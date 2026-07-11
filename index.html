@@ -8,7 +8,7 @@
   <!-- Google Fonts & Firebase SDK Compatibility Version -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2 family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -107,10 +107,33 @@
     }
 
     @keyframes slideIn { to { transform: translateY(0); opacity: 1; } }
-
     .toast.success { border-left-color: var(--success); color: #065f46; background: #f0fdf4; }
     .toast.error { border-left-color: var(--danger); color: #991b1b; background: #fef2f2; }
     .toast.warning { border-left-color: var(--warning); color: #92400e; background: #fffbeb; }
+
+    /* Premium Fullscreen Upload Loading Screen Overlay */
+    .upload-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(6px);
+      z-index: 3000;
+      display: none;
+      place-items: center;
+      padding: 20px;
+    }
+    .upload-overlay-card {
+      background: var(--card);
+      padding: 32px 24px;
+      border-radius: var(--radius-lg);
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      box-shadow: var(--shadow-premium);
+      animation: modalUnfold 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+    }
+    .upload-overlay-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; color: var(--text-main); }
+    .upload-overlay-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
 
     /* Custom Premium Modal */
     .p-modal-overlay {
@@ -123,96 +146,37 @@
       place-items: center;
       padding: 16px;
     }
-    .p-modal {
-      background: var(--card);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      max-width: 440px;
-      width: 100%;
-      box-shadow: var(--shadow-premium);
-      text-align: center;
-    }
+    .p-modal { background: var(--card); border-radius: var(--radius-lg); padding: 24px; max-width: 440px; width: 100%; box-shadow: var(--shadow-premium); text-align: center; }
     .p-modal h3 { font-size: 18px; margin-bottom: 12px; font-weight: 700; }
     .p-modal p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
     .p-modal-btns { display: flex; gap: 12px; }
 
     /* Layout Containers */
-    .app-container {
-      max-width: 1340px;
-      margin: 0 auto;
-      padding: 12px 12px 60px;
-    }
-    @media (min-width: 640px) {
-      .app-container { padding: 24px 20px 80px; }
-    }
+    .app-container { max-width: 1340px; margin: 0 auto; padding: 12px 12px 60px; }
+    @media (min-width: 640px) { .app-container { padding: 24px 20px 80px; } }
 
     /* Navigation Header */
-    .premium-nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--panel-bg);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      padding: 12px 16px;
-      border-radius: var(--radius-md);
-      margin-bottom: 16px;
-      box-shadow: var(--shadow-premium);
-    }
-    @media (min-width: 640px) {
-      .premium-nav { padding: 16px 24px; border-radius: var(--radius-lg); margin-bottom: 32px; }
-    }
-
+    .premium-nav { display: flex; justify-content: space-between; align-items: center; background: var(--panel-bg); backdrop-filter: blur(12px); border: 1px solid var(--border); padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 16px; box-shadow: var(--shadow-premium); }
+    @media (min-width: 640px) { .premium-nav { padding: 16px 24px; border-radius: var(--radius-lg); margin-bottom: 32px; } }
     .nav-brand { display: flex; align-items: center; gap: 12px; }
     .nav-logo { width: 40px; height: 40px; background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border-radius: var(--radius-md); display: grid; place-items: center; color: var(--primary); }
     .nav-titles h1 { font-size: 15px; font-weight: 800; letter-spacing: -0.02em; }
     .nav-titles p { font-size: 11px; color: var(--text-muted); font-weight: 500; }
 
     /* Stats Grid */
-    .premium-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    @media (min-width: 640px) {
-      .premium-stats { gap: 20px; margin-bottom: 32px; }
-    }
-
-    .stat-box {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow-premium);
-    }
-    @media (min-width: 640px) {
-      .stat-box { border-radius: var(--radius-lg); padding: 24px; }
-    }
+    .premium-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    @media (min-width: 640px) { .premium-stats { gap: 20px; margin-bottom: 32px; } }
+    .stat-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-premium); }
+    @media (min-width: 640px) { .stat-box { border-radius: var(--radius-lg); padding: 24px; } }
     .stat-info .stat-val { font-size: 24px; font-weight: 800; line-height: 1.2; margin-top: 2px; }
     .stat-info .stat-lbl { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
     .stat-icon-wrap { width: 40px; height: 40px; border-radius: var(--radius-md); display: grid; place-items: center; background: #f1f5f9; }
 
     /* Workspace Structural Grid */
     .workspace-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-    @media (min-width: 1024px) {
-      .workspace-grid.two-cols { grid-template-columns: 420px 1fr; gap: 32px; align-items: start; }
-    }
-
-    .p-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 16px;
-      box-shadow: var(--shadow-premium);
-    }
-    @media (min-width: 640px) {
-      .p-card { border-radius: var(--radius-lg); padding: 28px; }
-    }
-
+    @media (min-width: 1024px) { .workspace-grid.two-cols { grid-template-columns: 420px 1fr; gap: 32px; align-items: start; } }
+    .p-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; box-shadow: var(--shadow-premium); }
+    @media (min-width: 640px) { .p-card { border-radius: var(--radius-lg); padding: 28px; } }
     .p-card-head { margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
     .p-card-head h2 { font-size: 16px; font-weight: 700; }
     .p-card-head p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
@@ -222,11 +186,9 @@
     .form-group label { display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px; }
     .input-premium { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 14px; font-size: 14px; font-family: inherit; color: var(--text-main); background: #f8fafc; outline: none; transition: var(--transition); }
     .input-premium:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.12); }
-
     .dropzone { border: 2px dashed #cbd5e1; border-radius: var(--radius-md); padding: 24px 16px; text-align: center; background: #f8fafc; cursor: pointer; transition: var(--transition); display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .dropzone:hover { border-color: var(--primary); background: rgba(2, 132, 199, 0.02); }
     .dropzone p { font-size: 12px; color: var(--text-muted); font-weight: 600; }
-
     .preview-grid-premium { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
     .preview-thumb { aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); }
     .preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
@@ -236,7 +198,6 @@
     .btn-premium:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
     .btn-premium:active { transform: translateY(1px); }
     .btn-premium:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-
     .btn-secondary { background: #f1f5f9; color: #334155; box-shadow: none; border: 1px solid var(--border); }
     .btn-secondary:hover { background: #e2e8f0; }
     .btn-danger-p { background: #fef2f2; color: var(--danger); box-shadow: none; }
@@ -245,9 +206,7 @@
     /* Output Generation Box Link Matrix Components */
     .p-share-container { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
     .p-share-row { display: flex; flex-direction: column; background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; gap: 12px; transition: var(--transition); }
-    @media (min-width: 640px) {
-      .p-share-row { flex-direction: row; align-items: center; justify-content: space-between; gap: 24px; }
-    }
+    @media (min-width: 640px) { .p-share-row { flex-direction: row; align-items: center; justify-content: space-between; gap: 24px; } }
     .p-share-meta { flex: 1; min-width: 0; }
     .p-share-label { font-size: 13px; font-weight: 700; color: var(--text-main); }
     .p-share-url-preview { font-size: 12px; color: var(--text-muted); font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
@@ -255,13 +214,12 @@
     .btn-share-action { padding: 6px 14px; font-size: 13px; min-height: 36px; width: auto; flex: 1; }
     @media (min-width: 640px) { .btn-share-action { flex: initial; } }
 
-    /* CORE SMART RESPONSIVE MOBILE TABLE OPTIMIZATIONS */
+    /* Table & Responsive Matrix */
     .table-container { border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden; }
     .p-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
     .p-table th { background: #f8fafc; padding: 14px 16px; font-weight: 700; color: #475569; border-bottom: 1px solid var(--border); }
     .p-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); background: #fff; vertical-align: middle; }
     
-    /* Engine Biến đổi Table sang Card Layout trên Thiết bị Mobile */
     @media (max-width: 639px) {
       .p-table, .p-table tbody, .p-table tr, .p-table td { display: block; width: 100%; }
       .p-table thead { display: none; }
@@ -271,59 +229,60 @@
       .p-table td::before { content: attr(data-label); font-weight: 700; color: var(--text-muted); font-size: 12px; text-align: left; }
       .p-table td:last-child { border-bottom: none; flex-direction: column; align-items: stretch; padding-top: 12px; }
       .p-table td:last-child::before { display: none; }
-      .p-table td > div { text-align: right; }
-      
-      /* Grid Actions Mobile Matrix */
       .flex-actions-group { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; margin-top: 4px; }
-      .flex-actions-group .btn-premium { width: 100% !important; padding: 8px 4px; font-size: 11px; min-height: 36px; justify-content: center; }
+      .flex-actions-group .btn-premium { width: 100% !important; padding: 8px 4px; font-size: 11px; min-height: 36px; }
     }
 
     .badge-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
     .badge-status.pending { background: #fff7ed; color: var(--warning); }
     .badge-status.completed { background: #ecfdf5; color: var(--success); }
-    .flex-actions-group { display: flex; gap: 8px; }
 
-    /* Focus Mode Workspace (Garage Portal) */
+    /* Portal Layout Design */
     .focus-portal-layout { display: grid; grid-template-columns: 1fr; gap: 16px; }
-    @media (min-width: 1024px) {
-      .focus-portal-layout { grid-template-columns: 360px 1fr; gap: 28px; align-items: start; }
-      .sticky-sidebar { position: sticky; top: 24px; }
-    }
-
+    @media (min-width: 1024px) { .focus-portal-layout { grid-template-columns: 360px 1fr; gap: 28px; align-items: start; } .sticky-sidebar { position: sticky; top: 24px; } }
     .image-workspace-list { display: flex; flex-direction: column; gap: 16px; }
     @media (min-width: 640px) { .image-workspace-list { gap: 24px; } }
-    
     .premium-image-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-premium); display: grid; grid-template-columns: 1fr; }
     @media (min-width: 640px) { .premium-image-card { grid-template-columns: 1fr 1fr; border-radius: var(--radius-lg); } }
-
     .img-display-pane { background: #0f172a; display: grid; place-items: center; position: relative; min-height: 220px; }
     @media (min-width: 640px) { .img-display-pane { min-height: 320px; } }
     .img-display-pane img { width: 100%; height: 100%; object-fit: contain; max-height: 360px; cursor: zoom-in; }
     .img-pane-indicator { position: absolute; left: 12px; top: 12px; background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 999px; color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-
     .inputs-entry-pane { padding: 16px; display: flex; flex-direction: column; justify-content: space-between; background: #fff; gap: 12px; }
     @media (min-width: 640px) { .inputs-entry-pane { padding: 24px; } }
     .inputs-entry-pane textarea { width: 100%; min-height: 120px; border: 1px solid var(--border); background: #f8fafc; border-radius: var(--radius-md); padding: 12px; font-family: inherit; font-size: 14px; outline: none; resize: vertical; transition: var(--transition); line-height: 1.5; }
     .inputs-entry-pane textarea:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.1); }
     
-    .summary-row-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; margin-bottom: 10px; }
     .p-progress-bar { height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-top: 12px; display: none; }
     .p-progress-bar.active { display: block; }
     .p-progress-fill { height: 100%; width: 0%; background: var(--primary-gradient); transition: width 0.2s ease; }
 
-    /* Lightbox Premium */
+    /* Lightbox Custom block */
     .premium-lightbox { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 2000; display: none; place-items: center; padding: 16px; opacity: 0; transition: opacity 0.2s ease; }
     .premium-lightbox.show { display: grid; opacity: 1; }
     .premium-lightbox img { max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: var(--radius-md); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
     .lightbox-close-btn { position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.1); border: none; color: #fff; font-size: 24px; cursor: pointer; display: grid; place-items: center; }
-
     .empty-state-text { text-align: center; color: var(--text-muted); font-style: italic; padding: 24px 16px; font-size: 14px; }
   </style>
 </head>
 <body>
 
+  <!-- Hệ thống Toast thông báo -->
   <div id="toastContainer" class="toast-container"></div>
 
+  <!-- Màn hình chờ tải lên song song công công công nghệ cao -->
+  <div id="uploadOverlay" class="upload-overlay">
+    <div class="upload-overlay-card">
+      <div class="spinner-premium"></div>
+      <div id="uploadOverlayTitle" class="upload-overlay-title">Đang đồng bộ ảnh tổn thất</div>
+      <div id="uploadOverlaySubtitle" class="upload-overlay-subtitle">Tiến trình kết nối dữ liệu song song...</div>
+      <div class="p-progress-bar active" style="margin-top: 0;">
+        <div id="uploadOverlayProgressFill" class="p-progress-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hộp thoại xác nhận Pop-up -->
   <div id="modalOverlay" class="p-modal-overlay">
     <div class="p-modal">
       <h3 id="modalTitle">Xác nhận</h3>
@@ -343,7 +302,7 @@
         </div>
         <div class="nav-titles">
           <h1>Workspace Core Systems</h1>
-          <p>Hệ thống Giám định & Giải quyết Tổn thất Cơ giới Realtime</p>
+          <p>Hệ thống Giám định & Đối chiếu tổn thất xe cơ giới thời gian thực</p>
         </div>
       </div>
     </nav>
@@ -392,7 +351,7 @@
     let dbNodeInstance = null;
     let localActiveCaseNode = null;
     let localActiveImageStack = [];
-    let activeObjectUrls = []; // Theo dõi giải phóng bộ nhớ RAM
+    let activeObjectUrls = []; 
 
     function showConfirmModal(title, msg) {
       return new Promise((resolve) => {
@@ -439,7 +398,6 @@
       const targetedViewArg = URLQueryStrings.get('view');
       const brandElement = document.getElementById('navBrandClick');
 
-      // Tắt tất cả các node lắng nghe ngầm cũ trước khi chuyển View để CHỐNG LAG
       dbNodeInstance.ref('cases').off();
       if (localActiveCaseNode && localActiveCaseNode.idCa) {
         dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}`).off();
@@ -473,28 +431,28 @@
     }
 
     /****************************************************
-     * 1. CORE INTERNAL MANAGEMENT WORKSPACE VIEW (DASHBOARD)
+     * 1. DASHBOARD VIEW (MÀN HÌNH QUẢN LÝ TỔNG)
      ****************************************************/
     function renderManagerDashboardWorkspace() {
       rootContainer.innerHTML = `
         <div class="premium-stats">
           <div class="stat-box">
             <div class="stat-info">
-              <div class="stat-lbl">Tổng ca tiếp nhận</div>
+              <div class="stat-lbl">Tổng phiên tiếp nhận</div>
               <div class="stat-val" id="lblTotalCases">0</div>
             </div>
             <div class="stat-icon-wrap" style="color:var(--primary)">${SVGS.FOLDER}</div>
           </div>
           <div class="stat-box">
             <div class="stat-info">
-              <div class="stat-lbl">Chờ nhập liệu</div>
+              <div class="stat-lbl">Hồ sơ chưa nhập</div>
               <div class="stat-val" id="lblPendingCases" style="color:var(--warning)">0</div>
             </div>
             <div class="stat-icon-wrap" style="color:var(--warning)">${SVGS.CLOCK}</div>
           </div>
           <div class="stat-box">
             <div class="stat-info">
-              <div class="stat-lbl">Đã hoàn thành</div>
+              <div class="stat-lbl">Hồ sơ hoàn tất</div>
               <div class="stat-val" id="lblCompletedCases" style="color:var(--success)">0</div>
             </div>
             <div class="stat-icon-wrap" style="color:var(--success)">${SVGS.CHECK_CIRCLE}</div>
@@ -504,22 +462,22 @@
         <div class="workspace-grid two-cols">
           <section class="p-card">
             <div class="p-card-head">
-              <h2>Khởi tạo hồ sơ mới</h2>
-              <p>Nhập thông tin phương tiện và tải lên danh sách dữ liệu ảnh gốc ban đầu.</p>
+              <h2>Tạo ca giám định mới</h2>
+              <p>Khởi tạo thông tin phương tiện tổn thất và đồng bộ danh sách ảnh gốc chứng cứ.</p>
             </div>
             
             <div class="form-group">
-              <label>Biển kiểm soát phương tiện</label>
-              <input id="txtPlateNumber" class="input-premium" type="text" placeholder="Ví dụ: 30H-123.45" autocomplete="off" />
+              <label>Biển kiểm soát</label>
+              <input id="txtPlateNumber" class="input-premium" type="text" placeholder="BKS VD: 30H-123.45" autocomplete="off" />
             </div>
 
             <div class="form-group">
-              <label>Đơn vị Gara sửa chữa chỉ định</label>
-              <input id="txtGaragePartner" class="input-premium" type="text" placeholder="Ví dụ: Gara ô tô Hàng Kênh" autocomplete="off" />
+              <label>Garage sửa chữa xử lý</label>
+              <input id="txtGaragePartner" class="input-premium" type="text" placeholder="Tên đơn vị sửa chữa" autocomplete="off" />
             </div>
 
             <div class="form-group">
-              <label>Tệp dữ liệu ảnh hiện trạng giám định</label>
+              <label>Ảnh chụp hiện trạng tổn thất phương tiện</label>
               <div class="dropzone" onclick="document.getElementById('fileImageUploader').click()">
                 <div style="color:var(--text-muted)">${SVGS.CAMERA}</div>
                 <p>Nhấp vào đây để chọn tệp tin hình ảnh tổn thất</p>
@@ -529,18 +487,13 @@
               <div id="boxPreviewsHolder" class="preview-grid-premium"></div>
             </div>
 
-            <div id="creationProgressContainer" class="p-progress-bar">
-              <div id="creationProgressFill" class="p-progress-fill"></div>
-            </div>
-            <div id="lblCreationStatus" style="font-size:12px; font-weight:600; color:var(--primary); margin-top:6px; display:none;"></div>
-
-            <button id="btnCreateCaseSubmit" class="btn-premium" style="margin-top:16px;">Tạo hồ sơ dữ liệu & Đồng bộ</button>
+            <button id="btnCreateCaseSubmit" class="btn-premium" style="margin-top:16px;">Khởi tạo ca trực tuyến</button>
           </section>
 
           <section class="p-card">
             <div class="p-card-head">
-              <h2>Danh sách phiên xử lý thời gian thực</h2>
-              <p>Bảng điều phối liên kết trực tiếp tới máy chủ Firebase Cloud Realtime Data.</p>
+              <h2>Danh sách ca giám định (Realtime)</h2>
+              <p>Hệ thống tự động đồng bộ liên tục dữ liệu từ máy chủ.</p>
             </div>
             <div class="table-container">
               <table class="p-table">
@@ -549,12 +502,12 @@
                     <th>Thông tin phương tiện</th>
                     <th>Số ảnh</th>
                     <th>Trạng thái</th>
-                    <th>Hành động điều phối</th>
+                    <th>Thao tác điều phối</th>
                   </tr>
                 </thead>
                 <tbody id="tblCasesBodyContainer">
                   <tr>
-                    <td colspan="4" class="empty-state-text">Đang thiết lập kênh truyền tải từ máy chủ...</td>
+                    <td colspan="4" class="empty-state-text">Đang tải luồng dữ liệu từ Firebase Cloud...</td>
                   </tr>
                 </tbody>
               </table>
@@ -568,7 +521,6 @@
       document.getElementById('fileImageUploader').addEventListener('change', executeImageFilesPreviewBinding);
       document.getElementById('btnCreateCaseSubmit').addEventListener('click', pipelineTriggerCaseCreationFlow);
 
-      // Kênh lắng nghe danh sách tổng (Chỉ bật khi ở Dashboard)
       dbNodeInstance.ref('cases').on('value', (dataSnapshot) => {
         executeUIRenderCasesTable(dataSnapshot.val());
       });
@@ -580,7 +532,7 @@
     }
 
     function executeImageFilesPreviewBinding() {
-      clearActiveObjectUrls(); // Giải phóng RAM cũ tránh giật lag tệp tin lớn
+      clearActiveObjectUrls(); 
       const fileInputElement = document.getElementById('fileImageUploader');
       const filesList = Array.from(fileInputElement.files || []);
       const labelSummary = document.getElementById('lblDropzoneSummary');
@@ -620,7 +572,7 @@
       if (!tableBody) return;
 
       if (!casesPayload) {
-        tableBody.innerHTML = `<tr><td colspan="4" class="empty-state-text">Hệ thống chưa ghi nhận bất kỳ hồ sơ nào.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="4" class="empty-state-text">Hệ thống chưa ghi nhận ca xe nào.</td></tr>`;
         totalLbl.textContent = '0'; pendingLbl.textContent = '0'; completedLbl.textContent = '0';
         return;
       }
@@ -637,7 +589,6 @@
         const partnerPortalInputLink = `${getCleanOriginBaseUrl()}?idCa=${uniqueKeyToken}`;
         const internalResultReviewLink = `${getCleanOriginBaseUrl()}?idCa=${uniqueKeyToken}&view=result`;
 
-        // data-label bổ trợ map responsive thẻ Card tự động trên Mobile CSS
         return `
           <tr>
             <td data-label="Thông tin xe">
@@ -653,8 +604,8 @@
             </td>
             <td>
               <div class="flex-actions-group">
-                <button class="btn-premium btn-secondary" onclick="window.open('${partnerPortalInputLink}', '_blank')">${SVGS.EXTERNAL} Nhập</button>
-                <button class="btn-premium" style="background:var(--dark);" onclick="window.open('${internalResultReviewLink}', '_blank')">${SVGS.CHECK_CIRCLE} Xem</button>
+                <button class="btn-premium btn-secondary" onclick="window.open('${partnerPortalInputLink}', '_blank')">${SVGS.EXTERNAL} Link Nhập</button>
+                <button class="btn-premium" style="background:var(--dark);" onclick="window.open('${internalResultReviewLink}', '_blank')">${SVGS.CHECK_CIRCLE} Đối chiếu</button>
                 <button class="btn-premium btn-danger-p" onclick="triggerDestructiveDeleteCase('${uniqueKeyToken}', '${escapeAttributeData(entityNode.bienSo)}')">${SVGS.TRASH} Xóa</button>
               </div>
             </td>
@@ -669,33 +620,34 @@
     }
 
     async function triggerDestructiveDeleteCase(caseKey, friendlyPlateName) {
-      const confirmAction = await showConfirmModal('Xóa hồ sơ dữ liệu', `Bạn chắc chắn có muốn xóa bỏ toàn bộ dữ liệu thuộc ca phương tiện kiểm soát: ${friendlyPlateName}?`);
+      const confirmAction = await showConfirmModal('Xóa ca giám định', `Bạn chắc chắn muốn loại bỏ hồ sơ xe: ${friendlyPlateName}?`);
       if (confirmAction) {
         await dbNodeInstance.ref(`cases/${caseKey}`).remove();
-        triggerToast('Đã xóa bỏ hồ sơ khỏi hệ thống Cloud.', 'warning');
+        triggerToast('Đã xóa bỏ dữ liệu hồ sơ khỏi hệ thống Cloud.', 'warning');
       }
     }
 
     /****************************************************
-     * FILE UPLOAD STREAM & TRANSACTION FLOWS
+     * ĐÃ NÂNG CẤP: LUỒNG TẢI ẢNH SONG SONG + MÀN HÌNH CHỜ
      ****************************************************/
     async function pipelineTriggerCaseCreationFlow() {
       const plateInputVal = document.getElementById('txtPlateNumber').value.trim();
       const garageInputVal = document.getElementById('txtGaragePartner').value.trim();
       const imagesFileList = Array.from(document.getElementById('fileImageUploader').files || []);
-      const triggerButton = document.getElementById('btnCreateCaseSubmit');
 
       if (!plateInputVal || !garageInputVal || !imagesFileList.length) {
-        triggerToast('Vui lòng điền đầy đủ thông tin Biển số, Gara và đính kèm hình ảnh.', 'error');
+        triggerToast('Vui lòng nhập đầy đủ Biển số, Tên Garage và tải lên hình ảnh.', 'error');
         return;
       }
 
-      try {
-        toggleButtonUIPendingState(triggerButton, true, 'Đang chuẩn bị luồng dữ liệu...');
-        updateProgressBarIndicator('Đang kết nối API Storage...', 5);
+      // Kích hoạt màn hình chờ toàn diện UI
+      toggleUploadOverlay(true, `Đang khởi tạo ${imagesFileList.length} ảnh tổn thất...`, 'Kết nối hạ tầng Cloudinary API', 0);
 
-        const secureHostedImageUrlsArray = await executionSequentialImagesUploadCore(imagesFileList);
-        updateProgressBarIndicator('Đồng bộ kiến trúc đám mây Firebase Realtime...', 90);
+      try {
+        // Thực thi luồng xử lý tải song song (Parallel Promise Stream Pooling)
+        const secureHostedImageUrlsArray = await executionParallelImagesUploadCore(imagesFileList);
+        
+        toggleUploadOverlay(true, 'Đang ghi nhận cấu trúc dữ liệu...', 'Đồng bộ thời gian thực với Firebase...', 95);
 
         const generatedCaseUniqueToken = 'CASE_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5).toUpperCase();
         const mappedImageNodeObjects = secureHostedImageUrlsArray.map(secureUrl => ({
@@ -714,11 +666,11 @@
         };
 
         await dbNodeInstance.ref(`cases/${generatedCaseUniqueToken}`).set(finalPayloadStructure);
-        updateProgressBarIndicator('Giao dịch hoàn tất.', 100);
-        triggerToast('Khởi tạo hồ sơ xe thành công.');
+        triggerToast('Hồ sơ giám định trực tuyến đã đồng bộ thành công.');
 
         renderInlineCreationSuccessPanel(finalPayloadStructure);
 
+        // Đóng form
         document.getElementById('txtPlateNumber').value = '';
         document.getElementById('txtGaragePartner').value = '';
         document.getElementById('fileImageUploader').value = '';
@@ -727,23 +679,35 @@
         clearActiveObjectUrls();
       } catch (exception) {
         console.error(exception);
-        triggerToast(exception.message || 'Lỗi phát sinh trong tiến trình upload.', 'error');
-        updateProgressBarIndicator('', 0);
+        triggerToast(exception.message || 'Lỗi nghẽn mạng phát sinh trong tiến trình upload song song.', 'error');
       } finally {
-        toggleButtonUIPendingState(triggerButton, false, 'Tạo hồ sơ dữ liệu & Đồng bộ');
+        toggleUploadOverlay(false); // Đóng màn hình chờ tải lên
       }
     }
 
-    async function executionSequentialImagesUploadCore(filesArray) {
-      const temporaryCollectedLinks = [];
-      for (let idx = 0; idx < filesArray.length; idx++) {
-        const individualProgressWeight = Math.round(((idx + 1) / filesArray.length) * 80);
-        updateProgressBarIndicator(`Tải ảnh lên Server Media (${idx + 1}/${filesArray.length})...`, individualProgressWeight);
-        
-        const receivedSecureUrlResult = await uploadSingleImageToCloudinaryEngine(filesArray[idx]);
-        temporaryCollectedLinks.push(receivedSecureUrlResult);
-      }
-      return temporaryCollectedLinks;
+    // Công cụ lõi xử lý Multi-thread Upload song song
+    async function executionParallelImagesUploadCore(filesArray) {
+      let resolvedCounter = 0;
+      const totalFilesCount = filesArray.length;
+
+      // Map danh sách mảng thành tập hợp các Promise bất đồng bộ chạy đồng thời
+      const parallelPromisesPool = filesArray.map(async (fileItem) => {
+        try {
+          const cloudSecureUrl = await uploadSingleImageToCloudinaryEngine(fileItem);
+          resolvedCounter++;
+          
+          // Tính toán phần trăm hoàn thành thực tế dựa theo số luồng phản hồi thành công
+          const accumulatedPercentage = Math.round((resolvedCounter / totalFilesCount) * 100);
+          toggleUploadOverlay(true, `Đang truyền tải ảnh tổn thất (${resolvedCounter}/${totalFilesCount})`, `Băng thông đám mây tốc độ cao: ${accumulatedPercentage}%`, accumulatedPercentage);
+          
+          return cloudSecureUrl;
+        } catch (error) {
+          throw new Error(`Tệp tin [${fileItem.name}] thất bại: ${error.message}`);
+        }
+      });
+
+      // Kích nổ toàn bộ các Request đồng thời, gom kết quả trả về trong một mảng sau cùng
+      return await Promise.all(parallelPromisesPool);
     }
 
     async function uploadSingleImageToCloudinaryEngine(fileBlob) {
@@ -759,12 +723,29 @@
       const parsedTextResponse = await networkResponse.text();
       
       let convertedJSONData;
-      try { convertedJSONData = JSON.parse(parsedTextResponse); } catch(err) { throw new Error('Phản hồi Media Storage lỗi.'); }
+      try { convertedJSONData = JSON.parse(parsedTextResponse); } catch(err) { throw new Error('Phản hồi Server lỗi.'); }
 
       if (!networkResponse.ok || !convertedJSONData.secure_url) {
-        throw new Error(convertedJSONData?.error?.message || 'Không thể đẩy hình ảnh lên Cloudinary.');
+        throw new Error(convertedJSONData?.error?.message || 'Lỗi truyền tải.');
       }
       return convertedJSONData.secure_url;
+    }
+
+    function toggleUploadOverlay(show, title = '', subtitle = '', percent = 0) {
+      const overlay = document.getElementById('uploadOverlay');
+      const tEl = document.getElementById('uploadOverlayTitle');
+      const sEl = document.getElementById('uploadOverlaySubtitle');
+      const bar = document.getElementById('uploadOverlayProgressFill');
+      if (!overlay) return;
+
+      if (show) {
+        overlay.style.display = 'grid';
+        if (title) tEl.textContent = title;
+        if (subtitle) sEl.textContent = subtitle;
+        if (bar) bar.style.width = `${percent}%`;
+      } else {
+        overlay.style.display = 'none';
+      }
     }
 
     function renderInlineCreationSuccessPanel(dataPayload) {
@@ -777,29 +758,29 @@
       outputCardBox.innerHTML = `
         <div class="p-card-head" style="margin-bottom:20px; padding-bottom:12px;">
           <h2 style="color:var(--success); font-size:16px; display:flex; align-items:center; gap:6px;">${SVGS.SPARKLES} Khởi tạo hồ sơ trực tuyến thành công</h2>
-          <p style="font-size:12px; margin-top:4px;">Mã định danh phương tiện: <strong style="color:var(--dark); font-family:monospace;">${dataPayload.idCa}</strong></p>
+          <p style="font-size:12px; margin-top:4px;">Mã ca xe định danh: <strong style="color:var(--dark); font-family:monospace;">${dataPayload.idCa}</strong></p>
         </div>
 
         <div class="p-share-container">
           <div class="p-share-row">
             <div class="p-share-meta">
-              <div class="p-share-label">Cổng đối tác (Garage điền bộ phận)</div>
+              <div class="p-share-label">Link gửi Garage (Nhập bộ phận)</div>
               <div class="p-share-url-preview">${escapeHtmlOutput(shareLinkGara)}</div>
             </div>
             <div class="p-share-actions">
               <button class="btn-premium btn-share-action" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkGara)}')">${SVGS.COPY} Sao chép</button>
-              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkGara)}', '_blank')">${SVGS.EXTERNAL} Mở</button>
+              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkGara)}', '_blank')">${SVGS.EXTERNAL} Mở nhanh</button>
             </div>
           </div>
 
           <div class="p-share-row">
             <div class="p-share-meta">
-              <div class="p-share-label">Cổng nội bộ (Giám định viên giám sát)</div>
+              <div class="p-share-label">Link Giám định viên (Đối chiếu kết quả)</div>
               <div class="p-share-url-preview">${escapeHtmlOutput(shareLinkView)}</div>
             </div>
             <div class="p-share-actions">
               <button class="btn-premium btn-share-action" style="background:var(--dark);" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkView)}')">${SVGS.COPY} Sao chép</button>
-              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkView)}', '_blank')">${SVGS.EXTERNAL} Xem</button>
+              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkView)}', '_blank')">${SVGS.EXTERNAL} Đi đến</button>
             </div>
           </div>
         </div>
@@ -808,17 +789,16 @@
     }
 
     /****************************************************
-     * 2. PORTAL VIEW WORKSPACE CONFIGURATIONS
+     * 2. PORTAL WORKSPACE PORTALS VIEWS
      ****************************************************/
     function bindAndFetchCaseRealtimeSync(caseId, currentViewFlag) {
-      renderLoadingLayoutIndicator('Đang kết nối cổng dữ liệu bảo mật thời gian thực...');
+      renderLoadingLayoutIndicator('Đang thiết lập cổng kết nối bảo mật hồ sơ...');
 
-      // Lắng nghe cục bộ duy nhất node hồ sơ hiện hành để giảm tải băng thông và CHỐNG LAG mượt mà
       dbNodeInstance.ref(`cases/${caseId}`).on('value', (dataSnapshot) => {
         const databaseValueObject = dataSnapshot.val();
         
         if (!databaseValueObject) {
-          renderErrorLayoutState('Hồ sơ giám định mục tiêu không tồn tại hoặc đã bị hủy bỏ.');
+          renderErrorLayoutState('Hồ sơ ca xe mục tiêu không tồn tại hoặc đã bị gỡ bỏ.');
           return;
         }
 
@@ -834,7 +814,7 @@
           renderPortalGarageInteractiveInputView();
         }
       }, (networkException) => {
-        renderErrorLayoutState('Mất quyền kết nối dữ liệu: ' + networkException.message);
+        renderErrorLayoutState('Mất quyền kết nối: ' + networkException.message);
       });
     }
 
@@ -846,22 +826,22 @@
       return `
         <div class="p-card sticky-sidebar">
           <div class="p-card-head">
-            <h2>${isReadOnlyMode ? 'Dữ liệu Đối chiếu' : 'Cập nhật Hạng mục'}</h2>
-            <p>${isReadOnlyMode ? 'Chế độ xem Báo cáo' : 'Cửa sổ dành cho Garage'}</p>
+            <h2>${isReadOnlyMode ? 'Dữ liệu Đối chiếu' : 'Cập nhật hạng mục'}</h2>
+            <p>${isReadOnlyMode ? 'Chế độ xem biên bản chốt' : 'Khai báo thông tin từ Garage'}</p>
           </div>
 
           ${showBackButton ? `<button class="btn-premium btn-secondary" style="width:100%; margin-bottom:16px; gap:6px;" onclick="goHome()">${SVGS.ARROW_LEFT} Quay lại Dashboard</button>` : ''}
 
           <div class="form-group">
-            <label style="margin:0;">Mã hồ sơ hệ thống</label>
+            <label style="margin:0;">Mã hồ sơ ca xe</label>
             <div style="font-weight:700; font-size:14px; color:var(--dark)">${node.idCa}</div>
           </div>
           <div class="form-group">
-            <label style="margin:0;">Biển kiểm soát xe</label>
+            <label style="margin:0;">Biển số phương tiện</label>
             <div style="font-weight:700; font-size:14px; color:var(--dark)">${escapeHtmlOutput(node.bienSo)}</div>
           </div>
           <div class="form-group">
-            <label style="margin:0;">Cơ sở sửa chữa phụ trách</label>
+            <label style="margin:0;">Đơn vị sửa chữa phụ trách</label>
             <div style="font-weight:700; font-size:14px; color:var(--dark)">${escapeHtmlOutput(node.tenGara)}</div>
           </div>
           <div class="form-group">
@@ -873,15 +853,15 @@
 
           ${showBackButton ? `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
-              <button class="btn-premium" style="width:100%; gap:6px;" onclick="executeCopyAggregatedRawText()">${SVGS.COPY} Copy chuỗi dữ liệu tổng hợp</button>
+              <button class="btn-premium" style="width:100%; gap:6px;" onclick="executeCopyAggregatedRawText()">${SVGS.COPY} Copy chuỗi biên bản nhanh</button>
             </div>
           ` : isReadOnlyMode ? `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
-              <div class="badge-status completed" style="width:100%; padding:10px; justify-content:center; gap:6px;">${SVGS.CHECK_CIRCLE} Biểu mẫu đã gửi và khóa an toàn</div>
+              <div class="badge-status completed" style="width:100%; padding:10px; justify-content:center; gap:6px;">${SVGS.CHECK_CIRCLE} Biểu mẫu đã gửi & khóa an toàn</div>
             </div>
           ` : `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
-              <button id="btnSubmitGarageFinalResponse" class="btn-premium" style="width:100%; gap:6px;">${SVGS.CHECK_CIRCLE} Xác nhận & Gửi báo giá</button>
+              <button id="btnSubmitGarageFinalResponse" class="btn-premium" style="width:100%; gap:6px;">${SVGS.CHECK_CIRCLE} Hoàn tất & Gửi báo giá</button>
             </div>
           `}
         </div>
@@ -890,7 +870,7 @@
 
     function renderPortalGarageInteractiveInputView() {
       if (!localActiveImageStack.length) {
-        renderErrorLayoutState('Hồ sơ hiện hữu chưa được nạp dữ liệu hình ảnh.');
+        renderErrorLayoutState('Hồ sơ xe chưa được nạp danh sách hình ảnh.');
         return;
       }
 
@@ -898,13 +878,13 @@
         return `
           <div class="premium-image-card">
             <div class="img-display-pane">
-              <span class="img-pane-indicator">Ảnh hiện trạng bộ phận số ${index + 1}</span>
+              <span class="img-pane-indicator">Ảnh tổn thất số ${index + 1}</span>
               <img src="${escapeAttributeData(item.linkAnh)}" alt="Ảnh tổn thất số ${index + 1}" loading="lazy" onclick="openLightbox('${escapeAttributeData(item.linkAnh)}')" />
             </div>
             <div class="inputs-entry-pane">
               <div class="form-group" style="width:100%">
-                <label>Khai báo tên bộ phận / Phương án xử lý ảnh số ${index + 1}</label>
-                <textarea class="garage-quote-textarea-node" data-index-token="${index}" placeholder="Ví dụ cụ thể:&#10;- Thay mới mặt ca lăng chính hãng&#10;- Sơn hấp xử lý xước dặm tai trước trái">${escapeHtmlOutput(item.hangMucBaoGia || '')}</textarea>
+                <label>Khai báo bộ phận tổn thất / Phương án khắc phục vùng ảnh ${index + 1}</label>
+                <textarea class="garage-quote-textarea-node" data-index-token="${index}" placeholder="Ví dụ phương án rõ ràng:&#10;- Thay mới cản trước chính hãng&#10;- Gò nắn chắn bùn trước trái&#10;- Sơn hấp xử lý xước dặm sườn xe">${escapeHtmlOutput(item.hangMucBaoGia || '')}</textarea>
               </div>
               <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self: flex-start; gap:4px; min-height:36px;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">${SVGS.EXTERNAL} Xem ảnh gốc phóng to</button>
             </div>
@@ -927,11 +907,11 @@
       const emptyFieldsCounter = DOMTextareaElements.filter(tx => !tx.value.trim()).length;
 
       if (emptyFieldsCounter > 0) {
-        const proceedBlank = await showConfirmModal('Phát hiện ô trống', `Có ${emptyFieldsCounter} hình ảnh chưa khai báo tên bộ phận. Bạn vẫn muốn hoàn tất gửi?`);
+        const proceedBlank = await showConfirmModal('Phát hiện ô trống bộ phận', `Có ${emptyFieldsCounter} vùng ảnh chưa điền bộ phận tổn thất. Bạn vẫn muốn tiếp tục gửi đi?`);
         if (!proceedBlank) return;
       }
 
-      const finalFreezeConfirmation = await showConfirmModal('Gửi hồ sơ & Đóng băng', 'Sau khi gửi, toàn bộ dữ liệu của bạn sẽ khóa tự động để Giám định viên thực hiện đối chiếu. Xác nhận gửi báo giá bộ phận?');
+      const finalFreezeConfirmation = await showConfirmModal('Xác nhận chốt hồ sơ', 'Sau khi gửi, toàn bộ dữ liệu hạng mục bộ phận sẽ khóa tự động để bảo hiểm đối chiếu. Xác nhận gửi?');
       if (!finalFreezeConfirmation) return;
 
       const packagedItemsPayload = DOMTextareaElements.map(tx => {
@@ -948,13 +928,13 @@
           trangThai: STATUS_COMPLETED
         });
 
-        triggerToast('Báo giá bộ phận xe đã khóa và gửi thành công.');
+        triggerToast('Hồ sơ báo giá bộ phận cơ giới đã được khóa an toàn.');
         const finalizedResultUrl = `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(localActiveCaseNode.idCa)}`;
         window.history.replaceState({}, '', finalizedResultUrl);
         evaluateViewRoutingState();
       } catch (err) {
         console.error(err);
-        triggerToast('Xung đột truyền dữ liệu: ' + err.message, 'error');
+        triggerToast('Lỗi nghẽn mạng đồng bộ: ' + err.message, 'error');
       }
     }
 
@@ -970,15 +950,15 @@
         return `
           <div class="premium-image-card">
             <div class="img-display-pane">
-              <span class="img-pane-indicator" style="background:var(--primary);">Ảnh kiểm tra #${index + 1}</span>
-              <img src="${escapeAttributeData(item.linkAnh)}" alt="Ảnh chứng cứ vùng ${index + 1}" loading="lazy" onclick="openLightbox('${escapeAttributeData(item.linkAnh)}')" />
+              <span class="img-pane-indicator" style="background:var(--primary);">Ảnh chứng cứ #${index + 1}</span>
+              <img src="${escapeAttributeData(item.linkAnh)}" alt="Ảnh kết quả vùng ${index + 1}" loading="lazy" onclick="openLightbox('${escapeAttributeData(item.linkAnh)}')" />
             </div>
             <div class="inputs-entry-pane" style="background:#fafafa;">
               <div class="form-group" style="width:100%;">
-                <label style="color:var(--primary); font-weight:800; text-transform:uppercase; letter-spacing:0.02em;">Chi tiết hạng mục bộ phận ghi nhận</label>
-                <div style="background:#fff; border:1px solid var(--border); padding:16px; border-radius:var(--radius-md); font-size:15px; font-weight:700; white-space:pre-wrap; min-height:110px;" class="${textContentClean ? '':'empty-state-text'}">${textContentClean ? escapeHtmlOutput(textContentClean) : 'Garage bỏ trống không khai báo danh mục cho ảnh này.'}</div>
+                <label style="color:var(--primary); font-weight:800; text-transform:uppercase; letter-spacing:0.02em;">Bộ phận tổn thất & hạng mục ghi nhận từ đối tác</label>
+                <div style="background:#fff; border:1px solid var(--border); padding:16px; border-radius:var(--radius-md); font-size:15px; font-weight:700; white-space:pre-wrap; min-height:110px;" class="${textContentClean ? '':'empty-state-text'}">${textContentClean ? escapeHtmlOutput(textContentClean) : 'Garage bỏ trống không khai báo thông tin bộ phận tổn thất cho ảnh này.'}</div>
               </div>
-              <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self:flex-start; gap:4px; min-height:36px;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">${SVGS.EXTERNAL} Tải ảnh gốc chứng từ</button>
+              <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self:flex-start; gap:4px; min-height:36px;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">${SVGS.EXTERNAL} Xem ảnh gốc kết quả</button>
             </div>
           </div>
         `;
@@ -1001,16 +981,16 @@
       outputLinesBuffer.push('==================================================');
       outputLinesBuffer.push('   BIÊN BẢN TỔNG HỢP HẠNG MỤC PHƯƠNG TIỆN CƠ GIỚI   ');
       outputLinesBuffer.push('==================================================');
-      outputLinesBuffer.push(`- Mã hồ sơ nghiệp vụ: ${node.idCa || ''}`);
+      outputLinesBuffer.push(`- Mã ca giám định:    ${node.idCa || ''}`);
       outputLinesBuffer.push(`- Biển kiểm soát xe:  ${node.bienSo || ''}`);
-      outputLinesBuffer.push(`- Đơn vị báo giá:     ${node.tenGara || ''}`);
-      outputLinesBuffer.push(`- Trạng thái dữ liệu: ${node.trangThai || ''}`);
+      outputLinesBuffer.push(`- Đơn vị sửa chữa:    ${node.tenGara || ''}`);
+      outputLinesBuffer.push(`- Tình trạng dữ liệu: ${node.trangThai || ''}`);
       outputLinesBuffer.push('--------------------------------------------------\n');
 
       localActiveImageStack.forEach((item, index) => {
         outputLinesBuffer.push(`[VÙNG ẢNH KHAI BÁO SỐ ${index + 1}]`);
-        outputLinesBuffer.push(`+ Bộ phận & Hạng mục xử lý: \n${item.hangMucBaoGia || 'Không ghi nhận hạng mục.'}`);
-        outputLinesBuffer.push(`+ URL liên kết ảnh chứng cứ: ${item.linkAnh || ''}`);
+        outputLinesBuffer.push(`+ Chi tiết hạng mục bộ phận: \n${item.hangMucBaoGia || 'Không ghi nhận hạng mục.'}`);
+        outputLinesBuffer.push(`+ URL ảnh chứng cứ gốc: ${item.linkAnh || ''}`);
         outputLinesBuffer.push('');
       });
 
@@ -1022,7 +1002,7 @@
     }
 
     /****************************************************
-     * GENERIC HELPERS UTILITY CORE ENGINE
+     * UTILS HELPERS
      ****************************************************/
     function renderLoadingLayoutIndicator(friendlyMessage) {
       rootContainer.innerHTML = `
@@ -1053,48 +1033,18 @@
     function renderFatalConfigurationFailure() {
       rootContainer.innerHTML = `
         <div class="p-card" style="border-top:4px solid var(--danger); margin-top:40px;">
-          <h2 style="color:var(--danger); font-size:18px;">Lỗi xác thực hệ thống phân quyền</h2>
+          <h2 style="color:var(--danger); font-size:18px;">Lỗi xác thực cấu hình phân quyền</h2>
           <p style="margin-top:10px; font-size:13px; color:var(--text-muted); line-height:1.6;">
-            Biến <strong>CONFIG.FIREBASE</strong> hoặc tài khoản <strong>CLOUDINARY</strong> chưa điền token hoặc chứa chuỗi ký tự mặc định "PASTE_". Vui lòng kiểm tra lại mã nguồn.
+            Biến cấu hình đám mây chứa chuỗi ký tự mặc định "PASTE_". Vui lòng cấu hình thật file index.html.
           </p>
         </div>
       `;
     }
 
-    function updateProgressBarIndicator(statusMsg, percentageProgressValue) {
-      const containerBar = document.getElementById('creationProgressContainer');
-      const textLabel = document.getElementById('lblCreationStatus');
-      const barFillNode = document.getElementById('creationProgressFill');
-      
-      if (!containerBar || !textLabel || !barFillNode) return;
-
-      if (!statusMsg) {
-        containerBar.classList.remove('active');
-        textLabel.style.display = 'none';
-        return;
-      }
-      containerBar.classList.add('active');
-      textLabel.style.display = 'block';
-      textLabel.textContent = statusMsg;
-      barFillNode.style.width = `${Math.max(0, Math.min(100, percentageProgressValue))}%`;
-    }
-
-    function toggleButtonUIPendingState(buttonDomNode, isBusyState, overlayTextValue) {
-      if (!buttonDomNode) return;
-      if (isBusyState) {
-        buttonDomNode.setAttribute('data-preserved-text', buttonDomNode.textContent);
-        buttonDomNode.textContent = overlayTextValue;
-        buttonDomNode.disabled = true;
-      } else {
-        buttonDomNode.textContent = buttonDomNode.getAttribute('data-preserved-text') || overlayTextValue;
-        buttonDomNode.disabled = false;
-      }
-    }
-
     function executeTextCopyToClipboardRawString(textStringPayload) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(textStringPayload)
-          .then(() => triggerToast('Đã sao chép liên kết thành công.'))
+          .then(() => triggerToast('Đã sao chép liên kết hồ sơ vào bộ nhớ tạm.'))
           .catch(() => fallbackExecutionTextCopyLegacy(textStringPayload));
       } else {
         fallbackExecutionTextCopyLegacy(textStringPayload);
@@ -1136,6 +1086,7 @@
       return String(unsafeStringValue || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
     }
 
+    // Escape dữ liệu attribute an toàn chống XSS độc hại
     function escapeAttributeData(unsafeAttrValue) { return escapeHtmlOutput(unsafeAttrValue); }
   </script>
 </body>
