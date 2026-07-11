@@ -293,6 +293,33 @@
     .btn-danger-p { background: #fef2f2; color: var(--danger); box-shadow: none; }
     .btn-danger-p:hover { background: #fee2e2; box-shadow: none; }
 
+    /* Premium Compact Output Results Matrix Component */
+    .p-share-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .p-share-row {
+      display: flex;
+      flex-direction: column;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      gap: 14px;
+      transition: var(--transition);
+    }
+    @media (min-width: 640px) {
+      .p-share-row { flex-direction: row; align-items: center; justify-content: space-between; gap: 24px; }
+    }
+    .p-share-row:hover { background: #fff; border-color: var(--primary); box-shadow: 0 4px 16px rgba(2, 132, 199, 0.04); }
+    .p-share-meta { flex: 1; min-width: 0; }
+    .p-share-label { font-size: 13px; font-weight: 700; color: var(--text-main); }
+    .p-share-url-preview { font-size: 12px; color: var(--text-muted); font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .p-share-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .btn-share-action { padding: 8px 16px; font-size: 13px; height: 38px; width: auto; }
+
     /* Premium Smart Table Data View */
     .table-container {
       overflow-x: auto;
@@ -501,22 +528,18 @@
       const brandElement = document.getElementById('navBrandClick');
 
       if (!caseIdToken) {
-        // Cấp quyền về Home cho Quản lý khi ở màn hình tổng
         if (brandElement) {
           brandElement.style.cursor = 'pointer';
           brandElement.onclick = goHome;
         }
         renderManagerDashboardWorkspace();
       } else {
-        // Nếu URL chứa token của Ca xe: Xử lý cô lập phân quyền hệ thống
         if (targetedViewArg !== 'result') {
-          // Bẻ gãy sự kiện click logo và khóa chuột đối với vai trò Gara
           if (brandElement) {
             brandElement.style.cursor = 'default';
             brandElement.onclick = null;
           }
         } else {
-          // Trả lại quyền xem cho Giám định viên nếu mở qua chế độ xem kết quả
           if (brandElement) {
             brandElement.style.cursor = 'pointer';
             brandElement.onclick = goHome;
@@ -564,7 +587,7 @@
           <section class="p-card">
             <div class="p-card-head">
               <h2>Khởi tạo hồ sơ mới</h2>
-              <p>Nhập thông tin mục tiêu phương tiện và tải lên danh sách dữ liệu ảnh gốc ban đầu.</p>
+              <p>Nhập thông tin mục tiện phương tiện và tải lên danh sách dữ liệu ảnh gốc ban đầu.</p>
             </div>
             
             <div class="form-group">
@@ -817,6 +840,7 @@
       return convertedJSONData.secure_url;
     }
 
+    /* ĐÃ SỬA: Rút gọn gọn gàng theo chiều ngang dạng Premium Matrix */
     function renderInlineCreationSuccessPanel(dataPayload) {
       const outputCardBox = document.getElementById('panelOutputResultAnchor');
       outputCardBox.style.display = 'block';
@@ -825,25 +849,34 @@
       const shareLinkView = `${getCleanOriginBaseUrl()}?idCa=${dataPayload.idCa}&view=result`;
 
       outputCardBox.innerHTML = `
-        <div class="p-card-head">
-          <h2 style="color:var(--success)">✓ Đồng bộ Hồ sơ Lên Đám mây Thành công</h2>
-          <p>Mã phiên định danh: <strong>${dataPayload.idCa}</strong></p>
+        <div class="p-card-head" style="margin-bottom:20px; padding-bottom:12px;">
+          <h2 style="color:var(--success); font-size:16px;">✨ Khởi tạo và đồng bộ hồ sơ thành công</h2>
+          <p style="font-size:12px; margin-top:2px;">Mã định danh hệ thống phương tiện: <strong style="color:var(--dark); font-family:monospace;">${dataPayload.idCa}</strong></p>
         </div>
 
-        <div class="form-group">
-          <label>Đường dẫn chia sẻ dành cho Đơn vị đối tác (Gara nhập liệu)</label>
-          <input id="lblLinkGarageOutput" class="input-premium text-link-area" readonly value="${shareLinkGara}" />
-          <div class="flex-actions-group">
-            <button class="btn-premium" onclick="executeTextCopyToClipboard('lblLinkGarageOutput')">Sao chép Link Gara</button>
+        <div class="p-share-container">
+          <!-- Row 1: Cổng Garage tác nghiệp -->
+          <div class="p-share-row">
+            <div class="p-share-meta">
+              <div class="p-share-label">🚘 Đường dẫn bàn giao đối tác (Garage điền hạng mục)</div>
+              <div class="p-share-url-preview">${escapeHtmlOutput(shareLinkGara)}</div>
+            </div>
+            <div class="p-share-actions">
+              <button class="btn-premium btn-share-action" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkGara)}')">📋 Sao chép Link</button>
+              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkGara)}', '_blank')">↗ Mở nhanh</button>
+            </div>
           </div>
-        </div>
 
-        <div class="form-group" style="margin-top:20px;">
-          <label>Đường dẫn giám sát kết quả/Đối chiếu nội bộ dành cho Giám định viên</label>
-          <input id="lblLinkReviewOutput" class="input-premium text-link-area" readonly value="${shareLinkView}" />
-          <div class="flex-actions-group">
-            <button class="btn-premium" style="background:var(--dark)" onclick="executeTextCopyToClipboard('lblLinkReviewOutput')">Sao chép Link Kết quả</button>
-            <button class="btn-premium btn-secondary" onclick="window.open('${shareLinkView}', '_blank')">Mở trang Đối chiếu</button>
+          <!-- Row 2: Cổng nội bộ Giám định viên -->
+          <div class="p-share-row">
+            <div class="p-share-meta">
+              <div class="p-share-label">📊 Đường dẫn giám sát kết quả (Giám định viên đối chiếu)</div>
+              <div class="p-share-url-preview">${escapeHtmlOutput(shareLinkView)}</div>
+            </div>
+            <div class="p-share-actions">
+              <button class="btn-premium btn-share-action" style="background:var(--dark);" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkView)}')">📋 Sao chép Link</button>
+              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkView)}', '_blank')">↗ Mở trang</button>
+            </div>
           </div>
         </div>
       `;
@@ -870,7 +903,6 @@
         const shouldForceReadOnlyResultView = currentViewFlag === 'result';
         const isCaseLockedByGarageSubmission = localActiveCaseNode.trangThai === STATUS_COMPLETED;
 
-        // Định tuyến giao diện kèm cờ kiểm soát nút Back Dashboard
         if (shouldForceReadOnlyResultView || isCaseLockedByGarageSubmission) {
           renderPortalResultReadOnlyView(shouldForceReadOnlyResultView ? 'result' : 'garage-locked');
         } else {
@@ -883,7 +915,6 @@
 
     function buildHtmlComponentSidebarCaseMetadata(viewContextMode) {
       const isReadOnlyMode = (viewContextMode === 'result' || viewContextMode === 'garage-locked');
-      // CHỈ cho phép hiển thị nút Quay lại Dashboard nếu viewContextMode là 'result' (Dành cho Quản lý/Giám định viên)
       const showBackButton = (viewContextMode === 'result');
       const node = localActiveCaseNode || {};
 
@@ -978,7 +1009,7 @@
         if (!proceedBlank) return;
       }
 
-      const finalFreezeConfirmation = await showConfirmModal('Đóng băng hồ sơ báo giá', 'Sau khi xác nhận gửi, toàn bộ biểu mẫu hạng mục sẽ bị khóa tự động để chuyển tiếp cho Giám định viên đối chiếu. Xác nhận hoàn tất tiến trình gửi?');
+      const finalFreezeConfirmation = await showConfirmModal('Đóng băng hồ sơ báo giá', 'Sau khi xác nhận gửi, toàn bộ biểu mẫu hạng mục sẽ bị khóa tự động để chuyển tiếp cho Giám định viên công ty bảo hiểm đối chiếu. Xác nhận hoàn tất tiến trình gửi?');
       if (!finalFreezeConfirmation) return;
 
       const packagedItemsPayload = DOMTextareaElements.map(tx => {
