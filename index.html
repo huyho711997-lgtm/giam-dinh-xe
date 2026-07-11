@@ -8,74 +8,201 @@
 
   <style>
     :root {
-      --bg: #f4f6f8;
-      --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --border: #e5e7eb;
+      --bg: #eef2f7;
+      --bg2: #f8fafc;
+      --card: rgba(255, 255, 255, 0.92);
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
       --primary: #0f766e;
-      --primary-dark: #0d5f59;
+      --primary2: #14b8a6;
+      --dark: #0f172a;
       --danger: #dc2626;
-      --success-bg: #ecfdf5;
-      --success-text: #047857;
-      --warning-bg: #fffbeb;
-      --warning-text: #92400e;
-      --radius: 14px;
+      --success: #059669;
+      --warning: #d97706;
+      --shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
+      --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 22px;
+      --radius-sm: 14px;
     }
 
     * {
       box-sizing: border-box;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(20, 184, 166, 0.18), transparent 32%),
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 30%),
+        linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+      min-height: 100vh;
       line-height: 1.5;
     }
 
-    .page {
-      max-width: 760px;
+    a {
+      color: inherit;
+    }
+
+    .app-shell {
+      max-width: 920px;
       margin: 0 auto;
-      padding: 16px;
+      padding: 18px 14px 120px;
     }
 
-    .header {
-      margin: 12px 0 18px;
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      padding: 24px 18px;
+      color: #fff;
+      background:
+        linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 118, 110, 0.95)),
+        url("data:image/svg+xml,%3Csvg width='160' height='160' viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='rgba(255,255,255,.18)' stroke-width='1'%3E%3Cpath d='M0 80h160M80 0v160M20 0v160M140 0v160M0 20h160M0 140h160'/%3E%3C/g%3E%3C/svg%3E");
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
     }
 
-    .header h1 {
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      right: -80px;
+      top: -70px;
+      border-radius: 999px;
+      background: rgba(20, 184, 166, 0.35);
+      filter: blur(4px);
+    }
+
+    .hero-top {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.2);
+      font-size: 23px;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.72);
+      margin-top: 1px;
+    }
+
+    .status-pill {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      color: #d1fae5;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(167, 243, 208, 0.28);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #34d399;
+      box-shadow: 0 0 0 5px rgba(52, 211, 153, 0.16);
+    }
+
+    .hero h1 {
+      position: relative;
+      z-index: 1;
+      margin: 22px 0 8px;
+      font-size: 28px;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      position: relative;
+      z-index: 1;
       margin: 0;
-      font-size: 22px;
-      line-height: 1.25;
+      color: rgba(255, 255, 255, 0.76);
+      font-size: 14px;
+      max-width: 620px;
     }
 
-    .header p {
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 14px;
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
     }
 
     .card {
       background: var(--card);
-      border: 1px solid var(--border);
+      border: 1px solid rgba(226, 232, 240, 0.85);
       border-radius: var(--radius);
       padding: 16px;
-      margin-bottom: 14px;
-      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.04);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(14px);
     }
 
-    .card h2 {
-      margin: 0 0 14px;
+    .section-title {
+      margin: 0 0 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .section-title h2 {
+      margin: 0;
       font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .section-title span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
     }
 
     label {
       display: block;
-      margin: 12px 0 6px;
-      font-weight: 700;
-      font-size: 14px;
+      margin: 14px 0 7px;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 800;
     }
 
     input[type="text"],
@@ -83,16 +210,27 @@
     textarea {
       width: 100%;
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
+      border-radius: 15px;
+      padding: 13px 14px;
       font-size: 16px;
+      color: var(--text);
       background: #fff;
+      outline: none;
+      transition: 0.18s ease;
     }
 
-    input[type="text"]:disabled,
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: rgba(20, 184, 166, 0.7);
+      box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.13);
+    }
+
+    input:disabled,
     textarea:disabled {
-      background: #f3f4f6;
-      color: #6b7280;
+      color: #475569;
+      background: #f8fafc;
+      -webkit-text-fill-color: #475569;
+      opacity: 1;
     }
 
     textarea {
@@ -100,164 +238,429 @@
       resize: vertical;
     }
 
-    .btn {
-      width: 100%;
-      border: 0;
-      border-radius: 10px;
-      padding: 13px 16px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      background: var(--primary);
-      color: #fff;
-      margin-top: 14px;
-    }
-
-    .btn:hover {
-      background: var(--primary-dark);
-    }
-
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .btn-secondary {
-      background: #111827;
-    }
-
-    .btn-secondary:hover {
-      background: #030712;
-    }
-
-    .muted {
+    .field-help {
+      margin-top: 7px;
       color: var(--muted);
-      font-size: 14px;
-    }
-
-    .progress {
-      margin-top: 12px;
-      font-size: 14px;
-      color: var(--primary);
-      font-weight: 700;
-    }
-
-    .notice {
-      padding: 12px;
-      border-radius: 10px;
-      margin-bottom: 14px;
-      font-size: 14px;
-    }
-
-    .notice.success {
-      background: var(--success-bg);
-      color: var(--success-text);
-    }
-
-    .notice.warning {
-      background: var(--warning-bg);
-      color: var(--warning-text);
-    }
-
-    .notice.error {
-      background: #fef2f2;
-      color: var(--danger);
-    }
-
-    .meta {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
-      font-size: 14px;
-    }
-
-    .meta div {
-      background: #f9fafb;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
-    }
-
-    .image-item {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      margin-bottom: 16px;
-      background: #fff;
-    }
-
-    .image-item img {
-      display: block;
-      width: 100%;
-      height: auto;
-      background: #f3f4f6;
-    }
-
-    .image-body {
-      padding: 12px;
-    }
-
-    .image-index {
-      display: inline-block;
-      margin-bottom: 8px;
-      padding: 4px 9px;
-      border-radius: 999px;
-      background: #eef2ff;
-      color: #3730a3;
       font-size: 13px;
-      font-weight: 700;
     }
 
-    .link-box {
+    .btn-row {
       display: flex;
       flex-direction: column;
       gap: 10px;
+      margin-top: 14px;
     }
 
-    .small {
-      font-size: 13px;
-    }
-
-    .center {
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-weight: 850;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      box-shadow: 0 12px 24px rgba(20, 184, 166, 0.25);
+      transition: transform 0.12s ease, opacity 0.12s ease;
+      text-decoration: none;
       text-align: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
     }
 
-    .hidden {
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-dark {
+      background: linear-gradient(135deg, #111827, #334155);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
+    }
+
+    .btn-light {
+      color: #0f172a;
+      background: #fff;
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #dc2626, #f97316);
+      box-shadow: 0 12px 24px rgba(220, 38, 38, 0.18);
+    }
+
+    .notice {
+      border-radius: 18px;
+      padding: 13px 14px;
+      font-size: 14px;
+      border: 1px solid transparent;
+      margin: 12px 0;
+    }
+
+    .notice.success {
+      color: #065f46;
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+    }
+
+    .notice.warning {
+      color: #92400e;
+      background: #fffbeb;
+      border-color: #fde68a;
+    }
+
+    .notice.error {
+      color: #991b1b;
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    .notice.info {
+      color: #075985;
+      background: #f0f9ff;
+      border-color: #bae6fd;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 12px 0 4px;
+    }
+
+    .meta-item {
+      padding: 12px;
+      border-radius: 16px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+    }
+
+    .meta-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .meta-value {
+      margin-top: 3px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 850;
+      word-break: break-word;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .preview-item {
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #f1f5f9;
+      aspect-ratio: 1 / 1;
+    }
+
+    .preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .progress-wrap {
+      margin-top: 14px;
       display: none;
     }
 
-    @media (min-width: 640px) {
-      .page {
-        padding: 24px;
+    .progress-wrap.show {
+      display: block;
+    }
+
+    .progress-text {
+      color: var(--primary);
+      font-weight: 850;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #ccfbf1;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 8%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--primary), var(--primary2));
+      transition: width .25s ease;
+    }
+
+    .case-toolbar {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .image-card {
+      overflow: hidden;
+      border-radius: 24px;
+      background: #fff;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      box-shadow: var(--shadow-soft);
+      margin-bottom: 16px;
+    }
+
+    .image-frame {
+      position: relative;
+      background: #0f172a;
+    }
+
+    .image-frame img {
+      width: 100%;
+      display: block;
+      height: auto;
+      max-height: 78vh;
+      object-fit: contain;
+      background: #0f172a;
+    }
+
+    .image-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      color: #fff;
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(10px);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .image-body {
+      padding: 15px;
+    }
+
+    .note-box {
+      margin-top: 10px;
+      padding: 14px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, #f8fafc, #ffffff);
+      border: 1px solid var(--border);
+    }
+
+    .note-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .note-content {
+      margin-top: 7px;
+      font-size: 17px;
+      font-weight: 850;
+      color: var(--text);
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .empty-note {
+      color: #94a3b8;
+      font-style: italic;
+      font-weight: 600;
+    }
+
+    .image-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .copy-area {
+      min-height: 118px;
+      font-size: 14px;
+      background: #f8fafc;
+    }
+
+    .sticky-submit {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 50;
+      padding: 12px 14px 16px;
+      background: rgba(248, 250, 252, 0.88);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(226, 232, 240, 0.9);
+      box-shadow: 0 -16px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    .sticky-inner {
+      max-width: 920px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .loading {
+      min-height: 240px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 38px;
+      height: 38px;
+      border: 4px solid #ccfbf1;
+      border-top-color: var(--primary);
+      border-radius: 999px;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 14px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .print-only {
+      display: none;
+    }
+
+    @media (min-width: 720px) {
+      .app-shell {
+        padding: 26px 20px 120px;
       }
 
-      .header h1 {
-        font-size: 26px;
+      .hero {
+        padding: 30px;
       }
 
-      .meta {
+      .hero h1 {
+        font-size: 38px;
+      }
+
+      .grid.two {
+        grid-template-columns: 1.05fr 0.95fr;
+      }
+
+      .card {
+        padding: 20px;
+      }
+
+      .btn-row,
+      .case-toolbar,
+      .image-actions,
+      .sticky-inner {
         grid-template-columns: repeat(2, 1fr);
       }
 
-      .btn {
-        width: auto;
-        min-width: 180px;
+      .preview-grid {
+        grid-template-columns: repeat(4, 1fr);
       }
 
-      .btn.full {
-        width: 100%;
+      .meta-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .hero,
+      .case-toolbar,
+      .sticky-submit,
+      .image-actions,
+      .btn,
+      input,
+      textarea {
+        display: none !important;
+      }
+
+      .app-shell {
+        max-width: none;
+        padding: 0;
+      }
+
+      .card,
+      .image-card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        break-inside: avoid;
+      }
+
+      .print-only {
+        display: block;
+      }
+
+      .image-frame img {
+        max-height: none;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="page">
-    <header class="header">
-      <h1>Đối chiếu ảnh giám định xe</h1>
-      <p>Upload ảnh tổn thất và gửi link cho Garage điền hạng mục báo giá.</p>
-    </header>
+  <div class="app-shell">
+    <section class="hero">
+      <div class="hero-top">
+        <div class="brand">
+          <div class="logo">🚘</div>
+          <div>
+            <div class="brand-title">Garage Claim Review</div>
+            <div class="brand-subtitle">Đối chiếu ảnh giám định & báo giá</div>
+          </div>
+        </div>
+
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          Online
+        </div>
+      </div>
+
+      <h1>Đối chiếu ảnh tổn thất xe cơ giới</h1>
+      <p>
+        Tạo ca giám định, gửi link cho Garage nhập hạng mục báo giá,
+        sau đó xem lại toàn bộ ảnh và ghi chú ngay trên web.
+      </p>
+    </section>
 
     <main id="app"></main>
   </div>
@@ -267,19 +670,22 @@
      * CẤU HÌNH BẮT BUỘC
      ****************************************************/
     const CONFIG = {
-      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxjvUTolYObrw6FVCJupbWDqqBxCnkFjEJTikZmKPmAcC1Lla62Mgfyfnq7D7pkV2elKA/exec',
-      CLOUDINARY_CLOUD_NAME: 'ug4spdjp',
-      CLOUDINARY_UPLOAD_PRESET: 'giam_dinh_xe_unsigned',
+      APPS_SCRIPT_URL: 'PASTE_APPS_SCRIPT_WEB_APP_URL_HERE',
 
-      // Có thể để rỗng nếu bạn đã cấu hình folder trong Upload Preset.
-      CLOUDINARY_FOLDER: 'giam_dinh_xe'
+      CLOUDINARY_CLOUD_NAME: 'PASTE_CLOUDINARY_CLOUD_NAME_HERE',
+
+      CLOUDINARY_UPLOAD_PRESET: 'PASTE_UNSIGNED_UPLOAD_PRESET_HERE',
+
+      // Khuyên để rỗng nếu đã cấu hình folder trong Cloudinary Upload Preset.
+      CLOUDINARY_FOLDER: ''
     };
 
     const STATUS_DA_DIEN = 'Đã điền';
 
-    let currentGarageImages = [];
-
     const app = document.getElementById('app');
+
+    let currentCase = null;
+    let currentImages = [];
 
     document.addEventListener('DOMContentLoaded', init);
 
@@ -293,55 +699,117 @@
       const idCa = params.get('idCa');
 
       if (idCa) {
-        await renderGarageView(idCa);
+        await loadCase(idCa);
       } else {
         renderOwnerView();
       }
     }
 
     /****************************************************
-     * GIAO DIỆN NGƯỜI TẠO CA
+     * MÀN HÌNH TẠO CA
      ****************************************************/
     function renderOwnerView() {
       app.innerHTML = `
-        <section class="card">
-          <h2>Tạo ca giám định mới</h2>
+        <div class="grid two">
+          <section class="card">
+            <div class="section-title">
+              <h2>Tạo ca mới</h2>
+              <span>Bước 1/2</span>
+            </div>
 
-          <label for="bienSo">Biển số xe</label>
-          <input id="bienSo" type="text" placeholder="VD: 51A-123.45" autocomplete="off" />
+            <label for="bienSo">Biển số xe</label>
+            <input id="bienSo" type="text" placeholder="VD: 51A-123.45" autocomplete="off" />
 
-          <label for="tenGara">Tên Garage</label>
-          <input id="tenGara" type="text" placeholder="VD: Garage Minh Phát" autocomplete="off" />
+            <label for="tenGara">Tên Garage</label>
+            <input id="tenGara" type="text" placeholder="VD: Garage Minh Phát" autocomplete="off" />
 
-          <label for="images">Chọn ảnh tổn thất</label>
-          <input id="images" type="file" accept="image/*" multiple />
+            <label for="images">Ảnh tổn thất</label>
+            <input id="images" type="file" accept="image/*" multiple />
 
-          <p id="fileInfo" class="muted small">Chưa chọn ảnh.</p>
+            <div id="fileInfo" class="field-help">
+              Chọn nhiều ảnh cùng lúc. Nên chọn ảnh rõ nét, đủ sáng.
+            </div>
 
-          <button id="createBtn" class="btn full" type="button">
-            Tạo ca
-          </button>
+            <div id="previewGrid" class="preview-grid"></div>
 
-          <div id="progress" class="progress hidden"></div>
-        </section>
+            <div class="progress-wrap" id="progressWrap">
+              <div class="progress-text" id="progressText"></div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+            </div>
 
-        <section id="resultBox" class="card hidden"></section>
+            <div class="btn-row">
+              <button id="createBtn" class="btn" type="button">
+                Tạo ca & upload ảnh
+              </button>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="section-title">
+              <h2>Quy trình</h2>
+              <span>Mobile ready</span>
+            </div>
+
+            <div class="notice info">
+              1. Bạn tạo ca và upload ảnh tổn thất.
+              <br>
+              2. Hệ thống sinh link gửi Garage.
+              <br>
+              3. Garage mở link, nhập hạng mục báo giá.
+              <br>
+              4. Bạn mở lại link để xem ảnh + ghi chú.
+            </div>
+
+            <div class="notice warning">
+              Lưu ý: sau khi Garage bấm xác nhận, form sẽ khóa để tránh chỉnh sửa nhầm.
+            </div>
+          </section>
+        </div>
+
+        <section id="resultBox" class="card" style="display:none;"></section>
       `;
 
-      document.getElementById('images').addEventListener('change', handleFileChange);
+      document.getElementById('images').addEventListener('change', handleFilePreview);
       document.getElementById('createBtn').addEventListener('click', createCaseFlow);
     }
 
-    function handleFileChange() {
-      const files = Array.from(document.getElementById('images').files || []);
+    function handleFilePreview() {
+      const input = document.getElementById('images');
+      const files = Array.from(input.files || []);
       const fileInfo = document.getElementById('fileInfo');
+      const previewGrid = document.getElementById('previewGrid');
+
+      previewGrid.innerHTML = '';
 
       if (files.length === 0) {
-        fileInfo.textContent = 'Chưa chọn ảnh.';
+        fileInfo.textContent = 'Chọn nhiều ảnh cùng lúc. Nên chọn ảnh rõ nét, đủ sáng.';
         return;
       }
 
       fileInfo.textContent = `Đã chọn ${files.length} ảnh.`;
+
+      files.slice(0, 12).forEach(file => {
+        const url = URL.createObjectURL(file);
+
+        const div = document.createElement('div');
+        div.className = 'preview-item';
+        div.innerHTML = `<img src="${url}" alt="Ảnh xem trước">`;
+
+        previewGrid.appendChild(div);
+      });
+
+      if (files.length > 12) {
+        const div = document.createElement('div');
+        div.className = 'preview-item';
+        div.style.display = 'grid';
+        div.style.placeItems = 'center';
+        div.style.color = '#64748b';
+        div.style.fontWeight = '800';
+        div.textContent = `+${files.length - 12}`;
+        previewGrid.appendChild(div);
+      }
     }
 
     async function createCaseFlow() {
@@ -366,88 +834,96 @@
       }
 
       try {
-        setButtonBusy(createBtn, true, 'Đang tạo ca...');
-        setProgress(`Bắt đầu upload ${files.length} ảnh...`);
+        setButtonBusy(createBtn, true, 'Đang xử lý...');
+        setProgress(`Chuẩn bị upload ${files.length} ảnh...`, 5);
 
         const imageLinks = await uploadImagesToCloudinary(files);
 
-        setProgress('Đã upload ảnh. Đang lưu dữ liệu vào Google Sheets...');
+        setProgress('Đã upload ảnh. Đang lưu vào Google Sheets...', 88);
 
-        const apiResult = await apiPost('createCase', {
+        const result = await apiPost('createCase', {
           bienSo,
           tenGara,
           imageLinks
         });
 
-        if (!apiResult.ok) {
-          throw new Error(apiResult.message || 'Tạo ca thất bại.');
+        if (!result.ok) {
+          throw new Error(result.message || 'Tạo ca thất bại.');
         }
 
-        const shareLink = `${getCurrentPageBaseUrl()}?idCa=${encodeURIComponent(apiResult.idCa)}`;
+        setProgress('Hoàn tất.', 100);
 
-        renderCreateSuccess(apiResult, shareLink);
-        setProgress('');
+        const shareLink = `${getCurrentPageBaseUrl()}?idCa=${encodeURIComponent(result.idCa)}`;
+
+        renderCreateSuccess(result, shareLink);
 
       } catch (err) {
         console.error(err);
         alert(err.message || 'Có lỗi xảy ra khi tạo ca.');
-        setProgress('');
+        setProgress('', 0);
       } finally {
-        setButtonBusy(createBtn, false, 'Tạo ca');
+        setButtonBusy(createBtn, false, 'Tạo ca & upload ảnh');
       }
     }
 
-    function renderCreateSuccess(apiResult, shareLink) {
+    function renderCreateSuccess(result, shareLink) {
       const resultBox = document.getElementById('resultBox');
-      resultBox.classList.remove('hidden');
+      resultBox.style.display = 'block';
 
       resultBox.innerHTML = `
-        <div class="notice success">
-          Tạo ca thành công. Bạn copy link dưới đây gửi cho Garage qua Zalo.
+        <div class="section-title">
+          <h2>Đã tạo ca thành công</h2>
+          <span>Bước 2/2</span>
         </div>
 
-        <div class="meta">
-          <div><strong>ID ca:</strong><br>${escapeHtml(apiResult.idCa)}</div>
-          <div><strong>Số ảnh:</strong><br>${escapeHtml(String(apiResult.soLuongAnh))}</div>
-          <div><strong>Biển số:</strong><br>${escapeHtml(apiResult.bienSo)}</div>
-          <div><strong>Garage:</strong><br>${escapeHtml(apiResult.tenGara)}</div>
+        <div class="notice success">
+          Copy link bên dưới gửi cho Garage qua Zalo. Sau khi Garage gửi lại, mở chính link này để xem kết quả ảnh + hạng mục.
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-item">
+            <div class="meta-label">ID ca</div>
+            <div class="meta-value">${escapeHtml(result.idCa)}</div>
+          </div>
+
+          <div class="meta-item">
+            <div class="meta-label">Biển số</div>
+            <div class="meta-value">${escapeHtml(result.bienSo)}</div>
+          </div>
+
+          <div class="meta-item">
+            <div class="meta-label">Garage</div>
+            <div class="meta-value">${escapeHtml(result.tenGara)}</div>
+          </div>
+
+          <div class="meta-item">
+            <div class="meta-label">Số ảnh</div>
+            <div class="meta-value">${escapeHtml(String(result.soLuongAnh))}</div>
+          </div>
         </div>
 
         <label for="shareLink">Link gửi Garage</label>
-        <div class="link-box">
-          <textarea id="shareLink" readonly>${escapeHtml(shareLink)}</textarea>
-          <button id="copyBtn" class="btn btn-secondary full" type="button">
+        <textarea id="shareLink" class="copy-area" readonly>${escapeHtml(shareLink)}</textarea>
+
+        <div class="case-toolbar">
+          <button class="btn" type="button" onclick="copyTextById('shareLink')">
             Copy link
           </button>
+
+          <a class="btn btn-dark" href="${escapeAttr(shareLink)}" target="_blank" rel="noopener">
+            Mở trang Garage
+          </a>
         </div>
       `;
 
-      document.getElementById('copyBtn').addEventListener('click', copyShareLink);
-    }
-
-    async function copyShareLink() {
-      const textarea = document.getElementById('shareLink');
-      const link = textarea.value;
-
-      try {
-        await navigator.clipboard.writeText(link);
-        alert('Đã copy link.');
-      } catch (err) {
-        textarea.select();
-        document.execCommand('copy');
-        alert('Đã copy link.');
-      }
+      resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     /****************************************************
-     * GIAO DIỆN GARAGE
+     * TẢI VÀ HIỂN THỊ CA
      ****************************************************/
-    async function renderGarageView(idCa) {
-      app.innerHTML = `
-        <section class="card center">
-          <p class="progress">Đang tải dữ liệu ca giám định...</p>
-        </section>
-      `;
+    async function loadCase(idCa) {
+      renderLoading('Đang tải dữ liệu ca giám định...');
 
       try {
         const result = await apiGet({
@@ -459,95 +935,216 @@
           throw new Error(result.message || 'Không lấy được dữ liệu ca.');
         }
 
-        renderGarageForm(result);
+        currentCase = result.ca;
+        currentImages = Array.isArray(result.hinhAnh) ? result.hinhAnh : [];
+
+        const locked = Boolean(result.locked || currentCase.trangThai === STATUS_DA_DIEN);
+
+        if (locked) {
+          renderResultView();
+        } else {
+          renderGarageInputView();
+        }
 
       } catch (err) {
         console.error(err);
-        renderError(err.message || 'Có lỗi xảy ra khi tải dữ liệu.');
+        renderError(err.message || 'Có lỗi khi tải dữ liệu.');
       }
     }
 
-    function renderGarageForm(data) {
-      const ca = data.ca;
-      const images = Array.isArray(data.hinhAnh) ? data.hinhAnh : [];
-      const locked = Boolean(data.locked || ca.trangThai === STATUS_DA_DIEN);
+    function renderCaseHeader(mode) {
+      const ca = currentCase || {};
 
-      currentGarageImages = images;
+      const isResult = mode === 'result';
 
-      const imageHtml = images.map((item, index) => {
-        return `
-          <div class="image-item">
-            <img src="${escapeAttr(item.linkAnh)}" alt="Ảnh tổn thất ${index + 1}" loading="lazy" />
+      return `
+        <section class="card">
+          <div class="section-title">
+            <h2>${isResult ? 'Kết quả Garage đã đối chiếu' : 'Garage nhập hạng mục báo giá'}</h2>
+            <span>${isResult ? 'Đã khóa' : 'Chờ gửi'}</span>
+          </div>
 
-            <div class="image-body">
-              <span class="image-index">Ảnh ${index + 1}</span>
+          <div class="meta-grid">
+            <div class="meta-item">
+              <div class="meta-label">ID ca</div>
+              <div class="meta-value">${escapeHtml(ca.idCa || '')}</div>
+            </div>
 
-              <label>Hạng mục báo giá Garage</label>
-              <input
-                class="quoteInput"
-                data-index="${index}"
-                type="text"
-                placeholder="VD: Thay cản trước / Sơn cửa trước trái"
-                value="${escapeAttr(item.hangMucBaoGia || '')}"
-                ${locked ? 'disabled' : ''}
-              />
+            <div class="meta-item">
+              <div class="meta-label">Biển số</div>
+              <div class="meta-value">${escapeHtml(ca.bienSo || '')}</div>
+            </div>
+
+            <div class="meta-item">
+              <div class="meta-label">Garage</div>
+              <div class="meta-value">${escapeHtml(ca.tenGara || '')}</div>
+            </div>
+
+            <div class="meta-item">
+              <div class="meta-label">Trạng thái</div>
+              <div class="meta-value">${escapeHtml(ca.trangThai || '')}</div>
             </div>
           </div>
+
+          ${
+            isResult
+              ? `
+                <div class="notice success">
+                  Garage đã gửi hạng mục. Bạn có thể xem lại ảnh và note ngay bên dưới.
+                </div>
+
+                <div class="case-toolbar">
+                  <button class="btn" type="button" onclick="copyResultText()">
+                    Copy kết quả
+                  </button>
+
+                  <button class="btn btn-light" type="button" onclick="window.print()">
+                    In / lưu PDF
+                  </button>
+                </div>
+              `
+              : `
+                <div class="notice warning">
+                  Vui lòng xem từng ảnh, nhập đúng tên hạng mục theo báo giá Garage, sau đó bấm xác nhận gửi.
+                </div>
+              `
+          }
+        </section>
+      `;
+    }
+
+    function renderGarageInputView() {
+      if (!currentImages.length) {
+        renderError('Ca này chưa có ảnh.');
+        return;
+      }
+
+      const imageHtml = currentImages.map((item, index) => {
+        return `
+          <article class="image-card">
+            <div class="image-frame">
+              <img src="${escapeAttr(item.linkAnh)}" alt="Ảnh tổn thất ${index + 1}" loading="lazy">
+              <div class="image-badge">Ảnh ${index + 1}</div>
+            </div>
+
+            <div class="image-body">
+              <label for="quote_${index}">Hạng mục báo giá của Garage</label>
+              <textarea
+                id="quote_${index}"
+                class="quote-input"
+                data-index="${index}"
+                placeholder="VD: Thay cản trước / Sơn cửa trước trái / Thay đèn pha phải"
+              >${escapeHtml(item.hangMucBaoGia || '')}</textarea>
+
+              <div class="image-actions">
+                <a class="btn btn-light" href="${escapeAttr(item.linkAnh)}" target="_blank" rel="noopener">
+                  Mở ảnh gốc
+                </a>
+              </div>
+            </div>
+          </article>
         `;
       }).join('');
 
       app.innerHTML = `
-        <section class="card">
-          <h2>Garage điền hạng mục báo giá</h2>
-
-          <div class="meta">
-            <div><strong>ID ca:</strong><br>${escapeHtml(ca.idCa)}</div>
-            <div><strong>Trạng thái:</strong><br>${escapeHtml(ca.trangThai)}</div>
-            <div><strong>Biển số:</strong><br>${escapeHtml(ca.bienSo)}</div>
-            <div><strong>Garage:</strong><br>${escapeHtml(ca.tenGara)}</div>
-          </div>
-
-          ${
-            locked
-              ? `<div class="notice success">Ca này đã được gửi. Form đã khóa để tránh chỉnh sửa nhầm.</div>`
-              : `<div class="notice warning">Vui lòng xem từng ảnh và nhập đúng tên hạng mục theo báo giá của Garage.</div>`
-          }
-        </section>
+        ${renderCaseHeader('input')}
 
         <section>
-          ${
-            images.length > 0
-              ? imageHtml
-              : `<div class="card notice error">Ca này chưa có ảnh.</div>`
-          }
+          ${imageHtml}
         </section>
 
-        ${
-          !locked && images.length > 0
-            ? `
-              <section id="garageActions" class="card">
-                <button id="submitGarageBtn" class="btn full" type="button">
-                  Xác nhận gửi
-                </button>
-                <p class="muted small">
-                  Sau khi gửi, form sẽ bị khóa và không thể gửi lại.
-                </p>
-              </section>
-            `
-            : ''
-        }
+        <div class="sticky-submit">
+          <div class="sticky-inner">
+            <button id="submitGarageBtn" class="btn" type="button">
+              Xác nhận gửi
+            </button>
+
+            <button class="btn btn-light" type="button" onclick="scrollToTop()">
+              Lên đầu trang
+            </button>
+          </div>
+        </div>
       `;
 
-      if (!locked && images.length > 0) {
-        document.getElementById('submitGarageBtn').addEventListener('click', function () {
-          submitGarageItems(ca.idCa);
-        });
-      }
+      document.getElementById('submitGarageBtn').addEventListener('click', submitGarageItems);
     }
 
-    async function submitGarageItems(idCa) {
+    function renderResultView() {
+      if (!currentImages.length) {
+        renderError('Ca này chưa có ảnh.');
+        return;
+      }
+
+      const imageHtml = currentImages.map((item, index) => {
+        const note = String(item.hangMucBaoGia || '').trim();
+
+        return `
+          <article class="image-card">
+            <div class="image-frame">
+              <img src="${escapeAttr(item.linkAnh)}" alt="Ảnh tổn thất ${index + 1}" loading="lazy">
+              <div class="image-badge">Ảnh ${index + 1}</div>
+            </div>
+
+            <div class="image-body">
+              <div class="note-box">
+                <div class="note-label">
+                  <span>Hạng mục Garage đã nhập</span>
+                  <span>#${index + 1}</span>
+                </div>
+
+                <div class="note-content ${note ? '' : 'empty-note'}">
+                  ${note ? escapeHtml(note) : 'Garage chưa nhập hạng mục cho ảnh này'}
+                </div>
+              </div>
+
+              <div class="image-actions">
+                <a class="btn btn-light" href="${escapeAttr(item.linkAnh)}" target="_blank" rel="noopener">
+                  Mở ảnh gốc
+                </a>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      app.innerHTML = `
+        <div class="print-only">
+          <h2>Kết quả đối chiếu ảnh giám định</h2>
+          <p>ID ca: ${escapeHtml(currentCase.idCa || '')}</p>
+          <p>Biển số: ${escapeHtml(currentCase.bienSo || '')}</p>
+          <p>Garage: ${escapeHtml(currentCase.tenGara || '')}</p>
+        </div>
+
+        ${renderCaseHeader('result')}
+
+        <section>
+          ${imageHtml}
+        </section>
+
+        <section class="card">
+          <div class="section-title">
+            <h2>Bảng kết quả nhanh</h2>
+            <span>${currentImages.length} ảnh</span>
+          </div>
+
+          <textarea id="resultText" class="copy-area" readonly>${escapeHtml(buildResultText())}</textarea>
+
+          <div class="case-toolbar">
+            <button class="btn" type="button" onclick="copyTextById('resultText')">
+              Copy bảng này
+            </button>
+
+            <button class="btn btn-light" type="button" onclick="scrollToTop()">
+              Lên đầu trang
+            </button>
+          </div>
+        </section>
+      `;
+    }
+
+    async function submitGarageItems() {
       const submitBtn = document.getElementById('submitGarageBtn');
-      const inputs = Array.from(document.querySelectorAll('.quoteInput'));
+      const inputs = Array.from(document.querySelectorAll('.quote-input'));
 
       const blankCount = inputs.filter(input => !input.value.trim()).length;
 
@@ -556,12 +1153,12 @@
         if (!ok) return;
       }
 
-      const confirmSend = confirm('Sau khi gửi, form sẽ bị khóa. Xác nhận gửi?');
-      if (!confirmSend) return;
+      const okSend = confirm('Sau khi gửi, form sẽ khóa và không thể chỉnh sửa. Xác nhận gửi?');
+      if (!okSend) return;
 
       const items = inputs.map(input => {
         const index = Number(input.dataset.index);
-        const img = currentGarageImages[index];
+        const img = currentImages[index];
 
         return {
           linkAnh: img.linkAnh,
@@ -573,7 +1170,7 @@
         setButtonBusy(submitBtn, true, 'Đang gửi...');
 
         const result = await apiPost('submitQuoteItems', {
-          idCa,
+          idCa: currentCase.idCa,
           items
         });
 
@@ -581,16 +1178,9 @@
           throw new Error(result.message || 'Gửi dữ liệu thất bại.');
         }
 
-        inputs.forEach(input => {
-          input.disabled = true;
-        });
+        alert('Đã gửi thành công. Hệ thống sẽ chuyển sang màn hình xem kết quả.');
 
-        const actions = document.getElementById('garageActions');
-        actions.innerHTML = `
-          <div class="notice success">
-            Đã gửi thành công. Form đã được khóa.
-          </div>
-        `;
+        await loadCase(currentCase.idCa);
 
       } catch (err) {
         console.error(err);
@@ -600,13 +1190,15 @@
     }
 
     /****************************************************
-     * CLOUDINARY UPLOAD
+     * CLOUDINARY
      ****************************************************/
     async function uploadImagesToCloudinary(files) {
       const links = [];
 
       for (let i = 0; i < files.length; i++) {
-        setProgress(`Đang upload ảnh ${i + 1}/${files.length}...`);
+        const percent = Math.round(((i + 1) / files.length) * 82);
+
+        setProgress(`Đang upload ảnh ${i + 1}/${files.length}...`, percent);
 
         const link = await uploadOneImageToCloudinary(files[i]);
         links.push(link);
@@ -670,12 +1262,6 @@
         ...payload
       };
 
-      /*
-       * Quan trọng:
-       * Không set header Content-Type: application/json.
-       * Làm vậy để tránh CORS preflight khi gọi Apps Script từ GitHub Pages.
-       * Apps Script vẫn đọc được JSON qua e.postData.contents.
-       */
       const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
         method: 'POST',
         body: JSON.stringify(body)
@@ -690,25 +1276,142 @@
       try {
         return JSON.parse(text);
       } catch (err) {
+        console.error('Response không phải JSON:', text);
         throw new Error('Server không trả về JSON hợp lệ.');
       }
     }
 
     /****************************************************
-     * TIỆN ÍCH GIAO DIỆN
+     * COPY / KẾT QUẢ
      ****************************************************/
-    function setProgress(message) {
-      const progress = document.getElementById('progress');
+    function buildResultText() {
+      const ca = currentCase || {};
+      const lines = [];
 
-      if (!progress) return;
+      lines.push('KẾT QUẢ ĐỐI CHIẾU ẢNH GIÁM ĐỊNH');
+      lines.push('--------------------------------');
+      lines.push(`ID ca: ${ca.idCa || ''}`);
+      lines.push(`Biển số: ${ca.bienSo || ''}`);
+      lines.push(`Garage: ${ca.tenGara || ''}`);
+      lines.push(`Trạng thái: ${ca.trangThai || ''}`);
+      lines.push('');
+
+      currentImages.forEach((item, index) => {
+        lines.push(`Ảnh ${index + 1}:`);
+        lines.push(`Hạng mục: ${item.hangMucBaoGia || 'Chưa nhập'}`);
+        lines.push(`Link ảnh: ${item.linkAnh || ''}`);
+        lines.push('');
+      });
+
+      return lines.join('\n');
+    }
+
+    function copyResultText() {
+      const text = buildResultText();
+
+      navigator.clipboard.writeText(text)
+        .then(() => alert('Đã copy kết quả.'))
+        .catch(() => fallbackCopy(text));
+    }
+
+    function copyTextById(id) {
+      const el = document.getElementById(id);
+
+      if (!el) return;
+
+      const text = el.value || el.textContent || '';
+
+      navigator.clipboard.writeText(text)
+        .then(() => alert('Đã copy.'))
+        .catch(() => fallbackCopy(text));
+    }
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      try {
+        document.execCommand('copy');
+        alert('Đã copy.');
+      } catch (err) {
+        alert('Không copy tự động được. Bạn hãy copy thủ công.');
+      }
+
+      document.body.removeChild(textarea);
+    }
+
+    /****************************************************
+     * TIỆN ÍCH UI
+     ****************************************************/
+    function renderLoading(message) {
+      app.innerHTML = `
+        <section class="card loading">
+          <div>
+            <div class="spinner"></div>
+            <strong>${escapeHtml(message)}</strong>
+            <div class="field-help">Vui lòng kiểm tra kết nối mạng nếu tải quá lâu.</div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderError(message) {
+      app.innerHTML = `
+        <section class="card">
+          <div class="section-title">
+            <h2>Không thể xử lý</h2>
+            <span>Lỗi</span>
+          </div>
+
+          <div class="notice error">
+            ${escapeHtml(message)}
+          </div>
+
+          <button class="btn btn-light" type="button" onclick="window.location.reload()">
+            Tải lại trang
+          </button>
+        </section>
+      `;
+    }
+
+    function renderConfigError() {
+      app.innerHTML = `
+        <section class="card">
+          <div class="section-title">
+            <h2>Chưa cấu hình ứng dụng</h2>
+            <span>Config</span>
+          </div>
+
+          <div class="notice error">
+            Bạn cần thay APPS_SCRIPT_URL, CLOUDINARY_CLOUD_NAME và CLOUDINARY_UPLOAD_PRESET trong file index.html.
+          </div>
+        </section>
+      `;
+    }
+
+    function setProgress(message, percent) {
+      const wrap = document.getElementById('progressWrap');
+      const text = document.getElementById('progressText');
+      const fill = document.getElementById('progressFill');
+
+      if (!wrap || !text || !fill) return;
 
       if (!message) {
-        progress.classList.add('hidden');
-        progress.textContent = '';
-      } else {
-        progress.classList.remove('hidden');
-        progress.textContent = message;
+        wrap.classList.remove('show');
+        text.textContent = '';
+        fill.style.width = '0%';
+        return;
       }
+
+      wrap.classList.add('show');
+      text.textContent = message;
+      fill.style.width = `${Math.max(0, Math.min(100, percent || 8))}%`;
     }
 
     function setButtonBusy(button, isBusy, busyText) {
@@ -724,26 +1427,16 @@
       }
     }
 
-    function renderError(message) {
-      app.innerHTML = `
-        <section class="card">
-          <div class="notice error">
-            ${escapeHtml(message)}
-          </div>
-        </section>
-      `;
+    function scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
     }
 
-    function renderConfigError() {
-      app.innerHTML = `
-        <section class="card">
-          <h2>Chưa cấu hình ứng dụng</h2>
-
-          <div class="notice error">
-            Bạn cần thay APPS_SCRIPT_URL, CLOUDINARY_CLOUD_NAME và CLOUDINARY_UPLOAD_PRESET trong file index.html.
-          </div>
-        </section>
-      `;
+    function getCurrentPageBaseUrl() {
+      const withoutQuery = window.location.href.split('?')[0].split('#')[0];
+      return withoutQuery.replace(/index\.html$/i, '');
     }
 
     function isConfigValid() {
@@ -755,11 +1448,6 @@
         CONFIG.CLOUDINARY_UPLOAD_PRESET &&
         !CONFIG.CLOUDINARY_UPLOAD_PRESET.includes('PASTE_')
       );
-    }
-
-    function getCurrentPageBaseUrl() {
-      const withoutQuery = window.location.href.split('?')[0].split('#')[0];
-      return withoutQuery.replace(/index\.html$/i, '');
     }
 
     function escapeHtml(value) {
