@@ -56,6 +56,23 @@
       line-height: 1.5;
     }
 
+    /* Hệ thống quản lý kích thước SVG dùng chung */
+    .svg-icon {
+      width: 1.25rem;
+      height: 1.25rem;
+      display: inline-block;
+      vertical-align: middle;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+    
+    .svg-icon-lg { width: 2.25rem; height: 2.25rem; }
+    .svg-icon-sm { width: 1rem; height: 1rem; }
+
     /* Premium Notification System (Toast) */
     .toast-container {
       position: fixed;
@@ -150,7 +167,7 @@
       border-radius: var(--radius-md);
       display: grid;
       place-items: center;
-      font-size: 22px;
+      color: var(--primary);
     }
 
     .nav-titles h1 { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
@@ -177,7 +194,7 @@
 
     .stat-info .stat-val { font-size: 28px; font-weight: 800; line-height: 1.2; margin-top: 4px; }
     .stat-info .stat-lbl { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .stat-icon-wrap { width: 48px; height: 48px; border-radius: var(--radius-md); display: grid; place-items: center; font-size: 20px; background: #f1f5f9; }
+    .stat-icon-wrap { width: 48px; height: 48px; border-radius: var(--radius-md); display: grid; place-items: center; background: #f1f5f9; }
 
     /* Main Grid Split Workspace */
     .workspace-grid {
@@ -240,10 +257,13 @@
       background: #f8fafc;
       cursor: pointer;
       transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
     }
 
-    .dropzone:hover { border-color: var(--primary); background: rgba(2, 132, 199, 0.02); }
-    .dropzone icon { font-size: 32px; display: block; margin-bottom: 10px; }
+    .dropzone:hover { border-color: var(--primary); background: rgba(2, 132, 199, 0.02); color: var(--primary); }
     .dropzone p { font-size: 13px; color: var(--text-muted); font-weight: 500; }
 
     .preview-grid-premium {
@@ -315,10 +335,10 @@
     }
     .p-share-row:hover { background: #fff; border-color: var(--primary); box-shadow: 0 4px 16px rgba(2, 132, 199, 0.04); }
     .p-share-meta { flex: 1; min-width: 0; }
-    .p-share-label { font-size: 13px; font-weight: 700; color: var(--text-main); }
+    .p-share-label { font-size: 13px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px; }
     .p-share-url-preview { font-size: 12px; color: var(--text-muted); font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
     .p-share-actions { display: flex; gap: 8px; flex-shrink: 0; }
-    .btn-share-action { padding: 8px 16px; font-size: 13px; height: 38px; width: auto; }
+    .btn-share-action { padding: 8px 16px; font-size: 13px; height: 38px; width: auto; gap: 6px; }
 
     /* Premium Smart Table Data View */
     .table-container {
@@ -431,10 +451,13 @@
   </div>
 
   <div class="app-container">
-    <!-- Header App Bar Space (Chặn điều hướng cứng ở tầng thẻ) -->
+    <!-- Header App Bar Space -->
     <nav class="premium-nav">
       <div class="nav-brand" id="navBrandClick">
-        <div class="nav-logo">🛡️</div>
+        <div class="nav-logo">
+          <!-- Shield SVG Icon -->
+          <svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
         <div class="nav-titles">
           <h1>Workspace Core Systems</h1>
           <p>Hệ thống Giám định & Giải quyết Tổn thất Cơ giới Realtime</p>
@@ -475,12 +498,24 @@
     const STATUS_PENDING = 'Chờ điền';
     const STATUS_COMPLETED = 'Đã điền';
 
+    // Thư viện nhúng SVG để tái sử dụng trong JS Template String gọn gàng hơn
+    const SVGS = {
+      FOLDER: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
+      CLOCK: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+      CHECK_CIRCLE: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
+      CAMERA: `<svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
+      ARROW_LEFT: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
+      EXTERNAL: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
+      COPY: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
+      TRASH: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+      SPARKLES: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707"/></svg>`
+    };
+
     const rootContainer = document.getElementById('appRoot');
     let dbNodeInstance = null;
     let localActiveCaseNode = null;
     let localActiveImageStack = [];
 
-    // Prompt Modal Functionality Promises Wrapper
     function showConfirmModal(title, msg) {
       return new Promise((resolve) => {
         const overlay = document.getElementById('modalOverlay');
@@ -499,7 +534,6 @@
       });
     }
 
-    // Modern Toast Alerts triggers
     function triggerToast(message, type = 'success') {
       const container = document.getElementById('toastContainer');
       const element = document.createElement('div');
@@ -565,21 +599,21 @@
               <div class="stat-lbl">Tổng ca tiếp nhận</div>
               <div class="stat-val" id="lblTotalCases">0</div>
             </div>
-            <div class="stat-icon-wrap" style="color:var(--primary)">📁</div>
+            <div class="stat-icon-wrap" style="color:var(--primary)">${SVGS.FOLDER}</div>
           </div>
           <div class="stat-box">
             <div class="stat-info">
               <div class="stat-lbl">Hồ sơ chờ nhập</div>
               <div class="stat-val" id="lblPendingCases" style="color:var(--warning)">0</div>
             </div>
-            <div class="stat-icon-wrap">⏳</div>
+            <div class="stat-icon-wrap" style="color:var(--warning)">${SVGS.CLOCK}</div>
           </div>
           <div class="stat-box">
             <div class="stat-info">
               <div class="stat-lbl">Hồ sơ hoàn tất</div>
               <div class="stat-val" id="lblCompletedCases" style="color:var(--success)">0</div>
             </div>
-            <div class="stat-icon-wrap">✅</div>
+            <div class="stat-icon-wrap" style="color:var(--success)">${SVGS.CHECK_CIRCLE}</div>
           </div>
         </div>
 
@@ -587,7 +621,7 @@
           <section class="p-card">
             <div class="p-card-head">
               <h2>Khởi tạo hồ sơ mới</h2>
-              <p>Nhập thông tin mục tiện phương tiện và tải lên danh sách dữ liệu ảnh gốc ban đầu.</p>
+              <p>Nhập thông tin mục tiêu phương tiện và tải lên danh sách dữ liệu ảnh gốc ban đầu.</p>
             </div>
             
             <div class="form-group">
@@ -603,7 +637,7 @@
             <div class="form-group">
               <label>Tệp dữ liệu ảnh hiện trạng giám định</label>
               <div class="dropzone" onclick="document.getElementById('fileImageUploader').click()">
-                <icon>📸</icon>
+                <div style="color:var(--text-muted)">${SVGS.CAMERA}</div>
                 <p>Nhấp vào đây để chọn tệp tin hình ảnh tổn thất</p>
                 <input id="fileImageUploader" type="file" accept="image/*" multiple style="display:none;" />
               </div>
@@ -726,9 +760,9 @@
             </td>
             <td>
               <div class="flex-actions-group">
-                <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px;" onclick="window.open('${partnerPortalInputLink}', '_blank')">Link Nhập</button>
-                <button class="btn-premium" style="padding:6px 12px; font-size:12px; background:var(--dark);" onclick="window.open('${internalResultReviewLink}', '_blank')">Kết quả</button>
-                <button class="btn-premium btn-danger-p" style="padding:6px 12px; font-size:12px;" onclick="triggerDestructiveDeleteCase('${uniqueKeyToken}', '${escapeAttributeData(entityNode.bienSo)}')">Xóa</button>
+                <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; gap:4px;" onclick="window.open('${partnerPortalInputLink}', '_blank')">${SVGS.EXTERNAL} Link Nhập</button>
+                <button class="btn-premium" style="padding:6px 12px; font-size:12px; background:var(--dark); gap:4px;" onclick="window.open('${internalResultReviewLink}', '_blank')">${SVGS.CHECK_CIRCLE} Kết quả</button>
+                <button class="btn-premium btn-danger-p" style="padding:6px 12px; font-size:12px; gap:4px;" onclick="triggerDestructiveDeleteCase('${uniqueKeyToken}', '${escapeAttributeData(entityNode.bienSo)}')">${SVGS.TRASH} Xóa</button>
               </div>
             </td>
           </tr>
@@ -840,7 +874,6 @@
       return convertedJSONData.secure_url;
     }
 
-    /* ĐÃ SỬA: Rút gọn gọn gàng theo chiều ngang dạng Premium Matrix */
     function renderInlineCreationSuccessPanel(dataPayload) {
       const outputCardBox = document.getElementById('panelOutputResultAnchor');
       outputCardBox.style.display = 'block';
@@ -850,32 +883,32 @@
 
       outputCardBox.innerHTML = `
         <div class="p-card-head" style="margin-bottom:20px; padding-bottom:12px;">
-          <h2 style="color:var(--success); font-size:16px;">✨ Khởi tạo và đồng bộ hồ sơ thành công</h2>
-          <p style="font-size:12px; margin-top:2px;">Mã định danh hệ thống phương tiện: <strong style="color:var(--dark); font-family:monospace;">${dataPayload.idCa}</strong></p>
+          <h2 style="color:var(--success); font-size:16px; display:flex; align-items:center; gap:6px;">${SVGS.SPARKLES} Khởi tạo và đồng bộ hồ sơ thành công</h2>
+          <p style="font-size:12px; margin-top:4px;">Mã định danh hệ thống phương tiện: <strong style="color:var(--dark); font-family:monospace;">${dataPayload.idCa}</strong></p>
         </div>
 
         <div class="p-share-container">
           <!-- Row 1: Cổng Garage tác nghiệp -->
           <div class="p-share-row">
             <div class="p-share-meta">
-              <div class="p-share-label">🚘 Đường dẫn bàn giao đối tác (Garage điền hạng mục)</div>
+              <div class="p-share-label">Đường dẫn bàn giao đối tác (Garage điền hạng mục)</div>
               <div class="p-share-url-preview">${escapeHtmlOutput(shareLinkGara)}</div>
             </div>
             <div class="p-share-actions">
-              <button class="btn-premium btn-share-action" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkGara)}')">📋 Sao chép Link</button>
-              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkGara)}', '_blank')">↗ Mở nhanh</button>
+              <button class="btn-premium btn-share-action" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkGara)}')">${SVGS.COPY} Sao chép Link</button>
+              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkGara)}', '_blank')">${SVGS.EXTERNAL} Mở nhanh</button>
             </div>
           </div>
 
           <!-- Row 2: Cổng nội bộ Giám định viên -->
           <div class="p-share-row">
             <div class="p-share-meta">
-              <div class="p-share-label">📊 Đường dẫn giám sát kết quả (Giám định viên đối chiếu)</div>
+              <div class="p-share-label">Đường dẫn giám sát kết quả (Giám định viên đối chiếu)</div>
               <div class="p-share-url-preview">${escapeHtmlOutput(shareLinkView)}</div>
             </div>
             <div class="p-share-actions">
-              <button class="btn-premium btn-share-action" style="background:var(--dark);" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkView)}')">📋 Sao chép Link</button>
-              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkView)}', '_blank')">↗ Mở trang</button>
+              <button class="btn-premium btn-share-action" style="background:var(--dark);" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkView)}')">${SVGS.COPY} Sao chép Link</button>
+              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkView)}', '_blank')">${SVGS.EXTERNAL} Mở trang</button>
             </div>
           </div>
         </div>
@@ -925,7 +958,7 @@
             <p>${isReadOnlyMode ? 'Chế độ xem Báo cáo Tổng hợp' : 'Cửa sổ cập nhật của Gara'}</p>
           </div>
 
-          ${showBackButton ? `<button class="btn-premium btn-secondary" style="width:100%; margin-bottom:16px;" onclick="goHome()">⬅ Quay lại Dashboard</button>` : ''}
+          ${showBackButton ? `<button class="btn-premium btn-secondary" style="width:100%; margin-bottom:16px; gap:6px;" onclick="goHome()">${SVGS.ARROW_LEFT} Quay lại Dashboard</button>` : ''}
 
           <div class="form-group">
             <label style="margin:0;">Mã hồ sơ hệ thống</label>
@@ -948,16 +981,16 @@
 
           ${showBackButton ? `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
-              <button class="btn-premium" style="width:100%; margin-bottom:8px;" onclick="executeCopyAggregatedRawText()">Copy văn bản tổng hợp nhanh</button>
-              <button class="btn-premium btn-secondary" style="width:100%;" onclick="window.print()">In báo cáo / Xuất PDF</button>
+              <button class="btn-premium" style="width:100%; margin-bottom:8px; gap:6px;" onclick="executeCopyAggregatedRawText()">${SVGS.COPY} Copy văn bản tổng hợp</button>
+              <button class="btn-premium btn-secondary" style="width:100%; gap:6px;" onclick="window.print()">${SVGS.EXTERNAL} In danh sách / PDF</button>
             </div>
           ` : isReadOnlyMode ? `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
-              <div class="badge-status completed" style="width:100%; padding:10px; justify-content:center;">Hồ sơ báo giá đã được khóa an toàn</div>
+              <div class="badge-status completed" style="width:100%; padding:10px; justify-content:center; gap:6px;">${SVGS.CHECK_CIRCLE} Hồ sơ báo giá đã được khóa an toàn</div>
             </div>
           ` : `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
-              <button id="btnSubmitGarageFinalResponse" class="btn-premium" style="width:100%;">Xác nhận & Gửi báo giá</button>
+              <button id="btnSubmitGarageFinalResponse" class="btn-premium" style="width:100%; gap:6px;">${SVGS.CHECK_CIRCLE} Xác nhận & Gửi báo giá</button>
             </div>
           `}
         </div>
@@ -984,7 +1017,7 @@
                 <textarea class="garage-quote-textarea-node" data-index-token="${index}" placeholder="Ví dụ cụ thể:&#10;- Thay mới cản trước chính hãng&#10;- Gò nắn phục hồi biến dạng khung dầm&#10;- Sơn dập hấp phủ chỉ sườn phải">${escapeHtmlOutput(item.hangMucBaoGia || '')}</textarea>
                 <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">Mẹo: Xuống dòng (Ấn phím Enter) để phân tách rõ ràng nếu vùng ảnh có nhiều chi tiết phát hiện tổn thất.</div>
               </div>
-              <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self: flex-start;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">Xem ảnh gốc độ phân giải cao ↗</button>
+              <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self: flex-start; gap:4px;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">${SVGS.EXTERNAL} Xem ảnh gốc độ nét cao</button>
             </div>
           </div>
         `;
@@ -1057,7 +1090,7 @@
                 <label style="color:var(--primary); font-weight:800; text-transform:uppercase; letter-spacing:0.02em;">Hạng mục bộ phận đã khai báo</label>
                 <div style="background:#fff; border:1px solid var(--border); padding:16px; border-radius:var(--radius-md); font-size:15px; font-weight:700; white-space:pre-wrap; min-height:110px;" class="${textContentClean ? '':'empty-state-text'}">${textContentClean ? escapeHtmlOutput(textContentClean) : 'Không có hạng mục nào được khai báo cho vùng ảnh tổn thất này.'}</div>
               </div>
-              <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self:flex-start;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">Tải ảnh gốc kết quả ↓</button>
+              <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self:flex-start; gap:4px;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">${SVGS.EXTERNAL} Tải ảnh gốc kết quả</button>
             </div>
           </div>
         `;
@@ -1091,7 +1124,7 @@
               </div>
               
               ${renderMode === 'result' ? `
-                <button class="btn-premium" style="width:100%" onclick="executeTextCopyToClipboard('txtRawSummaryOutputArea')">Copy toàn bộ kết quả trích xuất văn bản</button>
+                <button class="btn-premium" style="width:100%; gap:6px;" onclick="executeTextCopyToClipboard('txtRawSummaryOutputArea')">${SVGS.COPY} Copy toàn bộ kết quả văn bản</button>
               ` : `
                 <div style="font-size:13px; color:var(--text-muted); font-style:italic; text-align:center;">Hồ sơ ở trạng thái chỉ đọc sau khi biểu mẫu đã hoàn tất đồng bộ gửi.</div>
               `}
@@ -1243,6 +1276,7 @@
       return window.location.href.split('?')[0].split('#')[0].replace(/index\.html$/i, '');
     }
 
+    // Kiểm tra cấu hình hệ thống
     function isSystemConfigHealthy() {
       return (
         CONFIG.FIREBASE.apiKey && !CONFIG.FIREBASE.apiKey.includes('PASTE_') &&
@@ -1254,6 +1288,7 @@
       return String(unsafeStringValue || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
     }
 
+    // Escape thuộc tính thẻ HTML
     function escapeAttributeData(unsafeAttrValue) { return escapeHtmlOutput(unsafeAttrValue); }
   </script>
 </body>
