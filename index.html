@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#080b11" />
   <meta name="description" content="Nền tảng đối chiếu ảnh giám định và hạng mục báo giá Garage theo thời gian thực." />
-  <title>ClaimVision — Đối chiếu giám định xe cơ giới</title>
+  <title>ClaimVision Ultimate — Đối chiếu giám định xe cơ giới</title>
 
   <!-- Google Fonts & Firebase SDK -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -402,6 +402,84 @@
     .text-link-area { min-height: 80px; color: var(--primary); background: rgba(4,7,11,.55) !important; border-color: rgba(216,180,109,.16); font-family: 'JetBrains Mono'; font-size: 10px; }
 
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+
+    /* ===== ULTIMATE PROFILE & TWO-WAY EVIDENCE WORKFLOW ===== */
+    .nav-user-card { appearance:none; color:inherit; cursor:pointer; text-align:left; transition:var(--transition); }
+    .nav-user-card:hover { transform:translateY(-1px); border-color:rgba(216,180,109,.34); background:rgba(216,180,109,.055); }
+    .nav-user-copy em { display:block; overflow:hidden; margin-top:2px; color:var(--primary-2); font-size:8px; font-style:normal; font-weight:800; letter-spacing:.05em; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; }
+    .profile-modal-panel { position:relative; overflow:hidden; width:min(620px,100%); padding:0; border:1px solid var(--border-strong); border-radius:26px; background:linear-gradient(145deg,#111824,#0a0f17); box-shadow:0 35px 110px rgba(0,0,0,.7); }
+    .profile-modal-hero { position:relative; display:flex; align-items:center; gap:18px; padding:28px; border-bottom:1px solid var(--border); background:linear-gradient(120deg,rgba(216,180,109,.12),rgba(91,169,255,.035)); }
+    .profile-modal-hero::after { content:''; position:absolute; width:210px; height:210px; right:-85px; top:-115px; border-radius:50%; background:rgba(216,180,109,.11); filter:blur(5px); }
+    .profile-avatar-large { width:70px; height:70px; display:grid; place-items:center; flex:0 0 auto; color:#171209; border:1px solid rgba(245,220,156,.55); border-radius:22px; background:var(--primary-gradient); box-shadow:0 18px 42px rgba(199,155,75,.24); font:800 19px 'JetBrains Mono'; }
+    .profile-modal-hero h3 { position:relative; z-index:1; font-size:20px; letter-spacing:-.035em; }
+    .profile-modal-hero p { position:relative; z-index:1; margin-top:4px; color:var(--text-muted); font-size:11px; }
+    .profile-modal-body { padding:25px 28px 28px; }
+    .profile-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .profile-form-grid .form-group.full { grid-column:1/-1; }
+    .profile-email-lock { display:flex; align-items:center; gap:10px; min-height:48px; padding:0 14px; color:var(--text-muted); border:1px solid var(--border); border-radius:13px; background:rgba(4,7,11,.45); font-size:12px; }
+    .profile-modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:6px; }
+    .profile-modal-actions .btn-premium { width:auto; min-width:130px; }
+    .profile-close { position:absolute; top:16px; right:16px; z-index:4; width:36px; min-height:36px; padding:0; }
+    @media(max-width:620px){ .profile-form-grid{grid-template-columns:1fr}.profile-form-grid .form-group.full{grid-column:auto}.profile-modal-body,.profile-modal-hero{padding:22px}.profile-modal-actions{display:grid;grid-template-columns:1fr 1fr}.profile-modal-actions .btn-premium{width:100%;min-width:0} }
+
+    .hero-user-inline { cursor:pointer; transition:var(--transition); }
+    .hero-user-inline:hover { border-color:rgba(216,180,109,.32); background:rgba(216,180,109,.05); transform:translateY(-1px); }
+    .profile-setup-hint { display:inline-flex; align-items:center; gap:6px; margin-top:5px; color:var(--primary-2); font-size:9px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+
+    .request-composer { padding:14px; border:1px solid var(--border); border-radius:17px; background:rgba(4,7,11,.46); }
+    .request-composer-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:stretch; }
+    .request-composer-row .textarea-premium { min-height:76px; resize:none; }
+    .request-add-btn { width:48px; min-height:48px; padding:0; align-self:stretch; font-size:22px; }
+    .request-composer-help { display:flex; justify-content:space-between; gap:12px; margin-top:10px; color:var(--text-muted); font-size:9px; }
+    .requested-items-builder { display:grid; gap:8px; margin-top:12px; }
+    .requested-builder-empty { padding:17px; text-align:center; color:var(--text-muted); border:1px dashed var(--border); border-radius:13px; font-size:10px; }
+    .requested-builder-row { display:grid; grid-template-columns:32px minmax(0,1fr) auto; gap:9px; align-items:center; padding:9px; border:1px solid var(--border); border-radius:13px; background:rgba(255,255,255,.022); animation:slideIn .25s ease both; }
+    .requested-builder-index { width:32px; height:32px; display:grid; place-items:center; color:var(--primary-2); border:1px solid rgba(216,180,109,.2); border-radius:10px; background:rgba(216,180,109,.05); font:700 9px 'JetBrains Mono'; }
+    .requested-builder-input { width:100%; min-width:0; height:36px; padding:0 10px; outline:none; color:var(--text-main); border:1px solid transparent; border-radius:9px; background:transparent; font-size:11px; font-weight:650; transition:var(--transition); }
+    .requested-builder-input:focus { border-color:rgba(216,180,109,.35); background:rgba(4,7,11,.55); }
+    .requested-builder-actions { display:flex; gap:5px; }
+    .mini-icon-btn { width:30px; height:30px; display:grid; place-items:center; cursor:pointer; color:var(--text-muted); border:1px solid var(--border); border-radius:9px; background:rgba(255,255,255,.025); transition:var(--transition); }
+    .mini-icon-btn:hover { color:var(--text-main); border-color:var(--border-strong); background:rgba(255,255,255,.06); }
+    .mini-icon-btn.danger:hover { color:var(--danger); border-color:rgba(255,107,122,.28); background:rgba(255,107,122,.06); }
+    .mini-icon-btn .svg-icon { width:14px; height:14px; }
+    @media(max-width:520px){ .request-composer-row{grid-template-columns:1fr}.request-add-btn{width:100%;min-height:42px}.requested-builder-row{grid-template-columns:30px minmax(0,1fr)}.requested-builder-actions{grid-column:2;justify-content:flex-end} }
+
+    .garage-progress-panel { overflow:hidden; margin-bottom:18px; padding:18px 20px; border:1px solid var(--border); border-radius:18px; background:linear-gradient(120deg,rgba(216,180,109,.07),rgba(255,255,255,.018)); }
+    .garage-progress-top { display:flex; align-items:center; justify-content:space-between; gap:18px; }
+    .garage-progress-top strong { display:block; font-size:13px; }
+    .garage-progress-top span { color:var(--text-muted); font-size:10px; }
+    .garage-progress-percent { color:var(--primary-2)!important; font:700 18px 'JetBrains Mono'!important; }
+    .garage-progress-track { height:7px; overflow:hidden; margin-top:13px; border-radius:999px; background:rgba(255,255,255,.055); }
+    .garage-progress-track > div { width:0; height:100%; border-radius:inherit; background:var(--primary-gradient); box-shadow:0 0 20px rgba(216,180,109,.28); transition:width .35s ease; }
+    .autosave-state { display:inline-flex; align-items:center; gap:6px; margin-top:9px; color:var(--text-muted); font-size:9px; }
+    .autosave-state::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow:0 0 0 4px rgba(72,215,161,.07); }
+    .autosave-state.saving::before { background:var(--warning); }
+    .autosave-state.error::before { background:var(--danger); }
+
+    .evidence-request-card { transition:transform var(--transition),border-color var(--transition); }
+    .evidence-request-card.is-complete { border-color:rgba(72,215,161,.22); }
+    .evidence-request-card.is-uploading { border-color:rgba(216,180,109,.38); box-shadow:0 18px 50px rgba(199,155,75,.08); }
+    .evidence-request-status { margin-left:auto; }
+    .evidence-upload-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .evidence-upload-actions .btn-premium { width:auto; min-height:39px; padding:8px 13px; font-size:10px; }
+    .evidence-existing-wrap { margin-top:15px; }
+    .evidence-existing-title { display:flex; justify-content:space-between; gap:12px; margin-bottom:8px; color:var(--text-muted); font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .evidence-preview-grid { grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); }
+    .evidence-preview-item { position:relative; aspect-ratio:1; overflow:hidden; border:1px solid var(--border); border-radius:13px; background:#080b11; }
+    .evidence-preview-item img { width:100%; height:100%; object-fit:cover; }
+    .evidence-preview-item .evidence-order { position:absolute; left:7px; bottom:7px; padding:3px 6px; color:#fff; border:1px solid rgba(255,255,255,.12); border-radius:999px; background:rgba(3,5,9,.7); backdrop-filter:blur(8px); font:700 8px 'JetBrains Mono'; }
+    .evidence-remove-btn { position:absolute; top:6px; right:6px; width:27px; height:27px; display:grid; place-items:center; cursor:pointer; color:#fff; border:1px solid rgba(255,255,255,.14); border-radius:9px; background:rgba(3,5,9,.76); backdrop-filter:blur(8px); transition:var(--transition); }
+    .evidence-remove-btn:hover { color:var(--danger); border-color:rgba(255,107,122,.42); background:rgba(40,6,12,.86); }
+    .evidence-remove-btn .svg-icon { width:13px; height:13px; }
+    .evidence-upload-status { display:none; margin-top:12px; padding:11px 12px; border:1px solid rgba(216,180,109,.2); border-radius:12px; background:rgba(216,180,109,.045); }
+    .evidence-upload-status.show { display:block; }
+    .evidence-upload-status-line { display:flex; justify-content:space-between; gap:12px; color:var(--text-soft); font-size:10px; }
+    .evidence-upload-status-line strong { color:var(--primary-2); font-family:'JetBrains Mono'; }
+    .evidence-note { min-height:82px!important; margin-top:13px; }
+    .evidence-empty-gallery { padding:16px; text-align:center; color:var(--text-muted); border:1px dashed var(--border); border-radius:12px; font-size:10px; }
+    .portal-counter strong small { display:block; margin-top:3px; color:var(--text-muted); font:700 8px 'Plus Jakarta Sans'; letter-spacing:.06em; text-transform:uppercase; }
+
   </style>
 </head>
 <body>
@@ -431,6 +509,27 @@
         <button id="modalConfirm" class="btn-premium">Xác nhận</button>
       </div>
     </div>
+  </div>
+
+
+
+  <div id="profileModalOverlay" class="p-modal-overlay" aria-hidden="true">
+    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <button type="button" class="btn-premium btn-secondary profile-close" onclick="closeUserProfileModal()" aria-label="Đóng">×</button>
+      <div class="profile-modal-hero">
+        <div id="profileModalAvatar" class="profile-avatar-large">GD</div>
+        <div><h3 id="profileModalTitle">Hồ sơ người dùng</h3><p>Thông tin này được hiển thị trên Dashboard và lưu cùng mỗi hồ sơ giám định.</p></div>
+      </div>
+      <div class="profile-modal-body">
+        <div class="profile-form-grid">
+          <div class="form-group full"><label>Họ và tên hiển thị</label><input id="profileDisplayName" class="input-premium" type="text" maxlength="80" placeholder="Ví dụ: Hồ Quang Huy"></div>
+          <div class="form-group"><label>Chức danh</label><input id="profileRole" class="input-premium" type="text" maxlength="80" placeholder="Giám định viên"></div>
+          <div class="form-group"><label>Đơn vị / Phòng ban</label><input id="profileDepartment" class="input-premium" type="text" maxlength="100" placeholder="Bộ phận Giám định"></div>
+          <div class="form-group full"><label>Email đăng nhập</label><div id="profileEmailLocked" class="profile-email-lock"></div></div>
+        </div>
+        <div class="profile-modal-actions"><button type="button" class="btn-premium btn-secondary" onclick="closeUserProfileModal()">Đóng</button><button id="btnSaveUserProfile" type="button" class="btn-premium" onclick="saveUserProfile()">Lưu hồ sơ</button></div>
+      </div>
+    </section>
   </div>
 
   <div class="app-container">
@@ -503,11 +602,19 @@
     let activeObjectUrls = [];
     let garageEvidenceObjectUrls = [];
     let cachedCasesPayload = null;
-    let activeCaseFilter = 'all'; 
+    let activeCaseFilter = 'all';
+    let activeUserProfile = null;
+    let caseRequestedItemsDraft = [];
+    let garageUploadsInFlight = 0;
+    let garageAutosaveTimers = new Map();
+    let garagePortalMounted = false; 
 
     document.addEventListener('DOMContentLoaded', initApplicationState);
     window.addEventListener('popstate', () => { if (window.firebase?.auth) evaluateViewRoutingState(firebase.auth().currentUser); });
-    document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && document.getElementById('lightbox')?.classList.contains('show')) closeLightbox(); });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && document.getElementById('lightbox')?.classList.contains('show')) closeLightbox();
+      if (event.key === 'Escape' && document.getElementById('profileModalOverlay')?.style.display === 'grid') closeUserProfileModal();
+    });
 
     function initApplicationState() {
       if (!isSystemConfigHealthy()) {
@@ -517,7 +624,8 @@
       firebase.initializeApp(CONFIG.FIREBASE);
       dbNodeInstance = firebase.database();
 
-      firebase.auth().onAuthStateChanged((userInstance) => {
+      firebase.auth().onAuthStateChanged(async (userInstance) => {
+        activeUserProfile = userInstance ? await loadUserProfile(userInstance) : null;
         evaluateViewRoutingState(userInstance);
       });
     }
@@ -589,12 +697,43 @@
       evaluateViewRoutingState(firebase.auth().currentUser);
     }
 
+    function getProfileStorageKey(uid) {
+      return `claimvision.userProfile.${uid || 'anonymous'}`;
+    }
+
+    function deriveInitials(displayName) {
+      return String(displayName || 'Giám định viên').split(/\s+/).filter(Boolean).slice(0,2).map(part => part.charAt(0)).join('').toUpperCase() || 'GD';
+    }
+
+    async function loadUserProfile(userInstance) {
+      const fallback = {
+        displayName: String(userInstance?.displayName || '').trim(),
+        role: 'Giám định viên',
+        department: 'Bộ phận Giám định'
+      };
+      try {
+        const localValue = JSON.parse(localStorage.getItem(getProfileStorageKey(userInstance?.uid)) || 'null');
+        if (localValue && typeof localValue === 'object') Object.assign(fallback, localValue);
+      } catch (_) {}
+      try {
+        const snapshot = await dbNodeInstance.ref(`users/${userInstance.uid}/profile`).once('value');
+        const cloudValue = snapshot.val();
+        if (cloudValue && typeof cloudValue === 'object') Object.assign(fallback, cloudValue);
+      } catch (error) {
+        console.info('User profile cloud storage is unavailable; local profile remains active.', error?.code || error?.message || error);
+      }
+      fallback.isConfigured = Boolean(String(fallback.displayName || '').trim());
+      if (!fallback.displayName) fallback.displayName = 'Giám định viên';
+      return fallback;
+    }
+
     function getAuthenticatedUserPresentation(userInstance) {
-      const email = String(userInstance?.email || '').trim();
-      const fallbackName = email ? email.split('@')[0] : 'Giám định viên';
-      const displayName = String(userInstance?.displayName || fallbackName || 'Giám định viên').trim();
-      const initials = displayName.split(/\s+/).filter(Boolean).slice(0,2).map(part => part.charAt(0)).join('').toUpperCase() || 'GD';
-      return { displayName, email: email || 'Tài khoản Firebase', initials };
+      const email = String(userInstance?.email || '').trim() || 'Tài khoản Firebase';
+      const profile = activeUserProfile || {};
+      const displayName = String(profile.displayName || userInstance?.displayName || 'Giám định viên').trim();
+      const role = String(profile.role || 'Giám định viên').trim();
+      const department = String(profile.department || 'Bộ phận Giám định').trim();
+      return { displayName, email, role, department, initials: deriveInitials(displayName), isConfigured: Boolean(profile.isConfigured || userInstance?.displayName || (profile.displayName && profile.displayName !== 'Giám định viên')) };
     }
 
     function renderNavigationUserProfile(userInstance, targetNode) {
@@ -602,12 +741,66 @@
       const profile = getAuthenticatedUserPresentation(userInstance);
       targetNode.innerHTML = `
         <div class="nav-user-zone">
-          <div class="nav-user-card" title="${escapeAttributeData(profile.email)}">
+          <button type="button" class="nav-user-card" title="Mở hồ sơ người dùng" onclick="openUserProfileModal()">
             <div class="nav-user-avatar">${escapeHtmlOutput(profile.initials)}</div>
-            <div class="nav-user-copy"><strong>${escapeHtmlOutput(profile.displayName)}</strong><span>Giám định viên · ${escapeHtmlOutput(profile.email)}</span></div>
-          </div>
+            <div class="nav-user-copy"><strong>${escapeHtmlOutput(profile.displayName)}</strong><em>${escapeHtmlOutput(profile.role)}</em><span>${escapeHtmlOutput(profile.department)}</span></div>
+          </button>
           <button class="btn-premium btn-secondary nav-logout-icon" title="Đăng xuất" aria-label="Đăng xuất" onclick="executeLogoutFlow()">${SVGS.LOGOUT}</button>
         </div>`;
+    }
+
+    function openUserProfileModal() {
+      const user = firebase.auth().currentUser;
+      if (!user) return;
+      const profile = getAuthenticatedUserPresentation(user);
+      document.getElementById('profileDisplayName').value = profile.isConfigured ? profile.displayName : '';
+      document.getElementById('profileRole').value = profile.role;
+      document.getElementById('profileDepartment').value = profile.department;
+      document.getElementById('profileEmailLocked').innerHTML = `${SVGS.LOCK}<span>${escapeHtmlOutput(profile.email)}</span>`;
+      document.getElementById('profileModalAvatar').textContent = profile.initials;
+      const overlay = document.getElementById('profileModalOverlay');
+      overlay.style.display = 'grid';
+      overlay.setAttribute('aria-hidden', 'false');
+      setTimeout(() => document.getElementById('profileDisplayName')?.focus(), 40);
+    }
+
+    function closeUserProfileModal() {
+      const overlay = document.getElementById('profileModalOverlay');
+      if (!overlay) return;
+      overlay.style.display = 'none';
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    async function saveUserProfile() {
+      const user = firebase.auth().currentUser;
+      if (!user) return triggerToast('Phiên đăng nhập không còn hợp lệ.', 'error');
+      const displayName = String(document.getElementById('profileDisplayName')?.value || '').trim();
+      const role = String(document.getElementById('profileRole')?.value || '').trim() || 'Giám định viên';
+      const department = String(document.getElementById('profileDepartment')?.value || '').trim() || 'Bộ phận Giám định';
+      if (displayName.length < 2) return triggerToast('Vui lòng nhập họ tên hiển thị hợp lệ.', 'error');
+      const button = document.getElementById('btnSaveUserProfile');
+      toggleButtonUIPendingState(button, true, 'Đang lưu...');
+      const payload = { displayName, role, department, updatedAt: Date.now() };
+      try {
+        await user.updateProfile({ displayName });
+        activeUserProfile = payload;
+        try { localStorage.setItem(getProfileStorageKey(user.uid), JSON.stringify(payload)); } catch (storageError) { console.info('Local profile storage is unavailable.', storageError?.message || storageError); }
+        try { await dbNodeInstance.ref(`users/${user.uid}/profile`).set(payload); } catch (cloudError) { console.info('Profile saved locally; cloud profile path is unavailable.', cloudError?.code || cloudError?.message || cloudError); }
+        renderNavigationUserProfile(user, document.getElementById('navUserActionSpace'));
+        const heroName = document.getElementById('heroUserName');
+        const heroMeta = document.getElementById('heroUserMeta');
+        const heroAvatar = document.getElementById('heroUserAvatar');
+        if (heroName) heroName.textContent = displayName;
+        if (heroMeta) heroMeta.textContent = `${role} · ${department}`;
+        if (heroAvatar) heroAvatar.textContent = deriveInitials(displayName);
+        closeUserProfileModal();
+        triggerToast('Thông tin người dùng đã được cập nhật.');
+      } catch (error) {
+        console.error(error);
+        triggerToast('Không thể cập nhật hồ sơ người dùng: ' + (error.message || 'Lỗi không xác định'), 'error');
+      } finally {
+        toggleButtonUIPendingState(button, false, 'Lưu hồ sơ');
+      }
     }
 
     /****************************************************
@@ -693,7 +886,7 @@
             <div class="eyebrow">Trung tâm giám định số</div>
             <h2>Đối chiếu tổn thất<br><span>nhanh, rõ và có hệ thống.</span></h2>
             <p>Tạo hồ sơ, chuyển ảnh hiện trạng cho Garage và xem lại toàn bộ hạng mục được ghi chú trên từng ảnh trong cùng một không gian dữ liệu.</p>
-            <div class="hero-user-inline"><div class="nav-user-avatar">${escapeHtmlOutput(currentProfile.initials)}</div><div><strong>${escapeHtmlOutput(currentProfile.displayName)}</strong><span>Giám định viên đang đăng nhập · ${escapeHtmlOutput(currentProfile.email)}</span></div></div>
+            <div class="hero-user-inline" onclick="openUserProfileModal()" title="Chỉnh sửa hồ sơ người dùng"><div id="heroUserAvatar" class="nav-user-avatar">${escapeHtmlOutput(currentProfile.initials)}</div><div><strong id="heroUserName">${escapeHtmlOutput(currentProfile.displayName)}</strong><span id="heroUserMeta">${escapeHtmlOutput(currentProfile.role)} · ${escapeHtmlOutput(currentProfile.department)}</span>${currentProfile.isConfigured ? `` : `<div class="profile-setup-hint">${SVGS.USER} Thiết lập tên hiển thị</div>`}</div></div>
           </div>
           <div class="hero-signature">
             <div class="seal">${SVGS.SPARKLES}</div>
@@ -739,13 +932,17 @@
             </div>
             <div class="workflow-divider">Luồng 02 · Hạng mục để Garage cung cấp ảnh</div>
             <div class="form-group">
-              <label>Tên hạng mục Garage đang báo giá</label>
-              <textarea id="txtRequestedItemNames" class="textarea-premium" placeholder="Nhập mỗi hạng mục trên một dòng. Ví dụ:
+              <label>Danh sách hạng mục Garage đang báo giá</label>
+              <div class="request-composer">
+                <div class="request-composer-row">
+                  <textarea id="requestedItemComposerInput" class="textarea-premium" placeholder="Nhập một hoặc nhiều hạng mục, mỗi dòng một tên. Ví dụ:
 Cản trước
-Đèn pha trước phải
-Tai xe trước phải"></textarea>
-              <div class="request-helper"><span>Garage phải tải ít nhất 01 ảnh cho mỗi hạng mục.</span><strong id="lblRequestedItemsCount">00 hạng mục</strong></div>
-              <div id="requestedItemsPreview" class="requested-items-preview"></div>
+Đèn pha trước phải"></textarea>
+                  <button id="btnAddRequestedItems" type="button" class="btn-premium request-add-btn" title="Thêm hạng mục">+</button>
+                </div>
+                <div class="request-composer-help"><span>Nhấn Enter hoặc nút + để thêm. Có thể dán nhiều dòng cùng lúc.</span><strong id="lblRequestedItemsCount">00 hạng mục</strong></div>
+                <div id="requestedItemsBuilderList" class="requested-items-builder"></div>
+              </div>
             </div>
             <button id="btnCreateCaseSubmit" class="btn-premium">${SVGS.SPARKLES} Khởi tạo ca trực tuyến</button>
           </section>
@@ -774,7 +971,13 @@ Tai xe trước phải"></textarea>
       const fileInput = document.getElementById('fileImageUploader');
       const dropzone = document.getElementById('imageDropzone');
       fileInput.addEventListener('change', executeImageFilesPreviewBinding);
-      document.getElementById('txtRequestedItemNames').addEventListener('input', renderRequestedItemsPreview);
+      caseRequestedItemsDraft = [];
+      renderRequestedItemsBuilder();
+      const requestComposer = document.getElementById('requestedItemComposerInput');
+      document.getElementById('btnAddRequestedItems').addEventListener('click', addRequestedItemsFromComposer);
+      requestComposer.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); addRequestedItemsFromComposer(); }
+      });
       document.getElementById('btnCreateCaseSubmit').addEventListener('click', pipelineTriggerCaseCreationFlow);
       document.getElementById('caseSearchInput').addEventListener('input', () => executeUIRenderCasesTable());
       document.querySelectorAll('[data-case-filter]').forEach(btn => btn.addEventListener('click', () => setCaseFilter(btn.dataset.caseFilter)));
@@ -823,7 +1026,7 @@ Tai xe trước phải"></textarea>
 
     function parseRequestedItemNames(rawValue) {
       const seen = new Set();
-      return String(rawValue || '').split(/\r?\n/).map(item => item.trim()).filter(Boolean).filter(item => {
+      return String(rawValue || '').split(/\r?\n|;/).map(item => item.trim().replace(/^[-•\d.)\s]+/, '')).filter(Boolean).filter(item => {
         const normalized = item.toLocaleLowerCase('vi');
         if (seen.has(normalized)) return false;
         seen.add(normalized);
@@ -831,15 +1034,67 @@ Tai xe trước phải"></textarea>
       });
     }
 
-    function renderRequestedItemsPreview() {
-      const textarea = document.getElementById('txtRequestedItemNames');
+    function addRequestedItemsFromComposer() {
+      const composer = document.getElementById('requestedItemComposerInput');
+      if (!composer) return;
+      const incoming = parseRequestedItemNames(composer.value);
+      if (!incoming.length) return triggerToast('Nhập ít nhất một tên hạng mục trước khi thêm.', 'warning');
+      const existing = new Set(caseRequestedItemsDraft.map(item => item.tenHangMuc.toLocaleLowerCase('vi')));
+      let added = 0;
+      incoming.forEach(name => {
+        const key = name.toLocaleLowerCase('vi');
+        if (existing.has(key)) return;
+        caseRequestedItemsDraft.push({ id: `REQ_${Date.now()}_${Math.random().toString(36).slice(2,7)}`, tenHangMuc: name });
+        existing.add(key);
+        added += 1;
+      });
+      composer.value = '';
+      renderRequestedItemsBuilder();
+      if (!added) triggerToast('Các hạng mục vừa nhập đã có trong danh sách.', 'warning');
+      else composer.focus();
+    }
+
+    function updateRequestedItemDraft(index, value) {
+      if (!caseRequestedItemsDraft[index]) return;
+      caseRequestedItemsDraft[index].tenHangMuc = String(value || '').trimStart();
+      updateRequestedItemsCount();
+    }
+
+    function removeRequestedItemDraft(index) {
+      caseRequestedItemsDraft.splice(index, 1);
+      renderRequestedItemsBuilder();
+    }
+
+    function moveRequestedItemDraft(index, direction) {
+      const target = index + direction;
+      if (target < 0 || target >= caseRequestedItemsDraft.length) return;
+      [caseRequestedItemsDraft[index], caseRequestedItemsDraft[target]] = [caseRequestedItemsDraft[target], caseRequestedItemsDraft[index]];
+      renderRequestedItemsBuilder();
+    }
+
+    function updateRequestedItemsCount() {
       const countNode = document.getElementById('lblRequestedItemsCount');
-      const previewNode = document.getElementById('requestedItemsPreview');
-      if (!textarea || !countNode || !previewNode) return;
-      const items = parseRequestedItemNames(textarea.value);
-      countNode.textContent = `${String(items.length).padStart(2,'0')} hạng mục`;
-      previewNode.innerHTML = items.slice(0,8).map((item,index) => `<div class="requested-item-chip"><span>${String(index+1).padStart(2,'0')}</span><div>${escapeHtmlOutput(item)}</div></div>`).join('');
-      if (items.length > 8) previewNode.insertAdjacentHTML('beforeend', `<div class="requested-item-chip"><span>+</span><div>Còn ${items.length - 8} hạng mục khác</div></div>`);
+      if (countNode) countNode.textContent = `${String(caseRequestedItemsDraft.filter(item => item.tenHangMuc.trim()).length).padStart(2,'0')} hạng mục`;
+    }
+
+    function renderRequestedItemsBuilder() {
+      const listNode = document.getElementById('requestedItemsBuilderList');
+      if (!listNode) return;
+      updateRequestedItemsCount();
+      if (!caseRequestedItemsDraft.length) {
+        listNode.innerHTML = `<div class="requested-builder-empty">Chưa có hạng mục yêu cầu ảnh. Garage chỉ thấy nhóm này sau khi bạn thêm ít nhất một hạng mục.</div>`;
+        return;
+      }
+      listNode.innerHTML = caseRequestedItemsDraft.map((item,index) => `
+        <div class="requested-builder-row">
+          <div class="requested-builder-index">${String(index+1).padStart(2,'0')}</div>
+          <input class="requested-builder-input" value="${escapeAttributeData(item.tenHangMuc)}" oninput="updateRequestedItemDraft(${index},this.value)" onblur="this.value=this.value.trim();updateRequestedItemDraft(${index},this.value)" aria-label="Tên hạng mục ${index+1}">
+          <div class="requested-builder-actions">
+            <button type="button" class="mini-icon-btn" title="Chuyển lên" onclick="moveRequestedItemDraft(${index},-1)">${SVGS.ARROW_LEFT}</button>
+            <button type="button" class="mini-icon-btn" title="Chuyển xuống" onclick="moveRequestedItemDraft(${index},1)" style="transform:rotate(180deg)">${SVGS.ARROW_LEFT}</button>
+            <button type="button" class="mini-icon-btn danger" title="Xóa hạng mục" onclick="removeRequestedItemDraft(${index})">${SVGS.TRASH}</button>
+          </div>
+        </div>`).join('');
     }
 
     function executeUIRenderCasesTable(casesPayload) {
@@ -922,7 +1177,7 @@ Tai xe trước phải"></textarea>
       const plateInputVal = document.getElementById('txtPlateNumber').value.trim();
       const garageInputVal = document.getElementById('txtGaragePartner').value.trim();
       const imagesFileList = Array.from(document.getElementById('fileImageUploader').files || []);
-      const requestedItemNames = parseRequestedItemNames(document.getElementById('txtRequestedItemNames').value);
+      const requestedItemNames = caseRequestedItemsDraft.map(item => String(item.tenHangMuc || '').trim()).filter(Boolean);
 
       if (!plateInputVal || !garageInputVal) {
         triggerToast('Vui lòng nhập biển số xe và Garage phụ trách.', 'error');
@@ -965,7 +1220,9 @@ Tai xe trước phải"></textarea>
           nguoiTao: {
             uid: currentUser?.uid || '',
             email: currentProfile.email,
-            tenHienThi: currentProfile.displayName
+            tenHienThi: currentProfile.displayName,
+            chucDanh: currentProfile.role,
+            donVi: currentProfile.department
           },
           createdAt: firebase.database.ServerValue.TIMESTAMP
         };
@@ -980,8 +1237,9 @@ Tai xe trước phải"></textarea>
         document.getElementById('fileImageUploader').value = '';
         document.getElementById('boxPreviewsHolder').innerHTML = '';
         document.getElementById('lblDropzoneSummary').textContent = 'Chưa chọn ảnh.';
-        document.getElementById('txtRequestedItemNames').value = '';
-        renderRequestedItemsPreview();
+        caseRequestedItemsDraft = [];
+        document.getElementById('requestedItemComposerInput').value = '';
+        renderRequestedItemsBuilder();
         clearActiveObjectUrls();
       } catch (exception) {
         console.error(exception);
@@ -1086,7 +1344,11 @@ Tai xe trước phải"></textarea>
         const isCaseLockedByGarageSubmission = localActiveCaseNode.trangThai === STATUS_COMPLETED;
 
         if (shouldForceReadOnlyResultView || isCaseLockedByGarageSubmission) {
+          garagePortalMounted = false;
           renderPortalResultReadOnlyView(shouldForceReadOnlyResultView ? 'result' : 'garage-locked');
+        } else if (garagePortalMounted && document.querySelector('[data-garage-portal="active"]')) {
+          refreshGarageProgressUI();
+          refreshAllEvidenceCardsFromState();
         } else {
           renderPortalGarageInteractiveInputView();
         }
@@ -1100,6 +1362,7 @@ Tai xe trước phải"></textarea>
       const showBackButton = (viewContextMode === 'result');
       const node = localActiveCaseNode || {};
       const creatorName = node.nguoiTao?.tenHienThi || node.nguoiTao?.email || 'Hồ sơ trước phiên bản mới';
+      const creatorMeta = [node.nguoiTao?.chucDanh, node.nguoiTao?.donVi].filter(Boolean).join(' · ');
       const createdDate = formatCaseTimestamp(node.createdAt);
       return `
         <aside class="p-card sticky-sidebar">
@@ -1109,7 +1372,7 @@ Tai xe trước phải"></textarea>
           <div class="metadata-list">
             <div class="metadata-row"><span>Biển kiểm soát</span><strong>${escapeHtmlOutput(node.bienSo)}</strong></div>
             <div class="metadata-row"><span>Garage phụ trách</span><strong>${escapeHtmlOutput(node.tenGara)}</strong></div>
-            <div class="metadata-row"><span>Người tạo hồ sơ</span><strong>${escapeHtmlOutput(creatorName)}</strong></div>
+            <div class="metadata-row"><span>Người tạo hồ sơ</span><strong>${escapeHtmlOutput(creatorName)}${creatorMeta ? `<small style="display:block;margin-top:3px;color:var(--text-muted);font-size:8px;font-weight:700">${escapeHtmlOutput(creatorMeta)}</small>` : ``}</strong></div>
             <div class="metadata-row"><span>Thời gian khởi tạo</span><strong>${escapeHtmlOutput(createdDate.date)} · ${escapeHtmlOutput(createdDate.time)}</strong></div>
             <div class="metadata-row"><span>Ảnh cần Garage định danh</span><strong>${Number(node.soLuongAnh || localActiveImageStack.length)} ảnh</strong></div>
             <div class="metadata-row"><span>Hạng mục cần Garage cung cấp ảnh</span><strong>${Number(node.soLuongHangMucYeuCauAnh || localActiveRequestedItems.length)} hạng mục</strong></div>
@@ -1120,76 +1383,85 @@ Tai xe trước phải"></textarea>
         </aside>`;
     }
 
+    function renderEvidenceGalleryMarkup(item, requestIndex) {
+      const urls = normalizeEvidenceImageUrls(item);
+      if (!urls.length) return `<div class="evidence-empty-gallery">Chưa có ảnh nào được lưu cho hạng mục này.</div>`;
+      return urls.map((url,imageIndex) => `<div class="evidence-preview-item">
+        <img src="${escapeAttributeData(url)}" alt="Ảnh minh chứng ${imageIndex+1}" loading="lazy" onclick="openLightbox('${escapeAttributeData(url)}')">
+        <span class="evidence-order">${String(imageIndex+1).padStart(2,'0')}</span>
+        <button type="button" class="evidence-remove-btn" title="Xóa ảnh" onclick="event.stopPropagation();removeGarageEvidenceImage(${requestIndex},${imageIndex})">${SVGS.TRASH}</button>
+      </div>`).join('');
+    }
+
     function renderPortalGarageInteractiveInputView() {
       if (!localActiveImageStack.length && !localActiveRequestedItems.length) return renderErrorLayoutState('Hồ sơ hiện tại chưa có nội dung yêu cầu Garage xử lý.');
-      garageEvidenceObjectUrls.forEach(url => URL.revokeObjectURL(url));
-      garageEvidenceObjectUrls = [];
+      garagePortalMounted = true;
 
       const imageInputSection = localActiveImageStack.length ? `
-        <div class="workspace-section-head"><div><h2>01 · Xác định hạng mục từ ảnh hiện trạng</h2><p>Nhập tên bộ phận và phương án xử lý tương ứng với từng ảnh.</p></div><div class="workspace-section-index">${String(localActiveImageStack.length).padStart(2,'0')} FRAMES</div></div>
+        <div class="workspace-section-head"><div><h2>01 · Xác định hạng mục từ ảnh hiện trạng</h2><p>Nội dung được tự động lưu trong khi Garage nhập, không bị mất khi tải ảnh ở nhóm bên dưới.</p></div><div class="workspace-section-index">${String(localActiveImageStack.length).padStart(2,'0')} FRAMES</div></div>
         ${localActiveImageStack.map((item, index) => `
           <article class="premium-image-card">
             <div class="img-display-pane"><span class="img-pane-indicator">Ảnh hiện trạng ${String(index + 1).padStart(2,'0')}</span><img src="${escapeAttributeData(item.linkAnh)}" alt="Ảnh tổn thất ${index + 1}" loading="lazy" onclick="openLightbox('${escapeAttributeData(item.linkAnh)}')" /></div>
             <div class="inputs-entry-pane">
-              <div><div class="image-sequence">DAMAGE FRAME / ${String(index + 1).padStart(2,'0')}</div><div class="form-group" style="margin:0"><label>Tên bộ phận và phương án khắc phục</label><textarea class="garage-quote-textarea-node" data-index-token="${index}" placeholder="Ví dụ:
-• Thay mới cụm đèn pha trước phải
-• Gò nắn phục hồi tai bắt cản
-• Sơn hoàn thiện vè trước phải">${escapeHtmlOutput(item.hangMucBaoGia || '')}</textarea></div></div>
+              <div><div class="image-sequence">DAMAGE FRAME / ${String(index + 1).padStart(2,'0')}</div><div class="form-group" style="margin:0"><label>Tên bộ phận và phương án khắc phục</label><textarea class="garage-quote-textarea-node" data-index-token="${index}" placeholder="Ví dụ:\n• Thay mới cụm đèn pha trước phải\n• Gò nắn phục hồi tai bắt cản\n• Sơn hoàn thiện vè trước phải">${escapeHtmlOutput(item.hangMucBaoGia || '')}</textarea><div id="garageNoteSaveState_${index}" class="autosave-state">Đã bật tự động lưu</div></div></div>
               <button class="btn-premium btn-secondary btn-inline" onclick="window.open('${escapeAttributeData(item.linkAnh)}','_blank')">${SVGS.EXTERNAL} Mở ảnh nguyên bản</button>
             </div>
           </article>`).join('')}` : '';
 
       const evidenceRequestSection = localActiveRequestedItems.length ? `
-        <div class="workspace-section-head" style="margin-top:${localActiveImageStack.length ? '12px' : '0'}"><div><h2>02 · Cung cấp ảnh theo hạng mục báo giá</h2><p>Tải một hoặc nhiều ảnh rõ nét cho từng hạng mục bên dưới.</p></div><div class="workspace-section-index">${String(localActiveRequestedItems.length).padStart(2,'0')} REQUESTS</div></div>
-        ${localActiveRequestedItems.map((item,index) => `
-          <article class="evidence-request-card">
-            <div class="evidence-request-head"><div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div><div><small>Hạng mục cần ảnh minh chứng</small><h3>${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3></div></div>
+        <div class="workspace-section-head" style="margin-top:${localActiveImageStack.length ? '12px' : '0'}"><div><h2>02 · Cung cấp ảnh theo hạng mục báo giá</h2><p>Ảnh được tải lên và lưu ngay theo từng hạng mục. Có thể thêm tiếp hoặc xóa ảnh trước khi gửi hồ sơ.</p></div><div class="workspace-section-index">${String(localActiveRequestedItems.length).padStart(2,'0')} REQUESTS</div></div>
+        ${localActiveRequestedItems.map((item,index) => {
+          const urls = normalizeEvidenceImageUrls(item);
+          return `<article id="evidenceRequestCard_${index}" class="evidence-request-card ${urls.length ? 'is-complete' : ''}">
+            <div class="evidence-request-head"><div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div><div><small>Hạng mục cần ảnh minh chứng</small><h3>${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3></div><div id="evidenceStatus_${index}" class="evidence-request-status badge-status ${urls.length ? 'completed' : 'pending'}">${urls.length ? `${urls.length} ảnh đã lưu` : 'Chưa có ảnh'}</div></div>
             <div class="evidence-request-body">
               <div class="dropzone evidence-dropzone" data-evidence-dropzone="${index}" onclick="document.getElementById('garageEvidenceInput_${index}').click()">
-                <div><div class="dropzone-icon">${SVGS.UPLOAD}</div><strong>Tải ảnh Garage cung cấp</strong><p>Có thể chọn nhiều ảnh JPG, PNG hoặc WEBP</p></div>
-                <input id="garageEvidenceInput_${index}" class="garage-evidence-input" data-request-index="${index}" type="file" accept="image/*" multiple hidden />
+                <div><div class="dropzone-icon">${SVGS.UPLOAD}</div><strong>Chọn, chụp hoặc kéo ảnh vào đây</strong><p>Ảnh sẽ được tải và lưu ngay · tối đa 12 ảnh/hạng mục</p></div>
+                <input id="garageEvidenceInput_${index}" class="garage-evidence-input" data-request-index="${index}" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden />
               </div>
-              <div id="garageEvidenceSummary_${index}" class="file-summary">Chưa chọn ảnh cho hạng mục này.</div>
-              <div id="garageEvidencePreview_${index}" class="evidence-preview-grid"></div>
+              <div class="evidence-upload-actions"><button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('garageEvidenceInput_${index}').click()">${SVGS.IMAGE} Chọn nhiều ảnh</button><button type="button" class="btn-premium btn-secondary" onclick="openMobileCameraForEvidence(${index})">${SVGS.CAMERA} Chụp ảnh</button></div>
+              <div id="evidenceUploadStatus_${index}" class="evidence-upload-status"><div class="evidence-upload-status-line"><span id="evidenceUploadText_${index}">Đang chuẩn bị...</span><strong id="evidenceUploadPercent_${index}">0%</strong></div><div class="p-progress-bar active"><div id="evidenceUploadFill_${index}" class="p-progress-fill"></div></div></div>
+              <textarea id="garageEvidenceNote_${index}" class="textarea-premium evidence-note" placeholder="Ghi chú thêm cho hạng mục này (không bắt buộc)...">${escapeHtmlOutput(item.ghiChuGarage || '')}</textarea>
+              <div id="garageEvidenceNoteState_${index}" class="autosave-state">Ghi chú được tự động lưu</div>
+              <div class="evidence-existing-wrap"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
             </div>
-          </article>`).join('')}` : '';
+          </article>`;
+        }).join('')}` : '';
 
       rootContainer.innerHTML = `
-        <div class="portal-shell">
-          <header class="portal-topbar"><div><div class="eyebrow">Garage response portal</div><h1>Hoàn thiện dữ liệu báo giá</h1><p>Garage thực hiện đồng thời việc định danh hạng mục theo ảnh và cung cấp ảnh cho các hạng mục được yêu cầu.</p></div><div class="portal-counter-stack"><div class="portal-counter">Ảnh cần ghi tên<strong>${String(localActiveImageStack.length).padStart(2,'0')}</strong></div><div class="portal-counter">Hạng mục cần ảnh<strong>${String(localActiveRequestedItems.length).padStart(2,'0')}</strong></div></div></header>
+        <div class="portal-shell" data-garage-portal="active">
+          <header class="portal-topbar"><div><div class="eyebrow">Garage response portal</div><h1>Hoàn thiện dữ liệu báo giá</h1><p>Mọi ghi chú và ảnh minh chứng được lưu theo thời gian thực trước khi Garage khóa hồ sơ.</p></div><div class="portal-counter-stack"><div class="portal-counter">Ảnh cần ghi tên<strong id="garageHeaderNoteCounter">00/00</strong></div><div class="portal-counter">Hạng mục có ảnh<strong id="garageHeaderEvidenceCounter">00/00</strong></div></div></header>
+          <div class="garage-progress-panel"><div class="garage-progress-top"><div><strong>Tiến độ hoàn thiện hồ sơ</strong><span id="garageProgressCaption">Đang tính toán dữ liệu...</span></div><span id="garageProgressPercent" class="garage-progress-percent">0%</span></div><div class="garage-progress-track"><div id="garageProgressFill"></div></div></div>
           <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list">${imageInputSection}${evidenceRequestSection}</div></div>
         </div>`;
 
-      document.querySelectorAll('.garage-evidence-input').forEach(input => input.addEventListener('change', () => renderGarageEvidencePreview(input)));
+      document.querySelectorAll('.garage-quote-textarea-node').forEach(textarea => {
+        textarea.addEventListener('input', () => { scheduleGarageImageNoteAutosave(Number(textarea.dataset.indexToken), textarea.value); refreshGarageProgressUI(); });
+      });
+      document.querySelectorAll('.garage-evidence-input').forEach(input => input.addEventListener('change', () => handleGarageEvidenceFiles(Number(input.dataset.requestIndex), Array.from(input.files || []))));
+      document.querySelectorAll('.evidence-note').forEach(textarea => {
+        const index = Number(textarea.id.split('_').pop());
+        textarea.addEventListener('input', () => scheduleGarageEvidenceNoteAutosave(index, textarea.value));
+      });
       document.querySelectorAll('[data-evidence-dropzone]').forEach(dropzone => {
         ['dragenter','dragover'].forEach(eventName => dropzone.addEventListener(eventName, event => { event.preventDefault(); event.stopPropagation(); dropzone.classList.add('is-dragging'); }));
         ['dragleave','drop'].forEach(eventName => dropzone.addEventListener(eventName, event => { event.preventDefault(); event.stopPropagation(); dropzone.classList.remove('is-dragging'); }));
-        dropzone.addEventListener('drop', event => {
-          const index = Number(dropzone.dataset.evidenceDropzone);
-          const input = document.getElementById(`garageEvidenceInput_${index}`);
-          const files = Array.from(event.dataTransfer.files || []).filter(file => file.type.startsWith('image/'));
-          if (!files.length) return triggerToast('Vui lòng thả đúng định dạng hình ảnh.', 'error');
-          const transfer = new DataTransfer();
-          files.forEach(file => transfer.items.add(file));
-          input.files = transfer.files;
-          renderGarageEvidencePreview(input);
-        });
+        dropzone.addEventListener('drop', event => handleGarageEvidenceFiles(Number(dropzone.dataset.evidenceDropzone), Array.from(event.dataTransfer.files || [])));
       });
       document.getElementById('btnSubmitGarageFinalResponse').addEventListener('click', pipelineTriggerGarageDataLockSubmission);
+      refreshGarageProgressUI();
     }
 
-    function renderGarageEvidencePreview(inputNode) {
-      const requestIndex = Number(inputNode.dataset.requestIndex);
-      const files = Array.from(inputNode.files || []);
-      const summaryNode = document.getElementById(`garageEvidenceSummary_${requestIndex}`);
-      const previewNode = document.getElementById(`garageEvidencePreview_${requestIndex}`);
-      if (!summaryNode || !previewNode) return;
-      summaryNode.textContent = files.length ? `${files.length} ảnh đã sẵn sàng tải lên.` : 'Chưa chọn ảnh cho hạng mục này.';
-      previewNode.innerHTML = files.map((file,index) => {
-        const url = URL.createObjectURL(file);
-        garageEvidenceObjectUrls.push(url);
-        return `<div class="evidence-preview-item"><img src="${url}" alt="Ảnh minh chứng ${index+1}"><span>${String(index+1).padStart(2,'0')}</span></div>`;
-      }).join('');
+    function openMobileCameraForEvidence(index) {
+      const cameraInput = document.createElement('input');
+      cameraInput.type = 'file';
+      cameraInput.accept = 'image/*';
+      cameraInput.capture = 'environment';
+      cameraInput.multiple = false;
+      cameraInput.style.display = 'none';
+      cameraInput.addEventListener('change', () => { handleGarageEvidenceFiles(index, Array.from(cameraInput.files || [])); cameraInput.remove(); });
+      document.body.appendChild(cameraInput);
+      cameraInput.click();
     }
 
     function normalizeEvidenceImageUrls(item) {
@@ -1199,76 +1471,229 @@ Tai xe trước phải"></textarea>
       return rawValue ? [rawValue] : [];
     }
 
-    async function uploadGarageEvidenceItems() {
-      const packagedItems = localActiveRequestedItems.map((item,index) => ({
-        tenHangMuc: item.tenHangMuc || `Hạng mục ${index+1}`,
-        thuTu: item.thuTu || index + 1,
-        hinhAnhGarage: normalizeEvidenceImageUrls(item)
-      }));
-      const uploadJobs = [];
-      document.querySelectorAll('.garage-evidence-input').forEach(input => {
-        const requestIndex = Number(input.dataset.requestIndex);
-        Array.from(input.files || []).forEach(file => uploadJobs.push({ requestIndex, file }));
+    function validateGarageEvidenceFiles(files, existingCount = 0) {
+      const allowed = ['image/jpeg','image/png','image/webp','image/heic','image/heif'];
+      const valid = [];
+      const rejected = [];
+      files.forEach(file => {
+        if (!allowed.includes(file.type) && !file.name.match(/\.(jpe?g|png|webp|heic|heif)$/i)) rejected.push(`${file.name}: sai định dạng`);
+        else if (file.size > 20 * 1024 * 1024) rejected.push(`${file.name}: vượt 20MB`);
+        else valid.push(file);
       });
-      if (!uploadJobs.length) return packagedItems;
-      let completed = 0;
-      toggleUploadOverlay(true, 'Đang tải ảnh Garage cung cấp...', `0/${uploadJobs.length} ảnh đã đồng bộ`, 0);
-      await Promise.all(uploadJobs.map(async job => {
-        const url = await uploadSingleImageToCloudinaryEngine(job.file);
-        packagedItems[job.requestIndex].hinhAnhGarage.push(url);
-        completed += 1;
-        toggleUploadOverlay(true, 'Đang tải ảnh Garage cung cấp...', `${completed}/${uploadJobs.length} ảnh đã đồng bộ`, Math.round((completed / uploadJobs.length) * 100));
-      }));
-      return packagedItems;
+      const remaining = Math.max(0, 12 - existingCount);
+      if (valid.length > remaining) {
+        valid.splice(remaining).forEach(file => rejected.push(`${file.name}: vượt giới hạn 12 ảnh`));
+      }
+      return { valid, rejected };
+    }
+
+    async function prepareImageFileForUpload(file) {
+      if (!file.type.match(/^image\/(jpeg|png|webp)$/) || file.size < 2.5 * 1024 * 1024) return file;
+      try {
+        const bitmap = await createImageBitmap(file);
+        const maxEdge = 2560;
+        const ratio = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+        if (ratio >= .98) { bitmap.close(); return file; }
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(bitmap.width * ratio);
+        canvas.height = Math.round(bitmap.height * ratio);
+        canvas.getContext('2d', { alpha:false }).drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        bitmap.close();
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', .88));
+        if (!blob) return file;
+        return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type:'image/jpeg', lastModified:Date.now() });
+      } catch (_) { return file; }
+    }
+
+    function setEvidenceUploadUI(index, show, text = '', percent = 0) {
+      const card = document.getElementById(`evidenceRequestCard_${index}`);
+      const status = document.getElementById(`evidenceUploadStatus_${index}`);
+      if (card) card.classList.toggle('is-uploading', show);
+      if (!status) return;
+      status.classList.toggle('show', show);
+      const textNode = document.getElementById(`evidenceUploadText_${index}`);
+      const percentNode = document.getElementById(`evidenceUploadPercent_${index}`);
+      const fill = document.getElementById(`evidenceUploadFill_${index}`);
+      if (textNode) textNode.textContent = text;
+      if (percentNode) percentNode.textContent = `${Math.max(0,Math.min(100,percent))}%`;
+      if (fill) fill.style.width = `${Math.max(0,Math.min(100,percent))}%`;
+    }
+
+    async function handleGarageEvidenceFiles(requestIndex, incomingFiles) {
+      if (!localActiveRequestedItems[requestIndex] || !incomingFiles.length) return;
+      const currentUrls = normalizeEvidenceImageUrls(localActiveRequestedItems[requestIndex]);
+      const { valid, rejected } = validateGarageEvidenceFiles(incomingFiles, currentUrls.length);
+      if (rejected.length) triggerToast(rejected.slice(0,2).join(' · ') + (rejected.length > 2 ? ` · +${rejected.length-2} lỗi khác` : ''), 'warning');
+      if (!valid.length) return;
+      garageUploadsInFlight += 1;
+      setEvidenceUploadUI(requestIndex, true, `Chuẩn bị ${valid.length} ảnh...`, 2);
+      try {
+        const newUrls = [];
+        for (let i = 0; i < valid.length; i += 1) {
+          const prepared = await prepareImageFileForUpload(valid[i]);
+          const progress = Math.round((i / valid.length) * 90) + 5;
+          setEvidenceUploadUI(requestIndex, true, `Đang tải ảnh ${i+1}/${valid.length}: ${valid[i].name}`, progress);
+          newUrls.push(await uploadSingleImageToCloudinaryEngine(prepared));
+        }
+        localActiveRequestedItems[requestIndex].hinhAnhGarage = [...currentUrls, ...newUrls];
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh`).set(localActiveRequestedItems);
+        setEvidenceUploadUI(requestIndex, true, 'Đã lưu ảnh vào hồ sơ', 100);
+        refreshSingleEvidenceCard(requestIndex);
+        refreshGarageProgressUI();
+        triggerToast(`Đã lưu ${newUrls.length} ảnh cho hạng mục “${localActiveRequestedItems[requestIndex].tenHangMuc}”.`);
+      } catch (error) {
+        console.error(error);
+        triggerToast('Không thể tải ảnh: ' + (error.message || 'Lỗi kết nối'), 'error');
+      } finally {
+        garageUploadsInFlight = Math.max(0, garageUploadsInFlight - 1);
+        const input = document.getElementById(`garageEvidenceInput_${requestIndex}`);
+        if (input) input.value = '';
+        setTimeout(() => setEvidenceUploadUI(requestIndex, false), 900);
+      }
+    }
+
+    async function removeGarageEvidenceImage(requestIndex, imageIndex) {
+      const item = localActiveRequestedItems[requestIndex];
+      if (!item) return;
+      const urls = normalizeEvidenceImageUrls(item);
+      if (!urls[imageIndex]) return;
+      const confirmed = await showConfirmModal('Xóa ảnh minh chứng', `Xóa ảnh số ${imageIndex+1} khỏi hạng mục “${item.tenHangMuc}”?`);
+      if (!confirmed) return;
+      urls.splice(imageIndex,1);
+      item.hinhAnhGarage = urls;
+      try {
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh`).set(localActiveRequestedItems);
+        refreshSingleEvidenceCard(requestIndex);
+        refreshGarageProgressUI();
+        triggerToast('Đã xóa ảnh khỏi hồ sơ.', 'warning');
+      } catch (error) { triggerToast('Không thể xóa ảnh: ' + error.message, 'error'); }
+    }
+
+    function refreshSingleEvidenceCard(index) {
+      const item = localActiveRequestedItems[index];
+      if (!item) return;
+      const urls = normalizeEvidenceImageUrls(item);
+      const preview = document.getElementById(`garageEvidencePreview_${index}`);
+      const count = document.getElementById(`evidenceCount_${index}`);
+      const status = document.getElementById(`evidenceStatus_${index}`);
+      const card = document.getElementById(`evidenceRequestCard_${index}`);
+      if (preview) preview.innerHTML = renderEvidenceGalleryMarkup(item,index);
+      if (count) count.textContent = `${urls.length} ảnh`;
+      if (status) { status.className = `evidence-request-status badge-status ${urls.length ? 'completed' : 'pending'}`; status.textContent = urls.length ? `${urls.length} ảnh đã lưu` : 'Chưa có ảnh'; }
+      if (card) card.classList.toggle('is-complete', Boolean(urls.length));
+    }
+
+    function refreshAllEvidenceCardsFromState() {
+      localActiveRequestedItems.forEach((_,index) => refreshSingleEvidenceCard(index));
+    }
+
+    function scheduleGarageImageNoteAutosave(index, value) {
+      if (!localActiveImageStack[index]) return;
+      localActiveImageStack[index].hangMucBaoGia = value;
+      const key = `image_${index}`;
+      const state = document.getElementById(`garageNoteSaveState_${index}`);
+      if (state) { state.className = 'autosave-state saving'; state.textContent = 'Đang chờ tự động lưu...'; }
+      clearTimeout(garageAutosaveTimers.get(key));
+      garageAutosaveTimers.set(key, setTimeout(async () => {
+        try {
+          await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hinhAnh`).set(localActiveImageStack);
+          if (state) { state.className = 'autosave-state'; state.textContent = 'Đã tự động lưu'; }
+        } catch (error) {
+          if (state) { state.className = 'autosave-state error'; state.textContent = 'Lưu thất bại'; }
+        }
+      }, 700));
+    }
+
+    function scheduleGarageEvidenceNoteAutosave(index, value) {
+      if (!localActiveRequestedItems[index]) return;
+      localActiveRequestedItems[index].ghiChuGarage = value;
+      const key = `evidence_${index}`;
+      const state = document.getElementById(`garageEvidenceNoteState_${index}`);
+      if (state) { state.className = 'autosave-state saving'; state.textContent = 'Đang chờ tự động lưu...'; }
+      clearTimeout(garageAutosaveTimers.get(key));
+      garageAutosaveTimers.set(key, setTimeout(async () => {
+        try {
+          await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh`).set(localActiveRequestedItems);
+          if (state) { state.className = 'autosave-state'; state.textContent = 'Ghi chú đã được lưu'; }
+        } catch (error) {
+          if (state) { state.className = 'autosave-state error'; state.textContent = 'Lưu ghi chú thất bại'; }
+        }
+      }, 700));
+    }
+
+    function refreshGarageProgressUI() {
+      const noteTotal = localActiveImageStack.length;
+      const evidenceTotal = localActiveRequestedItems.length;
+      const noteDone = Array.from(document.querySelectorAll('.garage-quote-textarea-node')).length
+        ? Array.from(document.querySelectorAll('.garage-quote-textarea-node')).filter(node => node.value.trim()).length
+        : localActiveImageStack.filter(item => String(item.hangMucBaoGia || '').trim()).length;
+      const evidenceDone = localActiveRequestedItems.filter(item => normalizeEvidenceImageUrls(item).length).length;
+      const total = noteTotal + evidenceTotal;
+      const done = noteDone + evidenceDone;
+      const percent = total ? Math.round((done / total) * 100) : 100;
+      const noteCounter = document.getElementById('garageHeaderNoteCounter');
+      const evidenceCounter = document.getElementById('garageHeaderEvidenceCounter');
+      const caption = document.getElementById('garageProgressCaption');
+      const percentNode = document.getElementById('garageProgressPercent');
+      const fill = document.getElementById('garageProgressFill');
+      if (noteCounter) noteCounter.textContent = `${String(noteDone).padStart(2,'0')}/${String(noteTotal).padStart(2,'0')}`;
+      if (evidenceCounter) evidenceCounter.textContent = `${String(evidenceDone).padStart(2,'0')}/${String(evidenceTotal).padStart(2,'0')}`;
+      if (caption) caption.textContent = `${done}/${total} nội dung bắt buộc đã hoàn thành`;
+      if (percentNode) percentNode.textContent = `${percent}%`;
+      if (fill) fill.style.width = `${percent}%`;
+    }
+
+    async function flushGarageAutosaves() {
+      garageAutosaveTimers.forEach(timer => clearTimeout(timer));
+      garageAutosaveTimers.clear();
+      document.querySelectorAll('.garage-quote-textarea-node').forEach(node => {
+        const index = Number(node.dataset.indexToken);
+        if (localActiveImageStack[index]) localActiveImageStack[index].hangMucBaoGia = node.value.trim();
+      });
+      document.querySelectorAll('.evidence-note').forEach(node => {
+        const index = Number(node.id.split('_').pop());
+        if (localActiveRequestedItems[index]) localActiveRequestedItems[index].ghiChuGarage = node.value.trim();
+      });
+      await Promise.all([
+        dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hinhAnh`).set(localActiveImageStack),
+        dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh`).set(localActiveRequestedItems)
+      ]);
     }
 
     async function pipelineTriggerGarageDataLockSubmission() {
+      if (garageUploadsInFlight > 0) return triggerToast('Ảnh đang được tải lên. Vui lòng đợi tiến trình hiện tại hoàn tất.', 'warning');
       const DOMTextareaElements = Array.from(document.querySelectorAll('.garage-quote-textarea-node'));
       const emptyFieldsCounter = DOMTextareaElements.filter(tx => !tx.value.trim()).length;
       if (emptyFieldsCounter > 0) {
-        const proceedBlank = await showConfirmModal('Phát hiện ô chưa khai báo', `Còn ${emptyFieldsCounter} ảnh hiện trạng chưa được nhập tên bộ phận. Bạn vẫn muốn tiếp tục?`);
-        if (!proceedBlank) return;
-      }
-
-      const missingEvidenceIndexes = localActiveRequestedItems.map((item,index) => {
-        const input = document.getElementById(`garageEvidenceInput_${index}`);
-        const existingImages = normalizeEvidenceImageUrls(item);
-        return existingImages.length || Number(input?.files?.length || 0) ? null : index;
-      }).filter(index => index !== null);
-      if (missingEvidenceIndexes.length) {
-        const firstIndex = missingEvidenceIndexes[0];
-        document.querySelector(`[data-evidence-dropzone="${firstIndex}"]`)?.scrollIntoView({ behavior:'smooth', block:'center' });
-        triggerToast(`Còn ${missingEvidenceIndexes.length} hạng mục chưa được Garage cung cấp ảnh.`, 'error');
+        const firstEmpty = DOMTextareaElements.find(tx => !tx.value.trim());
+        firstEmpty?.scrollIntoView({ behavior:'smooth', block:'center' });
+        triggerToast(`Còn ${emptyFieldsCounter} ảnh hiện trạng chưa được nhập tên hạng mục.`, 'error');
         return;
       }
-
-      const finalFreezeConfirmation = await showConfirmModal('Xác nhận khóa hồ sơ', 'Sau khi gửi, toàn bộ ghi chú và ảnh Garage cung cấp sẽ được khóa để Giám định viên đối chiếu. Xác nhận gửi?');
+      const missingEvidenceIndexes = localActiveRequestedItems.map((item,index) => normalizeEvidenceImageUrls(item).length ? null : index).filter(index => index !== null);
+      if (missingEvidenceIndexes.length) {
+        document.querySelector(`[data-evidence-dropzone="${missingEvidenceIndexes[0]}"]`)?.scrollIntoView({ behavior:'smooth', block:'center' });
+        triggerToast(`Còn ${missingEvidenceIndexes.length} hạng mục chưa có ảnh minh chứng.`, 'error');
+        return;
+      }
+      const finalFreezeConfirmation = await showConfirmModal('Khóa và gửi hồ sơ', 'Tất cả ghi chú và ảnh đã được lưu. Sau khi xác nhận, Garage không thể chỉnh sửa hồ sơ này nữa.');
       if (!finalFreezeConfirmation) return;
-
-      const packagedImageNotes = DOMTextareaElements.map(tx => {
-        const numericIndex = Number(tx.dataset.indexToken);
-        return { linkAnh: localActiveImageStack[numericIndex].linkAnh, hangMucBaoGia: tx.value.trim() };
-      });
-
       try {
-        const packagedEvidenceItems = await uploadGarageEvidenceItems();
-        toggleUploadOverlay(true, 'Đang khóa hồ sơ...', 'Đồng bộ kết quả cuối cùng lên Firebase...', 98);
+        toggleUploadOverlay(true, 'Đang hoàn tất hồ sơ...', 'Kiểm tra và đồng bộ dữ liệu cuối cùng...', 35);
+        await flushGarageAutosaves();
+        toggleUploadOverlay(true, 'Đang khóa hồ sơ...', 'Cập nhật trạng thái kết quả trên Firebase...', 85);
         await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}`).update({
-          hinhAnh: packagedImageNotes,
-          hangMucYeuCauAnh: packagedEvidenceItems,
+          hinhAnh: localActiveImageStack,
+          hangMucYeuCauAnh: localActiveRequestedItems,
           trangThai: STATUS_COMPLETED,
           garageSubmittedAt: firebase.database.ServerValue.TIMESTAMP
         });
-        triggerToast('Garage đã gửi đầy đủ ghi chú và ảnh minh chứng.');
-        const finalizedResultUrl = `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(localActiveCaseNode.idCa)}`;
-        window.history.replaceState({}, '', finalizedResultUrl);
-        evaluateViewRoutingState(firebase.auth().currentUser);
+        triggerToast('Garage đã gửi đầy đủ hạng mục và ảnh minh chứng.');
+        window.history.replaceState({}, '', `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(localActiveCaseNode.idCa)}`);
       } catch (err) {
         console.error(err);
         triggerToast('Lỗi đồng bộ truyền tải: ' + err.message, 'error');
-      } finally {
-        toggleUploadOverlay(false);
-      }
+      } finally { toggleUploadOverlay(false); }
     }
 
     function renderPortalResultReadOnlyView(renderMode) {
@@ -1290,7 +1715,7 @@ Tai xe trước phải"></textarea>
         <div class="workspace-section-head" style="margin-top:${localActiveImageStack.length ? '12px' : '0'}"><div><h2>02 · Ảnh Garage cung cấp theo hạng mục báo giá</h2><p>Kiểm tra trực tiếp bộ ảnh minh chứng Garage đã tải cho từng hạng mục.</p></div><div class="workspace-section-index">${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</div></div>
         ${localActiveRequestedItems.map((item,index) => {
           const urls = normalizeEvidenceImageUrls(item);
-          return `<article class="evidence-result-card"><div class="evidence-result-title"><div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div><div><h3>${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3><p>${urls.length} ảnh do Garage cung cấp</p></div></div>${urls.length ? `<div class="evidence-result-gallery">${urls.map((url,imageIndex) => `<button type="button" class="evidence-result-image" title="Mở ảnh ${imageIndex+1}" onclick="openLightbox('${escapeAttributeData(url)}')"><img src="${escapeAttributeData(url)}" alt="Ảnh Garage cung cấp ${imageIndex+1}" loading="lazy"></button>`).join('')}</div>` : `<div class="evidence-empty">Garage chưa cung cấp ảnh cho hạng mục này.</div>`}</article>`;
+          return `<article class="evidence-result-card"><div class="evidence-result-title"><div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div><div><h3>${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3><p>${urls.length} ảnh do Garage cung cấp</p></div></div>${item.ghiChuGarage ? `<div class="result-content" style="margin-bottom:14px"><strong style="display:block;margin-bottom:6px;color:var(--primary-2);font-size:9px;letter-spacing:.08em;text-transform:uppercase">Ghi chú Garage</strong>${escapeHtmlOutput(item.ghiChuGarage)}</div>` : ``}${urls.length ? `<div class="evidence-result-gallery">${urls.map((url,imageIndex) => `<button type="button" class="evidence-result-image" title="Mở ảnh ${imageIndex+1}" onclick="openLightbox('${escapeAttributeData(url)}')"><img src="${escapeAttributeData(url)}" alt="Ảnh Garage cung cấp ${imageIndex+1}" loading="lazy"></button>`).join('')}</div>` : `<div class="evidence-empty">Garage chưa cung cấp ảnh cho hạng mục này.</div>`}</article>`;
         }).join('')}` : '';
 
       rootContainer.innerHTML = `
@@ -1324,6 +1749,7 @@ Tai xe trước phải"></textarea>
       localActiveRequestedItems.forEach((item,index) => {
         outputLinesBuffer.push(`[HẠNG MỤC YÊU CẦU ẢNH SỐ ${index + 1}]`);
         outputLinesBuffer.push(`+ Tên hạng mục: ${item.tenHangMuc || ''}`);
+        if (item.ghiChuGarage) outputLinesBuffer.push(`+ Ghi chú Garage: ${item.ghiChuGarage}`);
         const urls = normalizeEvidenceImageUrls(item);
         if (urls.length) urls.forEach((url,imageIndex) => outputLinesBuffer.push(`+ Ảnh Garage ${imageIndex + 1}: ${url}`));
         else outputLinesBuffer.push('+ Ảnh Garage: Chưa cung cấp.');
