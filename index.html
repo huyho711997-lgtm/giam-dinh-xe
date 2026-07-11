@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Đối chiếu ảnh giám định xe</title>
+
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --primary: #0f766e;
+      --primary-dark: #0d5f59;
+      --danger: #dc2626;
+      --success-bg: #ecfdf5;
+      --success-text: #047857;
+      --warning-bg: #fffbeb;
+      --warning-text: #92400e;
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .page {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .header {
+      margin: 12px 0 18px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    .header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.04);
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="file"],
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 16px;
+      background: #fff;
+    }
+
+    input[type="text"]:disabled,
+    textarea:disabled {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .btn {
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      padding: 13px 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+      margin-top: 14px;
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #111827;
+    }
+
+    .btn-secondary:hover {
+      background: #030712;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .progress {
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .notice {
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+
+    .notice.success {
+      background: var(--success-bg);
+      color: var(--success-text);
+    }
+
+    .notice.warning {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+    }
+
+    .notice.error {
+      background: #fef2f2;
+      color: var(--danger);
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .meta div {
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    .image-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 16px;
+      background: #fff;
+    }
+
+    .image-item img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #f3f4f6;
+    }
+
+    .image-body {
+      padding: 12px;
+    }
+
+    .image-index {
+      display: inline-block;
+      margin-bottom: 8px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .link-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .small {
+      font-size: 13px;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (min-width: 640px) {
+      .page {
+        padding: 24px;
+      }
+
+      .header h1 {
+        font-size: 26px;
+      }
+
+      .meta {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .btn {
+        width: auto;
+        min-width: 180px;
+      }
+
+      .btn.full {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <header class="header">
+      <h1>Đối chiếu ảnh giám định xe</h1>
+      <p>Upload ảnh tổn thất và gửi link cho Garage điền hạng mục báo giá.</p>
+    </header>
+
+    <main id="app"></main>
+  </div>
+
+  <script>
+    /****************************************************
+     * CẤU HÌNH BẮT BUỘC
+     ****************************************************/
+    const CONFIG = {
+      APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxjvUTolYObrw6FVCJupbWDqqBxCnkFjEJTikZmKPmAcC1Lla62Mgfyfnq7D7pkV2elKA/exec',
+      CLOUDINARY_CLOUD_NAME: 'ug4spdjp',
+      CLOUDINARY_UPLOAD_PRESET: 'giam_dinh_xe_unsigned',
+
+      // Có thể để rỗng nếu bạn đã cấu hình folder trong Upload Preset.
+      CLOUDINARY_FOLDER: 'giam_dinh_xe'
+    };
+
+    const STATUS_DA_DIEN = 'Đã điền';
+
+    let currentGarageImages = [];
+
+    const app = document.getElementById('app');
+
+    document.addEventListener('DOMContentLoaded', init);
+
+    async function init() {
+      if (!isConfigValid()) {
+        renderConfigError();
+        return;
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      const idCa = params.get('idCa');
+
+      if (idCa) {
+        await renderGarageView(idCa);
+      } else {
+        renderOwnerView();
+      }
+    }
+
+    /****************************************************
+     * GIAO DIỆN NGƯỜI TẠO CA
+     ****************************************************/
+    function renderOwnerView() {
+      app.innerHTML = `
+        <section class="card">
+          <h2>Tạo ca giám định mới</h2>
+
+          <label for="bienSo">Biển số xe</label>
+          <input id="bienSo" type="text" placeholder="VD: 51A-123.45" autocomplete="off" />
+
+          <label for="tenGara">Tên Garage</label>
+          <input id="tenGara" type="text" placeholder="VD: Garage Minh Phát" autocomplete="off" />
+
+          <label for="images">Chọn ảnh tổn thất</label>
+          <input id="images" type="file" accept="image/*" multiple />
+
+          <p id="fileInfo" class="muted small">Chưa chọn ảnh.</p>
+
+          <button id="createBtn" class="btn full" type="button">
+            Tạo ca
+          </button>
+
+          <div id="progress" class="progress hidden"></div>
+        </section>
+
+        <section id="resultBox" class="card hidden"></section>
+      `;
+
+      document.getElementById('images').addEventListener('change', handleFileChange);
+      document.getElementById('createBtn').addEventListener('click', createCaseFlow);
+    }
+
+    function handleFileChange() {
+      const files = Array.from(document.getElementById('images').files || []);
+      const fileInfo = document.getElementById('fileInfo');
+
+      if (files.length === 0) {
+        fileInfo.textContent = 'Chưa chọn ảnh.';
+        return;
+      }
+
+      fileInfo.textContent = `Đã chọn ${files.length} ảnh.`;
+    }
+
+    async function createCaseFlow() {
+      const bienSo = document.getElementById('bienSo').value.trim();
+      const tenGara = document.getElementById('tenGara').value.trim();
+      const files = Array.from(document.getElementById('images').files || []);
+      const createBtn = document.getElementById('createBtn');
+
+      if (!bienSo) {
+        alert('Vui lòng nhập biển số xe.');
+        return;
+      }
+
+      if (!tenGara) {
+        alert('Vui lòng nhập tên Garage.');
+        return;
+      }
+
+      if (files.length === 0) {
+        alert('Vui lòng chọn ít nhất 1 ảnh tổn thất.');
+        return;
+      }
+
+      try {
+        setButtonBusy(createBtn, true, 'Đang tạo ca...');
+        setProgress(`Bắt đầu upload ${files.length} ảnh...`);
+
+        const imageLinks = await uploadImagesToCloudinary(files);
+
+        setProgress('Đã upload ảnh. Đang lưu dữ liệu vào Google Sheets...');
+
+        const apiResult = await apiPost('createCase', {
+          bienSo,
+          tenGara,
+          imageLinks
+        });
+
+        if (!apiResult.ok) {
+          throw new Error(apiResult.message || 'Tạo ca thất bại.');
+        }
+
+        const shareLink = `${getCurrentPageBaseUrl()}?idCa=${encodeURIComponent(apiResult.idCa)}`;
+
+        renderCreateSuccess(apiResult, shareLink);
+        setProgress('');
+
+      } catch (err) {
+        console.error(err);
+        alert(err.message || 'Có lỗi xảy ra khi tạo ca.');
+        setProgress('');
+      } finally {
+        setButtonBusy(createBtn, false, 'Tạo ca');
+      }
+    }
+
+    function renderCreateSuccess(apiResult, shareLink) {
+      const resultBox = document.getElementById('resultBox');
+      resultBox.classList.remove('hidden');
+
+      resultBox.innerHTML = `
+        <div class="notice success">
+          Tạo ca thành công. Bạn copy link dưới đây gửi cho Garage qua Zalo.
+        </div>
+
+        <div class="meta">
+          <div><strong>ID ca:</strong><br>${escapeHtml(apiResult.idCa)}</div>
+          <div><strong>Số ảnh:</strong><br>${escapeHtml(String(apiResult.soLuongAnh))}</div>
+          <div><strong>Biển số:</strong><br>${escapeHtml(apiResult.bienSo)}</div>
+          <div><strong>Garage:</strong><br>${escapeHtml(apiResult.tenGara)}</div>
+        </div>
+
+        <label for="shareLink">Link gửi Garage</label>
+        <div class="link-box">
+          <textarea id="shareLink" readonly>${escapeHtml(shareLink)}</textarea>
+          <button id="copyBtn" class="btn btn-secondary full" type="button">
+            Copy link
+          </button>
+        </div>
+      `;
+
+      document.getElementById('copyBtn').addEventListener('click', copyShareLink);
+    }
+
+    async function copyShareLink() {
+      const textarea = document.getElementById('shareLink');
+      const link = textarea.value;
+
+      try {
+        await navigator.clipboard.writeText(link);
+        alert('Đã copy link.');
+      } catch (err) {
+        textarea.select();
+        document.execCommand('copy');
+        alert('Đã copy link.');
+      }
+    }
+
+    /****************************************************
+     * GIAO DIỆN GARAGE
+     ****************************************************/
+    async function renderGarageView(idCa) {
+      app.innerHTML = `
+        <section class="card center">
+          <p class="progress">Đang tải dữ liệu ca giám định...</p>
+        </section>
+      `;
+
+      try {
+        const result = await apiGet({
+          action: 'getCase',
+          idCa
+        });
+
+        if (!result.ok) {
+          throw new Error(result.message || 'Không lấy được dữ liệu ca.');
+        }
+
+        renderGarageForm(result);
+
+      } catch (err) {
+        console.error(err);
+        renderError(err.message || 'Có lỗi xảy ra khi tải dữ liệu.');
+      }
+    }
+
+    function renderGarageForm(data) {
+      const ca = data.ca;
+      const images = Array.isArray(data.hinhAnh) ? data.hinhAnh : [];
+      const locked = Boolean(data.locked || ca.trangThai === STATUS_DA_DIEN);
+
+      currentGarageImages = images;
+
+      const imageHtml = images.map((item, index) => {
+        return `
+          <div class="image-item">
+            <img src="${escapeAttr(item.linkAnh)}" alt="Ảnh tổn thất ${index + 1}" loading="lazy" />
+
+            <div class="image-body">
+              <span class="image-index">Ảnh ${index + 1}</span>
+
+              <label>Hạng mục báo giá Garage</label>
+              <input
+                class="quoteInput"
+                data-index="${index}"
+                type="text"
+                placeholder="VD: Thay cản trước / Sơn cửa trước trái"
+                value="${escapeAttr(item.hangMucBaoGia || '')}"
+                ${locked ? 'disabled' : ''}
+              />
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      app.innerHTML = `
+        <section class="card">
+          <h2>Garage điền hạng mục báo giá</h2>
+
+          <div class="meta">
+            <div><strong>ID ca:</strong><br>${escapeHtml(ca.idCa)}</div>
+            <div><strong>Trạng thái:</strong><br>${escapeHtml(ca.trangThai)}</div>
+            <div><strong>Biển số:</strong><br>${escapeHtml(ca.bienSo)}</div>
+            <div><strong>Garage:</strong><br>${escapeHtml(ca.tenGara)}</div>
+          </div>
+
+          ${
+            locked
+              ? `<div class="notice success">Ca này đã được gửi. Form đã khóa để tránh chỉnh sửa nhầm.</div>`
+              : `<div class="notice warning">Vui lòng xem từng ảnh và nhập đúng tên hạng mục theo báo giá của Garage.</div>`
+          }
+        </section>
+
+        <section>
+          ${
+            images.length > 0
+              ? imageHtml
+              : `<div class="card notice error">Ca này chưa có ảnh.</div>`
+          }
+        </section>
+
+        ${
+          !locked && images.length > 0
+            ? `
+              <section id="garageActions" class="card">
+                <button id="submitGarageBtn" class="btn full" type="button">
+                  Xác nhận gửi
+                </button>
+                <p class="muted small">
+                  Sau khi gửi, form sẽ bị khóa và không thể gửi lại.
+                </p>
+              </section>
+            `
+            : ''
+        }
+      `;
+
+      if (!locked && images.length > 0) {
+        document.getElementById('submitGarageBtn').addEventListener('click', function () {
+          submitGarageItems(ca.idCa);
+        });
+      }
+    }
+
+    async function submitGarageItems(idCa) {
+      const submitBtn = document.getElementById('submitGarageBtn');
+      const inputs = Array.from(document.querySelectorAll('.quoteInput'));
+
+      const blankCount = inputs.filter(input => !input.value.trim()).length;
+
+      if (blankCount > 0) {
+        const ok = confirm(`Còn ${blankCount} ảnh chưa nhập hạng mục. Bạn vẫn muốn gửi?`);
+        if (!ok) return;
+      }
+
+      const confirmSend = confirm('Sau khi gửi, form sẽ bị khóa. Xác nhận gửi?');
+      if (!confirmSend) return;
+
+      const items = inputs.map(input => {
+        const index = Number(input.dataset.index);
+        const img = currentGarageImages[index];
+
+        return {
+          linkAnh: img.linkAnh,
+          hangMucBaoGia: input.value.trim()
+        };
+      });
+
+      try {
+        setButtonBusy(submitBtn, true, 'Đang gửi...');
+
+        const result = await apiPost('submitQuoteItems', {
+          idCa,
+          items
+        });
+
+        if (!result.ok) {
+          throw new Error(result.message || 'Gửi dữ liệu thất bại.');
+        }
+
+        inputs.forEach(input => {
+          input.disabled = true;
+        });
+
+        const actions = document.getElementById('garageActions');
+        actions.innerHTML = `
+          <div class="notice success">
+            Đã gửi thành công. Form đã được khóa.
+          </div>
+        `;
+
+      } catch (err) {
+        console.error(err);
+        alert(err.message || 'Có lỗi xảy ra khi gửi dữ liệu.');
+        setButtonBusy(submitBtn, false, 'Xác nhận gửi');
+      }
+    }
+
+    /****************************************************
+     * CLOUDINARY UPLOAD
+     ****************************************************/
+    async function uploadImagesToCloudinary(files) {
+      const links = [];
+
+      for (let i = 0; i < files.length; i++) {
+        setProgress(`Đang upload ảnh ${i + 1}/${files.length}...`);
+
+        const link = await uploadOneImageToCloudinary(files[i]);
+        links.push(link);
+      }
+
+      return links;
+    }
+
+    async function uploadOneImageToCloudinary(file) {
+      const cloudName = CONFIG.CLOUDINARY_CLOUD_NAME;
+      const uploadPreset = CONFIG.CLOUDINARY_UPLOAD_PRESET;
+
+      const url = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/image/upload`;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', uploadPreset);
+
+      if (CONFIG.CLOUDINARY_FOLDER) {
+        formData.append('folder', CONFIG.CLOUDINARY_FOLDER);
+      }
+
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await readJsonSafe(response);
+
+      if (!response.ok || !data.secure_url) {
+        const msg = data.error && data.error.message
+          ? data.error.message
+          : 'Upload ảnh lên Cloudinary thất bại.';
+
+        throw new Error(msg);
+      }
+
+      return data.secure_url;
+    }
+
+    /****************************************************
+     * API GOOGLE APPS SCRIPT
+     ****************************************************/
+    async function apiGet(params) {
+      const url = new URL(CONFIG.APPS_SCRIPT_URL);
+
+      Object.keys(params).forEach(key => {
+        url.searchParams.set(key, params[key]);
+      });
+
+      const response = await fetch(url.toString(), {
+        method: 'GET'
+      });
+
+      return await readJsonSafe(response);
+    }
+
+    async function apiPost(action, payload) {
+      const body = {
+        action,
+        ...payload
+      };
+
+      /*
+       * Quan trọng:
+       * Không set header Content-Type: application/json.
+       * Làm vậy để tránh CORS preflight khi gọi Apps Script từ GitHub Pages.
+       * Apps Script vẫn đọc được JSON qua e.postData.contents.
+       */
+      const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(body)
+      });
+
+      return await readJsonSafe(response);
+    }
+
+    async function readJsonSafe(response) {
+      const text = await response.text();
+
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        throw new Error('Server không trả về JSON hợp lệ.');
+      }
+    }
+
+    /****************************************************
+     * TIỆN ÍCH GIAO DIỆN
+     ****************************************************/
+    function setProgress(message) {
+      const progress = document.getElementById('progress');
+
+      if (!progress) return;
+
+      if (!message) {
+        progress.classList.add('hidden');
+        progress.textContent = '';
+      } else {
+        progress.classList.remove('hidden');
+        progress.textContent = message;
+      }
+    }
+
+    function setButtonBusy(button, isBusy, busyText) {
+      if (!button) return;
+
+      if (isBusy) {
+        button.dataset.originalText = button.textContent;
+        button.textContent = busyText;
+        button.disabled = true;
+      } else {
+        button.textContent = button.dataset.originalText || button.textContent;
+        button.disabled = false;
+      }
+    }
+
+    function renderError(message) {
+      app.innerHTML = `
+        <section class="card">
+          <div class="notice error">
+            ${escapeHtml(message)}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderConfigError() {
+      app.innerHTML = `
+        <section class="card">
+          <h2>Chưa cấu hình ứng dụng</h2>
+
+          <div class="notice error">
+            Bạn cần thay APPS_SCRIPT_URL, CLOUDINARY_CLOUD_NAME và CLOUDINARY_UPLOAD_PRESET trong file index.html.
+          </div>
+        </section>
+      `;
+    }
+
+    function isConfigValid() {
+      return (
+        CONFIG.APPS_SCRIPT_URL &&
+        !CONFIG.APPS_SCRIPT_URL.includes('PASTE_') &&
+        CONFIG.CLOUDINARY_CLOUD_NAME &&
+        !CONFIG.CLOUDINARY_CLOUD_NAME.includes('PASTE_') &&
+        CONFIG.CLOUDINARY_UPLOAD_PRESET &&
+        !CONFIG.CLOUDINARY_UPLOAD_PRESET.includes('PASTE_')
+      );
+    }
+
+    function getCurrentPageBaseUrl() {
+      const withoutQuery = window.location.href.split('?')[0].split('#')[0];
+      return withoutQuery.replace(/index\.html$/i, '');
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value);
+    }
+  </script>
+</body>
+</html>
