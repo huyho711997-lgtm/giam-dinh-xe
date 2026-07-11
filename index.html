@@ -10,8 +10,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
+  <!-- Firebase Core, Database và Core Auth Engine Modules -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -257,12 +259,16 @@
     .p-progress-bar.active { display: block; }
     .p-progress-fill { height: 100%; width: 0%; background: var(--primary-gradient); transition: width 0.2s ease; }
 
-    /* Lightbox Custom block */
+    /* Lightbox Premium Custom block */
     .premium-lightbox { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 2000; display: none; place-items: center; padding: 16px; opacity: 0; transition: opacity 0.2s ease; }
     .premium-lightbox.show { display: grid; opacity: 1; }
     .premium-lightbox img { max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: var(--radius-md); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
     .lightbox-close-btn { position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.1); border: none; color: #fff; font-size: 24px; cursor: pointer; display: grid; place-items: center; }
     .empty-state-text { text-align: center; color: var(--text-muted); font-style: italic; padding: 24px 16px; font-size: 14px; }
+
+    /* Login System Box Matrix Layout */
+    .login-wrapper { display: flex; justify-content: center; align-items: center; min-height: 55vh; padding: 12px; width: 100%; }
+    .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px 24px; max-width: 400px; width: 100%; box-shadow: var(--shadow-premium); text-align: center; }
   </style>
 </head>
 <body>
@@ -270,7 +276,7 @@
   <!-- Hệ thống Toast thông báo -->
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Màn hình chờ tải lên song song công công công nghệ cao -->
+  <!-- Màn hình chờ tải lên song song -->
   <div id="uploadOverlay" class="upload-overlay">
     <div class="upload-overlay-card">
       <div class="spinner-premium"></div>
@@ -295,6 +301,7 @@
   </div>
 
   <div class="app-container">
+    <!-- Header App Bar Space -->
     <nav class="premium-nav">
       <div class="nav-brand" id="navBrandClick">
         <div class="nav-logo">
@@ -305,6 +312,8 @@
           <p>Hệ thống Giám định & Đối chiếu tổn thất xe cơ giới thời gian thực</p>
         </div>
       </div>
+      <!-- Khu vực chứa nút Đăng xuất Firebase -->
+      <div id="navUserActionSpace"></div>
     </nav>
 
     <main id="appRoot"></main>
@@ -344,7 +353,9 @@
       EXTERNAL: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`,
       COPY: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
       TRASH: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
-      SPARKLES: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707"/></svg>`
+      SPARKLES: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707"/></svg>`,
+      LOCK: `<svg class="svg-icon svg-icon-lg" style="color:var(--primary); margin-bottom:12px;" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+      LOGOUT: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`
     };
 
     const rootContainer = document.getElementById('appRoot');
@@ -352,33 +363,6 @@
     let localActiveCaseNode = null;
     let localActiveImageStack = [];
     let activeObjectUrls = []; 
-
-    function showConfirmModal(title, msg) {
-      return new Promise((resolve) => {
-        const overlay = document.getElementById('modalOverlay');
-        document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalMsg').textContent = msg;
-        overlay.style.display = 'grid';
-        
-        const cleanUp = (res) => {
-          overlay.style.display = 'none';
-          document.getElementById('modalConfirm').onclick = null;
-          document.getElementById('modalCancel').onclick = null;
-          resolve(res);
-        };
-        document.getElementById('modalConfirm').onclick = () => cleanUp(true);
-        document.getElementById('modalCancel').onclick = () => cleanUp(false);
-      });
-    }
-
-    function triggerToast(message, type = 'success') {
-      const container = document.getElementById('toastContainer');
-      const element = document.createElement('div');
-      element.className = `toast ${type}`;
-      element.textContent = message;
-      container.appendChild(element);
-      setTimeout(() => element.remove(), 4000);
-    }
 
     document.addEventListener('DOMContentLoaded', initApplicationState);
 
@@ -389,18 +373,48 @@
       }
       firebase.initializeApp(CONFIG.FIREBASE);
       dbNodeInstance = firebase.database();
-      evaluateViewRoutingState();
+
+      // ĐA NÂNG CẤP: Gắn cổng lắng nghe trạng thái đăng nhập Firebase Auth toàn cục
+      firebase.auth().onAuthStateChanged((userInstance) => {
+        evaluateViewRoutingState(userInstance);
+      });
     }
 
-    function evaluateViewRoutingState() {
+    // ĐA NÂNG CẤP: Đọc tham số định tuyến và kiểm tra quyền của Firebase Auth User Object
+    function evaluateViewRoutingState(userInstance) {
       const URLQueryStrings = new URLSearchParams(window.location.search);
       const caseIdToken = URLQueryStrings.get('idCa');
       const targetedViewArg = URLQueryStrings.get('view');
       const brandElement = document.getElementById('navBrandClick');
+      const userActionSpace = document.getElementById('navUserActionSpace');
 
+      const isManagementRoute = !caseIdToken || targetedViewArg === 'result';
+      const isUserAuthenticated = !!userInstance;
+
+      // Hủy lắng nghe cũ chống lag bộ nhớ
       dbNodeInstance.ref('cases').off();
       if (localActiveCaseNode && localActiveCaseNode.idCa) {
         dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}`).off();
+      }
+
+      // KIỂM TRA BẢO MẬT: Nếu là trang quản lý mà chưa đăng nhập -> Chặn và kích hoạt Login Card
+      if (isManagementRoute && !isUserAuthenticated) {
+        if (brandElement) {
+          brandElement.style.cursor = 'default';
+          brandElement.onclick = null;
+        }
+        if (userActionSpace) userActionSpace.innerHTML = '';
+        renderLoginView();
+        return;
+      }
+
+      // Hiển thị nút đăng xuất nếu đang ở giao diện quản lý và đã login thành công
+      if (isUserAuthenticated && isManagementRoute) {
+        if (userActionSpace) {
+          userActionSpace.innerHTML = `<button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; gap:6px; min-height:36px;" onclick="executeLogoutFlow()">${SVGS.LOGOUT} Đăng xuất</button>`;
+        }
+      } else {
+        if (userActionSpace) userActionSpace.innerHTML = '';
       }
 
       if (!caseIdToken) {
@@ -427,7 +441,76 @@
 
     function goHome() {
       window.history.pushState({}, '', getCleanOriginBaseUrl());
-      evaluateViewRoutingState();
+      evaluateViewRoutingState(firebase.auth().currentUser);
+    }
+
+    /****************************************************
+     * 0. CỔNG XÁC THỰC FIREBASE AUTH (LOGIN VIEW PORTAL)
+     ****************************************************/
+    function renderLoginView() {
+      rootContainer.innerHTML = `
+        <div class="login-wrapper">
+          <div class="login-card">
+            <div>${SVGS.LOCK}</div>
+            <h2 style="font-size:18px; font-weight:800; color:var(--text-main);">Xác thực Giám định viên</h2>
+            <p style="font-size:13px; color:var(--text-muted); margin-top:4px; margin-bottom:24px;">Hệ thống yêu cầu đăng nhập tài khoản đám mây.</p>
+            
+            <div class="form-group" style="text-align:left;">
+              <label>Email nghiệp vụ</label>
+              <input id="txtEmailInput" class="input-premium" type="email" placeholder="gdv@baohiem.com" autocomplete="username" />
+            </div>
+            
+            <div class="form-group" style="text-align:left;">
+              <label>Mật khẩu mật định</label>
+              <input id="txtPasswordInput" class="input-premium" type="password" placeholder="••••••••" autocomplete="current-password" />
+            </div>
+
+            <button id="btnLoginSubmit" class="btn-premium" style="margin-top:8px; width:100%;">Đăng nhập hệ thống</button>
+          </div>
+        </div>
+      `;
+
+      const emailField = document.getElementById('txtEmailInput');
+      const passwordField = document.getElementById('txtPasswordInput');
+      const submitBtn = document.getElementById('btnLoginSubmit');
+
+      const executeFirebaseLoginAction = () => {
+        const email = emailField.value.trim();
+        const password = passwordField.value;
+
+        if (!email || !password) {
+          triggerToast('Vui lòng điền đầy đủ Email và Mật khẩu.', 'error');
+          return;
+        }
+
+        toggleButtonUIPendingState(submitBtn, true, 'Đang xác thực bảo mật...');
+
+        // Gọi API của Firebase Auth Engine
+        firebase.auth().signInWithEmailAndPassword(email, password)
+          .then(() => {
+            triggerToast('Đăng nhập thành công!');
+            // Trạng thái onAuthStateChanged sẽ tự động bắt được và re-render giao diện quản trị
+          })
+          .catch((error) => {
+            console.error(error);
+            triggerToast(error.message || 'Tài khoản hoặc mật khẩu không chính xác.', 'error');
+            toggleButtonUIPendingState(submitBtn, false, 'Đăng nhập hệ thống');
+            passwordField.value = '';
+            passwordField.focus();
+          });
+      };
+
+      submitBtn.addEventListener('click', executeFirebaseLoginAction);
+      passwordField.addEventListener('keydown', (e) => { if (e.key === 'Enter') executeFirebaseLoginAction(); });
+      emailField.focus();
+    }
+
+    function executeLogoutFlow() {
+      firebase.auth().signOut().then(() => {
+        triggerToast('Đã đăng xuất khỏi phiên làm việc an toàn.', 'warning');
+      }).catch((err) => {
+        triggerToast('Lỗi tiến trình đăng xuất: ' + err.message, 'error');
+      });
     }
 
     /****************************************************
@@ -524,11 +607,6 @@
       dbNodeInstance.ref('cases').on('value', (dataSnapshot) => {
         executeUIRenderCasesTable(dataSnapshot.val());
       });
-    }
-
-    function clearActiveObjectUrls() {
-      activeObjectUrls.forEach(url => URL.revokeObjectURL(url));
-      activeObjectUrls = [];
     }
 
     function executeImageFilesPreviewBinding() {
@@ -628,7 +706,7 @@
     }
 
     /****************************************************
-     * ĐÃ NÂNG CẤP: LUỒNG TẢI ẢNH SONG SONG + MÀN HÌNH CHỜ
+     * LUỒNG TẢI ẢNH SONG SONG + MÀN HÌNH CHỜ
      ****************************************************/
     async function pipelineTriggerCaseCreationFlow() {
       const plateInputVal = document.getElementById('txtPlateNumber').value.trim();
@@ -640,11 +718,9 @@
         return;
       }
 
-      // Kích hoạt màn hình chờ toàn diện UI
       toggleUploadOverlay(true, `Đang khởi tạo ${imagesFileList.length} ảnh tổn thất...`, 'Kết nối hạ tầng Cloudinary API', 0);
 
       try {
-        // Thực thi luồng xử lý tải song song (Parallel Promise Stream Pooling)
         const secureHostedImageUrlsArray = await executionParallelImagesUploadCore(imagesFileList);
         
         toggleUploadOverlay(true, 'Đang ghi nhận cấu trúc dữ liệu...', 'Đồng bộ thời gian thực với Firebase...', 95);
@@ -670,7 +746,6 @@
 
         renderInlineCreationSuccessPanel(finalPayloadStructure);
 
-        // Đóng form
         document.getElementById('txtPlateNumber').value = '';
         document.getElementById('txtGaragePartner').value = '';
         document.getElementById('fileImageUploader').value = '';
@@ -681,22 +756,19 @@
         console.error(exception);
         triggerToast(exception.message || 'Lỗi nghẽn mạng phát sinh trong tiến trình upload song song.', 'error');
       } finally {
-        toggleUploadOverlay(false); // Đóng màn hình chờ tải lên
+        toggleUploadOverlay(false); 
       }
     }
 
-    // Công cụ lõi xử lý Multi-thread Upload song song
     async function executionParallelImagesUploadCore(filesArray) {
       let resolvedCounter = 0;
       const totalFilesCount = filesArray.length;
 
-      // Map danh sách mảng thành tập hợp các Promise bất đồng bộ chạy đồng thời
       const parallelPromisesPool = filesArray.map(async (fileItem) => {
         try {
           const cloudSecureUrl = await uploadSingleImageToCloudinaryEngine(fileItem);
           resolvedCounter++;
           
-          // Tính toán phần trăm hoàn thành thực tế dựa theo số luồng phản hồi thành công
           const accumulatedPercentage = Math.round((resolvedCounter / totalFilesCount) * 100);
           toggleUploadOverlay(true, `Đang truyền tải ảnh tổn thất (${resolvedCounter}/${totalFilesCount})`, `Băng thông đám mây tốc độ cao: ${accumulatedPercentage}%`, accumulatedPercentage);
           
@@ -706,7 +778,6 @@
         }
       });
 
-      // Kích nổ toàn bộ các Request đồng thời, gom kết quả trả về trong một mảng sau cùng
       return await Promise.all(parallelPromisesPool);
     }
 
@@ -931,7 +1002,7 @@
         triggerToast('Hồ sơ báo giá bộ phận cơ giới đã được khóa an toàn.');
         const finalizedResultUrl = `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(localActiveCaseNode.idCa)}`;
         window.history.replaceState({}, '', finalizedResultUrl);
-        evaluateViewRoutingState();
+        evaluateViewRoutingState(firebase.auth().currentUser);
       } catch (err) {
         console.error(err);
         triggerToast('Lỗi nghẽn mạng đồng bộ: ' + err.message, 'error');
@@ -1041,6 +1112,36 @@
       `;
     }
 
+    function updateProgressBarIndicator(statusMsg, percentageProgressValue) {
+      const containerBar = document.getElementById('creationProgressContainer');
+      const textLabel = document.getElementById('lblCreationStatus');
+      const barFillNode = document.getElementById('creationProgressFill');
+      
+      if (!containerBar || !textLabel || !barFillNode) return;
+
+      if (!statusMsg) {
+        containerBar.classList.remove('active');
+        textLabel.style.display = 'none';
+        return;
+      }
+      containerBar.classList.add('active');
+      textLabel.style.display = 'block';
+      textLabel.textContent = statusMsg;
+      barFillNode.style.width = `${Math.max(0, Math.min(100, percentageProgressValue))}%`;
+    }
+
+    function toggleButtonUIPendingState(buttonDomNode, isBusyState, overlayTextValue) {
+      if (!buttonDomNode) return;
+      if (isBusyState) {
+        buttonDomNode.setAttribute('data-preserved-text', buttonDomNode.textContent);
+        buttonDomNode.textContent = overlayTextValue;
+        buttonDomNode.disabled = true;
+      } else {
+        buttonDomNode.textContent = buttonDomNode.getAttribute('data-preserved-text') || overlayTextValue;
+        buttonDomNode.disabled = false;
+      }
+    }
+
     function executeTextCopyToClipboardRawString(textStringPayload) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(textStringPayload)
@@ -1086,7 +1187,6 @@
       return String(unsafeStringValue || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
     }
 
-    // Escape dữ liệu attribute an toàn chống XSS độc hại
     function escapeAttributeData(unsafeAttrValue) { return escapeHtmlOutput(unsafeAttrValue); }
   </script>
 </body>
