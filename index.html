@@ -113,6 +113,15 @@
     .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 5px rgba(72,215,161,.09), 0 0 18px rgba(72,215,161,.45); }
     @media (max-width: 650px) { .nav-titles p { display: none; } .nav-titles h1 { font-size: 13px; } .premium-nav { top: 10px; } }
 
+    .nav-user-zone { display: flex; align-items: center; gap: 9px; }
+    .nav-user-card { min-width: 0; display: flex; align-items: center; gap: 10px; padding: 6px 10px 6px 7px; border: 1px solid var(--border); border-radius: 14px; background: rgba(255,255,255,.03); }
+    .nav-user-avatar { width: 34px; height: 34px; display: grid; place-items: center; flex: 0 0 auto; color: #171209; border: 1px solid rgba(245,220,156,.4); border-radius: 11px; background: var(--primary-gradient); font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 800; }
+    .nav-user-copy { min-width: 0; max-width: 210px; }
+    .nav-user-copy strong { display: block; overflow: hidden; color: var(--text-soft); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .nav-user-copy span { display: block; overflow: hidden; color: var(--text-muted); font-size: 8px; font-weight: 700; letter-spacing: .06em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+    .nav-logout-icon { width: 38px; min-height: 38px; padding: 0; }
+    @media (max-width: 720px) { .nav-user-copy { display: none; } .nav-user-card { padding: 4px; } .nav-user-avatar { width: 32px; height: 32px; } .nav-logout-icon { width: 34px; min-height: 34px; } }
+
     .hero-panel {
       position: relative;
       isolation: isolate;
@@ -136,6 +145,10 @@
     .hero-panel h2 { max-width: 760px; font-size: clamp(30px, 5vw, 57px); font-weight: 700; line-height: 1.04; letter-spacing: -.055em; }
     .hero-panel h2 span { color: var(--primary-2); }
     .hero-panel p { max-width: 680px; margin-top: 16px; color: var(--text-muted); font-size: clamp(13px, 1.4vw, 15px); }
+    .hero-user-inline { width: fit-content; max-width: 100%; display: flex; align-items: center; gap: 10px; margin-top: 21px; padding: 8px 12px 8px 8px; border: 1px solid var(--border); border-radius: 14px; background: rgba(255,255,255,.03); }
+    .hero-user-inline .nav-user-avatar { width: 36px; height: 36px; }
+    .hero-user-inline strong { display: block; color: var(--text-soft); font-size: 11px; }
+    .hero-user-inline span { display: block; overflow: hidden; max-width: 310px; margin-top: 2px; color: var(--text-muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
     .hero-signature { display: grid; justify-items: end; gap: 12px; padding-bottom: 2px; }
     .hero-signature .seal { width: 82px; height: 82px; display: grid; place-items: center; border: 1px solid rgba(216,180,109,.24); border-radius: 50%; color: var(--primary-2); background: rgba(216,180,109,.045); box-shadow: inset 0 0 35px rgba(216,180,109,.04); }
     .hero-signature .seal .svg-icon { width: 32px; height: 32px; }
@@ -182,8 +195,9 @@
       transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
     }
     .input-premium { height: 50px; padding: 0 15px; font-size: 13px; }
-    .input-premium::placeholder, .inputs-entry-pane textarea::placeholder { color: #505968; }
-    .input-premium:focus, .inputs-entry-pane textarea:focus { border-color: rgba(216,180,109,.62); background: rgba(5,8,13,.88); box-shadow: 0 0 0 4px rgba(216,180,109,.07), 0 16px 40px rgba(0,0,0,.2); }
+    .textarea-premium { width: 100%; min-height: 126px; padding: 14px 15px; outline: none; resize: vertical; color: var(--text-main); border: 1px solid var(--border); border-radius: 13px; background: rgba(4,7,11,.62); font-size: 13px; line-height: 1.65; transition: border-color var(--transition), box-shadow var(--transition), background var(--transition); }
+    .input-premium::placeholder, .textarea-premium::placeholder, .inputs-entry-pane textarea::placeholder { color: #505968; }
+    .input-premium:focus, .textarea-premium:focus, .inputs-entry-pane textarea:focus { border-color: rgba(216,180,109,.62); background: rgba(5,8,13,.88); box-shadow: 0 0 0 4px rgba(216,180,109,.07), 0 16px 40px rgba(0,0,0,.2); }
 
     .dropzone { position: relative; overflow: hidden; display: grid; place-items: center; min-height: 178px; padding: 28px 18px; cursor: pointer; text-align: center; border: 1px dashed rgba(216,180,109,.33); border-radius: 18px; background: linear-gradient(145deg, rgba(216,180,109,.055), rgba(255,255,255,.012)); transition: border-color var(--transition), background var(--transition), transform var(--transition); }
     .dropzone:hover, .dropzone.is-dragging { transform: translateY(-2px); border-color: var(--primary-2); background: linear-gradient(145deg, rgba(216,180,109,.1), rgba(255,255,255,.025)); }
@@ -197,6 +211,13 @@
     .preview-thumb { position: relative; overflow: hidden; aspect-ratio: 1; border: 1px solid var(--border); border-radius: 11px; background: #080b11; }
     .preview-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
     .preview-thumb:hover img { transform: scale(1.06); }
+    .request-helper { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; color: var(--text-muted); font-size: 10px; }
+    .request-helper strong { color: var(--primary-2); font-family: 'JetBrains Mono'; font-size: 10px; }
+    .requested-items-preview { display: grid; gap: 7px; margin-top: 11px; }
+    .requested-item-chip { display: grid; grid-template-columns: 25px minmax(0,1fr); gap: 9px; align-items: center; padding: 9px 10px; color: var(--text-soft); border: 1px solid var(--border); border-radius: 11px; background: rgba(255,255,255,.025); font-size: 10px; }
+    .requested-item-chip span { width: 25px; height: 25px; display: grid; place-items: center; color: var(--primary-2); border: 1px solid rgba(216,180,109,.18); border-radius: 8px; background: rgba(216,180,109,.045); font-family: 'JetBrains Mono'; font-size: 8px; font-weight: 700; }
+    .workflow-divider { display: flex; align-items: center; gap: 10px; margin: 23px 0 18px; color: var(--text-muted); font-size: 8px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .workflow-divider::before, .workflow-divider::after { content: ''; height: 1px; flex: 1; background: var(--border); }
 
     .btn-premium { min-height: 46px; width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 9px; appearance: none; cursor: pointer; text-decoration: none; color: #171209; border: 1px solid rgba(245,220,156,.42); border-radius: 13px; background: var(--primary-gradient); box-shadow: 0 12px 28px rgba(155,108,34,.2), inset 0 1px rgba(255,255,255,.28); font-size: 12px; font-weight: 800; letter-spacing: .01em; transition: transform var(--transition), filter var(--transition), box-shadow var(--transition), border-color var(--transition); }
     .btn-premium:hover { transform: translateY(-2px); filter: brightness(1.06); box-shadow: 0 16px 34px rgba(155,108,34,.28), inset 0 1px rgba(255,255,255,.3); }
@@ -282,6 +303,12 @@
     .portal-topbar p { margin-top: 6px; color: var(--text-muted); font-size: 12px; }
     .portal-counter { min-width: 118px; padding: 14px 16px; color: var(--text-muted); border: 1px solid var(--border); border-radius: 15px; background: rgba(255,255,255,.025); text-align: right; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
     .portal-counter strong { display: block; margin-top: 3px; color: var(--primary-2); font-family: 'JetBrains Mono'; font-size: 20px; letter-spacing: -.04em; }
+    .portal-counter-stack { display: flex; gap: 9px; }
+    .portal-counter-stack .portal-counter { min-width: 112px; }
+    .workspace-section-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 6px 3px 2px; }
+    .workspace-section-head h2 { font-size: 15px; font-weight: 800; letter-spacing: -.025em; }
+    .workspace-section-head p { margin-top: 3px; color: var(--text-muted); font-size: 10px; }
+    .workspace-section-index { color: var(--primary); font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 700; letter-spacing: .08em; }
     .focus-portal-layout { display: grid; grid-template-columns: 330px minmax(0,1fr); gap: 20px; align-items: start; }
     .sticky-sidebar { position: sticky; top: 105px; padding: 24px; }
     .case-id-chip { margin-bottom: 18px; padding: 13px; border: 1px dashed rgba(216,180,109,.2); border-radius: 13px; background: rgba(216,180,109,.035); }
@@ -306,8 +333,24 @@
     .inputs-entry-pane textarea { min-height: 180px; padding: 16px; resize: vertical; font-size: 13px; line-height: 1.65; }
     .result-content { min-height: 165px; padding: 18px; color: var(--text-soft); border: 1px solid var(--border); border-left: 2px solid var(--primary); border-radius: 13px; background: rgba(4,7,11,.55); font-size: 13px; font-weight: 600; line-height: 1.75; white-space: pre-wrap; }
     .result-content.is-empty { color: var(--text-muted); font-weight: 500; font-style: italic; }
+    .evidence-request-card { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-sm); }
+    .evidence-request-head { display: grid; grid-template-columns: 48px minmax(0,1fr); gap: 15px; align-items: center; padding: 21px 23px; border-bottom: 1px solid var(--border); background: linear-gradient(120deg, rgba(216,180,109,.05), transparent 55%); }
+    .evidence-request-number { width: 48px; height: 48px; display: grid; place-items: center; color: var(--primary-2); border: 1px solid rgba(216,180,109,.2); border-radius: 15px; background: rgba(216,180,109,.05); font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 700; }
+    .evidence-request-head small { display: block; color: var(--text-muted); font-size: 8px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+    .evidence-request-head h3 { margin-top: 5px; color: var(--text-main); font-size: 15px; line-height: 1.45; }
+    .evidence-request-body { padding: 21px 23px 23px; }
+    .evidence-dropzone { min-height: 140px; }
+    .evidence-preview-grid, .evidence-result-gallery { display: grid; grid-template-columns: repeat(auto-fill,minmax(105px,1fr)); gap: 9px; margin-top: 13px; }
+    .evidence-preview-item, .evidence-result-image { position: relative; overflow: hidden; aspect-ratio: 4/3; padding: 0; cursor: pointer; border: 1px solid var(--border); border-radius: 12px; background: #06080c; }
+    .evidence-preview-item img, .evidence-result-image img { width: 100%; height: 100%; object-fit: cover; }
+    .evidence-preview-item span { position: absolute; right: 6px; bottom: 6px; padding: 4px 6px; color: #fff; border-radius: 7px; background: rgba(5,7,11,.76); font-size: 8px; }
+    .evidence-result-card { padding: 22px; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-sm); }
+    .evidence-result-title { display: flex; align-items: flex-start; gap: 13px; }
+    .evidence-result-title h3 { font-size: 15px; line-height: 1.45; }
+    .evidence-result-title p { margin-top: 4px; color: var(--text-muted); font-size: 10px; }
+    .evidence-empty { margin-top: 14px; padding: 22px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 13px; text-align: center; font-size: 11px; }
     @media (max-width: 1050px) { .focus-portal-layout { grid-template-columns: 1fr; } .sticky-sidebar { position: static; } }
-    @media (max-width: 760px) { .portal-topbar { grid-template-columns: 1fr; padding: 21px; } .portal-counter { text-align: left; } .premium-image-card { grid-template-columns: 1fr; } .img-display-pane { min-height: 280px; border-right: 0; border-bottom: 1px solid var(--border); } .inputs-entry-pane { padding: 21px; } }
+    @media (max-width: 760px) { .portal-topbar { grid-template-columns: 1fr; padding: 21px; } .portal-counter-stack { display: grid; grid-template-columns: 1fr 1fr; } .portal-counter { text-align: left; } .premium-image-card { grid-template-columns: 1fr; } .img-display-pane { min-height: 280px; border-right: 0; border-bottom: 1px solid var(--border); } .inputs-entry-pane { padding: 21px; } }
 
     .login-wrapper { min-height: calc(100vh - 40px); display: grid; grid-template-columns: minmax(0,1.2fr) minmax(340px,.8fr); overflow: hidden; border: 1px solid var(--border); border-radius: 32px; background: linear-gradient(120deg, rgba(16,22,31,.97), rgba(6,9,14,.95)); box-shadow: var(--shadow-lg); }
     .login-visual { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; min-height: 650px; padding: clamp(35px,6vw,75px); border-right: 1px solid var(--border); }
@@ -447,6 +490,8 @@
       SEARCH: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="20" y1="20" x2="16.65" y2="16.65"/></svg>`,
       CAR: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 11l2-5h14l2 5"/><path d="M5 11h14a2 2 0 0 1 2 2v5H3v-5a2 2 0 0 1 2-2Z"/><circle cx="7" cy="15" r="1"/><circle cx="17" cy="15" r="1"/></svg>`,
       IMAGE: `<svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
+      USER: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>`,
+      UPLOAD: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 16V4"/><polyline points="7 9 12 4 17 9"/><path d="M5 20h14"/></svg>`,
       LOGOUT: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`
     };
 
@@ -454,7 +499,9 @@
     let dbNodeInstance = null;
     let localActiveCaseNode = null;
     let localActiveImageStack = [];
+    let localActiveRequestedItems = [];
     let activeObjectUrls = [];
+    let garageEvidenceObjectUrls = [];
     let cachedCasesPayload = null;
     let activeCaseFilter = 'all'; 
 
@@ -508,13 +555,11 @@
         if (mainNavBarDOM) mainNavBarDOM.style.display = 'flex';
       }
 
-      // Thiết lập nút Đăng xuất an toàn cho Giám định viên
+      // Hiển thị đầy đủ người dùng đang đăng nhập và thao tác đăng xuất
       if (isUserAuthenticated && isManagementRoute) {
-        if (userActionSpace) {
-          userActionSpace.innerHTML = `<button class="btn-premium btn-secondary btn-inline" onclick="executeLogoutFlow()">${SVGS.LOGOUT} Đăng xuất</button>`;
-        }
-      } else {
-        if (userActionSpace) userActionSpace.innerHTML = '';
+        renderNavigationUserProfile(userInstance, userActionSpace);
+      } else if (userActionSpace) {
+        userActionSpace.innerHTML = '';
       }
 
       if (!caseIdToken) {
@@ -542,6 +587,27 @@
     function goHome() {
       window.history.pushState({}, '', getCleanOriginBaseUrl());
       evaluateViewRoutingState(firebase.auth().currentUser);
+    }
+
+    function getAuthenticatedUserPresentation(userInstance) {
+      const email = String(userInstance?.email || '').trim();
+      const fallbackName = email ? email.split('@')[0] : 'Giám định viên';
+      const displayName = String(userInstance?.displayName || fallbackName || 'Giám định viên').trim();
+      const initials = displayName.split(/\s+/).filter(Boolean).slice(0,2).map(part => part.charAt(0)).join('').toUpperCase() || 'GD';
+      return { displayName, email: email || 'Tài khoản Firebase', initials };
+    }
+
+    function renderNavigationUserProfile(userInstance, targetNode) {
+      if (!targetNode) return;
+      const profile = getAuthenticatedUserPresentation(userInstance);
+      targetNode.innerHTML = `
+        <div class="nav-user-zone">
+          <div class="nav-user-card" title="${escapeAttributeData(profile.email)}">
+            <div class="nav-user-avatar">${escapeHtmlOutput(profile.initials)}</div>
+            <div class="nav-user-copy"><strong>${escapeHtmlOutput(profile.displayName)}</strong><span>Giám định viên · ${escapeHtmlOutput(profile.email)}</span></div>
+          </div>
+          <button class="btn-premium btn-secondary nav-logout-icon" title="Đăng xuất" aria-label="Đăng xuất" onclick="executeLogoutFlow()">${SVGS.LOGOUT}</button>
+        </div>`;
     }
 
     /****************************************************
@@ -620,12 +686,14 @@
      * 1. PREMIUM MANAGEMENT DASHBOARD WORKSPACE
      ****************************************************/
     function renderManagerDashboardWorkspace() {
+      const currentProfile = getAuthenticatedUserPresentation(firebase.auth().currentUser);
       rootContainer.innerHTML = `
         <section class="hero-panel">
           <div>
             <div class="eyebrow">Trung tâm giám định số</div>
             <h2>Đối chiếu tổn thất<br><span>nhanh, rõ và có hệ thống.</span></h2>
             <p>Tạo hồ sơ, chuyển ảnh hiện trạng cho Garage và xem lại toàn bộ hạng mục được ghi chú trên từng ảnh trong cùng một không gian dữ liệu.</p>
+            <div class="hero-user-inline"><div class="nav-user-avatar">${escapeHtmlOutput(currentProfile.initials)}</div><div><strong>${escapeHtmlOutput(currentProfile.displayName)}</strong><span>Giám định viên đang đăng nhập · ${escapeHtmlOutput(currentProfile.email)}</span></div></div>
           </div>
           <div class="hero-signature">
             <div class="seal">${SVGS.SPARKLES}</div>
@@ -650,7 +718,7 @@
 
         <div class="workspace-grid two-cols">
           <section class="p-card create-panel">
-            <div class="p-card-head"><div><h2>Tạo hồ sơ mới</h2><p>Thông tin cơ bản và bộ ảnh tổn thất.</p></div><div class="section-number">01</div></div>
+            <div class="p-card-head"><div><h2>Tạo hồ sơ mới</h2><p>Thiết lập yêu cầu đối chiếu hai chiều cho Garage.</p></div><div class="section-number">01</div></div>
             <div class="form-group">
               <label>Biển kiểm soát xe</label>
               <div class="input-shell"><span class="field-prefix">${SVGS.CAR}</span><input id="txtPlateNumber" class="input-premium" type="text" placeholder="Ví dụ: 30H-123.45" autocomplete="off" /></div>
@@ -659,14 +727,25 @@
               <label>Garage sửa chữa</label>
               <div class="input-shell"><span class="field-prefix">${SVGS.FOLDER}</span><input id="txtGaragePartner" class="input-premium" type="text" placeholder="Tên đơn vị phụ trách" autocomplete="off" /></div>
             </div>
+            <div class="workflow-divider">Luồng 01 · Ảnh để Garage xác định hạng mục</div>
             <div class="form-group">
               <label>Ảnh hiện trạng tổn thất</label>
               <div class="dropzone" id="imageDropzone" onclick="document.getElementById('fileImageUploader').click()">
-                <div><div class="dropzone-icon">${SVGS.IMAGE}</div><strong>Chọn hoặc kéo ảnh vào đây</strong><p>Hỗ trợ nhiều ảnh JPG, PNG, WEBP</p></div>
+                <div><div class="dropzone-icon">${SVGS.IMAGE}</div><strong>Chọn hoặc kéo ảnh vào đây</strong><p>Garage sẽ nhập tên bộ phận và phương án xử lý theo từng ảnh</p></div>
                 <input id="fileImageUploader" type="file" accept="image/*" multiple hidden />
               </div>
               <div id="lblDropzoneSummary" class="file-summary">Chưa chọn ảnh.</div>
               <div id="boxPreviewsHolder" class="preview-grid-premium"></div>
+            </div>
+            <div class="workflow-divider">Luồng 02 · Hạng mục để Garage cung cấp ảnh</div>
+            <div class="form-group">
+              <label>Tên hạng mục Garage đang báo giá</label>
+              <textarea id="txtRequestedItemNames" class="textarea-premium" placeholder="Nhập mỗi hạng mục trên một dòng. Ví dụ:
+Cản trước
+Đèn pha trước phải
+Tai xe trước phải"></textarea>
+              <div class="request-helper"><span>Garage phải tải ít nhất 01 ảnh cho mỗi hạng mục.</span><strong id="lblRequestedItemsCount">00 hạng mục</strong></div>
+              <div id="requestedItemsPreview" class="requested-items-preview"></div>
             </div>
             <button id="btnCreateCaseSubmit" class="btn-premium">${SVGS.SPARKLES} Khởi tạo ca trực tuyến</button>
           </section>
@@ -683,7 +762,7 @@
             </div>
             <div class="table-container">
               <table class="p-table">
-                <thead><tr><th>Phương tiện</th><th>Khởi tạo</th><th>Ảnh</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th></tr></thead>
+                <thead><tr><th>Phương tiện</th><th>Khởi tạo</th><th>Nội dung</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th></tr></thead>
                 <tbody id="tblCasesBodyContainer"><tr><td colspan="5" class="empty-state-text">Đang kết nối dữ liệu...</td></tr></tbody>
               </table>
             </div>
@@ -695,6 +774,7 @@
       const fileInput = document.getElementById('fileImageUploader');
       const dropzone = document.getElementById('imageDropzone');
       fileInput.addEventListener('change', executeImageFilesPreviewBinding);
+      document.getElementById('txtRequestedItemNames').addEventListener('input', renderRequestedItemsPreview);
       document.getElementById('btnCreateCaseSubmit').addEventListener('click', pipelineTriggerCaseCreationFlow);
       document.getElementById('caseSearchInput').addEventListener('input', () => executeUIRenderCasesTable());
       document.querySelectorAll('[data-case-filter]').forEach(btn => btn.addEventListener('click', () => setCaseFilter(btn.dataset.caseFilter)));
@@ -741,6 +821,27 @@
       }
     }
 
+    function parseRequestedItemNames(rawValue) {
+      const seen = new Set();
+      return String(rawValue || '').split(/\r?\n/).map(item => item.trim()).filter(Boolean).filter(item => {
+        const normalized = item.toLocaleLowerCase('vi');
+        if (seen.has(normalized)) return false;
+        seen.add(normalized);
+        return true;
+      });
+    }
+
+    function renderRequestedItemsPreview() {
+      const textarea = document.getElementById('txtRequestedItemNames');
+      const countNode = document.getElementById('lblRequestedItemsCount');
+      const previewNode = document.getElementById('requestedItemsPreview');
+      if (!textarea || !countNode || !previewNode) return;
+      const items = parseRequestedItemNames(textarea.value);
+      countNode.textContent = `${String(items.length).padStart(2,'0')} hạng mục`;
+      previewNode.innerHTML = items.slice(0,8).map((item,index) => `<div class="requested-item-chip"><span>${String(index+1).padStart(2,'0')}</span><div>${escapeHtmlOutput(item)}</div></div>`).join('');
+      if (items.length > 8) previewNode.insertAdjacentHTML('beforeend', `<div class="requested-item-chip"><span>+</span><div>Còn ${items.length - 8} hạng mục khác</div></div>`);
+    }
+
     function executeUIRenderCasesTable(casesPayload) {
       if (typeof casesPayload !== 'undefined') cachedCasesPayload = casesPayload;
       const tableBody = document.getElementById('tblCasesBodyContainer');
@@ -758,7 +859,7 @@
       completedLbl.textContent = metricCompleted;
       const searchQuery = String(document.getElementById('caseSearchInput')?.value || '').trim().toLocaleLowerCase('vi');
       const filteredEntries = allEntries.filter(([,item]) => {
-        const matchesText = !searchQuery || `${item.bienSo || ''} ${item.tenGara || ''}`.toLocaleLowerCase('vi').includes(searchQuery);
+        const matchesText = !searchQuery || `${item.bienSo || ''} ${item.tenGara || ''} ${item.nguoiTao?.tenHienThi || ''} ${item.nguoiTao?.email || ''}`.toLocaleLowerCase('vi').includes(searchQuery);
         const isDone = item.trangThai === STATUS_COMPLETED;
         const matchesStatus = activeCaseFilter === 'all' || (activeCaseFilter === 'completed' && isDone) || (activeCaseFilter === 'pending' && !isDone);
         return matchesText && matchesStatus;
@@ -779,7 +880,7 @@
           <tr>
             <td data-label="Phương tiện"><div class="vehicle-cell"><div class="vehicle-avatar">${initials}</div><div><div class="vehicle-name">${plate}</div><div class="vehicle-sub">${escapeHtmlOutput(entityNode.tenGara || 'Chưa xác định Garage')}</div></div></div></td>
             <td data-label="Khởi tạo"><div class="date-mini">${dateInfo.date}<span>${dateInfo.time}</span></div></td>
-            <td data-label="Số ảnh"><strong style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-soft)">${Number(entityNode.soLuongAnh || 0).toString().padStart(2,'0')}</strong></td>
+            <td data-label="Nội dung"><div class="date-mini"><strong style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-soft)">${Number(entityNode.soLuongAnh || 0).toString().padStart(2,'0')} ảnh</strong><span>${Number(entityNode.soLuongHangMucYeuCauAnh || (Array.isArray(entityNode.hangMucYeuCauAnh) ? entityNode.hangMucYeuCauAnh.length : Object.keys(entityNode.hangMucYeuCauAnh || {}).length)).toString().padStart(2,'0')} yêu cầu ảnh</span></div></td>
             <td data-label="Trạng thái"><span class="badge-status ${targetBadgeClass}">${escapeHtmlOutput(entityNode.trangThai || STATUS_PENDING)}</span></td>
             <td><div class="flex-actions-group">
               <button title="Mở link Garage" class="btn-premium btn-secondary" onclick="window.open('${escapeAttributeData(partnerPortalInputLink)}','_blank')">${SVGS.EXTERNAL}<span class="action-label">Garage</span></button>
@@ -821,16 +922,21 @@
       const plateInputVal = document.getElementById('txtPlateNumber').value.trim();
       const garageInputVal = document.getElementById('txtGaragePartner').value.trim();
       const imagesFileList = Array.from(document.getElementById('fileImageUploader').files || []);
+      const requestedItemNames = parseRequestedItemNames(document.getElementById('txtRequestedItemNames').value);
 
-      if (!plateInputVal || !garageInputVal || !imagesFileList.length) {
-        triggerToast('Vui lòng hoàn tất thông tin trường nhập và tệp tin ảnh.', 'error');
+      if (!plateInputVal || !garageInputVal) {
+        triggerToast('Vui lòng nhập biển số xe và Garage phụ trách.', 'error');
+        return;
+      }
+      if (!imagesFileList.length && !requestedItemNames.length) {
+        triggerToast('Hãy tải ảnh hiện trạng hoặc nhập ít nhất một hạng mục cần Garage cung cấp ảnh.', 'error');
         return;
       }
 
-      toggleUploadOverlay(true, `Đang mã hóa dữ liệu hình ảnh...`, 'Kích nổ cụm luồng dẫn API public...', 0);
+      toggleUploadOverlay(true, imagesFileList.length ? 'Đang mã hóa dữ liệu hình ảnh...' : 'Đang khởi tạo yêu cầu...', 'Chuẩn bị cấu trúc hồ sơ đối chiếu hai chiều...', 0);
 
       try {
-        const secureHostedImageUrlsArray = await executionParallelImagesUploadCore(imagesFileList);
+        const secureHostedImageUrlsArray = imagesFileList.length ? await executionParallelImagesUploadCore(imagesFileList) : [];
         
         toggleUploadOverlay(true, 'Khởi tạo thực thể cấu trúc...', 'Đồng bộ trường dữ liệu sang máy chủ đám mây...', 95);
 
@@ -840,13 +946,27 @@
           hangMucBaoGia: ""
         }));
 
+        const currentUser = firebase.auth().currentUser;
+        const currentProfile = getAuthenticatedUserPresentation(currentUser);
+        const requestedEvidenceNodes = requestedItemNames.map((itemName, index) => ({
+          tenHangMuc: itemName,
+          thuTu: index + 1,
+          hinhAnhGarage: []
+        }));
         const finalPayloadStructure = {
           idCa: generatedCaseUniqueToken,
           bienSo: plateInputVal,
           tenGara: garageInputVal,
           trangThai: STATUS_PENDING,
           soLuongAnh: mappedImageNodeObjects.length,
+          soLuongHangMucYeuCauAnh: requestedEvidenceNodes.length,
           hinhAnh: mappedImageNodeObjects,
+          hangMucYeuCauAnh: requestedEvidenceNodes,
+          nguoiTao: {
+            uid: currentUser?.uid || '',
+            email: currentProfile.email,
+            tenHienThi: currentProfile.displayName
+          },
           createdAt: firebase.database.ServerValue.TIMESTAMP
         };
 
@@ -859,7 +979,9 @@
         document.getElementById('txtGaragePartner').value = '';
         document.getElementById('fileImageUploader').value = '';
         document.getElementById('boxPreviewsHolder').innerHTML = '';
-        document.getElementById('lblDropzoneSummary').textContent = 'Chưa có tệp dữ liệu nào được nạp.';
+        document.getElementById('lblDropzoneSummary').textContent = 'Chưa chọn ảnh.';
+        document.getElementById('txtRequestedItemNames').value = '';
+        renderRequestedItemsPreview();
         clearActiveObjectUrls();
       } catch (exception) {
         console.error(exception);
@@ -939,7 +1061,7 @@
           <div><h2>Hồ sơ đã được khởi tạo thành công</h2><p>Mã định danh: <strong style="color:var(--primary-2);font-family:'JetBrains Mono'">${escapeHtmlOutput(dataPayload.idCa)}</strong></p></div>
         </div>
         <div class="p-share-container">
-          <div class="p-share-row"><div class="p-share-meta"><div class="p-share-label">Liên kết dành cho Garage nhập hạng mục</div><div class="p-share-url-preview">${escapeHtmlOutput(shareLinkGara)}</div></div><div class="p-share-actions"><button class="btn-premium btn-share-action" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkGara)}')">${SVGS.COPY} Sao chép</button><button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkGara)}','_blank')">${SVGS.EXTERNAL} Mở link</button></div></div>
+          <div class="p-share-row"><div class="p-share-meta"><div class="p-share-label">Liên kết dành cho Garage nhập hạng mục và tải ảnh</div><div class="p-share-url-preview">${escapeHtmlOutput(shareLinkGara)}</div></div><div class="p-share-actions"><button class="btn-premium btn-share-action" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkGara)}')">${SVGS.COPY} Sao chép</button><button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkGara)}','_blank')">${SVGS.EXTERNAL} Mở link</button></div></div>
           <div class="p-share-row"><div class="p-share-meta"><div class="p-share-label">Liên kết Giám định viên xem kết quả</div><div class="p-share-url-preview">${escapeHtmlOutput(shareLinkView)}</div></div><div class="p-share-actions"><button class="btn-premium btn-dark btn-share-action" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkView)}')">${SVGS.COPY} Sao chép</button><button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkView)}','_blank')">${SVGS.EXTERNAL} Đối chiếu</button></div></div>
         </div>`;
       outputCardBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -958,6 +1080,7 @@
 
         localActiveCaseNode = databaseValueObject;
         localActiveImageStack = Array.isArray(databaseValueObject.hinhAnh) ? databaseValueObject.hinhAnh : Object.values(databaseValueObject.hinhAnh || {});
+        localActiveRequestedItems = Array.isArray(databaseValueObject.hangMucYeuCauAnh) ? databaseValueObject.hangMucYeuCauAnh : Object.values(databaseValueObject.hangMucYeuCauAnh || {});
 
         const shouldForceReadOnlyResultView = currentViewFlag === 'result';
         const isCaseLockedByGarageSubmission = localActiveCaseNode.trangThai === STATUS_COMPLETED;
@@ -976,6 +1099,8 @@
       const isReadOnlyMode = (viewContextMode === 'result' || viewContextMode === 'garage-locked');
       const showBackButton = (viewContextMode === 'result');
       const node = localActiveCaseNode || {};
+      const creatorName = node.nguoiTao?.tenHienThi || node.nguoiTao?.email || 'Hồ sơ trước phiên bản mới';
+      const createdDate = formatCaseTimestamp(node.createdAt);
       return `
         <aside class="p-card sticky-sidebar">
           <div class="p-card-head"><div><h2>${isReadOnlyMode ? 'Thông tin đối chiếu' : 'Thông tin hồ sơ'}</h2><p>${isReadOnlyMode ? 'Dữ liệu đã được Garage xác nhận.' : 'Cổng khai báo dành cho Garage.'}</p></div><div class="section-number">${isReadOnlyMode ? 'R' : 'G'}</div></div>
@@ -984,86 +1109,194 @@
           <div class="metadata-list">
             <div class="metadata-row"><span>Biển kiểm soát</span><strong>${escapeHtmlOutput(node.bienSo)}</strong></div>
             <div class="metadata-row"><span>Garage phụ trách</span><strong>${escapeHtmlOutput(node.tenGara)}</strong></div>
-            <div class="metadata-row"><span>Số ảnh hiện trạng</span><strong>${Number(node.soLuongAnh || localActiveImageStack.length)} ảnh</strong></div>
+            <div class="metadata-row"><span>Người tạo hồ sơ</span><strong>${escapeHtmlOutput(creatorName)}</strong></div>
+            <div class="metadata-row"><span>Thời gian khởi tạo</span><strong>${escapeHtmlOutput(createdDate.date)} · ${escapeHtmlOutput(createdDate.time)}</strong></div>
+            <div class="metadata-row"><span>Ảnh cần Garage định danh</span><strong>${Number(node.soLuongAnh || localActiveImageStack.length)} ảnh</strong></div>
+            <div class="metadata-row"><span>Hạng mục cần Garage cung cấp ảnh</span><strong>${Number(node.soLuongHangMucYeuCauAnh || localActiveRequestedItems.length)} hạng mục</strong></div>
             <div class="metadata-row"><span>Trạng thái</span><strong><span class="badge-status ${node.trangThai === STATUS_COMPLETED ? 'completed' : 'pending'}">${escapeHtmlOutput(node.trangThai)}</span></strong></div>
           </div>
-          <div class="sidebar-tip">Mỗi ghi chú phải bám đúng vùng ảnh, nêu rõ bộ phận và phương án xử lý để Giám định viên đối chiếu nhanh.</div>
+          <div class="sidebar-tip">Hoàn thành cả hai nhóm: ghi rõ hạng mục theo ảnh hiện trạng và tải ảnh minh chứng cho từng hạng mục được yêu cầu.</div>
           ${showBackButton ? `<button class="btn-premium" onclick="executeCopyAggregatedRawText()">${SVGS.COPY} Sao chép biên bản tổng</button>` : isReadOnlyMode ? `<div class="badge-status completed" style="width:100%;justify-content:center;padding:12px">Hồ sơ đã khóa</div>` : `<button id="btnSubmitGarageFinalResponse" class="btn-premium">${SVGS.CHECK_CIRCLE} Hoàn tất & gửi kết quả</button>`}
         </aside>`;
     }
 
     function renderPortalGarageInteractiveInputView() {
-      if (!localActiveImageStack.length) return renderErrorLayoutState('Ca xe hiện tại chưa có hình ảnh chứng từ gốc.');
-      const generatedImagesCardsListHTML = localActiveImageStack.map((item, index) => `
-        <article class="premium-image-card">
-          <div class="img-display-pane"><span class="img-pane-indicator">Ảnh hiện trạng ${String(index + 1).padStart(2,'0')}</span><img src="${escapeAttributeData(item.linkAnh)}" alt="Ảnh tổn thất ${index + 1}" loading="lazy" onclick="openLightbox('${escapeAttributeData(item.linkAnh)}')" /></div>
-          <div class="inputs-entry-pane">
-            <div><div class="image-sequence">DAMAGE FRAME / ${String(index + 1).padStart(2,'0')}</div><div class="form-group" style="margin:0"><label>Tên bộ phận và phương án khắc phục</label><textarea class="garage-quote-textarea-node" data-index-token="${index}" placeholder="Ví dụ:\n• Thay mới cụm đèn pha trước phải\n• Gò nắn phục hồi tai bắt cản\n• Sơn hoàn thiện vè trước phải"></textarea></div></div>
-            <button class="btn-premium btn-secondary btn-inline" onclick="window.open('${escapeAttributeData(item.linkAnh)}','_blank')">${SVGS.EXTERNAL} Mở ảnh nguyên bản</button>
-          </div>
-        </article>`).join('');
+      if (!localActiveImageStack.length && !localActiveRequestedItems.length) return renderErrorLayoutState('Hồ sơ hiện tại chưa có nội dung yêu cầu Garage xử lý.');
+      garageEvidenceObjectUrls.forEach(url => URL.revokeObjectURL(url));
+      garageEvidenceObjectUrls = [];
+
+      const imageInputSection = localActiveImageStack.length ? `
+        <div class="workspace-section-head"><div><h2>01 · Xác định hạng mục từ ảnh hiện trạng</h2><p>Nhập tên bộ phận và phương án xử lý tương ứng với từng ảnh.</p></div><div class="workspace-section-index">${String(localActiveImageStack.length).padStart(2,'0')} FRAMES</div></div>
+        ${localActiveImageStack.map((item, index) => `
+          <article class="premium-image-card">
+            <div class="img-display-pane"><span class="img-pane-indicator">Ảnh hiện trạng ${String(index + 1).padStart(2,'0')}</span><img src="${escapeAttributeData(item.linkAnh)}" alt="Ảnh tổn thất ${index + 1}" loading="lazy" onclick="openLightbox('${escapeAttributeData(item.linkAnh)}')" /></div>
+            <div class="inputs-entry-pane">
+              <div><div class="image-sequence">DAMAGE FRAME / ${String(index + 1).padStart(2,'0')}</div><div class="form-group" style="margin:0"><label>Tên bộ phận và phương án khắc phục</label><textarea class="garage-quote-textarea-node" data-index-token="${index}" placeholder="Ví dụ:
+• Thay mới cụm đèn pha trước phải
+• Gò nắn phục hồi tai bắt cản
+• Sơn hoàn thiện vè trước phải">${escapeHtmlOutput(item.hangMucBaoGia || '')}</textarea></div></div>
+              <button class="btn-premium btn-secondary btn-inline" onclick="window.open('${escapeAttributeData(item.linkAnh)}','_blank')">${SVGS.EXTERNAL} Mở ảnh nguyên bản</button>
+            </div>
+          </article>`).join('')}` : '';
+
+      const evidenceRequestSection = localActiveRequestedItems.length ? `
+        <div class="workspace-section-head" style="margin-top:${localActiveImageStack.length ? '12px' : '0'}"><div><h2>02 · Cung cấp ảnh theo hạng mục báo giá</h2><p>Tải một hoặc nhiều ảnh rõ nét cho từng hạng mục bên dưới.</p></div><div class="workspace-section-index">${String(localActiveRequestedItems.length).padStart(2,'0')} REQUESTS</div></div>
+        ${localActiveRequestedItems.map((item,index) => `
+          <article class="evidence-request-card">
+            <div class="evidence-request-head"><div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div><div><small>Hạng mục cần ảnh minh chứng</small><h3>${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3></div></div>
+            <div class="evidence-request-body">
+              <div class="dropzone evidence-dropzone" data-evidence-dropzone="${index}" onclick="document.getElementById('garageEvidenceInput_${index}').click()">
+                <div><div class="dropzone-icon">${SVGS.UPLOAD}</div><strong>Tải ảnh Garage cung cấp</strong><p>Có thể chọn nhiều ảnh JPG, PNG hoặc WEBP</p></div>
+                <input id="garageEvidenceInput_${index}" class="garage-evidence-input" data-request-index="${index}" type="file" accept="image/*" multiple hidden />
+              </div>
+              <div id="garageEvidenceSummary_${index}" class="file-summary">Chưa chọn ảnh cho hạng mục này.</div>
+              <div id="garageEvidencePreview_${index}" class="evidence-preview-grid"></div>
+            </div>
+          </article>`).join('')}` : '';
+
       rootContainer.innerHTML = `
         <div class="portal-shell">
-          <header class="portal-topbar"><div><div class="eyebrow">Garage response portal</div><h1>Khai báo hạng mục sửa chữa</h1><p>Đối chiếu từng ảnh và nhập đúng tên bộ phận hoặc phương án xử lý tương ứng.</p></div><div class="portal-counter">Tổng số ảnh<strong>${String(localActiveImageStack.length).padStart(2,'0')}</strong></div></header>
-          <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list">${generatedImagesCardsListHTML}</div></div>
+          <header class="portal-topbar"><div><div class="eyebrow">Garage response portal</div><h1>Hoàn thiện dữ liệu báo giá</h1><p>Garage thực hiện đồng thời việc định danh hạng mục theo ảnh và cung cấp ảnh cho các hạng mục được yêu cầu.</p></div><div class="portal-counter-stack"><div class="portal-counter">Ảnh cần ghi tên<strong>${String(localActiveImageStack.length).padStart(2,'0')}</strong></div><div class="portal-counter">Hạng mục cần ảnh<strong>${String(localActiveRequestedItems.length).padStart(2,'0')}</strong></div></div></header>
+          <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list">${imageInputSection}${evidenceRequestSection}</div></div>
         </div>`;
+
+      document.querySelectorAll('.garage-evidence-input').forEach(input => input.addEventListener('change', () => renderGarageEvidencePreview(input)));
+      document.querySelectorAll('[data-evidence-dropzone]').forEach(dropzone => {
+        ['dragenter','dragover'].forEach(eventName => dropzone.addEventListener(eventName, event => { event.preventDefault(); event.stopPropagation(); dropzone.classList.add('is-dragging'); }));
+        ['dragleave','drop'].forEach(eventName => dropzone.addEventListener(eventName, event => { event.preventDefault(); event.stopPropagation(); dropzone.classList.remove('is-dragging'); }));
+        dropzone.addEventListener('drop', event => {
+          const index = Number(dropzone.dataset.evidenceDropzone);
+          const input = document.getElementById(`garageEvidenceInput_${index}`);
+          const files = Array.from(event.dataTransfer.files || []).filter(file => file.type.startsWith('image/'));
+          if (!files.length) return triggerToast('Vui lòng thả đúng định dạng hình ảnh.', 'error');
+          const transfer = new DataTransfer();
+          files.forEach(file => transfer.items.add(file));
+          input.files = transfer.files;
+          renderGarageEvidencePreview(input);
+        });
+      });
       document.getElementById('btnSubmitGarageFinalResponse').addEventListener('click', pipelineTriggerGarageDataLockSubmission);
+    }
+
+    function renderGarageEvidencePreview(inputNode) {
+      const requestIndex = Number(inputNode.dataset.requestIndex);
+      const files = Array.from(inputNode.files || []);
+      const summaryNode = document.getElementById(`garageEvidenceSummary_${requestIndex}`);
+      const previewNode = document.getElementById(`garageEvidencePreview_${requestIndex}`);
+      if (!summaryNode || !previewNode) return;
+      summaryNode.textContent = files.length ? `${files.length} ảnh đã sẵn sàng tải lên.` : 'Chưa chọn ảnh cho hạng mục này.';
+      previewNode.innerHTML = files.map((file,index) => {
+        const url = URL.createObjectURL(file);
+        garageEvidenceObjectUrls.push(url);
+        return `<div class="evidence-preview-item"><img src="${url}" alt="Ảnh minh chứng ${index+1}"><span>${String(index+1).padStart(2,'0')}</span></div>`;
+      }).join('');
+    }
+
+    function normalizeEvidenceImageUrls(item) {
+      const rawValue = item?.hinhAnhGarage ?? item?.linkAnhGarage ?? [];
+      if (Array.isArray(rawValue)) return rawValue.filter(Boolean);
+      if (rawValue && typeof rawValue === 'object') return Object.values(rawValue).filter(Boolean);
+      return rawValue ? [rawValue] : [];
+    }
+
+    async function uploadGarageEvidenceItems() {
+      const packagedItems = localActiveRequestedItems.map((item,index) => ({
+        tenHangMuc: item.tenHangMuc || `Hạng mục ${index+1}`,
+        thuTu: item.thuTu || index + 1,
+        hinhAnhGarage: normalizeEvidenceImageUrls(item)
+      }));
+      const uploadJobs = [];
+      document.querySelectorAll('.garage-evidence-input').forEach(input => {
+        const requestIndex = Number(input.dataset.requestIndex);
+        Array.from(input.files || []).forEach(file => uploadJobs.push({ requestIndex, file }));
+      });
+      if (!uploadJobs.length) return packagedItems;
+      let completed = 0;
+      toggleUploadOverlay(true, 'Đang tải ảnh Garage cung cấp...', `0/${uploadJobs.length} ảnh đã đồng bộ`, 0);
+      await Promise.all(uploadJobs.map(async job => {
+        const url = await uploadSingleImageToCloudinaryEngine(job.file);
+        packagedItems[job.requestIndex].hinhAnhGarage.push(url);
+        completed += 1;
+        toggleUploadOverlay(true, 'Đang tải ảnh Garage cung cấp...', `${completed}/${uploadJobs.length} ảnh đã đồng bộ`, Math.round((completed / uploadJobs.length) * 100));
+      }));
+      return packagedItems;
     }
 
     async function pipelineTriggerGarageDataLockSubmission() {
       const DOMTextareaElements = Array.from(document.querySelectorAll('.garage-quote-textarea-node'));
       const emptyFieldsCounter = DOMTextareaElements.filter(tx => !tx.value.trim()).length;
-
       if (emptyFieldsCounter > 0) {
-        const proceedBlank = await showConfirmModal('Phát hiện ô trống dữ liệu', `Hệ thống ghi nhận còn ${emptyFieldsCounter} hình ảnh chưa được điền thông tin tên bộ phận. Bạn vẫn muốn tiếp tục gửi chốt?`);
+        const proceedBlank = await showConfirmModal('Phát hiện ô chưa khai báo', `Còn ${emptyFieldsCounter} ảnh hiện trạng chưa được nhập tên bộ phận. Bạn vẫn muốn tiếp tục?`);
         if (!proceedBlank) return;
       }
 
-      const finalFreezeConfirmation = await showConfirmModal('Xác nhận khóa hồ sơ', 'Sau khi chốt gửi, biểu mẫu tác nghiệp sẽ chuyển về trạng thái chỉ đọc để chuyển tiếp Giám định viên. Xác nhận gửi?');
+      const missingEvidenceIndexes = localActiveRequestedItems.map((item,index) => {
+        const input = document.getElementById(`garageEvidenceInput_${index}`);
+        const existingImages = normalizeEvidenceImageUrls(item);
+        return existingImages.length || Number(input?.files?.length || 0) ? null : index;
+      }).filter(index => index !== null);
+      if (missingEvidenceIndexes.length) {
+        const firstIndex = missingEvidenceIndexes[0];
+        document.querySelector(`[data-evidence-dropzone="${firstIndex}"]`)?.scrollIntoView({ behavior:'smooth', block:'center' });
+        triggerToast(`Còn ${missingEvidenceIndexes.length} hạng mục chưa được Garage cung cấp ảnh.`, 'error');
+        return;
+      }
+
+      const finalFreezeConfirmation = await showConfirmModal('Xác nhận khóa hồ sơ', 'Sau khi gửi, toàn bộ ghi chú và ảnh Garage cung cấp sẽ được khóa để Giám định viên đối chiếu. Xác nhận gửi?');
       if (!finalFreezeConfirmation) return;
 
-      const packagedItemsPayload = DOMTextareaElements.map(tx => {
+      const packagedImageNotes = DOMTextareaElements.map(tx => {
         const numericIndex = Number(tx.dataset.indexToken);
-        return {
-          linkAnh: localActiveImageStack[numericIndex].linkAnh,
-          hangMucBaoGia: tx.value.trim()
-        };
+        return { linkAnh: localActiveImageStack[numericIndex].linkAnh, hangMucBaoGia: tx.value.trim() };
       });
 
       try {
+        const packagedEvidenceItems = await uploadGarageEvidenceItems();
+        toggleUploadOverlay(true, 'Đang khóa hồ sơ...', 'Đồng bộ kết quả cuối cùng lên Firebase...', 98);
         await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}`).update({
-          hinhAnh: packagedItemsPayload,
-          trangThai: STATUS_COMPLETED
+          hinhAnh: packagedImageNotes,
+          hangMucYeuCauAnh: packagedEvidenceItems,
+          trangThai: STATUS_COMPLETED,
+          garageSubmittedAt: firebase.database.ServerValue.TIMESTAMP
         });
-
-        triggerToast('Dữ liệu danh mục bộ phận xe cơ giới đã gửi thành công.');
+        triggerToast('Garage đã gửi đầy đủ ghi chú và ảnh minh chứng.');
         const finalizedResultUrl = `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(localActiveCaseNode.idCa)}`;
         window.history.replaceState({}, '', finalizedResultUrl);
         evaluateViewRoutingState(firebase.auth().currentUser);
       } catch (err) {
         console.error(err);
         triggerToast('Lỗi đồng bộ truyền tải: ' + err.message, 'error');
+      } finally {
+        toggleUploadOverlay(false);
       }
     }
 
     function renderPortalResultReadOnlyView(renderMode) {
-      if (!localActiveImageStack.length) return renderErrorLayoutState('Không thể cấu trúc danh sách hình ảnh.');
+      if (!localActiveImageStack.length && !localActiveRequestedItems.length) return renderErrorLayoutState('Không thể cấu trúc dữ liệu kết quả của hồ sơ.');
       const completedItems = localActiveImageStack.filter(item => String(item.hangMucBaoGia || '').trim()).length;
-      const generatedReadOnlyCardsHTML = localActiveImageStack.map((item, index) => {
-        const textContentClean = String(item.hangMucBaoGia || '').trim();
-        return `
-          <article class="premium-image-card">
+      const completedEvidenceItems = localActiveRequestedItems.filter(item => normalizeEvidenceImageUrls(item).length).length;
+
+      const imageResultsSection = localActiveImageStack.length ? `
+        <div class="workspace-section-head"><div><h2>01 · Hạng mục Garage xác định từ ảnh</h2><p>Ảnh hiện trạng và nội dung Garage khai báo được hiển thị song song.</p></div><div class="workspace-section-index">${String(completedItems).padStart(2,'0')}/${String(localActiveImageStack.length).padStart(2,'0')}</div></div>
+        ${localActiveImageStack.map((item, index) => {
+          const textContentClean = String(item.hangMucBaoGia || '').trim();
+          return `<article class="premium-image-card">
             <div class="img-display-pane"><span class="img-pane-indicator">Ảnh đối chiếu ${String(index + 1).padStart(2,'0')}</span><img src="${escapeAttributeData(item.linkAnh)}" alt="Ảnh kết quả ${index + 1}" loading="lazy" onclick="openLightbox('${escapeAttributeData(item.linkAnh)}')" /></div>
-            <div class="inputs-entry-pane">
-              <div><div class="image-sequence">GARAGE RESULT / ${String(index + 1).padStart(2,'0')}</div><div class="form-group" style="margin:0"><label>Hạng mục Garage đã ghi nhận</label><div class="result-content ${textContentClean ? '' : 'is-empty'}">${textContentClean ? escapeHtmlOutput(textContentClean) : 'Garage không khai báo hạng mục cho ảnh này.'}</div></div></div>
-              <button class="btn-premium btn-secondary btn-inline" onclick="window.open('${escapeAttributeData(item.linkAnh)}','_blank')">${SVGS.EXTERNAL} Mở ảnh chứng cứ gốc</button>
-            </div>
+            <div class="inputs-entry-pane"><div><div class="image-sequence">GARAGE RESULT / ${String(index + 1).padStart(2,'0')}</div><div class="form-group" style="margin:0"><label>Hạng mục Garage đã ghi nhận</label><div class="result-content ${textContentClean ? '' : 'is-empty'}">${textContentClean ? escapeHtmlOutput(textContentClean) : 'Garage không khai báo hạng mục cho ảnh này.'}</div></div></div><button class="btn-premium btn-secondary btn-inline" onclick="window.open('${escapeAttributeData(item.linkAnh)}','_blank')">${SVGS.EXTERNAL} Mở ảnh chứng cứ gốc</button></div>
           </article>`;
-      }).join('');
+        }).join('')}` : '';
+
+      const evidenceResultsSection = localActiveRequestedItems.length ? `
+        <div class="workspace-section-head" style="margin-top:${localActiveImageStack.length ? '12px' : '0'}"><div><h2>02 · Ảnh Garage cung cấp theo hạng mục báo giá</h2><p>Kiểm tra trực tiếp bộ ảnh minh chứng Garage đã tải cho từng hạng mục.</p></div><div class="workspace-section-index">${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</div></div>
+        ${localActiveRequestedItems.map((item,index) => {
+          const urls = normalizeEvidenceImageUrls(item);
+          return `<article class="evidence-result-card"><div class="evidence-result-title"><div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div><div><h3>${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3><p>${urls.length} ảnh do Garage cung cấp</p></div></div>${urls.length ? `<div class="evidence-result-gallery">${urls.map((url,imageIndex) => `<button type="button" class="evidence-result-image" title="Mở ảnh ${imageIndex+1}" onclick="openLightbox('${escapeAttributeData(url)}')"><img src="${escapeAttributeData(url)}" alt="Ảnh Garage cung cấp ${imageIndex+1}" loading="lazy"></button>`).join('')}</div>` : `<div class="evidence-empty">Garage chưa cung cấp ảnh cho hạng mục này.</div>`}</article>`;
+        }).join('')}` : '';
+
       rootContainer.innerHTML = `
         <div class="portal-shell">
-          <header class="portal-topbar"><div><div class="eyebrow">Verified comparison result</div><h1>Kết quả đối chiếu Garage</h1><p>Toàn bộ ảnh hiện trạng và nội dung Garage ghi chú được trình bày song song để kiểm tra nhanh.</p></div><div class="portal-counter">Đã khai báo<strong>${String(completedItems).padStart(2,'0')}/${String(localActiveImageStack.length).padStart(2,'0')}</strong></div></header>
-          <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata(renderMode)}<div class="image-workspace-list">${generatedReadOnlyCardsHTML}</div></div>
+          <header class="portal-topbar"><div><div class="eyebrow">Verified comparison result</div><h1>Kết quả đối chiếu Garage</h1><p>Xem lại đầy đủ người tạo hồ sơ, nội dung Garage khai báo và ảnh minh chứng theo từng hạng mục.</p></div><div class="portal-counter-stack"><div class="portal-counter">Đã ghi hạng mục<strong>${String(completedItems).padStart(2,'0')}/${String(localActiveImageStack.length).padStart(2,'0')}</strong></div><div class="portal-counter">Đã cung cấp ảnh<strong>${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</strong></div></div></header>
+          <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata(renderMode)}<div class="image-workspace-list">${imageResultsSection}${evidenceResultsSection}</div></div>
         </div>`;
     }
 
@@ -1077,6 +1310,7 @@
       outputLinesBuffer.push(`- Mã ca giám định:    ${node.idCa || ''}`);
       outputLinesBuffer.push(`- Biển kiểm soát xe:  ${node.bienSo || ''}`);
       outputLinesBuffer.push(`- Đơn vị sửa chữa:    ${node.tenGara || ''}`);
+      outputLinesBuffer.push(`- Người tạo hồ sơ:    ${node.nguoiTao?.tenHienThi || node.nguoiTao?.email || 'Không ghi nhận'}`);
       outputLinesBuffer.push(`- Tình trạng dữ liệu: ${node.trangThai || ''}`);
       outputLinesBuffer.push('--------------------------------------------------\n');
 
@@ -1084,6 +1318,15 @@
         outputLinesBuffer.push(`[VÙNG ẢNH KHAI BÁO SỐ ${index + 1}]`);
         outputLinesBuffer.push(`+ Chi tiết hạng mục bộ phận: \n${item.hangMucBaoGia || 'Không ghi nhận hạng mục.'}`);
         outputLinesBuffer.push(`+ URL ảnh chứng cứ gốc: ${item.linkAnh || ''}`);
+        outputLinesBuffer.push('');
+      });
+
+      localActiveRequestedItems.forEach((item,index) => {
+        outputLinesBuffer.push(`[HẠNG MỤC YÊU CẦU ẢNH SỐ ${index + 1}]`);
+        outputLinesBuffer.push(`+ Tên hạng mục: ${item.tenHangMuc || ''}`);
+        const urls = normalizeEvidenceImageUrls(item);
+        if (urls.length) urls.forEach((url,imageIndex) => outputLinesBuffer.push(`+ Ảnh Garage ${imageIndex + 1}: ${url}`));
+        else outputLinesBuffer.push('+ Ảnh Garage: Chưa cung cấp.');
         outputLinesBuffer.push('');
       });
 
