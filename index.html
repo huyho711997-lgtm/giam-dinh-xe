@@ -3,42 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Hệ thống Đối chiếu Ảnh Giám định Xe Cơ giới - Premium</title>
+  <title>Hệ thống Đối chiếu Ảnh Giám định Xe Cơ giới - Ultra Premium</title>
 
   <!-- Google Fonts & Firebase SDK Compatibility Version -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   
-  <!-- Firebase Core, Database và Core Auth Engine Modules -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
-      --bg: #f8fafc;
-      --panel-bg: rgba(255, 255, 255, 0.85);
-      --card: #ffffff;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
+      --bg: #090d16;
+      --card: rgba(17, 24, 39, 0.7);
+      --card-solid: #111827;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.16);
       
-      /* Premium Color Palette */
-      --primary: #0284c7;
-      --primary-gradient: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-      --accent: #0ea5e9;
-      --dark: #0f172a;
-      --danger: #ef4444;
+      /* Luxury Color Palette */
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --primary-gradient: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+      --dark: #030712;
+      --danger: #f43f5e;
       --success: #10b981;
       --warning: #f59e0b;
       
-      --radius-lg: 20px;
+      --radius-lg: 16px;
       --radius-md: 12px;
-      --radius-sm: 8px;
-      --shadow-premium: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 20px 40px -10px rgba(0, 0, 0, 0.03);
-      --shadow-hover: 0 20px 40px -5px rgba(2, 132, 199, 0.12);
-      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --radius-sm: 6px;
+      --shadow-premium: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     * {
@@ -52,13 +51,16 @@
       font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
       color: var(--text-main);
       background-color: var(--bg);
+      /* Ambient Glowing Orbs Background Effect */
       background-image: 
-        radial-gradient(at 0% 0%, rgba(2, 132, 199, 0.05) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
+        radial-gradient(at 10% 10%, rgba(14, 165, 233, 0.1) 0px, transparent 40%),
+        radial-gradient(at 90% 80%, rgba(37, 99, 235, 0.08) 0px, transparent 45%);
       min-height: 100vh;
       line-height: 1.5;
+      overflow-x: hidden;
     }
 
+    /* SVG Icon Infrastructure Global Rules */
     .svg-icon {
       width: 1.25rem;
       height: 1.25rem;
@@ -71,224 +73,255 @@
       stroke-linejoin: round;
       flex-shrink: 0;
     }
-    
-    .svg-icon-lg { width: 2.25rem; height: 2.25rem; }
+    .svg-icon-lg { width: 2.5rem; height: 2.25rem; }
     .svg-icon-sm { width: 1rem; height: 1rem; }
 
-    /* Toast Notification */
+    /* Ultra-Premium Toast Banner Alerts */
     .toast-container {
       position: fixed;
-      top: 16px;
-      right: 16px;
-      left: 16px;
-      z-index: 1000;
+      top: 24px;
+      right: 24px;
+      left: 24px;
+      z-index: 5000;
       display: flex;
       flex-direction: column;
       gap: 12px;
       pointer-events: none;
     }
-    @media (min-width: 640px) {
-      .toast-container { left: auto; width: 360px; top: 24px; right: 24px; }
-    }
+    @media (min-width: 640px) { .toast-container { left: auto; width: 380px; } }
 
     .toast {
-      background: var(--card);
-      border-left: 4px solid var(--primary);
-      padding: 14px 18px;
+      background: #1f2937;
+      border: 1px solid var(--border);
+      padding: 16px 20px;
       border-radius: var(--radius-md);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      box-shadow: var(--shadow-premium);
       display: flex;
       align-items: center;
       gap: 12px;
       pointer-events: auto;
       transform: translateY(-20px);
       opacity: 0;
-      animation: slideIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.1);
+      animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       font-weight: 600;
       font-size: 14px;
     }
-
     @keyframes slideIn { to { transform: translateY(0); opacity: 1; } }
-    .toast.success { border-left-color: var(--success); color: #065f46; background: #f0fdf4; }
-    .toast.error { border-left-color: var(--danger); color: #991b1b; background: #fef2f2; }
-    .toast.warning { border-left-color: var(--warning); color: #92400e; background: #fffbeb; }
+    .toast.success { border-left: 4px solid var(--success); color: #ecfdf5; }
+    .toast.error { border-left: 4px solid var(--danger); color: #fef2f2; }
+    .toast.warning { border-left: 4px solid var(--warning); color: #fffbeb; }
 
-    /* Premium Fullscreen Upload Loading Screen Overlay */
+    /* Parallel Task Loading Overlay screen */
     .upload-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(6px);
-      z-index: 3000;
+      background: rgba(3, 7, 18, 0.85);
+      backdrop-filter: blur(12px);
+      z-index: 4000;
       display: none;
       place-items: center;
       padding: 20px;
     }
     .upload-overlay-card {
-      background: var(--card);
-      padding: 32px 24px;
+      background: var(--card-solid);
+      border: 1px solid var(--border);
+      padding: 40px 24px;
       border-radius: var(--radius-lg);
-      max-width: 380px;
+      max-width: 400px;
       width: 100%;
       text-align: center;
       box-shadow: var(--shadow-premium);
-      animation: modalUnfold 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
     }
-    .upload-overlay-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; color: var(--text-main); }
-    .upload-overlay-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+    .upload-overlay-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; color: var(--text-main); letter-spacing: -0.01em; }
+    .upload-overlay-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
 
-    /* Custom Premium Modal */
+    /* Custom Premium Modal Dialog System */
     .p-modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.4);
-      backdrop-filter: blur(4px);
-      z-index: 999;
+      background: rgba(3, 7, 18, 0.6);
+      backdrop-filter: blur(8px);
+      z-index: 3500;
       display: none;
       place-items: center;
       padding: 16px;
     }
-    .p-modal { background: var(--card); border-radius: var(--radius-lg); padding: 24px; max-width: 440px; width: 100%; box-shadow: var(--shadow-premium); text-align: center; }
-    .p-modal h3 { font-size: 18px; margin-bottom: 12px; font-weight: 700; }
-    .p-modal p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
+    .p-modal { background: var(--card-solid); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px 24px; max-width: 440px; width: 100%; box-shadow: var(--shadow-premium); text-align: center; }
+    .p-modal h3 { font-size: 18px; margin-bottom: 10px; font-weight: 800; letter-spacing: -0.01em; }
+    .p-modal p { color: var(--text-muted); font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
     .p-modal-btns { display: flex; gap: 12px; }
 
-    /* Layout Containers */
-    .app-container { max-width: 1340px; margin: 0 auto; padding: 12px 12px 60px; }
-    @media (min-width: 640px) { .app-container { padding: 24px 20px 80px; } }
+    /* Workspace Architecture Base Grid Grid Layout */
+    .app-container { max-width: 1340px; margin: 0 auto; padding: 16px 16px 80px; }
+    @media (min-width: 640px) { .app-container { padding: 32px 24px 100px; } }
 
-    /* Navigation Header */
-    .premium-nav { display: flex; justify-content: space-between; align-items: center; background: var(--panel-bg); backdrop-filter: blur(12px); border: 1px solid var(--border); padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 16px; box-shadow: var(--shadow-premium); }
-    @media (min-width: 640px) { .premium-nav { padding: 16px 24px; border-radius: var(--radius-lg); margin-bottom: 32px; } }
-    .nav-brand { display: flex; align-items: center; gap: 12px; }
-    .nav-logo { width: 40px; height: 40px; background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border-radius: var(--radius-md); display: grid; place-items: center; color: var(--primary); }
-    .nav-titles h1 { font-size: 15px; font-weight: 800; letter-spacing: -0.02em; }
-    .nav-titles p { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+    /* Premium Navigation System App Bar Header */
+    .premium-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-premium);
+    }
+    @media (min-width: 640px) { .premium-nav { padding: 20px 28px; border-radius: var(--radius-lg); margin-bottom: 40px; } }
+    .nav-brand { display: flex; align-items: center; gap: 14px; }
+    .nav-logo { width: 44px; height: 44px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: var(--radius-md); display: grid; place-items: center; color: var(--primary); }
+    .nav-titles h1 { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-main); }
+    .nav-titles p { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
 
-    /* Stats Grid */
-    .premium-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-    @media (min-width: 640px) { .premium-stats { gap: 20px; margin-bottom: 32px; } }
-    .stat-box { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-premium); }
+    /* Metric Smart Widgets Grid panels */
+    .premium-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    @media (min-width: 640px) { .premium-stats { gap: 24px; margin-bottom: 40px; } }
+    .stat-box { background: var(--card); border: 1px solid var(--border); backdrop-filter: blur(10px); border-radius: var(--radius-md); padding: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-premium); transition: var(--transition); }
     @media (min-width: 640px) { .stat-box { border-radius: var(--radius-lg); padding: 24px; } }
-    .stat-info .stat-val { font-size: 24px; font-weight: 800; line-height: 1.2; margin-top: 2px; }
-    .stat-info .stat-lbl { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-    .stat-icon-wrap { width: 40px; height: 40px; border-radius: var(--radius-md); display: grid; place-items: center; background: #f1f5f9; }
+    .stat-box:hover { border-color: var(--primary); box-shadow: 0 10px 30px -10px rgba(56, 189, 248, 0.15); }
+    .stat-info .stat-val { font-size: 32px; font-weight: 800; line-height: 1.1; margin-top: 4px; color: var(--text-main); font-family: 'JetBrains Mono', monospace; }
+    .stat-info .stat-lbl { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-icon-wrap { width: 44px; height: 44px; border-radius: var(--radius-md); display: grid; place-items: center; background: rgba(255,255,255,0.03); border: 1px solid var(--border); }
 
-    /* Workspace Structural Grid */
-    .workspace-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-    @media (min-width: 1024px) { .workspace-grid.two-cols { grid-template-columns: 420px 1fr; gap: 32px; align-items: start; } }
-    .p-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; box-shadow: var(--shadow-premium); }
-    @media (min-width: 640px) { .p-card { border-radius: var(--radius-lg); padding: 28px; } }
-    .p-card-head { margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
-    .p-card-head h2 { font-size: 16px; font-weight: 700; }
-    .p-card-head p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    /* Core Content Structure Splits viewports */
+    .workspace-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+    @media (min-width: 1024px) { .workspace-grid.two-cols { grid-template-columns: 440px 1fr; gap: 40px; align-items: start; } }
+    
+    .p-card { background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-premium); }
+    @media (min-width: 640px) { .p-card { border-radius: var(--radius-lg); padding: 32px; } }
+    .p-card-head { margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+    .p-card-head h2 { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+    .p-card-head p { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
 
-    /* Controls Elements */
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px; }
-    .input-premium { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 14px; font-size: 14px; font-family: inherit; color: var(--text-main); background: #f8fafc; outline: none; transition: var(--transition); }
-    .input-premium:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.12); }
-    .dropzone { border: 2px dashed #cbd5e1; border-radius: var(--radius-md); padding: 24px 16px; text-align: center; background: #f8fafc; cursor: pointer; transition: var(--transition); display: flex; flex-direction: column; align-items: center; gap: 8px; }
-    .dropzone:hover { border-color: var(--primary); background: rgba(2, 132, 199, 0.02); }
-    .dropzone p { font-size: 12px; color: var(--text-muted); font-weight: 600; }
-    .preview-grid-premium { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
-    .preview-thumb { aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); }
+    /* Advanced Form Field controls */
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.02em; }
+    .input-premium { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; font-size: 14px; font-family: inherit; color: var(--text-main); background: rgba(0, 0, 0, 0.2); outline: none; transition: var(--transition); }
+    .input-premium:focus { background: rgba(0, 0, 0, 0.4); border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary), 0 0 20px rgba(56, 189, 248, 0.15); }
+
+    /* Cyber Drag Dropzone architecture panel */
+    .dropzone { border: 2px dashed var(--border); border-radius: var(--radius-md); padding: 32px 20px; text-align: center; background: rgba(0, 0, 0, 0.15); cursor: pointer; transition: var(--transition); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .dropzone:hover { border-color: var(--primary); background: rgba(56, 189, 248, 0.02); color: var(--primary); }
+    .dropzone p { font-size: 13px; color: var(--text-muted); font-weight: 600; }
+
+    .preview-grid-premium { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
+    .preview-thumb { aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); position: relative; }
     .preview-thumb img { width: 100%; height: 100%; object-fit: cover; }
 
-    /* Premium Active Buttons */
-    .btn-premium { appearance: none; border: 0; font-family: inherit; padding: 12px 20px; font-size: 14px; font-weight: 700; border-radius: var(--radius-md); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; color: #fff; background: var(--primary-gradient); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15); transition: var(--transition); width: 100%; min-height: 44px; text-decoration: none; }
-    .btn-premium:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
+    /* Modern Luxury Controls Buttons Modules */
+    .btn-premium { appearance: none; border: 0; font-family: inherit; padding: 14px 24px; font-size: 14px; font-weight: 700; border-radius: var(--radius-md); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; color: #fff; background: var(--primary-gradient); box-shadow: 0 4px 20px rgba(2, 132, 199, 0.3); transition: var(--transition); width: 100%; min-height: 48px; text-decoration: none; }
+    .btn-premium:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(2, 132, 199, 0.45); background: var(--primary-hover); }
     .btn-premium:active { transform: translateY(1px); }
-    .btn-premium:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-    .btn-secondary { background: #f1f5f9; color: #334155; box-shadow: none; border: 1px solid var(--border); }
-    .btn-secondary:hover { background: #e2e8f0; }
-    .btn-danger-p { background: #fef2f2; color: var(--danger); box-shadow: none; }
-    .btn-danger-p:hover { background: #fee2e2; }
+    .btn-premium:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
 
-    /* Output Generation Box Link Matrix Components */
-    .p-share-container { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
-    .p-share-row { display: flex; flex-direction: column; background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; gap: 12px; transition: var(--transition); }
+    .btn-secondary { background: rgba(255, 255, 255, 0.04); color: var(--text-main); box-shadow: none; border: 1px solid var(--border); }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--border-hover); }
+    .btn-danger-p { background: rgba(244, 63, 94, 0.1); color: var(--danger); box-shadow: none; border: 1px solid rgba(244, 63, 94, 0.2); }
+    .btn-danger-p:hover { background: rgba(244, 63, 94, 0.16); border-color: var(--danger); }
+
+    /* Horizontal Link Matrix Blocks */
+    .p-share-container { display: flex; flex-direction: column; gap: 14px; margin-top: 20px; }
+    .p-share-row { display: flex; flex-direction: column; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; gap: 14px; transition: var(--transition); }
     @media (min-width: 640px) { .p-share-row { flex-direction: row; align-items: center; justify-content: space-between; gap: 24px; } }
+    .p-share-row:hover { border-color: var(--primary); background: rgba(0, 0, 0, 0.3); }
     .p-share-meta { flex: 1; min-width: 0; }
     .p-share-label { font-size: 13px; font-weight: 700; color: var(--text-main); }
-    .p-share-url-preview { font-size: 12px; color: var(--text-muted); font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .p-share-url-preview { font-size: 12px; color: var(--primary); font-family: 'JetBrains Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; opacity: 0.8; }
     .p-share-actions { display: flex; gap: 8px; }
-    .btn-share-action { padding: 6px 14px; font-size: 13px; min-height: 36px; width: auto; flex: 1; }
+    .btn-share-action { padding: 6px 16px; font-size: 13px; min-height: 38px; width: auto; flex: 1; }
     @media (min-width: 640px) { .btn-share-action { flex: initial; } }
 
-    /* Table & Responsive Matrix */
-    .table-container { border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden; }
+    /* Advanced Management Table Frame viewports */
+    .table-container { border-radius: var(--radius-md); border: 1px solid var(--border); overflow: hidden; background: rgba(0,0,0,0.1); }
     .p-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-    .p-table th { background: #f8fafc; padding: 14px 16px; font-weight: 700; color: #475569; border-bottom: 1px solid var(--border); }
-    .p-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); background: #fff; vertical-align: middle; }
+    .p-table th { background: rgba(255,255,255,0.02); padding: 16px; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid var(--border); font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em; }
+    .p-table td { padding: 16px; border-bottom: 1px solid var(--border); vertical-align: middle; transition: var(--transition); }
+    .p-table tr:last-child td { border-bottom: none; }
+    .p-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
     
     @media (max-width: 639px) {
       .p-table, .p-table tbody, .p-table tr, .p-table td { display: block; width: 100%; }
       .p-table thead { display: none; }
-      .p-table tr { background: #fff; border-bottom: 8px solid #f1f5f9; padding: 12px; }
+      .p-table tr { border-bottom: 12px solid #030712; padding: 16px 12px; background: rgba(255,255,255,0.01); }
       .p-table tr:last-child { border-bottom: none; }
-      .p-table td { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #f1f5f9; text-align: right; }
-      .p-table td::before { content: attr(data-label); font-weight: 700; color: var(--text-muted); font-size: 12px; text-align: left; }
-      .p-table td:last-child { border-bottom: none; flex-direction: column; align-items: stretch; padding-top: 12px; }
+      .p-table td { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.04); text-align: right; }
+      .p-table td::before { content: attr(data-label); font-weight: 700; color: var(--text-muted); font-size: 12px; text-align: left; text-transform: uppercase; }
+      .p-table td:last-child { border-bottom: none; flex-direction: column; align-items: stretch; padding-top: 16px; }
       .p-table td:last-child::before { display: none; }
-      .flex-actions-group { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 100%; margin-top: 4px; }
-      .flex-actions-group .btn-premium { width: 100% !important; padding: 8px 4px; font-size: 11px; min-height: 36px; }
+      .p-table td > div { text-align: right; }
+      .flex-actions-group { display: grid !important; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+      .flex-actions-group .btn-premium { width: 100% !important; padding: 10px 4px; font-size: 12px; min-height: 38px; }
     }
 
-    .badge-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-    .badge-status.pending { background: #fff7ed; color: var(--warning); }
-    .badge-status.completed { background: #ecfdf5; color: var(--success); }
+    .badge-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid transparent; }
+    .badge-status.pending { background: rgba(245, 158, 11, 0.08); color: var(--warning); border-color: rgba(245, 158, 11, 0.15); }
+    .badge-status.completed { background: rgba(16, 185, 129, 0.08); color: var(--success); border-color: rgba(16, 185, 129, 0.15); }
+    .flex-actions-group { display: flex; gap: 8px; }
 
-    /* Portal Layout Design */
-    .focus-portal-layout { display: grid; grid-template-columns: 1fr; gap: 16px; }
-    @media (min-width: 1024px) { .focus-portal-layout { grid-template-columns: 360px 1fr; gap: 28px; align-items: start; } .sticky-sidebar { position: sticky; top: 24px; } }
-    .image-workspace-list { display: flex; flex-direction: column; gap: 16px; }
-    @media (min-width: 640px) { .image-workspace-list { gap: 24px; } }
+    /* Sandbox Distraction-Free Focus Portals Layouts */
+    .focus-portal-layout { display: grid; grid-template-columns: 1fr; gap: 20px; }
+    @media (min-width: 1024px) { .focus-portal-layout { grid-template-columns: 380px 1fr; gap: 32px; align-items: start; } .sticky-sidebar { position: sticky; top: 24px; } }
+    .image-workspace-list { display: flex; flex-direction: column; gap: 20px; }
+    @media (min-width: 640px) { .image-workspace-list { gap: 32px; } }
+    
     .premium-image-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-premium); display: grid; grid-template-columns: 1fr; }
     @media (min-width: 640px) { .premium-image-card { grid-template-columns: 1fr 1fr; border-radius: var(--radius-lg); } }
-    .img-display-pane { background: #0f172a; display: grid; place-items: center; position: relative; min-height: 220px; }
-    @media (min-width: 640px) { .img-display-pane { min-height: 320px; } }
-    .img-display-pane img { width: 100%; height: 100%; object-fit: contain; max-height: 360px; cursor: zoom-in; }
-    .img-pane-indicator { position: absolute; left: 12px; top: 12px; background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 999px; color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-    .inputs-entry-pane { padding: 16px; display: flex; flex-direction: column; justify-content: space-between; background: #fff; gap: 12px; }
-    @media (min-width: 640px) { .inputs-entry-pane { padding: 24px; } }
-    .inputs-entry-pane textarea { width: 100%; min-height: 120px; border: 1px solid var(--border); background: #f8fafc; border-radius: var(--radius-md); padding: 12px; font-family: inherit; font-size: 14px; outline: none; resize: vertical; transition: var(--transition); line-height: 1.5; }
-    .inputs-entry-pane textarea:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.1); }
+
+    .img-display-pane { background: #030712; display: grid; place-items: center; position: relative; min-height: 240px; border-right: 1px solid var(--border); }
+    @media (min-width: 640px) { .img-display-pane { min-height: 340px; } }
+    .img-display-pane img { width: 100%; height: 100%; object-fit: contain; max-height: 380px; cursor: zoom-in; transition: transform 0.3s ease; }
+    .img-display-pane img:hover { transform: scale(1.01); }
+    .img-pane-indicator { position: absolute; left: 14px; top: 14px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); border: 1px solid var(--border); padding: 6px 14px; border-radius: 999px; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; }
+
+    .inputs-entry-pane { padding: 20px; display: flex; flex-direction: column; justify-content: space-between; background: rgba(255,255,255,0.01); gap: 16px; }
+    @media (min-width: 640px) { .inputs-entry-pane { padding: 28px; } }
+    .inputs-entry-pane textarea { width: 100%; min-height: 140px; border: 1px solid var(--border); background: rgba(0,0,0,0.3); border-radius: var(--radius-md); padding: 14px; font-family: inherit; font-size: 14px; color: var(--text-main); outline: none; resize: vertical; transition: var(--transition); line-height: 1.6; }
+    .inputs-entry-pane textarea:focus { background: rgba(0,0,0,0.5); border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary), 0 0 20px rgba(56, 189, 248, 0.1); }
     
-    .p-progress-bar { height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-top: 12px; display: none; }
+    .summary-row-box { background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; }
+    .p-progress-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden; margin-top: 12px; display: none; }
     .p-progress-bar.active { display: block; }
     .p-progress-fill { height: 100%; width: 0%; background: var(--primary-gradient); transition: width 0.2s ease; }
 
-    /* Lightbox Premium Custom block */
-    .premium-lightbox { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 2000; display: none; place-items: center; padding: 16px; opacity: 0; transition: opacity 0.2s ease; }
+    /* Luxury Lightbox Window View */
+    .premium-lightbox { position: fixed; inset: 0; background: rgba(3, 7, 18, 0.96); backdrop-filter: blur(12px); z-index: 6000; display: none; place-items: center; padding: 20px; opacity: 0; transition: opacity 0.2s ease; }
     .premium-lightbox.show { display: grid; opacity: 1; }
-    .premium-lightbox img { max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: var(--radius-md); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-    .lightbox-close-btn { position: absolute; top: 16px; right: 16px; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.1); border: none; color: #fff; font-size: 24px; cursor: pointer; display: grid; place-items: center; }
-    .empty-state-text { text-align: center; color: var(--text-muted); font-style: italic; padding: 24px 16px; font-size: 14px; }
+    .premium-lightbox img { max-width: 100%; max-height: 88vh; object-fit: contain; border-radius: var(--radius-md); box-shadow: 0 30px 70px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.05); }
+    .lightbox-close-btn { position: absolute; top: 24px; right: 24px; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 24px; cursor: pointer; display: grid; place-items: center; transition: var(--transition); }
+    .lightbox-close-btn:hover { background: rgba(255,255,255,0.1); transform: rotate(90deg); }
 
-    /* Login System Box Matrix Layout */
-    .login-wrapper { display: flex; justify-content: center; align-items: center; min-height: 55vh; padding: 12px; width: 100%; }
-    .login-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px 24px; max-width: 400px; width: 100%; box-shadow: var(--shadow-premium); text-align: center; }
+    .text-link-area { min-height: 80px; font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--primary); background: rgba(0,0,0,0.4) !important; cursor: default; border-color: rgba(56, 189, 248, 0.2); }
+    .spinner-premium { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.05); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.6s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-state-text { text-align: center; color: var(--text-muted); font-style: italic; padding: 32px 16px; font-size: 14px; }
+
+    /* Ultra-Premium Luxury Login System Card Space Matrix */
+    .login-wrapper { display: flex; justify-content: center; align-items: center; min-height: 65vh; padding: 16px; width: 100%; }
+    .login-card { background: var(--card); backdrop-filter: blur(30px); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 40px 32px; max-width: 420px; width: 100%; box-shadow: var(--shadow-premium); text-align: center; position: relative; }
+    .login-card::before { content: ''; position: absolute; inset: 0; border-radius: var(--radius-lg); padding: 1px; background: linear-gradient(to bottom, rgba(255,255,255,0.1), transparent); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+    .login-badge { display: inline-flex; font-size: 10px; font-weight: 800; background: rgba(56, 189, 248, 0.1); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.2); padding: 4px 12px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
+    .login-icon-frame { width: 56px; height: 56px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 50%; display: grid; place-items: center; margin: 0 auto 20px; color: var(--primary); }
   </style>
 </head>
 <body>
 
-  <!-- Hệ thống Toast thông báo -->
+  <!-- Hệ thống thông báo tiêu chuẩn High-end Matrix -->
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- Màn hình chờ tải lên song song -->
+  <!-- Màn hình chờ khóa UI tải lên song song -->
   <div id="uploadOverlay" class="upload-overlay">
     <div class="upload-overlay-card">
       <div class="spinner-premium"></div>
       <div id="uploadOverlayTitle" class="upload-overlay-title">Đang đồng bộ ảnh tổn thất</div>
       <div id="uploadOverlaySubtitle" class="upload-overlay-subtitle">Tiến trình kết nối dữ liệu song song...</div>
-      <div class="p-progress-bar active" style="margin-top: 0;">
+      <div class="p-progress-bar active" style="margin-top: 0; background: rgba(255,255,255,0.03);">
         <div id="uploadOverlayProgressFill" class="p-progress-fill"></div>
       </div>
     </div>
   </div>
 
-  <!-- Hộp thoại xác nhận Pop-up -->
+  <!-- Hộp thoại xác nhận Pop-up Cao cấp -->
   <div id="modalOverlay" class="p-modal-overlay">
     <div class="p-modal">
       <h3 id="modalTitle">Xác nhận</h3>
@@ -312,7 +345,6 @@
           <p>Hệ thống Giám định & Đối chiếu tổn thất xe cơ giới thời gian thực</p>
         </div>
       </div>
-      <!-- Khu vực chứa nút Đăng xuất Firebase -->
       <div id="navUserActionSpace"></div>
     </nav>
 
@@ -354,7 +386,7 @@
       COPY: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
       TRASH: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
       SPARKLES: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707"/></svg>`,
-      LOCK: `<svg class="svg-icon svg-icon-lg" style="color:var(--primary); margin-bottom:12px;" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+      LOCK: `<svg class="svg-icon svg-icon-lg" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
       LOGOUT: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`
     };
 
@@ -374,13 +406,11 @@
       firebase.initializeApp(CONFIG.FIREBASE);
       dbNodeInstance = firebase.database();
 
-      // ĐA NÂNG CẤP: Gắn cổng lắng nghe trạng thái đăng nhập Firebase Auth toàn cục
       firebase.auth().onAuthStateChanged((userInstance) => {
         evaluateViewRoutingState(userInstance);
       });
     }
 
-    // ĐA NÂNG CẤP: Đọc tham số định tuyến và kiểm tra quyền của Firebase Auth User Object
     function evaluateViewRoutingState(userInstance) {
       const URLQueryStrings = new URLSearchParams(window.location.search);
       const caseIdToken = URLQueryStrings.get('idCa');
@@ -391,13 +421,11 @@
       const isManagementRoute = !caseIdToken || targetedViewArg === 'result';
       const isUserAuthenticated = !!userInstance;
 
-      // Hủy lắng nghe cũ chống lag bộ nhớ
       dbNodeInstance.ref('cases').off();
       if (localActiveCaseNode && localActiveCaseNode.idCa) {
         dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}`).off();
       }
 
-      // KIỂM TRA BẢO MẬT: Nếu là trang quản lý mà chưa đăng nhập -> Chặn và kích hoạt Login Card
       if (isManagementRoute && !isUserAuthenticated) {
         if (brandElement) {
           brandElement.style.cursor = 'default';
@@ -408,10 +436,9 @@
         return;
       }
 
-      // Hiển thị nút đăng xuất nếu đang ở giao diện quản lý và đã login thành công
       if (isUserAuthenticated && isManagementRoute) {
         if (userActionSpace) {
-          userActionSpace.innerHTML = `<button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; gap:6px; min-height:36px;" onclick="executeLogoutFlow()">${SVGS.LOGOUT} Đăng xuất</button>`;
+          userActionSpace.innerHTML = `<button class="btn-premium btn-secondary" style="padding:6px 14px; font-size:12px; gap:6px; min-height:36px;" onclick="executeLogoutFlow()">${SVGS.LOGOUT} Đăng xuất</button>`;
         }
       } else {
         if (userActionSpace) userActionSpace.innerHTML = '';
@@ -445,27 +472,28 @@
     }
 
     /****************************************************
-     * 0. CỔNG XÁC THỰC FIREBASE AUTH (LOGIN VIEW PORTAL)
+     * 0. LUXURY LOGIN INTERFACE PORTAL (FIREBASE AUTH)
      ****************************************************/
     function renderLoginView() {
       rootContainer.innerHTML = `
         <div class="login-wrapper">
           <div class="login-card">
-            <div>${SVGS.LOCK}</div>
-            <h2 style="font-size:18px; font-weight:800; color:var(--text-main);">Xác thực Giám định viên</h2>
-            <p style="font-size:13px; color:var(--text-muted); margin-top:4px; margin-bottom:24px;">Hệ thống yêu cầu đăng nhập tài khoản đám mây.</p>
+            <span class="login-badge">Internal Gateway</span>
+            <div class="login-icon-frame">${SVGS.LOCK}</div>
+            <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); letter-spacing: -0.02em;">Hệ thống Giám định</h2>
+            <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px; margin-bottom: 28px;">Không gian làm việc bảo mật của Giám định viên</p>
             
-            <div class="form-group" style="text-align:left;">
-              <label>Email nghiệp vụ</label>
-              <input id="txtEmailInput" class="input-premium" type="email" placeholder="gdv@baohiem.com" autocomplete="username" />
+            <div class="form-group" style="text-align: left;">
+              <label>Email tài khoản</label>
+              <input id="txtEmailInput" class="input-premium" type="email" placeholder="gdv@company.com" autocomplete="username" />
             </div>
             
-            <div class="form-group" style="text-align:left;">
-              <label>Mật khẩu mật định</label>
+            <div class="form-group" style="text-align: left; margin-bottom: 24px;">
+              <label>Mật khẩu mật mã</label>
               <input id="txtPasswordInput" class="input-premium" type="password" placeholder="••••••••" autocomplete="current-password" />
             </div>
 
-            <button id="btnLoginSubmit" class="btn-premium" style="margin-top:8px; width:100%;">Đăng nhập hệ thống</button>
+            <button id="btnLoginSubmit" class="btn-premium" style="width: 100%;">Đăng nhập hệ thống</button>
           </div>
         </div>
       `;
@@ -483,17 +511,15 @@
           return;
         }
 
-        toggleButtonUIPendingState(submitBtn, true, 'Đang xác thực bảo mật...');
+        toggleButtonUIPendingState(submitBtn, true, 'Đang giải mã thực thể...');
 
-        // Gọi API của Firebase Auth Engine
         firebase.auth().signInWithEmailAndPassword(email, password)
           .then(() => {
             triggerToast('Đăng nhập thành công!');
-            // Trạng thái onAuthStateChanged sẽ tự động bắt được và re-render giao diện quản trị
           })
           .catch((error) => {
             console.error(error);
-            triggerToast(error.message || 'Tài khoản hoặc mật khẩu không chính xác.', 'error');
+            triggerToast('Tài khoản hoặc mật khẩu không đúng.', 'error');
             toggleButtonUIPendingState(submitBtn, false, 'Đăng nhập hệ thống');
             passwordField.value = '';
             passwordField.focus();
@@ -507,14 +533,14 @@
 
     function executeLogoutFlow() {
       firebase.auth().signOut().then(() => {
-        triggerToast('Đã đăng xuất khỏi phiên làm việc an toàn.', 'warning');
+        triggerToast('Đã đóng phiên kết nối an toàn.', 'warning');
       }).catch((err) => {
-        triggerToast('Lỗi tiến trình đăng xuất: ' + err.message, 'error');
+        triggerToast('Lỗi tiến trình: ' + err.message, 'error');
       });
     }
 
     /****************************************************
-     * 1. DASHBOARD VIEW (MÀN HÌNH QUẢN LÝ TỔNG)
+     * 1. PREMIUM MANAGEMENT DASHBOARD WORKSPACE
      ****************************************************/
     function renderManagerDashboardWorkspace() {
       rootContainer.innerHTML = `
@@ -528,7 +554,7 @@
           </div>
           <div class="stat-box">
             <div class="stat-info">
-              <div class="stat-lbl">Hồ sơ chưa nhập</div>
+              <div class="stat-lbl">Hồ sơ chờ nhập</div>
               <div class="stat-val" id="lblPendingCases" style="color:var(--warning)">0</div>
             </div>
             <div class="stat-icon-wrap" style="color:var(--warning)">${SVGS.CLOCK}</div>
@@ -545,28 +571,28 @@
         <div class="workspace-grid two-cols">
           <section class="p-card">
             <div class="p-card-head">
-              <h2>Tạo ca giám định mới</h2>
-              <p>Khởi tạo thông tin phương tiện tổn thất và đồng bộ danh sách ảnh gốc chứng cứ.</p>
+              <h2>Khởi tạo hồ sơ mới</h2>
+              <p>Nhập thực thể phương tiện và đồng bộ kho tài nguyên ảnh chứng cứ.</p>
             </div>
             
             <div class="form-group">
-              <label>Biển kiểm soát</label>
-              <input id="txtPlateNumber" class="input-premium" type="text" placeholder="BKS VD: 30H-123.45" autocomplete="off" />
+              <label>Biển kiểm soát xe</label>
+              <input id="txtPlateNumber" class="input-premium" type="text" placeholder="VD: 30H-123.45" autocomplete="off" />
             </div>
 
             <div class="form-group">
-              <label>Garage sửa chữa xử lý</label>
-              <input id="txtGaragePartner" class="input-premium" type="text" placeholder="Tên đơn vị sửa chữa" autocomplete="off" />
+              <label>Garage sửa chữa chỉ định</label>
+              <input id="txtGaragePartner" class="input-premium" type="text" placeholder="Tên cơ sở sửa chữa phụ trách" autocomplete="off" />
             </div>
 
             <div class="form-group">
-              <label>Ảnh chụp hiện trạng tổn thất phương tiện</label>
+              <label>Tệp tin hình ảnh tổn thất hiện trạng</label>
               <div class="dropzone" onclick="document.getElementById('fileImageUploader').click()">
                 <div style="color:var(--text-muted)">${SVGS.CAMERA}</div>
-                <p>Nhấp vào đây để chọn tệp tin hình ảnh tổn thất</p>
+                <p>Nhấp chọn tập tin hoặc kéo ảnh vào đây</p>
                 <input id="fileImageUploader" type="file" accept="image/*" multiple style="display:none;" />
               </div>
-              <div id="lblDropzoneSummary" class="empty-state-text" style="font-size:12px; padding:8px 0 0;">Chưa có ảnh nào được chọn.</div>
+              <div id="lblDropzoneSummary" class="empty-state-text" style="font-size:12px; padding:8px 0 0;">Chưa có tệp dữ liệu nào được nạp.</div>
               <div id="boxPreviewsHolder" class="preview-grid-premium"></div>
             </div>
 
@@ -575,8 +601,8 @@
 
           <section class="p-card">
             <div class="p-card-head">
-              <h2>Danh sách ca giám định (Realtime)</h2>
-              <p>Hệ thống tự động đồng bộ liên tục dữ liệu từ máy chủ.</p>
+              <h2>Phiên giám định trực tuyến</h2>
+              <p>Mạng dữ liệu cốt lõi đồng bộ tự động theo thời gian thực.</p>
             </div>
             <div class="table-container">
               <table class="p-table">
@@ -590,7 +616,7 @@
                 </thead>
                 <tbody id="tblCasesBodyContainer">
                   <tr>
-                    <td colspan="4" class="empty-state-text">Đang tải luồng dữ liệu từ Firebase Cloud...</td>
+                    <td colspan="4" class="empty-state-text">Đang kết nối trung tâm dữ liệu Cloud...</td>
                   </tr>
                 </tbody>
               </table>
@@ -618,11 +644,11 @@
 
       gridHolder.innerHTML = '';
       if (!filesList.length) {
-        labelSummary.textContent = 'Chưa có ảnh nào được chọn.';
+        labelSummary.textContent = 'Chưa có tệp dữ liệu nào được nạp.';
         return;
       }
 
-      labelSummary.textContent = `Đã chọn tổng cộng ${filesList.length} tệp tin hình ảnh.`;
+      labelSummary.textContent = `Đã ghi nhận cấu trúc ${filesList.length} tệp tin ảnh.`;
       filesList.slice(0, 8).forEach(file => {
         const readerBlobUrl = URL.createObjectURL(file);
         activeObjectUrls.push(readerBlobUrl);
@@ -635,7 +661,7 @@
       if (filesList.length > 8) {
         const remainderCounterBadge = document.createElement('div');
         remainderCounterBadge.className = 'preview-thumb';
-        remainderCounterBadge.style.cssText = `display:grid; place-items:center; font-weight:800; color:var(--text-muted); background:#f1f5f9; font-size:13px;`;
+        remainderCounterBadge.style.cssText = `display:grid; place-items:center; font-weight:800; color:var(--primary); background:rgba(0,0,0,0.4); font-size:13px; font-family:'JetBrains Mono';`;
         remainderCounterBadge.textContent = `+${filesList.length - 8}`;
         gridHolder.appendChild(remainderCounterBadge);
       }
@@ -650,7 +676,7 @@
       if (!tableBody) return;
 
       if (!casesPayload) {
-        tableBody.innerHTML = `<tr><td colspan="4" class="empty-state-text">Hệ thống chưa ghi nhận ca xe nào.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="4" class="empty-state-text">Hệ thống trống. Chưa ghi nhận ca xe.</td></tr>`;
         totalLbl.textContent = '0'; pendingLbl.textContent = '0'; completedLbl.textContent = '0';
         return;
       }
@@ -670,10 +696,10 @@
         return `
           <tr>
             <td data-label="Thông tin xe">
-              <div style="font-weight:700; color:var(--dark); font-size:15px;">${escapeHtmlOutput(entityNode.bienSo)}</div>
+              <div style="font-weight:700; color:var(--text-main); font-size:15px; letter-spacing:-0.01em;">${escapeHtmlOutput(entityNode.bienSo)}</div>
               <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${escapeHtmlOutput(entityNode.tenGara)}</div>
             </td>
-            <td data-label="Số lượng ảnh"><span style="font-weight:700;">${entityNode.soLuongAnh || 0}</span> ảnh</td>
+            <td data-label="Số lượng ảnh"><span style="font-weight:700; font-family:'JetBrains Mono';">${entityNode.soLuongAnh || 0}</span> file</td>
             <td data-label="Trạng thái">
               <span class="badge-status ${targetBadgeClass}">
                 <span style="width:6px; height:6px; border-radius:50%; background:currentColor"></span>
@@ -698,15 +724,15 @@
     }
 
     async function triggerDestructiveDeleteCase(caseKey, friendlyPlateName) {
-      const confirmAction = await showConfirmModal('Xóa ca giám định', `Bạn chắc chắn muốn loại bỏ hồ sơ xe: ${friendlyPlateName}?`);
+      const confirmAction = await showConfirmModal('Xóa bỏ ca xe', `Hành động này sẽ xóa vĩnh viễn tài nguyên thuộc ca xe: ${friendlyPlateName}. Xác nhận hủy?`);
       if (confirmAction) {
         await dbNodeInstance.ref(`cases/${caseKey}`).remove();
-        triggerToast('Đã xóa bỏ dữ liệu hồ sơ khỏi hệ thống Cloud.', 'warning');
+        triggerToast('Hồ sơ ca giám định đã hủy bỏ thành công.', 'warning');
       }
     }
 
     /****************************************************
-     * LUỒNG TẢI ẢNH SONG SONG + MÀN HÌNH CHỜ
+     * PARALLEL ASYNC STREAM CORE PROCESSING UPLOADER
      ****************************************************/
     async function pipelineTriggerCaseCreationFlow() {
       const plateInputVal = document.getElementById('txtPlateNumber').value.trim();
@@ -714,16 +740,16 @@
       const imagesFileList = Array.from(document.getElementById('fileImageUploader').files || []);
 
       if (!plateInputVal || !garageInputVal || !imagesFileList.length) {
-        triggerToast('Vui lòng nhập đầy đủ Biển số, Tên Garage và tải lên hình ảnh.', 'error');
+        triggerToast('Vui lòng hoàn tất thông tin trường nhập và tệp tin ảnh.', 'error');
         return;
       }
 
-      toggleUploadOverlay(true, `Đang khởi tạo ${imagesFileList.length} ảnh tổn thất...`, 'Kết nối hạ tầng Cloudinary API', 0);
+      toggleUploadOverlay(true, `Đang mã hóa dữ liệu hình ảnh...`, 'Kích nổ cụm luồng dẫn API public...', 0);
 
       try {
         const secureHostedImageUrlsArray = await executionParallelImagesUploadCore(imagesFileList);
         
-        toggleUploadOverlay(true, 'Đang ghi nhận cấu trúc dữ liệu...', 'Đồng bộ thời gian thực với Firebase...', 95);
+        toggleUploadOverlay(true, 'Khởi tạo thực thể cấu trúc...', 'Đồng bộ trường dữ liệu sang máy chủ đám mây...', 95);
 
         const generatedCaseUniqueToken = 'CASE_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5).toUpperCase();
         const mappedImageNodeObjects = secureHostedImageUrlsArray.map(secureUrl => ({
@@ -742,7 +768,7 @@
         };
 
         await dbNodeInstance.ref(`cases/${generatedCaseUniqueToken}`).set(finalPayloadStructure);
-        triggerToast('Hồ sơ giám định trực tuyến đã đồng bộ thành công.');
+        triggerToast('Dữ liệu nghiệp vụ ca xe đã được đẩy lên Cloud.');
 
         renderInlineCreationSuccessPanel(finalPayloadStructure);
 
@@ -750,11 +776,11 @@
         document.getElementById('txtGaragePartner').value = '';
         document.getElementById('fileImageUploader').value = '';
         document.getElementById('boxPreviewsHolder').innerHTML = '';
-        document.getElementById('lblDropzoneSummary').textContent = 'Chưa có ảnh nào được chọn.';
+        document.getElementById('lblDropzoneSummary').textContent = 'Chưa có tệp dữ liệu nào được nạp.';
         clearActiveObjectUrls();
       } catch (exception) {
         console.error(exception);
-        triggerToast(exception.message || 'Lỗi nghẽn mạng phát sinh trong tiến trình upload song song.', 'error');
+        triggerToast(exception.message || 'Lỗi truyền tải đa luồng.', 'error');
       } finally {
         toggleUploadOverlay(false); 
       }
@@ -770,11 +796,11 @@
           resolvedCounter++;
           
           const accumulatedPercentage = Math.round((resolvedCounter / totalFilesCount) * 100);
-          toggleUploadOverlay(true, `Đang truyền tải ảnh tổn thất (${resolvedCounter}/${totalFilesCount})`, `Băng thông đám mây tốc độ cao: ${accumulatedPercentage}%`, accumulatedPercentage);
+          toggleUploadOverlay(true, `Đang xử lý gói ảnh dữ liệu (${resolvedCounter}/${totalFilesCount})`, `Luồng truyền tải song song ổn định: ${accumulatedPercentage}%`, accumulatedPercentage);
           
           return cloudSecureUrl;
         } catch (error) {
-          throw new Error(`Tệp tin [${fileItem.name}] thất bại: ${error.message}`);
+          throw new Error(`Lỗi tệp [${fileItem.name}]: ${error.message}`);
         }
       });
 
@@ -794,10 +820,10 @@
       const parsedTextResponse = await networkResponse.text();
       
       let convertedJSONData;
-      try { convertedJSONData = JSON.parse(parsedTextResponse); } catch(err) { throw new Error('Phản hồi Server lỗi.'); }
+      try { convertedJSONData = JSON.parse(parsedTextResponse); } catch(err) { throw new Error('Cấu trúc Media phản hồi lỗi.'); }
 
       if (!networkResponse.ok || !convertedJSONData.secure_url) {
-        throw new Error(convertedJSONData?.error?.message || 'Lỗi truyền tải.');
+        throw new Error(convertedJSONData?.error?.message || 'Lỗi API.');
       }
       return convertedJSONData.secure_url;
     }
@@ -828,30 +854,30 @@
 
       outputCardBox.innerHTML = `
         <div class="p-card-head" style="margin-bottom:20px; padding-bottom:12px;">
-          <h2 style="color:var(--success); font-size:16px; display:flex; align-items:center; gap:6px;">${SVGS.SPARKLES} Khởi tạo hồ sơ trực tuyến thành công</h2>
-          <p style="font-size:12px; margin-top:4px;">Mã ca xe định danh: <strong style="color:var(--dark); font-family:monospace;">${dataPayload.idCa}</strong></p>
+          <h2 style="color:var(--success); font-size:16px; display:flex; align-items:center; gap:6px;">${SVGS.SPARKLES} Đồng bộ cấu trúc ca xe thành công</h2>
+          <p style="font-size:12px; margin-top:4px;">Token ca xe định danh: <strong style="color:var(--primary); font-family:'JetBrains Mono', monospace;">${dataPayload.idCa}</strong></p>
         </div>
 
         <div class="p-share-container">
           <div class="p-share-row">
             <div class="p-share-meta">
-              <div class="p-share-label">Link gửi Garage (Nhập bộ phận)</div>
+              <div class="p-share-label">Cổng bàn giao tác nghiệp đối tác (Garage nhập bộ phận)</div>
               <div class="p-share-url-preview">${escapeHtmlOutput(shareLinkGara)}</div>
             </div>
             <div class="p-share-actions">
-              <button class="btn-premium btn-share-action" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkGara)}')">${SVGS.COPY} Sao chép</button>
-              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkGara)}', '_blank')">${SVGS.EXTERNAL} Mở nhanh</button>
+              <button class="btn-premium btn-share-action" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkGara)}')">${SVGS.COPY} Sao chép Link</button>
+              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkGara)}', '_blank')">${SVGS.EXTERNAL} Mở tab</button>
             </div>
           </div>
 
           <div class="p-share-row">
             <div class="p-share-meta">
-              <div class="p-share-label">Link Giám định viên (Đối chiếu kết quả)</div>
+              <div class="p-share-label">Cổng theo dõi nghiệp vụ nội bộ (Giám định viên đối chiếu)</div>
               <div class="p-share-url-preview">${escapeHtmlOutput(shareLinkView)}</div>
             </div>
             <div class="p-share-actions">
-              <button class="btn-premium btn-share-action" style="background:var(--dark);" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkView)}')">${SVGS.COPY} Sao chép</button>
-              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkView)}', '_blank')">${SVGS.EXTERNAL} Đi đến</button>
+              <button class="btn-premium btn-share-action" style="background:var(--dark);" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkView)}')">${SVGS.COPY} Sao chép Link</button>
+              <button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkView)}', '_blank')">${SVGS.EXTERNAL} Truy cập</button>
             </div>
           </div>
         </div>
@@ -860,16 +886,16 @@
     }
 
     /****************************************************
-     * 2. PORTAL WORKSPACE PORTALS VIEWS
+     * 2. DISTRACTION-FREE ISOLATED PORTAL WORKSPACE
      ****************************************************/
     function bindAndFetchCaseRealtimeSync(caseId, currentViewFlag) {
-      renderLoadingLayoutIndicator('Đang thiết lập cổng kết nối bảo mật hồ sơ...');
+      renderLoadingLayoutIndicator('Đang khởi chạy luồng liên kết bảo mật dữ liệu...');
 
       dbNodeInstance.ref(`cases/${caseId}`).on('value', (dataSnapshot) => {
         const databaseValueObject = dataSnapshot.val();
         
         if (!databaseValueObject) {
-          renderErrorLayoutState('Hồ sơ ca xe mục tiêu không tồn tại hoặc đã bị gỡ bỏ.');
+          renderErrorLayoutState('Mã định danh ca xe không hợp lệ hoặc tài nguyên đã bị xóa trên cơ sở dữ liệu Cloud.');
           return;
         }
 
@@ -885,7 +911,7 @@
           renderPortalGarageInteractiveInputView();
         }
       }, (networkException) => {
-        renderErrorLayoutState('Mất quyền kết nối: ' + networkException.message);
+        renderErrorLayoutState('Lỗi cổng kết nối truyền tải: ' + networkException.message);
       });
     }
 
@@ -897,26 +923,26 @@
       return `
         <div class="p-card sticky-sidebar">
           <div class="p-card-head">
-            <h2>${isReadOnlyMode ? 'Dữ liệu Đối chiếu' : 'Cập nhật hạng mục'}</h2>
-            <p>${isReadOnlyMode ? 'Chế độ xem biên bản chốt' : 'Khai báo thông tin từ Garage'}</p>
+            <h2>${isReadOnlyMode ? 'Dữ liệu Đối chiếu' : 'Khai báo Bộ phận'}</h2>
+            <p>${isReadOnlyMode ? 'Chế độ biên bản chốt chặn' : 'Cửa sổ tác nghiệp dành cho Garage'}</p>
           </div>
 
           ${showBackButton ? `<button class="btn-premium btn-secondary" style="width:100%; margin-bottom:16px; gap:6px;" onclick="goHome()">${SVGS.ARROW_LEFT} Quay lại Dashboard</button>` : ''}
 
           <div class="form-group">
-            <label style="margin:0;">Mã hồ sơ ca xe</label>
-            <div style="font-weight:700; font-size:14px; color:var(--dark)">${node.idCa}</div>
+            <label style="margin:0;">Mã định danh ca xe</label>
+            <div style="font-weight:700; font-size:14px; color:var(--text-main); font-family:'JetBrains Mono', monospace;">${node.idCa}</div>
           </div>
           <div class="form-group">
-            <label style="margin:0;">Biển số phương tiện</label>
-            <div style="font-weight:700; font-size:14px; color:var(--dark)">${escapeHtmlOutput(node.bienSo)}</div>
+            <label style="margin:0;">Biển số xe kiểm soát</label>
+            <div style="font-weight:700; font-size:14px; color:var(--text-main)">${escapeHtmlOutput(node.bienSo)}</div>
           </div>
           <div class="form-group">
-            <label style="margin:0;">Đơn vị sửa chữa phụ trách</label>
-            <div style="font-weight:700; font-size:14px; color:var(--dark)">${escapeHtmlOutput(node.tenGara)}</div>
+            <label style="margin:0;">Cơ sở sửa chữa phụ trách</label>
+            <div style="font-weight:700; font-size:14px; color:var(--text-main)">${escapeHtmlOutput(node.tenGara)}</div>
           </div>
           <div class="form-group">
-            <label style="margin:0;">Trạng thái hồ sơ</label>
+            <label style="margin:0;">Trạng thái tài nguyên</label>
             <span class="badge-status ${node.trangThai === STATUS_COMPLETED ? 'completed' : 'pending'}" style="margin-top:4px;">
               ${escapeHtmlOutput(node.trangThai)}
             </span>
@@ -924,11 +950,11 @@
 
           ${showBackButton ? `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
-              <button class="btn-premium" style="width:100%; gap:6px;" onclick="executeCopyAggregatedRawText()">${SVGS.COPY} Copy chuỗi biên bản nhanh</button>
+              <button class="btn-premium" style="width:100%; gap:6px;" onclick="executeCopyAggregatedRawText()">${SVGS.COPY} Trích xuất văn bản tổng</button>
             </div>
           ` : isReadOnlyMode ? `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
-              <div class="badge-status completed" style="width:100%; padding:10px; justify-content:center; gap:6px;">${SVGS.CHECK_CIRCLE} Biểu mẫu đã gửi & khóa an toàn</div>
+              <div class="badge-status completed" style="width:100%; padding:12px; justify-content:center; gap:6px;">${SVGS.CHECK_CIRCLE} Hồ sơ đã khóa & chuyển tiếp bảo hiểm</div>
             </div>
           ` : `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
@@ -941,7 +967,7 @@
 
     function renderPortalGarageInteractiveInputView() {
       if (!localActiveImageStack.length) {
-        renderErrorLayoutState('Hồ sơ xe chưa được nạp danh sách hình ảnh.');
+        renderErrorLayoutState('Ca xe hiện tại chưa ghi nhận danh sách hình ảnh chứng từ gốc.');
         return;
       }
 
@@ -949,15 +975,15 @@
         return `
           <div class="premium-image-card">
             <div class="img-display-pane">
-              <span class="img-pane-indicator">Ảnh tổn thất số ${index + 1}</span>
+              <span class="img-pane-indicator">Ảnh tổn thất chi tiết số ${index + 1}</span>
               <img src="${escapeAttributeData(item.linkAnh)}" alt="Ảnh tổn thất số ${index + 1}" loading="lazy" onclick="openLightbox('${escapeAttributeData(item.linkAnh)}')" />
             </div>
             <div class="inputs-entry-pane">
               <div class="form-group" style="width:100%">
-                <label>Khai báo bộ phận tổn thất / Phương án khắc phục vùng ảnh ${index + 1}</label>
-                <textarea class="garage-quote-textarea-node" data-index-token="${index}" placeholder="Ví dụ phương án rõ ràng:&#10;- Thay mới cản trước chính hãng&#10;- Gò nắn chắn bùn trước trái&#10;- Sơn hấp xử lý xước dặm sườn xe">${escapeHtmlOutput(item.hangMucBaoGia || '')}</textarea>
+                <label>Xác định tên bộ phận / Phương án khắc phục vùng ảnh ${index + 1}</label>
+                <textarea class="garage-quote-textarea-node" data-index-token="${index}" placeholder="Ví dụ khai báo rõ ràng:&#10;- Thay mới cụm đèn pha trước phải chính hãng&#10;- Gò nắn phục hồi biến dạng ụ bắt giảm xóc&#10;- Sơn hấp phủ chỉ sườn phải trước"></textarea>
               </div>
-              <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self: flex-start; gap:4px; min-height:36px;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">${SVGS.EXTERNAL} Xem ảnh gốc phóng to</button>
+              <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self: flex-start; gap:4px; min-height:36px;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">${SVGS.EXTERNAL} Phóng to ảnh gốc độ nét cao</button>
             </div>
           </div>
         `;
@@ -978,11 +1004,11 @@
       const emptyFieldsCounter = DOMTextareaElements.filter(tx => !tx.value.trim()).length;
 
       if (emptyFieldsCounter > 0) {
-        const proceedBlank = await showConfirmModal('Phát hiện ô trống bộ phận', `Có ${emptyFieldsCounter} vùng ảnh chưa điền bộ phận tổn thất. Bạn vẫn muốn tiếp tục gửi đi?`);
+        const proceedBlank = await showConfirmModal('Phát hiện ô trống dữ liệu', `Hệ thống ghi nhận còn ${emptyFieldsCounter} hình ảnh chưa được điền thông tin tên bộ phận. Bạn vẫn muốn tiếp tục gửi chốt?`);
         if (!proceedBlank) return;
       }
 
-      const finalFreezeConfirmation = await showConfirmModal('Xác nhận chốt hồ sơ', 'Sau khi gửi, toàn bộ dữ liệu hạng mục bộ phận sẽ khóa tự động để bảo hiểm đối chiếu. Xác nhận gửi?');
+      const finalFreezeConfirmation = await showConfirmModal('Xác nhận khóa hồ sơ', 'Sau khi chốt gửi, biểu mẫu tác nghiệp sẽ chuyển về trạng thái chỉ đọc để chuyển tiếp Giám định viên. Xác nhận gửi?');
       if (!finalFreezeConfirmation) return;
 
       const packagedItemsPayload = DOMTextareaElements.map(tx => {
@@ -999,19 +1025,19 @@
           trangThai: STATUS_COMPLETED
         });
 
-        triggerToast('Hồ sơ báo giá bộ phận cơ giới đã được khóa an toàn.');
+        triggerToast('Dữ liệu danh mục bộ phận xe cơ giới đã gửi thành công.');
         const finalizedResultUrl = `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(localActiveCaseNode.idCa)}`;
         window.history.replaceState({}, '', finalizedResultUrl);
         evaluateViewRoutingState(firebase.auth().currentUser);
       } catch (err) {
         console.error(err);
-        triggerToast('Lỗi nghẽn mạng đồng bộ: ' + err.message, 'error');
+        triggerToast('Lỗi đồng bộ truyền tải: ' + err.message, 'error');
       }
     }
 
     function renderPortalResultReadOnlyView(renderMode) {
       if (!localActiveImageStack.length) {
-        renderErrorLayoutState('Không trích xuất được danh sách hình ảnh.');
+        renderErrorLayoutState('Không thể cấu trúc mảng hình ảnh.');
         return;
       }
 
@@ -1021,15 +1047,15 @@
         return `
           <div class="premium-image-card">
             <div class="img-display-pane">
-              <span class="img-pane-indicator" style="background:var(--primary);">Ảnh chứng cứ #${index + 1}</span>
+              <span class="img-pane-indicator" style="background:rgba(2, 132, 199, 0.3); border-color:var(--primary)">Vùng ảnh giám định #${index + 1}</span>
               <img src="${escapeAttributeData(item.linkAnh)}" alt="Ảnh kết quả vùng ${index + 1}" loading="lazy" onclick="openLightbox('${escapeAttributeData(item.linkAnh)}')" />
             </div>
-            <div class="inputs-entry-pane" style="background:#fafafa;">
+            <div class="inputs-entry-pane">
               <div class="form-group" style="width:100%;">
-                <label style="color:var(--primary); font-weight:800; text-transform:uppercase; letter-spacing:0.02em;">Bộ phận tổn thất & hạng mục ghi nhận từ đối tác</label>
-                <div style="background:#fff; border:1px solid var(--border); padding:16px; border-radius:var(--radius-md); font-size:15px; font-weight:700; white-space:pre-wrap; min-height:110px;" class="${textContentClean ? '':'empty-state-text'}">${textContentClean ? escapeHtmlOutput(textContentClean) : 'Garage bỏ trống không khai báo thông tin bộ phận tổn thất cho ảnh này.'}</div>
+                <label style="color:var(--primary); font-weight:800; tracking-spacing:0.02em;">Chi tiết hạng mục bộ phận ghi nhận từ Garage đối tác</label>
+                <div style="background:rgba(0,0,0,0.4); border:1px solid var(--border); padding:18px; border-radius:var(--radius-md); font-size:14px; font-weight:700; white-space:pre-wrap; min-height:110px; color:var(--text-main); border-left: 3px solid var(--primary);" class="${textContentClean ? '':'empty-state-text'}">${textContentClean ? escapeHtmlOutput(textContentClean) : 'Đơn vị đối tác không khai báo danh mục bộ phận cho vùng ảnh tổn thất này.'}</div>
               </div>
-              <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self:flex-start; gap:4px; min-height:36px;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">${SVGS.EXTERNAL} Xem ảnh gốc kết quả</button>
+              <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self:flex-start; gap:4px; min-height:36px;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">${SVGS.EXTERNAL} Mở ảnh chứng cứ gốc</button>
             </div>
           </div>
         `;
@@ -1073,14 +1099,14 @@
     }
 
     /****************************************************
-     * UTILS HELPERS
+     * GENERIC INFRASTRUCTURE HELPERS UTILS
      ****************************************************/
     function renderLoadingLayoutIndicator(friendlyMessage) {
       rootContainer.innerHTML = `
-        <div class="p-card" style="text-align:center; padding:48px 16px;">
+        <div class="p-card" style="text-align:center; padding:60px 20px; background:var(--card)">
           <div class="spinner-premium"></div>
           <h3 style="font-size:15px; font-weight:700; margin-bottom:4px;">${escapeHtmlOutput(friendlyMessage)}</h3>
-          <p style="font-size:12px; color:var(--text-muted);">Mạng lưới dữ liệu thời gian thực đang đồng bộ.</p>
+          <p style="font-size:12px; color:var(--text-muted);">Mạng lưới dữ liệu thời gian thực đang đồng bộ đám mây.</p>
         </div>
       `;
     }
@@ -1089,13 +1115,13 @@
       rootContainer.innerHTML = `
         <div class="p-card" style="border-top: 4px solid var(--danger);">
           <div class="p-card-head">
-            <h2 style="color:var(--danger)">Cảnh báo: Không tải được tài nguyên hồ sơ</h2>
+            <h2 style="color:var(--danger)">Cảnh báo hệ thống: Lỗi tài nguyên gói</h2>
           </div>
-          <div style="background:#fff5f5; border:1px solid #fed7d7; color:#c53030; padding:14px; border-radius:var(--radius-md); font-size:13px; font-weight:600; margin-bottom:16px;">
+          <div style="background:rgba(244,63,94,0.05); border:1px solid rgba(244,63,94,0.15); color:var(--danger); padding:16px; border-radius:var(--radius-md); font-size:13px; font-weight:600; margin-bottom:20px; line-height:1.6;">
             ${escapeHtmlOutput(errorMessage)}
           </div>
           <div class="flex-actions-group">
-            <button class="btn-premium" onclick="window.location.reload()">Thử tải lại trang</button>
+            <button class="btn-premium" onclick="window.location.reload()">Tải lại trang</button>
           </div>
         </div>
       `;
@@ -1104,30 +1130,12 @@
     function renderFatalConfigurationFailure() {
       rootContainer.innerHTML = `
         <div class="p-card" style="border-top:4px solid var(--danger); margin-top:40px;">
-          <h2 style="color:var(--danger); font-size:18px;">Lỗi xác thực cấu hình phân quyền</h2>
+          <h2 style="color:var(--danger); font-size:18px;">Lỗi xác thực cấu hình lõi phân quyền</h2>
           <p style="margin-top:10px; font-size:13px; color:var(--text-muted); line-height:1.6;">
-            Biến cấu hình đám mây chứa chuỗi ký tự mặc định "PASTE_". Vui lòng cấu hình thật file index.html.
+            Cấu hình khóa ứng dụng trong đối tượng cấu trúc <strong>CONFIG.FIREBASE</strong> hoặc khóa công khai tài khoản <strong>CLOUDINARY</strong> chứa chuỗi ký tự tạm rỗng hoặc "PASTE_". Vui lòng kiểm tra lại file index.html.
           </p>
         </div>
       `;
-    }
-
-    function updateProgressBarIndicator(statusMsg, percentageProgressValue) {
-      const containerBar = document.getElementById('creationProgressContainer');
-      const textLabel = document.getElementById('lblCreationStatus');
-      const barFillNode = document.getElementById('creationProgressFill');
-      
-      if (!containerBar || !textLabel || !barFillNode) return;
-
-      if (!statusMsg) {
-        containerBar.classList.remove('active');
-        textLabel.style.display = 'none';
-        return;
-      }
-      containerBar.classList.add('active');
-      textLabel.style.display = 'block';
-      textLabel.textContent = statusMsg;
-      barFillNode.style.width = `${Math.max(0, Math.min(100, percentageProgressValue))}%`;
     }
 
     function toggleButtonUIPendingState(buttonDomNode, isBusyState, overlayTextValue) {
@@ -1145,7 +1153,7 @@
     function executeTextCopyToClipboardRawString(textStringPayload) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(textStringPayload)
-          .then(() => triggerToast('Đã sao chép liên kết hồ sơ vào bộ nhớ tạm.'))
+          .then(() => triggerToast('Đã sao chép liên kết vào bộ nhớ ảo.'))
           .catch(() => fallbackExecutionTextCopyLegacy(textStringPayload));
       } else {
         fallbackExecutionTextCopyLegacy(textStringPayload);
@@ -1156,7 +1164,7 @@
       const transientTextarea = document.createElement('textarea');
       transientTextarea.value = fallbackText; transientTextarea.style.position = 'fixed'; transientTextarea.style.left = '-9999px';
       document.body.appendChild(transientTextarea); transientTextarea.focus(); transientTextarea.select();
-      try { document.execCommand('copy'); triggerToast('Đã sao chép liên kết.'); } catch (err) { triggerToast('Lỗi sao chép.', 'error'); }
+      try { document.execCommand('copy'); triggerToast('Đã sao chép liên kết.'); } catch (err) { triggerToast('Lỗi trích xuất bộ nhớ.', 'error'); }
       document.body.removeChild(transientTextarea);
     }
 
