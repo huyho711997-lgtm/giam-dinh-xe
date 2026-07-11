@@ -141,7 +141,6 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      cursor: pointer;
     }
 
     .nav-logo {
@@ -229,7 +228,6 @@
     .input-premium:focus {
       background: #fff;
       border-color: var(--primary);
-      box-shadow: 0 0 0 4px cubic-bezier(2, 132, 199, 0.15);
       box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.12);
     }
 
@@ -406,9 +404,9 @@
   </div>
 
   <div class="app-container">
-    <!-- Header App Bar Space -->
+    <!-- Header App Bar Space (Chặn điều hướng cứng ở tầng thẻ) -->
     <nav class="premium-nav">
-      <div class="nav-brand" onclick="goHome()">
+      <div class="nav-brand" id="navBrandClick">
         <div class="nav-logo">🛡️</div>
         <div class="nav-titles">
           <h1>Workspace Core Systems</h1>
@@ -500,10 +498,30 @@
       const URLQueryStrings = new URLSearchParams(window.location.search);
       const caseIdToken = URLQueryStrings.get('idCa');
       const targetedViewArg = URLQueryStrings.get('view');
+      const brandElement = document.getElementById('navBrandClick');
 
       if (!caseIdToken) {
+        // Cấp quyền về Home cho Quản lý khi ở màn hình tổng
+        if (brandElement) {
+          brandElement.style.cursor = 'pointer';
+          brandElement.onclick = goHome;
+        }
         renderManagerDashboardWorkspace();
       } else {
+        // Nếu URL chứa token của Ca xe: Xử lý cô lập phân quyền hệ thống
+        if (targetedViewArg !== 'result') {
+          // Bẻ gãy sự kiện click logo và khóa chuột đối với vai trò Gara
+          if (brandElement) {
+            brandElement.style.cursor = 'default';
+            brandElement.onclick = null;
+          }
+        } else {
+          // Trả lại quyền xem cho Giám định viên nếu mở qua chế độ xem kết quả
+          if (brandElement) {
+            brandElement.style.cursor = 'pointer';
+            brandElement.onclick = goHome;
+          }
+        }
         bindAndFetchCaseRealtimeSync(caseIdToken, targetedViewArg);
       }
     }
@@ -824,7 +842,7 @@
           <label>Đường dẫn giám sát kết quả/Đối chiếu nội bộ dành cho Giám định viên</label>
           <input id="lblLinkReviewOutput" class="input-premium text-link-area" readonly value="${shareLinkView}" />
           <div class="flex-actions-group">
-            <button class="btn-premium style="background:var(--dark)" onclick="executeTextCopyToClipboard('lblLinkReviewOutput')">Sao chép Link Kết quả</button>
+            <button class="btn-premium" style="background:var(--dark)" onclick="executeTextCopyToClipboard('lblLinkReviewOutput')">Sao chép Link Kết quả</button>
             <button class="btn-premium btn-secondary" onclick="window.open('${shareLinkView}', '_blank')">Mở trang Đối chiếu</button>
           </div>
         </div>
@@ -852,8 +870,9 @@
         const shouldForceReadOnlyResultView = currentViewFlag === 'result';
         const isCaseLockedByGarageSubmission = localActiveCaseNode.trangThai === STATUS_COMPLETED;
 
+        // Định tuyến giao diện kèm cờ kiểm soát nút Back Dashboard
         if (shouldForceReadOnlyResultView || isCaseLockedByGarageSubmission) {
-          renderPortalResultReadOnlyView();
+          renderPortalResultReadOnlyView(shouldForceReadOnlyResultView ? 'result' : 'garage-locked');
         } else {
           renderPortalGarageInteractiveInputView();
         }
@@ -863,7 +882,9 @@
     }
 
     function buildHtmlComponentSidebarCaseMetadata(viewContextMode) {
-      const isReadOnlyMode = viewContextMode === 'result';
+      const isReadOnlyMode = (viewContextMode === 'result' || viewContextMode === 'garage-locked');
+      // CHỈ cho phép hiển thị nút Quay lại Dashboard nếu viewContextMode là 'result' (Dành cho Quản lý/Giám định viên)
+      const showBackButton = (viewContextMode === 'result');
       const node = localActiveCaseNode || {};
 
       return `
@@ -873,7 +894,7 @@
             <p>${isReadOnlyMode ? 'Chế độ xem Báo cáo Tổng hợp' : 'Cửa sổ cập nhật của Gara'}</p>
           </div>
 
-          <button class="btn-premium btn-secondary" style="width:100%; margin-bottom:16px;" onclick="goHome()">⬅ Quay lại Dashboard</button>
+          ${showBackButton ? `<button class="btn-premium btn-secondary" style="width:100%; margin-bottom:16px;" onclick="goHome()">⬅ Quay lại Dashboard</button>` : ''}
 
           <div class="form-group">
             <label style="margin:0;">Mã hồ sơ hệ thống</label>
@@ -894,10 +915,14 @@
             </span>
           </div>
 
-          ${isReadOnlyMode ? `
+          ${showBackButton ? `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
               <button class="btn-premium" style="width:100%; margin-bottom:8px;" onclick="executeCopyAggregatedRawText()">Copy văn bản tổng hợp nhanh</button>
               <button class="btn-premium btn-secondary" style="width:100%;" onclick="window.print()">In báo cáo / Xuất PDF</button>
+            </div>
+          ` : isReadOnlyMode ? `
+            <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
+              <div class="badge-status completed" style="width:100%; padding:10px; justify-content:center;">Hồ sơ báo giá đã được khóa an toàn</div>
             </div>
           ` : `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
@@ -924,9 +949,9 @@
             </div>
             <div class="inputs-entry-pane">
               <div class="form-group" style="width:100%">
-                <label>Khai báo hạng mục khắc phục / Đề xuất Báo giá</label>
+                <label>Khai báo bộ phận / Hạng mục tổn thất ảnh số ${index + 1}</label>
                 <textarea class="garage-quote-textarea-node" data-index-token="${index}" placeholder="Ví dụ cụ thể:&#10;- Thay mới cản trước chính hãng&#10;- Gò nắn phục hồi biến dạng khung dầm&#10;- Sơn dập hấp phủ chỉ sườn phải">${escapeHtmlOutput(item.hangMucBaoGia || '')}</textarea>
-                <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">Mẹo: Xuống dòng (Ấn phím Enter) để phân tách rõ ràng nếu vùng ảnh có nhiều chi tiết tổn thất đồng thời.</div>
+                <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">Mẹo: Xuống dòng (Ấn phím Enter) để phân tách rõ ràng nếu vùng ảnh có nhiều chi tiết phát hiện tổn thất.</div>
               </div>
               <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self: flex-start;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">Xem ảnh gốc độ phân giải cao ↗</button>
             </div>
@@ -949,11 +974,11 @@
       const emptyFieldsCounter = DOMTextareaElements.filter(tx => !tx.value.trim()).length;
 
       if (emptyFieldsCounter > 0) {
-        const proceedBlank = await showConfirmModal('Phát hiện ô trống nội dung', `Hệ thống ghi nhận đang có ${emptyFieldsCounter} hình ảnh tổn thất để trống nội dung khai báo. Bạn vẫn muốn tiếp tục gửi đi?`);
+        const proceedBlank = await showConfirmModal('Phát hiện ô trống nội dung', `Hệ thống ghi nhận đang có ${emptyFieldsCounter} hình ảnh tổn thất để trống nội dung khai báo bộ phận. Bạn vẫn muốn tiếp tục gửi đi?`);
         if (!proceedBlank) return;
       }
 
-      const finalFreezeConfirmation = await showConfirmModal('Đóng băng hồ sơ báo giá', 'Sau khi xác nhận gửi, toàn bộ biểu mẫu hạng mục sẽ bị khóa tự động để chuyển tiếp cho Giám định viên công ty bảo hiểm đối chiếu. Xác nhận hoàn tất tiến trình gửi?');
+      const finalFreezeConfirmation = await showConfirmModal('Đóng băng hồ sơ báo giá', 'Sau khi xác nhận gửi, toàn bộ biểu mẫu hạng mục sẽ bị khóa tự động để chuyển tiếp cho Giám định viên đối chiếu. Xác nhận hoàn tất tiến trình gửi?');
       if (!finalFreezeConfirmation) return;
 
       const packagedItemsPayload = DOMTextareaElements.map(tx => {
@@ -971,7 +996,7 @@
         });
 
         triggerToast('Báo giá đã đóng băng và đồng bộ hóa thành công.');
-        const finalizedResultUrl = `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(localActiveCaseNode.idCa)}&view=result`;
+        const finalizedResultUrl = `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(localActiveCaseNode.idCa)}`;
         window.history.replaceState({}, '', finalizedResultUrl);
         evaluateViewRoutingState();
       } catch (err) {
@@ -981,7 +1006,7 @@
     }
 
     /* READ ONLY REPORT SUMMARY RESULT PORTAL VIEW */
-    function renderPortalResultReadOnlyView() {
+    function renderPortalResultReadOnlyView(renderMode) {
       if (!localActiveImageStack.length) {
         renderErrorLayoutState('Không trích xuất được cấu trúc danh sách mảng hình ảnh.');
         return;
@@ -998,8 +1023,8 @@
             </div>
             <div class="inputs-entry-pane" style="background:#fafafa;">
               <div class="form-group" style="width:100%;">
-                <label style="color:var(--primary); font-weight:800; text-transform:uppercase; letter-spacing:0.02em;">Hạng mục ghi nhận từ hệ thống đối tác Gara</label>
-                <div style="background:#fff; border:1px solid var(--border); padding:16px; border-radius:var(--radius-md); font-size:15px; font-weight:700; white-space:pre-wrap; min-height:110px;" class="${textContentClean ? '':'empty-state-text'}">${textContentClean ? escapeHtmlOutput(textContentClean) : 'Đối tác không khai báo bất kỳ chi tiết sửa chữa đề xuất nào cho vùng ảnh tổn thất này.'}</div>
+                <label style="color:var(--primary); font-weight:800; text-transform:uppercase; letter-spacing:0.02em;">Hạng mục bộ phận đã khai báo</label>
+                <div style="background:#fff; border:1px solid var(--border); padding:16px; border-radius:var(--radius-md); font-size:15px; font-weight:700; white-space:pre-wrap; min-height:110px;" class="${textContentClean ? '':'empty-state-text'}">${textContentClean ? escapeHtmlOutput(textContentClean) : 'Không có hạng mục nào được khai báo cho vùng ảnh tổn thất này.'}</div>
               </div>
               <button class="btn-premium btn-secondary" style="padding:6px 12px; font-size:12px; align-self:flex-start;" onclick="window.open('${escapeAttributeData(item.linkAnh)}', '_blank')">Tải ảnh gốc kết quả ↓</button>
             </div>
@@ -1009,7 +1034,7 @@
 
       rootContainer.innerHTML = `
         <div class="focus-portal-layout">
-          ${buildHtmlComponentSidebarCaseMetadata('result')}
+          ${buildHtmlComponentSidebarCaseMetadata(renderMode)}
           <div class="image-workspace-list">
             ${generatedReadOnlyCardsHTML}
 
@@ -1033,7 +1058,12 @@
                 <label>Báo cáo biên bản thô dạng chuỗi ký tự (Raw String Text Data Block)</label>
                 <textarea id="txtRawSummaryOutputArea" class="input-premium text-link-area" style="min-height:180px;" readonly>${escapeHtmlOutput(compileRawTextSummaryReportBlock())}</textarea>
               </div>
-              <button class="btn-premium" style="width:100%" onclick="executeTextCopyToClipboard('txtRawSummaryOutputArea')">Copy toàn bộ kết quả trích xuất văn bản</button>
+              
+              ${renderMode === 'result' ? `
+                <button class="btn-premium" style="width:100%" onclick="executeTextCopyToClipboard('txtRawSummaryOutputArea')">Copy toàn bộ kết quả trích xuất văn bản</button>
+              ` : `
+                <div style="font-size:13px; color:var(--text-muted); font-style:italic; text-align:center;">Hồ sơ ở trạng thái chỉ đọc sau khi biểu mẫu đã hoàn tất đồng bộ gửi.</div>
+              `}
             </div>
           </div>
         </div>
@@ -1092,7 +1122,6 @@
           </div>
           <div class="flex-actions-group">
             <button class="btn-premium" onclick="window.location.reload()">Thử tải lại trang</button>
-            <button class="btn-premium btn-secondary" onclick="goHome()">Quay về Dashboard</button>
           </div>
         </div>
       `;
