@@ -56,7 +56,7 @@
       line-height: 1.5;
     }
 
-    /* Hệ thống quản lý kích thước SVG dùng chung */
+    /* Hệ thống quản lý kích thước SVG */
     .svg-icon {
       width: 1.25rem;
       height: 1.25rem;
@@ -398,9 +398,6 @@
     .inputs-entry-pane { padding: 24px; display: flex; flex-direction: column; justify-content: space-between; background: #fff; }
     .inputs-entry-pane textarea { width: 100%; min-height: 140px; border: 1px solid var(--border); background: #f8fafc; border-radius: var(--radius-md); padding: 14px; font-family: inherit; font-size: 14px; outline: none; resize: vertical; transition: var(--transition); line-height: 1.5; }
     .inputs-entry-pane textarea:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.1); }
-
-    /* Summary Block Output Layout */
-    .summary-row-box { background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; }
     
     /* Progress Bars UI */
     .p-progress-bar { height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-top: 12px; display: none; }
@@ -422,15 +419,6 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .empty-state-text { text-align: center; color: var(--text-muted); font-style: italic; padding: 32px 16px; }
-
-    @media print {
-      body { background: #fff; }
-      .premium-nav, .premium-stats, .dropzone, .btn-premium, .lightbox-close-btn, .sticky-sidebar .btn-premium, th:last-child, td:last-child { display: none !important; }
-      .app-container { padding: 0; }
-      .focus-portal-layout { display: block; }
-      .premium-image-card { box-shadow: none; border: 1px solid #cbd5e1; page-break-inside: avoid; margin-bottom: 20px; display: block; }
-      .img-display-pane img { max-height: 280px; }
-    }
   </style>
 </head>
 <body>
@@ -498,7 +486,7 @@
     const STATUS_PENDING = 'Chờ điền';
     const STATUS_COMPLETED = 'Đã điền';
 
-    // Thư viện nhúng SVG để tái sử dụng trong JS Template String gọn gàng hơn
+    // Thư viện SVG nhúng trực tiếp
     const SVGS = {
       FOLDER: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
       CLOCK: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
@@ -826,7 +814,7 @@
 
         renderInlineCreationSuccessPanel(finalPayloadStructure);
 
-        // Reset input fields
+        // Reset bộ form nhập
         document.getElementById('txtPlateNumber').value = '';
         document.getElementById('txtGaragePartner').value = '';
         document.getElementById('fileImageUploader').value = '';
@@ -888,7 +876,6 @@
         </div>
 
         <div class="p-share-container">
-          <!-- Row 1: Cổng Garage tác nghiệp -->
           <div class="p-share-row">
             <div class="p-share-meta">
               <div class="p-share-label">Đường dẫn bàn giao đối tác (Garage điền hạng mục)</div>
@@ -900,7 +887,6 @@
             </div>
           </div>
 
-          <!-- Row 2: Cổng nội bộ Giám định viên -->
           <div class="p-share-row">
             <div class="p-share-meta">
               <div class="p-share-label">Đường dẫn giám sát kết quả (Giám định viên đối chiếu)</div>
@@ -917,7 +903,7 @@
     }
 
     /****************************************************
-     * 2. PORTAL VIEW WORKSPACE CONFIGURATIONS (FOCUS MODE INTERFACES)
+     * 2. PORTAL VIEW WORKSPACE CONFIGURATIONS
      ****************************************************/
     function bindAndFetchCaseRealtimeSync(caseId, currentViewFlag) {
       renderLoadingLayoutIndicator('Đang thiết lập kênh truyền dữ liệu bảo mật...');
@@ -946,6 +932,7 @@
       });
     }
 
+    /* ĐA SỬA: Loại bỏ toàn bộ nút và tính năng liên quan đến in ấn */
     function buildHtmlComponentSidebarCaseMetadata(viewContextMode) {
       const isReadOnlyMode = (viewContextMode === 'result' || viewContextMode === 'garage-locked');
       const showBackButton = (viewContextMode === 'result');
@@ -981,8 +968,7 @@
 
           ${showBackButton ? `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
-              <button class="btn-premium" style="width:100%; margin-bottom:8px; gap:6px;" onclick="executeCopyAggregatedRawText()">${SVGS.COPY} Copy văn bản tổng hợp</button>
-              <button class="btn-premium btn-secondary" style="width:100%; gap:6px;" onclick="window.print()">${SVGS.EXTERNAL} In danh sách / PDF</button>
+              <button class="btn-premium" style="width:100%; gap:6px;" onclick="executeCopyAggregatedRawText()">${SVGS.COPY} Copy văn bản tổng hợp</button>
             </div>
           ` : isReadOnlyMode ? `
             <div style="border-top:1px solid var(--border); padding-top:16px; margin-top:16px;">
@@ -1069,7 +1055,7 @@
       }
     }
 
-    /* READ ONLY REPORT SUMMARY RESULT PORTAL VIEW */
+    /* ĐA SỬA: Loại bỏ hộp thoại "thống kê thô" rườm rà dưới cuối trang, chỉ giữ lại ảnh và hạng mục đối chiếu sạch */
     function renderPortalResultReadOnlyView(renderMode) {
       if (!localActiveImageStack.length) {
         renderErrorLayoutState('Không trích xuất được cấu trúc danh sách mảng hình ảnh.');
@@ -1101,34 +1087,6 @@
           ${buildHtmlComponentSidebarCaseMetadata(renderMode)}
           <div class="image-workspace-list">
             ${generatedReadOnlyCardsHTML}
-
-            <!-- Aggregated Report Output Card Block -->
-            <div class="p-card">
-              <div class="p-card-head">
-                <h2>Bảng thống kê kết quả tổng hợp nhanh</h2>
-                <p>Tổng hợp nhanh dạng danh sách để trích xuất hoặc dán sang văn bản đền bù bảo hiểm.</p>
-              </div>
-
-              <div style="margin-bottom:20px;">
-                ${localActiveImageStack.map((item, index) => `
-                  <div class="summary-row-box">
-                    <span style="font-size:12px; font-weight:800; color:var(--primary); text-transform:uppercase;">Hình ảnh hiện trạng số ${index + 1}</span>
-                    <div style="font-weight:700; font-size:14px; margin-top:4px; white-space:pre-wrap;">${item.hangMucBaoGia ? escapeHtmlOutput(item.hangMucBaoGia) : '--- Không khai báo ---'}</div>
-                  </div>
-                `).join('')}
-              </div>
-
-              <div class="form-group">
-                <label>Báo cáo biên bản thô dạng chuỗi ký tự (Raw String Text Data Block)</label>
-                <textarea id="txtRawSummaryOutputArea" class="input-premium text-link-area" style="min-height:180px;" readonly>${escapeHtmlOutput(compileRawTextSummaryReportBlock())}</textarea>
-              </div>
-              
-              ${renderMode === 'result' ? `
-                <button class="btn-premium" style="width:100%; gap:6px;" onclick="executeTextCopyToClipboard('txtRawSummaryOutputArea')">${SVGS.COPY} Copy toàn bộ kết quả văn bản</button>
-              ` : `
-                <div style="font-size:13px; color:var(--text-muted); font-style:italic; text-align:center;">Hồ sơ ở trạng thái chỉ đọc sau khi biểu mẫu đã hoàn tất đồng bộ gửi.</div>
-              `}
-            </div>
           </div>
         </div>
       `;
@@ -1237,6 +1195,7 @@
       if (targetElement) executeTextCopyToClipboardRawString(targetElement.value || targetElement.textContent || '');
     }
 
+    // Cơ chế Clipboard ảo hóa nâng cao (Không dùng Textarea ẩn trên DOM)
     function executeTextCopyToClipboardRawString(textStringPayload) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(textStringPayload)
@@ -1276,7 +1235,6 @@
       return window.location.href.split('?')[0].split('#')[0].replace(/index\.html$/i, '');
     }
 
-    // Kiểm tra cấu hình hệ thống
     function isSystemConfigHealthy() {
       return (
         CONFIG.FIREBASE.apiKey && !CONFIG.FIREBASE.apiKey.includes('PASTE_') &&
@@ -1288,7 +1246,6 @@
       return String(unsafeStringValue || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
     }
 
-    // Escape thuộc tính thẻ HTML
     function escapeAttributeData(unsafeAttrValue) { return escapeHtmlOutput(unsafeAttrValue); }
   </script>
 </body>
