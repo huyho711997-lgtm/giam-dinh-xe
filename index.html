@@ -122,7 +122,7 @@
       --text-main: #1c1f26;
       --text-soft: #3a4252;
       --text-muted: #717d96;
-      --border: rgba(28, 31, 38, .15); /* Firmed up for light mode definition */
+      --border: rgba(28, 31, 38, .15); 
       --border-strong: rgba(28, 31, 38, .26);
       --shadow-sm: 0 10px 28px rgba(28, 31, 38, .05);
       --shadow-lg: 0 30px 80px rgba(28, 31, 38, .09);
@@ -130,7 +130,7 @@
       --primary: #b38c43;
       --primary-2: #6b501f;
       --primary-dark: #4d3711;
-      --primary-gradient: linear-gradient(135deg, #f3d08c 0%, #d5a247 50%, #9e7123 100%); /* Gorgeous warm primary gold */
+      --primary-gradient: linear-gradient(135deg, #f3d08c 0%, #d5a247 50%, #9e7123 100%); 
 
       --grid-opacity: .18;
       --grid-color: rgba(28, 31, 38, .015);
@@ -141,7 +141,7 @@
       --metadata-bg: rgba(216, 180, 109, .035);
       --portal-bg: linear-gradient(120deg, #eae8e1, #f4f3ed);
       --input-bg: #ffffff;
-      --input-focus-bg: #ffffff; /* FIXED: Keeps input background white on focus, avoiding dark overlapping */
+      --input-focus-bg: #ffffff; 
       --dropzone-bg: linear-gradient(145deg, rgba(216,180,109,.04), rgba(255,255,255,.2));
       --dropzone-glow: rgba(216,180,109,.04);
       --login-bg: linear-gradient(120deg, #f5f5f2, #ffffff);
@@ -154,28 +154,28 @@
 
       /* Button Specs */
       --btn-premium-border: rgba(179,140,67,.3);
-      --btn-dark-bg: #1e293b; /* Premium slate slate-800 for stark contrast action */
+      --btn-dark-bg: #1e293b; 
       --btn-dark-text: #ffffff;
       --btn-dark-border: #1e293b;
       --btn-dark-hover-bg: #0f172a;
       
-      --btn-danger-text: #b91c1c; /* Crimson Red for perfect visibility */
+      --btn-danger-text: #b91c1c; 
       --btn-danger-bg: #fef2f2;
       --btn-danger-border: #fca5a5;
       --btn-danger-hover-bg: #fee2e2;
       --btn-danger-hover-border: #ef4444;
 
       /* Badges & Status Codes */
-      --status-pending-text: #b45309; /* Dark Amber-700 */
-      --status-pending-bg: #fef3c7; /* Soft Amber-100 */
-      --status-pending-border: #fde68a; /* Amber-200 */
+      --status-pending-text: #b45309; 
+      --status-pending-bg: #fef3c7; 
+      --status-pending-border: #fde68a; 
       
-      --status-completed-text: #15803d; /* Dark Green-700 */
-      --status-completed-bg: #dcfce7; /* Soft Green-100 */
-      --status-completed-border: #bbf7d0; /* Green-200 */
+      --status-completed-text: #15803d; 
+      --status-completed-bg: #dcfce7; 
+      --status-completed-border: #bbf7d0; 
 
       /* Components Specifics */
-      --result-content-bg: #faf9f6; /* Ivory cream background to stay readable and clean */
+      --result-content-bg: #faf9f6; 
       --toast-bg: rgba(255, 255, 255, 0.96);
       --toast-text: var(--text-main);
       --modal-bg: #ffffff;
@@ -457,7 +457,6 @@
     .textarea-premium { width: 100%; min-height: 126px; padding: 14px 15px; outline: none; resize: vertical; color: var(--text-main); border: 1px solid var(--border); border-radius: 13px; background: var(--input-bg); font-size: 13px; line-height: 1.65; transition: border-color var(--transition), box-shadow var(--transition), background var(--transition); }
     .input-premium::placeholder, .textarea-premium::placeholder, .inputs-entry-pane textarea::placeholder { color: var(--placeholder-color); }
     
-    /* FIXED: Prevent dark background overlapping on input focus in light mode */
     .input-premium:focus, .textarea-premium:focus, .inputs-entry-pane textarea:focus { 
       border-color: rgba(216,180,109,.62); 
       background: var(--input-focus-bg); 
@@ -489,11 +488,9 @@
     .btn-premium:active { transform: translateY(0); }
     .btn-premium:disabled { cursor: not-allowed; opacity: .48; transform: none; filter: grayscale(.2); box-shadow: none; }
     
-    /* Secondary Buttons Styling */
     .btn-secondary { color: var(--text-soft); border-color: var(--border); background: var(--surface-soft); box-shadow: none; }
     .btn-secondary:hover { color: var(--text-main); border-color: var(--border-strong); background: var(--surface-hover); box-shadow: none; }
     
-    /* FIXED: Consolidated Dynamic Variable Action Buttons */
     .btn-dark { color: var(--btn-dark-text); border-color: var(--btn-dark-border); background: var(--btn-dark-bg); box-shadow: none; }
     .btn-dark:hover { background: var(--btn-dark-hover-bg); border-color: var(--btn-dark-hover-bg); }
 
@@ -514,7 +511,6 @@
     .table-container { overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: var(--surface-soft); }
     .p-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
     
-    /* FIXED: Semantic Table variables mapped correctly */
     .p-table th { padding: 13px 15px; color: var(--table-th-text); border-bottom: 1px solid var(--border); background: var(--table-th-bg); font-size: 9px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
     .p-table td { padding: 15px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text-soft); }
     
@@ -528,7 +524,6 @@
     .date-mini { color: var(--text-soft); font-size: 10px; }
     .date-mini span { display: block; margin-top: 2px; color: var(--text-muted); font-size: 9px; }
     
-    /* FIXED: Enhanced accessibility and contrast for status badges */
     .badge-status { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid transparent; border-radius: 999px; font-size: 9px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; }
     .badge-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
     .badge-status.pending { color: var(--status-pending-text); border-color: var(--status-pending-border); background: var(--status-pending-bg); }
@@ -566,7 +561,7 @@
     .p-share-url-preview { margin-top: 5px; overflow: hidden; color: var(--primary); font-family: 'JetBrains Mono'; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
     .p-share-actions { display: flex; gap: 7px; }
     .btn-share-action { width: auto; min-height: 38px; padding: 0 13px; font-size: 10px; }
-    @media (max-width: 650px) { .p-share-row { grid-template-columns: 1fr; } .p-share-actions { display: grid; grid-template-columns: 1fr 1fr; } .btn-share-action { width: 100%; } }
+    @media (max-width: 650px) { .p-share-row { display: grid; grid-template-columns: 1fr; } .p-share-actions { display: grid; grid-template-columns: 1fr 1fr; } .btn-share-action { width: 100%; } }
 
     .success-panel { margin-top: 20px; padding: 26px; border-color: rgba(72,215,161,.2); background: linear-gradient(140deg, rgba(72,215,161,.055), var(--surface) 42%); }
     .success-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 21px; }
@@ -609,7 +604,6 @@
     .image-sequence { margin-bottom: 14px; color: var(--primary); font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 700; letter-spacing: .09em; }
     .inputs-entry-pane textarea { min-height: 180px; padding: 16px; resize: vertical; font-size: 13px; line-height: 1.65; }
     
-    /* FIXED: Consume dynamic ivory background variable correctly */
     .result-content { min-height: 165px; padding: 18px; color: var(--text-soft); border: 1px solid var(--border); border-left: 2px solid var(--primary); border-radius: 13px; background: var(--result-content-bg); font-size: 13px; font-weight: 600; line-height: 1.75; white-space: pre-wrap; }
     .result-content.is-empty { color: var(--text-muted); font-weight: 500; font-style: italic; }
     
@@ -655,7 +649,6 @@
 
     .toast-container { position: fixed; top: 22px; right: 22px; z-index: 5000; display: grid; gap: 10px; width: min(390px, calc(100vw - 34px)); pointer-events: none; }
     
-    /* FIXED: Adaptive Toast messaging styling */
     .toast { display: flex; align-items: center; gap: 11px; padding: 15px 17px; color: var(--toast-text); border: 1px solid var(--border-strong); border-radius: 14px; background: var(--toast-bg); box-shadow: var(--shadow-lg); backdrop-filter: blur(18px); font-size: 12px; font-weight: 700; pointer-events: auto; opacity: 0; transform: translateY(-14px); animation: toastIn .35s cubic-bezier(.16,1,.3,1) forwards; }
     .toast::before { content: ''; width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: var(--success); box-shadow: 0 0 12px var(--success); }
     .toast.error::before { background: var(--danger); box-shadow: 0 0 12px var(--danger); }
@@ -664,7 +657,6 @@
 
     .upload-overlay, .p-modal-overlay { position: fixed; inset: 0; z-index: 4000; display: none; place-items: center; padding: 18px; background: rgba(3,5,8,.78); backdrop-filter: blur(18px); }
     
-    /* FIXED: Mapped modal wrapper backgrounds cleanly */
     .upload-overlay-card, .p-modal { width: min(430px,100%); padding: 32px; border: 1px solid var(--border-strong); border-radius: 24px; background: var(--modal-bg); box-shadow: var(--shadow-lg); text-align: center; }
     .upload-overlay-title, .p-modal h3 { font-size: 18px; font-weight: 800; letter-spacing: -.03em; color: var(--text-main); }
     .upload-overlay-subtitle, .p-modal p { margin: 7px 0 22px; color: var(--text-muted); font-size: 11px; line-height: 1.65; }
@@ -1458,7 +1450,7 @@
           <input class="requested-builder-input" value="${escapeAttributeData(item.tenHangMuc)}" oninput="updateRequestedItemDraft(${index},this.value)" onblur="this.value=this.value.trim();updateRequestedItemDraft(${index},this.value)" aria-label="Tên hạng mục ${index+1}">
           <div class="requested-builder-actions">
             <button type="button" class="mini-icon-btn" title="Chuyển lên" onclick="moveRequestedItemDraft(${index},-1)">${SVGS.ARROW_LEFT}</button>
-            <button type="button" class="mini-icon-btn" title="Chuyển xuống" onclick="moveRequestedItemDraft(${index},1)" style="transform:rotate(180deg)">${SVGS.ARROW_LEFT}</button>
+            <button type="button" class="mini-icon-btn" title="Chuyển xuống" onclick="moveRequestedItemDraft(${index}, 1)" style="transform:rotate(180deg)">${SVGS.ARROW_LEFT}</button>
             <button type="button" class="mini-icon-btn danger" title="Xóa hạng mục" onclick="removeRequestedItemDraft(${index})">${SVGS.TRASH}</button>
           </div>
         </div>`).join('');
@@ -1898,7 +1890,8 @@
           const prepared = await prepareImageFileForUpload(valid[i]);
           const progress = Math.round((i / valid.length) * 90) + 5;
           setEvidenceUploadUI(requestIndex, true, `Đang tải ảnh ${i+1}/${valid.length}: ${valid[i].name}`, progress);
-          newUrls.push(await uploadSingleImageToCloudinementUrl = await uploadSingleImageToCloudinaryEngine(prepared));
+          // FIXED: Clean syntax instead of garbled token
+          newUrls.push(await uploadSingleImageToCloudinaryEngine(prepared));
         }
         localActiveRequestedItems[requestIndex].hinhAnhGarage = [...currentUrls, ...newUrls];
         await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh`).set(localActiveRequestedItems);
@@ -2041,7 +2034,7 @@
         triggerToast(`Còn ${missingEvidenceIndexes.length} hạng mục chưa có ảnh minh chứng.`, 'error');
         return;
       }
-      const finalFreezeConfirmation = await showConfirmModal('Khóa và gửi hồ sơ', 'Tất cả ghi chú và ảnh đã được lưu. Sau khi xác nhận, Garage không thể chỉnh sửa hồ sơ này nữa.');
+      const finalFreezeConfirmation = await showConfirmModal('Khóa và gửi hồ sơ', 'Tất cả ghi chú and ảnh đã được lưu. Sau khi xác nhận, Garage không thể chỉnh sửa hồ sơ này nữa.');
       if (!finalFreezeConfirmation) return;
       try {
         toggleUploadOverlay(true, 'Đang hoàn tất hồ sơ...', 'Kiểm tra và đồng bộ dữ liệu cuối cùng...', 35);
@@ -2255,7 +2248,6 @@
       return window.location.href.split('?')[0].split('#')[0].replace(/index\.html$/i, '');
     }
 
-    // FIXED: Correct check helper for system health check
     function isSystemConfigHealthy() {
       return (
         CONFIG.FIREBASE.apiKey && !CONFIG.FIREBASE.apiKey.includes('PASTE_') &&
