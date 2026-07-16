@@ -2302,10 +2302,18 @@
     function buildHtmlComponentSidebarCaseMetadata(viewContextMode) {
       const isReadOnlyMode = (viewContextMode === 'result' || viewContextMode === 'garage-locked');
       const showBackButton = (viewContextMode === 'result');
+      const isAdjusterView = (viewContextMode === 'result');
       const node = localActiveCaseNode || {};
       const creatorName = node.nguoiTao?.tenHienThi || node.nguoiTao?.email || 'Hồ sơ trước phiên bản mới';
       const creatorMeta = [node.nguoiTao?.chucDanh, node.nguoiTao?.donVi].filter(Boolean).join(' · ');
       const createdDate = formatCaseTimestamp(node.createdAt);
+      const adjusterSummaryMarkup = isAdjusterView ? `
+        <div class="adjuster-summary-box" style="margin-top: 16px; margin-bottom: 16px; padding: 14px; border: 1px solid var(--primary); border-radius: var(--radius-lg); background: rgba(216,180,109,0.04);">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary); font-weight: 700; margin-bottom: 8px;">Tóm tắt phê duyệt của GĐV</div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; color: var(--text-muted);"><span>Số hạng mục duyệt:</span><strong id="adjusterSummaryCount" style="color: var(--text-main);">0 hạng mục</strong></div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; color: var(--text-main);"><span>Tổng tiền duyệt:</span><strong id="adjusterSummaryTotalMoney" style="color: var(--primary);">0 đ</strong></div>
+        </div>
+      ` : '';
       return `
         <aside class="p-card sticky-sidebar">
           <div class="p-card-head"><div><h2>${isReadOnlyMode ? 'Thông tin đối chiếu' : 'Thông tin hồ sơ'}</h2><p>${isReadOnlyMode ? 'Dữ liệu đã được Garage xác nhận.' : 'Cổng khai báo dành cho Garage.'}</p></div><div class="section-number">${isReadOnlyMode ? 'R' : 'G'}</div></div>
@@ -2321,6 +2329,7 @@
             <div class="metadata-row"><span>Trạng thái</span><strong><span class="badge-status ${node.trangThai === STATUS_COMPLETED ? 'completed' : 'pending'}">${escapeHtmlOutput(node.trangThai)}</span></strong></div>
           </div>
           <div class="sidebar-tip">Hoàn thành cả hai nhóm: ghi rõ hạng mục theo ảnh hiện trạng và tải ảnh minh chứng cho từng hạng mục được yêu cầu.</div>
+          ${adjusterSummaryMarkup}
           ${showBackButton ? `<button class="btn-premium" onclick="executeCopyAggregatedRawText()">${SVGS.COPY} Sao chép biên bản tổng</button>` : isReadOnlyMode ? `<div class="badge-status completed" style="width:100%;justify-content:center;padding:12px">Hồ sơ đã khóa</div>` : `<button id="btnSubmitGarageFinalResponse" class="btn-premium">${SVGS.CHECK_CIRCLE} Hoàn tất & gửi kết quả</button>`}
         </aside>`;
     }
@@ -2647,6 +2656,39 @@
       } finally { toggleUploadOverlay(false); }
     }
 
+    function updateAdjusterSummaryStats() {
+      let totalMoney = 0;
+      let approvedCount = 0;
+      if (!localActiveRequestedItems) return;
+      localActiveRequestedItems.forEach(item => {
+        const decision = item.phuongAnDuyet || 'chua';
+        if (decision === 'thay_moi' || decision === 'sua_chua') {
+          totalMoney += Number(item.soTienDuyet || 0);
+          approvedCount++;
+        }
+      });
+      const summaryValNode = document.getElementById('adjusterSummaryTotalMoney');
+      const summaryCountNode = document.getElementById('adjusterSummaryCount');
+      if (summaryValNode) summaryValNode.textContent = totalMoney.toLocaleString('vi-VN') + ' đ';
+      if (summaryCountNode) summaryCountNode.textContent = `${approvedCount} hạng mục`;
+    }
+
+    async function updateAdjusterDecision(requestIndex, phuongAn, soTien) {
+      if (!localActiveRequestedItems[requestIndex]) return;
+      if (typeof phuongAn !== 'undefined') {
+        localActiveRequestedItems[requestIndex].phuongAnDuyet = phuongAn;
+      }
+      if (typeof soTien !== 'undefined') {
+        localActiveRequestedItems[requestIndex].soTienDuyet = Number(soTien) || 0;
+      }
+      try {
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh`).set(localActiveRequestedItems);
+        updateAdjusterSummaryStats();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
     function renderPortalResultReadOnlyView(renderMode) {
       if (!localActiveImageStack.length && !localActiveRequestedItems.length) return renderErrorLayoutState('Không thể cấu trúc dữ liệu kết quả của hồ sơ.');
       const completedItems = localActiveImageStack.filter(item => String(item.hangMucBaoGia || '').trim()).length;
@@ -2666,7 +2708,28 @@
         <div class="workspace-section-head" style="margin-top:${localActiveImageStack.length ? '12px' : '0'}"><div><h2>02 · Ảnh Garage cung cấp theo hạng mục báo giá</h2><p>Kiểm tra trực tiếp bộ ảnh minh chứng Garage đã tải cho từng hạng mục.</p></div><div class="workspace-section-index">${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</div></div>
         ${localActiveRequestedItems.map((item,index) => {
           const urls = normalizeEvidenceImageUrls(item);
-          return `<article class="evidence-result-card"><div class="evidence-result-title"><div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div><div><h3>${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3><p>${urls.length} ảnh do Garage cung cấp</p></div></div>${item.ghiChuGarage ? `<div class="result-content" style="margin-bottom:14px"><strong style="display:block;margin-bottom:6px;color:var(--primary);font-size:9px;letter-spacing:.08em;text-transform:uppercase">Ghi chú Garage</strong>${escapeHtmlOutput(item.ghiChuGarage)}</div>` : ``}${urls.length ? `<div class="evidence-result-gallery">${urls.map((url,imageIndex) => `<button type="button" class="evidence-result-image" title="Mở ảnh ${imageIndex+1}" onclick="openLightbox('${escapeAttributeData(url)}')"><img src="${escapeAttributeData(url)}" alt="Ảnh Garage cung cấp ${imageIndex+1}" loading="lazy"></button>`).join('')}</div>` : `<div class="evidence-empty">Garage chưa cung cấp ảnh cho hạng mục này.</div>`}</article>`;
+          const decision = item.phuongAnDuyet || 'chua';
+          const approvedAmount = item.soTienDuyet || 0;
+          const isAdjusterView = (renderMode === 'result');
+          const decisionMarkup = isAdjusterView ? `
+            <div class="adjuster-decision-pane" style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between;">
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Phương án bồi thường</span>
+                <div class="decision-pill-group" style="display: flex; gap: 6px;">
+                  <button type="button" class="decision-pill ${decision === 'chua' ? 'active' : ''}" onclick="updateAdjusterDecision(${index}, 'chua')">Chưa duyệt</button>
+                  <button type="button" class="decision-pill thay-moi ${decision === 'thay_moi' ? 'active' : ''}" onclick="updateAdjusterDecision(${index}, 'thay_moi')">Thay mới</button>
+                  <button type="button" class="decision-pill sua-chua ${decision === 'sua_chua' ? 'active' : ''}" onclick="updateAdjusterDecision(${index}, 'sua_chua')">Sửa chữa</button>
+                  <button type="button" class="decision-pill tu-choi ${decision === 'tu_choi' ? 'active' : ''}" onclick="updateAdjusterDecision(${index}, 'tu_choi')">Từ chối</button>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px; width: 160px;">
+                <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Số tiền duyệt (VNĐ)</span>
+                <input type="number" class="input-premium" style="height: 34px !important; font-size: 13px; text-align: right;" value="${approvedAmount}" placeholder="Nhập số tiền..." oninput="updateAdjusterDecision(${index}, undefined, this.value)" />
+              </div>
+            </div>
+          ` : '';
+
+          return `<article class="evidence-result-card"><div class="evidence-result-title"><div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div><div><h3>${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3><p>${urls.length} ảnh do Garage cung cấp</p></div></div>${item.ghiChuGarage ? `<div class="result-content" style="margin-bottom:14px"><strong style="display:block;margin-bottom:6px;color:var(--primary);font-size:9px;letter-spacing:.08em;text-transform:uppercase">Ghi chú Garage</strong>${escapeHtmlOutput(item.ghiChuGarage)}</div>` : ``}${urls.length ? `<div class="evidence-result-gallery">${urls.map((url,imageIndex) => `<button type="button" class="evidence-result-image" title="Mở ảnh ${imageIndex+1}" onclick="openLightbox('${escapeAttributeData(url)}')"><img src="${escapeAttributeData(url)}" alt="Ảnh Garage cung cấp ${imageIndex+1}" loading="lazy"></button>`).join('')}</div>` : `<div class="evidence-empty">Garage chưa cung cấp ảnh cho hạng mục này.</div>`}${decisionMarkup}</article>`;
         }).join('')}` : '';
 
       const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
@@ -2682,6 +2745,8 @@
           </header>
           <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata(renderMode)}<div class="image-workspace-list">${imageResultsSection}${evidenceResultsSection}</div></div>
         </div>`;
+      
+      if (renderMode === 'result') updateAdjusterSummaryStats();
     }
 
     function compileRawTextSummaryReportBlock() {
@@ -2709,6 +2774,15 @@
         outputLinesBuffer.push(`[HẠNG MỤC YÊU CẦU ẢNH SỐ ${index + 1}]`);
         outputLinesBuffer.push(`+ Tên hạng mục: ${item.tenHangMuc || ''}`);
         if (item.ghiChuGarage) outputLinesBuffer.push(`+ Ghi chú Garage: ${item.ghiChuGarage}`);
+        const decisionText = {
+          'chua': 'Chưa phê duyệt',
+          'thay_moi': 'Đồng ý thay mới',
+          'sua_chua': 'Đồng ý sửa chữa',
+          'tu_choi': 'Từ chối bồi thường'
+        }[item.phuongAnDuyet || 'chua'];
+        const amount = Number(item.soTienDuyet || 0).toLocaleString('vi-VN') + ' đ';
+        outputLinesBuffer.push(`+ Phương án GĐV duyệt: ${decisionText}`);
+        outputLinesBuffer.push(`+ Số tiền duyệt: ${amount}`);
         const urls = normalizeEvidenceImageUrls(item);
         if (urls.length) urls.forEach((url,imageIndex) => outputLinesBuffer.push(`+ Ảnh Garage ${imageIndex + 1}: ${url}`));
         else outputLinesBuffer.push('+ Ảnh Garage: Chưa cung cấp.');
