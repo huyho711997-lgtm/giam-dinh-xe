@@ -46,6 +46,66 @@
       --transition: .26s cubic-bezier(.2,.75,.3,1);
     }
 
+    /* ==========================================================================
+       ===== NEW: LUXURY LIGHT THEME SYSTEM (DYNAMIC OVERRIDES) =====
+       ========================================================================== */
+    body.light-mode {
+      --bg: #f4f6fa;
+      --bg-soft: #ffffff;
+      --surface: rgba(255, 255, 255, .90);
+      --surface-strong: #f8fafc;
+      --surface-soft: rgba(15, 23, 42, .03);
+      --surface-hover: rgba(15, 23, 42, .05);
+      --text-main: #0f172a;
+      --text-soft: #334155;
+      --text-muted: #64748b;
+      --border: rgba(15, 23, 42, .09);
+      --border-strong: rgba(15, 23, 42, .16);
+      --shadow-sm: 0 10px 28px rgba(15, 23, 42, .05);
+      --shadow-lg: 0 30px 80px rgba(15, 23, 42, .1);
+    }
+    body.light-mode {
+      background:
+        radial-gradient(circle at 14% -8%, rgba(216,180,109,.1), transparent 35%),
+        radial-gradient(circle at 92% 16%, rgba(91,169,255,.06), transparent 30%),
+        linear-gradient(180deg, #ffffff 0%, #f4f6fa 55%, #e2e8f0 100%);
+    }
+    body.light-mode::before {
+      background-image:
+        linear-gradient(rgba(15, 23, 42, .015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15, 23, 42, .015) 1px, transparent 1px);
+      mask-image: linear-gradient(to bottom, black, transparent 95%);
+    }
+    body.light-mode .premium-nav { background: rgba(255,255,255,.8); }
+    body.light-mode .hero-panel, body.light-mode .portal-topbar { background: linear-gradient(125deg, #e2e8f0, #f1f5f9); }
+    body.light-mode .hero-panel::before { background: radial-gradient(circle, rgba(216,180,109,0.15), rgba(216,180,109,0.02) 48%, transparent 70%); }
+    body.light-mode .stat-box { background: var(--bg-soft); }
+    body.light-mode .stat-box:hover { background: #f8fafc; }
+    body.light-mode .input-premium, body.light-mode .textarea-premium, body.light-mode .inputs-entry-pane textarea { background: #ffffff; color: var(--text-main); }
+    body.light-mode .metadata-row { background: #ffffff; }
+    body.light-mode .p-table th { background: rgba(0, 0, 0, 0.02); color: #475569; }
+    body.light-mode .p-table tbody tr:hover { background: rgba(0, 0, 0, 0.015); }
+    body.light-mode .p-share-row { background: rgba(0, 0, 0, 0.02); }
+    body.light-mode .p-share-row:hover { background: rgba(216,180,109,0.04); }
+    body.light-mode .result-content { background: #f8fafc; color: var(--text-soft); }
+    body.light-mode .upload-overlay-card, body.light-mode .p-modal { background: #ffffff; border-color: var(--border-strong); }
+    body.light-mode .toast { background: rgba(255, 255, 255, 0.96); box-shadow: 0 20px 50px rgba(0,0,0,0.12); color: var(--text-main); }
+    body.light-mode .profile-modal-panel { background: linear-gradient(145deg, #ffffff, #f8fafc); }
+    body.light-mode .profile-email-lock { background: #f1f5f9; }
+    body.light-mode .request-composer { background: rgba(0, 0, 0, 0.02); }
+    body.light-mode .requested-builder-row { background: #ffffff; }
+    body.light-mode .requested-builder-input:focus { background: #ffffff; }
+    body.light-mode .img-display-pane { background: #f1f5f9; }
+    body.light-mode .img-pane-indicator { background: rgba(255, 255, 255, 0.8); color: var(--text-main); border-color: var(--border); }
+    body.light-mode .evidence-preview-item, body.light-mode .evidence-result-image { background: #f1f5f9; }
+    body.light-mode .login-wrapper { background: linear-gradient(120deg, #ffffff, #f8fafc); }
+    body.light-mode .login-visual { border-right-color: var(--border); }
+    body.light-mode .login-visual::after { color: rgba(0, 0, 0, 0.02); }
+    body.light-mode .login-icon-frame { background: rgba(216,180,109,0.1); }
+    body.light-mode ::-webkit-scrollbar-track { background: #f1f5f9; }
+    body.light-mode ::-webkit-scrollbar-thumb { border-color: #f1f5f9; background: #cbd5e1; }
+    body.light-mode ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html { scroll-behavior: smooth; }
     body {
@@ -115,7 +175,7 @@
 
     .nav-user-zone { display: flex; align-items: center; gap: 10px; }
 
-    /* ===== REFINED: LUXURY IDENTITY SYSTEM (FIXED SYMMETRY) ===== */
+    /* ===== LUXURY IDENTITY SYSTEM (FIXED SYMMETRY) ===== */
     .nav-user-card { 
       appearance: none; 
       color: inherit; 
@@ -125,7 +185,7 @@
       display: inline-flex; 
       align-items: center; 
       gap: 10px; 
-      height: 48px; /* Khóa cứng chiều cao tỷ lệ vàng */
+      height: 48px; 
       padding: 0 14px 0 6px; 
       border: 1px solid var(--border); 
       border-radius: 14px; 
@@ -178,7 +238,7 @@
       line-height: 1.1;
     }
     .nav-user-copy span { 
-      display: none; /* Ẩn bớt phòng ban trên thanh Nav để chống ngộp chữ */
+      display: none; 
     }
     .nav-logout-icon { 
       width: 48px; 
@@ -197,6 +257,12 @@
       color: var(--danger);
       border-color: rgba(255, 107, 122, .22);
       background: rgba(255, 107, 122, .06);
+    }
+    /* Chế độ hover đặc biệt cho nút đổi giao diện */
+    .nav-logout-icon.theme-btn:hover {
+      color: var(--primary);
+      border-color: rgba(216, 180, 109, 0.3);
+      background: rgba(216, 180, 109, 0.06);
     }
     @media (max-width: 720px) { .nav-user-copy { display: none; } .nav-user-card { padding: 6px; height: 38px; } .nav-user-avatar { width: 26px; height: 36px; font-size: 11px; } .nav-logout-icon { width: 38px; height: 38px; min-height: 38px !important; } }
 
@@ -255,8 +321,7 @@
       color: var(--text-soft); 
       font-size: 11px; 
       font-weight: 500;
-      text-overflow: ellipsis; 
-      white-space: nowrap; 
+      text-overflow: ellipsis;  White-space: nowrap; 
     }
     .hero-signature { display: grid; justify-items: end; gap: 12px; padding-bottom: 2px; }
     .hero-signature .seal { width: 82px; height: 82px; display: grid; place-items: center; border: 1px solid rgba(216,180,109,.24); border-radius: 50%; color: var(--primary-2); background: rgba(216,180,109,.045); box-shadow: inset 0 0 35px rgba(216,180,109,.04); }
@@ -416,7 +481,7 @@
     .portal-topbar p { margin-top: 6px; color: var(--text-muted); font-size: 12px; }
     .portal-counter { min-width: 118px; padding: 14px 16px; color: var(--text-muted); border: 1px solid var(--border); border-radius: 15px; background: rgba(255,255,255,.025); text-align: right; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
     .portal-counter strong { display: block; margin-top: 3px; color: var(--primary-2); font-family: 'JetBrains Mono'; font-size: 20px; letter-spacing: -.04em; }
-    .portal-counter-stack { display: flex; gap: 9px; }
+    .portal-counter-stack { display: flex; gap: 9px; align-items: center; }
     .portal-counter-stack .portal-counter { min-width: 112px; }
     .workspace-section-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 6px 3px 2px; }
     .workspace-section-head h2 { font-size: 15px; font-weight: 800; letter-spacing: -.025em; }
@@ -477,7 +542,7 @@
     .login-copy h1 span { color: var(--primary-2); }
     .login-copy p { max-width: 570px; margin-top: 20px; color: var(--text-muted); font-size: 14px; }
     .login-footnote { display: flex; gap: 22px; color: #616b7a; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-    .login-panel { display: grid; place-items: center; padding: 36px; }
+    .login-panel { position: relative; display: grid; place-items: center; padding: 36px; }
     .login-card { width: min(410px,100%); padding: 10px; }
     .login-icon-frame { width: 48px; height: 48px; display: grid; place-items: center; margin-bottom: 22px; color: var(--primary-2); border: 1px solid rgba(216,180,109,.2); border-radius: 15px; background: rgba(216,180,109,.045); }
     .login-icon-frame .svg-icon { width: 22px; height: 22px; }
@@ -515,78 +580,6 @@
     .text-link-area { min-height: 80px; color: var(--primary); background: rgba(4,7,11,.55) !important; border-color: rgba(216,180,109,.16); font-family: 'JetBrains Mono'; font-size: 10px; }
 
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
-
-    /* ===== ULTIMATE PROFILE & TWO-WAY EVIDENCE WORKFLOW ===== */
-    .profile-modal-panel { position:relative; overflow:hidden; width:min(620px,100%); padding:0; border:1px solid var(--border-strong); border-radius:26px; background:linear-gradient(145deg,#111824,#0a0f17); box-shadow:0 35px 110px rgba(0,0,0,.7); }
-    .profile-modal-hero { position:relative; display:flex; align-items:center; gap:18px; padding:28px; border-bottom:1px solid var(--border); background:linear-gradient(120deg,rgba(216,180,109,.12),rgba(91,169,255,.035)); }
-    .profile-modal-hero::after { content:''; position:absolute; width:210px; height:210px; right:-85px; top:-115px; border-radius:50%; background:rgba(216,180,109,.11); filter:blur(5px); }
-    .profile-avatar-large { width:70px; height:70px; display:grid; place-items:center; flex:0 0 auto; color:#171209; border:1px solid rgba(245,220,156,.55); border-radius:22px; background:var(--primary-gradient); box-shadow:0 18px 42px rgba(199,155,75,.24); font:800 19px 'JetBrains Mono'; }
-    .profile-modal-hero h3 { position:relative; z-index:1; font-size:20px; letter-spacing:-.035em; }
-    .profile-modal-hero p { position:relative; z-index:1; margin-top:4px; color:var(--text-muted); font-size:11px; }
-    .profile-modal-body { padding:25px 28px 28px; }
-    .profile-form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-    .profile-form-grid .form-group.full { grid-column:1/-1; }
-    .profile-email-lock { display:flex; align-items:center; gap:10px; min-height:48px; padding:0 14px; color:var(--text-muted); border:1px solid var(--border); border-radius:13px; background:rgba(4,7,11,.45); font-size:12px; }
-    .profile-modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:6px; }
-    .profile-modal-actions .btn-premium { width:auto; min-width:130px; }
-    .profile-close { position:absolute; top:16px; right:16px; z-index:4; width:36px; min-height:36px; padding:0; }
-    @media(max-width:620px){ .profile-form-grid{grid-template-columns:1fr}.profile-form-grid .form-group.full{grid-column:auto}.profile-modal-body,.profile-modal-hero{padding:22px}.profile-modal-actions{display:grid;grid-template-columns:1fr 1fr}.profile-modal-actions .btn-premium{width:100%;min-width:0} }
-
-    .profile-setup-hint { display:inline-flex; align-items:center; gap:6px; margin-top:5px; color:var(--primary-2); font-size:9px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
-
-    .request-composer { padding:14px; border:1px solid var(--border); border-radius:17px; background:rgba(4,7,11,.46); }
-    .request-composer-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:stretch; }
-    .request-composer-row .textarea-premium { min-height:76px; resize:none; }
-    .request-add-btn { width:48px; min-height:48px; padding:0; align-self:stretch; font-size:22px; }
-    .request-composer-help { display:flex; justify-content:space-between; gap:12px; margin-top:10px; color:var(--text-muted); font-size:9px; }
-    .requested-items-builder { display:grid; gap:8px; margin-top:12px; }
-    .requested-builder-empty { padding:17px; text-align:center; color:var(--text-muted); border:1px dashed var(--border); border-radius:13px; font-size:10px; }
-    .requested-builder-row { display:grid; grid-template-columns:32px minmax(0,1fr) auto; gap:9px; align-items:center; padding:9px; border:1px solid var(--border); border-radius:13px; background:rgba(255,255,255,.022); animation:slideIn .25s ease both; }
-    .requested-builder-index { width:32px; height:32px; display:grid; place-items:center; color:var(--primary-2); border:1px solid rgba(216,180,109,.2); border-radius:10px; background:rgba(216,180,109,.05); font:700 9px 'JetBrains Mono'; }
-    .requested-builder-input { width:100%; min-width:0; height:36px; padding:0 10px; outline:none; color:var(--text-main); border:1px solid transparent; border-radius:9px; background:transparent; font-size:11px; font-weight:650; transition:var(--transition); }
-    .requested-builder-input:focus { border-color:rgba(216,180,109,.35); background:rgba(4,7,11,.55); }
-    .requested-builder-actions { display:flex; gap:5px; }
-    .mini-icon-btn { width:30px; height:30px; display:grid; place-items:center; cursor:pointer; color:var(--text-muted); border:1px solid var(--border); border-radius:9px; background:rgba(255,255,255,.025); transition:var(--transition); }
-    .mini-icon-btn:hover { color:var(--text-main); border-color:var(--border-strong); background:rgba(255,255,255,.06); }
-    .mini-icon-btn.danger:hover { color:var(--danger); border-color:rgba(255,107,122,.28); background:rgba(255,107,122,.06); }
-    .mini-icon-btn .svg-icon { width:14px; height:14px; }
-    @media(max-width:520px){ .request-composer-row{grid-template-columns:1fr}.request-add-btn{width:100%;min-height:42px}.requested-builder-row{grid-template-columns:30px minmax(0,1fr)}.requested-builder-actions{grid-column:2;justify-content:flex-end} }
-
-    .garage-progress-panel { overflow:hidden; margin-bottom:18px; padding:18px 20px; border:1px solid var(--border); border-radius:18px; background:linear-gradient(120deg,rgba(216,180,109,.07),rgba(255,255,255,.018)); }
-    .garage-progress-top { display:flex; align-items:center; justify-content:space-between; gap:18px; }
-    .garage-progress-top strong { display:block; font-size:13px; }
-    .garage-progress-top span { color:var(--text-muted); font-size:10px; }
-    .garage-progress-percent { color:var(--primary-2)!important; font:700 18px 'JetBrains Mono'!important; }
-    .garage-progress-track { height:7px; overflow:hidden; margin-top:13px; border-radius:999px; background:rgba(255,255,255,.055); }
-    .garage-progress-track > div { width:0; height:100%; border-radius:inherit; background:var(--primary-gradient); box-shadow:0 0 20px rgba(216,180,109,.28); transition:width .35s ease; }
-    .autosave-state { display:inline-flex; align-items:center; gap:6px; margin-top:9px; color:var(--text-muted); font-size:9px; }
-    .autosave-state::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow:0 0 0 4px rgba(72,215,161,.07); }
-    .autosave-state.saving::before { background:var(--warning); }
-    .autosave-state.error::before { background:var(--danger); }
-
-    .evidence-request-card { transition:transform var(--transition),border-color var(--transition); }
-    .evidence-request-card.is-complete { border-color:rgba(72,215,161,.22); }
-    .evidence-request-card.is-uploading { border-color:rgba(216,180,109,.38); box-shadow:0 18px 50px rgba(199,155,75,.08); }
-    .evidence-request-status { margin-left:auto; }
-    .evidence-upload-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-    .evidence-upload-actions .btn-premium { width:auto; min-height:39px; padding:8px 13px; font-size:10px; }
-    .evidence-existing-wrap { margin-top:15px; }
-    .evidence-existing-title { display:flex; justify-content:space-between; gap:12px; margin-bottom:8px; color:var(--text-muted); font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
-    .evidence-preview-grid { grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); }
-    .evidence-preview-item { position:relative; aspect-ratio:1; overflow:hidden; border:1px solid var(--border); border-radius:13px; background:#080b11; }
-    .evidence-preview-item img { width:100%; height:100%; object-fit:cover; }
-    .evidence-preview-item .evidence-order { position:absolute; left:7px; bottom:7px; padding:3px 6px; color:#fff; border:1px solid rgba(255,255,255,.12); border-radius:999px; background:rgba(3,5,9,.7); backdrop-filter:blur(8px); font:700 8px 'JetBrains Mono'; }
-    .evidence-remove-btn { position:absolute; top:6px; right:6px; width:27px; height:27px; display:grid; place-items:center; cursor:pointer; color:#fff; border:1px solid rgba(255,255,255,.14); border-radius:9px; background:rgba(3,5,9,.76); backdrop-filter:blur(8px); transition:var(--transition); }
-    .evidence-remove-btn:hover { color:var(--danger); border-color:rgba(255,107,122,.42); background:rgba(40,6,12,.86); }
-    .evidence-remove-btn .svg-icon { width:13px; height:13px; }
-    .evidence-upload-status { display:none; margin-top:12px; padding:11px 12px; border:1px solid rgba(216,180,109,.2); border-radius:12px; background:rgba(216,180,109,.045); }
-    .evidence-upload-status.show { display:block; }
-    .evidence-upload-status-line { display:flex; justify-content:space-between; gap:12px; color:var(--text-soft); font-size:10px; }
-    .evidence-upload-status-line strong { color:var(--primary-2); font-family:'JetBrains Mono'; }
-    .evidence-note { min-height:82px!important; margin-top:13px; }
-    .evidence-empty-gallery { padding:16px; text-align:center; color:var(--text-muted); border:1px dashed var(--border); border-radius:12px; font-size:10px; }
-    .portal-counter strong small { display:block; margin-top:3px; color:var(--text-muted); font:700 8px 'Plus Jakarta Sans'; letter-spacing:.06em; text-transform:uppercase; }
-
   </style>
 </head>
 <body>
@@ -639,7 +632,7 @@
   </div>
 
   <div class="app-container">
-    <!-- Header App Bar Space (Mặc định ẩn, bật tắt động qua Router JS) -->
+    <!-- Header App Bar Space -->
     <nav class="premium-nav" id="mainNavigationBar">
       <div class="nav-brand" id="navBrandClick">
         <div class="nav-logo">
@@ -681,6 +674,7 @@
     const STATUS_PENDING = 'Chờ điền';
     const STATUS_COMPLETED = 'Đã điền';
 
+    // ===== CORE DESIGN SYSTEM ICONS WITH NEW SUN & MOON =====
     const SVGS = {
       FOLDER: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`,
       CLOCK: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
@@ -697,7 +691,9 @@
       IMAGE: `<svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
       USER: `<svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>`,
       UPLOAD: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 16V4"/><polyline points="7 9 12 4 17 9"/><path d="M5 20h14"/></svg>`,
-      LOGOUT: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`
+      LOGOUT: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+      SUN: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+      MOON: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`
     };
 
     const rootContainer = document.getElementById('appRoot');
@@ -708,12 +704,15 @@
     let activeObjectUrls = [];
     let cachedCasesPayload = null;
     let activeCaseFilter = 'all';
-    let activeDashboardTab = 'list';
+    let activeDashboardTab = 'list'; 
     let activeUserProfile = null;
     let caseRequestedItemsDraft = [];
     let garageUploadsInFlight = 0;
     let garageAutosaveTimers = new Map();
     let garagePortalMounted = false; 
+
+    // QUẢN LÝ THEME STATE: Khởi tạo từ cấu hình lưu trữ
+    let currentTheme = localStorage.getItem('claimvision-theme') || 'dark';
 
     document.addEventListener('DOMContentLoaded', initApplicationState);
     window.addEventListener('popstate', () => { if (window.firebase?.auth) evaluateViewRoutingState(firebase.auth().currentUser); });
@@ -723,6 +722,13 @@
     });
 
     function initApplicationState() {
+      // Áp dụng cấu hình giao diện ngay khi khởi chạy app
+      if (currentTheme === 'light') {
+        document.body.classList.add('light-mode');
+      } else {
+        document.body.classList.remove('light-mode');
+      }
+
       if (!isSystemConfigHealthy()) {
         renderFatalConfigurationFailure();
         return;
@@ -733,6 +739,18 @@
       firebase.auth().onAuthStateChanged(async (userInstance) => {
         activeUserProfile = userInstance ? await loadUserProfile(userInstance) : null;
         evaluateViewRoutingState(userInstance);
+      });
+    }
+
+    // THAY ĐỔI THEME REALTIME: Thay đổi trực tiếp lớp CSS mà không reload / mất dữ liệu form
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light-mode');
+      currentTheme = isLight ? 'light' : 'dark';
+      localStorage.setItem('claimvision-theme', currentTheme);
+      
+      // Đồng bộ hóa icon của mọi nút chuyển đổi đang hiển thị trên màn hình
+      document.querySelectorAll('.theme-toggle-btn-node').forEach(btn => {
+        btn.innerHTML = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
       });
     }
 
@@ -839,11 +857,13 @@
     function renderNavigationUserProfile(userInstance, targetNode) {
       if (!targetNode) return;
       const profile = getAuthenticatedUserPresentation(userInstance);
+      const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
       targetNode.innerHTML = `
         <div class="nav-user-zone">
+          <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện Sáng/Tối" onclick="toggleTheme()">${activeThemeIcon}</button>
           <button type="button" class="nav-user-card" title="Mở hồ sơ người dùng" onclick="openUserProfileModal()">
             <div class="nav-user-avatar">${escapeHtmlOutput(profile.initials)}</div>
-            <div class="nav-user-copy"><strong>${escapeHtmlOutput(profile.displayName)}</strong><em>${escapeHtmlOutput(profile.role)}</em><span>${escapeHtmlOutput(profile.department)}</span></div>
+            <div class="nav-user-copy"><strong>${escapeHtmlOutput(profile.displayName)}</strong><em>${escapeHtmlOutput(profile.role)}</em></div>
           </button>
           <button class="btn-premium btn-secondary nav-logout-icon" title="Đăng xuất" aria-label="Đăng xuất" onclick="executeLogoutFlow()">${SVGS.LOGOUT}</button>
         </div>`;
@@ -907,6 +927,7 @@
      * 0. LUXURY LOGIN PORTAL VIEW (ULTRA CLEAN FOCUS)
      ****************************************************/
     function renderLoginView() {
+      const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
       rootContainer.innerHTML = `
         <div class="login-wrapper">
           <section class="login-visual">
@@ -922,6 +943,9 @@
             <div class="login-footnote"><span>Firebase realtime</span><span>Cloudinary media</span><span>Secure access</span></div>
           </section>
           <section class="login-panel">
+            <div style="position: absolute; top: 20px; right: 20px;">
+              <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện" onclick="toggleTheme()">${activeThemeIcon}</button>
+            </div>
             <div class="login-card">
               <div class="login-icon-frame">${SVGS.LOCK}</div>
               <h2>Chào mừng trở lại</h2>
@@ -976,7 +1000,7 @@
     }
 
     /****************************************************
-     * 1. PREMIUM MANAGEMENT DASHBOARD WORKSPACE (TABBED ARCHITECTURE)
+     * 1. PREMIUM MANAGEMENT DASHBOARD WORKSPACE
      ****************************************************/
     function renderManagerDashboardWorkspace() {
       const currentProfile = getAuthenticatedUserPresentation(firebase.auth().currentUser);
@@ -1601,9 +1625,17 @@
           </article>`;
         }).join('')}` : '';
 
+      const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
       rootContainer.innerHTML = `
         <div class="portal-shell" data-garage-portal="active">
-          <header class="portal-topbar"><div><div class="eyebrow">Garage response portal</div><h1>Hoàn thiện dữ liệu báo giá</h1><p>Mọi ghi chú và ảnh minh chứng được lưu theo thời gian thực trước khi Garage khóa hồ sơ.</p></div><div class="portal-counter-stack"><div class="portal-counter">Ảnh cần ghi tên<strong id="garageHeaderNoteCounter">00/00</strong></div><div class="portal-counter">Hạng mục có ảnh<strong id="garageHeaderEvidenceCounter">00/00</strong></div></div></header>
+          <header class="portal-topbar">
+            <div><div class="eyebrow">Garage response portal</div><h1>Hoàn thiện dữ liệu báo giá</h1><p>Mọi ghi chú và ảnh minh chứng được lưu theo thời gian thực trước khi Garage khóa hồ sơ.</p></div>
+            <div class="portal-counter-stack">
+              <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện Sáng/Tối" onclick="toggleTheme()">${activeThemeIcon}</button>
+              <div class="portal-counter">Ảnh cần ghi tên<strong id="garageHeaderNoteCounter">00/00</strong></div>
+              <div class="portal-counter">Hạng mục có ảnh<strong id="garageHeaderEvidenceCounter">00/00</strong></div>
+            </div>
+          </header>
           <div class="garage-progress-panel"><div class="garage-progress-top"><div><strong>Tiến độ hoàn thiện hồ sơ</strong><span id="garageProgressCaption">Đang tính toán dữ liệu...</span></div><span id="garageProgressPercent" class="garage-progress-percent">0%</span></div><div class="garage-progress-track"><div id="garageProgressFill"></div></div></div>
           <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list">${imageInputSection}${evidenceRequestSection}</div></div>
         </div>`;
@@ -1891,9 +1923,17 @@
           return `<article class="evidence-result-card"><div class="evidence-result-title"><div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div><div><h3>${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3><p>${urls.length} ảnh do Garage cung cấp</p></div></div>${item.ghiChuGarage ? `<div class="result-content" style="margin-bottom:14px"><strong style="display:block;margin-bottom:6px;color:var(--primary-2);font-size:9px;letter-spacing:.08em;text-transform:uppercase">Ghi chú Garage</strong>${escapeHtmlOutput(item.ghiChuGarage)}</div>` : ``}${urls.length ? `<div class="evidence-result-gallery">${urls.map((url,imageIndex) => `<button type="button" class="evidence-result-image" title="Mở ảnh ${imageIndex+1}" onclick="openLightbox('${escapeAttributeData(url)}')"><img src="${escapeAttributeData(url)}" alt="Ảnh Garage cung cấp ${imageIndex+1}" loading="lazy"></button>`).join('')}</div>` : `<div class="evidence-empty">Garage chưa cung cấp ảnh cho hạng mục này.</div>`}</article>`;
         }).join('')}` : '';
 
+      const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
       rootContainer.innerHTML = `
         <div class="portal-shell">
-          <header class="portal-topbar"><div><div class="eyebrow">Verified comparison result</div><h1>Kết quả đối chiếu Garage</h1><p>Xem lại đầy đủ người tạo hồ sơ, nội dung Garage khai báo và ảnh minh chứng theo từng hạng mục.</p></div><div class="portal-counter-stack"><div class="portal-counter">Đã ghi hạng mục<strong>${String(completedItems).padStart(2,'0')}/${String(localActiveImageStack.length).padStart(2,'0')}</strong></div><div class="portal-counter">Đã cung cấp ảnh<strong>${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</strong></div></div></header>
+          <header class="portal-topbar">
+            <div><div class="eyebrow">Verified comparison result</div><h1>Kết quả đối chiếu Garage</h1><p>Xem lại đầy đủ người tạo hồ sơ, nội dung Garage khai báo và ảnh minh chứng theo từng hạng mục.</p></div>
+            <div class="portal-counter-stack">
+              <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện Sáng/Tối" onclick="toggleTheme()">${activeThemeIcon}</button>
+              <div class="portal-counter">Đã ghi hạng mục<strong>${String(completedItems).padStart(2,'0')}/${String(localActiveImageStack.length).padStart(2,'0')}</strong></div>
+              <div class="portal-counter">Đã cung cấp ảnh<strong>${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</strong></div>
+            </div>
+          </header>
           <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata(renderMode)}<div class="image-workspace-list">${imageResultsSection}${evidenceResultsSection}</div></div>
         </div>`;
     }
