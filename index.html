@@ -114,13 +114,75 @@
     @media (max-width: 650px) { .nav-titles p { display: none; } .nav-titles h1 { font-size: 13px; } .premium-nav { top: 10px; } }
 
     .nav-user-zone { display: flex; align-items: center; gap: 9px; }
-    .nav-user-card { min-width: 0; display: flex; align-items: center; gap: 10px; padding: 6px 10px 6px 7px; border: 1px solid var(--border); border-radius: 14px; background: rgba(255,255,255,.03); }
-    .nav-user-avatar { width: 34px; height: 34px; display: grid; place-items: center; flex: 0 0 auto; color: #171209; border: 1px solid rgba(245,220,156,.4); border-radius: 11px; background: var(--primary-gradient); font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 800; }
-    .nav-user-copy { min-width: 0; max-width: 210px; }
-    .nav-user-copy strong { display: block; overflow: hidden; color: var(--text-soft); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-    .nav-user-copy span { display: block; overflow: hidden; color: var(--text-muted); font-size: 8px; font-weight: 700; letter-spacing: .06em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+
+    /* ===== UPDATE: USER IDENTITY DISPLAY SYSTEM ===== */
+    .nav-user-card { 
+      appearance: none; 
+      color: inherit; 
+      cursor: pointer; 
+      text-align: left; 
+      transition: var(--transition); 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 12px; 
+      padding: 8px 16px 8px 10px; 
+      border: 1px solid var(--border); 
+      border-radius: 14px; 
+      background: rgba(255, 255, 255, .03);
+    }
+    .nav-user-card:hover { transform: translateY(-1px); border-color: rgba(216,180,109,.34); background: rgba(216,180,109,.055); }
+    .nav-user-avatar { 
+      width: 40px; 
+      height: 40px; 
+      display: grid; 
+      place-items: center; 
+      flex: 0 0 auto; 
+      color: #171209; 
+      border: 1px solid rgba(245,220,156,.4); 
+      border-radius: 11px; 
+      background: var(--primary-gradient); 
+      font-family: 'JetBrains Mono'; 
+      font-size: 13px; 
+      font-weight: 800; 
+    }
+    .nav-user-copy { min-width: 0; max-width: 240px; }
+    .nav-user-copy strong { 
+      display: block; 
+      overflow: hidden; 
+      color: var(--text-main); 
+      font-size: 14px; 
+      font-weight: 700;
+      text-overflow: ellipsis; 
+      white-space: nowrap; 
+      line-height: 1.2;
+    }
+    .nav-user-copy em { 
+      display: block; 
+      overflow: hidden; 
+      margin-top: 3px; 
+      color: var(--primary-2); 
+      font-size: 10px; 
+      font-style: normal; 
+      font-weight: 800; 
+      letter-spacing: .05em; 
+      text-overflow: ellipsis; 
+      text-transform: uppercase; 
+      white-space: nowrap; 
+    }
+    .nav-user-copy span { 
+      display: block; 
+      overflow: hidden; 
+      margin-top: 1px;
+      color: var(--text-muted); 
+      font-size: 9px; 
+      font-weight: 700; 
+      letter-spacing: .06em; 
+      text-overflow: ellipsis; 
+      text-transform: uppercase; 
+      white-space: nowrap; 
+    }
     .nav-logout-icon { width: 38px; min-height: 38px; padding: 0; }
-    @media (max-width: 720px) { .nav-user-copy { display: none; } .nav-user-card { padding: 4px; } .nav-user-avatar { width: 32px; height: 32px; } .nav-logout-icon { width: 34px; min-height: 34px; } }
+    @media (max-width: 720px) { .nav-user-copy { display: none; } .nav-user-card { padding: 6px; } .nav-user-avatar { width: 36px; height: 36px; font-size: 12px; } .nav-logout-icon { width: 34px; min-height: 34px; } }
 
     .hero-panel {
       position: relative;
@@ -145,10 +207,41 @@
     .hero-panel h2 { max-width: 760px; font-size: clamp(30px, 5vw, 57px); font-weight: 700; line-height: 1.04; letter-spacing: -.055em; }
     .hero-panel h2 span { color: var(--primary-2); }
     .hero-panel p { max-width: 680px; margin-top: 16px; color: var(--text-muted); font-size: clamp(13px, 1.4vw, 15px); }
-    .hero-user-inline { width: fit-content; max-width: 100%; display: flex; align-items: center; gap: 10px; margin-top: 21px; padding: 8px 12px 8px 8px; border: 1px solid var(--border); border-radius: 14px; background: rgba(255,255,255,.03); }
-    .hero-user-inline .nav-user-avatar { width: 36px; height: 36px; }
-    .hero-user-inline strong { display: block; color: var(--text-soft); font-size: 11px; }
-    .hero-user-inline span { display: block; overflow: hidden; max-width: 310px; margin-top: 2px; color: var(--text-muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+    
+    .hero-user-inline { 
+      width: fit-content; 
+      max-width: 100%; 
+      display: flex; 
+      align-items: center; 
+      gap: 14px; 
+      margin-top: 24px; 
+      padding: 10px 18px 10px 10px; 
+      border: 1px solid var(--border); 
+      border-radius: 16px; 
+      background: rgba(255, 255, 255, .03); 
+      cursor: pointer; 
+      transition: var(--transition); 
+    }
+    .hero-user-inline:hover { border-color: rgba(216,180,109,.32); background: rgba(216,180,109,.05); transform: translateY(-1px); }
+    .hero-user-inline .nav-user-avatar { width: 46px; height: 46px; font-size: 15px; }
+    .hero-user-inline strong { 
+      display: block; 
+      color: var(--text-main); 
+      font-size: 15px; 
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .hero-user-inline span { 
+      display: block; 
+      overflow: hidden; 
+      max-width: 340px; 
+      margin-top: 4px; 
+      color: var(--text-soft); 
+      font-size: 11px; 
+      font-weight: 500;
+      text-overflow: ellipsis; 
+      white-space: nowrap; 
+    }
     .hero-signature { display: grid; justify-items: end; gap: 12px; padding-bottom: 2px; }
     .hero-signature .seal { width: 82px; height: 82px; display: grid; place-items: center; border: 1px solid rgba(216,180,109,.24); border-radius: 50%; color: var(--primary-2); background: rgba(216,180,109,.045); box-shadow: inset 0 0 35px rgba(216,180,109,.04); }
     .hero-signature .seal .svg-icon { width: 32px; height: 32px; }
@@ -344,7 +437,7 @@
     .evidence-request-head h3 { margin-top: 5px; color: var(--text-main); font-size: 15px; line-height: 1.45; }
     .evidence-request-body { padding: 21px 23px 23px; }
     .evidence-dropzone { min-height: 140px; }
-    .evidence-preview-grid, .evidence-result-gallery { display: grid; grid-template-columns: repeat(auto-fill,minmax(105px,1fr)); gap: 9px; margin-top: 13px; }
+    .evidence-preview-grid, .evidence-result-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 9px; margin-top: 13px; }
     .evidence-preview-item, .evidence-result-image { position: relative; overflow: hidden; aspect-ratio: 4/3; padding: 0; cursor: pointer; border: 1px solid var(--border); border-radius: 12px; background: #06080c; }
     .evidence-preview-item img, .evidence-result-image img { width: 100%; height: 100%; object-fit: cover; }
     .evidence-preview-item span { position: absolute; right: 6px; bottom: 6px; padding: 4px 6px; color: #fff; border-radius: 7px; background: rgba(5,7,11,.76); font-size: 8px; }
@@ -408,9 +501,6 @@
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 
     /* ===== ULTIMATE PROFILE & TWO-WAY EVIDENCE WORKFLOW ===== */
-    .nav-user-card { appearance:none; color:inherit; cursor:pointer; text-align:left; transition:var(--transition); }
-    .nav-user-card:hover { transform:translateY(-1px); border-color:rgba(216,180,109,.34); background:rgba(216,180,109,.055); }
-    .nav-user-copy em { display:block; overflow:hidden; margin-top:2px; color:var(--primary-2); font-size:8px; font-style:normal; font-weight:800; letter-spacing:.05em; text-overflow:ellipsis; text-transform:uppercase; white-space:nowrap; }
     .profile-modal-panel { position:relative; overflow:hidden; width:min(620px,100%); padding:0; border:1px solid var(--border-strong); border-radius:26px; background:linear-gradient(145deg,#111824,#0a0f17); box-shadow:0 35px 110px rgba(0,0,0,.7); }
     .profile-modal-hero { position:relative; display:flex; align-items:center; gap:18px; padding:28px; border-bottom:1px solid var(--border); background:linear-gradient(120deg,rgba(216,180,109,.12),rgba(91,169,255,.035)); }
     .profile-modal-hero::after { content:''; position:absolute; width:210px; height:210px; right:-85px; top:-115px; border-radius:50%; background:rgba(216,180,109,.11); filter:blur(5px); }
@@ -426,8 +516,6 @@
     .profile-close { position:absolute; top:16px; right:16px; z-index:4; width:36px; min-height:36px; padding:0; }
     @media(max-width:620px){ .profile-form-grid{grid-template-columns:1fr}.profile-form-grid .form-group.full{grid-column:auto}.profile-modal-body,.profile-modal-hero{padding:22px}.profile-modal-actions{display:grid;grid-template-columns:1fr 1fr}.profile-modal-actions .btn-premium{width:100%;min-width:0} }
 
-    .hero-user-inline { cursor:pointer; transition:var(--transition); }
-    .hero-user-inline:hover { border-color:rgba(216,180,109,.32); background:rgba(216,180,109,.05); transform:translateY(-1px); }
     .profile-setup-hint { display:inline-flex; align-items:center; gap:6px; margin-top:5px; color:var(--primary-2); font-size:9px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
 
     .request-composer { padding:14px; border:1px solid var(--border); border-radius:17px; background:rgba(4,7,11,.46); }
@@ -514,7 +602,7 @@
     </div>
   </div>
 
-  <!-- Hồ sơ cá nhân -->
+  <!-- Hồ sơ người dùng Modal -->
   <div id="profileModalOverlay" class="p-modal-overlay" aria-hidden="true">
     <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
       <button type="button" class="btn-premium btn-secondary profile-close" onclick="closeUserProfileModal()" aria-label="Đóng">×</button>
@@ -602,7 +690,6 @@
     let localActiveImageStack = [];
     let localActiveRequestedItems = [];
     let activeObjectUrls = [];
-    let garageEvidenceObjectUrls = [];
     let cachedCasesPayload = null;
     let activeCaseFilter = 'all';
     let activeDashboardTab = 'list'; // 'list' hoặc 'create'
@@ -873,19 +960,25 @@
     }
 
     /****************************************************
-     * 1. PREMIUM MANAGEMENT DASHBOARD WORKSPACE (MODIFIED TABS)
+     * 1. PREMIUM MANAGEMENT DASHBOARD WORKSPACE (TABBED ARCHITECTURE)
      ****************************************************/
     function renderManagerDashboardWorkspace() {
       const currentProfile = getAuthenticatedUserPresentation(firebase.auth().currentUser);
       
-      // Khởi tạo khung sườn Dashboard chính
       rootContainer.innerHTML = `
         <section class="hero-panel">
           <div>
             <div class="eyebrow">Trung tâm giám định số</div>
             <h2>Đối chiếu tổn thất<br><span>nhanh, rõ và có hệ thống.</span></h2>
             <p>Tạo hồ sơ độc lập, chuyển ảnh hiện trạng cho Garage và xem lại toàn bộ hạng mục được ghi chú trên từng ảnh trong cùng một không gian dữ liệu.</p>
-            <div class="hero-user-inline" onclick="openUserProfileModal()" title="Chỉnh sửa hồ sơ người dùng"><div id="heroUserAvatar" class="nav-user-avatar">${escapeHtmlOutput(currentProfile.initials)}</div><div><strong id="heroUserName">${escapeHtmlOutput(currentProfile.displayName)}</strong><span id="heroUserMeta">${escapeHtmlOutput(currentProfile.role)} · ${escapeHtmlOutput(currentProfile.department)}</span>${currentProfile.isConfigured ? `` : `<div class="profile-setup-hint">${SVGS.USER} Thiết lập tên hiển thị</div>`}</div></div>
+            <div class="hero-user-inline" onclick="openUserProfileModal()" title="Chỉnh sửa hồ sơ người dùng">
+              <div id="heroUserAvatar" class="nav-user-avatar">${escapeHtmlOutput(currentProfile.initials)}</div>
+              <div>
+                <strong id="heroUserName">${escapeHtmlOutput(currentProfile.displayName)}</strong>
+                <span id="heroUserMeta">${escapeHtmlOutput(currentProfile.role)} · ${escapeHtmlOutput(currentProfile.department)}</span>
+                ${currentProfile.isConfigured ? `` : `<div class="profile-setup-hint">${SVGS.USER} Thiết lập tên hiển thị</div>`}
+              </div>
+            </div>
           </div>
           <div class="hero-signature">
             <div class="seal">${SVGS.SPARKLES}</div>
@@ -908,7 +1001,7 @@
           </div>
         </section>
 
-        <!-- Hệ thống Tab phân chia luồng công việc -->
+        <!-- Tab Controls System -->
         <div class="workspace-tabs-nav">
           <button class="workspace-tab-btn ${activeDashboardTab === 'list' ? 'active' : ''}" onclick="switchWorkspaceTab('list')">
             ${SVGS.FOLDER} Danh sách hồ sơ giám định
@@ -922,15 +1015,12 @@
         <section id="panelOutputResultAnchor" class="p-card success-panel" style="display:none;"></section>
       `;
 
-      // Render nội dung của tab đang hoạt động
       renderActiveTabContent();
 
-      // Đăng ký nhận luồng dữ liệu thay đổi từ Firebase và cập nhật bảng + metrics
       dbNodeInstance.ref('cases').on('value', (dataSnapshot) => {
         const val = dataSnapshot.val() || {};
         cachedCasesPayload = val;
         
-        // Cập nhật các con số metrics trên stats board
         const allEntries = Object.entries(val);
         const metricTotal = allEntries.length;
         const metricCompleted = allEntries.filter(([,item]) => item.trangThai === STATUS_COMPLETED).length;
@@ -944,7 +1034,6 @@
         if (pendingLbl) pendingLbl.textContent = metricPending;
         if (completedLbl) completedLbl.textContent = metricCompleted;
 
-        // Nếu đang ở tab danh sách thì render lại bảng dữ liệu
         if (activeDashboardTab === 'list') {
           executeUIRenderCasesTable(val);
         }
@@ -955,12 +1044,10 @@
       if (activeDashboardTab === tabName) return;
       activeDashboardTab = tabName;
       
-      // Toggle CSS hoạt động của các nút Tab
       document.querySelectorAll('.workspace-tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.textContent.includes(tabName === 'list' ? 'Danh sách' : 'Khởi tạo'));
       });
 
-      // Ẩn bảng thành công cũ khi đổi tab để tránh loãng thông tin
       const outputCardBox = document.getElementById('panelOutputResultAnchor');
       if (outputCardBox) outputCardBox.style.display = 'none';
 
@@ -994,15 +1081,12 @@
           </div>
         `;
         
-        // Gán sự kiện cho các control trong tab danh sách
         document.getElementById('caseSearchInput').addEventListener('input', () => executeUIRenderCasesTable());
         document.querySelectorAll('[data-case-filter]').forEach(btn => btn.addEventListener('click', () => setCaseFilter(btn.dataset.caseFilter)));
         
-        // Render dữ liệu hiện có
         executeUIRenderCasesTable(cachedCasesPayload);
 
       } else {
-        // TAB TẠO HỒ SƠ: Mở rộng tràn viền cực kỳ thoáng đãng
         container.innerHTML = `
           <div class="workspace-grid single-col">
             <section class="p-card create-panel">
@@ -1050,7 +1134,6 @@
           </div>
         `;
 
-        // Reset & thiết lập lại các trình xử lý sự kiện cho giao diện tạo mới
         caseRequestedItemsDraft = [];
         renderRequestedItemsBuilder();
         
@@ -1065,7 +1148,6 @@
         });
         document.getElementById('btnCreateCaseSubmit').addEventListener('click', pipelineTriggerCaseCreationFlow);
 
-        // Kéo thả files
         ['dragenter','dragover'].forEach(eventName => dropzone.addEventListener(eventName, (event) => { event.preventDefault(); event.stopPropagation(); dropzone.classList.add('is-dragging'); }));
         ['dragleave','drop'].forEach(eventName => dropzone.addEventListener(eventName, (event) => { event.preventDefault(); event.stopPropagation(); dropzone.classList.remove('is-dragging'); }));
         dropzone.addEventListener('drop', (event) => {
@@ -1091,7 +1173,7 @@
         return;
       }
       labelSummary.textContent = `${filesList.length} ảnh đã sẵn sàng tải lên.`;
-      filesList.slice(0, 16).forEach((file, index) => { // Tăng giới hạn hiển thị preview lên 16 ảnh
+      filesList.slice(0, 16).forEach((file, index) => {
         const readerBlobUrl = URL.createObjectURL(file);
         activeObjectUrls.push(readerBlobUrl);
         const thumbDiv = document.createElement('div');
@@ -1312,7 +1394,6 @@
 
         renderInlineCreationSuccessPanel(finalPayloadStructure);
 
-        // Chuyển lại về Tab danh sách sau khi tạo thành công để xem thành quả
         setTimeout(() => {
           switchWorkspaceTab('list');
         }, 3200);
@@ -1446,7 +1527,7 @@
           ${showBackButton ? `<button class="btn-premium btn-secondary" style="margin-bottom:14px" onclick="goHome()">${SVGS.ARROW_LEFT} Về Dashboard</button>` : ''}
           <div class="case-id-chip"><span>Mã hồ sơ</span><strong>${escapeHtmlOutput(node.idCa)}</strong></div>
           <div class="metadata-list">
-            <div class="metadata-row"><span>Biển kiểm soát</span><strong>${escapeHtmlOutput(node.bienSo)}</strong></div>
+            <div class="metadata-row"><span>Biển kiểm soát</span><th><strong>${escapeHtmlOutput(node.bienSo)}</strong></th></div>
             <div class="metadata-row"><span>Garage phụ trách</span><strong>${escapeHtmlOutput(node.tenGara)}</strong></div>
             <div class="metadata-row"><span>Người tạo hồ sơ</span><strong>${escapeHtmlOutput(creatorName)}${creatorMeta ? `<small style="display:block;margin-top:3px;color:var(--text-muted);font-size:8px;font-weight:700">${escapeHtmlOutput(creatorMeta)}</small>` : ``}</strong></div>
             <div class="metadata-row"><span>Thời gian khởi tạo</span><strong>${escapeHtmlOutput(createdDate.date)} · ${escapeHtmlOutput(createdDate.time)}</strong></div>
@@ -1958,7 +2039,6 @@
       return window.location.href.split('?')[0].split('#')[0].replace(/index\.html$/i, '');
     }
 
-    // Đã chỉnh sửa logic check CONFIG tránh trigger cảnh báo khi key hợp lệ
     function isSystemConfigHealthy() {
       return (
         CONFIG.FIREBASE.apiKey && !CONFIG.FIREBASE.apiKey.includes('PASTE_') &&
