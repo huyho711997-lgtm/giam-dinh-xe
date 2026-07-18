@@ -3301,35 +3301,51 @@
       const canvas = document.createElement('canvas');
       const vw = video.videoWidth || 1920;
       const vh = video.videoHeight || 1080;
-      const isVideoLandscape = vw > vh;
       
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       const orientationAngle = (window.orientation !== undefined) ? window.orientation : (screen.orientation ? screen.orientation.angle : 0);
-      const isDeviceLandscape = (orientationAngle === 90 || orientationAngle === -90 || orientationAngle === 270 || orientationAngle === -270);
       
-      if (isDeviceLandscape === isVideoLandscape) {
-        canvas.width = vw;
-        canvas.height = vh;
+      if (isIOS) {
+        let correctionAngle = 0;
+        let targetWidth = vw;
+        let targetHeight = vh;
+        
+        if (orientationAngle === 0) {
+          correctionAngle = Math.PI / 2;
+          targetWidth = vh;
+          targetHeight = vw;
+        } else if (orientationAngle === 90) {
+          correctionAngle = 0;
+          targetWidth = vw;
+          targetHeight = vh;
+        } else if (orientationAngle === -90 || orientationAngle === 270) {
+          // Landscape Right - need 180 degrees to correct upside down hold
+          correctionAngle = Math.PI;
+          targetWidth = vw;
+          targetHeight = vh;
+        } else if (orientationAngle === 180) {
+          correctionAngle = -Math.PI / 2;
+          targetWidth = vh;
+          targetHeight = vw;
+        }
+        
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
         const ctx = canvas.getContext('2d');
-        if (orientationAngle === 180) {
+        
+        if (correctionAngle !== 0) {
           ctx.translate(canvas.width / 2, canvas.height / 2);
-          ctx.rotate(Math.PI);
+          ctx.rotate(correctionAngle);
           ctx.drawImage(video, -vw / 2, -vh / 2, vw, vh);
         } else {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         }
       } else {
-        canvas.width = vh;
-        canvas.height = vw;
+        // Android / Desktop auto-rotates correctly
+        canvas.width = vw;
+        canvas.height = vh;
         const ctx = canvas.getContext('2d');
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        
-        let angle = Math.PI / 2; // 90 degrees clockwise
-        if (orientationAngle === -90 || orientationAngle === 270) {
-          angle = -Math.PI / 2; // 90 degrees counter-clockwise
-        }
-        
-        ctx.rotate(angle);
-        ctx.drawImage(video, -vw / 2, -vh / 2, vw, vh);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       }
       
       canvas.toBlob((blob) => {
