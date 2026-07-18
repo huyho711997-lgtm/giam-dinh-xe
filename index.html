@@ -788,6 +788,23 @@
       background: var(--surface-strong) !important;
     }
 
+    .user-toolbar-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      width: 100%;
+    }
+    @media (max-width: 768px) {
+      .user-toolbar-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .user-toolbar-grid .btn-premium {
+        width: 100% !important;
+      }
+    }
+
     .premium-lightbox { position: fixed; inset: 0; z-index: 6000; display: none; place-items: center; padding: 20px; opacity: 0; background: rgba(2,4,7,.96); backdrop-filter: blur(18px); transition: opacity .2s ease; }
     .premium-lightbox.show { display: grid; opacity: 1; }
     .premium-lightbox img { max-width: min(1400px,96vw); max-height: 90vh; object-fit: contain; border: 1px solid var(--border); border-radius: 17px; box-shadow: 0 36px 100px rgba(0,0,0,.8); }
@@ -3255,20 +3272,27 @@
         container.innerHTML = `
           <div class="workspace-grid single-col">
             <section class="p-card">
-              <div class="p-card-head" style="margin-bottom: 24px;">
+              <div class="p-card-head" style="margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
                 <div>
-                  <h2>Quản lý tài khoản người dùng</h2>
-                  <p>Danh sách toàn bộ thành viên, phân quyền vai trò và phòng ban tương ứng.</p>
+                  <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin: 0;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>Quản lý tài khoản người dùng</span>
+                  </h2>
+                  <p style="margin-top: 4px; font-size: 13px; color: var(--text-soft);">Danh sách toàn bộ thành viên, phân quyền vai trò và phòng ban tương ứng.</p>
                 </div>
-                <div class="section-number">01</div>
               </div>
               
-              <div class="user-toolbar" style="display: flex; gap: 16px; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 24px; width: 100%;">
-                <div class="search-wrap" style="flex: 1; min-width: 280px; margin: 0;">
+              <div class="user-toolbar-grid" style="margin-bottom: 24px;">
+                <div class="search-wrap" style="margin: 0; width: 100%;">
                   ${SVGS.SEARCH}
                   <input id="userSearchInput" class="input-premium" type="search" placeholder="Tìm kiếm tên, email, vai trò, bộ phận..." autocomplete="off" style="width: 100%;" />
                 </div>
-                <button type="button" class="btn-premium" onclick="openCreateUserModal()" style="padding: 10px 24px; min-height: unset; height: 42px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; margin: 0; background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.35); cursor: pointer; transition: all 0.2s ease;">
+                <button type="button" class="btn-premium" onclick="openCreateUserModal()" style="width: auto !important; padding: 0 24px; min-height: unset; height: 42px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; margin: 0; background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.35); cursor: pointer; transition: all 0.2s ease;">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                   <span>Thêm thành viên mới</span>
                 </button>
