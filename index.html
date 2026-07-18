@@ -2114,6 +2114,15 @@
       evaluateViewRoutingState(firebase.auth().currentUser);
     }
 
+    function navigateToCase(caseIdToken, viewArg = null) {
+      let url = `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(caseIdToken)}`;
+      if (viewArg) {
+        url += `&view=${encodeURIComponent(viewArg)}`;
+      }
+      window.history.pushState({}, '', url);
+      evaluateViewRoutingState(firebase.auth().currentUser);
+    }
+
     function getProfileStorageKey(uid) {
       return `claimvision.userProfile.${uid || 'anonymous'}`;
     }
@@ -3050,8 +3059,8 @@
             <td data-label="Nội dung"><div class="date-mini"><strong style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-soft)">${Number(entityNode.soLuongAnh || 0).toString().padStart(2,'0')} ảnh hiện trạng</strong><span>${Number(reqCount).toString().padStart(2,'0')} yêu cầu ảnh</span></div></td>
             <td data-label="Trạng thái"><span class="badge-status ${targetBadgeClass}">${escapeHtmlOutput(entityNode.trangThai || STATUS_PENDING)}</span></td>
             <td><div class="flex-actions-group">
-              <button title="Mở link Garage" class="btn-premium btn-secondary" onclick="window.open('${escapeAttributeData(partnerPortalInputLink)}','_blank')">${SVGS.EXTERNAL}<span class="action-label">Garage</span></button>
-              <button title="Xem kết quả đối chiếu" class="btn-premium btn-dark" onclick="window.open('${escapeAttributeData(internalResultReviewLink)}','_blank')">${SVGS.CHECK_CIRCLE}<span class="action-label">Kết quả</span></button>
+              <button title="Xem link Garage" class="btn-premium btn-secondary" onclick="navigateToCase('${uniqueKeyToken}')">${SVGS.EXTERNAL}<span class="action-label">Garage</span></button>
+              <button title="Xem kết quả đối chiếu" class="btn-premium btn-dark" onclick="navigateToCase('${uniqueKeyToken}', 'result')">${SVGS.CHECK_CIRCLE}<span class="action-label">Kết quả</span></button>
               <button title="Xóa hồ sơ" class="btn-premium btn-danger-p" onclick="triggerDestructiveDeleteCase('${uniqueKeyToken}','${escapeAttributeData(entityNode.bienSo)}')">${SVGS.TRASH}<span class="action-label">Xóa</span></button>
             </div></td>
           </tr>`;
