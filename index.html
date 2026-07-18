@@ -1359,7 +1359,7 @@
       z-index: 2;
     }
     .camera-grid-overlay .grid-line {
-      border: 0.5px dashed rgba(255, 255, 255, 0.15);
+      border: 0.5px dashed rgba(255, 255, 255, 0.08);
     }
     .camera-grid-overlay .grid-line.vertical {
       grid-row: 1 / span 3;
@@ -1383,57 +1383,68 @@
       grid-row: 3;
       border-left: 0; border-right: 0;
     }
-    /* Center target crosshair */
+    /* Center target crosshair (Premium Rangefinder style) */
     .camera-target-crosshair {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 24px;
-      height: 24px;
+      width: 40px;
+      height: 40px;
       pointer-events: none;
       z-index: 2;
-      opacity: 0.4;
-    }
-    .camera-target-crosshair::before,
-    .camera-target-crosshair::after {
-      content: '';
-      position: absolute;
-      background: #ffffff;
+      opacity: 0.55;
     }
     .camera-target-crosshair::before {
-      top: 11px; left: 0; width: 24px; height: 2px;
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border: 1.5px solid #ffca28;
+      border-radius: 50%;
     }
     .camera-target-crosshair::after {
-      top: 0; left: 11px; width: 2px; height: 24px;
-    }
-    /* Camera focus ring animation and style */
-    .camera-focus-ring {
-      position: absolute;
-      width: 65px;
-      height: 65px;
-      border: 2px solid #ffca28;
-      border-radius: 50%;
-      pointer-events: none;
-      transform: translate(-50%, -50%) scale(2);
-      opacity: 0;
-      transition: transform 0.25s cubic-bezier(0.1, 0.8, 0.3, 1), opacity 0.25s ease;
-      z-index: 50;
-      box-shadow: 0 0 15px rgba(255, 202, 40, 0.3);
-    }
-    .camera-focus-ring::after {
       content: '';
       position: absolute;
       top: 50%; left: 50%;
-      width: 6px; height: 6px;
+      width: 4px; height: 4px;
       background: #ffca28;
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 8px #ffca28;
+    }
+    /* Camera focus ring (Premium Sony/Fujifilm Bracket style) */
+    .camera-focus-ring {
+      position: absolute;
+      width: 70px;
+      height: 70px;
+      border: 1.5px solid transparent;
+      border-radius: 8px;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(1.8) rotate(45deg);
+      opacity: 0;
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+      z-index: 50;
+      box-shadow: 0 0 15px rgba(255, 202, 40, 0.2);
+    }
+    .camera-focus-ring::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      background: linear-gradient(to right, #ffca28 12px, transparent 12px) 0 0,
+                  linear-gradient(to right, #ffca28 12px, transparent 12px) 0 100%,
+                  linear-gradient(to left, #ffca28 12px, transparent 12px) 100% 0,
+                  linear-gradient(to left, #ffca28 12px, transparent 12px) 100% 100%,
+                  linear-gradient(to bottom, #ffca28 12px, transparent 12px) 0 0,
+                  linear-gradient(to bottom, #ffca28 12px, transparent 12px) 100% 0,
+                  linear-gradient(to top, #ffca28 12px, transparent 12px) 0 100%,
+                  linear-gradient(to top, #ffca28 12px, transparent 12px) 100% 100%;
+      background-repeat: no-repeat;
+      background-size: 100% 100%;
     }
     .camera-focus-ring.active {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 0.9;
+      transform: translate(-50%, -50%) scale(1) rotate(0deg);
+      opacity: 1;
     }
 
     .camera-overlay-header {
@@ -1583,53 +1594,87 @@
       align-items: center;
       padding: 0 12px;
     }
-    .camera-control-left {
-      width: 60px;
-      height: 40px;
+     .camera-control-left {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      min-width: 80px;
+    }
+    .camera-cancel-btn {
+      background: transparent;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 700;
+      font-size: 12px;
+      padding: 8px 16px;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .camera-cancel-btn:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.4);
     }
     .camera-capture-outer {
-      width: 74px;
-      height: 74px;
+      width: 78px;
+      height: 78px;
       border-radius: 50%;
-      border: 4px solid #ffffff;
+      border: 4px solid rgba(255, 202, 40, 0.35);
       background: transparent;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 0 16px rgba(255,255,255,0.2);
+      box-shadow: 0 0 20px rgba(255, 202, 40, 0.15);
+      transition: border-color 0.2s, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .camera-capture-outer:hover {
+      border-color: rgba(255, 202, 40, 0.6);
+      transform: scale(1.04);
     }
     .camera-capture-inner {
-      width: 58px;
-      height: 58px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      background: #ffffff;
+      background: radial-gradient(circle, #ffffff 0%, #f1f3f5 100%);
       transition: transform 0.15s, background-color 0.15s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .camera-capture-outer:active {
+      transform: scale(0.95);
     }
     .camera-capture-outer:active .camera-capture-inner {
-      transform: scale(0.88);
-      background: #e0e0e0;
+      transform: scale(0.86);
+      background: #ffca28;
     }
     .camera-save-btn {
-      background: var(--primary-gradient);
-      color: #171209;
+      background: linear-gradient(135deg, #f5dc9c 0%, #ffca28 50%, #ff8f00 100%);
+      color: #0d0902;
       border: none;
       font-weight: 800;
-      font-size: 13px;
-      padding: 10px 24px;
+      font-size: 12px;
+      padding: 9px 20px;
       border-radius: 30px;
       cursor: pointer;
-      transition: opacity 0.2s ease, transform 0.25s ease;
+      transition: opacity 0.2s ease, transform 0.2s ease;
       box-shadow: 0 4px 16px rgba(255, 202, 40, 0.35);
       text-transform: uppercase;
       letter-spacing: 0.04em;
+      min-width: 80px;
+      text-align: center;
+    }
+    .camera-save-btn:active {
+      transform: scale(0.95);
     }
     .camera-save-btn:disabled {
-      opacity: 0.45;
+      opacity: 0.35;
       cursor: not-allowed;
       box-shadow: none;
-      background: rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.3);
     }
   </style>
 </head>
@@ -1739,7 +1784,9 @@
         <div class="camera-preview-strip" id="cameraPreviewStrip"></div>
       </div>
       <div class="camera-controls">
-        <div class="camera-control-left"></div>
+        <div class="camera-control-left">
+          <button type="button" class="camera-cancel-btn" onclick="closeCustomCameraModal(false)">Hủy</button>
+        </div>
         <div class="camera-capture-outer" onclick="triggerCustomCameraCapture()">
           <div class="camera-capture-inner"></div>
         </div>
