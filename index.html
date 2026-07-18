@@ -3856,7 +3856,15 @@
         contents: [{
           parts: [
             {
-              text: "Bạn là một AI OCR chuyên nghiệp phân tích báo giá sửa chữa xe cơ giới của Việt Nam. Hãy đọc ảnh báo giá này và trích xuất ra danh sách các tên hạng mục phụ tùng hoặc nội dung công việc sửa chữa cần khắc phục (ví dụ: cản trước, đèn pha trái, sơn nắp capo, gò nắn tai xe...). Quy tắc:\n1. Chỉ trả về danh sách các tên hạng mục phụ tùng/sửa chữa, mỗi hạng mục trên 1 dòng mới.\n2. Tuyệt đối không kèm số thứ tự (1, 2, 3..), không kèm đơn giá, không kèm tiền tệ, không kèm ký tự đặc biệt như dấu gạch đầu dòng.\n3. Loại bỏ các văn bản thừa như tiêu đề, tổng tiền, thuế VAT.\n4. Tên hạng mục nên ngắn gọn, rõ nghĩa tiếng Việt."
+              text: "Bạn là một AI OCR chuyên nghiệp phân tích báo giá sửa chữa xe cơ giới của Việt Nam. Hãy đọc ảnh báo giá này và trích xuất thông tin thành cấu trúc JSON có định dạng sau:\n" +
+                "{\n" +
+                "  \"bienSo\": \"biển số xe nếu có trong ảnh (ví dụ: 30H-123.45), nếu không có để trống \\\"\\\"\",\n" +
+                "  \"tenGara\": \"tên đơn vị sửa chữa/gara báo giá nếu có trong ảnh (ví dụ: Gara Tiên Phong), nếu không có để trống \\\"\\\"\",\n" +
+                "  \"hangMuc\": [\n" +
+                "     \"danh sách các tên hạng mục phụ tùng hoặc công việc sửa chữa cần khắc phục, mỗi phần tử là 1 chuỗi ngắn gọn, loại bỏ số thứ tự, đơn giá, VAT, tiền tệ\"\n" +
+                "  ]\n" +
+                "}\n" +
+                "Lưu ý: Chỉ trả về duy nhất chuỗi JSON hợp lệ, không kèm theo lời giải thích hoặc định dạng markdown khác ngoài khối mã JSON."
             },
             {
               inlineData: {
@@ -3941,9 +3949,25 @@
       
       try {
         const base64Data = await convertFileToBase64(file);
-        const ocrText = await callGeminiOcrApi(base64Data, file.type);
+        const ocrResponseText = await callGeminiOcrApi(base64Data, file.type);
         
-        const extracted = ocrText.split('\n')
+        let ocrResultObj;
+        let cleanText = ocrResponseText.trim();
+        if (cleanText.startsWith('```')) {
+          cleanText = cleanText.replace(/^```(?:json)?/, '').replace(/```$/, '').trim();
+        }
+        try {
+          ocrResultObj = JSON.parse(cleanText);
+        } catch (e) {
+          console.error("Failed to parse Gemini JSON:", e);
+          ocrResultObj = {
+            bienSo: "",
+            tenGara: "",
+            hangMuc: ocrResponseText.split('\n').map(line => line.replace(/^[\*\-\+\d\.\s\)]+/, '').trim()).filter(Boolean)
+          };
+        }
+        
+        const extracted = (Array.isArray(ocrResultObj.hangMuc) ? ocrResultObj.hangMuc : [])
           .map(line => {
             let clean = line.trim();
             clean = clean.replace(/^[\*\-\+\d\.\s\)]+/, '');
@@ -3957,6 +3981,32 @@
         
         displayExtractedOcrItems(extracted);
         triggerToast(`AI OCR: Trích xuất thành công ${extracted.length} hạng mục từ ảnh báo giá!`, 'success');
+
+        const extractedPlate = ocrResultObj.bienSo ? String(ocrResultObj.bienSo).trim() : '';
+        const extractedGarage = ocrResultObj.tenGara ? String(ocrResultObj.tenGara).trim() : '';
+
+        if (extractedPlate || extractedGarage) {
+          const detailList = [];
+          if (extractedPlate) detailList.push(`• Biển kiểm soát: <strong>${escapeHtmlOutput(extractedPlate)}</strong>`);
+          if (extractedGarage) detailList.push(`• Garage phụ trách: <strong>${escapeHtmlOutput(extractedGarage)}</strong>`);
+          
+          const confirmMsg = `AI phát hiện các thông tin xe sau trên ảnh báo giá:<br/><br/>${detailList.join('<br/>')}<br/><br/>Bạn có muốn tự động áp dụng các thông tin này vào ô nhập liệu không?`;
+          
+          setTimeout(async () => {
+            const confirmResult = await showConfirmModal('Phát hiện thông tin báo giá', confirmMsg, 'Áp dụng', 'Bỏ qua');
+            if (confirmResult) {
+              if (extractedPlate) {
+                const inputPlate = document.getElementById('txtPlateNumber');
+                if (inputPlate) inputPlate.value = extractedPlate;
+              }
+              if (extractedGarage) {
+                const inputGarage = document.getElementById('txtGaragePartner');
+                if (inputGarage) inputGarage.value = extractedGarage;
+              }
+              triggerToast('Đã tự động điền thông tin báo giá!', 'success');
+            }
+          }, 600);
+        }
       } catch (error) {
         console.error('Gemini OCR API Error:', error);
         
