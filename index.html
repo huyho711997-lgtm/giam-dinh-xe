@@ -2709,7 +2709,10 @@
           </div>
           <div class="sidebar-tip">Hoàn thành cả hai nhóm: ghi rõ hạng mục theo ảnh hiện trạng và tải ảnh minh chứng cho từng hạng mục được yêu cầu.</div>
           ${adjusterSummaryMarkup}
-          ${showBackButton ? `<button class="btn-premium" onclick="executeCopyAggregatedRawText()">${SVGS.COPY} Sao chép biên bản tổng</button>` : isReadOnlyMode ? `<div class="badge-status completed" style="width:100%;justify-content:center;padding:12px">Hồ sơ đã khóa</div>` : `<button id="btnSubmitGarageFinalResponse" class="btn-premium">${SVGS.CHECK_CIRCLE} Hoàn tất & gửi kết quả</button>`}
+          ${showBackButton ? `<button class="btn-premium" onclick="executeCopyAggregatedRawText()">${SVGS.COPY} Sao chép biên bản tổng</button>` : isReadOnlyMode ? `<div class="badge-status completed" style="width:100%;justify-content:center;padding:12px">Hồ sơ đã khóa</div>` : `
+            <button id="btnDraftGarageResponse" class="btn-premium btn-secondary" style="width:100%; margin-bottom:8px; border:1px solid rgba(179,140,67,0.3) !important;">Lưu nháp hồ sơ</button>
+            <button id="btnSubmitGarageFinalResponse" class="btn-premium" style="width:100%;">${SVGS.CHECK_CIRCLE} Hoàn tất & gửi kết quả</button>
+          `}
         </aside>`;
     }
 
@@ -2782,10 +2785,12 @@
           <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list">${imageInputSection}${evidenceRequestSection}</div></div>
           <div class="mobile-bottom-bar">
             <div class="mobile-bottom-bar-info">
-              <span class="mobile-bottom-bar-progress">Tiến độ hồ sơ</span>
               <span id="mobileBottomBarProgressPercent" class="mobile-bottom-bar-percentage">0%</span>
             </div>
-            <button id="btnMobileSubmitGarageResponse" class="btn-premium">${SVGS.CHECK_CIRCLE} Gửi kết quả</button>
+            <div class="mobile-bottom-bar-actions" style="display:flex; gap:8px;">
+              <button id="btnMobileDraftGarageResponse" class="btn-premium btn-secondary" style="width:auto !important; height:38px !important; border:1px solid rgba(179,140,67,0.3) !important; padding:0 12px !important; font-size:12px !important; font-weight:700 !important; border-radius:999px !important;">Lưu nháp</button>
+              <button id="btnMobileSubmitGarageResponse" class="btn-premium" style="padding:0 14px !important; font-size:12px !important;">${SVGS.CHECK_CIRCLE} Gửi kết quả</button>
+            </div>
           </div>
         </div>`;
 
@@ -2802,10 +2807,18 @@
         ['dragleave','drop'].forEach(eventName => dropzone.addEventListener(eventName, event => { event.preventDefault(); event.stopPropagation(); dropzone.classList.remove('is-dragging'); }));
         dropzone.addEventListener('drop', event => handleGarageEvidenceFiles(Number(dropzone.dataset.evidenceDropzone), Array.from(event.dataTransfer.files || [])));
       });
-      document.getElementById('btnSubmitGarageFinalResponse').addEventListener('click', pipelineTriggerGarageDataLockSubmission);
       
+      const submitBtn = document.getElementById('btnSubmitGarageFinalResponse');
+      if (submitBtn) submitBtn.addEventListener('click', pipelineTriggerGarageDataLockSubmission);
+
+      const desktopDraftBtn = document.getElementById('btnDraftGarageResponse');
+      if (desktopDraftBtn) desktopDraftBtn.addEventListener('click', triggerManualGarageDraftSave);
+
       const mobileSubmitBtn = document.getElementById('btnMobileSubmitGarageResponse');
       if (mobileSubmitBtn) mobileSubmitBtn.addEventListener('click', pipelineTriggerGarageDataLockSubmission);
+
+      const mobileDraftBtn = document.getElementById('btnMobileDraftGarageResponse');
+      if (mobileDraftBtn) mobileDraftBtn.addEventListener('click', triggerManualGarageDraftSave);
 
       initializeSidebarCollapse();
       refreshGarageProgressUI();
@@ -3037,6 +3050,21 @@
         dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hinhAnh`).set(localActiveImageStack),
         dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh`).set(localActiveRequestedItems)
       ]);
+    }
+
+    async function triggerManualGarageDraftSave() {
+      try {
+        if (garageUploadsInFlight > 0) {
+          triggerToast('Có tệp ảnh đang tải lên. Vui lòng đợi ảnh tải xong rồi lưu nháp.', 'warning');
+          return;
+        }
+        triggerToast('Đang tiến hành lưu nháp hồ sơ...', 'info');
+        await flushGarageAutosaves();
+        triggerToast('Đã lưu nháp hồ sơ thành công!', 'success');
+      } catch (err) {
+        console.error('Lưu nháp thất bại:', err);
+        triggerToast('Lỗi hệ thống: Không thể lưu nháp hồ sơ.', 'error');
+      }
     }
 
     async function pipelineTriggerGarageDataLockSubmission() {
