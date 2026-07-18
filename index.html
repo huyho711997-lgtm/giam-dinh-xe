@@ -4378,15 +4378,40 @@
                       <strong style="color: var(--text-main); font-size: 14px; font-weight: 700;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</strong>
                     </td>
                     <td data-label="Hình ảnh minh chứng" style="vertical-align: middle;">
-                      ${urls.length ? `
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                          ${urls.map((url, imageIndex) => `
-                            <button type="button" class="evidence-result-image" title="Mở ảnh ${imageIndex+1}" onclick="openLightbox(normalizeEvidenceImageUrls(localActiveRequestedItems[${index}]), ${imageIndex})" style="width: 90px; height: 68px; border-radius: 8px; flex-shrink: 0; margin: 0; border: 1.5px solid var(--border-strong);">
-                              <img src="${escapeAttributeData(url)}" alt="Ảnh minh chứng" style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;">
-                            </button>
-                          `).join('')}
-                        </div>
-                      ` : `
+                      ${urls.length ? (() => {
+                        const MAX_VISIBLE = 3;
+                        if (urls.length <= MAX_VISIBLE) {
+                          return `
+                            <div style="display: flex; gap: 8px; flex-wrap: nowrap;">
+                              ${urls.map((url, imageIndex) => `
+                                <button type="button" class="evidence-result-image" onclick="openLightbox(normalizeEvidenceImageUrls(localActiveRequestedItems[${index}]), ${imageIndex})" style="width: 90px; height: 68px; border-radius: 8px; flex-shrink: 0; margin: 0; border: 1.5px solid var(--border-strong);">
+                                  <img src="${escapeAttributeData(url)}" alt="Ảnh minh chứng" style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;">
+                                </button>
+                              `).join('')}
+                            </div>
+                          `;
+                        } else {
+                          const visibleUrls = urls.slice(0, MAX_VISIBLE - 1);
+                          const remainingCount = urls.length - (MAX_VISIBLE - 1);
+                          const overlayUrl = urls[MAX_VISIBLE - 1];
+                          return `
+                            <div style="display: flex; gap: 8px; flex-wrap: nowrap;">
+                              ${visibleUrls.map((url, imageIndex) => `
+                                <button type="button" class="evidence-result-image" onclick="openLightbox(normalizeEvidenceImageUrls(localActiveRequestedItems[${index}]), ${imageIndex})" style="width: 90px; height: 68px; border-radius: 8px; flex-shrink: 0; margin: 0; border: 1.5px solid var(--border-strong);">
+                                  <img src="${escapeAttributeData(url)}" alt="Ảnh minh chứng" style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;">
+                                </button>
+                              `).join('')}
+                              <button type="button" class="evidence-result-image" onclick="openLightbox(normalizeEvidenceImageUrls(localActiveRequestedItems[${index}]), ${MAX_VISIBLE - 1})" style="position: relative; width: 90px; height: 68px; border-radius: 8px; flex-shrink: 0; margin: 0; border: 1.5px solid var(--border-strong);">
+                                <img src="${escapeAttributeData(overlayUrl)}" alt="Ảnh minh chứng" style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;">
+                                <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.65); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; border-radius: 6px; font-weight: 800; font-size: 13px;">
+                                  <span>+${remainingCount}</span>
+                                  <span style="font-size: 8.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; margin-top: 1px; opacity: 0.85;">ảnh</span>
+                                </div>
+                              </button>
+                            </div>
+                          `;
+                        }
+                      })() : `
                         <span style="color: var(--text-muted); font-size: 12px; font-style: italic;">Garage chưa cung cấp ảnh</span>
                       `}
                     </td>
