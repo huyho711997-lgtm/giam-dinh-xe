@@ -1406,6 +1406,33 @@
     }
     .camera-target-crosshair::after {
       top: 0; left: 11px; width: 2px; height: 24px;
+    /* Camera focus ring animation and style */
+    .camera-focus-ring {
+      position: absolute;
+      width: 65px;
+      height: 65px;
+      border: 2px solid #ffca28;
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(2);
+      opacity: 0;
+      transition: transform 0.25s cubic-bezier(0.1, 0.8, 0.3, 1), opacity 0.25s ease;
+      z-index: 50;
+      box-shadow: 0 0 15px rgba(255, 202, 40, 0.3);
+    }
+    .camera-focus-ring::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 6px; height: 6px;
+      background: #ffca28;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px #ffca28;
+    }
+    .camera-focus-ring.active {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.9;
     }
 
     .camera-overlay-header {
@@ -1676,7 +1703,7 @@
   <!-- Custom In-App Camera Modal -->
   <div id="customCameraModal" class="custom-camera-modal" style="display: none;">
     <div class="camera-stream-container">
-      <video id="customCameraVideo" autoplay playsinline muted></video>
+      <video id="customCameraVideo" autoplay playsinline muted onclick="triggerCustomCameraFocus(event)"></video>
       
       <!-- Premium Grid Lines (Rule of Thirds) -->
       <div class="camera-grid-overlay">
@@ -1691,14 +1718,20 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
         <div class="camera-current-category" id="cameraActiveCategoryText">Đang chụp</div>
-        <button type="button" class="camera-action-btn btn-switch-cam" onclick="switchCustomCamera()" title="Đổi Camera">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-        </button>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="camera-action-btn btn-flash-cam" id="btnToggleCameraFlash" onclick="toggleCustomCameraTorch()" title="Bật/Tắt Flash">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          </button>
+          <button type="button" class="camera-action-btn btn-switch-cam" onclick="switchCustomCamera()" title="Đổi Camera">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          </button>
+        </div>
       </div>
       <div class="camera-flash-effect" id="cameraFlashEffect"></div>
       
-      <!-- Center target crosshair -->
+      <!-- Center target crosshair & Focus Ring -->
       <div class="camera-target-crosshair"></div>
+      <div id="cameraFocusRing" class="camera-focus-ring"></div>
     </div>
     <div class="camera-footer">
       <div class="camera-preview-container">
@@ -3342,6 +3375,7 @@
     let customCameraFacingMode = 'environment';
     let customCameraPhotos = [];
     let customCameraRequestIndex = null;
+    let customCameraTorchActive = false;
 
     async function openCustomCameraModal(requestIndex) {
       customCameraRequestIndex = requestIndex;
@@ -3382,6 +3416,23 @@
       try {
         customCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = customCameraStream;
+        if (customCameraTorchActive) {
+          setTimeout(async () => {
+            try {
+              const track = customCameraStream.getVideoTracks()[0];
+              if (track) {
+                const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+                if (capabilities.torch) {
+                  await track.applyConstraints({ advanced: [{ torch: true }] });
+                } else {
+                  customCameraTorchActive = false;
+                }
+              }
+            } catch (e) {
+              console.warn('Torch activation failed:', e);
+            }
+          }, 400);
+        }
       } catch (err) {
         console.warn('Rear camera exact constraints failed, fallback to environment', err);
         try {
@@ -3390,6 +3441,23 @@
             audio: false
           });
           video.srcObject = customCameraStream;
+          if (customCameraTorchActive) {
+            setTimeout(async () => {
+              try {
+                const track = customCameraStream.getVideoTracks()[0];
+                if (track) {
+                  const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+                  if (capabilities.torch) {
+                    await track.applyConstraints({ advanced: [{ torch: true }] });
+                  } else {
+                    customCameraTorchActive = false;
+                  }
+                }
+              } catch (e) {
+                console.warn('Fallback torch activation failed:', e);
+              }
+            }, 400);
+          }
         } catch (fallbackErr) {
           console.error('Cannot access camera via getUserMedia:', fallbackErr);
           triggerToast('Không thể kết nối camera. Chuyển sang trình chọn tệp mặc định!', 'warning');
@@ -3413,11 +3481,91 @@
       }
       const video = document.getElementById('customCameraVideo');
       if (video) video.srcObject = null;
+      
+      // Reset torch active state & button UI styles
+      customCameraTorchActive = false;
+      const flashBtn = document.getElementById('btnToggleCameraFlash');
+      if (flashBtn) {
+        flashBtn.classList.remove('active');
+        flashBtn.style.color = '#ffffff';
+        flashBtn.style.background = 'rgba(15, 12, 8, 0.6)';
+        flashBtn.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+      }
     }
 
     async function switchCustomCamera() {
       customCameraFacingMode = (customCameraFacingMode === 'environment') ? 'user' : 'environment';
       await startCustomCameraStream();
+    }
+
+    async function toggleCustomCameraTorch() {
+      if (!customCameraStream) {
+        triggerToast('Camera chưa hoạt động!', 'warning');
+        return;
+      }
+      const track = customCameraStream.getVideoTracks()[0];
+      if (!track) return;
+      
+      try {
+        const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+        if (!capabilities.torch) {
+          triggerToast('Đèn Flash không hỗ trợ trên camera này!', 'warning');
+          return;
+        }
+        
+        customCameraTorchActive = !customCameraTorchActive;
+        await track.applyConstraints({
+          advanced: [{ torch: customCameraTorchActive }]
+        });
+        
+        const flashBtn = document.getElementById('btnToggleCameraFlash');
+        if (flashBtn) {
+          flashBtn.classList.toggle('active', customCameraTorchActive);
+          flashBtn.style.color = customCameraTorchActive ? '#ffca28' : '#ffffff';
+          flashBtn.style.background = customCameraTorchActive ? 'rgba(255, 202, 40, 0.2)' : 'rgba(15, 12, 8, 0.6)';
+          flashBtn.style.borderColor = customCameraTorchActive ? '#ffca28' : 'rgba(255, 255, 255, 0.2)';
+        }
+      } catch (err) {
+        console.error('Torch toggle failed:', err);
+        triggerToast('Không điều khiển được đèn Flash trên thiết bị này!', 'warning');
+      }
+    }
+
+    async function triggerCustomCameraFocus(event) {
+      const video = document.getElementById('customCameraVideo');
+      const container = video.parentElement;
+      const ring = document.getElementById('cameraFocusRing');
+      if (!container || !ring) return;
+      
+      const rect = container.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      
+      ring.style.left = `${x}px`;
+      ring.style.top = `${y}px`;
+      ring.classList.remove('active');
+      void ring.offsetWidth; // Force layout reflow
+      ring.classList.add('active');
+      
+      setTimeout(() => {
+        ring.classList.remove('active');
+      }, 1200);
+      
+      if (customCameraStream) {
+        const track = customCameraStream.getVideoTracks()[0];
+        if (track) {
+          try {
+            const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+            if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+              await track.applyConstraints({
+                advanced: [{ focusMode: 'continuous' }]
+              });
+            }
+          } catch (e) {
+            console.warn('Hardware focus failed:', e);
+          }
+        }
+      }
     }
 
     function deleteCapturedPhotoFromCamera(index) {
