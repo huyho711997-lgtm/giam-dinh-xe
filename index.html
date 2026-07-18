@@ -2056,7 +2056,15 @@
       dbNodeInstance = firebase.database();
 
       firebase.auth().onAuthStateChanged(async (userInstance) => {
-        activeUserProfile = userInstance ? await loadUserProfile(userInstance) : null;
+        if (userInstance) {
+          activeUserProfile = await loadUserProfile(userInstance);
+          if (activeUserProfile && !activeUserProfile.email && userInstance.email) {
+            activeUserProfile.email = userInstance.email;
+            dbNodeInstance.ref(`users/${userInstance.uid}/profile/email`).set(userInstance.email).catch(() => {});
+          }
+        } else {
+          activeUserProfile = null;
+        }
         evaluateViewRoutingState(userInstance);
       });
     }
@@ -2085,6 +2093,7 @@
       const isUserAuthenticated = !!userInstance;
 
       dbNodeInstance.ref('cases').off();
+      dbNodeInstance.ref('users').off();
       if (localActiveCaseNode && localActiveCaseNode.idCa) {
         dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}`).off();
       }
@@ -2312,6 +2321,124 @@
       }
     }
 
+    let cachedUsersPayload = {};
+
+    function fetchAndBindUsersListRealtime() {
+      const container = document.getElementById('tblUsersBodyContainer');
+      if (!container) return;
+      
+      dbNodeInstance.ref('users').on('value', (snapshot) => {
+        cachedUsersPayload = snapshot.val() || {};
+        renderUsersTableList();
+      }, (error) => {
+        console.error('Failed to listen to users node:', error);
+        if (container) {
+          container.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);padding:24px;font-weight:700;">Không có quyền đọc danh sách tài khoản (Permission Denied).</td></tr>`;
+        }
+      });
+    }
+
+    function renderUsersTableList() {
+      const tbody = document.getElementById('tblUsersBodyContainer');
+      if (!tbody) return;
+      
+      const searchQuery = String(document.getElementById('userSearchInput')?.value || '').trim().toLowerCase();
+      const entries = Object.entries(cachedUsersPayload);
+      
+      const filtered = entries.filter(([uid, data]) => {
+        const profile = data.profile || {};
+        const name = String(profile.displayName || '').toLowerCase();
+        const email = String(profile.email || '').toLowerCase();
+        const role = String(profile.role || '').toLowerCase();
+        const dept = String(profile.department || '').toLowerCase();
+        return !searchQuery || name.includes(searchQuery) || email.includes(searchQuery) || role.includes(searchQuery) || dept.includes(searchQuery);
+      });
+      
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không tìm thấy tài khoản</strong><p>Thử lại với tên, email hoặc từ khóa khác.</p></div></td></tr>`;
+        return;
+      }
+      
+      tbody.innerHTML = filtered.map(([uid, data]) => {
+        const profile = data.profile || {};
+        const displayName = escapeHtmlOutput(profile.displayName || 'Người dùng mới');
+        const email = escapeHtmlOutput(profile.email || 'Chưa cập nhật email');
+        const role = String(profile.role || 'Giám định viên').trim();
+        const department = escapeHtmlOutput(profile.department || 'Bộ phận Giám định');
+        const initials = deriveInitials(displayName);
+        
+        return `
+          <tr>
+            <td data-label="Người dùng">
+              <div class="vehicle-cell">
+                <div class="vehicle-avatar" style="background: var(--surface-soft); color: var(--primary); font-weight: 700;">${initials}</div>
+                <div>
+                  <div class="vehicle-name">${displayName}</div>
+                  <div style="font-size: 10px; color: var(--text-muted);">UID: ${uid.slice(0, 8)}...</div>
+                </div>
+              </div>
+            </td>
+            <td data-label="Email">
+              <span style="font-family: 'JetBrains Mono'; font-size: 12.5px; color: var(--text-soft);">${email}</span>
+            </td>
+            <td data-label="Vai trò">
+              <select id="userRole_${uid}" class="input-premium" style="min-height: unset; height: 32px; padding: 0 8px; font-size: 12px; border-radius: 6px; background: var(--surface-strong); border: 1px solid var(--border); color: var(--text-main);">
+                <option value="Admin" ${role === 'Admin' ? 'selected' : ''}>Admin (Quản trị)</option>
+                <option value="Giám định viên" ${role === 'Giám định viên' ? 'selected' : ''}>Giám định viên</option>
+                <option value="Garage" ${role === 'Garage' ? 'selected' : ''}>Garage</option>
+              </select>
+            </td>
+            <td data-label="Bộ phận">
+              <input id="userDept_${uid}" class="input-premium" type="text" value="${escapeAttributeData(department)}" style="min-height: unset; height: 32px; padding: 0 8px; font-size: 12px; border-radius: 6px; background: var(--surface-strong); border: 1px solid var(--border); color: var(--text-main);" />
+            </td>
+            <td data-label="Thao tác" style="text-align: right; padding-right: 20px; vertical-align: middle;">
+              <button type="button" class="btn-premium" onclick="saveUserAdministrationChange('${uid}', this)" style="padding: 6px 14px; min-height: unset; height: 32px; font-size: 11px; margin: 0; display: inline-flex; align-items: center; gap: 5px; border-radius: 6px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; cursor: pointer;">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                <span>Lưu</span>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function saveUserAdministrationChange(uid, btnElement) {
+      const selectedRole = document.getElementById(`userRole_${uid}`)?.value;
+      const typedDept = document.getElementById(`userDept_${uid}`)?.value || '';
+      
+      const currentProfile = (cachedUsersPayload[uid] && cachedUsersPayload[uid].profile) || {};
+      const updatedProfile = {
+        ...currentProfile,
+        role: selectedRole,
+        department: typedDept,
+        updatedAt: Date.now()
+      };
+      
+      toggleButtonUIPendingState(btnElement, true, '...');
+      
+      try {
+        await dbNodeInstance.ref(`users/${uid}/profile`).set(updatedProfile);
+        triggerToast('Đã cập nhật phân quyền người dùng thành công!', 'success');
+        
+        const currentUserId = firebase.auth().currentUser?.uid;
+        if (uid === currentUserId) {
+          activeUserProfile = updatedProfile;
+          try { localStorage.setItem(getProfileStorageKey(uid), JSON.stringify(updatedProfile)); } catch(_) {}
+          renderHeaderNavigationLinks();
+          
+          const heroMeta = document.getElementById('heroUserMeta');
+          if (heroMeta) {
+            heroMeta.textContent = `${selectedRole} · ${typedDept}`;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to update user profile node:', error);
+        triggerToast('Lỗi cập nhật phân quyền: ' + (error.message || error), 'error');
+      } finally {
+        toggleButtonUIPendingState(btnElement, false, 'Lưu');
+      }
+    }
+
     function getProfileStorageKey(uid) {
       return `claimvision.userProfile.${uid || 'anonymous'}`;
     }
@@ -2382,12 +2509,26 @@
       const homeActive = activeDashboardTab === 'home' ? 'active' : '';
       const listActive = activeDashboardTab === 'list' ? 'active' : '';
       const createActive = activeDashboardTab === 'create' ? 'active' : '';
+      const usersActive = activeDashboardTab === 'users' ? 'active' : '';
+      
+      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
       
       tabsContainer.innerHTML = `
         <div class="header-nav-tabs">
           <button id="headerNavHomeBtn" class="header-nav-btn ${homeActive}" onclick="navigateHeaderTab('home')">${SVGS.HOME} <span class="nav-btn-text">Trang chủ</span></button>
           <button id="headerNavListBtn" class="header-nav-btn ${listActive}" onclick="navigateHeaderTab('list')">${SVGS.FOLDER} <span class="nav-btn-text">Quản lý hồ sơ</span></button>
           <button id="headerNavCreateBtn" class="header-nav-btn ${createActive}" onclick="navigateHeaderTab('create')">${SVGS.SPARKLES} <span class="nav-btn-text">Khởi tạo hồ sơ</span></button>
+          ${isAdmin ? `
+            <button id="headerNavUsersBtn" class="header-nav-btn ${usersActive}" onclick="navigateHeaderTab('users')">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span class="nav-btn-text">Quản lý User</span>
+            </button>
+          ` : ''}
         </div>
       `;
     }
@@ -2516,13 +2657,14 @@
       if (displayName.length < 2) return triggerToast('Vui lòng nhập họ tên hiển thị hợp lệ.', 'error');
       const button = document.getElementById('btnSaveUserProfile');
       toggleButtonUIPendingState(button, true, 'Đang lưu...');
-      const payload = { displayName, role, department, updatedAt: Date.now() };
+      const payload = { displayName, role, department, email: user.email || '', updatedAt: Date.now() };
       try {
         await user.updateProfile({ displayName });
         activeUserProfile = payload;
         try { localStorage.setItem(getProfileStorageKey(user.uid), JSON.stringify(payload)); } catch (storageError) { console.info('Local profile storage is unavailable.', storageError?.message || storageError); }
         try { await dbNodeInstance.ref(`users/${user.uid}/profile`).set(payload); } catch (cloudError) { console.info('Profile saved locally; cloud profile path is unavailable.', cloudError?.code || cloudError?.message || cloudError); }
         renderNavigationUserProfile(user, document.getElementById('navUserActionSpace'));
+        renderHeaderNavigationLinks(); // Dynamically show/hide Admin user management tab
         const heroName = document.getElementById('heroUserName');
         const heroMeta = document.getElementById('heroUserMeta');
         const heroAvatar = document.getElementById('heroUserAvatar');
@@ -2630,11 +2772,11 @@
       const homeBtn = document.getElementById('headerNavHomeBtn');
       const listBtn = document.getElementById('headerNavListBtn');
       const createBtn = document.getElementById('headerNavCreateBtn');
-      if (homeBtn && listBtn && createBtn) {
-        homeBtn.classList.toggle('active', activeDashboardTab === 'home');
-        listBtn.classList.toggle('active', activeDashboardTab === 'list');
-        createBtn.classList.toggle('active', activeDashboardTab === 'create');
-      }
+      const usersBtn = document.getElementById('headerNavUsersBtn');
+      if (homeBtn) homeBtn.classList.toggle('active', activeDashboardTab === 'home');
+      if (listBtn) listBtn.classList.toggle('active', activeDashboardTab === 'list');
+      if (createBtn) createBtn.classList.toggle('active', activeDashboardTab === 'create');
+      if (usersBtn) usersBtn.classList.toggle('active', activeDashboardTab === 'users');
 
       dbNodeInstance.ref('cases').on('value', (dataSnapshot) => {
         const val = dataSnapshot.val() || {};
@@ -2652,6 +2794,11 @@
       if (activeDashboardTab === tabName) return;
       activeDashboardTab = tabName;
       
+      try {
+        dbNodeInstance.ref('cases').off();
+        dbNodeInstance.ref('users').off();
+      } catch (e) {}
+
       if (tabName === 'create') {
         activeCreateFlowMode = 'select';
       }
@@ -2659,11 +2806,11 @@
       const homeBtn = document.getElementById('headerNavHomeBtn');
       const listBtn = document.getElementById('headerNavListBtn');
       const createBtn = document.getElementById('headerNavCreateBtn');
-      if (homeBtn && listBtn && createBtn) {
-        homeBtn.classList.toggle('active', tabName === 'home');
-        listBtn.classList.toggle('active', tabName === 'list');
-        createBtn.classList.toggle('active', tabName === 'create');
-      }
+      const usersBtn = document.getElementById('headerNavUsersBtn');
+      if (homeBtn) homeBtn.classList.toggle('active', tabName === 'home');
+      if (listBtn) listBtn.classList.toggle('active', tabName === 'list');
+      if (createBtn) createBtn.classList.toggle('active', tabName === 'create');
+      if (usersBtn) usersBtn.classList.toggle('active', tabName === 'users');
 
       const outputCardBox = document.getElementById('panelOutputResultAnchor');
       if (outputCardBox) outputCardBox.style.display = 'none';
@@ -2786,6 +2933,63 @@
         updateStatsCounters(cachedCasesPayload);
         executeUIRenderCasesTable(cachedCasesPayload);
 
+      } else if (activeDashboardTab === 'users') {
+        const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+        if (!isAdmin) {
+          container.innerHTML = `
+            <div class="p-card state-card" style="padding: 48px 24px; text-align: center;">
+              <div class="state-icon" style="color: var(--danger); margin-bottom: 16px;">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              </div>
+              <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main);">Truy cập bị từ chối</h2>
+              <p style="margin: 9px 0 22px; color: var(--text-muted); font-size: 13px; line-height: 1.7; max-width: 460px; margin-left: auto; margin-right: auto;">
+                Bạn không có quyền quản trị viên để xem trang này. Vui lòng mở Hồ sơ cá nhân và đổi Chức danh/Vai trò thành "Admin" để mở khóa tính năng.
+              </p>
+            </div>
+          `;
+          return;
+        }
+        
+        container.innerHTML = `
+          <div class="workspace-grid single-col">
+            <section class="p-card">
+              <div class="p-card-head" style="margin-bottom: 24px;">
+                <div>
+                  <h2>Quản lý tài khoản người dùng</h2>
+                  <p>Danh sách toàn bộ thành viên, phân quyền vai trò và phòng ban tương ứng.</p>
+                </div>
+                <div class="section-number">01</div>
+              </div>
+              
+              <div class="cases-toolbar" style="margin-bottom: 20px;">
+                <div class="search-wrap" style="flex: 1;">
+                  ${SVGS.SEARCH}
+                  <input id="userSearchInput" class="input-premium" type="search" placeholder="Tìm tên, email hoặc vai trò..." autocomplete="off" />
+                </div>
+              </div>
+              
+              <div class="table-container">
+                <table class="p-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 250px;">Người dùng</th>
+                      <th>Email</th>
+                      <th style="width: 180px;">Vai trò</th>
+                      <th style="width: 200px;">Bộ phận / Phòng ban</th>
+                      <th style="width: 120px; text-align: right; padding-right: 20px;">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tblUsersBodyContainer">
+                    <tr><td colspan="5" class="empty-state-text">Đang đồng bộ danh sách người dùng...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        `;
+        
+        document.getElementById('userSearchInput').addEventListener('input', () => renderUsersTableList());
+        fetchAndBindUsersListRealtime();
       } else {
         if (activeCreateFlowMode === 'select') {
           container.innerHTML = `
