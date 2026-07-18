@@ -2908,7 +2908,7 @@
             const fontSize = Math.max(16, Math.round(w / 45));
             const padding = Math.max(12, Math.round(w / 60));
             const lineHeight = fontSize * 1.35;
-            const lineCount = 3;
+            const lineCount = 2;
             const rectHeight = padding * 2 + lineHeight * lineCount;
             
             // Draw semi-transparent dark banner at bottom
@@ -2921,29 +2921,22 @@
             ctx.textBaseline = 'top';
             
             // Prepare texts
-            const caseNode = localActiveCaseNode || {};
-            const tenGara = caseNode.tenGara || 'N/A';
-            const bienSo = caseNode.bienSo || 'N/A';
-            
             const now = new Date();
             const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
             
-            let gpsStr = 'Tọa độ GPS: Không khả dụng (Chưa cấp quyền)';
+            let gpsStr = 'Định vị GPS: Không khả dụng (Chưa cấp quyền)';
             if (lastFetchedGpsCoords) {
-              gpsStr = `Tọa độ GPS: Vĩ độ ${lastFetchedGpsCoords.latitude}, Kinh độ ${lastFetchedGpsCoords.longitude}`;
+              gpsStr = `Định vị GPS: Vĩ độ ${lastFetchedGpsCoords.latitude}, Kinh độ ${lastFetchedGpsCoords.longitude}`;
             }
             
-            const line1 = `TASCO CLAIMVISION  |  GARA: ${tenGara.toUpperCase()}  |  BKS: ${bienSo.toUpperCase()}`;
-            const line2 = `HẠNG MỤC: ${categoryName.toUpperCase()}  |  THỜI GIAN: ${timeStr}`;
-            const line3 = `${gpsStr}`;
+            const line1 = `Thời gian chụp: ${timeStr}`;
+            const line2 = `${gpsStr}`;
             
             // Draw lines of text
             let currentY = h - rectHeight + padding;
             ctx.fillText(line1, padding, currentY);
             currentY += lineHeight;
             ctx.fillText(line2, padding, currentY);
-            currentY += lineHeight;
-            ctx.fillText(line3, padding, currentY);
             
             // Convert canvas back to Blob/File
             canvas.toBlob((blob) => {
