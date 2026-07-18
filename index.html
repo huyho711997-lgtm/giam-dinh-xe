@@ -3299,29 +3299,32 @@
       } catch (_) {}
       
       const canvas = document.createElement('canvas');
-      const isPageLandscape = window.innerWidth > window.innerHeight;
-      const isVideoLandscape = video.videoWidth > video.videoHeight;
-      
       const vw = video.videoWidth || 1920;
       const vh = video.videoHeight || 1080;
+      const isVideoLandscape = vw > vh;
       
-      if (isPageLandscape === isVideoLandscape) {
-        // Same orientation - draw directly
+      const orientationAngle = (window.orientation !== undefined) ? window.orientation : (screen.orientation ? screen.orientation.angle : 0);
+      const isDeviceLandscape = (orientationAngle === 90 || orientationAngle === -90 || orientationAngle === 270 || orientationAngle === -270);
+      
+      if (isDeviceLandscape === isVideoLandscape) {
         canvas.width = vw;
         canvas.height = vh;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        if (orientationAngle === 180) {
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate(Math.PI);
+          ctx.drawImage(video, -vw / 2, -vh / 2, vw, vh);
+        } else {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        }
       } else {
-        // Different orientation - rotate 90 degrees to match viewport
         canvas.width = vh;
         canvas.height = vw;
         const ctx = canvas.getContext('2d');
-        
         ctx.translate(canvas.width / 2, canvas.height / 2);
         
-        // Determine rotation angle
         let angle = Math.PI / 2; // 90 degrees clockwise
-        if (window.orientation === -90) {
+        if (orientationAngle === -90 || orientationAngle === 270) {
           angle = -Math.PI / 2; // 90 degrees counter-clockwise
         }
         
