@@ -3597,9 +3597,12 @@
 
                 <!-- AI OCR / Text Extractor Section -->
                 <div class="form-group" style="margin-bottom: 28px;">
-                  <label style="display: flex; align-items: center; gap: 6px;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                    <span>Trích xuất hạng mục từ báo giá của Gara (AI OCR / Văn bản)</span>
+                  <label style="display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%;">
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                      <span>Trích xuất hạng mục từ báo giá của Gara (AI OCR / Văn bản)</span>
+                    </span>
+                    <button type="button" onclick="promptGeminiApiKey()" style="background: none; border: none; color: var(--primary); font-size: 11px; cursor: pointer; text-decoration: underline; padding: 0; font-weight: 700;">Cấu hình API Key Gemini</button>
                   </label>
                   <div class="p-card" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: none;">
                     
@@ -3806,7 +3809,73 @@
       if (panelText) panelText.style.display = tabType === 'text' ? 'block' : 'none';
     }
 
-    function handleOcrImageUpload(event) {
+    function convertFileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64String = reader.result.split(',')[1];
+          resolve(base64String);
+        };
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function callGeminiOcrApi(base64Data, mimeType) {
+      let apiKey = localStorage.getItem('claimvision-gemini-key') || CONFIG.FIREBASE.apiKey;
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      
+      const payload = {
+        contents: [{
+          parts: [
+            {
+              text: "Bạn là một AI OCR chuyên nghiệp phân tích báo giá sửa chữa xe cơ giới của Việt Nam. Hãy đọc ảnh báo giá này và trích xuất ra danh sách các tên hạng mục phụ tùng hoặc nội dung công việc sửa chữa cần khắc phục (ví dụ: cản trước, đèn pha trái, sơn nắp capo, gò nắn tai xe...). Quy tắc:\n1. Chỉ trả về danh sách các tên hạng mục phụ tùng/sửa chữa, mỗi hạng mục trên 1 dòng mới.\n2. Tuyệt đối không kèm số thứ tự (1, 2, 3..), không kèm đơn giá, không kèm tiền tệ, không kèm ký tự đặc biệt như dấu gạch đầu dòng.\n3. Loại bỏ các văn bản thừa như tiêu đề, tổng tiền, thuế VAT.\n4. Tên hạng mục nên ngắn gọn, rõ nghĩa tiếng Việt."
+            },
+            {
+              inlineData: {
+                mimeType: mimeType,
+                data: base64Data
+              }
+            }
+          ]
+        }]
+      };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        const errMessage = errJson?.error?.message || response.statusText;
+        throw new Error(errMessage);
+      }
+
+      const resJson = await response.json();
+      const textResult = resJson?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      return textResult;
+    }
+
+    function promptGeminiApiKey() {
+      const currentKey = localStorage.getItem('claimvision-gemini-key') || '';
+      const promptVal = window.prompt("Nhập Gemini API Key của bạn để sử dụng tính năng OCR thực tế từ Google Cloud (hoặc bỏ trống để dùng key mặc định):", currentKey);
+      if (promptVal !== null) {
+        const trimmed = promptVal.trim();
+        if (trimmed) {
+          localStorage.setItem('claimvision-gemini-key', trimmed);
+          triggerToast('Đã lưu Gemini API Key riêng của bạn.', 'success');
+        } else {
+          localStorage.removeItem('claimvision-gemini-key');
+          triggerToast('Đã chuyển lời gọi API về key mặc định của hệ thống.', 'info');
+        }
+      }
+    }
+
+    async function handleOcrImageUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
       
@@ -3821,43 +3890,34 @@
       if (dropzone) dropzone.style.display = 'none';
       if (scanningView) scanningView.style.display = 'block';
       
-      // Simulate AI scan logic
-      setTimeout(() => {
-        // Mock parsed items typical for automotive quotes
-        const mockDb = [
-          'Cản trước xe',
-          'Đèn pha bên trái',
-          'Đèn pha bên phải',
-          'Nắp ca pô',
-          'Mặt ca lăng',
-          'Kính chắn gió trước',
-          'Gương chiếu hậu trái',
-          'Gương chiếu hậu phải',
-          'Cửa trước bên trái',
-          'Cửa sau bên trái',
-          'Cản sau xe',
-          'Cốp sau xe',
-          'Đèn hậu bên trái',
-          'Đèn hậu bên phải'
-        ];
+      try {
+        const base64Data = await convertFileToBase64(file);
+        const ocrText = await callGeminiOcrApi(base64Data, file.type);
         
-        // Let's add some noise filter & randomness or read from filename
-        const cleanFileName = removeVietnameseTones(file.name).toLowerCase();
-        let selectedMocks = [];
-        
-        if (cleanFileName.includes('truoc') || cleanFileName.includes('front')) {
-          selectedMocks = ['Cản trước xe', 'Đèn pha bên trái', 'Đèn pha bên phải', 'Nắp ca pô', 'Mặt ca lăng', 'Kính chắn gió trước'];
-        } else if (cleanFileName.includes('sau') || cleanFileName.includes('rear')) {
-          selectedMocks = ['Cản sau xe', 'Cốp sau xe', 'Đèn hậu bên trái', 'Đèn hậu bên phải', 'Kính sau xe'];
-        } else if (cleanFileName.includes('than') || cleanFileName.includes('side')) {
-          selectedMocks = ['Gương chiếu hậu trái', 'Gương chiếu hậu phải', 'Cửa trước bên trái', 'Cửa sau bên trái', 'Cửa trước bên phải', 'Cửa sau bên phải'];
-        } else {
-          selectedMocks = mockDb.sort(() => 0.5 - Math.random()).slice(0, 7);
+        const extracted = ocrText.split('\n')
+          .map(line => {
+            let clean = line.trim();
+            clean = clean.replace(/^[\*\-\+\d\.\s\)]+/, '');
+            return clean.trim();
+          })
+          .filter(line => line.length > 2);
+          
+        if (extracted.length === 0) {
+          throw new Error("Không thể tìm thấy hạng mục phụ tùng nào trong văn bản phản hồi của AI.");
         }
         
-        displayExtractedOcrItems(selectedMocks);
-        triggerToast('AI OCR: Đã trích xuất thành công các hạng mục báo giá!', 'success');
-      }, 2400);
+        displayExtractedOcrItems(extracted);
+        triggerToast(`AI OCR: Trích xuất thành công ${extracted.length} hạng mục từ ảnh báo giá!`, 'success');
+      } catch (error) {
+        console.error('Gemini OCR API Error:', error);
+        const isAuthError = String(error.message).includes('API key') || String(error.message).includes('key');
+        let friendlyMsg = 'Lỗi quét báo giá bằng AI: ' + error.message;
+        if (isAuthError) {
+          friendlyMsg = 'Yêu cầu từ chối hoặc lỗi API Key. Vui lòng click "Cấu hình API Key" để bổ sung key Gemini hoạt động.';
+        }
+        triggerToast(friendlyMsg, 'error');
+        resetOcrScanPanel();
+      }
     }
 
     function processTextToExtractItems() {
