@@ -1531,40 +1531,59 @@
       border-radius: 50%;
       transform: translate(-50%, -50%);
     }
-    /* Camera focus ring (Premium Sony/Fujifilm Bracket style) */
+    /* Camera focus ring (Premium Sony/Fujifilm Bracket style with emerald green lock feedback) */
     .camera-focus-ring {
       position: absolute;
-      width: 70px;
-      height: 70px;
-      border: 1.5px solid transparent;
-      border-radius: 8px;
+      width: 62px;
+      height: 62px;
       pointer-events: none;
-      transform: translate(-50%, -50%) scale(1.8) rotate(45deg);
-      opacity: 0;
-      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
       z-index: 50;
-      box-shadow: 0 0 15px rgba(255, 202, 40, 0.2);
+      opacity: 0;
     }
     .camera-focus-ring::before {
       content: '';
       position: absolute;
-      inset: -2px;
-      border: 2px solid transparent;
+      inset: 0;
+      border: 2.5px solid transparent;
       border-radius: 6px;
-      background: linear-gradient(to right, #ffca28 12px, transparent 12px) 0 0,
-                  linear-gradient(to right, #ffca28 12px, transparent 12px) 0 100%,
-                  linear-gradient(to left, #ffca28 12px, transparent 12px) 100% 0,
-                  linear-gradient(to left, #ffca28 12px, transparent 12px) 100% 100%,
-                  linear-gradient(to bottom, #ffca28 12px, transparent 12px) 0 0,
-                  linear-gradient(to bottom, #ffca28 12px, transparent 12px) 100% 0,
-                  linear-gradient(to top, #ffca28 12px, transparent 12px) 0 100%,
-                  linear-gradient(to top, #ffca28 12px, transparent 12px) 100% 100%;
+      background: 
+        linear-gradient(to right, currentColor 12px, transparent 12px) 0 0,
+        linear-gradient(to right, currentColor 12px, transparent 12px) 0 100%,
+        linear-gradient(to left, currentColor 12px, transparent 12px) 100% 0,
+        linear-gradient(to left, currentColor 12px, transparent 12px) 100% 100%,
+        linear-gradient(to bottom, currentColor 12px, transparent 12px) 0 0,
+        linear-gradient(to bottom, currentColor 12px, transparent 12px) 100% 0,
+        linear-gradient(to top, currentColor 12px, transparent 12px) 0 100%,
+        linear-gradient(to top, currentColor 12px, transparent 12px) 100% 100%;
       background-repeat: no-repeat;
       background-size: 100% 100%;
     }
     .camera-focus-ring.active {
-      transform: translate(-50%, -50%) scale(1) rotate(0deg);
-      opacity: 1;
+      animation: focusLockAnimation 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes focusLockAnimation {
+      0% {
+        transform: translate(-50%, -50%) scale(1.7) rotate(45deg);
+        opacity: 0;
+        color: #ffca28;
+        filter: drop-shadow(0 0 5px rgba(255,202,40,0.5));
+      }
+      18% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
+        color: #ffca28;
+        filter: drop-shadow(0 0 8px rgba(255,202,40,0.6));
+      }
+      33% { opacity: 0.2; }
+      48% { opacity: 1; color: #ffca28; }
+      63% { opacity: 0.2; }
+      78% { opacity: 1; color: #2ecc71; filter: drop-shadow(0 0 8px rgba(46,204,113,0.7)); }
+      100% {
+        transform: translate(-50%, -50%) scale(0.92) rotate(0deg);
+        opacity: 0;
+        color: #2ecc71;
+        filter: drop-shadow(0 0 4px rgba(46,204,113,0.2));
+      }
     }
 
     .camera-overlay-header {
@@ -1597,22 +1616,27 @@
       background: rgba(15, 12, 8, 0.85);
     }
     .camera-current-category {
-      background: rgba(15, 12, 8, 0.7);
+      position: absolute;
+      top: calc(env(safe-area-inset-top, 16px) + 54px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 12, 8, 0.75);
       backdrop-filter: blur(12px);
-      padding: 8px 18px;
+      padding: 7px 18px;
       border-radius: 20px;
-      font-size: 13px;
+      font-size: 11px;
       font-weight: 800;
       color: #ffca28;
-      border: 1.5px solid rgba(255, 202, 40, 0.3);
+      border: 1px solid rgba(255, 202, 40, 0.35);
       text-align: center;
-      max-width: 60%;
+      max-width: 85%;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      z-index: 10;
     }
     .camera-flash-effect {
       position: absolute;
@@ -1891,7 +1915,6 @@
         <button type="button" class="camera-action-btn btn-close-cam" onclick="closeCustomCameraModal(false)" title="Hủy bỏ">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
-        <div class="camera-current-category" id="cameraActiveCategoryText">Đang chụp</div>
         <div style="display: flex; gap: 8px;">
           <button type="button" class="camera-action-btn btn-flash-cam" id="btnToggleCameraFlash" onclick="toggleCustomCameraTorch()" title="Bật/Tắt Flash">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
@@ -1901,6 +1924,8 @@
           </button>
         </div>
       </div>
+      
+      <div class="camera-current-category" id="cameraActiveCategoryText">Đang chụp</div>
       <div class="camera-flash-effect" id="cameraFlashEffect"></div>
       
       <!-- Center target crosshair & Focus Ring -->
