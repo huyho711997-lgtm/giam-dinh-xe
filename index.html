@@ -3591,11 +3591,8 @@
                 <div class="form-group">
                   <label>Danh sách các hạng mục muốn Garage chụp ảnh làm bằng chứng</label>
                   <div class="request-composer" style="padding: 14px;">
-                    <!-- Container gợi ý phụ tùng nhanh -->
-                    <div id="suggestionsContainer"></div>
-
-                    <div class="request-composer-help" style="margin-top: 14px;">
-                      <span>Nhập trực tiếp vào bảng hoặc nhấp chọn gợi ý nhanh. Có thể copy-paste nhiều dòng từ Excel.</span>
+                    <div class="request-composer-help" style="margin-top: 0;">
+                      <span>Nhập trực tiếp vào bảng. Có thể copy-paste nhiều dòng từ Excel.</span>
                       <strong id="lblRequestedItemsCount">00 hạng mục</strong>
                     </div>
                     <div id="requestedItemsBuilderList" class="requested-items-builder"></div>
@@ -3704,29 +3701,7 @@
       return `REQ_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
     }
 
-    function renderSuggestionsSection() {
-      const container = document.getElementById('suggestionsContainer');
-      if (!container) return;
-      const currentListLower = caseRequestedItemsDraft.map(item => item.tenHangMuc.trim().toLowerCase());
-      container.innerHTML = `
-        <div class="suggestions-section">
-          <div class="suggestions-title">Gợi ý chọn nhanh phụ tùng phổ biến:</div>
-          <div class="suggestions-groups">
-            ${Object.entries(SUGGESTIONS).map(([groupName, items]) => `
-              <div class="suggestion-group">
-                <span class="suggestion-group-label">${groupName}:</span>
-                <div class="suggestion-chips-flow">
-                  ${items.map(item => {
-                    const isActive = currentListLower.includes(item.toLowerCase());
-                    return `<button type="button" class="suggestion-chip ${isActive ? 'active' : ''}" onclick="toggleSuggestionItem('${escapeAttributeData(item)}')">${escapeHtmlOutput(item)}</button>`;
-                  }).join('')}
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
+    function renderSuggestionsSection() {}
 
     function toggleSuggestionItem(itemName) {
       const firstEmptyIndex = caseRequestedItemsDraft.findIndex(item => !item.tenHangMuc.trim());
