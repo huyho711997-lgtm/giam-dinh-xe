@@ -906,64 +906,101 @@
 
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 
-    /* --- MOBILE STYLING ENHANCEMENTS FOR GARAGE PORTAL --- */
+    /* --- PREMIUM MOBILE STYLING ENHANCEMENTS FOR GARAGE PORTAL --- */
     .mobile-bottom-bar {
       display: none;
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
       z-index: 3000;
-      padding: 12px 16px;
-      background: var(--surface);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-top: 1px solid var(--border);
-      box-shadow: var(--shadow-lg);
+      padding: 10px 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.85); /* fallback */
+      background: color-mix(in srgb, var(--surface) 85%, transparent);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(179, 140, 67, 0.15); /* shimmer gold border */
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
+      animation: slideUpBottomBar 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+    
+    @keyframes slideUpBottomBar {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .mobile-bottom-bar-info {
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      gap: 8px;
       min-width: 0;
     }
     .mobile-bottom-bar-progress {
       font-size: 10px;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      white-space: nowrap;
     }
     .mobile-bottom-bar-percentage {
       font-family: 'JetBrains Mono', monospace;
       font-size: 16px;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--primary);
+      background: var(--primary-light);
+      padding: 2px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(179, 140, 67, 0.2);
     }
     .mobile-bottom-bar .btn-premium {
       height: 38px;
-      padding: 0 18px;
+      padding: 0 20px;
       font-size: 12.5px;
-      font-weight: 600;
-      border-radius: 20px;
+      font-weight: 700;
+      border-radius: 999px;
+      background: var(--primary-gradient);
+      color: #171209;
+      box-shadow: 0 4px 14px rgba(199, 155, 75, 0.3);
+      border: 1px solid rgba(245, 220, 156, 0.4);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .mobile-bottom-bar .btn-premium:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 6px rgba(199, 155, 75, 0.2);
+    }
+
+    /* Collapsible metadata accordion details */
+    .collapsible-summary-tag {
+      display: none;
+      padding: 8px 18px 12px;
+      font-size: 11.5px;
+      color: var(--text-soft);
+      border-top: 1px dashed var(--border);
+      margin-top: 0;
+      background: var(--bg);
+      font-weight: 500;
     }
 
     @media (max-width: 990px) {
-      /* Display bottom bar in portal active mode on mobile */
       body:has([data-garage-portal="active"]) .mobile-bottom-bar {
         display: flex;
       }
       body:has([data-garage-portal="active"]) {
-        padding-bottom: 74px !important;
+        padding-bottom: 88px !important;
       }
 
-      /* Collapsible details for sidebar metadata on mobile */
       .sticky-sidebar.collapsed .metadata-list,
       .sticky-sidebar.collapsed .case-id-chip,
       .sticky-sidebar.collapsed .sidebar-tip {
         display: none !important;
+      }
+      .sticky-sidebar.collapsed .collapsible-summary-tag {
+        display: block !important;
       }
       .sticky-sidebar {
         padding: 0 !important;
@@ -1004,76 +1041,204 @@
       }
     }
 
+    /* Pulsing Animation for Autosave States */
+    .autosave-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 500;
+    }
+    .autosave-state::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulseGreen 2s infinite;
+    }
+    .autosave-state.saving::before {
+      background: var(--warning);
+      box-shadow: 0 0 8px var(--warning);
+      animation: pulseAmber 1s infinite;
+    }
+    .autosave-state.error::before {
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+      animation: pulseRed 1s infinite;
+    }
+    
+    @keyframes pulseGreen {
+      0% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.6); }
+      70% { box-shadow: 0 0 0 5px rgba(52, 199, 89, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+    }
+    @keyframes pulseAmber {
+      0% { box-shadow: 0 0 0 0 rgba(255, 149, 0, 0.6); }
+      70% { box-shadow: 0 0 0 5px rgba(255, 149, 0, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 149, 0, 0); }
+    }
+    @keyframes pulseRed {
+      0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.6); }
+      70% { box-shadow: 0 0 0 5px rgba(255, 59, 48, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+    }
+
+    /* Dynamic, clean layout for progress title and subtitle */
+    .garage-progress-panel {
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      padding: 14px 20px;
+      margin-bottom: 20px;
+    }
+    .garage-progress-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .progress-label-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+    .progress-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .progress-subtitle {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
     @media (max-width: 768px) {
       .premium-image-card {
         grid-template-columns: 1fr !important;
-        border-radius: var(--radius-md) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02) !important;
+        border: 1px solid var(--border) !important;
+        margin-bottom: 14px !important;
       }
       .img-display-pane {
-        min-height: 170px !important;
-        max-height: 170px !important;
+        min-height: 160px !important;
+        max-height: 160px !important;
+        background: var(--bg) !important;
       }
       .inputs-entry-pane {
-        padding: 12px 14px !important;
-        gap: 10px !important;
+        padding: 14px 16px !important;
+        gap: 12px !important;
       }
       .inputs-entry-pane textarea {
-        min-height: 68px !important;
-        font-size: 14px !important; /* Prevents iOS auto-zoom */
-        padding: 8px 10px !important;
+        min-height: 60px !important;
+        font-size: 14px !important;
+        padding: 8px 12px !important;
+        border-radius: 10px !important;
+        border: 1px solid var(--border-strong) !important;
       }
-      .image-sequence {
-        font-size: 9px !important;
+      .inputs-entry-pane textarea:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12) !important;
       }
       
       .evidence-request-card {
-        border-radius: var(--radius-md) !important;
+        border-radius: 16px !important;
+        border: 1px solid var(--border) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02) !important;
+        margin-bottom: 14px !important;
       }
       .evidence-request-head {
-        padding: 10px 14px !important;
-        gap: 10px !important;
+        padding: 12px 16px !important;
+        gap: 12px !important;
+        background: var(--bg) !important;
+      }
+      .evidence-request-number {
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 8px !important;
+        background: var(--primary-gradient) !important;
+        color: #171209 !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
       }
       .evidence-request-head h3 {
-        font-size: 12.5px !important;
+        font-size: 13.5px !important;
+        font-weight: 700 !important;
       }
       .evidence-request-body {
-        padding: 12px 14px !important;
+        padding: 14px 16px !important;
       }
       .evidence-dropzone {
         min-height: 56px !important;
-        padding: 8px !important;
+        border: 1px dashed var(--primary) !important;
+        border-radius: 10px !important;
+        background: var(--primary-light) !important;
+        padding: 10px !important;
       }
       .evidence-dropzone strong {
-        font-size: 11px !important;
+        font-size: 11.5px !important;
+        color: var(--primary) !important;
       }
       .evidence-dropzone p {
         display: none !important;
       }
       .evidence-upload-actions {
         display: flex;
-        gap: 6px !important;
-        margin-top: 6px !important;
+        gap: 8px !important;
+        margin-top: 8px !important;
       }
       .evidence-upload-actions button {
         flex: 1 !important;
-        height: 36px !important;
-        font-size: 11px !important;
-        border-radius: var(--radius-md) !important;
-        font-weight: 600 !important;
+        height: 38px !important;
+        font-size: 12px !important;
+        border-radius: 10px !important;
+        font-weight: 700 !important;
+        border: 1px solid var(--border-strong) !important;
+        box-shadow: var(--shadow-sm) !important;
       }
       .evidence-note {
-        min-height: 48px !important;
-        font-size: 14px !important; /* Prevents iOS auto-zoom */
-        padding: 8px 10px !important;
+        min-height: 52px !important;
+        font-size: 14px !important;
+        padding: 8px 12px !important;
+        border-radius: 10px !important;
+        border: 1px solid var(--border-strong) !important;
+      }
+      .evidence-note:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.12) !important;
       }
       .evidence-preview-grid {
-        grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)) !important;
+        grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)) !important;
         gap: 6px !important;
+        margin-top: 10px !important;
+      }
+      .evidence-preview-item {
+        border-radius: 8px !important;
+      }
+      .evidence-remove-btn {
+        width: 20px !important;
+        height: 20px !important;
+        background: rgba(255, 59, 48, 0.85) !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        backdrop-filter: blur(4px) !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
       }
       .garage-progress-panel {
-        padding: 10px 14px !important;
+        padding: 12px 16px !important;
         margin-bottom: 12px !important;
-        border-radius: var(--radius-md) !important;
+        border-radius: 16px !important;
+      }
+      .garage-progress-track {
+        height: 6px !important;
+        border-radius: 3px !important;
       }
     }
   </style>
@@ -2488,6 +2653,11 @@
       return `
         <aside class="p-card sticky-sidebar">
           <div class="p-card-head"><div><h2>${isReadOnlyMode ? 'Thông tin đối chiếu' : 'Thông tin hồ sơ'}</h2><p>${isReadOnlyMode ? 'Dữ liệu đã được Garage xác nhận.' : 'Cổng khai báo dành cho Garage.'}</p></div><div class="section-number">${isReadOnlyMode ? 'R' : 'G'}</div></div>
+          <div class="collapsible-summary-tag">
+            <span>BKS: <strong>${escapeHtmlOutput(node.bienSo)}</strong></span>
+            <span style="margin: 0 6px; opacity: 0.5;">·</span>
+            <span>Gara: <strong>${escapeHtmlOutput(node.tenGara)}</strong></span>
+          </div>
           ${showBackButton ? `<button class="btn-premium btn-secondary" style="margin-bottom:14px" onclick="goHome()">${SVGS.ARROW_LEFT} Về Dashboard</button>` : ''}
           <div class="case-id-chip"><span>Mã hồ sơ</span><strong>${escapeHtmlOutput(node.idCa)}</strong></div>
           <div class="metadata-list">
@@ -2561,11 +2731,20 @@
               <div class="portal-counter">Hạng mục có ảnh<strong id="garageHeaderEvidenceCounter">00/00</strong></div>
             </div>
           </header>
-          <div class="garage-progress-panel"><div class="garage-progress-top"><div><strong>Tiến độ hoàn thiện hồ sơ</strong><span id="garageProgressCaption">Đang tính toán dữ liệu...</span></div><span id="garageProgressPercent" class="garage-progress-percent">0%</span></div><div class="garage-progress-track"><div id="garageProgressFill"></div></div></div>
+          <div class="garage-progress-panel">
+            <div class="garage-progress-top">
+              <div class="progress-label-group">
+                <strong class="progress-title">Tiến độ hoàn thiện hồ sơ</strong>
+                <span id="garageProgressCaption" class="progress-subtitle">Đang tính toán dữ liệu...</span>
+              </div>
+              <span id="garageProgressPercent" class="garage-progress-percent">0%</span>
+            </div>
+            <div class="garage-progress-track"><div id="garageProgressFill"></div></div>
+          </div>
           <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list">${imageInputSection}${evidenceRequestSection}</div></div>
           <div class="mobile-bottom-bar">
             <div class="mobile-bottom-bar-info">
-              <span class="mobile-bottom-bar-progress">Tiến độ:</span>
+              <span class="mobile-bottom-bar-progress">Tiến độ hồ sơ</span>
               <span id="mobileBottomBarProgressPercent" class="mobile-bottom-bar-percentage">0%</span>
             </div>
             <button id="btnMobileSubmitGarageResponse" class="btn-premium">${SVGS.CHECK_CIRCLE} Gửi kết quả</button>
