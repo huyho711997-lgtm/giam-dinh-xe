@@ -4410,13 +4410,11 @@
           </table>
         </div>` : '';
 
-      const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
       rootContainer.innerHTML = `
         <div class="portal-shell">
           <header class="portal-topbar">
             <div><div class="eyebrow">Verified comparison result</div><h1>Kết quả đối chiếu Garage</h1><p>Xem lại đầy đủ người tạo hồ sơ, nội dung Garage khai báo và ảnh minh chứng theo từng hạng mục.</p></div>
             <div class="portal-counter-stack">
-              <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện Sáng/Tối" onclick="toggleTheme()">${activeThemeIcon}</button>
               <div class="portal-counter">Ảnh cần ghi tên<strong>${String(completedItems).padStart(2,'0')}/${String(localActiveImageStack.length).padStart(2,'0')}</strong></div>
               <div class="portal-counter">Hạng mục có ảnh<strong>${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</strong></div>
             </div>
