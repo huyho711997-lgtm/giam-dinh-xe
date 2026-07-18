@@ -4440,8 +4440,20 @@
           <header class="portal-topbar">
             <div><div class="eyebrow">Verified comparison result</div><h1>Kết quả đối chiếu Garage</h1><p>Xem lại đầy đủ người tạo hồ sơ, nội dung Garage khai báo và ảnh minh chứng theo từng hạng mục.</p></div>
             <div class="portal-counter-stack">
-              <div class="portal-counter">Ảnh cần ghi tên<strong>${String(completedItems).padStart(2,'0')}/${String(localActiveImageStack.length).padStart(2,'0')}</strong></div>
-              <div class="portal-counter">Hạng mục có ảnh<strong>${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</strong></div>
+              ${(() => {
+                const total = localActiveRequestedItems.length;
+                const completed = completedEvidenceItems;
+                const isAllDone = total > 0 && completed === total;
+                const badgeColor = isAllDone ? '#10b981' : '#f59e0b';
+                const badgeBorder = isAllDone ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.35)';
+                const badgeBg = isAllDone ? 'rgba(16, 185, 129, 0.06)' : 'rgba(245, 158, 11, 0.05)';
+                return `
+                  <div class="portal-counter" style="border: 1px solid ${badgeBorder}; background: ${badgeBg}; box-shadow: 0 0 12px ${isAllDone ? 'rgba(16,185,129,0.06)' : 'rgba(245,158,11,0.05)'}; transition: all 0.3s ease; text-align: right;">
+                    <span style="color: ${isAllDone ? 'rgba(16,185,129,0.75)' : 'rgba(245,158,11,0.75)'}; font-weight: 800; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;">Tiến độ ảnh minh chứng</span>
+                    <strong style="color: ${badgeColor}; display: block; margin-top: 3px; font-family: 'JetBrains Mono'; font-size: 20px; letter-spacing: -.04em;">${String(completed).padStart(2,'0')}/${String(total).padStart(2,'0')}</strong>
+                  </div>
+                `;
+              })()}
             </div>
           </header>
           <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata(renderMode)}<div class="image-workspace-list">${imageResultsSection}${evidenceResultsSection}</div></div>
