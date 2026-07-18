@@ -1324,6 +1324,155 @@
         border-radius: 3px !important;
       }
     }
+
+    /* Custom In-App Camera Modal Styling */
+    .custom-camera-modal {
+      position: fixed;
+      inset: 0;
+      background: #000000;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      color: #ffffff;
+      font-family: system-ui, -apple-system, sans-serif;
+      user-select: none;
+    }
+    .camera-stream-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #000000;
+    }
+    #customCameraVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .camera-overlay-header {
+      position: absolute;
+      top: env(safe-area-inset-top, 16px);
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 16px;
+      z-index: 10;
+    }
+    .camera-action-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      outline: none;
+      font-size: 16px;
+    }
+    .camera-current-category {
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(8px);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffca28;
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+      max-width: 60%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .camera-flash-effect {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 5;
+      transition: opacity 0.05s ease-out;
+    }
+    .camera-flash-effect.flash-active {
+      opacity: 1;
+      transition: none;
+    }
+    .camera-footer {
+      background: #0d0c0a;
+      padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)) 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .camera-preview-strip {
+      height: 70px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      align-items: center;
+      padding: 2px 0;
+      scrollbar-width: none;
+    }
+    .camera-preview-strip::-webkit-scrollbar {
+      display: none;
+    }
+    .camera-preview-thumbnail {
+      width: 80px;
+      height: 60px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 2px solid #ffffff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      flex-shrink: 0;
+      position: relative;
+      animation: cameraThumbPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes cameraThumbPop {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .camera-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .camera-capture-trigger {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 6px solid #333333;
+      cursor: pointer;
+      box-shadow: 0 0 0 4px #ffffff;
+      outline: none;
+      transition: transform 0.1s ease;
+    }
+    .camera-capture-trigger:active {
+      transform: scale(0.9);
+    }
+    .camera-save-btn {
+      background: var(--primary-gradient);
+      color: #171209;
+      border: none;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 10px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: opacity 0.2s ease, transform 0.25s ease;
+      box-shadow: 0 4px 12px rgba(255, 202, 40, 0.25);
+      text-transform: uppercase;
+    }
+    .camera-save-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
   </style>
 </head>
 <body>
@@ -1392,6 +1541,29 @@
   <div id="lightbox" class="premium-lightbox" onclick="closeLightbox()">
     <button class="lightbox-close-btn" type="button" onclick="closeLightbox()">×</button>
     <img id="lightboxImg" src="" alt="Zoomed View">
+  </div>
+
+  <!-- Custom In-App Camera Modal -->
+  <div id="customCameraModal" class="custom-camera-modal" style="display: none;">
+    <div class="camera-stream-container">
+      <video id="customCameraVideo" autoplay playsinline muted></video>
+      <div class="camera-overlay-header">
+        <button type="button" class="camera-action-btn btn-close-cam" onclick="closeCustomCameraModal(false)">✕</button>
+        <div class="camera-current-category" id="cameraActiveCategoryText">Đang chụp</div>
+        <button type="button" class="camera-action-btn btn-switch-cam" onclick="switchCustomCamera()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        </button>
+      </div>
+      <div class="camera-flash-effect" id="cameraFlashEffect"></div>
+    </div>
+    <div class="camera-footer">
+      <div class="camera-preview-strip" id="cameraPreviewStrip"></div>
+      <div class="camera-controls">
+        <div style="width: 60px;"></div>
+        <button type="button" class="camera-capture-trigger" onclick="triggerCustomCameraCapture()"></button>
+        <button type="button" class="camera-save-btn" id="btnSaveCustomCameraPhotos" onclick="closeCustomCameraModal(true)" disabled>Xong (0)</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -3018,17 +3190,163 @@
       });
     }
 
-    function openMobileCameraForEvidence(index) {
+    let customCameraStream = null;
+    let customCameraFacingMode = 'environment';
+    let customCameraPhotos = [];
+    let customCameraRequestIndex = null;
+
+    async function openCustomCameraModal(requestIndex) {
+      customCameraRequestIndex = requestIndex;
+      customCameraPhotos = [];
+      
       prefetchGpsCoordinates();
-      const cameraInput = document.createElement('input');
-      cameraInput.type = 'file';
-      cameraInput.accept = 'image/*';
-      cameraInput.capture = 'environment';
-      cameraInput.multiple = false;
-      cameraInput.style.display = 'none';
-      cameraInput.addEventListener('change', () => { handleGarageEvidenceFiles(index, Array.from(cameraInput.files || []), true); cameraInput.remove(); });
-      document.body.appendChild(cameraInput);
-      cameraInput.click();
+      
+      const activeCategoryText = document.getElementById('cameraActiveCategoryText');
+      if (activeCategoryText) {
+        const item = localActiveRequestedItems[requestIndex];
+        activeCategoryText.textContent = `Đang chụp: ${item?.tenHangMuc || `Hạng mục ${requestIndex + 1}`}`;
+      }
+      
+      const strip = document.getElementById('cameraPreviewStrip');
+      if (strip) strip.innerHTML = '';
+      
+      updateCustomCameraDoneBtn();
+      
+      const modal = document.getElementById('customCameraModal');
+      if (modal) modal.style.display = 'flex';
+      
+      await startCustomCameraStream();
+    }
+
+    async function startCustomCameraStream() {
+      stopCustomCameraStream();
+      
+      const video = document.getElementById('customCameraVideo');
+      if (!video) return;
+      
+      const constraints = {
+        video: {
+          facingMode: customCameraFacingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      };
+      
+      try {
+        customCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = customCameraStream;
+      } catch (err) {
+        console.warn('Rear camera exact constraints failed, fallback to environment', err);
+        try {
+          customCameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' },
+            audio: false
+          });
+          video.srcObject = customCameraStream;
+        } catch (fallbackErr) {
+          console.error('Cannot access camera via getUserMedia:', fallbackErr);
+          triggerToast('Không thể kết nối camera. Chuyển sang trình chọn tệp mặc định!', 'warning');
+          
+          closeCustomCameraModal(false);
+          const fileInput = document.getElementById(`garageEvidenceInput_${customCameraRequestIndex}`);
+          if (fileInput) {
+            fileInput.setAttribute('capture', 'environment');
+            fileInput.dataset.sourceType = 'camera';
+            fileInput.click();
+            fileInput.removeAttribute('capture');
+          }
+        }
+      }
+    }
+
+    function stopCustomCameraStream() {
+      if (customCameraStream) {
+        customCameraStream.getTracks().forEach(track => track.stop());
+        customCameraStream = null;
+      }
+      const video = document.getElementById('customCameraVideo');
+      if (video) video.srcObject = null;
+    }
+
+    async function switchCustomCamera() {
+      customCameraFacingMode = (customCameraFacingMode === 'environment') ? 'user' : 'environment';
+      await startCustomCameraStream();
+    }
+
+    function triggerCustomCameraCapture() {
+      const video = document.getElementById('customCameraVideo');
+      if (!video || !customCameraStream) return;
+      
+      const flash = document.getElementById('cameraFlashEffect');
+      if (flash) {
+        flash.classList.add('flash-active');
+        setTimeout(() => flash.classList.remove('flash-active'), 80);
+      }
+      
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+      } catch (_) {}
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 1920;
+      canvas.height = video.videoHeight || 1080;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], `capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
+          customCameraPhotos.push(file);
+          
+          const strip = document.getElementById('cameraPreviewStrip');
+          if (strip) {
+            const img = document.createElement('img');
+            img.className = 'camera-preview-thumbnail';
+            img.src = URL.createObjectURL(blob);
+            strip.appendChild(img);
+            strip.scrollLeft = strip.scrollWidth;
+          }
+          
+          updateCustomCameraDoneBtn();
+        }
+      }, 'image/jpeg', 0.92);
+    }
+
+    function updateCustomCameraDoneBtn() {
+      const btn = document.getElementById('btnSaveCustomCameraPhotos');
+      if (btn) {
+        btn.textContent = `Xong (${customCameraPhotos.length})`;
+        btn.disabled = (customCameraPhotos.length === 0);
+      }
+    }
+
+    async function closeCustomCameraModal(savePhotos = false) {
+      stopCustomCameraStream();
+      
+      const modal = document.getElementById('customCameraModal');
+      if (modal) modal.style.display = 'none';
+      
+      if (savePhotos && customCameraPhotos.length > 0 && customCameraRequestIndex !== null) {
+        await handleGarageEvidenceFiles(customCameraRequestIndex, customCameraPhotos, true);
+      }
+      
+      customCameraRequestIndex = null;
+      customCameraPhotos = [];
+    }
+
+    function openMobileCameraForEvidence(index) {
+      openCustomCameraModal(index);
     }
 
     function normalizeEvidenceImageUrls(item) {
@@ -3120,14 +3438,7 @@
         refreshGarageProgressUI();
         triggerToast(`Đã lưu ${newUrls.length} ảnh cho hạng mục “${localActiveRequestedItems[requestIndex].tenHangMuc}”.`);
         
-        if (isFromCamera) {
-          setTimeout(async () => {
-            const captureMore = await showConfirmModal('Chụp ảnh liên tục', 'Bạn có muốn chụp thêm ảnh khác cho hạng mục này không?', 'Chụp tiếp', 'Hoàn tất');
-            if (captureMore) {
-              openMobileCameraForEvidence(requestIndex);
-            }
-          }, 600);
-        }
+
       } catch (error) {
         console.error(error);
         triggerToast('Không thể tải ảnh: ' + (error.message || 'Lỗi kết nối'), 'error');
