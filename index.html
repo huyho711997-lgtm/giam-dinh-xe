@@ -2153,6 +2153,7 @@
     let activeObjectUrls = [];
     let cachedCasesPayload = null;
     let activeCaseFilter = 'all';
+    let activeUserFilter = 'all';
     let activeDashboardTab = 'home'; 
     let activeCreateFlowMode = 'select';
     let activeUserProfile = null;
@@ -2475,13 +2476,49 @@
       
       dbNodeInstance.ref('users').on('value', (snapshot) => {
         cachedUsersPayload = snapshot.val() || {};
+        updateUsersStats(cachedUsersPayload);
         renderUsersTableList();
       }, (error) => {
         console.error('Failed to listen to users node:', error);
         if (container) {
-          container.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);padding:24px;font-weight:700;">Không có quyền đọc danh sách tài khoản (Permission Denied).</td></tr>`;
+          container.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--danger);padding:24px;font-weight:700;">Không có quyền đọc danh sách tài khoản (Permission Denied).</td></tr>`;
         }
       });
+    }
+
+    function updateUsersStats(usersVal) {
+      const entries = Object.entries(usersVal || {});
+      let total = 0;
+      let admins = 0;
+      let inspectors = 0;
+      let garages = 0;
+      
+      entries.forEach(([uid, data]) => {
+        const profile = data.profile || {};
+        const role = String(profile.role || '').trim().toLowerCase();
+        total++;
+        if (role === 'admin') admins++;
+        else if (role === 'garage') garages++;
+        else inspectors++;
+      });
+      
+      const lblTotal = document.getElementById('userStatTotal');
+      const lblAdmins = document.getElementById('userStatAdmins');
+      const lblInspectors = document.getElementById('userStatInspectors');
+      const lblGarages = document.getElementById('userStatGarages');
+      
+      if (lblTotal) lblTotal.textContent = total;
+      if (lblAdmins) lblAdmins.textContent = admins;
+      if (lblInspectors) lblInspectors.textContent = inspectors;
+      if (lblGarages) lblGarages.textContent = garages;
+    }
+
+    function setUserFilter(filterValue) {
+      activeUserFilter = filterValue;
+      document.querySelectorAll('[data-user-filter]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.userFilter === filterValue);
+      });
+      renderUsersTableList();
     }
 
     function renderUsersTableList() {
@@ -2497,11 +2534,23 @@
         const email = String(profile.email || '').toLowerCase();
         const role = String(profile.role || '').toLowerCase();
         const dept = String(profile.department || '').toLowerCase();
-        return !searchQuery || name.includes(searchQuery) || email.includes(searchQuery) || role.includes(searchQuery) || dept.includes(searchQuery);
+        
+        const matchSearch = !searchQuery || name.includes(searchQuery) || email.includes(searchQuery) || role.includes(searchQuery) || dept.includes(searchQuery);
+        
+        let matchRole = true;
+        if (activeUserFilter === 'Admin') {
+          matchRole = role === 'admin';
+        } else if (activeUserFilter === 'Giám định viên') {
+          matchRole = role !== 'admin' && role !== 'garage';
+        } else if (activeUserFilter === 'Garage') {
+          matchRole = role === 'garage';
+        }
+        
+        return matchSearch && matchRole;
       });
       
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không tìm thấy tài khoản</strong><p>Thử lại với tên, email hoặc từ khóa khác.</p></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không tìm thấy tài khoản</strong><p>Thử lại với tên, email hoặc bộ lọc khác.</p></div></td></tr>`;
         return;
       }
       
@@ -2526,7 +2575,7 @@
           <tr style="transition: background 0.15s ease;">
             <td data-label="Thành viên">
               <div class="vehicle-cell">
-                <div class="vehicle-avatar" style="background: var(--surface-soft); color: var(--text-main); font-weight: 700; border: 1px solid var(--border);">${initials}</div>
+                <div class="vehicle-avatar" style="background: ${role === 'Admin' ? 'linear-gradient(135deg, #d8b46d, #9b6c22)' : role === 'Garage' ? 'linear-gradient(135deg, #48d7a1, #047857)' : 'linear-gradient(135deg, #5ba9ff, #1d4ed8)'}; color: ${role === 'Giám định viên' ? '#ffffff' : '#080b11'}; font-weight: 800; border: 1px solid var(--border-strong); text-shadow: 0 1px 1px rgba(0,0,0,0.15);">${initials}</div>
                 <div>
                   <div class="vehicle-name" style="font-weight: 700; color: var(--text-main);">${displayName}</div>
                   <div style="font-size: 12px; color: var(--text-soft); margin-top: 2px;">${email}</div>
@@ -3270,6 +3319,46 @@
         }
         
         container.innerHTML = `
+          <!-- Dynamic Stats Cards Row -->
+          <div class="user-stats-row" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; width: 100%;">
+            <div class="p-card stat-card" style="display: flex; align-items: center; justify-content: space-between; padding: 18px 20px;">
+              <div class="stat-info">
+                <div class="stat-lbl" style="font-size: 11px; color: var(--text-soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Tổng thành viên</div>
+                <div class="stat-val" id="userStatTotal" style="font-size: 26px; font-weight: 850; color: var(--text-main); margin-top: 4px;">0</div>
+              </div>
+              <div class="stat-icon-wrap" style="color: var(--primary); background: rgba(216,180,109,0.08); width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              </div>
+            </div>
+            <div class="p-card stat-card" style="display: flex; align-items: center; justify-content: space-between; padding: 18px 20px;">
+              <div class="stat-info">
+                <div class="stat-lbl" style="font-size: 11px; color: var(--text-soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Quản trị (Admin)</div>
+                <div class="stat-val" id="userStatAdmins" style="font-size: 26px; font-weight: 850; color: var(--primary); margin-top: 4px;">0</div>
+              </div>
+              <div class="stat-icon-wrap" style="color: var(--primary); background: rgba(216,180,109,0.08); width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              </div>
+            </div>
+            <div class="p-card stat-card" style="display: flex; align-items: center; justify-content: space-between; padding: 18px 20px;">
+              <div class="stat-info">
+                <div class="stat-lbl" style="font-size: 11px; color: var(--text-soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Giám định viên</div>
+                <div class="stat-val" id="userStatInspectors" style="font-size: 26px; font-weight: 850; color: var(--blue); margin-top: 4px;">0</div>
+              </div>
+              <div class="stat-icon-wrap" style="color: var(--blue); background: rgba(91,169,255,0.08); width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              </div>
+            </div>
+            <div class="p-card stat-card" style="display: flex; align-items: center; justify-content: space-between; padding: 18px 20px;">
+              <div class="stat-info">
+                <div class="stat-lbl" style="font-size: 11px; color: var(--text-soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Garage đối tác</div>
+                <div class="stat-val" id="userStatGarages" style="font-size: 26px; font-weight: 850; color: var(--success); margin-top: 4px;">0</div>
+              </div>
+              <div class="stat-icon-wrap" style="color: var(--success); background: rgba(72,215,161,0.08); width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              </div>
+            </div>
+          </div>
+
           <div class="workspace-grid single-col">
             <section class="p-card">
               <div class="p-card-head" style="margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
@@ -3287,15 +3376,23 @@
                 </div>
               </div>
               
-              <div class="user-toolbar-grid" style="margin-bottom: 24px;">
+              <div class="user-toolbar-grid" style="margin-bottom: 24px; gap: 16px;">
                 <div class="search-wrap" style="margin: 0; width: 100%;">
                   ${SVGS.SEARCH}
                   <input id="userSearchInput" class="input-premium" type="search" placeholder="Tìm kiếm tên, email, vai trò, bộ phận..." autocomplete="off" style="width: 100%;" />
                 </div>
-                <button type="button" class="btn-premium" onclick="openCreateUserModal()" style="width: auto !important; padding: 0 24px; min-height: unset; height: 42px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; margin: 0; background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.35); cursor: pointer; transition: all 0.2s ease;">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  <span>Thêm thành viên mới</span>
-                </button>
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                  <div class="filter-pills" id="userRoleFilterPills" style="display: flex; gap: 4px; margin: 0; background: var(--surface-soft); padding: 4px; border-radius: 10px; border: 1px solid var(--border);">
+                    <button class="filter-pill active" data-user-filter="all" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Tất cả</button>
+                    <button class="filter-pill" data-user-filter="Admin" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Admin</button>
+                    <button class="filter-pill" data-user-filter="Giám định viên" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Giám định viên</button>
+                    <button class="filter-pill" data-user-filter="Garage" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Garage</button>
+                  </div>
+                  <button type="button" class="btn-premium" onclick="openCreateUserModal()" style="width: auto !important; padding: 0 24px; min-height: unset; height: 42px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; margin: 0; background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.35); cursor: pointer; transition: all 0.2s ease;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Thêm thành viên mới</span>
+                  </button>
+                </div>
               </div>
               
               <div class="table-container" style="border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); overflow: hidden; margin-top: 8px;">
@@ -3318,6 +3415,9 @@
         `;
         
         document.getElementById('userSearchInput').addEventListener('input', () => renderUsersTableList());
+        document.querySelectorAll('[data-user-filter]').forEach(btn => {
+          btn.addEventListener('click', () => setUserFilter(btn.dataset.userFilter));
+        });
         fetchAndBindUsersListRealtime();
       } else {
         if (activeCreateFlowMode === 'select') {
