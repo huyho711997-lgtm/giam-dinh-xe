@@ -567,6 +567,12 @@
     .badge-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
     .badge-status.pending { color: var(--status-pending-text); border-color: var(--status-pending-border); background: var(--status-pending-bg); }
     .badge-status.completed { color: var(--status-completed-text); border-color: var(--status-completed-border); background: var(--status-completed-bg); }
+    .badge-status.uploading { color: #ffca28; border-color: rgba(255, 202, 40, 0.3); background: rgba(255, 202, 40, 0.08); }
+    .badge-status.uploading::before { background: #ffca28; box-shadow: 0 0 10px #ffca28; animation: uploadingPulse 1.2s infinite ease-in-out; }
+    @keyframes uploadingPulse {
+      0%, 100% { opacity: 0.35; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
     
     .flex-actions-group { display: flex; justify-content: flex-end; gap: 7px; }
     .flex-actions-group .btn-premium { width: 38px; min-height: 38px; padding: 0; }
@@ -3264,7 +3270,6 @@
                 <input id="garageEvidenceInput_${index}" class="garage-evidence-input" data-request-index="${index}" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden />
               </div>
               <div class="evidence-upload-actions"><button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('garageEvidenceInput_${index}').click()">${SVGS.IMAGE} Chọn nhiều ảnh</button><button type="button" class="btn-premium btn-secondary" onclick="openMobileCameraForEvidence(${index})">${SVGS.CAMERA} Chụp ảnh</button></div>
-              <div id="evidenceUploadStatus_${index}" class="evidence-upload-status"><div class="evidence-upload-status-line"><span id="evidenceUploadText_${index}">Đang chuẩn bị...</span><strong id="evidenceUploadPercent_${index}">0%</strong></div><div class="p-progress-bar active"><div id="evidenceUploadFill_${index}" class="p-progress-fill"></div></div></div>
               <textarea id="garageEvidenceNote_${index}" class="textarea-premium evidence-note" placeholder="Ghi chú thêm cho hạng mục này (không bắt buộc)...">${escapeHtmlOutput(item.ghiChuGarage || '')}</textarea>
               <div id="garageEvidenceNoteState_${index}" class="autosave-state">Ghi chú được tự động lưu</div>
               <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
@@ -3894,16 +3899,35 @@
 
     function setEvidenceUploadUI(index, show, text = '', percent = 0) {
       const card = document.getElementById(`evidenceRequestCard_${index}`);
-      const status = document.getElementById(`evidenceUploadStatus_${index}`);
+      const statusNode = document.getElementById(`evidenceStatus_${index}`);
       if (card) card.classList.toggle('is-uploading', show);
-      if (!status) return;
-      status.classList.toggle('show', show);
-      const textNode = document.getElementById(`evidenceUploadText_${index}`);
-      const percentNode = document.getElementById(`evidenceUploadPercent_${index}`);
-      const fill = document.getElementById(`evidenceUploadFill_${index}`);
-      if (textNode) textNode.textContent = text;
-      if (percentNode) percentNode.textContent = `${Math.max(0,Math.min(100,percent))}%`;
-      if (fill) fill.style.width = `${Math.max(0,Math.min(100,percent))}%`;
+      
+      if (!statusNode) return;
+      
+      if (show) {
+        statusNode.className = 'evidence-request-status badge-status uploading';
+        
+        let compactText = text;
+        if (text.includes('xử lý') || text.includes('x\u1eed l\u00fd')) {
+          compactText = 'Đang xử lý';
+        } else if (text.includes('đóng dấu') || text.includes('\u0111\u00f3ng d\u1ea5u')) {
+          compactText = 'Đóng dấu';
+        } else if (text.includes('Chuẩn bị') || text.includes('Chu\u1ea3n b\u1ecb')) {
+          compactText = 'Chuẩn bị';
+        } else if (text.includes('tải ảnh') || text.includes('t\u1ea3i \u1ea3nh')) {
+          const match = text.match(/\d+\/\d+/);
+          compactText = match ? `Tải ảnh ${match[0]}` : 'Tải ảnh';
+        } else if (text.includes('Đã lưu') || text.includes('\u0110\u00e3 l\u01b0u')) {
+          compactText = 'Đã lưu';
+        }
+        
+        statusNode.textContent = `${compactText} ${Math.max(0, Math.min(100, percent))}%`;
+      } else {
+        const item = localActiveRequestedItems[index];
+        const urls = normalizeEvidenceImageUrls(item);
+        statusNode.className = `evidence-request-status badge-status ${urls.length ? 'completed' : 'pending'}`;
+        statusNode.textContent = urls.length ? `${urls.length} ảnh đã lưu` : 'Chưa có ảnh';
+      }
     }
 
     async function handleGarageEvidenceFiles(requestIndex, incomingFiles, isFromCamera = false) {
