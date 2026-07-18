@@ -1958,6 +1958,51 @@
     </section>
   </div>
 
+  <!-- Chỉnh sửa thành viên Modal -->
+  <div id="editUserModalOverlay" class="p-modal-overlay" aria-hidden="true" style="display: none;">
+    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="editUserModalTitle" style="max-width: 500px;">
+      <button type="button" class="btn-premium btn-secondary profile-close" onclick="closeEditUserModal()" aria-label="Đóng">×</button>
+      <div class="profile-modal-hero">
+        <div class="profile-avatar-large" style="background: var(--primary-gradient); color: #080b11; display: grid; place-items: center;">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+        </div>
+        <div>
+          <h3 id="editUserModalTitle">Chỉnh sửa thành viên</h3>
+          <p>Cập nhật thông tin chi tiết và phân quyền của thành viên trên hệ thống.</p>
+        </div>
+      </div>
+      <div class="profile-modal-body">
+        <input type="hidden" id="editAdminUid" />
+        <div class="profile-form-grid">
+          <div class="form-group full">
+            <label>Họ và tên hiển thị</label>
+            <input id="editAdminDisplayName" class="input-premium" type="text" maxlength="80" placeholder="Ví dụ: Nguyễn Văn A" autocomplete="off" />
+          </div>
+          <div class="form-group full">
+            <label>Email đăng nhập (Không thể thay đổi)</label>
+            <input id="editAdminEmail" class="input-premium" type="email" disabled style="opacity: 0.6; cursor: not-allowed;" />
+          </div>
+          <div class="form-group">
+            <label>Vai trò hệ thống</label>
+            <select id="editAdminRole" class="input-premium">
+              <option value="Giám định viên">Giám định viên</option>
+              <option value="Admin">Admin (Quản trị)</option>
+              <option value="Garage">Garage</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Đơn vị / Phòng ban</label>
+            <input id="editAdminDepartment" class="input-premium" type="text" maxlength="100" placeholder="Ví dụ: Bộ phận Giám định" autocomplete="off" />
+          </div>
+        </div>
+        <div class="profile-modal-actions" style="margin-top: 24px;">
+          <button type="button" class="btn-premium btn-secondary" onclick="closeEditUserModal()">Hủy bỏ</button>
+          <button id="btnSubmitEditUser" type="button" class="btn-premium" onclick="submitEditUserAccount()">Lưu thay đổi</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <div class="app-container">
     <!-- Header App Bar Space -->
     <nav class="premium-nav" id="mainNavigationBar">
@@ -2108,6 +2153,7 @@
       if (event.key === 'Escape' && document.getElementById('lightbox')?.classList.contains('show')) closeLightbox();
       if (event.key === 'Escape' && document.getElementById('profileModalOverlay')?.style.display === 'grid') closeUserProfileModal();
       if (event.key === 'Escape' && document.getElementById('createUserModalOverlay')?.style.display === 'grid') closeCreateUserModal();
+      if (event.key === 'Escape' && document.getElementById('editUserModalOverlay')?.style.display === 'grid') closeEditUserModal();
     });
 
     function initApplicationState() {
@@ -2438,7 +2484,7 @@
       });
       
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không tìm thấy tài khoản</strong><p>Thử lại với tên, email hoặc từ khóa khác.</p></div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không tìm thấy tài khoản</strong><p>Thử lại với tên, email hoặc từ khóa khác.</p></div></td></tr>`;
         return;
       }
       
@@ -2450,35 +2496,44 @@
         const department = escapeHtmlOutput(profile.department || 'Bộ phận Giám định');
         const initials = deriveInitials(displayName);
         
+        let roleBadge = '';
+        if (role === 'Admin') {
+          roleBadge = `<span class="badge-status" style="background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.25); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Admin</span>`;
+        } else if (role === 'Garage') {
+          roleBadge = `<span class="badge-status" style="background: rgba(72,215,161,0.12); color: var(--success); border: 1px solid rgba(72,215,161,0.25); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Garage</span>`;
+        } else {
+          roleBadge = `<span class="badge-status" style="background: rgba(91,169,255,0.12); color: var(--blue); border: 1px solid rgba(91,169,255,0.25); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Giám định viên</span>`;
+        }
+        
         return `
-          <tr>
-            <td data-label="Người dùng">
+          <tr style="transition: background 0.15s ease;">
+            <td data-label="Thành viên">
               <div class="vehicle-cell">
-                <div class="vehicle-avatar" style="background: var(--surface-soft); color: var(--primary); font-weight: 700;">${initials}</div>
+                <div class="vehicle-avatar" style="background: var(--surface-soft); color: var(--text-main); font-weight: 700; border: 1px solid var(--border);">${initials}</div>
                 <div>
-                  <div class="vehicle-name">${displayName}</div>
-                  <div style="font-size: 10px; color: var(--text-muted);">UID: ${uid.slice(0, 8)}...</div>
+                  <div class="vehicle-name" style="font-weight: 700; color: var(--text-main);">${displayName}</div>
+                  <div style="font-size: 12px; color: var(--text-soft); margin-top: 2px;">${email}</div>
+                  <div style="font-size: 9px; color: var(--text-muted); font-family: monospace; margin-top: 1px;">UID: ${uid}</div>
                 </div>
               </div>
             </td>
-            <td data-label="Email">
-              <span style="font-family: 'JetBrains Mono'; font-size: 12.5px; color: var(--text-soft);">${email}</span>
+            <td data-label="Bộ phận / Phòng ban">
+              <span style="font-size: 13px; color: var(--text-soft); font-weight: 500;">${department}</span>
             </td>
-            <td data-label="Vai trò">
-              <select id="userRole_${uid}" class="admin-select-premium">
-                <option value="Admin" ${role === 'Admin' ? 'selected' : ''}>Admin (Quản trị)</option>
-                <option value="Giám định viên" ${role === 'Giám định viên' ? 'selected' : ''}>Giám định viên</option>
-                <option value="Garage" ${role === 'Garage' ? 'selected' : ''}>Garage</option>
-              </select>
+            <td data-label="Vai trò hệ thống">
+              ${roleBadge}
             </td>
-            <td data-label="Bộ phận">
-              <input id="userDept_${uid}" class="admin-input-premium" type="text" value="${escapeAttributeData(department)}" />
-            </td>
-            <td data-label="Thao tác" style="text-align: right; padding-right: 20px; vertical-align: middle;">
-              <button type="button" class="btn-premium" onclick="saveUserAdministrationChange('${uid}', this)" style="padding: 6px 14px; min-height: unset; height: 32px; font-size: 11px; margin: 0; display: inline-flex; align-items: center; gap: 5px; border-radius: 6px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; cursor: pointer;">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                <span>Lưu</span>
-              </button>
+            <td data-label="Thao tác" style="text-align: right; padding-right: 24px; vertical-align: middle;">
+              <div style="display: inline-flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                <button type="button" class="btn-premium btn-secondary" onclick="openEditUserModal('${uid}')" style="padding: 6px 14px; min-height: unset; height: 32px; font-size: 12px; font-weight: 700; border-radius: 6px; margin: 0; display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); cursor: pointer;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                  <span>Sửa</span>
+                </button>
+                <button type="button" class="btn-premium btn-danger-p" onclick="triggerDeleteUserAccount('${uid}', '${escapeAttributeData(displayName)}')" style="padding: 6px 14px; min-height: unset; height: 32px; font-size: 12px; font-weight: 700; border-radius: 6px; margin: 0; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                  <span>Xóa</span>
+                </button>
+              </div>
             </td>
           </tr>
         `;
@@ -2840,6 +2895,94 @@
       }
     }
 
+    function openEditUserModal(uid) {
+      const data = cachedUsersPayload[uid] || {};
+      const profile = data.profile || {};
+      
+      document.getElementById('editAdminUid').value = uid;
+      document.getElementById('editAdminDisplayName').value = profile.displayName || '';
+      document.getElementById('editAdminEmail').value = profile.email || 'Chưa có email';
+      document.getElementById('editAdminRole').value = profile.role || 'Giám định viên';
+      document.getElementById('editAdminDepartment').value = profile.department || '';
+      
+      const overlay = document.getElementById('editUserModalOverlay');
+      if (!overlay) return;
+      overlay.style.display = 'grid';
+      overlay.setAttribute('aria-hidden', 'false');
+    }
+    
+    function closeEditUserModal() {
+      const overlay = document.getElementById('editUserModalOverlay');
+      if (!overlay) return;
+      overlay.style.display = 'none';
+      overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    async function submitEditUserAccount() {
+      const uid = document.getElementById('editAdminUid').value;
+      if (!uid) return;
+      
+      const displayName = String(document.getElementById('editAdminDisplayName')?.value || '').trim();
+      const role = String(document.getElementById('editAdminRole')?.value || '').trim();
+      const department = String(document.getElementById('editAdminDepartment')?.value || '').trim() || 'Bộ phận Giám định';
+      
+      if (!displayName) return triggerToast('Vui lòng nhập họ và tên hiển thị.', 'warning');
+      
+      const button = document.getElementById('btnSubmitEditUser');
+      toggleButtonUIPendingState(button, true, 'Đang lưu...');
+      
+      try {
+        const currentProfile = (cachedUsersPayload[uid] && cachedUsersPayload[uid].profile) || {};
+        const updatedProfile = {
+          ...currentProfile,
+          displayName,
+          role,
+          department,
+          updatedAt: Date.now()
+        };
+        
+        await dbNodeInstance.ref(`users/${uid}/profile`).set(updatedProfile);
+        triggerToast('Đã lưu thay đổi thông tin người dùng thành công!', 'success');
+        
+        const currentUserId = firebase.auth().currentUser?.uid;
+        if (uid === currentUserId) {
+          activeUserProfile = updatedProfile;
+          try { localStorage.setItem(getProfileStorageKey(uid), JSON.stringify(updatedProfile)); } catch(_) {}
+          renderHeaderNavigationLinks();
+          
+          const heroName = document.getElementById('heroUserName');
+          const heroMeta = document.getElementById('heroUserMeta');
+          const heroAvatar = document.getElementById('heroUserAvatar');
+          if (heroName) heroName.textContent = displayName;
+          if (heroMeta) heroMeta.textContent = `${role} · ${department}`;
+          if (heroAvatar) heroAvatar.textContent = deriveInitials(displayName);
+        }
+        closeEditUserModal();
+      } catch (error) {
+        console.error('Failed to update user profile node:', error);
+        triggerToast('Lỗi cập nhật thông tin: ' + (error.message || error), 'error');
+      } finally {
+        toggleButtonUIPendingState(button, false, 'Lưu thay đổi');
+      }
+    }
+
+    async function triggerDeleteUserAccount(uid, displayName) {
+      const confirmed = await showConfirmModal(
+        'Xóa quyền truy cập', 
+        `Bạn có chắc chắn muốn xóa quyền truy cập của người dùng "${displayName}" khỏi hệ thống không?`, 
+        'Xóa tài khoản', 
+        'Hủy'
+      );
+      if (confirmed) {
+        try {
+          await dbNodeInstance.ref(`users/${uid}`).remove();
+          triggerToast(`Đã xóa thành viên ${displayName} khỏi cơ sở dữ liệu!`, 'success');
+        } catch (e) {
+          console.error(e);
+          triggerToast('Không thể xóa người dùng: ' + e.message, 'error');
+        }
+      }
+    }
     /****************************************************
      * 0. LUXURY LOGIN PORTAL VIEW (ULTRA CLEAN FOCUS)
      ****************************************************/
@@ -3120,30 +3263,29 @@
                 <div class="section-number">01</div>
               </div>
               
-              <div class="cases-toolbar" style="margin-bottom: 20px; display: flex; gap: 16px; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+              <div class="user-toolbar" style="display: flex; gap: 16px; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 24px; width: 100%;">
                 <div class="search-wrap" style="flex: 1; min-width: 280px; margin: 0;">
                   ${SVGS.SEARCH}
-                  <input id="userSearchInput" class="input-premium" type="search" placeholder="Tìm kiếm tên, email, vai trò, bộ phận..." autocomplete="off" />
+                  <input id="userSearchInput" class="input-premium" type="search" placeholder="Tìm kiếm tên, email, vai trò, bộ phận..." autocomplete="off" style="width: 100%;" />
                 </div>
-                <button type="button" class="btn-premium" onclick="openCreateUserModal()" style="padding: 10px 20px; min-height: unset; height: 42px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; margin: 0; background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.3); cursor: pointer;">
+                <button type="button" class="btn-premium" onclick="openCreateUserModal()" style="padding: 10px 24px; min-height: unset; height: 42px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; margin: 0; background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.35); cursor: pointer; transition: all 0.2s ease;">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                   <span>Thêm thành viên mới</span>
                 </button>
               </div>
               
-              <div class="table-container">
+              <div class="table-container" style="border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); overflow: hidden; margin-top: 8px;">
                 <table class="p-table">
                   <thead>
                     <tr>
-                      <th style="width: 250px;">Người dùng</th>
-                      <th>Email</th>
-                      <th style="width: 180px;">Vai trò</th>
-                      <th style="width: 200px;">Bộ phận / Phòng ban</th>
-                      <th style="width: 120px; text-align: right; padding-right: 20px;">Thao tác</th>
+                      <th>Thành viên</th>
+                      <th style="width: 250px;">Bộ phận / Phòng ban</th>
+                      <th style="width: 180px;">Vai trò hệ thống</th>
+                      <th style="width: 160px; text-align: right; padding-right: 24px;">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="tblUsersBodyContainer">
-                    <tr><td colspan="5" class="empty-state-text">Đang đồng bộ danh sách người dùng...</td></tr>
+                    <tr><td colspan="4" class="empty-state-text">Đang đồng bộ danh sách người dùng...</td></tr>
                   </tbody>
                 </table>
               </div>
