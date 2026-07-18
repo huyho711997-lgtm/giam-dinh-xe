@@ -3850,7 +3850,7 @@
 
     async function callGeminiOcrApi(base64Data, mimeType) {
       let apiKey = localStorage.getItem('claimvision-gemini-key') || CONFIG.FIREBASE.apiKey;
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
       
       const payload = {
         contents: [{
@@ -3959,10 +3959,9 @@
         triggerToast(`AI OCR: Trích xuất thành công ${extracted.length} hạng mục từ ảnh báo giá!`, 'success');
       } catch (error) {
         console.error('Gemini OCR API Error:', error);
-        const isAuthError = String(error.message).includes('API key') || String(error.message).includes('key') || String(error.message).includes('Key');
         let friendlyMsg = 'Lỗi Gemini OCR: ' + error.message;
-        if (isAuthError) {
-          friendlyMsg = 'Yêu cầu từ chối hoặc lỗi API Key. Vui lòng mở mục "Quản lý người dùng" để kiểm tra/bổ sung key Gemini hoạt động.';
+        if (error.message.includes('API key') || error.message.includes('API_KEY') || error.message.includes('Key') || error.message.includes('not valid')) {
+          friendlyMsg = 'Xác thực thất bại. Vui lòng kiểm tra lại API Key Gemini đã điền trong mục "Quản lý người dùng". Chi tiết: ' + error.message;
         }
         triggerToast(friendlyMsg, 'error');
         resetOcrScanPanel();
