@@ -3333,13 +3333,7 @@
       const creatorName = node.nguoiTao?.tenHienThi || node.nguoiTao?.email || 'Hồ sơ trước phiên bản mới';
       const creatorMeta = [node.nguoiTao?.chucDanh, node.nguoiTao?.donVi].filter(Boolean).join(' · ');
       const createdDate = formatCaseTimestamp(node.createdAt);
-      const adjusterSummaryMarkup = isAdjusterView ? `
-        <div class="adjuster-summary-box" style="margin-top: 16px; margin-bottom: 16px; padding: 14px; border: 1px solid var(--primary); border-radius: var(--radius-lg); background: rgba(216,180,109,0.04);">
-          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary); font-weight: 700; margin-bottom: 8px;">Tóm tắt phê duyệt của GĐV</div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; color: var(--text-muted);"><span>Số hạng mục duyệt:</span><strong id="adjusterSummaryCount" style="color: var(--text-main);">0 hạng mục</strong></div>
-          <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 800; color: var(--text-main);"><span>Tổng tiền duyệt:</span><strong id="adjusterSummaryTotalMoney" style="color: var(--primary);">0 đ</strong></div>
-        </div>
-      ` : '';
+      
       return `
         <aside class="p-card sticky-sidebar">
           <div class="p-card-head"><div><h2>${isReadOnlyMode ? 'Thông tin đối chiếu' : 'Thông tin hồ sơ'}</h2><p>${isReadOnlyMode ? 'Dữ liệu đã được Garage xác nhận.' : 'Cổng khai báo dành cho Garage.'}</p></div><div class="section-number">${isReadOnlyMode ? 'R' : 'G'}</div></div>
@@ -3360,11 +3354,10 @@
             <div class="metadata-row"><span>Trạng thái</span><strong><span class="badge-status ${node.trangThai === STATUS_COMPLETED ? 'completed' : 'pending'}">${escapeHtmlOutput(node.trangThai)}</span></strong></div>
           </div>
           <div class="sidebar-tip">Hoàn thành cả hai nhóm: ghi rõ hạng mục theo ảnh hiện trạng và tải ảnh minh chứng cho từng hạng mục được yêu cầu.</div>
-          ${adjusterSummaryMarkup}
-          ${showBackButton ? `<button class="btn-premium" onclick="executeCopyAggregatedRawText()">${SVGS.COPY} Sao chép biên bản tổng</button>` : isReadOnlyMode ? `<div class="badge-status completed" style="width:100%;justify-content:center;padding:12px">Hồ sơ đã khóa</div>` : `
+          ${isReadOnlyMode && !isAdjusterView ? `<div class="badge-status completed" style="width:100%;justify-content:center;padding:12px">Hồ sơ đã khóa</div>` : (!isReadOnlyMode ? `
             <button id="btnDraftGarageResponse" class="btn-premium btn-secondary" style="width:100%; margin-bottom:8px; border:1px solid rgba(179,140,67,0.3) !important;">Lưu nháp hồ sơ</button>
             <button id="btnSubmitGarageFinalResponse" class="btn-premium" style="width:100%;">${SVGS.CHECK_CIRCLE} Hoàn tất & gửi kết quả</button>
-          `}
+          ` : '')}
         </aside>`;
     }
 
