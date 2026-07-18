@@ -3959,9 +3959,22 @@
         triggerToast(`AI OCR: Trích xuất thành công ${extracted.length} hạng mục từ ảnh báo giá!`, 'success');
       } catch (error) {
         console.error('Gemini OCR API Error:', error);
+        
+        let apiKey = localStorage.getItem('claimvision-gemini-key') || '';
+        let isFallback = !apiKey;
+        let activeKeyToPrint = apiKey || CONFIG.FIREBASE.apiKey;
+        
+        let maskKey = activeKeyToPrint.length > 10 
+          ? `${activeKeyToPrint.substring(0, 7)}...${activeKeyToPrint.substring(activeKeyToPrint.length - 5)}`
+          : 'Không hợp lệ';
+          
+        let keySource = isFallback 
+          ? 'Khóa mặc định hệ thống (Firebase Key - không dùng cho Gemini)' 
+          : 'Khóa cá nhân bạn đã thiết lập';
+
         let friendlyMsg = 'Lỗi Gemini OCR: ' + error.message;
-        if (error.message.includes('API key') || error.message.includes('API_KEY') || error.message.includes('Key') || error.message.includes('not valid')) {
-          friendlyMsg = 'Xác thực thất bại. Vui lòng kiểm tra lại API Key Gemini đã điền trong mục "Quản lý người dùng". Chi tiết: ' + error.message;
+        if (error.message.includes('API key') || error.message.includes('API_KEY') || error.message.includes('Key') || error.message.includes('not valid') || error.message.includes('403')) {
+          friendlyMsg = `Xác thực thất bại. Vui lòng kiểm tra lại API Key Gemini. \n- Nguồn khóa đang dùng: ${keySource} [${maskKey}]. \n- Chi tiết lỗi: ${error.message}`;
         }
         triggerToast(friendlyMsg, 'error');
         resetOcrScanPanel();
