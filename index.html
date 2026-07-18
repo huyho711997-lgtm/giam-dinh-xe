@@ -573,6 +573,13 @@
       0%, 100% { opacity: 0.35; transform: scale(0.85); }
       50% { opacity: 1; transform: scale(1.15); }
     }
+    .clickable-row {
+      cursor: pointer;
+      transition: background-color 0.18s ease;
+    }
+    .clickable-row:hover {
+      background-color: var(--surface-soft) !important;
+    }
     
     .flex-actions-group { display: flex; justify-content: flex-end; gap: 7px; }
     .flex-actions-group .btn-premium { width: 38px; min-height: 38px; padding: 0; }
@@ -3053,12 +3060,12 @@
         const initials = plate.replace(/[^A-Za-z0-9]/g, '').slice(0,2).toUpperCase() || 'CV';
         const reqCount = entityNode.soLuongHangMucYeuCauAnh || (Array.isArray(entityNode.hangMucYeuCauAnh) ? entityNode.hangMucYeuCauAnh.length : Object.keys(entityNode.hangMucYeuCauAnh || {}).length);
         return `
-          <tr>
+          <tr class="clickable-row" onclick="navigateToCase('${uniqueKeyToken}', '${isCaseDone ? 'result' : ''}')">
             <td data-label="Phương tiện"><div class="vehicle-cell"><div class="vehicle-avatar">${initials}</div><div><div class="vehicle-name">${plate}</div><div class="vehicle-sub">${escapeHtmlOutput(entityNode.tenGara || 'Chưa xác định Garage')}</div></div></div></td>
             <td data-label="Khởi tạo"><div class="date-mini">${dateInfo.date}<span>${dateInfo.time}</span></div></td>
             <td data-label="Nội dung"><div class="date-mini"><strong style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-soft)">${Number(entityNode.soLuongAnh || 0).toString().padStart(2,'0')} ảnh hiện trạng</strong><span>${Number(reqCount).toString().padStart(2,'0')} yêu cầu ảnh</span></div></td>
             <td data-label="Trạng thái"><span class="badge-status ${targetBadgeClass}">${escapeHtmlOutput(entityNode.trangThai || STATUS_PENDING)}</span></td>
-            <td><div class="flex-actions-group">
+            <td onclick="event.stopPropagation()"><div class="flex-actions-group">
               <button title="Xem link Garage" class="btn-premium btn-secondary" onclick="navigateToCase('${uniqueKeyToken}')">${SVGS.EXTERNAL}<span class="action-label">Garage</span></button>
               <button title="Xem kết quả đối chiếu" class="btn-premium btn-dark" onclick="navigateToCase('${uniqueKeyToken}', 'result')">${SVGS.CHECK_CIRCLE}<span class="action-label">Kết quả</span></button>
               <button title="Xóa hồ sơ" class="btn-premium btn-danger-p" onclick="triggerDestructiveDeleteCase('${uniqueKeyToken}','${escapeAttributeData(entityNode.bienSo)}')">${SVGS.TRASH}<span class="action-label">Xóa</span></button>
