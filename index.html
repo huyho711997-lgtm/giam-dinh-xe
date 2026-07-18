@@ -2232,6 +2232,81 @@
       }
     }
 
+    async function downloadAllCategoriesZip() {
+      if (!localActiveRequestedItems || !localActiveRequestedItems.length) {
+        triggerToast('Không có hạng mục nào để tải!', 'warning');
+        return;
+      }
+      
+      let totalImagesCount = 0;
+      localActiveRequestedItems.forEach(item => {
+        totalImagesCount += normalizeEvidenceImageUrls(item).length;
+      });
+      
+      if (totalImagesCount === 0) {
+        triggerToast('Chưa có hạng mục nào được bổ sung hình ảnh!', 'warning');
+        return;
+      }
+      
+      triggerToast(`Đang chuẩn bị nén toàn bộ ${totalImagesCount} ảnh...`, 'info');
+      
+      try {
+        if (typeof JSZip === 'undefined') {
+          triggerToast('Thư viện nén chưa sẵn sàng, vui lòng thử lại sau!', 'warning');
+          return;
+        }
+        
+        const zip = new JSZip();
+        const plateNo = removeVietnameseTones(localActiveCaseNode?.bienSo || 'ho_so');
+        const fetchPromises = [];
+        
+        localActiveRequestedItems.forEach((item, index) => {
+          const urls = normalizeEvidenceImageUrls(item);
+          if (urls.length === 0) return;
+          
+          const rawCategoryName = item.tenHangMuc || `hang_muc_${index+1}`;
+          const safeCategoryName = removeVietnameseTones(rawCategoryName);
+          
+          urls.forEach((url, i) => {
+            const fetchPromise = (async () => {
+              try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                let ext = 'jpg';
+                const urlPath = url.split('?')[0];
+                const match = urlPath.match(/\.(png|jpe?g|webp|heic|heif)$/i);
+                if (match) {
+                  ext = match[1].toLowerCase();
+                }
+                const imageName = `${safeCategoryName}_${String(i+1).padStart(2, '0')}.${ext}`;
+                zip.folder(safeCategoryName).file(imageName, blob);
+              } catch (err) {
+                console.error(`Failed to download ${url}:`, err);
+              }
+            })();
+            fetchPromises.push(fetchPromise);
+          });
+        });
+        
+        await Promise.all(fetchPromises);
+        
+        const content = await zip.generateAsync({ type: 'blob' });
+        const blobUrl = URL.createObjectURL(content);
+        
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `${plateNo}_tat_ca_anh_minh_chung.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+        triggerToast('Tải xuống toàn bộ ảnh thành công!', 'success');
+      } catch (e) {
+        console.error('Download all zip failed:', e);
+        triggerToast('Tải xuống toàn bộ ảnh thất bại!', 'error');
+      }
+    }
+
     function getProfileStorageKey(uid) {
       return `claimvision.userProfile.${uid || 'anonymous'}`;
     }
@@ -4421,12 +4496,20 @@
       const imageResultsSection = '';
 
       const evidenceResultsSection = localActiveRequestedItems.length ? `
-        <div class="workspace-section-head" style="margin-bottom: 12px;">
+        <div class="workspace-section-head" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
           <div>
             <h2>Danh sách hình ảnh minh chứng theo hạng mục</h2>
             <p>Bảng tổng hợp hồ sơ giám định và hình ảnh minh chứng tương ứng do Garage cung cấp.</p>
           </div>
-          <div class="workspace-section-index">${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</div>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            ${completedEvidenceItems > 0 ? `
+              <button type="button" class="btn-premium" onclick="downloadAllCategoriesZip()" style="padding: 8px 16px; min-height: unset; height: 36px; font-size: 11.5px; margin: 0; display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 12px rgba(216,180,109,0.25);">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Tải toàn bộ ảnh (.ZIP)</span>
+              </button>
+            ` : ''}
+            <div class="workspace-section-index" style="margin: 0; flex-shrink: 0;">${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</div>
+          </div>
         </div>
         <div class="p-card" style="padding: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-sm);">
           <table class="p-table" style="width: 100%; border-collapse: collapse;">
