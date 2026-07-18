@@ -663,7 +663,44 @@
     .evidence-result-title p { margin-top: 4px; color: var(--text-muted); font-size: 10px; }
     .evidence-empty { margin-top: 14px; padding: 22px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 13px; text-align: center; font-size: 11px; }
     @media (max-width: 1050px) { .focus-portal-layout { grid-template-columns: 1fr; } .sticky-sidebar { position: static; } }
-    @media (max-width: 760px) { .portal-topbar { grid-template-columns: 1fr; padding: 21px; } .portal-counter-stack { display: grid; grid-template-columns: 1fr 1fr; } .portal-counter { text-align: left; } .premium-image-card { grid-template-columns: 1fr; } .img-display-pane { min-height: 280px; border-right: 0; border-bottom: 1px solid var(--border); } .inputs-entry-pane { padding: 21px; } }
+    @media (max-width: 760px) {
+      .portal-topbar {
+        grid-template-columns: 1fr !important;
+        padding: 21px !important;
+        position: relative !important;
+      }
+      .portal-topbar > div:first-child {
+        padding-right: 48px !important;
+      }
+      .portal-topbar .theme-btn.theme-toggle-btn-node {
+        position: absolute !important;
+        top: 21px !important;
+        right: 21px !important;
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 50% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: grid !important;
+        place-items: center !important;
+        z-index: 10 !important;
+      }
+      .portal-counter-stack {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+        margin-top: 15px !important;
+        width: 100% !important;
+      }
+      .portal-counter {
+        text-align: left !important;
+        width: auto !important;
+        min-width: 0 !important;
+      }
+      .premium-image-card { grid-template-columns: 1fr; }
+      .img-display-pane { min-height: 280px; border-right: 0; border-bottom: 1px solid var(--border); }
+      .inputs-entry-pane { padding: 21px; }
+    }
 
     .login-wrapper { min-height: calc(100vh - 40px); display: grid; grid-template-columns: minmax(0,1.2fr) minmax(340px,.8fr); overflow: hidden; border: 1px solid var(--border); border-radius: 32px; background: var(--login-bg); box-shadow: var(--shadow-lg); }
     .login-visual { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; min-height: 650px; padding: clamp(35px,6vw,75px); border-right: 1px solid var(--border); }
@@ -1038,7 +1075,11 @@
         border-bottom: 1px solid var(--border) !important;
         margin-bottom: 16px !important;
       }
-      .sticky-sidebar #btnSubmitGarageFinalResponse {
+      .sticky-sidebar #btnSubmitGarageFinalResponse,
+      .sticky-sidebar #btnDraftGarageResponse {
+        display: none !important;
+      }
+      .sticky-sidebar .p-card-head .section-number {
         display: none !important;
       }
     }
@@ -3192,8 +3233,8 @@
             <div><div class="eyebrow">Verified comparison result</div><h1>Kết quả đối chiếu Garage</h1><p>Xem lại đầy đủ người tạo hồ sơ, nội dung Garage khai báo và ảnh minh chứng theo từng hạng mục.</p></div>
             <div class="portal-counter-stack">
               <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện Sáng/Tối" onclick="toggleTheme()">${activeThemeIcon}</button>
-              <div class="portal-counter">Đã ghi hạng mục<strong>${String(completedItems).padStart(2,'0')}/${String(localActiveImageStack.length).padStart(2,'0')}</strong></div>
-              <div class="portal-counter">Đã cung cấp ảnh<strong>${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</strong></div>
+              <div class="portal-counter">Ảnh cần ghi tên<strong>${String(completedItems).padStart(2,'0')}/${String(localActiveImageStack.length).padStart(2,'0')}</strong></div>
+              <div class="portal-counter">Hạng mục có ảnh<strong>${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</strong></div>
             </div>
           </header>
           <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata(renderMode)}<div class="image-workspace-list">${imageResultsSection}${evidenceResultsSection}</div></div>
