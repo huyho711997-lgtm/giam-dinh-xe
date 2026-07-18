@@ -3850,7 +3850,7 @@
 
     async function callGeminiOcrApi(base64Data, mimeType) {
       let apiKey = localStorage.getItem('claimvision-gemini-key') || CONFIG.FIREBASE.apiKey;
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
       
       const payload = {
         contents: [{
