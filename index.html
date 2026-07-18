@@ -2130,6 +2130,43 @@
       evaluateViewRoutingState(firebase.auth().currentUser);
     }
 
+    async function downloadCategoryImages(index) {
+      const item = localActiveRequestedItems[index];
+      if (!item) return;
+      const urls = normalizeEvidenceImageUrls(item);
+      if (!urls.length) {
+        triggerToast('Hạng mục này chưa có ảnh để tải xuống!', 'warning');
+        return;
+      }
+      
+      const plateNo = (localActiveCaseNode?.bienSo || 'HoSo').replace(/[^a-zA-Z0-9]/g, '_');
+      const categoryName = (item.tenHangMuc || `HangMuc_${index+1}`).replace(/[^a-zA-Z0-9]/g, '_');
+      
+      triggerToast(`Đang chuẩn bị tải xuống ${urls.length} ảnh...`, 'info');
+      
+      for (let i = 0; i < urls.length; i++) {
+        try {
+          const url = urls[i];
+          const response = await fetch(url);
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = `${plateNo}_${categoryName}_anh_${String(i+1).padStart(2, '0')}.jpg`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+          
+          await new Promise(resolve => setTimeout(resolve, 350));
+        } catch (e) {
+          console.error('Download failed for:', urls[i], e);
+          window.open(urls[i], '_blank');
+        }
+      }
+    }
+
     function getProfileStorageKey(uid) {
       return `claimvision.userProfile.${uid || 'anonymous'}`;
     }
@@ -4318,28 +4355,25 @@
         <div class="workspace-section-head" style="margin-top:${localActiveImageStack.length ? '12px' : '0'}"><div><h2>02 · Ảnh Garage cung cấp theo hạng mục báo giá</h2><p>Kiểm tra trực tiếp bộ ảnh minh chứng Garage đã tải cho từng hạng mục.</p></div><div class="workspace-section-index">${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</div></div>
         ${localActiveRequestedItems.map((item,index) => {
           const urls = normalizeEvidenceImageUrls(item);
-          const decision = item.phuongAnDuyet || 'chua';
-          const approvedAmount = item.soTienDuyet || 0;
-          const isAdjusterView = (renderMode === 'result');
-          const decisionMarkup = isAdjusterView ? `
-            <div class="adjuster-decision-pane" style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border); display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between;">
-              <div style="display: flex; flex-direction: column; gap: 6px;">
-                <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Phương án bồi thường</span>
-                <div class="decision-pill-group" style="display: flex; gap: 6px;">
-                  <button type="button" class="decision-pill ${decision === 'chua' ? 'active' : ''}" onclick="updateAdjusterDecision(${index}, 'chua')">Chưa duyệt</button>
-                  <button type="button" class="decision-pill thay-moi ${decision === 'thay_moi' ? 'active' : ''}" onclick="updateAdjusterDecision(${index}, 'thay_moi')">Thay mới</button>
-                  <button type="button" class="decision-pill sua-chua ${decision === 'sua_chua' ? 'active' : ''}" onclick="updateAdjusterDecision(${index}, 'sua_chua')">Sửa chữa</button>
-                  <button type="button" class="decision-pill tu-choi ${decision === 'tu_choi' ? 'active' : ''}" onclick="updateAdjusterDecision(${index}, 'tu_choi')">Từ chối</button>
+          return `<article class="evidence-result-card">
+            <div class="evidence-result-title" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div>
+                <div>
+                  <h3 style="margin:0; font-size:15px; font-weight:700; color:var(--text-main);">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3>
+                  <p style="margin:2px 0 0 0; color:var(--text-muted); font-size:10px;">${urls.length} ảnh do Garage cung cấp</p>
                 </div>
               </div>
-              <div style="display: flex; flex-direction: column; gap: 6px; width: 160px;">
-                <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Số tiền duyệt (VNĐ)</span>
-                <input type="number" class="input-premium" style="height: 34px !important; font-size: 13px; text-align: right;" value="${approvedAmount}" placeholder="Nhập số tiền..." oninput="updateAdjusterDecision(${index}, undefined, this.value)" />
-              </div>
+              ${urls.length ? `
+                <button type="button" class="btn-premium btn-secondary" onclick="downloadCategoryImages(${index})" style="padding: 6px 14px; min-height: unset; height: 32px; font-size: 11px; margin: 0; display: flex; align-items: center; gap: 6px; border-radius: 8px;">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Tải ảnh (${urls.length})</span>
+                </button>
+              ` : ''}
             </div>
-          ` : '';
-
-          return `<article class="evidence-result-card"><div class="evidence-result-title"><div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div><div><h3>${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3><p>${urls.length} ảnh do Garage cung cấp</p></div></div>${item.ghiChuGarage ? `<div class="result-content" style="margin-bottom:14px"><strong style="display:block;margin-bottom:6px;color:var(--primary);font-size:9px;letter-spacing:.08em;text-transform:uppercase">Ghi chú Garage</strong>${escapeHtmlOutput(item.ghiChuGarage)}</div>` : ``}${urls.length ? `<div class="evidence-result-gallery">${urls.map((url,imageIndex) => `<button type="button" class="evidence-result-image" title="Mở ảnh ${imageIndex+1}" onclick="openLightbox(normalizeEvidenceImageUrls(localActiveRequestedItems[${index}]), ${imageIndex})"><img src="${escapeAttributeData(url)}" alt="Ảnh Garage cung cấp ${imageIndex+1}" loading="lazy"></button>`).join('')}</div>` : `<div class="evidence-empty">Garage chưa cung cấp ảnh cho hạng mục này.</div>`}${decisionMarkup}</article>`;
+            ${item.ghiChuGarage ? `<div class="result-content" style="margin-bottom:12px"><strong style="display:block;margin-bottom:4px;color:var(--primary);font-size:9px;letter-spacing:.08em;text-transform:uppercase">Ghi chú Garage</strong>${escapeHtmlOutput(item.ghiChuGarage)}</div>` : ``}
+            ${urls.length ? `<div class="evidence-result-gallery" style="margin-top: 0;">${urls.map((url,imageIndex) => `<button type="button" class="evidence-result-image" title="Mở ảnh ${imageIndex+1}" onclick="openLightbox(normalizeEvidenceImageUrls(localActiveRequestedItems[${index}]), ${imageIndex})"><img src="${escapeAttributeData(url)}" alt="Ảnh Garage cung cấp ${imageIndex+1}" loading="lazy"></button>`).join('')}</div>` : `<div class="evidence-empty">Garage chưa cung cấp ảnh cho hạng mục này.</div>`}
+          </article>`;
         }).join('')}` : '';
 
       const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
