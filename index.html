@@ -3147,6 +3147,25 @@
     /****************************************************
      * 1. PREMIUM MANAGEMENT DASHBOARD WORKSPACE
      ****************************************************/
+    function filterCasesByUserPrivileges(casesPayload, currentUserInstance) {
+      if (!currentUserInstance) return {};
+      
+      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+      if (isAdmin) {
+        return casesPayload; // Admins can see everything
+      }
+      
+      const filtered = {};
+      Object.entries(casesPayload || {}).forEach(([key, val]) => {
+        if (val.nguoiTao && val.nguoiTao.uid === currentUserInstance.uid) {
+          filtered[key] = val;
+        } else if (!val.nguoiTao) {
+          filtered[key] = val; // Backward compatibility for legacy cases
+        }
+      });
+      return filtered;
+    }
+
     function renderManagerDashboardWorkspace() {
       rootContainer.innerHTML = `
         <div id="tabContentContainer"></div>
@@ -3167,12 +3186,15 @@
 
       dbNodeInstance.ref('cases').on('value', (dataSnapshot) => {
         const val = dataSnapshot.val() || {};
-        cachedCasesPayload = val;
+        const currentUser = firebase.auth().currentUser;
+        const filteredVal = filterCasesByUserPrivileges(val, currentUser);
         
-        updateStatsCounters(val);
+        cachedCasesPayload = filteredVal;
+        
+        updateStatsCounters(filteredVal);
 
         if (activeDashboardTab === 'list') {
-          executeUIRenderCasesTable(val);
+          executeUIRenderCasesTable(filteredVal);
         }
       });
     }
@@ -4117,6 +4139,15 @@
         if (!databaseValueObject) {
           renderErrorLayoutState('Mã định danh ca xe không hợp lệ hoặc tài nguyên đã bị xóa trên cơ sở dữ liệu Cloud.');
           return;
+        }
+
+        const currentUser = firebase.auth().currentUser;
+        const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+        if (currentUser && currentViewFlag === 'result') {
+          if (!isAdmin && databaseValueObject.nguoiTao && databaseValueObject.nguoiTao.uid !== currentUser.uid) {
+            renderErrorLayoutState('Bạn không có quyền truy cập hồ sơ này (Access Denied).');
+            return;
+          }
         }
 
         localActiveCaseNode = databaseValueObject;
