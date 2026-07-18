@@ -1171,8 +1171,23 @@
         font-weight: 800 !important;
       }
       .evidence-request-head h3 {
-        font-size: 13.5px !important;
+        font-size: 17px !important;
+        font-weight: 800 !important;
+        color: var(--text-main) !important;
+        margin-top: 4px !important;
+      }
+      .evidence-request-head small {
+        font-size: 10px !important;
         font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        color: var(--text-muted) !important;
+      }
+      .badge-status::before {
+        box-shadow: none !important;
+      }
+      .evidence-request-head .badge-status {
+        padding: 5px 10px !important;
       }
       .evidence-request-body {
         padding: 14px 16px !important;
@@ -1185,6 +1200,14 @@
         gap: 10px !important;
         margin-top: 0 !important;
         margin-bottom: 12px !important;
+      }
+      .evidence-upload-actions button svg {
+        width: 16px !important;
+        height: 16px !important;
+        stroke-width: 2.2px !important;
+        fill: none !important;
+        stroke: currentColor !important;
+        flex-shrink: 0 !important;
       }
       .evidence-upload-actions button:first-child {
         flex: 1 !important;
