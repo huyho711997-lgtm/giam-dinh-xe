@@ -3299,10 +3299,35 @@
       } catch (_) {}
       
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth || 1920;
-      canvas.height = video.videoHeight || 1080;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const isPageLandscape = window.innerWidth > window.innerHeight;
+      const isVideoLandscape = video.videoWidth > video.videoHeight;
+      
+      const vw = video.videoWidth || 1920;
+      const vh = video.videoHeight || 1080;
+      
+      if (isPageLandscape === isVideoLandscape) {
+        // Same orientation - draw directly
+        canvas.width = vw;
+        canvas.height = vh;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      } else {
+        // Different orientation - rotate 90 degrees to match viewport
+        canvas.width = vh;
+        canvas.height = vw;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        
+        // Determine rotation angle
+        let angle = Math.PI / 2; // 90 degrees clockwise
+        if (window.orientation === -90) {
+          angle = -Math.PI / 2; // 90 degrees counter-clockwise
+        }
+        
+        ctx.rotate(angle);
+        ctx.drawImage(video, -vw / 2, -vh / 2, vw, vh);
+      }
       
       canvas.toBlob((blob) => {
         if (blob) {
