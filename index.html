@@ -905,6 +905,177 @@
     .evidence-preview-item:hover img { transform: scale(1.05); }
 
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+    /* --- MOBILE STYLING ENHANCEMENTS FOR GARAGE PORTAL --- */
+    .mobile-bottom-bar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 3000;
+      padding: 12px 16px;
+      background: var(--surface);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .mobile-bottom-bar-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .mobile-bottom-bar-progress {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .mobile-bottom-bar-percentage {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .mobile-bottom-bar .btn-premium {
+      height: 38px;
+      padding: 0 18px;
+      font-size: 12.5px;
+      font-weight: 600;
+      border-radius: 20px;
+    }
+
+    @media (max-width: 990px) {
+      /* Display bottom bar in portal active mode on mobile */
+      body:has([data-garage-portal="active"]) .mobile-bottom-bar {
+        display: flex;
+      }
+      body:has([data-garage-portal="active"]) {
+        padding-bottom: 74px !important;
+      }
+
+      /* Collapsible details for sidebar metadata on mobile */
+      .sticky-sidebar.collapsed .metadata-list,
+      .sticky-sidebar.collapsed .case-id-chip,
+      .sticky-sidebar.collapsed .sidebar-tip {
+        display: none !important;
+      }
+      .sticky-sidebar {
+        padding: 0 !important;
+        border-radius: var(--radius-lg) !important;
+        margin-bottom: 16px !important;
+        overflow: hidden;
+      }
+      .sticky-sidebar .p-card-head {
+        cursor: pointer;
+        position: relative;
+        user-select: none;
+        padding: 14px 18px !important;
+        margin-bottom: 0 !important;
+        border-bottom: none !important;
+      }
+      .sticky-sidebar .p-card-head::after {
+        content: '';
+        position: absolute;
+        right: 18px;
+        top: 50%;
+        transform: translateY(-50%) rotate(0deg);
+        width: 10px;
+        height: 10px;
+        border-left: 2px solid var(--text-muted);
+        border-bottom: 2px solid var(--text-muted);
+        transform: translateY(-70%) rotate(-45deg);
+        transition: transform 0.2s ease;
+      }
+      .sticky-sidebar:not(.collapsed) .p-card-head::after {
+        transform: translateY(-30%) rotate(135deg);
+      }
+      .sticky-sidebar:not(.collapsed) .p-card-head {
+        border-bottom: 1px solid var(--border) !important;
+        margin-bottom: 16px !important;
+      }
+      .sticky-sidebar #btnSubmitGarageFinalResponse {
+        display: none !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .premium-image-card {
+        grid-template-columns: 1fr !important;
+        border-radius: var(--radius-md) !important;
+      }
+      .img-display-pane {
+        min-height: 170px !important;
+        max-height: 170px !important;
+      }
+      .inputs-entry-pane {
+        padding: 12px 14px !important;
+        gap: 10px !important;
+      }
+      .inputs-entry-pane textarea {
+        min-height: 68px !important;
+        font-size: 14px !important; /* Prevents iOS auto-zoom */
+        padding: 8px 10px !important;
+      }
+      .image-sequence {
+        font-size: 9px !important;
+      }
+      
+      .evidence-request-card {
+        border-radius: var(--radius-md) !important;
+      }
+      .evidence-request-head {
+        padding: 10px 14px !important;
+        gap: 10px !important;
+      }
+      .evidence-request-head h3 {
+        font-size: 12.5px !important;
+      }
+      .evidence-request-body {
+        padding: 12px 14px !important;
+      }
+      .evidence-dropzone {
+        min-height: 56px !important;
+        padding: 8px !important;
+      }
+      .evidence-dropzone strong {
+        font-size: 11px !important;
+      }
+      .evidence-dropzone p {
+        display: none !important;
+      }
+      .evidence-upload-actions {
+        display: flex;
+        gap: 6px !important;
+        margin-top: 6px !important;
+      }
+      .evidence-upload-actions button {
+        flex: 1 !important;
+        height: 36px !important;
+        font-size: 11px !important;
+        border-radius: var(--radius-md) !important;
+        font-weight: 600 !important;
+      }
+      .evidence-note {
+        min-height: 48px !important;
+        font-size: 14px !important; /* Prevents iOS auto-zoom */
+        padding: 8px 10px !important;
+      }
+      .evidence-preview-grid {
+        grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)) !important;
+        gap: 6px !important;
+      }
+      .garage-progress-panel {
+        padding: 10px 14px !important;
+        margin-bottom: 12px !important;
+        border-radius: var(--radius-md) !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2392,6 +2563,13 @@
           </header>
           <div class="garage-progress-panel"><div class="garage-progress-top"><div><strong>Tiến độ hoàn thiện hồ sơ</strong><span id="garageProgressCaption">Đang tính toán dữ liệu...</span></div><span id="garageProgressPercent" class="garage-progress-percent">0%</span></div><div class="garage-progress-track"><div id="garageProgressFill"></div></div></div>
           <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list">${imageInputSection}${evidenceRequestSection}</div></div>
+          <div class="mobile-bottom-bar">
+            <div class="mobile-bottom-bar-info">
+              <span class="mobile-bottom-bar-progress">Tiến độ:</span>
+              <span id="mobileBottomBarProgressPercent" class="mobile-bottom-bar-percentage">0%</span>
+            </div>
+            <button id="btnMobileSubmitGarageResponse" class="btn-premium">${SVGS.CHECK_CIRCLE} Gửi kết quả</button>
+          </div>
         </div>`;
 
       document.querySelectorAll('.garage-quote-textarea-node').forEach(textarea => {
@@ -2408,6 +2586,11 @@
         dropzone.addEventListener('drop', event => handleGarageEvidenceFiles(Number(dropzone.dataset.evidenceDropzone), Array.from(event.dataTransfer.files || [])));
       });
       document.getElementById('btnSubmitGarageFinalResponse').addEventListener('click', pipelineTriggerGarageDataLockSubmission);
+      
+      const mobileSubmitBtn = document.getElementById('btnMobileSubmitGarageResponse');
+      if (mobileSubmitBtn) mobileSubmitBtn.addEventListener('click', pipelineTriggerGarageDataLockSubmission);
+
+      initializeSidebarCollapse();
       refreshGarageProgressUI();
     }
 
@@ -2601,6 +2784,25 @@
       if (caption) caption.textContent = `${done}/${total} nội dung bắt buộc đã hoàn thành`;
       if (percentNode) percentNode.textContent = `${percent}%`;
       if (fill) fill.style.width = `${percent}%`;
+      const mobilePercentNode = document.getElementById('mobileBottomBarProgressPercent');
+      if (mobilePercentNode) mobilePercentNode.textContent = `${percent}%`;
+    }
+
+    function initializeSidebarCollapse() {
+      const sidebar = document.querySelector('.sticky-sidebar');
+      if (sidebar) {
+        if (window.innerWidth <= 990) {
+          sidebar.classList.add('collapsed');
+        }
+        const head = sidebar.querySelector('.p-card-head');
+        if (head) {
+          head.addEventListener('click', () => {
+            if (window.innerWidth <= 990) {
+              sidebar.classList.toggle('collapsed');
+            }
+          });
+        }
+      }
     }
 
     async function flushGarageAutosaves() {
@@ -2747,6 +2949,7 @@
         </div>`;
       
       if (renderMode === 'result') updateAdjusterSummaryStats();
+      initializeSidebarCollapse();
     }
 
     function compileRawTextSummaryReportBlock() {
