@@ -2870,15 +2870,61 @@
     }
 
     let lastFetchedGpsCoords = null;
+    let lastFetchedAddress = null;
+
+    async function reverseGeocodeAddress(lat, lon) {
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=vi&addressdetails=1&email=huyho711997@gmail.com`;
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data || !data.address) return null;
+        
+        const addr = data.address;
+        const parts = [];
+        
+        // House number and road
+        const house = addr.house_number || addr.building;
+        const road = addr.road || addr.highway || addr.street;
+        if (house && road) {
+          parts.push(`${house} ${road}`);
+        } else {
+          if (house) parts.push(house);
+          if (road) parts.push(road);
+        }
+        
+        // Ward / Suburb / Commune
+        const ward = addr.suburb || addr.quarter || addr.neighbourhood || addr.village || addr.commune || addr.townland;
+        if (ward) parts.push(ward);
+        
+        // District / Town / City District
+        const district = addr.city_district || addr.district || addr.county || addr.town;
+        if (district) parts.push(district);
+        
+        // City / Province / State
+        const city = addr.city || addr.province || addr.state || addr.municipality;
+        if (city) parts.push(city);
+        
+        return parts.join(', ');
+      } catch (err) {
+        console.error('Reverse geocoding error:', err);
+        return null;
+      }
+    }
 
     function prefetchGpsCoordinates() {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
             lastFetchedGpsCoords = {
-              latitude: position.coords.latitude.toFixed(6),
-              longitude: position.coords.longitude.toFixed(6)
+              latitude: lat.toFixed(6),
+              longitude: lon.toFixed(6)
             };
+            reverseGeocodeAddress(lat, lon).then((address) => {
+              lastFetchedAddress = address;
+            });
           },
           (error) => {
             console.warn('Geolocation error:', error);
@@ -2924,9 +2970,11 @@
             const now = new Date();
             const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
             
-            let gpsStr = 'Định vị GPS: Không khả dụng (Chưa cấp quyền)';
-            if (lastFetchedGpsCoords) {
-              gpsStr = `Định vị GPS: Vĩ độ ${lastFetchedGpsCoords.latitude}, Kinh độ ${lastFetchedGpsCoords.longitude}`;
+            let gpsStr = 'Định vị: Chưa xác định (Chưa cấp quyền GPS)';
+            if (lastFetchedAddress) {
+              gpsStr = `Định vị: ${lastFetchedAddress}`;
+            } else if (lastFetchedGpsCoords) {
+              gpsStr = `Định vị: ${lastFetchedGpsCoords.latitude}, ${lastFetchedGpsCoords.longitude}`;
             }
             
             const line1 = `Thời gian chụp: ${timeStr}`;
