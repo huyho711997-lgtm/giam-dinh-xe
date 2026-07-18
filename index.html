@@ -2905,6 +2905,10 @@
         const city = addr.city || addr.province || addr.state || addr.municipality;
         if (city) parts.push(city);
         
+        if (addr.postcode) {
+          parts.push(addr.postcode);
+        }
+        
         return parts.join(', ');
       } catch (err) {
         console.error('Reverse geocoding error:', err);
@@ -2952,39 +2956,49 @@
             const w = canvas.width;
             const h = canvas.height;
             const fontSize = Math.max(16, Math.round(w / 45));
-            const padding = Math.max(12, Math.round(w / 60));
+            const padding = Math.max(16, Math.round(w / 50));
             const lineHeight = fontSize * 1.35;
-            const lineCount = 2;
-            const rectHeight = padding * 2 + lineHeight * lineCount;
-            
-            // Draw semi-transparent dark banner at bottom
-            ctx.fillStyle = 'rgba(15, 12, 8, 0.65)';
-            ctx.fillRect(0, h - rectHeight, w, rectHeight);
             
             // Setup text style
             ctx.font = `bold ${fontSize}px sans-serif`;
             ctx.fillStyle = '#FFFFFF';
-            ctx.textBaseline = 'top';
+            ctx.textBaseline = 'bottom';
+            ctx.textAlign = 'right';
+            
+            // Text shadow for readability on light backgrounds
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+            ctx.shadowBlur = Math.max(3, Math.round(w / 300));
+            ctx.shadowOffsetX = Math.max(1, Math.round(w / 600));
+            ctx.shadowOffsetY = Math.max(1, Math.round(w / 600));
             
             // Prepare texts
+            const caseNode = localActiveCaseNode || {};
+            const adjusterName = activeUserProfile?.tenHienThi || activeUserProfile?.email || caseNode.nguoiTao?.tenHienThi || caseNode.nguoiTao?.email || 'N/A';
+            
             const now = new Date();
             const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
             
-            let gpsStr = 'Định vị: Chưa xác định (Chưa cấp quyền GPS)';
+            let gpsStr = 'Chưa xác định (Chưa cấp quyền GPS)';
             if (lastFetchedAddress) {
-              gpsStr = `Định vị: ${lastFetchedAddress}`;
+              gpsStr = lastFetchedAddress;
             } else if (lastFetchedGpsCoords) {
-              gpsStr = `Định vị: ${lastFetchedGpsCoords.latitude}, ${lastFetchedGpsCoords.longitude}`;
+              gpsStr = `${lastFetchedGpsCoords.latitude}, ${lastFetchedGpsCoords.longitude}`;
             }
             
-            const line1 = `Thời gian chụp: ${timeStr}`;
-            const line2 = `${gpsStr}`;
+            const line1 = `TASCO DLK`;
+            const line2 = `Giám định viên: ${adjusterName}`;
+            const line3 = `${timeStr}`;
+            const line4 = `${gpsStr}`;
             
-            // Draw lines of text
-            let currentY = h - rectHeight + padding;
-            ctx.fillText(line1, padding, currentY);
-            currentY += lineHeight;
-            ctx.fillText(line2, padding, currentY);
+            // Draw lines of text from bottom to top
+            let currentY = h - padding;
+            ctx.fillText(line4, w - padding, currentY);
+            currentY -= lineHeight;
+            ctx.fillText(line3, w - padding, currentY);
+            currentY -= lineHeight;
+            ctx.fillText(line2, w - padding, currentY);
+            currentY -= lineHeight;
+            ctx.fillText(line1, w - padding, currentY);
             
             // Convert canvas back to Blob/File
             canvas.toBlob((blob) => {
@@ -3105,6 +3119,15 @@
         refreshSingleEvidenceCard(requestIndex);
         refreshGarageProgressUI();
         triggerToast(`Đã lưu ${newUrls.length} ảnh cho hạng mục “${localActiveRequestedItems[requestIndex].tenHangMuc}”.`);
+        
+        if (isFromCamera) {
+          setTimeout(async () => {
+            const captureMore = await showConfirmModal('Chụp ảnh liên tục', 'Bạn có muốn chụp thêm ảnh khác cho hạng mục này không?', 'Chụp tiếp', 'Hoàn tất');
+            if (captureMore) {
+              openMobileCameraForEvidence(requestIndex);
+            }
+          }, 600);
+        }
       } catch (error) {
         console.error(error);
         triggerToast('Không thể tải ảnh: ' + (error.message || 'Lỗi kết nối'), 'error');
@@ -3452,7 +3475,7 @@
       }, 3800);
     }
 
-    function showConfirmModal(title, message) {
+    function showConfirmModal(title, message, confirmText = 'Xác nhận', cancelText = 'Hủy') {
       return new Promise((resolve) => {
         const overlay = document.getElementById('modalOverlay');
         const titleNode = document.getElementById('modalTitle');
@@ -3465,11 +3488,19 @@
         }
         titleNode.textContent = title || 'Xác nhận thao tác';
         messageNode.textContent = message || 'Bạn có chắc chắn muốn tiếp tục?';
+        
+        const originalConfirmText = confirmButton.textContent;
+        const originalCancelText = cancelButton.textContent;
+        confirmButton.textContent = confirmText;
+        cancelButton.textContent = cancelText;
+
         overlay.style.display = 'grid';
         document.body.style.overflow = 'hidden';
         const finish = (result) => {
           overlay.style.display = 'none';
           document.body.style.overflow = '';
+          confirmButton.textContent = originalConfirmText;
+          cancelButton.textContent = originalCancelText;
           cancelButton.removeEventListener('click', onCancel);
           confirmButton.removeEventListener('click', onConfirm);
           overlay.removeEventListener('click', onBackdrop);
