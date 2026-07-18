@@ -15,6 +15,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
     /* ==========================================================================
@@ -2140,6 +2141,24 @@
       evaluateViewRoutingState(firebase.auth().currentUser);
     }
 
+    function removeVietnameseTones(str) {
+      if (!str) return '';
+      let result = str.toString().trim();
+      result = result.toLowerCase();
+      result = result.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
+      result = result.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
+      result = result.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
+      result = result.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
+      result = result.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
+      result = result.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
+      result = result.replace(/đ/g, 'd');
+      result = result.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      result = result.replace(/[^a-z0-9]/g, '_');
+      result = result.replace(/_+/g, '_');
+      result = result.replace(/^_+|_+$/g, '');
+      return result || 'hang_muc';
+    }
+
     async function downloadCategoryImages(index) {
       const item = localActiveRequestedItems[index];
       if (!item) return;
@@ -2149,31 +2168,67 @@
         return;
       }
       
-      const plateNo = (localActiveCaseNode?.bienSo || 'HoSo').replace(/[^a-zA-Z0-9]/g, '_');
-      const categoryName = (item.tenHangMuc || `HangMuc_${index+1}`).replace(/[^a-zA-Z0-9]/g, '_');
+      const rawCategoryName = item.tenHangMuc || `hang_muc_${index+1}`;
+      const safeCategoryName = removeVietnameseTones(rawCategoryName);
+      const plateNo = removeVietnameseTones(localActiveCaseNode?.bienSo || 'ho_so');
       
       triggerToast(`Đang chuẩn bị tải xuống ${urls.length} ảnh...`, 'info');
       
-      for (let i = 0; i < urls.length; i++) {
-        try {
-          const url = urls[i];
-          const response = await fetch(url);
-          const blob = await response.blob();
-          const blobUrl = URL.createObjectURL(blob);
+      try {
+        if (typeof JSZip !== 'undefined') {
+          const zip = new JSZip();
+          const promises = urls.map(async (url, i) => {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            let ext = 'jpg';
+            const urlPath = url.split('?')[0];
+            const match = urlPath.match(/\.(png|jpe?g|webp|heic|heif)$/i);
+            if (match) {
+              ext = match[1].toLowerCase();
+            }
+            const imageName = `${safeCategoryName}_${String(i+1).padStart(2, '0')}.${ext}`;
+            zip.file(imageName, blob);
+          });
+          
+          await Promise.all(promises);
+          
+          const content = await zip.generateAsync({ type: 'blob' });
+          const blobUrl = URL.createObjectURL(content);
           
           const a = document.createElement('a');
           a.href = blobUrl;
-          a.download = `${plateNo}_${categoryName}_anh_${String(i+1).padStart(2, '0')}.jpg`;
+          a.download = `${plateNo}_${safeCategoryName}.zip`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(blobUrl);
-          
-          await new Promise(resolve => setTimeout(resolve, 350));
-        } catch (e) {
-          console.error('Download failed for:', urls[i], e);
-          window.open(urls[i], '_blank');
+          triggerToast('Đã tải xuống file nén thành công!', 'success');
+        } else {
+          triggerToast('Không thể nén file, đang tải trực tiếp...', 'warning');
+          for (let i = 0; i < urls.length; i++) {
+            const url = urls[i];
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            let ext = 'jpg';
+            const urlPath = url.split('?')[0];
+            const match = urlPath.match(/\.(png|jpe?g|webp|heic|heif)$/i);
+            if (match) ext = match[1].toLowerCase();
+            
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = `${safeCategoryName}_${String(i+1).padStart(2, '0')}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+            await new Promise(resolve => setTimeout(resolve, 350));
+          }
         }
+      } catch (e) {
+        console.error('Download failed:', e);
+        triggerToast('Tải xuống thất bại, đang mở liên kết trực tiếp...', 'error');
+        urls.forEach(url => window.open(url, '_blank'));
       }
     }
 
