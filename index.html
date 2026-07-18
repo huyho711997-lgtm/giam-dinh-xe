@@ -2869,14 +2869,109 @@
       refreshGarageProgressUI();
     }
 
+    let lastFetchedGpsCoords = null;
+
+    function prefetchGpsCoordinates() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            lastFetchedGpsCoords = {
+              latitude: position.coords.latitude.toFixed(6),
+              longitude: position.coords.longitude.toFixed(6)
+            };
+          },
+          (error) => {
+            console.warn('Geolocation error:', error);
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 }
+        );
+      }
+    }
+
+    function addWatermarkToImageFile(file, categoryName) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw original image
+            ctx.drawImage(img, 0, 0);
+            
+            // Proportional layout configuration
+            const w = canvas.width;
+            const h = canvas.height;
+            const fontSize = Math.max(16, Math.round(w / 45));
+            const padding = Math.max(12, Math.round(w / 60));
+            const lineHeight = fontSize * 1.35;
+            const lineCount = 3;
+            const rectHeight = padding * 2 + lineHeight * lineCount;
+            
+            // Draw semi-transparent dark banner at bottom
+            ctx.fillStyle = 'rgba(15, 12, 8, 0.65)';
+            ctx.fillRect(0, h - rectHeight, w, rectHeight);
+            
+            // Setup text style
+            ctx.font = `bold ${fontSize}px sans-serif`;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.textBaseline = 'top';
+            
+            // Prepare texts
+            const caseNode = localActiveCaseNode || {};
+            const tenGara = caseNode.tenGara || 'N/A';
+            const bienSo = caseNode.bienSo || 'N/A';
+            
+            const now = new Date();
+            const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+            
+            let gpsStr = 'Tọa độ GPS: Không khả dụng (Chưa cấp quyền)';
+            if (lastFetchedGpsCoords) {
+              gpsStr = `Tọa độ GPS: Vĩ độ ${lastFetchedGpsCoords.latitude}, Kinh độ ${lastFetchedGpsCoords.longitude}`;
+            }
+            
+            const line1 = `TASCO CLAIMVISION  |  GARA: ${tenGara.toUpperCase()}  |  BKS: ${bienSo.toUpperCase()}`;
+            const line2 = `HẠNG MỤC: ${categoryName.toUpperCase()}  |  THỜI GIAN: ${timeStr}`;
+            const line3 = `${gpsStr}`;
+            
+            // Draw lines of text
+            let currentY = h - rectHeight + padding;
+            ctx.fillText(line1, padding, currentY);
+            currentY += lineHeight;
+            ctx.fillText(line2, padding, currentY);
+            currentY += lineHeight;
+            ctx.fillText(line3, padding, currentY);
+            
+            // Convert canvas back to Blob/File
+            canvas.toBlob((blob) => {
+              if (blob) {
+                const stampedFile = new File([blob], file.name, { type: file.type });
+                resolve(stampedFile);
+              } else {
+                resolve(file);
+              }
+            }, file.type, 0.9);
+          };
+          img.onerror = () => resolve(file);
+          img.src = e.target.result;
+        };
+        reader.onerror = () => resolve(file);
+        reader.readAsDataURL(file);
+      });
+    }
+
     function openMobileCameraForEvidence(index) {
+      prefetchGpsCoordinates();
       const cameraInput = document.createElement('input');
       cameraInput.type = 'file';
       cameraInput.accept = 'image/*';
       cameraInput.capture = 'environment';
       cameraInput.multiple = false;
       cameraInput.style.display = 'none';
-      cameraInput.addEventListener('change', () => { handleGarageEvidenceFiles(index, Array.from(cameraInput.files || [])); cameraInput.remove(); });
+      cameraInput.addEventListener('change', () => { handleGarageEvidenceFiles(index, Array.from(cameraInput.files || []), true); cameraInput.remove(); });
       document.body.appendChild(cameraInput);
       cameraInput.click();
     }
@@ -2936,10 +3031,20 @@
       if (fill) fill.style.width = `${Math.max(0,Math.min(100,percent))}%`;
     }
 
-    async function handleGarageEvidenceFiles(requestIndex, incomingFiles) {
+    async function handleGarageEvidenceFiles(requestIndex, incomingFiles, isFromCamera = false) {
       if (!localActiveRequestedItems[requestIndex] || !incomingFiles.length) return;
+
+      let processedFiles = incomingFiles;
+      if (isFromCamera) {
+        setEvidenceUploadUI(requestIndex, true, `Đang xử lý toạ độ & ngày giờ...`, 1);
+        const categoryName = localActiveRequestedItems[requestIndex].tenHangMuc || `Hạng mục ${requestIndex + 1}`;
+        processedFiles = await Promise.all(
+          incomingFiles.map(file => addWatermarkToImageFile(file, categoryName))
+        );
+      }
+
       const currentUrls = normalizeEvidenceImageUrls(localActiveRequestedItems[requestIndex]);
-      const { valid, rejected } = validateGarageEvidenceFiles(incomingFiles, currentUrls.length);
+      const { valid, rejected } = validateGarageEvidenceFiles(processedFiles, currentUrls.length);
       if (rejected.length) triggerToast(rejected.slice(0,2).join(' · ') + (rejected.length > 2 ? ` · +${rejected.length-2} lỗi khác` : ''), 'warning');
       if (!valid.length) return;
       garageUploadsInFlight += 1;
