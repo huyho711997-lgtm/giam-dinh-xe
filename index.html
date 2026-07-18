@@ -4461,14 +4461,24 @@
               ${(() => {
                 const total = localActiveRequestedItems.length;
                 const completed = completedEvidenceItems;
-                const isAllDone = total > 0 && completed === total;
-                const badgeColor = isAllDone ? '#10b981' : '#f59e0b';
-                const badgeBorder = isAllDone ? 'rgba(16, 185, 129, 0.35)' : 'rgba(245, 158, 11, 0.35)';
-                const badgeBg = isAllDone ? 'rgba(16, 185, 129, 0.06)' : 'rgba(245, 158, 11, 0.05)';
+                const pending = total - completed;
                 return `
-                  <div class="portal-counter" style="border: 1px solid ${badgeBorder}; background: ${badgeBg}; box-shadow: 0 0 12px ${isAllDone ? 'rgba(16,185,129,0.06)' : 'rgba(245,158,11,0.05)'}; transition: all 0.3s ease; text-align: right;">
-                    <span style="color: ${isAllDone ? 'rgba(16,185,129,0.75)' : 'rgba(245,158,11,0.75)'}; font-weight: 800; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;">Tiến độ ảnh minh chứng</span>
-                    <strong style="color: ${badgeColor}; display: block; margin-top: 3px; font-family: 'JetBrains Mono'; font-size: 20px; letter-spacing: -.04em;">${String(completed).padStart(2,'0')}/${String(total).padStart(2,'0')}</strong>
+                  <!-- Đã bổ sung ảnh -->
+                  <div class="portal-counter" style="border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.04); text-align: right; min-width: 122px;">
+                    <span style="color: rgba(16, 185, 129, 0.8); font-weight: 800; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;">Đã bổ sung ảnh</span>
+                    <strong style="color: #10b981; display: block; margin-top: 3px; font-family: 'JetBrains Mono'; font-size: 20px; letter-spacing: -.04em;">${String(completed).padStart(2,'0')}</strong>
+                  </div>
+                  
+                  <!-- Chưa bổ sung ảnh -->
+                  <div class="portal-counter" style="border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.04); text-align: right; min-width: 122px;">
+                    <span style="color: rgba(239, 68, 68, 0.8); font-weight: 800; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;">Chưa có ảnh</span>
+                    <strong style="color: #ef4444; display: block; margin-top: 3px; font-family: 'JetBrains Mono'; font-size: 20px; letter-spacing: -.04em;">${String(pending).padStart(2,'0')}</strong>
+                  </div>
+                  
+                  <!-- Tổng hạng mục -->
+                  <div class="portal-counter" style="border: 1px solid rgba(216, 180, 109, 0.3); background: rgba(216, 180, 109, 0.04); text-align: right; min-width: 122px;">
+                    <span style="color: rgba(216, 180, 109, 0.8); font-weight: 800; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;">Tổng hạng mục</span>
+                    <strong style="color: #d8b46d; display: block; margin-top: 3px; font-family: 'JetBrains Mono'; font-size: 20px; letter-spacing: -.04em;">${String(total).padStart(2,'0')}</strong>
                   </div>
                 `;
               })()}
