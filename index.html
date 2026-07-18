@@ -2058,6 +2058,19 @@
       firebase.auth().onAuthStateChanged(async (userInstance) => {
         if (userInstance) {
           activeUserProfile = await loadUserProfile(userInstance);
+          
+          // Auto-promote huyho71@gmail.com to permanent Admin role in database
+          const isBootstrapAdmin = userInstance.email && String(userInstance.email).trim().toLowerCase() === 'huyho71@gmail.com';
+          if (isBootstrapAdmin && activeUserProfile && activeUserProfile.role !== 'Admin') {
+            activeUserProfile.role = 'Admin';
+            activeUserProfile.department = 'Quản trị hệ thống';
+            dbNodeInstance.ref(`users/${userInstance.uid}/profile`).update({
+              role: 'Admin',
+              department: 'Quản trị hệ thống',
+              email: userInstance.email
+            }).catch(() => {});
+          }
+          
           if (activeUserProfile && !activeUserProfile.email && userInstance.email) {
             activeUserProfile.email = userInstance.email;
             dbNodeInstance.ref(`users/${userInstance.uid}/profile/email`).set(userInstance.email).catch(() => {});
@@ -2448,10 +2461,11 @@
     }
 
     async function loadUserProfile(userInstance) {
+      const isBootstrapAdmin = userInstance?.email && String(userInstance.email).trim().toLowerCase() === 'huyho71@gmail.com';
       const fallback = {
         displayName: String(userInstance?.displayName || '').trim(),
-        role: 'Giám định viên',
-        department: 'Bộ phận Giám định'
+        role: isBootstrapAdmin ? 'Admin' : 'Giám định viên',
+        department: isBootstrapAdmin ? 'Quản trị hệ thống' : 'Bộ phận Giám định'
       };
       try {
         const localValue = JSON.parse(localStorage.getItem(getProfileStorageKey(userInstance?.uid)) || 'null');
