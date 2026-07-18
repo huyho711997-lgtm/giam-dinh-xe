@@ -3105,12 +3105,30 @@
         const dateInfo = formatCaseTimestamp(entityNode.createdAt);
         const plate = escapeHtmlOutput(entityNode.bienSo || 'Chưa có biển số');
         const initials = plate.replace(/[^A-Za-z0-9]/g, '').slice(0,2).toUpperCase() || 'CV';
-        const reqCount = entityNode.soLuongHangMucYeuCauAnh || (Array.isArray(entityNode.hangMucYeuCauAnh) ? entityNode.hangMucYeuCauAnh.length : Object.keys(entityNode.hangMucYeuCauAnh || {}).length);
+        
+        const reqList = Array.isArray(entityNode.hangMucYeuCauAnh) ? entityNode.hangMucYeuCauAnh : Object.values(entityNode.hangMucYeuCauAnh || {});
+        const totalReq = reqList.length;
+        const completedReq = reqList.filter(item => normalizeEvidenceImageUrls(item).length > 0).length;
+        const isCaseEvidenceComplete = totalReq > 0 && completedReq === totalReq;
+        
+        const checkmarkMarkup = isCaseEvidenceComplete ? `
+          <span class="verified-evidence-badge" title="Đã hoàn thiện nộp đủ ảnh minh chứng cho tất cả các hạng mục" style="display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: #10b981; color: #fff; flex-shrink: 0; box-shadow: 0 0 8px rgba(16,185,129,0.45); margin-left: 2px;">
+            <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
+        ` : '';
+        
         return `
-          <tr class="clickable-row" onclick="navigateToCase('${uniqueKeyToken}', '${isCaseDone ? 'result' : ''}')">
-            <td data-label="Phương tiện"><div class="vehicle-cell"><div class="vehicle-avatar">${initials}</div><div><div class="vehicle-name">${plate}</div><div class="vehicle-sub">${escapeHtmlOutput(entityNode.tenGara || 'Chưa xác định Garage')}</div></div></div></td>
+          <tr class="clickable-row" onclick="navigateToCase('${uniqueKeyToken}', 'result')">
+            <td data-label="Phương tiện"><div class="vehicle-cell"><div class="vehicle-avatar">${initials}</div><div><div class="vehicle-name" style="display: flex; align-items: center; gap: 5px;">${plate}${checkmarkMarkup}</div><div class="vehicle-sub">${escapeHtmlOutput(entityNode.tenGara || 'Chưa xác định Garage')}</div></div></div></td>
             <td data-label="Khởi tạo"><div class="date-mini">${dateInfo.date}<span>${dateInfo.time}</span></div></td>
-            <td data-label="Nội dung"><div class="date-mini"><strong style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-soft)">${Number(entityNode.soLuongAnh || 0).toString().padStart(2,'0')} ảnh hiện trạng</strong><span>${Number(reqCount).toString().padStart(2,'0')} yêu cầu ảnh</span></div></td>
+            <td data-label="Nội dung">
+              <div class="date-mini">
+                <strong style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-soft)">${Number(entityNode.soLuongAnh || 0).toString().padStart(2,'0')} ảnh hiện trạng</strong>
+                <span style="color: ${isCaseEvidenceComplete ? '#10b981' : 'var(--text-muted)'}; font-weight: ${isCaseEvidenceComplete ? '700' : '500'}">
+                  ${completedReq}/${totalReq} hạng mục có ảnh
+                </span>
+              </div>
+            </td>
             <td data-label="Trạng thái"><span class="badge-status ${targetBadgeClass}">${escapeHtmlOutput(entityNode.trangThai || STATUS_PENDING)}</span></td>
             <td onclick="event.stopPropagation()"><div class="flex-actions-group">
               <button title="Xem link Garage" class="btn-premium btn-secondary" onclick="navigateToCase('${uniqueKeyToken}')">${SVGS.EXTERNAL}<span class="action-label">Garage</span></button>
