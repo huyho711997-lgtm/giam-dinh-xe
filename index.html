@@ -3593,22 +3593,37 @@
       return { valid, rejected };
     }
 
-    async function prepareImageFileForUpload(file) {
-      if (!file.type.match(/^image\/(jpeg|png|webp)$/) || file.size < 2.5 * 1024 * 1024) return file;
+        async function prepareImageFileForUpload(file) {
+      if (!file.type.match(/^image\/(jpeg|png|webp)$/)) return file;
+      const MAX_DIMENSION = 1280;
       try {
         const bitmap = await createImageBitmap(file);
-        const maxEdge = 2560;
-        const ratio = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
-        if (ratio >= .98) { bitmap.close(); return file; }
+        let width = bitmap.width;
+        let height = bitmap.height;
+        
+        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIMENSION) / width);
+            width = MAX_DIMENSION;
+          } else {
+            width = Math.round((width * MAX_DIMENSION) / height);
+            height = MAX_DIMENSION;
+          }
+        }
+        
         const canvas = document.createElement('canvas');
-        canvas.width = Math.round(bitmap.width * ratio);
-        canvas.height = Math.round(bitmap.height * ratio);
-        canvas.getContext('2d', { alpha:false }).drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d', { alpha: false });
+        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
         bitmap.close();
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', .88));
+        
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
         if (!blob) return file;
-        return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type:'image/jpeg', lastModified:Date.now() });
-      } catch (_) { return file; }
+        return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+      } catch (_) {
+        return file;
+      }
     }
 
     function setEvidenceUploadUI(index, show, text = '', percent = 0) {
@@ -3628,10 +3643,16 @@
     async function handleGarageEvidenceFiles(requestIndex, incomingFiles, isFromCamera = false) {
       if (!localActiveRequestedItems[requestIndex] || !incomingFiles.length) return;
 
+      const fileInput = document.getElementById(`garageEvidenceInput_${requestIndex}`);
+      const isCameraSource = isFromCamera || (fileInput && fileInput.dataset.sourceType === 'camera');
+      if (fileInput) delete fileInput.dataset.sourceType;
+
+      const categoryName = localActiveRequestedItems[requestIndex].tenHangMuc || `H\u1ea1ng m\u1ee5c ${requestIndex + 1}`;
+      setEvidenceUploadUI(requestIndex, true, `\u0110ang x\u1eed l\u00fd ${incomingFiles.length} \u1ea3nh`, 5);
+
       let processedFiles = incomingFiles;
-      if (isFromCamera) {
-        setEvidenceUploadUI(requestIndex, true, `Đang xử lý toạ độ & ngày giờ...`, 1);
-        const categoryName = localActiveRequestedItems[requestIndex].tenHangMuc || `Hạng mục ${requestIndex + 1}`;
+      if (isCameraSource) {
+        setEvidenceUploadUI(requestIndex, true, `\u0110ang \u0111\u00f3ng d\u1ea5u \u1ea3nh...`, 10);
         processedFiles = await Promise.all(
           incomingFiles.map(file => addWatermarkToImageFile(file, categoryName))
         );
@@ -3639,35 +3660,41 @@
 
       const currentUrls = normalizeEvidenceImageUrls(localActiveRequestedItems[requestIndex]);
       const { valid, rejected } = validateGarageEvidenceFiles(processedFiles, currentUrls.length);
-      if (rejected.length) triggerToast(rejected.slice(0,2).join(' · ') + (rejected.length > 2 ? ` · +${rejected.length-2} lỗi khác` : ''), 'warning');
-      if (!valid.length) return;
+      if (rejected.length) triggerToast(rejected[0], 'warning');
+      if (!valid.length) {
+        setEvidenceUploadUI(requestIndex, false);
+        return;
+      }
+      
       garageUploadsInFlight += 1;
-      setEvidenceUploadUI(requestIndex, true, `Chuẩn bị ${valid.length} ảnh...`, 2);
+      setEvidenceUploadUI(requestIndex, true, `Chu\u1ea3n b\u1ecb t\u1ea3i l\u00ean...`, 20);
       try {
-        const newUrls = [];
-        for (let i = 0; i < valid.length; i += 1) {
-          const prepared = await prepareImageFileForUpload(valid[i]);
-          const progress = Math.round((i / valid.length) * 90) + 5;
-          setEvidenceUploadUI(requestIndex, true, `Đang tải ảnh ${i+1}/${valid.length}: ${valid[i].name}`, progress);
-          // FIXED: Clean syntax instead of garbled token
-          newUrls.push(await uploadSingleImageToCloudinaryEngine(prepared));
-        }
+        let completedCount = 0;
+        const uploadPromises = valid.map(async (file) => {
+          const prepared = await prepareImageFileForUpload(file);
+          const url = await uploadSingleImageToCloudinaryEngine(prepared);
+          completedCount++;
+          const progress = Math.round((completedCount / valid.length) * 70) + 20;
+          setEvidenceUploadUI(requestIndex, true, `\u0110ang t\u1ea3i \u1ea3nh ${completedCount}/${valid.length}`, progress);
+          return url;
+        });
+        
+        const newUrls = await Promise.all(uploadPromises);
+        
         localActiveRequestedItems[requestIndex].hinhAnhGarage = [...currentUrls, ...newUrls];
         await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh`).set(localActiveRequestedItems);
-        setEvidenceUploadUI(requestIndex, true, 'Đã lưu ảnh vào hồ sơ', 100);
+        setEvidenceUploadUI(requestIndex, true, `\u0110\u00e3 l\u01b0u`, 100);
         refreshSingleEvidenceCard(requestIndex);
         refreshGarageProgressUI();
-        triggerToast(`Đã lưu ${newUrls.length} ảnh cho hạng mục “${localActiveRequestedItems[requestIndex].tenHangMuc}”.`);
-        
-
+        triggerToast(`\u0110\u00e3 l\u01b0u ${newUrls.length} \u1ea3nh cho h\u1ea1ng m\u1ee5c \u201c${categoryName}\u201d.`);
       } catch (error) {
         console.error(error);
-        triggerToast('Không thể tải ảnh: ' + (error.message || 'Lỗi kết nối'), 'error');
+        triggerToast('L\u1ed7i: ' + error.message, 'error');
       } finally {
         garageUploadsInFlight = Math.max(0, garageUploadsInFlight - 1);
         const input = document.getElementById(`garageEvidenceInput_${requestIndex}`);
         if (input) input.value = '';
-        setTimeout(() => setEvidenceUploadUI(requestIndex, false), 900);
+        setTimeout(() => setEvidenceUploadUI(requestIndex, false), 800);
       }
     }
 
