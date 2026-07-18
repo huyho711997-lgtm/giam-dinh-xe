@@ -1157,6 +1157,8 @@
         margin-bottom: 14px !important;
       }
       .evidence-request-head {
+        display: flex !important;
+        align-items: center !important;
         padding: 12px 16px !important;
         gap: 12px !important;
         background: var(--bg) !important;
@@ -1188,6 +1190,8 @@
       }
       .evidence-request-head .badge-status {
         padding: 5px 10px !important;
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
       }
       .evidence-request-body {
         padding: 14px 16px !important;
@@ -2756,7 +2760,7 @@
               <div id="evidenceUploadStatus_${index}" class="evidence-upload-status"><div class="evidence-upload-status-line"><span id="evidenceUploadText_${index}">Đang chuẩn bị...</span><strong id="evidenceUploadPercent_${index}">0%</strong></div><div class="p-progress-bar active"><div id="evidenceUploadFill_${index}" class="p-progress-fill"></div></div></div>
               <textarea id="garageEvidenceNote_${index}" class="textarea-premium evidence-note" placeholder="Ghi chú thêm cho hạng mục này (không bắt buộc)...">${escapeHtmlOutput(item.ghiChuGarage || '')}</textarea>
               <div id="garageEvidenceNoteState_${index}" class="autosave-state">Ghi chú được tự động lưu</div>
-              <div class="evidence-existing-wrap"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
+              <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
             </div>
           </article>`;
         }).join('')}` : '';
@@ -2950,10 +2954,12 @@
       const count = document.getElementById(`evidenceCount_${index}`);
       const status = document.getElementById(`evidenceStatus_${index}`);
       const card = document.getElementById(`evidenceRequestCard_${index}`);
+      const container = document.getElementById(`evidenceGalleryContainer_${index}`);
       if (preview) preview.innerHTML = renderEvidenceGalleryMarkup(item,index);
       if (count) count.textContent = `${urls.length} ảnh`;
       if (status) { status.className = `evidence-request-status badge-status ${urls.length ? 'completed' : 'pending'}`; status.textContent = urls.length ? `${urls.length} ảnh đã lưu` : 'Chưa có ảnh'; }
       if (card) card.classList.toggle('is-complete', Boolean(urls.length));
+      if (container) container.style.display = urls.length ? 'block' : 'none';
     }
 
     function refreshAllEvidenceCardsFromState() {
