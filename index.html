@@ -1325,7 +1325,7 @@
       }
     }
 
-    /* Custom In-App Camera Modal Styling */
+    /* Custom In-App Camera Modal Styling (Ultra Premium) */
     .custom-camera-modal {
       position: fixed;
       inset: 0;
@@ -1348,6 +1348,66 @@
       height: 100%;
       object-fit: cover;
     }
+    /* Rule of thirds grid overlay */
+    .camera-grid-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .camera-grid-overlay .grid-line {
+      border: 0.5px dashed rgba(255, 255, 255, 0.15);
+    }
+    .camera-grid-overlay .grid-line.vertical {
+      grid-row: 1 / span 3;
+    }
+    .camera-grid-overlay .grid-line.vertical:nth-child(1) {
+      grid-column: 2;
+      border-top: 0; border-bottom: 0;
+    }
+    .camera-grid-overlay .grid-line.vertical:nth-child(2) {
+      grid-column: 3;
+      border-top: 0; border-bottom: 0;
+    }
+    .camera-grid-overlay .grid-line.horizontal {
+      grid-column: 1 / span 3;
+    }
+    .camera-grid-overlay .grid-line.horizontal:nth-child(3) {
+      grid-row: 2;
+      border-left: 0; border-right: 0;
+    }
+    .camera-grid-overlay .grid-line.horizontal:nth-child(4) {
+      grid-row: 3;
+      border-left: 0; border-right: 0;
+    }
+    /* Center target crosshair */
+    .camera-target-crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0.4;
+    }
+    .camera-target-crosshair::before,
+    .camera-target-crosshair::after {
+      content: '';
+      position: absolute;
+      background: #ffffff;
+    }
+    .camera-target-crosshair::before {
+      top: 11px; left: 0; width: 24px; height: 2px;
+    }
+    .camera-target-crosshair::after {
+      top: 0; left: 11px; width: 2px; height: 24px;
+    }
+
     .camera-overlay-header {
       position: absolute;
       top: env(safe-area-inset-top, 16px);
@@ -1360,34 +1420,40 @@
       z-index: 10;
     }
     .camera-action-btn {
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
-      background: rgba(0,0,0,0.55);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(15, 12, 8, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255,255,255,0.2);
       color: #ffffff;
       display: grid;
       place-items: center;
       cursor: pointer;
       outline: none;
-      font-size: 16px;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .camera-action-btn:active {
+      transform: scale(0.92);
+      background: rgba(15, 12, 8, 0.85);
     }
     .camera-current-category {
-      background: rgba(0,0,0,0.65);
-      backdrop-filter: blur(8px);
-      padding: 6px 16px;
+      background: rgba(15, 12, 8, 0.7);
+      backdrop-filter: blur(12px);
+      padding: 8px 18px;
       border-radius: 20px;
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
       color: #ffca28;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1.5px solid rgba(255, 202, 40, 0.3);
       text-align: center;
       max-width: 60%;
       white-space: nowrap;
       overflow: hidden;
+      text-overflow: ellipsis;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     }
     .camera-flash-effect {
       position: absolute;
@@ -1403,57 +1469,118 @@
       transition: none;
     }
     .camera-footer {
-      background: #0d0c0a;
-      padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)) 16px;
+      background: #000000;
+      padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px)) 16px;
       display: flex;
       flex-direction: column;
       gap: 16px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      z-index: 3;
+    }
+    .camera-preview-container {
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 6px 10px;
+      border: 1px solid rgba(255,255,255,0.06);
     }
     .camera-preview-strip {
       height: 70px;
       display: flex;
-      gap: 8px;
+      gap: 10px;
       overflow-x: auto;
       align-items: center;
-      padding: 2px 0;
       scrollbar-width: none;
     }
     .camera-preview-strip::-webkit-scrollbar {
       display: none;
     }
-    .camera-preview-thumbnail {
+    .camera-preview-wrapper {
+      position: relative;
+      flex-shrink: 0;
       width: 80px;
       height: 60px;
-      border-radius: 8px;
-      object-fit: cover;
-      border: 2px solid #ffffff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      flex-shrink: 0;
-      position: relative;
       animation: cameraThumbPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
+    .camera-preview-thumbnail {
+      width: 100%;
+      height: 100%;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .camera-thumb-badge {
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      background: #ffca28;
+      color: #171209;
+      font-size: 9px;
+      font-weight: 800;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      border: 1px solid #171209;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .camera-thumb-delete {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #ef5350;
+      color: #ffffff;
+      border: none;
+      font-size: 10px;
+      font-weight: 700;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      border: 1px solid #000000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      padding: 0;
+      line-height: 1;
+    }
     @keyframes cameraThumbPop {
-      0% { transform: scale(0.5); opacity: 0; }
+      0% { transform: scale(0.6); opacity: 0; }
       100% { transform: scale(1); opacity: 1; }
     }
     .camera-controls {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 0 12px;
     }
-    .camera-capture-trigger {
-      width: 76px;
-      height: 76px;
+    .camera-control-left {
+      width: 60px;
+      height: 40px;
+    }
+    .camera-capture-outer {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      border: 4px solid #ffffff;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 16px rgba(255,255,255,0.2);
+    }
+    .camera-capture-inner {
+      width: 58px;
+      height: 58px;
       border-radius: 50%;
       background: #ffffff;
-      border: 6px solid #333333;
-      cursor: pointer;
-      box-shadow: 0 0 0 4px #ffffff;
-      outline: none;
-      transition: transform 0.1s ease;
+      transition: transform 0.15s, background-color 0.15s;
     }
-    .camera-capture-trigger:active {
-      transform: scale(0.9);
+    .camera-capture-outer:active .camera-capture-inner {
+      transform: scale(0.88);
+      background: #e0e0e0;
     }
     .camera-save-btn {
       background: var(--primary-gradient);
@@ -1461,17 +1588,20 @@
       border: none;
       font-weight: 800;
       font-size: 13px;
-      padding: 10px 20px;
+      padding: 10px 24px;
       border-radius: 30px;
       cursor: pointer;
       transition: opacity 0.2s ease, transform 0.25s ease;
-      box-shadow: 0 4px 12px rgba(255, 202, 40, 0.25);
+      box-shadow: 0 4px 16px rgba(255, 202, 40, 0.35);
       text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
     .camera-save-btn:disabled {
-      opacity: 0.5;
+      opacity: 0.45;
       cursor: not-allowed;
       box-shadow: none;
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.4);
     }
   </style>
 </head>
@@ -1547,20 +1677,38 @@
   <div id="customCameraModal" class="custom-camera-modal" style="display: none;">
     <div class="camera-stream-container">
       <video id="customCameraVideo" autoplay playsinline muted></video>
+      
+      <!-- Premium Grid Lines (Rule of Thirds) -->
+      <div class="camera-grid-overlay">
+        <div class="grid-line vertical"></div>
+        <div class="grid-line vertical"></div>
+        <div class="grid-line horizontal"></div>
+        <div class="grid-line horizontal"></div>
+      </div>
+      
       <div class="camera-overlay-header">
-        <button type="button" class="camera-action-btn btn-close-cam" onclick="closeCustomCameraModal(false)">✕</button>
+        <button type="button" class="camera-action-btn btn-close-cam" onclick="closeCustomCameraModal(false)" title="Hủy bỏ">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
         <div class="camera-current-category" id="cameraActiveCategoryText">Đang chụp</div>
-        <button type="button" class="camera-action-btn btn-switch-cam" onclick="switchCustomCamera()">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        <button type="button" class="camera-action-btn btn-switch-cam" onclick="switchCustomCamera()" title="Đổi Camera">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
         </button>
       </div>
       <div class="camera-flash-effect" id="cameraFlashEffect"></div>
+      
+      <!-- Center target crosshair -->
+      <div class="camera-target-crosshair"></div>
     </div>
     <div class="camera-footer">
-      <div class="camera-preview-strip" id="cameraPreviewStrip"></div>
+      <div class="camera-preview-container">
+        <div class="camera-preview-strip" id="cameraPreviewStrip"></div>
+      </div>
       <div class="camera-controls">
-        <div style="width: 60px;"></div>
-        <button type="button" class="camera-capture-trigger" onclick="triggerCustomCameraCapture()"></button>
+        <div class="camera-control-left"></div>
+        <div class="camera-capture-outer" onclick="triggerCustomCameraCapture()">
+          <div class="camera-capture-inner"></div>
+        </div>
         <button type="button" class="camera-save-btn" id="btnSaveCustomCameraPhotos" onclick="closeCustomCameraModal(true)" disabled>Xong (0)</button>
       </div>
     </div>
@@ -3207,9 +3355,7 @@
         activeCategoryText.textContent = `Đang chụp: ${item?.tenHangMuc || `Hạng mục ${requestIndex + 1}`}`;
       }
       
-      const strip = document.getElementById('cameraPreviewStrip');
-      if (strip) strip.innerHTML = '';
-      
+      renderCustomCameraPreviewStrip();
       updateCustomCameraDoneBtn();
       
       const modal = document.getElementById('customCameraModal');
@@ -3274,6 +3420,47 @@
       await startCustomCameraStream();
     }
 
+    function deleteCapturedPhotoFromCamera(index) {
+      customCameraPhotos.splice(index, 1);
+      renderCustomCameraPreviewStrip();
+      updateCustomCameraDoneBtn();
+    }
+
+    function renderCustomCameraPreviewStrip() {
+      const strip = document.getElementById('cameraPreviewStrip');
+      if (!strip) return;
+      strip.innerHTML = '';
+      
+      customCameraPhotos.forEach((file, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'camera-preview-wrapper';
+        
+        const img = document.createElement('img');
+        img.className = 'camera-preview-thumbnail';
+        img.src = URL.createObjectURL(file);
+        
+        const badge = document.createElement('div');
+        badge.className = 'camera-thumb-badge';
+        badge.textContent = idx + 1;
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'camera-thumb-delete';
+        deleteBtn.innerHTML = '✕';
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          deleteCapturedPhotoFromCamera(idx);
+        };
+        
+        wrapper.appendChild(img);
+        wrapper.appendChild(badge);
+        wrapper.appendChild(deleteBtn);
+        strip.appendChild(wrapper);
+      });
+      
+      strip.scrollLeft = strip.scrollWidth;
+    }
+
     function triggerCustomCameraCapture() {
       const video = document.getElementById('customCameraVideo');
       if (!video || !customCameraStream) return;
@@ -3311,20 +3498,19 @@
         let targetHeight = vh;
         
         if (orientationAngle === 0) {
-          correctionAngle = Math.PI / 2;
+          correctionAngle = -Math.PI / 2; // Portrait needs -90 degrees
           targetWidth = vh;
           targetHeight = vw;
         } else if (orientationAngle === 90) {
-          correctionAngle = 0;
+          correctionAngle = Math.PI; // Landscape Left needs 180 degrees
           targetWidth = vw;
           targetHeight = vh;
         } else if (orientationAngle === -90 || orientationAngle === 270) {
-          // Landscape Right - need 180 degrees to correct upside down hold
-          correctionAngle = Math.PI;
+          correctionAngle = 0; // Landscape Right is natively correct
           targetWidth = vw;
           targetHeight = vh;
         } else if (orientationAngle === 180) {
-          correctionAngle = -Math.PI / 2;
+          correctionAngle = Math.PI / 2; // Portrait upside down needs 90 degrees
           targetWidth = vh;
           targetHeight = vw;
         }
@@ -3352,16 +3538,7 @@
         if (blob) {
           const file = new File([blob], `capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
           customCameraPhotos.push(file);
-          
-          const strip = document.getElementById('cameraPreviewStrip');
-          if (strip) {
-            const img = document.createElement('img');
-            img.className = 'camera-preview-thumbnail';
-            img.src = URL.createObjectURL(blob);
-            strip.appendChild(img);
-            strip.scrollLeft = strip.scrollWidth;
-          }
-          
+          renderCustomCameraPreviewStrip();
           updateCustomCameraDoneBtn();
         }
       }, 'image/jpeg', 0.92);
