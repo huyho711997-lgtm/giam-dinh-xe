@@ -4344,41 +4344,70 @@
       const completedItems = localActiveImageStack.filter(item => String(item.hangMucBaoGia || '').trim()).length;
       const completedEvidenceItems = localActiveRequestedItems.filter(item => normalizeEvidenceImageUrls(item).length).length;
 
-      const imageResultsSection = localActiveImageStack.length ? `
-        <div class="workspace-section-head"><div><h2>01 · Hạng mục Garage xác định từ ảnh</h2><p>Ảnh hiện trạng và nội dung Garage khai báo được hiển thị song song.</p></div><div class="workspace-section-index">${String(completedItems).padStart(2,'0')}/${String(localActiveImageStack.length).padStart(2,'0')}</div></div>
-        ${localActiveImageStack.map((item, index) => {
-          const textContentClean = String(item.hangMucBaoGia || '').trim();
-          return `<article class="premium-image-card">
-            <div class="img-display-pane"><span class="img-pane-indicator">Ảnh đối chiếu ${String(index + 1).padStart(2,'0')}</span><img src="${escapeAttributeData(item.linkAnh)}" alt="Ảnh kết quả ${index + 1}" loading="lazy" onclick="openLightbox(localActiveImageStack.map(x => x.linkAnh), ${index})" /></div>
-            <div class="inputs-entry-pane"><div><div class="image-sequence">GARAGE RESULT / ${String(index + 1).padStart(2,'0')}</div><div class="form-group" style="margin:0"><label>Hạng mục Garage đã ghi nhận</label><div class="result-content ${textContentClean ? '' : 'is-empty'}">${textContentClean ? escapeHtmlOutput(textContentClean) : 'Garage không khai báo hạng mục cho ảnh này.'}</div></div></div><button class="btn-premium btn-secondary btn-inline" onclick="window.open('${escapeAttributeData(item.linkAnh)}','_blank')">${SVGS.EXTERNAL} Mở ảnh chứng cứ gốc</button></div>
-          </article>`;
-        }).join('')}` : '';
+      // Lược bỏ hoàn toàn mục 01 (dư thừa dữ liệu hình ảnh) để tập trung xem ảnh theo hạng mục
+      const imageResultsSection = '';
 
       const evidenceResultsSection = localActiveRequestedItems.length ? `
-        <div class="workspace-section-head" style="margin-top:${localActiveImageStack.length ? '12px' : '0'}"><div><h2>02 · Ảnh Garage cung cấp theo hạng mục báo giá</h2><p>Kiểm tra trực tiếp bộ ảnh minh chứng Garage đã tải cho từng hạng mục.</p></div><div class="workspace-section-index">${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</div></div>
-        <div class="evidence-results-grid">
-          ${localActiveRequestedItems.map((item,index) => {
-            const urls = normalizeEvidenceImageUrls(item);
-            return `<article class="evidence-result-card">
-              <div class="evidence-result-title" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div>
-                  <div>
-                    <h3 style="margin:0; font-size:15px; font-weight:700; color:var(--text-main);">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3>
-                    <p style="margin:2px 0 0 0; color:var(--text-muted); font-size:10px;">${urls.length} ảnh do Garage cung cấp</p>
-                  </div>
-                </div>
-                ${urls.length ? `
-                  <button type="button" class="btn-premium btn-secondary" onclick="downloadCategoryImages(${index})" style="padding: 6px 14px; min-height: unset; height: 32px; font-size: 11px; margin: 0; display: flex; align-items: center; gap: 6px; border-radius: 8px;">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span>Tải ảnh (${urls.length})</span>
-                  </button>
-                ` : ''}
-              </div>
-              ${item.ghiChuGarage ? `<div class="result-content" style="margin-bottom:12px"><strong style="display:block;margin-bottom:4px;color:var(--primary);font-size:9px;letter-spacing:.08em;text-transform:uppercase">Ghi chú Garage</strong>${escapeHtmlOutput(item.ghiChuGarage)}</div>` : ``}
-              ${urls.length ? `<div class="evidence-result-gallery" style="margin-top: 0;">${urls.map((url,imageIndex) => `<button type="button" class="evidence-result-image" title="Mở ảnh ${imageIndex+1}" onclick="openLightbox(normalizeEvidenceImageUrls(localActiveRequestedItems[${index}]), ${imageIndex})"><img src="${escapeAttributeData(url)}" alt="Ảnh Garage cung cấp ${imageIndex+1}" loading="lazy"></button>`).join('')}</div>` : `<div class="evidence-empty">Garage chưa cung cấp ảnh cho hạng mục này.</div>`}
-            </article>`;
-          }).join('')}
+        <div class="workspace-section-head" style="margin-bottom: 12px;">
+          <div>
+            <h2>Danh sách hình ảnh minh chứng theo hạng mục</h2>
+            <p>Bảng tổng hợp hồ sơ giám định và hình ảnh minh chứng tương ứng do Garage cung cấp.</p>
+          </div>
+          <div class="workspace-section-index">${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</div>
+        </div>
+        <div class="p-card" style="padding: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-sm);">
+          <table class="p-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr>
+                <th style="width: 60px; text-align: center;">#</th>
+                <th style="width: 220px;">Hạng mục yêu cầu</th>
+                <th>Hình ảnh minh chứng từ Garage</th>
+                <th style="width: 250px;">Ghi chú của Gara</th>
+                <th style="width: 150px; text-align: right; padding-right: 20px;">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${localActiveRequestedItems.map((item, index) => {
+                const urls = normalizeEvidenceImageUrls(item);
+                return `
+                  <tr>
+                    <td data-label="#" style="text-align: center; vertical-align: middle;">
+                      <div class="evidence-request-number" style="width: 32px; height: 32px; margin: 0 auto; font-size: 11px; border-radius: 10px;">${String(index+1).padStart(2,'0')}</div>
+                    </td>
+                    <td data-label="Hạng mục" style="vertical-align: middle;">
+                      <strong style="color: var(--text-main); font-size: 14px; font-weight: 700;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</strong>
+                    </td>
+                    <td data-label="Hình ảnh minh chứng" style="vertical-align: middle;">
+                      ${urls.length ? `
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                          ${urls.map((url, imageIndex) => `
+                            <button type="button" class="evidence-result-image" title="Mở ảnh ${imageIndex+1}" onclick="openLightbox(normalizeEvidenceImageUrls(localActiveRequestedItems[${index}]), ${imageIndex})" style="width: 90px; height: 68px; border-radius: 8px; flex-shrink: 0; margin: 0; border: 1.5px solid var(--border-strong);">
+                              <img src="${escapeAttributeData(url)}" alt="Ảnh minh chứng" style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;">
+                            </button>
+                          `).join('')}
+                        </div>
+                      ` : `
+                        <span style="color: var(--text-muted); font-size: 12px; font-style: italic;">Garage chưa cung cấp ảnh</span>
+                      `}
+                    </td>
+                    <td data-label="Ghi chú" style="vertical-align: middle;">
+                      <div style="font-size: 12px; color: var(--text-soft); line-height: 1.5; white-space: pre-wrap; max-height: 80px; overflow-y: auto;">${item.ghiChuGarage ? escapeHtmlOutput(item.ghiChuGarage) : '<span style="color: var(--text-muted); font-style: italic;">Không có ghi chú</span>'}</div>
+                    </td>
+                    <td data-label="Thao tác" style="text-align: right; vertical-align: middle; padding-right: 20px;">
+                      ${urls.length ? `
+                        <button type="button" class="btn-premium btn-secondary" onclick="downloadCategoryImages(${index})" style="padding: 6px 12px; min-height: unset; height: 30px; font-size: 11px; margin: 0; display: inline-flex; align-items: center; gap: 5px; border-radius: 6px;">
+                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                          <span>Tải về (${urls.length})</span>
+                        </button>
+                      ` : `
+                        <span style="color: var(--text-muted); font-size: 12px;">—</span>
+                      `}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
         </div>` : '';
 
       const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
