@@ -3406,6 +3406,32 @@
             </div>
           </div>
 
+          <!-- System Integration Gemini Key Config Card -->
+          <div class="workspace-grid single-col" style="margin-bottom: 20px;">
+            <section class="p-card cases-panel" style="padding: 20px 24px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft);">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                <div style="flex: 1; min-width: 280px;">
+                  <h3 style="font-size: 15px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin: 0;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <span>Cấu hình tích hợp Gemini API Key</span>
+                  </h3>
+                  <p style="margin-top: 4px; font-size: 12px; color: var(--text-soft); margin-bottom: 0; line-height: 1.5;">Điền API Key của Gemini để kích hoạt khả năng AI OCR nhận dạng linh kiện ô tô từ ảnh báo giá của Gara.</p>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 320px; justify-content: flex-end;">
+                  <div class="input-shell" style="max-width: 380px; width: 100%; margin: 0; position: relative;">
+                    <span class="field-prefix" onclick="toggleGeminiKeyVisibility()" style="cursor: pointer; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; color: var(--text-soft); z-index: 5;">
+                      <svg id="geminiEyeIcon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </span>
+                    <input id="txtSettingsGeminiKey" class="input-premium" type="password" placeholder="Dán Gemini API Key của bạn tại đây..." style="padding-left: 36px; height: 38px; min-height: unset; font-size: 12px; width: 100%;" autocomplete="off" />
+                  </div>
+                  <button type="button" class="btn-premium" onclick="saveGeminiSettingsKey()" style="width: auto !important; height: 38px; min-height: unset; padding: 0 18px; font-size: 12.5px; font-weight: 800; border-radius: 8px; background: var(--primary-gradient); color: #080b11; border: none; cursor: pointer; margin: 0; display: inline-flex; align-items: center; justify-content: center;">
+                    Lưu cấu hình
+                  </button>
+                </div>
+              </div>
+            </section>
+          </div>
+
           <div class="workspace-grid single-col">
             <section class="p-card cases-panel">
               <div class="p-card-head" style="margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
@@ -3466,6 +3492,7 @@
           btn.addEventListener('click', () => setUserFilter(btn.dataset.userFilter));
         });
         fetchAndBindUsersListRealtime();
+        loadGeminiSettingsKeyIntoUI();
       } else {
         if (activeCreateFlowMode === 'select') {
           container.innerHTML = `
@@ -3602,7 +3629,7 @@
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                       <span>Trích xuất hạng mục từ báo giá của Gara (AI OCR / Văn bản)</span>
                     </span>
-                    <button type="button" onclick="promptGeminiApiKey()" style="background: none; border: none; color: var(--primary); font-size: 11px; cursor: pointer; text-decoration: underline; padding: 0; font-weight: 700;">Cấu hình API Key Gemini</button>
+                    <span id="lblOcrKeyStatus" style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Đang kiểm tra API Key...</span>
                   </label>
                   <div class="p-card" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: none;">
                     
@@ -3860,19 +3887,41 @@
       return textResult;
     }
 
-    function promptGeminiApiKey() {
-      const currentKey = localStorage.getItem('claimvision-gemini-key') || '';
-      const promptVal = window.prompt("Nhập Gemini API Key của bạn để sử dụng tính năng OCR thực tế từ Google Cloud (hoặc bỏ trống để dùng key mặc định):", currentKey);
-      if (promptVal !== null) {
-        const trimmed = promptVal.trim();
-        if (trimmed) {
-          localStorage.setItem('claimvision-gemini-key', trimmed);
-          triggerToast('Đã lưu Gemini API Key riêng của bạn.', 'success');
-        } else {
-          localStorage.removeItem('claimvision-gemini-key');
-          triggerToast('Đã chuyển lời gọi API về key mặc định của hệ thống.', 'info');
-        }
+    function toggleGeminiKeyVisibility() {
+      const input = document.getElementById('txtSettingsGeminiKey');
+      const icon = document.getElementById('geminiEyeIcon');
+      if (!input || !icon) return;
+      
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>`;
+      } else {
+        input.type = 'password';
+        icon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>`;
       }
+    }
+
+    function saveGeminiSettingsKey() {
+      const input = document.getElementById('txtSettingsGeminiKey');
+      if (!input) return;
+      
+      const val = String(input.value).trim();
+      if (val) {
+        localStorage.setItem('claimvision-gemini-key', val);
+        triggerToast('Đã lưu cấu hình Gemini API Key của bạn thành công!', 'success');
+      } else {
+        localStorage.removeItem('claimvision-gemini-key');
+        triggerToast('Đã xóa Gemini API Key riêng, hệ thống sẽ sử dụng API Key mặc định.', 'info');
+      }
+      
+      // Update key status label if we are on create tab (e.g. if we switch back)
+      renderRequestedItemsBuilder();
+    }
+
+    function loadGeminiSettingsKeyIntoUI() {
+      const input = document.getElementById('txtSettingsGeminiKey');
+      if (!input) return;
+      input.value = localStorage.getItem('claimvision-gemini-key') || '';
     }
 
     async function handleOcrImageUpload(event) {
@@ -4135,6 +4184,13 @@
       const listNode = document.getElementById('requestedItemsBuilderList');
       if (!listNode) return;
       renderSuggestionsSection();
+
+      const hasCustomKey = !!localStorage.getItem('claimvision-gemini-key');
+      const lblStatus = document.getElementById('lblOcrKeyStatus');
+      if (lblStatus) {
+        lblStatus.textContent = hasCustomKey ? 'Gemini API (Khóa cá nhân)' : 'Gemini API (Mặc định)';
+        lblStatus.style.color = hasCustomKey ? 'var(--primary)' : 'var(--text-muted)';
+      }
       
       if (caseRequestedItemsDraft.length === 0) {
         caseRequestedItemsDraft = [
