@@ -4077,12 +4077,23 @@
       
       if (!container || !chipsFlow) return;
       
-      chipsFlow.innerHTML = itemsArray.map((item, idx) => `
-        <label class="suggestion-chip" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 12.5px; background: var(--surface); color: var(--text-main); font-weight: 600;">
-          <input type="checkbox" class="ocr-item-checkbox" data-index="${idx}" checked style="margin: 0; width: 14px; height: 14px; accent-color: var(--primary);" />
-          <span>${escapeHtmlOutput(item)}</span>
-        </label>
-      `).join('');
+      // Force list style format dynamically
+      chipsFlow.style.display = 'grid';
+      chipsFlow.style.gridTemplateColumns = '1fr';
+      chipsFlow.style.gap = '8px';
+      
+      chipsFlow.innerHTML = itemsArray.map((item, idx) => {
+        const serialNum = String(idx + 1).padStart(2, '0');
+        return `
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); transition: background 0.15s ease; width: 100%; box-sizing: border-box;">
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; margin: 0; user-select: none;">
+              <input type="checkbox" class="ocr-item-checkbox" data-index="${idx}" checked style="margin: 0; width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;" />
+              <span style="font-size: 11px; font-weight: 800; background: var(--surface-soft); color: var(--text-soft); padding: 2px 6px; border-radius: 4px; font-family: monospace;">${serialNum}</span>
+              <span style="font-size: 13px; color: var(--text-main); font-weight: 600;">${escapeHtmlOutput(item)}</span>
+            </label>
+          </div>
+        `;
+      }).join('');
       
       const scanningView = document.getElementById('ocrScanningView');
       if (scanningView) scanningView.style.display = 'none';
@@ -4096,11 +4107,16 @@
 
     function applySelectedOcrItemsToComposer() {
       const selectedItems = [];
-      document.querySelectorAll('.ocr-item-checkbox').forEach(cb => {
+      const checkboxes = document.querySelectorAll('.ocr-item-checkbox');
+      
+      checkboxes.forEach(cb => {
         if (cb.checked) {
           const idx = parseInt(cb.dataset.index);
           if (ocrExtractedItemsList[idx]) {
-            selectedItems.push(ocrExtractedItemsList[idx]);
+            selectedItems.push({
+              item: ocrExtractedItemsList[idx],
+              cb: cb
+            });
           }
         }
       });
@@ -4109,18 +4125,19 @@
         return triggerToast('Vui lòng chọn ít nhất một hạng mục để thêm.', 'warning');
       }
       
-      selectedItems.forEach(item => {
+      selectedItems.forEach(entry => {
         const firstEmptyIndex = caseRequestedItemsDraft.findIndex(d => !d.tenHangMuc.trim());
         if (firstEmptyIndex > -1) {
-          caseRequestedItemsDraft[firstEmptyIndex].tenHangMuc = item;
+          caseRequestedItemsDraft[firstEmptyIndex].tenHangMuc = entry.item;
         } else {
-          caseRequestedItemsDraft.push({ id: generateUniqueReqId(), tenHangMuc: item });
+          caseRequestedItemsDraft.push({ id: generateUniqueReqId(), tenHangMuc: entry.item });
         }
+        entry.cb.checked = false; // Uncheck added items
       });
       
       renderRequestedItemsBuilder();
       triggerToast(`Đã thêm ${selectedItems.length} hạng mục vào danh sách yêu cầu ảnh!`, 'success');
-      resetOcrScanPanel();
+      // Keep panel active so user can re-select or verify items
     }
 
     function resetOcrScanPanel() {
