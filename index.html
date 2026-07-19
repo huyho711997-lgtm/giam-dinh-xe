@@ -2822,6 +2822,11 @@
       const labelSummary = document.getElementById('lblDropzoneSummary');
       if (labelSummary) labelSummary.textContent = 'Chưa có ảnh nào được chọn.';
 
+      // Clear OCR extraction panels and items
+      try {
+        resetOcrScanPanel();
+      } catch (e) {}
+
       activeCreateFlowMode = 'select';
       editingCaseId = null;
     }
@@ -4149,12 +4154,15 @@
             <div style="display: grid; grid-template-columns: 1fr; gap: 6px;">
               ${groupList.map((entry, index) => {
                 const serialNum = String(index + 1).padStart(2, '0');
+                const isAlreadyAdded = caseRequestedItemsDraft.some(item => 
+                  item && String(item.tenHangMuc || '').trim().toLowerCase() === String(entry.item || '').trim().toLowerCase()
+                );
                 return `
                   <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); transition: background 0.15s ease; width: 100%; box-sizing: border-box;">
                     <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; margin: 0; user-select: none;">
-                      <input type="checkbox" class="ocr-item-checkbox" data-index="${entry.idx}" checked style="margin: 0; width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;" />
+                      <input type="checkbox" class="ocr-item-checkbox" data-index="${entry.idx}" ${isAlreadyAdded ? '' : 'checked'} style="margin: 0; width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;" />
                       <span style="font-size: 10px; font-weight: 800; background: var(--surface-soft); color: var(--text-soft); padding: 2px 6px; border-radius: 4px; font-family: monospace;">${serialNum}</span>
-                      <span style="font-size: 13px; color: var(--text-main); font-weight: 600; line-height: 1.45;">${escapeHtmlOutput(entry.item)}</span>
+                      <span style="font-size: 13px; color: var(--text-main); font-weight: 600; line-height: 1.45; ${isAlreadyAdded ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${escapeHtmlOutput(entry.item)}</span>
                     </label>
                   </div>
                 `;
@@ -4567,6 +4575,13 @@
         caseRequestedItemsDraft.push({ id: generateUniqueReqId(), tenHangMuc: '' });
       }
       
+      // Load and display saved OCR items list if they exist in database
+      if (caseEntity.ocrExtractedItems && caseEntity.ocrExtractedItems.length > 0) {
+        displayExtractedOcrItems(caseEntity.ocrExtractedItems);
+      } else {
+        resetOcrScanPanel();
+      }
+      
       switchWorkspaceTab('create');
       
       setTimeout(() => {
@@ -4622,10 +4637,14 @@
           const isCaseDone = totalReq > 0 && completedReq === totalReq;
           const newStatus = isCaseDone ? STATUS_COMPLETED : STATUS_PENDING;
 
+          const existingOcrItems = caseEntity && caseEntity.ocrExtractedItems ? caseEntity.ocrExtractedItems : [];
+          const currentOcrItems = ocrExtractedItemsList && ocrExtractedItemsList.length ? ocrExtractedItemsList : existingOcrItems;
+
           const updatePayload = {
             bienSo: plateInputVal,
             tenGara: garageInputVal,
             hangMucYeuCauAnh: requestedEvidenceNodes,
+            ocrExtractedItems: currentOcrItems,
             trangThai: newStatus
           };
 
@@ -4681,6 +4700,7 @@
           soLuongHangMucYeuCauAnh: requestedEvidenceNodes.length,
           hinhAnh: mappedImageNodeObjects,
           hangMucYeuCauAnh: requestedEvidenceNodes,
+          ocrExtractedItems: ocrExtractedItemsList || [],
           nguoiTao: {
             uid: currentUser?.uid || '',
             email: currentProfile.email,
