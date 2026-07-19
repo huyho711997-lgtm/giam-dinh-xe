@@ -4591,9 +4591,15 @@
         caseRequestedItemsDraft.push({ id: generateUniqueReqId(), tenHangMuc: '' });
       }
       
-      // Load and display saved OCR items list if they exist in database
-      if (caseEntity.ocrExtractedItems && caseEntity.ocrExtractedItems.length > 0) {
-        displayExtractedOcrItems(caseEntity.ocrExtractedItems);
+      // Load and display saved OCR items list if they exist in database (handling both Array and Firebase Object formats)
+      let savedOcrItems = caseEntity.ocrExtractedItems;
+      if (savedOcrItems) {
+        const ocrItemsArray = Array.isArray(savedOcrItems) ? savedOcrItems : Object.values(savedOcrItems);
+        if (ocrItemsArray.length > 0) {
+          displayExtractedOcrItems(ocrItemsArray);
+        } else {
+          resetOcrScanPanel();
+        }
       } else {
         resetOcrScanPanel();
       }
@@ -4653,7 +4659,10 @@
           const isCaseDone = totalReq > 0 && completedReq === totalReq;
           const newStatus = isCaseDone ? STATUS_COMPLETED : STATUS_PENDING;
 
-          const existingOcrItems = caseEntity && caseEntity.ocrExtractedItems ? caseEntity.ocrExtractedItems : [];
+          let existingOcrItems = caseEntity && caseEntity.ocrExtractedItems ? caseEntity.ocrExtractedItems : [];
+          if (existingOcrItems && !Array.isArray(existingOcrItems)) {
+            existingOcrItems = Object.values(existingOcrItems);
+          }
           const currentOcrItems = ocrExtractedItemsList && ocrExtractedItemsList.length ? ocrExtractedItemsList : existingOcrItems;
 
           const updatePayload = {
