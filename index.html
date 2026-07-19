@@ -3624,13 +3624,13 @@
 
                 <!-- AI OCR / Text Extractor Section -->
                 <div class="form-group" style="margin-bottom: 28px;">
-                  <label style="display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%;">
-                    <span style="display: flex; align-items: center; gap: 6px;">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                      <span>Trích xuất hạng mục từ báo giá của Gara (AI OCR / Văn bản)</span>
+                  <div style="border-left: 4px solid var(--primary); padding-left: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; box-sizing: border-box;">
+                    <span style="display: inline-flex; align-items: center; gap: 8px;">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                      <span style="font-size: 13.5px; font-weight: 850; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-main);">Trích xuất hạng mục từ báo giá (AI OCR / Văn bản)</span>
                     </span>
-                    <span id="lblOcrKeyStatus" style="font-size: 11px; color: var(--text-muted); font-weight: 700;">Đang kiểm tra API Key...</span>
-                  </label>
+                    <span id="lblOcrKeyStatus" style="font-size: 11px; color: var(--text-muted); font-weight: 700; background: var(--surface-soft); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);">Đang kiểm tra API Key...</span>
+                  </div>
                   <div class="p-card" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: none;">
                     
                     <!-- Tab buttons -->
@@ -3679,12 +3679,23 @@
 
                     <!-- Extracted Items Selection Area -->
                     <div id="ocrExtractedItemsContainer" style="display: none; margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 18px;">
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                         <strong style="font-size: 13px; color: var(--text-main); font-weight: 750;">Hạng mục trích xuất được (Chọn để yêu cầu ảnh):</strong>
-                        <div style="display: flex; gap: 8px;">
-                          <button type="button" onclick="selectAllOcrItems(true)" style="background:none; border:none; color:var(--primary); font-size:11.5px; font-weight:700; cursor:pointer; padding:0;">Chọn tất cả</button>
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                          <button type="button" onclick="selectAllOcrItems(true)" style="background:none; border:none; color:var(--primary); font-size:11.5px; font-weight:800; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:4px;">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                            <span>Chọn tất cả</span>
+                          </button>
                           <span style="color: var(--border);">|</span>
-                          <button type="button" onclick="selectAllOcrItems(false)" style="background:none; border:none; color:var(--text-muted); font-size:11.5px; font-weight:700; cursor:pointer; padding:0;">Bỏ chọn</button>
+                          <button type="button" onclick="selectAllOcrItems(false)" style="background:none; border:none; color:var(--text-soft); font-size:11.5px; font-weight:800; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:4px;">
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                            <span>Bỏ chọn</span>
+                          </button>
+                          <span style="color: var(--border);">|</span>
+                          <button type="button" onclick="toggleOcrPanelHeight()" style="background:none; border:none; color:var(--blue); font-size:11.5px; font-weight:800; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:4px;">
+                            <svg id="btnOcrExpandIcon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
+                            <span id="btnOcrExpandText">Mở rộng</span>
+                          </button>
                         </div>
                       </div>
                       <div id="ocrItemsChipsFlow" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; max-height: 200px; overflow-y: auto; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-soft);">
@@ -3706,7 +3717,12 @@
                 </div>
 
                 <div class="form-group">
-                  <label>Danh sách các hạng mục muốn Garage chụp ảnh làm bằng chứng</label>
+                  <div style="border-left: 4px solid var(--blue); padding-left: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; box-sizing: border-box;">
+                    <span style="display: inline-flex; align-items: center; gap: 8px;">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--blue);"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                      <span style="font-size: 13.5px; font-weight: 850; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-main);">Hạng mục yêu cầu Garage chụp ảnh làm bằng chứng</span>
+                    </span>
+                  </div>
                   <div class="request-composer" style="padding: 14px;">
                     <div class="request-composer-help" style="margin-top: 0;">
                       <span>Nhập trực tiếp vào bảng. Có thể copy-paste nhiều dòng từ Excel.</span>
@@ -4152,6 +4168,26 @@
       document.querySelectorAll('.ocr-item-checkbox').forEach(cb => cb.checked = selectVal);
     }
 
+    let ocrPanelExpanded = false;
+    function toggleOcrPanelHeight() {
+      ocrPanelExpanded = !ocrPanelExpanded;
+      const chipsFlow = document.getElementById('ocrItemsChipsFlow');
+      const expandText = document.getElementById('btnOcrExpandText');
+      const expandIcon = document.getElementById('btnOcrExpandIcon');
+      
+      if (!chipsFlow || !expandText || !expandIcon) return;
+      
+      if (ocrPanelExpanded) {
+        chipsFlow.style.maxHeight = '650px';
+        expandText.textContent = 'Thu gọn';
+        expandIcon.innerHTML = `<path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7"></path>`; // Minimize-2 SVG
+      } else {
+        chipsFlow.style.maxHeight = '200px';
+        expandText.textContent = 'Mở rộng';
+        expandIcon.innerHTML = `<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>`; // Maximize-2 SVG
+      }
+    }
+
     function applySelectedOcrItemsToComposer() {
       const selectedItems = [];
       const checkboxes = document.querySelectorAll('.ocr-item-checkbox');
@@ -4203,6 +4239,15 @@
       if (extractedContainer) extractedContainer.style.display = 'none';
       
       ocrExtractedItemsList = [];
+      
+      // Reset height expand settings
+      ocrPanelExpanded = false;
+      const chipsFlow = document.getElementById('ocrItemsChipsFlow');
+      const expandText = document.getElementById('btnOcrExpandText');
+      const expandIcon = document.getElementById('btnOcrExpandIcon');
+      if (chipsFlow) chipsFlow.style.maxHeight = '200px';
+      if (expandText) expandText.textContent = 'Mở rộng';
+      if (expandIcon) expandIcon.innerHTML = `<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>`;
     }
     function toggleSuggestionItem(itemName) {
       const firstEmptyIndex = caseRequestedItemsDraft.findIndex(item => !item.tenHangMuc.trim());
