@@ -2186,6 +2186,7 @@
     let garageUploadsInFlight = 0;
     let garageAutosaveTimers = new Map();
     let garagePortalMounted = false; 
+    let editingCaseId = null;
 
     // QUẢN LÝ THEME STATE: Khởi tạo từ cấu hình lưu trữ
     let currentTheme = localStorage.getItem('claimvision-theme') || 'dark';
