@@ -2823,6 +2823,7 @@
       if (labelSummary) labelSummary.textContent = 'Chưa có ảnh nào được chọn.';
 
       activeCreateFlowMode = 'select';
+      editingCaseId = null;
     }
 
     function applyTemplateToDraft(templateName) {
@@ -4470,6 +4471,19 @@
           </span>
         ` : '';
         
+        const currentUser = firebase.auth().currentUser;
+        const currentProfile = activeUserProfile || {};
+        const isAdmin = String(currentProfile.role || '').trim().toLowerCase() === 'admin';
+        const isCreator = entityNode.nguoiTao?.uid === currentUser?.uid;
+        
+        const showEditButton = isCreator || isAdmin;
+        const editButtonMarkup = showEditButton ? `
+          <button title="Sửa hồ sơ" class="btn-premium btn-secondary" onclick="triggerEditCaseFlow('${uniqueKeyToken}')" style="background: var(--surface-soft); border: 1px solid var(--border); color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; font-weight: 700; height: 32px; min-height: unset; padding: 0 10px; border-radius: 6px; cursor: pointer;">
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            <span class="action-label">Sửa</span>
+          </button>
+        ` : '';
+
         return `
           <tr class="clickable-row" onclick="navigateToCase('${uniqueKeyToken}', 'result')">
             <td data-label="Phương tiện"><div class="vehicle-cell"><div class="vehicle-avatar">${initials}</div><div><div class="vehicle-name" style="display: flex; align-items: center; gap: 5px;">${plate}${checkmarkMarkup}</div><div class="vehicle-sub">${escapeHtmlOutput(entityNode.tenGara || 'Chưa xác định Garage')}</div></div></div></td>
@@ -4485,6 +4499,7 @@
             <td data-label="Trạng thái"><span class="badge-status ${targetBadgeClass}">${escapeHtmlOutput(entityNode.trangThai || STATUS_PENDING)}</span></td>
             <td onclick="event.stopPropagation()"><div class="flex-actions-group">
               <button title="Xem link Garage" class="btn-premium btn-secondary" onclick="navigateToCase('${uniqueKeyToken}')">${SVGS.EXTERNAL}<span class="action-label">Garage</span></button>
+              ${editButtonMarkup}
               <button title="Xem kết quả đối chiếu" class="btn-premium btn-dark" onclick="navigateToCase('${uniqueKeyToken}', 'result')">${SVGS.CHECK_CIRCLE}<span class="action-label">Kết quả</span></button>
               <button title="Xóa hồ sơ" class="btn-premium btn-danger-p" onclick="triggerDestructiveDeleteCase('${uniqueKeyToken}','${escapeAttributeData(entityNode.bienSo)}')">${SVGS.TRASH}<span class="action-label">Xóa</span></button>
             </div></td>
@@ -4516,6 +4531,37 @@
       }
     }
 
+    function triggerEditCaseFlow(caseId) {
+      const caseEntity = cachedCasesPayload && cachedCasesPayload[caseId];
+      if (!caseEntity) return triggerToast('Không tìm thấy dữ liệu ca xe để chỉnh sửa.', 'error');
+      
+      editingCaseId = caseId;
+      activeCreateFlowMode = 'excel'; 
+      
+      const itemsList = Array.isArray(caseEntity.hangMucYeuCauAnh) 
+        ? caseEntity.hangMucYeuCauAnh 
+        : Object.values(caseEntity.hangMucYeuCauAnh || {});
+        
+      caseRequestedItemsDraft = itemsList.map(item => ({
+        id: item.id || generateUniqueReqId(),
+        tenHangMuc: item.tenHangMuc || ''
+      }));
+      
+      while (caseRequestedItemsDraft.length < 3) {
+        caseRequestedItemsDraft.push({ id: generateUniqueReqId(), tenHangMuc: '' });
+      }
+      
+      activeDashboardTab = 'create';
+      switchWorkspaceTab('create');
+      
+      setTimeout(() => {
+        const plateInput = document.getElementById('txtPlateNumber');
+        const garageInput = document.getElementById('txtGaragePartner');
+        if (plateInput) plateInput.value = caseEntity.bienSo || '';
+        if (garageInput) garageInput.value = caseEntity.tenGara || '';
+      }, 50);
+    }
+
     /****************************************************
      * PARALLEL ASYNC STREAM CORE PROCESSING UPLOADER
      ****************************************************/
@@ -4528,6 +4574,57 @@
 
       if (!plateInputVal || !garageInputVal) {
         triggerToast('Vui lòng nhập biển số xe và Garage phụ trách.', 'error');
+        return;
+      }
+
+      // Handle Case Editing
+      if (editingCaseId) {
+        if (!requestedItemNames.length) {
+          triggerToast('Vui lòng nhập ít nhất một hạng mục phụ tùng cần yêu cầu ảnh.', 'error');
+          return;
+        }
+        
+        toggleUploadOverlay(true, 'Đang cập nhật hồ sơ...', 'Đồng bộ dữ liệu chỉnh sửa lên Cloud...', 40);
+        
+        try {
+          const caseEntity = cachedCasesPayload && cachedCasesPayload[editingCaseId];
+          const existingRequestedList = caseEntity && caseEntity.hangMucYeuCauAnh
+            ? (Array.isArray(caseEntity.hangMucYeuCauAnh) ? caseEntity.hangMucYeuCauAnh : Object.values(caseEntity.hangMucYeuCauAnh))
+            : [];
+            
+          const requestedEvidenceNodes = requestedItemNames.map((itemName, index) => {
+            const existingItem = existingRequestedList.find(item => item.tenHangMuc === itemName);
+            return {
+              tenHangMuc: itemName,
+              thuTu: index + 1,
+              hinhAnhGarage: existingItem ? (existingItem.hinhAnhGarage || []) : []
+            };
+          });
+
+          // Re-evaluate completed status
+          const totalReq = requestedEvidenceNodes.length;
+          const completedReq = requestedEvidenceNodes.filter(item => normalizeEvidenceImageUrls(item).length > 0).length;
+          const isCaseDone = totalReq > 0 && completedReq === totalReq;
+          const newStatus = isCaseDone ? STATUS_COMPLETED : STATUS_PENDING;
+
+          const updatePayload = {
+            bienSo: plateInputVal,
+            tenGara: garageInputVal,
+            hangMucYeuCauAnh: requestedEvidenceNodes,
+            trangThai: newStatus
+          };
+
+          await dbNodeInstance.ref(`cases/${editingCaseId}`).update(updatePayload);
+          triggerToast('Đã cập nhật thông tin hồ sơ giám định thành công!', 'success');
+          
+          resetCaseCreationForm();
+          switchWorkspaceTab('list');
+        } catch (exception) {
+          console.error(exception);
+          triggerToast('Lỗi cập nhật hồ sơ: ' + exception.message, 'error');
+        } finally {
+          toggleUploadOverlay(false);
+        }
         return;
       }
       
