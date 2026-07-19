@@ -3629,7 +3629,7 @@
                       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                       <span style="font-size: 13.5px; font-weight: 850; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-main);">Trích xuất hạng mục từ báo giá (AI OCR / Văn bản)</span>
                     </span>
-                    <span id="lblOcrKeyStatus" style="font-size: 11px; color: var(--text-muted); font-weight: 700; background: var(--surface-soft); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);">Đang kiểm tra API Key...</span>
+                    <span id="lblOcrKeyStatus" style="display: none;"></span>
                   </div>
                   <div class="p-card" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: none;">
                     
@@ -4087,6 +4087,22 @@
       triggerToast(`Đã trích xuất thành công ${extracted.length} hạng mục từ văn bản!`, 'success');
     }
 
+    function normalizeVietnameseText(str) {
+      if (!str) return '';
+      let result = str.toLowerCase();
+      result = result.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
+      result = result.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
+      result = result.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
+      result = result.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
+      result = result.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
+      result = result.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
+      result = result.replace(/đ/g, 'd');
+      result = result.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      result = result.replace(/[^a-z0-9\s]/g, ' ');
+      result = result.replace(/\s+/g, ' ').trim();
+      return result;
+    }
+
     function displayExtractedOcrItems(itemsArray) {
       ocrExtractedItemsList = itemsArray;
       
@@ -4102,10 +4118,10 @@
       };
       
       itemsArray.forEach((item, idx) => {
-        const lower = removeVietnameseTones(item).toLowerCase();
+        const lower = normalizeVietnameseText(item);
         
-        const laborKeywords = ['cong thay', 'tien cong', 'thao lap', 'nhan cong', 'tien cong thay', 'cong go', 'go nhat', 'nan phuc hoi', 'thao go', 'kiem tra', 'cong kiem tra', 'tiencong'];
-        const paintKeywords = ['son ', ' son', 'sơn', 'danh bong', 'lam dong', 'go son', 'son phu', 'dong son', 'đồng sơn'];
+        const laborKeywords = ['cong thay', 'tien cong', 'thao lap', 'nhan cong', 'tien cong thay', 'cong go', 'go nhat', 'nan phuc hoi', 'thao go', 'kiem tra', 'cong kiem tra', 'tiencong', 'cong '];
+        const paintKeywords = ['son ', ' son', 'sơn', 'danh bong', 'lam dong', 'go son', 'son phu', 'dong son', 'dong paint', 'son'];
         
         const entry = { item, idx };
         
