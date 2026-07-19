@@ -3210,13 +3210,12 @@
       if (activeDashboardTab === tabName) return;
       activeDashboardTab = tabName;
       
-      try {
-        dbNodeInstance.ref('cases').off();
-        dbNodeInstance.ref('users').off();
-      } catch (e) {}
+      // Keep Firebase realtime listeners active for instant updates on lists and home counts
 
       if (tabName === 'create') {
-        activeCreateFlowMode = 'select';
+        if (!editingCaseId) {
+          activeCreateFlowMode = 'select';
+        }
       }
       
       const homeBtn = document.getElementById('headerNavHomeBtn');
