@@ -595,7 +595,7 @@
       .p-table td:first-child { display: block; padding: 0 0 12px; }
       .p-table td:first-child::before, .p-table td:last-child::before { display: none; }
       .p-table td:last-child { display: block; padding-top: 12px; }
-      .flex-actions-group { display: grid; grid-template-columns: repeat(3,1fr); }
+      .flex-actions-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
       .flex-actions-group .btn-premium { width: 100%; padding: 0 8px; }
       .flex-actions-group .btn-premium .action-label { display: inline; }
     }
@@ -4478,8 +4478,8 @@
         
         const showEditButton = isCreator || isAdmin;
         const editButtonMarkup = showEditButton ? `
-          <button title="Sửa hồ sơ" class="btn-premium btn-secondary" onclick="triggerEditCaseFlow('${uniqueKeyToken}')" style="background: var(--surface-soft); border: 1px solid var(--border); color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; font-weight: 700; height: 32px; min-height: unset; padding: 0 10px; border-radius: 6px; cursor: pointer;">
-            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          <button type="button" title="Sửa hồ sơ" class="btn-premium btn-secondary" onclick="event.stopPropagation(); triggerEditCaseFlow('${uniqueKeyToken}')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             <span class="action-label">Sửa</span>
           </button>
         ` : '';
@@ -4532,8 +4532,25 @@
     }
 
     function triggerEditCaseFlow(caseId) {
-      const caseEntity = cachedCasesPayload && cachedCasesPayload[caseId];
-      if (!caseEntity) return triggerToast('Không tìm thấy dữ liệu ca xe để chỉnh sửa.', 'error');
+      console.log('triggerEditCaseFlow matching caseId:', caseId);
+      
+      let caseEntity = null;
+      if (cachedCasesPayload) {
+        // Direct key lookup
+        caseEntity = cachedCasesPayload[caseId];
+        
+        // Fallback: search array/object entries by idCa
+        if (!caseEntity) {
+          caseEntity = Object.values(cachedCasesPayload).find(c => c && (c.idCa === caseId || c.id === caseId));
+        }
+      }
+      
+      if (!caseEntity) {
+        console.error('Case details not resolved for ID:', caseId, cachedCasesPayload);
+        return triggerToast('Không tìm thấy dữ liệu ca xe để chỉnh sửa.', 'error');
+      }
+      
+      triggerToast('Đang tải dữ liệu hồ sơ chỉnh sửa...', 'info');
       
       editingCaseId = caseId;
       activeCreateFlowMode = 'excel'; 
