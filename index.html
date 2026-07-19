@@ -1009,6 +1009,74 @@
       background: var(--primary-gradient);
       box-shadow: 0 4px 10px rgba(199,155,75,.15);
     }
+
+    /* Premium Creation Option Cards */
+    .creation-option-card {
+      position: relative;
+      padding: 36px 28px;
+      text-align: center;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface-soft);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    .creation-option-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(216, 180, 109, 0.4);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 0 30px rgba(216, 180, 109, 0.08);
+      background: var(--surface-hover);
+    }
+    .creation-card-watermark {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 32px;
+      font-weight: 900;
+      opacity: 0.08;
+      color: var(--text-main);
+      user-select: none;
+      transition: opacity 0.3s ease;
+    }
+    .creation-option-card:hover .creation-card-watermark {
+      opacity: 0.15;
+    }
+    .creation-card-icon-wrap {
+      width: 56px;
+      height: 56px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      margin-bottom: 24px;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+    }
+    .creation-option-card:hover .creation-card-icon-wrap {
+      transform: scale(1.1) rotate(3deg);
+    }
+    .creation-option-card .btn-premium {
+      width: 100%;
+      height: 44px;
+      min-height: unset;
+      font-size: 13px;
+      font-weight: 850;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: auto;
+      transition: var(--transition);
+      box-sizing: border-box;
+    }
+    .creation-option-card:hover .btn-premium {
+      box-shadow: 0 8px 20px rgba(199, 155, 75, 0.25);
+    }
     
     /* Excel Grid styling */
     .excel-grid-container {
@@ -3510,31 +3578,40 @@
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
-                  <div class="p-card" style="padding: 28px; text-align: center; border: 1px solid var(--border); transition: all var(--transition);">
-                    <div style="width: 48px; height: 48px; display: grid; place-items: center; border-radius: 12px; background: rgba(216,180,109,0.08); color: var(--primary); margin: 0 auto 20px;">${SVGS.FOLDER}</div>
-                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 10px;">1. Bổ sung hình ảnh theo hạng mục chỉ định</h3>
-                    <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; min-height: 60px;">
+                  <div class="creation-option-card" onclick="switchCreateFlow('excel')">
+                    <div class="creation-card-watermark">01</div>
+                    <div class="creation-card-icon-wrap" style="background: rgba(216,180,109,0.08); color: var(--primary);">
+                      ${SVGS.FOLDER}
+                    </div>
+                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">1. Bổ sung hình ảnh theo hạng mục chỉ định</h3>
+                    <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Phù hợp khi đã có báo giá hoặc danh sách hạng mục cần đối chiếu. Nhập tay hoặc dán cột hàng loạt từ Microsoft Excel.
                     </p>
-                    <button type="button" class="btn-premium" onclick="switchCreateFlow('excel')">Tạo bằng danh sách</button>
+                    <button type="button" class="btn-premium">Tạo bằng danh sách &nbsp;➔</button>
                   </div>
                   
-                  <div class="p-card" style="padding: 28px; text-align: center; border: 1px solid var(--border); transition: all var(--transition);">
-                    <div style="width: 48px; height: 48px; display: grid; place-items: center; border-radius: 12px; background: rgba(40,167,69,0.08); color: var(--success); margin: 0 auto 20px;">${SVGS.IMAGE}</div>
-                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 10px;">2. Chỉ tải ảnh hiện trường</h3>
-                    <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; min-height: 60px;">
+                  <div class="creation-option-card" onclick="switchCreateFlow('image')">
+                    <div class="creation-card-watermark">02</div>
+                    <div class="creation-card-icon-wrap" style="background: rgba(40,167,69,0.08); color: var(--success);">
+                      ${SVGS.IMAGE}
+                    </div>
+                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">2. Chỉ tải ảnh hiện trường</h3>
+                    <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Phù hợp khi mới tiếp nhận xe tại hiện trường. Chỉ tải ảnh tổn thất, Garage sẽ tự nhận định bộ phận hư hỏng sau.
                     </p>
-                    <button type="button" class="btn-premium" onclick="switchCreateFlow('image')">Tạo bằng hình ảnh</button>
+                    <button type="button" class="btn-premium">Tạo bằng hình ảnh &nbsp;➔</button>
                   </div>
                   
-                  <div class="p-card" style="padding: 28px; text-align: center; border: 1px solid var(--border); transition: all var(--transition);">
-                    <div style="width: 48px; height: 48px; display: grid; place-items: center; border-radius: 12px; background: rgba(23,162,184,0.08); color: #17a2b8; margin: 0 auto 20px;">${SVGS.SPARKLES}</div>
-                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 10px;">3. Dùng mẫu danh mục</h3>
-                    <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; min-height: 60px;">
+                  <div class="creation-option-card" onclick="switchCreateFlow('template')">
+                    <div class="creation-card-watermark">03</div>
+                    <div class="creation-card-icon-wrap" style="background: rgba(23,162,184,0.08); color: #17a2b8;">
+                      ${SVGS.SPARKLES}
+                    </div>
+                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">3. Dùng mẫu danh mục</h3>
+                    <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Khởi tạo nhanh bằng các mẫu va chạm tiêu chuẩn của hãng (Đâm đầu xe, va chạm đuôi xe, ngập nước...) để tự động điền bảng.
                     </p>
-                    <button type="button" class="btn-premium" onclick="switchCreateFlow('template')">Xem các mẫu chuẩn</button>
+                    <button type="button" class="btn-premium">Xem các mẫu chuẩn &nbsp;➔</button>
                   </div>
                 </div>
               </section>
