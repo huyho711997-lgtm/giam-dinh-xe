@@ -4146,27 +4146,42 @@
       const renderGroupHtml = (title, iconSvg, colorVar, groupList) => {
         if (groupList.length === 0) return '';
         return `
-          <div class="ocr-category-group" style="border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--bg-soft); margin-bottom: 4px; box-sizing: border-box;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
-              <span style="color: ${colorVar}; display: flex; align-items: center; justify-content: center;">${iconSvg}</span>
-              <strong style="font-size: 12.5px; color: ${colorVar}; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800;">${title} (${groupList.length})</strong>
+          <div class="ocr-category-group" style="margin-bottom: 20px; width: 100%;">
+            <div style="border-left: 4px solid var(--primary); padding-left: 10px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--primary); display: flex; align-items: center; justify-content: center;">${iconSvg}</span>
+              <strong style="font-size: 13px; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 850;">${title} (${groupList.length})</strong>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr; gap: 6px;">
-              ${groupList.map((entry, index) => {
-                const serialNum = String(index + 1).padStart(2, '0');
-                const isAlreadyAdded = caseRequestedItemsDraft.some(item => 
-                  item && String(item.tenHangMuc || '').trim().toLowerCase() === String(entry.item || '').trim().toLowerCase()
-                );
-                return `
-                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); transition: background 0.15s ease; width: 100%; box-sizing: border-box;">
-                    <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; margin: 0; user-select: none;">
-                      <input type="checkbox" class="ocr-item-checkbox" data-index="${entry.idx}" ${isAlreadyAdded ? '' : 'checked'} style="margin: 0; width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;" />
-                      <span style="font-size: 10px; font-weight: 800; background: var(--surface-soft); color: var(--text-soft); padding: 2px 6px; border-radius: 4px; font-family: monospace;">${serialNum}</span>
-                      <span style="font-size: 13px; color: var(--text-main); font-weight: 600; line-height: 1.45; ${isAlreadyAdded ? 'text-decoration: line-through; opacity: 0.6;' : ''}">${escapeHtmlOutput(entry.item)}</span>
-                    </label>
-                  </div>
-                `;
-              }).join('')}
+            <div class="table-container" style="border: 1px solid var(--border); border-radius: 10px; background: var(--surface); overflow: hidden; margin-top: 8px;">
+              <table class="p-table" style="margin: 0; width: 100%;">
+                <thead>
+                  <tr>
+                    <th style="width: 60px; text-align: center; font-size: 11px; padding: 10px 12px;">Chọn</th>
+                    <th style="width: 60px; text-align: center; font-size: 11px; padding: 10px 12px;">STT</th>
+                    <th style="text-align: left; font-size: 11px; padding: 10px 12px;">Tên phụ tùng trích xuất</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${groupList.map((entry, index) => {
+                    const serialNum = String(index + 1).padStart(2, '0');
+                    const isAlreadyAdded = caseRequestedItemsDraft.some(item => 
+                      item && String(item.tenHangMuc || '').trim().toLowerCase() === String(entry.item || '').trim().toLowerCase()
+                    );
+                    return `
+                      <tr style="background: ${isAlreadyAdded ? 'var(--surface-soft)' : 'transparent'};">
+                        <td data-label="Chọn" style="text-align: center; padding: 10px 12px; vertical-align: middle; border-bottom: 1px solid var(--border);">
+                          <input type="checkbox" class="ocr-item-checkbox" data-index="${entry.idx}" ${isAlreadyAdded ? '' : 'checked'} style="margin: 0; width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;" />
+                        </td>
+                        <td data-label="STT" style="text-align: center; padding: 10px 12px; font-family: monospace; font-size: 12px; color: var(--text-soft); font-weight: 800; vertical-align: middle; border-bottom: 1px solid var(--border);">
+                          ${serialNum}
+                        </td>
+                        <td data-label="Hạng mục" style="padding: 10px 12px; font-size: 13px; color: var(--text-main); font-weight: 600; text-align: left; line-height: 1.45; vertical-align: middle; border-bottom: 1px solid var(--border); ${isAlreadyAdded ? 'text-decoration: line-through; opacity: 0.6;' : ''}">
+                          ${escapeHtmlOutput(entry.item)}
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
             </div>
           </div>
         `;
