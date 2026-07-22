@@ -4898,6 +4898,48 @@
       return `<span class="category-badge" style="background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.25); font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; line-height: 1;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg><span>Hạng mục tổn thất</span></span>`;
     }
 
+    function getCategoryGroupInfo(itemName, isGarageCustom = false) {
+      if (isGarageCustom) {
+        return {
+          key: 'damages',
+          title: 'HÌNH ẢNH GIÁM ĐỊNH TỔN THẤT',
+          subtitle: 'Các hạng mục tổn thất do Gara khởi tạo bổ sung tại xưởng',
+          color: 'var(--primary)',
+          badgeBg: 'rgba(216,180,109,0.12)',
+          iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`
+        };
+      }
+      const lower = normalizeVietnameseText(itemName || '');
+      if (lower.includes('ca vet') || lower.includes('giay phep') || lower.includes('gplx') || lower.includes('cccd') || lower.includes('can cuoc') || lower.includes('so dang kiem')) {
+        return {
+          key: 'documents',
+          title: 'GIẤY TỜ XE & HỒ SƠ PHÁP LÝ',
+          subtitle: 'Cà vẹt xe, Giấy phép lái xe, CCCD và Sổ đăng kiểm xe',
+          color: '#3b82f6',
+          badgeBg: 'rgba(59,130,246,0.12)',
+          iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`
+        };
+      }
+      if (lower.includes('tong the') || lower.includes('tem dang kiem') || lower.includes('so khung') || lower.includes('vin')) {
+        return {
+          key: 'overall',
+          title: 'HÌNH ẢNH TỔNG THỂ XE',
+          subtitle: 'Ảnh tổng thể 4 góc chéo của xe, Tem đăng kiểm và Số khung (VIN)',
+          color: '#10b981',
+          badgeBg: 'rgba(16,185,129,0.12)',
+          iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`
+        };
+      }
+      return {
+        key: 'damages',
+        title: 'HÌNH ẢNH GIÁM ĐỊNH TỔN THẤT',
+        subtitle: 'Chi tiết vị trí va chạm, linh kiện và phụ tùng hư hỏng',
+        color: 'var(--primary)',
+        badgeBg: 'rgba(216,180,109,0.12)',
+        iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`
+      };
+    }
+
     async function triggerAddNewGarageItemFromPortal() {
       const inputEl = document.getElementById('txtGarageNewItemName');
       if (!inputEl) return;
@@ -4990,57 +5032,35 @@
             </div>
           </article>`).join('')}` : '';
 
-      const evidenceRequestSection = localActiveRequestedItems.length ? `
-        <div class="workspace-section-head" style="margin-top:${localActiveImageStack.length ? '12px' : '0'}"><div><h2>${localActiveImageStack.length ? '02' : '01'} · Cung cấp ảnh giám định & Giấy tờ xe</h2><p>Ảnh được tải lên và lưu ngay theo từng hạng mục. Bạn có thể tự thêm hạng mục mới ở cuối danh sách.</p></div><div class="workspace-section-index">${String(localActiveRequestedItems.length).padStart(2,'0')} REQUESTS</div></div>
-        ${localActiveRequestedItems.map((item,index) => {
-          const urls = normalizeEvidenceImageUrls(item);
-          const isGarageCustomItem = !!item.taoBoiGara;
-          const categoryBadge = getCategoryBadgeMarkup(item.tenHangMuc, isGarageCustomItem);
-          const canDeleteCustomItem = urls.length === 0 && isGarageCustomItem;
-
-          const hiddenFileInputMarkup = `<input id="garageEvidenceInput_${index}" class="garage-evidence-input" data-request-index="${index}" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden />`;
-
-          const actionButtonsMarkup = isGarageCustomItem ? `
-            <div class="evidence-upload-actions" style="margin-bottom: 12px;">
-              <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="width: 100%; min-height: 44px; font-size: 13px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                <span>Chụp ảnh từ Camera (Bắt buộc)</span>
-              </button>
-            </div>
-          ` : `
-            <div class="evidence-upload-actions" style="display: flex; gap: 10px; margin-bottom: 12px;">
-              ${hiddenFileInputMarkup}
-              <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('garageEvidenceInput_${index}').click()" style="flex: 1; min-height: 44px; font-size: 12.5px; border-radius: 10px; font-weight: 750; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">${SVGS.IMAGE} Chọn nhiều ảnh</button>
-              <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="flex: 1; min-height: 44px; font-size: 12.5px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">${SVGS.CAMERA} Chụp ảnh</button>
-            </div>
-          `;
-
-          return `<article id="evidenceRequestCard_${index}" class="evidence-request-card ${urls.length ? 'is-complete' : ''}">
-            <div class="evidence-request-head">
-              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; width: 100%;">
-                <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
-                  <span class="evidence-request-number">${String(index+1).padStart(2,'0')}</span>
-                  ${categoryBadge}
-                </div>
-                <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                  <span id="evidenceStatus_${index}" class="evidence-request-status badge-status ${urls.length ? 'completed' : 'pending'}">${urls.length ? `${urls.length} ảnh đã lưu` : 'Chưa có ảnh'}</span>
-                  ${canDeleteCustomItem ? `
-                    <button type="button" class="btn-premium btn-secondary" title="Xóa hạng mục này" onclick="event.stopPropagation();triggerRemoveGarageCustomItem(${index})" style="width: 28px !important; min-height: 28px !important; height: 28px !important; padding: 0; border-radius: 6px; color: var(--danger); flex-shrink: 0;">
-                      ${SVGS.TRASH}
-                    </button>
-                  ` : ''}
-                </div>
-              </div>
-              <h3 style="margin: 0; font-size: 15.5px; font-weight: 800; color: var(--text-main); line-height: 1.35; word-break: break-word;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3>
-            </div>
-            <div class="evidence-request-body" style="padding: 16px 18px;">
-              ${actionButtonsMarkup}
-              <textarea id="garageEvidenceNote_${index}" class="textarea-premium evidence-note" placeholder="Ghi chú thêm cho hạng mục này (không bắt buộc)...">${escapeHtmlOutput(item.ghiChuGarage || '')}</textarea>
-              <div id="garageEvidenceNoteState_${index}" class="autosave-state">Ghi chú được tự động lưu</div>
-              <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
-            </div>
-          </article>`;
-        }).join('')}` : '';
+      const groupedDefinitions = [
+        {
+          key: 'documents',
+          indexNum: '01',
+          title: 'GIẤY TỜ XE & HỒ SƠ PHÁP LÝ',
+          subtitle: 'Cà vẹt xe, Giấy phép lái xe, CCCD và Sổ đăng kiểm xe',
+          color: '#3b82f6',
+          badgeBg: 'rgba(59,130,246,0.12)',
+          iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`
+        },
+        {
+          key: 'overall',
+          indexNum: '02',
+          title: 'HÌNH ẢNH TỔNG THỂ XE',
+          subtitle: 'Ảnh tổng thể 4 góc chéo của xe, Tem đăng kiểm và Số khung (VIN)',
+          color: '#10b981',
+          badgeBg: 'rgba(16,185,129,0.12)',
+          iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`
+        },
+        {
+          key: 'damages',
+          indexNum: '03',
+          title: 'HÌNH ẢNH GIÁM ĐỊNH TỔN THẤT',
+          subtitle: 'Chi tiết vị trí tổn thất va chạm & Gara tự tạo hạng mục chụp ảnh tại chỗ',
+          color: 'var(--primary)',
+          badgeBg: 'rgba(216,180,109,0.12)',
+          iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`
+        }
+      ];
 
       const garageAddItemBox = `
         <article class="p-card garage-add-item-box" style="padding: 22px 24px; border: 2px dashed var(--primary); background: rgba(216,180,109,0.04); border-radius: 16px; margin-top: 18px;">
@@ -5061,6 +5081,96 @@
           </div>
         </article>
       `;
+
+      const renderSingleCardMarkup = (item, index) => {
+        const urls = normalizeEvidenceImageUrls(item);
+        const isGarageCustomItem = !!item.taoBoiGara;
+        const categoryBadge = getCategoryBadgeMarkup(item.tenHangMuc, isGarageCustomItem);
+        const canDeleteCustomItem = urls.length === 0 && isGarageCustomItem;
+
+        const hiddenFileInputMarkup = `<input id="garageEvidenceInput_${index}" class="garage-evidence-input" data-request-index="${index}" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden />`;
+
+        const actionButtonsMarkup = isGarageCustomItem ? `
+          <div class="evidence-upload-actions" style="margin-bottom: 12px;">
+            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="width: 100%; min-height: 44px; font-size: 13px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              <span>Chụp ảnh từ Camera (Bắt buộc)</span>
+            </button>
+          </div>
+        ` : `
+          <div class="evidence-upload-actions" style="display: flex; gap: 10px; margin-bottom: 12px;">
+            ${hiddenFileInputMarkup}
+            <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('garageEvidenceInput_${index}').click()" style="flex: 1; min-height: 44px; font-size: 12.5px; border-radius: 10px; font-weight: 750; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">${SVGS.IMAGE} Chọn nhiều ảnh</button>
+            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="flex: 1; min-height: 44px; font-size: 12.5px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">${SVGS.CAMERA} Chụp ảnh</button>
+          </div>
+        `;
+
+        return `<article id="evidenceRequestCard_${index}" class="evidence-request-card ${urls.length ? 'is-complete' : ''}">
+          <div class="evidence-request-head">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; width: 100%;">
+              <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                <span class="evidence-request-number">${String(index+1).padStart(2,'0')}</span>
+                ${categoryBadge}
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                <span id="evidenceStatus_${index}" class="evidence-request-status badge-status ${urls.length ? 'completed' : 'pending'}">${urls.length ? `${urls.length} ảnh đã lưu` : 'Chưa có ảnh'}</span>
+                ${canDeleteCustomItem ? `
+                  <button type="button" class="btn-premium btn-secondary" title="Xóa hạng mục này" onclick="event.stopPropagation();triggerRemoveGarageCustomItem(${index})" style="width: 28px !important; min-height: 28px !important; height: 28px !important; padding: 0; border-radius: 6px; color: var(--danger); flex-shrink: 0;">
+                    ${SVGS.TRASH}
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+            <h3 style="margin: 0; font-size: 15.5px; font-weight: 800; color: var(--text-main); line-height: 1.35; word-break: break-word;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3>
+          </div>
+          <div class="evidence-request-body" style="padding: 16px 18px;">
+            ${actionButtonsMarkup}
+            <textarea id="garageEvidenceNote_${index}" class="textarea-premium evidence-note" placeholder="Ghi chú thêm cho hạng mục này (không bắt buộc)...">${escapeHtmlOutput(item.ghiChuGarage || '')}</textarea>
+            <div id="garageEvidenceNoteState_${index}" class="autosave-state">Ghi chú được tự động lưu</div>
+            <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
+          </div>
+        </article>`;
+      };
+
+      const evidenceRequestSection = localActiveRequestedItems.length ? groupedDefinitions.map(def => {
+        const matchingIndices = [];
+        localActiveRequestedItems.forEach((item, index) => {
+          const groupInfo = getCategoryGroupInfo(item.tenHangMuc, !!item.taoBoiGara);
+          if (groupInfo.key === def.key) matchingIndices.push(index);
+        });
+
+        if (matchingIndices.length === 0 && def.key !== 'damages') return '';
+
+        let completedCount = 0;
+        matchingIndices.forEach(idx => {
+          if (normalizeEvidenceImageUrls(localActiveRequestedItems[idx]).length > 0) completedCount++;
+        });
+
+        const cardsHTML = matchingIndices.map(idx => renderSingleCardMarkup(localActiveRequestedItems[idx], idx)).join('');
+
+        return `
+          <div class="evidence-group-section" style="margin-top: 24px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-left: 4px solid ${def.color}; padding-left: 12px; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: ${def.badgeBg}; color: ${def.color}; display: grid; place-items: center; flex-shrink: 0;">
+                  ${def.iconSvg}
+                </div>
+                <div>
+                  <h3 style="font-size: 14px; font-weight: 850; letter-spacing: 0.04em; color: var(--text-main); margin: 0; text-transform: uppercase;">MỤC ${def.indexNum} · ${def.title}</h3>
+                  <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">${def.subtitle}</span>
+                </div>
+              </div>
+              <div style="font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: var(--text-soft);">
+                ${completedCount}/${matchingIndices.length} hạng mục có ảnh
+              </div>
+            </div>
+            <div class="evidence-cards-list" style="display: flex; flex-direction: column; gap: 14px;">
+              ${cardsHTML}
+              ${def.key === 'damages' ? garageAddItemBox : ''}
+            </div>
+          </div>
+        `;
+      }).join('') : '';
 
       const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
       rootContainer.innerHTML = `
