@@ -5175,6 +5175,14 @@
         `;
 
         const isDamageItem = getCategoryGroupInfo(item.tenHangMuc, isGarageCustomItem).key === 'damages';
+        const DAMAGE_TAG_ICONS = {
+          'Trầy xước': `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><line x1="4" y1="16" x2="16" y2="4"></line><line x1="8" y1="20" x2="20" y2="8"></line></svg>`,
+          'Móp méo': `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>`,
+          'Bể / Vỡ': `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
+          'Cong vênh': `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>`,
+          'Rách': `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.47" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>`
+        };
+
         const damageMetaSelectorMarkup = isDamageItem ? `
           <div class="damage-meta-selector" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
             <div style="margin-bottom: 10px;">
@@ -5185,8 +5193,9 @@
                 ${['Trầy xước', 'Móp méo', 'Bể / Vỡ', 'Cong vênh', 'Rách'].map(tag => {
                   const isSelected = (item.mucDoHuHong || '').includes(tag);
                   return `
-                    <button type="button" onclick="toggleDamageSeverityTag(${index}, '${tag}')" style="padding: 4px 10px; font-size: 11.5px; font-weight: 750; border-radius: 20px; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}; background: ${isSelected ? 'rgba(216,180,109,0.15)' : 'var(--surface)'}; color: ${isSelected ? 'var(--primary)' : 'var(--text-main)'};">
-                      ${isSelected ? '✓ ' : '+ '}${tag}
+                    <button type="button" onclick="toggleDamageSeverityTag(${index}, '${tag}')" style="padding: 5px 12px; font-size: 11.5px; font-weight: 750; border-radius: 20px; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}; background: ${isSelected ? 'rgba(216,180,109,0.15)' : 'var(--surface)'}; color: ${isSelected ? 'var(--primary)' : 'var(--text-main)'}; display: inline-flex; align-items: center; gap: 5px;">
+                      ${isSelected ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>` : (DAMAGE_TAG_ICONS[tag] || `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`)}
+                      <span>${tag}</span>
                     </button>
                   `;
                 }).join('')}
@@ -5199,11 +5208,13 @@
                 Phương án đề xuất của Gara:
               </label>
               <div style="display: flex; gap: 8px;">
-                <button type="button" onclick="setProposedAction(${index}, 'sua_chua')" style="flex: 1; height: 36px; font-size: 12px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 1.5px solid ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'sua_chua' ? 'rgba(59,130,246,0.12)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--text-soft)'}; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                  <span>🛠️ Sửa chữa</span>
+                <button type="button" onclick="setProposedAction(${index}, 'sua_chua')" style="flex: 1; height: 40px; font-size: 12.5px; font-weight: 800; border-radius: 9px; cursor: pointer; transition: all 0.2s ease; border: 1.5px solid ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'sua_chua' ? 'rgba(59,130,246,0.12)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--text-soft)'}; display: flex; align-items: center; justify-content: center; gap: 7px;">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                  <span>Sửa chữa</span>
                 </button>
-                <button type="button" onclick="setProposedAction(${index}, 'thay_the')" style="flex: 1; height: 36px; font-size: 12px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 1.5px solid ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'thay_the' ? 'rgba(239,68,68,0.12)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--text-soft)'}; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                  <span>🔄 Thay thế</span>
+                <button type="button" onclick="setProposedAction(${index}, 'thay_the')" style="flex: 1; height: 40px; font-size: 12.5px; font-weight: 800; border-radius: 9px; cursor: pointer; transition: all 0.2s ease; border: 1.5px solid ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'thay_the' ? 'rgba(239,68,68,0.12)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--text-soft)'}; display: flex; align-items: center; justify-content: center; gap: 7px;">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                  <span>Thay thế</span>
                 </button>
               </div>
             </div>
@@ -6268,8 +6279,8 @@
                     <td data-label="Hạng mục" style="vertical-align: middle;">
                       ${getCategoryBadgeMarkup(item.tenHangMuc, item.taoBoiGara)}
                       <strong style="color: var(--text-main); font-size: 14px; font-weight: 700; display: block; margin-top: 2px;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</strong>
-                      ${item.mucDoHuHong ? `<div style="margin-top: 4px; font-size: 11.5px; color: var(--primary); font-weight: 750;">💥 Mức độ: ${escapeHtmlOutput(item.mucDoHuHong)}</div>` : ''}
-                      ${item.phuongAnDeXuat ? `<div style="margin-top: 2px; font-size: 11.5px; color: ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : '#ef4444'}; font-weight: 750;">Đề xuất Gara: ${item.phuongAnDeXuat === 'sua_chua' ? '🛠️ Sửa chữa' : '🔄 Thay thế'}</div>` : ''}
+                      ${item.mucDoHuHong ? `<div style="margin-top: 4px; font-size: 11.5px; color: var(--primary); font-weight: 750; display: inline-flex; align-items: center; gap: 4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span>Mức độ: ${escapeHtmlOutput(item.mucDoHuHong)}</span></div>` : ''}
+                      ${item.phuongAnDeXuat ? `<div style="margin-top: 2px; font-size: 11.5px; color: ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : '#ef4444'}; font-weight: 750; display: inline-flex; align-items: center; gap: 4px;">${item.phuongAnDeXuat === 'sua_chua' ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg><span>Đề xuất: Sửa chữa</span>` : `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg><span>Đề xuất: Thay thế</span>`}</div>` : ''}
                     </td>
                     <td data-label="Hình ảnh minh chứng" style="vertical-align: middle;">
                       ${urls.length ? (() => {
