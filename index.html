@@ -2903,17 +2903,11 @@
     function applyTemplateToDraft(templateName) {
       const templates = {
         'giam-dinh-xe': [
-          'Cà vẹt xe - Mặt trước',
-          'Cà vẹt xe - Mặt sau',
-          'Giấy phép lái xe - Mặt trước',
-          'Giấy phép lái xe - Mặt sau',
-          'CCCD lái xe - Mặt trước',
-          'CCCD lái xe - Mặt sau',
+          'Cà vẹt xe (2 mặt)',
+          'Giấy phép lái xe (2 mặt)',
+          'Căn cước công dân (2 mặt)',
           'Sổ đăng kiểm xe',
-          'Tổng thể xe - Góc trước trái',
-          'Tổng thể xe - Góc trước phải',
-          'Tổng thể xe - Góc sau trái',
-          'Tổng thể xe - Góc sau phải',
+          'Hình ảnh tổng thể xe (4 góc chéo)',
           'Tem đăng kiểm xe',
           'Số khung xe (VIN)'
         ],
@@ -3738,99 +3732,7 @@
                   </div>
                 </div>
 
-                <!-- AI OCR / Text Extractor Section -->
-                <div class="form-group" style="margin-bottom: 28px;">
-                  <div style="border-left: 4px solid var(--primary); padding-left: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; box-sizing: border-box;">
-                    <span style="display: inline-flex; align-items: center; gap: 8px;">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                      <span style="font-size: 13.5px; font-weight: 850; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-main);">Trích xuất hạng mục từ báo giá (AI OCR / Văn bản)</span>
-                    </span>
-                    <span id="lblOcrKeyStatus" style="display: none;"></span>
-                  </div>
-                  <div class="p-card" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: none;">
-                    
-                    <!-- Tab buttons -->
-                    <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
-                      <button type="button" id="tabOcrImageBtn" class="filter-pill active" onclick="switchOcrTab('image')" style="font-size:12px; height:32px; min-height:unset; border-radius:8px; padding: 0 14px; line-height: 1; display: inline-flex; align-items: center; gap: 4px;">
-                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                        <span>Quét ảnh báo giá (AI OCR)</span>
-                      </button>
-                      <button type="button" id="tabOcrTextBtn" class="filter-pill" onclick="switchOcrTab('text')" style="font-size:12px; height:32px; min-height:unset; border-radius:8px; padding: 0 14px; line-height: 1; display: inline-flex; align-items: center; gap: 4px;">
-                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                        <span>Trích xuất từ Văn bản (Copy-Paste)</span>
-                      </button>
-                    </div>
 
-                    <!-- Content Panel: Image OCR -->
-                    <div id="panelOcrImage" style="display: block;">
-                      <div id="ocrDropzone" style="border: 2px dashed var(--border-strong); border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; background: var(--surface); transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center;" onclick="document.getElementById('fileOcrInput').click()">
-                        <input type="file" id="fileOcrInput" accept="image/*" style="display: none;" onchange="handleOcrImageUpload(event)" />
-                        <div style="color: var(--primary); margin-bottom: 12px; display: grid; place-items: center; background: rgba(216,180,109,0.08); width: 48px; height: 48px; border-radius: 50%;">
-                          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                        </div>
-                        <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 700;">Tải lên ảnh chụp báo giá của Gara</strong>
-                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px; max-width: 380px; line-height: 1.6;">Hệ thống AI sẽ tự động phân tích và trích xuất danh sách các hạng mục phụ tùng xe cơ giới.</p>
-                      </div>
-
-                      <!-- Scanning Preview & Animation -->
-                      <div id="ocrScanningView" style="display: none; position: relative; border-radius: 10px; overflow: hidden; background: var(--surface); border: 1px solid var(--border); padding: 20px; text-align: center;">
-                        <div style="position: relative; max-width: 260px; margin: 0 auto; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-                          <img id="ocrPreviewImg" style="width: 100%; height: auto; display: block; filter: brightness(0.65);" />
-                          <!-- Laser sweep bar -->
-                          <div id="ocrLaserSweep" style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--primary); box-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary); animation: laserSweepAnim 2.2s infinite ease-in-out;"></div>
-                        </div>
-                        <div style="margin-top: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                          <div class="spinner-premium" style="width:28px; height:28px; margin-bottom: 10px;"></div>
-                          <strong style="font-size: 13.5px; color: var(--primary); display: block; font-weight: 750;">Đang quét ảnh báo giá bằng AI...</strong>
-                          <span style="font-size: 12px; color: var(--text-muted); margin-top: 4px; display: block;">Áp dụng bộ lọc khử nhiễu & trích xuất hạng mục tiếng Việt...</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Content Panel: Text Copy-Paste -->
-                    <div id="panelOcrText" style="display: none;">
-                      <textarea id="txtOcrRawText" class="textarea-premium" placeholder="Ví dụ dán văn bản báo giá từ PDF/Excel:&#10;1. Thay mới cụm đèn pha bên trái: 4.500.000đ&#10;2. Sơn nắp ca pô hoàn chỉnh: 1.500.000đ&#10;3. Gò nắn phục hồi cản trước: 800.000đ" style="min-height: 120px; font-size: 12.5px; line-height: 1.6; padding: 12px; margin-bottom: 12px; font-family: inherit; width: 100%; box-sizing: border-box;"></textarea>
-                      <button type="button" class="btn-premium" onclick="processTextToExtractItems()" style="width: auto !important; height: 38px; min-height: unset; padding: 0 20px; font-size: 12px; border-radius: 8px; background: var(--surface-soft); border: 1px solid var(--border); color: var(--text-main); font-weight: 750; cursor: pointer;">Trích xuất hạng mục</button>
-                    </div>
-
-                    <!-- Extracted Items Selection Area -->
-                    <div id="ocrExtractedItemsContainer" style="display: none; margin-top: 20px; border-top: 1px dashed var(--border); padding-top: 18px;">
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                        <strong style="font-size: 13px; color: var(--text-main); font-weight: 750;">Hạng mục trích xuất được (Chọn để yêu cầu ảnh):</strong>
-                        <div style="display: flex; gap: 12px; align-items: center;">
-                          <button type="button" onclick="selectAllOcrItems(true)" style="background:none; border:none; color:var(--text-soft); font-size:11.5px; font-weight:800; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:4px;">
-                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                            <span>Chọn tất cả</span>
-                          </button>
-                          <span style="color: var(--border);">|</span>
-                          <button type="button" onclick="selectAllOcrItems(false)" style="background:none; border:none; color:var(--text-soft); font-size:11.5px; font-weight:800; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:4px;">
-                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
-                            <span>Bỏ chọn</span>
-                          </button>
-                          <span style="color: var(--border);">|</span>
-                          <button type="button" onclick="toggleOcrPanelHeight()" style="background:none; border:none; color:var(--text-soft); font-size:11.5px; font-weight:800; cursor:pointer; padding:0; display:inline-flex; align-items:center; gap:4px;">
-                            <svg id="btnOcrExpandIcon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
-                            <span id="btnOcrExpandText">Mở rộng</span>
-                          </button>
-                        </div>
-                      </div>
-                      <div id="ocrItemsChipsFlow" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; max-height: 300px; overflow-y: auto; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-soft);">
-                        <!-- Chips will be generated here -->
-                      </div>
-                      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end;">
-                        <button type="button" class="btn-premium btn-secondary" onclick="resetOcrScanPanel()" style="width: auto !important; height: 40px; min-height: unset; padding: 0 18px; font-size: 12.5px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-weight: 750;">
-                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-soft);"><path d="M23 4v6h-6M1 20v-6h6"></path><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                          <span>Hủy / Quét lại</span>
-                        </button>
-                        <button type="button" class="btn-premium" onclick="applySelectedOcrItemsToComposer()" style="width: auto !important; height: 40px; min-height: unset; padding: 0 24px; font-size: 12.5px; border-radius: 8px; background: var(--primary-gradient); color: #080b11; border: none; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                          <span>Thêm vào danh sách yêu cầu ảnh</span>
-                        </button>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
 
                 <div class="form-group">
                   <div style="border-left: 4px solid var(--primary); padding-left: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; box-sizing: border-box;">
