@@ -2902,6 +2902,21 @@
 
     function applyTemplateToDraft(templateName) {
       const templates = {
+        'giam-dinh-xe': [
+          'Cà vẹt xe - Mặt trước',
+          'Cà vẹt xe - Mặt sau',
+          'Giấy phép lái xe - Mặt trước',
+          'Giấy phép lái xe - Mặt sau',
+          'CCCD lái xe - Mặt trước',
+          'CCCD lái xe - Mặt sau',
+          'Sổ đăng kiểm xe',
+          'Tổng thể xe - Góc trước trái',
+          'Tổng thể xe - Góc trước phải',
+          'Tổng thể xe - Góc sau trái',
+          'Tổng thể xe - Góc sau phải',
+          'Tem đăng kiểm xe',
+          'Số khung xe (VIN)'
+        ],
         'dau-xe': ['Cản trước', 'Đèn pha trái', 'Đèn pha phải', 'Mặt ca lăng', 'Nắp ca pô', 'Kính chắn gió trước'],
         'duoi-xe': ['Cản sau', 'Cốp sau', 'Đèn hậu trái', 'Đèn hậu phải', 'Kính sau', 'Lốp/Mâm xe'],
         'than-xe': ['Gương trái', 'Gương phải', 'Cửa trước trái', 'Cửa trước phải', 'Cửa sau trái', 'Cửa sau phải']
@@ -3578,12 +3593,24 @@
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
-                  <div class="creation-option-card" onclick="switchCreateFlow('excel')">
+                  <div class="creation-option-card" onclick="applyTemplateToDraft('giam-dinh-xe')">
                     <div class="creation-card-watermark">01</div>
+                    <div class="creation-card-icon-wrap" style="background: rgba(216,180,109,0.12); color: var(--primary);">
+                      ${SVGS.CAR}
+                    </div>
+                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">1. Hồ sơ Giám định Tiêu chuẩn</h3>
+                    <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
+                      Yêu cầu Gara chụp Giấy tờ (Cà vẹt, GPLX, CCCD 2 mặt, Đăng kiểm), Ảnh 4 góc xe, Tem, Số khung & Gara tự tạo thêm hạng mục tại xưởng.
+                    </p>
+                    <button type="button" class="btn-premium">Tạo mẫu Giám định chuẩn &nbsp;➔</button>
+                  </div>
+
+                  <div class="creation-option-card" onclick="switchCreateFlow('excel')">
+                    <div class="creation-card-watermark">02</div>
                     <div class="creation-card-icon-wrap" style="background: rgba(216,180,109,0.08); color: var(--primary);">
                       ${SVGS.FOLDER}
                     </div>
-                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">1. Bổ sung hình ảnh theo hạng mục chỉ định</h3>
+                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">2. Bổ sung hình ảnh theo hạng mục chỉ định</h3>
                     <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Phù hợp khi đã có báo giá hoặc danh sách hạng mục cần đối chiếu. Nhập tay hoặc dán cột hàng loạt từ Microsoft Excel.
                     </p>
@@ -3591,11 +3618,11 @@
                   </div>
                   
                   <div class="creation-option-card" onclick="switchCreateFlow('image')">
-                    <div class="creation-card-watermark">02</div>
+                    <div class="creation-card-watermark">03</div>
                     <div class="creation-card-icon-wrap" style="background: rgba(40,167,69,0.08); color: var(--success);">
                       ${SVGS.IMAGE}
                     </div>
-                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">2. Chỉ tải ảnh hiện trường</h3>
+                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">3. Chỉ tải ảnh hiện trường</h3>
                     <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Phù hợp khi mới tiếp nhận xe tại hiện trường. Chỉ tải ảnh tổn thất, Garage sẽ tự nhận định bộ phận hư hỏng sau.
                     </p>
@@ -3603,11 +3630,11 @@
                   </div>
                   
                   <div class="creation-option-card" onclick="switchCreateFlow('template')">
-                    <div class="creation-card-watermark">03</div>
+                    <div class="creation-card-watermark">04</div>
                     <div class="creation-card-icon-wrap" style="background: rgba(23,162,184,0.08); color: #17a2b8;">
                       ${SVGS.SPARKLES}
                     </div>
-                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">3. Dùng mẫu danh mục</h3>
+                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">4. Dùng mẫu va chạm khác</h3>
                     <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Khởi tạo nhanh bằng các mẫu va chạm tiêu chuẩn của hãng (Đâm đầu xe, va chạm đuôi xe, ngập nước...) để tự động điền bảng.
                     </p>
@@ -3630,6 +3657,12 @@
                 </div>
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                  <div class="p-card" style="padding: 24px; cursor: pointer; transition: all var(--transition); border: 1.5px solid var(--primary);" onclick="applyTemplateToDraft('giam-dinh-xe')">
+                    <div style="width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: rgba(216,180,109,0.15); color: var(--primary); margin-bottom: 16px;">${SVGS.CAR}</div>
+                    <h4 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--primary);">★ Mẫu Giám định Xe đầy đủ</h4>
+                    <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">Bộ 13 mục chuẩn: Giấy tờ (Cà vẹt, GPLX, CCCD 2 mặt, Sổ đăng kiểm), 4 góc chéo, Tem đăng kiểm, Số khung (VIN) & Gara chụp linh hoạt.</p>
+                    <button type="button" class="btn-premium" style="min-height: 36px !important; font-size: 11px;">Áp dụng mẫu này</button>
+                  </div>
                   <div class="p-card" style="padding: 24px; cursor: pointer; transition: all var(--transition);" onclick="applyTemplateToDraft('dau-xe')">
                     <div style="width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: rgba(216,180,109,0.08); color: var(--primary); margin-bottom: 16px;">${SVGS.CAR}</div>
                     <h4 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--text-main);">Mẫu đâm va đầu xe</h4>
@@ -4995,8 +5028,95 @@
       </div>`).join('');
     }
 
+    function getCategoryBadgeMarkup(itemName) {
+      const lower = normalizeVietnameseText(itemName || '');
+      if (lower.includes('ca vet') || lower.includes('giay phep') || lower.includes('gplx') || lower.includes('cccd') || lower.includes('can cuoc') || lower.includes('so dang kiem')) {
+        return `<span class="badge-status" style="background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.25); font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 6px; margin-bottom: 4px; display: inline-block;">📄 Giấy tờ xe</span>`;
+      }
+      if (lower.includes('tong the') || lower.includes('tem dang kiem') || lower.includes('so khung') || lower.includes('vin')) {
+        return `<span class="badge-status" style="background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.25); font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 6px; margin-bottom: 4px; display: inline-block;">🚗 Ảnh tiêu chuẩn</span>`;
+      }
+      return `<span class="badge-status" style="background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.25); font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 6px; margin-bottom: 4px; display: inline-block;">🔧 Hạng mục tổn thất</span>`;
+    }
+
+    async function triggerAddNewGarageItemFromPortal() {
+      const inputEl = document.getElementById('txtGarageNewItemName');
+      if (!inputEl) return;
+      const itemName = inputEl.value.trim();
+      if (!itemName) {
+        return triggerToast('Vui lòng nhập tên hạng mục cần chụp ảnh.', 'error');
+      }
+
+      if (!Array.isArray(localActiveRequestedItems)) {
+        localActiveRequestedItems = [];
+      }
+
+      const newItem = {
+        id: generateUniqueReqId(),
+        tenHangMuc: itemName,
+        thuTu: localActiveRequestedItems.length + 1,
+        hinhAnhGarage: [],
+        ghiChuGarage: ''
+      };
+
+      localActiveRequestedItems.push(newItem);
+
+      try {
+        toggleUploadOverlay(true, 'Đang tạo hạng mục mới...', 'Đồng bộ dữ liệu sang máy chủ Cloud...', 40);
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh`).set(localActiveRequestedItems);
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/soLuongHangMucYeuCauAnh`).set(localActiveRequestedItems.length);
+        
+        inputEl.value = '';
+        triggerToast(`Đã tạo hạng mục "${itemName}". Bạn có thể chụp/tải ảnh ngay!`, 'success');
+        
+        renderPortalGarageInteractiveInputView();
+        
+        setTimeout(() => {
+          const newCardIndex = localActiveRequestedItems.length - 1;
+          const newCard = document.getElementById(`evidenceRequestCard_${newCardIndex}`);
+          if (newCard) {
+            newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            newCard.style.boxShadow = '0 0 0 2px var(--primary)';
+            setTimeout(() => newCard.style.boxShadow = '', 2200);
+          }
+        }, 120);
+      } catch (err) {
+        console.error(err);
+        triggerToast('Lỗi tạo hạng mục: ' + err.message, 'error');
+      } finally {
+        toggleUploadOverlay(false);
+      }
+    }
+
+    async function triggerRemoveGarageCustomItem(itemIndex) {
+      if (!localActiveRequestedItems || !localActiveRequestedItems[itemIndex]) return;
+      const item = localActiveRequestedItems[itemIndex];
+      const confirmAction = await showConfirmModal('Xóa hạng mục', `Bạn có chắc muốn xóa hạng mục "${item.tenHangMuc}" khỏi danh sách?`);
+      if (!confirmAction) return;
+
+      localActiveRequestedItems.splice(itemIndex, 1);
+      localActiveRequestedItems.forEach((it, idx) => { it.thuTu = idx + 1; });
+
+      try {
+        toggleUploadOverlay(true, 'Đang xóa hạng mục...', 'Đồng bộ dữ liệu...', 40);
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh`).set(localActiveRequestedItems);
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/soLuongHangMucYeuCauAnh`).set(localActiveRequestedItems.length);
+        
+        triggerToast('Đã xóa hạng mục thành công.', 'warning');
+        renderPortalGarageInteractiveInputView();
+      } catch (err) {
+        console.error(err);
+        triggerToast('Lỗi xóa hạng mục: ' + err.message, 'error');
+      } finally {
+        toggleUploadOverlay(false);
+      }
+    }
+
+    window.triggerAddNewGarageItemFromPortal = triggerAddNewGarageItemFromPortal;
+    window.triggerRemoveGarageCustomItem = triggerRemoveGarageCustomItem;
+
     function renderPortalGarageInteractiveInputView() {
-      if (!localActiveImageStack.length && !localActiveRequestedItems.length) return renderErrorLayoutState('Hồ sơ hiện tại chưa có nội dung yêu cầu Garage xử lý.');
+      if (!localActiveImageStack.length && !localActiveRequestedItems.length && !localActiveCaseNode) return renderErrorLayoutState('Hồ sơ hiện tại chưa có nội dung yêu cầu Garage xử lý.');
       garagePortalMounted = true;
 
       const imageInputSection = localActiveImageStack.length ? `
@@ -5011,11 +5131,29 @@
           </article>`).join('')}` : '';
 
       const evidenceRequestSection = localActiveRequestedItems.length ? `
-        <div class="workspace-section-head" style="margin-top:${localActiveImageStack.length ? '12px' : '0'}"><div><h2>02 · Cung cấp ảnh theo hạng mục báo giá</h2><p>Ảnh được tải lên và lưu ngay theo từng hạng mục. Có thể thêm tiếp hoặc xóa ảnh trước khi gửi hồ sơ.</p></div><div class="workspace-section-index">${String(localActiveRequestedItems.length).padStart(2,'0')} REQUESTS</div></div>
+        <div class="workspace-section-head" style="margin-top:${localActiveImageStack.length ? '12px' : '0'}"><div><h2>${localActiveImageStack.length ? '02' : '01'} · Cung cấp ảnh giám định & Giấy tờ xe</h2><p>Ảnh được tải lên và lưu ngay theo từng hạng mục. Bạn có thể tự thêm hạng mục mới ở cuối danh sách.</p></div><div class="workspace-section-index">${String(localActiveRequestedItems.length).padStart(2,'0')} REQUESTS</div></div>
         ${localActiveRequestedItems.map((item,index) => {
           const urls = normalizeEvidenceImageUrls(item);
+          const categoryBadge = getCategoryBadgeMarkup(item.tenHangMuc);
+          const canDeleteCustomItem = urls.length === 0;
+
           return `<article id="evidenceRequestCard_${index}" class="evidence-request-card ${urls.length ? 'is-complete' : ''}">
-            <div class="evidence-request-head"><div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div><div><small>Hạng mục cần ảnh minh chứng</small><h3>${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3></div><div id="evidenceStatus_${index}" class="evidence-request-status badge-status ${urls.length ? 'completed' : 'pending'}">${urls.length ? `${urls.length} ảnh đã lưu` : 'Chưa có ảnh'}</div></div>
+            <div class="evidence-request-head">
+              <div class="evidence-request-number">${String(index+1).padStart(2,'0')}</div>
+              <div style="flex: 1; padding-right: 10px;">
+                ${categoryBadge}
+                <small style="display:block;">Hạng mục cần ảnh minh chứng</small>
+                <h3 style="margin-top:2px;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div id="evidenceStatus_${index}" class="evidence-request-status badge-status ${urls.length ? 'completed' : 'pending'}">${urls.length ? `${urls.length} ảnh đã lưu` : 'Chưa có ảnh'}</div>
+                ${canDeleteCustomItem ? `
+                  <button type="button" class="btn-premium btn-secondary" title="Xóa hạng mục này" onclick="event.stopPropagation();triggerRemoveGarageCustomItem(${index})" style="width: 32px !important; min-height: 32px !important; height: 32px !important; padding: 0; border-radius: 6px; color: var(--danger); flex-shrink: 0;">
+                    ${SVGS.TRASH}
+                  </button>
+                ` : ''}
+              </div>
+            </div>
             <div class="evidence-request-body">
               <div class="dropzone evidence-dropzone" data-evidence-dropzone="${index}" onclick="document.getElementById('garageEvidenceInput_${index}').click()">
                 <div><div class="dropzone-icon">${SVGS.UPLOAD}</div><strong>Chọn, chụp hoặc kéo ảnh vào đây</strong><p>Ảnh sẽ được tải và lưu ngay · tối đa 12 ảnh/hạng mục</p></div>
@@ -5029,11 +5167,31 @@
           </article>`;
         }).join('')}` : '';
 
+      const garageAddItemBox = `
+        <article class="p-card garage-add-item-box" style="padding: 22px 24px; border: 2px dashed var(--primary); background: rgba(216,180,109,0.04); border-radius: 16px; margin-top: 18px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(216,180,109,0.15); color: var(--primary); display: grid; place-items: center; flex-shrink: 0;">${SVGS.SPARKLES}</div>
+              <div>
+                <h3 style="font-size: 15px; font-weight: 850; color: var(--text-main); margin: 0;">Gara tự thêm hạng mục chụp ảnh tại chỗ</h3>
+                <p style="font-size: 11.5px; color: var(--text-muted); margin-top: 2px; margin-bottom: 0;">Nhập tên bộ phận tổn thất/sửa chữa thực tế để khởi tạo thẻ chụp ảnh tức thì.</p>
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <input id="txtGarageNewItemName" class="input-premium" type="text" placeholder="Ví dụ: Vè trước trái, Cản trước trầy xước, Đèn pha vỡ..." style="flex: 1; min-width: 220px; height: 42px; font-size: 13px;" onkeydown="if(event.key==='Enter'){event.preventDefault();triggerAddNewGarageItemFromPortal();}" />
+            <button type="button" class="btn-premium" onclick="triggerAddNewGarageItemFromPortal()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12px; font-weight: 800; border-radius: 8px;">
+              ${SVGS.CAMERA} Tạo hạng mục & Chụp ảnh ngay
+            </button>
+          </div>
+        </article>
+      `;
+
       const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
       rootContainer.innerHTML = `
         <div class="portal-shell" data-garage-portal="active">
           <header class="portal-topbar">
-            <div><div class="eyebrow">Garage response portal</div><h1>Hoàn thiện dữ liệu báo giá</h1><p>Mọi ghi chú và ảnh minh chứng được lưu theo thời gian thực trước khi Garage khóa hồ sơ.</p></div>
+            <div><div class="eyebrow">Garage response portal</div><h1>Hoàn thiện dữ liệu báo giá & Giám định</h1><p>Mọi ghi chú và ảnh minh chứng được lưu theo thời gian thực trước khi Garage khóa hồ sơ.</p></div>
             <div class="portal-counter-stack">
               <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện Sáng/Tối" onclick="toggleTheme()">${activeThemeIcon}</button>
               <div class="portal-counter">Ảnh cần ghi tên<strong id="garageHeaderNoteCounter">00/00</strong></div>
@@ -5050,7 +5208,7 @@
             </div>
             <div class="garage-progress-track"><div id="garageProgressFill"></div></div>
           </div>
-          <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list">${imageInputSection}${evidenceRequestSection}</div></div>
+          <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list">${imageInputSection}${evidenceRequestSection}${garageAddItemBox}</div></div>
           <div class="mobile-bottom-bar">
             <div class="mobile-bottom-bar-info">
               <span id="mobileBottomBarProgressPercent" class="mobile-bottom-bar-percentage">0%</span>
@@ -5997,7 +6155,8 @@
                       <div class="evidence-request-number" style="width: 32px; height: 32px; margin: 0 auto; font-size: 11px; border-radius: 10px;">${String(index+1).padStart(2,'0')}</div>
                     </td>
                     <td data-label="Hạng mục" style="vertical-align: middle;">
-                      <strong style="color: var(--text-main); font-size: 14px; font-weight: 700;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</strong>
+                      ${getCategoryBadgeMarkup(item.tenHangMuc)}
+                      <strong style="color: var(--text-main); font-size: 14px; font-weight: 700; display: block; margin-top: 2px;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</strong>
                     </td>
                     <td data-label="Hình ảnh minh chứng" style="vertical-align: middle;">
                       ${urls.length ? (() => {
