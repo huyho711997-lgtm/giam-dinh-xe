@@ -4930,7 +4930,10 @@
       </div>`).join('');
     }
 
-    function getCategoryBadgeMarkup(itemName) {
+    function getCategoryBadgeMarkup(itemName, isGarageCustom = false) {
+      if (isGarageCustom) {
+        return `<span class="badge-status" style="background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 6px; margin-bottom: 5px; display: inline-flex; align-items: center; gap: 5px; line-height: 1;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg><span>Bắt buộc chụp từ Camera</span></span>`;
+      }
       const lower = normalizeVietnameseText(itemName || '');
       if (lower.includes('ca vet') || lower.includes('giay phep') || lower.includes('gplx') || lower.includes('cccd') || lower.includes('can cuoc') || lower.includes('so dang kiem')) {
         return `<span class="badge-status" style="background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.25); font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 6px; margin-bottom: 5px; display: inline-flex; align-items: center; gap: 5px; line-height: 1;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg><span>Giấy tờ xe</span></span>`;
@@ -4958,7 +4961,8 @@
         tenHangMuc: itemName,
         thuTu: localActiveRequestedItems.length + 1,
         hinhAnhGarage: [],
-        ghiChuGarage: ''
+        ghiChuGarage: '',
+        taoBoiGara: true
       };
 
       localActiveRequestedItems.push(newItem);
@@ -5036,8 +5040,37 @@
         <div class="workspace-section-head" style="margin-top:${localActiveImageStack.length ? '12px' : '0'}"><div><h2>${localActiveImageStack.length ? '02' : '01'} · Cung cấp ảnh giám định & Giấy tờ xe</h2><p>Ảnh được tải lên và lưu ngay theo từng hạng mục. Bạn có thể tự thêm hạng mục mới ở cuối danh sách.</p></div><div class="workspace-section-index">${String(localActiveRequestedItems.length).padStart(2,'0')} REQUESTS</div></div>
         ${localActiveRequestedItems.map((item,index) => {
           const urls = normalizeEvidenceImageUrls(item);
-          const categoryBadge = getCategoryBadgeMarkup(item.tenHangMuc);
-          const canDeleteCustomItem = urls.length === 0;
+          const isGarageCustomItem = !!item.taoBoiGara;
+          const categoryBadge = getCategoryBadgeMarkup(item.tenHangMuc, isGarageCustomItem);
+          const canDeleteCustomItem = urls.length === 0 && isGarageCustomItem;
+
+          const dropzoneMarkup = isGarageCustomItem ? `
+            <div class="dropzone evidence-dropzone" data-evidence-dropzone="${index}" onclick="openMobileCameraForEvidence(${index})" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.03);">
+              <div>
+                <div class="dropzone-icon" style="color: #ef4444;">${SVGS.CAMERA}</div>
+                <strong style="color: var(--text-main);">Bấm vào đây để mở Camera chụp ảnh trực tiếp</strong>
+                <p style="color: #ef4444; font-weight: 700; margin-top: 4px;">Hạng mục Gara khởi tạo bắt buộc chụp ảnh từ Camera · Không chọn tệp từ thư viện</p>
+              </div>
+            </div>
+          ` : `
+            <div class="dropzone evidence-dropzone" data-evidence-dropzone="${index}" onclick="document.getElementById('garageEvidenceInput_${index}').click()">
+              <div><div class="dropzone-icon">${SVGS.UPLOAD}</div><strong>Chọn, chụp hoặc kéo ảnh vào đây</strong><p>Ảnh sẽ được tải và lưu ngay · tối đa 12 ảnh/hạng mục</p></div>
+              <input id="garageEvidenceInput_${index}" class="garage-evidence-input" data-request-index="${index}" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden />
+            </div>
+          `;
+
+          const actionButtonsMarkup = isGarageCustomItem ? `
+            <div class="evidence-upload-actions">
+              <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="width: 100%; height: 42px; font-size: 12.5px; border-radius: 8px;">
+                ${SVGS.CAMERA} Chụp ảnh từ Camera (Bắt buộc)
+              </button>
+            </div>
+          ` : `
+            <div class="evidence-upload-actions">
+              <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('garageEvidenceInput_${index}').click()">${SVGS.IMAGE} Chọn nhiều ảnh</button>
+              <button type="button" class="btn-premium btn-secondary" onclick="openMobileCameraForEvidence(${index})">${SVGS.CAMERA} Chụp ảnh</button>
+            </div>
+          `;
 
           return `<article id="evidenceRequestCard_${index}" class="evidence-request-card ${urls.length ? 'is-complete' : ''}">
             <div class="evidence-request-head">
@@ -5057,11 +5090,8 @@
               </div>
             </div>
             <div class="evidence-request-body">
-              <div class="dropzone evidence-dropzone" data-evidence-dropzone="${index}" onclick="document.getElementById('garageEvidenceInput_${index}').click()">
-                <div><div class="dropzone-icon">${SVGS.UPLOAD}</div><strong>Chọn, chụp hoặc kéo ảnh vào đây</strong><p>Ảnh sẽ được tải và lưu ngay · tối đa 12 ảnh/hạng mục</p></div>
-                <input id="garageEvidenceInput_${index}" class="garage-evidence-input" data-request-index="${index}" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden />
-              </div>
-              <div class="evidence-upload-actions"><button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('garageEvidenceInput_${index}').click()">${SVGS.IMAGE} Chọn nhiều ảnh</button><button type="button" class="btn-premium btn-secondary" onclick="openMobileCameraForEvidence(${index})">${SVGS.CAMERA} Chụp ảnh</button></div>
+              ${dropzoneMarkup}
+              ${actionButtonsMarkup}
               <textarea id="garageEvidenceNote_${index}" class="textarea-premium evidence-note" placeholder="Ghi chú thêm cho hạng mục này (không bắt buộc)...">${escapeHtmlOutput(item.ghiChuGarage || '')}</textarea>
               <div id="garageEvidenceNoteState_${index}" class="autosave-state">Ghi chú được tự động lưu</div>
               <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
@@ -5748,6 +5778,12 @@
       const fileInput = document.getElementById(`garageEvidenceInput_${requestIndex}`);
       const isCameraSource = isFromCamera || (fileInput && fileInput.dataset.sourceType === 'camera');
       if (fileInput) delete fileInput.dataset.sourceType;
+
+      if (localActiveRequestedItems[requestIndex]?.taoBoiGara && !isCameraSource) {
+        triggerToast('Hạng mục này do Gara khởi tạo bắt buộc phải chụp trực tiếp từ Camera.', 'error');
+        setEvidenceUploadUI(requestIndex, false);
+        return;
+      }
 
       const categoryName = localActiveRequestedItems[requestIndex].tenHangMuc || `H\u1ea1ng m\u1ee5c ${requestIndex + 1}`;
       setEvidenceUploadUI(requestIndex, true, `\u0110ang x\u1eed l\u00fd ${incomingFiles.length} \u1ea3nh`, 5);
