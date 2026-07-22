@@ -4971,6 +4971,8 @@
         inputEl.value = '';
         triggerToast(`Đã tạo hạng mục "${itemName}". Bạn có thể chụp/tải ảnh ngay!`, 'success');
         
+        if (!window.sectionCollapseState) window.sectionCollapseState = {};
+        window.sectionCollapseState['damages'] = false;
         renderPortalGarageInteractiveInputView();
         
         setTimeout(() => {
@@ -5156,9 +5158,9 @@
 
       if (!window.sectionCollapseState) {
         window.sectionCollapseState = {
-          documents: false,
-          overall: false,
-          damages: false
+          documents: true,
+          overall: true,
+          damages: true
         };
       }
 
