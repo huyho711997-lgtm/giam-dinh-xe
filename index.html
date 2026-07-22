@@ -4998,31 +4998,20 @@
           const categoryBadge = getCategoryBadgeMarkup(item.tenHangMuc, isGarageCustomItem);
           const canDeleteCustomItem = urls.length === 0 && isGarageCustomItem;
 
-          const dropzoneMarkup = isGarageCustomItem ? `
-            <div class="dropzone evidence-dropzone" data-evidence-dropzone="${index}" onclick="openMobileCameraForEvidence(${index})" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.03);">
-              <div>
-                <div class="dropzone-icon" style="color: #ef4444;">${SVGS.CAMERA}</div>
-                <strong style="color: var(--text-main);">Bấm vào đây để mở Camera chụp ảnh trực tiếp</strong>
-                <p style="color: #ef4444; font-weight: 700; margin-top: 4px;">Hạng mục Gara khởi tạo bắt buộc chụp ảnh từ Camera · Không chọn tệp từ thư viện</p>
-              </div>
-            </div>
-          ` : `
-            <div class="dropzone evidence-dropzone" data-evidence-dropzone="${index}" onclick="document.getElementById('garageEvidenceInput_${index}').click()">
-              <div><div class="dropzone-icon">${SVGS.UPLOAD}</div><strong>Chọn, chụp hoặc kéo ảnh vào đây</strong><p>Ảnh sẽ được tải và lưu ngay · tối đa 12 ảnh/hạng mục</p></div>
-              <input id="garageEvidenceInput_${index}" class="garage-evidence-input" data-request-index="${index}" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden />
-            </div>
-          `;
+          const hiddenFileInputMarkup = `<input id="garageEvidenceInput_${index}" class="garage-evidence-input" data-request-index="${index}" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden />`;
 
           const actionButtonsMarkup = isGarageCustomItem ? `
-            <div class="evidence-upload-actions">
-              <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="width: 100%; height: 42px; font-size: 12.5px; border-radius: 8px;">
-                ${SVGS.CAMERA} Chụp ảnh từ Camera (Bắt buộc)
+            <div class="evidence-upload-actions" style="margin-bottom: 12px;">
+              <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="width: 100%; min-height: 44px; font-size: 13px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <span>Chụp ảnh từ Camera (Bắt buộc)</span>
               </button>
             </div>
           ` : `
-            <div class="evidence-upload-actions">
-              <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('garageEvidenceInput_${index}').click()">${SVGS.IMAGE} Chọn nhiều ảnh</button>
-              <button type="button" class="btn-premium btn-secondary" onclick="openMobileCameraForEvidence(${index})">${SVGS.CAMERA} Chụp ảnh</button>
+            <div class="evidence-upload-actions" style="display: flex; gap: 10px; margin-bottom: 12px;">
+              ${hiddenFileInputMarkup}
+              <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('garageEvidenceInput_${index}').click()" style="flex: 1; min-height: 44px; font-size: 12.5px; border-radius: 10px; font-weight: 750; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">${SVGS.IMAGE} Chọn nhiều ảnh</button>
+              <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="flex: 1; min-height: 44px; font-size: 12.5px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">${SVGS.CAMERA} Chụp ảnh</button>
             </div>
           `;
 
@@ -5044,8 +5033,7 @@
               </div>
               <h3 style="margin: 0; font-size: 15.5px; font-weight: 800; color: var(--text-main); line-height: 1.35; word-break: break-word;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3>
             </div>
-            <div class="evidence-request-body">
-              ${dropzoneMarkup}
+            <div class="evidence-request-body" style="padding: 16px 18px;">
               ${actionButtonsMarkup}
               <textarea id="garageEvidenceNote_${index}" class="textarea-premium evidence-note" placeholder="Ghi chú thêm cho hạng mục này (không bắt buộc)...">${escapeHtmlOutput(item.ghiChuGarage || '')}</textarea>
               <div id="garageEvidenceNoteState_${index}" class="autosave-state">Ghi chú được tự động lưu</div>
