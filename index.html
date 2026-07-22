@@ -5037,9 +5037,54 @@
       }
     }
 
+    async function toggleDamageSeverityTag(itemIndex, tag) {
+      if (!localActiveRequestedItems || !localActiveRequestedItems[itemIndex]) return;
+      const item = localActiveRequestedItems[itemIndex];
+      let currentTags = (item.mucDoHuHong || '').split(',').map(s => s.trim()).filter(Boolean);
+      if (currentTags.includes(tag)) {
+        currentTags = currentTags.filter(t => t !== tag);
+      } else {
+        currentTags.push(tag);
+      }
+      item.mucDoHuHong = currentTags.join(', ');
+      
+      try {
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh/${itemIndex}/mucDoHuHong`).set(item.mucDoHuHong);
+      } catch (e) {
+        console.error(e);
+      }
+      renderPortalGarageInteractiveInputView();
+    }
+
+    async function setProposedAction(itemIndex, action) {
+      if (!localActiveRequestedItems || !localActiveRequestedItems[itemIndex]) return;
+      const item = localActiveRequestedItems[itemIndex];
+      item.phuongAnDeXuat = item.phuongAnDeXuat === action ? '' : action;
+      
+      try {
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh/${itemIndex}/phuongAnDeXuat`).set(item.phuongAnDeXuat);
+      } catch (e) {
+        console.error(e);
+      }
+      renderPortalGarageInteractiveInputView();
+    }
+
+    async function saveDamageSeverityCustom(itemIndex, val) {
+      if (!localActiveRequestedItems || !localActiveRequestedItems[itemIndex]) return;
+      localActiveRequestedItems[itemIndex].mucDoHuHong = val.trim();
+      try {
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh/${itemIndex}/mucDoHuHong`).set(val.trim());
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     window.triggerAddNewGarageItemFromPortal = triggerAddNewGarageItemFromPortal;
     window.triggerRemoveGarageCustomItem = triggerRemoveGarageCustomItem;
     window.toggleEvidenceGroupSection = toggleEvidenceGroupSection;
+    window.toggleDamageSeverityTag = toggleDamageSeverityTag;
+    window.setProposedAction = setProposedAction;
+    window.saveDamageSeverityCustom = saveDamageSeverityCustom;
 
     function renderPortalGarageInteractiveInputView() {
       if (!localActiveImageStack.length && !localActiveRequestedItems.length && !localActiveCaseNode) return renderErrorLayoutState('Hồ sơ hiện tại chưa có nội dung yêu cầu Garage xử lý.');
@@ -5129,6 +5174,42 @@
           </div>
         `;
 
+        const isDamageItem = getCategoryGroupInfo(item.tenHangMuc, isGarageCustomItem).key === 'damages';
+        const damageMetaSelectorMarkup = isDamageItem ? `
+          <div class="damage-meta-selector" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">
+                Mức độ hư hỏng:
+              </label>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px;">
+                ${['Trầy xước', 'Móp méo', 'Bể / Vỡ', 'Cong vênh', 'Rách'].map(tag => {
+                  const isSelected = (item.mucDoHuHong || '').includes(tag);
+                  return `
+                    <button type="button" onclick="toggleDamageSeverityTag(${index}, '${tag}')" style="padding: 4px 10px; font-size: 11.5px; font-weight: 750; border-radius: 20px; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}; background: ${isSelected ? 'rgba(216,180,109,0.15)' : 'var(--surface)'}; color: ${isSelected ? 'var(--primary)' : 'var(--text-main)'};">
+                      ${isSelected ? '✓ ' : '+ '}${tag}
+                    </button>
+                  `;
+                }).join('')}
+              </div>
+              <input type="text" id="txtDamageSeverityCustom_${index}" class="input-premium" value="${escapeAttributeData(item.mucDoHuHong || '')}" placeholder="Ghi nhận chi tiết mức độ hư hỏng..." onchange="saveDamageSeverityCustom(${index}, this.value)" style="height: 36px; font-size: 12.5px; border-radius: 8px;" />
+            </div>
+
+            <div>
+              <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">
+                Phương án đề xuất của Gara:
+              </label>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" onclick="setProposedAction(${index}, 'sua_chua')" style="flex: 1; height: 36px; font-size: 12px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 1.5px solid ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'sua_chua' ? 'rgba(59,130,246,0.12)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--text-soft)'}; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <span>🛠️ Sửa chữa</span>
+                </button>
+                <button type="button" onclick="setProposedAction(${index}, 'thay_the')" style="flex: 1; height: 36px; font-size: 12px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 1.5px solid ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'thay_the' ? 'rgba(239,68,68,0.12)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--text-soft)'}; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <span>🔄 Thay thế</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        ` : '';
+
         return `<article id="evidenceRequestCard_${index}" class="evidence-request-card ${urls.length ? 'is-complete' : ''}">
           <div class="evidence-request-head">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; width: 100%;">
@@ -5149,6 +5230,7 @@
           </div>
           <div class="evidence-request-body" style="padding: 16px 18px;">
             ${actionButtonsMarkup}
+            ${damageMetaSelectorMarkup}
             <textarea id="garageEvidenceNote_${index}" class="textarea-premium evidence-note" placeholder="Ghi chú thêm cho hạng mục này (không bắt buộc)...">${escapeHtmlOutput(item.ghiChuGarage || '')}</textarea>
             <div id="garageEvidenceNoteState_${index}" class="autosave-state">Ghi chú được tự động lưu</div>
             <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
@@ -6184,8 +6266,10 @@
                       <div class="evidence-request-number" style="width: 32px; height: 32px; margin: 0 auto; font-size: 11px; border-radius: 10px;">${String(index+1).padStart(2,'0')}</div>
                     </td>
                     <td data-label="Hạng mục" style="vertical-align: middle;">
-                      ${getCategoryBadgeMarkup(item.tenHangMuc)}
+                      ${getCategoryBadgeMarkup(item.tenHangMuc, item.taoBoiGara)}
                       <strong style="color: var(--text-main); font-size: 14px; font-weight: 700; display: block; margin-top: 2px;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</strong>
+                      ${item.mucDoHuHong ? `<div style="margin-top: 4px; font-size: 11.5px; color: var(--primary); font-weight: 750;">💥 Mức độ: ${escapeHtmlOutput(item.mucDoHuHong)}</div>` : ''}
+                      ${item.phuongAnDeXuat ? `<div style="margin-top: 2px; font-size: 11.5px; color: ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : '#ef4444'}; font-weight: 750;">Đề xuất Gara: ${item.phuongAnDeXuat === 'sua_chua' ? '🛠️ Sửa chữa' : '🔄 Thay thế'}</div>` : ''}
                     </td>
                     <td data-label="Hình ảnh minh chứng" style="vertical-align: middle;">
                       ${urls.length ? (() => {
@@ -6307,6 +6391,8 @@
       localActiveRequestedItems.forEach((item,index) => {
         outputLinesBuffer.push(`[HẠNG MỤC YÊU CẦU ẢNH SỐ ${index + 1}]`);
         outputLinesBuffer.push(`+ Tên hạng mục: ${item.tenHangMuc || ''}`);
+        if (item.mucDoHuHong) outputLinesBuffer.push(`+ Mức độ hư hỏng: ${item.mucDoHuHong}`);
+        if (item.phuongAnDeXuat) outputLinesBuffer.push(`+ Phương án Gara đề xuất: ${item.phuongAnDeXuat === 'sua_chua' ? 'Sửa chữa' : 'Thay thế'}`);
         if (item.ghiChuGarage) outputLinesBuffer.push(`+ Ghi chú Garage: ${item.ghiChuGarage}`);
         const decisionText = {
           'chua': 'Chưa phê duyệt',
