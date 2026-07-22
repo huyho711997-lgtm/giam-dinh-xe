@@ -5014,8 +5014,30 @@
       }
     }
 
+    function toggleEvidenceGroupSection(groupKey) {
+      if (!window.sectionCollapseState) window.sectionCollapseState = {};
+      const currentState = !!window.sectionCollapseState[groupKey];
+      const newState = !currentState;
+      window.sectionCollapseState[groupKey] = newState;
+
+      const bodyEl = document.getElementById(`evidenceGroupBody_${groupKey}`);
+      const chevronEl = document.getElementById(`evidenceGroupChevron_${groupKey}`);
+      const headerEl = document.getElementById(`evidenceGroupHeader_${groupKey}`);
+
+      if (bodyEl) {
+        bodyEl.style.display = newState ? 'none' : 'flex';
+      }
+      if (chevronEl) {
+        chevronEl.style.transform = newState ? 'rotate(-90deg)' : 'rotate(0deg)';
+      }
+      if (headerEl) {
+        headerEl.style.marginBottom = newState ? '0' : '14px';
+      }
+    }
+
     window.triggerAddNewGarageItemFromPortal = triggerAddNewGarageItemFromPortal;
     window.triggerRemoveGarageCustomItem = triggerRemoveGarageCustomItem;
+    window.toggleEvidenceGroupSection = toggleEvidenceGroupSection;
 
     function renderPortalGarageInteractiveInputView() {
       if (!localActiveImageStack.length && !localActiveRequestedItems.length && !localActiveCaseNode) return renderErrorLayoutState('Hồ sơ hiện tại chưa có nội dung yêu cầu Garage xử lý.');
@@ -5132,6 +5154,14 @@
         </article>`;
       };
 
+      if (!window.sectionCollapseState) {
+        window.sectionCollapseState = {
+          documents: false,
+          overall: false,
+          damages: false
+        };
+      }
+
       const evidenceRequestSection = localActiveRequestedItems.length ? groupedDefinitions.map(def => {
         const matchingIndices = [];
         localActiveRequestedItems.forEach((item, index) => {
@@ -5146,25 +5176,31 @@
           if (normalizeEvidenceImageUrls(localActiveRequestedItems[idx]).length > 0) completedCount++;
         });
 
+        const isCollapsed = !!(window.sectionCollapseState && window.sectionCollapseState[def.key]);
         const cardsHTML = matchingIndices.map(idx => renderSingleCardMarkup(localActiveRequestedItems[idx], idx)).join('');
 
         return `
-          <div class="evidence-group-section" style="margin-top: 24px; margin-bottom: 16px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; border-left: 4px solid ${def.color}; padding-left: 12px; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="evidence-group-section" style="margin-top: 22px; margin-bottom: 16px;">
+            <div id="evidenceGroupHeader_${def.key}" class="evidence-group-header" onclick="toggleEvidenceGroupSection('${def.key}')" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid ${def.color}; padding: 10px 14px; background: var(--bg-soft); border-radius: 12px; border: 1px solid var(--border); margin-bottom: ${isCollapsed ? '0' : '14px'}; user-select: none; transition: all 0.2s ease; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
                 <div style="width: 32px; height: 32px; border-radius: 8px; background: ${def.badgeBg}; color: ${def.color}; display: grid; place-items: center; flex-shrink: 0;">
                   ${def.iconSvg}
                 </div>
-                <div>
-                  <h3 style="font-size: 14px; font-weight: 850; letter-spacing: 0.04em; color: var(--text-main); margin: 0; text-transform: uppercase;">MỤC ${def.indexNum} · ${def.title}</h3>
-                  <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">${def.subtitle}</span>
+                <div style="min-width: 0;">
+                  <h3 style="font-size: 13.5px; font-weight: 850; letter-spacing: 0.04em; color: var(--text-main); margin: 0; text-transform: uppercase;">MỤC ${def.indexNum} · ${def.title}</h3>
+                  <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${def.subtitle}</span>
                 </div>
               </div>
-              <div style="font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: var(--text-soft);">
-                ${completedCount}/${matchingIndices.length} hạng mục có ảnh
+              <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto;">
+                <div style="font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: ${completedCount === matchingIndices.length ? '#10b981' : 'var(--text-soft)'};">
+                  ${completedCount}/${matchingIndices.length} hạng mục có ảnh
+                </div>
+                <div id="evidenceGroupChevron_${def.key}" style="width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: grid; place-items: center; color: var(--text-muted); transition: transform 0.2s ease; transform: ${isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'};">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
               </div>
             </div>
-            <div class="evidence-cards-list" style="display: flex; flex-direction: column; gap: 14px;">
+            <div id="evidenceGroupBody_${def.key}" class="evidence-cards-list" style="display: ${isCollapsed ? 'none' : 'flex'}; flex-direction: column; gap: 14px;">
               ${cardsHTML}
               ${def.key === 'damages' ? garageAddItemBox : ''}
             </div>
