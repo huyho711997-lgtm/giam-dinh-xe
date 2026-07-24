@@ -689,16 +689,19 @@
       html, body {
         overflow-x: hidden !important;
         max-width: 100vw !important;
+        width: 100% !important;
       }
       .app-container {
         padding: 8px 4px 80px !important;
-        max-width: 100vw !important;
+        max-width: 100% !important;
+        width: 100% !important;
         overflow-x: hidden !important;
         box-sizing: border-box !important;
       }
       .portal-shell {
         padding: 0 0 90px !important;
         max-width: 100% !important;
+        width: 100% !important;
         overflow-x: hidden !important;
         box-sizing: border-box !important;
       }
@@ -707,12 +710,16 @@
         flex-direction: column !important;
         width: 100% !important;
         max-width: 100% !important;
+        min-width: 0 !important;
         box-sizing: border-box !important;
       }
       .focus-portal-layout > .image-workspace-list {
         order: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
         width: 100% !important;
         max-width: 100% !important;
+        min-width: 0 !important;
         box-sizing: border-box !important;
       }
       .focus-portal-layout > .sticky-sidebar {
@@ -720,12 +727,32 @@
         position: static !important;
         width: 100% !important;
         max-width: 100% !important;
+        min-width: 0 !important;
         margin-top: 16px !important;
         box-sizing: border-box !important;
       }
-      .evidence-request-card, .evidence-group-section, .image-workspace-list, .garage-add-item-box {
+      .evidence-group-section {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        margin-top: 14px !important;
+        margin-bottom: 14px !important;
+      }
+      .evidence-cards-list {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+      }
+      .evidence-request-card, .image-workspace-list, .garage-add-item-box {
         max-width: 100% !important;
         width: 100% !important;
+        min-width: 0 !important;
         box-sizing: border-box !important;
       }
       .evidence-request-head {
