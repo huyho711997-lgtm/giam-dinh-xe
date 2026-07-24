@@ -1516,21 +1516,26 @@
       }
       
       .evidence-request-card {
-        border-radius: 16px !important;
+        border-radius: 14px !important;
         border: 1px solid var(--border) !important;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02) !important;
-        margin-bottom: 14px !important;
+        margin-bottom: 12px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
       }
       .category-badge::before {
         display: none !important;
         content: none !important;
       }
       .evidence-request-head {
-        padding: 14px 16px !important;
+        padding: 10px 10px !important;
         background: var(--bg-soft) !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
       }
       .evidence-request-head h3 {
-        font-size: 15px !important;
+        font-size: 14px !important;
         font-weight: 800 !important;
         color: var(--text-main) !important;
         margin: 0 !important;
@@ -1539,36 +1544,48 @@
         box-shadow: none !important;
       }
       .evidence-request-head .evidence-request-status {
-        padding: 5px 10px !important;
+        padding: 3px 7px !important;
+        font-size: 10px !important;
         margin-left: auto !important;
         flex-shrink: 0 !important;
+        white-space: nowrap !important;
       }
       .evidence-request-body {
-        padding: 14px 16px !important;
+        padding: 12px 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
       }
       .evidence-dropzone {
         display: flex !important;
-        padding: 14px 12px !important;
+        padding: 12px 10px !important;
         margin-bottom: 12px !important;
       }
       .evidence-upload-actions {
         display: flex !important;
-        gap: 10px !important;
+        gap: 6px !important;
         margin-top: 0 !important;
         margin-bottom: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .evidence-upload-actions button {
+        flex: 1 !important;
+        min-width: 0 !important;
+        padding: 0 4px !important;
+        font-size: 11.5px !important;
       }
       .evidence-upload-actions button svg {
-        width: 16px !important;
-        height: 16px !important;
+        width: 14px !important;
+        height: 14px !important;
         stroke-width: 2.2px !important;
         fill: none !important;
         stroke: currentColor !important;
         flex-shrink: 0 !important;
       }
       .evidence-note {
-        min-height: 52px !important;
-        font-size: 14px !important;
-        padding: 8px 12px !important;
+        min-height: 48px !important;
+        font-size: 13px !important;
+        padding: 8px 10px !important;
         border-radius: 10px !important;
         border: 1px solid var(--border-strong) !important;
       }
