@@ -702,9 +702,36 @@
       }
     }
     @media (max-width: 760px) {
+      html, body {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+      }
+      .app-container {
+        padding: 10px 6px 80px !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+      }
+      .portal-shell {
+        padding: 0 2px 90px !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+      }
+      .evidence-request-card, .evidence-group-section, .focus-portal-layout, .image-workspace-list, .garage-add-item-box {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .evidence-request-body {
+        padding: 14px 12px !important;
+      }
+      .garage-add-item-box {
+        padding: 16px 14px !important;
+      }
+      .garage-add-item-box button {
+        width: 100% !important;
+      }
       .portal-topbar {
         grid-template-columns: 1fr !important;
-        padding: 21px !important;
+        padding: 16px !important;
         position: relative !important;
       }
       .portal-topbar > div:first-child {
@@ -5176,17 +5203,17 @@
         const hiddenFileInputMarkup = `<input id="garageEvidenceInput_${index}" class="garage-evidence-input" data-request-index="${index}" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple hidden />`;
 
         const actionButtonsMarkup = isGarageCustomItem ? `
-          <div class="evidence-upload-actions" style="margin-bottom: 12px;">
-            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="width: 100%; min-height: 44px; font-size: 13px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          <div class="evidence-upload-actions" style="margin-bottom: 12px; width: 100%;">
+            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="width: 100%; min-height: 42px; font-size: 12.5px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
               <span>Chụp ảnh từ Camera (Bắt buộc)</span>
             </button>
           </div>
         ` : `
-          <div class="evidence-upload-actions" style="display: flex; gap: 10px; margin-bottom: 12px;">
+          <div class="evidence-upload-actions" style="display: flex; gap: 8px; margin-bottom: 12px; width: 100%;">
             ${hiddenFileInputMarkup}
-            <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('garageEvidenceInput_${index}').click()" style="flex: 1; min-height: 44px; font-size: 12.5px; border-radius: 10px; font-weight: 750; display: inline-flex; align-items: center; justify-content: center; gap: 6px;">${SVGS.IMAGE} Chọn nhiều ảnh</button>
-            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="flex: 1; min-height: 44px; font-size: 12.5px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">${SVGS.CAMERA} Chụp ảnh</button>
+            <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('garageEvidenceInput_${index}').click()" style="flex: 1; min-width: 0; min-height: 42px; font-size: 12px; border-radius: 10px; font-weight: 750; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; white-space: nowrap;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Chọn nhiều ảnh</span></button>
+            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="flex: 1; min-width: 0; min-height: 42px; font-size: 12px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; white-space: nowrap;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Chụp ảnh</span></button>
           </div>
         `;
 
