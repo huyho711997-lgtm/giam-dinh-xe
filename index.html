@@ -735,6 +735,7 @@
         width: auto !important;
         min-width: 0 !important;
       }
+      .portal-shell { padding-bottom: 90px !important; }
       .premium-image-card { grid-template-columns: 1fr; }
       .img-display-pane { min-height: 280px; border-right: 0; border-bottom: 1px solid var(--border); }
       .inputs-entry-pane { padding: 21px; }
@@ -5290,22 +5291,22 @@
         const cardsHTML = matchingIndices.map(idx => renderSingleCardMarkup(localActiveRequestedItems[idx], idx)).join('');
 
         return `
-          <div class="evidence-group-section" style="margin-top: 22px; margin-bottom: 16px;">
-            <div id="evidenceGroupHeader_${def.key}" class="evidence-group-header" onclick="toggleEvidenceGroupSection('${def.key}')" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid ${def.color}; padding: 10px 14px; background: var(--bg-soft); border-radius: 12px; border: 1px solid var(--border); margin-bottom: ${isCollapsed ? '0' : '14px'}; user-select: none; transition: all 0.2s ease; flex-wrap: wrap; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+          <div class="evidence-group-section" style="margin-top: 18px; margin-bottom: 16px;">
+            <div id="evidenceGroupHeader_${def.key}" class="evidence-group-header" onclick="toggleEvidenceGroupSection('${def.key}')" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid ${def.color}; padding: 12px 14px; background: var(--bg-soft); border-radius: 12px; border: 1px solid var(--border); margin-bottom: ${isCollapsed ? '0' : '14px'}; user-select: none; transition: all 0.2s ease; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                 <div style="width: 32px; height: 32px; border-radius: 8px; background: ${def.badgeBg}; color: ${def.color}; display: grid; place-items: center; flex-shrink: 0;">
                   ${def.iconSvg}
                 </div>
-                <div style="min-width: 0;">
-                  <h3 style="font-size: 13.5px; font-weight: 850; letter-spacing: 0.04em; color: var(--text-main); margin: 0; text-transform: uppercase;">MỤC ${def.indexNum} · ${def.title}</h3>
-                  <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${def.subtitle}</span>
+                <div style="flex: 1; min-width: 0;">
+                  <h3 style="font-size: 13px; font-weight: 850; letter-spacing: 0.02em; color: var(--text-main); margin: 0; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">MỤC ${def.indexNum} · ${def.title}</h3>
+                  <span style="font-size: 10.5px; color: var(--text-muted); display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${def.subtitle}</span>
                 </div>
               </div>
-              <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto;">
-                <div style="font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: ${completedCount === matchingIndices.length ? '#10b981' : 'var(--text-soft)'};">
-                  ${completedCount}/${matchingIndices.length} hạng mục có ảnh
+              <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                <div style="font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: ${completedCount === matchingIndices.length ? '#10b981' : 'var(--text-soft)'}; white-space: nowrap;">
+                  ${completedCount}/${matchingIndices.length} có ảnh
                 </div>
-                <div id="evidenceGroupChevron_${def.key}" style="width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: grid; place-items: center; color: var(--text-muted); transition: transform 0.2s ease; transform: ${isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'};">
+                <div id="evidenceGroupChevron_${def.key}" style="width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: grid; place-items: center; color: var(--text-muted); flex-shrink: 0; transition: transform 0.2s ease; transform: ${isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'};">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
               </div>
