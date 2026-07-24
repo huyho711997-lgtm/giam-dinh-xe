@@ -742,12 +742,14 @@
         margin-bottom: 14px !important;
       }
       .evidence-cards-list {
-        display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
+      }
+      .evidence-cards-list.is-hidden {
+        display: none !important;
       }
       .evidence-request-card, .image-workspace-list, .garage-add-item-box {
         max-width: 100% !important;
@@ -5127,6 +5129,7 @@
       const headerEl = document.getElementById(`evidenceGroupHeader_${groupKey}`);
 
       if (bodyEl) {
+        bodyEl.classList.toggle('is-hidden', newState);
         bodyEl.style.display = newState ? 'none' : 'flex';
       }
       if (chevronEl) {
@@ -5395,7 +5398,7 @@
                 </div>
               </div>
             </div>
-            <div id="evidenceGroupBody_${def.key}" class="evidence-cards-list" style="display: ${isCollapsed ? 'none' : 'flex'}; flex-direction: column; gap: 14px;">
+            <div id="evidenceGroupBody_${def.key}" class="evidence-cards-list ${isCollapsed ? 'is-hidden' : ''}" style="display: ${isCollapsed ? 'none' : 'flex'}; flex-direction: column; gap: 14px;">
               ${cardsHTML}
               ${def.key === 'damages' ? garageAddItemBox : ''}
             </div>
