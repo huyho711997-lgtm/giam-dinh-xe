@@ -686,42 +686,56 @@
     .evidence-result-title p { margin-top: 4px; color: var(--text-muted); font-size: 10px; }
     .evidence-empty { margin-top: 14px; padding: 22px; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 13px; text-align: center; font-size: 11px; }
     @media (max-width: 1050px) {
-      .focus-portal-layout {
-        display: flex !important;
-        flex-direction: column !important;
-      }
-      .focus-portal-layout > .image-workspace-list {
-        order: 1 !important;
-        width: 100% !important;
-      }
-      .focus-portal-layout > .sticky-sidebar {
-        order: 2 !important;
-        position: static !important;
-        width: 100% !important;
-        margin-top: 16px !important;
-      }
-    }
-    @media (max-width: 760px) {
       html, body {
         overflow-x: hidden !important;
         max-width: 100vw !important;
       }
       .app-container {
-        padding: 10px 6px 80px !important;
+        padding: 8px 4px 80px !important;
         max-width: 100vw !important;
         overflow-x: hidden !important;
+        box-sizing: border-box !important;
       }
       .portal-shell {
-        padding: 0 2px 90px !important;
+        padding: 0 0 90px !important;
         max-width: 100% !important;
         overflow-x: hidden !important;
+        box-sizing: border-box !important;
       }
-      .evidence-request-card, .evidence-group-section, .focus-portal-layout, .image-workspace-list, .garage-add-item-box {
+      .focus-portal-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
         max-width: 100% !important;
         box-sizing: border-box !important;
       }
+      .focus-portal-layout > .image-workspace-list {
+        order: 1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .focus-portal-layout > .sticky-sidebar {
+        order: 2 !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 16px !important;
+        box-sizing: border-box !important;
+      }
+      .evidence-request-card, .evidence-group-section, .image-workspace-list, .garage-add-item-box {
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .evidence-request-head {
+        padding: 12px 12px !important;
+      }
       .evidence-request-body {
         padding: 14px 12px !important;
+      }
+      .evidence-group-header {
+        padding: 10px 10px !important;
       }
       .garage-add-item-box {
         padding: 16px 14px !important;
@@ -762,7 +776,6 @@
         width: auto !important;
         min-width: 0 !important;
       }
-      .portal-shell { padding-bottom: 90px !important; }
       .premium-image-card { grid-template-columns: 1fr; }
       .img-display-pane { min-height: 280px; border-right: 0; border-bottom: 1px solid var(--border); }
       .inputs-entry-pane { padding: 21px; }
@@ -5212,8 +5225,8 @@
         ` : `
           <div class="evidence-upload-actions" style="display: flex; gap: 8px; margin-bottom: 12px; width: 100%;">
             ${hiddenFileInputMarkup}
-            <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('garageEvidenceInput_${index}').click()" style="flex: 1; min-width: 0; min-height: 42px; font-size: 12px; border-radius: 10px; font-weight: 750; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; white-space: nowrap;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Chọn nhiều ảnh</span></button>
-            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="flex: 1; min-width: 0; min-height: 42px; font-size: 12px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; white-space: nowrap;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Chụp ảnh</span></button>
+            <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('garageEvidenceInput_${index}').click()" style="flex: 1; min-width: 0; min-height: 42px; font-size: 12px; border-radius: 10px; font-weight: 750; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 6px; white-space: nowrap;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg><span>Chọn ảnh</span></button>
+            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="flex: 1; min-width: 0; min-height: 42px; font-size: 12px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 6px; white-space: nowrap;"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg><span>Chụp ảnh</span></button>
           </div>
         `;
 
