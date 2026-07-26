@@ -5422,35 +5422,28 @@
               </div>
 
               <!-- CUSTOM FLOATING OVERLAY POPUP MENU -->
-              <div id="customDamageMenu_${index}" class="custom-damage-popover-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; width: 230px; z-index: 1000; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 6px; box-shadow: 0 12px 32px rgba(0,0,0,0.18); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
-                <div style="padding: 4px 8px 6px; font-size: 9.5px; font-weight: 850; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); margin-bottom: 4px;">
-                  GỢI Ý MÔ TẢ TỔN THẤT MẪU
+              <div id="customDamageMenu_${index}" class="custom-damage-popover-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0; width: 100%; min-width: 280px; z-index: 1000; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 8px; box-shadow: 0 16px 40px rgba(0,0,0,0.22); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-sizing: border-box;">
+                <div style="padding: 4px 8px 6px; font-size: 10px; font-weight: 850; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                  <span>GỢI Ý MÔ TẢ TỔN THẤT MẪU</span>
+                  <span style="font-weight: 750; color: var(--primary); font-size: 9.5px;">CHỌN NHANH</span>
                 </div>
-                <div class="custom-popover-options-list" style="display: flex; flex-direction: column; gap: 2px; max-height: 220px; overflow-y: auto;">
-                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Trầy xước')">
-                    <span class="opt-icon">⚡</span><span>Trầy xước</span>
-                  </button>
-                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Móp méo')">
-                    <span class="opt-icon">🔨</span><span>Móp méo</span>
-                  </button>
-                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Bể / Vỡ')">
-                    <span class="opt-icon">💥</span><span>Bể / Vỡ</span>
-                  </button>
-                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Cong vênh')">
-                    <span class="opt-icon">🔄</span><span>Cong vênh</span>
-                  </button>
-                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Rách')">
-                    <span class="opt-icon">✂️</span><span>Rách</span>
-                  </button>
-                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Trầy xước & Móp méo')">
-                    <span class="opt-icon">⚡🔨</span><span>Trầy xước & Móp méo</span>
-                  </button>
-                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Sơn trầy / Bong tróc')">
-                    <span class="opt-icon">🎨</span><span>Sơn trầy / Bong tróc</span>
-                  </button>
-                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Biến dạng gãy vỡ')">
-                    <span class="opt-icon">⚠️</span><span>Biến dạng gãy vỡ</span>
-                  </button>
+                <div class="custom-popover-options-list" style="display: flex; flex-direction: column; gap: 4px; max-height: 280px; overflow-y: auto;">
+                  ${[
+                    { text: 'Trầy xước', svg: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--primary);"><line x1="4" y1="16" x2="16" y2="4"></line><line x1="8" y1="20" x2="20" y2="8"></line></svg>` },
+                    { text: 'Móp méo', svg: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--primary);"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>` },
+                    { text: 'Bể / Vỡ', svg: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--primary);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>` },
+                    { text: 'Cong vênh', svg: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--primary);"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>` },
+                    { text: 'Rách', svg: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--primary);"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.47" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>` },
+                    { text: 'Trầy xước & Móp méo', svg: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--primary);"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>` },
+                    { text: 'Sơn trầy / Bong tróc', svg: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--primary);"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>` },
+                    { text: 'Biến dạng gãy vỡ', svg: `<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:var(--primary);"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>` }
+                  ].map(opt => `
+                    <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, '${opt.text}')" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; font-size: 12.5px; font-weight: 700; color: var(--text-main); background: var(--bg-soft); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; text-align: left; transition: all 0.2s ease;">
+                      <span style="width: 26px; height: 26px; border-radius: 6px; background: rgba(216,180,109,0.15); display: grid; place-items: center; flex-shrink: 0;">${opt.svg}</span>
+                      <span style="flex: 1; min-width: 0;">${opt.text}</span>
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity:0.4; flex-shrink:0;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                  `).join('')}
                 </div>
               </div>
             </div>
