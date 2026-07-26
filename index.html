@@ -5580,7 +5580,7 @@
         </div>
       `;
 
-      const evidenceRequestSection = localActiveRequestedItems.length ? (toggleAllToolbarMarkup + groupedDefinitions.map(def => {
+      const evidenceRequestSection = localActiveRequestedItems.length ? toggleAllToolbarMarkup + groupedDefinitions.map(def => {
         const matchingIndices = [];
         localActiveRequestedItems.forEach((item, index) => {
           const groupInfo = getCategoryGroupInfo(item.tenHangMuc, !!item.taoBoiGara);
