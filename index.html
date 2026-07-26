@@ -665,11 +665,25 @@
     .result-content { min-height: 165px; padding: 18px; color: var(--text-soft); border: 1px solid var(--border); border-left: 2px solid var(--primary); border-radius: 13px; background: var(--result-content-bg); font-size: 13px; font-weight: 600; line-height: 1.75; white-space: pre-wrap; }
     .result-content.is-empty { color: var(--text-muted); font-weight: 500; font-style: italic; }
     
-    .evidence-request-card { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-sm); }
-    .evidence-request-head { padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--bg-soft); }
+    .evidence-request-card {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.03);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .evidence-request-card:hover {
+      border-color: rgba(216,180,109,0.38);
+      box-shadow: 0 8px 24px rgba(216,180,109,0.08);
+    }
+    .evidence-request-card.is-complete {
+      border-color: rgba(16,185,129,0.35);
+    }
+    .evidence-request-head { padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--bg-soft); }
     .evidence-request-number { width: 28px; height: 28px; display: inline-grid; place-items: center; color: var(--primary); border: 1px solid rgba(216,180,109,.2); border-radius: 8px; background: rgba(216,180,109,.08); font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 800; }
     .evidence-request-head h3 { margin: 0; color: var(--text-main); font-size: 15.5px; font-weight: 800; line-height: 1.35; }
-    .evidence-request-body { padding: 21px 23px 23px; }
+    .evidence-request-body { padding: 14px 16px; }
     .evidence-dropzone { min-height: 140px; }
     .evidence-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 9px; margin-top: 13px; }
     .evidence-result-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 13px; }
