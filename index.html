@@ -769,22 +769,33 @@
       .evidence-request-body {
         padding: 14px 12px !important;
       }
+      .evidence-group-section {
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
+      }
       .evidence-group-header {
         padding: 10px 8px !important;
         gap: 6px !important;
+        margin-bottom: 6px !important;
       }
       .evidence-group-header h3 {
         font-size: 12px !important;
       }
+      .garage-progress-panel {
+        margin-bottom: 10px !important;
+        padding: 12px 14px !important;
+      }
       .garage-add-item-box {
-        padding: 16px 14px !important;
+        padding: 14px 12px !important;
+        margin-top: 10px !important;
       }
       .garage-add-item-box button {
         width: 100% !important;
       }
       .portal-topbar {
         grid-template-columns: 1fr !important;
-        padding: 16px !important;
+        padding: 14px 16px !important;
+        margin-bottom: 10px !important;
         position: relative !important;
       }
       .portal-topbar > div:first-child {
@@ -5523,8 +5534,8 @@
         const cardsHTML = matchingIndices.map(idx => renderSingleCardMarkup(localActiveRequestedItems[idx], idx)).join('');
 
         return `
-          <div class="evidence-group-section" style="margin-top: 18px; margin-bottom: 16px;">
-            <div id="evidenceGroupHeader_${def.key}" class="evidence-group-header" onclick="toggleEvidenceGroupSection('${def.key}')" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid ${def.color}; padding: 12px 14px; background: var(--bg-soft); border-radius: 12px; border: 1px solid var(--border); margin-bottom: ${isCollapsed ? '0' : '14px'}; user-select: none; transition: all 0.2s ease; gap: 8px;">
+          <div class="evidence-group-section" style="margin-top: 6px; margin-bottom: 6px;">
+            <div id="evidenceGroupHeader_${def.key}" class="evidence-group-header" onclick="toggleEvidenceGroupSection('${def.key}')" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-left: 4px solid ${def.color}; padding: 10px 12px; background: var(--bg-soft); border-radius: 12px; border: 1px solid var(--border); margin-bottom: ${isCollapsed ? '0' : '8px'}; user-select: none; transition: all 0.2s ease; gap: 8px;">
               <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
                 <div style="width: 32px; height: 32px; border-radius: 8px; background: ${def.badgeBg}; color: ${def.color}; display: grid; place-items: center; flex-shrink: 0;">
                   ${def.iconSvg}
@@ -5543,7 +5554,7 @@
                 </div>
               </div>
             </div>
-            <div id="evidenceGroupBody_${def.key}" class="evidence-cards-list ${isCollapsed ? 'is-hidden' : ''}" style="display: ${isCollapsed ? 'none' : 'flex'}; flex-direction: column; gap: 14px;">
+            <div id="evidenceGroupBody_${def.key}" class="evidence-cards-list ${isCollapsed ? 'is-hidden' : ''}" style="display: ${isCollapsed ? 'none' : 'flex'}; flex-direction: column; gap: 8px;">
               ${cardsHTML}
               ${def.key === 'damages' ? garageAddItemBox : ''}
             </div>
