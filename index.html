@@ -5227,10 +5227,28 @@
       });
     }
 
+    function toggleSingleCardCollapse(index) {
+      if (!window.cardCollapseState) window.cardCollapseState = {};
+      const isCurrentlyCollapsed = !!window.cardCollapseState[index];
+      const newState = !isCurrentlyCollapsed;
+      window.cardCollapseState[index] = newState;
+
+      const bodyEl = document.getElementById(`evidenceCardBody_${index}`);
+      const chevronEl = document.getElementById(`evidenceCardChevron_${index}`);
+      
+      if (bodyEl) {
+        bodyEl.style.display = newState ? 'none' : 'block';
+      }
+      if (chevronEl) {
+        chevronEl.style.transform = newState ? 'rotate(-90deg)' : 'rotate(0deg)';
+      }
+    }
+
     window.triggerAddNewGarageItemFromPortal = triggerAddNewGarageItemFromPortal;
     window.triggerRemoveGarageCustomItem = triggerRemoveGarageCustomItem;
     window.toggleEvidenceGroupSection = toggleEvidenceGroupSection;
     window.toggleAllSections = toggleAllSections;
+    window.toggleSingleCardCollapse = toggleSingleCardCollapse;
 
     async function toggleDamageSeverityTag(itemIndex, tag) {
       if (!localActiveRequestedItems || !localActiveRequestedItems[itemIndex]) return;
@@ -5532,9 +5550,11 @@
           <div id="garageEvidenceNoteState_${index}" class="autosave-state" style="font-size: 9.5px; margin-top: 3px;">Tự động lưu</div>
         ` : '';
 
-        return `<article id="evidenceRequestCard_${index}" class="evidence-request-card ${urls.length ? 'is-complete' : ''}">
-          <div class="evidence-request-head">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; width: 100%;">
+        const isCardCollapsed = !!(window.cardCollapseState && window.cardCollapseState[index]);
+
+        return `<article id="evidenceRequestCard_${index}" class="evidence-request-card ${urls.length ? 'is-complete' : ''}" style="margin-bottom: 8px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); transition: all 0.2s ease;">
+          <div class="evidence-request-head" onclick="toggleSingleCardCollapse(${index})" style="cursor: pointer; padding: 10px 12px; background: var(--bg-soft); user-select: none; display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
               <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
                 <span class="evidence-request-number">${String(index+1).padStart(2,'0')}</span>
                 ${categoryBadge}
@@ -5542,15 +5562,18 @@
               <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
                 <span id="evidenceStatus_${index}" class="evidence-request-status badge-status ${urls.length ? 'completed' : 'pending'}">${urls.length ? `${urls.length} ảnh đã lưu` : 'Chưa có ảnh'}</span>
                 ${canDeleteCustomItem ? `
-                  <button type="button" class="btn-premium btn-secondary" title="Xóa hạng mục này" onclick="event.stopPropagation();triggerRemoveGarageCustomItem(${index})" style="width: 28px !important; min-height: 28px !important; height: 28px !important; padding: 0; border-radius: 6px; color: var(--danger); flex-shrink: 0;">
+                  <button type="button" class="btn-premium btn-secondary" title="Xóa hạng mục này" onclick="event.stopPropagation();triggerRemoveGarageCustomItem(${index})" style="width: 26px !important; min-height: 26px !important; height: 26px !important; padding: 0; border-radius: 6px; color: var(--danger); flex-shrink: 0;">
                     ${SVGS.TRASH}
                   </button>
                 ` : ''}
+                <div id="evidenceCardChevron_${index}" style="width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: grid; place-items: center; color: var(--text-muted); flex-shrink: 0; transition: transform 0.2s ease; transform: ${isCardCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'};">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
               </div>
             </div>
-            <h3 style="margin: 0; font-size: 15.5px; font-weight: 800; color: var(--text-main); line-height: 1.35; word-break: break-word;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3>
+            <h3 style="margin: 0; font-size: 14.5px; font-weight: 800; color: var(--text-main); line-height: 1.35; word-break: break-word;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3>
           </div>
-          <div class="evidence-request-body" style="padding: 10px 12px;">
+          <div id="evidenceCardBody_${index}" class="evidence-request-body" style="padding: 10px 12px; display: ${isCardCollapsed ? 'none' : 'block'}; border-top: 1px solid var(--border);">
             ${actionButtonsMarkup}
             ${damageMetaSelectorMarkup}
             <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
