@@ -5276,68 +5276,107 @@
       if (!modalEl) {
         modalEl = document.createElement('div');
         modalEl.id = 'cameraGuideModal';
-        modalEl.style.cssText = 'position: fixed; inset: 0; z-index: 10000; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: space-between; font-family: system-ui, -apple-system, sans-serif; overflow: hidden;';
+        modalEl.style.cssText = 'position: fixed; inset: 0; z-index: 10000; background: rgba(8,11,17,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; flex-direction: column; align-items: center; justify-content: space-between; font-family: system-ui, -apple-system, sans-serif; overflow-y: auto; padding: 16px; box-sizing: border-box;';
         document.body.appendChild(modalEl);
       }
 
       modalEl.innerHTML = `
         <!-- Top Bar Header -->
-        <div style="width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.75); backdrop-filter: blur(10px); z-index: 2; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box;">
+        <div style="width: 100%; max-width: 500px; padding: 12px 16px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; display: flex; align-items: center; justify-content: space-between; box-sizing: border-box; margin-bottom: 10px;">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981;"></span>
-            <span style="font-size: 11.5px; font-weight: 850; color: #fff; text-transform: uppercase; letter-spacing: 0.05em;">KHUNG ĐỊNH HÌNH GÓC CHỤP XE (CAM GUIDE)</span>
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            <span style="font-size: 11px; font-weight: 850; color: #fff; text-transform: uppercase; letter-spacing: 0.06em;">KHUNG THÔNG SỐ ĐỊNH VỊ GÓC CHỤP CAD (AUTO HUD)</span>
           </div>
-          <button type="button" onclick="closeCameraViewfinderWithGuideModal()" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.18); border: none; color: #fff; font-size: 16px; display: grid; place-items: center; cursor: pointer;">✕</button>
+          <button type="button" onclick="closeCameraViewfinderWithGuideModal()" style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.15); border: none; color: #fff; font-size: 16px; display: grid; place-items: center; cursor: pointer;">✕</button>
         </div>
 
-        <!-- Live Video Viewfinder & Overlay -->
-        <div style="position: relative; width: 100%; flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-          <video id="cameraGuideVideo" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
-
-          <!-- Guidance Instruction Card Floating Top -->
-          <div style="position: absolute; top: 16px; left: 16px; right: 16px; padding: 10px 14px; background: rgba(8,11,17,0.85); border: 1px solid rgba(216,180,109,0.4); border-radius: 14px; color: #fff; text-align: center; backdrop-filter: blur(12px); box-shadow: 0 8px 25px rgba(0,0,0,0.5); z-index: 3;">
-            <div style="font-size: 10px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px;">📐 HƯỚNG DẪN VỊ TRÍ ĐỨNG CHỤP</div>
-            <div style="font-size: 13.5px; font-weight: 850; color: #f8fafc;">${escapeHtmlOutput(itemName)}</div>
-            <div style="font-size: 10.5px; color: #94a3b8; margin-top: 2px;">Đứng lùi 3 - 4 mét, giữ ngang tầm mắt & căn xe khớp đường viền nét đứt.</div>
+        <!-- Main Content Container with Precision Technical CAD Vector Silhouette -->
+        <div style="width: 100%; max-width: 500px; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+          <!-- Guidance Banner -->
+          <div style="width: 100%; padding: 12px 16px; background: rgba(216,180,109,0.1); border: 1px solid rgba(216,180,109,0.3); border-radius: 14px; margin-bottom: 12px; box-sizing: border-box;">
+            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px;">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 22h20L2 2v20z"></path></svg>
+              <span>HƯỚNG DẪN ĐỊNH VỊ GÓC ĐỨNG 45°</span>
+            </div>
+            <div style="font-size: 15px; font-weight: 850; color: #ffffff;">${escapeHtmlOutput(itemName)}</div>
+            <p style="font-size: 11.5px; color: #94a3b8; margin: 4px 0 0 0; line-height: 1.45;">Đứng lùi 3 - 4 mét, giữ camera ngang tầm mắt và gióng khung thân xe khớp với sơ đồ CAD kỹ thuật bên dưới.</p>
           </div>
 
-          <!-- Car Silhouette SVG Overlay -->
-          <div style="position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; z-index: 2;">
-            <svg viewBox="0 0 400 300" style="width: 88%; max-width: 380px; opacity: 0.88; filter: drop-shadow(0 0 12px rgba(0,240,255,0.6));">
-              <!-- Outer Positioning Bounds -->
-              <rect x="20" y="20" width="360" height="260" rx="16" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-dasharray="8,6" />
-              <!-- Corner Markers -->
-              <path d="M 20,45 L 20,20 L 45,20" stroke="#d8b46d" stroke-width="3" fill="none" />
-              <path d="M 380,45 L 380,20 L 355,20" stroke="#d8b46d" stroke-width="3" fill="none" />
-              <path d="M 20,255 L 20,280 L 45,280" stroke="#d8b46d" stroke-width="3" fill="none" />
-              <path d="M 380,255 L 380,280 L 355,280" stroke="#d8b46d" stroke-width="3" fill="none" />
+          <!-- Professional Technical CAD Vector Blueprint SVG -->
+          <div style="position: relative; width: 100%; padding: 18px; background: rgba(0,0,0,0.65); border: 1px solid rgba(0,240,255,0.35); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); box-sizing: border-box; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+            <video id="cameraGuideVideo" autoplay playsinline style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.6; display: none;"></video>
+
+            <svg viewBox="0 0 500 310" style="width: 100%; max-width: 440px; filter: drop-shadow(0 0 14px rgba(0, 240, 255, 0.45)); z-index: 2;">
+              <defs>
+                <linearGradient id="carCadGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.95" />
+                  <stop offset="50%" stop-color="#3b82f6" stop-opacity="0.9" />
+                  <stop offset="100%" stop-color="#d8b46d" stop-opacity="0.95" />
+                </linearGradient>
+              </defs>
+
+              <!-- Technical HUD Outer Frame & Precision Grid -->
+              <rect x="15" y="15" width="470" height="280" rx="18" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="1.5" stroke-dasharray="6,4" />
               
-              <!-- Car 45 Degree Angle Body Silhouette -->
-              <path d="M 60,185 L 95,128 L 145,115 L 265,115 L 315,138 L 345,185 L 348,212 L 58,212 Z" fill="none" stroke="#00f0ff" stroke-width="2.8" stroke-dasharray="10,6" />
-              <!-- Windshield & Roof Outline -->
-              <path d="M 125,128 L 165,78 L 255,78 L 295,132" fill="none" stroke="#00f0ff" stroke-width="2.2" stroke-dasharray="6,4" />
-              <!-- Wheels -->
-              <circle cx="108" cy="212" r="26" fill="none" stroke="#00f0ff" stroke-width="2.2" stroke-dasharray="5,4" />
-              <circle cx="295" cy="212" r="26" fill="none" stroke="#00f0ff" stroke-width="2.2" stroke-dasharray="5,4" />
-              
-              <!-- Center Reticle Target Crosshair -->
-              <line x1="200" y1="130" x2="200" y2="170" stroke="#d8b46d" stroke-width="1.8" />
-              <line x1="180" y1="150" x2="220" y2="150" stroke="#d8b46d" stroke-width="1.8" />
-              <circle cx="200" cy="150" r="12" fill="none" stroke="#d8b46d" stroke-width="1.5" stroke-dasharray="4,3" />
+              <!-- Corner Precision L-Brackets -->
+              <path d="M 15,45 L 15,15 L 45,15" fill="none" stroke="#d8b46d" stroke-width="3" />
+              <path d="M 485,45 L 485,15 L 455,15" fill="none" stroke="#d8b46d" stroke-width="3" />
+              <path d="M 15,265 L 15,295 L 45,295" fill="none" stroke="#d8b46d" stroke-width="3" />
+              <path d="M 485,265 L 485,295 L 455,295" fill="none" stroke="#d8b46d" stroke-width="3" />
+
+              <!-- Ground Radar Perspective Grid -->
+              <path d="M 40,240 L 140,200 L 360,200 L 460,240 Z" fill="none" stroke="rgba(0, 240, 255, 0.25)" stroke-width="1.2" stroke-dasharray="4,4" />
+
+              <!-- Technical CAD Sedan Silhouette Contour (3D Perspective 45 Angle) -->
+              <path d="M 150,120 Q 210,60 295,60 Q 355,60 375,115" fill="none" stroke="url(#carCadGradient)" stroke-width="2.5" stroke-dasharray="8,4" />
+              <path d="M 80,180 L 110,130 L 150,120" fill="none" stroke="url(#carCadGradient)" stroke-width="2.8" stroke-dasharray="8,4" />
+              <path d="M 375,115 L 425,130 L 435,180" fill="none" stroke="url(#carCadGradient)" stroke-width="2.8" stroke-dasharray="8,4" />
+              <path d="M 75,180 L 435,180" fill="none" stroke="url(#carCadGradient)" stroke-width="2" stroke-dasharray="10,5" />
+
+              <!-- Headlight & Taillight CAD Vectors -->
+              <polygon points="85,165 115,140 125,155 90,175" fill="rgba(0, 240, 255, 0.15)" stroke="#00f0ff" stroke-width="1.8" />
+              <polygon points="415,160 430,140 435,155 420,170" fill="rgba(239, 68, 68, 0.2)" stroke="#ef4444" stroke-width="1.8" />
+
+              <!-- Front Wheel Arch & Alloy Wheel Mesh -->
+              <g transform="translate(130, 180)">
+                <ellipse cx="0" cy="0" rx="30" ry="30" fill="none" stroke="#00f0ff" stroke-width="2.2" stroke-dasharray="6,3" />
+                <circle cx="0" cy="0" r="13" fill="none" stroke="#d8b46d" stroke-width="1.5" />
+                <line x1="-26" y1="0" x2="26" y2="0" stroke="#00f0ff" stroke-width="1.2" />
+                <line x1="0" y1="-26" x2="0" y2="26" stroke="#00f0ff" stroke-width="1.2" />
+              </g>
+
+              <!-- Rear Wheel Arch & Alloy Wheel Mesh -->
+              <g transform="translate(370, 180)">
+                <ellipse cx="0" cy="0" rx="30" ry="30" fill="none" stroke="#00f0ff" stroke-width="2.2" stroke-dasharray="6,3" />
+                <circle cx="0" cy="0" r="13" fill="none" stroke="#d8b46d" stroke-width="1.5" />
+                <line x1="-26" y1="0" x2="26" y2="0" stroke="#00f0ff" stroke-width="1.2" />
+                <line x1="0" y1="-26" x2="0" y2="26" stroke="#00f0ff" stroke-width="1.2" />
+              </g>
+
+              <!-- Side Windows Vector Outline -->
+              <path d="M 160,118 L 200,75 L 285,75 L 275,118 Z" fill="rgba(0, 240, 255, 0.08)" stroke="#00f0ff" stroke-width="1.5" stroke-dasharray="4,3" />
+              <path d="M 285,118 L 293,75 L 345,75 L 360,118 Z" fill="rgba(0, 240, 255, 0.08)" stroke="#00f0ff" stroke-width="1.5" stroke-dasharray="4,3" />
+
+              <!-- Center Target Reticle & Angle Gauge -->
+              <g transform="translate(250, 135)">
+                <circle cx="0" cy="0" r="16" fill="none" stroke="#d8b46d" stroke-width="1.8" stroke-dasharray="5,3" />
+                <circle cx="0" cy="0" r="3.5" fill="#d8b46d" />
+                <line x1="-26" y1="0" x2="26" y2="0" stroke="#d8b46d" stroke-width="1.5" />
+                <line x1="0" y1="-26" x2="0" y2="26" stroke="#d8b46d" stroke-width="1.5" />
+                <text x="0" y="34" font-family="'JetBrains Mono', monospace" font-size="9.5" font-weight="800" fill="#d8b46d" text-anchor="middle">ANGLE 45° · DIST 3-4M</text>
+              </g>
             </svg>
           </div>
         </div>
 
         <!-- Bottom Action Controls Bar -->
-        <div style="width: 100%; padding: 16px 20px; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 3; display: flex; align-items: center; justify-content: space-around; box-sizing: border-box;">
-          <button type="button" onclick="closeCameraViewfinderWithGuideModal()" style="padding: 10px 16px; border-radius: 99px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 12px; font-weight: 750; cursor: pointer;">Đóng</button>
-          
-          <!-- Big Capture Button -->
-          <button type="button" title="Chụp ảnh theo khung hướng dẫn" onclick="capturePhotoFromGuideStreamCanvas()" style="width: 68px; height: 68px; border-radius: 50%; background: var(--primary-gradient); border: 4px solid #fff; box-shadow: 0 0 20px rgba(216,180,109,0.6); display: grid; place-items: center; cursor: pointer; transition: transform 0.15s ease;">
-            <div style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid #080b11; background: transparent;"></div>
+        <div style="width: 100%; max-width: 500px; padding: 12px 0 0 0; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; margin-top: 10px;">
+          <button type="button" class="btn-premium" onclick="fallbackTriggerStandardInputCamera(${index})" style="width: 100%; min-height: 46px; font-size: 13.5px; border-radius: 12px; background: var(--primary-gradient); color: #080b11; font-weight: 850; border: none; box-shadow: 0 6px 20px rgba(216,180,109,0.35); display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            <span>Mở Camera chụp ảnh ngay</span>
           </button>
 
-          <button type="button" onclick="fallbackTriggerStandardInputCamera(currentCameraRequestIndex)" style="padding: 10px 14px; border-radius: 99px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer;">Camera gốc</button>
+          <button type="button" onclick="closeCameraViewfinderWithGuideModal()" style="width: 100%; min-height: 38px; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; font-size: 12px; font-weight: 750; cursor: pointer;">Đóng hướng dẫn</button>
         </div>
       `;
 
@@ -5350,33 +5389,12 @@
           audio: false
         });
         currentActiveCameraStream = stream;
-        if (videoEl) videoEl.srcObject = stream;
-      } catch (err) {
-        console.warn('Camera stream live preview not available, showing visual guide:', err);
-        const container = modalEl.querySelector('#cameraGuideVideo')?.parentElement;
-        if (container) {
-          container.innerHTML = `
-            <div style="padding: 24px; text-align: center; color: #fff; max-width: 360px; width: 100%; box-sizing: border-box;">
-              <div style="font-size: 11px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">📐 SƠ ĐỒ HƯỚNG DẪN GÓC CHỤP CHUẨN</div>
-              <div style="font-size: 15px; font-weight: 850; color: #fff; margin-bottom: 10px;">${escapeHtmlOutput(itemName)}</div>
-              <div style="margin: 14px 0; padding: 14px; background: rgba(255,255,255,0.04); border-radius: 16px; border: 1px solid rgba(216,180,109,0.3); box-shadow: inset 0 0 20px rgba(0,0,0,0.5);">
-                <svg viewBox="0 0 400 250" style="width: 100%; opacity: 0.92; filter: drop-shadow(0 0 8px rgba(0,240,255,0.5));">
-                  <rect x="10" y="10" width="380" height="230" rx="12" fill="none" stroke="#d8b46d" stroke-width="2" stroke-dasharray="6,4" />
-                  <path d="M 60,165 L 95,110 L 145,100 L 265,100 L 315,120 L 345,165 L 348,190 L 58,190 Z" fill="none" stroke="#00f0ff" stroke-width="2.5" stroke-dasharray="8,5" />
-                  <path d="M 125,110 L 165,65 L 255,65 L 295,115" fill="none" stroke="#00f0ff" stroke-width="2" stroke-dasharray="5,4" />
-                  <circle cx="108" cy="190" r="22" fill="none" stroke="#00f0ff" stroke-width="2" stroke-dasharray="4,3" />
-                  <circle cx="295" cy="190" r="22" fill="none" stroke="#00f0ff" stroke-width="2" stroke-dasharray="4,3" />
-                  <line x1="200" y1="115" x2="200" y2="155" stroke="#d8b46d" stroke-width="1.8" />
-                  <line x1="180" y1="135" x2="220" y2="135" stroke="#d8b46d" stroke-width="1.8" />
-                </svg>
-              </div>
-              <p style="font-size: 11.5px; color: #94a3b8; line-height: 1.55; margin-bottom: 18px;">Hãy lùi 3 - 4 mét, đứng góc 45° so với xe và giữ máy ngang tầm mắt trước khi mở camera chụp ảnh.</p>
-              <button type="button" class="btn-premium" onclick="fallbackTriggerStandardInputCamera(${index})" style="width: 100%; min-height: 44px; font-size: 13px; border-radius: 12px; background: var(--primary-gradient); color: #080b11; font-weight: 850; border: none; box-shadow: 0 4px 16px rgba(216,180,109,0.3);">
-                📸 Mở Camera chụp ảnh ngay
-              </button>
-            </div>
-          `;
+        if (videoEl) {
+          videoEl.srcObject = stream;
+          videoEl.style.display = 'block';
         }
+      } catch (err) {
+        console.log('Stream live view not active, displaying CAD Vector diagram:', err);
       }
     }
 
