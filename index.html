@@ -770,7 +770,11 @@
         padding: 14px 12px !important;
       }
       .evidence-group-header {
-        padding: 10px 10px !important;
+        padding: 10px 8px !important;
+        gap: 6px !important;
+      }
+      .evidence-group-header h3 {
+        font-size: 12px !important;
       }
       .garage-add-item-box {
         padding: 16px 14px !important;
@@ -1389,57 +1393,7 @@
         display: flex;
       }
       body:has([data-garage-portal="active"]) {
-        padding-bottom: 88px !important;
-      }
-
-      .sticky-sidebar.collapsed .metadata-list,
-      .sticky-sidebar.collapsed .case-id-chip,
-      .sticky-sidebar.collapsed .sidebar-tip {
-        display: none !important;
-      }
-      .sticky-sidebar.collapsed .collapsible-summary-tag {
-        display: block !important;
-      }
-      .sticky-sidebar {
-        padding: 0 !important;
-        border-radius: var(--radius-lg) !important;
-        margin-bottom: 16px !important;
-        overflow: hidden;
-      }
-      .sticky-sidebar .p-card-head {
-        cursor: pointer;
-        position: relative;
-        user-select: none;
-        padding: 14px 18px !important;
-        margin-bottom: 0 !important;
-        border-bottom: none !important;
-      }
-      .sticky-sidebar .p-card-head::after {
-        content: '';
-        position: absolute;
-        right: 18px;
-        top: 50%;
-        transform: translateY(-50%) rotate(0deg);
-        width: 10px;
-        height: 10px;
-        border-left: 2px solid var(--text-muted);
-        border-bottom: 2px solid var(--text-muted);
-        transform: translateY(-70%) rotate(-45deg);
-        transition: transform 0.2s ease;
-      }
-      .sticky-sidebar:not(.collapsed) .p-card-head::after {
-        transform: translateY(-30%) rotate(135deg);
-      }
-      .sticky-sidebar:not(.collapsed) .p-card-head {
-        border-bottom: 1px solid var(--border) !important;
-        margin-bottom: 16px !important;
-      }
-      .sticky-sidebar #btnSubmitGarageFinalResponse,
-      .sticky-sidebar #btnDraftGarageResponse {
-        display: none !important;
-      }
-      .sticky-sidebar .p-card-head .section-number {
-        display: none !important;
+        padding-bottom: 120px !important;
       }
     }
 
