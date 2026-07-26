@@ -1334,7 +1334,15 @@
 
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 
-    /* --- PREMIUM MOBILE STYLING ENHANCEMENTS FOR GARAGE PORTAL --- */
+    /* --- LUXURY HERO BANNER & MOBILE PREMIUM STYLING --- */
+    .portal-hero-banner {
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .portal-hero-banner:hover {
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+      border-color: rgba(216, 180, 109, 0.4) !important;
+    }
+
     .mobile-bottom-bar {
       display: none;
       position: fixed;
@@ -5583,42 +5591,46 @@
       const nodeData = localActiveCaseNode || {};
       rootContainer.innerHTML = `
         <div class="portal-shell" data-garage-portal="active">
-          <header class="portal-hero-banner" style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm); backdrop-filter: blur(20px);">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
-              <div>
-                <div style="font-size: 9.5px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 5px;">
-                  <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9C2.1 11.2 2 11.6 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><circle cx="17" cy="17" r="2"></circle></svg>
-                  <span>CỔNG GIÁM ĐỊNH TỔN THẤT & BÁO GIÁ SỬA CHỮA (GARAGE WORKSHOP)</span>
+          <header class="portal-hero-banner" style="background: radial-gradient(circle at 10% 0%, rgba(216,180,109,0.12) 0%, transparent 45%), radial-gradient(circle at 90% 100%, rgba(59,130,246,0.08) 0%, transparent 45%), var(--surface); border: 1px solid rgba(216,180,109,0.25); border-radius: 20px; padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 12px 35px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.2); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+              <div style="flex: 1; min-width: 0;">
+                <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); margin-bottom: 6px;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9C2.1 11.2 2 11.6 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><circle cx="17" cy="17" r="2"></circle></svg>
+                  <span style="font-size: 9.5px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;">CỔNG GIÁM ĐỊNH TỔN THẤT & BÁO GIÁ SỬA CHỮA (GARAGE WORKSHOP)</span>
                 </div>
-                <h1 style="font-size: 16px; font-weight: 850; color: var(--text-main); margin: 2px 0 0; letter-spacing: -0.02em;">Khai Báo Phương Án Xử Lý & Giám Định Thực Tế Tại Xưởng</h1>
+                <h1 style="font-size: 16.5px; font-weight: 850; color: var(--text-main); margin: 2px 0 0; letter-spacing: -0.03em; line-height: 1.35; word-break: break-word;">Khai Báo Phương Án Xử Lý & Giám Định Thực Tế Tại Xưởng</h1>
               </div>
-              <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện Sáng/Tối" onclick="toggleTheme()" style="width: 34px; height: 34px; min-height: 34px !important; padding: 0; border-radius: 10px; flex-shrink: 0; display: grid; place-items: center;">${activeThemeIcon}</button>
+              <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện Sáng/Tối" onclick="toggleTheme()" style="width: 36px; height: 36px; min-height: 36px !important; padding: 0; border-radius: 12px; flex-shrink: 0; display: grid; place-items: center; border: 1px solid var(--border); background: var(--bg-soft); box-shadow: 0 2px 8px rgba(0,0,0,0.04); transition: transform 0.2s ease;">${activeThemeIcon}</button>
             </div>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; padding: 8px 10px; background: var(--bg-soft); border-radius: 10px; border: 1px solid var(--border);">
-              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11.5px;">
-                <div style="display: flex; align-items: center; gap: 4px;">
-                  <span style="color: var(--text-muted); font-size: 10.5px; font-weight: 700;">BKS:</span>
-                  <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${escapeHtmlOutput(nodeData.bienSo || 'N/A')}</strong>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; padding: 10px 12px; background: rgba(0,0,0,0.02); background: color-mix(in srgb, var(--bg-soft) 80%, var(--surface)); border-radius: 12px; border: 1px solid var(--border);">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <div style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 8px; background: rgba(216,180,109,0.14); border: 1px solid rgba(216,180,109,0.35);">
+                  <span style="color: var(--text-muted); font-size: 10px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.04em;">BKS:</span>
+                  <strong style="color: var(--primary); font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 850;">${escapeHtmlOutput(nodeData.bienSo || 'N/A')}</strong>
                 </div>
-                <span style="color: var(--border);">•</span>
-                <div style="display: flex; align-items: center; gap: 4px;">
-                  <span style="color: var(--text-muted); font-size: 10.5px; font-weight: 700;">Gara:</span>
-                  <strong style="color: var(--text-main); font-weight: 800;">${escapeHtmlOutput(nodeData.tenGara || 'N/A')}</strong>
+                <div style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border);">
+                  <span style="color: var(--text-muted); font-size: 10px; font-weight: 750;">Gara:</span>
+                  <strong style="color: var(--text-main); font-size: 11.5px; font-weight: 800;">${escapeHtmlOutput(nodeData.tenGara || 'N/A')}</strong>
                 </div>
               </div>
-              <div style="font-size: 10.5px; color: var(--text-muted); font-weight: 750;">
-                Ghi tên: <strong id="garageHeaderNoteCounter" style="color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 800;">00/00</strong> · Có ảnh: <strong id="garageHeaderEvidenceCounter" style="color: #10b981; font-family: 'JetBrains Mono'; font-weight: 800;">00/00</strong>
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 10.5px; font-weight: 800;">
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; background: rgba(216,180,109,0.1); color: var(--primary);">
+                  Ghi tên: <strong id="garageHeaderNoteCounter" style="font-family: 'JetBrains Mono', monospace; font-weight: 850;">00/00</strong>
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 6px; background: rgba(16,185,129,0.12); color: #10b981;">
+                  Có ảnh: <strong id="garageHeaderEvidenceCounter" style="font-family: 'JetBrains Mono', monospace; font-weight: 850;">00/00</strong>
+                </span>
               </div>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <div style="flex: 1; height: 6px; border-radius: 99px; background: var(--surface-soft); overflow: hidden; border: 1px solid var(--border);">
-                <div id="garageProgressFill" style="height: 100%; width: 0; border-radius: inherit; background: var(--primary-gradient); transition: width 0.4s cubic-bezier(.25, .8, .25, 1);"></div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="flex: 1; height: 8px; border-radius: 99px; background: var(--bg-soft); overflow: hidden; border: 1px solid var(--border); box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);">
+                <div id="garageProgressFill" style="height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #d8b46d 0%, #f5dc9c 50%, #10b981 100%); box-shadow: 0 0 12px rgba(216,180,109,0.4); transition: width 0.4s cubic-bezier(.25, .8, .25, 1);"></div>
               </div>
               <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
                 <span id="garageProgressCaption" style="font-size: 10px; color: var(--text-muted); font-weight: 700; display: none;">Tiến độ</span>
-                <span id="garageProgressPercent" class="garage-progress-percent" style="font-size: 13px; font-weight: 850; color: var(--primary); font-family: 'JetBrains Mono';">0%</span>
+                <span id="garageProgressPercent" class="garage-progress-percent" style="font-size: 13.5px; font-weight: 850; color: var(--primary); font-family: 'JetBrains Mono', monospace; padding: 2px 8px; border-radius: 8px; background: rgba(216,180,109,0.14); border: 1px solid rgba(216,180,109,0.3);">0%</span>
               </div>
             </div>
           </header>
