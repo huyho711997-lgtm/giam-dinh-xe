@@ -713,8 +713,20 @@
         min-width: 0 !important;
         box-sizing: border-box !important;
       }
-      .focus-portal-layout > .image-workspace-list {
+      .focus-portal-layout > .sticky-sidebar {
         order: 1 !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 14px !important;
+        padding: 14px 16px !important;
+        box-sizing: border-box !important;
+        border-radius: 16px !important;
+      }
+      .focus-portal-layout > .image-workspace-list {
+        order: 2 !important;
         display: flex !important;
         flex-direction: column !important;
         width: 100% !important;
@@ -722,14 +734,8 @@
         min-width: 0 !important;
         box-sizing: border-box !important;
       }
-      .focus-portal-layout > .sticky-sidebar {
-        order: 2 !important;
-        position: static !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        margin-top: 16px !important;
-        box-sizing: border-box !important;
+      .sidebar-body-content.is-hidden {
+        display: none !important;
       }
       .evidence-group-section {
         display: flex !important;
@@ -4940,6 +4946,23 @@
       });
     }
 
+    function toggleSidebarCollapse() {
+      if (typeof window.sidebarCollapseState === 'undefined') {
+        window.sidebarCollapseState = (window.innerWidth <= 1050);
+      }
+      window.sidebarCollapseState = !window.sidebarCollapseState;
+      const bodyEl = document.getElementById('sidebarBodyContent');
+      const chevronEl = document.getElementById('sidebarChevronIcon');
+      if (bodyEl) {
+        bodyEl.classList.toggle('is-hidden', window.sidebarCollapseState);
+        bodyEl.style.display = window.sidebarCollapseState ? 'none' : 'block';
+      }
+      if (chevronEl) {
+        chevronEl.style.transform = window.sidebarCollapseState ? 'rotate(-90deg)' : 'rotate(0deg)';
+      }
+    }
+    window.toggleSidebarCollapse = toggleSidebarCollapse;
+
     function buildHtmlComponentSidebarCaseMetadata(viewContextMode) {
       const isReadOnlyMode = (viewContextMode === 'result' || viewContextMode === 'garage-locked');
       const showBackButton = (viewContextMode === 'result');
@@ -4948,31 +4971,50 @@
       const creatorName = node.nguoiTao?.tenHienThi || node.nguoiTao?.email || 'Hồ sơ trước phiên bản mới';
       const creatorMeta = [node.nguoiTao?.chucDanh, node.nguoiTao?.donVi].filter(Boolean).join(' · ');
       const createdDate = formatCaseTimestamp(node.createdAt);
-      
+
+      if (typeof window.sidebarCollapseState === 'undefined') {
+        window.sidebarCollapseState = (window.innerWidth <= 1050);
+      }
+      const isCollapsed = !!window.sidebarCollapseState;
+
       return `
-        <aside class="p-card sticky-sidebar">
-          <div class="p-card-head"><div><h2>${isReadOnlyMode ? 'Thông tin đối chiếu' : 'Thông tin hồ sơ'}</h2><p>${isReadOnlyMode ? 'Dữ liệu đã được Garage xác nhận.' : 'Cổng khai báo dành cho Garage.'}</p></div><div class="section-number">${isReadOnlyMode ? 'R' : 'G'}</div></div>
-          <div class="collapsible-summary-tag">
-            <span>BKS: <strong>${escapeHtmlOutput(node.bienSo)}</strong></span>
-            <span style="margin: 0 6px; opacity: 0.5;">·</span>
-            <span>Gara: <strong>${escapeHtmlOutput(node.tenGara)}</strong></span>
+        <aside id="caseSidebarCard" class="p-card sticky-sidebar">
+          <div class="p-card-head" onclick="toggleSidebarCollapse()" style="cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <h2 style="margin: 0; font-size: 15px; font-weight: 800;">${isReadOnlyMode ? 'Thông tin đối chiếu' : 'Thông tin hồ sơ'}</h2>
+              <p style="margin-top: 2px; font-size: 10px; color: var(--text-muted);">${isReadOnlyMode ? 'Dữ liệu đã được Garage xác nhận.' : 'Cổng khai báo dành cho Garage.'}</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+              <div class="section-number">${isReadOnlyMode ? 'R' : 'G'}</div>
+              <div id="sidebarChevronIcon" style="width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: grid; place-items: center; color: var(--text-muted); transition: transform 0.2s ease; transform: ${isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'};">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+            </div>
           </div>
-          ${showBackButton ? `<button class="btn-premium btn-secondary" style="margin-bottom:14px" onclick="goHome()">${SVGS.ARROW_LEFT} Về Dashboard</button>` : ''}
-          <div class="case-id-chip"><span>Mã hồ sơ</span><strong>${escapeHtmlOutput(node.idCa)}</strong></div>
-          <div class="metadata-list">
-            <div class="metadata-row"><span>Biển kiểm soát</span><strong>${escapeHtmlOutput(node.bienSo)}</strong></div>
-            <div class="metadata-row"><span>Garage phụ trách</span><strong>${escapeHtmlOutput(node.tenGara)}</strong></div>
-            <div class="metadata-row"><span>Người tạo hồ sơ</span><strong>${escapeHtmlOutput(creatorName)}${creatorMeta ? `<small style="display:block;margin-top:3px;color:var(--text-muted);font-size:8px;font-weight:700">${escapeHtmlOutput(creatorMeta)}</small>` : ``}</strong></div>
-            <div class="metadata-row"><span>Thời gian khởi tạo</span><strong>${escapeHtmlOutput(createdDate.date)} · ${escapeHtmlOutput(createdDate.time)}</strong></div>
-            <div class="metadata-row"><span>Ảnh cần Garage định danh</span><strong>${Number(node.soLuongAnh || localActiveImageStack.length)} ảnh</strong></div>
-            <div class="metadata-row"><span>Hạng mục cần Garage cung cấp ảnh</span><strong>${Number(node.soLuongHangMucYeuCauAnh || localActiveRequestedItems.length)} hạng mục</strong></div>
-            <div class="metadata-row"><span>Trạng thái</span><strong><span class="badge-status ${node.trangThai === STATUS_COMPLETED ? 'completed' : 'pending'}">${escapeHtmlOutput(node.trangThai)}</span></strong></div>
+          
+          <div class="collapsible-summary-tag" onclick="toggleSidebarCollapse()" style="cursor: pointer; margin-top: 8px; padding: 6px 10px; background: var(--bg-soft); border-radius: 8px; font-size: 11px; color: var(--text-soft); display: flex; align-items: center; justify-content: space-between;">
+            <span>BKS: <strong style="color: var(--primary); font-family: 'JetBrains Mono';">${escapeHtmlOutput(node.bienSo || 'N/A')}</strong></span>
+            <span>Gara: <strong style="color: var(--text-main);">${escapeHtmlOutput(node.tenGara || 'N/A')}</strong></span>
           </div>
-          <div class="sidebar-tip">Hoàn thành cả hai nhóm: ghi rõ hạng mục theo ảnh hiện trạng và tải ảnh minh chứng cho từng hạng mục được yêu cầu.</div>
-          ${isReadOnlyMode && !isAdjusterView ? `<div class="badge-status completed" style="width:100%;justify-content:center;padding:12px">Hồ sơ đã khóa</div>` : (!isReadOnlyMode ? `
-            <button id="btnDraftGarageResponse" class="btn-premium btn-secondary" style="width:100%; margin-bottom:8px; border:1px solid rgba(179,140,67,0.3) !important;">Lưu nháp hồ sơ</button>
-            <button id="btnSubmitGarageFinalResponse" class="btn-premium" style="width:100%;">${SVGS.CHECK_CIRCLE} Hoàn tất & gửi kết quả</button>
-          ` : '')}
+
+          <div id="sidebarBodyContent" class="sidebar-body-content ${isCollapsed ? 'is-hidden' : ''}" style="display: ${isCollapsed ? 'none' : 'block'}; margin-top: 14px;">
+            ${showBackButton ? `<button class="btn-premium btn-secondary" style="margin-bottom:14px" onclick="goHome()">${SVGS.ARROW_LEFT} Về Dashboard</button>` : ''}
+            <div class="case-id-chip"><span>Mã hồ sơ</span><strong>${escapeHtmlOutput(node.idCa)}</strong></div>
+            <div class="metadata-list">
+              <div class="metadata-row"><span>Biển kiểm soát</span><strong>${escapeHtmlOutput(node.bienSo)}</strong></div>
+              <div class="metadata-row"><span>Garage phụ trách</span><strong>${escapeHtmlOutput(node.tenGara)}</strong></div>
+              <div class="metadata-row"><span>Người tạo hồ sơ</span><strong>${escapeHtmlOutput(creatorName)}${creatorMeta ? `<small style="display:block;margin-top:3px;color:var(--text-muted);font-size:8px;font-weight:700">${escapeHtmlOutput(creatorMeta)}</small>` : ``}</strong></div>
+              <div class="metadata-row"><span>Thời gian khởi tạo</span><strong>${escapeHtmlOutput(createdDate.date)} · ${escapeHtmlOutput(createdDate.time)}</strong></div>
+              <div class="metadata-row"><span>Ảnh cần Garage định danh</span><strong>${Number(node.soLuongAnh || localActiveImageStack.length)} ảnh</strong></div>
+              <div class="metadata-row"><span>Hạng mục cần Garage cung cấp ảnh</span><strong>${Number(node.soLuongHangMucYeuCauAnh || localActiveRequestedItems.length)} hạng mục</strong></div>
+              <div class="metadata-row"><span>Trạng thái</span><strong><span class="badge-status ${node.trangThai === STATUS_COMPLETED ? 'completed' : 'pending'}">${escapeHtmlOutput(node.trangThai)}</span></strong></div>
+            </div>
+            <div class="sidebar-tip">Hoàn thành cả hai nhóm: ghi rõ hạng mục theo ảnh hiện trạng và tải ảnh minh chứng cho từng hạng mục được yêu cầu.</div>
+            ${isReadOnlyMode && !isAdjusterView ? `<div class="badge-status completed" style="width:100%;justify-content:center;padding:12px">Hồ sơ đã khóa</div>` : (!isReadOnlyMode ? `
+              <button id="btnDraftGarageResponse" class="btn-premium btn-secondary" style="width:100%; margin-bottom:8px; border:1px solid rgba(179,140,67,0.3) !important;">Lưu nháp hồ sơ</button>
+              <button id="btnSubmitGarageFinalResponse" class="btn-premium" style="width:100%;">${SVGS.CHECK_CIRCLE} Hoàn tất & gửi kết quả</button>
+            ` : '')}
+          </div>
         </aside>`;
     }
 
