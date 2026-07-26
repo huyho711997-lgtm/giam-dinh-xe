@@ -5526,42 +5526,59 @@
     } catch (_) {}
 
     function prefetchGpsCoordinates() {
-      const now = Date.now();
       if (gpsPermissionDenied) return;
-      // If cached location exists in localStorage (valid for 12 hours), NEVER call browser GPS again!
-      if (lastFetchedGpsCoords && (now - lastGpsFetchTime < 43200000)) return;
+      if (lastFetchedGpsCoords) return; // If coordinates exist in localStorage, NEVER prompt browser again!
 
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            lastGpsFetchTime = Date.now();
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-            lastFetchedGpsCoords = {
-              latitude: lat.toFixed(6),
-              longitude: lon.toFixed(6)
-            };
-            try {
-              localStorage.setItem('tasco_cached_gps', JSON.stringify(lastFetchedGpsCoords));
-              localStorage.setItem('tasco_cached_gps_time', String(lastGpsFetchTime));
-            } catch (_) {}
+      if (!navigator.geolocation) return;
 
-            reverseGeocodeAddress(lat, lon).then((address) => {
-              if (address) {
-                lastFetchedAddress = address;
-                try { localStorage.setItem('tasco_cached_address', address); } catch (_) {}
-              }
-            });
-          },
-          (error) => {
-            console.warn('Geolocation error:', error);
-            if (error && error.code === 1) {
-              gpsPermissionDenied = true;
-            }
-          },
-          { enableHighAccuracy: false, timeout: 4000, maximumAge: 86400000 }
-        );
+      // Silent permission check to eliminate all popups
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+          if (result.state === 'granted') {
+            executeGpsPositionFetch();
+          } else if (result.state === 'prompt') {
+            console.log('Geolocation permission state is prompt: silent mode active (no popup triggered).');
+          } else if (result.state === 'denied') {
+            gpsPermissionDenied = true;
+          }
+        }).catch(() => {
+          if (!lastFetchedGpsCoords) executeGpsPositionFetch();
+        });
+      } else {
+        if (!lastFetchedGpsCoords) executeGpsPositionFetch();
       }
+    }
+
+    function executeGpsPositionFetch() {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          lastGpsFetchTime = Date.now();
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          lastFetchedGpsCoords = {
+            latitude: lat.toFixed(6),
+            longitude: lon.toFixed(6)
+          };
+          try {
+            localStorage.setItem('tasco_cached_gps', JSON.stringify(lastFetchedGpsCoords));
+            localStorage.setItem('tasco_cached_gps_time', String(lastGpsFetchTime));
+          } catch (_) {}
+
+          reverseGeocodeAddress(lat, lon).then((address) => {
+            if (address) {
+              lastFetchedAddress = address;
+              try { localStorage.setItem('tasco_cached_address', address); } catch (_) {}
+            }
+          });
+        },
+        (error) => {
+          console.warn('Geolocation error:', error);
+          if (error && error.code === 1) {
+            gpsPermissionDenied = true;
+          }
+        },
+        { enableHighAccuracy: false, timeout: 4000, maximumAge: 86400000 }
+      );
     }
 
     function addWatermarkToImageFile(file, categoryName) {
