@@ -5515,10 +5515,21 @@
     let lastGpsFetchTime = 0;
     let gpsPermissionDenied = false;
 
+    // Load persistent cached location from localStorage so permission is only needed ONCE
+    try {
+      const savedGps = localStorage.getItem('tasco_cached_gps');
+      const savedAddr = localStorage.getItem('tasco_cached_address');
+      const savedTime = localStorage.getItem('tasco_cached_gps_time');
+      if (savedGps) lastFetchedGpsCoords = JSON.parse(savedGps);
+      if (savedAddr) lastFetchedAddress = savedAddr;
+      if (savedTime) lastGpsFetchTime = Number(savedTime);
+    } catch (_) {}
+
     function prefetchGpsCoordinates() {
       const now = Date.now();
       if (gpsPermissionDenied) return;
-      if (lastFetchedGpsCoords && (now - lastGpsFetchTime < 300000)) return;
+      // If cached location exists in localStorage (valid for 12 hours), NEVER call browser GPS again!
+      if (lastFetchedGpsCoords && (now - lastGpsFetchTime < 43200000)) return;
 
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -5530,8 +5541,16 @@
               latitude: lat.toFixed(6),
               longitude: lon.toFixed(6)
             };
+            try {
+              localStorage.setItem('tasco_cached_gps', JSON.stringify(lastFetchedGpsCoords));
+              localStorage.setItem('tasco_cached_gps_time', String(lastGpsFetchTime));
+            } catch (_) {}
+
             reverseGeocodeAddress(lat, lon).then((address) => {
-              if (address) lastFetchedAddress = address;
+              if (address) {
+                lastFetchedAddress = address;
+                try { localStorage.setItem('tasco_cached_address', address); } catch (_) {}
+              }
             });
           },
           (error) => {
@@ -5540,7 +5559,7 @@
               gpsPermissionDenied = true;
             }
           },
-          { enableHighAccuracy: false, timeout: 4000, maximumAge: 300000 }
+          { enableHighAccuracy: false, timeout: 4000, maximumAge: 86400000 }
         );
       }
     }
