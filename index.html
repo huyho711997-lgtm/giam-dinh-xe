@@ -5283,39 +5283,30 @@
         };
 
         const damageMetaSelectorMarkup = isDamageItem ? `
-          <div class="damage-meta-selector" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
-            <div style="margin-bottom: 10px;">
-              <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">
-                Mức độ hư hỏng:
-              </label>
-              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px;">
-                ${['Trầy xước', 'Móp méo', 'Bể / Vỡ', 'Cong vênh', 'Rách'].map(tag => {
-                  const isSelected = (item.mucDoHuHong || '').includes(tag);
-                  return `
-                    <button type="button" onclick="toggleDamageSeverityTag(${index}, '${tag}')" style="padding: 5px 12px; font-size: 11.5px; font-weight: 750; border-radius: 20px; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}; background: ${isSelected ? 'rgba(216,180,109,0.15)' : 'var(--surface)'}; color: ${isSelected ? 'var(--primary)' : 'var(--text-main)'}; display: inline-flex; align-items: center; gap: 5px;">
-                      ${isSelected ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>` : (DAMAGE_TAG_ICONS[tag] || `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`)}
-                      <span>${tag}</span>
-                    </button>
-                  `;
-                }).join('')}
-              </div>
-              <input type="text" id="txtDamageSeverityCustom_${index}" class="input-premium" value="${escapeAttributeData(item.mucDoHuHong || '')}" placeholder="Ghi nhận chi tiết mức độ hư hỏng..." onchange="saveDamageSeverityCustom(${index}, this.value)" style="height: 36px; font-size: 12.5px; border-radius: 8px;" />
+          <div class="damage-meta-selector" style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px;">
+            <!-- Proposed Action Pills -->
+            <div style="display: flex; gap: 6px; width: 100%;">
+              <button type="button" onclick="setProposedAction(${index}, 'sua_chua')" style="flex: 1; height: 32px; font-size: 11.5px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'sua_chua' ? 'rgba(59,130,246,0.15)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--text-soft)'}; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                <span>Sửa chữa</span>
+              </button>
+              <button type="button" onclick="setProposedAction(${index}, 'thay_the')" style="flex: 1; height: 32px; font-size: 11.5px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'thay_the' ? 'rgba(239,68,68,0.15)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--text-soft)'}; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                <span>Thay thế</span>
+              </button>
             </div>
 
-            <div>
-              <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 6px;">
-                Phương án đề xuất của Gara:
-              </label>
-              <div style="display: flex; gap: 8px;">
-                <button type="button" onclick="setProposedAction(${index}, 'sua_chua')" style="flex: 1; height: 40px; font-size: 12.5px; font-weight: 800; border-radius: 9px; cursor: pointer; transition: all 0.2s ease; border: 1.5px solid ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'sua_chua' ? 'rgba(59,130,246,0.12)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--text-soft)'}; display: flex; align-items: center; justify-content: center; gap: 7px;">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
-                  <span>Sửa chữa</span>
-                </button>
-                <button type="button" onclick="setProposedAction(${index}, 'thay_the')" style="flex: 1; height: 40px; font-size: 12.5px; font-weight: 800; border-radius: 9px; cursor: pointer; transition: all 0.2s ease; border: 1.5px solid ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'thay_the' ? 'rgba(239,68,68,0.12)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--text-soft)'}; display: flex; align-items: center; justify-content: center; gap: 7px;">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                  <span>Thay thế</span>
-                </button>
-              </div>
+            <!-- Damage Tags Pill Strip -->
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; width: 100%;">
+              ${['Trầy xước', 'Móp méo', 'Bể / Vỡ', 'Cong vênh', 'Rách'].map(tag => {
+                const isSelected = (item.mucDoHuHong || '').includes(tag);
+                return `
+                  <button type="button" onclick="toggleDamageSeverityTag(${index}, '${tag}')" style="padding: 4px 10px; font-size: 11px; font-weight: 750; border-radius: 16px; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}; background: ${isSelected ? 'rgba(216,180,109,0.15)' : 'var(--surface)'}; color: ${isSelected ? 'var(--primary)' : 'var(--text-main)'}; display: inline-flex; align-items: center; gap: 4px;">
+                    ${isSelected ? `<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>` : (DAMAGE_TAG_ICONS[tag] || '')}
+                    <span>${tag}</span>
+                  </button>
+                `;
+              }).join('')}
             </div>
           </div>
         ` : '';
@@ -5338,11 +5329,11 @@
             </div>
             <h3 style="margin: 0; font-size: 15.5px; font-weight: 800; color: var(--text-main); line-height: 1.35; word-break: break-word;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3>
           </div>
-          <div class="evidence-request-body" style="padding: 16px 18px;">
+          <div class="evidence-request-body" style="padding: 12px 14px;">
             ${actionButtonsMarkup}
             ${damageMetaSelectorMarkup}
-            <textarea id="garageEvidenceNote_${index}" class="textarea-premium evidence-note" placeholder="Ghi chú thêm cho hạng mục này (không bắt buộc)...">${escapeHtmlOutput(item.ghiChuGarage || '')}</textarea>
-            <div id="garageEvidenceNoteState_${index}" class="autosave-state">Ghi chú được tự động lưu</div>
+            <input type="text" id="garageEvidenceNote_${index}" class="input-premium evidence-note" placeholder="Ghi chú / mô tả tổn thất (không bắt buộc)..." value="${escapeAttributeData(item.ghiChuGarage || '')}" style="height: 36px; font-size: 12px; border-radius: 8px; width: 100%; box-sizing: border-box;" />
+            <div id="garageEvidenceNoteState_${index}" class="autosave-state" style="font-size: 9.5px; margin-top: 3px;">Tự động lưu</div>
             <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
           </div>
         </article>`;
