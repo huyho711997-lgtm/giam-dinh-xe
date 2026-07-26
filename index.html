@@ -5512,72 +5512,40 @@
       }
     }
 
-    let lastGpsFetchTime = 0;
+    let lastFetchedGpsCoords = null;
+    let lastFetchedAddress = null;
     let gpsPermissionDenied = false;
 
-    // Load persistent cached location from localStorage so permission is only needed ONCE
+    // Clear any previous stored location cache to ensure 100% real-time GPS positioning
     try {
-      const savedGps = localStorage.getItem('tasco_cached_gps');
-      const savedAddr = localStorage.getItem('tasco_cached_address');
-      const savedTime = localStorage.getItem('tasco_cached_gps_time');
-      if (savedGps) lastFetchedGpsCoords = JSON.parse(savedGps);
-      if (savedAddr) lastFetchedAddress = savedAddr;
-      if (savedTime) lastGpsFetchTime = Number(savedTime);
+      localStorage.removeItem('tasco_cached_gps');
+      localStorage.removeItem('tasco_cached_address');
+      localStorage.removeItem('tasco_cached_gps_time');
     } catch (_) {}
 
     function prefetchGpsCoordinates() {
       if (gpsPermissionDenied) return;
-      if (lastFetchedGpsCoords) return; // If coordinates exist in localStorage, NEVER prompt browser again!
-
       if (!navigator.geolocation) return;
 
-      // Silent permission check to eliminate all popups
-      if (navigator.permissions && navigator.permissions.query) {
-        navigator.permissions.query({ name: 'geolocation' }).then((result) => {
-          if (result.state === 'granted') {
-            executeGpsPositionFetch();
-          } else if (result.state === 'prompt') {
-            console.log('Geolocation permission state is prompt: silent mode active (no popup triggered).');
-          } else if (result.state === 'denied') {
-            gpsPermissionDenied = true;
-          }
-        }).catch(() => {
-          if (!lastFetchedGpsCoords) executeGpsPositionFetch();
-        });
-      } else {
-        if (!lastFetchedGpsCoords) executeGpsPositionFetch();
-      }
-    }
-
-    function executeGpsPositionFetch() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          lastGpsFetchTime = Date.now();
           const lat = position.coords.latitude;
           const lon = position.coords.longitude;
           lastFetchedGpsCoords = {
             latitude: lat.toFixed(6),
             longitude: lon.toFixed(6)
           };
-          try {
-            localStorage.setItem('tasco_cached_gps', JSON.stringify(lastFetchedGpsCoords));
-            localStorage.setItem('tasco_cached_gps_time', String(lastGpsFetchTime));
-          } catch (_) {}
-
           reverseGeocodeAddress(lat, lon).then((address) => {
-            if (address) {
-              lastFetchedAddress = address;
-              try { localStorage.setItem('tasco_cached_address', address); } catch (_) {}
-            }
+            if (address) lastFetchedAddress = address;
           });
         },
         (error) => {
-          console.warn('Geolocation error:', error);
+          console.warn('Real-time Geolocation error:', error);
           if (error && error.code === 1) {
             gpsPermissionDenied = true;
           }
         },
-        { enableHighAccuracy: false, timeout: 4000, maximumAge: 86400000 }
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
     }
 
