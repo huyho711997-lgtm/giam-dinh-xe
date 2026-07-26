@@ -5705,20 +5705,19 @@
 
         const groupInfo = getCategoryGroupInfo(item.tenHangMuc, isGarageCustomItem);
         const isDocumentGroupItem = (groupInfo.key === 'documents');
+        const isOverallGroupItem = (groupInfo.key === 'overall');
 
         const actionButtonsMarkup = `
           ${hiddenFileInputMarkup}
           <div class="evidence-upload-actions" style="margin-bottom: 8px; width: 100%; display: flex; gap: 6px; flex-wrap: wrap;">
-            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="${isDocumentGroupItem ? 'flex: 1; min-width: 135px;' : 'width: 100%;'} min-height: 38px; font-size: 12px; border-radius: 8px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 12px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+            <button type="button" class="btn-premium" onclick="openCameraViewfinderWithGuideModal(${index})" style="flex: 1; min-width: 140px; min-height: 38px; font-size: 12px; border-radius: 8px; background: var(--primary-gradient); color: #080b11; font-weight: 850; border: none; box-shadow: 0 4px 12px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-              <span>Chụp từ Camera</span>
+              <span>${isOverallGroupItem ? '📐 Khung Hướng Dẫn & Chụp Camera' : 'Chụp từ Camera'}</span>
             </button>
-            ${isDocumentGroupItem ? `
-              <button type="button" class="btn-premium btn-secondary" onclick="triggerUploadFromGallery(${index})" style="flex: 1; min-width: 135px; min-height: 38px; font-size: 12px; border-radius: 8px; background: var(--surface); color: var(--text-main); font-weight: 800; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#3b82f6" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
-                <span>Tải từ Thư viện</span>
-              </button>
-            ` : ''}
+            <button type="button" class="btn-premium btn-secondary" onclick="triggerUploadFromGallery(${index})" style="${isDocumentGroupItem ? 'flex: 1; min-width: 135px;' : 'width: auto; padding: 0 14px;'} min-height: 38px; font-size: 12px; border-radius: 8px; background: var(--surface); color: var(--text-main); font-weight: 800; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; gap: 6px;" title="Tải ảnh từ thư viện tệp">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#3b82f6" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+              <span>${isDocumentGroupItem ? 'Tải từ Thư viện' : 'Thư viện'}</span>
+            </button>
           </div>
         `;
 
