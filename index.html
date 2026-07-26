@@ -1375,9 +1375,40 @@
       transform: scale(0.97);
       box-shadow: 0 2px 6px rgba(199, 155, 75, 0.2);
     }
-    .premium-combobox-group:focus-within {
+    .custom-premium-combobox:focus-within .combobox-input-wrapper {
       border-color: var(--primary) !important;
       box-shadow: 0 0 0 3px rgba(216, 180, 109, 0.25) !important;
+    }
+    .custom-damage-popover-menu {
+      animation: popoverFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes popoverFadeIn {
+      from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .popover-option-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+    .popover-option-item:hover, .popover-option-item:active {
+      background: rgba(216, 180, 109, 0.15);
+      color: var(--primary);
+    }
+    .popover-option-item .opt-icon {
+      font-size: 13px;
+      flex-shrink: 0;
     }
 
     /* Collapsible metadata accordion details */
@@ -5182,22 +5213,61 @@
       }
     }
 
-    async function selectPresetDamageNote(itemIndex, val) {
-      if (!val || !localActiveRequestedItems || !localActiveRequestedItems[itemIndex]) return;
-      const inputEl = document.getElementById(`garageEvidenceNote_${itemIndex}`);
-      if (inputEl) {
-        inputEl.value = val;
+    function toggleCustomDamageDropdown(itemIndex, event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById(`customDamageMenu_${itemIndex}`);
+      const arrow = document.getElementById(`customDropdownArrow_${itemIndex}`);
+      
+      document.querySelectorAll('.custom-damage-popover-menu').forEach(el => {
+        if (el.id !== `customDamageMenu_${itemIndex}`) el.style.display = 'none';
+      });
+
+      if (menu) {
+        const isOpen = (menu.style.display === 'block');
+        menu.style.display = isOpen ? 'none' : 'block';
+        if (arrow) arrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
       }
+    }
+
+    async function applyCustomPresetNote(itemIndex, val) {
+      const menu = document.getElementById(`customDamageMenu_${itemIndex}`);
+      const arrow = document.getElementById(`customDropdownArrow_${itemIndex}`);
+      if (menu) menu.style.display = 'none';
+      if (arrow) arrow.style.transform = 'rotate(0deg)';
+
+      const inputEl = document.getElementById(`garageEvidenceNote_${itemIndex}`);
+      if (inputEl) inputEl.value = val;
+
+      if (!localActiveRequestedItems || !localActiveRequestedItems[itemIndex]) return;
       localActiveRequestedItems[itemIndex].ghiChuGarage = val;
       localActiveRequestedItems[itemIndex].mucDoHuHong = val;
+
       try {
         await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh/${itemIndex}/ghiChuGarage`).set(val);
         await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh/${itemIndex}/mucDoHuHong`).set(val);
-        triggerToast(`Đã chọn mô tả: "${val}"`, 'info');
+        triggerToast(`Đã ghi nhận: "${val}"`, 'info');
       } catch (e) {
         console.error(e);
       }
     }
+
+    async function saveGarageEvidenceNoteDirect(itemIndex, val) {
+      if (!localActiveRequestedItems || !localActiveRequestedItems[itemIndex]) return;
+      const cleanVal = val.trim();
+      localActiveRequestedItems[itemIndex].ghiChuGarage = cleanVal;
+      try {
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh/${itemIndex}/ghiChuGarage`).set(cleanVal);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.custom-premium-combobox')) {
+        document.querySelectorAll('.custom-damage-popover-menu').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('[id^="customDropdownArrow_"]').forEach(el => el.style.transform = 'rotate(0deg)');
+      }
+    });
 
     window.triggerAddNewGarageItemFromPortal = triggerAddNewGarageItemFromPortal;
     window.triggerRemoveGarageCustomItem = triggerRemoveGarageCustomItem;
@@ -5205,7 +5275,9 @@
     window.toggleDamageSeverityTag = toggleDamageSeverityTag;
     window.setProposedAction = setProposedAction;
     window.saveDamageSeverityCustom = saveDamageSeverityCustom;
-    window.selectPresetDamageNote = selectPresetDamageNote;
+    window.toggleCustomDamageDropdown = toggleCustomDamageDropdown;
+    window.applyCustomPresetNote = applyCustomPresetNote;
+    window.saveGarageEvidenceNoteDirect = saveGarageEvidenceNoteDirect;
 
     function renderPortalGarageInteractiveInputView() {
       if (!localActiveImageStack.length && !localActiveRequestedItems.length && !localActiveCaseNode) return renderErrorLayoutState('Hồ sơ hiện tại chưa có nội dung yêu cầu Garage xử lý.');
@@ -5334,31 +5406,53 @@
           <div class="evidence-request-body" style="padding: 10px 12px;">
             ${actionButtonsMarkup}
             ${damageMetaSelectorMarkup}
-            <div class="premium-combobox-group" style="position: relative; display: flex; align-items: center; width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 3px 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); transition: all 0.2s ease; margin-bottom: 4px;">
-              <!-- Custom Styled Dropdown Trigger -->
-              <div style="position: relative; flex-shrink: 0; display: inline-flex; align-items: center;">
-                <select onchange="selectPresetDamageNote(${index}, this.value)" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; z-index:2; cursor:pointer;">
-                  <option value="">-- Chọn mô tả mẫu --</option>
-                  <option value="Trầy xước">Trầy xước</option>
-                  <option value="Móp méo">Móp méo</option>
-                  <option value="Bể / Vỡ">Bể / Vỡ</option>
-                  <option value="Cong vênh">Cong vênh</option>
-                  <option value="Rách">Rách</option>
-                  <option value="Trầy xước & Móp méo">Trầy xước & Móp méo</option>
-                  <option value="Sơn trầy / Bong tróc">Sơn trầy / Bong tróc</option>
-                  <option value="Biến dạng gãy vỡ">Biến dạng gãy vỡ</option>
-                </select>
-                <button type="button" class="btn-premium btn-secondary" style="height: 30px; font-size: 11.5px; padding: 0 10px; border-radius: 7px; background: rgba(216,180,109,0.14); color: var(--primary); font-weight: 800; border: 1px solid rgba(216,180,109,0.3); display: inline-flex; align-items: center; gap: 5px; pointer-events: none;">
+            <div id="damageCombobox_${index}" class="custom-premium-combobox" style="position: relative; width: 100%; margin-bottom: 4px;">
+              <div class="combobox-input-wrapper" style="display: flex; align-items: center; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 3px 6px; transition: all 0.25s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                <!-- Custom Trigger Button -->
+                <button type="button" onclick="toggleCustomDamageDropdown(${index}, event)" style="height: 30px; font-size: 11.5px; padding: 0 10px; border-radius: 7px; background: rgba(216,180,109,0.14); color: var(--primary); font-weight: 800; border: 1px solid rgba(216,180,109,0.3); display: inline-flex; align-items: center; gap: 5px; cursor: pointer; flex-shrink: 0; transition: all 0.2s ease;">
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                   <span>Mẫu mô tả</span>
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; opacity: 0.8;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  <svg id="customDropdownArrow_${index}" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; transition: transform 0.2s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
+
+                <div style="width: 1px; height: 18px; background: var(--border); margin: 0 8px; flex-shrink: 0;"></div>
+
+                <!-- Integrated Text Input -->
+                <input type="text" id="garageEvidenceNote_${index}" class="evidence-note" placeholder="Nhập hoặc chọn mô tả tổn thất..." value="${escapeAttributeData(item.ghiChuGarage || item.mucDoHuHong || '')}" onchange="saveGarageEvidenceNoteDirect(${index}, this.value)" style="flex: 1; min-width: 0; height: 32px; font-size: 12px; font-weight: 500; border: none; background: transparent; color: var(--text-main); outline: none; padding: 0 4px; box-sizing: border-box;" />
               </div>
-              
-              <div style="width: 1px; height: 18px; background: var(--border); margin: 0 8px; flex-shrink: 0;"></div>
-              
-              <!-- Integrated Text Input -->
-              <input type="text" id="garageEvidenceNote_${index}" class="evidence-note" placeholder="Nhập hoặc chọn mô tả tổn thất..." value="${escapeAttributeData(item.ghiChuGarage || item.mucDoHuHong || '')}" style="flex: 1; min-width: 0; height: 32px; font-size: 12px; font-weight: 500; border: none; background: transparent; color: var(--text-main); outline: none; padding: 0 4px; box-sizing: border-box;" />
+
+              <!-- CUSTOM FLOATING OVERLAY POPUP MENU -->
+              <div id="customDamageMenu_${index}" class="custom-damage-popover-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; width: 230px; z-index: 1000; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 6px; box-shadow: 0 12px 32px rgba(0,0,0,0.18); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);">
+                <div style="padding: 4px 8px 6px; font-size: 9.5px; font-weight: 850; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); margin-bottom: 4px;">
+                  GỢI Ý MÔ TẢ TỔN THẤT MẪU
+                </div>
+                <div class="custom-popover-options-list" style="display: flex; flex-direction: column; gap: 2px; max-height: 220px; overflow-y: auto;">
+                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Trầy xước')">
+                    <span class="opt-icon">⚡</span><span>Trầy xước</span>
+                  </button>
+                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Móp méo')">
+                    <span class="opt-icon">🔨</span><span>Móp méo</span>
+                  </button>
+                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Bể / Vỡ')">
+                    <span class="opt-icon">💥</span><span>Bể / Vỡ</span>
+                  </button>
+                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Cong vênh')">
+                    <span class="opt-icon">🔄</span><span>Cong vênh</span>
+                  </button>
+                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Rách')">
+                    <span class="opt-icon">✂️</span><span>Rách</span>
+                  </button>
+                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Trầy xước & Móp méo')">
+                    <span class="opt-icon">⚡🔨</span><span>Trầy xước & Móp méo</span>
+                  </button>
+                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Sơn trầy / Bong tróc')">
+                    <span class="opt-icon">🎨</span><span>Sơn trầy / Bong tróc</span>
+                  </button>
+                  <button type="button" class="popover-option-item" onclick="applyCustomPresetNote(${index}, 'Biến dạng gãy vỡ')">
+                    <span class="opt-icon">⚠️</span><span>Biến dạng gãy vỡ</span>
+                  </button>
+                </div>
+              </div>
             </div>
             <div id="garageEvidenceNoteState_${index}" class="autosave-state" style="font-size: 9.5px; margin-top: 3px;">Tự động lưu</div>
             <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
