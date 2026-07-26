@@ -5089,7 +5089,7 @@
           iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`
         };
       }
-      if (lower.includes('tong the') || lower.includes('tem dang kiem') || lower.includes('so khung') || lower.includes('vin')) {
+      if (lower.includes('tong the') || lower.includes('tem dang kiem') || lower.includes('so khung') || lower.includes('vin') || lower.includes('goc') || lower.includes('45') || lower.includes('dau xe') || lower.includes('duoi xe') || lower.includes('hong xe') || lower.includes('truoc') || lower.includes('sau')) {
         return {
           key: 'overall',
           title: 'HÌNH ẢNH TỔNG THỂ XE',
@@ -5352,8 +5352,31 @@
         currentActiveCameraStream = stream;
         if (videoEl) videoEl.srcObject = stream;
       } catch (err) {
-        console.warn('Camera stream fallback:', err);
-        fallbackTriggerStandardInputCamera(index);
+        console.warn('Camera stream live preview not available, showing visual guide:', err);
+        const container = modalEl.querySelector('#cameraGuideVideo')?.parentElement;
+        if (container) {
+          container.innerHTML = `
+            <div style="padding: 24px; text-align: center; color: #fff; max-width: 360px; width: 100%; box-sizing: border-box;">
+              <div style="font-size: 11px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;">📐 SƠ ĐỒ HƯỚNG DẪN GÓC CHỤP CHUẨN</div>
+              <div style="font-size: 15px; font-weight: 850; color: #fff; margin-bottom: 10px;">${escapeHtmlOutput(itemName)}</div>
+              <div style="margin: 14px 0; padding: 14px; background: rgba(255,255,255,0.04); border-radius: 16px; border: 1px solid rgba(216,180,109,0.3); box-shadow: inset 0 0 20px rgba(0,0,0,0.5);">
+                <svg viewBox="0 0 400 250" style="width: 100%; opacity: 0.92; filter: drop-shadow(0 0 8px rgba(0,240,255,0.5));">
+                  <rect x="10" y="10" width="380" height="230" rx="12" fill="none" stroke="#d8b46d" stroke-width="2" stroke-dasharray="6,4" />
+                  <path d="M 60,165 L 95,110 L 145,100 L 265,100 L 315,120 L 345,165 L 348,190 L 58,190 Z" fill="none" stroke="#00f0ff" stroke-width="2.5" stroke-dasharray="8,5" />
+                  <path d="M 125,110 L 165,65 L 255,65 L 295,115" fill="none" stroke="#00f0ff" stroke-width="2" stroke-dasharray="5,4" />
+                  <circle cx="108" cy="190" r="22" fill="none" stroke="#00f0ff" stroke-width="2" stroke-dasharray="4,3" />
+                  <circle cx="295" cy="190" r="22" fill="none" stroke="#00f0ff" stroke-width="2" stroke-dasharray="4,3" />
+                  <line x1="200" y1="115" x2="200" y2="155" stroke="#d8b46d" stroke-width="1.8" />
+                  <line x1="180" y1="135" x2="220" y2="135" stroke="#d8b46d" stroke-width="1.8" />
+                </svg>
+              </div>
+              <p style="font-size: 11.5px; color: #94a3b8; line-height: 1.55; margin-bottom: 18px;">Hãy lùi 3 - 4 mét, đứng góc 45° so với xe và giữ máy ngang tầm mắt trước khi mở camera chụp ảnh.</p>
+              <button type="button" class="btn-premium" onclick="fallbackTriggerStandardInputCamera(${index})" style="width: 100%; min-height: 44px; font-size: 13px; border-radius: 12px; background: var(--primary-gradient); color: #080b11; font-weight: 850; border: none; box-shadow: 0 4px 16px rgba(216,180,109,0.3);">
+                📸 Mở Camera chụp ảnh ngay
+              </button>
+            </div>
+          `;
+        }
       }
     }
 
