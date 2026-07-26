@@ -5178,12 +5178,30 @@
       }
     }
 
+    async function selectPresetDamageNote(itemIndex, val) {
+      if (!val || !localActiveRequestedItems || !localActiveRequestedItems[itemIndex]) return;
+      const inputEl = document.getElementById(`garageEvidenceNote_${itemIndex}`);
+      if (inputEl) {
+        inputEl.value = val;
+      }
+      localActiveRequestedItems[itemIndex].ghiChuGarage = val;
+      localActiveRequestedItems[itemIndex].mucDoHuHong = val;
+      try {
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh/${itemIndex}/ghiChuGarage`).set(val);
+        await dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}/hangMucYeuCauAnh/${itemIndex}/mucDoHuHong`).set(val);
+        triggerToast(`Đã chọn mô tả: "${val}"`, 'info');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     window.triggerAddNewGarageItemFromPortal = triggerAddNewGarageItemFromPortal;
     window.triggerRemoveGarageCustomItem = triggerRemoveGarageCustomItem;
     window.toggleEvidenceGroupSection = toggleEvidenceGroupSection;
     window.toggleDamageSeverityTag = toggleDamageSeverityTag;
     window.setProposedAction = setProposedAction;
     window.saveDamageSeverityCustom = saveDamageSeverityCustom;
+    window.selectPresetDamageNote = selectPresetDamageNote;
 
     function renderPortalGarageInteractiveInputView() {
       if (!localActiveImageStack.length && !localActiveRequestedItems.length && !localActiveCaseNode) return renderErrorLayoutState('Hồ sơ hiện tại chưa có nội dung yêu cầu Garage xử lý.');
@@ -5277,26 +5295,16 @@
         };
 
         const damageMetaSelectorMarkup = isDamageItem ? `
-          <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; width: 100%;">
-            <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap; width: 100%;">
-              <button type="button" onclick="setProposedAction(${index}, 'sua_chua')" style="height: 28px; padding: 0 10px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'sua_chua' ? 'rgba(59,130,246,0.15)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--text-soft)'}; display: inline-flex; align-items: center; gap: 4px;">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+          <div style="margin-bottom: 8px; width: 100%;">
+            <div style="display: flex; gap: 6px; width: 100%;">
+              <button type="button" onclick="setProposedAction(${index}, 'sua_chua')" style="flex: 1; height: 34px; font-size: 11.5px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'sua_chua' ? 'rgba(59,130,246,0.15)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'sua_chua' ? '#3b82f6' : 'var(--text-soft)'}; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
                 <span>Sửa chữa</span>
               </button>
-              <button type="button" onclick="setProposedAction(${index}, 'thay_the')" style="height: 28px; padding: 0 10px; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'thay_the' ? 'rgba(239,68,68,0.15)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--text-soft)'}; display: inline-flex; align-items: center; gap: 4px;">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              <button type="button" onclick="setProposedAction(${index}, 'thay_the')" style="flex: 1; height: 34px; font-size: 11.5px; font-weight: 800; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--border)'}; background: ${item.phuongAnDeXuat === 'thay_the' ? 'rgba(239,68,68,0.15)' : 'var(--surface)'}; color: ${item.phuongAnDeXuat === 'thay_the' ? '#ef4444' : 'var(--text-soft)'}; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                 <span>Thay thế</span>
               </button>
-              <span style="color: var(--border); font-size: 12px; margin: 0 2px;">|</span>
-              ${['Trầy xước', 'Móp méo', 'Bể / Vỡ', 'Cong vênh', 'Rách'].map(tag => {
-                const isSelected = (item.mucDoHuHong || '').includes(tag);
-                return `
-                  <button type="button" onclick="toggleDamageSeverityTag(${index}, '${tag}')" style="padding: 3px 8px; height: 26px; font-size: 10.5px; font-weight: 750; border-radius: 14px; cursor: pointer; transition: all 0.2s ease; border: 1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}; background: ${isSelected ? 'rgba(216,180,109,0.15)' : 'var(--surface)'}; color: ${isSelected ? 'var(--primary)' : 'var(--text-muted)'}; display: inline-flex; align-items: center; gap: 3px;">
-                    ${isSelected ? `<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>` : (DAMAGE_TAG_ICONS[tag] || '')}
-                    <span>${tag}</span>
-                  </button>
-                `;
-              }).join('')}
             </div>
           </div>
         ` : '';
@@ -5322,7 +5330,20 @@
           <div class="evidence-request-body" style="padding: 10px 12px;">
             ${actionButtonsMarkup}
             ${damageMetaSelectorMarkup}
-            <input type="text" id="garageEvidenceNote_${index}" class="input-premium evidence-note" placeholder="Mô tả chi tiết tổn thất (tùy chọn)..." value="${escapeAttributeData(item.ghiChuGarage || '')}" style="height: 32px; font-size: 11.5px; border-radius: 6px; width: 100%; box-sizing: border-box;" />
+            <div style="display: flex; gap: 6px; width: 100%; margin-bottom: 4px;">
+              <select onchange="selectPresetDamageNote(${index}, this.value)" style="height: 34px; font-size: 11.5px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); padding: 0 8px; font-weight: 750; flex-shrink: 0; cursor: pointer; max-width: 140px;">
+                <option value="">📋 Tùy chọn list</option>
+                <option value="Trầy xước">Trầy xước</option>
+                <option value="Móp méo">Móp méo</option>
+                <option value="Bể / Vỡ">Bể / Vỡ</option>
+                <option value="Cong vênh">Cong vênh</option>
+                <option value="Rách">Rách</option>
+                <option value="Trầy xước & Móp méo">Trầy xước & Móp méo</option>
+                <option value="Sơn trầy / Bong tróc">Sơn trầy / Bong tróc</option>
+                <option value="Biến dạng gãy vỡ">Biến dạng gãy vỡ</option>
+              </select>
+              <input type="text" id="garageEvidenceNote_${index}" class="input-premium evidence-note" placeholder="Nhập hoặc chọn mô tả tổn thất..." value="${escapeAttributeData(item.ghiChuGarage || item.mucDoHuHong || '')}" style="height: 34px; font-size: 12px; border-radius: 8px; flex: 1; min-width: 0; box-sizing: border-box;" />
+            </div>
             <div id="garageEvidenceNoteState_${index}" class="autosave-state" style="font-size: 9.5px; margin-top: 3px;">Tự động lưu</div>
             <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
           </div>
