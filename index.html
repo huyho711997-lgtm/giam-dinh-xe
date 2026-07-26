@@ -725,6 +725,9 @@
         box-sizing: border-box !important;
         border-radius: 16px !important;
       }
+      #caseSidebarCard {
+        display: none !important;
+      }
       .focus-portal-layout > .image-workspace-list {
         order: 2 !important;
         display: flex !important;
@@ -5563,27 +5566,50 @@
       }).join('') : '';
 
       const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
+      const nodeData = localActiveCaseNode || {};
       rootContainer.innerHTML = `
         <div class="portal-shell" data-garage-portal="active">
-          <header class="portal-topbar">
-            <div><div class="eyebrow">Garage response portal</div><h1>Hoàn thiện dữ liệu báo giá & Giám định</h1><p>Mọi ghi chú và ảnh minh chứng được lưu theo thời gian thực trước khi Garage khóa hồ sơ.</p></div>
-            <div class="portal-counter-stack">
-              <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện Sáng/Tối" onclick="toggleTheme()">${activeThemeIcon}</button>
-              <div class="portal-counter">Ảnh cần ghi tên<strong id="garageHeaderNoteCounter">00/00</strong></div>
-              <div class="portal-counter">Hạng mục có ảnh<strong id="garageHeaderEvidenceCounter">00/00</strong></div>
+          <header class="portal-hero-banner" style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm); backdrop-filter: blur(20px);">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
+              <div>
+                <div style="font-size: 9.5px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 5px;">
+                  <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                  <span>GARAGE RESPONSE PORTAL</span>
+                </div>
+                <h1 style="font-size: 16px; font-weight: 850; color: var(--text-main); margin: 2px 0 0; letter-spacing: -0.02em;">Hoàn thiện dữ liệu báo giá & Giám định</h1>
+              </div>
+              <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện Sáng/Tối" onclick="toggleTheme()" style="width: 34px; height: 34px; min-height: 34px !important; padding: 0; border-radius: 10px; flex-shrink: 0; display: grid; place-items: center;">${activeThemeIcon}</button>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; padding: 8px 10px; background: var(--bg-soft); border-radius: 10px; border: 1px solid var(--border);">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11.5px;">
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <span style="color: var(--text-muted); font-size: 10.5px; font-weight: 700;">BKS:</span>
+                  <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${escapeHtmlOutput(nodeData.bienSo || 'N/A')}</strong>
+                </div>
+                <span style="color: var(--border);">•</span>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <span style="color: var(--text-muted); font-size: 10.5px; font-weight: 700;">Gara:</span>
+                  <strong style="color: var(--text-main); font-weight: 800;">${escapeHtmlOutput(nodeData.tenGara || 'N/A')}</strong>
+                </div>
+              </div>
+              <div style="font-size: 10.5px; color: var(--text-muted); font-weight: 750;">
+                Ghi tên: <strong id="garageHeaderNoteCounter" style="color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 800;">00/00</strong> · Có ảnh: <strong id="garageHeaderEvidenceCounter" style="color: #10b981; font-family: 'JetBrains Mono'; font-weight: 800;">00/00</strong>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="flex: 1; height: 6px; border-radius: 99px; background: var(--surface-soft); overflow: hidden; border: 1px solid var(--border);">
+                <div id="garageProgressFill" style="height: 100%; width: 0; border-radius: inherit; background: var(--primary-gradient); transition: width 0.4s cubic-bezier(.25, .8, .25, 1);"></div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                <span id="garageProgressCaption" style="font-size: 10px; color: var(--text-muted); font-weight: 700; display: none;">Tiến độ</span>
+                <span id="garageProgressPercent" class="garage-progress-percent" style="font-size: 13px; font-weight: 850; color: var(--primary); font-family: 'JetBrains Mono';">0%</span>
+              </div>
             </div>
           </header>
-          <div class="garage-progress-panel">
-            <div class="garage-progress-top">
-              <div class="progress-label-group">
-                <strong class="progress-title">Tiến độ hoàn thiện hồ sơ</strong>
-                <span id="garageProgressCaption" class="progress-subtitle">Đang tính toán dữ liệu...</span>
-              </div>
-              <span id="garageProgressPercent" class="garage-progress-percent">0%</span>
-            </div>
-            <div class="garage-progress-track"><div id="garageProgressFill"></div></div>
-          </div>
-          <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list">${imageInputSection}${evidenceRequestSection || garageAddItemBox}</div></div>
+
+          <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list" style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px; box-shadow: var(--shadow-sm);">${imageInputSection}${evidenceRequestSection || garageAddItemBox}</div></div>
           <div class="mobile-bottom-bar">
             <div class="mobile-bottom-bar-info">
               <span id="mobileBottomBarProgressPercent" class="mobile-bottom-bar-percentage">0%</span>
