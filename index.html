@@ -3009,7 +3009,7 @@
         tenHangMuc: name
       }));
       
-      switchCreateFlow('excel');
+      switchCreateFlow('standard');
     }
 
     function updateStatsCounters(val) {
@@ -3801,26 +3801,13 @@
               </section>
             </div>
           `;
-        } else if (activeCreateFlowMode === 'excel') {
-          container.innerHTML = `
-            <div class="workspace-grid single-col">
-              <section class="p-card create-panel">
-                <button type="button" class="btn-premium btn-secondary" onclick="switchCreateFlow('select')" style="max-width: 140px; min-height: 36px !important; font-size: 11px; margin-bottom: 20px;">${SVGS.ARROW_LEFT} Quay lại</button>
-                <div class="p-card-head"><div><h2>Bổ sung hình ảnh theo hạng mục chỉ định</h2><p>Lập danh sách bằng bảng Excel thông minh để Garage chụp ảnh minh chứng.</p></div><div class="section-number">02</div></div>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 24px;">
-                  <div class="form-group" style="margin:0;">
-                    <label>Biển kiểm soát xe</label>
-                    <div class="input-shell"><span class="field-prefix">${SVGS.CAR}</span><input id="txtPlateNumber" class="input-premium" type="text" placeholder="Ví dụ: 30H-123.45" autocomplete="off" /></div>
-                  </div>
-                  <div class="form-group" style="margin:0;">
-                    <label>Garage sửa chữa phụ trách</label>
-                    <div class="input-shell"><span class="field-prefix">${SVGS.FOLDER}</span><input id="txtGaragePartner" class="input-premium" type="text" placeholder="Tên đơn vị sửa chữa" autocomplete="off" /></div>
-                  </div>
-                </div>
+        } else if (activeCreateFlowMode === 'excel' || activeCreateFlowMode === 'standard') {
+          const isExcelMode = (activeCreateFlowMode === 'excel');
+          const pageTitle = isExcelMode ? 'Bổ sung hình ảnh theo hạng mục chỉ định' : 'Hồ sơ Giám định Tiêu chuẩn';
+          const pageSubtitle = isExcelMode ? 'Lập danh sách bằng bảng Excel thông minh hoặc trích xuất báo giá AI OCR.' : 'Mẫu khởi tạo tiêu chuẩn: Giấy tờ xe, Ảnh 4 góc chéo, Tem đăng kiểm và Số khung (VIN).';
+          const sectionNum = isExcelMode ? '02' : '01';
 
-
-
+          const ocrBlockMarkup = isExcelMode ? `
                 <div class="form-group" style="margin-bottom: 24px;">
                   <div style="border-left: 4px solid var(--primary); padding-left: 12px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; box-sizing: border-box;">
                     <span style="display: inline-flex; align-items: center; gap: 8px;">
@@ -3917,6 +3904,26 @@
 
                   </div>
                 </div>
+          ` : '';
+
+          container.innerHTML = `
+            <div class="workspace-grid single-col">
+              <section class="p-card create-panel">
+                <button type="button" class="btn-premium btn-secondary" onclick="switchCreateFlow('select')" style="max-width: 140px; min-height: 36px !important; font-size: 11px; margin-bottom: 20px;">${SVGS.ARROW_LEFT} Quay lại</button>
+                <div class="p-card-head"><div><h2>${pageTitle}</h2><p>${pageSubtitle}</p></div><div class="section-number">${sectionNum}</div></div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 24px;">
+                  <div class="form-group" style="margin:0;">
+                    <label>Biển kiểm soát xe</label>
+                    <div class="input-shell"><span class="field-prefix">${SVGS.CAR}</span><input id="txtPlateNumber" class="input-premium" type="text" placeholder="Ví dụ: 30H-123.45" autocomplete="off" /></div>
+                  </div>
+                  <div class="form-group" style="margin:0;">
+                    <label>Garage sửa chữa phụ trách</label>
+                    <div class="input-shell"><span class="field-prefix">${SVGS.FOLDER}</span><input id="txtGaragePartner" class="input-premium" type="text" placeholder="Tên đơn vị sửa chữa" autocomplete="off" /></div>
+                  </div>
+                </div>
+
+                ${ocrBlockMarkup}
 
                 <div class="form-group">
                   <div style="border-left: 4px solid var(--primary); padding-left: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; box-sizing: border-box;">
