@@ -5209,6 +5209,8 @@
 
     function toggleAllSections(expand) {
       if (!window.sectionCollapseState) window.sectionCollapseState = {};
+      if (!window.cardCollapseState) window.cardCollapseState = {};
+
       ['documents', 'overall', 'damages'].forEach(key => {
         window.sectionCollapseState[key] = !expand;
         const bodyEl = document.getElementById(`evidenceGroupBody_${key}`);
@@ -5225,12 +5227,22 @@
           headerEl.style.marginBottom = expand ? '8px' : '0';
         }
       });
+
+      if (typeof localActiveRequestedItems !== 'undefined' && localActiveRequestedItems) {
+        localActiveRequestedItems.forEach((_, idx) => {
+          window.cardCollapseState[idx] = !expand;
+          const bodyEl = document.getElementById(`evidenceCardBody_${idx}`);
+          const chevronEl = document.getElementById(`evidenceCardChevron_${idx}`);
+          if (bodyEl) bodyEl.style.display = expand ? 'block' : 'none';
+          if (chevronEl) chevronEl.style.transform = expand ? 'rotate(0deg)' : 'rotate(-90deg)';
+        });
+      }
     }
 
     function toggleSingleCardCollapse(index) {
       if (!window.cardCollapseState) window.cardCollapseState = {};
-      const isCurrentlyCollapsed = !!window.cardCollapseState[index];
-      const newState = !isCurrentlyCollapsed;
+      const currentIsCollapsed = (index in window.cardCollapseState) ? window.cardCollapseState[index] : true;
+      const newState = !currentIsCollapsed;
       window.cardCollapseState[index] = newState;
 
       const bodyEl = document.getElementById(`evidenceCardBody_${index}`);
@@ -5550,7 +5562,7 @@
           <div id="garageEvidenceNoteState_${index}" class="autosave-state" style="font-size: 9.5px; margin-top: 3px;">Tự động lưu</div>
         ` : '';
 
-        const isCardCollapsed = !!(window.cardCollapseState && window.cardCollapseState[index]);
+        const isCardCollapsed = (window.cardCollapseState && index in window.cardCollapseState) ? !!window.cardCollapseState[index] : true;
 
         return `<article id="evidenceRequestCard_${index}" class="evidence-request-card ${urls.length ? 'is-complete' : ''}" style="margin-bottom: 8px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); transition: all 0.2s ease;">
           <div class="evidence-request-head" onclick="toggleSingleCardCollapse(${index})" style="cursor: pointer; padding: 10px 12px; background: var(--bg-soft); user-select: none; display: flex; flex-direction: column; gap: 4px;">
@@ -5583,9 +5595,9 @@
 
       if (!window.sectionCollapseState) {
         window.sectionCollapseState = {
-          documents: false,
-          overall: false,
-          damages: false
+          documents: true,
+          overall: true,
+          damages: true
         };
       }
 
