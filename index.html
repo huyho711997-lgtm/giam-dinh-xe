@@ -5512,10 +5512,18 @@
       }
     }
 
+    let lastGpsFetchTime = 0;
+    let gpsPermissionDenied = false;
+
     function prefetchGpsCoordinates() {
+      const now = Date.now();
+      if (gpsPermissionDenied) return;
+      if (lastFetchedGpsCoords && (now - lastGpsFetchTime < 300000)) return;
+
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
+            lastGpsFetchTime = Date.now();
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
             lastFetchedGpsCoords = {
@@ -5523,13 +5531,16 @@
               longitude: lon.toFixed(6)
             };
             reverseGeocodeAddress(lat, lon).then((address) => {
-              lastFetchedAddress = address;
+              if (address) lastFetchedAddress = address;
             });
           },
           (error) => {
             console.warn('Geolocation error:', error);
+            if (error && error.code === 1) {
+              gpsPermissionDenied = true;
+            }
           },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 10000 }
+          { enableHighAccuracy: false, timeout: 4000, maximumAge: 300000 }
         );
       }
     }
@@ -5644,73 +5655,72 @@
       const video = document.getElementById('customCameraVideo');
       if (!video) return;
       
-      const constraints = {
-        video: {
-          facingMode: customCameraFacingMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        },
-        audio: false
-      };
-      
-      try {
-        customCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = customCameraStream;
-        if (customCameraTorchActive) {
-          setTimeout(async () => {
-            try {
-              const track = customCameraStream.getVideoTracks()[0];
-              if (track) {
-                const capabilities = track.getCapabilities ? track.getCapabilities() : {};
-                if (capabilities.torch) {
-                  await track.applyConstraints({ advanced: [{ torch: true }] });
-                } else {
-                  customCameraTorchActive = false;
-                }
-              }
-            } catch (e) {
-              console.warn('Torch activation failed:', e);
-            }
-          }, 400);
-        }
-      } catch (err) {
-        console.warn('Rear camera exact constraints failed, fallback to environment', err);
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('autoplay', 'true');
+      video.muted = true;
+
+      const constraintOptions = [
+        { video: { facingMode: customCameraFacingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false },
+        { video: { facingMode: customCameraFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+        { video: { facingMode: customCameraFacingMode }, audio: false },
+        { video: true, audio: false }
+      ];
+
+      let stream = null;
+      for (const option of constraintOptions) {
         try {
-          customCameraStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment' },
-            audio: false
-          });
-          video.srcObject = customCameraStream;
-          if (customCameraTorchActive) {
-            setTimeout(async () => {
-              try {
-                const track = customCameraStream.getVideoTracks()[0];
-                if (track) {
-                  const capabilities = track.getCapabilities ? track.getCapabilities() : {};
-                  if (capabilities.torch) {
-                    await track.applyConstraints({ advanced: [{ torch: true }] });
-                  } else {
-                    customCameraTorchActive = false;
-                  }
-                }
-              } catch (e) {
-                console.warn('Fallback torch activation failed:', e);
-              }
-            }, 400);
-          }
-        } catch (fallbackErr) {
-          console.error('Cannot access camera via getUserMedia:', fallbackErr);
-          triggerToast('Không thể kết nối camera. Chuyển sang trình chọn tệp mặc định!', 'warning');
-          
-          closeCustomCameraModal(false);
-          const fileInput = document.getElementById(`garageEvidenceInput_${customCameraRequestIndex}`);
-          if (fileInput) {
-            fileInput.setAttribute('capture', 'environment');
-            fileInput.dataset.sourceType = 'camera';
-            fileInput.click();
-            fileInput.removeAttribute('capture');
-          }
+          stream = await navigator.mediaDevices.getUserMedia(option);
+          if (stream) break;
+        } catch (e) {
+          console.warn('Camera constraint option failed:', option, e);
         }
+      }
+
+      if (!stream) {
+        triggerToast('Không thể kết nối camera. Chuyển sang trình chọn tệp mặc định!', 'warning');
+        closeCustomCameraModal(false);
+        const fileInput = document.getElementById(`garageEvidenceInput_${customCameraRequestIndex}`);
+        if (fileInput) {
+          fileInput.setAttribute('capture', 'environment');
+          fileInput.dataset.sourceType = 'camera';
+          fileInput.click();
+          fileInput.removeAttribute('capture');
+        }
+        return;
+      }
+
+      customCameraStream = stream;
+      video.srcObject = stream;
+
+      try {
+        await video.play();
+      } catch (playErr) {
+        console.warn('video.play() failed:', playErr);
+      }
+
+      setTimeout(() => {
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+          console.warn('Video stream width is 0, attempting video.play() retry...');
+          video.play().catch(() => {});
+        }
+      }, 400);
+
+      if (customCameraTorchActive) {
+        setTimeout(async () => {
+          try {
+            const track = customCameraStream.getVideoTracks()[0];
+            if (track && track.getCapabilities) {
+              const capabilities = track.getCapabilities();
+              if (capabilities.torch) {
+                await track.applyConstraints({ advanced: [{ torch: true }] });
+              } else {
+                customCameraTorchActive = false;
+              }
+            }
+          } catch (e) {
+            console.warn('Torch activation failed:', e);
+          }
+        }, 400);
       }
     }
 
@@ -5860,6 +5870,12 @@
     function triggerCustomCameraCapture() {
       const video = document.getElementById('customCameraVideo');
       if (!video || !customCameraStream) return;
+
+      if (!video.videoWidth || !video.videoHeight) {
+        triggerToast('Camera đang khởi động, vui lòng thử lại sau giây lát!', 'warning');
+        video.play().catch(() => {});
+        return;
+      }
       
       const flash = document.getElementById('cameraFlashEffect');
       if (flash) {
