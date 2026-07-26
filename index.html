@@ -5545,7 +5545,7 @@
             gpsPermissionDenied = true;
           }
         },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        { enableHighAccuracy: false, timeout: 4000, maximumAge: 0 }
       );
     }
 
@@ -5636,8 +5636,6 @@
       customCameraRequestIndex = requestIndex;
       customCameraPhotos = [];
       
-      prefetchGpsCoordinates();
-      
       const activeCategoryText = document.getElementById('cameraActiveCategoryText');
       if (activeCategoryText) {
         const item = localActiveRequestedItems[requestIndex];
@@ -5707,7 +5705,9 @@
           console.warn('Video stream width is 0, attempting video.play() retry...');
           video.play().catch(() => {});
         }
-      }, 400);
+        // Fetch fresh real-time GPS in background AFTER camera is already displaying video smoothly
+        prefetchGpsCoordinates();
+      }, 500);
 
       if (customCameraTorchActive) {
         setTimeout(async () => {
