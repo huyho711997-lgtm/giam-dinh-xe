@@ -5474,6 +5474,15 @@
               </button>
             </div>
           </div>
+          <div id="damageCombobox_${index}" class="custom-premium-combobox" style="position: relative; display: flex; align-items: center; gap: 6px; width: 100%; margin-bottom: 4px;">
+            <button type="button" onclick="toggleCustomDamageDropdown(${index}, event)" style="flex: 1; min-width: 0; height: 36px !important; min-height: 36px !important; max-height: 36px !important; line-height: 34px !important; font-size: 12px; padding: 0 8px; border-radius: 8px; background: rgba(216,180,109,0.14); color: var(--primary); font-weight: 800; border: 1px solid rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; transition: all 0.2s ease; box-sizing: border-box !important; white-space: nowrap;">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+              <span>Mẫu mô tả</span>
+              <svg id="customDropdownArrow_${index}" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; transition: transform 0.2s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <input type="text" id="garageEvidenceNote_${index}" class="evidence-note" placeholder="Mô tả chi tiết tổn thất..." value="${escapeAttributeData(item.ghiChuGarage || item.mucDoHuHong || '')}" onchange="saveGarageEvidenceNoteDirect(${index}, this.value)" style="flex: 1; min-width: 0; height: 36px !important; min-height: 36px !important; max-height: 36px !important; line-height: 34px !important; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); padding: 0 10px; color: var(--text-main); box-sizing: border-box !important; outline: none; margin: 0; text-align: center;" />
+          </div>
+          <div id="garageEvidenceNoteState_${index}" class="autosave-state" style="font-size: 9.5px; margin-top: 3px;">Tự động lưu</div>
         ` : '';
 
         return `<article id="evidenceRequestCard_${index}" class="evidence-request-card ${urls.length ? 'is-complete' : ''}">
@@ -5497,15 +5506,6 @@
           <div class="evidence-request-body" style="padding: 10px 12px;">
             ${actionButtonsMarkup}
             ${damageMetaSelectorMarkup}
-            <div id="damageCombobox_${index}" class="custom-premium-combobox" style="position: relative; display: flex; align-items: center; gap: 6px; width: 100%; margin-bottom: 4px;">
-              <button type="button" onclick="toggleCustomDamageDropdown(${index}, event)" style="flex: 1; min-width: 0; height: 36px !important; min-height: 36px !important; max-height: 36px !important; line-height: 34px !important; font-size: 12px; padding: 0 8px; border-radius: 8px; background: rgba(216,180,109,0.14); color: var(--primary); font-weight: 800; border: 1px solid rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; transition: all 0.2s ease; box-sizing: border-box !important; white-space: nowrap;">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                <span>Mẫu mô tả</span>
-                <svg id="customDropdownArrow_${index}" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; transition: transform 0.2s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </button>
-              <input type="text" id="garageEvidenceNote_${index}" class="evidence-note" placeholder="Mô tả chi tiết tổn thất..." value="${escapeAttributeData(item.ghiChuGarage || item.mucDoHuHong || '')}" onchange="saveGarageEvidenceNoteDirect(${index}, this.value)" style="flex: 1; min-width: 0; height: 36px !important; min-height: 36px !important; max-height: 36px !important; line-height: 34px !important; font-size: 12px; font-weight: 600; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); padding: 0 10px; color: var(--text-main); box-sizing: border-box !important; outline: none; margin: 0; text-align: center;" />
-            </div>
-            <div id="garageEvidenceNoteState_${index}" class="autosave-state" style="font-size: 9.5px; margin-top: 3px;">Tự động lưu</div>
             <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
           </div>
         </article>`;
