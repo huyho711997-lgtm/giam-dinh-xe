@@ -1375,6 +1375,10 @@
       transform: scale(0.97);
       box-shadow: 0 2px 6px rgba(199, 155, 75, 0.2);
     }
+    .premium-combobox-group:focus-within {
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 3px rgba(216, 180, 109, 0.25) !important;
+    }
 
     /* Collapsible metadata accordion details */
     .collapsible-summary-tag {
@@ -5330,19 +5334,31 @@
           <div class="evidence-request-body" style="padding: 10px 12px;">
             ${actionButtonsMarkup}
             ${damageMetaSelectorMarkup}
-            <div style="display: flex; gap: 6px; width: 100%; margin-bottom: 4px;">
-              <select onchange="selectPresetDamageNote(${index}, this.value)" style="height: 34px; font-size: 11.5px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); padding: 0 8px; font-weight: 750; flex-shrink: 0; cursor: pointer; max-width: 140px;">
-                <option value="">📋 Tùy chọn list</option>
-                <option value="Trầy xước">Trầy xước</option>
-                <option value="Móp méo">Móp méo</option>
-                <option value="Bể / Vỡ">Bể / Vỡ</option>
-                <option value="Cong vênh">Cong vênh</option>
-                <option value="Rách">Rách</option>
-                <option value="Trầy xước & Móp méo">Trầy xước & Móp méo</option>
-                <option value="Sơn trầy / Bong tróc">Sơn trầy / Bong tróc</option>
-                <option value="Biến dạng gãy vỡ">Biến dạng gãy vỡ</option>
-              </select>
-              <input type="text" id="garageEvidenceNote_${index}" class="input-premium evidence-note" placeholder="Nhập hoặc chọn mô tả tổn thất..." value="${escapeAttributeData(item.ghiChuGarage || item.mucDoHuHong || '')}" style="height: 34px; font-size: 12px; border-radius: 8px; flex: 1; min-width: 0; box-sizing: border-box;" />
+            <div class="premium-combobox-group" style="position: relative; display: flex; align-items: center; width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 3px 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); transition: all 0.2s ease; margin-bottom: 4px;">
+              <!-- Custom Styled Dropdown Trigger -->
+              <div style="position: relative; flex-shrink: 0; display: inline-flex; align-items: center;">
+                <select onchange="selectPresetDamageNote(${index}, this.value)" style="position: absolute; top:0; left:0; width:100%; height:100%; opacity:0; z-index:2; cursor:pointer;">
+                  <option value="">-- Chọn mô tả mẫu --</option>
+                  <option value="Trầy xước">Trầy xước</option>
+                  <option value="Móp méo">Móp méo</option>
+                  <option value="Bể / Vỡ">Bể / Vỡ</option>
+                  <option value="Cong vênh">Cong vênh</option>
+                  <option value="Rách">Rách</option>
+                  <option value="Trầy xước & Móp méo">Trầy xước & Móp méo</option>
+                  <option value="Sơn trầy / Bong tróc">Sơn trầy / Bong tróc</option>
+                  <option value="Biến dạng gãy vỡ">Biến dạng gãy vỡ</option>
+                </select>
+                <button type="button" class="btn-premium btn-secondary" style="height: 30px; font-size: 11.5px; padding: 0 10px; border-radius: 7px; background: rgba(216,180,109,0.14); color: var(--primary); font-weight: 800; border: 1px solid rgba(216,180,109,0.3); display: inline-flex; align-items: center; gap: 5px; pointer-events: none;">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                  <span>Mẫu mô tả</span>
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; opacity: 0.8;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+              </div>
+              
+              <div style="width: 1px; height: 18px; background: var(--border); margin: 0 8px; flex-shrink: 0;"></div>
+              
+              <!-- Integrated Text Input -->
+              <input type="text" id="garageEvidenceNote_${index}" class="evidence-note" placeholder="Nhập hoặc chọn mô tả tổn thất..." value="${escapeAttributeData(item.ghiChuGarage || item.mucDoHuHong || '')}" style="flex: 1; min-width: 0; height: 32px; font-size: 12px; font-weight: 500; border: none; background: transparent; color: var(--text-main); outline: none; padding: 0 4px; box-sizing: border-box;" />
             </div>
             <div id="garageEvidenceNoteState_${index}" class="autosave-state" style="font-size: 9.5px; margin-top: 3px;">Tự động lưu</div>
             <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
