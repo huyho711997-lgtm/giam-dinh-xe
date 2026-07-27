@@ -2247,8 +2247,9 @@
 
         <div class="profile-form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 16px;">
           <div class="form-group">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Mã vụ tổn thất (VTT)</label>
-            <input id="modalPendingMaVuTonThat" class="input-premium" type="text" placeholder="VTT/XCG/2026/..." />
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Mã vụ tổn thất (VTT) *</label>
+            <input id="modalPendingMaVuTonThat" class="input-premium" type="text" placeholder="VTT/XCG/2026/..." oninput="checkModalDuplicateMaVTT(this.value)" />
+            <div id="modalMaVttDuplicateWarning" style="display: none; margin-top: 5px; font-size: 11.5px; color: #ef4444; font-weight: 750; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); padding: 6px 10px; border-radius: 8px;"></div>
           </div>
           <div class="form-group">
             <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Biển số xe *</label>
@@ -3567,6 +3568,49 @@
       const pasteArea = document.getElementById('modalTxtQuickPasteMessage');
       if (pasteArea) pasteArea.value = '';
 
+    function findExistingClaimByMaVTT(maVuTonThat) {
+      if (!maVuTonThat || typeof maVuTonThat !== 'string') return null;
+      const targetNorm = maVuTonThat.trim().toLowerCase();
+      if (!targetNorm || targetNorm === '—' || targetNorm === '-') return null;
+
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+      return claimsList.find(c => {
+        if (!c.maVuTonThat) return false;
+        const itemNorm = String(c.maVuTonThat).trim().toLowerCase();
+        return itemNorm === targetNorm;
+      });
+    }
+
+    function checkModalDuplicateMaVTT(val) {
+      const warnEl = document.getElementById('modalMaVttDuplicateWarning');
+      const inputEl = document.getElementById('modalPendingMaVuTonThat');
+      if (!warnEl) return null;
+
+      const existing = findExistingClaimByMaVTT(val);
+      if (existing) {
+        warnEl.style.display = 'block';
+        warnEl.innerHTML = `⚠️ Đã tồn tại hồ sơ (${escapeHtmlOutput(existing.bienSo)} - GĐV: ${escapeHtmlOutput(existing.gdvTiepNhan)})!`;
+        if (inputEl) inputEl.style.borderColor = '#ef4444';
+        return existing;
+      } else {
+        warnEl.style.display = 'none';
+        warnEl.textContent = '';
+        if (inputEl) inputEl.style.borderColor = '';
+        return null;
+      }
+    }
+
+    function openAddPendingClaimModal() {
+      const modal = document.getElementById('addPendingClaimModalOverlay');
+      if (!modal) return;
+
+      // Clear paste box
+      const pasteArea = document.getElementById('modalTxtQuickPasteMessage');
+      if (pasteArea) pasteArea.value = '';
+
+      // Clear duplicate warning
+      checkModalDuplicateMaVTT('');
+
       // Clear or preset form inputs
       const profile = activeUserProfile || {};
       const currentUser = firebase.auth().currentUser;
@@ -3642,7 +3686,28 @@
       if (parsed.nguyenNhan) setValIfPresent('modalPendingNguyenNhan', parsed.nguyenNhan);
       if (parsed.moTaTonThat) setValIfPresent('modalPendingMoTaTonThat', parsed.moTaTonThat);
 
-      if (parsed.bienSo || parsed.maVuTonThat) {
+      // Check if duplicate MaVuTonThat exists
+      if (parsed.maVuTonThat) {
+        const existing = checkModalDuplicateMaVTT(parsed.maVuTonThat);
+        if (existing) {
+          if (window.Swal) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Cảnh báo: Hồ sơ đã tồn tại!',
+              html: `Mã vụ tổn thất <b>${escapeHtmlOutput(parsed.maVuTonThat)}</b> đã có trong hệ thống từ trước.<br><br>` +
+                    `🚗 <b>Biển số:</b> ${escapeHtmlOutput(existing.bienSo)}<br>` +
+                    `👤 <b>GĐV tiếp nhận:</b> ${escapeHtmlOutput(existing.gdvTiepNhan)}<br>` +
+                    `📌 <b>Trạng thái:</b> ${PENDING_STATUS_MAP[existing.trangThai]?.label || existing.trangThai}`,
+              confirmButtonText: 'Đã hiểu & Kiểm tra lại',
+              confirmButtonColor: '#d8b46d'
+            });
+          } else {
+            triggerToast(`⚠️ Cảnh báo: Mã VTT ${parsed.maVuTonThat} đã tồn tại (BSX: ${existing.bienSo})!`, 'error');
+          }
+        } else if (parsed.bienSo) {
+          triggerToast(`Đã tự động trích xuất dữ liệu tin nhắn!`, 'success');
+        }
+      } else if (parsed.bienSo) {
         triggerToast(`Đã tự động trích xuất dữ liệu tin nhắn!`, 'success');
       } else {
         triggerToast('Không thể tự nhận diện BSX hoặc Mã VTT. Bạn hãy kiểm tra và nhập vào biểu mẫu.', 'info');
@@ -3659,6 +3724,29 @@
         triggerToast('Vui lòng nhập Biển số xe hoặc Mã vụ tổn thất.', 'error');
         document.getElementById('modalPendingBienSo')?.focus();
         return;
+      }
+
+      // Check duplicate MaVuTonThat before saving
+      if (maVuTonThat) {
+        const existing = findExistingClaimByMaVTT(maVuTonThat);
+        if (existing) {
+          if (window.Swal) {
+            Swal.fire({
+              icon: 'error',
+              title: 'Không thể thêm hồ sơ trùng!',
+              html: `Mã vụ tổn thất <b>${escapeHtmlOutput(maVuTonThat)}</b> đã được tiếp nhận trước đó.<br><br>` +
+                    `🚘 <b>Biển số xe:</b> ${escapeHtmlOutput(existing.bienSo)}<br>` +
+                    `👤 <b>GĐV phụ trách:</b> ${escapeHtmlOutput(existing.gdvTiepNhan)}<br>` +
+                    `📌 <b>Trạng thái hiện tại:</b> ${PENDING_STATUS_MAP[existing.trangThai]?.label || existing.trangThai}`,
+              confirmButtonText: 'Đóng và kiểm tra lại',
+              confirmButtonColor: '#ef4444'
+            });
+          } else {
+            triggerToast(`Không thể lưu: Mã VTT ${maVuTonThat} đã tồn tại trong hệ thống!`, 'error');
+          }
+          document.getElementById('modalPendingMaVuTonThat')?.focus();
+          return;
+        }
       }
 
       const user = firebase.auth().currentUser;
