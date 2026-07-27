@@ -3844,10 +3844,26 @@
       executeUIRenderPendingClaims();
     }
 
+    function toggleRowStatusDropdown(event, claimId) {
+      if (event) event.stopPropagation();
+      const targetMenuId = `rowStatusMenu_${claimId}`;
+      const targetMenu = document.getElementById(targetMenuId);
+      const isHidden = !targetMenu || targetMenu.style.display === 'none' || !targetMenu.style.display;
+      
+      closeAllCustomDropdowns();
+
+      if (targetMenu && isHidden) {
+        targetMenu.style.display = 'block';
+      }
+    }
+
     function closeAllCustomDropdowns() {
       ['menuCustomStatusDropdown', 'menuCustomGdvDropdown', 'menuCustomPeriodDropdown'].forEach(id => {
         const menu = document.getElementById(id);
         if (menu) menu.style.display = 'none';
+      });
+      document.querySelectorAll('.row-status-menu').forEach(menu => {
+        menu.style.display = 'none';
       });
     }
 
@@ -4105,13 +4121,28 @@
               </div>
             </td>
             <td>
-              <div style="position: relative; display: inline-block; width: 100%;">
-                <select onchange="updatePendingClaimStatus('${item.id}', this.value)" style="appearance: none; background: ${statusConfig.bg}; color: ${statusConfig.color}; border: 1px solid ${statusConfig.border}; font-size: 11.5px; font-weight: 800; padding: 6px 26px 6px 12px; border-radius: 99px; cursor: pointer; outline: none; width: 100%; transition: all 0.2s ease;">
-                  ${Object.entries(PENDING_STATUS_MAP).map(([key, cfg]) => `
-                    <option value="${key}" ${item.trangThai === key ? 'selected' : ''} style="background: var(--surface-strong); color: var(--text-main); font-weight: 700;">${cfg.label}</option>
-                  `).join('')}
-                </select>
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: ${statusConfig.color}; pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              <div class="custom-dropdown-container row-status-dropdown-wrap" style="position: relative; display: inline-block; width: 100%;">
+                <button type="button" onclick="toggleRowStatusDropdown(event, '${item.id}')" style="appearance: none; background: ${statusConfig.bg}; color: ${statusConfig.color}; border: 1px solid ${statusConfig.border}; font-size: 11.5px; font-weight: 800; padding: 6px 26px 6px 12px; border-radius: 99px; cursor: pointer; outline: none; width: 100%; transition: all 0.2s ease; display: flex; align-items: center; justify-content: space-between;">
+                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${statusConfig.label}</span>
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: ${statusConfig.color}; flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                <!-- Row Status Floating Popup Menu -->
+                <div id="rowStatusMenu_${item.id}" class="custom-dropdown-menu row-status-menu" style="display: none; position: absolute; top: calc(100% + 4px); right: 0; min-width: 185px; width: 100%; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
+                  ${Object.entries(PENDING_STATUS_MAP).map(([key, cfg]) => {
+                    const isSel = item.trangThai === key;
+                    const statusDotColor = cfg.color || '#d8b46d';
+                    return `
+                      <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="updatePendingClaimStatus('${item.id}', '${key}')" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 11.5px;">
+                          <span style="width: 7px; height: 7px; border-radius: 50%; background: ${statusDotColor}; box-shadow: 0 0 5px ${statusDotColor}; flex-shrink: 0;"></span>
+                          <span>${cfg.label}</span>
+                        </div>
+                        ${isSel ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
               </div>
             </td>
             <td style="text-align: right; padding-right: 20px;">
