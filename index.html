@@ -2197,93 +2197,6 @@
           <button type="button" class="btn-premium btn-secondary" onclick="closeEditUserModal()">Hủy bỏ</button>
           <button id="btnSubmitEditUser" type="button" class="btn-premium" onclick="submitEditUserAccount()">Lưu thay đổi</button>
         </div>
-  <!-- Tiếp nhận / Thêm mới Hồ sơ tồn Modal -->
-  <div id="addPendingClaimModalOverlay" class="p-modal-overlay" aria-hidden="true" style="display: none;">
-    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="addPendingModalTitle" style="max-width: 650px; width: 92%;">
-      <button type="button" class="btn-premium btn-secondary profile-close" onclick="closeAddPendingClaimModal()" aria-label="Đóng">×</button>
-      <div class="profile-modal-hero">
-        <div class="profile-avatar-large" style="background: var(--primary-gradient); color: #080b11; display: grid; place-items: center;">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-        </div>
-        <div>
-          <h3 id="addPendingModalTitle">Tiếp nhận Hồ sơ tồn Mới</h3>
-          <p>Dán bản tin thông báo tổn thất thô (Zalo/Email/SMS) hoặc tự điền chi tiết vào form.</p>
-        </div>
-      </div>
-      <div class="profile-modal-body" style="max-height: 75vh; overflow-y: auto; padding-right: 6px;">
-        
-        <!-- Raw Text Paste Box -->
-        <div style="background: var(--bg-soft); border: 1px dashed var(--primary); border-radius: 12px; padding: 14px; margin-bottom: 18px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="font-size: 12px; font-weight: 800; color: var(--text-main); margin: 0;">📋 Dán tin nhắn thông báo tổn thất</label>
-            <button type="button" class="btn-premium" onclick="executeParseModalRawText()" style="height: 28px; min-height: unset; padding: 0 14px; font-size: 11px; border-radius: 6px; background: var(--primary-gradient); color: #080b11; font-weight: 800; cursor: pointer;">⚡ Phân tích & Tự động điền</button>
-          </div>
-          <textarea id="txtModalRawMessage" class="textarea-premium" placeholder="Ví dụ dán nguyên văn bản tin:&#10;YC GDCT/TOYOTA ĐẮK LẮK&#10; - BSX: 47E00777&#10; - Hãng xe: TOYOTA...&#10; - GĐV tiếp nhận: Huỳnh Văn Phúc&#10; - Mã số vụ tổn thất: VTT/XCG/2026/0067213" style="width: 100%; min-height: 80px; font-size: 12px; line-height: 1.5; font-family: inherit; margin: 0; box-sizing: border-box;"></textarea>
-        </div>
-
-        <div style="border-top: 1px solid var(--border); padding-top: 14px; margin-bottom: 14px;">
-          <strong style="font-size: 12.5px; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; display: block;">Chi tiết hồ sơ tổn thất</strong>
-        </div>
-
-        <!-- Form Fields Grid -->
-        <div class="profile-form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
-          <div class="form-group">
-            <label>Mã số vụ tổn thất (VTT)</label>
-            <input id="txtModalMaVTT" class="input-premium" type="text" placeholder="Ví dụ: VTT/XCG/2026/0067213" />
-          </div>
-          <div class="form-group">
-            <label>Biển kiểm soát xe (BSX)</label>
-            <input id="txtModalBSX" class="input-premium" type="text" placeholder="Ví dụ: 47E00777" />
-          </div>
-          <div class="form-group">
-            <label>Hãng & Hiệu xe</label>
-            <input id="txtModalHangXe" class="input-premium" type="text" placeholder="Ví dụ: TOYOTA VIOS" />
-          </div>
-          <div class="form-group">
-            <label>Đơn vị cấp đơn</label>
-            <input id="txtModalDonViCap" class="input-premium" type="text" placeholder="Ví dụ: Chi nhánh Đắk Lắk..." />
-          </div>
-          <div class="form-group">
-            <label>Giám định viên tiếp nhận</label>
-            <input id="txtModalGDV" class="input-premium" type="text" placeholder="Ví dụ: Huỳnh Văn Phúc" />
-          </div>
-          <div class="form-group">
-            <label>Cán bộ xử lý (CBXL)</label>
-            <input id="txtModalCBXL" class="input-premium" type="text" placeholder="Ví dụ: TT247-Nguyễn Bảo Anh" />
-          </div>
-          <div class="form-group full" style="grid-column: 1 / -1;">
-            <label>Địa điểm xảy ra tổn thất</label>
-            <input id="txtModalDiaDiem" class="input-premium" type="text" placeholder="Ví dụ: Thuận An, Đắk Nông" />
-          </div>
-          <div class="form-group full" style="grid-column: 1 / -1;">
-            <label>Mô tả tổn thất & Nguyên nhân</label>
-            <textarea id="txtModalMoTa" class="textarea-premium" placeholder="Ví dụ: XE BỊ SỤP Ổ GÀ - TRẦY MÓP CẢN TRƯỚC..." style="min-height: 60px; font-size: 12px; width: 100%; box-sizing: border-box;"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Thông tin Lái xe & SĐT</label>
-            <input id="txtModalLaiXe" class="input-premium" type="text" placeholder="Họ tên - Số điện thoại" />
-          </div>
-          <div class="form-group">
-            <label>Thông tin Người liên hệ</label>
-            <input id="txtModalNguoiLienHe" class="input-premium" type="text" placeholder="Họ tên - Số điện thoại" />
-          </div>
-          <div class="form-group full" style="grid-column: 1 / -1;">
-            <label>Trạng thái hồ sơ ban đầu</label>
-            <select id="selModalTrangThai" class="input-premium">
-              <option value="moi_tiep_nhan">🟡 Mới tiếp nhận</option>
-              <option value="dang_giam_dinh">🔵 Đang giám định</option>
-              <option value="cho_bao_gia">🟣 Chờ báo giá Gara</option>
-              <option value="cho_duyet_bt">🟧 Chờ duyệt bồi thường</option>
-              <option value="hoan_thanh">🟢 Đã hoàn thành</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="profile-modal-actions" style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
-          <button type="button" class="btn-premium btn-secondary" onclick="closeAddPendingClaimModal()">Hủy bỏ</button>
-          <button id="btnSubmitAddPendingClaim" type="button" class="btn-premium" onclick="submitAddPendingClaimForm()" style="background: var(--primary-gradient); color: #080b11; border: none; font-weight: 800;">Lưu & Tiếp nhận hồ sơ</button>
-        </div>
-
       </div>
     </section>
   </div>
@@ -2447,7 +2360,6 @@
       if (event.key === 'Escape' && document.getElementById('profileModalOverlay')?.style.display === 'grid') closeUserProfileModal();
       if (event.key === 'Escape' && document.getElementById('createUserModalOverlay')?.style.display === 'grid') closeCreateUserModal();
       if (event.key === 'Escape' && document.getElementById('editUserModalOverlay')?.style.display === 'grid') closeEditUserModal();
-      if (event.key === 'Escape' && document.getElementById('addPendingClaimModalOverlay')?.style.display === 'grid') closeAddPendingClaimModal();
     });
 
     function initApplicationState() {
@@ -3461,85 +3373,64 @@
     function parseDamageReportText(rawText) {
       if (!rawText || typeof rawText !== 'string') return {};
 
-      const lines = rawText.split(/\r?\n/);
-      const result = {
-        maVuTonThat: '',
-        bienSo: '',
-        donViCapDon: '',
-        hangXe: '',
-        hieuXe: '',
-        namSanXuat: '',
-        vcx: '',
-        tnds: '',
-        ngayThongBao: '',
-        ngayVTT: '',
-        diaDiemVTT: '',
-        nguyenNhan: '',
-        moTaTonThat: '',
-        hienTruong: '',
-        laiXe: '',
-        nguoiLienHe: '',
-        gdvTiepNhan: '',
-        canBoXuLy: '',
-        rawText: rawText
-      };
-
-      const keyMap = [
-        { keys: ['mã số vụ tổn thất', 'mã vtt', 'mã vụ tổn thất', 'mã hồ sơ', 'mã vụ'], field: 'maVuTonThat' },
-        { keys: ['bsx', 'biển số', 'biển kiểm soát', 'biển số xe'], field: 'bienSo' },
-        { keys: ['đv cấp đơn', 'đơn vị cấp đơn', 'chi nhánh cấp đơn'], field: 'donViCapDon' },
-        { keys: ['hãng xe'], field: 'hangXe' },
-        { keys: ['hiệu xe'], field: 'hieuXe' },
-        { keys: ['năm sx', 'năm sản xuất'], field: 'namSanXuat' },
-        { keys: ['vcx', 'bảo hiểm vcx'], field: 'vcx' },
-        { keys: ['tnds', 'bảo hiểm tnds'], field: 'tnds' },
-        { keys: ['ngày thông báo', 'thời gian thông báo'], field: 'ngayThongBao' },
-        { keys: ['ngày vtt', 'ngày xảy ra vtt', 'ngày tổn thất'], field: 'ngayVTT' },
-        { keys: ['địa điểm vtt', 'địa điểm tổn thất', 'nơi xảy ra vtt'], field: 'diaDiemVTT' },
-        { keys: ['nguyên nhân', 'nguyên nhân vtt'], field: 'nguyenNhan' },
-        { keys: ['mô tả tổn thất', 'mô tả vtt', 'tổn thất'], field: 'moTaTonThat' },
-        { keys: ['hiện trường', 'tình trạng hiện trường'], field: 'hienTruong' },
-        { keys: ['lái xe', 'tài xế'], field: 'laiXe' },
-        { keys: ['người liên hệ', 'liên hệ'], field: 'nguoiLienHe' },
-        { keys: ['gđv tiếp nhận vtt', 'gđv tiếp nhận', 'gđv phụ trách', 'giám định viên'], field: 'gdvTiepNhan' },
-        { keys: ['cán bộ xử lý', 'cbxl'], field: 'canBoXuLy' }
-      ];
-
-      for (let line of lines) {
-        line = line.trim();
-        if (!line) continue;
-        if (line.startsWith('-') || line.startsWith('+') || line.startsWith('*')) {
-          line = line.substring(1).trim();
-        }
-
-        const colonIdx = line.indexOf(':');
-        const eqIdx = line.indexOf('=');
-        let sepIdx = -1;
-        if (colonIdx !== -1 && eqIdx !== -1) sepIdx = Math.min(colonIdx, eqIdx);
-        else if (colonIdx !== -1) sepIdx = colonIdx;
-        else if (eqIdx !== -1) sepIdx = eqIdx;
-
-        if (sepIdx !== -1) {
-          const rawKey = line.substring(0, sepIdx).trim().toLowerCase();
-          let rawVal = line.substring(sepIdx + 1).trim();
-          rawVal = rawVal.replace(/\s*@\S+.*$/, '').replace(/[\.\s]+$/, '').trim();
-
-          if (rawVal && rawVal !== '-') {
-            for (const item of keyMap) {
-              if (!result[item.field] && item.keys.some(k => rawKey.includes(k) || k.includes(rawKey))) {
-                result[item.field] = rawVal;
-                break;
-              }
-            }
+      const getValue = (labels) => {
+        for (const label of labels) {
+          const regex = new RegExp(`(?:-|^|\\n)\\s*${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[:=]\\s*([^\\n]+)`, 'i');
+          const match = rawText.match(regex);
+          if (match && match[1]) {
+            let val = match[1].trim();
+            val = val.replace(/\s*@\S+.*$/, '').replace(/[\.\s]+$/, '').trim();
+            if (val && val !== '-') return val;
           }
         }
+        return '';
+      };
+
+      const maVuTonThat = getValue(['Mã số vụ tổn thất', 'Mã VTT', 'Mã vụ tổn thất', 'Mã hồ sơ', 'Mã vụ']);
+      const bienSo = getValue(['BSX', 'Biển số', 'Biển kiểm soát', 'Biển số xe']);
+      const donViCapDon = getValue(['ĐV cấp đơn', 'Đơn vị cấp đơn', 'Chi nhánh cấp đơn']);
+      const hangXe = getValue(['Hãng xe']);
+      const hieuXe = getValue(['Hiệu xe']);
+      const namSanXuat = getValue(['Năm SX', 'Năm sản xuất']);
+      const vcx = getValue(['VCX', 'Bảo hiểm VCX']);
+      const tnds = getValue(['TNDS', 'Bảo hiểm TNDS']);
+      const ngayThongBao = getValue(['Ngày thông báo', 'Thời gian thông báo']);
+      const ngayVTT = getValue(['Ngày VTT', 'Ngày xảy ra VTT', 'Ngày tổn thất']);
+      const diaDiemVTT = getValue(['Địa điểm VTT', 'Địa điểm tổn thất', 'Nơi xảy ra VTT']);
+      const nguyenNhan = getValue(['Nguyên nhân', 'Nguyên nhân VTT']);
+      const moTaTonThat = getValue(['Mô tả tổn thất', 'Mô tả VTT', 'Tổn thất']);
+      const hienTruong = getValue(['Hiện trường', 'Tình trạng hiện trường']);
+      const laiXe = getValue(['Lái xe', 'Tài xế']);
+      const nguoiLienHe = getValue(['Người liên hệ', 'Liên hệ']);
+      const gdvTiepNhan = getValue(['GĐV tiếp nhận VTT', 'GĐV tiếp nhận', 'GĐV phụ trách', 'Giám định viên']);
+      const canBoXuLy = getValue(['Cán bộ xử lý', 'CBXL']);
+
+      let fullHangXe = hangXe;
+      if (hieuXe && !hangXe.toLowerCase().includes(hieuXe.toLowerCase())) {
+        fullHangXe = `${hangXe} ${hieuXe}`.trim();
       }
 
-      if (result.hieuXe && result.hangXe && !result.hangXe.toLowerCase().includes(result.hieuXe.toLowerCase())) {
-        result.hangXe = `${result.hangXe} ${result.hieuXe}`.trim();
-      }
-
-      return result;
+      return {
+        maVuTonThat,
+        bienSo,
+        donViCapDon,
+        hangXe: fullHangXe,
+        hieuXe,
+        namSanXuat,
+        vcx,
+        tnds,
+        ngayThongBao,
+        ngayVTT,
+        diaDiemVTT,
+        nguyenNhan,
+        moTaTonThat,
+        hienTruong,
+        laiXe,
+        nguoiLienHe,
+        gdvTiepNhan,
+        canBoXuLy,
+        rawText
+      };
     }
 
     async function executeQuickParseAndAddClaim() {
@@ -3600,133 +3491,10 @@
     }
 
     function openAddPendingClaimModal() {
-      const overlay = document.getElementById('addPendingClaimModalOverlay');
-      if (!overlay) return;
-
-      // Reset form fields
-      const txtMsg = document.getElementById('txtModalRawMessage');
-      if (txtMsg) txtMsg.value = '';
-      const txtVTT = document.getElementById('txtModalMaVTT');
-      if (txtVTT) txtVTT.value = '';
-      const txtBSX = document.getElementById('txtModalBSX');
-      if (txtBSX) txtBSX.value = '';
-      const txtHang = document.getElementById('txtModalHangXe');
-      if (txtHang) txtHang.value = '';
-      const txtDonVi = document.getElementById('txtModalDonViCap');
-      if (txtDonVi) txtDonVi.value = '';
-      const txtGDV = document.getElementById('txtModalGDV');
-      if (txtGDV) txtGDV.value = '';
-      const txtCBXL = document.getElementById('txtModalCBXL');
-      if (txtCBXL) txtCBXL.value = '';
-      const txtDiaDiem = document.getElementById('txtModalDiaDiem');
-      if (txtDiaDiem) txtDiaDiem.value = '';
-      const txtMoTa = document.getElementById('txtModalMoTa');
-      if (txtMoTa) txtMoTa.value = '';
-      const txtLaiXe = document.getElementById('txtModalLaiXe');
-      if (txtLaiXe) txtLaiXe.value = '';
-      const txtNguoiLienHe = document.getElementById('txtModalNguoiLienHe');
-      if (txtNguoiLienHe) txtNguoiLienHe.value = '';
-      const selTrangThai = document.getElementById('selModalTrangThai');
-      if (selTrangThai) selTrangThai.value = 'moi_tiep_nhan';
-
-      const user = firebase.auth().currentUser;
-      const profile = activeUserProfile || {};
-      if (profile.displayName && txtGDV) {
-        txtGDV.value = profile.displayName;
-      }
-
-      overlay.style.display = 'grid';
-      document.body.style.overflow = 'hidden';
-      if (txtMsg) txtMsg.focus();
-    }
-
-    function closeAddPendingClaimModal() {
-      const overlay = document.getElementById('addPendingClaimModalOverlay');
-      if (overlay) {
-        overlay.style.display = 'none';
-        document.body.style.overflow = '';
-      }
-    }
-
-    function executeParseModalRawText() {
-      const rawText = (document.getElementById('txtModalRawMessage')?.value || '').trim();
-      if (!rawText) {
-        triggerToast('Vui lòng dán tin nhắn thông báo tổn thất trước khi bấm phân tích.', 'warning');
-        return;
-      }
-
-      const parsed = parseDamageReportText(rawText);
-      if (parsed.maVuTonThat) document.getElementById('txtModalMaVTT').value = parsed.maVuTonThat;
-      if (parsed.bienSo) document.getElementById('txtModalBSX').value = parsed.bienSo;
-      if (parsed.hangXe) document.getElementById('txtModalHangXe').value = parsed.hangXe;
-      if (parsed.donViCapDon) document.getElementById('txtModalDonViCap').value = parsed.donViCapDon;
-      if (parsed.gdvTiepNhan) document.getElementById('txtModalGDV').value = parsed.gdvTiepNhan;
-      if (parsed.canBoXuLy) document.getElementById('txtModalCBXL').value = parsed.canBoXuLy;
-      if (parsed.diaDiemVTT) document.getElementById('txtModalDiaDiem').value = parsed.diaDiemVTT;
-      if (parsed.moTaTonThat || parsed.nguyenNhan) {
-        document.getElementById('txtModalMoTa').value = [parsed.nguyenNhan ? `NGUYÊN NHÂN: ${parsed.nguyenNhan}` : '', parsed.moTaTonThat ? `MÔ TẢ: ${parsed.moTaTonThat}` : ''].filter(Boolean).join(' | ');
-      }
-      if (parsed.laiXe) document.getElementById('txtModalLaiXe').value = parsed.laiXe;
-      if (parsed.nguoiLienHe) document.getElementById('txtModalNguoiLienHe').value = parsed.nguoiLienHe;
-
-      triggerToast('Đã tự động nhận diện và bóc tách dữ liệu vào form!', 'success');
-    }
-
-    async function submitAddPendingClaimForm() {
-      const bienSo = document.getElementById('txtModalBSX')?.value.trim();
-      const maVuTonThat = document.getElementById('txtModalMaVTT')?.value.trim();
-      const hangXe = document.getElementById('txtModalHangXe')?.value.trim();
-      const donViCapDon = document.getElementById('txtModalDonViCap')?.value.trim();
-      const gdvTiepNhan = document.getElementById('txtModalGDV')?.value.trim();
-      const canBoXuLy = document.getElementById('txtModalCBXL')?.value.trim();
-      const diaDiemVTT = document.getElementById('txtModalDiaDiem')?.value.trim();
-      const moTaTonThat = document.getElementById('txtModalMoTa')?.value.trim();
-      const laiXe = document.getElementById('txtModalLaiXe')?.value.trim();
-      const nguoiLienHe = document.getElementById('txtModalNguoiLienHe')?.value.trim();
-      const trangThai = document.getElementById('selModalTrangThai')?.value || 'moi_tiep_nhan';
-      const rawText = document.getElementById('txtModalRawMessage')?.value.trim() || '';
-
-      if (!bienSo && !maVuTonThat) {
-        triggerToast('Vui lòng nhập Biển số xe hoặc Mã vụ tổn thất.', 'error');
-        return;
-      }
-
-      const btn = document.getElementById('btnSubmitAddPendingClaim');
-      toggleButtonUIPendingState(btn, true, 'Đang lưu...');
-
-      const user = firebase.auth().currentUser;
-      const profile = activeUserProfile || {};
-      const creatorName = profile.displayName || user?.email || 'Admin';
-
-      const claimId = 'claim_' + Date.now();
-      const payload = {
-        id: claimId,
-        maVuTonThat: maVuTonThat || `VTT/XCG/${new Date().getFullYear()}/${Math.floor(100000 + Math.random() * 900000)}`,
-        bienSo: bienSo || 'Chưa rõ',
-        donViCapDon: donViCapDon || '—',
-        hangXe: hangXe || '—',
-        gdvTiepNhan: gdvTiepNhan || profile.displayName || 'Chưa phân công',
-        canBoXuLy: canBoXuLy || '—',
-        diaDiemVTT: diaDiemVTT || '—',
-        moTaTonThat: moTaTonThat || '—',
-        laiXe: laiXe || '—',
-        nguoiLienHe: nguoiLienHe || '—',
-        trangThai: trangThai,
-        rawText: rawText,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        createdByName: creatorName
-      };
-
-      try {
-        await dbNodeInstance.ref(`pending_claims/${claimId}`).set(payload);
-        triggerToast(`Đã lưu thành công hồ sơ tồn ${payload.bienSo}!`, 'success');
-        closeAddPendingClaimModal();
-      } catch (e) {
-        console.error(e);
-        triggerToast('Lỗi khi lưu hồ sơ: ' + e.message, 'error');
-      } finally {
-        toggleButtonUIPendingState(btn, false, 'Lưu & Tiếp nhận hồ sơ');
+      const area = document.getElementById('txtQuickPasteMessage');
+      if (area) {
+        area.focus();
+        area.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
 
@@ -3744,22 +3512,18 @@
       const gdvSelect = document.getElementById('pendingGdvFilterSelect');
       if (!tbody) return;
 
-      const rawList = Object.values(cachedPendingClaimsPayload || {});
-      const claimsList = rawList.filter(c => c && typeof c === 'object');
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
 
-      // Update GDV Select Filter Options only when options change
+      // Update GDV Select Filter Options
       if (gdvSelect) {
         const selectedGdv = gdvSelect.value;
         const gdvSet = new Set(['all']);
         claimsList.forEach(c => { if (c.gdvTiepNhan) gdvSet.add(c.gdvTiepNhan); });
         
-        const currentOptionString = Array.from(gdvSelect.options).map(o => o.value).join(',');
-        const newOptionString = Array.from(gdvSet).join(',');
-        if (currentOptionString !== newOptionString) {
-          gdvSelect.innerHTML = `<option value="all">Tất cả GĐV team</option>` + 
-            Array.from(gdvSet).filter(g => g !== 'all').map(g => `<option value="${escapeAttributeData(g)}">${escapeHtmlOutput(g)}</option>`).join('');
-          gdvSelect.value = selectedGdv && gdvSet.has(selectedGdv) ? selectedGdv : 'all';
-        }
+        gdvSelect.innerHTML = `<option value="all">Tất cả GĐV team</option>` + 
+          Array.from(gdvSet).filter(g => g !== 'all').map(g => `<option value="${escapeAttributeData(g)}">${escapeHtmlOutput(g)}</option>`).join('');
+        
+        gdvSelect.value = selectedGdv && gdvSet.has(selectedGdv) ? selectedGdv : 'all';
       }
 
       // Read Filters
@@ -4341,6 +4105,24 @@
                   <button type="button" class="btn-premium" onclick="openAddPendingClaimModal()" style="width: auto !important; padding: 0 22px; min-height: 40px; font-size: 12.5px; border-radius: 10px; font-weight: 800; background: var(--primary-gradient); color: #080b11; border: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     <span>+ Tiếp nhận hồ sơ mới (Dán tin)</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Paste Dropzone Banner Card -->
+              <div style="background: var(--surface); border: 1px dashed var(--primary); border-radius: 14px; padding: 18px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                    <span>Dán nhanh bản tin thông báo tổn thất (Zalo / Email / SMS)</span>
+                  </strong>
+                  <span style="font-size: 11.5px; color: var(--text-muted);">Tự động phân tích 16+ trường thông tin</span>
+                </div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                  <textarea id="txtQuickPasteMessage" class="textarea-premium" placeholder="Ví dụ dán nguyên văn bản tin:&#10;YC GDCT/TOYOTA ĐẮK LẮK&#10; - BSX: 47E00777&#10; - Hãng xe: TOYOTA...&#10; - GĐV tiếp nhận: Huỳnh Văn Phúc&#10; - Mã số vụ tổn thất: VTT/XCG/2026/0067213" style="flex: 1; min-height: 85px; font-size: 12px; line-height: 1.5; font-family: inherit; margin: 0; padding: 10px;"></textarea>
+                  <button type="button" class="btn-premium" onclick="executeQuickParseAndAddClaim()" style="width: auto !important; height: auto; min-height: 85px; padding: 0 24px; font-size: 13px; font-weight: 800; border-radius: 10px; background: var(--primary-gradient); color: #080b11; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    <span>Phân tích & Thêm mới</span>
                   </button>
                 </div>
               </div>
@@ -6328,7 +6110,7 @@
       }
     }
 
-    function openNativeFileInputCamera(index) {
+    function openMobileCameraForEvidence(index) {
       const inputEl = document.getElementById(`garageEvidenceInput_${index}`);
       if (inputEl) {
         inputEl.setAttribute('capture', 'environment');
