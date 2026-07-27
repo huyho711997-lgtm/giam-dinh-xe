@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#080b11" />
-  <meta name="description" content="Nền tảng đối chiếu ảnh giám định và hạng mục báo giá Garage theo thời gian thực." />
-  <title>ClaimVision Ultimate — Đối chiếu giám định xe cơ giới</title>
+  <meta name="description" content="Nền tảng Giám định - Bồi thường Xe cơ giới Tasco theo thời gian thực." />
+  <title>Giám định - Bồi thường Tasco</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23d8b46d'/%3E%3Cstop offset='100%25' stop-color='%233b82f6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='%23080b11'/%3E%3Cpath d='M50 16 L80 31 V55 C80 72 50 86 50 86 C50 86 20 72 20 55 V31 Z' fill='none' stroke='url(%23g)' stroke-width='6.5' stroke-linejoin='round'/%3E%3Cpath d='M35 38 H65 M50 38 V68 M42 54 L50 62 L65 47' fill='none' stroke='%23ffffff' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
 
   <!-- Google Fonts & Firebase SDK -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2203,9 +2204,13 @@
   <div class="app-container">
     <!-- Header App Bar Space -->
     <nav class="premium-nav" id="mainNavigationBar">
-      <div class="nav-brand" id="navBrandClick">
-        <div class="nav-logo">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
+      <div class="nav-brand" id="navBrandClick" style="cursor: pointer;" onclick="navigateHeaderTab('home')">
+        <div class="nav-logo" style="background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); border-radius: 12px; width: 42px; height: 42px; display: grid; place-items: center;">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" style="color: var(--primary);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
+        </div>
+        <div class="nav-brand-title" style="display: flex; flex-direction: column; justify-content: center;">
+          <span style="font-size: 14.5px; font-weight: 850; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2;">Giám định - Bồi thường Tasco</span>
+          <span style="font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px;">Xe cơ giới</span>
         </div>
       </div>
       <div id="navUserActionSpace"></div>
@@ -3254,11 +3259,13 @@
         <div class="login-wrapper">
           <section class="login-visual">
             <div class="login-brand">
-              <div class="nav-logo"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg></div>
-              <span>ClaimVision Intelligence</span>
+              <div class="nav-logo" style="background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); border-radius: 12px; width: 42px; height: 42px; display: grid; place-items: center;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" style="color: var(--primary);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
+              </div>
+              <span>Giám định - Bồi thường Tasco</span>
             </div>
             <div class="login-copy">
-              <div class="eyebrow">Motor claim workspace</div>
+              <div class="eyebrow">Hệ thống Giám định & Quản lý Bồi thường Xe Cơ Giới</div>
               <h1>Nhìn rõ tổn thất.<br><span>Chốt đúng hạng mục.</span></h1>
               <p>Một không gian tác nghiệp tập trung để Giám định viên và Garage đối chiếu ảnh hiện trạng, hạng mục sửa chữa và kết quả theo thời gian thực.</p>
             </div>
@@ -3411,8 +3418,8 @@
         container.innerHTML = `
           <section class="hero-panel" style="margin-bottom: 24px; padding: 48px 32px;">
             <div>
-              <div class="eyebrow">${SVGS.SPARKLES} Nền tảng số thông minh</div>
-              <h2 style="font-size: 32px; line-height: 1.2;">ClaimVision<br><span>Nhìn rõ tổn thất · Chốt đúng phương án.</span></h2>
+              <div class="eyebrow">${SVGS.SPARKLES} Nền tảng Giám định số Tasco Insurtech</div>
+              <h2 style="font-size: 32px; line-height: 1.2;">Giám định - Bồi thường Tasco<br><span>Nhìn rõ tổn thất · Chốt đúng phương án.</span></h2>
               <p style="max-width: 600px; margin-top: 14px; font-size: 14px; color: var(--text-soft);">
                 Hệ thống hỗ trợ giám định viên và Gara đối chiếu hình ảnh hiện trạng, lập danh sách phụ tùng và đồng bộ phương án sửa chữa thời gian thực.
               </p>
