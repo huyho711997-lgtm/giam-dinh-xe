@@ -2458,35 +2458,51 @@
         document.body.classList.remove('light-mode');
       }
 
-      if (!isSystemConfigHealthy()) {
+      if (typeof firebase === 'undefined' || !isSystemConfigHealthy()) {
         renderFatalConfigurationFailure();
         return;
       }
-      firebase.initializeApp(CONFIG.FIREBASE);
-      dbNodeInstance = firebase.database();
+
+      try {
+        if (!firebase.apps || !firebase.apps.length) {
+          firebase.initializeApp(CONFIG.FIREBASE);
+        }
+        dbNodeInstance = firebase.database();
+      } catch (err) {
+        console.error("Firebase init failed:", err);
+      }
+
+      if (!firebase.auth) {
+        renderFatalConfigurationFailure();
+        return;
+      }
 
       firebase.auth().onAuthStateChanged(async (userInstance) => {
-        if (userInstance) {
-          activeUserProfile = await loadUserProfile(userInstance);
-          
-          // Auto-promote huyho71@gmail.com to permanent Admin role in database
-          const isBootstrapAdmin = userInstance.email && String(userInstance.email).trim().toLowerCase() === 'huyho71@gmail.com';
-          if (isBootstrapAdmin && activeUserProfile && activeUserProfile.role !== 'Admin') {
-            activeUserProfile.role = 'Admin';
-            activeUserProfile.department = 'Quản trị hệ thống';
-            dbNodeInstance.ref(`users/${userInstance.uid}/profile`).update({
-              role: 'Admin',
-              department: 'Quản trị hệ thống',
-              email: userInstance.email
-            }).catch(() => {});
+        try {
+          if (userInstance) {
+            activeUserProfile = await loadUserProfile(userInstance);
+            
+            // Auto-promote huyho71@gmail.com to permanent Admin role in database
+            const isBootstrapAdmin = userInstance.email && String(userInstance.email).trim().toLowerCase() === 'huyho71@gmail.com';
+            if (isBootstrapAdmin && activeUserProfile && activeUserProfile.role !== 'Admin' && dbNodeInstance) {
+              activeUserProfile.role = 'Admin';
+              activeUserProfile.department = 'Quản trị hệ thống';
+              dbNodeInstance.ref(`users/${userInstance.uid}/profile`).update({
+                role: 'Admin',
+                department: 'Quản trị hệ thống',
+                email: userInstance.email
+              }).catch(() => {});
+            }
+            
+            if (activeUserProfile && !activeUserProfile.email && userInstance.email && dbNodeInstance) {
+              activeUserProfile.email = userInstance.email;
+              dbNodeInstance.ref(`users/${userInstance.uid}/profile/email`).set(userInstance.email).catch(() => {});
+            }
+          } else {
+            activeUserProfile = null;
           }
-          
-          if (activeUserProfile && !activeUserProfile.email && userInstance.email) {
-            activeUserProfile.email = userInstance.email;
-            dbNodeInstance.ref(`users/${userInstance.uid}/profile/email`).set(userInstance.email).catch(() => {});
-          }
-        } else {
-          activeUserProfile = null;
+        } catch (e) {
+          console.error("Auth state error:", e);
         }
         evaluateViewRoutingState(userInstance);
       });
@@ -2515,10 +2531,12 @@
       const isManagementRoute = !caseIdToken || targetedViewArg === 'result';
       const isUserAuthenticated = !!userInstance;
 
-      dbNodeInstance.ref('cases').off();
-      dbNodeInstance.ref('users').off();
-      if (localActiveCaseNode && localActiveCaseNode.idCa) {
-        dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}`).off();
+      if (dbNodeInstance) {
+        dbNodeInstance.ref('cases').off();
+        dbNodeInstance.ref('users').off();
+        if (localActiveCaseNode && localActiveCaseNode.idCa) {
+          dbNodeInstance.ref(`cases/${localActiveCaseNode.idCa}`).off();
+        }
       }
 
       if (isManagementRoute && !isUserAuthenticated) {
