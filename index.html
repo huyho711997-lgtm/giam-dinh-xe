@@ -6310,7 +6310,7 @@
       }
     }
 
-    function openMobileCameraForEvidence(index) {
+    function openNativeFileInputCamera(index) {
       const inputEl = document.getElementById(`garageEvidenceInput_${index}`);
       if (inputEl) {
         inputEl.setAttribute('capture', 'environment');
@@ -8205,7 +8205,12 @@
     }
 
     function escapeHtmlOutput(unsafeStringValue) {
-      return String(unsafeStringValue || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+      return String(unsafeStringValue || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
 
     function escapeAttributeData(unsafeAttrValue) { return escapeHtmlOutput(unsafeAttrValue); }
