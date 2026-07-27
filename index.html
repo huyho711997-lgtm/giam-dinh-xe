@@ -3919,12 +3919,38 @@
       }
     }
 
+    function toggleRowGdvDropdown(event, claimId) {
+      if (event) event.stopPropagation();
+      const targetMenuId = `rowGdvMenu_${claimId}`;
+      const targetMenu = document.getElementById(targetMenuId);
+      const isHidden = !targetMenu || targetMenu.style.display === 'none' || !targetMenu.style.display;
+      
+      closeAllCustomDropdowns();
+
+      if (targetMenu && isHidden) {
+        targetMenu.style.display = 'block';
+      }
+    }
+
+    async function quickUpdateClaimGdv(claimId, newGdvName) {
+      closeAllCustomDropdowns();
+      if (!claimId || !newGdvName) return;
+      try {
+        await dbNodeInstance.ref(`pending_claims/${claimId}/gdvTiepNhan`).set(newGdvName);
+        await dbNodeInstance.ref(`pending_claims/${claimId}/updatedAt`).set(Date.now());
+        triggerToast(`Đã phân công lại GĐV ${newGdvName} thành công!`, 'success');
+      } catch (e) {
+        console.error(e);
+        triggerToast('Lỗi phân công GĐV: ' + e.message, 'error');
+      }
+    }
+
     function closeAllCustomDropdowns() {
       ['menuCustomStatusDropdown', 'menuCustomGdvDropdown', 'menuCustomPeriodDropdown'].forEach(id => {
         const menu = document.getElementById(id);
         if (menu) menu.style.display = 'none';
       });
-      document.querySelectorAll('.row-status-menu').forEach(menu => {
+      document.querySelectorAll('.row-status-menu, .row-gdv-menu').forEach(menu => {
         menu.style.display = 'none';
       });
     }
@@ -4150,6 +4176,11 @@
         `;
       }
 
+      // Prepare full GDV Team list for quick row switching
+      const gdvTeamSet = new Set(['Huỳnh Văn Phúc', 'Giám định viên']);
+      claimsList.forEach(c => { if (c.gdvTiepNhan && c.gdvTiepNhan !== '—' && c.gdvTiepNhan !== 'Chưa phân công') gdvTeamSet.add(c.gdvTiepNhan); });
+      const gdvTeamList = Array.from(gdvTeamSet);
+
       // Sort by newest created first
       filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
@@ -4172,8 +4203,30 @@
               <span style="font-size: 11.5px; color: var(--text-soft);">${escapeHtmlOutput(item.donViCapDon || '—')}</span>
             </td>
             <td>
-              <div style="font-size: 12.5px; font-weight: 750; color: var(--text-main);">${escapeHtmlOutput(item.gdvTiepNhan || '—')}</div>
-              <div style="font-size: 11px; color: var(--text-muted);">CBXL: ${escapeHtmlOutput(item.canBoXuLy || '—')}</div>
+              <div class="custom-dropdown-container row-gdv-dropdown-wrap" style="position: relative; display: inline-block;">
+                <button type="button" onclick="toggleRowGdvDropdown(event, '${item.id}')" title="Nhấp để đổi nhanh Giám định viên tiếp nhận" style="background: rgba(216,180,109,0.08); border: 1px solid rgba(216,180,109,0.25); padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; color: var(--primary); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); flex-shrink: 0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;">${escapeHtmlOutput(item.gdvTiepNhan || 'Chưa phân công')}</span>
+                  <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.7; flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                <!-- Floating Quick GDV Menu List -->
+                <div id="rowGdvMenu_${item.id}" class="custom-dropdown-menu row-gdv-menu" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 180px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
+                  ${gdvTeamList.map(gName => {
+                    const isSel = item.gdvTiepNhan === gName;
+                    return `
+                      <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="quickUpdateClaimGdv('${item.id}', '${escapeAttributeData(gName)}')" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(59,130,246,0.12); color: #3b82f6; font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 11.5px;">
+                          <span style="width: 7px; height: 7px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 5px #3b82f6; flex-shrink: 0;"></span>
+                          <span>${escapeHtmlOutput(gName)}</span>
+                        </div>
+                        ${isSel ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px; padding-left: 2px;">CBXL: ${escapeHtmlOutput(item.canBoXuLy || '—')}</div>
             </td>
             <td>
               <div style="font-size: 12px; color: var(--text-main); font-weight: 600; line-height: 1.4;">${escapeHtmlOutput(item.moTaTonThat || item.nguyenNhan || '—')}</div>
