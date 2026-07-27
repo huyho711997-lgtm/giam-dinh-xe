@@ -2201,6 +2201,131 @@
     </section>
   </div>
 
+  <!-- Modal Tiếp Nhận Hồ Sơ Tồn (Dán tin & Nhập biểu mẫu riêng biệt) -->
+  <div id="addPendingClaimModalOverlay" class="p-modal-overlay" aria-hidden="true" style="display: none;">
+    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="addPendingClaimModalTitle" style="max-width: 840px; width: 92%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 0;">
+      <!-- Header -->
+      <div style="padding: 22px 28px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface-strong);">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--primary-gradient); color: #080b11; display: grid; place-items: center; flex-shrink: 0; box-shadow: var(--shadow-sm);">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+          </div>
+          <div>
+            <h3 id="addPendingClaimModalTitle" style="font-size: 19px; font-weight: 850; color: var(--text-main); margin: 0;">Tiếp nhận hồ sơ tổn thất mới</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 3px 0 0 0;">Dán tin nhắn Zalo/SMS/Email để tự động phân tích hoặc tự nhập chi tiết 16+ trường thông tin.</p>
+          </div>
+        </div>
+        <button type="button" class="btn-premium btn-secondary" onclick="closeAddPendingClaimModal()" aria-label="Đóng" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; padding: 0; border-radius: 10px; font-size: 18px; display: grid; place-items: center; cursor: pointer;">×</button>
+      </div>
+
+      <!-- Body Scrollable Area -->
+      <div style="padding: 24px 28px; overflow-y: auto; flex: 1;">
+        <!-- Section 1: Quick Paste Zone -->
+        <div style="background: var(--surface); border: 1px dashed var(--primary); border-radius: 14px; padding: 18px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 800; display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+              <span>Dán tin nhắn thông báo tổn thất (Zalo / Email / SMS)</span>
+            </strong>
+            <span style="font-size: 11.5px; color: var(--text-muted);">Tự động bóc tách 16+ trường dữ liệu</span>
+          </div>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <textarea id="modalTxtQuickPasteMessage" class="textarea-premium" placeholder="Ví dụ dán nguyên văn bản tin:&#10;YC GDCT/TOYOTA ĐẮK LẮK&#10; - BSX: 47E00777&#10; - Hãng xe: TOYOTA...&#10; - GĐV tiếp nhận: Huỳnh Văn Phúc&#10; - Mã số vụ tổn thất: VTT/XCG/2026/0067213" style="flex: 1; min-height: 90px; font-size: 12.5px; line-height: 1.5; font-family: inherit; margin: 0; padding: 10px 12px;"></textarea>
+            <button type="button" class="btn-premium" onclick="executeModalParseText()" style="width: auto !important; height: auto; min-height: 90px; padding: 0 20px; font-size: 13px; font-weight: 800; border-radius: 10px; background: var(--primary-gradient); color: #080b11; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+              <span>Phân tích tự động</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section 2: Detailed Structured Form Grid -->
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          <span style="font-size: 13.5px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.04em;">Thông tin chi tiết hồ sơ (16+ Trường dữ liệu)</span>
+        </div>
+
+        <div class="profile-form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 16px;">
+          <div class="form-group">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Mã vụ tổn thất (VTT)</label>
+            <input id="modalPendingMaVuTonThat" class="input-premium" type="text" placeholder="VTT/XCG/2026/..." />
+          </div>
+          <div class="form-group">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Biển số xe *</label>
+            <input id="modalPendingBienSo" class="input-premium" type="text" placeholder="Ví dụ: 47A-123.45" style="font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;" />
+          </div>
+          <div class="form-group">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Đơn vị cấp đơn</label>
+            <input id="modalPendingDonViCapDon" class="input-premium" type="text" placeholder="Ví dụ: ĐẮK LẮK, HÀ NỘI..." />
+          </div>
+          <div class="form-group">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Hãng xe / Hiệu xe</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <input id="modalPendingHangXe" class="input-premium" type="text" placeholder="Hãng xe (TOYOTA...)" />
+              <input id="modalPendingHieuXe" class="input-premium" type="text" placeholder="Hiệu xe (CAMRY...)" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Năm sản xuất</label>
+            <input id="modalPendingNamSanXuat" class="input-premium" type="text" placeholder="Ví dụ: 2022" />
+          </div>
+          <div class="form-group">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">GĐV Tiếp nhận / Cán bộ XL</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <input id="modalPendingGdvTiepNhan" class="input-premium" type="text" placeholder="GĐV tiếp nhận" />
+              <input id="modalPendingCanBoXuLy" class="input-premium" type="text" placeholder="Cán bộ xử lý" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày thông báo</label>
+            <input id="modalPendingNgayThongBao" class="input-premium" type="text" placeholder="DD/MM/YYYY HH:mm" />
+          </div>
+          <div class="form-group">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày xảy ra VTT</label>
+            <input id="modalPendingNgayVTT" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
+          </div>
+          <div class="form-group full" style="grid-column: span 2;">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Địa điểm VTT & Hiện trường</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <input id="modalPendingDiaDiemVTT" class="input-premium" type="text" placeholder="Địa điểm xảy ra tổn thất" />
+              <input id="modalPendingHienTruong" class="input-premium" type="text" placeholder="Tình trạng hiện trường" />
+            </div>
+          </div>
+          <div class="form-group full" style="grid-column: span 2;">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Lái xe & Người liên hệ</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <input id="modalPendingLaiXe" class="input-premium" type="text" placeholder="Tên lái xe & SĐT" />
+              <input id="modalPendingNguoiLienHe" class="input-premium" type="text" placeholder="Người liên hệ" />
+            </div>
+          </div>
+          <div class="form-group full" style="grid-column: span 2;">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Thông tin VCX & TNDS</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <input id="modalPendingVcx" class="input-premium" type="text" placeholder="VCX (Vật chất xe)" />
+              <input id="modalPendingTnds" class="input-premium" type="text" placeholder="TNDS (Trách nhiệm dân sự)" />
+            </div>
+          </div>
+          <div class="form-group full" style="grid-column: span 2;">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Nguyên nhân tổn thất</label>
+            <input id="modalPendingNguyenNhan" class="input-premium" type="text" placeholder="Mô tả nguyên nhân tổn thất" />
+          </div>
+          <div class="form-group full" style="grid-column: span 2;">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Mô tả chi tiết tổn thất</label>
+            <textarea id="modalPendingMoTaTonThat" class="textarea-premium" placeholder="Mô tả danh mục các chi tiết bị tổn thất..." style="min-height: 70px; font-size: 12.5px;"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div style="padding: 16px 28px; border-top: 1px solid var(--border); background: var(--surface-strong); display: flex; justify-content: flex-end; gap: 12px;">
+        <button type="button" class="btn-premium btn-secondary" onclick="closeAddPendingClaimModal()" style="width: auto !important; padding: 0 20px; height: 42px; cursor: pointer;">Hủy bỏ</button>
+        <button id="btnSubmitAddPendingClaim" type="button" class="btn-premium" onclick="saveAddPendingClaimFromModal()" style="width: auto !important; padding: 0 28px; height: 42px; font-weight: 800; background: var(--primary-gradient); color: #080b11; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          <span>Lưu hồ sơ tiếp nhận</span>
+        </button>
+      </div>
+    </section>
+  </div>
+
   <div class="app-container">
     <!-- Header App Bar Space -->
     <nav class="premium-nav" id="mainNavigationBar">
@@ -3433,18 +3558,105 @@
       };
     }
 
-    async function executeQuickParseAndAddClaim() {
-      const area = document.getElementById('txtQuickPasteMessage');
-      if (!area) return;
-      const rawText = area.value.trim();
+    function openAddPendingClaimModal() {
+      const modal = document.getElementById('addPendingClaimModalOverlay');
+      if (!modal) return;
+
+      // Clear paste box
+      const pasteArea = document.getElementById('modalTxtQuickPasteMessage');
+      if (pasteArea) pasteArea.value = '';
+
+      // Clear or preset form inputs
+      const profile = activeUserProfile || {};
+      const currentUser = firebase.auth().currentUser;
+
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val || '';
+      };
+
+      setVal('modalPendingMaVuTonThat', `VTT/XCG/${new Date().getFullYear()}/${Math.floor(100000 + Math.random() * 900000)}`);
+      setVal('modalPendingBienSo', '');
+      setVal('modalPendingDonViCapDon', '');
+      setVal('modalPendingHangXe', '');
+      setVal('modalPendingHieuXe', '');
+      setVal('modalPendingNamSanXuat', '');
+      setVal('modalPendingGdvTiepNhan', profile.displayName || currentUser?.email || '');
+      setVal('modalPendingCanBoXuLy', '');
+      setVal('modalPendingNgayThongBao', new Date().toLocaleString('vi-VN'));
+      setVal('modalPendingNgayVTT', '');
+      setVal('modalPendingDiaDiemVTT', '');
+      setVal('modalPendingHienTruong', '');
+      setVal('modalPendingLaiXe', '');
+      setVal('modalPendingNguoiLienHe', '');
+      setVal('modalPendingVcx', '');
+      setVal('modalPendingTnds', '');
+      setVal('modalPendingNguyenNhan', '');
+      setVal('modalPendingMoTaTonThat', '');
+
+      modal.style.display = 'grid';
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeAddPendingClaimModal() {
+      const modal = document.getElementById('addPendingClaimModalOverlay');
+      if (modal) {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    function executeModalParseText() {
+      const pasteArea = document.getElementById('modalTxtQuickPasteMessage');
+      if (!pasteArea) return;
+      const rawText = pasteArea.value.trim();
       if (!rawText) {
         triggerToast('Vui lòng dán nội dung tin nhắn thông báo tổn thất.', 'warning');
         return;
       }
 
       const parsed = parseDamageReportText(rawText);
-      if (!parsed.bienSo && !parsed.maVuTonThat) {
-        triggerToast('Không thể nhận diện BSX hoặc Mã VTT. Vui lòng kiểm tra lại văn bản tin nhắn.', 'error');
+      
+      const setValIfPresent = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && val) el.value = val;
+      };
+
+      if (parsed.maVuTonThat) setValIfPresent('modalPendingMaVuTonThat', parsed.maVuTonThat);
+      if (parsed.bienSo) setValIfPresent('modalPendingBienSo', parsed.bienSo);
+      if (parsed.donViCapDon) setValIfPresent('modalPendingDonViCapDon', parsed.donViCapDon);
+      if (parsed.hangXe) setValIfPresent('modalPendingHangXe', parsed.hangXe);
+      if (parsed.hieuXe) setValIfPresent('modalPendingHieuXe', parsed.hieuXe);
+      if (parsed.namSanXuat) setValIfPresent('modalPendingNamSanXuat', parsed.namSanXuat);
+      if (parsed.gdvTiepNhan) setValIfPresent('modalPendingGdvTiepNhan', parsed.gdvTiepNhan);
+      if (parsed.canBoXuLy) setValIfPresent('modalPendingCanBoXuLy', parsed.canBoXuLy);
+      if (parsed.ngayThongBao) setValIfPresent('modalPendingNgayThongBao', parsed.ngayThongBao);
+      if (parsed.ngayVTT) setValIfPresent('modalPendingNgayVTT', parsed.ngayVTT);
+      if (parsed.diaDiemVTT) setValIfPresent('modalPendingDiaDiemVTT', parsed.diaDiemVTT);
+      if (parsed.hienTruong) setValIfPresent('modalPendingHienTruong', parsed.hienTruong);
+      if (parsed.laiXe) setValIfPresent('modalPendingLaiXe', parsed.laiXe);
+      if (parsed.nguoiLienHe) setValIfPresent('modalPendingNguoiLienHe', parsed.nguoiLienHe);
+      if (parsed.vcx) setValIfPresent('modalPendingVcx', parsed.vcx);
+      if (parsed.tnds) setValIfPresent('modalPendingTnds', parsed.tnds);
+      if (parsed.nguyenNhan) setValIfPresent('modalPendingNguyenNhan', parsed.nguyenNhan);
+      if (parsed.moTaTonThat) setValIfPresent('modalPendingMoTaTonThat', parsed.moTaTonThat);
+
+      if (parsed.bienSo || parsed.maVuTonThat) {
+        triggerToast(`Đã tự động trích xuất dữ liệu tin nhắn!`, 'success');
+      } else {
+        triggerToast('Không thể tự nhận diện BSX hoặc Mã VTT. Bạn hãy kiểm tra và nhập vào biểu mẫu.', 'info');
+      }
+    }
+
+    async function saveAddPendingClaimFromModal() {
+      const getVal = (id) => (document.getElementById(id)?.value || '').trim();
+
+      const bienSo = getVal('modalPendingBienSo');
+      const maVuTonThat = getVal('modalPendingMaVuTonThat');
+
+      if (!bienSo && !maVuTonThat) {
+        triggerToast('Vui lòng nhập Biển số xe hoặc Mã vụ tổn thất.', 'error');
+        document.getElementById('modalPendingBienSo')?.focus();
         return;
       }
 
@@ -3453,26 +3665,28 @@
       const creatorName = profile.displayName || user?.email || 'Admin';
 
       const claimId = 'claim_' + Date.now();
+      const rawText = getVal('modalTxtQuickPasteMessage');
+
       const payload = {
         id: claimId,
-        maVuTonThat: parsed.maVuTonThat || `VTT/XCG/${new Date().getFullYear()}/${Math.floor(100000 + Math.random() * 900000)}`,
-        bienSo: parsed.bienSo || 'Chưa rõ',
-        donViCapDon: parsed.donViCapDon || '—',
-        hangXe: parsed.hangXe || '—',
-        hieuXe: parsed.hieuXe || '',
-        namSanXuat: parsed.namSanXuat || '',
-        vcx: parsed.vcx || '',
-        tnds: parsed.tnds || '',
-        ngayThongBao: parsed.ngayThongBao || new Date().toLocaleString('vi-VN'),
-        ngayVTT: parsed.ngayVTT || '—',
-        diaDiemVTT: parsed.diaDiemVTT || '—',
-        nguyenNhan: parsed.nguyenNhan || '—',
-        moTaTonThat: parsed.moTaTonThat || '—',
-        hienTruong: parsed.hienTruong || '—',
-        laiXe: parsed.laiXe || '—',
-        nguoiLienHe: parsed.nguoiLienHe || '—',
-        gdvTiepNhan: parsed.gdvTiepNhan || profile.displayName || 'Chưa phân công',
-        canBoXuLy: parsed.canBoXuLy || '—',
+        maVuTonThat: maVuTonThat || `VTT/XCG/${new Date().getFullYear()}/${Math.floor(100000 + Math.random() * 900000)}`,
+        bienSo: bienSo || 'Chưa rõ',
+        donViCapDon: getVal('modalPendingDonViCapDon') || '—',
+        hangXe: getVal('modalPendingHangXe') || '—',
+        hieuXe: getVal('modalPendingHieuXe') || '',
+        namSanXuat: getVal('modalPendingNamSanXuat') || '',
+        vcx: getVal('modalPendingVcx') || '',
+        tnds: getVal('modalPendingTnds') || '',
+        ngayThongBao: getVal('modalPendingNgayThongBao') || new Date().toLocaleString('vi-VN'),
+        ngayVTT: getVal('modalPendingNgayVTT') || '—',
+        diaDiemVTT: getVal('modalPendingDiaDiemVTT') || '—',
+        nguyenNhan: getVal('modalPendingNguyenNhan') || '—',
+        moTaTonThat: getVal('modalPendingMoTaTonThat') || '—',
+        hienTruong: getVal('modalPendingHienTruong') || '—',
+        laiXe: getVal('modalPendingLaiXe') || '—',
+        nguoiLienHe: getVal('modalPendingNguoiLienHe') || '—',
+        gdvTiepNhan: getVal('modalPendingGdvTiepNhan') || profile.displayName || 'Chưa phân công',
+        canBoXuLy: getVal('modalPendingCanBoXuLy') || '—',
         trangThai: 'moi_tiep_nhan',
         rawText: rawText,
         createdAt: Date.now(),
@@ -3480,21 +3694,18 @@
         createdByName: creatorName
       };
 
+      const btnSave = document.getElementById('btnSubmitAddPendingClaim');
+      if (btnSave) btnSave.disabled = true;
+
       try {
         await dbNodeInstance.ref(`pending_claims/${claimId}`).set(payload);
-        area.value = '';
+        closeAddPendingClaimModal();
         triggerToast(`Đã tiếp nhận thành công hồ sơ ${payload.bienSo} (${payload.maVuTonThat})!`, 'success');
       } catch (e) {
         console.error(e);
-        triggerToast('Không thể lưu hồ sơ tồn: ' + e.message, 'error');
-      }
-    }
-
-    function openAddPendingClaimModal() {
-      const area = document.getElementById('txtQuickPasteMessage');
-      if (area) {
-        area.focus();
-        area.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        triggerToast('Không thể lưu hồ sơ: ' + e.message, 'error');
+      } finally {
+        if (btnSave) btnSave.disabled = false;
       }
     }
 
@@ -4105,24 +4316,6 @@
                   <button type="button" class="btn-premium" onclick="openAddPendingClaimModal()" style="width: auto !important; padding: 0 22px; min-height: 40px; font-size: 12.5px; border-radius: 10px; font-weight: 800; background: var(--primary-gradient); color: #080b11; border: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     <span>+ Tiếp nhận hồ sơ mới (Dán tin)</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Quick Paste Dropzone Banner Card -->
-              <div style="background: var(--surface); border: 1px dashed var(--primary); border-radius: 14px; padding: 18px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                  <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 800; display: flex; align-items: center; gap: 8px;">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-                    <span>Dán nhanh bản tin thông báo tổn thất (Zalo / Email / SMS)</span>
-                  </strong>
-                  <span style="font-size: 11.5px; color: var(--text-muted);">Tự động phân tích 16+ trường thông tin</span>
-                </div>
-                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                  <textarea id="txtQuickPasteMessage" class="textarea-premium" placeholder="Ví dụ dán nguyên văn bản tin:&#10;YC GDCT/TOYOTA ĐẮK LẮK&#10; - BSX: 47E00777&#10; - Hãng xe: TOYOTA...&#10; - GĐV tiếp nhận: Huỳnh Văn Phúc&#10; - Mã số vụ tổn thất: VTT/XCG/2026/0067213" style="flex: 1; min-height: 85px; font-size: 12px; line-height: 1.5; font-family: inherit; margin: 0; padding: 10px;"></textarea>
-                  <button type="button" class="btn-premium" onclick="executeQuickParseAndAddClaim()" style="width: auto !important; height: auto; min-height: 85px; padding: 0 24px; font-size: 13px; font-weight: 800; border-radius: 10px; background: var(--primary-gradient); color: #080b11; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                    <span>Phân tích & Thêm mới</span>
                   </button>
                 </div>
               </div>
