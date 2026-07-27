@@ -4014,24 +4014,155 @@
 
     // addRequestedItemsFromComposer removed (replaced by inline Excel-like grid actions)
 
+    const EXCEL_CATEGORY_DEFS = {
+      damages: {
+        key: 'damages',
+        label: 'Hạng mục tổn thất',
+        code: 'MỤC 03',
+        subtitle: 'Chi tiết vị trí va chạm, linh kiện & phụ tùng hư hỏng',
+        color: 'var(--primary)',
+        bg: 'rgba(216,180,109,0.12)',
+        border: 'rgba(216,180,109,0.3)',
+        svg: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`
+      },
+      overall: {
+        key: 'overall',
+        label: 'Ảnh tổng thể xe',
+        code: 'MỤC 02',
+        subtitle: 'Ảnh 4 góc chéo xe, tem đăng kiểm & số khung (VIN)',
+        color: '#10b981',
+        bg: 'rgba(16,185,129,0.12)',
+        border: 'rgba(16,185,129,0.3)',
+        svg: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`
+      },
+      documents: {
+        key: 'documents',
+        label: 'Giấy tờ xe',
+        code: 'MỤC 01',
+        subtitle: 'Cà vẹt, GPLX, Đăng kiểm & GCN bảo hiểm tiếp nhận',
+        color: '#3b82f6',
+        bg: 'rgba(59,130,246,0.12)',
+        border: 'rgba(59,130,246,0.3)',
+        svg: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`
+      }
+    };
+
     function updateRequestedItemDraft(index, value) {
       if (!caseRequestedItemsDraft[index]) return;
       caseRequestedItemsDraft[index].tenHangMuc = String(value || '').trimStart();
       if (!caseRequestedItemsDraft[index]._userSetCategory) {
         const detectedKey = getCategoryGroupInfo(value).key;
         caseRequestedItemsDraft[index].phanLoai = detectedKey;
-        const catSelect = document.getElementById(`excelCategory_${index}`);
-        if (catSelect) catSelect.value = detectedKey;
+        const catDef = EXCEL_CATEGORY_DEFS[detectedKey] || EXCEL_CATEGORY_DEFS.damages;
+        const btn = document.getElementById(`excelCategoryBtn_${index}`);
+        if (btn) {
+          btn.style.borderColor = catDef.border;
+          btn.style.background = catDef.bg;
+          btn.style.color = catDef.color;
+          const iconSlot = btn.querySelector('.cat-icon-slot');
+          const labelSlot = btn.querySelector('.cat-label-slot');
+          const codeSlot = btn.querySelector('.cat-code-slot');
+          if (iconSlot) iconSlot.innerHTML = catDef.svg;
+          if (labelSlot) labelSlot.textContent = catDef.label;
+          if (codeSlot) codeSlot.textContent = catDef.code;
+        }
       }
       updateRequestedItemsCount();
     }
 
-    function updateRequestedItemCategory(index, value) {
-      if (!caseRequestedItemsDraft[index]) return;
-      caseRequestedItemsDraft[index].phanLoai = value;
-      caseRequestedItemsDraft[index]._userSetCategory = true;
+    function toggleExcelCategoryDropdown(itemIndex, event) {
+      if (event) event.stopPropagation();
+
+      let menu = document.getElementById('globalExcelCategoryPopoverMenu');
+      if (!menu) {
+        menu = document.createElement('div');
+        menu.id = 'globalExcelCategoryPopoverMenu';
+        menu.className = 'custom-category-popover-menu';
+        document.body.appendChild(menu);
+      }
+
+      const isCurrentOpen = (menu.style.display === 'block' && menu.dataset.activeCardIndex == itemIndex);
+
+      if (isCurrentOpen) {
+        menu.style.display = 'none';
+        delete menu.dataset.activeCardIndex;
+        document.querySelectorAll('[id^="excelCatArrow_"]').forEach(el => el.style.transform = 'rotate(0deg)');
+        return;
+      }
+
+      const btnWrap = document.getElementById(`excelCategoryWrap_${itemIndex}`);
+      const arrow = document.getElementById(`excelCatArrow_${itemIndex}`);
+      if (!btnWrap) return;
+
+      const rect = btnWrap.getBoundingClientRect();
+      const currentKey = (caseRequestedItemsDraft[itemIndex] && caseRequestedItemsDraft[itemIndex].phanLoai) || 'damages';
+
+      const categoryList = [EXCEL_CATEGORY_DEFS.damages, EXCEL_CATEGORY_DEFS.overall, EXCEL_CATEGORY_DEFS.documents];
+
+      menu.innerHTML = `
+        <div style="padding: 6px 10px; font-size: 10px; font-weight: 850; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+          <span>PHÂN LOẠI NHÓM HẠNG MỤC</span>
+          <span style="font-weight: 750; color: var(--primary); font-size: 9.5px;">CHỌN MỤC</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+          ${categoryList.map(cat => {
+            const isSelected = (currentKey === cat.key);
+            return `
+              <button type="button" onclick="selectExcelCategory(${itemIndex}, '${cat.key}')" style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 11px; font-size: 12px; font-weight: 750; color: ${cat.color}; background: ${isSelected ? cat.bg : 'var(--bg-soft)'}; border: 1px solid ${isSelected ? cat.border : 'var(--border)'}; border-radius: 10px; cursor: pointer; text-align: left; transition: all 0.2s ease;">
+                <div style="width: 32px; height: 32px; border-radius: 9px; background: ${cat.bg}; color: ${cat.color}; display: grid; place-items: center; flex-shrink: 0; border: 1px solid ${cat.border};">
+                  ${cat.svg}
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-weight: 850; font-size: 12.5px; color: var(--text-main);">${cat.label}</span>
+                    <span style="font-size: 9.5px; font-weight: 850; font-family: 'JetBrains Mono', monospace; padding: 1px 6px; border-radius: 5px; background: ${cat.bg}; border: 1px solid ${cat.border}; color: ${cat.color};">${cat.code}</span>
+                  </div>
+                  <span style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.subtitle}</span>
+                </div>
+                ${isSelected ? `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="${cat.color}" stroke-width="2.8" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
+              </button>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      menu.style.position = 'fixed';
+      menu.style.top = `${rect.bottom + 6}px`;
+      menu.style.left = `${rect.left}px`;
+      menu.style.width = `${Math.max(rect.width, 275)}px`;
+      menu.style.zIndex = '999999';
+      menu.style.background = 'var(--surface)';
+      menu.style.border = '1.5px solid var(--border)';
+      menu.style.borderRadius = '14px';
+      menu.style.padding = '8px';
+      menu.style.boxShadow = '0 18px 45px rgba(0,0,0,0.28)';
+      menu.style.backdropFilter = 'blur(20px)';
+      menu.style.webkitBackdropFilter = 'blur(20px)';
+      menu.style.boxSizing = 'border-box';
+      menu.style.display = 'block';
+      menu.dataset.activeCardIndex = itemIndex;
+
+      document.querySelectorAll('[id^="excelCatArrow_"]').forEach(el => el.style.transform = 'rotate(0deg)');
+      if (arrow) arrow.style.transform = 'rotate(180deg)';
     }
-    window.updateRequestedItemCategory = updateRequestedItemCategory;
+
+    function selectExcelCategory(itemIndex, categoryKey) {
+      if (!caseRequestedItemsDraft[itemIndex]) return;
+      caseRequestedItemsDraft[itemIndex].phanLoai = categoryKey;
+      caseRequestedItemsDraft[itemIndex]._userSetCategory = true;
+
+      const menu = document.getElementById('globalExcelCategoryPopoverMenu');
+      if (menu) {
+        menu.style.display = 'none';
+        delete menu.dataset.activeCardIndex;
+      }
+      document.querySelectorAll('[id^="excelCatArrow_"]').forEach(el => el.style.transform = 'rotate(0deg)');
+
+      renderRequestedItemsBuilder();
+    }
+
+    window.toggleExcelCategoryDropdown = toggleExcelCategoryDropdown;
+    window.selectExcelCategory = selectExcelCategory;
 
     function removeRequestedItemDraft(index) {
       caseRequestedItemsDraft.splice(index, 1);
@@ -4657,16 +4788,27 @@
                     />
                   </td>
                   <td class="cell-category" style="padding: 4px 6px;">
-                    <select
-                      id="excelCategory_${index}"
-                      class="excel-grid-select"
-                      onchange="updateRequestedItemCategory(${index}, this.value)"
-                      style="width: 100%; height: 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-size: 12px; font-weight: 700; padding: 0 8px; outline: none; cursor: pointer;"
-                    >
-                      <option value="damages" ${catVal === 'damages' ? 'selected' : ''}>🛠️ Hạng mục tổn thất (Mục 03)</option>
-                      <option value="overall" ${catVal === 'overall' ? 'selected' : ''}>📸 Ảnh tổng thể xe (Mục 02)</option>
-                      <option value="documents" ${catVal === 'documents' ? 'selected' : ''}>📄 Giấy tờ xe (Mục 01)</option>
-                    </select>
+                    ${(() => {
+                      const catDef = EXCEL_CATEGORY_DEFS[catVal] || EXCEL_CATEGORY_DEFS.damages;
+                      return `
+                        <div id="excelCategoryWrap_${index}" class="excel-category-combobox-wrap" style="position: relative; width: 100%;">
+                          <button 
+                            type="button" 
+                            id="excelCategoryBtn_${index}"
+                            class="excel-category-trigger-btn"
+                            onclick="toggleExcelCategoryDropdown(${index}, event)"
+                            style="width: 100%; height: 36px; border-radius: 9px; border: 1px solid ${catDef.border}; background: ${catDef.bg}; color: ${catDef.color}; font-size: 12px; font-weight: 800; padding: 0 9px; display: inline-flex; align-items: center; justify-content: space-between; gap: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.03);"
+                          >
+                            <div style="display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1;">
+                              <span class="cat-icon-slot" style="display: grid; place-items: center; flex-shrink: 0;">${catDef.svg}</span>
+                              <span class="cat-label-slot" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; font-weight: 800;">${catDef.label}</span>
+                              <span class="cat-code-slot" style="font-size: 9px; font-weight: 850; font-family: 'JetBrains Mono', monospace; padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,0.1); flex-shrink: 0;">${catDef.code}</span>
+                            </div>
+                            <svg id="excelCatArrow_${index}" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0; transition: transform 0.2s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                          </button>
+                        </div>
+                      `;
+                    })()}
                   </td>
                   <td class="cell-action">
                     <button type="button" class="excel-row-del-btn" onclick="removeRequestedItemDraft(${index})" title="Xóa dòng">&times;</button>
@@ -5621,6 +5763,14 @@
         }
         document.querySelectorAll('[id^="customDropdownArrow_"]').forEach(el => el.style.transform = 'rotate(0deg)');
       }
+      if (!e.target.closest('.excel-category-combobox-wrap') && !e.target.closest('#globalExcelCategoryPopoverMenu')) {
+        const catMenu = document.getElementById('globalExcelCategoryPopoverMenu');
+        if (catMenu) {
+          catMenu.style.display = 'none';
+          delete catMenu.dataset.activeCardIndex;
+        }
+        document.querySelectorAll('[id^="excelCatArrow_"]').forEach(el => el.style.transform = 'rotate(0deg)');
+      }
     });
 
     window.addEventListener('scroll', () => {
@@ -5633,6 +5783,17 @@
           menu.style.top = `${rect.bottom + 6}px`;
           menu.style.left = `${rect.left}px`;
           menu.style.width = `${rect.width}px`;
+        }
+      }
+      const catMenu = document.getElementById('globalExcelCategoryPopoverMenu');
+      if (catMenu && catMenu.style.display === 'block') {
+        const itemIndex = catMenu.dataset.activeCardIndex;
+        const btnWrap = document.getElementById(`excelCategoryWrap_${itemIndex}`);
+        if (btnWrap) {
+          const rect = btnWrap.getBoundingClientRect();
+          catMenu.style.top = `${rect.bottom + 6}px`;
+          catMenu.style.left = `${rect.left}px`;
+          catMenu.style.width = `${Math.max(rect.width, 275)}px`;
         }
       }
     }, { passive: true });
