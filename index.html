@@ -4017,8 +4017,21 @@
     function updateRequestedItemDraft(index, value) {
       if (!caseRequestedItemsDraft[index]) return;
       caseRequestedItemsDraft[index].tenHangMuc = String(value || '').trimStart();
+      if (!caseRequestedItemsDraft[index]._userSetCategory) {
+        const detectedKey = getCategoryGroupInfo(value).key;
+        caseRequestedItemsDraft[index].phanLoai = detectedKey;
+        const catSelect = document.getElementById(`excelCategory_${index}`);
+        if (catSelect) catSelect.value = detectedKey;
+      }
       updateRequestedItemsCount();
     }
+
+    function updateRequestedItemCategory(index, value) {
+      if (!caseRequestedItemsDraft[index]) return;
+      caseRequestedItemsDraft[index].phanLoai = value;
+      caseRequestedItemsDraft[index]._userSetCategory = true;
+    }
+    window.updateRequestedItemCategory = updateRequestedItemCategory;
 
     function removeRequestedItemDraft(index) {
       caseRequestedItemsDraft.splice(index, 1);
@@ -4621,11 +4634,14 @@
               <tr>
                 <th class="col-stt">STT</th>
                 <th class="col-name">Tên phụ tùng cần chụp ảnh minh chứng</th>
+                <th class="col-category" style="width: 210px;">Phân loại hạng mục</th>
                 <th class="col-action"></th>
               </tr>
             </thead>
             <tbody id="excelGridBody">
-              ${caseRequestedItemsDraft.map((item, index) => `
+              ${caseRequestedItemsDraft.map((item, index) => {
+                const catVal = item.phanLoai || (getCategoryGroupInfo(item.tenHangMuc).key || 'damages');
+                return `
                 <tr class="excel-grid-row" data-row-index="${index}">
                   <td class="cell-stt">${String(index + 1).padStart(2, '0')}</td>
                   <td class="cell-name">
@@ -4640,11 +4656,24 @@
                       autocomplete="off"
                     />
                   </td>
+                  <td class="cell-category" style="padding: 4px 6px;">
+                    <select
+                      id="excelCategory_${index}"
+                      class="excel-grid-select"
+                      onchange="updateRequestedItemCategory(${index}, this.value)"
+                      style="width: 100%; height: 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-size: 12px; font-weight: 700; padding: 0 8px; outline: none; cursor: pointer;"
+                    >
+                      <option value="damages" ${catVal === 'damages' ? 'selected' : ''}>🛠️ Hạng mục tổn thất (Mục 03)</option>
+                      <option value="overall" ${catVal === 'overall' ? 'selected' : ''}>📸 Ảnh tổng thể xe (Mục 02)</option>
+                      <option value="documents" ${catVal === 'documents' ? 'selected' : ''}>📄 Giấy tờ xe (Mục 01)</option>
+                    </select>
+                  </td>
                   <td class="cell-action">
                     <button type="button" class="excel-row-del-btn" onclick="removeRequestedItemDraft(${index})" title="Xóa dòng">&times;</button>
                   </td>
                 </tr>
-              `).join('')}
+              `;
+              }).join('')}
             </tbody>
           </table>
           <div class="excel-grid-footer">
@@ -4847,14 +4876,19 @@
             ? (Array.isArray(caseEntity.hangMucYeuCauAnh) ? caseEntity.hangMucYeuCauAnh : Object.values(caseEntity.hangMucYeuCauAnh))
             : [];
             
-          const requestedEvidenceNodes = requestedItemNames.map((itemName, index) => {
-            const existingItem = existingRequestedList.find(item => item.tenHangMuc === itemName);
-            return {
-              tenHangMuc: itemName,
-              thuTu: index + 1,
-              hinhAnhGarage: existingItem ? (existingItem.hinhAnhGarage || []) : []
-            };
-          });
+          const requestedEvidenceNodes = caseRequestedItemsDraft
+            .filter(item => String(item.tenHangMuc || '').trim())
+            .map((item, index) => {
+              const itemName = item.tenHangMuc.trim();
+              const catKey = item.phanLoai || getCategoryGroupInfo(itemName).key || 'damages';
+              const existingItem = existingRequestedList.find(ex => ex.tenHangMuc === itemName);
+              return {
+                tenHangMuc: itemName,
+                phanLoai: catKey,
+                thuTu: index + 1,
+                hinhAnhGarage: existingItem ? (existingItem.hinhAnhGarage || []) : []
+              };
+            });
 
           // Re-evaluate completed status
           const totalReq = requestedEvidenceNodes.length;
@@ -4914,11 +4948,18 @@
 
         const currentUser = firebase.auth().currentUser;
         const currentProfile = getAuthenticatedUserPresentation(currentUser);
-        const requestedEvidenceNodes = requestedItemNames.map((itemName, index) => ({
-          tenHangMuc: itemName,
-          thuTu: index + 1,
-          hinhAnhGarage: []
-        }));
+        const requestedEvidenceNodes = caseRequestedItemsDraft
+          .filter(item => String(item.tenHangMuc || '').trim())
+          .map((item, index) => {
+            const itemName = item.tenHangMuc.trim();
+            const catKey = item.phanLoai || getCategoryGroupInfo(itemName).key || 'damages';
+            return {
+              tenHangMuc: itemName,
+              phanLoai: catKey,
+              thuTu: index + 1,
+              hinhAnhGarage: []
+            };
+          });
         const finalPayloadStructure = {
           idCa: generatedCaseUniqueToken,
           bienSo: plateInputVal,
@@ -5171,7 +5212,38 @@
       return `<span class="category-badge" style="background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.25); font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; line-height: 1;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg><span>Hạng mục tổn thất</span></span>`;
     }
 
-    function getCategoryGroupInfo(itemName, isGarageCustom = false) {
+    function getCategoryGroupInfo(itemName, isGarageCustom = false, itemObj = null) {
+      const explicitCat = (itemObj && itemObj.phanLoai) || (typeof itemName === 'object' && itemName ? itemName.phanLoai : null);
+      if (explicitCat && ['documents', 'overall', 'damages'].includes(explicitCat)) {
+        if (explicitCat === 'documents') {
+          return {
+            key: 'documents',
+            title: 'GIẤY TỜ XE & HỒ SƠ PHÁP LÝ',
+            subtitle: 'Cà vẹt xe, Giấy phép lái xe, CCCD và Sổ đăng kiểm xe',
+            color: '#3b82f6',
+            badgeBg: 'rgba(59,130,246,0.12)',
+            iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`
+          };
+        }
+        if (explicitCat === 'overall') {
+          return {
+            key: 'overall',
+            title: 'HÌNH ẢNH TỔNG THỂ XE',
+            subtitle: 'Ảnh tổng thể 4 góc chéo của xe, Tem đăng kiểm và Số khung (VIN)',
+            color: '#10b981',
+            badgeBg: 'rgba(16,185,129,0.12)',
+            iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>`
+          };
+        }
+        return {
+          key: 'damages',
+          title: 'HÌNH ẢNH GIÁM ĐỊNH TỔN THẤT',
+          subtitle: 'Chi tiết vị trí va chạm, linh kiện và phụ tùng hư hỏng',
+          color: 'var(--primary)',
+          badgeBg: 'rgba(216,180,109,0.12)',
+          iconSvg: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`
+        };
+      }
       if (isGarageCustom) {
         return {
           key: 'damages',
