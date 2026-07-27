@@ -2476,6 +2476,7 @@
     let cachedPendingClaimsPayload = {};
     let activePendingStatusFilter = 'all';
     let editingCaseId = null;
+    let editingPendingClaimId = null;
 
     // QUẢN LÝ THEME STATE: Khởi tạo từ cấu hình lưu trữ
     let currentTheme = localStorage.getItem('claimvision-theme') || 'dark';
@@ -3596,6 +3597,14 @@
       const modal = document.getElementById('addPendingClaimModalOverlay');
       if (!modal) return;
 
+      editingPendingClaimId = null;
+
+      const titleEl = document.getElementById('addPendingClaimModalTitle');
+      if (titleEl) titleEl.textContent = 'Tiếp nhận hồ sơ tổn thất mới';
+
+      const btnSubmitSpan = document.querySelector('#btnSubmitAddPendingClaim span');
+      if (btnSubmitSpan) btnSubmitSpan.textContent = 'Lưu hồ sơ tiếp nhận';
+
       // Clear paste box
       const pasteArea = document.getElementById('modalTxtQuickPasteMessage');
       if (pasteArea) pasteArea.value = '';
@@ -3635,12 +3644,64 @@
       modal.setAttribute('aria-hidden', 'false');
     }
 
+    function openEditPendingClaimModal(claimId) {
+      if (!claimId || !cachedPendingClaimsPayload) return;
+      const item = cachedPendingClaimsPayload[claimId];
+      if (!item) {
+        triggerToast('Không tìm thấy dữ liệu hồ sơ để chỉnh sửa.', 'error');
+        return;
+      }
+
+      editingPendingClaimId = claimId;
+
+      const titleEl = document.getElementById('addPendingClaimModalTitle');
+      if (titleEl) titleEl.textContent = `Chỉnh sửa thông tin hồ sơ (${item.bienSo})`;
+
+      const btnSubmitSpan = document.querySelector('#btnSubmitAddPendingClaim span');
+      if (btnSubmitSpan) btnSubmitSpan.textContent = 'Lưu cập nhật hồ sơ';
+
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val || '';
+      };
+
+      // Clear duplicate warning
+      checkModalDuplicateMaVTT('');
+
+      setVal('modalPendingMaVuTonThat', item.maVuTonThat || '');
+      setVal('modalPendingBienSo', item.bienSo || '');
+      setVal('modalPendingDonViCapDon', item.donViCapDon || '');
+      setVal('modalPendingHangXe', item.hangXe || '');
+      setVal('modalPendingHieuXe', item.hieuXe || '');
+      setVal('modalPendingNamSanXuat', item.namSanXuat || '');
+      setVal('modalPendingGdvTiepNhan', item.gdvTiepNhan || '');
+      setVal('modalPendingCanBoXuLy', item.canBoXuLy || '');
+      setVal('modalPendingNgayThongBao', item.ngayThongBao || '');
+      setVal('modalPendingNgayVTT', item.ngayVTT || '');
+      setVal('modalPendingDiaDiemVTT', item.diaDiemVTT || '');
+      setVal('modalPendingHienTruong', item.hienTruong || '');
+      setVal('modalPendingLaiXe', item.laiXe || '');
+      setVal('modalPendingNguoiLienHe', item.nguoiLienHe || '');
+      setVal('modalPendingVcx', item.vcx || '');
+      setVal('modalPendingTnds', item.tnds || '');
+      setVal('modalPendingNguyenNhan', item.nguyenNhan || '');
+      setVal('modalPendingMoTaTonThat', item.moTaTonThat || '');
+      setVal('modalTxtQuickPasteMessage', item.rawText || '');
+
+      const modal = document.getElementById('addPendingClaimModalOverlay');
+      if (modal) {
+        modal.style.display = 'grid';
+        modal.setAttribute('aria-hidden', 'false');
+      }
+    }
+
     function closeAddPendingClaimModal() {
       const modal = document.getElementById('addPendingClaimModalOverlay');
       if (modal) {
         modal.style.display = 'none';
         modal.setAttribute('aria-hidden', 'true');
       }
+      editingPendingClaimId = null;
     }
 
     function executeModalParseText() {
@@ -3679,7 +3740,7 @@
       if (parsed.moTaTonThat) setValIfPresent('modalPendingMoTaTonThat', parsed.moTaTonThat);
 
       // Check if duplicate MaVuTonThat exists
-      if (parsed.maVuTonThat) {
+      if (!editingPendingClaimId && parsed.maVuTonThat) {
         const existing = checkModalDuplicateMaVTT(parsed.maVuTonThat);
         if (existing) {
           if (window.Swal) {
@@ -3718,8 +3779,12 @@
         return;
       }
 
-      // Check duplicate MaVuTonThat before saving
-      if (maVuTonThat) {
+      const isEditing = !!editingPendingClaimId;
+      const targetClaimId = isEditing ? editingPendingClaimId : ('claim_' + Date.now());
+      const existingItem = isEditing ? (cachedPendingClaimsPayload[editingPendingClaimId] || {}) : {};
+
+      // If adding NEW claim, check duplicate MaVuTonThat
+      if (!isEditing && maVuTonThat) {
         const existing = findExistingClaimByMaVTT(maVuTonThat);
         if (existing) {
           if (window.Swal) {
@@ -3743,22 +3808,19 @@
 
       const user = firebase.auth().currentUser;
       const profile = activeUserProfile || {};
-      const creatorName = profile.displayName || user?.email || 'Admin';
-
-      const claimId = 'claim_' + Date.now();
-      const rawText = getVal('modalTxtQuickPasteMessage');
+      const creatorName = existingItem.createdByName || profile.displayName || user?.email || 'Admin';
 
       const payload = {
-        id: claimId,
-        maVuTonThat: maVuTonThat || `VTT/XCG/${new Date().getFullYear()}/${Math.floor(100000 + Math.random() * 900000)}`,
-        bienSo: bienSo || 'Chưa rõ',
+        id: targetClaimId,
+        maVuTonThat: maVuTonThat || existingItem.maVuTonThat || `VTT/XCG/${new Date().getFullYear()}/${Math.floor(100000 + Math.random() * 900000)}`,
+        bienSo: bienSo || existingItem.bienSo || 'Chưa rõ',
         donViCapDon: getVal('modalPendingDonViCapDon') || '—',
         hangXe: getVal('modalPendingHangXe') || '—',
         hieuXe: getVal('modalPendingHieuXe') || '',
         namSanXuat: getVal('modalPendingNamSanXuat') || '',
         vcx: getVal('modalPendingVcx') || '',
         tnds: getVal('modalPendingTnds') || '',
-        ngayThongBao: getVal('modalPendingNgayThongBao') || new Date().toLocaleString('vi-VN'),
+        ngayThongBao: getVal('modalPendingNgayThongBao') || existingItem.ngayThongBao || new Date().toLocaleString('vi-VN'),
         ngayVTT: getVal('modalPendingNgayVTT') || '—',
         diaDiemVTT: getVal('modalPendingDiaDiemVTT') || '—',
         nguyenNhan: getVal('modalPendingNguyenNhan') || '—',
@@ -3766,11 +3828,11 @@
         hienTruong: getVal('modalPendingHienTruong') || '—',
         laiXe: getVal('modalPendingLaiXe') || '—',
         nguoiLienHe: getVal('modalPendingNguoiLienHe') || '—',
-        gdvTiepNhan: getVal('modalPendingGdvTiepNhan') || profile.displayName || 'Chưa phân công',
+        gdvTiepNhan: getVal('modalPendingGdvTiepNhan') || existingItem.gdvTiepNhan || profile.displayName || 'Chưa phân công',
         canBoXuLy: getVal('modalPendingCanBoXuLy') || '—',
-        trangThai: 'moi_tiep_nhan',
-        rawText: rawText,
-        createdAt: Date.now(),
+        trangThai: existingItem.trangThai || 'moi_tiep_nhan',
+        rawText: getVal('modalTxtQuickPasteMessage') || existingItem.rawText || '',
+        createdAt: existingItem.createdAt || Date.now(),
         updatedAt: Date.now(),
         createdByName: creatorName
       };
@@ -3779,9 +3841,9 @@
       if (btnSave) btnSave.disabled = true;
 
       try {
-        await dbNodeInstance.ref(`pending_claims/${claimId}`).set(payload);
+        await dbNodeInstance.ref(`pending_claims/${targetClaimId}`).set(payload);
         closeAddPendingClaimModal();
-        triggerToast(`Đã tiếp nhận thành công hồ sơ ${payload.bienSo} (${payload.maVuTonThat})!`, 'success');
+        triggerToast(isEditing ? `Đã cập nhật thông tin hồ sơ ${payload.bienSo} thành công!` : `Đã tiếp nhận thành công hồ sơ ${payload.bienSo} (${payload.maVuTonThat})!`, 'success');
       } catch (e) {
         console.error(e);
         triggerToast('Không thể lưu hồ sơ: ' + e.message, 'error');
@@ -4147,6 +4209,9 @@
             </td>
             <td style="text-align: right; padding-right: 20px;">
               <div style="display: inline-flex; gap: 6px; justify-content: flex-end; align-items: center;">
+                <button type="button" class="btn-premium btn-secondary" onclick="openEditPendingClaimModal('${item.id}')" title="Chỉnh sửa thông tin hồ sơ" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; padding: 0; display: grid; place-items: center; border-radius: 8px; margin: 0; cursor: pointer; color: var(--primary);">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
                 <button type="button" class="btn-premium btn-secondary" onclick="copyPendingClaimText('${item.id}')" title="Sao chép nội dung tin" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; padding: 0; display: grid; place-items: center; border-radius: 8px; margin: 0; cursor: pointer;">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
                 </button>
