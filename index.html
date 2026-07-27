@@ -2346,6 +2346,8 @@
     let garageUploadsInFlight = 0;
     let garageAutosaveTimers = new Map();
     let garagePortalMounted = false; 
+    let cachedPendingClaimsPayload = {};
+    let activePendingStatusFilter = 'all';
     let editingCaseId = null;
 
     // QUẢN LÝ THEME STATE: Khởi tạo từ cấu hình lưu trữ
@@ -2899,6 +2901,7 @@
       
       const homeActive = activeDashboardTab === 'home' ? 'active' : '';
       const listActive = activeDashboardTab === 'list' ? 'active' : '';
+      const pendingActive = activeDashboardTab === 'pending' ? 'active' : '';
       const createActive = activeDashboardTab === 'create' ? 'active' : '';
       const usersActive = activeDashboardTab === 'users' ? 'active' : '';
       
@@ -2908,6 +2911,15 @@
         <div class="header-nav-tabs">
           <button id="headerNavHomeBtn" class="header-nav-btn ${homeActive}" onclick="navigateHeaderTab('home')">${SVGS.HOME} <span class="nav-btn-text">Trang chủ</span></button>
           <button id="headerNavListBtn" class="header-nav-btn ${listActive}" onclick="navigateHeaderTab('list')">${SVGS.FOLDER} <span class="nav-btn-text">Quản lý hồ sơ</span></button>
+          <button id="headerNavPendingBtn" class="header-nav-btn ${pendingActive}" onclick="navigateHeaderTab('pending')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="12" y1="18" x2="12" y2="12"></line>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+            <span class="nav-btn-text">Hồ sơ tồn</span>
+          </button>
           <button id="headerNavCreateBtn" class="header-nav-btn ${createActive}" onclick="navigateHeaderTab('create')">${SVGS.SPARKLES} <span class="nav-btn-text">Khởi tạo hồ sơ</span></button>
           ${isAdmin ? `
             <button id="headerNavUsersBtn" class="header-nav-btn ${usersActive}" onclick="navigateHeaderTab('users')">
@@ -3329,6 +3341,374 @@
     }
 
     /****************************************************
+     * SMART PARSER ENGINE & PENDING CLAIMS SYSTEM
+     ****************************************************/
+    const PENDING_STATUS_MAP = {
+      'moi_tiep_nhan': { label: 'Mới tiếp nhận', bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)' },
+      'dang_giam_dinh': { label: 'Đang giám định', bg: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', border: 'rgba(59, 130, 246, 0.3)' },
+      'cho_bao_gia': { label: 'Chờ báo giá Gara', bg: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', border: 'rgba(139, 92, 246, 0.3)' },
+      'cho_duyet_bt': { label: 'Chờ duyệt BT', bg: 'rgba(236, 72, 153, 0.12)', color: '#ec4899', border: 'rgba(236, 72, 153, 0.3)' },
+      'hoan_thanh': { label: 'Đã hoàn thành', bg: 'rgba(16, 185, 129, 0.12)', color: '#10b981', border: 'rgba(16, 185, 129, 0.3)' },
+      'ton_qua_han': { label: 'Tồn quá hạn (>7 ngày)', bg: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', border: 'rgba(239, 68, 68, 0.3)' }
+    };
+
+    function parseDamageReportText(rawText) {
+      if (!rawText || typeof rawText !== 'string') return {};
+
+      const getValue = (labels) => {
+        for (const label of labels) {
+          const regex = new RegExp(`(?:-|^|\\n)\\s*${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[:=]\\s*([^\\n]+)`, 'i');
+          const match = rawText.match(regex);
+          if (match && match[1]) {
+            let val = match[1].trim();
+            val = val.replace(/\s*@\S+.*$/, '').replace(/[\.\s]+$/, '').trim();
+            if (val && val !== '-') return val;
+          }
+        }
+        return '';
+      };
+
+      const maVuTonThat = getValue(['Mã số vụ tổn thất', 'Mã VTT', 'Mã vụ tổn thất', 'Mã hồ sơ', 'Mã vụ']);
+      const bienSo = getValue(['BSX', 'Biển số', 'Biển kiểm soát', 'Biển số xe']);
+      const donViCapDon = getValue(['ĐV cấp đơn', 'Đơn vị cấp đơn', 'Chi nhánh cấp đơn']);
+      const hangXe = getValue(['Hãng xe']);
+      const hieuXe = getValue(['Hiệu xe']);
+      const namSanXuat = getValue(['Năm SX', 'Năm sản xuất']);
+      const vcx = getValue(['VCX', 'Bảo hiểm VCX']);
+      const tnds = getValue(['TNDS', 'Bảo hiểm TNDS']);
+      const ngayThongBao = getValue(['Ngày thông báo', 'Thời gian thông báo']);
+      const ngayVTT = getValue(['Ngày VTT', 'Ngày xảy ra VTT', 'Ngày tổn thất']);
+      const diaDiemVTT = getValue(['Địa điểm VTT', 'Địa điểm tổn thất', 'Nơi xảy ra VTT']);
+      const nguyenNhan = getValue(['Nguyên nhân', 'Nguyên nhân VTT']);
+      const moTaTonThat = getValue(['Mô tả tổn thất', 'Mô tả VTT', 'Tổn thất']);
+      const hienTruong = getValue(['Hiện trường', 'Tình trạng hiện trường']);
+      const laiXe = getValue(['Lái xe', 'Tài xế']);
+      const nguoiLienHe = getValue(['Người liên hệ', 'Liên hệ']);
+      const gdvTiepNhan = getValue(['GĐV tiếp nhận VTT', 'GĐV tiếp nhận', 'GĐV phụ trách', 'Giám định viên']);
+      const canBoXuLy = getValue(['Cán bộ xử lý', 'CBXL']);
+
+      let fullHangXe = hangXe;
+      if (hieuXe && !hangXe.toLowerCase().includes(hieuXe.toLowerCase())) {
+        fullHangXe = `${hangXe} ${hieuXe}`.trim();
+      }
+
+      return {
+        maVuTonThat,
+        bienSo,
+        donViCapDon,
+        hangXe: fullHangXe,
+        hieuXe,
+        namSanXuat,
+        vcx,
+        tnds,
+        ngayThongBao,
+        ngayVTT,
+        diaDiemVTT,
+        nguyenNhan,
+        moTaTonThat,
+        hienTruong,
+        laiXe,
+        nguoiLienHe,
+        gdvTiepNhan,
+        canBoXuLy,
+        rawText
+      };
+    }
+
+    async function executeQuickParseAndAddClaim() {
+      const area = document.getElementById('txtQuickPasteMessage');
+      if (!area) return;
+      const rawText = area.value.trim();
+      if (!rawText) {
+        triggerToast('Vui lòng dán nội dung tin nhắn thông báo tổn thất.', 'warning');
+        return;
+      }
+
+      const parsed = parseDamageReportText(rawText);
+      if (!parsed.bienSo && !parsed.maVuTonThat) {
+        triggerToast('Không thể nhận diện BSX hoặc Mã VTT. Vui lòng kiểm tra lại văn bản tin nhắn.', 'error');
+        return;
+      }
+
+      const user = firebase.auth().currentUser;
+      const profile = activeUserProfile || {};
+      const creatorName = profile.displayName || user?.email || 'Admin';
+
+      const claimId = 'claim_' + Date.now();
+      const payload = {
+        id: claimId,
+        maVuTonThat: parsed.maVuTonThat || `VTT/XCG/${new Date().getFullYear()}/${Math.floor(100000 + Math.random() * 900000)}`,
+        bienSo: parsed.bienSo || 'Chưa rõ',
+        donViCapDon: parsed.donViCapDon || '—',
+        hangXe: parsed.hangXe || '—',
+        hieuXe: parsed.hieuXe || '',
+        namSanXuat: parsed.namSanXuat || '',
+        vcx: parsed.vcx || '',
+        tnds: parsed.tnds || '',
+        ngayThongBao: parsed.ngayThongBao || new Date().toLocaleString('vi-VN'),
+        ngayVTT: parsed.ngayVTT || '—',
+        diaDiemVTT: parsed.diaDiemVTT || '—',
+        nguyenNhan: parsed.nguyenNhan || '—',
+        moTaTonThat: parsed.moTaTonThat || '—',
+        hienTruong: parsed.hienTruong || '—',
+        laiXe: parsed.laiXe || '—',
+        nguoiLienHe: parsed.nguoiLienHe || '—',
+        gdvTiepNhan: parsed.gdvTiepNhan || profile.displayName || 'Chưa phân công',
+        canBoXuLy: parsed.canBoXuLy || '—',
+        trangThai: 'moi_tiep_nhan',
+        rawText: rawText,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        createdByName: creatorName
+      };
+
+      try {
+        await dbNodeInstance.ref(`pending_claims/${claimId}`).set(payload);
+        area.value = '';
+        triggerToast(`Đã tiếp nhận thành công hồ sơ ${payload.bienSo} (${payload.maVuTonThat})!`, 'success');
+      } catch (e) {
+        console.error(e);
+        triggerToast('Không thể lưu hồ sơ tồn: ' + e.message, 'error');
+      }
+    }
+
+    function openAddPendingClaimModal() {
+      const area = document.getElementById('txtQuickPasteMessage');
+      if (area) {
+        area.focus();
+        area.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    function setPendingStatusFilter(statusKey) {
+      activePendingStatusFilter = statusKey;
+      document.querySelectorAll('#pendingStatusFilterPills .filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.pendingStatus === statusKey);
+      });
+      executeUIRenderPendingClaims();
+    }
+
+    function executeUIRenderPendingClaims() {
+      const tbody = document.getElementById('tblPendingClaimsBodyContainer');
+      const statsContainer = document.getElementById('pendingWeeklyStatsContainer');
+      const gdvSelect = document.getElementById('pendingGdvFilterSelect');
+      if (!tbody) return;
+
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+
+      // Update GDV Select Filter Options
+      if (gdvSelect) {
+        const selectedGdv = gdvSelect.value;
+        const gdvSet = new Set(['all']);
+        claimsList.forEach(c => { if (c.gdvTiepNhan) gdvSet.add(c.gdvTiepNhan); });
+        
+        gdvSelect.innerHTML = `<option value="all">Tất cả GĐV team</option>` + 
+          Array.from(gdvSet).filter(g => g !== 'all').map(g => `<option value="${escapeAttributeData(g)}">${escapeHtmlOutput(g)}</option>`).join('');
+        
+        gdvSelect.value = selectedGdv && gdvSet.has(selectedGdv) ? selectedGdv : 'all';
+      }
+
+      // Read Filters
+      const searchVal = (document.getElementById('pendingSearchInput')?.value || '').toLowerCase().trim();
+      const gdvFilter = gdvSelect ? gdvSelect.value : 'all';
+      const periodFilter = document.getElementById('pendingPeriodFilterSelect')?.value || 'this_week';
+
+      // Time Period Helper (This Week vs Last Week vs Month)
+      const now = new Date();
+      const startOfThisWeek = new Date(now);
+      startOfThisWeek.setHours(0,0,0,0);
+      startOfThisWeek.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
+
+      const startOfLastWeek = new Date(startOfThisWeek);
+      startOfLastWeek.setDate(startOfThisWeek.getDate() - 7);
+      const endOfLastWeek = new Date(startOfThisWeek);
+
+      const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      // Filter list
+      let filtered = claimsList.filter(c => {
+        // Status filter
+        if (activePendingStatusFilter !== 'all' && c.trangThai !== activePendingStatusFilter) return false;
+        
+        // GĐV filter
+        if (gdvFilter !== 'all' && c.gdvTiepNhan !== gdvFilter) return false;
+
+        // Search text
+        if (searchVal) {
+          const matchBS = (c.bienSo || '').toLowerCase().includes(searchVal);
+          const matchVTT = (c.maVuTonThat || '').toLowerCase().includes(searchVal);
+          const matchGDV = (c.gdvTiepNhan || '').toLowerCase().includes(searchVal);
+          const matchHang = (c.hangXe || '').toLowerCase().includes(searchVal);
+          if (!matchBS && !matchVTT && !matchGDV && !matchHang) return false;
+        }
+
+        // Period filter
+        const createdDate = new Date(c.createdAt || Date.now());
+        if (periodFilter === 'this_week' && createdDate < startOfThisWeek) return false;
+        if (periodFilter === 'last_week' && (createdDate < startOfLastWeek || createdDate >= endOfLastWeek)) return false;
+        if (periodFilter === 'this_month' && createdDate < startOfThisMonth) return false;
+
+        return true;
+      });
+
+      // Calculate Status Counters for Pills
+      const counts = { all: claimsList.length, moi_tiep_nhan: 0, dang_giam_dinh: 0, cho_bao_gia: 0, cho_duyet_bt: 0, hoan_thanh: 0, ton_qua_han: 0 };
+      claimsList.forEach(c => {
+        if (counts[c.trangThai] !== undefined) counts[c.trangThai]++;
+      });
+      const cntAll = document.getElementById('cntStatusAll'); if (cntAll) cntAll.textContent = counts.all;
+      const cntMoi = document.getElementById('cntStatusMoi'); if (cntMoi) cntMoi.textContent = counts.moi_tiep_nhan;
+      const cntGD = document.getElementById('cntStatusGD'); if (cntGD) cntGD.textContent = counts.dang_giam_dinh;
+      const cntBG = document.getElementById('cntStatusBG'); if (cntBG) cntBG.textContent = counts.cho_bao_gia;
+      const cntBT = document.getElementById('cntStatusBT'); if (cntBT) cntBT.textContent = counts.cho_duyet_bt;
+      const cntHT = document.getElementById('cntStatusHT'); if (cntHT) cntHT.textContent = counts.hoan_thanh;
+
+      // Render Weekly Stats Cards
+      if (statsContainer) {
+        const thisWeekClaims = claimsList.filter(c => new Date(c.createdAt || Date.now()) >= startOfThisWeek);
+        const thisWeekTotal = thisWeekClaims.length;
+        const thisWeekCompleted = thisWeekClaims.filter(c => c.trangThai === 'hoan_thanh').length;
+        const thisWeekPending = thisWeekTotal - thisWeekCompleted;
+        const rate = thisWeekTotal > 0 ? Math.round((thisWeekCompleted / thisWeekTotal) * 100) : 100;
+
+        statsContainer.innerHTML = `
+          <div class="p-card" style="padding: 16px; border: 1px solid rgba(216,180,109,0.3); background: rgba(216,180,109,0.05);">
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 750; text-transform: uppercase;">Ca phát sinh tuần này</span>
+            <strong style="display: block; font-size: 22px; color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 4px;">${String(thisWeekTotal).padStart(2,'0')} ca</strong>
+          </div>
+          <div class="p-card" style="padding: 16px; border: 1px solid rgba(16,185,129,0.3); background: rgba(16,185,129,0.05);">
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 750; text-transform: uppercase;">Hồ sơ hoàn thành</span>
+            <strong style="display: block; font-size: 22px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 4px;">${String(thisWeekCompleted).padStart(2,'0')} ca</strong>
+          </div>
+          <div class="p-card" style="padding: 16px; border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.05);">
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 750; text-transform: uppercase;">Hồ sơ đang tồn đọng</span>
+            <strong style="display: block; font-size: 22px; color: #ef4444; font-family: 'JetBrains Mono'; margin-top: 4px;">${String(thisWeekPending).padStart(2,'0')} ca</strong>
+          </div>
+          <div class="p-card" style="padding: 16px; border: 1px solid rgba(59,130,246,0.3); background: rgba(59,130,246,0.05);">
+            <span style="font-size: 11px; color: var(--text-muted); font-weight: 750; text-transform: uppercase;">Tỷ lệ xử lý tuần</span>
+            <strong style="display: block; font-size: 22px; color: #3b82f6; font-family: 'JetBrains Mono'; margin-top: 4px;">${rate}%</strong>
+          </div>
+        `;
+      }
+
+      // Sort by newest created first
+      filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state-text">Không tìm thấy hồ sơ tồn đọng nào phù hợp.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((item, idx) => {
+        const statusConfig = PENDING_STATUS_MAP[item.trangThai] || PENDING_STATUS_MAP['moi_tiep_nhan'];
+        return `
+          <tr>
+            <td style="text-align: center; font-weight: 750; color: var(--text-muted);">${String(idx + 1).padStart(2, '0')}</td>
+            <td>
+              <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 13.5px; display: block;">${escapeHtmlOutput(item.bienSo)}</strong>
+              <span style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono';">${escapeHtmlOutput(item.maVuTonThat)}</span>
+            </td>
+            <td>
+              <strong style="color: var(--text-main); font-size: 13px; display: block;">${escapeHtmlOutput(item.hangXe || '—')}</strong>
+              <span style="font-size: 11.5px; color: var(--text-soft);">${escapeHtmlOutput(item.donViCapDon || '—')}</span>
+            </td>
+            <td>
+              <div style="font-size: 12.5px; font-weight: 750; color: var(--text-main);">${escapeHtmlOutput(item.gdvTiepNhan || '—')}</div>
+              <div style="font-size: 11px; color: var(--text-muted);">CBXL: ${escapeHtmlOutput(item.canBoXuLy || '—')}</div>
+            </td>
+            <td>
+              <div style="font-size: 12px; color: var(--text-main); font-weight: 600; line-height: 1.4;">${escapeHtmlOutput(item.moTaTonThat || item.nguyenNhan || '—')}</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">📍 ${escapeHtmlOutput(item.diaDiemVTT || '—')}</div>
+            </td>
+            <td>
+              <select onchange="updatePendingClaimStatus('${item.id}', this.value)" style="background: ${statusConfig.bg}; color: ${statusConfig.color}; border: 1px solid ${statusConfig.border}; font-size: 11.5px; font-weight: 800; padding: 4px 8px; border-radius: 8px; cursor: pointer; outline: none; width: 100%;">
+                ${Object.entries(PENDING_STATUS_MAP).map(([key, cfg]) => `
+                  <option value="${key}" ${item.trangThai === key ? 'selected' : ''} style="background: var(--surface); color: var(--text-main);">${cfg.label}</option>
+                `).join('')}
+              </select>
+            </td>
+            <td style="text-align: right; padding-right: 20px;">
+              <div style="display: inline-flex; gap: 6px; justify-content: flex-end;">
+                <button type="button" class="btn-premium btn-secondary" onclick="copyPendingClaimText('${item.id}')" title="Sao chép nội dung tin" style="padding: 4px 8px; min-height: 28px; font-size: 11px; margin: 0;">📋</button>
+                <button type="button" class="btn-premium btn-danger-p" onclick="deletePendingClaim('${item.id}', '${escapeAttributeData(item.bienSo)}')" title="Xóa hồ sơ tồn" style="padding: 4px 8px; min-height: 28px; font-size: 11px; margin: 0;">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function updatePendingClaimStatus(claimId, newStatus) {
+      try {
+        await dbNodeInstance.ref(`pending_claims/${claimId}/trangThai`).set(newStatus);
+        await dbNodeInstance.ref(`pending_claims/${claimId}/updatedAt`).set(Date.now());
+        triggerToast('Đã cập nhật trạng thái hồ sơ tồn thành công!', 'success');
+      } catch (e) {
+        console.error(e);
+        triggerToast('Lỗi cập nhật trạng thái: ' + e.message, 'error');
+      }
+    }
+
+    async function deletePendingClaim(claimId, bienSo) {
+      const confirmAction = await showConfirmModal('Xóa hồ sơ tồn', `Bạn có chắc chắn muốn xóa vụ tổn thất xe ${bienSo} khỏi danh sách hồ sơ tồn không?`);
+      if (confirmAction) {
+        try {
+          await dbNodeInstance.ref(`pending_claims/${claimId}`).remove();
+          triggerToast(`Đã xóa hồ sơ xe ${bienSo} thành công.`, 'warning');
+        } catch (e) {
+          console.error(e);
+          triggerToast('Lỗi xóa hồ sơ: ' + e.message, 'error');
+        }
+      }
+    }
+
+    function copyPendingClaimText(claimId) {
+      const item = cachedPendingClaimsPayload[claimId];
+      if (!item) return;
+      const text = item.rawText || `YC GDCT / ${item.hangXe}\nBSX: ${item.bienSo}\nMã VTT: ${item.maVuTonThat}\nGĐV tiếp nhận: ${item.gdvTiepNhan}\nĐịa điểm: ${item.diaDiemVTT}\nMô tả: ${item.moTaTonThat}`;
+      executeTextCopyToClipboardRawString(text);
+    }
+
+    function openExportWeeklyReportModal() {
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+      const now = new Date();
+      const startOfThisWeek = new Date(now);
+      startOfThisWeek.setHours(0,0,0,0);
+      startOfThisWeek.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
+
+      const thisWeekClaims = claimsList.filter(c => new Date(c.createdAt || Date.now()) >= startOfThisWeek);
+      
+      let summaryReportText = `==================================================\n`;
+      summaryReportText += `   BÁO CÁO TỔNG HỢP HỒ SƠ TỒN TRONG TUẦN (TASCO INSURTECH)\n`;
+      summaryReportText += `==================================================\n`;
+      summaryReportText += `+ Thời gian báo cáo:  ${new Date().toLocaleDateString('vi-VN')}\n`;
+      summaryReportText += `+ Tổng số hồ sơ phát sinh tuần: ${thisWeekClaims.length} vụ\n`;
+      summaryReportText += `+ Đã hoàn thành đóng hồ sơ:     ${thisWeekClaims.filter(c => c.trangThai === 'hoan_thanh').length} vụ\n`;
+      summaryReportText += `+ Hồ sơ còn đang tồn đọng:     ${thisWeekClaims.filter(c => c.trangThai !== 'hoan_thanh').length} vụ\n`;
+      summaryReportText += `--------------------------------------------------\n\n`;
+
+      summaryReportText += `[CHI TIẾT HỒ SƠ TỒN ĐỌNG PHÂN THEO GIÁM ĐỊNH VIÊN]\n`;
+      
+      const gdvMap = {};
+      claimsList.filter(c => c.trangThai !== 'hoan_thanh').forEach(c => {
+        const gdv = c.gdvTiepNhan || 'Chưa phân công';
+        if (!gdvMap[gdv]) gdvMap[gdv] = [];
+        gdvMap[gdv].push(c);
+      });
+
+      Object.entries(gdvMap).forEach(([gdv, list], idx) => {
+        summaryReportText += `\n${idx + 1}. GĐV ${gdv} (${list.length} hồ sơ tồn):\n`;
+        list.forEach((item) => {
+          const sttLabel = PENDING_STATUS_MAP[item.trangThai]?.label || item.trangThai;
+          summaryReportText += `   - [${item.bienSo}] (${item.maVuTonThat}) - ${item.hangXe} | Trạng thái: ${sttLabel} | Nơi VTT: ${item.diaDiemVTT}\n`;
+        });
+      });
+
+      executeTextCopyToClipboardRawString(summaryReportText);
+      triggerToast('Đã sao chép Báo cáo tổng hợp tuần vào bộ nhớ tạm!', 'success');
+    }
+
+    /****************************************************
      * 1. PREMIUM MANAGEMENT DASHBOARD WORKSPACE
      ****************************************************/
     function filterCasesByUserPrivileges(casesPayload, currentUserInstance) {
@@ -3361,10 +3741,12 @@
       // Update header tabs active states
       const homeBtn = document.getElementById('headerNavHomeBtn');
       const listBtn = document.getElementById('headerNavListBtn');
+      const pendingBtn = document.getElementById('headerNavPendingBtn');
       const createBtn = document.getElementById('headerNavCreateBtn');
       const usersBtn = document.getElementById('headerNavUsersBtn');
       if (homeBtn) homeBtn.classList.toggle('active', activeDashboardTab === 'home');
       if (listBtn) listBtn.classList.toggle('active', activeDashboardTab === 'list');
+      if (pendingBtn) pendingBtn.classList.toggle('active', activeDashboardTab === 'pending');
       if (createBtn) createBtn.classList.toggle('active', activeDashboardTab === 'create');
       if (usersBtn) usersBtn.classList.toggle('active', activeDashboardTab === 'users');
 
@@ -3379,6 +3761,13 @@
 
         if (activeDashboardTab === 'list') {
           executeUIRenderCasesTable(filteredVal);
+        }
+      });
+
+      dbNodeInstance.ref('pending_claims').on('value', (snapshot) => {
+        cachedPendingClaimsPayload = snapshot.val() || {};
+        if (activeDashboardTab === 'pending') {
+          executeUIRenderPendingClaims();
         }
       });
     }
@@ -3397,10 +3786,12 @@
       
       const homeBtn = document.getElementById('headerNavHomeBtn');
       const listBtn = document.getElementById('headerNavListBtn');
+      const pendingBtn = document.getElementById('headerNavPendingBtn');
       const createBtn = document.getElementById('headerNavCreateBtn');
       const usersBtn = document.getElementById('headerNavUsersBtn');
       if (homeBtn) homeBtn.classList.toggle('active', tabName === 'home');
       if (listBtn) listBtn.classList.toggle('active', tabName === 'list');
+      if (pendingBtn) pendingBtn.classList.toggle('active', tabName === 'pending');
       if (createBtn) createBtn.classList.toggle('active', tabName === 'create');
       if (usersBtn) usersBtn.classList.toggle('active', tabName === 'users');
 
@@ -3670,6 +4061,118 @@
         });
         fetchAndBindUsersListRealtime();
         loadGeminiSettingsKeyIntoUI();
+      } else if (activeDashboardTab === 'pending') {
+        container.innerHTML = `
+          <div class="workspace-grid single-col">
+            <section class="p-card cases-panel" style="padding: 28px;">
+              <!-- Header Title & Action Buttons -->
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 18px;">
+                <div>
+                  <h2 style="font-size: 22px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; gap: 10px; margin: 0;">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="12" y1="18" x2="12" y2="12"></line>
+                      <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                    <span>Quản lý Hồ sơ tồn & Báo cáo tổn thất</span>
+                  </h2>
+                  <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft);">Quản lý danh sách hồ sơ tổn thất tồn đọng trong team, phân công Giám định viên và theo dõi báo cáo tuần.</p>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                  <button type="button" class="btn-premium btn-secondary" onclick="openExportWeeklyReportModal()" style="width: auto !important; padding: 0 18px; min-height: 40px; font-size: 12.5px; border-radius: 10px; font-weight: 750; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Xuất Báo cáo tuần</span>
+                  </button>
+                  <button type="button" class="btn-premium" onclick="openAddPendingClaimModal()" style="width: auto !important; padding: 0 22px; min-height: 40px; font-size: 12.5px; border-radius: 10px; font-weight: 800; background: var(--primary-gradient); color: #080b11; border: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>+ Tiếp nhận hồ sơ mới (Dán tin)</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick Paste Dropzone Banner Card -->
+              <div style="background: var(--surface); border: 1px dashed var(--primary); border-radius: 14px; padding: 18px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                    <span>Dán nhanh bản tin thông báo tổn thất (Zalo / Email / SMS)</span>
+                  </strong>
+                  <span style="font-size: 11.5px; color: var(--text-muted);">Tự động phân tích 16+ trường thông tin</span>
+                </div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                  <textarea id="txtQuickPasteMessage" class="textarea-premium" placeholder="Ví dụ dán nguyên văn bản tin:&#10;YC GDCT/TOYOTA ĐẮK LẮK&#10; - BSX: 47E00777&#10; - Hãng xe: TOYOTA...&#10; - GĐV tiếp nhận: Huỳnh Văn Phúc&#10; - Mã số vụ tổn thất: VTT/XCG/2026/0067213" style="flex: 1; min-height: 85px; font-size: 12px; line-height: 1.5; font-family: inherit; margin: 0; padding: 10px;"></textarea>
+                  <button type="button" class="btn-premium" onclick="executeQuickParseAndAddClaim()" style="width: auto !important; height: auto; min-height: 85px; padding: 0 24px; font-size: 13px; font-weight: 800; border-radius: 10px; background: var(--primary-gradient); color: #080b11; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    <span>Phân tích & Thêm mới</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Weekly Metrics Summary Stats Cards -->
+              <div id="pendingWeeklyStatsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                <!-- Stat Cards will be rendered dynamically -->
+              </div>
+
+              <!-- Filter Toolbar Row -->
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; background: var(--bg-soft); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border);">
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; flex: 1;">
+                  <!-- Search Input -->
+                  <div class="search-wrap" style="margin: 0; max-width: 240px;">
+                    ${SVGS.SEARCH}
+                    <input id="pendingSearchInput" class="input-premium" type="search" placeholder="Tìm BSX, Mã VTT, GĐV..." autocomplete="off" />
+                  </div>
+                  <!-- Filter GĐV Dropdown -->
+                  <select id="pendingGdvFilterSelect" class="input-premium" onchange="executeUIRenderPendingClaims()" style="width: auto; max-width: 180px; font-size: 12px; height: 38px;">
+                    <option value="all">Tất cả GĐV team</option>
+                  </select>
+                  <!-- Filter Time Period -->
+                  <select id="pendingPeriodFilterSelect" class="input-premium" onchange="executeUIRenderPendingClaims()" style="width: auto; max-width: 160px; font-size: 12px; height: 38px;">
+                    <option value="this_week">Tuần này</option>
+                    <option value="last_week">Tuần trước</option>
+                    <option value="this_month">Tháng này</option>
+                    <option value="all">Tất cả thời gian</option>
+                  </select>
+                </div>
+
+                <!-- Status Filter Pills -->
+                <div class="filter-pills" id="pendingStatusFilterPills" style="display: flex; gap: 4px; margin: 0; background: var(--surface); padding: 4px; border-radius: 10px; border: 1px solid var(--border); overflow-x: auto;">
+                  <button class="filter-pill active" data-pending-status="all" onclick="setPendingStatusFilter('all')" style="padding: 5px 12px; font-size: 11.5px; font-weight: 750;">Tất cả (<span id="cntStatusAll">0</span>)</button>
+                  <button class="filter-pill" data-pending-status="moi_tiep_nhan" onclick="setPendingStatusFilter('moi_tiep_nhan')" style="padding: 5px 12px; font-size: 11.5px; font-weight: 750; color: #f59e0b;">Mới tiếp nhận (<span id="cntStatusMoi">0</span>)</button>
+                  <button class="filter-pill" data-pending-status="dang_giam_dinh" onclick="setPendingStatusFilter('dang_giam_dinh')" style="padding: 5px 12px; font-size: 11.5px; font-weight: 750; color: #3b82f6;">Đang giám định (<span id="cntStatusGD">0</span>)</button>
+                  <button class="filter-pill" data-pending-status="cho_bao_gia" onclick="setPendingStatusFilter('cho_bao_gia')" style="padding: 5px 12px; font-size: 11.5px; font-weight: 750; color: #8b5cf6;">Chờ báo giá (<span id="cntStatusBG">0</span>)</button>
+                  <button class="filter-pill" data-pending-status="cho_duyet_bt" onclick="setPendingStatusFilter('cho_duyet_bt')" style="padding: 5px 12px; font-size: 11.5px; font-weight: 750; color: #ec4899;">Chờ duyệt BT (<span id="cntStatusBT">0</span>)</button>
+                  <button class="filter-pill" data-pending-status="hoan_thanh" onclick="setPendingStatusFilter('hoan_thanh')" style="padding: 5px 12px; font-size: 11.5px; font-weight: 750; color: #10b981;">Đã hoàn thành (<span id="cntStatusHT">0</span>)</button>
+                </div>
+              </div>
+
+              <!-- Table Container -->
+              <div class="table-container" style="border: 1px solid var(--border); border-radius: 14px; background: var(--bg-soft); overflow: hidden;">
+                <table class="p-table" style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr>
+                      <th style="width: 50px; text-align: center;">#</th>
+                      <th style="width: 160px;">Mã VTT / BSX</th>
+                      <th style="width: 200px;">Hãng xe & Đơn vị cấp</th>
+                      <th style="width: 180px;">GĐV & Cán bộ XL</th>
+                      <th>Nội dung tổn thất & Địa điểm</th>
+                      <th style="width: 160px;">Trạng thái hồ sơ</th>
+                      <th style="width: 130px; text-align: right; padding-right: 20px;">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tblPendingClaimsBodyContainer">
+                    <tr><td colspan="7" class="empty-state-text">Đang đồng bộ danh sách hồ sơ tồn...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        `;
+
+        const searchInput = document.getElementById('pendingSearchInput');
+        if (searchInput) searchInput.addEventListener('input', () => executeUIRenderPendingClaims());
+
+        executeUIRenderPendingClaims();
       } else {
         if (activeCreateFlowMode === 'select') {
           container.innerHTML = `
