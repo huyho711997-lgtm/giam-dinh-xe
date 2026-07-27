@@ -3710,12 +3710,37 @@
       }
     }
 
+    function toggleCustomStatusDropdown(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById('menuCustomStatusDropdown');
+      if (!menu) return;
+      const isHidden = menu.style.display === 'none' || !menu.style.display;
+      closeAllCustomDropdowns();
+      if (isHidden) {
+        menu.style.display = 'block';
+      }
+    }
+
+    function selectCustomStatusFilter(statusKey) {
+      activePendingStatusFilter = statusKey;
+      closeAllCustomDropdowns();
+      executeUIRenderPendingClaims();
+    }
+
+    function closeAllCustomDropdowns() {
+      const menu = document.getElementById('menuCustomStatusDropdown');
+      if (menu) menu.style.display = 'none';
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.custom-dropdown-container')) {
+        closeAllCustomDropdowns();
+      }
+    });
+
     function setPendingStatusFilter(statusKey) {
       activePendingStatusFilter = statusKey;
-      const statusSelect = document.getElementById('pendingStatusFilterSelect');
-      if (statusSelect && statusSelect.value !== statusKey) {
-        statusSelect.value = statusKey;
-      }
+      closeAllCustomDropdowns();
       executeUIRenderPendingClaims();
     }
 
@@ -3723,14 +3748,13 @@
       const searchInput = document.getElementById('pendingSearchInput');
       const gdvSelect = document.getElementById('pendingGdvFilterSelect');
       const periodSelect = document.getElementById('pendingPeriodFilterSelect');
-      const statusSelect = document.getElementById('pendingStatusFilterSelect');
 
       if (searchInput) searchInput.value = '';
       if (gdvSelect) gdvSelect.value = 'all';
       if (periodSelect) periodSelect.value = 'this_week';
-      if (statusSelect) statusSelect.value = 'all';
 
       activePendingStatusFilter = 'all';
+      closeAllCustomDropdowns();
       executeUIRenderPendingClaims();
       triggerToast('Đã đặt lại bộ lọc dữ liệu!', 'info');
     }
@@ -3739,7 +3763,6 @@
       const tbody = document.getElementById('tblPendingClaimsBodyContainer');
       const statsContainer = document.getElementById('pendingWeeklyStatsContainer');
       const gdvSelect = document.getElementById('pendingGdvFilterSelect');
-      const statusSelect = document.getElementById('pendingStatusFilterSelect');
       if (!tbody) return;
 
       const claimsList = Object.values(cachedPendingClaimsPayload || {});
@@ -3760,7 +3783,6 @@
       const searchVal = (document.getElementById('pendingSearchInput')?.value || '').toLowerCase().trim();
       const gdvFilter = gdvSelect ? gdvSelect.value : 'all';
       const periodFilter = document.getElementById('pendingPeriodFilterSelect')?.value || 'this_week';
-      if (statusSelect) activePendingStatusFilter = statusSelect.value || activePendingStatusFilter || 'all';
 
       // Time Period Helper (This Week vs Last Week vs Month)
       const now = new Date();
@@ -3800,22 +3822,45 @@
         return true;
       });
 
-      // Calculate Status Counters for Status Dropdown Menu
+      // Calculate Status Counters
       const counts = { all: claimsList.length, moi_tiep_nhan: 0, dang_giam_dinh: 0, cho_bao_gia: 0, cho_duyet_bt: 0, hoan_thanh: 0, ton_qua_han: 0 };
       claimsList.forEach(c => {
         if (counts[c.trangThai] !== undefined) counts[c.trangThai]++;
       });
 
-      if (statusSelect) {
-        const cur = activePendingStatusFilter || 'all';
-        statusSelect.innerHTML = `
-          <option value="all" ${cur === 'all' ? 'selected' : ''}>Tất cả trạng thái (${counts.all})</option>
-          <option value="moi_tiep_nhan" ${cur === 'moi_tiep_nhan' ? 'selected' : ''}>🟡 Mới tiếp nhận (${counts.moi_tiep_nhan})</option>
-          <option value="dang_giam_dinh" ${cur === 'dang_giam_dinh' ? 'selected' : ''}>🔵 Đang giám định (${counts.dang_giam_dinh})</option>
-          <option value="cho_bao_gia" ${cur === 'cho_bao_gia' ? 'selected' : ''}>🟣 Chờ báo giá Gara (${counts.cho_bao_gia})</option>
-          <option value="cho_duyet_bt" ${cur === 'cho_duyet_bt' ? 'selected' : ''}>🔴 Chờ duyệt BT (${counts.cho_duyet_bt})</option>
-          <option value="hoan_thanh" ${cur === 'hoan_thanh' ? 'selected' : ''}>🟢 Đã hoàn thành (${counts.hoan_thanh})</option>
-        `;
+      // Render Custom Luxury Status Floating Menu Items
+      const curStatus = activePendingStatusFilter || 'all';
+      const statusLabelMap = {
+        'all': { label: 'Tất cả trạng thái', color: 'var(--primary)' },
+        'moi_tiep_nhan': { label: 'Mới tiếp nhận', color: '#f59e0b' },
+        'dang_giam_dinh': { label: 'Đang giám định', color: '#3b82f6' },
+        'cho_bao_gia': { label: 'Chờ báo giá Gara', color: '#8b5cf6' },
+        'cho_duyet_bt': { label: 'Chờ duyệt BT', color: '#ec4899' },
+        'hoan_thanh': { label: 'Đã hoàn thành', color: '#10b981' }
+      };
+
+      const lblSelected = document.getElementById('lblCustomStatusDropdownSelected');
+      if (lblSelected) {
+        const curInfo = statusLabelMap[curStatus] || statusLabelMap['all'];
+        const countVal = counts[curStatus] !== undefined ? counts[curStatus] : counts.all;
+        lblSelected.innerHTML = `${curInfo.label} <span style="font-family: 'JetBrains Mono'; opacity: 0.85; margin-left: 4px; font-weight: 800;">(${countVal})</span>`;
+      }
+
+      const customMenu = document.getElementById('menuCustomStatusDropdown');
+      if (customMenu) {
+        customMenu.innerHTML = Object.entries(statusLabelMap).map(([key, item]) => {
+          const countVal = counts[key] !== undefined ? counts[key] : counts.all;
+          const isSel = curStatus === key;
+          return `
+            <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="selectCustomStatusFilter('${key}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 3px; ${isSel ? 'background: rgba(216,180,109,0.14); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); font-weight: 850;' : 'color: var(--text-main); font-weight: 650;'}">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="width: 9px; height: 9px; border-radius: 50%; background: ${item.color}; box-shadow: 0 0 8px ${item.color}; flex-shrink: 0;"></span>
+                <span>${item.label}</span>
+              </div>
+              <span style="font-size: 11px; font-family: 'JetBrains Mono'; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: ${isSel ? 'rgba(216,180,109,0.25)' : 'var(--surface-soft)'}; color: ${isSel ? 'var(--primary)' : 'var(--text-soft)'};">${countVal}</span>
+            </div>
+          `;
+        }).join('');
       }
 
       // Render Weekly Stats Cards
@@ -4391,18 +4436,18 @@
 
                 <!-- Right Side: Unified 3-Dropdown Filter Control Group + Reset Button -->
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; flex: 1;">
-                  <!-- Filter 1: Status Dropdown -->
-                  <div style="position: relative; flex: 1; min-width: 180px; max-width: 220px;">
-                    <select id="pendingStatusFilterSelect" class="input-premium" onchange="executeUIRenderPendingClaims()" style="appearance: none; padding-left: 36px; padding-right: 32px; font-size: 12.5px; height: 42px; border-radius: 12px; font-weight: 750; cursor: pointer; background: var(--bg-soft); border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
-                      <option value="all">Tất cả trạng thái (0)</option>
-                      <option value="moi_tiep_nhan">🟡 Mới tiếp nhận (0)</option>
-                      <option value="dang_giam_dinh">🔵 Đang giám định (0)</option>
-                      <option value="cho_bao_gia">🟣 Chờ báo giá (0)</option>
-                      <option value="cho_duyet_bt">🔴 Chờ duyệt BT (0)</option>
-                      <option value="hoan_thanh">🟢 Đã hoàn thành (0)</option>
-                    </select>
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  <!-- Filter 1: Custom Luxury Floating Status Dropdown Menu -->
+                  <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 200px; max-width: 230px;">
+                    <button id="btnCustomStatusDropdown" type="button" onclick="toggleCustomStatusDropdown(event)" style="width: 100%; height: 42px; padding: 0 30px 0 36px; border-radius: 12px; font-size: 12.5px; font-weight: 750; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; transition: all 0.2s ease;">
+                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                      <span id="lblCustomStatusDropdownSelected" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Tất cả trạng thái (0)</span>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+
+                    <!-- Custom Floating Menu List (Obsidian Luxury Glassmorphism Style) -->
+                    <div id="menuCustomStatusDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 240px; background: var(--surface-strong); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.35); padding: 6px; z-index: 999; backdrop-filter: blur(16px);">
+                      <!-- Custom List items rendered dynamically -->
+                    </div>
                   </div>
 
                   <!-- Filter 2: GDV Team Dropdown -->
