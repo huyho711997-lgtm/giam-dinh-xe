@@ -3940,12 +3940,12 @@
           const countVal = counts[key] !== undefined ? counts[key] : counts.all;
           const isSel = curStatus === key;
           return `
-            <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="selectCustomStatusFilter('${key}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 3px; ${isSel ? 'background: rgba(216,180,109,0.14); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); font-weight: 850;' : 'color: var(--text-main); font-weight: 650;'}">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="width: 9px; height: 9px; border-radius: 50%; background: ${item.color}; box-shadow: 0 0 8px ${item.color}; flex-shrink: 0;"></span>
+            <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="selectCustomStatusFilter('${key}')" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                <span style="width: 7px; height: 7px; border-radius: 50%; background: ${item.color}; box-shadow: 0 0 5px ${item.color}; flex-shrink: 0;"></span>
                 <span>${item.label}</span>
               </div>
-              <span style="font-size: 11px; font-family: 'JetBrains Mono'; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: ${isSel ? 'rgba(216,180,109,0.25)' : 'var(--surface-soft)'}; color: ${isSel ? 'var(--primary)' : 'var(--text-soft)'};">${countVal}</span>
+              <span style="font-size: 10.5px; font-family: 'JetBrains Mono'; font-weight: 800; padding: 1px 6px; border-radius: 99px; background: ${isSel ? 'rgba(216,180,109,0.2)' : 'var(--bg-soft)'}; color: ${isSel ? 'var(--primary)' : 'var(--text-muted)'};">${countVal}</span>
             </div>
           `;
         }).join('');
@@ -4525,15 +4525,15 @@
                 <!-- Right Side: Unified 3-Dropdown Filter Control Group + Reset Button -->
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; flex: 1;">
                   <!-- Filter 1: Custom Luxury Floating Status Dropdown Menu -->
-                  <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 200px; max-width: 230px;">
-                    <button id="btnCustomStatusDropdown" type="button" onclick="toggleCustomStatusDropdown(event)" style="width: 100%; height: 42px; padding: 0 30px 0 36px; border-radius: 12px; font-size: 12.5px; font-weight: 750; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; transition: all 0.2s ease;">
+                  <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 190px; max-width: 220px;">
+                    <button id="btnCustomStatusDropdown" type="button" onclick="toggleCustomStatusDropdown(event)" style="width: 100%; height: 42px; padding: 0 28px 0 34px; border-radius: 12px; font-size: 12.5px; font-weight: 750; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; transition: all 0.2s ease;">
                       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                      <span id="lblCustomStatusDropdownSelected" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Tất cả trạng thái (0)</span>
+                      <span id="lblCustomStatusDropdownSelected" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 750;">Tất cả trạng thái (0)</span>
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </button>
 
-                    <!-- Custom Floating Menu List (Obsidian Luxury Glassmorphism Style) -->
-                    <div id="menuCustomStatusDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 240px; background: var(--surface-strong); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.35); padding: 6px; z-index: 999; backdrop-filter: blur(16px);">
+                    <!-- Custom Floating Menu List (Slim Apple-Style Glassmorphism) -->
+                    <div id="menuCustomStatusDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; width: 100%; min-width: 210px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.06); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
                       <!-- Custom List items rendered dynamically -->
                     </div>
                   </div>
