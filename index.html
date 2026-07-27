@@ -3560,14 +3560,6 @@
       };
     }
 
-    function openAddPendingClaimModal() {
-      const modal = document.getElementById('addPendingClaimModalOverlay');
-      if (!modal) return;
-
-      // Clear paste box
-      const pasteArea = document.getElementById('modalTxtQuickPasteMessage');
-      if (pasteArea) pasteArea.value = '';
-
     function findExistingClaimByMaVTT(maVuTonThat) {
       if (!maVuTonThat || typeof maVuTonThat !== 'string') return null;
       const targetNorm = maVuTonThat.trim().toLowerCase();
