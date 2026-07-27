@@ -3443,64 +3443,85 @@
     function parseDamageReportText(rawText) {
       if (!rawText || typeof rawText !== 'string') return {};
 
-      const getValue = (labels) => {
-        for (const label of labels) {
-          const regex = new RegExp(`(?:-|^|\\n)\\s*${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[:=]\\s*([^\\n]+)`, 'i');
-          const match = rawText.match(regex);
-          if (match && match[1]) {
-            let val = match[1].trim();
-            val = val.replace(/\s*@\S+.*$/, '').replace(/[\.\s]+$/, '').trim();
-            if (val && val !== '-') return val;
+      const lines = rawText.split(/\r?\n/);
+      const result = {
+        maVuTonThat: '',
+        bienSo: '',
+        donViCapDon: '',
+        hangXe: '',
+        hieuXe: '',
+        namSanXuat: '',
+        vcx: '',
+        tnds: '',
+        ngayThongBao: '',
+        ngayVTT: '',
+        diaDiemVTT: '',
+        nguyenNhan: '',
+        moTaTonThat: '',
+        hienTruong: '',
+        laiXe: '',
+        nguoiLienHe: '',
+        gdvTiepNhan: '',
+        canBoXuLy: '',
+        rawText: rawText
+      };
+
+      const keyMap = [
+        { keys: ['mã số vụ tổn thất', 'mã vtt', 'mã vụ tổn thất', 'mã hồ sơ', 'mã vụ'], field: 'maVuTonThat' },
+        { keys: ['bsx', 'biển số', 'biển kiểm soát', 'biển số xe'], field: 'bienSo' },
+        { keys: ['đv cấp đơn', 'đơn vị cấp đơn', 'chi nhánh cấp đơn'], field: 'donViCapDon' },
+        { keys: ['hãng xe'], field: 'hangXe' },
+        { keys: ['hiệu xe'], field: 'hieuXe' },
+        { keys: ['năm sx', 'năm sản xuất'], field: 'namSanXuat' },
+        { keys: ['vcx', 'bảo hiểm vcx'], field: 'vcx' },
+        { keys: ['tnds', 'bảo hiểm tnds'], field: 'tnds' },
+        { keys: ['ngày thông báo', 'thời gian thông báo'], field: 'ngayThongBao' },
+        { keys: ['ngày vtt', 'ngày xảy ra vtt', 'ngày tổn thất'], field: 'ngayVTT' },
+        { keys: ['địa điểm vtt', 'địa điểm tổn thất', 'nơi xảy ra vtt'], field: 'diaDiemVTT' },
+        { keys: ['nguyên nhân', 'nguyên nhân vtt'], field: 'nguyenNhan' },
+        { keys: ['mô tả tổn thất', 'mô tả vtt', 'tổn thất'], field: 'moTaTonThat' },
+        { keys: ['hiện trường', 'tình trạng hiện trường'], field: 'hienTruong' },
+        { keys: ['lái xe', 'tài xế'], field: 'laiXe' },
+        { keys: ['người liên hệ', 'liên hệ'], field: 'nguoiLienHe' },
+        { keys: ['gđv tiếp nhận vtt', 'gđv tiếp nhận', 'gđv phụ trách', 'giám định viên'], field: 'gdvTiepNhan' },
+        { keys: ['cán bộ xử lý', 'cbxl'], field: 'canBoXuLy' }
+      ];
+
+      for (let line of lines) {
+        line = line.trim();
+        if (!line) continue;
+        if (line.startsWith('-') || line.startsWith('+') || line.startsWith('*')) {
+          line = line.substring(1).trim();
+        }
+
+        const colonIdx = line.indexOf(':');
+        const eqIdx = line.indexOf('=');
+        let sepIdx = -1;
+        if (colonIdx !== -1 && eqIdx !== -1) sepIdx = Math.min(colonIdx, eqIdx);
+        else if (colonIdx !== -1) sepIdx = colonIdx;
+        else if (eqIdx !== -1) sepIdx = eqIdx;
+
+        if (sepIdx !== -1) {
+          const rawKey = line.substring(0, sepIdx).trim().toLowerCase();
+          let rawVal = line.substring(sepIdx + 1).trim();
+          rawVal = rawVal.replace(/\s*@\S+.*$/, '').replace(/[\.\s]+$/, '').trim();
+
+          if (rawVal && rawVal !== '-') {
+            for (const item of keyMap) {
+              if (!result[item.field] && item.keys.some(k => rawKey.includes(k) || k.includes(rawKey))) {
+                result[item.field] = rawVal;
+                break;
+              }
+            }
           }
         }
-        return '';
-      };
-
-      const maVuTonThat = getValue(['Mã số vụ tổn thất', 'Mã VTT', 'Mã vụ tổn thất', 'Mã hồ sơ', 'Mã vụ']);
-      const bienSo = getValue(['BSX', 'Biển số', 'Biển kiểm soát', 'Biển số xe']);
-      const donViCapDon = getValue(['ĐV cấp đơn', 'Đơn vị cấp đơn', 'Chi nhánh cấp đơn']);
-      const hangXe = getValue(['Hãng xe']);
-      const hieuXe = getValue(['Hiệu xe']);
-      const namSanXuat = getValue(['Năm SX', 'Năm sản xuất']);
-      const vcx = getValue(['VCX', 'Bảo hiểm VCX']);
-      const tnds = getValue(['TNDS', 'Bảo hiểm TNDS']);
-      const ngayThongBao = getValue(['Ngày thông báo', 'Thời gian thông báo']);
-      const ngayVTT = getValue(['Ngày VTT', 'Ngày xảy ra VTT', 'Ngày tổn thất']);
-      const diaDiemVTT = getValue(['Địa điểm VTT', 'Địa điểm tổn thất', 'Nơi xảy ra VTT']);
-      const nguyenNhan = getValue(['Nguyên nhân', 'Nguyên nhân VTT']);
-      const moTaTonThat = getValue(['Mô tả tổn thất', 'Mô tả VTT', 'Tổn thất']);
-      const hienTruong = getValue(['Hiện trường', 'Tình trạng hiện trường']);
-      const laiXe = getValue(['Lái xe', 'Tài xế']);
-      const nguoiLienHe = getValue(['Người liên hệ', 'Liên hệ']);
-      const gdvTiepNhan = getValue(['GĐV tiếp nhận VTT', 'GĐV tiếp nhận', 'GĐV phụ trách', 'Giám định viên']);
-      const canBoXuLy = getValue(['Cán bộ xử lý', 'CBXL']);
-
-      let fullHangXe = hangXe;
-      if (hieuXe && !hangXe.toLowerCase().includes(hieuXe.toLowerCase())) {
-        fullHangXe = `${hangXe} ${hieuXe}`.trim();
       }
 
-      return {
-        maVuTonThat,
-        bienSo,
-        donViCapDon,
-        hangXe: fullHangXe,
-        hieuXe,
-        namSanXuat,
-        vcx,
-        tnds,
-        ngayThongBao,
-        ngayVTT,
-        diaDiemVTT,
-        nguyenNhan,
-        moTaTonThat,
-        hienTruong,
-        laiXe,
-        nguoiLienHe,
-        gdvTiepNhan,
-        canBoXuLy,
-        rawText
-      };
+      if (result.hieuXe && result.hangXe && !result.hangXe.toLowerCase().includes(result.hieuXe.toLowerCase())) {
+        result.hangXe = `${result.hangXe} ${result.hieuXe}`.trim();
+      }
+
+      return result;
     }
 
     async function executeQuickParseAndAddClaim() {
@@ -3705,18 +3726,22 @@
       const gdvSelect = document.getElementById('pendingGdvFilterSelect');
       if (!tbody) return;
 
-      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+      const rawList = Object.values(cachedPendingClaimsPayload || {});
+      const claimsList = rawList.filter(c => c && typeof c === 'object');
 
-      // Update GDV Select Filter Options
+      // Update GDV Select Filter Options only when options change
       if (gdvSelect) {
         const selectedGdv = gdvSelect.value;
         const gdvSet = new Set(['all']);
         claimsList.forEach(c => { if (c.gdvTiepNhan) gdvSet.add(c.gdvTiepNhan); });
         
-        gdvSelect.innerHTML = `<option value="all">Tất cả GĐV team</option>` + 
-          Array.from(gdvSet).filter(g => g !== 'all').map(g => `<option value="${escapeAttributeData(g)}">${escapeHtmlOutput(g)}</option>`).join('');
-        
-        gdvSelect.value = selectedGdv && gdvSet.has(selectedGdv) ? selectedGdv : 'all';
+        const currentOptionString = Array.from(gdvSelect.options).map(o => o.value).join(',');
+        const newOptionString = Array.from(gdvSet).join(',');
+        if (currentOptionString !== newOptionString) {
+          gdvSelect.innerHTML = `<option value="all">Tất cả GĐV team</option>` + 
+            Array.from(gdvSet).filter(g => g !== 'all').map(g => `<option value="${escapeAttributeData(g)}">${escapeHtmlOutput(g)}</option>`).join('');
+          gdvSelect.value = selectedGdv && gdvSet.has(selectedGdv) ? selectedGdv : 'all';
+        }
       }
 
       // Read Filters
