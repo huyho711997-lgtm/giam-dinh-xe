@@ -3276,22 +3276,18 @@
     }
 
     function updateStatsCounters(val) {
-      try {
-        const allEntries = Object.entries(val || cachedCasesPayload || {}).filter(([,item]) => item && typeof item === 'object');
-        const metricTotal = allEntries.length;
-        const metricCompleted = allEntries.filter(([,item]) => item && item.trangThai === STATUS_COMPLETED).length;
-        const metricPending = metricTotal - metricCompleted;
+      const allEntries = Object.entries(val || cachedCasesPayload || {});
+      const metricTotal = allEntries.length;
+      const metricCompleted = allEntries.filter(([,item]) => item.trangThai === STATUS_COMPLETED).length;
+      const metricPending = metricTotal - metricCompleted;
 
-        const totalLbl = document.getElementById('lblTotalCases');
-        const pendingLbl = document.getElementById('lblPendingCases');
-        const completedLbl = document.getElementById('lblCompletedCases');
-        
-        if (totalLbl) totalLbl.textContent = metricTotal;
-        if (pendingLbl) pendingLbl.textContent = metricPending;
-        if (completedLbl) completedLbl.textContent = metricCompleted;
-      } catch (e) {
-        console.error("Lỗi updateStatsCounters:", e);
-      }
+      const totalLbl = document.getElementById('lblTotalCases');
+      const pendingLbl = document.getElementById('lblPendingCases');
+      const completedLbl = document.getElementById('lblCompletedCases');
+      
+      if (totalLbl) totalLbl.textContent = metricTotal;
+      if (pendingLbl) pendingLbl.textContent = metricPending;
+      if (completedLbl) completedLbl.textContent = metricCompleted;
     }
 
     function openUserProfileModal() {
@@ -4027,34 +4023,6 @@
       reader.readAsArrayBuffer(file);
     }
 
-    function isSameDateString(dateStr1, dateStr2) {
-      if (!dateStr1 || !dateStr2) return false;
-      const s1 = String(dateStr1).trim();
-      const s2 = String(dateStr2).trim();
-      if (!s1 || !s2 || s1 === '—' || s2 === '—') return false;
-
-      // Extract all digit sequences
-      const d1Digits = s1.replace(/[^0-9]/g, '');
-      const d2Digits = s2.replace(/[^0-9]/g, '');
-      if (d1Digits && d2Digits && d1Digits === d2Digits) return true;
-
-      // Split into day, month, year components
-      const parts1 = s1.split(/[\/\-\.\s,:]+/).filter(p => p.length > 0 && !isNaN(p));
-      const parts2 = s2.split(/[\/\-\.\s,:]+/).filter(p => p.length > 0 && !isNaN(p));
-
-      if (parts1.length >= 3 && parts2.length >= 3) {
-        const set1 = new Set(parts1.map(p => parseInt(p, 10)));
-        const set2 = new Set(parts2.map(p => parseInt(p, 10)));
-        let matchCount = 0;
-        set1.forEach(v => { if (set2.has(v)) matchCount++; });
-        if (matchCount >= 3) return true;
-      }
-      
-      // Fallback substring check
-      if (s1.includes(s2) || s2.includes(s1)) return true;
-      return false;
-    }
-
     function processParsedExcelData(rows) {
       if (!rows || rows.length < 2) return;
 
@@ -4078,7 +4046,6 @@
       const bsxCol = findCol(['biển số', 'bsx', 'biển xe', 'xe']);
       const garaCol = findCol(['gara', 'nơi sửa', 'đơn vị sửa', 'garage', 'sửa chữa', 'tên gara']);
       const statusCol = findCol(['trạng thái', 'tình trạng', 'trang thai', 'status']);
-      const ngayVttCol = findCol(['ngày tổn thất', 'ngày vtt', 'ngày xảy ra', 'thời gian tổn thất', 'ngày bị', 'ngày phát sinh']);
       const ngayDuyetCol = findCol(['ngày duyệt', 'ngày duyệt bt', 'hoàn thành', 'ngày bồi thường', 'duyệt bồi thường']);
       const soTienCol = findCol(['số tiền', 'tiền bồi thường', 'tiền bt', 'chi phí', 'giá trị']);
 
@@ -4095,52 +4062,24 @@
         const rawBsx = bsxCol >= 0 ? String(row[bsxCol] || '').trim() : '';
         const rawGara = garaCol >= 0 ? String(row[garaCol] || '').trim() : '';
         const rawStatus = statusCol >= 0 ? String(row[statusCol] || '').trim() : '';
-        const rawNgayVtt = ngayVttCol >= 0 ? String(row[ngayVttCol] || '').trim() : '';
         const rawNgayDuyet = ngayDuyetCol >= 0 ? String(row[ngayDuyetCol] || '').trim() : '';
         const rawSoTien = soTienCol >= 0 ? String(row[soTienCol] || '').trim() : '';
 
         if (!rawVtt && !rawBsx) continue; // Skip empty rows
 
-        // DUAL CRITERIA MATCHING ENGINE: Biển số xe + Ngày tổn thất
+        // Match claim by VTT or BSX
         let matchedClaim = null;
-        let matchReason = '';
-
-        if (rawBsx) {
-          const normBsx = rawBsx.toLowerCase().replace(/[^a-z0-9]/g, '');
-          if (normBsx) {
-            // Find all claims matching this license plate
-            const claimsWithBsx = claimsList.filter(c => {
-              if (!c.bienSo) return false;
-              const bNorm = String(c.bienSo).toLowerCase().replace(/[^a-z0-9]/g, '');
-              return bNorm === normBsx;
-            });
-
-            if (claimsWithBsx.length > 0) {
-              const targetDate = rawNgayVtt || rawNgayDuyet;
-              if (targetDate) {
-                // Try exact date match with ngayVTT or ngayThongBao
-                matchedClaim = claimsWithBsx.find(c => {
-                  return isSameDateString(c.ngayVTT, targetDate) || isSameDateString(c.ngayThongBao, targetDate);
-                });
-                if (matchedClaim) matchReason = 'bsx_date';
-              }
-
-              // Fallback to plate match if date wasn't specified or didn't match single record
-              if (!matchedClaim) {
-                matchedClaim = claimsWithBsx[0];
-                matchReason = 'bsx';
-              }
-            }
-          }
+        if (rawVtt) {
+          const normVtt = rawVtt.toLowerCase();
+          matchedClaim = claimsList.find(c => c.maVuTonThat && String(c.maVuTonThat).trim().toLowerCase() === normVtt);
         }
-
-        // FALLBACK KEY #2: Mã vụ tổn thất
-        if (!matchedClaim && rawVtt) {
-          const normVtt = rawVtt.trim().toLowerCase();
-          if (normVtt && normVtt !== '—' && normVtt !== '-') {
-            matchedClaim = claimsList.find(c => c.maVuTonThat && String(c.maVuTonThat).trim().toLowerCase() === normVtt);
-            if (matchedClaim) matchReason = 'vtt';
-          }
+        if (!matchedClaim && rawBsx) {
+          const normBsx = rawBsx.toLowerCase().replace(/[^a-z0-9]/g, '');
+          matchedClaim = claimsList.find(c => {
+            if (!c.bienSo) return false;
+            const bNorm = String(c.bienSo).toLowerCase().replace(/[^a-z0-9]/g, '');
+            return bNorm === normBsx;
+          });
         }
 
         // Map status label to key
@@ -4168,11 +4107,9 @@
           rawStatus: rawStatus,
           mappedStatusKey: mappedStatusKey,
           mappedStatusLabel: mappedStatusLabel || rawStatus,
-          rawNgayVtt: rawNgayVtt,
           rawNgayDuyet: rawNgayDuyet,
           rawSoTien: rawSoTien,
-          matchedClaim: matchedClaim,
-          matchReason: matchReason
+          matchedClaim: matchedClaim
         });
       }
 
@@ -4188,7 +4125,7 @@
       if (previewSec) previewSec.style.display = 'block';
 
       if (badge) {
-        badge.innerHTML = `Khớp dữ liệu theo Biển số xe & Ngày VTT: <strong style="font-family: 'JetBrains Mono'; font-size: 13px;">${matchedCount} / ${batchRows.length}</strong> hồ sơ`;
+        badge.innerHTML = `Khớp dữ liệu: <strong style="font-family: 'JetBrains Mono'; font-size: 13px;">${matchedCount} / ${batchRows.length}</strong> hồ sơ`;
       }
 
       if (btnSubmit) {
@@ -4212,16 +4149,11 @@
 
       tbody.innerHTML = batchRows.map((r, idx) => {
         const isMatched = !!r.matchedClaim;
-        let matchLabel = '✕ Chưa có trong hệ thống';
-        if (r.matchReason === 'bsx_date') matchLabel = '✓ Khớp BSX + Ngày VTT';
-        else if (r.matchReason === 'bsx') matchLabel = '✓ Khớp Biển số xe';
-        else if (r.matchReason === 'vtt') matchLabel = '✓ Khớp Mã VTT';
-
         return `
           <tr style="${isMatched ? 'background: rgba(16,185,129,0.04);' : 'background: rgba(239,68,68,0.03);'}">
             <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
             <td>
-              <strong style="color: ${isMatched ? 'var(--primary)' : 'var(--text-main)'}; font-family: 'JetBrains Mono'; font-size: 12.5px; display: block;">${escapeHtmlOutput(r.rawBsx)}</strong>
+              <strong style="color: ${isMatched ? 'var(--primary)' : 'var(--text-main)'}; font-family: 'JetBrains Mono'; font-size: 12px; display: block;">${escapeHtmlOutput(r.rawBsx)}</strong>
               <span style="font-size: 10.5px; color: var(--text-muted); font-family: 'JetBrains Mono';">${escapeHtmlOutput(r.rawVtt)}</span>
             </td>
             <td>
@@ -4232,16 +4164,16 @@
               <div style="font-size: 11.5px; font-weight: 800; color: ${isMatched ? '#10b981' : 'var(--text-soft)'};">${escapeHtmlOutput(r.mappedStatusLabel || '—')}</div>
             </td>
             <td>
-              <div style="font-size: 11.5px; font-family: 'JetBrains Mono'; color: var(--text-main);">${escapeHtmlOutput(r.rawNgayDuyet || r.rawNgayVtt || '—')}</div>
+              <div style="font-size: 11.5px; font-family: 'JetBrains Mono'; color: var(--text-main);">${escapeHtmlOutput(r.rawNgayDuyet || '—')}</div>
             </td>
             <td style="text-align: center;">
               ${isMatched ? `
-                <span style="font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; ${r.matchReason === 'bsx_date' ? 'background: rgba(216,180,109,0.18); color: var(--primary); border: 1px solid rgba(216,180,109,0.4);' : 'background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);'}">
-                  ${matchLabel}
+                <span style="font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);">
+                  ✓ Khớp dữ liệu
                 </span>
               ` : `
                 <span style="font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3);">
-                  ✕ Chưa có trong hệ thống
+                  ✕ Không thấy Mã VTT
                 </span>
               `}
             </td>
@@ -4266,11 +4198,6 @@
         for (const r of matchedRows) {
           const claimId = r.matchedClaim.id;
           const updates = { updatedAt: Date.now() };
-
-          // If Excel has a new/updated MaVuTonThat, sync it too!
-          if (r.rawVtt && r.rawVtt !== '—' && r.rawVtt !== r.matchedClaim.maVuTonThat) {
-            updates.maVuTonThat = r.rawVtt;
-          }
 
           if (r.rawGara) {
             updates.donViCapDon = r.rawGara;
@@ -4297,13 +4224,13 @@
           Swal.fire({
             icon: 'success',
             title: 'Cập nhật tự động hoàn tất!',
-            html: `✅ Đã đối chiếu theo <b>Biển số xe</b> và cập nhật thành công <b>${successCount} / ${matchedRows.length}</b> hồ sơ từ tệp Excel lên hệ thống.<br><br>` +
-                  `Thông tin Mã VTT, Gara sửa chữa, Trạng thái và Ngày duyệt bồi thường đã được đồng bộ tự động.`,
+            html: `✅ Đã cập nhật thành công <b>${successCount} / ${matchedRows.length}</b> hồ sơ tổn thất từ tệp Excel lên hệ thống.<br><br>` +
+                  `Thông tin Gara sửa chữa, Trạng thái và Ngày duyệt bồi thường đã được đồng bộ tự động.`,
             confirmButtonText: 'Tuyệt vời',
             confirmButtonColor: '#10b981'
           });
         } else {
-          triggerToast(`Đã cập nhật tự động thành công ${successCount} hồ sơ theo Biển số xe!`, 'success');
+          triggerToast(`Đã cập nhật tự động thành công ${successCount} hồ sơ!`, 'success');
         }
 
         executeUIRenderPendingClaims();
@@ -4316,7 +4243,7 @@
     }
 
     let activePendingGdvFilter = 'all';
-    let activePendingPeriodFilter = 'all';
+    let activePendingPeriodFilter = 'this_week';
 
     function toggleCustomStatusDropdown(event) {
       if (event) event.stopPropagation();
@@ -4452,7 +4379,7 @@
 
       activePendingStatusFilter = 'all';
       activePendingGdvFilter = 'all';
-      activePendingPeriodFilter = 'all';
+      activePendingPeriodFilter = 'this_week';
       pendingClaimsCurrentPage = 1;
 
       closeAllCustomDropdowns();
@@ -4461,18 +4388,16 @@
     }
 
     function executeUIRenderPendingClaims() {
-      try {
-        const tbody = document.getElementById('tblPendingClaimsBodyContainer');
-        const statsContainer = document.getElementById('pendingWeeklyStatsContainer');
-        if (!tbody) return;
+      const tbody = document.getElementById('tblPendingClaimsBodyContainer');
+      const statsContainer = document.getElementById('pendingWeeklyStatsContainer');
+      if (!tbody) return;
 
-        const rawClaims = Object.values(cachedPendingClaimsPayload || {});
-        const claimsList = rawClaims.filter(c => c && typeof c === 'object');
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
 
-        // Read Filters
-        const searchVal = (document.getElementById('pendingSearchInput')?.value || '').toLowerCase().trim();
-        const gdvFilter = activePendingGdvFilter || 'all';
-        const periodFilter = activePendingPeriodFilter || 'all';
+      // Read Filters
+      const searchVal = (document.getElementById('pendingSearchInput')?.value || '').toLowerCase().trim();
+      const gdvFilter = activePendingGdvFilter || 'all';
+      const periodFilter = activePendingPeriodFilter || 'this_week';
 
       // Time Period Helper (This Week vs Last Week vs Month)
       const now = new Date();
@@ -4854,11 +4779,10 @@
               <button type="button" onclick="setPendingClaimsPage(${pendingClaimsCurrentPage + 1})" ${pendingClaimsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 32px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingClaimsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${pendingClaimsCurrentPage >= totalPages ? 'none' : 'auto'};" title="Trang sau">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>
+            </div>
+          </div>
         `;
       }
-    } catch (err) {
-      console.error("Lỗi render danh sách hồ sơ tồn:", err);
-    }
     }
 
     async function updatePendingClaimStatus(claimId, newStatus) {
@@ -5365,7 +5289,7 @@
                   <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 150px; max-width: 170px;">
                     <button id="btnCustomPeriodDropdown" type="button" onclick="toggleCustomPeriodDropdown(event)" style="width: 100%; height: 42px; padding: 0 28px 0 34px; border-radius: 12px; font-size: 12.5px; font-weight: 750; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; transition: all 0.2s ease;">
                       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #10b981; pointer-events: none;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                      <span id="lblCustomPeriodDropdownSelected" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 750;">Tất cả thời gian</span>
+                      <span id="lblCustomPeriodDropdownSelected" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 750;">Tuần này</span>
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </button>
 
@@ -6581,85 +6505,79 @@
     }
 
     function executeUIRenderCasesTable(casesPayload) {
-      try {
-        if (typeof casesPayload !== 'undefined') cachedCasesPayload = casesPayload;
-        const tableBody = document.getElementById('tblCasesBodyContainer');
-        if (!tableBody) return;
-        
-        const allCases = cachedCasesPayload || {};
-        const allEntries = Object.entries(allCases).filter(([,item]) => item && typeof item === 'object').sort((a,b) => Number((b[1] && b[1].createdAt) || 0) - Number((a[1] && a[1].createdAt) || 0));
-        
-        const searchQuery = String(document.getElementById('caseSearchInput')?.value || '').trim().toLocaleLowerCase('vi');
-        const filteredEntries = allEntries.filter(([,item]) => {
-          if (!item || typeof item !== 'object') return false;
-          const matchesText = !searchQuery || `${item.bienSo || ''} ${item.tenGara || ''} ${item.nguoiTao?.tenHienThi || ''} ${item.nguoiTao?.email || ''}`.toLocaleLowerCase('vi').includes(searchQuery);
-          const isDone = item.trangThai === STATUS_COMPLETED;
-          const matchesStatus = activeCaseFilter === 'all' || (activeCaseFilter === 'completed' && isDone) || (activeCaseFilter === 'pending' && !isDone);
-          return matchesText && matchesStatus;
-        });
-        
-        if (!filteredEntries.length) {
-          tableBody.innerHTML = `<tr><td colspan="5"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không tìm thấy hồ sơ phù hợp</strong><p>Thử thay đổi từ khóa hoặc bộ lọc trạng thái.</p></div></td></tr>`;
-          return;
-        }
-        tableBody.innerHTML = filteredEntries.map(([uniqueKeyToken, entityNode]) => {
-          if (!entityNode || typeof entityNode !== 'object') return '';
-          const isCaseDone = entityNode.trangThai === STATUS_COMPLETED;
-          const targetBadgeClass = isCaseDone ? 'completed' : 'pending';
-          const partnerPortalInputLink = `${getCleanOriginBaseUrl()}?idCa=${uniqueKeyToken}`;
-          const internalResultReviewLink = `${getCleanOriginBaseUrl()}?idCa=${uniqueKeyToken}&view=result`;
-          const dateInfo = formatCaseTimestamp(entityNode.createdAt);
-          const plate = escapeHtmlOutput(entityNode.bienSo || 'Chưa có biển số');
-          const initials = plate.replace(/[^A-Za-z0-9]/g, '').slice(0,2).toUpperCase() || 'CV';
-          
-          const reqList = Array.isArray(entityNode.hangMucYeuCauAnh) ? entityNode.hangMucYeuCauAnh : Object.values(entityNode.hangMucYeuCauAnh || {});
-          const totalReq = reqList.length;
-          const completedReq = reqList.filter(item => normalizeEvidenceImageUrls(item).length > 0).length;
-          const isCaseEvidenceComplete = totalReq > 0 && completedReq === totalReq;
-          
-          const checkmarkMarkup = isCaseEvidenceComplete ? `
-            <span class="verified-evidence-badge" title="Đã hoàn thiện nộp đủ ảnh minh chứng cho tất cả các hạng mục" style="display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: #10b981; color: #fff; flex-shrink: 0; box-shadow: 0 0 8px rgba(16,185,129,0.45); margin-left: 2px;">
-              <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            </span>
-          ` : '';
-          
-          const currentUser = firebase.auth().currentUser;
-          const currentProfile = activeUserProfile || {};
-          const isAdmin = String(currentProfile.role || '').trim().toLowerCase() === 'admin';
-          const isCreator = entityNode.nguoiTao?.uid === currentUser?.uid;
-          
-          const showEditButton = isCreator || isAdmin;
-          const editButtonMarkup = showEditButton ? `
-            <button type="button" title="Sửa hồ sơ" class="btn-premium btn-secondary" onclick="event.stopPropagation(); triggerEditCaseFlow('${uniqueKeyToken}')">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-              <span class="action-label">Sửa</span>
-            </button>
-          ` : '';
-
-          return `
-            <tr class="clickable-row" onclick="navigateToCase('${uniqueKeyToken}', 'result')">
-              <td data-label="Phương tiện"><div class="vehicle-cell"><div class="vehicle-avatar">${initials}</div><div><div class="vehicle-name" style="display: flex; align-items: center; gap: 5px;">${plate}${checkmarkMarkup}</div><div class="vehicle-sub">${escapeHtmlOutput(entityNode.tenGara || 'Chưa xác định Garage')}</div></div></div></td>
-              <td data-label="Khởi tạo"><div class="date-mini">${dateInfo.date}<span>${dateInfo.time}</span></div></td>
-              <td data-label="Nội dung">
-                <div class="date-mini">
-                  <strong style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-soft)">${Number(entityNode.soLuongAnh || 0).toString().padStart(2,'0')} ảnh hiện trạng</strong>
-                  <span style="color: ${isCaseEvidenceComplete ? '#10b981' : 'var(--text-muted)'}; font-weight: ${isCaseEvidenceComplete ? '700' : '500'}">
-                    ${completedReq}/${totalReq} hạng mục có ảnh
-                  </span>
-                </div>
-              </td>
-              <td data-label="Trạng thái"><span class="badge-status ${targetBadgeClass}">${escapeHtmlOutput(entityNode.trangThai || STATUS_PENDING)}</span></td>
-              <td onclick="event.stopPropagation()"><div class="flex-actions-group">
-                <button title="Xem link Garage" class="btn-premium btn-secondary" onclick="navigateToCase('${uniqueKeyToken}')">${SVGS.EXTERNAL}<span class="action-label">Garage</span></button>
-                ${editButtonMarkup}
-                <button title="Xem kết quả đối chiếu" class="btn-premium btn-dark" onclick="navigateToCase('${uniqueKeyToken}', 'result')">${SVGS.CHECK_CIRCLE}<span class="action-label">Kết quả</span></button>
-                <button title="Xóa hồ sơ" class="btn-premium btn-danger-p" onclick="triggerDestructiveDeleteCase('${uniqueKeyToken}','${escapeAttributeData(entityNode.bienSo)}')">${SVGS.TRASH}<span class="action-label">Xóa</span></button>
-              </div></td>
-            </tr>`;
-        }).join('');
-      } catch (err) {
-        console.error("Lỗi render cases table:", err);
+      if (typeof casesPayload !== 'undefined') cachedCasesPayload = casesPayload;
+      const tableBody = document.getElementById('tblCasesBodyContainer');
+      if (!tableBody) return;
+      
+      const allCases = cachedCasesPayload || {};
+      const allEntries = Object.entries(allCases).sort((a,b) => Number(b[1].createdAt || 0) - Number(a[1].createdAt || 0));
+      
+      const searchQuery = String(document.getElementById('caseSearchInput')?.value || '').trim().toLocaleLowerCase('vi');
+      const filteredEntries = allEntries.filter(([,item]) => {
+        const matchesText = !searchQuery || `${item.bienSo || ''} ${item.tenGara || ''} ${item.nguoiTao?.tenHienThi || ''} ${item.nguoiTao?.email || ''}`.toLocaleLowerCase('vi').includes(searchQuery);
+        const isDone = item.trangThai === STATUS_COMPLETED;
+        const matchesStatus = activeCaseFilter === 'all' || (activeCaseFilter === 'completed' && isDone) || (activeCaseFilter === 'pending' && !isDone);
+        return matchesText && matchesStatus;
+      });
+      
+      if (!filteredEntries.length) {
+        tableBody.innerHTML = `<tr><td colspan="5"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không tìm thấy hồ sơ phù hợp</strong><p>Thử thay đổi từ khóa hoặc bộ lọc trạng thái.</p></div></td></tr>`;
+        return;
       }
+      tableBody.innerHTML = filteredEntries.map(([uniqueKeyToken, entityNode]) => {
+        const isCaseDone = entityNode.trangThai === STATUS_COMPLETED;
+        const targetBadgeClass = isCaseDone ? 'completed' : 'pending';
+        const partnerPortalInputLink = `${getCleanOriginBaseUrl()}?idCa=${uniqueKeyToken}`;
+        const internalResultReviewLink = `${getCleanOriginBaseUrl()}?idCa=${uniqueKeyToken}&view=result`;
+        const dateInfo = formatCaseTimestamp(entityNode.createdAt);
+        const plate = escapeHtmlOutput(entityNode.bienSo || 'Chưa có biển số');
+        const initials = plate.replace(/[^A-Za-z0-9]/g, '').slice(0,2).toUpperCase() || 'CV';
+        
+        const reqList = Array.isArray(entityNode.hangMucYeuCauAnh) ? entityNode.hangMucYeuCauAnh : Object.values(entityNode.hangMucYeuCauAnh || {});
+        const totalReq = reqList.length;
+        const completedReq = reqList.filter(item => normalizeEvidenceImageUrls(item).length > 0).length;
+        const isCaseEvidenceComplete = totalReq > 0 && completedReq === totalReq;
+        
+        const checkmarkMarkup = isCaseEvidenceComplete ? `
+          <span class="verified-evidence-badge" title="Đã hoàn thiện nộp đủ ảnh minh chứng cho tất cả các hạng mục" style="display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: #10b981; color: #fff; flex-shrink: 0; box-shadow: 0 0 8px rgba(16,185,129,0.45); margin-left: 2px;">
+            <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </span>
+        ` : '';
+        
+        const currentUser = firebase.auth().currentUser;
+        const currentProfile = activeUserProfile || {};
+        const isAdmin = String(currentProfile.role || '').trim().toLowerCase() === 'admin';
+        const isCreator = entityNode.nguoiTao?.uid === currentUser?.uid;
+        
+        const showEditButton = isCreator || isAdmin;
+        const editButtonMarkup = showEditButton ? `
+          <button type="button" title="Sửa hồ sơ" class="btn-premium btn-secondary" onclick="event.stopPropagation(); triggerEditCaseFlow('${uniqueKeyToken}')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            <span class="action-label">Sửa</span>
+          </button>
+        ` : '';
+
+        return `
+          <tr class="clickable-row" onclick="navigateToCase('${uniqueKeyToken}', 'result')">
+            <td data-label="Phương tiện"><div class="vehicle-cell"><div class="vehicle-avatar">${initials}</div><div><div class="vehicle-name" style="display: flex; align-items: center; gap: 5px;">${plate}${checkmarkMarkup}</div><div class="vehicle-sub">${escapeHtmlOutput(entityNode.tenGara || 'Chưa xác định Garage')}</div></div></div></td>
+            <td data-label="Khởi tạo"><div class="date-mini">${dateInfo.date}<span>${dateInfo.time}</span></div></td>
+            <td data-label="Nội dung">
+              <div class="date-mini">
+                <strong style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-soft)">${Number(entityNode.soLuongAnh || 0).toString().padStart(2,'0')} ảnh hiện trạng</strong>
+                <span style="color: ${isCaseEvidenceComplete ? '#10b981' : 'var(--text-muted)'}; font-weight: ${isCaseEvidenceComplete ? '700' : '500'}">
+                  ${completedReq}/${totalReq} hạng mục có ảnh
+                </span>
+              </div>
+            </td>
+            <td data-label="Trạng thái"><span class="badge-status ${targetBadgeClass}">${escapeHtmlOutput(entityNode.trangThai || STATUS_PENDING)}</span></td>
+            <td onclick="event.stopPropagation()"><div class="flex-actions-group">
+              <button title="Xem link Garage" class="btn-premium btn-secondary" onclick="navigateToCase('${uniqueKeyToken}')">${SVGS.EXTERNAL}<span class="action-label">Garage</span></button>
+              ${editButtonMarkup}
+              <button title="Xem kết quả đối chiếu" class="btn-premium btn-dark" onclick="navigateToCase('${uniqueKeyToken}', 'result')">${SVGS.CHECK_CIRCLE}<span class="action-label">Kết quả</span></button>
+              <button title="Xóa hồ sơ" class="btn-premium btn-danger-p" onclick="triggerDestructiveDeleteCase('${uniqueKeyToken}','${escapeAttributeData(entityNode.bienSo)}')">${SVGS.TRASH}<span class="action-label">Xóa</span></button>
+            </div></td>
+          </tr>`;
+      }).join('');
     }
 
     function setCaseFilter(filterValue) {
