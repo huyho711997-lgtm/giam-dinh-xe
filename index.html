@@ -3276,18 +3276,22 @@
     }
 
     function updateStatsCounters(val) {
-      const allEntries = Object.entries(val || cachedCasesPayload || {});
-      const metricTotal = allEntries.length;
-      const metricCompleted = allEntries.filter(([,item]) => item.trangThai === STATUS_COMPLETED).length;
-      const metricPending = metricTotal - metricCompleted;
+      try {
+        const allEntries = Object.entries(val || cachedCasesPayload || {}).filter(([,item]) => item && typeof item === 'object');
+        const metricTotal = allEntries.length;
+        const metricCompleted = allEntries.filter(([,item]) => item && item.trangThai === STATUS_COMPLETED).length;
+        const metricPending = metricTotal - metricCompleted;
 
-      const totalLbl = document.getElementById('lblTotalCases');
-      const pendingLbl = document.getElementById('lblPendingCases');
-      const completedLbl = document.getElementById('lblCompletedCases');
-      
-      if (totalLbl) totalLbl.textContent = metricTotal;
-      if (pendingLbl) pendingLbl.textContent = metricPending;
-      if (completedLbl) completedLbl.textContent = metricCompleted;
+        const totalLbl = document.getElementById('lblTotalCases');
+        const pendingLbl = document.getElementById('lblPendingCases');
+        const completedLbl = document.getElementById('lblCompletedCases');
+        
+        if (totalLbl) totalLbl.textContent = metricTotal;
+        if (pendingLbl) pendingLbl.textContent = metricPending;
+        if (completedLbl) completedLbl.textContent = metricCompleted;
+      } catch (e) {
+        console.error("Lỗi updateStatsCounters:", e);
+      }
     }
 
     function openUserProfileModal() {
@@ -4850,12 +4854,11 @@
               <button type="button" onclick="setPendingClaimsPage(${pendingClaimsCurrentPage + 1})" ${pendingClaimsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 32px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingClaimsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${pendingClaimsCurrentPage >= totalPages ? 'none' : 'auto'};" title="Trang sau">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>
-            </div>
         `;
       }
-      } catch (err) {
-        console.error("Lỗi render danh sách hồ sơ tồn:", err);
-      }
+    } catch (err) {
+      console.error("Lỗi render danh sách hồ sơ tồn:", err);
+    }
     }
 
     async function updatePendingClaimStatus(claimId, newStatus) {
@@ -6578,79 +6581,85 @@
     }
 
     function executeUIRenderCasesTable(casesPayload) {
-      if (typeof casesPayload !== 'undefined') cachedCasesPayload = casesPayload;
-      const tableBody = document.getElementById('tblCasesBodyContainer');
-      if (!tableBody) return;
-      
-      const allCases = cachedCasesPayload || {};
-      const allEntries = Object.entries(allCases).sort((a,b) => Number(b[1].createdAt || 0) - Number(a[1].createdAt || 0));
-      
-      const searchQuery = String(document.getElementById('caseSearchInput')?.value || '').trim().toLocaleLowerCase('vi');
-      const filteredEntries = allEntries.filter(([,item]) => {
-        const matchesText = !searchQuery || `${item.bienSo || ''} ${item.tenGara || ''} ${item.nguoiTao?.tenHienThi || ''} ${item.nguoiTao?.email || ''}`.toLocaleLowerCase('vi').includes(searchQuery);
-        const isDone = item.trangThai === STATUS_COMPLETED;
-        const matchesStatus = activeCaseFilter === 'all' || (activeCaseFilter === 'completed' && isDone) || (activeCaseFilter === 'pending' && !isDone);
-        return matchesText && matchesStatus;
-      });
-      
-      if (!filteredEntries.length) {
-        tableBody.innerHTML = `<tr><td colspan="5"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không tìm thấy hồ sơ phù hợp</strong><p>Thử thay đổi từ khóa hoặc bộ lọc trạng thái.</p></div></td></tr>`;
-        return;
-      }
-      tableBody.innerHTML = filteredEntries.map(([uniqueKeyToken, entityNode]) => {
-        const isCaseDone = entityNode.trangThai === STATUS_COMPLETED;
-        const targetBadgeClass = isCaseDone ? 'completed' : 'pending';
-        const partnerPortalInputLink = `${getCleanOriginBaseUrl()}?idCa=${uniqueKeyToken}`;
-        const internalResultReviewLink = `${getCleanOriginBaseUrl()}?idCa=${uniqueKeyToken}&view=result`;
-        const dateInfo = formatCaseTimestamp(entityNode.createdAt);
-        const plate = escapeHtmlOutput(entityNode.bienSo || 'Chưa có biển số');
-        const initials = plate.replace(/[^A-Za-z0-9]/g, '').slice(0,2).toUpperCase() || 'CV';
+      try {
+        if (typeof casesPayload !== 'undefined') cachedCasesPayload = casesPayload;
+        const tableBody = document.getElementById('tblCasesBodyContainer');
+        if (!tableBody) return;
         
-        const reqList = Array.isArray(entityNode.hangMucYeuCauAnh) ? entityNode.hangMucYeuCauAnh : Object.values(entityNode.hangMucYeuCauAnh || {});
-        const totalReq = reqList.length;
-        const completedReq = reqList.filter(item => normalizeEvidenceImageUrls(item).length > 0).length;
-        const isCaseEvidenceComplete = totalReq > 0 && completedReq === totalReq;
+        const allCases = cachedCasesPayload || {};
+        const allEntries = Object.entries(allCases).filter(([,item]) => item && typeof item === 'object').sort((a,b) => Number((b[1] && b[1].createdAt) || 0) - Number((a[1] && a[1].createdAt) || 0));
         
-        const checkmarkMarkup = isCaseEvidenceComplete ? `
-          <span class="verified-evidence-badge" title="Đã hoàn thiện nộp đủ ảnh minh chứng cho tất cả các hạng mục" style="display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: #10b981; color: #fff; flex-shrink: 0; box-shadow: 0 0 8px rgba(16,185,129,0.45); margin-left: 2px;">
-            <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </span>
-        ` : '';
+        const searchQuery = String(document.getElementById('caseSearchInput')?.value || '').trim().toLocaleLowerCase('vi');
+        const filteredEntries = allEntries.filter(([,item]) => {
+          if (!item || typeof item !== 'object') return false;
+          const matchesText = !searchQuery || `${item.bienSo || ''} ${item.tenGara || ''} ${item.nguoiTao?.tenHienThi || ''} ${item.nguoiTao?.email || ''}`.toLocaleLowerCase('vi').includes(searchQuery);
+          const isDone = item.trangThai === STATUS_COMPLETED;
+          const matchesStatus = activeCaseFilter === 'all' || (activeCaseFilter === 'completed' && isDone) || (activeCaseFilter === 'pending' && !isDone);
+          return matchesText && matchesStatus;
+        });
         
-        const currentUser = firebase.auth().currentUser;
-        const currentProfile = activeUserProfile || {};
-        const isAdmin = String(currentProfile.role || '').trim().toLowerCase() === 'admin';
-        const isCreator = entityNode.nguoiTao?.uid === currentUser?.uid;
-        
-        const showEditButton = isCreator || isAdmin;
-        const editButtonMarkup = showEditButton ? `
-          <button type="button" title="Sửa hồ sơ" class="btn-premium btn-secondary" onclick="event.stopPropagation(); triggerEditCaseFlow('${uniqueKeyToken}')">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            <span class="action-label">Sửa</span>
-          </button>
-        ` : '';
+        if (!filteredEntries.length) {
+          tableBody.innerHTML = `<tr><td colspan="5"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không tìm thấy hồ sơ phù hợp</strong><p>Thử thay đổi từ khóa hoặc bộ lọc trạng thái.</p></div></td></tr>`;
+          return;
+        }
+        tableBody.innerHTML = filteredEntries.map(([uniqueKeyToken, entityNode]) => {
+          if (!entityNode || typeof entityNode !== 'object') return '';
+          const isCaseDone = entityNode.trangThai === STATUS_COMPLETED;
+          const targetBadgeClass = isCaseDone ? 'completed' : 'pending';
+          const partnerPortalInputLink = `${getCleanOriginBaseUrl()}?idCa=${uniqueKeyToken}`;
+          const internalResultReviewLink = `${getCleanOriginBaseUrl()}?idCa=${uniqueKeyToken}&view=result`;
+          const dateInfo = formatCaseTimestamp(entityNode.createdAt);
+          const plate = escapeHtmlOutput(entityNode.bienSo || 'Chưa có biển số');
+          const initials = plate.replace(/[^A-Za-z0-9]/g, '').slice(0,2).toUpperCase() || 'CV';
+          
+          const reqList = Array.isArray(entityNode.hangMucYeuCauAnh) ? entityNode.hangMucYeuCauAnh : Object.values(entityNode.hangMucYeuCauAnh || {});
+          const totalReq = reqList.length;
+          const completedReq = reqList.filter(item => normalizeEvidenceImageUrls(item).length > 0).length;
+          const isCaseEvidenceComplete = totalReq > 0 && completedReq === totalReq;
+          
+          const checkmarkMarkup = isCaseEvidenceComplete ? `
+            <span class="verified-evidence-badge" title="Đã hoàn thiện nộp đủ ảnh minh chứng cho tất cả các hạng mục" style="display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: #10b981; color: #fff; flex-shrink: 0; box-shadow: 0 0 8px rgba(16,185,129,0.45); margin-left: 2px;">
+              <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </span>
+          ` : '';
+          
+          const currentUser = firebase.auth().currentUser;
+          const currentProfile = activeUserProfile || {};
+          const isAdmin = String(currentProfile.role || '').trim().toLowerCase() === 'admin';
+          const isCreator = entityNode.nguoiTao?.uid === currentUser?.uid;
+          
+          const showEditButton = isCreator || isAdmin;
+          const editButtonMarkup = showEditButton ? `
+            <button type="button" title="Sửa hồ sơ" class="btn-premium btn-secondary" onclick="event.stopPropagation(); triggerEditCaseFlow('${uniqueKeyToken}')">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              <span class="action-label">Sửa</span>
+            </button>
+          ` : '';
 
-        return `
-          <tr class="clickable-row" onclick="navigateToCase('${uniqueKeyToken}', 'result')">
-            <td data-label="Phương tiện"><div class="vehicle-cell"><div class="vehicle-avatar">${initials}</div><div><div class="vehicle-name" style="display: flex; align-items: center; gap: 5px;">${plate}${checkmarkMarkup}</div><div class="vehicle-sub">${escapeHtmlOutput(entityNode.tenGara || 'Chưa xác định Garage')}</div></div></div></td>
-            <td data-label="Khởi tạo"><div class="date-mini">${dateInfo.date}<span>${dateInfo.time}</span></div></td>
-            <td data-label="Nội dung">
-              <div class="date-mini">
-                <strong style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-soft)">${Number(entityNode.soLuongAnh || 0).toString().padStart(2,'0')} ảnh hiện trạng</strong>
-                <span style="color: ${isCaseEvidenceComplete ? '#10b981' : 'var(--text-muted)'}; font-weight: ${isCaseEvidenceComplete ? '700' : '500'}">
-                  ${completedReq}/${totalReq} hạng mục có ảnh
-                </span>
-              </div>
-            </td>
-            <td data-label="Trạng thái"><span class="badge-status ${targetBadgeClass}">${escapeHtmlOutput(entityNode.trangThai || STATUS_PENDING)}</span></td>
-            <td onclick="event.stopPropagation()"><div class="flex-actions-group">
-              <button title="Xem link Garage" class="btn-premium btn-secondary" onclick="navigateToCase('${uniqueKeyToken}')">${SVGS.EXTERNAL}<span class="action-label">Garage</span></button>
-              ${editButtonMarkup}
-              <button title="Xem kết quả đối chiếu" class="btn-premium btn-dark" onclick="navigateToCase('${uniqueKeyToken}', 'result')">${SVGS.CHECK_CIRCLE}<span class="action-label">Kết quả</span></button>
-              <button title="Xóa hồ sơ" class="btn-premium btn-danger-p" onclick="triggerDestructiveDeleteCase('${uniqueKeyToken}','${escapeAttributeData(entityNode.bienSo)}')">${SVGS.TRASH}<span class="action-label">Xóa</span></button>
-            </div></td>
-          </tr>`;
-      }).join('');
+          return `
+            <tr class="clickable-row" onclick="navigateToCase('${uniqueKeyToken}', 'result')">
+              <td data-label="Phương tiện"><div class="vehicle-cell"><div class="vehicle-avatar">${initials}</div><div><div class="vehicle-name" style="display: flex; align-items: center; gap: 5px;">${plate}${checkmarkMarkup}</div><div class="vehicle-sub">${escapeHtmlOutput(entityNode.tenGara || 'Chưa xác định Garage')}</div></div></div></td>
+              <td data-label="Khởi tạo"><div class="date-mini">${dateInfo.date}<span>${dateInfo.time}</span></div></td>
+              <td data-label="Nội dung">
+                <div class="date-mini">
+                  <strong style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-soft)">${Number(entityNode.soLuongAnh || 0).toString().padStart(2,'0')} ảnh hiện trạng</strong>
+                  <span style="color: ${isCaseEvidenceComplete ? '#10b981' : 'var(--text-muted)'}; font-weight: ${isCaseEvidenceComplete ? '700' : '500'}">
+                    ${completedReq}/${totalReq} hạng mục có ảnh
+                  </span>
+                </div>
+              </td>
+              <td data-label="Trạng thái"><span class="badge-status ${targetBadgeClass}">${escapeHtmlOutput(entityNode.trangThai || STATUS_PENDING)}</span></td>
+              <td onclick="event.stopPropagation()"><div class="flex-actions-group">
+                <button title="Xem link Garage" class="btn-premium btn-secondary" onclick="navigateToCase('${uniqueKeyToken}')">${SVGS.EXTERNAL}<span class="action-label">Garage</span></button>
+                ${editButtonMarkup}
+                <button title="Xem kết quả đối chiếu" class="btn-premium btn-dark" onclick="navigateToCase('${uniqueKeyToken}', 'result')">${SVGS.CHECK_CIRCLE}<span class="action-label">Kết quả</span></button>
+                <button title="Xóa hồ sơ" class="btn-premium btn-danger-p" onclick="triggerDestructiveDeleteCase('${uniqueKeyToken}','${escapeAttributeData(entityNode.bienSo)}')">${SVGS.TRASH}<span class="action-label">Xóa</span></button>
+              </div></td>
+            </tr>`;
+        }).join('');
+      } catch (err) {
+        console.error("Lỗi render cases table:", err);
+      }
     }
 
     function setCaseFilter(filterValue) {
