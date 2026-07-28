@@ -2477,6 +2477,19 @@
     let activePendingStatusFilter = 'all';
     let editingCaseId = null;
     let editingPendingClaimId = null;
+    let pendingClaimsCurrentPage = 1;
+    let pendingClaimsPerPage = 10;
+
+    function setPendingClaimsPage(page) {
+      pendingClaimsCurrentPage = page;
+      executeUIRenderPendingClaims();
+    }
+
+    function setPendingClaimsPerPage(perPage) {
+      pendingClaimsPerPage = parseInt(perPage, 10) || 10;
+      pendingClaimsCurrentPage = 1;
+      executeUIRenderPendingClaims();
+    }
 
     // QUẢN LÝ THEME STATE: Khởi tạo từ cấu hình lưu trữ
     let currentTheme = localStorage.getItem('claimvision-theme') || 'dark';
@@ -3878,6 +3891,7 @@
 
     function selectCustomStatusFilter(statusKey) {
       activePendingStatusFilter = statusKey;
+      pendingClaimsCurrentPage = 1;
       closeAllCustomDropdowns();
       executeUIRenderPendingClaims();
     }
@@ -3895,6 +3909,7 @@
 
     function selectCustomGdvFilter(gdvName) {
       activePendingGdvFilter = gdvName;
+      pendingClaimsCurrentPage = 1;
       closeAllCustomDropdowns();
       executeUIRenderPendingClaims();
     }
@@ -3912,6 +3927,7 @@
 
     function selectCustomPeriodFilter(periodKey) {
       activePendingPeriodFilter = periodKey;
+      pendingClaimsCurrentPage = 1;
       closeAllCustomDropdowns();
       executeUIRenderPendingClaims();
     }
@@ -3973,6 +3989,7 @@
 
     function setPendingStatusFilter(statusKey) {
       activePendingStatusFilter = statusKey;
+      pendingClaimsCurrentPage = 1;
       closeAllCustomDropdowns();
       executeUIRenderPendingClaims();
     }
@@ -3985,6 +4002,7 @@
       activePendingStatusFilter = 'all';
       activePendingGdvFilter = 'all';
       activePendingPeriodFilter = 'this_week';
+      pendingClaimsCurrentPage = 1;
 
       closeAllCustomDropdowns();
       executeUIRenderPendingClaims();
@@ -4194,16 +4212,31 @@
       // Sort by newest created first
       filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
-      if (filtered.length === 0) {
+      const totalFilteredCount = filtered.length;
+      const perPage = pendingClaimsPerPage === 'all' ? (totalFilteredCount || 1) : (parseInt(pendingClaimsPerPage, 10) || 10);
+      const totalPages = Math.ceil(totalFilteredCount / perPage) || 1;
+
+      if (pendingClaimsCurrentPage > totalPages) pendingClaimsCurrentPage = totalPages;
+      if (pendingClaimsCurrentPage < 1) pendingClaimsCurrentPage = 1;
+
+      const startIndex = (pendingClaimsCurrentPage - 1) * perPage;
+      const endIndex = Math.min(startIndex + perPage, totalFilteredCount);
+      const pageItems = filtered.slice(startIndex, endIndex);
+
+      const paginationContainer = document.getElementById('pendingClaimsPaginationContainer');
+
+      if (totalFilteredCount === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="empty-state-text">Không tìm thấy hồ sơ tồn đọng nào phù hợp.</td></tr>`;
+        if (paginationContainer) paginationContainer.innerHTML = '';
         return;
       }
 
-      tbody.innerHTML = filtered.map((item, idx) => {
+      tbody.innerHTML = pageItems.map((item, idx) => {
+        const itemNumber = startIndex + idx + 1;
         const statusConfig = PENDING_STATUS_MAP[item.trangThai] || PENDING_STATUS_MAP['moi_tiep_nhan'];
         return `
           <tr>
-            <td style="text-align: center; font-weight: 750; color: var(--text-muted);">${String(idx + 1).padStart(2, '0')}</td>
+            <td style="text-align: center; font-weight: 750; color: var(--text-muted);">${String(itemNumber).padStart(2, '0')}</td>
             <td>
               <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 13.5px; display: block;">${escapeHtmlOutput(item.bienSo)}</strong>
               <span style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono';">${escapeHtmlOutput(item.maVuTonThat)}</span>
@@ -4286,6 +4319,79 @@
           </tr>
         `;
       }).join('');
+
+      // Render Ultra-Luxury Pagination Control Bar
+      if (paginationContainer) {
+        const displayStart = startIndex + 1;
+        const displayEnd = endIndex;
+
+        // Smart pagination buttons with ellipsis
+        let pageBtnsHtml = '';
+        const maxVisibleButtons = 5;
+        let startPage = Math.max(1, pendingClaimsCurrentPage - 2);
+        let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
+        if (endPage - startPage < maxVisibleButtons - 1) {
+          startPage = Math.max(1, endPage - maxVisibleButtons + 1);
+        }
+
+        if (startPage > 1) {
+          pageBtnsHtml += `<button type="button" onclick="setPendingClaimsPage(1)" style="min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">1</button>`;
+          if (startPage > 2) {
+            pageBtnsHtml += `<span style="font-size: 12px; color: var(--text-muted); padding: 0 2px;">...</span>`;
+          }
+        }
+
+        for (let p = startPage; p <= endPage; p++) {
+          const isAct = p === pendingClaimsCurrentPage;
+          pageBtnsHtml += `
+            <button type="button" onclick="setPendingClaimsPage(${p})" style="min-width: 32px; height: 32px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${isAct ? 'background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 2px 8px rgba(216,180,109,0.35);' : 'background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main);'}">${p}</button>
+          `;
+        }
+
+        if (endPage < totalPages) {
+          if (endPage < totalPages - 1) {
+            pageBtnsHtml += `<span style="font-size: 12px; color: var(--text-muted); padding: 0 2px;">...</span>`;
+          }
+          pageBtnsHtml += `<button type="button" onclick="setPendingClaimsPage(${totalPages})" style="min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">${totalPages}</button>`;
+        }
+
+        paginationContainer.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 18px; background: var(--surface); border-radius: 14px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); margin-top: 16px;">
+            <!-- Left Info: Counter & Items per page selector -->
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+              <span style="font-size: 12.5px; color: var(--text-soft); font-weight: 600;">
+                Hiển thị <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 800;">${displayStart} - ${displayEnd}</strong> trên tổng số <strong style="color: var(--text-main); font-family: 'JetBrains Mono'; font-weight: 800;">${totalFilteredCount}</strong> hồ sơ
+              </span>
+
+              <!-- Items per page selector -->
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-soft); font-weight: 600;">
+                <span>Hiển thị:</span>
+                <select onchange="setPendingClaimsPerPage(this.value)" style="appearance: none; background: var(--bg-soft); color: var(--text-main); border: 1px solid var(--border); padding: 5px 28px 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; outline: none; transition: all 0.2s ease;">
+                  <option value="10" ${perPage === 10 ? 'selected' : ''}>10 / trang</option>
+                  <option value="25" ${perPage === 25 ? 'selected' : ''}>25 / trang</option>
+                  <option value="50" ${perPage === 50 ? 'selected' : ''}>50 / trang</option>
+                  <option value="100" ${perPage === 100 ? 'selected' : ''}>100 / trang</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Right Controls: Prev / Page Buttons / Next -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" onclick="setPendingClaimsPage(${pendingClaimsCurrentPage - 1})" ${pendingClaimsCurrentPage <= 1 ? 'disabled' : ''} style="width: 32px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingClaimsCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${pendingClaimsCurrentPage <= 1 ? 'none' : 'auto'};" title="Trang trước">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+
+              <div style="display: flex; gap: 4px; align-items: center;">
+                ${pageBtnsHtml}
+              </div>
+
+              <button type="button" onclick="setPendingClaimsPage(${pendingClaimsCurrentPage + 1})" ${pendingClaimsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 32px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingClaimsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${pendingClaimsCurrentPage >= totalPages ? 'none' : 'auto'};" title="Trang sau">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }
     }
 
     async function updatePendingClaimStatus(claimId, newStatus) {
@@ -4824,12 +4930,18 @@
                   </tbody>
                 </table>
               </div>
+
+              <!-- Ultra-Luxury Pagination Footer Toolbar Container -->
+              <div id="pendingClaimsPaginationContainer"></div>
             </section>
           </div>
         `;
 
         const searchInput = document.getElementById('pendingSearchInput');
-        if (searchInput) searchInput.addEventListener('input', () => executeUIRenderPendingClaims());
+        if (searchInput) searchInput.addEventListener('input', () => {
+          pendingClaimsCurrentPage = 1;
+          executeUIRenderPendingClaims();
+        });
 
         executeUIRenderPendingClaims();
       } else {
