@@ -2253,6 +2253,10 @@
             <div id="modalMaVttDuplicateWarning" style="display: none; margin-top: 5px; font-size: 11.5px; color: #ef4444; font-weight: 750; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); padding: 6px 10px; border-radius: 8px;"></div>
           </div>
           <div class="form-group">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Số hồ sơ bồi thường (Số HSBT)</label>
+            <input id="modalPendingSoHoSoBoiThuong" class="input-premium" type="text" placeholder="Ví dụ: HSBT-2026-00891" style="font-weight: 750; color: #10b981;" />
+          </div>
+          <div class="form-group">
             <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Biển số xe *</label>
             <input id="modalPendingBienSo" class="input-premium" type="text" placeholder="Ví dụ: 47A-123.45" style="font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;" />
           </div>
@@ -3611,6 +3615,7 @@
       };
 
       const maVuTonThat = getValue(['Mã số vụ tổn thất', 'Mã VTT', 'Mã vụ tổn thất', 'Mã hồ sơ', 'Mã vụ']);
+      const soHoSoBoiThuong = getValue(['Số HSBT', 'Số hồ sơ bồi thường', 'Số hồ sơ BT', 'Số HSBT/BT', 'Số HS bồi thường', 'Số hồ sơ']);
       const bienSo = getValue(['BSX', 'Biển số', 'Biển kiểm soát', 'Biển số xe']);
       const donViCapDon = getValue(['ĐV cấp đơn', 'Đơn vị cấp đơn', 'Chi nhánh cấp đơn']);
       const hangXe = getValue(['Hãng xe']);
@@ -3636,6 +3641,7 @@
 
       return {
         maVuTonThat,
+        soHoSoBoiThuong,
         bienSo,
         donViCapDon,
         hangXe: fullHangXe,
@@ -3718,6 +3724,7 @@
       };
 
       setVal('modalPendingMaVuTonThat', `VTT/XCG/${new Date().getFullYear()}/${Math.floor(100000 + Math.random() * 900000)}`);
+      setVal('modalPendingSoHoSoBoiThuong', '');
       setVal('modalPendingBienSo', '');
       setVal('modalPendingDonViCapDon', '');
       setVal('modalPendingHangXe', '');
@@ -3765,6 +3772,7 @@
       checkModalDuplicateMaVTT('');
 
       setVal('modalPendingMaVuTonThat', item.maVuTonThat || '');
+      setVal('modalPendingSoHoSoBoiThuong', item.soHoSoBoiThuong || '');
       setVal('modalPendingBienSo', item.bienSo || '');
       setVal('modalPendingDonViCapDon', item.donViCapDon || '');
       setVal('modalPendingHangXe', item.hangXe || '');
@@ -3817,6 +3825,7 @@
       };
 
       if (parsed.maVuTonThat) setValIfPresent('modalPendingMaVuTonThat', parsed.maVuTonThat);
+      if (parsed.soHoSoBoiThuong) setValIfPresent('modalPendingSoHoSoBoiThuong', parsed.soHoSoBoiThuong);
       if (parsed.bienSo) setValIfPresent('modalPendingBienSo', parsed.bienSo);
       if (parsed.donViCapDon) setValIfPresent('modalPendingDonViCapDon', parsed.donViCapDon);
       if (parsed.hangXe) setValIfPresent('modalPendingHangXe', parsed.hangXe);
@@ -3909,6 +3918,7 @@
       const payload = {
         id: targetClaimId,
         maVuTonThat: maVuTonThat || existingItem.maVuTonThat || `VTT/XCG/${new Date().getFullYear()}/${Math.floor(100000 + Math.random() * 900000)}`,
+        soHoSoBoiThuong: getVal('modalPendingSoHoSoBoiThuong') || existingItem.soHoSoBoiThuong || '',
         bienSo: bienSo || existingItem.bienSo || 'Chưa rõ',
         donViCapDon: getVal('modalPendingDonViCapDon') || '—',
         hangXe: getVal('modalPendingHangXe') || '—',
@@ -4058,9 +4068,51 @@
       reader.readAsArrayBuffer(file);
     }
 
+    async function promptAssignSoHoSoBoiThuong(claimId, currentVal) {
+      if (!window.Swal) {
+        const val = prompt('Nhập Số hồ sơ bồi thường (Số HSBT):', currentVal || '');
+        if (val !== null) {
+          try {
+            await dbNodeInstance.ref(`pending_claims/${claimId}/soHoSoBoiThuong`).set(val.trim());
+            await dbNodeInstance.ref(`pending_claims/${claimId}/updatedAt`).set(Date.now());
+            triggerToast('Đã gán Số hồ sơ bồi thường thành công!', 'success');
+            executeUIRenderPendingClaims();
+          } catch (e) {
+            console.error(e);
+            triggerToast('Lỗi gán Số HSBT: ' + e.message, 'error');
+          }
+        }
+        return;
+      }
+
+      const { value: newSoHsbt } = await Swal.fire({
+        title: 'Gán Số hồ sơ bồi thường',
+        input: 'text',
+        inputLabel: 'Nhập Số hồ sơ bồi thường (Số HSBT)',
+        inputValue: currentVal || '',
+        placeholder: 'Ví dụ: HSBT-2026-00891',
+        showCancelButton: true,
+        confirmButtonText: 'Lưu Số HSBT',
+        cancelButtonText: 'Hủy bỏ',
+        confirmButtonColor: '#10b981'
+      });
+
+      if (newSoHsbt !== undefined) {
+        try {
+          await dbNodeInstance.ref(`pending_claims/${claimId}/soHoSoBoiThuong`).set(newSoHsbt.trim());
+          await dbNodeInstance.ref(`pending_claims/${claimId}/updatedAt`).set(Date.now());
+          triggerToast('Đã gán Số hồ sơ bồi thường thành công!', 'success');
+          executeUIRenderPendingClaims();
+        } catch (e) {
+          console.error(e);
+          triggerToast('Lỗi gán Số HSBT: ' + e.message, 'error');
+        }
+      }
+    }
+
     function processParsedExcelData(rows) {
       let headerIndex = -1;
-      let colMap = { bsx: -1, date: -1, vtt: -1, status: -1, gara: -1, amount: -1 };
+      let colMap = { bsx: -1, date: -1, vtt: -1, status: -1, gara: -1, amount: -1, soHsbt: -1 };
 
       for (let i = 0; i < Math.min(10, rows.length); i++) {
         const row = rows[i];
@@ -4071,6 +4123,7 @@
           if (text.includes('biển số') || text.includes('bsx') || text.includes('bks')) colMap.bsx = colIdx;
           else if (text.includes('ngày') || text.includes('thời gian')) colMap.date = colIdx;
           else if (text.includes('mã vtt') || text.includes('mã vụ')) colMap.vtt = colIdx;
+          else if (text.includes('hsbt') || text.includes('số hsbt') || text.includes('số hồ sơ bồi thường') || text.includes('số hs bồi thường') || text.includes('số hồ sơ bt') || text.includes('số hồ sơ')) colMap.soHsbt = colIdx;
           else if (text.includes('trạng thái') || text.includes('tình trạng')) colMap.status = colIdx;
           else if (text.includes('gara') || text.includes('xưởng')) colMap.gara = colIdx;
           else if (text.includes('tiền') || text.includes('bồi thường') || text.includes('duyệt')) colMap.amount = colIdx;
@@ -4084,7 +4137,7 @@
 
       if (headerIndex === -1) {
         headerIndex = 0;
-        colMap = { bsx: 0, vtt: 1, gara: 2, status: 3, date: 4, amount: 5 };
+        colMap = { bsx: 0, vtt: 1, gara: 2, status: 3, date: 4, amount: 5, soHsbt: 6 };
       }
 
       const allClaims = Object.values(cachedPendingClaimsPayload || {}).filter(c => c && typeof c === 'object');
@@ -4097,6 +4150,7 @@
         const rawBsx = colMap.bsx !== -1 ? String(r[colMap.bsx] || '').trim() : '';
         const rawDate = colMap.date !== -1 ? String(r[colMap.date] || '').trim() : '';
         const rawVtt = colMap.vtt !== -1 ? String(r[colMap.vtt] || '').trim() : '';
+        const rawSoHsbt = colMap.soHsbt !== -1 ? String(r[colMap.soHsbt] || '').trim() : '';
         const rawStatusStr = colMap.status !== -1 ? String(r[colMap.status] || '').trim() : '';
         const rawGara = colMap.gara !== -1 ? String(r[colMap.gara] || '').trim() : '';
         const rawAmount = colMap.amount !== -1 ? String(r[colMap.amount] || '').trim() : '';
@@ -4132,6 +4186,7 @@
           rawBsx,
           rawDate,
           rawVtt,
+          rawSoHsbt,
           rawStatusStr,
           targetStatus,
           rawGara,
@@ -4161,7 +4216,10 @@
           return `
             <tr style="${isMatched ? '' : 'opacity: 0.6; background: rgba(239,68,68,0.03);'}">
               <td style="text-align: center; font-weight: 700;">${idx + 1}</td>
-              <td><strong style="color: var(--primary); font-family: 'JetBrains Mono';">${escapeHtmlOutput(r.rawBsx || r.matchedClaim?.bienSo || '—')}</strong></td>
+              <td>
+                <strong style="color: var(--primary); font-family: 'JetBrains Mono';">${escapeHtmlOutput(r.rawBsx || r.matchedClaim?.bienSo || '—')}</strong>
+                ${r.rawSoHsbt ? `<div style="font-size: 10.5px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 700;">HSBT: ${escapeHtmlOutput(r.rawSoHsbt)}</div>` : ''}
+              </td>
               <td><span style="font-family: 'JetBrains Mono'; font-size: 11px;">${escapeHtmlOutput(r.rawVtt || r.matchedClaim?.maVuTonThat || '—')}</span></td>
               <td>${escapeHtmlOutput(r.rawGara || r.matchedClaim?.garaSuaChua || '—')}</td>
               <td>${statusBadge}</td>
@@ -4204,6 +4262,7 @@
             updates.garaSuaChua = r.rawGara;
             updates.tenGara = r.rawGara;
           }
+          if (r.rawSoHsbt && r.rawSoHsbt !== '—') updates.soHoSoBoiThuong = r.rawSoHsbt;
           if (r.rawDate && r.rawDate !== '—') updates.ngayDuyetBT = r.rawDate;
           if (r.rawAmount && r.rawAmount !== '—') updates.soTienDuyetBT = r.rawAmount;
           if (r.rawVtt && r.rawVtt !== '—' && r.rawVtt !== r.matchedClaim.maVuTonThat) updates.maVuTonThat = r.rawVtt;
@@ -4599,7 +4658,13 @@
             <td style="text-align: center; font-weight: 750; color: var(--text-muted);">${String(itemNumber).padStart(2, '0')}</td>
             <td>
               <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 13.5px; display: block;">${escapeHtmlOutput(item.bienSo)}</strong>
-              <span style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono';">${escapeHtmlOutput(item.maVuTonThat)}</span>
+              <span style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono'; display: block;">VTT: ${escapeHtmlOutput(item.maVuTonThat)}</span>
+              <div style="margin-top: 3px;">
+                <button type="button" onclick="promptAssignSoHoSoBoiThuong('${item.id}', '${escapeAttributeData(item.soHoSoBoiThuong || '')}')" title="Nhấp để gán / sửa Số hồ sơ bồi thường" style="border: none; background: ${item.soHoSoBoiThuong ? 'rgba(16,185,129,0.1)' : 'rgba(216,180,109,0.08)'}; color: ${item.soHoSoBoiThuong ? '#10b981' : 'var(--text-muted)'}; padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 750; font-family: 'JetBrains Mono'; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                  <span>${item.soHoSoBoiThuong ? escapeHtmlOutput(item.soHoSoBoiThuong) : '+ Gán Số HSBT'}</span>
+                </button>
+              </div>
             </td>
             <td>
               <strong style="color: var(--text-main); font-size: 13px; display: block;">${escapeHtmlOutput(item.hangXe || '—')}</strong>
