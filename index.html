@@ -4067,19 +4067,29 @@
 
         if (!rawVtt && !rawBsx) continue; // Skip empty rows
 
-        // Match claim by VTT or BSX
+        // PRIORITY KEY #1: Biển số xe (License Plate Number normalized)
         let matchedClaim = null;
-        if (rawVtt) {
-          const normVtt = rawVtt.toLowerCase();
-          matchedClaim = claimsList.find(c => c.maVuTonThat && String(c.maVuTonThat).trim().toLowerCase() === normVtt);
-        }
-        if (!matchedClaim && rawBsx) {
+        let matchReason = '';
+
+        if (rawBsx) {
           const normBsx = rawBsx.toLowerCase().replace(/[^a-z0-9]/g, '');
-          matchedClaim = claimsList.find(c => {
-            if (!c.bienSo) return false;
-            const bNorm = String(c.bienSo).toLowerCase().replace(/[^a-z0-9]/g, '');
-            return bNorm === normBsx;
-          });
+          if (normBsx) {
+            matchedClaim = claimsList.find(c => {
+              if (!c.bienSo) return false;
+              const bNorm = String(c.bienSo).toLowerCase().replace(/[^a-z0-9]/g, '');
+              return bNorm === normBsx;
+            });
+            if (matchedClaim) matchReason = 'bsx';
+          }
+        }
+
+        // FALLBACK KEY #2: Mã vụ tổn thất (if Biển số xe missed)
+        if (!matchedClaim && rawVtt) {
+          const normVtt = rawVtt.trim().toLowerCase();
+          if (normVtt && normVtt !== '—' && normVtt !== '-') {
+            matchedClaim = claimsList.find(c => c.maVuTonThat && String(c.maVuTonThat).trim().toLowerCase() === normVtt);
+            if (matchedClaim) matchReason = 'vtt';
+          }
         }
 
         // Map status label to key
@@ -4109,7 +4119,8 @@
           mappedStatusLabel: mappedStatusLabel || rawStatus,
           rawNgayDuyet: rawNgayDuyet,
           rawSoTien: rawSoTien,
-          matchedClaim: matchedClaim
+          matchedClaim: matchedClaim,
+          matchReason: matchReason
         });
       }
 
@@ -4125,7 +4136,7 @@
       if (previewSec) previewSec.style.display = 'block';
 
       if (badge) {
-        badge.innerHTML = `Khớp dữ liệu: <strong style="font-family: 'JetBrains Mono'; font-size: 13px;">${matchedCount} / ${batchRows.length}</strong> hồ sơ`;
+        badge.innerHTML = `Khớp dữ liệu theo Biển số xe: <strong style="font-family: 'JetBrains Mono'; font-size: 13px;">${matchedCount} / ${batchRows.length}</strong> hồ sơ`;
       }
 
       if (btnSubmit) {
@@ -4149,11 +4160,13 @@
 
       tbody.innerHTML = batchRows.map((r, idx) => {
         const isMatched = !!r.matchedClaim;
+        const matchLabel = r.matchReason === 'bsx' ? '✓ Khớp Biển số xe' : (r.matchReason === 'vtt' ? '✓ Khớp Mã VTT' : '✕ Không tìm thấy');
+
         return `
           <tr style="${isMatched ? 'background: rgba(16,185,129,0.04);' : 'background: rgba(239,68,68,0.03);'}">
             <td style="text-align: center; font-weight: 700; color: var(--text-muted);">${idx + 1}</td>
             <td>
-              <strong style="color: ${isMatched ? 'var(--primary)' : 'var(--text-main)'}; font-family: 'JetBrains Mono'; font-size: 12px; display: block;">${escapeHtmlOutput(r.rawBsx)}</strong>
+              <strong style="color: ${isMatched ? 'var(--primary)' : 'var(--text-main)'}; font-family: 'JetBrains Mono'; font-size: 12.5px; display: block;">${escapeHtmlOutput(r.rawBsx)}</strong>
               <span style="font-size: 10.5px; color: var(--text-muted); font-family: 'JetBrains Mono';">${escapeHtmlOutput(r.rawVtt)}</span>
             </td>
             <td>
@@ -4169,11 +4182,11 @@
             <td style="text-align: center;">
               ${isMatched ? `
                 <span style="font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);">
-                  ✓ Khớp dữ liệu
+                  ${matchLabel}
                 </span>
               ` : `
                 <span style="font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3);">
-                  ✕ Không thấy Mã VTT
+                  ✕ Chưa có trong hệ thống
                 </span>
               `}
             </td>
@@ -4198,6 +4211,11 @@
         for (const r of matchedRows) {
           const claimId = r.matchedClaim.id;
           const updates = { updatedAt: Date.now() };
+
+          // If Excel has a new/updated MaVuTonThat, sync it too!
+          if (r.rawVtt && r.rawVtt !== '—' && r.rawVtt !== r.matchedClaim.maVuTonThat) {
+            updates.maVuTonThat = r.rawVtt;
+          }
 
           if (r.rawGara) {
             updates.donViCapDon = r.rawGara;
@@ -4224,13 +4242,13 @@
           Swal.fire({
             icon: 'success',
             title: 'Cập nhật tự động hoàn tất!',
-            html: `✅ Đã cập nhật thành công <b>${successCount} / ${matchedRows.length}</b> hồ sơ tổn thất từ tệp Excel lên hệ thống.<br><br>` +
-                  `Thông tin Gara sửa chữa, Trạng thái và Ngày duyệt bồi thường đã được đồng bộ tự động.`,
+            html: `✅ Đã đối chiếu theo <b>Biển số xe</b> và cập nhật thành công <b>${successCount} / ${matchedRows.length}</b> hồ sơ từ tệp Excel lên hệ thống.<br><br>` +
+                  `Thông tin Mã VTT, Gara sửa chữa, Trạng thái và Ngày duyệt bồi thường đã được đồng bộ tự động.`,
             confirmButtonText: 'Tuyệt vời',
             confirmButtonColor: '#10b981'
           });
         } else {
-          triggerToast(`Đã cập nhật tự động thành công ${successCount} hồ sơ!`, 'success');
+          triggerToast(`Đã cập nhật tự động thành công ${successCount} hồ sơ theo Biển số xe!`, 'success');
         }
 
         executeUIRenderPendingClaims();
