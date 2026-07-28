@@ -2488,6 +2488,7 @@
     function setPendingClaimsPerPage(perPage) {
       pendingClaimsPerPage = parseInt(perPage, 10) || 10;
       pendingClaimsCurrentPage = 1;
+      closeAllCustomDropdowns();
       executeUIRenderPendingClaims();
     }
 
@@ -3971,8 +3972,19 @@
       }
     }
 
+    function toggleCustomPerPageDropdown(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById('menuCustomPerPageDropdown');
+      if (!menu) return;
+      const isHidden = menu.style.display === 'none' || !menu.style.display;
+      closeAllCustomDropdowns();
+      if (isHidden) {
+        menu.style.display = 'block';
+      }
+    }
+
     function closeAllCustomDropdowns() {
-      ['menuCustomStatusDropdown', 'menuCustomGdvDropdown', 'menuCustomPeriodDropdown'].forEach(id => {
+      ['menuCustomStatusDropdown', 'menuCustomGdvDropdown', 'menuCustomPeriodDropdown', 'menuCustomPerPageDropdown'].forEach(id => {
         const menu = document.getElementById(id);
         if (menu) menu.style.display = 'none';
       });
@@ -4363,15 +4375,28 @@
                 Hiển thị <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 800;">${displayStart} - ${displayEnd}</strong> trên tổng số <strong style="color: var(--text-main); font-family: 'JetBrains Mono'; font-weight: 800;">${totalFilteredCount}</strong> hồ sơ
               </span>
 
-              <!-- Items per page selector -->
+              <!-- Custom Luxury Items per page selector -->
               <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-soft); font-weight: 600;">
                 <span>Hiển thị:</span>
-                <select onchange="setPendingClaimsPerPage(this.value)" style="appearance: none; background: var(--bg-soft); color: var(--text-main); border: 1px solid var(--border); padding: 5px 28px 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; outline: none; transition: all 0.2s ease;">
-                  <option value="10" ${perPage === 10 ? 'selected' : ''}>10 / trang</option>
-                  <option value="25" ${perPage === 25 ? 'selected' : ''}>25 / trang</option>
-                  <option value="50" ${perPage === 50 ? 'selected' : ''}>50 / trang</option>
-                  <option value="100" ${perPage === 100 ? 'selected' : ''}>100 / trang</option>
-                </select>
+                <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
+                  <button id="btnCustomPerPageDropdown" type="button" onclick="toggleCustomPerPageDropdown(event)" style="background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); font-size: 12px; font-weight: 800; padding: 5px 28px 5px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: all 0.2s ease;">
+                    <span>${perPage} / trang</span>
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </button>
+
+                  <!-- Custom Floating Menu List (Opens Upwards) -->
+                  <div id="menuCustomPerPageDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; bottom: calc(100% + 5px); left: 0; min-width: 110px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
+                    ${[10, 25, 50, 100].map(num => {
+                      const isSel = perPage === num;
+                      return `
+                        <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="setPendingClaimsPerPage(${num})" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
+                          <span style="font-size: 11.5px; font-family: 'JetBrains Mono';">${num} / trang</span>
+                          ${isSel ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
               </div>
             </div>
 
