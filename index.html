@@ -4457,16 +4457,18 @@
     }
 
     function executeUIRenderPendingClaims() {
-      const tbody = document.getElementById('tblPendingClaimsBodyContainer');
-      const statsContainer = document.getElementById('pendingWeeklyStatsContainer');
-      if (!tbody) return;
+      try {
+        const tbody = document.getElementById('tblPendingClaimsBodyContainer');
+        const statsContainer = document.getElementById('pendingWeeklyStatsContainer');
+        if (!tbody) return;
 
-      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+        const rawClaims = Object.values(cachedPendingClaimsPayload || {});
+        const claimsList = rawClaims.filter(c => c && typeof c === 'object');
 
-      // Read Filters
-      const searchVal = (document.getElementById('pendingSearchInput')?.value || '').toLowerCase().trim();
-      const gdvFilter = activePendingGdvFilter || 'all';
-      const periodFilter = activePendingPeriodFilter || 'this_week';
+        // Read Filters
+        const searchVal = (document.getElementById('pendingSearchInput')?.value || '').toLowerCase().trim();
+        const gdvFilter = activePendingGdvFilter || 'all';
+        const periodFilter = activePendingPeriodFilter || 'all';
 
       // Time Period Helper (This Week vs Last Week vs Month)
       const now = new Date();
@@ -4849,8 +4851,10 @@
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>
             </div>
-          </div>
         `;
+      }
+      } catch (err) {
+        console.error("Lỗi render danh sách hồ sơ tồn:", err);
       }
     }
 
