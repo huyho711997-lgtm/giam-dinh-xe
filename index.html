@@ -3978,24 +3978,50 @@
       }
     }
 
+    function parseDateParts(dateInput) {
+      if (!dateInput) return null;
+      if (typeof dateInput === 'number' || (!isNaN(dateInput) && String(dateInput).length >= 10 && !String(dateInput).includes('/') && !String(dateInput).includes('-'))) {
+        const dt = new Date(Number(dateInput));
+        if (!isNaN(dt.getTime())) {
+          return { day: dt.getDate(), month: dt.getMonth() + 1, year: dt.getFullYear() };
+        }
+      }
+      
+      const str = String(dateInput).trim();
+      if (!str) return null;
+
+      if (!isNaN(str) && Number(str) > 30000 && Number(str) < 60000) {
+        const jsDate = new Date(Math.round((Number(str) - (25567 + 2)) * 86400 * 1000));
+        return { day: jsDate.getDate(), month: jsDate.getMonth() + 1, year: jsDate.getFullYear() };
+      }
+
+      const parts = str.split(/[\/\-\.\sT]/).filter(Boolean);
+      if (parts.length >= 3) {
+        let p1 = parseInt(parts[0], 10);
+        let p2 = parseInt(parts[1], 10);
+        let p3 = parseInt(parts[2], 10);
+
+        if (p1 > 1000) {
+          return { day: p3, month: p2, year: p1 };
+        } else if (p3 > 1000) {
+          return { day: p1, month: p2, year: p3 };
+        }
+      }
+
+      return null;
+    }
+
     function isSameDateString(d1, d2) {
       if (!d1 || !d2) return false;
-      const s1 = String(d1).trim();
-      const s2 = String(d2).trim();
-      if (s1 === s2) return true;
-      
-      const dig1 = s1.replace(/\D/g, '');
-      const dig2 = s2.replace(/\D/g, '');
-      if (dig1 && dig1 === dig2) return true;
-
-      const parts1 = s1.split(/[\/\-\.\s]/).filter(Boolean);
-      const parts2 = s2.split(/[\/\-\.\s]/).filter(Boolean);
-      if (parts1.length === 3 && parts2.length === 3) {
-        const sorted1 = [...parts1].sort().join('-');
-        const sorted2 = [...parts2].sort().join('-');
-        if (sorted1 === sorted2) return true;
+      const dp1 = parseDateParts(d1);
+      const dp2 = parseDateParts(d2);
+      if (dp1 && dp2) {
+        return dp1.day === dp2.day && dp1.month === dp2.month && dp1.year === dp2.year;
       }
-      return false;
+
+      const s1 = String(d1).trim().replace(/\D/g, '');
+      const s2 = String(d2).trim().replace(/\D/g, '');
+      return !!s1 && s1 === s2;
     }
 
     function handleExcelFileSelected(event) {
@@ -4091,29 +4117,15 @@
         let matchedClaim = null;
         let matchType = '';
 
+        // STRICT MANDATORY DUAL-MATCHING: Biển số xe AND Ngày tổn thất MUST BOTH MATCH TOGETHER!
         if (normBsx && rawDate) {
           matchedClaim = allClaims.find(c => {
             const claimBsx = (c.bienSo || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
             if (claimBsx !== normBsx) return false;
-            return isSameDateString(rawDate, c.ngayTonThat || c.createdAt);
+            const dateToCompare = c.ngayTonThat || c.createdAt;
+            return isSameDateString(rawDate, dateToCompare);
           });
           if (matchedClaim) matchType = 'bsx_date';
-        }
-
-        if (!matchedClaim && normBsx) {
-          matchedClaim = allClaims.find(c => {
-            const claimBsx = (c.bienSo || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-            return claimBsx === normBsx;
-          });
-          if (matchedClaim) matchType = 'bsx';
-        }
-
-        if (!matchedClaim && normVtt) {
-          matchedClaim = allClaims.find(c => {
-            const claimVtt = (c.maVuTonThat || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-            return claimVtt === normVtt;
-          });
-          if (matchedClaim) matchType = 'vtt';
         }
 
         parsedExcelBatchRows.push({
@@ -4143,10 +4155,8 @@
           const statusObj = PENDING_STATUS_MAP[r.targetStatus] || PENDING_STATUS_MAP['moi_tiep_nhan'];
           const statusBadge = r.targetStatus ? `<span class="badge-status" style="background:${statusObj.bg}; color:${statusObj.color}; border:1px solid ${statusObj.border}; padding:3px 8px; border-radius:99px; font-size:11px;">${statusObj.label}</span>` : '<span style="color:var(--text-muted)">Giữ nguyên</span>';
 
-          let matchBadge = '<span style="color:#ef4444; font-weight:700;">✕ Khai báo mới / Không khớp</span>';
-          if (r.matchType === 'bsx_date') matchBadge = '<span style="color:#10b981; font-weight:800;">✓ Khớp Biển số + Ngày</span>';
-          else if (r.matchType === 'bsx') matchBadge = '<span style="color:#3b82f6; font-weight:700;">✓ Khớp Biển số xe</span>';
-          else if (r.matchType === 'vtt') matchBadge = '<span style="color:#8b5cf6; font-weight:700;">✓ Khớp Mã vụ tổn thất</span>';
+          let matchBadge = '<span style="color:#ef4444; font-weight:700;">✕ Không khớp (Cần khớp cả Biển số & Ngày)</span>';
+          if (r.matchType === 'bsx_date') matchBadge = '<span style="color:#10b981; font-weight:800;">✓ Khớp chuẩn 100% (Biển số + Ngày)</span>';
 
           return `
             <tr style="${isMatched ? '' : 'opacity: 0.6; background: rgba(239,68,68,0.03);'}">
