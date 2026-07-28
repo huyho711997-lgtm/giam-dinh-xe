@@ -4023,6 +4023,34 @@
       reader.readAsArrayBuffer(file);
     }
 
+    function isSameDateString(dateStr1, dateStr2) {
+      if (!dateStr1 || !dateStr2) return false;
+      const s1 = String(dateStr1).trim();
+      const s2 = String(dateStr2).trim();
+      if (!s1 || !s2 || s1 === '—' || s2 === '—') return false;
+
+      // Extract all digit sequences
+      const d1Digits = s1.replace(/[^0-9]/g, '');
+      const d2Digits = s2.replace(/[^0-9]/g, '');
+      if (d1Digits && d2Digits && d1Digits === d2Digits) return true;
+
+      // Split into day, month, year components
+      const parts1 = s1.split(/[\/\-\.\s,:]+/).filter(p => p.length > 0 && !isNaN(p));
+      const parts2 = s2.split(/[\/\-\.\s,:]+/).filter(p => p.length > 0 && !isNaN(p));
+
+      if (parts1.length >= 3 && parts2.length >= 3) {
+        const set1 = new Set(parts1.map(p => parseInt(p, 10)));
+        const set2 = new Set(parts2.map(p => parseInt(p, 10)));
+        let matchCount = 0;
+        set1.forEach(v => { if (set2.has(v)) matchCount++; });
+        if (matchCount >= 3) return true;
+      }
+      
+      // Fallback substring check
+      if (s1.includes(s2) || s2.includes(s1)) return true;
+      return false;
+    }
+
     function processParsedExcelData(rows) {
       if (!rows || rows.length < 2) return;
 
@@ -4046,6 +4074,7 @@
       const bsxCol = findCol(['biển số', 'bsx', 'biển xe', 'xe']);
       const garaCol = findCol(['gara', 'nơi sửa', 'đơn vị sửa', 'garage', 'sửa chữa', 'tên gara']);
       const statusCol = findCol(['trạng thái', 'tình trạng', 'trang thai', 'status']);
+      const ngayVttCol = findCol(['ngày tổn thất', 'ngày vtt', 'ngày xảy ra', 'thời gian tổn thất', 'ngày bị', 'ngày phát sinh']);
       const ngayDuyetCol = findCol(['ngày duyệt', 'ngày duyệt bt', 'hoàn thành', 'ngày bồi thường', 'duyệt bồi thường']);
       const soTienCol = findCol(['số tiền', 'tiền bồi thường', 'tiền bt', 'chi phí', 'giá trị']);
 
@@ -4062,28 +4091,46 @@
         const rawBsx = bsxCol >= 0 ? String(row[bsxCol] || '').trim() : '';
         const rawGara = garaCol >= 0 ? String(row[garaCol] || '').trim() : '';
         const rawStatus = statusCol >= 0 ? String(row[statusCol] || '').trim() : '';
+        const rawNgayVtt = ngayVttCol >= 0 ? String(row[ngayVttCol] || '').trim() : '';
         const rawNgayDuyet = ngayDuyetCol >= 0 ? String(row[ngayDuyetCol] || '').trim() : '';
         const rawSoTien = soTienCol >= 0 ? String(row[soTienCol] || '').trim() : '';
 
         if (!rawVtt && !rawBsx) continue; // Skip empty rows
 
-        // PRIORITY KEY #1: Biển số xe (License Plate Number normalized)
+        // DUAL CRITERIA MATCHING ENGINE: Biển số xe + Ngày tổn thất
         let matchedClaim = null;
         let matchReason = '';
 
         if (rawBsx) {
           const normBsx = rawBsx.toLowerCase().replace(/[^a-z0-9]/g, '');
           if (normBsx) {
-            matchedClaim = claimsList.find(c => {
+            // Find all claims matching this license plate
+            const claimsWithBsx = claimsList.filter(c => {
               if (!c.bienSo) return false;
               const bNorm = String(c.bienSo).toLowerCase().replace(/[^a-z0-9]/g, '');
               return bNorm === normBsx;
             });
-            if (matchedClaim) matchReason = 'bsx';
+
+            if (claimsWithBsx.length > 0) {
+              const targetDate = rawNgayVtt || rawNgayDuyet;
+              if (targetDate) {
+                // Try exact date match with ngayVTT or ngayThongBao
+                matchedClaim = claimsWithBsx.find(c => {
+                  return isSameDateString(c.ngayVTT, targetDate) || isSameDateString(c.ngayThongBao, targetDate);
+                });
+                if (matchedClaim) matchReason = 'bsx_date';
+              }
+
+              // Fallback to plate match if date wasn't specified or didn't match single record
+              if (!matchedClaim) {
+                matchedClaim = claimsWithBsx[0];
+                matchReason = 'bsx';
+              }
+            }
           }
         }
 
-        // FALLBACK KEY #2: Mã vụ tổn thất (if Biển số xe missed)
+        // FALLBACK KEY #2: Mã vụ tổn thất
         if (!matchedClaim && rawVtt) {
           const normVtt = rawVtt.trim().toLowerCase();
           if (normVtt && normVtt !== '—' && normVtt !== '-') {
@@ -4117,6 +4164,7 @@
           rawStatus: rawStatus,
           mappedStatusKey: mappedStatusKey,
           mappedStatusLabel: mappedStatusLabel || rawStatus,
+          rawNgayVtt: rawNgayVtt,
           rawNgayDuyet: rawNgayDuyet,
           rawSoTien: rawSoTien,
           matchedClaim: matchedClaim,
@@ -4136,7 +4184,7 @@
       if (previewSec) previewSec.style.display = 'block';
 
       if (badge) {
-        badge.innerHTML = `Khớp dữ liệu theo Biển số xe: <strong style="font-family: 'JetBrains Mono'; font-size: 13px;">${matchedCount} / ${batchRows.length}</strong> hồ sơ`;
+        badge.innerHTML = `Khớp dữ liệu theo Biển số xe & Ngày VTT: <strong style="font-family: 'JetBrains Mono'; font-size: 13px;">${matchedCount} / ${batchRows.length}</strong> hồ sơ`;
       }
 
       if (btnSubmit) {
@@ -4160,7 +4208,10 @@
 
       tbody.innerHTML = batchRows.map((r, idx) => {
         const isMatched = !!r.matchedClaim;
-        const matchLabel = r.matchReason === 'bsx' ? '✓ Khớp Biển số xe' : (r.matchReason === 'vtt' ? '✓ Khớp Mã VTT' : '✕ Không tìm thấy');
+        let matchLabel = '✕ Chưa có trong hệ thống';
+        if (r.matchReason === 'bsx_date') matchLabel = '✓ Khớp BSX + Ngày VTT';
+        else if (r.matchReason === 'bsx') matchLabel = '✓ Khớp Biển số xe';
+        else if (r.matchReason === 'vtt') matchLabel = '✓ Khớp Mã VTT';
 
         return `
           <tr style="${isMatched ? 'background: rgba(16,185,129,0.04);' : 'background: rgba(239,68,68,0.03);'}">
@@ -4177,11 +4228,11 @@
               <div style="font-size: 11.5px; font-weight: 800; color: ${isMatched ? '#10b981' : 'var(--text-soft)'};">${escapeHtmlOutput(r.mappedStatusLabel || '—')}</div>
             </td>
             <td>
-              <div style="font-size: 11.5px; font-family: 'JetBrains Mono'; color: var(--text-main);">${escapeHtmlOutput(r.rawNgayDuyet || '—')}</div>
+              <div style="font-size: 11.5px; font-family: 'JetBrains Mono'; color: var(--text-main);">${escapeHtmlOutput(r.rawNgayDuyet || r.rawNgayVtt || '—')}</div>
             </td>
             <td style="text-align: center;">
               ${isMatched ? `
-                <span style="font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);">
+                <span style="font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 99px; ${r.matchReason === 'bsx_date' ? 'background: rgba(216,180,109,0.18); color: var(--primary); border: 1px solid rgba(216,180,109,0.4);' : 'background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3);'}">
                   ${matchLabel}
                 </span>
               ` : `
