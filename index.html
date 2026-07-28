@@ -2485,9 +2485,19 @@
     window.addEventListener('popstate', () => { if (window.firebase?.auth) evaluateViewRoutingState(firebase.auth().currentUser); });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && document.getElementById('lightbox')?.classList.contains('show')) closeLightbox();
+      if (event.key === 'Escape' && document.getElementById('customCameraModal')?.style.display === 'flex') closeCustomCameraModal(false);
       if (event.key === 'Escape' && document.getElementById('profileModalOverlay')?.style.display === 'grid') closeUserProfileModal();
       if (event.key === 'Escape' && document.getElementById('createUserModalOverlay')?.style.display === 'grid') closeCreateUserModal();
       if (event.key === 'Escape' && document.getElementById('editUserModalOverlay')?.style.display === 'grid') closeEditUserModal();
+    });
+
+    window.addEventListener('beforeunload', (event) => {
+      const isCamOpen = document.getElementById('customCameraModal')?.style.display === 'flex';
+      if (isCamOpen && typeof customCameraPhotos !== 'undefined' && customCameraPhotos.length > 0) {
+        event.preventDefault();
+        event.returnValue = 'Bạn có tệp ảnh chụp chưa lưu. Bạn có chắc muốn rời đi?';
+        return event.returnValue;
+      }
     });
 
     function initApplicationState() {
@@ -7786,6 +7796,21 @@
     }
 
     async function closeCustomCameraModal(savePhotos = false) {
+      if (!savePhotos && customCameraPhotos.length > 0) {
+        const count = customCameraPhotos.length;
+        const item = (customCameraRequestIndex !== null && typeof localActiveRequestedItems !== 'undefined') ? localActiveRequestedItems[customCameraRequestIndex] : null;
+        const itemName = item?.tenHangMuc || (customCameraRequestIndex !== null ? `Hạng mục ${customCameraRequestIndex + 1}` : 'hạng mục này');
+        
+        const confirmExit = await showConfirmModal(
+          '⚠️ HỦY BỎ ẢNH ĐÃ CHỤP?',
+          `Bạn đã chụp ${count} ảnh cho "${itemName}" nhưng chưa bấm "Xong". Thoát ngay bây giờ sẽ HỦY BỎ toàn bộ ${count} ảnh vừa chụp!`,
+          'Hủy ảnh & Thoát',
+          'Tiếp tục chụp'
+        );
+        
+        if (!confirmExit) return;
+      }
+
       stopCustomCameraStream();
       
       const modal = document.getElementById('customCameraModal');
