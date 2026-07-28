@@ -8428,10 +8428,12 @@
         confirmButton.textContent = confirmText;
         cancelButton.textContent = cancelText;
 
+        overlay.style.zIndex = '999999';
         overlay.style.display = 'grid';
         document.body.style.overflow = 'hidden';
         const finish = (result) => {
           overlay.style.display = 'none';
+          overlay.style.zIndex = '';
           document.body.style.overflow = '';
           confirmButton.textContent = originalConfirmText;
           cancelButton.textContent = originalCancelText;
