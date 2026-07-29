@@ -4816,13 +4816,14 @@
     function formatDateDisplay(val) {
       if (!val) return '—';
       const str = String(val).trim();
-      if (!str || str === '—') return '—';
+      if (!str || str === '—' || str === '0' || str === 'null' || str === 'undefined' || str === '1970-01-01' || str.startsWith('01/01/1970')) return '—';
 
       const dp = parseDateParts(str);
       if (dp) {
+        if (dp.year <= 1970) return '—';
         let res = `${String(dp.day).padStart(2,'0')}/${String(dp.month).padStart(2,'0')}/${dp.year}`;
         const timeMatch = str.match(/\b([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?\b/);
-        if (timeMatch) {
+        if (timeMatch && (timeMatch[1] !== '00' || timeMatch[2] !== '00')) {
           res += ` ${timeMatch[1].padStart(2,'0')}:${timeMatch[2]}`;
         }
         return res;
@@ -5046,6 +5047,22 @@
         }
 
         const fullRowMeta = {
+          bienSo: rawBsx,
+          soHoSoBoiThuong: rawSoHsbt,
+          donViCapDon: getVal(r, colMap.chiNhanh) || getVal(r, colMap.chiNhanhXuly),
+          hangXe: getVal(r, colMap.hangXe),
+          hieuXe: getVal(r, colMap.hieuXe),
+          namSanXuat: getVal(r, colMap.namSanXuat),
+          gdvTiepNhan: getVal(r, colMap.gdvHo),
+          canBoXuLy: getVal(r, colMap.gdvHo),
+          ngayThongBao: formatDateDisplay(getVal(r, colMap.ngayThongBao)),
+          ngayVTT: rawDate,
+          diaDiemVTT: getVal(r, colMap.diaDiemTonThat) || getVal(r, colMap.tinhTonThat),
+          hienTruong: getVal(r, colMap.diaDiemTonThat),
+          nguyenNhan: getVal(r, colMap.nhomNguyenNhan) || getVal(r, colMap.dienBienTonThat),
+          moTaTonThat: getVal(r, colMap.dienBienTonThat) || getVal(r, colMap.doiTuongTonThat),
+          garaSuaChua: getVal(r, colMap.gara) || getVal(r, colMap.tenGaraVietTat),
+
           chiNhanhXuly: getVal(r, colMap.chiNhanhXuly),
           chiNhanh: getVal(r, colMap.chiNhanh),
           ttkd: getVal(r, colMap.ttkd),
@@ -5064,15 +5081,11 @@
           ngayThanhToanPhi: formatDateDisplay(getVal(r, colMap.ngayThanhToanPhi)),
           phiBh: getVal(r, colMap.phiBh),
           khachHang: getVal(r, colMap.khachHang),
-          hieuXe: getVal(r, colMap.hieuXe),
           loaiXe: getVal(r, colMap.loaiXe),
-          hangXe: getVal(r, colMap.hangXe),
-          namSanXuat: getVal(r, colMap.namSanXuat),
           loaiDongCo: getVal(r, colMap.loaiDongCo),
           mdsd: getVal(r, colMap.mdsd),
           soChoTrongTai: getVal(r, colMap.soChoTrongTai),
           maSpNghiepVu: getVal(r, colMap.maSpNghiepVu),
-          ngayThongBao: formatDateDisplay(getVal(r, colMap.ngayThongBao)),
           ngayMoHs: formatDateDisplay(getVal(r, colMap.ngayMoHs)),
           doiTuongTonThat: getVal(r, colMap.doiTuongTonThat),
           tinhTonThat: getVal(r, colMap.tinhTonThat),
@@ -5203,12 +5216,17 @@
             const updates = { updatedAt: Date.now() };
 
             if (r.targetStatus) updates.trangThai = r.targetStatus;
+            if (r.rawBsx && r.rawBsx !== '—') updates.bienSo = r.rawBsx.toUpperCase();
             if (r.rawGara && r.rawGara !== '—') {
               updates.garaSuaChua = r.rawGara;
               updates.tenGara = r.rawGara;
             }
             if (r.rawSoHsbt && r.rawSoHsbt !== '—') updates.soHoSoBoiThuong = r.rawSoHsbt;
-            if (r.rawDate && r.rawDate !== '—') updates.ngayDuyetBT = r.rawDate;
+            if (r.rawDate && r.rawDate !== '—') {
+              updates.ngayDuyetBT = r.rawDate;
+              updates.ngayVTT = r.rawDate;
+              updates.ngayTonThat = r.rawDate;
+            }
             if (r.rawAmount && r.rawAmount !== '—') updates.soTienDuyetBT = r.rawAmount;
             if (r.rawVtt && r.rawVtt !== '—' && r.rawVtt !== r.matchedClaim.maVuTonThat) updates.maVuTonThat = r.rawVtt;
 
@@ -5227,12 +5245,13 @@
             const newId = 'claim_' + Date.now() + '_' + Math.floor(Math.random() * 100000) + '_' + createdCounter;
             const newClaimObj = {
               id: newId,
-              maVuTonThat: r.rawVtt || ('VTT/XCG/' + new Date().getFullYear() + '/' + Math.floor(100000 + Math.random() * 900000)),
+              maVuTonThat: r.rawVtt || r.rawSoHsbt || ('VTT/XCG/' + new Date().getFullYear() + '/' + Math.floor(100000 + Math.random() * 900000)),
               bienSo: (r.rawBsx || 'CHƯA_XÁC_ĐỊNH').toUpperCase(),
               soHoSoBoiThuong: r.rawSoHsbt || '',
               garaSuaChua: r.rawGara || '',
               tenGara: r.rawGara || '',
               trangThai: r.targetStatus || 'moi',
+              ngayVTT: r.rawDate || '—',
               ngayTonThat: r.rawDate || new Date().toLocaleDateString('vi-VN'),
               soTienDuyetBT: r.rawAmount || '',
               createdAt: Date.now(),
