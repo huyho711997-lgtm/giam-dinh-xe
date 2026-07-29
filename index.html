@@ -2427,8 +2427,9 @@
           <label style="font-size: 12px; font-weight: 800; color: var(--text-soft); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.04em;">Số hồ sơ bồi thường (Số HSBT)</label>
           <input id="txtAssignSoHsbtInput" class="input-premium" type="text" placeholder="Ví dụ: HSBT-2026-00891" style="font-weight: 800; font-family: 'JetBrains Mono'; font-size: 14px; color: #10b981; height: 46px; border-radius: 12px; padding-left: 14px;" autocomplete="off" />
         </div>
-        <div style="font-size: 11.5px; color: var(--text-muted); background: var(--bg-soft); padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); line-height: 1.5;">
-          💡 <i>Số HSBT sau khi lưu sẽ hiển thị nổi bật trực tiếp tại danh sách hồ sơ tồn đọng và tự động bộ lọc báo cáo.</i>
+        <div style="font-size: 11.5px; color: var(--text-muted); background: var(--bg-soft); padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); line-height: 1.5; display: flex; align-items: center; gap: 8px;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); flex-shrink: 0;"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+          <span>Số HSBT sau khi lưu sẽ hiển thị nổi bật trực tiếp tại danh sách hồ sơ tồn đọng và tự động bộ lọc báo cáo.</span>
         </div>
       </div>
 
@@ -2569,7 +2570,22 @@
       UPLOAD: `<svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 16V4"/><polyline points="7 9 12 4 17 9"/><path d="M5 20h14"/></svg>`,
       LOGOUT: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
       SUN: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
-      MOON: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`
+      MOON: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+      KEY: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>`,
+      TEST_TUBE: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2v17.5a2.5 2.5 0 0 1-5 0V2"/><path d="M8.5 2h7"/><path d="M14.5 16h-5"/></svg>`,
+      SAVE: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
+      REFRESH: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>`,
+      EYE: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+      CLOUD: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>`,
+      SCROLL: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>`,
+      ROCKET: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71.13-2.5-.28-3.03l-.72-.72c-.53-.41-2.32-.99-3 0z"/><path d="M12 15l-3-3 7.5-7.5c1.46-1.46 3.82-.41 4 1.5.21 2.37-1 4.5-2.5 6L12 15z"/></svg>`,
+      LIGHTBULB: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>`,
+      EDIT: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+      ARROW_RIGHT: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`,
+      CHECK: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+      CLOSE: `<svg class="svg-icon svg-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+      DOT_GREEN: `<svg viewBox="0 0 8 8" width="8" height="8" style="display:inline-block; vertical-align:middle; margin-right:4px;"><circle cx="4" cy="4" r="4" fill="#10b981"/></svg>`,
+      DOT_RED: `<svg viewBox="0 0 8 8" width="8" height="8" style="display:inline-block; vertical-align:middle; margin-right:4px;"><circle cx="4" cy="4" r="4" fill="#ef4444"/></svg>`
     };
 
     const rootContainer = document.getElementById('appRoot');
@@ -3025,13 +3041,13 @@
       }
 
       const ACTION_BADGES = {
-        'LOGIN': `<span class="badge-status" style="background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3);">🔑 Đăng nhập</span>`,
-        'CREATE_CASE': `<span class="badge-status" style="background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3);">📁 Tạo hồ sơ</span>`,
-        'EDIT_CASE': `<span class="badge-status" style="background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.3);">✏️ Sửa hồ sơ</span>`,
-        'GARAGE_SAVE_DRAFT': `<span class="badge-status" style="background: rgba(255,189,89,0.12); color: var(--warning); border: 1px solid rgba(255,189,89,0.3);">💾 Gara nháp</span>`,
-        'GARAGE_SUBMIT': `<span class="badge-status" style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.4);">🚀 Gara gửi kết quả</span>`,
-        'USER_MANAGE': `<span class="badge-status" style="background: rgba(168,85,247,0.12); color: #a855f7; border: 1px solid rgba(168,85,247,0.3);">👤 Quản lý User</span>`,
-        'SYSTEM_SETTING': `<span class="badge-status" style="background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3);">⚙️ System Config</span>`
+        'LOGIN': `<span class="badge-status" style="background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.KEY} Đăng nhập</span>`,
+        'CREATE_CASE': `<span class="badge-status" style="background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.FOLDER} Tạo hồ sơ</span>`,
+        'EDIT_CASE': `<span class="badge-status" style="background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.EDIT} Sửa hồ sơ</span>`,
+        'GARAGE_SAVE_DRAFT': `<span class="badge-status" style="background: rgba(255,189,89,0.12); color: var(--warning); border: 1px solid rgba(255,189,89,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.SAVE} Gara nháp</span>`,
+        'GARAGE_SUBMIT': `<span class="badge-status" style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.4); display:inline-flex; align-items:center; gap:4px;">${SVGS.ROCKET} Gara gửi kết quả</span>`,
+        'USER_MANAGE': `<span class="badge-status" style="background: rgba(168,85,247,0.12); color: #a855f7; border: 1px solid rgba(168,85,247,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.USER} Quản lý User</span>`,
+        'SYSTEM_SETTING': `<span class="badge-status" style="background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.LOCK} System Config</span>`
       };
 
       tbody.innerHTML = filteredEntries.map(([, log]) => {
@@ -3126,7 +3142,7 @@
 
       const statusEl = document.getElementById('cloudinaryConnStatus');
       if (statusEl) {
-        statusEl.innerHTML = `<span style="color:var(--primary); font-weight:800;">🔄 Đang thử nghiệm kết nối tới Cloudinary (${cloudName})...</span>`;
+        statusEl.innerHTML = `<span style="color:var(--primary); font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.REFRESH} Đang thử nghiệm kết nối tới Cloudinary (${cloudName})...</span>`;
       }
 
       try {
@@ -3146,7 +3162,7 @@
         const json = await res.json();
         if (res.ok && json.secure_url) {
           if (statusEl) {
-            statusEl.innerHTML = `<span style="color:#10b981; font-weight:800;">🟢 KẾT NỐI CLOUDINARY THÀNH CÔNG! Cloud: <strong>${cloudName}</strong>, Preset: <strong>${preset}</strong></span>`;
+            statusEl.innerHTML = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.DOT_GREEN} KẾT NỐI CLOUDINARY THÀNH CÔNG! Cloud: <strong>${cloudName}</strong>, Preset: <strong>${preset}</strong></span>`;
           }
           triggerToast('Kết nối tài khoản Cloudinary hoạt động hoàn hảo!', 'success');
         } else {
@@ -3154,7 +3170,7 @@
         }
       } catch (err) {
         if (statusEl) {
-          statusEl.innerHTML = `<span style="color:#ef4444; font-weight:800;">🔴 LỖI KẾT NỐI CLOUDINARY: ${escapeHtmlOutput(err.message)}</span>`;
+          statusEl.innerHTML = `<span style="color:#ef4444; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.DOT_RED} LỖI KẾT NỐI CLOUDINARY: ${escapeHtmlOutput(err.message)}</span>`;
         }
         triggerToast('Lỗi kết nối Cloudinary: ' + err.message, 'error');
       }
@@ -3242,7 +3258,7 @@
       }
 
       if (statusEl) {
-        statusEl.innerHTML = `<span style="color:var(--primary); font-weight:800;">🔄 Đang kiểm tra kết nối tới Google Gemini API...</span>`;
+        statusEl.innerHTML = `<span style="color:var(--primary); font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.REFRESH} Đang kiểm tra kết nối tới Google Gemini API...</span>`;
       }
 
       try {
@@ -3251,7 +3267,7 @@
 
         if (res.ok && data.models) {
           if (statusEl) {
-            statusEl.innerHTML = `<span style="color:#10b981; font-weight:800;">🟢 GEMINI API KEY KẾT NỐI THÀNH CÔNG! Nhận diện ${data.models.length} AI Models khả dụng.</span>`;
+            statusEl.innerHTML = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.DOT_GREEN} GEMINI API KEY KẾT NỐI THÀNH CÔNG! Nhận diện ${data.models.length} AI Models khả dụng.</span>`;
           }
           triggerToast('Kết nối Gemini API Key hoạt động tốt!', 'success');
         } else {
@@ -3259,7 +3275,7 @@
         }
       } catch (err) {
         if (statusEl) {
-          statusEl.innerHTML = `<span style="color:#ef4444; font-weight:800;">🔴 GEMINI API KEY LỖI: ${escapeHtmlOutput(err.message)}</span>`;
+          statusEl.innerHTML = `<span style="color:#ef4444; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.DOT_RED} GEMINI API KEY LỖI: ${escapeHtmlOutput(err.message)}</span>`;
         }
         triggerToast('Lỗi kết nối Gemini API Key: ' + err.message, 'error');
       }
@@ -3346,7 +3362,7 @@
           <div style="display: flex; flex-direction: column; gap: 20px;">
             <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm);">
               <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
-                <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(216,180,109,0.12); color: var(--primary); display: grid; place-items: center; border: 1px solid rgba(216,180,109,0.3); font-weight: 800; font-size: 18px;">🔑</div>
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(216,180,109,0.12); color: var(--primary); display: grid; place-items: center; border: 1px solid rgba(216,180,109,0.3); font-weight: 800; font-size: 18px;">${SVGS.KEY}</div>
                 <div>
                   <h3 style="font-size: 17px; font-weight: 850; color: var(--text-main); margin: 0;">Quản lý Google Gemini AI API Key</h3>
                   <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 3px; margin-bottom: 0;">Cấu hình khóa API Gemini phục vụ tính năng tự động trích xuất văn bản báo giá qua AI OCR, phân tích tổn thất va chạm và hỗ trợ nghiệp vụ.</p>
@@ -3358,7 +3374,7 @@
                 <div style="position: relative; display: flex; align-items: center; gap: 8px;">
                   <input id="txtSystemGeminiApiKey" type="password" class="input-premium" placeholder="Nhập API Key: AIzaSy..." style="font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.05em; padding-right: 45px;" />
                   <button type="button" onclick="toggleShowGeminiKeyVisibility()" style="position: absolute; right: 12px; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;" title="Hiện/Ẩn Key">
-                    👁️
+                    ${SVGS.EYE}
                   </button>
                 </div>
               </div>
@@ -3368,14 +3384,14 @@
               </div>
 
               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button type="button" class="btn-premium" onclick="saveSystemGeminiApiKeyUI()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12.5px; border-radius: 10px;">
-                  💾 Lưu cấu hình API Key
+                <button type="button" class="btn-premium" onclick="saveSystemGeminiApiKeyUI()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12.5px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px;">
+                  ${SVGS.SAVE} <span>Lưu cấu hình API Key</span>
                 </button>
-                <button type="button" class="btn-premium btn-secondary" onclick="testGeminiApiKeyConnectionUI()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12.5px; border-radius: 10px;">
-                  🧪 Kiểm tra kết nối Gemini API
+                <button type="button" class="btn-premium btn-secondary" onclick="testGeminiApiKeyConnectionUI()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12.5px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px;">
+                  ${SVGS.TEST_TUBE} <span>Kiểm tra kết nối Gemini API</span>
                 </button>
-                <button type="button" class="btn-premium btn-secondary danger" onclick="resetSystemGeminiApiKeyUI()" style="width: auto !important; padding: 0 16px; height: 42px; font-size: 12px; border-radius: 10px; border-color: var(--btn-danger-border); color: var(--btn-danger-text);">
-                  🔄 Đặt lại Key mặc định
+                <button type="button" class="btn-premium btn-secondary danger" onclick="resetSystemGeminiApiKeyUI()" style="width: auto !important; padding: 0 16px; height: 42px; font-size: 12px; border-radius: 10px; border-color: var(--btn-danger-border); color: var(--btn-danger-text); display: inline-flex; align-items: center; gap: 6px;">
+                  ${SVGS.REFRESH} <span>Đặt lại Key mặc định</span>
                 </button>
               </div>
             </div>
@@ -3394,7 +3410,7 @@
                   <div class="stat-val" id="lblCloudinaryTotalFiles" style="color: var(--primary); font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 850;">0</div>
                   <div class="stat-note">Tệp ảnh hiện trạng & ảnh minh chứng Gara</div>
                 </div>
-                <div class="stat-icon-wrap" style="color:var(--primary); font-size: 22px;">📸</div>
+                <div class="stat-icon-wrap" style="color:var(--primary); font-size: 22px;">${SVGS.CAMERA}</div>
               </div>
 
               <div class="stat-box" style="padding: 20px; border-radius: 16px; background: var(--surface);">
@@ -3403,7 +3419,7 @@
                   <div class="stat-val" id="lblCloudinaryUsedSize" style="color: #10b981; font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 850;">0.0 MB</div>
                   <div class="stat-note">Trung bình ~1.25 MB / ảnh độ phân giải cao</div>
                 </div>
-                <div class="stat-icon-wrap" style="color:#10b981; font-size: 22px;">💾</div>
+                <div class="stat-icon-wrap" style="color:#10b981; font-size: 22px;">${SVGS.SAVE}</div>
               </div>
 
               <div class="stat-box" style="padding: 20px; border-radius: 16px; background: var(--surface);">
@@ -3423,7 +3439,7 @@
             <!-- Settings Input Box -->
             <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm);">
               <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-                <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59,130,246,0.12); color: #3b82f6; display: grid; place-items: center; border: 1px solid rgba(59,130,246,0.3); font-weight: 800; font-size: 18px;">☁️</div>
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59,130,246,0.12); color: #3b82f6; display: grid; place-items: center; border: 1px solid rgba(59,130,246,0.3); font-weight: 800; font-size: 18px;">${SVGS.CLOUD}</div>
                 <div>
                   <h3 style="font-size: 17px; font-weight: 850; color: var(--text-main); margin: 0;">Quản lý Cấu hình Tài khoản Cloudinary Media Engine</h3>
                   <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 3px; margin-bottom: 0;">Thiết lập thông tin tài khoản Cloudinary để lưu trữ ảnh chụp hiện trạng va chạm và ảnh minh chứng từ Garage.</p>
@@ -3452,11 +3468,11 @@
               </div>
 
               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button type="button" class="btn-premium" onclick="saveCloudinarySettingsUI()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12.5px; border-radius: 10px;">
-                  💾 Lưu cấu hình Cloudinary
+                <button type="button" class="btn-premium" onclick="saveCloudinarySettingsUI()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12.5px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px;">
+                  ${SVGS.SAVE} <span>Lưu cấu hình Cloudinary</span>
                 </button>
-                <button type="button" class="btn-premium btn-secondary" onclick="testCloudinaryConnectionUI()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12.5px; border-radius: 10px;">
-                  🧪 Kiểm tra kết nối Cloudinary
+                <button type="button" class="btn-premium btn-secondary" onclick="testCloudinaryConnectionUI()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12.5px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px;">
+                  ${SVGS.TEST_TUBE} <span>Kiểm tra kết nối Cloudinary</span>
                 </button>
               </div>
             </div>
@@ -3469,14 +3485,14 @@
             <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm);">
               <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                  <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(16,185,129,0.12); color: #10b981; display: grid; place-items: center; border: 1px solid rgba(16,185,129,0.3); font-weight: 800; font-size: 18px;">📜</div>
+                  <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(16,185,129,0.12); color: #10b981; display: grid; place-items: center; border: 1px solid rgba(16,185,129,0.3); font-weight: 800; font-size: 18px;">${SVGS.SCROLL}</div>
                   <div>
                     <h3 style="font-size: 17px; font-weight: 850; color: var(--text-main); margin: 0;">Lịch sử thao tác & Audit Logs Hệ thống</h3>
                     <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 3px; margin-bottom: 0;">Theo dõi nhật ký thời gian thực các thao tác đăng nhập, khởi tạo hồ sơ, tải ảnh, khai báo từ Gara và thay đổi tài khoản.</p>
                   </div>
                 </div>
-                <button type="button" class="btn-premium btn-secondary" onclick="fetchAndBindAuditLogsRealtime()" style="width: auto !important; padding: 0 16px; height: 38px; font-size: 12px; border-radius: 8px;">
-                  🔄 Tải lại nhật ký
+                <button type="button" class="btn-premium btn-secondary" onclick="fetchAndBindAuditLogsRealtime()" style="width: auto !important; padding: 0 16px; height: 38px; font-size: 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                  ${SVGS.REFRESH} <span>Tải lại nhật ký</span>
                 </button>
               </div>
 
@@ -3489,11 +3505,11 @@
 
                 <div class="filter-pills" id="auditLogActionPills" style="display: flex; gap: 4px; margin: 0; background: var(--surface-soft); padding: 4px; border-radius: 10px; border: 1px solid var(--border); overflow-x: auto;">
                   <button class="filter-pill active" data-audit-filter="all" onclick="setAuditLogsFilter('all')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">Tất cả</button>
-                  <button class="filter-pill" data-audit-filter="LOGIN" onclick="setAuditLogsFilter('LOGIN')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">🔑 Đăng nhập</button>
-                  <button class="filter-pill" data-audit-filter="CREATE_CASE" onclick="setAuditLogsFilter('CREATE_CASE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">📁 Khởi tạo ca</button>
-                  <button class="filter-pill" data-audit-filter="GARAGE" onclick="setAuditLogsFilter('GARAGE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">🚀 Gara khai báo</button>
-                  <button class="filter-pill" data-audit-filter="USER_MANAGE" onclick="setAuditLogsFilter('USER_MANAGE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">👤 Tài khoản</button>
-                  <button class="filter-pill" data-audit-filter="SYSTEM_SETTING" onclick="setAuditLogsFilter('SYSTEM_SETTING')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">⚙️ System Cấu hình</button>
+                  <button class="filter-pill" data-audit-filter="LOGIN" onclick="setAuditLogsFilter('LOGIN')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.KEY} <span>Đăng nhập</span></button>
+                  <button class="filter-pill" data-audit-filter="CREATE_CASE" onclick="setAuditLogsFilter('CREATE_CASE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.FOLDER} <span>Khởi tạo ca</span></button>
+                  <button class="filter-pill" data-audit-filter="GARAGE" onclick="setAuditLogsFilter('GARAGE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.ROCKET} <span>Gara khai báo</span></button>
+                  <button class="filter-pill" data-audit-filter="USER_MANAGE" onclick="setAuditLogsFilter('USER_MANAGE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.USER} <span>Tài khoản</span></button>
+                  <button class="filter-pill" data-audit-filter="SYSTEM_SETTING" onclick="setAuditLogsFilter('SYSTEM_SETTING')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.LOCK} <span>System Cấu hình</span></button>
                 </div>
               </div>
 
@@ -4308,7 +4324,7 @@
       const existing = findExistingClaimByMaVTT(val);
       if (existing) {
         warnEl.style.display = 'block';
-        warnEl.innerHTML = `⚠️ Đã tồn tại hồ sơ (${escapeHtmlOutput(existing.bienSo)} - GĐV: ${escapeHtmlOutput(existing.gdvTiepNhan)})!`;
+        warnEl.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--warning); display: inline-block; vertical-align: middle; margin-right: 4px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Đã tồn tại hồ sơ (${escapeHtmlOutput(existing.bienSo)} - GĐV: ${escapeHtmlOutput(existing.gdvTiepNhan)})!`;
         if (inputEl) inputEl.style.borderColor = '#ef4444';
         return existing;
       } else {
@@ -4477,14 +4493,14 @@
               icon: 'warning',
               title: 'Cảnh báo: Hồ sơ đã tồn tại!',
               html: `Mã vụ tổn thất <b>${escapeHtmlOutput(parsed.maVuTonThat)}</b> đã có trong hệ thống từ trước.<br><br>` +
-                    `🚗 <b>Biển số:</b> ${escapeHtmlOutput(existing.bienSo)}<br>` +
-                    `👤 <b>GĐV tiếp nhận:</b> ${escapeHtmlOutput(existing.gdvTiepNhan)}<br>` +
-                    `📌 <b>Trạng thái:</b> ${PENDING_STATUS_MAP[existing.trangThai]?.label || existing.trangThai}`,
+                    `<b>Biển số:</b> ${escapeHtmlOutput(existing.bienSo)}<br>` +
+                    `<b>GĐV tiếp nhận:</b> ${escapeHtmlOutput(existing.gdvTiepNhan)}<br>` +
+                    `<b>Trạng thái:</b> ${PENDING_STATUS_MAP[existing.trangThai]?.label || existing.trangThai}`,
               confirmButtonText: 'Đã hiểu & Kiểm tra lại',
               confirmButtonColor: '#d8b46d'
             });
           } else {
-            triggerToast(`⚠️ Cảnh báo: Mã VTT ${parsed.maVuTonThat} đã tồn tại (BSX: ${existing.bienSo})!`, 'error');
+            triggerToast(`Cảnh báo: Mã VTT ${parsed.maVuTonThat} đã tồn tại (BSX: ${existing.bienSo})!`, 'error');
           }
         } else if (parsed.bienSo) {
           triggerToast(`Đã tự động trích xuất dữ liệu tin nhắn!`, 'success');
@@ -4521,9 +4537,9 @@
               icon: 'error',
               title: 'Không thể thêm hồ sơ trùng!',
               html: `Mã vụ tổn thất <b>${escapeHtmlOutput(maVuTonThat)}</b> đã được tiếp nhận trước đó.<br><br>` +
-                    `🚘 <b>Biển số xe:</b> ${escapeHtmlOutput(existing.bienSo)}<br>` +
-                    `👤 <b>GĐV phụ trách:</b> ${escapeHtmlOutput(existing.gdvTiepNhan)}<br>` +
-                    `📌 <b>Trạng thái hiện tại:</b> ${PENDING_STATUS_MAP[existing.trangThai]?.label || existing.trangThai}`,
+                    `<b>Biển số xe:</b> ${escapeHtmlOutput(existing.bienSo)}<br>` +
+                    `<b>GĐV phụ trách:</b> ${escapeHtmlOutput(existing.gdvTiepNhan)}<br>` +
+                    `<b>Trạng thái hiện tại:</b> ${PENDING_STATUS_MAP[existing.trangThai]?.label || existing.trangThai}`,
               confirmButtonText: 'Đóng và kiểm tra lại',
               confirmButtonColor: '#ef4444'
             });
@@ -4667,7 +4683,7 @@
         return;
       }
 
-      document.getElementById('lblExcelFileName').textContent = `📄 Đang đọc tệp: ${file.name}...`;
+      document.getElementById('lblExcelFileName').innerHTML = `${SVGS.FOLDER} <span>Đang đọc tệp: ${escapeHtmlOutput(file.name)}...</span>`;
 
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -4856,8 +4872,8 @@
           const statusObj = PENDING_STATUS_MAP[r.targetStatus] || PENDING_STATUS_MAP['moi_tiep_nhan'];
           const statusBadge = r.targetStatus ? `<span class="badge-status" style="background:${statusObj.bg}; color:${statusObj.color}; border:1px solid ${statusObj.border}; padding:3px 8px; border-radius:99px; font-size:11px;">${statusObj.label}</span>` : '<span style="color:var(--text-muted)">Giữ nguyên</span>';
 
-          let matchBadge = '<span style="color:#ef4444; font-weight:700;">✕ Không khớp (Cần khớp cả Biển số & Ngày)</span>';
-          if (r.matchType === 'bsx_date') matchBadge = '<span style="color:#10b981; font-weight:800;">✓ Khớp chuẩn 100% (Biển số + Ngày)</span>';
+          let matchBadge = `<span style="color:#ef4444; font-weight:700; display:inline-flex; align-items:center; gap:4px;">${SVGS.CLOSE} Không khớp (Cần khớp cả Biển số & Ngày)</span>`;
+          if (r.matchType === 'bsx_date') matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp chuẩn 100% (Biển số + Ngày)</span>`;
 
           return `
             <tr style="${isMatched ? '' : 'opacity: 0.6; background: rgba(239,68,68,0.03);'}">
@@ -5951,7 +5967,7 @@
                     <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Yêu cầu Gara chụp Giấy tờ (Cà vẹt, GPLX, CCCD 2 mặt, Đăng kiểm), Ảnh 4 góc xe, Tem, Số khung & Gara tự tạo thêm hạng mục tại xưởng.
                     </p>
-                    <button type="button" class="btn-premium">Tạo mẫu Giám định chuẩn &nbsp;➔</button>
+                    <button type="button" class="btn-premium" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;"><span>Tạo mẫu Giám định chuẩn</span> ${SVGS.ARROW_RIGHT}</button>
                   </div>
 
                   <div class="creation-option-card" onclick="switchCreateFlow('excel')">
@@ -5963,7 +5979,7 @@
                     <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Phù hợp khi đã có báo giá hoặc danh sách hạng mục cần đối chiếu. Nhập tay hoặc dán cột hàng loạt từ Microsoft Excel.
                     </p>
-                    <button type="button" class="btn-premium">Tạo bằng danh sách &nbsp;➔</button>
+                    <button type="button" class="btn-premium" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;"><span>Tạo bằng danh sách</span> ${SVGS.ARROW_RIGHT}</button>
                   </div>
                   
                   <div class="creation-option-card" onclick="switchCreateFlow('image')">
@@ -5975,7 +5991,7 @@
                     <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Phù hợp khi mới tiếp nhận xe tại hiện trường. Chỉ tải ảnh tổn thất, Garage sẽ tự nhận định bộ phận hư hỏng sau.
                     </p>
-                    <button type="button" class="btn-premium">Tạo bằng hình ảnh &nbsp;➔</button>
+                    <button type="button" class="btn-premium" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;"><span>Tạo bằng hình ảnh</span> ${SVGS.ARROW_RIGHT}</button>
                   </div>
                   
                   <div class="creation-option-card" onclick="switchCreateFlow('template')">
@@ -5987,7 +6003,7 @@
                     <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Khởi tạo nhanh bằng các mẫu va chạm tiêu chuẩn của hãng (Đâm đầu xe, va chạm đuôi xe, ngập nước...) để tự động điền bảng.
                     </p>
-                    <button type="button" class="btn-premium">Xem các mẫu chuẩn &nbsp;➔</button>
+                    <button type="button" class="btn-premium" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;"><span>Xem các mẫu chuẩn</span> ${SVGS.ARROW_RIGHT}</button>
                   </div>
                 </div>
               </section>
@@ -6008,7 +6024,7 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
                   <div class="p-card" style="padding: 24px; cursor: pointer; transition: all var(--transition); border: 1.5px solid var(--primary);" onclick="applyTemplateToDraft('giam-dinh-xe')">
                     <div style="width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: rgba(216,180,109,0.15); color: var(--primary); margin-bottom: 16px;">${SVGS.CAR}</div>
-                    <h4 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--primary);">★ Mẫu Giám định Xe đầy đủ</h4>
+                    <h4 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--primary); display: inline-flex; align-items: center; gap: 6px;">${SVGS.SPARKLES} <span>Mẫu Giám định Xe đầy đủ</span></h4>
                     <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;">Bộ 13 mục chuẩn: Giấy tờ (Cà vẹt, GPLX, CCCD 2 mặt, Sổ đăng kiểm), 4 góc chéo, Tem đăng kiểm, Số khung (VIN) & Gara chụp linh hoạt.</p>
                     <button type="button" class="btn-premium" style="min-height: 36px !important; font-size: 11px;">Áp dụng mẫu này</button>
                   </div>
@@ -8784,7 +8800,7 @@
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'camera-thumb-delete';
-        deleteBtn.innerHTML = '✕';
+        deleteBtn.innerHTML = SVGS.CLOSE;
         deleteBtn.onclick = (e) => {
           e.stopPropagation();
           deleteCapturedPhotoFromCamera(idx);
@@ -8903,7 +8919,7 @@
         const itemName = item?.tenHangMuc || (customCameraRequestIndex !== null ? `Hạng mục ${customCameraRequestIndex + 1}` : 'hạng mục này');
         
         const confirmExit = await showConfirmModal(
-          '⚠️ HỦY BỎ ẢNH ĐÃ CHỤP?',
+          'HỦY BỎ ẢNH ĐÃ CHỤP?',
           `Bạn đã chụp ${count} ảnh cho "${itemName}" nhưng chưa bấm "Xong". Thoát ngay bây giờ sẽ HỦY BỎ toàn bộ ${count} ảnh vừa chụp!`,
           'Hủy ảnh & Thoát',
           'Tiếp tục chụp'
