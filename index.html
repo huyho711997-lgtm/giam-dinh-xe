@@ -4230,12 +4230,20 @@
      * SMART PARSER ENGINE & PENDING CLAIMS SYSTEM
      ****************************************************/
     const PENDING_STATUS_MAP = {
-      'moi_tiep_nhan': { label: 'Mới tiếp nhận', bg: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)' },
-      'dang_giam_dinh': { label: 'Đang giám định', bg: 'rgba(59, 130, 246, 0.12)', color: '#3b82f6', border: 'rgba(59, 130, 246, 0.3)' },
-      'cho_bao_gia': { label: 'Chờ báo giá Gara', bg: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6', border: 'rgba(139, 92, 246, 0.3)' },
-      'cho_duyet_bt': { label: 'Chờ duyệt BT', bg: 'rgba(236, 72, 153, 0.12)', color: '#ec4899', border: 'rgba(236, 72, 153, 0.3)' },
-      'hoan_thanh': { label: 'Đã hoàn thành', bg: 'rgba(16, 185, 129, 0.12)', color: '#10b981', border: 'rgba(16, 185, 129, 0.3)' },
-      'ton_qua_han': { label: 'Tồn quá hạn (>7 ngày)', bg: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', border: 'rgba(239, 68, 68, 0.3)' }
+      'moi': { label: 'Mới', bg: 'rgba(148, 163, 184, 0.14)', color: '#64748b', border: 'rgba(148, 163, 184, 0.35)' },
+      'cho_giam_dinh_ht': { label: 'Chờ giám định HT', bg: 'rgba(245, 158, 11, 0.14)', color: '#d97706', border: 'rgba(245, 158, 11, 0.35)' },
+      'da_giam_dinh_ht': { label: 'Đã giám định HT', bg: 'rgba(2, 132, 199, 0.14)', color: '#0284c7', border: 'rgba(2, 132, 199, 0.35)' },
+      'cho_gdct': { label: 'Chờ GĐCT', bg: 'rgba(234, 88, 12, 0.14)', color: '#ea580c', border: 'rgba(234, 88, 12, 0.35)' },
+      'da_gdct': { label: 'Đã GĐCT', bg: 'rgba(99, 102, 241, 0.14)', color: '#6366f1', border: 'rgba(99, 102, 241, 0.35)' },
+      'cho_duyet_pasc': { label: 'Chờ duyệt PASC', bg: 'rgba(168, 85, 247, 0.14)', color: '#a855f7', border: 'rgba(168, 85, 247, 0.35)' },
+      'da_duyet_pasc': { label: 'Đã duyệt PASC', bg: 'rgba(217, 70, 239, 0.14)', color: '#d946ef', border: 'rgba(217, 70, 239, 0.35)' },
+      'cho_duyet_hsbt': { label: 'Chờ duyệt HSBT', bg: 'rgba(244, 63, 94, 0.14)', color: '#f43f5e', border: 'rgba(244, 63, 94, 0.35)' },
+      'da_duyet_hsbt': { label: 'Đã duyệt HSBT', bg: 'rgba(20, 184, 166, 0.14)', color: '#14b8a6', border: 'rgba(20, 184, 166, 0.35)' },
+      'cho_duyet_dntt': { label: 'Chờ duyệt ĐNTT', bg: 'rgba(139, 92, 246, 0.14)', color: '#8b5cf6', border: 'rgba(139, 92, 246, 0.35)' },
+      'cho_kt_duyet': { label: 'Chờ KT duyệt', bg: 'rgba(6, 182, 212, 0.14)', color: '#06b6d4', border: 'rgba(6, 182, 212, 0.35)' },
+      'kt_duyet': { label: 'KT duyệt', bg: 'rgba(13, 148, 136, 0.14)', color: '#0d9488', border: 'rgba(13, 148, 136, 0.35)' },
+      'da_thanh_toan': { label: 'Đã Thanh toán', bg: 'rgba(16, 185, 129, 0.16)', color: '#10b981', border: 'rgba(16, 185, 129, 0.35)' },
+      'tu_choi': { label: 'Từ chối', bg: 'rgba(239, 68, 68, 0.16)', color: '#ef4444', border: 'rgba(239, 68, 68, 0.35)' }
     };
 
     function parseDamageReportText(rawText) {
@@ -4576,7 +4584,7 @@
         nguoiLienHe: getVal('modalPendingNguoiLienHe') || '—',
         gdvTiepNhan: getVal('modalPendingGdvTiepNhan') || existingItem.gdvTiepNhan || profile.displayName || 'Chưa phân công',
         canBoXuLy: getVal('modalPendingCanBoXuLy') || '—',
-        trangThai: existingItem.trangThai || 'moi_tiep_nhan',
+        trangThai: existingItem.trangThai || 'moi',
         rawText: getVal('modalTxtQuickPasteMessage') || existingItem.rawText || '',
         createdAt: existingItem.createdAt || Date.now(),
         updatedAt: Date.now(),
@@ -4902,13 +4910,29 @@
 
         if (!rawBsx && !rawVtt && !rawSoHsbt) continue;
 
-        let targetStatus = '';
-        const stLower = rawStatusStr.toLowerCase();
-        if (stLower.includes('mới') || stLower.includes('tiếp nhận')) targetStatus = 'moi_tiep_nhan';
-        else if (stLower.includes('đang giám định') || stLower.includes('giám định')) targetStatus = 'dang_giam_dinh';
-        else if (stLower.includes('báo giá') || stLower.includes('chờ báo giá')) targetStatus = 'cho_bao_gia';
-        else if (stLower.includes('chờ duyệt') || stLower.includes('chờ duyệt bt')) targetStatus = 'cho_duyet_bt';
-        else if (stLower.includes('hoàn thành') || stLower.includes('đã hoàn thành') || stLower.includes('đóng') || stLower.includes('đã duyệt')) targetStatus = 'hoan_thanh';
+        let targetStatus = 'moi';
+        if (rawStatusStr) {
+          const stLower = rawStatusStr.trim().toLowerCase();
+          if (stLower.includes('từ chối') || stLower.includes('tu choi') || stLower.includes('hủy') || stLower.includes('huy')) targetStatus = 'tu_choi';
+          else if (stLower.includes('đã thanh toán') || stLower.includes('da thanh toan') || stLower.includes('thanh toán') || stLower.includes('thanh toan')) targetStatus = 'da_thanh_toan';
+          else if (stLower === 'kt duyệt' || stLower.includes('kt duyệt') || stLower.includes('kế toán duyệt')) targetStatus = 'kt_duyet';
+          else if (stLower.includes('chờ kt') || stLower.includes('cho kt') || stLower.includes('chờ kế toán')) targetStatus = 'cho_kt_duyet';
+          else if (stLower.includes('chờ duyệt đntt') || stLower.includes('cho duyet dntt') || stLower.includes('đntt')) targetStatus = 'cho_duyet_dntt';
+          else if (stLower.includes('đã duyệt hsbt') || stLower.includes('da duyet hsbt')) targetStatus = 'da_duyet_hsbt';
+          else if (stLower.includes('chờ duyệt hsbt') || stLower.includes('cho duyet hsbt')) targetStatus = 'cho_duyet_hsbt';
+          else if (stLower.includes('đã duyệt pasc') || stLower.includes('da duyet pasc')) targetStatus = 'da_duyet_pasc';
+          else if (stLower.includes('chờ duyệt pasc') || stLower.includes('cho duyet pasc')) targetStatus = 'cho_duyet_pasc';
+          else if (stLower.includes('đã gđct') || stLower.includes('da gdct') || stLower.includes('giám định chi tiết')) targetStatus = 'da_gdct';
+          else if (stLower.includes('chờ gđct') || stLower.includes('cho gdct')) targetStatus = 'cho_gdct';
+          else if (stLower.includes('đã giám định ht') || stLower.includes('da giam dinh ht') || stLower.includes('gđ hiện trường') || stLower.includes('gd ht')) targetStatus = 'da_giam_dinh_ht';
+          else if (stLower.includes('chờ giám định ht') || stLower.includes('cho giam dinh ht') || stLower.includes('chờ gđ ht')) targetStatus = 'cho_giam_dinh_ht';
+          else if (stLower.includes('mới') || stLower.includes('moi') || stLower.includes('tiếp nhận')) targetStatus = 'moi';
+          else {
+            for (const [k, cfg] of Object.entries(PENDING_STATUS_MAP)) {
+              if (cfg.label.toLowerCase() === stLower) { targetStatus = k; break; }
+            }
+          }
+        }
 
         const normBsx = rawBsx.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
         const normVtt = rawVtt.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
@@ -5040,7 +5064,7 @@
         const displayRows = parsedExcelBatchRows.slice(0, previewLimit);
         let html = displayRows.map((r, idx) => {
           const isMatched = !!r.matchedClaim;
-          const statusObj = PENDING_STATUS_MAP[r.targetStatus] || PENDING_STATUS_MAP['moi_tiep_nhan'];
+          const statusObj = PENDING_STATUS_MAP[r.targetStatus] || PENDING_STATUS_MAP['moi'];
           const statusBadge = r.targetStatus ? `<span class="badge-status" style="background:${statusObj.bg}; color:${statusObj.color}; border:1px solid ${statusObj.border}; padding:3px 8px; border-radius:99px; font-size:11px;">${statusObj.label}</span>` : '<span style="color:var(--text-muted)">Giữ nguyên</span>';
 
           let matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px; background: rgba(16,185,129,0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(16,185,129,0.25);">${SVGS.ROCKET} Hồ sơ mới (Sẽ tạo mới)</span>`;
@@ -5130,7 +5154,7 @@
               soHoSoBoiThuong: r.rawSoHsbt || '',
               garaSuaChua: r.rawGara || '',
               tenGara: r.rawGara || '',
-              trangThai: r.targetStatus || 'moi_tiep_nhan',
+              trangThai: r.targetStatus || 'moi',
               ngayTonThat: r.rawDate || new Date().toLocaleDateString('vi-VN'),
               soTienDuyetBT: r.rawAmount || '',
               createdAt: Date.now(),
@@ -5377,20 +5401,18 @@
       });
 
       // Calculate Status Counters
-      const counts = { all: claimsList.length, moi_tiep_nhan: 0, dang_giam_dinh: 0, cho_bao_gia: 0, cho_duyet_bt: 0, hoan_thanh: 0, ton_qua_han: 0 };
+      const counts = { all: claimsList.length };
+      Object.keys(PENDING_STATUS_MAP).forEach(k => { counts[k] = 0; });
       claimsList.forEach(c => {
-        if (counts[c.trangThai] !== undefined) counts[c.trangThai]++;
+        const stKey = PENDING_STATUS_MAP[c.trangThai] ? c.trangThai : 'moi';
+        counts[stKey] = (counts[stKey] || 0) + 1;
       });
 
       // Render Custom Luxury Status Floating Menu Items
       const curStatus = activePendingStatusFilter || 'all';
       const statusLabelMap = {
         'all': { label: 'Tất cả trạng thái', color: 'var(--primary)' },
-        'moi_tiep_nhan': { label: 'Mới tiếp nhận', color: '#f59e0b' },
-        'dang_giam_dinh': { label: 'Đang giám định', color: '#3b82f6' },
-        'cho_bao_gia': { label: 'Chờ báo giá Gara', color: '#8b5cf6' },
-        'cho_duyet_bt': { label: 'Chờ duyệt BT', color: '#ec4899' },
-        'hoan_thanh': { label: 'Đã hoàn thành', color: '#10b981' }
+        ...Object.fromEntries(Object.entries(PENDING_STATUS_MAP).map(([k, v]) => [k, { label: v.label, color: v.color }]))
       };
 
       const lblSelected = document.getElementById('lblCustomStatusDropdownSelected');
@@ -5477,7 +5499,7 @@
       if (statsContainer) {
         const thisWeekClaims = claimsList.filter(c => new Date(c.createdAt || Date.now()) >= startOfThisWeek);
         const thisWeekTotal = thisWeekClaims.length;
-        const thisWeekCompleted = thisWeekClaims.filter(c => c.trangThai === 'hoan_thanh').length;
+        const thisWeekCompleted = thisWeekClaims.filter(c => c.trangThai === 'da_thanh_toan' || c.trangThai === 'kt_duyet').length;
         const thisWeekPending = thisWeekTotal - thisWeekCompleted;
         const rate = thisWeekTotal > 0 ? Math.round((thisWeekCompleted / thisWeekTotal) * 100) : 100;
 
@@ -5550,7 +5572,7 @@
 
       tbody.innerHTML = pageItems.map((item, idx) => {
         const itemNumber = startIndex + idx + 1;
-        const statusConfig = PENDING_STATUS_MAP[item.trangThai] || PENDING_STATUS_MAP['moi_tiep_nhan'];
+        const statusConfig = PENDING_STATUS_MAP[item.trangThai] || PENDING_STATUS_MAP['moi'];
         return `
           <tr>
             <td style="text-align: center; font-weight: 750; color: var(--text-muted);">${String(itemNumber).padStart(2, '0')}</td>
