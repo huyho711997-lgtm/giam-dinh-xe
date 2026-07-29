@@ -4940,6 +4940,10 @@
           if (matchedClaim) matchType = 'vtt';
         }
 
+        if (!matchedClaim) {
+          matchType = 'new_claim';
+        }
+
         const fullRowMeta = {
           chiNhanhXuly: getVal(r, colMap.chiNhanhXuly),
           chiNhanh: getVal(r, colMap.chiNhanh),
@@ -5024,10 +5028,10 @@
       }
 
       const tbody = document.getElementById('tblExcelPreviewBody');
-      const matchedRows = parsedExcelBatchRows.filter(r => r.matchedClaim);
+      const validBatchRows = parsedExcelBatchRows; // All valid rows from Excel (both existing and new)
 
-      document.getElementById('lblMatchedExcelCount').textContent = matchedRows.length;
-      document.getElementById('lblSubmitCount').textContent = matchedRows.length;
+      document.getElementById('lblMatchedExcelCount').textContent = validBatchRows.length;
+      document.getElementById('lblSubmitCount').textContent = validBatchRows.length;
 
       if (parsedExcelBatchRows.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="empty-state-text">Không đọc được dòng dữ liệu nào từ tệp.</td></tr>`;
@@ -5037,13 +5041,13 @@
           const statusObj = PENDING_STATUS_MAP[r.targetStatus] || PENDING_STATUS_MAP['moi_tiep_nhan'];
           const statusBadge = r.targetStatus ? `<span class="badge-status" style="background:${statusObj.bg}; color:${statusObj.color}; border:1px solid ${statusObj.border}; padding:3px 8px; border-radius:99px; font-size:11px;">${statusObj.label}</span>` : '<span style="color:var(--text-muted)">Giữ nguyên</span>';
 
-          let matchBadge = `<span style="color:#ef4444; font-weight:700; display:inline-flex; align-items:center; gap:4px;">${SVGS.CLOSE} Chưa ghép được hồ sơ</span>`;
-          if (r.matchType === 'so_hsbt') matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Số HSBT</span>`;
-          else if (r.matchType === 'bsx_date') matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Biển số + Ngày</span>`;
-          else if (r.matchType === 'vtt') matchBadge = `<span style="color:#3b82f6; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Mã vụ TT</span>`;
+          let matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px; background: rgba(16,185,129,0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(16,185,129,0.25);">${SVGS.ROCKET} Hồ sơ mới (Sẽ tạo mới)</span>`;
+          if (r.matchType === 'so_hsbt') matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Số HSBT (Cập nhật)</span>`;
+          else if (r.matchType === 'bsx_date') matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Biển số + Ngày (Cập nhật)</span>`;
+          else if (r.matchType === 'vtt') matchBadge = `<span style="color:#3b82f6; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Mã vụ TT (Cập nhật)</span>`;
 
           return `
-            <tr style="${isMatched ? '' : 'opacity: 0.6; background: rgba(239,68,68,0.03);'}">
+            <tr style="${isMatched ? '' : 'background: rgba(16,185,129,0.02);'}">
               <td style="text-align: center; font-weight: 700;">${idx + 1}</td>
               <td>
                 <strong style="color: var(--primary); font-family: 'JetBrains Mono';">${escapeHtmlOutput(r.rawBsx || r.matchedClaim?.bienSo || '—')}</strong>
@@ -5060,7 +5064,7 @@
       }
 
       const btnSubmit = document.getElementById('btnSubmitImportExcel');
-      if (matchedRows.length > 0) {
+      if (validBatchRows.length > 0) {
         btnSubmit.disabled = false;
         btnSubmit.style.opacity = '1';
       } else {
@@ -5072,49 +5076,83 @@
     }
 
     async function executeApplyExcelBatchUpdate() {
-      const matchedRows = parsedExcelBatchRows.filter(r => r.matchedClaim);
-      if (matchedRows.length === 0) return;
+      if (!parsedExcelBatchRows || parsedExcelBatchRows.length === 0) return;
 
       const btnSubmit = document.getElementById('btnSubmitImportExcel');
       btnSubmit.disabled = true;
-      btnSubmit.innerHTML = `<span>Đang cập nhật...</span>`;
+      btnSubmit.innerHTML = `<span>Đang xử lý...</span>`;
 
       try {
         let updatedCounter = 0;
+        let createdCounter = 0;
 
-        for (const r of matchedRows) {
-          const claimId = r.matchedClaim.id;
-          const updates = { updatedAt: Date.now() };
+        for (const r of parsedExcelBatchRows) {
+          if (r.matchedClaim) {
+            // Update Existing Claim
+            const claimId = r.matchedClaim.id;
+            const updates = { updatedAt: Date.now() };
 
-          if (r.targetStatus) updates.trangThai = r.targetStatus;
-          if (r.rawGara && r.rawGara !== '—') {
-            updates.garaSuaChua = r.rawGara;
-            updates.tenGara = r.rawGara;
+            if (r.targetStatus) updates.trangThai = r.targetStatus;
+            if (r.rawGara && r.rawGara !== '—') {
+              updates.garaSuaChua = r.rawGara;
+              updates.tenGara = r.rawGara;
+            }
+            if (r.rawSoHsbt && r.rawSoHsbt !== '—') updates.soHoSoBoiThuong = r.rawSoHsbt;
+            if (r.rawDate && r.rawDate !== '—') updates.ngayDuyetBT = r.rawDate;
+            if (r.rawAmount && r.rawAmount !== '—') updates.soTienDuyetBT = r.rawAmount;
+            if (r.rawVtt && r.rawVtt !== '—' && r.rawVtt !== r.matchedClaim.maVuTonThat) updates.maVuTonThat = r.rawVtt;
+
+            if (r.fullRowMeta && typeof r.fullRowMeta === 'object') {
+              Object.entries(r.fullRowMeta).forEach(([k, v]) => {
+                if (v && v !== '—') updates[k] = v;
+              });
+            }
+
+            await dbNodeInstance.ref(`pending_claims/${claimId}`).update(updates);
+            updatedCounter++;
+          } else {
+            // Create New Claim from Excel Row
+            const newId = 'claim_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+            const newClaimObj = {
+              id: newId,
+              maVuTonThat: r.rawVtt || ('VTT/XCG/' + new Date().getFullYear() + '/' + Math.floor(100000 + Math.random() * 900000)),
+              bienSo: (r.rawBsx || 'CHƯA_XÁC_ĐỊNH').toUpperCase(),
+              soHoSoBoiThuong: r.rawSoHsbt || '',
+              garaSuaChua: r.rawGara || '',
+              tenGara: r.rawGara || '',
+              trangThai: r.targetStatus || 'moi_tiep_nhan',
+              ngayTonThat: r.rawDate || new Date().toLocaleDateString('vi-VN'),
+              soTienDuyetBT: r.rawAmount || '',
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+              gdvTiepNhan: r.fullRowMeta?.gdvHo || 'Hệ thống Excel',
+              canBoXuLy: r.fullRowMeta?.gdvHo || 'Hệ thống Excel',
+              donViCapDon: r.fullRowMeta?.chiNhanh || r.fullRowMeta?.chiNhanhXuly || ''
+            };
+
+            if (r.fullRowMeta && typeof r.fullRowMeta === 'object') {
+              Object.entries(r.fullRowMeta).forEach(([k, v]) => {
+                if (v && v !== '—') newClaimObj[k] = v;
+              });
+            }
+
+            await dbNodeInstance.ref(`pending_claims/${newId}`).set(newClaimObj);
+            createdCounter++;
           }
-          if (r.rawSoHsbt && r.rawSoHsbt !== '—') updates.soHoSoBoiThuong = r.rawSoHsbt;
-          if (r.rawDate && r.rawDate !== '—') updates.ngayDuyetBT = r.rawDate;
-          if (r.rawAmount && r.rawAmount !== '—') updates.soTienDuyetBT = r.rawAmount;
-          if (r.rawVtt && r.rawVtt !== '—' && r.rawVtt !== r.matchedClaim.maVuTonThat) updates.maVuTonThat = r.rawVtt;
-
-          if (r.fullRowMeta && typeof r.fullRowMeta === 'object') {
-            Object.entries(r.fullRowMeta).forEach(([k, v]) => {
-              if (v && v !== '—') updates[k] = v;
-            });
-          }
-
-          await dbNodeInstance.ref(`pending_claims/${claimId}`).update(updates);
-          updatedCounter++;
         }
 
         closeImportExcelModal();
-        triggerToast(`Đã cập nhật thành công ${updatedCounter} hồ sơ từ tệp Excel!`, 'success');
+        let msg = [];
+        if (createdCounter > 0) msg.push(`Tạo mới ${createdCounter} hồ sơ`);
+        if (updatedCounter > 0) msg.push(`Cập nhật ${updatedCounter} hồ sơ`);
+        triggerToast(`Nhập Excel thành công: ${msg.join(', ')}!`, 'success');
         executeUIRenderPendingClaims();
       } catch (err) {
-        console.error("Lỗi cập nhật hàng loạt Excel:", err);
-        triggerToast('Lỗi cập nhật hàng loạt: ' + err.message, 'error');
+        console.error("Lỗi nhập Excel:", err);
+        triggerToast('Lỗi nhập tệp Excel: ' + err.message, 'error');
       } finally {
         btnSubmit.disabled = false;
-        btnSubmit.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span>Xác nhận cập nhật (<span id="lblSubmitCount">${matchedRows.length}</span> hồ sơ)</span>`;
+        btnSubmit.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span>Xác nhận nhập Excel (<span id="lblSubmitCount">${parsedExcelBatchRows.length}</span> hồ sơ)</span>`;
       }
     }
 
@@ -6008,17 +6046,13 @@
                   <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft);">Quản lý danh sách hồ sơ tổn thất tồn đọng trong team, phân công Giám định viên và theo dõi báo cáo tuần.</p>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                  <button type="button" class="btn-premium btn-secondary" onclick="openImportExcelModal()" style="width: auto !important; padding: 0 18px; min-height: 40px; font-size: 12.5px; border-radius: 10px; font-weight: 750; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border: 1px solid rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); color: #10b981;">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h8"></path><path d="M8 17h8"></path><path d="M10 9h4"></path></svg>
-                    <span>Cập nhật từ Excel</span>
-                  </button>
-                  <button type="button" class="btn-premium btn-secondary" onclick="openExportWeeklyReportModal()" style="width: auto !important; padding: 0 18px; min-height: 40px; font-size: 12.5px; border-radius: 10px; font-weight: 750; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <button type="button" class="btn-premium btn-secondary" onclick="openExportWeeklyReportModal()" style="width: auto !important; padding: 0 18px; min-height: 42px; font-size: 12.5px; border-radius: 10px; font-weight: 750; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     <span>Xuất Báo cáo tuần</span>
                   </button>
-                  <button type="button" class="btn-premium" onclick="openAddPendingClaimModal()" style="width: auto !important; padding: 0 22px; height: 42px; font-size: 13px; border-radius: 10px; font-weight: 800; background: var(--primary-gradient); color: #080b11; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(216,180,109,0.35);">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    <span>Tiếp nhận hồ sơ mới (Dán tin)</span>
+                  <button type="button" class="btn-premium" onclick="openImportExcelModal()" style="width: auto !important; padding: 0 24px; height: 42px; font-size: 13px; border-radius: 10px; font-weight: 850; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.35);">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h8"></path><path d="M8 17h8"></path><path d="M10 9h4"></path></svg>
+                    <span>Nhập & Cập nhật Hồ sơ từ Excel</span>
                   </button>
                 </div>
               </div>
