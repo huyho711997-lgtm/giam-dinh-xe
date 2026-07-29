@@ -4901,7 +4901,8 @@
         if (!Array.isArray(r) || r.every(c => !String(c).trim())) continue;
 
         const rawBsx = getVal(r, colMap.bsx);
-        const rawDate = getVal(r, colMap.date) || getVal(r, colMap.ngayMoHs);
+        const rawDateRaw = getVal(r, colMap.date) || getVal(r, colMap.ngayMoHs);
+        const rawDate = formatDateDisplay(rawDateRaw);
         const rawVtt = getVal(r, colMap.vtt);
         const rawSoHsbt = getVal(r, colMap.soHsbt);
         const rawStatusStr = getVal(r, colMap.status);
@@ -4978,13 +4979,13 @@
           giaTriXe: getVal(r, colMap.giaTriXe),
           soTienBh: getVal(r, colMap.soTienBh),
           soGcn: getVal(r, colMap.soGcn),
-          ngayHieuLuc: getVal(r, colMap.ngayHieuLuc),
-          ngayHetHan: getVal(r, colMap.ngayHetHan),
+          ngayHieuLuc: formatDateDisplay(getVal(r, colMap.ngayHieuLuc)),
+          ngayHetHan: formatDateDisplay(getVal(r, colMap.ngayHetHan)),
           kenhKhaiThac: getVal(r, colMap.kenhKhaiThac),
           chiTietKenh: getVal(r, colMap.chiTietKenh),
           maKhaiThac: getVal(r, colMap.maKhaiThac),
           hinhThucCapDon: getVal(r, colMap.hinhThucCapDon),
-          ngayThanhToanPhi: getVal(r, colMap.ngayThanhToanPhi),
+          ngayThanhToanPhi: formatDateDisplay(getVal(r, colMap.ngayThanhToanPhi)),
           phiBh: getVal(r, colMap.phiBh),
           khachHang: getVal(r, colMap.khachHang),
           hieuXe: getVal(r, colMap.hieuXe),
@@ -4995,8 +4996,8 @@
           mdsd: getVal(r, colMap.mdsd),
           soChoTrongTai: getVal(r, colMap.soChoTrongTai),
           maSpNghiepVu: getVal(r, colMap.maSpNghiepVu),
-          ngayThongBao: getVal(r, colMap.ngayThongBao),
-          ngayMoHs: getVal(r, colMap.ngayMoHs),
+          ngayThongBao: formatDateDisplay(getVal(r, colMap.ngayThongBao)),
+          ngayMoHs: formatDateDisplay(getVal(r, colMap.ngayMoHs)),
           doiTuongTonThat: getVal(r, colMap.doiTuongTonThat),
           tinhTonThat: getVal(r, colMap.tinhTonThat),
           dienBienTonThat: getVal(r, colMap.dienBienTonThat),
@@ -5005,10 +5006,10 @@
           maGara: getVal(r, colMap.maGara),
           gdvHo: getVal(r, colMap.gdvHo),
           uocThietHai: getVal(r, colMap.uocThietHai),
-          pascNgayDuyet: getVal(r, colMap.pascNgayDuyet),
+          pascNgayDuyet: formatDateDisplay(getVal(r, colMap.pascNgayDuyet)),
           pascNguoiDuyet: getVal(r, colMap.pascNguoiDuyet),
           pascSoTienDuyet: getVal(r, colMap.pascSoTienDuyet),
-          toTrinhNgayDuyet: getVal(r, colMap.toTrinhNgayDuyet),
+          toTrinhNgayDuyet: formatDateDisplay(getVal(r, colMap.toTrinhNgayDuyet)),
           toTrinhNguoiDuyet: getVal(r, colMap.toTrinhNguoiDuyet),
           ttbtSoTienBoiThuong: getVal(r, colMap.ttbtSoTienBoiThuong),
           chiPhiGiamDinh: getVal(r, colMap.chiPhiGiamDinh),
@@ -5021,12 +5022,12 @@
           dongBhFollowSoTien: getVal(r, colMap.dongBhFollowSoTien),
           tongBoiThuongSauThue: getVal(r, colMap.tongBoiThuongSauThue),
           vat: getVal(r, colMap.vat),
-          ngayNhanDuHoSo: getVal(r, colMap.ngayNhanDuHoSo),
-          ngayDuyetDnttDauTien: getVal(r, colMap.ngayDuyetDnttDauTien),
-          ngayDuyetDnttCuoiCung: getVal(r, colMap.ngayDuyetDnttCuoiCung),
-          ngayKtXacNhan: getVal(r, colMap.ngayKtXacNhan),
+          ngayNhanDuHoSo: formatDateDisplay(getVal(r, colMap.ngayNhanDuHoSo)),
+          ngayDuyetDnttDauTien: formatDateDisplay(getVal(r, colMap.ngayDuyetDnttDauTien)),
+          ngayDuyetDnttCuoiCung: formatDateDisplay(getVal(r, colMap.ngayDuyetDnttCuoiCung)),
+          ngayKtXacNhan: formatDateDisplay(getVal(r, colMap.ngayKtXacNhan)),
           soTienDaThanhToan: getVal(r, colMap.soTienDaThanhToan),
-          ngayThanhToan: getVal(r, colMap.ngayThanhToan),
+          ngayThanhToan: formatDateDisplay(getVal(r, colMap.ngayThanhToan)),
           ghiChu: getVal(r, colMap.ghiChu),
           lyDoHuy: getVal(r, colMap.lyDoHuy),
           agentUniqCode: getVal(r, colMap.agentUniqCode),
