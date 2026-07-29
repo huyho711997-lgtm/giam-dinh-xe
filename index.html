@@ -5036,7 +5036,9 @@
       if (parsedExcelBatchRows.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="empty-state-text">Không đọc được dòng dữ liệu nào từ tệp.</td></tr>`;
       } else {
-        tbody.innerHTML = parsedExcelBatchRows.map((r, idx) => {
+        const previewLimit = 150;
+        const displayRows = parsedExcelBatchRows.slice(0, previewLimit);
+        let html = displayRows.map((r, idx) => {
           const isMatched = !!r.matchedClaim;
           const statusObj = PENDING_STATUS_MAP[r.targetStatus] || PENDING_STATUS_MAP['moi_tiep_nhan'];
           const statusBadge = r.targetStatus ? `<span class="badge-status" style="background:${statusObj.bg}; color:${statusObj.color}; border:1px solid ${statusObj.border}; padding:3px 8px; border-radius:99px; font-size:11px;">${statusObj.label}</span>` : '<span style="color:var(--text-muted)">Giữ nguyên</span>';
@@ -5061,6 +5063,11 @@
             </tr>
           `;
         }).join('');
+
+        if (parsedExcelBatchRows.length > previewLimit) {
+          html += `<tr><td colspan="7" style="text-align:center; padding:12px; font-weight:750; color:var(--text-muted); background:var(--bg-soft);">... Còn tiếp ${parsedExcelBatchRows.length - previewLimit} hồ sơ nữa (Toàn bộ ${parsedExcelBatchRows.length} hồ sơ sẽ được xử lý khi bấm Xác nhận).</td></tr>`;
+        }
+        tbody.innerHTML = html;
       }
 
       const btnSubmit = document.getElementById('btnSubmitImportExcel');
@@ -5080,11 +5087,12 @@
 
       const btnSubmit = document.getElementById('btnSubmitImportExcel');
       btnSubmit.disabled = true;
-      btnSubmit.innerHTML = `<span>Đang xử lý...</span>`;
+      btnSubmit.innerHTML = `<span>⚡ Đang xử lý siêu tốc...</span>`;
 
       try {
         let updatedCounter = 0;
         let createdCounter = 0;
+        const batchUpdates = {};
 
         for (const r of parsedExcelBatchRows) {
           if (r.matchedClaim) {
@@ -5108,11 +5116,13 @@
               });
             }
 
-            await dbNodeInstance.ref(`pending_claims/${claimId}`).update(updates);
+            Object.entries(updates).forEach(([k, v]) => {
+              batchUpdates[`pending_claims/${claimId}/${k}`] = v;
+            });
             updatedCounter++;
           } else {
             // Create New Claim from Excel Row
-            const newId = 'claim_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+            const newId = 'claim_' + Date.now() + '_' + Math.floor(Math.random() * 100000) + '_' + createdCounter;
             const newClaimObj = {
               id: newId,
               maVuTonThat: r.rawVtt || ('VTT/XCG/' + new Date().getFullYear() + '/' + Math.floor(100000 + Math.random() * 900000)),
@@ -5136,23 +5146,38 @@
               });
             }
 
-            await dbNodeInstance.ref(`pending_claims/${newId}`).set(newClaimObj);
+            batchUpdates[`pending_claims/${newId}`] = newClaimObj;
             createdCounter++;
           }
+        }
+
+        // Multi-location Batch Updates in Chunks of 400 paths for maximum speed and stability
+        const keys = Object.keys(batchUpdates);
+        const totalKeys = keys.length;
+        const CHUNK_SIZE = 400;
+
+        for (let i = 0; i < totalKeys; i += CHUNK_SIZE) {
+          const chunk = {};
+          const end = Math.min(i + CHUNK_SIZE, totalKeys);
+          for (let j = i; j < end; j++) {
+            chunk[keys[j]] = batchUpdates[keys[j]];
+          }
+          btnSubmit.innerHTML = `<span>⚡ Đang ghi dữ liệu ${Math.min(end, totalKeys)}/${totalKeys}...</span>`;
+          await dbNodeInstance.ref().update(chunk);
         }
 
         closeImportExcelModal();
         let msg = [];
         if (createdCounter > 0) msg.push(`Tạo mới ${createdCounter} hồ sơ`);
         if (updatedCounter > 0) msg.push(`Cập nhật ${updatedCounter} hồ sơ`);
-        triggerToast(`Nhập Excel thành công: ${msg.join(', ')}!`, 'success');
+        triggerToast(`Nhập Excel thành công (${parsedExcelBatchRows.length} hồ sơ): ${msg.join(', ')}!`, 'success');
         executeUIRenderPendingClaims();
       } catch (err) {
-        console.error("Lỗi nhập Excel:", err);
+        console.error("Lỗi nhập Excel siêu tốc:", err);
         triggerToast('Lỗi nhập tệp Excel: ' + err.message, 'error');
       } finally {
         btnSubmit.disabled = false;
-        btnSubmit.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span>Xác nhận nhập Excel (<span id="lblSubmitCount">${parsedExcelBatchRows.length}</span> hồ sơ)</span>`;
+        btnSubmit.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span>Xác nhận nhập Excel (<span id="lblSubmitCount">${parsedExcelBatchRows ? parsedExcelBatchRows.length : 0}</span> hồ sơ)</span>`;
       }
     }
 
