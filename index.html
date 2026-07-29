@@ -2209,7 +2209,17 @@
           <div class="form-group">
             <label>Đơn vị / Phòng ban</label>
             <input id="editAdminDepartment" class="input-premium" type="text" maxlength="100" placeholder="Ví dụ: Bộ phận Giám định" autocomplete="off" />
-       <!-- Modal Tiếp Nhận Hồ Sơ Tồn (Dán tin & Nhập biểu mẫu riêng biệt) -->
+          </div>
+        </div>
+        <div class="profile-modal-actions" style="margin-top: 24px;">
+          <button type="button" class="btn-premium btn-secondary" onclick="closeEditUserModal()">Hủy bỏ</button>
+          <button id="btnSubmitEditUser" type="button" class="btn-premium" onclick="submitEditUserAccount()">Lưu thay đổi</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal Tiếp Nhận Hồ Sơ Tồn (Dán tin & Nhập biểu mẫu riêng biệt) -->
   <div id="addPendingClaimModalOverlay" class="p-modal-overlay" aria-hidden="true" style="display: none;">
     <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="addPendingClaimModalTitle" style="width: 96vw; height: 92vh; max-width: 1400px; min-width: 900px; max-height: 92vh; min-height: 600px; display: flex; flex-direction: column; overflow: hidden; padding: 0; border-radius: 16px; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5);">
       <!-- Header -->
@@ -2494,21 +2504,6 @@
             </div>
             <div class="form-group">
               <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày thanh toán bồi thường</label>
-              <input id="modalPendingNgayThanhToan" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
-            </div>
-            <div class="form-group">
-              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày Kế toán xác nhận</label>
-              <input id="modalPendingNgayKtXacNhan" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
-            </div>
-
-            <div class="form-group" style="grid-column: span 3;">
-              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ghi chú / Lý do đề xuất hủy hồ sơ</label>
-              <input id="modalPendingGhiChu" class="input-premium" type="text" placeholder="Ghi chú thêm hoặc lý do từ chối/hủy..." />
-            </div>
-          </div>
-        </div>
-
-      </div>: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày thanh toán bồi thường</label>
               <input id="modalPendingNgayThanhToan" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
             </div>
             <div class="form-group">
