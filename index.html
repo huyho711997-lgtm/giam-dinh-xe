@@ -4774,7 +4774,23 @@
 
     function processParsedExcelData(rows) {
       let headerIndex = -1;
-      let colMap = { bsx: -1, date: -1, vtt: -1, status: -1, gara: -1, amount: -1, soHsbt: -1 };
+      let colMap = {
+        chiNhanhXuly: -1, chiNhanh: -1, ttkd: -1, phongBan: -1, soHd: -1, nguoiCapDon: -1,
+        giaTriXe: -1, soTienBh: -1, soGcn: -1, ngayHieuLuc: -1, ngayHetHan: -1, kenhKhaiThac: -1,
+        chiTietKenh: -1, maKhaiThac: -1, hinhThucCapDon: -1, ngayThanhToanPhi: -1, phiBh: -1,
+        khachHang: -1, bsx: -1, hieuXe: -1, loaiXe: -1, hangXe: -1, namSanXuat: -1, loaiDongCo: -1,
+        mdsd: -1, soChoTrongTai: -1, soHsbt: -1, maSpNghiepVu: -1, status: -1, ngayThongBao: -1,
+        date: -1, ngayMoHs: -1, doiTuongTonThat: -1, tinhTonThat: -1, dienBienTonThat: -1,
+        diaDiemTonThat: -1, nhomNguyenNhan: -1, maGara: -1, gdvHo: -1, uocThietHai: -1,
+        pascNgayDuyet: -1, pascNguoiDuyet: -1, gara: -1, pascSoTienDuyet: -1, toTrinhNgayDuyet: -1,
+        toTrinhNguoiDuyet: -1, ttbtSoTienBoiThuong: -1, chiPhiGiamDinh: -1, chiPhiCuuHo: -1,
+        chiPhiKhac: -1, amount: -1, duPhongBoiThuong: -1, thuDoiDongBhTyLe: -1,
+        thuDoiDongBhSoTien: -1, dongBhFollowTyLe: -1, dongBhFollowSoTien: -1,
+        tongBoiThuongSauThue: -1, vat: -1, ngayNhanDuHoSo: -1, ngayDuyetDnttDauTien: -1,
+        ngayDuyetDnttCuoiCung: -1, ngayKtXacNhan: -1, soTienDaThanhToan: -1, ngayThanhToan: -1,
+        ghiChu: -1, lyDoHuy: -1, agentUniqCode: -1, garageUniqCode: -1, zoneBoiThuong: -1,
+        khuVucGiamDinh: -1, tenGaraVietTat: -1, vtt: -1
+      };
 
       for (let i = 0; i < Math.min(10, rows.length); i++) {
         const row = rows[i];
@@ -4782,16 +4798,81 @@
 
         row.forEach((cell, colIdx) => {
           const text = String(cell || '').trim().toLowerCase();
-          if (text.includes('biển số') || text.includes('bsx') || text.includes('bks')) colMap.bsx = colIdx;
-          else if (text.includes('ngày') || text.includes('thời gian')) colMap.date = colIdx;
+          if (text.includes('chi nhánh xử lý')) colMap.chiNhanhXuly = colIdx;
+          else if (text.includes('chi nhánh')) colMap.chiNhanh = colIdx;
+          else if (text.includes('ttkd')) colMap.ttkd = colIdx;
+          else if (text.includes('phòng ban')) colMap.phongBan = colIdx;
+          else if (text.includes('số hđ') || text.includes('số hợp đồng')) colMap.soHd = colIdx;
+          else if (text.includes('người cấp đơn')) colMap.nguoiCapDon = colIdx;
+          else if (text.includes('giá trị khai báo xe')) colMap.giaTriXe = colIdx;
+          else if (text.includes('số tiền bh')) colMap.soTienBh = colIdx;
+          else if (text.includes('số gcn')) colMap.soGcn = colIdx;
+          else if (text.includes('ngày hiệu lực')) colMap.ngayHieuLuc = colIdx;
+          else if (text.includes('ngày hết hạn')) colMap.ngayHetHan = colIdx;
+          else if (text.includes('chi tiết kênh')) colMap.chiTietKenh = colIdx;
+          else if (text.includes('kênh khai thác')) colMap.kenhKhaiThac = colIdx;
+          else if (text.includes('mã khai thác')) colMap.maKhaiThac = colIdx;
+          else if (text.includes('hình thức cấp đơn')) colMap.hinhThucCapDon = colIdx;
+          else if (text.includes('ngày thanh toán phí')) colMap.ngayThanhToanPhi = colIdx;
+          else if (text.includes('phí bh')) colMap.phiBh = colIdx;
+          else if (text.includes('khách hàng')) colMap.khachHang = colIdx;
+          else if (text.includes('biển xe') || text.includes('biển số') || text.includes('bsx') || text.includes('bks')) colMap.bsx = colIdx;
+          else if (text.includes('hiệu xe')) colMap.hieuXe = colIdx;
+          else if (text.includes('loại xe')) colMap.loaiXe = colIdx;
+          else if (text.includes('hãng xe')) colMap.hangXe = colIdx;
+          else if (text.includes('năm sản xuất')) colMap.namSanXuat = colIdx;
+          else if (text.includes('loại động cơ')) colMap.loaiDongCo = colIdx;
+          else if (text.includes('mđsd')) colMap.mdsd = colIdx;
+          else if (text.includes('số chỗ') || text.includes('trọng tải')) colMap.soChoTrongTai = colIdx;
+          else if (text.includes('số hồ sơ bồi thường') || text.includes('số hsbt')) colMap.soHsbt = colIdx;
+          else if (text.includes('mã sp') || text.includes('nghiệp vụ')) colMap.maSpNghiepVu = colIdx;
+          else if (text.includes('trạng thái hồ sơ') || text.includes('trạng thái') || text.includes('tình trạng')) colMap.status = colIdx;
+          else if (text.includes('ngày thông báo')) colMap.ngayThongBao = colIdx;
+          else if (text.includes('ngày tổn thất') || text.includes('ngày tt')) colMap.date = colIdx;
+          else if (text.includes('ngày mở hs')) colMap.ngayMoHs = colIdx;
+          else if (text.includes('đối tượng tổn thất')) colMap.doiTuongTonThat = colIdx;
+          else if (text.includes('tỉnh tổn thất')) colMap.tinhTonThat = colIdx;
+          else if (text.includes('diễn biến tổn thất')) colMap.dienBienTonThat = colIdx;
+          else if (text.includes('địa điểm tổn thất')) colMap.diaDiemTonThat = colIdx;
+          else if (text.includes('nhóm nguyên nhân')) colMap.nhomNguyenNhan = colIdx;
+          else if (text.includes('mã gara sửa chữa')) colMap.maGara = colIdx;
+          else if (text.includes('gđv ho')) colMap.gdvHo = colIdx;
+          else if (text.includes('ước thiệt hại')) colMap.uocThietHai = colIdx;
+          else if (text.includes('pasc - ngày duyệt')) colMap.pascNgayDuyet = colIdx;
+          else if (text.includes('pasc - người duyệt')) colMap.pascNguoiDuyet = colIdx;
+          else if (text.includes('pasc - số tiền')) colMap.pascSoTienDuyet = colIdx;
+          else if (text.includes('tên gara (viết tắt)')) colMap.tenGaraVietTat = colIdx;
+          else if (text.includes('gara sửa chữa') || text.includes('gara') || text.includes('xưởng')) colMap.gara = colIdx;
+          else if (text.includes('tờ trình bt - ngày duyệt')) colMap.toTrinhNgayDuyet = colIdx;
+          else if (text.includes('tờ trình bt - người duyệt')) colMap.toTrinhNguoiDuyet = colIdx;
+          else if (text.includes('ttbt - số tiền bồi thường')) colMap.ttbtSoTienBoiThuong = colIdx;
+          else if (text.includes('ttbt - chi phí giám định')) colMap.chiPhiGiamDinh = colIdx;
+          else if (text.includes('ttbt - chi phí cứu hộ')) colMap.chiPhiCuuHo = colIdx;
+          else if (text.includes('ttbt - chi phí khác')) colMap.chiPhiKhac = colIdx;
+          else if (text.includes('ttbt - tổng số tiền bồi thường sau thuế')) colMap.tongBoiThuongSauThue = colIdx;
+          else if (text.includes('ttbt - tổng số tiền bồi thường') || text.includes('tổng số tiền bồi thường') || text.includes('bồi thường') || text.includes('tiền')) colMap.amount = colIdx;
+          else if (text.includes('dự phòng bồi thường')) colMap.duPhongBoiThuong = colIdx;
+          else if (text.includes('thu đòi đồng bảo hiểm - tỷ lệ')) colMap.thuDoiDongBhTyLe = colIdx;
+          else if (text.includes('thu đòi đồng bảo hiểm - số tiền')) colMap.thuDoiDongBhSoTien = colIdx;
+          else if (text.includes('đồng bảo hiểm follow - tỷ lệ')) colMap.dongBhFollowTyLe = colIdx;
+          else if (text.includes('đồng bảo hiểm follow - số tiền')) colMap.dongBhFollowSoTien = colIdx;
+          else if (text.includes('vat')) colMap.vat = colIdx;
+          else if (text.includes('ngày nhận đủ hồ sơ')) colMap.ngayNhanDuHoSo = colIdx;
+          else if (text.includes('ngày duyệt đntt đầu tiên')) colMap.ngayDuyetDnttDauTien = colIdx;
+          else if (text.includes('ngày duyệt đntt cuối cùng')) colMap.ngayDuyetDnttCuoiCung = colIdx;
+          else if (text.includes('ngày kt xác nhận')) colMap.ngayKtXacNhan = colIdx;
+          else if (text.includes('số tiền đã thanh toán')) colMap.soTienDaThanhToan = colIdx;
+          else if (text.includes('ngày thanh toán')) colMap.ngayThanhToan = colIdx;
+          else if (text.includes('ghi chú')) colMap.ghiChu = colIdx;
+          else if (text.includes('lý do đề xuất huỷ') || text.includes('lý do huỷ')) colMap.lyDoHuy = colIdx;
+          else if (text.includes('agent_uniq_code')) colMap.agentUniqCode = colIdx;
+          else if (text.includes('garage_uniq_code')) colMap.garageUniqCode = colIdx;
+          else if (text.includes('zone bồi thường')) colMap.zoneBoiThuong = colIdx;
+          else if (text.includes('khu vực giám định')) colMap.khuVucGiamDinh = colIdx;
           else if (text.includes('mã vtt') || text.includes('mã vụ')) colMap.vtt = colIdx;
-          else if (text.includes('hsbt') || text.includes('số hsbt') || text.includes('số hồ sơ bồi thường') || text.includes('số hs bồi thường') || text.includes('số hồ sơ bt') || text.includes('số hồ sơ')) colMap.soHsbt = colIdx;
-          else if (text.includes('trạng thái') || text.includes('tình trạng')) colMap.status = colIdx;
-          else if (text.includes('gara') || text.includes('xưởng')) colMap.gara = colIdx;
-          else if (text.includes('tiền') || text.includes('bồi thường') || text.includes('duyệt')) colMap.amount = colIdx;
         });
 
-        if (colMap.bsx !== -1 || colMap.vtt !== -1) {
+        if (colMap.bsx !== -1 || colMap.soHsbt !== -1 || colMap.vtt !== -1) {
           headerIndex = i;
           break;
         }
@@ -4805,19 +4886,21 @@
       const allClaims = Object.values(cachedPendingClaimsPayload || {}).filter(c => c && typeof c === 'object');
       parsedExcelBatchRows = [];
 
+      const getVal = (r, idx) => (idx !== undefined && idx !== -1) ? String(r[idx] || '').trim() : '';
+
       for (let i = headerIndex + 1; i < rows.length; i++) {
         const r = rows[i];
         if (!Array.isArray(r) || r.every(c => !String(c).trim())) continue;
 
-        const rawBsx = colMap.bsx !== -1 ? String(r[colMap.bsx] || '').trim() : '';
-        const rawDate = colMap.date !== -1 ? String(r[colMap.date] || '').trim() : '';
-        const rawVtt = colMap.vtt !== -1 ? String(r[colMap.vtt] || '').trim() : '';
-        const rawSoHsbt = colMap.soHsbt !== -1 ? String(r[colMap.soHsbt] || '').trim() : '';
-        const rawStatusStr = colMap.status !== -1 ? String(r[colMap.status] || '').trim() : '';
-        const rawGara = colMap.gara !== -1 ? String(r[colMap.gara] || '').trim() : '';
-        const rawAmount = colMap.amount !== -1 ? String(r[colMap.amount] || '').trim() : '';
+        const rawBsx = getVal(r, colMap.bsx);
+        const rawDate = getVal(r, colMap.date) || getVal(r, colMap.ngayMoHs);
+        const rawVtt = getVal(r, colMap.vtt);
+        const rawSoHsbt = getVal(r, colMap.soHsbt);
+        const rawStatusStr = getVal(r, colMap.status);
+        const rawGara = getVal(r, colMap.gara) || getVal(r, colMap.tenGaraVietTat);
+        const rawAmount = getVal(r, colMap.amount) || getVal(r, colMap.ttbtSoTienBoiThuong) || getVal(r, colMap.pascSoTienDuyet);
 
-        if (!rawBsx && !rawVtt) continue;
+        if (!rawBsx && !rawVtt && !rawSoHsbt) continue;
 
         let targetStatus = '';
         const stLower = rawStatusStr.toLowerCase();
@@ -4829,12 +4912,19 @@
 
         const normBsx = rawBsx.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
         const normVtt = rawVtt.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        const normSoHsbt = rawSoHsbt.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 
         let matchedClaim = null;
         let matchType = '';
 
-        // STRICT MANDATORY DUAL-MATCHING: Biển số xe AND Ngày tổn thất MUST BOTH MATCH TOGETHER!
-        if (normBsx && rawDate) {
+        // Priority 1: Exact Match by Số Hồ Sơ Bồi Thường
+        if (normSoHsbt) {
+          matchedClaim = allClaims.find(c => (c.soHoSoBoiThuong || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase() === normSoHsbt);
+          if (matchedClaim) matchType = 'so_hsbt';
+        }
+
+        // Priority 2: Biển số xe AND Ngày tổn thất MUST BOTH MATCH
+        if (!matchedClaim && normBsx && rawDate) {
           matchedClaim = allClaims.find(c => {
             const claimBsx = (c.bienSo || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
             if (claimBsx !== normBsx) return false;
@@ -4843,6 +4933,80 @@
           });
           if (matchedClaim) matchType = 'bsx_date';
         }
+
+        // Priority 3: Match by Mã vụ tổn thất
+        if (!matchedClaim && normVtt) {
+          matchedClaim = allClaims.find(c => (c.maVuTonThat || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase() === normVtt);
+          if (matchedClaim) matchType = 'vtt';
+        }
+
+        const fullRowMeta = {
+          chiNhanhXuly: getVal(r, colMap.chiNhanhXuly),
+          chiNhanh: getVal(r, colMap.chiNhanh),
+          ttkd: getVal(r, colMap.ttkd),
+          phongBan: getVal(r, colMap.phongBan),
+          soHd: getVal(r, colMap.soHd),
+          nguoiCapDon: getVal(r, colMap.nguoiCapDon),
+          giaTriXe: getVal(r, colMap.giaTriXe),
+          soTienBh: getVal(r, colMap.soTienBh),
+          soGcn: getVal(r, colMap.soGcn),
+          ngayHieuLuc: getVal(r, colMap.ngayHieuLuc),
+          ngayHetHan: getVal(r, colMap.ngayHetHan),
+          kenhKhaiThac: getVal(r, colMap.kenhKhaiThac),
+          chiTietKenh: getVal(r, colMap.chiTietKenh),
+          maKhaiThac: getVal(r, colMap.maKhaiThac),
+          hinhThucCapDon: getVal(r, colMap.hinhThucCapDon),
+          ngayThanhToanPhi: getVal(r, colMap.ngayThanhToanPhi),
+          phiBh: getVal(r, colMap.phiBh),
+          khachHang: getVal(r, colMap.khachHang),
+          hieuXe: getVal(r, colMap.hieuXe),
+          loaiXe: getVal(r, colMap.loaiXe),
+          hangXe: getVal(r, colMap.hangXe),
+          namSanXuat: getVal(r, colMap.namSanXuat),
+          loaiDongCo: getVal(r, colMap.loaiDongCo),
+          mdsd: getVal(r, colMap.mdsd),
+          soChoTrongTai: getVal(r, colMap.soChoTrongTai),
+          maSpNghiepVu: getVal(r, colMap.maSpNghiepVu),
+          ngayThongBao: getVal(r, colMap.ngayThongBao),
+          ngayMoHs: getVal(r, colMap.ngayMoHs),
+          doiTuongTonThat: getVal(r, colMap.doiTuongTonThat),
+          tinhTonThat: getVal(r, colMap.tinhTonThat),
+          dienBienTonThat: getVal(r, colMap.dienBienTonThat),
+          diaDiemTonThat: getVal(r, colMap.diaDiemTonThat),
+          nhomNguyenNhan: getVal(r, colMap.nhomNguyenNhan),
+          maGara: getVal(r, colMap.maGara),
+          gdvHo: getVal(r, colMap.gdvHo),
+          uocThietHai: getVal(r, colMap.uocThietHai),
+          pascNgayDuyet: getVal(r, colMap.pascNgayDuyet),
+          pascNguoiDuyet: getVal(r, colMap.pascNguoiDuyet),
+          pascSoTienDuyet: getVal(r, colMap.pascSoTienDuyet),
+          toTrinhNgayDuyet: getVal(r, colMap.toTrinhNgayDuyet),
+          toTrinhNguoiDuyet: getVal(r, colMap.toTrinhNguoiDuyet),
+          ttbtSoTienBoiThuong: getVal(r, colMap.ttbtSoTienBoiThuong),
+          chiPhiGiamDinh: getVal(r, colMap.chiPhiGiamDinh),
+          chiPhiCuuHo: getVal(r, colMap.chiPhiCuuHo),
+          chiPhiKhac: getVal(r, colMap.chiPhiKhac),
+          duPhongBoiThuong: getVal(r, colMap.duPhongBoiThuong),
+          thuDoiDongBhTyLe: getVal(r, colMap.thuDoiDongBhTyLe),
+          thuDoiDongBhSoTien: getVal(r, colMap.thuDoiDongBhSoTien),
+          dongBhFollowTyLe: getVal(r, colMap.dongBhFollowTyLe),
+          dongBhFollowSoTien: getVal(r, colMap.dongBhFollowSoTien),
+          tongBoiThuongSauThue: getVal(r, colMap.tongBoiThuongSauThue),
+          vat: getVal(r, colMap.vat),
+          ngayNhanDuHoSo: getVal(r, colMap.ngayNhanDuHoSo),
+          ngayDuyetDnttDauTien: getVal(r, colMap.ngayDuyetDnttDauTien),
+          ngayDuyetDnttCuoiCung: getVal(r, colMap.ngayDuyetDnttCuoiCung),
+          ngayKtXacNhan: getVal(r, colMap.ngayKtXacNhan),
+          soTienDaThanhToan: getVal(r, colMap.soTienDaThanhToan),
+          ngayThanhToan: getVal(r, colMap.ngayThanhToan),
+          ghiChu: getVal(r, colMap.ghiChu),
+          lyDoHuy: getVal(r, colMap.lyDoHuy),
+          agentUniqCode: getVal(r, colMap.agentUniqCode),
+          garageUniqCode: getVal(r, colMap.garageUniqCode),
+          zoneBoiThuong: getVal(r, colMap.zoneBoiThuong),
+          khuVucGiamDinh: getVal(r, colMap.khuVucGiamDinh),
+          tenGaraVietTat: getVal(r, colMap.tenGaraVietTat)
+        };
 
         parsedExcelBatchRows.push({
           rawBsx,
@@ -4854,7 +5018,8 @@
           rawGara,
           rawAmount,
           matchedClaim,
-          matchType
+          matchType,
+          fullRowMeta
         });
       }
 
@@ -4872,8 +5037,10 @@
           const statusObj = PENDING_STATUS_MAP[r.targetStatus] || PENDING_STATUS_MAP['moi_tiep_nhan'];
           const statusBadge = r.targetStatus ? `<span class="badge-status" style="background:${statusObj.bg}; color:${statusObj.color}; border:1px solid ${statusObj.border}; padding:3px 8px; border-radius:99px; font-size:11px;">${statusObj.label}</span>` : '<span style="color:var(--text-muted)">Giữ nguyên</span>';
 
-          let matchBadge = `<span style="color:#ef4444; font-weight:700; display:inline-flex; align-items:center; gap:4px;">${SVGS.CLOSE} Không khớp (Cần khớp cả Biển số & Ngày)</span>`;
-          if (r.matchType === 'bsx_date') matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp chuẩn 100% (Biển số + Ngày)</span>`;
+          let matchBadge = `<span style="color:#ef4444; font-weight:700; display:inline-flex; align-items:center; gap:4px;">${SVGS.CLOSE} Chưa ghép được hồ sơ</span>`;
+          if (r.matchType === 'so_hsbt') matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Số HSBT</span>`;
+          else if (r.matchType === 'bsx_date') matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Biển số + Ngày</span>`;
+          else if (r.matchType === 'vtt') matchBadge = `<span style="color:#3b82f6; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Mã vụ TT</span>`;
 
           return `
             <tr style="${isMatched ? '' : 'opacity: 0.6; background: rgba(239,68,68,0.03);'}">
@@ -4928,6 +5095,12 @@
           if (r.rawDate && r.rawDate !== '—') updates.ngayDuyetBT = r.rawDate;
           if (r.rawAmount && r.rawAmount !== '—') updates.soTienDuyetBT = r.rawAmount;
           if (r.rawVtt && r.rawVtt !== '—' && r.rawVtt !== r.matchedClaim.maVuTonThat) updates.maVuTonThat = r.rawVtt;
+
+          if (r.fullRowMeta && typeof r.fullRowMeta === 'object') {
+            Object.entries(r.fullRowMeta).forEach(([k, v]) => {
+              if (v && v !== '—') updates[k] = v;
+            });
+          }
 
           await dbNodeInstance.ref(`pending_claims/${claimId}`).update(updates);
           updatedCounter++;
