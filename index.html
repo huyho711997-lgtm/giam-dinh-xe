@@ -5991,12 +5991,17 @@
         return `
           <tr onclick="openEditPendingClaimModal('${item.id}')" style="cursor: pointer;">
             <td style="text-align: center; font-weight: 750; color: var(--text-muted); width: 44px;">${String(itemNumber).padStart(2, '0')}</td>
+            <td style="width: 155px;">
+              <span style="background: ${statusConfig.bg}; color: ${statusConfig.color}; border: 1px solid ${statusConfig.border}; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
+                ${statusConfig.label}
+              </span>
+            </td>
             <td style="width: 175px;">
               <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 13.5px; display: block; word-break: break-all;" title="${escapeAttributeData(displayVinInfo ? ('Số khung/máy: ' + displayVinInfo) : displayBsx)}">${escapeHtmlOutput(displayBsx)}</strong>
               <div style="margin-top: 3px; display: inline-flex; align-items: center; gap: 4px; max-width: 100%;">
-                <button type="button" onclick="event.stopPropagation(); promptAssignSoHoSoBoiThuong('${item.id}', '${escapeAttributeData(item.soHoSoBoiThuong || '')}')" title="Nhấp để gán / sửa Số hồ sơ bồi thường" style="border: none; background: ${item.soHoSoBoiThuong ? 'rgba(16,185,129,0.1)' : 'rgba(216,180,109,0.08)'}; color: ${item.soHoSoBoiThuong ? '#10b981' : 'var(--text-muted)'}; padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 750; font-family: 'JetBrains Mono'; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; max-width: 135px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <button type="button" onclick="event.stopPropagation(); promptAssignSoHoSoBoiThuong('${item.id}', '${escapeAttributeData(item.soHoSoBoiThuong || '')}')" title="Nhấp để gán / sửa Số hồ sơ bồi thường" style="border: none; background: ${item.soHoSoBoiThuong ? 'rgba(16,185,129,0.1)' : 'rgba(216,180,109,0.08)'}; color: ${item.soHoSoBoiThuong ? '#10b981' : 'var(--text-muted)'}; padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 750; font-family: 'JetBrains Mono'; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; overflow: visible; white-space: normal; word-break: break-all;">
                   <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink: 0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                  <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.soHoSoBoiThuong ? escapeHtmlOutput(item.soHoSoBoiThuong) : '+ Gán Số HSBT'}</span>
+                  <span>${item.soHoSoBoiThuong ? escapeHtmlOutput(item.soHoSoBoiThuong) : '+ Gán Số HSBT'}</span>
                 </button>
                 ${item.soHoSoBoiThuong ? `
                   <button type="button" onclick="event.stopPropagation(); executeTextCopyToClipboardRawString('${escapeAttributeData(item.soHoSoBoiThuong)}')" title="Sao chép nhanh số hồ sơ" style="border: none; background: rgba(59,130,246,0.1); color: #3b82f6; padding: 2px 5px; border-radius: 6px; font-size: 10.5px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: 18.5px; width: 18.5px; flex-shrink: 0;">
@@ -6013,33 +6018,6 @@
                 ${item.tnds ? `<span style="font-size: 10px; background: rgba(168,85,247,0.1); color: #a855f7; border: 1px solid rgba(168,85,247,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">TNDS</span>` : ''}
               </div>
             </td>
-            <td style="width: 175px;">
-              <div class="custom-dropdown-container row-gdv-dropdown-wrap" style="position: relative; display: inline-block; width: 100%;">
-                <button type="button" onclick="toggleRowGdvDropdown(event, '${item.id}')" title="Nhấp để đổi nhanh Giám định viên tiếp nhận" style="background: rgba(216,180,109,0.08); border: 1px solid rgba(216,180,109,0.25); padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 800; color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%; transition: all 0.2s ease;">
-                  <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); flex-shrink: 0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${escapeHtmlOutput(item.gdvTiepNhan || 'Chưa phân công')}</span>
-                  </div>
-                  <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.7; flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </button>
-
-                <!-- Floating Quick GDV Menu List -->
-                <div id="rowGdvMenu_${item.id}" class="custom-dropdown-menu row-gdv-menu" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; min-width: 180px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
-                  ${gdvTeamList.map(gName => {
-                    const isSel = item.gdvTiepNhan === gName;
-                    return `
-                      <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="event.stopPropagation(); quickUpdateClaimGdv('${item.id}', '${escapeAttributeData(gName)}')" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(59,130,246,0.12); color: #3b82f6; font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
-                        <div style="display: flex; align-items: center; gap: 8px; font-size: 11.5px;">
-                          <span style="width: 7px; height: 7px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 5px #3b82f6; flex-shrink: 0;"></span>
-                          <span>${escapeHtmlOutput(gName)}</span>
-                        </div>
-                        ${isSel ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
-                      </div>
-                    `;
-                  }).join('')}
-                </div>
-              </div>
-            </td>
             <td style="width: 270px; min-width: 220px;">
               <div style="font-size: 12px; color: var(--text-main); font-weight: 600; line-height: 1.4; word-break: break-word;">${escapeHtmlOutput(item.moTaTonThat || item.nguyenNhan || '—')}</div>
               <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: flex-start; gap: 4px; line-height: 1.35; word-break: break-word;">
@@ -6047,10 +6025,8 @@
                 <span>${escapeHtmlOutput(item.diaDiemVTT || item.tinhTonThat || '—')}</span>
               </div>
             </td>
-            <td>
-              <span style="background: ${statusConfig.bg}; color: ${statusConfig.color}; border: 1px solid ${statusConfig.border}; font-size: 11.5px; font-weight: 800; padding: 6px 12px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; width: 100%; white-space: nowrap;">
-                ${statusConfig.label}
-              </span>
+            <td style="width: 175px;">
+              <span style="font-size: 12.5px; font-weight: 750; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(item.gdvTiepNhan || 'Chưa phân công')}">${escapeHtmlOutput(item.gdvTiepNhan || 'Chưa phân công')}</span>
             </td>
             <td style="text-align: right; padding-right: 20px;">
               <div style="display: inline-flex; gap: 6px; justify-content: flex-end; align-items: center;">
@@ -6572,11 +6548,11 @@
                   <thead>
                     <tr>
                       <th style="width: 44px; text-align: center;">#</th>
+                      <th style="width: 155px;">Trạng thái hồ sơ</th>
                       <th style="width: 175px;">Biển số xe</th>
                       <th style="width: 210px;">Hãng xe & Đơn vị cấp</th>
-                      <th style="width: 175px;">Giám định viên</th>
                       <th style="width: 270px; min-width: 220px;">Nội dung tổn thất & Địa điểm</th>
-                      <th style="width: 155px;">Trạng thái hồ sơ</th>
+                      <th style="width: 175px;">Giám định viên</th>
                       <th style="width: 120px; text-align: center;">Thao tác</th>
                     </tr>
                   </thead>
