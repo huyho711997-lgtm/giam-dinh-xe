@@ -4815,11 +4815,19 @@
 
     function formatDateDisplay(val) {
       if (!val) return '—';
-      const dp = parseDateParts(val);
+      const str = String(val).trim();
+      if (!str || str === '—') return '—';
+
+      const dp = parseDateParts(str);
       if (dp) {
-        return `${String(dp.day).padStart(2,'0')}/${String(dp.month).padStart(2,'0')}/${dp.year}`;
+        let res = `${String(dp.day).padStart(2,'0')}/${String(dp.month).padStart(2,'0')}/${dp.year}`;
+        const timeMatch = str.match(/\b([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?\b/);
+        if (timeMatch) {
+          res += ` ${timeMatch[1].padStart(2,'0')}:${timeMatch[2]}`;
+        }
+        return res;
       }
-      return String(val);
+      return str;
     }
 
     function isSameDateString(d1, d2) {
@@ -4955,8 +4963,12 @@
         const r = rows[i];
         if (!Array.isArray(r) || r.every(c => !String(c).trim())) continue;
 
-        const rawBsx = getVal(r, colMap.bsx);
-        const rawDateRaw = getVal(r, colMap.date) || getVal(r, colMap.ngayMoHs);
+        let rawBsxRaw = getVal(r, colMap.bsx);
+        let rawBsx = rawBsxRaw;
+        if (rawBsx.includes('/')) {
+          rawBsx = rawBsx.split('/')[0].trim();
+        }
+        const rawDateRaw = getVal(r, colMap.date) || getVal(r, colMap.ngayMoHs) || getVal(r, colMap.ngayThongBao);
         const rawDate = formatDateDisplay(rawDateRaw);
         const rawVtt = getVal(r, colMap.vtt);
         const rawSoHsbt = getVal(r, colMap.soHsbt);
@@ -5004,17 +5016,26 @@
         }
 
         // Priority 2: Biển số xe AND Ngày tổn thất MUST BOTH MATCH
-        if (!matchedClaim && normBsx && rawDate) {
+        if (!matchedClaim && normBsx && (rawDateRaw || rawDate)) {
           matchedClaim = allClaims.find(c => {
             const claimBsx = (c.bienSo || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
             if (claimBsx !== normBsx) return false;
-            const dateToCompare = c.ngayTonThat || c.createdAt;
-            return isSameDateString(rawDate, dateToCompare);
+            const dateToCompare = c.ngayTonThat || c.ngayMoHs || c.createdAt;
+            return isSameDateString(rawDateRaw, dateToCompare) || isSameDateString(rawDate, dateToCompare);
           });
           if (matchedClaim) matchType = 'bsx_date';
         }
 
-        // Priority 3: Match by Mã vụ tổn thất
+        // Priority 3: Fallback Match by Biển số xe
+        if (!matchedClaim && normBsx) {
+          matchedClaim = allClaims.find(c => {
+            const claimBsx = (c.bienSo || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            return claimBsx === normBsx;
+          });
+          if (matchedClaim) matchType = 'bsx';
+        }
+
+        // Priority 4: Fallback Match by Mã vụ tổn thất
         if (!matchedClaim && normVtt) {
           matchedClaim = allClaims.find(c => (c.maVuTonThat || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase() === normVtt);
           if (matchedClaim) matchType = 'vtt';
@@ -5126,7 +5147,8 @@
           let matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px; background: rgba(16,185,129,0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(16,185,129,0.25);">${SVGS.ROCKET} Hồ sơ mới (Sẽ tạo mới)</span>`;
           if (r.matchType === 'so_hsbt') matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Số HSBT (Cập nhật)</span>`;
           else if (r.matchType === 'bsx_date') matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Biển số + Ngày (Cập nhật)</span>`;
-          else if (r.matchType === 'vtt') matchBadge = `<span style="color:#3b82f6; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Mã vụ TT (Cập nhật)</span>`;
+          else if (r.matchType === 'bsx') matchBadge = `<span style="color:#3b82f6; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Biển số xe (Cập nhật)</span>`;
+          else if (r.matchType === 'vtt') matchBadge = `<span style="color:#8b5cf6; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Mã vụ TT (Cập nhật)</span>`;
 
           return `
             <tr style="${isMatched ? '' : 'background: rgba(16,185,129,0.02);'}">
