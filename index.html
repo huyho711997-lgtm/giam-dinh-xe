@@ -577,14 +577,30 @@
       0%, 100% { opacity: 0.35; transform: scale(0.85); }
       50% { opacity: 1; transform: scale(1.15); }
     }
-    .clickable-row {
+    .edit-tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2.5px solid transparent;
+      padding: 9px 16px;
+      font-size: 12.5px;
+      font-weight: 750;
+      color: var(--text-soft);
       cursor: pointer;
-      transition: background-color 0.18s ease;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      border-radius: 8px 8px 0 0;
     }
-    .clickable-row:hover {
-      background-color: var(--surface-soft) !important;
+    .edit-tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255,255,255,0.04);
     }
-    
+    .edit-tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: rgba(216,180,109,0.12);
+      font-weight: 850;
+    }
+
     .flex-actions-group { display: flex; justify-content: flex-end; gap: 7px; }
     .flex-actions-group .btn-premium { width: 38px; min-height: 38px; padding: 0; }
     .flex-actions-group .btn-premium .action-label { display: none; }
@@ -2205,150 +2221,302 @@
 
   <!-- Modal Tiếp Nhận Hồ Sơ Tồn (Dán tin & Nhập biểu mẫu riêng biệt) -->
   <div id="addPendingClaimModalOverlay" class="p-modal-overlay" aria-hidden="true" style="display: none;">
-    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="addPendingClaimModalTitle" style="max-width: 840px; width: 92%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 0;">
+    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="addPendingClaimModalTitle" style="max-width: 1120px; width: 95%; max-height: 94vh; display: flex; flex-direction: column; overflow: hidden; padding: 0;">
       <!-- Header -->
-      <div style="padding: 22px 28px 18px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface-strong);">
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--primary-gradient); color: #080b11; display: grid; place-items: center; flex-shrink: 0; box-shadow: var(--shadow-sm);">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+      <div style="padding: 20px 28px 14px; border-bottom: 1px solid var(--border); background: var(--surface-strong);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--primary-gradient); color: #080b11; display: grid; place-items: center; flex-shrink: 0; box-shadow: var(--shadow-sm);">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+            </div>
+            <div>
+              <h3 id="addPendingClaimModalTitle" style="font-size: 19px; font-weight: 850; color: var(--text-main); margin: 0;">Chỉnh sửa chi tiết hồ sơ bồi thường</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 3px 0 0 0;">Quản lý toàn bộ 44+ trường dữ liệu chi tiết hồ sơ từ tệp Excel Core.</p>
+            </div>
           </div>
-          <div>
-            <h3 id="addPendingClaimModalTitle" style="font-size: 19px; font-weight: 850; color: var(--text-main); margin: 0;">Tiếp nhận hồ sơ tổn thất mới</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin: 3px 0 0 0;">Nhập chi tiết 16+ trường thông tin hồ sơ tổn thất xe cơ giới.</p>
-          </div>
+          <button type="button" class="btn-premium btn-secondary" onclick="closeAddPendingClaimModal()" aria-label="Đóng" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; padding: 0; border-radius: 10px; font-size: 18px; display: grid; place-items: center; cursor: pointer;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
         </div>
-        <button type="button" class="btn-premium btn-secondary" onclick="closeAddPendingClaimModal()" aria-label="Đóng" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; padding: 0; border-radius: 10px; font-size: 18px; display: grid; place-items: center; cursor: pointer;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+
+        <!-- Tabbed Navigation Menu Bar -->
+        <div style="display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 0; overflow-x: auto;">
+          <button id="tabBtn_Policy" type="button" onclick="switchEditClaimTab('Policy')" class="edit-tab-btn active">📋 Hợp đồng & Khách hàng</button>
+          <button id="tabBtn_Vehicle" type="button" onclick="switchEditClaimTab('Vehicle')" class="edit-tab-btn">🚗 Phương tiện & Lái xe</button>
+          <button id="tabBtn_Event" type="button" onclick="switchEditClaimTab('Event')" class="edit-tab-btn">📍 Vụ tổn thất & Diễn biến</button>
+          <button id="tabBtn_Unit" type="button" onclick="switchEditClaimTab('Unit')" class="edit-tab-btn">🏢 Đơn vị & Giám định viên</button>
+          <button id="tabBtn_Financial" type="button" onclick="switchEditClaimTab('Financial')" class="edit-tab-btn">💰 Bồi thường, PASC & Thanh toán</button>
+        </div>
       </div>
 
       <!-- Body Scrollable Area -->
-      <div style="padding: 24px 28px; overflow-y: auto; flex: 1;">
-        <!-- Section: Detailed Structured Form Grid -->
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-          <span style="font-size: 13.5px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.04em;">Thông tin chi tiết hồ sơ (16+ Trường dữ liệu)</span>
-        </div>
+      <div style="padding: 24px 28px; overflow-y: auto; flex: 1; background: var(--bg-soft);">
 
-        <div class="profile-form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 16px;">
-          <div class="form-group">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Mã vụ tổn thất (VTT) *</label>
-            <input id="modalPendingMaVuTonThat" class="input-premium" type="text" placeholder="VTT/XCG/2026/..." oninput="checkModalDuplicateMaVTT(this.value)" />
-            <div id="modalMaVttDuplicateWarning" style="display: none; margin-top: 5px; font-size: 11.5px; color: #ef4444; font-weight: 750; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); padding: 6px 10px; border-radius: 8px;"></div>
-          </div>
-          <div class="form-group">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Số hồ sơ bồi thường (Số HSBT)</label>
-            <input id="modalPendingSoHoSoBoiThuong" class="input-premium" type="text" placeholder="Ví dụ: HSBT-2026-00891" style="font-weight: 750; color: #10b981;" />
-          </div>
-          <div class="form-group">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Biển số xe *</label>
-            <input id="modalPendingBienSo" class="input-premium" type="text" placeholder="Ví dụ: 47A-123.45" style="font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;" />
-          </div>
-          <div class="form-group">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Đơn vị cấp đơn</label>
-            <input id="modalPendingDonViCapDon" class="input-premium" type="text" placeholder="Ví dụ: ĐẮK LẮK, HÀ NỘI..." />
-          </div>
-          <div class="form-group">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Hãng xe / Hiệu xe</label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <input id="modalPendingHangXe" class="input-premium" type="text" placeholder="Hãng xe (TOYOTA...)" />
-              <input id="modalPendingHieuXe" class="input-premium" type="text" placeholder="Hiệu xe (CAMRY...)" />
+        <!-- TAB 1: POLICY & CUSTOMER -->
+        <div id="tabPane_Policy" class="edit-tab-pane" style="display: block;">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 16px;">
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Mã vụ tổn thất (VTT) *</label>
+              <input id="modalPendingMaVuTonThat" class="input-premium" type="text" placeholder="VTT/XCG/2026/..." oninput="checkModalDuplicateMaVTT(this.value)" />
+              <div id="modalMaVttDuplicateWarning" style="display: none; margin-top: 5px; font-size: 11.5px; color: #ef4444; font-weight: 750; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); padding: 6px 10px; border-radius: 8px;"></div>
             </div>
-          </div>
-          <div class="form-group">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Năm sản xuất</label>
-            <input id="modalPendingNamSanXuat" class="input-premium" type="text" placeholder="Ví dụ: 2022" />
-          </div>
-          <div class="form-group">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">GĐV Tiếp nhận / Cán bộ XL</label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <input id="modalPendingGdvTiepNhan" class="input-premium" type="text" placeholder="GĐV tiếp nhận" />
-              <input id="modalPendingCanBoXuLy" class="input-premium" type="text" placeholder="Cán bộ xử lý" />
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Số hồ sơ bồi thường (Số HSBT)</label>
+              <input id="modalPendingSoHoSoBoiThuong" class="input-premium" type="text" placeholder="Ví dụ: HSBT/XCG/2026/..." style="font-weight: 750; color: #10b981;" />
             </div>
-          </div>
-          <div class="form-group full" style="grid-column: span 2;">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày thông báo / Ngày mở HS / Ngày xảy ra VTT</label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-              <input id="modalPendingNgayThongBao" class="input-premium" type="text" placeholder="Ngày thông báo (DD/MM/YYYY)" />
-              <input id="modalPendingNgayMoHs" class="input-premium" type="text" placeholder="Ngày mở HS (DD/MM/YYYY)" />
-              <input id="modalPendingNgayVTT" class="input-premium" type="text" placeholder="Ngày xảy ra VTT (DD/MM/YYYY)" style="font-weight: 750; color: var(--primary);" />
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Biển số xe *</label>
+              <input id="modalPendingBienSo" class="input-premium" type="text" placeholder="Ví dụ: 47C-194.25" style="font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;" />
             </div>
-          </div>
-          <div class="form-group full" style="grid-column: span 2;">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Địa điểm VTT & Hiện trường</label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <input id="modalPendingDiaDiemVTT" class="input-premium" type="text" placeholder="Địa điểm xảy ra tổn thất" />
-              <input id="modalPendingHienTruong" class="input-premium" type="text" placeholder="Tình trạng hiện trường" />
-            </div>
-          </div>
-          <div class="form-group full" style="grid-column: span 2;">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Lái xe & Người liên hệ</label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <input id="modalPendingLaiXe" class="input-premium" type="text" placeholder="Tên lái xe & SĐT" />
-              <input id="modalPendingNguoiLienHe" class="input-premium" type="text" placeholder="Người liên hệ" />
-            </div>
-          </div>
-          <div class="form-group full" style="grid-column: span 2;">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Thông tin VCX & TNDS</label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <input id="modalPendingVcx" class="input-premium" type="text" placeholder="VCX (Vật chất xe)" />
-              <input id="modalPendingTnds" class="input-premium" type="text" placeholder="TNDS (Trách nhiệm dân sự)" />
-            </div>
-          </div>
-          <div class="form-group full" style="grid-column: span 2;">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Nguyên nhân tổn thất</label>
-            <input id="modalPendingNguyenNhan" class="input-premium" type="text" placeholder="Mô tả nguyên nhân tổn thất" />
-          </div>
-          <div class="form-group full" style="grid-column: span 2;">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Mô tả chi tiết tổn thất</label>
-            <textarea id="modalPendingMoTaTonThat" class="textarea-premium" placeholder="Mô tả danh mục các chi tiết bị tổn thất..." style="min-height: 70px; font-size: 12.5px;"></textarea>
-          </div>
 
-          <!-- Section: Hợp đồng & Bảo hiểm -->
-          <div class="form-group full" style="grid-column: span 2; margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 12px;">
-            <label style="font-size: 12px; font-weight: 800; color: var(--primary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; text-transform: uppercase;">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-              <span>Thông tin Hợp đồng & Bảo hiểm</span>
-            </label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-              <input id="modalPendingSoHd" class="input-premium" type="text" placeholder="Số hợp đồng (Số HĐ)" />
-              <input id="modalPendingSoGcn" class="input-premium" type="text" placeholder="Số GCNBH" />
+            <div class="form-group" style="grid-column: span 2;">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Số khung & Số máy (Gốc trong tệp Excel)</label>
+              <input id="modalPendingSoKhungSoMay" class="input-premium" type="text" placeholder="Chuỗi số khung/số máy kết hợp" readonly style="background: var(--surface); color: var(--text-muted);" />
             </div>
-            <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 8px; margin-top: 8px;">
-              <input id="modalPendingKhachHang" class="input-premium" type="text" placeholder="Tên chủ xe / Khách hàng" />
-              <input id="modalPendingNgayHieuLuc" class="input-premium" type="text" placeholder="Hiệu lực từ (DD/MM/YYYY)" />
-              <input id="modalPendingNgayHetHan" class="input-premium" type="text" placeholder="Hết hạn ngày (DD/MM/YYYY)" />
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Tên chủ xe / Khách hàng</label>
+              <input id="modalPendingKhachHang" class="input-premium" type="text" placeholder="Tên khách hàng / doanh nghiệp" />
             </div>
-          </div>
 
-          <!-- Section: Phê duyệt PASC & Bồi thường -->
-          <div class="form-group full" style="grid-column: span 2; margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 12px;">
-            <label style="font-size: 12px; font-weight: 800; color: #10b981; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; text-transform: uppercase;">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              <span>Phê duyệt PASC, Tờ trình & Giá trị Bồi thường</span>
-            </label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-              <input id="modalPendingUocThietHai" class="input-premium" type="text" placeholder="Ước thiệt hại (VNĐ)" />
-              <input id="modalPendingPascSoTienDuyet" class="input-premium" type="text" placeholder="PASC - Số tiền đã duyệt (VNĐ)" style="font-weight:750; color:#10b981;" />
-              <input id="modalPendingPascNguoiDuyet" class="input-premium" type="text" placeholder="PASC - Người duyệt" />
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Số Hợp đồng (Số HĐ)</label>
+              <input id="modalPendingSoHd" class="input-premium" type="text" placeholder="Số hợp đồng bảo hiểm" />
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px;">
-              <input id="modalPendingToTrinhNguoiDuyet" class="input-premium" type="text" placeholder="Tờ trình BT - Người duyệt" />
-              <input id="modalPendingSoTienDaThanhToan" class="input-premium" type="text" placeholder="Số tiền đã thanh toán (VNĐ)" style="font-weight:750; color:#10b981;" />
-              <input id="modalPendingNgayThanhToan" class="input-premium" type="text" placeholder="Ngày thanh toán (DD/MM/YYYY)" />
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Số GCNBH</label>
+              <input id="modalPendingSoGcn" class="input-premium" type="text" placeholder="Số giấy chứng nhận BH" />
             </div>
-            <div style="margin-top: 8px;">
-              <input id="modalPendingGhiChu" class="input-premium" type="text" placeholder="Ghi chú / Lý do đề xuất hủy..." />
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Người cấp đơn</label>
+              <input id="modalPendingNguoiCapDon" class="input-premium" type="text" placeholder="Cán bộ cấp đơn" />
+            </div>
+
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày hiệu lực BH</label>
+              <input id="modalPendingNgayHieuLuc" class="input-premium" type="text" placeholder="DD/MM/YYYY HH:mm" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày hết hạn BH</label>
+              <input id="modalPendingNgayHetHan" class="input-premium" type="text" placeholder="DD/MM/YYYY HH:mm" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Kênh khai thác</label>
+              <input id="modalPendingKenhKhaiThac" class="input-premium" type="text" placeholder="Ví dụ: Trực tiếp, Đại lý..." />
+            </div>
+
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Giá trị xe khai báo (VNĐ)</label>
+              <input id="modalPendingGiaTriXe" class="input-premium" type="text" placeholder="VNĐ" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Số tiền bảo hiểm (VNĐ)</label>
+              <input id="modalPendingSoTienBh" class="input-premium" type="text" placeholder="VNĐ" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Phí bảo hiểm (VNĐ)</label>
+              <input id="modalPendingPhiBh" class="input-premium" type="text" placeholder="VNĐ" />
             </div>
           </div>
         </div>
+
+        <!-- TAB 2: VEHICLE & DRIVER -->
+        <div id="tabPane_Vehicle" class="edit-tab-pane" style="display: none;">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 16px;">
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Hãng xe</label>
+              <input id="modalPendingHangXe" class="input-premium" type="text" placeholder="TOYOTA, HYUNDAI..." />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Hiệu xe</label>
+              <input id="modalPendingHieuXe" class="input-premium" type="text" placeholder="CAMRY, HD250..." />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Loại xe</label>
+              <input id="modalPendingLoaiXe" class="input-premium" type="text" placeholder="Xe chở người, Xe đầu kéo..." />
+            </div>
+
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Năm sản xuất</label>
+              <input id="modalPendingNamSanXuat" class="input-premium" type="text" placeholder="2022" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Mục đích sử dụng (MĐSD)</label>
+              <input id="modalPendingMdsd" class="input-premium" type="text" placeholder="KDVT / Không KDVT" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Số chỗ / Trọng tải</label>
+              <input id="modalPendingSoChoTrongTai" class="input-premium" type="text" placeholder="Ví dụ: 7 chỗ / 15 tấn" />
+            </div>
+
+            <div class="form-group" style="grid-column: span 2;">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Họ tên Lái xe & SĐT</label>
+              <input id="modalPendingLaiXe" class="input-premium" type="text" placeholder="Tên lái xe - SĐT" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Người liên hệ VTT</label>
+              <input id="modalPendingNguoiLienHe" class="input-premium" type="text" placeholder="Họ tên người liên hệ" />
+            </div>
+
+            <div class="form-group" style="grid-column: span 3; border-top: 1px dashed var(--border); padding-top: 12px; margin-top: 6px;">
+              <label style="font-size: 12px; font-weight: 800; color: #3b82f6; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; text-transform: uppercase;">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span>Phạm vi Bảo hiểm VCX & TNDS</span>
+              </label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <label style="font-size: 11.5px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Bảo hiểm Vật chất xe (VCX)</label>
+                  <input id="modalPendingVcx" class="input-premium" type="text" placeholder="Thông tin gói VCX" />
+                </div>
+                <div>
+                  <label style="font-size: 11.5px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Bảo hiểm Trách nhiệm dân sự (TNDS)</label>
+                  <input id="modalPendingTnds" class="input-premium" type="text" placeholder="Thông tin gói TNDS" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: LOSS EVENT & LOCATION -->
+        <div id="tabPane_Event" class="edit-tab-pane" style="display: none;">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 16px;">
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày thông báo</label>
+              <input id="modalPendingNgayThongBao" class="input-premium" type="text" placeholder="DD/MM/YYYY HH:mm" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày mở HS</label>
+              <input id="modalPendingNgayMoHs" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--primary); margin-bottom: 4px; display: block;">Ngày xảy ra VTT *</label>
+              <input id="modalPendingNgayVTT" class="input-premium" type="text" placeholder="DD/MM/YYYY HH:mm" style="font-weight: 750; color: var(--primary);" />
+            </div>
+
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Tỉnh / Thành tổn thất</label>
+              <input id="modalPendingTinhTonThat" class="input-premium" type="text" placeholder="Tỉnh / Thành phố" />
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Địa điểm chi tiết tổn thất & Hiện trường</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <input id="modalPendingDiaDiemVTT" class="input-premium" type="text" placeholder="Địa điểm xảy ra VTT" />
+                <input id="modalPendingHienTruong" class="input-premium" type="text" placeholder="Tình trạng hiện trường" />
+              </div>
+            </div>
+
+            <div class="form-group" style="grid-column: span 3;">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Nhóm nguyên nhân tổn thất</label>
+              <input id="modalPendingNguyenNhan" class="input-premium" type="text" placeholder="Đâm, va quệt với vật thể hoặc phương tiện khác..." />
+            </div>
+
+            <div class="form-group" style="grid-column: span 3;">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Mô tả chi tiết diễn biến tổn thất</label>
+              <textarea id="modalPendingMoTaTonThat" class="textarea-premium" placeholder="Mô tả chi tiết các hạng mục hư hỏng tổn thất..." style="min-height: 90px; font-size: 12.5px;"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: PROCESSING UNIT & GARAGE -->
+        <div id="tabPane_Unit" class="edit-tab-pane" style="display: none;">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 16px;">
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Chi nhánh cấp đơn</label>
+              <input id="modalPendingDonViCapDon" class="input-premium" type="text" placeholder="Chi nhánh cấp đơn" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Chi nhánh xử lý HSBT</label>
+              <input id="modalPendingChiNhanhXuly" class="input-premium" type="text" placeholder="Chi nhánh xử lý" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">TTKD & Phòng ban</label>
+              <input id="modalPendingTtkd" class="input-premium" type="text" placeholder="Team KD / Phòng ban" />
+            </div>
+
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Giám định viên tiếp nhận</label>
+              <input id="modalPendingGdvTiepNhan" class="input-premium" type="text" placeholder="Tên GĐV phụ trách" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Cán bộ xử lý (CBXL)</label>
+              <input id="modalPendingCanBoXuLy" class="input-premium" type="text" placeholder="Họ tên cán bộ xử lý" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Zone & Khu vực giám định</label>
+              <input id="modalPendingZoneBoiThuong" class="input-premium" type="text" placeholder="Zone / Khu vực GĐ" />
+            </div>
+
+            <div class="form-group" style="grid-column: span 2;">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Gara sửa chữa chỉ định</label>
+              <input id="modalPendingGaraSuaChua" class="input-premium" type="text" placeholder="Tên Gara sửa chữa" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Tên Gara (viết tắt)</label>
+              <input id="modalPendingTenGaraVietTat" class="input-premium" type="text" placeholder="Tên viết tắt Gara" />
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: FINANCIALS & APPROVALS -->
+        <div id="tabPane_Financial" class="edit-tab-pane" style="display: none;">
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 16px;">
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ước thiệt hại ban đầu (VNĐ)</label>
+              <input id="modalPendingUocThietHai" class="input-premium" type="text" placeholder="VNĐ" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: #10b981; margin-bottom: 4px; display: block;">PASC - Số tiền đã duyệt (VNĐ)</label>
+              <input id="modalPendingPascSoTienDuyet" class="input-premium" type="text" placeholder="VNĐ" style="font-weight: 750; color: #10b981;" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">PASC - Người duyệt</label>
+              <input id="modalPendingPascNguoiDuyet" class="input-premium" type="text" placeholder="Cán bộ duyệt PASC" />
+            </div>
+
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Tờ trình BT - Người duyệt</label>
+              <input id="modalPendingToTrinhNguoiDuyet" class="input-premium" type="text" placeholder="Người duyệt tờ trình" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Tờ trình BT - Ngày duyệt</label>
+              <input id="modalPendingToTrinhNgayDuyet" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Dự phòng bồi thường (VNĐ)</label>
+              <input id="modalPendingDuPhongBoiThuong" class="input-premium" type="text" placeholder="VNĐ" />
+            </div>
+
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: #10b981; margin-bottom: 4px; display: block;">Số tiền đã thanh toán (VNĐ)</label>
+              <input id="modalPendingSoTienDaThanhToan" class="input-premium" type="text" placeholder="VNĐ" style="font-weight: 800; color: #10b981;" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày thanh toán bồi thường</label>
+              <input id="modalPendingNgayThanhToan" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày Kế toán xác nhận</label>
+              <input id="modalPendingNgayKtXacNhan" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
+            </div>
+
+            <div class="form-group" style="grid-column: span 3;">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ghi chú / Lý do đề xuất hủy hồ sơ</label>
+              <input id="modalPendingGhiChu" class="input-premium" type="text" placeholder="Ghi chú thêm hoặc lý do từ chối/hủy..." />
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Footer Buttons -->
-      <div style="padding: 16px 28px; border-top: 1px solid var(--border); background: var(--surface-strong); display: flex; justify-content: flex-end; gap: 12px;">
-        <button type="button" class="btn-premium btn-secondary" onclick="closeAddPendingClaimModal()" style="width: auto !important; padding: 0 20px; height: 42px; cursor: pointer;">Hủy bỏ</button>
-        <button id="btnSubmitAddPendingClaim" type="button" class="btn-premium" onclick="saveAddPendingClaimFromModal()" style="width: auto !important; padding: 0 28px; height: 42px; font-weight: 800; background: var(--primary-gradient); color: #080b11; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-          <span>Lưu hồ sơ tiếp nhận</span>
-        </button>
+      <div style="padding: 16px 28px; border-top: 1px solid var(--border); background: var(--surface-strong); display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">
+          💡 Bạn có thể nhấp qua các Tab phía trên để xem và chỉnh sửa từng nhóm thông tin.
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <button type="button" class="btn-premium btn-secondary" onclick="closeAddPendingClaimModal()" style="width: auto !important; padding: 0 20px; height: 42px; cursor: pointer;">Hủy bỏ</button>
+          <button id="btnSubmitAddPendingClaim" type="button" class="btn-premium" onclick="saveAddPendingClaimFromModal()" style="width: auto !important; padding: 0 28px; height: 42px; font-weight: 800; background: var(--primary-gradient); color: #080b11; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            <span>Lưu cập nhật hồ sơ</span>
+          </button>
+        </div>
       </div>
     </section>
   </div>
@@ -4442,47 +4610,66 @@
       setVal('modalPendingMaVuTonThat', item.maVuTonThat || '');
       setVal('modalPendingSoHoSoBoiThuong', item.soHoSoBoiThuong || '');
       setVal('modalPendingBienSo', item.bienSo || '');
-      setVal('modalPendingDonViCapDon', item.donViCapDon || '');
-      setVal('modalPendingHangXe', item.hangXe || '');
-      setVal('modalPendingHieuXe', item.hieuXe || '');
-      setVal('modalPendingNamSanXuat', item.namSanXuat || '');
-      setVal('modalPendingGdvTiepNhan', item.gdvTiepNhan || '');
-      setVal('modalPendingCanBoXuLy', item.canBoXuLy || '');
-      const rawNgayThongBao = item.ngayThongBao || item.createdAt;
-      const cleanNgayThongBao = formatDateDisplay(rawNgayThongBao);
-      setVal('modalPendingNgayThongBao', (cleanNgayThongBao !== '—' && !cleanNgayThongBao.includes('1970')) ? cleanNgayThongBao : new Date().toLocaleString('vi-VN'));
-
-      const cleanNgayMoHs = formatDateDisplay(item.ngayMoHs);
-      setVal('modalPendingNgayMoHs', cleanNgayMoHs !== '—' ? cleanNgayMoHs : (item.ngayMoHs || ''));
-
-      const rawNgayVTT = item.ngayVTT || item.ngayTonThat || item.date || item.ngayMoHs;
-      const cleanNgayVTT = formatDateDisplay(rawNgayVTT);
-      setVal('modalPendingNgayVTT', cleanNgayVTT !== '—' ? cleanNgayVTT : (item.ngayVTT || item.ngayTonThat || ''));
-
-      setVal('modalPendingDiaDiemVTT', item.diaDiemVTT || item.diaDiemTonThat || '');
-      setVal('modalPendingHienTruong', item.hienTruong || item.diaDiemTonThat || '');
-      setVal('modalPendingLaiXe', item.laiXe || '');
-      setVal('modalPendingNguoiLienHe', item.nguoiLienHe || item.khachHang || '');
-      setVal('modalPendingVcx', item.vcx || '');
-      setVal('modalPendingTnds', item.tnds || '');
-      setVal('modalPendingNguyenNhan', item.nguyenNhan || item.nhomNguyenNhan || '');
-      setVal('modalPendingMoTaTonThat', item.moTaTonThat || item.dienBienTonThat || '');
-
+      setVal('modalPendingSoKhungSoMay', item.soKhungSoMay || item.rawBsxFull || item.bienSo || '');
+      setVal('modalPendingKhachHang', item.khachHang || '');
       setVal('modalPendingSoHd', item.soHd || '');
       setVal('modalPendingSoGcn', item.soGcn || '');
-      setVal('modalPendingKhachHang', item.khachHang || '');
+      setVal('modalPendingNguoiCapDon', item.nguoiCapDon || '');
       const cleanNgayHieuLuc = formatDateDisplay(item.ngayHieuLuc);
       setVal('modalPendingNgayHieuLuc', cleanNgayHieuLuc !== '—' ? cleanNgayHieuLuc : (item.ngayHieuLuc || ''));
       const cleanNgayHetHan = formatDateDisplay(item.ngayHetHan);
       setVal('modalPendingNgayHetHan', cleanNgayHetHan !== '—' ? cleanNgayHetHan : (item.ngayHetHan || ''));
+      setVal('modalPendingKenhKhaiThac', item.kenhKhaiThac || '');
+      setVal('modalPendingGiaTriXe', item.giaTriXe || '');
+      setVal('modalPendingSoTienBh', item.soTienBh || '');
+      setVal('modalPendingPhiBh', item.phiBh || '');
+
+      setVal('modalPendingHangXe', item.hangXe || '');
+      setVal('modalPendingHieuXe', item.hieuXe || '');
+      setVal('modalPendingLoaiXe', item.loaiXe || '');
+      setVal('modalPendingNamSanXuat', item.namSanXuat || '');
+      setVal('modalPendingMdsd', item.mdsd || '');
+      setVal('modalPendingSoChoTrongTai', item.soChoTrongTai || '');
+      setVal('modalPendingLaiXe', item.laiXe || '');
+      setVal('modalPendingNguoiLienHe', item.nguoiLienHe || item.khachHang || '');
+      setVal('modalPendingVcx', item.vcx || '');
+      setVal('modalPendingTnds', item.tnds || '');
+
+      const rawNgayThongBao = item.ngayThongBao || item.createdAt;
+      const cleanNgayThongBao = formatDateDisplay(rawNgayThongBao);
+      setVal('modalPendingNgayThongBao', (cleanNgayThongBao !== '—' && !cleanNgayThongBao.includes('1970')) ? cleanNgayThongBao : new Date().toLocaleString('vi-VN'));
+      const cleanNgayMoHs = formatDateDisplay(item.ngayMoHs);
+      setVal('modalPendingNgayMoHs', cleanNgayMoHs !== '—' ? cleanNgayMoHs : (item.ngayMoHs || ''));
+      const rawNgayVTT = item.ngayVTT || item.ngayTonThat || item.date || item.ngayMoHs;
+      const cleanNgayVTT = formatDateDisplay(rawNgayVTT);
+      setVal('modalPendingNgayVTT', cleanNgayVTT !== '—' ? cleanNgayVTT : (item.ngayVTT || item.ngayTonThat || ''));
+      setVal('modalPendingTinhTonThat', item.tinhTonThat || '');
+      setVal('modalPendingDiaDiemVTT', item.diaDiemVTT || item.diaDiemTonThat || '');
+      setVal('modalPendingHienTruong', item.hienTruong || item.diaDiemTonThat || '');
+      setVal('modalPendingNguyenNhan', item.nguyenNhan || item.nhomNguyenNhan || '');
+      setVal('modalPendingMoTaTonThat', item.moTaTonThat || item.dienBienTonThat || '');
+
+      setVal('modalPendingDonViCapDon', item.donViCapDon || item.chiNhanh || '');
+      setVal('modalPendingChiNhanhXuly', item.chiNhanhXuly || '');
+      setVal('modalPendingTtkd', item.ttkd || item.phongBan || '');
+      setVal('modalPendingGdvTiepNhan', item.gdvTiepNhan || '');
+      setVal('modalPendingCanBoXuLy', item.canBoXuLy || '');
+      setVal('modalPendingZoneBoiThuong', item.zoneBoiThuong || item.khuVucGiamDinh || '');
+      setVal('modalPendingGaraSuaChua', item.garaSuaChua || '');
+      setVal('modalPendingTenGaraVietTat', item.tenGaraVietTat || '');
 
       setVal('modalPendingUocThietHai', item.uocThietHai || '');
       setVal('modalPendingPascSoTienDuyet', item.pascSoTienDuyet || item.soTienDuyetBT || '');
       setVal('modalPendingPascNguoiDuyet', item.pascNguoiDuyet || '');
       setVal('modalPendingToTrinhNguoiDuyet', item.toTrinhNguoiDuyet || '');
+      setVal('modalPendingToTrinhNgayDuyet', formatDateDisplay(item.toTrinhNgayDuyet) !== '—' ? formatDateDisplay(item.toTrinhNgayDuyet) : '');
+      setVal('modalPendingDuPhongBoiThuong', item.duPhongBoiThuong || '');
       setVal('modalPendingSoTienDaThanhToan', item.soTienDaThanhToan || '');
       setVal('modalPendingNgayThanhToan', formatDateDisplay(item.ngayThanhToan) !== '—' ? formatDateDisplay(item.ngayThanhToan) : '');
+      setVal('modalPendingNgayKtXacNhan', formatDateDisplay(item.ngayKtXacNhan) !== '—' ? formatDateDisplay(item.ngayKtXacNhan) : '');
       setVal('modalPendingGhiChu', item.ghiChu || '');
+
+      switchEditClaimTab('Policy');
 
       const modal = document.getElementById('addPendingClaimModalOverlay');
       if (modal) {
@@ -4498,6 +4685,16 @@
         modal.setAttribute('aria-hidden', 'true');
       }
       editingPendingClaimId = null;
+    }
+
+    function switchEditClaimTab(tabName) {
+      const tabs = ['Policy', 'Vehicle', 'Event', 'Unit', 'Financial'];
+      tabs.forEach(t => {
+        const tabBtn = document.getElementById('tabBtn_' + t);
+        const tabPane = document.getElementById('tabPane_' + t);
+        if (tabBtn) tabBtn.classList.toggle('active', t === tabName);
+        if (tabPane) tabPane.style.display = (t === tabName) ? 'block' : 'none';
+      });
     }
 
     function executeModalParseText() {
@@ -4638,8 +4835,24 @@
         uocThietHai: getVal('modalPendingUocThietHai') || existingItem.uocThietHai || '',
         pascSoTienDuyet: getVal('modalPendingPascSoTienDuyet') || existingItem.pascSoTienDuyet || '',
         pascNguoiDuyet: getVal('modalPendingPascNguoiDuyet') || existingItem.pascNguoiDuyet || '',
-        toTrinhNguoiDuyet: getVal('modalPendingToTrinhNguoiDuyet') || existingItem.toTrinhNguoiDuyet || '',
-        soTienDaThanhToan: getVal('modalPendingSoTienDaThanhToan') || existingItem.soTienDaThanhToan || '',
+        soKhungSoMay: getVal('modalPendingSoKhungSoMay') || existingItem.soKhungSoMay || '',
+        nguoiCapDon: getVal('modalPendingNguoiCapDon') || existingItem.nguoiCapDon || '',
+        kenhKhaiThac: getVal('modalPendingKenhKhaiThac') || existingItem.kenhKhaiThac || '',
+        giaTriXe: getVal('modalPendingGiaTriXe') || existingItem.giaTriXe || '',
+        soTienBh: getVal('modalPendingSoTienBh') || existingItem.soTienBh || '',
+        phiBh: getVal('modalPendingPhiBh') || existingItem.phiBh || '',
+        loaiXe: getVal('modalPendingLoaiXe') || existingItem.loaiXe || '',
+        mdsd: getVal('modalPendingMdsd') || existingItem.mdsd || '',
+        soChoTrongTai: getVal('modalPendingSoChoTrongTai') || existingItem.soChoTrongTai || '',
+        tinhTonThat: getVal('modalPendingTinhTonThat') || existingItem.tinhTonThat || '',
+        chiNhanhXuly: getVal('modalPendingChiNhanhXuly') || existingItem.chiNhanhXuly || '',
+        ttkd: getVal('modalPendingTtkd') || existingItem.ttkd || '',
+        zoneBoiThuong: getVal('modalPendingZoneBoiThuong') || existingItem.zoneBoiThuong || '',
+        garaSuaChua: getVal('modalPendingGaraSuaChua') || existingItem.garaSuaChua || '',
+        tenGaraVietTat: getVal('modalPendingTenGaraVietTat') || existingItem.tenGaraVietTat || '',
+        toTrinhNgayDuyet: getVal('modalPendingToTrinhNgayDuyet') || existingItem.toTrinhNgayDuyet || '',
+        duPhongBoiThuong: getVal('modalPendingDuPhongBoiThuong') || existingItem.duPhongBoiThuong || '',
+        ngayKtXacNhan: getVal('modalPendingNgayKtXacNhan') || existingItem.ngayKtXacNhan || '',
         ngayThanhToan: getVal('modalPendingNgayThanhToan') || existingItem.ngayThanhToan || '',
         ghiChu: getVal('modalPendingGhiChu') || existingItem.ghiChu || '',
         trangThai: existingItem.trangThai || 'moi',
