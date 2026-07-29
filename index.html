@@ -4780,6 +4780,61 @@
       }
     }
 
+    function parseDateParts(dateInput) {
+      if (!dateInput) return null;
+      if (typeof dateInput === 'number' || (!isNaN(dateInput) && String(dateInput).length >= 10 && !String(dateInput).includes('/') && !String(dateInput).includes('-'))) {
+        const dt = new Date(Number(dateInput));
+        if (!isNaN(dt.getTime())) {
+          return { day: dt.getDate(), month: dt.getMonth() + 1, year: dt.getFullYear() };
+        }
+      }
+      
+      const str = String(dateInput).trim();
+      if (!str) return null;
+
+      if (!isNaN(str) && Number(str) > 30000 && Number(str) < 60000) {
+        const jsDate = new Date(Math.round((Number(str) - (25567 + 2)) * 86400 * 1000));
+        return { day: jsDate.getDate(), month: jsDate.getMonth() + 1, year: jsDate.getFullYear() };
+      }
+
+      const parts = str.split(/[\/\-\.\sT]/).filter(Boolean);
+      if (parts.length >= 3) {
+        let p1 = parseInt(parts[0], 10);
+        let p2 = parseInt(parts[1], 10);
+        let p3 = parseInt(parts[2], 10);
+
+        if (p1 > 1000) {
+          return { day: p3, month: p2, year: p1 };
+        } else if (p3 > 1000) {
+          return { day: p1, month: p2, year: p3 };
+        }
+      }
+
+      return null;
+    }
+
+    function formatDateDisplay(val) {
+      if (!val) return '—';
+      const dp = parseDateParts(val);
+      if (dp) {
+        return `${String(dp.day).padStart(2,'0')}/${String(dp.month).padStart(2,'0')}/${dp.year}`;
+      }
+      return String(val);
+    }
+
+    function isSameDateString(d1, d2) {
+      if (!d1 || !d2) return false;
+      const dp1 = parseDateParts(d1);
+      const dp2 = parseDateParts(d2);
+      if (dp1 && dp2) {
+        return dp1.day === dp2.day && dp1.month === dp2.month && dp1.year === dp2.year;
+      }
+
+      const s1 = String(d1).trim().replace(/\D/g, '');
+      const s2 = String(d2).trim().replace(/\D/g, '');
+      return !!s1 && s1 === s2;
+    }
+
     function processParsedExcelData(rows) {
       let headerIndex = -1;
       let colMap = {
