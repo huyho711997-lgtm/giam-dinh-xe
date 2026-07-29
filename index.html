@@ -4428,8 +4428,13 @@
       setVal('modalPendingNamSanXuat', item.namSanXuat || '');
       setVal('modalPendingGdvTiepNhan', item.gdvTiepNhan || '');
       setVal('modalPendingCanBoXuLy', item.canBoXuLy || '');
-      setVal('modalPendingNgayThongBao', item.ngayThongBao || '');
-      setVal('modalPendingNgayVTT', item.ngayVTT || '');
+      const rawNgayThongBao = item.ngayThongBao || item.createdAt;
+      const cleanNgayThongBao = formatDateDisplay(rawNgayThongBao);
+      setVal('modalPendingNgayThongBao', (cleanNgayThongBao !== '—' && !cleanNgayThongBao.includes('1970')) ? cleanNgayThongBao : new Date().toLocaleString('vi-VN'));
+
+      const rawNgayVTT = item.ngayVTT || item.ngayTonThat || item.ngayMoHs;
+      const cleanNgayVTT = formatDateDisplay(rawNgayVTT);
+      setVal('modalPendingNgayVTT', cleanNgayVTT !== '—' ? cleanNgayVTT : '');
       setVal('modalPendingDiaDiemVTT', item.diaDiemVTT || '');
       setVal('modalPendingHienTruong', item.hienTruong || '');
       setVal('modalPendingLaiXe', item.laiXe || '');
