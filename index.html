@@ -2477,6 +2477,9 @@
     let activePendingStatusFilter = 'all';
     let editingCaseId = null;
     let editingPendingClaimId = null;
+    let activeSystemAdminSubTab = 'users';
+    let cachedAuditLogsPayload = {};
+    let activeAuditLogsFilter = 'all';
 
     // QUẢN LÝ THEME STATE: Khởi tạo từ cấu hình lưu trữ
     let currentTheme = localStorage.getItem('claimvision-theme') || 'dark';
@@ -2809,6 +2812,580 @@
       } catch (e) {
         console.error('Download all zip failed:', e);
         triggerToast('Tải xuống toàn bộ ảnh thất bại!', 'error');
+      }
+    }
+
+    /****************************************************
+     * SYSTEM AUDIT LOGGING & DEEP SETTINGS ENGINE
+     ****************************************************/
+    function logUserActivity(actionType, actionDetails, metadata = {}) {
+      try {
+        if (!dbNodeInstance) return;
+        const currentUser = firebase.auth().currentUser;
+        const uid = currentUser?.uid || 'guest';
+        const email = currentUser?.email || activeUserProfile?.email || 'N/A';
+        const name = activeUserProfile?.displayName || (currentUser?.email ? currentUser.email.split('@')[0] : 'Người dùng');
+        const role = activeUserProfile?.role || 'Khách';
+
+        const logId = 'LOG_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5).toUpperCase();
+        const logEntry = {
+          id: logId,
+          timestamp: Date.now(),
+          uid: uid,
+          userEmail: email,
+          userName: name,
+          userRole: role,
+          actionType: actionType,
+          actionDetails: String(actionDetails || ''),
+          metadata: metadata || {}
+        };
+
+        dbNodeInstance.ref(`auditLogs/${logId}`).set(logEntry).catch(() => {});
+      } catch (e) {
+        console.warn("Audit log writing failed:", e);
+      }
+    }
+
+    function fetchAndBindAuditLogsRealtime() {
+      const tbody = document.getElementById('tblAuditLogsBodyContainer');
+      if (!tbody || !dbNodeInstance) return;
+
+      dbNodeInstance.ref('auditLogs').limitToLast(150).on('value', (snapshot) => {
+        cachedAuditLogsPayload = snapshot.val() || {};
+        renderAuditLogsTableList();
+      }, (error) => {
+        console.error('Failed to listen to auditLogs node:', error);
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--danger);padding:24px;font-weight:700;">Không thể kết nối nhật ký hoạt động.</td></tr>`;
+        }
+      });
+    }
+
+    function setAuditLogsFilter(filterValue) {
+      activeAuditLogsFilter = filterValue;
+      document.querySelectorAll('#auditLogActionPills .filter-pill').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.auditFilter === filterValue);
+      });
+      renderAuditLogsTableList();
+    }
+
+    function renderAuditLogsTableList() {
+      const tbody = document.getElementById('tblAuditLogsBodyContainer');
+      if (!tbody) return;
+
+      const searchQuery = String(document.getElementById('auditLogSearchInput')?.value || '').trim().toLowerCase();
+      const entries = Object.entries(cachedAuditLogsPayload).sort((a, b) => Number(b[1].timestamp || 0) - Number(a[1].timestamp || 0));
+
+      const filteredEntries = entries.filter(([, log]) => {
+        const matchesText = !searchQuery || `${log.userName || ''} ${log.userEmail || ''} ${log.actionType || ''} ${log.actionDetails || ''}`.toLowerCase().includes(searchQuery);
+        let matchesFilter = true;
+        if (activeAuditLogsFilter === 'LOGIN') matchesFilter = (log.actionType === 'LOGIN');
+        else if (activeAuditLogsFilter === 'CREATE_CASE') matchesFilter = (log.actionType === 'CREATE_CASE' || log.actionType === 'EDIT_CASE');
+        else if (activeAuditLogsFilter === 'GARAGE') matchesFilter = (log.actionType === 'GARAGE_SAVE_DRAFT' || log.actionType === 'GARAGE_SUBMIT');
+        else if (activeAuditLogsFilter === 'USER_MANAGE') matchesFilter = (log.actionType === 'USER_MANAGE');
+        else if (activeAuditLogsFilter === 'SYSTEM_SETTING') matchesFilter = (log.actionType === 'SYSTEM_SETTING');
+
+        return matchesText && matchesFilter;
+      });
+
+      if (!filteredEntries.length) {
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không có nhật ký hoạt động nào</strong><p>Chưa ghi nhận dữ liệu phù hợp với bộ lọc.</p></div></td></tr>`;
+        return;
+      }
+
+      const ACTION_BADGES = {
+        'LOGIN': `<span class="badge-status" style="background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3);">🔑 Đăng nhập</span>`,
+        'CREATE_CASE': `<span class="badge-status" style="background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3);">📁 Tạo hồ sơ</span>`,
+        'EDIT_CASE': `<span class="badge-status" style="background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.3);">✏️ Sửa hồ sơ</span>`,
+        'GARAGE_SAVE_DRAFT': `<span class="badge-status" style="background: rgba(255,189,89,0.12); color: var(--warning); border: 1px solid rgba(255,189,89,0.3);">💾 Gara nháp</span>`,
+        'GARAGE_SUBMIT': `<span class="badge-status" style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.4);">🚀 Gara gửi kết quả</span>`,
+        'USER_MANAGE': `<span class="badge-status" style="background: rgba(168,85,247,0.12); color: #a855f7; border: 1px solid rgba(168,85,247,0.3);">👤 Quản lý User</span>`,
+        'SYSTEM_SETTING': `<span class="badge-status" style="background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3);">⚙️ System Config</span>`
+      };
+
+      tbody.innerHTML = filteredEntries.map(([, log]) => {
+        const dateStr = log.timestamp ? formatAuditLogDate(log.timestamp) : 'N/A';
+        const badge = ACTION_BADGES[log.actionType] || `<span class="badge-status" style="background: var(--surface-soft); color: var(--text-soft); border: 1px solid var(--border);">${escapeHtmlOutput(log.actionType || 'HĐ')}</span>`;
+        const initials = deriveInitials(log.userName || 'U');
+
+        return `
+          <tr>
+            <td style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; color: var(--text-soft);">${dateStr}</td>
+            <td>
+              <div class="vehicle-cell">
+                <div class="vehicle-avatar" style="width: 32px; height: 32px; font-size: 11px;">${initials}</div>
+                <div>
+                  <div style="font-size: 13px; font-weight: 800; color: var(--text-main);">${escapeHtmlOutput(log.userName || 'N/A')}</div>
+                  <div style="font-size: 10.5px; color: var(--text-muted);">${escapeHtmlOutput(log.userEmail || '')} · <span style="color:var(--primary); font-weight:700;">${escapeHtmlOutput(log.userRole || '')}</span></div>
+                </div>
+              </div>
+            </td>
+            <td>${badge}</td>
+            <td style="font-size: 12.5px; font-weight: 600; color: var(--text-main); line-height: 1.4;">${escapeHtmlOutput(log.actionDetails || '')}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function formatAuditLogDate(timestamp) {
+      try {
+        const d = new Date(timestamp);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        const hours = String(d.getHours()).padStart(2, '0');
+        const mins = String(d.getMinutes()).padStart(2, '0');
+        const secs = String(d.getSeconds()).padStart(2, '0');
+        return `${day}/${month}/${year} ${hours}:${mins}:${secs}`;
+      } catch (e) {
+        return 'N/A';
+      }
+    }
+
+    /****************************************************
+     * CLOUDINARY & GEMINI SYSTEM SETTINGS CORE
+     ****************************************************/
+    function getCloudinaryConfig() {
+      const cloudName = localStorage.getItem('claimvision-cloudinary-cloud') || CONFIG.CLOUDINARY_CLOUD_NAME || 'ug4spdjp';
+      const preset = localStorage.getItem('claimvision-cloudinary-preset') || CONFIG.CLOUDINARY_UPLOAD_PRESET || 'giam_dinh_xe_unsigned';
+      const folder = localStorage.getItem('claimvision-cloudinary-folder') || CONFIG.CLOUDINARY_FOLDER || 'giam_dinh_xe';
+      return { cloudName, preset, folder };
+    }
+
+    function saveCloudinarySettingsUI() {
+      const cloudName = String(document.getElementById('txtCloudinaryCloudName')?.value || '').trim();
+      const preset = String(document.getElementById('txtCloudinaryUploadPreset')?.value || '').trim();
+      const folder = String(document.getElementById('txtCloudinaryFolder')?.value || '').trim();
+
+      if (!cloudName || !preset) {
+        triggerToast('Vui lòng nhập Cloud Name và Upload Preset!', 'warning');
+        return;
+      }
+
+      localStorage.setItem('claimvision-cloudinary-cloud', cloudName);
+      localStorage.setItem('claimvision-cloudinary-preset', preset);
+      localStorage.setItem('claimvision-cloudinary-folder', folder);
+
+      CONFIG.CLOUDINARY_CLOUD_NAME = cloudName;
+      CONFIG.CLOUDINARY_UPLOAD_PRESET = preset;
+      CONFIG.CLOUDINARY_FOLDER = folder;
+
+      if (dbNodeInstance) {
+        dbNodeInstance.ref('settings/cloudinary').set({
+          cloudName,
+          preset,
+          folder,
+          updatedAt: Date.now()
+        }).catch(() => {});
+      }
+
+      logUserActivity('SYSTEM_SETTING', `Cập nhật cấu hình Cloudinary Media (Cloud Name: ${cloudName})`);
+      triggerToast('Đã lưu cấu hình tài khoản Cloudinary thành công!', 'success');
+      renderCloudinaryMetricsUI();
+    }
+
+    async function testCloudinaryConnectionUI() {
+      const cloudName = String(document.getElementById('txtCloudinaryCloudName')?.value || getCloudinaryConfig().cloudName).trim();
+      const preset = String(document.getElementById('txtCloudinaryUploadPreset')?.value || getCloudinaryConfig().preset).trim();
+
+      if (!cloudName || !preset) {
+        triggerToast('Vui lòng nhập Cloud Name và Upload Preset để thử nghiệm!', 'warning');
+        return;
+      }
+
+      const statusEl = document.getElementById('cloudinaryConnStatus');
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="color:var(--primary); font-weight:800;">🔄 Đang thử nghiệm kết nối tới Cloudinary (${cloudName})...</span>`;
+      }
+
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1; canvas.height = 1;
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.5));
+        
+        const formData = new FormData();
+        formData.append('file', blob);
+        formData.append('upload_preset', preset);
+
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/image/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const json = await res.json();
+        if (res.ok && json.secure_url) {
+          if (statusEl) {
+            statusEl.innerHTML = `<span style="color:#10b981; font-weight:800;">🟢 KẾT NỐI CLOUDINARY THÀNH CÔNG! Cloud: <strong>${cloudName}</strong>, Preset: <strong>${preset}</strong></span>`;
+          }
+          triggerToast('Kết nối tài khoản Cloudinary hoạt động hoàn hảo!', 'success');
+        } else {
+          throw new Error(json?.error?.message || 'Upload Preset không khả dụng');
+        }
+      } catch (err) {
+        if (statusEl) {
+          statusEl.innerHTML = `<span style="color:#ef4444; font-weight:800;">🔴 LỖI KẾT NỐI CLOUDINARY: ${escapeHtmlOutput(err.message)}</span>`;
+        }
+        triggerToast('Lỗi kết nối Cloudinary: ' + err.message, 'error');
+      }
+    }
+
+    function calculateCloudinaryMediaMetrics() {
+      const allCases = Object.values(cachedCasesPayload || {});
+      let totalImages = 0;
+
+      allCases.forEach(caseNode => {
+        if (caseNode.hinhAnh && Array.isArray(caseNode.hinhAnh)) {
+          totalImages += caseNode.hinhAnh.length;
+        } else if (caseNode.hinhAnh && typeof caseNode.hinhAnh === 'object') {
+          totalImages += Object.keys(caseNode.hinhAnh).length;
+        }
+
+        const reqList = caseNode.hangMucYeuCauAnh ? (Array.isArray(caseNode.hangMucYeuCauAnh) ? caseNode.hangMucYeuCauAnh : Object.values(caseNode.hangMucYeuCauAnh)) : [];
+        reqList.forEach(item => {
+          const urls = normalizeEvidenceImageUrls(item);
+          totalImages += urls.length;
+        });
+      });
+
+      const avgSizeBytes = 1.25 * 1024 * 1024;
+      const totalSizeBytes = totalImages * avgSizeBytes;
+      const sizeMB = (totalSizeBytes / (1024 * 1024)).toFixed(1);
+      const sizeGB = (totalSizeBytes / (1024 * 1024 * 1024)).toFixed(2);
+      const freeTierQuotaGB = 25.0;
+      const percentUsed = Math.min(100, ((parseFloat(sizeGB) / freeTierQuotaGB) * 100)).toFixed(1);
+
+      return {
+        totalImages,
+        sizeMB,
+        sizeGB,
+        freeTierQuotaGB,
+        percentUsed
+      };
+    }
+
+    function renderCloudinaryMetricsUI() {
+      const metrics = calculateCloudinaryMediaMetrics();
+      const filesLbl = document.getElementById('lblCloudinaryTotalFiles');
+      const sizeLbl = document.getElementById('lblCloudinaryUsedSize');
+      const fractionLbl = document.getElementById('lblCloudinaryQuotaFraction');
+      const percentLbl = document.getElementById('lblCloudinaryQuotaPercent');
+      const fillBar = document.getElementById('cloudinaryQuotaProgressFill');
+
+      if (filesLbl) filesLbl.textContent = metrics.totalImages;
+      if (sizeLbl) sizeLbl.textContent = `${metrics.sizeMB} MB`;
+      if (fractionLbl) fractionLbl.textContent = `${metrics.sizeGB} / ${metrics.freeTierQuotaGB}.00 GB`;
+      if (percentLbl) percentLbl.textContent = `${metrics.percentUsed}%`;
+      if (fillBar) fillBar.style.width = `${metrics.percentUsed}%`;
+
+      const cConfig = getCloudinaryConfig();
+      const cCloudInput = document.getElementById('txtCloudinaryCloudName');
+      const cPresetInput = document.getElementById('txtCloudinaryUploadPreset');
+      const cFolderInput = document.getElementById('txtCloudinaryFolder');
+
+      if (cCloudInput) cCloudInput.value = cConfig.cloudName;
+      if (cPresetInput) cPresetInput.value = cConfig.preset;
+      if (cFolderInput) cFolderInput.value = cConfig.folder;
+    }
+
+    function saveSystemGeminiApiKeyUI() {
+      const val = String(document.getElementById('txtSystemGeminiApiKey')?.value || '').trim();
+      if (val) {
+        localStorage.setItem('claimvision-gemini-key', val);
+        if (dbNodeInstance) dbNodeInstance.ref('settings/geminiApiKey').set(val).catch(() => {});
+        logUserActivity('SYSTEM_SETTING', 'Cập nhật Google Gemini API Key');
+        triggerToast('Đã lưu cấu hình Gemini API Key hệ thống thành công!', 'success');
+      } else {
+        localStorage.removeItem('claimvision-gemini-key');
+        if (dbNodeInstance) dbNodeInstance.ref('settings/geminiApiKey').remove().catch(() => {});
+        triggerToast('Đã xóa Gemini API Key riêng, dùng Key mặc định.', 'info');
+      }
+    }
+
+    async function testGeminiApiKeyConnectionUI() {
+      const val = String(document.getElementById('txtSystemGeminiApiKey')?.value || localStorage.getItem('claimvision-gemini-key') || CONFIG.FIREBASE.apiKey).trim();
+      const statusEl = document.getElementById('geminiConnStatus');
+
+      if (!val) {
+        triggerToast('Chưa nhập Gemini API Key!', 'warning');
+        return;
+      }
+
+      if (statusEl) {
+        statusEl.innerHTML = `<span style="color:var(--primary); font-weight:800;">🔄 Đang kiểm tra kết nối tới Google Gemini API...</span>`;
+      }
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${val}`);
+        const data = await res.json();
+
+        if (res.ok && data.models) {
+          if (statusEl) {
+            statusEl.innerHTML = `<span style="color:#10b981; font-weight:800;">🟢 GEMINI API KEY KẾT NỐI THÀNH CÔNG! Nhận diện ${data.models.length} AI Models khả dụng.</span>`;
+          }
+          triggerToast('Kết nối Gemini API Key hoạt động tốt!', 'success');
+        } else {
+          throw new Error(data?.error?.message || 'API Key không hợp lệ');
+        }
+      } catch (err) {
+        if (statusEl) {
+          statusEl.innerHTML = `<span style="color:#ef4444; font-weight:800;">🔴 GEMINI API KEY LỖI: ${escapeHtmlOutput(err.message)}</span>`;
+        }
+        triggerToast('Lỗi kết nối Gemini API Key: ' + err.message, 'error');
+      }
+    }
+
+    function resetSystemGeminiApiKeyUI() {
+      localStorage.removeItem('claimvision-gemini-key');
+      const input = document.getElementById('txtSystemGeminiApiKey');
+      if (input) input.value = '';
+      const statusEl = document.getElementById('geminiConnStatus');
+      if (statusEl) statusEl.innerHTML = `<span style="color:var(--text-muted);">Đã đặt lại sử dụng Gemini API Key mặc định của hệ thống.</span>`;
+      triggerToast('Đã đặt lại Key mặc định hệ thống.', 'info');
+    }
+
+    function toggleShowGeminiKeyVisibility() {
+      const input = document.getElementById('txtSystemGeminiApiKey');
+      if (!input) return;
+      input.type = (input.type === 'password') ? 'text' : 'password';
+    }
+
+    function switchSystemAdminSubTab(subTabName) {
+      activeSystemAdminSubTab = subTabName;
+      renderSystemAdminTabContent();
+    }
+
+    window.switchSystemAdminSubTab = switchSystemAdminSubTab;
+    window.saveSystemGeminiApiKeyUI = saveSystemGeminiApiKeyUI;
+    window.testGeminiApiKeyConnectionUI = testGeminiApiKeyConnectionUI;
+    window.resetSystemGeminiApiKeyUI = resetSystemGeminiApiKeyUI;
+    window.toggleShowGeminiKeyVisibility = toggleShowGeminiKeyVisibility;
+    window.saveCloudinarySettingsUI = saveCloudinarySettingsUI;
+    window.testCloudinaryConnectionUI = testCloudinaryConnectionUI;
+    window.setAuditLogsFilter = setAuditLogsFilter;
+
+    function renderSystemAdminTabContent() {
+      const container = document.getElementById('systemAdminSubTabContainer');
+      if (!container) return;
+
+      if (activeSystemAdminSubTab === 'users') {
+        container.innerHTML = `
+          <div class="user-toolbar-grid" style="margin-bottom: 24px; gap: 16px;">
+            <div class="search-wrap" style="margin: 0; width: 100%;">
+              ${SVGS.SEARCH}
+              <input id="userSearchInput" class="input-premium" type="search" placeholder="Tìm kiếm tên, email, vai trò, bộ phận..." autocomplete="off" style="width: 100%;" />
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <div class="filter-pills" id="userRoleFilterPills" style="display: flex; gap: 4px; margin: 0; background: var(--surface-soft); padding: 4px; border-radius: 10px; border: 1px solid var(--border);">
+                <button class="filter-pill active" data-user-filter="all" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Tất cả</button>
+                <button class="filter-pill" data-user-filter="Admin" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Admin</button>
+                <button class="filter-pill" data-user-filter="Giám định viên" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Giám định viên</button>
+                <button class="filter-pill" data-user-filter="Garage" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Garage</button>
+              </div>
+              <button type="button" class="btn-premium" onclick="openCreateUserModal()" style="width: auto !important; padding: 0 24px; min-height: unset; height: 42px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; margin: 0; background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.35); cursor: pointer; transition: all 0.2s ease;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Thêm thành viên mới</span>
+              </button>
+            </div>
+          </div>
+          
+          <div class="table-container" style="border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); overflow: hidden; margin-top: 8px;">
+            <table class="p-table users-table">
+              <thead>
+                <tr>
+                  <th>Thành viên</th>
+                  <th style="width: 250px;">Bộ phận / Phòng ban</th>
+                  <th style="width: 180px;">Vai trò hệ thống</th>
+                  <th style="width: 160px; text-align: right; padding-right: 24px;">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="tblUsersBodyContainer">
+                <tr><td colspan="4" class="empty-state-text">Đang đồng bộ danh sách người dùng...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        document.getElementById('userSearchInput')?.addEventListener('input', () => renderUsersTableList());
+        document.querySelectorAll('[data-user-filter]').forEach(btn => {
+          btn.addEventListener('click', () => setUserFilter(btn.dataset.userFilter));
+        });
+        fetchAndBindUsersListRealtime();
+      } else if (activeSystemAdminSubTab === 'api-keys') {
+        container.innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm);">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(216,180,109,0.12); color: var(--primary); display: grid; place-items: center; border: 1px solid rgba(216,180,109,0.3); font-weight: 800; font-size: 18px;">🔑</div>
+                <div>
+                  <h3 style="font-size: 17px; font-weight: 850; color: var(--text-main); margin: 0;">Quản lý Google Gemini AI API Key</h3>
+                  <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 3px; margin-bottom: 0;">Cấu hình khóa API Gemini phục vụ tính năng tự động trích xuất văn bản báo giá qua AI OCR, phân tích tổn thất va chạm và hỗ trợ nghiệp vụ.</p>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 16px;">
+                <label style="font-size: 11px; font-weight: 800; color: var(--text-soft);">Gemini API Key (System Global / Key Cá Nhân)</label>
+                <div style="position: relative; display: flex; align-items: center; gap: 8px;">
+                  <input id="txtSystemGeminiApiKey" type="password" class="input-premium" placeholder="Nhập API Key: AIzaSy..." style="font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.05em; padding-right: 45px;" />
+                  <button type="button" onclick="toggleShowGeminiKeyVisibility()" style="position: absolute; right: 12px; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;" title="Hiện/Ẩn Key">
+                    👁️
+                  </button>
+                </div>
+              </div>
+
+              <div id="geminiConnStatus" style="margin-bottom: 18px; padding: 12px 14px; border-radius: 10px; background: var(--bg-soft); border: 1px solid var(--border); font-size: 12px;">
+                <span style="color: var(--text-muted);">Nhấn nút <strong>"Kiểm tra kết nối"</strong> bên dưới để xác thực trực tiếp với máy chủ Google Gemini API.</span>
+              </div>
+
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn-premium" onclick="saveSystemGeminiApiKeyUI()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12.5px; border-radius: 10px;">
+                  💾 Lưu cấu hình API Key
+                </button>
+                <button type="button" class="btn-premium btn-secondary" onclick="testGeminiApiKeyConnectionUI()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12.5px; border-radius: 10px;">
+                  🧪 Kiểm tra kết nối Gemini API
+                </button>
+                <button type="button" class="btn-premium btn-secondary danger" onclick="resetSystemGeminiApiKeyUI()" style="width: auto !important; padding: 0 16px; height: 42px; font-size: 12px; border-radius: 10px; border-color: var(--btn-danger-border); color: var(--btn-danger-text);">
+                  🔄 Đặt lại Key mặc định
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        const keyInput = document.getElementById('txtSystemGeminiApiKey');
+        if (keyInput) keyInput.value = localStorage.getItem('claimvision-gemini-key') || '';
+      } else if (activeSystemAdminSubTab === 'cloudinary') {
+        container.innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Analytics Cards Row -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+              <div class="stat-box" style="padding: 20px; border-radius: 16px; background: var(--surface);">
+                <div class="stat-info">
+                  <div class="stat-lbl">TỔNG TỆP MEDIA TRÊN CLOUD</div>
+                  <div class="stat-val" id="lblCloudinaryTotalFiles" style="color: var(--primary); font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 850;">0</div>
+                  <div class="stat-note">Tệp ảnh hiện trạng & ảnh minh chứng Gara</div>
+                </div>
+                <div class="stat-icon-wrap" style="color:var(--primary); font-size: 22px;">📸</div>
+              </div>
+
+              <div class="stat-box" style="padding: 20px; border-radius: 16px; background: var(--surface);">
+                <div class="stat-info">
+                  <div class="stat-lbl">DUNG LƯỢNG LƯU TRỮ ƯỚC TÍNH</div>
+                  <div class="stat-val" id="lblCloudinaryUsedSize" style="color: #10b981; font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 850;">0.0 MB</div>
+                  <div class="stat-note">Trung bình ~1.25 MB / ảnh độ phân giải cao</div>
+                </div>
+                <div class="stat-icon-wrap" style="color:#10b981; font-size: 22px;">💾</div>
+              </div>
+
+              <div class="stat-box" style="padding: 20px; border-radius: 16px; background: var(--surface);">
+                <div class="stat-info" style="width: 100%;">
+                  <div class="stat-lbl">HẠN MỨC TÀI KHOẢN (FREE TIER 25GB)</div>
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px;">
+                    <div class="stat-val" id="lblCloudinaryQuotaPercent" style="color: var(--text-main); font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 850;">0%</div>
+                    <span id="lblCloudinaryQuotaFraction" style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">0.00 / 25.00 GB</span>
+                  </div>
+                  <div style="margin-top: 10px; height: 7px; border-radius: 99px; background: var(--bg-soft); overflow: hidden; border: 1px solid var(--border);">
+                    <div id="cloudinaryQuotaProgressFill" style="height: 100%; width: 0%; border-radius: inherit; background: linear-gradient(90deg, #10b981 0%, #d8b46d 70%, #ef4444 100%); transition: width 0.5s ease;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Settings Input Box -->
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm);">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59,130,246,0.12); color: #3b82f6; display: grid; place-items: center; border: 1px solid rgba(59,130,246,0.3); font-weight: 800; font-size: 18px;">☁️</div>
+                <div>
+                  <h3 style="font-size: 17px; font-weight: 850; color: var(--text-main); margin: 0;">Quản lý Cấu hình Tài khoản Cloudinary Media Engine</h3>
+                  <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 3px; margin-bottom: 0;">Thiết lập thông tin tài khoản Cloudinary để lưu trữ ảnh chụp hiện trạng va chạm và ảnh minh chứng từ Garage.</p>
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                <div class="form-group" style="margin: 0;">
+                  <label style="font-size: 11px; font-weight: 800; color: var(--text-soft);">Cloud Name *</label>
+                  <input id="txtCloudinaryCloudName" type="text" class="input-premium" placeholder="Ví dụ: ug4spdjp" style="font-family: 'JetBrains Mono', monospace;" />
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                  <label style="font-size: 11px; font-weight: 800; color: var(--text-soft);">Upload Preset (Unsigned) *</label>
+                  <input id="txtCloudinaryUploadPreset" type="text" class="input-premium" placeholder="Ví dụ: giam_dinh_xe_unsigned" style="font-family: 'JetBrains Mono', monospace;" />
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                  <label style="font-size: 11px; font-weight: 800; color: var(--text-soft);">Thư mục lưu trữ (Folder)</label>
+                  <input id="txtCloudinaryFolder" type="text" class="input-premium" placeholder="Ví dụ: giam_dinh_xe" style="font-family: 'JetBrains Mono', monospace;" />
+                </div>
+              </div>
+
+              <div id="cloudinaryConnStatus" style="margin-bottom: 18px; padding: 12px 14px; border-radius: 10px; background: var(--bg-soft); border: 1px solid var(--border); font-size: 12px;">
+                <span style="color: var(--text-muted);">Nhấn nút <strong>"Kiểm tra kết nối"</strong> để thử nghiệm tải tệp mẫu lên Cloudinary API.</span>
+              </div>
+
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn-premium" onclick="saveCloudinarySettingsUI()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12.5px; border-radius: 10px;">
+                  💾 Lưu cấu hình Cloudinary
+                </button>
+                <button type="button" class="btn-premium btn-secondary" onclick="testCloudinaryConnectionUI()" style="width: auto !important; padding: 0 20px; height: 42px; font-size: 12.5px; border-radius: 10px;">
+                  🧪 Kiểm tra kết nối Cloudinary
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        renderCloudinaryMetricsUI();
+      } else if (activeSystemAdminSubTab === 'audit-logs') {
+        container.innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm);">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(16,185,129,0.12); color: #10b981; display: grid; place-items: center; border: 1px solid rgba(16,185,129,0.3); font-weight: 800; font-size: 18px;">📜</div>
+                  <div>
+                    <h3 style="font-size: 17px; font-weight: 850; color: var(--text-main); margin: 0;">Lịch sử thao tác & Audit Logs Hệ thống</h3>
+                    <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 3px; margin-bottom: 0;">Theo dõi nhật ký thời gian thực các thao tác đăng nhập, khởi tạo hồ sơ, tải ảnh, khai báo từ Gara và thay đổi tài khoản.</p>
+                  </div>
+                </div>
+                <button type="button" class="btn-premium btn-secondary" onclick="fetchAndBindAuditLogsRealtime()" style="width: auto !important; padding: 0 16px; height: 38px; font-size: 12px; border-radius: 8px;">
+                  🔄 Tải lại nhật ký
+                </button>
+              </div>
+
+              <!-- Toolbar Filters -->
+              <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
+                <div class="search-wrap" style="flex: 1; min-width: 240px; margin: 0;">
+                  ${SVGS.SEARCH}
+                  <input id="auditLogSearchInput" class="input-premium" type="search" placeholder="Tìm theo tên người dùng, email, loại hành động, biển số xe..." autocomplete="off" oninput="renderAuditLogsTableList()" />
+                </div>
+
+                <div class="filter-pills" id="auditLogActionPills" style="display: flex; gap: 4px; margin: 0; background: var(--surface-soft); padding: 4px; border-radius: 10px; border: 1px solid var(--border); overflow-x: auto;">
+                  <button class="filter-pill active" data-audit-filter="all" onclick="setAuditLogsFilter('all')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">Tất cả</button>
+                  <button class="filter-pill" data-audit-filter="LOGIN" onclick="setAuditLogsFilter('LOGIN')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">🔑 Đăng nhập</button>
+                  <button class="filter-pill" data-audit-filter="CREATE_CASE" onclick="setAuditLogsFilter('CREATE_CASE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">📁 Khởi tạo ca</button>
+                  <button class="filter-pill" data-audit-filter="GARAGE" onclick="setAuditLogsFilter('GARAGE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">🚀 Gara khai báo</button>
+                  <button class="filter-pill" data-audit-filter="USER_MANAGE" onclick="setAuditLogsFilter('USER_MANAGE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">👤 Tài khoản</button>
+                  <button class="filter-pill" data-audit-filter="SYSTEM_SETTING" onclick="setAuditLogsFilter('SYSTEM_SETTING')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">⚙️ System Cấu hình</button>
+                </div>
+              </div>
+
+              <!-- Logs Table -->
+              <div class="table-container" style="border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); overflow: hidden;">
+                <table class="p-table audit-logs-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 170px;">Thời gian</th>
+                      <th style="width: 220px;">Người thực hiện</th>
+                      <th style="width: 160px;">Loại hành động</th>
+                      <th>Nội dung chi tiết thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tblAuditLogsBodyContainer">
+                    <tr><td colspan="4" class="empty-state-text">Đang đồng bộ nhật ký hoạt động hệ thống...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `;
+        fetchAndBindAuditLogsRealtime();
       }
     }
 
@@ -3310,6 +3887,7 @@
         };
         
         await dbNodeInstance.ref(`users/${newUid}/profile`).set(payload);
+        logUserActivity('USER_MANAGE', `Tạo tài khoản mới thành công: ${displayName} (${role} - ${department})`, { email, role });
         
         await tempApp.auth().signOut();
         
@@ -3377,6 +3955,7 @@
         };
         
         await dbNodeInstance.ref(`users/${uid}/profile`).set(updatedProfile);
+        logUserActivity('USER_MANAGE', `Cập nhật thông tin tài khoản: ${displayName} (${role} - ${department})`, { uid, role });
         triggerToast('Đã lưu thay đổi thông tin người dùng thành công!', 'success');
         
         const currentUserId = firebase.auth().currentUser?.uid;
@@ -3411,6 +3990,7 @@
       if (confirmed) {
         try {
           await dbNodeInstance.ref(`users/${uid}`).remove();
+          logUserActivity('USER_MANAGE', `Xóa quyền truy cập tài khoản: ${displayName}`, { uid });
           triggerToast(`Đã xóa thành viên ${displayName} khỏi cơ sở dữ liệu!`, 'success');
         } catch (e) {
           console.error(e);
@@ -3474,7 +4054,10 @@
         }
         toggleButtonUIPendingState(submitBtn, true, 'Đang xác thực...');
         firebase.auth().signInWithEmailAndPassword(email, password)
-          .then(() => triggerToast('Đăng nhập thành công.'))
+          .then(() => {
+            logUserActivity('LOGIN', `Đăng nhập hệ thống thành công (${email})`);
+            triggerToast('Đăng nhập thành công.');
+          })
           .catch((error) => {
             console.error(error);
             triggerToast('Email hoặc mật khẩu chưa chính xác.', 'error');
@@ -4650,67 +5233,51 @@
             </section>
           </div>
 
+      } else if (activeDashboardTab === 'users') {
+        const activeSubTab = activeSystemAdminSubTab || 'users';
+        container.innerHTML = `
           <div class="workspace-grid single-col">
-            <section class="p-card cases-panel">
-              <div class="p-card-head" style="margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
-                <div>
-                  <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin: 0;">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="9" cy="7" r="4"></circle>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    <span>Quản lý tài khoản người dùng</span>
-                  </h2>
-                  <p style="margin-top: 4px; font-size: 13px; color: var(--text-soft);">Danh sách toàn bộ thành viên, phân quyền vai trò và phòng ban tương ứng.</p>
-                </div>
-              </div>
-              
-              <div class="user-toolbar-grid" style="margin-bottom: 24px; gap: 16px;">
-                <div class="search-wrap" style="margin: 0; width: 100%;">
-                  ${SVGS.SEARCH}
-                  <input id="userSearchInput" class="input-premium" type="search" placeholder="Tìm kiếm tên, email, vai trò, bộ phận..." autocomplete="off" style="width: 100%;" />
-                </div>
-                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                  <div class="filter-pills" id="userRoleFilterPills" style="display: flex; gap: 4px; margin: 0; background: var(--surface-soft); padding: 4px; border-radius: 10px; border: 1px solid var(--border);">
-                    <button class="filter-pill active" data-user-filter="all" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Tất cả</button>
-                    <button class="filter-pill" data-user-filter="Admin" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Admin</button>
-                    <button class="filter-pill" data-user-filter="Giám định viên" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Giám định viên</button>
-                    <button class="filter-pill" data-user-filter="Garage" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Garage</button>
+            <section class="p-card cases-panel" style="padding: 24px;">
+              <div style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px;">
+                  <div>
+                    <h2 style="font-size: 22px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; gap: 10px; margin: 0; letter-spacing: -0.02em;">
+                      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                      <span>Quản trị & Cấu hình Hệ thống (System Settings)</span>
+                    </h2>
+                    <p style="margin-top: 4px; font-size: 13px; color: var(--text-soft);">Trung tâm quản lý tài khoản người dùng, cấu hình API Key, Cloudinary media và nhật ký hoạt động audit log.</p>
                   </div>
-                  <button type="button" class="btn-premium" onclick="openCreateUserModal()" style="width: auto !important; padding: 0 24px; min-height: unset; height: 42px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; margin: 0; background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.35); cursor: pointer; transition: all 0.2s ease;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    <span>Thêm thành viên mới</span>
+                </div>
+
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; background: var(--surface-soft); padding: 5px; border-radius: 14px; border: 1px solid var(--border);">
+                  <button type="button" class="filter-pill ${activeSubTab === 'users' ? 'active' : ''}" onclick="switchSystemAdminSubTab('users')" style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 10px; font-weight: 800; font-size: 12.5px;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>1. Quản lý Tài khoản</span>
+                  </button>
+
+                  <button type="button" class="filter-pill ${activeSubTab === 'api-keys' ? 'active' : ''}" onclick="switchSystemAdminSubTab('api-keys')" style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 10px; font-weight: 800; font-size: 12.5px;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                    <span>2. Cấu hình Gemini API Keys</span>
+                  </button>
+
+                  <button type="button" class="filter-pill ${activeSubTab === 'cloudinary' ? 'active' : ''}" onclick="switchSystemAdminSubTab('cloudinary')" style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 10px; font-weight: 800; font-size: 12.5px;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                    <span>3. Tài khoản & Dung lượng Cloudinary</span>
+                  </button>
+
+                  <button type="button" class="filter-pill ${activeSubTab === 'audit-logs' ? 'active' : ''}" onclick="switchSystemAdminSubTab('audit-logs')" style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 10px; font-weight: 800; font-size: 12.5px;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span>4. Lịch sử hoạt động người dùng</span>
                   </button>
                 </div>
               </div>
-              
-              <div class="table-container" style="border: 1px solid var(--border); border-radius: 12px; background: var(--bg-soft); overflow: hidden; margin-top: 8px;">
-                <table class="p-table users-table">
-                  <thead>
-                    <tr>
-                      <th>Thành viên</th>
-                      <th style="width: 250px;">Bộ phận / Phòng ban</th>
-                      <th style="width: 180px;">Vai trò hệ thống</th>
-                      <th style="width: 160px; text-align: right; padding-right: 24px;">Thao tác</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tblUsersBodyContainer">
-                    <tr><td colspan="4" class="empty-state-text">Đang đồng bộ danh sách người dùng...</td></tr>
-                  </tbody>
-                </table>
-              </div>
+
+              <div id="systemAdminSubTabContainer"></div>
             </section>
           </div>
         `;
-        
-        document.getElementById('userSearchInput').addEventListener('input', () => renderUsersTableList());
-        document.querySelectorAll('[data-user-filter]').forEach(btn => {
-          btn.addEventListener('click', () => setUserFilter(btn.dataset.userFilter));
-        });
-        fetchAndBindUsersListRealtime();
-        loadGeminiSettingsKeyIntoUI();
+        renderSystemAdminTabContent();
+      }
       } else if (activeDashboardTab === 'pending') {
         container.innerHTML = `
           <div class="workspace-grid single-col">
@@ -6292,6 +6859,7 @@
         };
 
         await dbNodeInstance.ref(`cases/${generatedCaseUniqueToken}`).set(finalPayloadStructure);
+        logUserActivity('CREATE_CASE', `Khởi tạo thành công hồ sơ mới xe BKS: ${plateInputVal} (Garage: ${garageInputVal})`, { bienSo: plateInputVal, idCa: generatedCaseUniqueToken });
         triggerToast('Dữ liệu nghiệp vụ ca xe đã được đẩy lên Cloud.');
 
         renderInlineCreationSuccessPanel(finalPayloadStructure);
@@ -6332,12 +6900,13 @@
     }
 
     async function uploadSingleImageToCloudinaryEngine(fileBlob) {
-      const targetApiEndpointUrl = `https://api.cloudinary.com/v1_1/${encodeURIComponent(CONFIG.CLOUDINARY_CLOUD_NAME)}/image/upload`;
+      const cConfig = getCloudinaryConfig();
+      const targetApiEndpointUrl = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cConfig.cloudName)}/image/upload`;
       const multiPartFormData = new FormData();
       multiPartFormData.append('file', fileBlob);
-      multiPartFormData.append('upload_preset', CONFIG.CLOUDINARY_UPLOAD_PRESET);
-      if (CONFIG.CLOUDINARY_FOLDER) {
-        multiPartFormData.append('folder', CONFIG.CLOUDINARY_FOLDER);
+      multiPartFormData.append('upload_preset', cConfig.preset);
+      if (cConfig.folder) {
+        multiPartFormData.append('folder', cConfig.folder);
       }
 
       const networkResponse = await fetch(targetApiEndpointUrl, { method: 'POST', body: multiPartFormData });
@@ -6347,7 +6916,7 @@
       try { convertedJSONData = JSON.parse(parsedTextResponse); } catch(err) { throw new Error('Phản hồi Server lỗi.'); }
 
       if (!networkResponse.ok || !convertedJSONData.secure_url) {
-        throw new Error(convertedJSONData?.error?.message || 'Lỗi API.');
+        throw new Error(convertedJSONData?.error?.message || 'Lỗi API Cloudinary.');
       }
       return convertedJSONData.secure_url;
     }
@@ -8159,6 +8728,7 @@
           trangThai: STATUS_COMPLETED,
           garageSubmittedAt: firebase.database.ServerValue.TIMESTAMP
         });
+        logUserActivity('GARAGE_SUBMIT', `Garage gửi kết quả hoàn tất giám định cho xe BKS: ${localActiveCaseNode.bienSo || 'N/A'}`, { idCa: localActiveCaseNode.idCa, bienSo: localActiveCaseNode.bienSo });
         triggerToast('Garage đã gửi đầy đủ hạng mục và ảnh minh chứng.');
         window.history.replaceState({}, '', `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(localActiveCaseNode.idCa)}`);
       } catch (err) {
