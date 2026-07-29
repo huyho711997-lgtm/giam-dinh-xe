@@ -2301,6 +2301,44 @@
             <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Mô tả chi tiết tổn thất</label>
             <textarea id="modalPendingMoTaTonThat" class="textarea-premium" placeholder="Mô tả danh mục các chi tiết bị tổn thất..." style="min-height: 70px; font-size: 12.5px;"></textarea>
           </div>
+
+          <!-- Section: Hợp đồng & Bảo hiểm -->
+          <div class="form-group full" style="grid-column: span 2; margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 12px;">
+            <label style="font-size: 12px; font-weight: 800; color: var(--primary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; text-transform: uppercase;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+              <span>Thông tin Hợp đồng & Bảo hiểm</span>
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <input id="modalPendingSoHd" class="input-premium" type="text" placeholder="Số hợp đồng (Số HĐ)" />
+              <input id="modalPendingSoGcn" class="input-premium" type="text" placeholder="Số GCNBH" />
+            </div>
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 8px; margin-top: 8px;">
+              <input id="modalPendingKhachHang" class="input-premium" type="text" placeholder="Tên chủ xe / Khách hàng" />
+              <input id="modalPendingNgayHieuLuc" class="input-premium" type="text" placeholder="Hiệu lực từ (DD/MM/YYYY)" />
+              <input id="modalPendingNgayHetHan" class="input-premium" type="text" placeholder="Hết hạn ngày (DD/MM/YYYY)" />
+            </div>
+          </div>
+
+          <!-- Section: Phê duyệt PASC & Bồi thường -->
+          <div class="form-group full" style="grid-column: span 2; margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 12px;">
+            <label style="font-size: 12px; font-weight: 800; color: #10b981; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; text-transform: uppercase;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              <span>Phê duyệt PASC, Tờ trình & Giá trị Bồi thường</span>
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+              <input id="modalPendingUocThietHai" class="input-premium" type="text" placeholder="Ước thiệt hại (VNĐ)" />
+              <input id="modalPendingPascSoTienDuyet" class="input-premium" type="text" placeholder="PASC - Số tiền đã duyệt (VNĐ)" style="font-weight:750; color:#10b981;" />
+              <input id="modalPendingPascNguoiDuyet" class="input-premium" type="text" placeholder="PASC - Người duyệt" />
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px;">
+              <input id="modalPendingToTrinhNguoiDuyet" class="input-premium" type="text" placeholder="Tờ trình BT - Người duyệt" />
+              <input id="modalPendingSoTienDaThanhToan" class="input-premium" type="text" placeholder="Số tiền đã thanh toán (VNĐ)" style="font-weight:750; color:#10b981;" />
+              <input id="modalPendingNgayThanhToan" class="input-premium" type="text" placeholder="Ngày thanh toán (DD/MM/YYYY)" />
+            </div>
+            <div style="margin-top: 8px;">
+              <input id="modalPendingGhiChu" class="input-premium" type="text" placeholder="Ghi chú / Lý do đề xuất hủy..." />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -4425,7 +4463,20 @@
       setVal('modalPendingTnds', item.tnds || '');
       setVal('modalPendingNguyenNhan', item.nguyenNhan || '');
       setVal('modalPendingMoTaTonThat', item.moTaTonThat || '');
-      setVal('modalTxtQuickPasteMessage', item.rawText || '');
+
+      setVal('modalPendingSoHd', item.soHd || '');
+      setVal('modalPendingSoGcn', item.soGcn || '');
+      setVal('modalPendingKhachHang', item.khachHang || '');
+      setVal('modalPendingNgayHieuLuc', formatDateDisplay(item.ngayHieuLuc) !== '—' ? formatDateDisplay(item.ngayHieuLuc) : '');
+      setVal('modalPendingNgayHetHan', formatDateDisplay(item.ngayHetHan) !== '—' ? formatDateDisplay(item.ngayHetHan) : '');
+
+      setVal('modalPendingUocThietHai', item.uocThietHai || '');
+      setVal('modalPendingPascSoTienDuyet', item.pascSoTienDuyet || item.soTienDuyetBT || '');
+      setVal('modalPendingPascNguoiDuyet', item.pascNguoiDuyet || '');
+      setVal('modalPendingToTrinhNguoiDuyet', item.toTrinhNguoiDuyet || '');
+      setVal('modalPendingSoTienDaThanhToan', item.soTienDaThanhToan || '');
+      setVal('modalPendingNgayThanhToan', formatDateDisplay(item.ngayThanhToan) !== '—' ? formatDateDisplay(item.ngayThanhToan) : '');
+      setVal('modalPendingGhiChu', item.ghiChu || '');
 
       const modal = document.getElementById('addPendingClaimModalOverlay');
       if (modal) {
@@ -4571,8 +4622,19 @@
         nguoiLienHe: getVal('modalPendingNguoiLienHe') || '—',
         gdvTiepNhan: getVal('modalPendingGdvTiepNhan') || existingItem.gdvTiepNhan || profile.displayName || 'Chưa phân công',
         canBoXuLy: getVal('modalPendingCanBoXuLy') || '—',
+        soHd: getVal('modalPendingSoHd') || existingItem.soHd || '',
+        soGcn: getVal('modalPendingSoGcn') || existingItem.soGcn || '',
+        khachHang: getVal('modalPendingKhachHang') || existingItem.khachHang || '',
+        ngayHieuLuc: getVal('modalPendingNgayHieuLuc') || existingItem.ngayHieuLuc || '',
+        ngayHetHan: getVal('modalPendingNgayHetHan') || existingItem.ngayHetHan || '',
+        uocThietHai: getVal('modalPendingUocThietHai') || existingItem.uocThietHai || '',
+        pascSoTienDuyet: getVal('modalPendingPascSoTienDuyet') || existingItem.pascSoTienDuyet || '',
+        pascNguoiDuyet: getVal('modalPendingPascNguoiDuyet') || existingItem.pascNguoiDuyet || '',
+        toTrinhNguoiDuyet: getVal('modalPendingToTrinhNguoiDuyet') || existingItem.toTrinhNguoiDuyet || '',
+        soTienDaThanhToan: getVal('modalPendingSoTienDaThanhToan') || existingItem.soTienDaThanhToan || '',
+        ngayThanhToan: getVal('modalPendingNgayThanhToan') || existingItem.ngayThanhToan || '',
+        ghiChu: getVal('modalPendingGhiChu') || existingItem.ghiChu || '',
         trangThai: existingItem.trangThai || 'moi',
-        rawText: getVal('modalTxtQuickPasteMessage') || existingItem.rawText || '',
         createdAt: existingItem.createdAt || Date.now(),
         updatedAt: Date.now(),
         createdByName: creatorName
