@@ -2264,13 +2264,13 @@
               <input id="modalPendingCanBoXuLy" class="input-premium" type="text" placeholder="Cán bộ xử lý" />
             </div>
           </div>
-          <div class="form-group">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày thông báo</label>
-            <input id="modalPendingNgayThongBao" class="input-premium" type="text" placeholder="DD/MM/YYYY HH:mm" />
-          </div>
-          <div class="form-group">
-            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày xảy ra VTT</label>
-            <input id="modalPendingNgayVTT" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
+          <div class="form-group full" style="grid-column: span 2;">
+            <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày thông báo / Ngày mở HS / Ngày xảy ra VTT</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+              <input id="modalPendingNgayThongBao" class="input-premium" type="text" placeholder="Ngày thông báo (DD/MM/YYYY)" />
+              <input id="modalPendingNgayMoHs" class="input-premium" type="text" placeholder="Ngày mở HS (DD/MM/YYYY)" />
+              <input id="modalPendingNgayVTT" class="input-premium" type="text" placeholder="Ngày xảy ra VTT (DD/MM/YYYY)" style="font-weight: 750; color: var(--primary);" />
+            </div>
           </div>
           <div class="form-group full" style="grid-column: span 2;">
             <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Địa điểm VTT & Hiện trường</label>
@@ -4452,23 +4452,29 @@
       const cleanNgayThongBao = formatDateDisplay(rawNgayThongBao);
       setVal('modalPendingNgayThongBao', (cleanNgayThongBao !== '—' && !cleanNgayThongBao.includes('1970')) ? cleanNgayThongBao : new Date().toLocaleString('vi-VN'));
 
-      const rawNgayVTT = item.ngayVTT || item.ngayTonThat || item.ngayMoHs;
+      const cleanNgayMoHs = formatDateDisplay(item.ngayMoHs);
+      setVal('modalPendingNgayMoHs', cleanNgayMoHs !== '—' ? cleanNgayMoHs : (item.ngayMoHs || ''));
+
+      const rawNgayVTT = item.ngayVTT || item.ngayTonThat || item.date || item.ngayMoHs;
       const cleanNgayVTT = formatDateDisplay(rawNgayVTT);
-      setVal('modalPendingNgayVTT', cleanNgayVTT !== '—' ? cleanNgayVTT : '');
-      setVal('modalPendingDiaDiemVTT', item.diaDiemVTT || '');
-      setVal('modalPendingHienTruong', item.hienTruong || '');
+      setVal('modalPendingNgayVTT', cleanNgayVTT !== '—' ? cleanNgayVTT : (item.ngayVTT || item.ngayTonThat || ''));
+
+      setVal('modalPendingDiaDiemVTT', item.diaDiemVTT || item.diaDiemTonThat || '');
+      setVal('modalPendingHienTruong', item.hienTruong || item.diaDiemTonThat || '');
       setVal('modalPendingLaiXe', item.laiXe || '');
-      setVal('modalPendingNguoiLienHe', item.nguoiLienHe || '');
+      setVal('modalPendingNguoiLienHe', item.nguoiLienHe || item.khachHang || '');
       setVal('modalPendingVcx', item.vcx || '');
       setVal('modalPendingTnds', item.tnds || '');
-      setVal('modalPendingNguyenNhan', item.nguyenNhan || '');
-      setVal('modalPendingMoTaTonThat', item.moTaTonThat || '');
+      setVal('modalPendingNguyenNhan', item.nguyenNhan || item.nhomNguyenNhan || '');
+      setVal('modalPendingMoTaTonThat', item.moTaTonThat || item.dienBienTonThat || '');
 
       setVal('modalPendingSoHd', item.soHd || '');
       setVal('modalPendingSoGcn', item.soGcn || '');
       setVal('modalPendingKhachHang', item.khachHang || '');
-      setVal('modalPendingNgayHieuLuc', formatDateDisplay(item.ngayHieuLuc) !== '—' ? formatDateDisplay(item.ngayHieuLuc) : '');
-      setVal('modalPendingNgayHetHan', formatDateDisplay(item.ngayHetHan) !== '—' ? formatDateDisplay(item.ngayHetHan) : '');
+      const cleanNgayHieuLuc = formatDateDisplay(item.ngayHieuLuc);
+      setVal('modalPendingNgayHieuLuc', cleanNgayHieuLuc !== '—' ? cleanNgayHieuLuc : (item.ngayHieuLuc || ''));
+      const cleanNgayHetHan = formatDateDisplay(item.ngayHetHan);
+      setVal('modalPendingNgayHetHan', cleanNgayHetHan !== '—' ? cleanNgayHetHan : (item.ngayHetHan || ''));
 
       setVal('modalPendingUocThietHai', item.uocThietHai || '');
       setVal('modalPendingPascSoTienDuyet', item.pascSoTienDuyet || item.soTienDuyetBT || '');
@@ -4613,7 +4619,9 @@
         vcx: getVal('modalPendingVcx') || '',
         tnds: getVal('modalPendingTnds') || '',
         ngayThongBao: getVal('modalPendingNgayThongBao') || existingItem.ngayThongBao || new Date().toLocaleString('vi-VN'),
-        ngayVTT: getVal('modalPendingNgayVTT') || '—',
+        ngayMoHs: getVal('modalPendingNgayMoHs') || existingItem.ngayMoHs || '',
+        ngayVTT: getVal('modalPendingNgayVTT') || existingItem.ngayVTT || '—',
+        ngayTonThat: getVal('modalPendingNgayVTT') || existingItem.ngayTonThat || '—',
         diaDiemVTT: getVal('modalPendingDiaDiemVTT') || '—',
         nguyenNhan: getVal('modalPendingNguyenNhan') || '—',
         moTaTonThat: getVal('modalPendingMoTaTonThat') || '—',
@@ -5733,8 +5741,12 @@
               </div>
             </td>
             <td>
-              <strong style="color: var(--text-main); font-size: 13px; display: block;">${escapeHtmlOutput(item.hangXe || '—')}</strong>
-              <span style="font-size: 11.5px; color: var(--text-soft);">${escapeHtmlOutput(item.donViCapDon || '—')}</span>
+              <strong style="color: var(--text-main); font-size: 13px; display: block;">${escapeHtmlOutput(item.hangXe || '—')} ${escapeHtmlOutput(item.hieuXe || '')}</strong>
+              <span style="font-size: 11.5px; color: var(--text-soft); display: block;">${escapeHtmlOutput(item.donViCapDon || '—')}</span>
+              <div style="margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap;">
+                ${item.vcx ? `<span style="font-size: 10px; background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">VCX</span>` : ''}
+                ${item.tnds ? `<span style="font-size: 10px; background: rgba(168,85,247,0.1); color: #a855f7; border: 1px solid rgba(168,85,247,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">TNDS</span>` : ''}
+              </div>
             </td>
             <td>
               <div class="custom-dropdown-container row-gdv-dropdown-wrap" style="position: relative; display: inline-block;">
