@@ -11313,7 +11313,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                   <!-- Line Dots & Value Tags -->
                   ${gPoints.map(p => `
-                    <g cursor="pointer" onmouseenter="showGarageChartTooltip(event, '${escapeAttributeData(p.key)}')" onmousemove="moveGarageChartTooltip(event)" onmouseleave="hideGarageChartTooltip()">
+                    <g pointer-events="none">
                       <circle cx="${p.cx}" cy="${p.lY}" r="4.5" fill="var(--surface)" stroke="#3b82f6" stroke-width="2.5" />
                       <text x="${p.cx}" y="${p.lY - 12}" font-size="10" font-weight="900" fill="#3b82f6" text-anchor="middle" font-family="JetBrains Mono">${p.totalClaimsCount} ca</text>
                     </g>
