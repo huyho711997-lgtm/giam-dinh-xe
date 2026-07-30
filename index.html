@@ -10768,18 +10768,27 @@ function formatDateDisplay(val) {
         gdvRows = gdvRows.filter(r => r.gdvName.toLowerCase().includes(activeGdvReportSearch) || r.branch.toLowerCase().includes(activeGdvReportSearch));
       }
 
+      // Sort GĐVs by KPI Performance (weightedKpiCount -> duyetHsbtCount -> totalOpenedCount) for Leaderboard & Master Table
+      const gdvRowsSorted = [...gdvRows].sort((a, b) => {
+        const kpiA = Math.round((a.weightedKpiCount || a.duyetHsbtCount) * 10) / 10;
+        const kpiB = Math.round((b.weightedKpiCount || b.duyetHsbtCount) * 10) / 10;
+        if (kpiB !== kpiA) return kpiB - kpiA;
+        if (b.duyetHsbtCount !== a.duyetHsbtCount) return b.duyetHsbtCount - a.duyetHsbtCount;
+        return b.totalOpenedCount - a.totalOpenedCount;
+      });
+
       const totalFilteredClaims = gdvRows.reduce((sum, r) => sum + r.totalOpenedCount, 0);
       const totalDuyetHsbtCount = gdvRows.reduce((sum, r) => sum + r.duyetHsbtCount, 0);
       const overallHsbtRate = totalFilteredClaims > 0 ? Math.round((totalDuyetHsbtCount / totalFilteredClaims) * 100) : 0;
       const passKpiCount = gdvRows.filter(r => (r.weightedKpiCount || r.duyetHsbtCount) >= 70).length;
-      const topGdvObj = gdvRows[0];
+      const topGdvObj = gdvRowsSorted[0];
       const topGdvName = topGdvObj ? topGdvObj.gdvName : 'Chưa có';
 
       const timeLabelText = activeGdvReportMonth === 'all' 
         ? (activeGdvReportYear === 'all' ? 'Tất cả thời gian' : `Toàn bộ năm ${activeGdvReportYear}`)
         : (activeGdvReportYear === 'all' ? `Tháng ${activeGdvReportMonth} (Tất cả năm)` : `Tháng ${activeGdvReportMonth}/${activeGdvReportYear}`);
 
-      const top3Performers = gdvRows.slice(0, 3);
+      const top3Performers = gdvRowsSorted.slice(0, 3);
 
       // ULTRA-SLEEK LINE CHART CALCULATIONS
       const chartWidth = 960;
@@ -11183,9 +11192,9 @@ function formatDateDisplay(val) {
                   </tr>
                 </thead>
                 <tbody>
-                  ${gdvRows.length === 0 ? `
+                  ${gdvRowsSorted.length === 0 ? `
                     <tr><td colspan="7" class="empty-state-text" style="padding: 45px; text-align: center; color: var(--text-muted); font-size: 14px;">Không tìm thấy dữ liệu hồ sơ nào trong mốc thời gian đã chọn (${timeLabelText}).</td></tr>
-                  ` : gdvRows.map((r, idx) => {
+                  ` : gdvRowsSorted.map((r, idx) => {
                     const percentTotal = totalFilteredClaims > 0 ? Math.round((r.totalOpenedCount / totalFilteredClaims) * 100) : 0;
                     const rateHsbt = r.totalOpenedCount > 0 ? Math.round((r.duyetHsbtCount / r.totalOpenedCount) * 100) : 0;
                     const initials = getGdvInitials(r.gdvName);
