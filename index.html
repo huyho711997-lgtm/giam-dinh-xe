@@ -10510,7 +10510,7 @@
   
     /****************************************************
      * BÁO CÁO SỐ LƯỢNG HỒ SƠ ĐANG TIẾP NHẬN & DUYỆT HSBT THEO GIÁM ĐỊNH VIÊN
-     * LUXURY EXECUTIVE DASHBOARD WITH CUSTOM GLASSMORPHI DROPDOWNS
+     * ULTRA-PREMIUM EXECUTIVE TABLE DESIGN SYSTEM
      ****************************************************/
     let activeGdvReportMonth = 'all';
     let activeGdvReportYear = 'all';
@@ -10883,7 +10883,7 @@
                         ${medals[pIdx]}
                       </div>
                       <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #b8944d); color: #111; font-weight: 900; font-size: 15px; display: grid; place-items: center; border: 2px solid rgba(255,255,255,0.4); box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                        <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, rgba(216,180,109,0.2) 0%, rgba(216,180,109,0.05) 100%); border: 1.5px solid rgba(216,180,109,0.4); color: var(--primary); font-weight: 900; font-size: 15px; display: grid; place-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                           ${initials}
                         </div>
                         <div>
@@ -10908,31 +10908,40 @@
             </div>
           ` : ''}
 
-          <!-- MASTER DATA TABLE CONTAINER -->
-          <div class="table-container" style="border: 1px solid var(--border-strong); border-radius: 18px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow-sm);">
-            <div style="padding: 16px 22px; background: var(--bg-soft); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 12.5px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                Bảng Thống kê Khối lượng Tiếp nhận & Duyệt HSBT theo Giám định viên (${gdvRows.length} nhân sự)
+          <!-- ULTRA-PREMIUM MASTER DATA TABLE CONTAINER -->
+          <div class="table-container" style="border: 1px solid var(--border-strong); border-radius: 20px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow-md);">
+            
+            <!-- Table Sub-Header Bar -->
+            <div style="padding: 18px 24px; background: linear-gradient(180deg, var(--bg-soft) 0%, rgba(0,0,0,0.02) 100%); border-bottom: 1px solid var(--border-strong); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <span style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); display: grid; place-items: center;">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                </div>
+                <span>Bảng Thống kê Khối lượng Tiếp nhận & Duyệt HSBT theo Giám định viên</span>
+              </span>
+
+              <span style="font-size: 11.5px; font-weight: 800; color: var(--primary); background: rgba(216,180,109,0.1); border: 1px solid rgba(216,180,109,0.25); padding: 5px 12px; border-radius: 99px;">
+                ${gdvRows.length} Cán bộ Giám định viên
               </span>
             </div>
 
-            <table class="p-table" style="width: 100%; border-collapse: collapse;">
+            <!-- Master Table -->
+            <table class="p-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
               <thead>
-                <tr style="background: var(--bg-soft);">
-                  <th style="width: 50px; text-align: center;">STT</th>
-                  <th style="width: 220px;">Giám định viên</th>
-                  <th style="width: 150px;">Đơn vị / Chi nhánh</th>
-                  <th style="width: 160px; text-align: center;">Số HS tiếp nhận</th>
-                  <th style="width: 160px; text-align: center;">Đã duyệt HSBT</th>
-                  <th style="width: 150px; text-align: center;">Tỷ lệ duyệt HSBT</th>
-                  <th>Phân bổ Trạng thái Nghiệp vụ</th>
-                  <th style="width: 160px; text-align: right; padding-right: 20px;">Tong tiền duyệt BT</th>
+                <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong);">
+                  <th style="width: 55px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">STT</th>
+                  <th style="width: 230px; padding: 14px 14px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Giám định viên</th>
+                  <th style="width: 150px; padding: 14px 14px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Đơn vị / Chi nhánh</th>
+                  <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Số HS tiếp nhận</th>
+                  <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Đã duyệt HSBT</th>
+                  <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Tỷ lệ duyệt HSBT</th>
+                  <th style="padding: 14px 16px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Phân bổ Trạng thái Nghiệp vụ</th>
+                  <th style="width: 170px; text-align: right; padding: 14px 24px 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Tổng tiền duyệt BT (VNĐ)</th>
                 </tr>
               </thead>
               <tbody>
                 ${gdvRows.length === 0 ? `
-                  <tr><td colspan="8" class="empty-state-text" style="padding: 40px; text-align: center; color: var(--text-muted); font-size: 14px;">Không tìm thấy dữ liệu hồ sơ nào trong mốc thời gian đã chọn (${timeLabelText}).</td></tr>
+                  <tr><td colspan="8" class="empty-state-text" style="padding: 45px; text-align: center; color: var(--text-muted); font-size: 14px;">Không tìm thấy dữ liệu hồ sơ nào trong mốc thời gian đã chọn (${timeLabelText}).</td></tr>
                 ` : gdvRows.map((r, idx) => {
                   const percentTotal = totalFilteredClaims > 0 ? Math.round((r.totalOpenedCount / totalFilteredClaims) * 100) : 0;
                   const rateHsbt = r.totalOpenedCount > 0 ? Math.round((r.duyetHsbtCount / r.totalOpenedCount) * 100) : 0;
@@ -10945,47 +10954,77 @@
 
                   const activeStatuses = Object.entries(r.statusMap).filter(([, cnt]) => cnt > 0);
 
+                  // Dynamic color gradient based on approval rate %
+                  let rateColor = '#3b82f6';
+                  let gradColor = 'linear-gradient(90deg, #3b82f6, #60a5fa)';
+                  if (rateHsbt >= 70) {
+                    rateColor = '#10b981';
+                    gradColor = 'linear-gradient(90deg, #10b981, #34d399)';
+                  } else if (rateHsbt < 50 && rateHsbt > 0) {
+                    rateColor = '#f97316';
+                    gradColor = 'linear-gradient(90deg, #f97316, #fb923c)';
+                  }
+
                   return `
                     <tr style="transition: background 0.15s ease; border-bottom: 1px solid var(--border);">
-                      <td style="text-align: center; font-weight: 800; color: var(--text-muted); font-size: 12px;">${String(idx + 1).padStart(2, '0')}</td>
-                      <td>
+                      
+                      <!-- STT -->
+                      <td style="text-align: center; font-weight: 850; color: var(--text-muted); font-size: 12.5px; padding: 14px 12px; font-family: 'JetBrains Mono';">
+                        ${String(idx + 1).padStart(2, '0')}
+                      </td>
+                      
+                      <!-- Giám định viên -->
+                      <td style="padding: 14px 14px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                          <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); font-weight: 850; font-size: 11px; display: grid; place-items: center; flex-shrink: 0;">
+                          <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, rgba(216,180,109,0.2) 0%, rgba(216,180,109,0.05) 100%); border: 1.5px solid rgba(216,180,109,0.4); color: var(--primary); font-weight: 900; font-size: 12px; display: grid; place-items: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                             ${initials}
                           </div>
                           <div>
                             <div style="display: flex; align-items: center; gap: 6px;">
                               ${rankBadge}
-                              <strong style="color: var(--text-main); font-size: 13px; font-weight: 850;">${escapeHtmlOutput(r.gdvName)}</strong>
+                              <strong style="color: var(--text-main); font-size: 13.5px; font-weight: 850; letter-spacing: -0.01em;">${escapeHtmlOutput(r.gdvName)}</strong>
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td><span style="font-size: 11.5px; color: var(--text-soft); font-weight: 600;">${escapeHtmlOutput(r.branch)}</span></td>
-                      <td style="text-align: center;">
-                        <strong style="font-size: 15px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} <span style="font-size: 11.5px; font-weight: 600;">ca</span></strong>
-                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">${percentTotal}% tổng kỳ</div>
+
+                      <!-- Chi nhánh -->
+                      <td style="padding: 14px 14px;">
+                        <span style="font-size: 12px; color: var(--text-soft); font-weight: 650;">${escapeHtmlOutput(r.branch)}</span>
                       </td>
-                      <td style="text-align: center;">
-                        <strong style="font-size: 15px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${r.duyetHsbtCount} <span style="font-size: 11.5px; font-weight: 600;">ca</span></strong>
-                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Chưa duyệt: ${r.pendingHsbtCount} ca</div>
+
+                      <!-- Số HS tiếp nhận -->
+                      <td style="text-align: center; padding: 14px 12px;">
+                        <strong style="font-size: 16px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
+                        <div style="font-size: 10.5px; font-weight: 800; color: var(--text-soft); background: rgba(0,0,0,0.04); padding: 1px 7px; border-radius: 99px; display: inline-block; margin-top: 3px;">${percentTotal}% tổng kỳ</div>
                       </td>
-                      <td style="text-align: center;">
-                        <strong style="font-size: 13px; color: #3b82f6; font-family: 'JetBrains Mono'; font-weight: 850;">${rateHsbt}%</strong>
-                        <div style="width: 100%; height: 5px; background: rgba(59,130,246,0.15); border-radius: 99px; margin-top: 4px; overflow: hidden;">
-                          <div style="width: ${rateHsbt}%; height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); border-radius: 99px;"></div>
+
+                      <!-- Đã duyệt HSBT -->
+                      <td style="text-align: center; padding: 14px 12px;">
+                        <strong style="font-size: 16px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${r.duyetHsbtCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
+                        <div style="font-size: 10.5px; font-weight: 750; color: var(--text-muted); margin-top: 3px;">Chờ duyệt: ${r.pendingHsbtCount} ca</div>
+                      </td>
+
+                      <!-- Tỷ lệ duyệt HSBT -->
+                      <td style="text-align: center; padding: 14px 12px;">
+                        <strong style="font-size: 14px; color: ${rateColor}; font-family: 'JetBrains Mono'; font-weight: 850;">${rateHsbt}%</strong>
+                        <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.06); border-radius: 99px; margin-top: 5px; overflow: hidden; padding: 1px; border: 1px solid rgba(0,0,0,0.08);">
+                          <div style="width: ${rateHsbt}%; height: 100%; background: ${gradColor}; border-radius: 99px; transition: width 0.3s ease;"></div>
                         </div>
                       </td>
-                      <td>
-                        <!-- COMPACT ELEGANT FLEX GRID FOR STATUS BADGES -->
-                        <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center; padding: 4px 0;">
+
+                      <!-- Phân bổ 14 Trạng thái -->
+                      <td style="padding: 14px 16px;">
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
                           ${activeStatuses.map(([stKey, stCount]) => {
                             const cfg = PENDING_STATUS_MAP[stKey] || PENDING_STATUS_MAP['moi'];
-                            return `<span style="background: ${cfg.bg}; color: ${cfg.color}; border: 1px solid ${cfg.border}; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 3px;"><span>${cfg.label}:</span> <strong style="font-family: 'JetBrains Mono'; font-size: 10.5px;">${stCount}</strong></span>`;
+                            return `<span style="background: ${cfg.bg}; color: ${cfg.color}; border: 1px solid ${cfg.border}; font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 8px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);"><span>${cfg.label}:</span> <strong style="font-family: 'JetBrains Mono'; font-size: 11px;">${stCount}</strong></span>`;
                           }).join('')}
                         </div>
                       </td>
-                      <td style="text-align: right; padding-right: 20px; font-family: 'JetBrains Mono'; font-weight: 850; color: var(--primary); font-size: 13px;">
+
+                      <!-- Tổng tiền duyệt BT -->
+                      <td style="text-align: right; padding: 14px 24px 14px 12px; font-family: 'JetBrains Mono'; font-weight: 850; color: var(--primary); font-size: 14px; letter-spacing: -0.01em;">
                         ${r.totalApprovedAmount > 0 ? formatCurrencyInputNumber(r.totalApprovedAmount) + ' đ' : '—'}
                       </td>
                     </tr>
