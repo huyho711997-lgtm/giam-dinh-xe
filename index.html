@@ -5780,28 +5780,48 @@
 
       const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
+      function getClaimDateForFilter(c) {
+        const dateStr = c.ngayMoHs || c.ngayTonThat || c.ngayVTT;
+        if (dateStr && dateStr !== '—') {
+          const dp = parseDateParts(dateStr);
+          if (dp && dp.year && dp.month && dp.day) {
+            return new Date(dp.year, dp.month - 1, dp.day, dp.hour || 0, dp.minute || 0, dp.second || 0);
+          }
+        }
+        return new Date(c.createdAt || Date.now());
+      }
+
       // Filter list
       let filtered = claimsList.filter(c => {
         // Status filter
         if (activePendingStatusFilter !== 'all' && c.trangThai !== activePendingStatusFilter) return false;
         
-        // GĐV filter
-        if (gdvFilter !== 'all' && c.gdvTiepNhan !== gdvFilter) return false;
+        // GĐV filter (Flexible match across gdvTiepNhan, canBoXuLy, gdvHo)
+        if (gdvFilter !== 'all') {
+          const filterNorm = gdvFilter.trim().toLowerCase();
+          const gdv1 = (c.gdvTiepNhan || '').trim().toLowerCase();
+          const gdv2 = (c.canBoXuLy || '').trim().toLowerCase();
+          const gdv3 = (c.gdvHo || '').trim().toLowerCase();
+          if (!gdv1.includes(filterNorm) && !gdv2.includes(filterNorm) && !gdv3.includes(filterNorm)) {
+            return false;
+          }
+        }
 
         // Search text
         if (searchVal) {
           const matchBS = (c.bienSo || '').toLowerCase().includes(searchVal);
           const matchVTT = (c.maVuTonThat || '').toLowerCase().includes(searchVal);
-          const matchGDV = (c.gdvTiepNhan || '').toLowerCase().includes(searchVal);
+          const matchGDV = (c.gdvTiepNhan || '').toLowerCase().includes(searchVal) || (c.canBoXuLy || '').toLowerCase().includes(searchVal) || (c.gdvHo || '').toLowerCase().includes(searchVal);
           const matchHang = (c.hangXe || '').toLowerCase().includes(searchVal);
-          if (!matchBS && !matchVTT && !matchGDV && !matchHang) return false;
+          const matchSoHsbt = (c.soHoSoBoiThuong || '').toLowerCase().includes(searchVal);
+          if (!matchBS && !matchVTT && !matchGDV && !matchHang && !matchSoHsbt) return false;
         }
 
-        // Period filter
-        const createdDate = new Date(c.createdAt || Date.now());
-        if (periodFilter === 'this_week' && createdDate < startOfThisWeek) return false;
-        if (periodFilter === 'last_week' && (createdDate < startOfLastWeek || createdDate >= endOfLastWeek)) return false;
-        if (periodFilter === 'this_month' && createdDate < startOfThisMonth) return false;
+        // Period filter based on Business Date (Ngày mở HS / Ngày tổn thất)
+        const claimDate = getClaimDateForFilter(c);
+        if (periodFilter === 'this_week' && claimDate < startOfThisWeek) return false;
+        if (periodFilter === 'last_week' && (claimDate < startOfLastWeek || claimDate >= endOfLastWeek)) return false;
+        if (periodFilter === 'this_month' && claimDate < startOfThisMonth) return false;
 
         return true;
       });
@@ -5847,7 +5867,11 @@
 
       // Render Custom Luxury GĐV Floating Menu Items
       const gdvSet = new Set(['all']);
-      claimsList.forEach(c => { if (c.gdvTiepNhan) gdvSet.add(c.gdvTiepNhan); });
+      claimsList.forEach(c => {
+        if (c.gdvTiepNhan && c.gdvTiepNhan !== '—' && c.gdvTiepNhan !== 'Chưa phân công') gdvSet.add(c.gdvTiepNhan.trim());
+        if (c.canBoXuLy && c.canBoXuLy !== '—' && c.canBoXuLy !== 'Chưa phân công') gdvSet.add(c.canBoXuLy.trim());
+        if (c.gdvHo && c.gdvHo !== '—' && c.gdvHo !== 'Chưa phân công') gdvSet.add(c.gdvHo.trim());
+      });
       const gdvList = Array.from(gdvSet);
 
       const lblGdvSelected = document.getElementById('lblCustomGdvDropdownSelected');
