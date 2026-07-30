@@ -4717,7 +4717,11 @@
       setVal('modalPendingPascNguoiDuyet', item.pascNguoiDuyet || '');
       setVal('modalPendingToTrinhNguoiDuyet', item.toTrinhNguoiDuyet || '');
       const rawToTrinhDate = item.toTrinhNgayDuyet || item.pascNgayDuyet;
-      setVal('modalPendingToTrinhNgayDuyet', (rawToTrinhDate && formatDateDisplay(rawToTrinhDate) !== '—') ? rawToTrinhDate : '');
+      let cleanToTrinhDisplay = formatDateDisplay(rawToTrinhDate);
+      if (cleanToTrinhDisplay === '—' && rawToTrinhDate && rawToTrinhDate !== '—') {
+        cleanToTrinhDisplay = String(rawToTrinhDate).trim();
+      }
+      setVal('modalPendingToTrinhNgayDuyet', cleanToTrinhDisplay !== '—' ? cleanToTrinhDisplay : '');
       const rawTtbtAmt = item.ttbtTongSoTienBoiThuong || item.tongBoiThuongSauThue || item.pascSoTienDuyet || item.soTienDuyetBT || item.ttbtSoTienBoiThuong || item.amount;
       setVal('modalPendingTtbtTongSoTienBoiThuong', formatCurrencyInputNumber(rawTtbtAmt));
       setVal('modalPendingDuPhongBoiThuong', formatCurrencyInputNumber(item.duPhongBoiThuong));
@@ -4967,21 +4971,27 @@
     }
 
     function parseDateParts(dateInput) {
-      if (!dateInput) return null;
-      if (typeof dateInput === 'number' || (!isNaN(dateInput) && String(dateInput).length >= 10 && !String(dateInput).includes('/') && !String(dateInput).includes('-'))) {
-        const dt = new Date(Number(dateInput));
+      if (dateInput === null || dateInput === undefined || dateInput === '') return null;
+
+      const num = Number(dateInput);
+      // Excel Serial Date Number Check (30000 to 75000)
+      if (!isNaN(num) && num >= 30000 && num <= 75000) {
+        const jsDate = new Date(Math.round((num - 25569) * 86400 * 1000));
+        if (!isNaN(jsDate.getTime())) {
+          return { day: jsDate.getUTCDate(), month: jsDate.getUTCMonth() + 1, year: jsDate.getUTCFullYear() };
+        }
+      }
+
+      // Timestamp in ms
+      if (!isNaN(num) && num > 100000000000) {
+        const dt = new Date(num);
         if (!isNaN(dt.getTime())) {
           return { day: dt.getDate(), month: dt.getMonth() + 1, year: dt.getFullYear() };
         }
       }
-      
-      const str = String(dateInput).trim();
-      if (!str) return null;
 
-      if (!isNaN(str) && Number(str) > 30000 && Number(str) < 60000) {
-        const jsDate = new Date(Math.round((Number(str) - (25567 + 2)) * 86400 * 1000));
-        return { day: jsDate.getDate(), month: jsDate.getMonth() + 1, year: jsDate.getFullYear() };
-      }
+      const str = String(dateInput).trim();
+      if (!str || str === '—' || str === 'null' || str === 'undefined') return null;
 
       const parts = str.split(/[\/\-\.\sT]/).filter(Boolean);
       if (parts.length >= 3) {
@@ -4990,10 +5000,26 @@
         let p3 = parseInt(parts[2], 10);
 
         if (p1 > 1000) {
+          // YYYY-MM-DD format
           return { day: p3, month: p2, year: p1 };
         } else if (p3 > 1000) {
-          return { day: p1, month: p2, year: p3 };
+          // MM/DD/YYYY or DD/MM/YYYY
+          let day = p1;
+          let month = p2;
+          if (p1 <= 12 && p2 > 12) {
+            month = p1;
+            day = p2;
+          } else if (p1 > 12 && p2 <= 12) {
+            day = p1;
+            month = p2;
+          }
+          return { day, month, year: p3 };
         }
+      }
+
+      const d = new Date(str);
+      if (!isNaN(d.getTime()) && d.getFullYear() > 1970) {
+        return { day: d.getDate(), month: d.getMonth() + 1, year: d.getFullYear() };
       }
 
       return null;
@@ -5247,7 +5273,7 @@
           else if (text.includes('pasc - số tiền')) colMap.pascSoTienDuyet = colIdx;
           else if (text.includes('tên gara (viết tắt)')) colMap.tenGaraVietTat = colIdx;
           else if (text.includes('gara sửa chữa') || text.includes('gara') || text.includes('xưởng')) colMap.gara = colIdx;
-          else if (text.includes('tờ trình bt - ngày duyệt')) colMap.toTrinhNgayDuyet = colIdx;
+          else if (text.includes('tờ trình bt - ngày duyệt') || text.includes('ngày duyệt') || text.includes('ngày tờ trình')) colMap.toTrinhNgayDuyet = colIdx;
           else if (text.includes('tờ trình bt - người duyệt')) colMap.toTrinhNguoiDuyet = colIdx;
           else if (text.includes('ttbt - số tiền bồi thường')) colMap.ttbtSoTienBoiThuong = colIdx;
           else if (text.includes('ttbt - chi phí giám định')) colMap.chiPhiGiamDinh = colIdx;
@@ -5434,7 +5460,7 @@
           pascNgayDuyet: formatDateDisplay(getVal(r, colMap.pascNgayDuyet)),
           pascNguoiDuyet: getVal(r, colMap.pascNguoiDuyet),
           pascSoTienDuyet: getVal(r, colMap.pascSoTienDuyet),
-          toTrinhNgayDuyet: formatDateDisplay(getVal(r, colMap.toTrinhNgayDuyet)),
+          toTrinhNgayDuyet: (formatDateDisplay(getVal(r, colMap.toTrinhNgayDuyet)) !== '—') ? formatDateDisplay(getVal(r, colMap.toTrinhNgayDuyet)) : (getVal(r, colMap.toTrinhNgayDuyet) || ''),
           toTrinhNguoiDuyet: getVal(r, colMap.toTrinhNguoiDuyet),
           ttbtSoTienBoiThuong: getVal(r, colMap.ttbtSoTienBoiThuong),
           ttbtTongSoTienBoiThuong: getVal(r, colMap.ttbtTongSoTienBoiThuong) || getVal(r, colMap.tongBoiThuongSauThue) || getVal(r, colMap.amount) || getVal(r, colMap.ttbtSoTienBoiThuong) || getVal(r, colMap.pascSoTienDuyet),
