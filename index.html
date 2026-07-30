@@ -10908,6 +10908,102 @@
             </div>
           ` : ''}
 
+          <!-- VISUAL BAR CHART: KPI TÍNH LƯƠNG GĐV (TARGET: 70 HỒ SƠ/THÁNG) -->
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <div style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
+                  <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #3b82f6; display: grid; place-items: center;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                  </div>
+                  <span>Biểu đồ Cột So sánh Khối lượng & Tiến độ Duyệt HSBT theo KPI Tính Lương (Target: 70 ca/tháng)</span>
+                </div>
+                <p style="font-size: 12px; color: var(--text-soft); margin-top: 4px; margin-bottom: 0;">
+                  So sánh số hồ sơ GĐV tiếp nhận trong tháng với số hồ sơ có ngày duyệt HSBT và định mức KPI tính lương <strong>70 hồ sơ/tháng</strong>.
+                </p>
+              </div>
+
+              <!-- Chart Legend -->
+              <div style="display: flex; align-items: center; gap: 16px; font-size: 11.5px; font-weight: 800; background: var(--bg-soft); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border);">
+                <span style="display: flex; align-items: center; gap: 6px; color: var(--text-main);"><span style="width: 12px; height: 12px; border-radius: 3px; background: var(--primary);"></span> HS tiếp nhận</span>
+                <span style="display: flex; align-items: center; gap: 6px; color: var(--text-main);"><span style="width: 12px; height: 12px; border-radius: 3px; background: #10b981;"></span> Đã duyệt HSBT</span>
+                <span style="display: flex; align-items: center; gap: 6px; color: #ef4444;"><span style="width: 14px; height: 3px; background: #ef4444; border-radius: 99px;"></span> KPI Chuẩn (70 ca)</span>
+              </div>
+            </div>
+
+            <!-- GĐV Performance Bars Container -->
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              ${gdvRows.map(r => {
+                const maxVal = Math.max(r.totalOpenedCount, r.duyetHsbtCount, 70, 1);
+                const openPct = Math.min(100, Math.round((r.totalOpenedCount / maxVal) * 100));
+                const duyetPct = Math.min(100, Math.round((r.duyetHsbtCount / maxVal) * 100));
+                const kpiPct = Math.min(100, Math.round((70 / maxVal) * 100));
+                const kpiAchievementRate = Math.round((r.duyetHsbtCount / 70) * 100);
+
+                let kpiBadgeBg = 'rgba(239,68,68,0.12)';
+                let kpiBadgeBorder = 'rgba(239,68,68,0.3)';
+                let kpiBadgeColor = '#ef4444';
+                let kpiStatusLabel = 'CHƯA ĐẠT KPI';
+
+                if (r.duyetHsbtCount >= 70) {
+                  kpiBadgeBg = 'rgba(16,185,129,0.15)';
+                  kpiBadgeBorder = 'rgba(16,185,129,0.35)';
+                  kpiBadgeColor = '#10b981';
+                  kpiStatusLabel = 'ĐẠT KPI TÍNH LƯƠNG';
+                } else if (r.duyetHsbtCount >= 50) {
+                  kpiBadgeBg = 'rgba(234,179,8,0.15)';
+                  kpiBadgeBorder = 'rgba(234,179,8,0.35)';
+                  kpiBadgeColor = '#eab308';
+                  kpiStatusLabel = 'GẦN ĐẠT KPI';
+                }
+
+                return `
+                  <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                      <div style="display: flex; align-items: center; gap: 8px;">
+                        <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(r.gdvName)}</strong>
+                        <span style="font-size: 11.5px; color: var(--text-soft);">(${escapeHtmlOutput(r.branch)})</span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 11px; font-weight: 850; padding: 3px 10px; border-radius: 99px; background: ${kpiBadgeBg}; border: 1px solid ${kpiBadgeBorder}; color: ${kpiBadgeColor}; font-family: 'JetBrains Mono';">
+                          ${kpiStatusLabel} (${kpiAchievementRate}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Dual Comparison Bar Track -->
+                    <div style="position: relative; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 10px; padding: 10px 14px; overflow: hidden;">
+                      
+                      <!-- KPI Benchmark Vertical Line (70 ca) -->
+                      <div style="position: absolute; left: ${kpiPct}%; top: 0; bottom: 0; width: 2px; background: #ef4444; z-index: 10; box-shadow: 0 0 6px rgba(239,68,68,0.6);" title="Mức KPI tính lương chuẩn: 70 ca">
+                        <span style="position: absolute; right: 4px; top: 2px; font-size: 9px; font-weight: 900; color: #ef4444; font-family: 'JetBrains Mono';">KPI: 70</span>
+                      </div>
+
+                      <!-- Bar 1: HS Tiếp nhận -->
+                      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <span style="width: 110px; font-size: 11px; font-weight: 800; color: var(--text-soft); flex-shrink: 0;">Tiếp nhận:</span>
+                        <div style="flex: 1; height: 14px; background: rgba(0,0,0,0.05); border-radius: 6px; overflow: hidden; position: relative;">
+                          <div style="width: ${openPct}%; height: 100%; background: linear-gradient(90deg, var(--primary), #b8944d); border-radius: 6px; transition: width 0.4s ease;"></div>
+                        </div>
+                        <span style="width: 55px; text-align: right; font-size: 12px; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">${r.totalOpenedCount} ca</span>
+                      </div>
+
+                      <!-- Bar 2: Đã Duyệt HSBT -->
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="width: 110px; font-size: 11px; font-weight: 800; color: var(--text-soft); flex-shrink: 0;">Đã duyệt HSBT:</span>
+                        <div style="flex: 1; height: 14px; background: rgba(0,0,0,0.05); border-radius: 6px; overflow: hidden; position: relative;">
+                          <div style="width: ${duyetPct}%; height: 100%; background: linear-gradient(90deg, #10b981, #34d399); border-radius: 6px; transition: width 0.4s ease;"></div>
+                        </div>
+                        <span style="width: 55px; text-align: right; font-size: 12px; font-weight: 850; font-family: 'JetBrains Mono'; color: #10b981;">${r.duyetHsbtCount} ca</span>
+                      </div>
+
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
           <!-- ULTRA-PREMIUM MASTER DATA TABLE CONTAINER -->
           <div class="table-container" style="border: 1px solid var(--border-strong); border-radius: 20px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow-md);">
             
