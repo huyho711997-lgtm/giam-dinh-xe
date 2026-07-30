@@ -10700,33 +10700,51 @@ function formatDateDisplay(val) {
         return true;
       });
 
-      // Group claims by Giám định viên / Cán bộ xử lý
+      // STRICT FILTERING: Only manage and display the 3 primary GĐVs requested by user
+      const defaultTargetGdvs = ['Nguyễn Quang Huy_DL', 'Hồ Quang Huy', 'Huỳnh Văn Phúc'];
       const gdvMap = {};
+      defaultTargetGdvs.forEach(name => {
+        gdvMap[name] = {
+          gdvName: name,
+          branch: '—',
+          totalOpenedCount: 0,
+          duyetHsbtCount: 0,
+          weightedKpiCount: 0,
+          pendingHsbtCount: 0,
+          totalApprovedAmount: 0,
+          statusMap: {}
+        };
+      });
+
+      function resolveTargetGdv(rawName) {
+        if (!rawName) return null;
+        const clean = String(rawName).trim().toLowerCase();
+        if (clean.includes('nguyễn quang huy') || clean.includes('quang huy_dl') || clean.includes('huy_dl')) return 'Nguyễn Quang Huy_DL';
+        if (clean.includes('hồ quang huy')) return 'Hồ Quang Huy';
+        if (clean.includes('huỳnh văn phúc') || clean.includes('văn phúc') || clean.includes('phúc')) return 'Huỳnh Văn Phúc';
+        return null;
+      }
+
       for (let i = 0; i < filteredClaims.length; i++) {
         const item = filteredClaims[i];
         const c = item.raw;
-        const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
+        const rawGdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '').trim();
+        const targetName = resolveTargetGdv(rawGdvName);
 
-        if (!gdvMap[gdvName]) {
-          gdvMap[gdvName] = {
-            gdvName,
-            branch: c.donViCapDon || c.chiNhanh || '—',
-            totalOpenedCount: 0,
-            duyetHsbtCount: 0,
-            weightedKpiCount: 0,
-            pendingHsbtCount: 0,
-            totalApprovedAmount: 0,
-            statusMap: {}
-          };
+        // Exclude claims that do not belong to the 3 managed GĐVs
+        if (!targetName || !gdvMap[targetName]) continue;
+
+        if (gdvMap[targetName].branch === '—' && (c.donViCapDon || c.chiNhanh)) {
+          gdvMap[targetName].branch = c.donViCapDon || c.chiNhanh;
         }
 
-        gdvMap[gdvName].totalOpenedCount++;
+        gdvMap[targetName].totalOpenedCount++;
         const stKey = PENDING_STATUS_MAP[c.trangThai] ? c.trangThai : 'moi';
-        gdvMap[gdvName].statusMap[stKey] = (gdvMap[gdvName].statusMap[stKey] || 0) + 1;
+        gdvMap[targetName].statusMap[stKey] = (gdvMap[targetName].statusMap[stKey] || 0) + 1;
 
         const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
         const amtVal = parseInt(amtStr, 10) || 0;
-        gdvMap[gdvName].totalApprovedAmount += amtVal;
+        gdvMap[targetName].totalApprovedAmount += amtVal;
 
         // Calculate KPI Coefficient k based on Claim Type & Amount Bracket
         const kpiRules = typeof getStoredKpiCoefConfig === 'function' ? getStoredKpiCoefConfig() : [];
@@ -10736,34 +10754,22 @@ function formatDateDisplay(val) {
         const kCoef = matchRule ? matchRule.coef : 1.0;
 
         if (isDuyetHsbtApproved(c)) {
-          gdvMap[gdvName].duyetHsbtCount++;
-          gdvMap[gdvName].weightedKpiCount += kCoef;
+          gdvMap[targetName].duyetHsbtCount++;
+          gdvMap[targetName].weightedKpiCount += kCoef;
         } else {
-          gdvMap[gdvName].pendingHsbtCount++;
+          gdvMap[targetName].pendingHsbtCount++;
         }
       }
 
-      let gdvRows = Object.values(gdvMap);
+      let gdvRows = defaultTargetGdvs.map(name => gdvMap[name]);
 
-      // Filter by search text
+      // Filter by search text if user searches
       if (activeGdvReportSearch) {
         gdvRows = gdvRows.filter(r => r.gdvName.toLowerCase().includes(activeGdvReportSearch) || r.branch.toLowerCase().includes(activeGdvReportSearch));
       }
 
-      // Prioritize the 3 default GĐVs requested by user: Nguyễn Quang Huy_DL, Hồ Quang Huy, Huỳnh Văn Phúc
-      const defaultTargetGdvs = ['Nguyễn Quang Huy_DL', 'Hồ Quang Huy', 'Huỳnh Văn Phúc'];
-      gdvRows.sort((a, b) => {
-        const idxA = defaultTargetGdvs.findIndex(name => a.gdvName.toLowerCase().trim() === name.toLowerCase().trim());
-        const idxB = defaultTargetGdvs.findIndex(name => b.gdvName.toLowerCase().trim() === name.toLowerCase().trim());
-
-        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-        if (idxA !== -1) return -1;
-        if (idxB !== -1) return 1;
-        return b.totalOpenedCount - a.totalOpenedCount;
-      });
-
-      const totalFilteredClaims = filteredClaims.length;
-      const totalDuyetHsbtCount = filteredClaims.filter(item => isDuyetHsbtApproved(item.raw)).length;
+      const totalFilteredClaims = gdvRows.reduce((sum, r) => sum + r.totalOpenedCount, 0);
+      const totalDuyetHsbtCount = gdvRows.reduce((sum, r) => sum + r.duyetHsbtCount, 0);
       const overallHsbtRate = totalFilteredClaims > 0 ? Math.round((totalDuyetHsbtCount / totalFilteredClaims) * 100) : 0;
       const passKpiCount = gdvRows.filter(r => (r.weightedKpiCount || r.duyetHsbtCount) >= 70).length;
       const topGdvObj = gdvRows[0];
