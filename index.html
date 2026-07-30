@@ -4679,8 +4679,11 @@
       setVal('modalPendingSoChoTrongTai', item.soChoTrongTai || '');
       setVal('modalPendingLaiXe', item.laiXe || '');
       setVal('modalPendingNguoiLienHe', item.nguoiLienHe || item.khachHang || '');
-      setVal('modalPendingVcx', item.vcx || '');
-      setVal('modalPendingTnds', item.tnds || '');
+      const spCodeVal = String(item.maSpNghiepVu || item.nghiepVu || item.loaiHinhBaoHiem || '').trim();
+      const isVcxCode = spCodeVal.toUpperCase().includes('VCX');
+      const isTndsCode = spCodeVal.toUpperCase().includes('TNDS');
+      setVal('modalPendingVcx', item.vcx || (isVcxCode ? (spCodeVal || 'VCX') : ''));
+      setVal('modalPendingTnds', item.tnds || (isTndsCode ? (spCodeVal || 'TNDS') : ''));
 
       const rawNgayThongBao = item.ngayThongBao || item.createdAt;
       const cleanNgayThongBao = formatDateDisplay(rawNgayThongBao);
@@ -5178,7 +5181,7 @@
         tongBoiThuongSauThue: -1, vat: -1, ngayNhanDuHoSo: -1, ngayDuyetDnttDauTien: -1,
         ngayDuyetDnttCuoiCung: -1, ngayKtXacNhan: -1, soTienDaThanhToan: -1, ngayThanhToan: -1,
         ghiChu: -1, lyDoHuy: -1, agentUniqCode: -1, garageUniqCode: -1, zoneBoiThuong: -1,
-        khuVucGiamDinh: -1, tenGaraVietTat: -1, vtt: -1
+        khuVucGiamDinh: -1, tenGaraVietTat: -1, vtt: -1, vcx: -1, tnds: -1
       };
 
       for (let i = 0; i < Math.min(10, rows.length); i++) {
@@ -5214,7 +5217,9 @@
           else if (text.includes('mđsd')) colMap.mdsd = colIdx;
           else if (text.includes('số chỗ') || text.includes('trọng tải')) colMap.soChoTrongTai = colIdx;
           else if (text.includes('số hồ sơ bồi thường') || text.includes('số hsbt')) colMap.soHsbt = colIdx;
-          else if (text.includes('mã sp') || text.includes('nghiệp vụ')) colMap.maSpNghiepVu = colIdx;
+          else if (text.includes('mã sp') || text.includes('nghiệp vụ') || text.includes('sản phẩm')) colMap.maSpNghiepVu = colIdx;
+          else if (text.includes('vật chất xe') || text === 'vcx') colMap.vcx = colIdx;
+          else if (text.includes('trách nhiệm dân sự') || text === 'tnds') colMap.tnds = colIdx;
           else if (text.includes('trạng thái hồ sơ') || text.includes('trạng thái') || text.includes('tình trạng')) colMap.status = colIdx;
           else if (text.includes('ngày thông báo')) colMap.ngayThongBao = colIdx;
           else if (text.includes('ngày tổn thất') || text.includes('ngày tt')) colMap.date = colIdx;
@@ -5403,6 +5408,8 @@
           mdsd: getVal(r, colMap.mdsd),
           soChoTrongTai: getVal(r, colMap.soChoTrongTai),
           maSpNghiepVu: getVal(r, colMap.maSpNghiepVu),
+          vcx: getVal(r, colMap.vcx) || (String(getVal(r, colMap.maSpNghiepVu)).toUpperCase().includes('VCX') ? getVal(r, colMap.maSpNghiepVu) : ''),
+          tnds: getVal(r, colMap.tnds) || (String(getVal(r, colMap.maSpNghiepVu)).toUpperCase().includes('TNDS') ? getVal(r, colMap.maSpNghiepVu) : ''),
           ngayMoHs: formatDateDisplay(getVal(r, colMap.ngayMoHs)),
           doiTuongTonThat: getVal(r, colMap.doiTuongTonThat),
           tinhTonThat: getVal(r, colMap.tinhTonThat),
@@ -10679,7 +10686,8 @@
 
         // Calculate KPI Coefficient k based on Claim Type & Amount Bracket
         const kpiRules = typeof getStoredKpiCoefConfig === 'function' ? getStoredKpiCoefConfig() : [];
-        const loaiType = String(c.loaiHinhBaoHiem || c.loaiHs || c.nghiepVu || '').toUpperCase().includes('TNDS') ? 'TNDS' : 'VCX';
+        const spText = String(c.tnds || c.vcx || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.loaiHs || c.nghiepVu || '').toUpperCase();
+        const loaiType = (c.tnds || spText.includes('TNDS')) ? 'TNDS' : 'VCX';
         const matchRule = kpiRules.find(r => r.type === loaiType && amtVal >= r.fromAmt && amtVal <= r.toAmt);
         const kCoef = matchRule ? matchRule.coef : 1.0;
 
