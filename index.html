@@ -10644,7 +10644,81 @@ function formatDateDisplay(val) {
       return clean.substring(0, 2).toUpperCase();
     }
 
-    function renderGdvMonthlyReportPage(targetContainer) {
+        let cachedCurrentGarageRows = [];
+
+    window.showGarageChartTooltip = function(evt, garageKey) {
+      const tooltip = document.getElementById('garageChartTooltip');
+      if (!tooltip || !cachedCurrentGarageRows) return;
+      const g = cachedCurrentGarageRows.find(row => row.key === garageKey);
+      if (!g) return;
+
+      const qh = g.gdvBreakdown['Nguyễn Quang Huy_DL'] || { opened: 0, amount: 0 };
+      const hqh = g.gdvBreakdown['Hồ Quang Huy'] || { opened: 0, amount: 0 };
+      const hvp = g.gdvBreakdown['Huỳnh Văn Phúc'] || { opened: 0, amount: 0 };
+
+      tooltip.innerHTML = `
+        <div style="font-weight: 850; font-size: 13.5px; color: #ffffff; margin-bottom: 3px;">${escapeHtmlOutput(g.name)}</div>
+        ${g.code !== 'N/A' && g.code !== g.name ? `<div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 8px;">Mã Gara: ${escapeHtmlOutput(g.code)}</div>` : '<div style="margin-bottom: 6px;"></div>'}
+        
+        <div style="border-top: 1px solid rgba(255,255,255,0.15); padding-top: 8px; margin-top: 4px; display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
+          <div style="display: flex; justify-content: space-between; gap: 14px;">
+            <span style="color: rgba(255,255,255,0.8);">Tiền bồi thường:</span>
+            <strong style="color: #34d399; font-family: 'JetBrains Mono'; font-weight: 850;">${formatCurrencyInputNumber(g.totalApprovedAmount)} đ</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; gap: 14px;">
+            <span style="color: rgba(255,255,255,0.8);">Tổng số hồ sơ:</span>
+            <strong style="color: #60a5fa; font-family: 'JetBrains Mono'; font-weight: 850;">${g.totalClaimsCount} ca</strong>
+          </div>
+          
+          <div style="border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 6px; margin-top: 4px; font-size: 11.5px; display: flex; flex-direction: column; gap: 4px;">
+            <div style="color: rgba(255,255,255,0.95); font-weight: 800;">Phân bổ Giám định viên:</div>
+            <div style="color: #93c5fd; display: flex; justify-content: space-between; gap: 10px;">
+              <span>🔹 Nguyễn Quang Huy_DL:</span>
+              <strong style="font-family: 'JetBrains Mono';">${qh.opened} ca (${formatCurrencyInputNumber(qh.amount)}đ)</strong>
+            </div>
+            <div style="color: #fde047; display: flex; justify-content: space-between; gap: 10px;">
+              <span>🔸 Hồ Quang Huy:</span>
+              <strong style="font-family: 'JetBrains Mono';">${hqh.opened} ca (${formatCurrencyInputNumber(hqh.amount)}đ)</strong>
+            </div>
+            <div style="color: #6ee7b7; display: flex; justify-content: space-between; gap: 10px;">
+              <span>🟢 Huỳnh Văn Phúc:</span>
+              <strong style="font-family: 'JetBrains Mono';">${hvp.opened} ca (${formatCurrencyInputNumber(hvp.amount)}đ)</strong>
+            </div>
+          </div>
+        </div>
+      `;
+
+      tooltip.style.display = 'block';
+      moveGarageChartTooltip(evt);
+    };
+
+    window.moveGarageChartTooltip = function(evt) {
+      const tooltip = document.getElementById('garageChartTooltip');
+      const container = document.getElementById('garageChartWrapContainer');
+      if (!tooltip || !container) return;
+
+      const rect = container.getBoundingClientRect();
+      const mouseX = evt.clientX - rect.left;
+      const mouseY = evt.clientY - rect.top;
+
+      let left = mouseX + 15;
+      let top = mouseY - 80;
+
+      if (left + 280 > rect.width) {
+        left = mouseX - 295;
+      }
+      if (top < 10) top = 10;
+
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+    };
+
+    window.hideGarageChartTooltip = function() {
+      const tooltip = document.getElementById('garageChartTooltip');
+      if (tooltip) tooltip.style.display = 'none';
+    };
+
+function renderGdvMonthlyReportPage(targetContainer) {
       const container = targetContainer || document.getElementById('tabContentContainer');
       if (!container) return;
 
@@ -10844,13 +10918,15 @@ function formatDateDisplay(val) {
       const activeGarageCount = garageRows.length;
       const topGarageObj = garageRows[0] || null;
 
-      // GARAGE COMBO BAR + LINE CHART CALCULATIONS
-      const gChartWidth = 960;
-      const gChartHeight = 320;
-      const gPaddingLeft = 80;
+      cachedCurrentGarageRows = garageRows;
+
+      // GARAGE COMBO BAR + LINE CHART CALCULATIONS (EXPANDED HEIGHT & BOT PADDING FOR ROTATED LABELS)
+      const gChartWidth = 980;
+      const gChartHeight = 400;
+      const gPaddingLeft = 85;
       const gPaddingRight = 65;
       const gPaddingTop = 45;
-      const gPaddingBottom = 55;
+      const gPaddingBottom = 115;
       const gPlotWidth = gChartWidth - gPaddingLeft - gPaddingRight;
       const gPlotHeight = gChartHeight - gPaddingTop - gPaddingBottom;
 
@@ -11126,13 +11202,21 @@ function formatDateDisplay(val) {
                 </div>
               </div>
 
-              <!-- SVG COMBO BAR + LINE VECTOR CHART -->
-              <div style="position: relative; width: 100%; overflow-x: auto;">
-                <svg viewBox="0 0 ${gChartWidth} ${gChartHeight}" style="width: 100%; height: auto; min-width: 800px; overflow: visible;">
+              <!-- SVG COMBO BAR + LINE VECTOR CHART WITH INTERACTIVE HOVER & ROTATED LABELS -->
+              <div id="garageChartWrapContainer" style="position: relative; width: 100%; overflow-x: auto;">
+                
+                <!-- Floating Glassmorphic Interactive Tooltip Card -->
+                <div id="garageChartTooltip" style="display: none; position: absolute; z-index: 1000; min-width: 270px; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.22); border-radius: 14px; color: #ffffff; padding: 14px 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.45); pointer-events: none; transition: opacity 0.15s ease;"></div>
+
+                <svg viewBox="0 0 ${gChartWidth} ${gChartHeight}" style="width: 100%; height: auto; min-width: 850px; overflow: visible;">
                   <defs>
                     <linearGradient id="garageBarGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stop-color="#10b981" stop-opacity="0.95" />
                       <stop offset="100%" stop-color="#059669" stop-opacity="0.75" />
+                    </linearGradient>
+                    <linearGradient id="garageBarGradHover" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#34d399" stop-opacity="1" />
+                      <stop offset="100%" stop-color="#10b981" stop-opacity="0.9" />
                     </linearGradient>
                   </defs>
 
@@ -11149,33 +11233,46 @@ function formatDateDisplay(val) {
 
                     return `
                       <line x1="${gPaddingLeft}" y1="${yPos}" x2="${gChartWidth - gPaddingRight}" y2="${yPos}" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" />
-                      <text x="${gPaddingLeft - 8}" y="${yPos + 3}" font-size="9.5" font-weight="750" fill="#10b981" text-anchor="end" font-family="JetBrains Mono">${moneyLabel}</text>
-                      <text x="${gChartWidth - gPaddingRight + 8}" y="${yPos + 3}" font-size="9.5" font-weight="750" fill="#3b82f6" text-anchor="start" font-family="JetBrains Mono">${claimsVal} ca</text>
+                      <text x="${gPaddingLeft - 10}" y="${yPos + 3}" font-size="10" font-weight="750" fill="#10b981" text-anchor="end" font-family="JetBrains Mono">${moneyLabel}</text>
+                      <text x="${gChartWidth - gPaddingRight + 10}" y="${yPos + 3}" font-size="10" font-weight="750" fill="#3b82f6" text-anchor="start" font-family="JetBrains Mono">${claimsVal} ca</text>
                     `;
                   }).join('')}
 
-                  <!-- VERTICAL BARS (Money in VNĐ) -->
-                  ${gPoints.map(p => `
-                    <rect x="${p.cx - barW/2}" y="${p.bY}" width="${barW}" height="${p.bHeight}" rx="5" fill="url(#garageBarGrad)" />
-                    <text x="${p.cx}" y="${p.bY - 6}" font-size="9" font-weight="850" fill="#10b981" text-anchor="middle" font-family="JetBrains Mono">
-                      ${p.totalApprovedAmount >= 1e6 ? (p.totalApprovedAmount / 1e6).toFixed(1) + 'M' : formatCurrencyInputNumber(p.totalApprovedAmount)}
-                    </text>
-                  `).join('')}
+                  <!-- INTERACTIVE VERTICAL BARS & ROTATED LABELS GROUP -->
+                  ${gPoints.map(p => {
+                    const fullName = p.name || '';
+                    const displayShortName = fullName.length > 22 ? fullName.substring(0, 20) + '...' : fullName;
+
+                    return `
+                      <g class="garage-chart-col-group" cursor="pointer" onmouseenter="showGarageChartTooltip(event, '${escapeAttributeData(p.key)}')" onmousemove="moveGarageChartTooltip(event)" onmouseleave="hideGarageChartTooltip()">
+                        <!-- Invisible Hit Box Target for easy hovering -->
+                        <rect x="${p.cx - stepGX/2}" y="${gPaddingTop}" width="${stepGX}" height="${gPlotHeight + 110}" fill="transparent" />
+
+                        <!-- Vertical Bar -->
+                        <rect x="${p.cx - barW/2}" y="${p.bY}" width="${barW}" height="${p.bHeight}" rx="6" fill="url(#garageBarGrad)" style="transition: all 0.2s ease;" />
+                        
+                        <!-- Bar Top Money Label -->
+                        <text x="${p.cx}" y="${p.bY - 8}" font-size="9.5" font-weight="850" fill="#10b981" text-anchor="middle" font-family="JetBrains Mono">
+                          ${p.totalApprovedAmount >= 1e6 ? (p.totalApprovedAmount / 1e6).toFixed(1) + 'M' : formatCurrencyInputNumber(p.totalApprovedAmount)}
+                        </text>
+
+                        <!-- Rotated Clean X-Axis Label (-38deg) -->
+                        <text x="${p.cx}" y="${gChartHeight - 95}" transform="rotate(-38, ${p.cx}, ${gChartHeight - 95})" font-size="10.5" font-weight="850" fill="var(--text-main)" text-anchor="end">
+                          ${escapeHtmlOutput(displayShortName)}
+                        </text>
+                      </g>
+                    `;
+                  }).join('')}
 
                   <!-- TREND LINE (Claim Count) -->
-                  ${gPoints.length > 1 ? `<path d="${gLinePathStr}" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />` : ''}
+                  ${gPoints.length > 1 ? `<path d="${gLinePathStr}" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pointer-events="none" />` : ''}
 
                   <!-- Line Dots & Value Tags -->
                   ${gPoints.map(p => `
-                    <circle cx="${p.cx}" cy="${p.lY}" r="4" fill="var(--surface)" stroke="#3b82f6" stroke-width="2.5" />
-                    <text x="${p.cx}" y="${p.lY - 10}" font-size="9.5" font-weight="900" fill="#3b82f6" text-anchor="middle" font-family="JetBrains Mono">${p.totalClaimsCount} ca</text>
-                  `).join('')}
-
-                  <!-- X-AXIS LABELS (Garage Names) -->
-                  ${gPoints.map(p => `
-                    <text x="${p.cx}" y="${gChartHeight - 14}" font-size="10.5" font-weight="850" fill="var(--text-main)" text-anchor="middle">
-                      ${escapeHtmlOutput(p.name)}
-                    </text>
+                    <g cursor="pointer" onmouseenter="showGarageChartTooltip(event, '${escapeAttributeData(p.key)}')" onmousemove="moveGarageChartTooltip(event)" onmouseleave="hideGarageChartTooltip()">
+                      <circle cx="${p.cx}" cy="${p.lY}" r="4.5" fill="var(--surface)" stroke="#3b82f6" stroke-width="2.5" />
+                      <text x="${p.cx}" y="${p.lY - 12}" font-size="10" font-weight="900" fill="#3b82f6" text-anchor="middle" font-family="JetBrains Mono">${p.totalClaimsCount} ca</text>
+                    </g>
                   `).join('')}
                 </svg>
               </div>
