@@ -4689,9 +4689,15 @@
       setVal('modalPendingVcx', item.vcx || (isVcxCode ? (spCodeVal || 'VCX') : ''));
       setVal('modalPendingTnds', item.tnds || (isTndsCode ? (spCodeVal || 'TNDS') : ''));
 
-      const rawNgayThongBao = item.ngayThongBao || item.createdAt;
+      const rawNgayThongBao = item.ngayThongBao;
       const cleanNgayThongBao = formatDateDisplay(rawNgayThongBao);
-      setVal('modalPendingNgayThongBao', (cleanNgayThongBao !== '—' && !cleanNgayThongBao.includes('1970')) ? cleanNgayThongBao : new Date().toLocaleString('vi-VN'));
+      if (cleanNgayThongBao !== '—' && !cleanNgayThongBao.includes('1970')) {
+        setVal('modalPendingNgayThongBao', cleanNgayThongBao);
+      } else if (rawNgayThongBao && rawNgayThongBao !== '—') {
+        setVal('modalPendingNgayThongBao', String(rawNgayThongBao).trim());
+      } else {
+        setVal('modalPendingNgayThongBao', isEditing ? '' : new Date().toLocaleString('vi-VN'));
+      }
       const cleanNgayMoHs = formatDateDisplay(item.ngayMoHs);
       setVal('modalPendingNgayMoHs', cleanNgayMoHs !== '—' ? cleanNgayMoHs : (item.ngayMoHs || ''));
       const rawNgayVTT = item.ngayVTT || item.ngayTonThat || item.date || item.ngayMoHs;
@@ -5254,7 +5260,7 @@
           else if (text.includes('vật chất xe') || text === 'vcx') colMap.vcx = colIdx;
           else if (text.includes('trách nhiệm dân sự') || text === 'tnds') colMap.tnds = colIdx;
           else if (text.includes('trạng thái hồ sơ') || text.includes('trạng thái') || text.includes('tình trạng')) colMap.status = colIdx;
-          else if (text.includes('ngày thông báo')) colMap.ngayThongBao = colIdx;
+          else if (text.includes('ngày thông báo') || text.includes('thời gian thông báo') || text.includes('ngày tb') || text.includes('thời gian tb') || text.includes('ngày khai báo') || text.includes('thời gian khai báo')) colMap.ngayThongBao = colIdx;
           else if (text.includes('ngày tổn thất') || text.includes('ngày tt')) colMap.date = colIdx;
           else if (text.includes('ngày mở hs')) colMap.ngayMoHs = colIdx;
           else if (text.includes('đối tượng tổn thất')) colMap.doiTuongTonThat = colIdx;
@@ -5412,7 +5418,7 @@
           namSanXuat: getVal(r, colMap.namSanXuat),
           gdvTiepNhan: getVal(r, colMap.gdvHo),
           canBoXuLy: getVal(r, colMap.gdvHo),
-          ngayThongBao: formatDateDisplay(getVal(r, colMap.ngayThongBao)),
+          ngayThongBao: (getVal(r, colMap.ngayThongBao) && formatDateDisplay(getVal(r, colMap.ngayThongBao)) !== '—') ? formatDateDisplay(getVal(r, colMap.ngayThongBao)) : (getVal(r, colMap.ngayThongBao) || ''),
           ngayVTT: rawDate,
           diaDiemVTT: getVal(r, colMap.diaDiemTonThat) || getVal(r, colMap.tinhTonThat),
           hienTruong: getVal(r, colMap.diaDiemTonThat),
