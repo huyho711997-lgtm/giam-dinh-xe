@@ -11018,8 +11018,8 @@ function formatDateDisplay(val) {
 
                   <!-- KPI RED BENCHMARK FINE LINE (70 CA) -->
                   <line x1="${paddingLeft}" y1="${yKpi}" x2="${chartWidth - paddingRight}" y2="${yKpi}" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.9" />
-                  <rect x="${chartWidth - paddingRight - 85}" y="${yKpi - 9}" width="80" height="18" rx="4" fill="#ef4444" opacity="0.9" />
-                  <text x="${chartWidth - paddingRight - 45}" y="${yKpi + 3}" font-size="9" font-weight="850" fill="#ffffff" text-anchor="middle" font-family="JetBrains Mono">KPI: 70 CA</text>
+                  <rect x="${paddingLeft + 10}" y="${yKpi - 9}" width="96" height="18" rx="4" fill="#ef4444" opacity="0.95" />
+                  <text x="${paddingLeft + 58}" y="${yKpi + 3}" font-size="9" font-weight="850" fill="#ffffff" text-anchor="middle" font-family="JetBrains Mono">KPI: 70 CA/THÁNG</text>
 
                   <!-- Line 1: Opened Claims (Primary Gold - Fine Line 2px) -->
                   ${pointsOpen.length > 1 ? `<path d="${pathOpenStr}" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />` : ''}
