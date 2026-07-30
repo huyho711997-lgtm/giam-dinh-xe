@@ -10507,10 +10507,8 @@
 
     function escapeAttributeData(unsafeAttrValue) { return escapeHtmlOutput(unsafeAttrValue); }
     function clearActiveObjectUrls() { activeObjectUrls.forEach(url => URL.revokeObjectURL(url)); activeObjectUrls = []; }
-  </script>
-</body>
-</html>
-    /****************************************************
+
+/****************************************************
      * BÁO CÁO PHÁT SINH TRONG THÁNG THEO GIÁM ĐỊNH VIÊN
      ****************************************************/
     let activeGdvReportMonth = new Date().getMonth() + 1;
@@ -10851,3 +10849,8 @@
         triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
       }
     }
+
+  </script>
+</body>
+</html>
+    
