@@ -4011,12 +4011,6 @@
             </svg>
             <span class="nav-btn-text">Báo cáo GĐV</span>
           </button>
-          <button id="headerNavGdvChartBtn" class="header-nav-btn ${activeDashboardTab === 'gdv_chart' ? 'active' : ''}" onclick="navigateHeaderTab('gdv_chart')">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-            </svg>
-            <span class="nav-btn-text">Biểu đồ KPI GĐV</span>
-          </button>
           <button id="headerNavCreateBtn" class="header-nav-btn ${createActive}" onclick="navigateHeaderTab('create')">${SVGS.SPARKLES} <span class="nav-btn-text">Khởi tạo hồ sơ</span></button>
           ${isAdmin ? `
             <button id="headerNavUsersBtn" class="header-nav-btn ${usersActive}" onclick="navigateHeaderTab('users')">
@@ -6390,10 +6384,6 @@
         return;
       }
 
-      if (activeDashboardTab === 'gdv_chart') {
-        renderGdvKpiLineChartPage(container);
-        return;
-      }
 
       if (activeDashboardTab === 'home') {
         container.innerHTML = `
@@ -10520,13 +10510,14 @@
     function clearActiveObjectUrls() { activeObjectUrls.forEach(url => URL.revokeObjectURL(url)); activeObjectUrls = []; }
   
     /****************************************************
-     * BÁO CÁO SỐ LƯỢNG HỒ SƠ ĐANG TIẾP NHẬN & DUYỆT HSBT THEO GIÁM ĐỊNH VIÊN
-     * ULTRA-PREMIUM EXECUTIVE TABLE DESIGN SYSTEM
+     * BÁO CÁO GIÁM ĐỊNH VIÊN & BIỂU ĐỒ KPI TÍNH LƯƠNG (UNIFIED)
+     * TOGGLE BETWEEN MASTER TABLE & ULTRA-SLEEK LINE CHART
      ****************************************************/
     let activeGdvReportMonth = String(new Date().getMonth() + 1);
     let activeGdvReportYear = String(new Date().getFullYear());
     let activeGdvReportBranch = 'all';
     let activeGdvReportSearch = '';
+    let activeGdvReportView = 'table'; // 'table' | 'chart'
 
     // Global Click Listener to Close Custom Dropdowns
     if (!window.hasRegisteredCustomDropdownListener) {
@@ -10536,6 +10527,11 @@
           document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
         }
       });
+    }
+
+    function switchGdvReportView(viewMode) {
+      activeGdvReportView = viewMode;
+      renderGdvMonthlyReportPage();
     }
 
     function toggleCustomDropdownMenu(menuId, event) {
@@ -10687,6 +10683,7 @@
       const totalFilteredClaims = filteredClaims.length;
       const totalDuyetHsbtCount = filteredClaims.filter(item => isDuyetHsbtApproved(item.raw)).length;
       const overallHsbtRate = totalFilteredClaims > 0 ? Math.round((totalDuyetHsbtCount / totalFilteredClaims) * 100) : 0;
+      const passKpiCount = gdvRows.filter(r => r.duyetHsbtCount >= 70).length;
       const topGdvObj = gdvRows[0];
       const topGdvName = topGdvObj ? topGdvObj.gdvName : 'Chưa có';
 
@@ -10696,11 +10693,39 @@
 
       const top3Performers = gdvRows.slice(0, 3);
 
+      // ULTRA-SLEEK LINE CHART CALCULATIONS
+      const chartWidth = 900;
+      const chartHeight = 280;
+      const paddingLeft = 50;
+      const paddingTop = 30;
+      const paddingBottom = 45;
+      const plotWidth = chartWidth - paddingLeft - 30;
+      const plotHeight = chartHeight - paddingTop - paddingBottom;
+
+      const maxY = Math.max(100, ...gdvRows.map(r => Math.max(r.totalOpenedCount, r.duyetHsbtCount)));
+      const stepX = gdvRows.length > 1 ? plotWidth / (gdvRows.length - 1) : plotWidth / 2;
+
+      const pointsOpen = [];
+      const pointsDuyet = [];
+
+      gdvRows.forEach((r, idx) => {
+        const x = gdvRows.length === 1 ? paddingLeft + plotWidth / 2 : paddingLeft + idx * stepX;
+        const yOpen = paddingTop + plotHeight - (r.totalOpenedCount / maxY) * plotHeight;
+        const yDuyet = paddingTop + plotHeight - (r.duyetHsbtCount / maxY) * plotHeight;
+
+        pointsOpen.push({ x, y: yOpen, val: r.totalOpenedCount, name: r.gdvName });
+        pointsDuyet.push({ x, y: yDuyet, val: r.duyetHsbtCount, name: r.gdvName });
+      });
+
+      const yKpi = paddingTop + plotHeight - (70 / maxY) * plotHeight;
+      const pathOpenStr = pointsOpen.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+      const pathDuyetStr = pointsDuyet.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+
       container.innerHTML = `
         <div style="padding: 24px 28px; max-width: 1600px; margin: 0 auto;">
           
           <!-- ADAPTIVE HERO BANNER HEADER -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 24px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 20px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
             <div style="position: absolute; right: -40px; top: -40px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(216,180,109,0.12) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none;"></div>
             
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
@@ -10713,7 +10738,7 @@
                   Báo cáo Khối lượng Tiếp nhận & Duyệt HSBT theo Giám định viên
                 </h1>
                 <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft); max-width: 850px; margin-bottom: 0;">
-                  Thống kê tổng số lượng hồ sơ tiếp nhận trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>), tình trạng lượng hồ sơ ở từng trạng thái và tỷ lệ duyệt HSBT của từng cán bộ.
+                  Thống kê tổng số lượng hồ sơ tiếp nhận trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>), tình trạng lượng hồ sơ ở từng trạng thái và đối chiếu KPI tính lương <strong>70 ca/tháng</strong>.
                 </p>
               </div>
 
@@ -10727,7 +10752,19 @@
             </div>
           </div>
 
-          <!-- LUXURY CONTROL HUB FILTER BAR WITH CUSTOM GLASSMORPHI DROPDOWNS -->
+          <!-- UNIFIED REPORT TYPE SEGMENTED TOGGLE BAR -->
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 6px; margin-bottom: 20px; display: inline-flex; gap: 6px; box-shadow: var(--shadow-xs);">
+            <button type="button" onclick="switchGdvReportView('table')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'table' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+              <span>📊 Bảng Báo cáo Thống kê Chi tiết</span>
+            </button>
+            <button type="button" onclick="switchGdvReportView('chart')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'chart' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              <span>📈 Biểu đồ Đường KPI & Lương GĐV</span>
+            </button>
+          </div>
+
+          <!-- CONTROL HUB FILTER BAR WITH CUSTOM GLASSMORPHI DROPDOWNS -->
           <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 16px 22px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: var(--shadow-sm);">
             
             <!-- Left Controls: Custom Dropdowns -->
@@ -10739,7 +10776,7 @@
 
               <!-- Custom Month Dropdown -->
               <div class="custom-select-wrapper" style="position: relative;">
-                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportMonthMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 160px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
+                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportMonthMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 160px; justify-content: space-between; box-shadow: var(--shadow-xs);">
                   <span style="display: flex; align-items: center; gap: 6px;">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                     <span>${activeGdvReportMonth === 'all' ? 'Tất cả các tháng' : 'Tháng ' + activeGdvReportMonth}</span>
@@ -10748,12 +10785,12 @@
                 </button>
 
                 <div id="ddReportMonthMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 190px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
-                  <div class="custom-select-item ${activeGdvReportMonth === 'all' ? 'active' : ''}" onclick="selectGdvReportMonth('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.15s ease; ${activeGdvReportMonth === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                  <div class="custom-select-item ${activeGdvReportMonth === 'all' ? 'active' : ''}" onclick="selectGdvReportMonth('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportMonth === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
                     <span>Tất cả các tháng</span>
                     ${activeGdvReportMonth === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                   </div>
                   ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `
-                    <div class="custom-select-item ${String(m) === String(activeGdvReportMonth) ? 'active' : ''}" onclick="selectGdvReportMonth('${m}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.15s ease; ${String(m) === String(activeGdvReportMonth) ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                    <div class="custom-select-item ${String(m) === String(activeGdvReportMonth) ? 'active' : ''}" onclick="selectGdvReportMonth('${m}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(m) === String(activeGdvReportMonth) ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
                       <span>Tháng ${m}</span>
                       ${String(m) === String(activeGdvReportMonth) ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                     </div>
@@ -10763,7 +10800,7 @@
 
               <!-- Custom Year Dropdown -->
               <div class="custom-select-wrapper" style="position: relative;">
-                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportYearMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 140px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
+                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportYearMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 140px; justify-content: space-between; box-shadow: var(--shadow-xs);">
                   <span style="display: flex; align-items: center; gap: 6px;">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                     <span>${activeGdvReportYear === 'all' ? 'Tất cả các năm' : 'Năm ' + activeGdvReportYear}</span>
@@ -10772,12 +10809,12 @@
                 </button>
 
                 <div id="ddReportYearMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 170px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
-                  <div class="custom-select-item ${activeGdvReportYear === 'all' ? 'active' : ''}" onclick="selectGdvReportYear('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.15s ease; ${activeGdvReportYear === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                  <div class="custom-select-item ${activeGdvReportYear === 'all' ? 'active' : ''}" onclick="selectGdvReportYear('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportYear === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
                     <span>Tất cả các năm</span>
                     ${activeGdvReportYear === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                   </div>
                   ${yearList.map(y => `
-                    <div class="custom-select-item ${String(y) === String(activeGdvReportYear) ? 'active' : ''}" onclick="selectGdvReportYear('${y}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.15s ease; ${String(y) === String(activeGdvReportYear) ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                    <div class="custom-select-item ${String(y) === String(activeGdvReportYear) ? 'active' : ''}" onclick="selectGdvReportYear('${y}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(y) === String(activeGdvReportYear) ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
                       <span>Năm ${y}</span>
                       ${String(y) === String(activeGdvReportYear) ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                     </div>
@@ -10787,7 +10824,7 @@
 
               <!-- Custom Branch Dropdown -->
               <div class="custom-select-wrapper" style="position: relative;">
-                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportBranchMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 220px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
+                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportBranchMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 220px; justify-content: space-between; box-shadow: var(--shadow-xs);">
                   <span style="display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary); flex-shrink: 0;"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"></path><path d="M6 12H4a2 2 0 0 0-2 2v8h4"></path><path d="M18 9h2a2 2 0 0 1 2 2v11h-4"></path></svg>
                     <span>${activeGdvReportBranch === 'all' ? 'Tất cả chi nhánh cấp đơn' : activeGdvReportBranch}</span>
@@ -10796,12 +10833,12 @@
                 </button>
 
                 <div id="ddReportBranchMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 250px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
-                  <div class="custom-select-item ${activeGdvReportBranch === 'all' ? 'active' : ''}" onclick="selectGdvReportBranch('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.15s ease; ${activeGdvReportBranch === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                  <div class="custom-select-item ${activeGdvReportBranch === 'all' ? 'active' : ''}" onclick="selectGdvReportBranch('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportBranch === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
                     <span>Tất cả chi nhánh cấp đơn</span>
                     ${activeGdvReportBranch === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                   </div>
                   ${branchList.filter(b => b !== 'all').map(b => `
-                    <div class="custom-select-item ${b === activeGdvReportBranch ? 'active' : ''}" onclick="selectGdvReportBranch('${escapeAttributeData(b)}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.15s ease; ${b === activeGdvReportBranch ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                    <div class="custom-select-item ${b === activeGdvReportBranch ? 'active' : ''}" onclick="selectGdvReportBranch('${escapeAttributeData(b)}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${b === activeGdvReportBranch ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
                       <span>${escapeHtmlOutput(b)}</span>
                       ${b === activeGdvReportBranch ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                     </div>
@@ -10819,226 +10856,313 @@
 
           <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
-            
-            <!-- Card 1: Total Opened Claims -->
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase; letter-spacing: 0.05em;">HỒ SƠ MỞ TRONG THÁNG</span>
-                <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(216,180,109,0.15); color: var(--primary); display: grid; place-items: center; border: 1px solid rgba(216,180,109,0.3);">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                </div>
-              </div>
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">HỒ SƠ MỞ TRONG THÁNG</span>
               <strong style="display: block; font-size: 30px; color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
-                ${totalFilteredClaims} <span style="font-size: 14px; font-weight: 750; color: var(--text-soft);">ca</span>
+                ${totalFilteredClaims} <span style="font-size: 14px; color: var(--text-soft);">ca</span>
               </strong>
             </div>
 
-            <!-- Card 2: Approved HSBT Claims -->
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(16,185,129,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase; letter-spacing: 0.05em;">ĐÃ DUYỆT HSBT</span>
-                <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(16,185,129,0.15); color: #10b981; display: grid; place-items: center; border: 1px solid rgba(16,185,129,0.3);">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-              </div>
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">ĐÃ DUYỆT HSBT</span>
               <strong style="display: block; font-size: 30px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
-                ${totalDuyetHsbtCount} <span style="font-size: 14px; font-weight: 750; color: var(--text-soft);">ca</span>
+                ${totalDuyetHsbtCount} <span style="font-size: 14px; color: var(--text-soft);">ca</span>
               </strong>
             </div>
 
-            <!-- Card 3: Approved HSBT Rate -->
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(59,130,246,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase; letter-spacing: 0.05em;">TỶ LỆ DUYỆT HSBT TOÀN TEAM</span>
-                <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(59,130,246,0.15); color: #3b82f6; display: grid; place-items: center; border: 1px solid rgba(59,130,246,0.3);">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                </div>
-              </div>
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">TỶ LỆ DUYỆT TOÀN TEAM</span>
               <strong style="display: block; font-size: 30px; color: #3b82f6; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
                 ${overallHsbtRate}%
               </strong>
             </div>
 
-            <!-- Card 4: Top Performer -->
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(168,85,247,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase; letter-spacing: 0.05em;">GĐV DẪN ĐẦU KHỐI LƯỢNG</span>
-                <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(168,85,247,0.15); color: #a855f7; display: grid; place-items: center; border: 1px solid rgba(168,85,247,0.3);">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="7"></circle><polyline points="8 21 12 17 16 21"></polyline></svg>
-                </div>
-              </div>
-              <strong style="display: block; font-size: 16px; color: #a855f7; margin-top: 12px; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(topGdvName)}">
-                🥇 ${escapeHtmlOutput(topGdvName)}
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">GĐV ĐẠT KPI LƯƠNG (70 CA)</span>
+              <strong style="display: block; font-size: 30px; color: #a855f7; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
+                ${passKpiCount} <span style="font-size: 14px; color: var(--text-soft);">/ ${gdvRows.length} nhân sự</span>
               </strong>
             </div>
           </div>
 
-          <!-- TOP 3 PODIUM SHOWCASE (LEADERBOARD) -->
-          ${top3Performers.length > 0 ? `
-            <div style="margin-bottom: 24px;">
-              <div style="font-size: 12.5px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>
-                <span>Vinh danh Top 3 GĐV Phụ trách Khối lượng lớn nhất</span>
-              </div>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-                ${top3Performers.map((p, pIdx) => {
-                  const medals = ['🥇 Top 1', '🥈 Top 2', '🥉 Top 3'];
-                  const borders = ['rgba(216,180,109,0.5)', 'rgba(148,163,184,0.5)', 'rgba(217,119,6,0.5)'];
-                  const badgeBgs = ['rgba(216,180,109,0.15)', 'rgba(148,163,184,0.15)', 'rgba(217,119,6,0.15)'];
-                  const initials = getGdvInitials(p.gdvName);
-                  const rateHsbt = p.totalOpenedCount > 0 ? Math.round((p.duyetHsbtCount / p.totalOpenedCount) * 100) : 0;
+          <!-- CONDITIONAL RENDERING BASED ON activeGdvReportView -->
+          ${activeGdvReportView === 'chart' ? `
+            
+            <!-- ULTRA-SLEEK FINE-LINED SVG LINE CHART SECTION -->
+            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+              
+              <!-- Chart Title Bar -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <div style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    <span>Biểu đồ Đường Xu hướng KPI & Lương Giám định viên (Target: 70 ca/tháng)</span>
+                  </div>
+                  <p style="font-size: 12px; color: var(--text-soft); margin-top: 4px; margin-bottom: 0;">
+                    Đường xu hướng mảnh tinh tế so sánh số hồ sơ tiếp nhận với số hồ sơ có ngày duyệt HSBT và vạch chuẩn KPI tính lương <strong>70 ca/tháng</strong>.
+                  </p>
+                </div>
 
-                  return `
-                    <div style="background: var(--surface); border: 1px solid ${borders[pIdx]}; border-radius: 16px; padding: 18px; box-shadow: var(--shadow-sm); position: relative;">
-                      <div style="position: absolute; right: 14px; top: 14px; font-size: 11px; font-weight: 850; padding: 3px 10px; border-radius: 99px; background: ${badgeBgs[pIdx]}; border: 1px solid ${borders[pIdx]}; color: var(--text-main);">
-                        ${medals[pIdx]}
-                      </div>
-                      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                        <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, rgba(216,180,109,0.2) 0%, rgba(216,180,109,0.05) 100%); border: 1.5px solid rgba(216,180,109,0.4); color: var(--primary); font-weight: 900; font-size: 15px; display: grid; place-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                <!-- Legend -->
+                <div style="display: flex; align-items: center; gap: 14px; font-size: 11.5px; font-weight: 800; background: var(--bg-soft); padding: 6px 14px; border-radius: 10px; border: 1px solid var(--border);">
+                  <span style="display: flex; align-items: center; gap: 6px; color: var(--text-main);"><span style="width: 12px; height: 2px; background: var(--primary); border-radius: 99px;"></span> Số HS tiếp nhận</span>
+                  <span style="display: flex; align-items: center; gap: 6px; color: var(--text-main);"><span style="width: 12px; height: 2px; background: #10b981; border-radius: 99px;"></span> Đã duyệt HSBT</span>
+                  <span style="display: flex; align-items: center; gap: 6px; color: #ef4444;"><span style="width: 12px; height: 1.5px; background: #ef4444; border-radius: 99px;"></span> Vạch KPI tính lương (70 ca)</span>
+                </div>
+              </div>
+
+              <!-- FINE-LINED SVG VECTOR CHART -->
+              <div style="position: relative; width: 100%; overflow-x: auto;">
+                <svg viewBox="0 0 ${chartWidth} ${chartHeight}" style="width: 100%; height: auto; min-width: 750px; overflow: visible;">
+                  
+                  <!-- Grid Y Lines -->
+                  ${[0, 0.25, 0.5, 0.75, 1].map(r => {
+                    const yVal = Math.round(maxY * r);
+                    const yPos = paddingTop + plotHeight - r * plotHeight;
+                    return `
+                      <line x1="${paddingLeft}" y1="${yPos}" x2="${chartWidth - 30}" y2="${yPos}" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" />
+                      <text x="${paddingLeft - 8}" y="${yPos + 3}" font-size="9.5" font-weight="700" fill="var(--text-muted)" text-anchor="end" font-family="JetBrains Mono">${yVal}</text>
+                    `;
+                  }).join('')}
+
+                  <!-- KPI RED BENCHMARK FINE LINE (70 CA) -->
+                  <line x1="${paddingLeft}" y1="${yKpi}" x2="${chartWidth - 30}" y2="${yKpi}" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.9" />
+                  <rect x="${chartWidth - 110}" y="${yKpi - 9}" width="80" height="18" rx="4" fill="#ef4444" opacity="0.9" />
+                  <text x="${chartWidth - 70}" y="${yKpi + 3}" font-size="9" font-weight="850" fill="#ffffff" text-anchor="middle" font-family="JetBrains Mono">KPI: 70 CA</text>
+
+                  <!-- Line 1: Opened Claims (Primary Gold - Fine Line 2px) -->
+                  ${pointsOpen.length > 1 ? `<path d="${pathOpenStr}" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />` : ''}
+                  
+                  <!-- Line 2: Approved HSBT Claims (Emerald Green - Fine Line 2px) -->
+                  ${pointsDuyet.length > 1 ? `<path d="${pathDuyetStr}" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />` : ''}
+
+                  <!-- Compact Points & Value Tags for Line 1 -->
+                  ${pointsOpen.map(p => `
+                    <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="var(--surface)" stroke="var(--primary)" stroke-width="2" />
+                    <text x="${p.x}" y="${p.y - 8}" font-size="9.5" font-weight="850" fill="var(--primary)" text-anchor="middle" font-family="JetBrains Mono">${p.val}</text>
+                  `).join('')}
+
+                  <!-- Compact Points & Value Tags for Line 2 -->
+                  ${pointsDuyet.map(p => `
+                    <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="var(--surface)" stroke="#10b981" stroke-width="2" />
+                    <text x="${p.x}" y="${p.y + 15}" font-size="9.5" font-weight="850" fill="#10b981" text-anchor="middle" font-family="JetBrains Mono">${p.val}</text>
+                  `).join('')}
+
+                  <!-- X Axis Labels (GĐV Names - Sleek Font) -->
+                  ${pointsOpen.map(p => `
+                    <text x="${p.x}" y="${chartHeight - 12}" font-size="10" font-weight="800" fill="var(--text-main)" text-anchor="middle">${escapeHtmlOutput(p.name)}</text>
+                  `).join('')}
+                </svg>
+              </div>
+            </div>
+
+            <!-- GĐV KPI CARDS GRID -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+              ${gdvRows.map(r => {
+                const kpiAchievementRate = Math.round((r.duyetHsbtCount / 70) * 100);
+                let kpiBadgeBg = 'rgba(239,68,68,0.12)';
+                let kpiBadgeBorder = 'rgba(239,68,68,0.3)';
+                let kpiBadgeColor = '#ef4444';
+                let kpiStatusLabel = 'CHƯA ĐẠT KPI';
+
+                if (r.duyetHsbtCount >= 70) {
+                  kpiBadgeBg = 'rgba(16,185,129,0.15)';
+                  kpiBadgeBorder = 'rgba(16,185,129,0.35)';
+                  kpiBadgeColor = '#10b981';
+                  kpiStatusLabel = 'ĐẠT KPI TÍNH LƯƠNG';
+                } else if (r.duyetHsbtCount >= 50) {
+                  kpiBadgeBg = 'rgba(234,179,8,0.15)';
+                  kpiBadgeBorder = 'rgba(234,179,8,0.35)';
+                  kpiBadgeColor = '#eab308';
+                  kpiStatusLabel = 'GẦN ĐẠT KPI';
+                }
+
+                const initials = getGdvInitials(r.gdvName);
+
+                return `
+                  <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 18px; box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); font-weight: 850; font-size: 12px; display: grid; place-items: center;">
                           ${initials}
                         </div>
                         <div>
-                          <strong style="display: block; font-size: 14.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(p.gdvName)}</strong>
-                          <span style="font-size: 11.5px; color: var(--text-soft);">${escapeHtmlOutput(p.branch)}</span>
+                          <strong style="display: block; font-size: 13.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(r.gdvName)}</strong>
+                          <span style="font-size: 11px; color: var(--text-soft);">${escapeHtmlOutput(r.branch)}</span>
                         </div>
                       </div>
-                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;">
-                        <div>
-                          <span style="font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Số HS tiếp nhận</span>
-                          <strong style="display: block; font-size: 16px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${p.totalOpenedCount} ca</strong>
-                        </div>
-                        <div>
-                          <span style="font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Đã duyệt HSBT</span>
-                          <strong style="display: block; font-size: 16px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${p.duyetHsbtCount} ca (${rateHsbt}%)</strong>
-                        </div>
+                      <span style="font-size: 10px; font-weight: 850; padding: 3px 8px; border-radius: 99px; background: ${kpiBadgeBg}; border: 1px solid ${kpiBadgeBorder}; color: ${kpiBadgeColor}; font-family: 'JetBrains Mono';">
+                        ${kpiStatusLabel}
+                      </span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;">
+                      <div>
+                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Số HS làm</span>
+                        <strong style="display: block; font-size: 15px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} ca</strong>
+                      </div>
+                      <div>
+                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Đã duyệt HSBT</span>
+                        <strong style="display: block; font-size: 15px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${r.duyetHsbtCount} ca</strong>
+                      </div>
+                      <div>
+                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Tỷ lệ KPI</span>
+                        <strong style="display: block; font-size: 15px; color: ${kpiBadgeColor}; font-family: 'JetBrains Mono'; font-weight: 850;">${kpiAchievementRate}%</strong>
                       </div>
                     </div>
-                  `;
-                }).join('')}
-              </div>
+                  </div>
+                `;
+              }).join('')}
             </div>
-          ` : ''}
 
-          <!-- ULTRA-PREMIUM MASTER DATA TABLE CONTAINER -->
-          <div class="table-container" style="border: 1px solid var(--border-strong); border-radius: 20px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow-md);">
+          ` : `
             
-            <!-- Table Sub-Header Bar -->
-            <div style="padding: 18px 24px; background: linear-gradient(180deg, var(--bg-soft) 0%, rgba(0,0,0,0.02) 100%); border-bottom: 1px solid var(--border-strong); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-              <span style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 10px;">
-                <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); display: grid; place-items: center;">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            <!-- TOP 3 PODIUM SHOWCASE (LEADERBOARD) -->
+            ${top3Performers.length > 0 ? `
+              <div style="margin-bottom: 24px;">
+                <div style="font-size: 12.5px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>
+                  <span>Vinh danh Top 3 GĐV Phụ trách Khối lượng lớn nhất</span>
                 </div>
-                <span>Bảng Thống kê Khối lượng Tiếp nhận & Duyệt HSBT theo Giám định viên</span>
-              </span>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                  ${top3Performers.map((p, pIdx) => {
+                    const medals = ['🥇 Top 1', '🥈 Top 2', '🥉 Top 3'];
+                    const borders = ['rgba(216,180,109,0.5)', 'rgba(148,163,184,0.5)', 'rgba(217,119,6,0.5)'];
+                    const badgeBgs = ['rgba(216,180,109,0.15)', 'rgba(148,163,184,0.15)', 'rgba(217,119,6,0.15)'];
+                    const initials = getGdvInitials(p.gdvName);
+                    const rateHsbt = p.totalOpenedCount > 0 ? Math.round((p.duyetHsbtCount / p.totalOpenedCount) * 100) : 0;
 
-              <span style="font-size: 11.5px; font-weight: 800; color: var(--primary); background: rgba(216,180,109,0.1); border: 1px solid rgba(216,180,109,0.25); padding: 5px 12px; border-radius: 99px;">
-                ${gdvRows.length} Cán bộ Giám định viên
-              </span>
-            </div>
-
-            <!-- Master Table -->
-            <table class="p-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
-              <thead>
-                <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong);">
-                  <th style="width: 55px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">STT</th>
-                  <th style="width: 230px; padding: 14px 14px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Giám định viên</th>
-                  <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Số HS tiếp nhận</th>
-                  <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Đã duyệt HSBT</th>
-                  <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Tỷ lệ duyệt HSBT</th>
-                  <th style="padding: 14px 16px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Phân bổ Trạng thái Nghiệp vụ</th>
-                  <th style="width: 170px; text-align: right; padding: 14px 24px 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Tổng tiền duyệt BT (VNĐ)</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${gdvRows.length === 0 ? `
-                  <tr><td colspan="7" class="empty-state-text" style="padding: 45px; text-align: center; color: var(--text-muted); font-size: 14px;">Không tìm thấy dữ liệu hồ sơ nào trong mốc thời gian đã chọn (${timeLabelText}).</td></tr>
-                ` : gdvRows.map((r, idx) => {
-                  const percentTotal = totalFilteredClaims > 0 ? Math.round((r.totalOpenedCount / totalFilteredClaims) * 100) : 0;
-                  const rateHsbt = r.totalOpenedCount > 0 ? Math.round((r.duyetHsbtCount / r.totalOpenedCount) * 100) : 0;
-                  const initials = getGdvInitials(r.gdvName);
-
-                  let rankBadge = '';
-                  if (idx === 0) rankBadge = '<span style="font-size: 14px;">🥇</span>';
-                  else if (idx === 1) rankBadge = '<span style="font-size: 14px;">🥈</span>';
-                  else if (idx === 2) rankBadge = '<span style="font-size: 14px;">🥉</span>';
-
-                  const activeStatuses = Object.entries(r.statusMap).filter(([, cnt]) => cnt > 0);
-
-                  // Dynamic color gradient based on approval rate %
-                  let rateColor = '#3b82f6';
-                  let gradColor = 'linear-gradient(90deg, #3b82f6, #60a5fa)';
-                  if (rateHsbt >= 70) {
-                    rateColor = '#10b981';
-                    gradColor = 'linear-gradient(90deg, #10b981, #34d399)';
-                  } else if (rateHsbt < 50 && rateHsbt > 0) {
-                    rateColor = '#f97316';
-                    gradColor = 'linear-gradient(90deg, #f97316, #fb923c)';
-                  }
-
-                  return `
-                    <tr style="transition: background 0.15s ease; border-bottom: 1px solid var(--border);">
-                      
-                      <!-- STT -->
-                      <td style="text-align: center; font-weight: 850; color: var(--text-muted); font-size: 12.5px; padding: 14px 12px; font-family: 'JetBrains Mono';">
-                        ${String(idx + 1).padStart(2, '0')}
-                      </td>
-                      
-                      <!-- Giám định viên -->
-                      <td style="padding: 14px 14px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                          <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, rgba(216,180,109,0.2) 0%, rgba(216,180,109,0.05) 100%); border: 1.5px solid rgba(216,180,109,0.4); color: var(--primary); font-weight: 900; font-size: 12px; display: grid; place-items: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                    return `
+                      <div style="background: var(--surface); border: 1px solid ${borders[pIdx]}; border-radius: 16px; padding: 18px; box-shadow: var(--shadow-sm); position: relative;">
+                        <div style="position: absolute; right: 14px; top: 14px; font-size: 11px; font-weight: 850; padding: 3px 10px; border-radius: 99px; background: ${badgeBgs[pIdx]}; border: 1px solid ${borders[pIdx]}; color: var(--text-main);">
+                          ${medals[pIdx]}
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                          <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, rgba(216,180,109,0.2) 0%, rgba(216,180,109,0.05) 100%); border: 1.5px solid rgba(216,180,109,0.4); color: var(--primary); font-weight: 900; font-size: 15px; display: grid; place-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                             ${initials}
                           </div>
                           <div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                              ${rankBadge}
-                              <strong style="color: var(--text-main); font-size: 13.5px; font-weight: 850; letter-spacing: -0.01em;">${escapeHtmlOutput(r.gdvName)}</strong>
-                            </div>
+                            <strong style="display: block; font-size: 14.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(p.gdvName)}</strong>
+                            <span style="font-size: 11.5px; color: var(--text-soft);">${escapeHtmlOutput(p.branch)}</span>
                           </div>
                         </div>
-                      </td>
-
-
-                      <!-- Số HS tiếp nhận -->
-                      <td style="text-align: center; padding: 14px 12px;">
-                        <strong style="font-size: 16px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
-                        <div style="font-size: 10.5px; font-weight: 800; color: var(--text-soft); background: rgba(0,0,0,0.04); padding: 1px 7px; border-radius: 99px; display: inline-block; margin-top: 3px;">${percentTotal}% tổng kỳ</div>
-                      </td>
-
-                      <!-- Đã duyệt HSBT -->
-                      <td style="text-align: center; padding: 14px 12px;">
-                        <strong style="font-size: 16px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${r.duyetHsbtCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
-                        <div style="font-size: 10.5px; font-weight: 750; color: var(--text-muted); margin-top: 3px;">Chờ duyệt: ${r.pendingHsbtCount} ca</div>
-                      </td>
-
-                      <!-- Tỷ lệ duyệt HSBT -->
-                      <td style="text-align: center; padding: 14px 12px;">
-                        <strong style="font-size: 14px; color: ${rateColor}; font-family: 'JetBrains Mono'; font-weight: 850;">${rateHsbt}%</strong>
-                        <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.06); border-radius: 99px; margin-top: 5px; overflow: hidden; padding: 1px; border: 1px solid rgba(0,0,0,0.08);">
-                          <div style="width: ${rateHsbt}%; height: 100%; background: ${gradColor}; border-radius: 99px; transition: width 0.3s ease;"></div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;">
+                          <div>
+                            <span style="font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Số HS tiếp nhận</span>
+                            <strong style="display: block; font-size: 16px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${p.totalOpenedCount} ca</strong>
+                          </div>
+                          <div>
+                            <span style="font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Đã duyệt HSBT</span>
+                            <strong style="display: block; font-size: 16px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${p.duyetHsbtCount} ca (${rateHsbt}%)</strong>
+                          </div>
                         </div>
-                      </td>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            ` : ''}
 
-                      <!-- Phân bổ 14 Trạng thái -->
-                      <td style="padding: 14px 16px;">
-                        <div style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
-                          ${activeStatuses.map(([stKey, stCount]) => {
-                            const cfg = PENDING_STATUS_MAP[stKey] || PENDING_STATUS_MAP['moi'];
-                            return `<span style="background: ${cfg.bg}; color: ${cfg.color}; border: 1px solid ${cfg.border}; font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 8px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.05);"><span>${cfg.label}:</span> <strong style="font-family: 'JetBrains Mono'; font-size: 11px;">${stCount}</strong></span>`;
-                          }).join('')}
-                        </div>
-                      </td>
+            <!-- ULTRA-PREMIUM MASTER DATA TABLE CONTAINER -->
+            <div class="table-container" style="border: 1px solid var(--border-strong); border-radius: 20px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow-md);">
+              <div style="padding: 18px 24px; background: linear-gradient(180deg, var(--bg-soft) 0%, rgba(0,0,0,0.02) 100%); border-bottom: 1px solid var(--border-strong); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <span style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 10px;">
+                  <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); display: grid; place-items: center;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                  </div>
+                  <span>Bảng Thống kê Khối lượng Tiếp nhận & Duyệt HSBT theo Giám định viên</span>
+                </span>
 
-                      <!-- Tổng tiền duyệt BT -->
-                      <td style="text-align: right; padding: 14px 24px 14px 12px; font-family: 'JetBrains Mono'; font-weight: 850; color: var(--primary); font-size: 14px; letter-spacing: -0.01em;">
-                        ${r.totalApprovedAmount > 0 ? formatCurrencyInputNumber(r.totalApprovedAmount) + ' đ' : '—'}
-                      </td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
+                <span style="font-size: 11.5px; font-weight: 800; color: var(--primary); background: rgba(216,180,109,0.1); border: 1px solid rgba(216,180,109,0.25); padding: 5px 12px; border-radius: 99px;">
+                  ${gdvRows.length} Cán bộ Giám định viên
+                </span>
+              </div>
+
+              <table class="p-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+                <thead>
+                  <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong);">
+                    <th style="width: 55px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">STT</th>
+                    <th style="width: 230px; padding: 14px 14px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Giám định viên</th>
+                    <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Số HS tiếp nhận</th>
+                    <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Đã duyệt HSBT</th>
+                    <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Tỷ lệ duyệt HSBT</th>
+                    <th style="padding: 14px 16px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Phân bổ Trạng thái Nghiệp vụ</th>
+                    <th style="width: 170px; text-align: right; padding: 14px 24px 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Tổng tiền duyệt BT (VNĐ)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${gdvRows.length === 0 ? `
+                    <tr><td colspan="7" class="empty-state-text" style="padding: 45px; text-align: center; color: var(--text-muted); font-size: 14px;">Không tìm thấy dữ liệu hồ sơ nào trong mốc thời gian đã chọn (${timeLabelText}).</td></tr>
+                  ` : gdvRows.map((r, idx) => {
+                    const percentTotal = totalFilteredClaims > 0 ? Math.round((r.totalOpenedCount / totalFilteredClaims) * 100) : 0;
+                    const rateHsbt = r.totalOpenedCount > 0 ? Math.round((r.duyetHsbtCount / r.totalOpenedCount) * 100) : 0;
+                    const initials = getGdvInitials(r.gdvName);
+
+                    let rankBadge = '';
+                    if (idx === 0) rankBadge = '<span style="font-size: 14px;">🥇</span>';
+                    else if (idx === 1) rankBadge = '<span style="font-size: 14px;">🥈</span>';
+                    else if (idx === 2) rankBadge = '<span style="font-size: 14px;">🥉</span>';
+
+                    const activeStatuses = Object.entries(r.statusMap).filter(([, cnt]) => cnt > 0);
+
+                    let rateColor = '#3b82f6';
+                    let gradColor = 'linear-gradient(90deg, #3b82f6, #60a5fa)';
+                    if (rateHsbt >= 70) {
+                      rateColor = '#10b981';
+                      gradColor = 'linear-gradient(90deg, #10b981, #34d399)';
+                    } else if (rateHsbt < 50 && rateHsbt > 0) {
+                      rateColor = '#f97316';
+                      gradColor = 'linear-gradient(90deg, #f97316, #fb923c)';
+                    }
+
+                    return `
+                      <tr style="transition: background 0.15s ease; border-bottom: 1px solid var(--border);">
+                        <td style="text-align: center; font-weight: 850; color: var(--text-muted); font-size: 12.5px; padding: 14px 12px; font-family: 'JetBrains Mono';">${String(idx + 1).padStart(2, '0')}</td>
+                        <td style="padding: 14px 14px;">
+                          <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, rgba(216,180,109,0.2) 0%, rgba(216,180,109,0.05) 100%); border: 1.5px solid rgba(216,180,109,0.4); color: var(--primary); font-weight: 900; font-size: 12px; display: grid; place-items: center; flex-shrink: 0;">
+                              ${initials}
+                            </div>
+                            <div>
+                              <div style="display: flex; align-items: center; gap: 6px;">
+                                ${rankBadge}
+                                <strong style="color: var(--text-main); font-size: 13.5px; font-weight: 850;">${escapeHtmlOutput(r.gdvName)}</strong>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style="text-align: center; padding: 14px 12px;">
+                          <strong style="font-size: 16px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
+                          <div style="font-size: 10.5px; font-weight: 800; color: var(--text-soft); background: rgba(0,0,0,0.04); padding: 1px 7px; border-radius: 99px; display: inline-block; margin-top: 3px;">${percentTotal}% tổng kỳ</div>
+                        </td>
+                        <td style="text-align: center; padding: 14px 12px;">
+                          <strong style="font-size: 16px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${r.duyetHsbtCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
+                          <div style="font-size: 10.5px; font-weight: 750; color: var(--text-muted); margin-top: 3px;">Chờ duyệt: ${r.pendingHsbtCount} ca</div>
+                        </td>
+                        <td style="text-align: center; padding: 14px 12px;">
+                          <strong style="font-size: 14px; color: ${rateColor}; font-family: 'JetBrains Mono'; font-weight: 850;">${rateHsbt}%</strong>
+                          <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.06); border-radius: 99px; margin-top: 5px; overflow: hidden; padding: 1px; border: 1px solid rgba(0,0,0,0.08);">
+                            <div style="width: ${rateHsbt}%; height: 100%; background: ${gradColor}; border-radius: 99px;"></div>
+                          </div>
+                        </td>
+                        <td style="padding: 14px 16px;">
+                          <div style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
+                            ${activeStatuses.map(([stKey, stCount]) => {
+                              const cfg = PENDING_STATUS_MAP[stKey] || PENDING_STATUS_MAP['moi'];
+                              return `<span style="background: ${cfg.bg}; color: ${cfg.color}; border: 1px solid ${cfg.border}; font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 8px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"><span>${cfg.label}:</span> <strong style="font-family: 'JetBrains Mono'; font-size: 11px;">${stCount}</strong></span>`;
+                            }).join('')}
+                          </div>
+                        </td>
+                        <td style="text-align: right; padding: 14px 24px 14px 12px; font-family: 'JetBrains Mono'; font-weight: 850; color: var(--primary); font-size: 14px;">
+                          ${r.totalApprovedAmount > 0 ? formatCurrencyInputNumber(r.totalApprovedAmount) + ' đ' : '—'}
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          `}
         </div>
       `;
     }
@@ -11119,416 +11243,6 @@
       } else {
         triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
       }
-    }
-
-
-
-    /****************************************************
-     * TRANG BIỂU ĐỒ ĐƯỜNG KPI & TÍNH LƯƠNG GĐV (70 CA/THÁNG)
-     * DEDICATED SVG LINE CHART DASHBOARD PAGE
-     ****************************************************/
-    function renderGdvKpiLineChartPage(targetContainer) {
-      const container = targetContainer || document.getElementById('tabContentContainer');
-      if (!container) return;
-
-      const claimsList = Object.values(cachedPendingClaimsPayload || {});
-
-      // SINGLE PASS O(N) PRE-PROCESSING
-      const yearSet = new Set();
-      const branchSet = new Set(['all']);
-      const parsedClaims = [];
-
-      for (let i = 0; i < claimsList.length; i++) {
-        const c = claimsList[i];
-        const dateStr = c.ngayMoHs || c.ngayTonThat || c.ngayVTT;
-        let yr = null;
-        let mo = null;
-
-        if (dateStr && dateStr !== '—') {
-          const dp = parseDateParts(dateStr);
-          if (dp && dp.year && dp.month) {
-            yr = dp.year;
-            mo = dp.month;
-          }
-        }
-        if (!yr) {
-          const d = new Date(c.createdAt || Date.now());
-          yr = d.getFullYear();
-          mo = d.getMonth() + 1;
-        }
-
-        yearSet.add(yr);
-        const branch = c.donViCapDon || c.chiNhanh || c.chiNhanhXuly;
-        if (branch && branch !== '—') branchSet.add(branch);
-
-        parsedClaims.push({
-          raw: c,
-          year: yr,
-          month: mo
-        });
-      }
-
-      const yearList = Array.from(yearSet).sort((a, b) => b - a);
-      const branchList = Array.from(branchSet);
-
-      // Filter claims based on selected Month, Year, and Branch
-      const filteredClaims = parsedClaims.filter(item => {
-        if (activeGdvReportYear !== 'all' && item.year !== parseInt(activeGdvReportYear, 10)) return false;
-        if (activeGdvReportMonth !== 'all' && item.month !== parseInt(activeGdvReportMonth, 10)) return false;
-        if (activeGdvReportBranch !== 'all') {
-          const b = item.raw.donViCapDon || item.raw.chiNhanh || item.raw.chiNhanhXuly || '';
-          if (b !== activeGdvReportBranch) return false;
-        }
-        return true;
-      });
-
-      // Group claims by Giám định viên / Cán bộ xử lý
-      const gdvMap = {};
-      for (let i = 0; i < filteredClaims.length; i++) {
-        const item = filteredClaims[i];
-        const c = item.raw;
-        const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
-
-        if (!gdvMap[gdvName]) {
-          gdvMap[gdvName] = {
-            gdvName,
-            branch: c.donViCapDon || c.chiNhanh || '—',
-            totalOpenedCount: 0,
-            duyetHsbtCount: 0,
-            pendingHsbtCount: 0
-          };
-        }
-
-        gdvMap[gdvName].totalOpenedCount++;
-        if (isDuyetHsbtApproved(c)) {
-          gdvMap[gdvName].duyetHsbtCount++;
-        } else {
-          gdvMap[gdvName].pendingHsbtCount++;
-        }
-      }
-
-      let gdvRows = Object.values(gdvMap);
-
-      if (activeGdvReportSearch) {
-        gdvRows = gdvRows.filter(r => r.gdvName.toLowerCase().includes(activeGdvReportSearch) || r.branch.toLowerCase().includes(activeGdvReportSearch));
-      }
-
-      gdvRows.sort((a, b) => b.totalOpenedCount - a.totalOpenedCount);
-
-      const totalFilteredClaims = filteredClaims.length;
-      const totalDuyetHsbtCount = filteredClaims.filter(item => isDuyetHsbtApproved(item.raw)).length;
-      const passKpiCount = gdvRows.filter(r => r.duyetHsbtCount >= 70).length;
-
-      const timeLabelText = activeGdvReportMonth === 'all' 
-        ? (activeGdvReportYear === 'all' ? 'Tất cả thời gian' : `Toàn bộ năm ${activeGdvReportYear}`)
-        : (activeGdvReportYear === 'all' ? `Tháng ${activeGdvReportMonth} (Tất cả năm)` : `Tháng ${activeGdvReportMonth}/${activeGdvReportYear}`);
-
-      // CALCULATE LINE CHART GEOMETRY
-      const chartWidth = 900;
-      const chartHeight = 320;
-      const paddingLeft = 60;
-      const paddingTop = 40;
-      const paddingBottom = 60;
-      const plotWidth = chartWidth - paddingLeft - 40;
-      const plotHeight = chartHeight - paddingTop - paddingBottom;
-
-      const maxY = Math.max(100, ...gdvRows.map(r => Math.max(r.totalOpenedCount, r.duyetHsbtCount)));
-
-      const stepX = gdvRows.length > 1 ? plotWidth / (gdvRows.length - 1) : plotWidth / 2;
-
-      const pointsOpen = [];
-      const pointsDuyet = [];
-
-      gdvRows.forEach((r, idx) => {
-        const x = gdvRows.length === 1 ? paddingLeft + plotWidth / 2 : paddingLeft + idx * stepX;
-        const yOpen = paddingTop + plotHeight - (r.totalOpenedCount / maxY) * plotHeight;
-        const yDuyet = paddingTop + plotHeight - (r.duyetHsbtCount / maxY) * plotHeight;
-
-        pointsOpen.push({ x, y: yOpen, val: r.totalOpenedCount, name: r.gdvName });
-        pointsDuyet.push({ x, y: yDuyet, val: r.duyetHsbtCount, name: r.gdvName });
-      });
-
-      const yKpi = paddingTop + plotHeight - (70 / maxY) * plotHeight;
-
-      const pathOpenStr = pointsOpen.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-      const pathDuyetStr = pointsDuyet.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-
-      container.innerHTML = `
-        <div style="padding: 24px 28px; max-width: 1600px; margin: 0 auto;">
-          
-          <!-- HERO BANNER HEADER -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 24px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-            <div style="position: absolute; right: -40px; top: -40px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none;"></div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
-              <div>
-                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3); color: #3b82f6; padding: 5px 14px; border-radius: 99px; font-size: 11.5px; font-weight: 850; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px;">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                  <span>BIỂU ĐỒ ĐƯỜNG NĂNG SUẤT GĐV</span>
-                </div>
-                <h1 style="font-size: 24px; font-weight: 850; color: var(--text-main); margin: 0; letter-spacing: -0.02em; line-height: 1.25;">
-                  Biểu đồ Đường KPI & Lương Giám định viên (Target: 70 ca/tháng)
-                </h1>
-                <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft); max-width: 850px; margin-bottom: 0;">
-                  Theo dõi đường xu hướng so sánh Số lượng hồ sơ tiếp nhận với Số lượng hồ sơ có ngày duyệt HSBT trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>) và vạch chuẩn KPI tính lương <strong>70 ca/tháng</strong>.
-                </p>
-              </div>
-
-              <!-- Export Button -->
-              <div>
-                <button type="button" onclick="exportGdvMonthlyReportExcel()" style="padding: 0 22px; height: 44px; font-size: 13px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 4px 16px rgba(16,185,129,0.3); transition: all 0.2s ease;">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  <span>Xuất Báo cáo Excel (.xlsx)</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- CONTROL HUB FILTER BAR -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 16px 22px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: var(--shadow-sm);">
-            
-            <!-- Left Controls: Custom Dropdowns -->
-            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-              <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--primary); background: rgba(216,180,109,0.08); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(216,180,109,0.2);">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                <span>Mốc thời gian:</span>
-              </div>
-
-              <!-- Custom Month Dropdown -->
-              <div class="custom-select-wrapper" style="position: relative;">
-                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddChartMonthMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 160px; justify-content: space-between; box-shadow: var(--shadow-xs);">
-                  <span style="display: flex; align-items: center; gap: 6px;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    <span>${activeGdvReportMonth === 'all' ? 'Tất cả các tháng' : 'Tháng ' + activeGdvReportMonth}</span>
-                  </span>
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </button>
-
-                <div id="ddChartMonthMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 190px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
-                  <div class="custom-select-item ${activeGdvReportMonth === 'all' ? 'active' : ''}" onclick="selectGdvReportMonth('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportMonth === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
-                    <span>Tất cả các tháng</span>
-                    ${activeGdvReportMonth === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
-                  </div>
-                  ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `
-                    <div class="custom-select-item ${String(m) === String(activeGdvReportMonth) ? 'active' : ''}" onclick="selectGdvReportMonth('${m}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(m) === String(activeGdvReportMonth) ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
-                      <span>Tháng ${m}</span>
-                      ${String(m) === String(activeGdvReportMonth) ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-
-              <!-- Custom Year Dropdown -->
-              <div class="custom-select-wrapper" style="position: relative;">
-                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddChartYearMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 140px; justify-content: space-between; box-shadow: var(--shadow-xs);">
-                  <span style="display: flex; align-items: center; gap: 6px;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span>${activeGdvReportYear === 'all' ? 'Tất cả các năm' : 'Năm ' + activeGdvReportYear}</span>
-                  </span>
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </button>
-
-                <div id="ddChartYearMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 170px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
-                  <div class="custom-select-item ${activeGdvReportYear === 'all' ? 'active' : ''}" onclick="selectGdvReportYear('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportYear === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
-                    <span>Tất cả các năm</span>
-                    ${activeGdvReportYear === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
-                  </div>
-                  ${yearList.map(y => `
-                    <div class="custom-select-item ${String(y) === String(activeGdvReportYear) ? 'active' : ''}" onclick="selectGdvReportYear('${y}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(y) === String(activeGdvReportYear) ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
-                      <span>Năm ${y}</span>
-                      ${String(y) === String(activeGdvReportYear) ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-
-              <!-- Custom Branch Dropdown -->
-              <div class="custom-select-wrapper" style="position: relative;">
-                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddChartBranchMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 220px; justify-content: space-between; box-shadow: var(--shadow-xs);">
-                  <span style="display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary); flex-shrink: 0;"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"></path><path d="M6 12H4a2 2 0 0 0-2 2v8h4"></path><path d="M18 9h2a2 2 0 0 1 2 2v11h-4"></path></svg>
-                    <span>${activeGdvReportBranch === 'all' ? 'Tất cả chi nhánh cấp đơn' : activeGdvReportBranch}</span>
-                  </span>
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </button>
-
-                <div id="ddChartBranchMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 250px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
-                  <div class="custom-select-item ${activeGdvReportBranch === 'all' ? 'active' : ''}" onclick="selectGdvReportBranch('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportBranch === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
-                    <span>Tất cả chi nhánh cấp đơn</span>
-                    ${activeGdvReportBranch === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
-                  </div>
-                  ${branchList.filter(b => b !== 'all').map(b => `
-                    <div class="custom-select-item ${b === activeGdvReportBranch ? 'active' : ''}" onclick="selectGdvReportBranch('${escapeAttributeData(b)}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${b === activeGdvReportBranch ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
-                      <span>${escapeHtmlOutput(b)}</span>
-                      ${b === activeGdvReportBranch ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-            </div>
-
-            <!-- Right Controls: Search GĐV -->
-            <div class="search-wrap" style="margin: 0; min-width: 240px; max-width: 320px; flex: 1;">
-              <input type="text" class="input-premium search-input" placeholder="Tìm kiếm GĐV hoặc Chi nhánh..." value="${escapeAttributeData(activeGdvReportSearch)}" oninput="changeGdvReportSearch(this.value)" style="padding-left: 38px; border-radius: 11px; height: 42px; font-size: 13px;" />
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-soft);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            </div>
-          </div>
-
-          <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
-            <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">TỔNG HỒ SƠ TIẾP NHẬN</span>
-              <strong style="display: block; font-size: 30px; color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
-                ${totalFilteredClaims} <span style="font-size: 14px; color: var(--text-soft);">ca</span>
-              </strong>
-            </div>
-
-            <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(16,185,129,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">ĐÃ DUYỆT HSBT TRONG THÁNG</span>
-              <strong style="display: block; font-size: 30px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
-                ${totalDuyetHsbtCount} <span style="font-size: 14px; color: var(--text-soft);">ca</span>
-              </strong>
-            </div>
-
-            <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(59,130,246,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">ĐỊNH MỨC KPI CHUẨN</span>
-              <strong style="display: block; font-size: 30px; color: #3b82f6; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
-                70 <span style="font-size: 14px; color: var(--text-soft);">ca / GĐV</span>
-              </strong>
-            </div>
-
-            <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(168,85,247,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">SỐ GĐV ĐẠT KPI TÍNH LƯƠNG</span>
-              <strong style="display: block; font-size: 30px; color: #a855f7; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
-                ${passKpiCount} <span style="font-size: 14px; color: var(--text-soft);">/ ${gdvRows.length} nhân sự</span>
-              </strong>
-            </div>
-          </div>
-
-          <!-- HIGH-PRECISION SVG LINE CHART CONTAINER -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 24px; box-shadow: var(--shadow-md);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-              <div>
-                <div style="font-size: 13.5px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                  <span>Biểu đồ Đường Xu hướng KPI & Lương Giám định viên (Target: 70 ca/tháng)</span>
-                </div>
-              </div>
-
-              <!-- Legend -->
-              <div style="display: flex; align-items: center; gap: 16px; font-size: 12px; font-weight: 850; background: var(--bg-soft); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--border);">
-                <span style="display: flex; align-items: center; gap: 6px; color: var(--text-main);"><span style="width: 14px; height: 3px; background: var(--primary); border-radius: 99px;"></span> Số HS tiếp nhận</span>
-                <span style="display: flex; align-items: center; gap: 6px; color: var(--text-main);"><span style="width: 14px; height: 3px; background: #10b981; border-radius: 99px;"></span> Đã duyệt HSBT</span>
-                <span style="display: flex; align-items: center; gap: 6px; color: #ef4444;"><span style="width: 14px; height: 3px; background: #ef4444; border-radius: 99px; stroke-dasharray: 2;"></span> Vạch KPI tính lương (70 ca)</span>
-              </div>
-            </div>
-
-            <!-- SVG LINE CHART -->
-            <div style="position: relative; width: 100%; overflow-x: auto;">
-              <svg viewBox="0 0 ${chartWidth} ${chartHeight}" style="width: 100%; height: auto; min-width: 750px; overflow: visible;">
-                <!-- Grid Y Lines -->
-                ${[0, 0.25, 0.5, 0.75, 1].map(r => {
-                  const yVal = Math.round(maxY * r);
-                  const yPos = paddingTop + plotHeight - r * plotHeight;
-                  return `
-                    <line x1="${paddingLeft}" y1="${yPos}" x2="${chartWidth - 40}" y2="${yPos}" stroke="var(--border)" stroke-width="1" stroke-dasharray="4" />
-                    <text x="${paddingLeft - 10}" y="${yPos + 4}" font-size="11" font-weight="700" fill="var(--text-muted)" text-anchor="end" font-family="JetBrains Mono">${yVal}</text>
-                  `;
-                }).join('')}
-
-                <!-- KPI RED BENCHMARK LINE (70 CA) -->
-                <line x1="${paddingLeft}" y1="${yKpi}" x2="${chartWidth - 40}" y2="${yKpi}" stroke="#ef4444" stroke-width="2" stroke-dasharray="6 4" />
-                <rect x="${chartWidth - 145}" y="${yKpi - 12}" width="100" height="22" rx="6" fill="#ef4444" />
-                <text x="${chartWidth - 95}" y="${yKpi + 3}" font-size="10" font-weight="900" fill="#ffffff" text-anchor="middle" font-family="JetBrains Mono">KPI: 70 CA</text>
-
-                <!-- Line 1: Opened Claims (Gold/Primary) -->
-                ${pointsOpen.length > 1 ? `<path d="${pathOpenStr}" fill="none" stroke="var(--primary)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />` : ''}
-                
-                <!-- Line 2: Approved HSBT Claims (Emerald Green) -->
-                ${pointsDuyet.length > 1 ? `<path d="${pathDuyetStr}" fill="none" stroke="#10b981" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />` : ''}
-
-                <!-- Points & Labels for Line 1 (Opened Claims) -->
-                ${pointsOpen.map(p => `
-                  <circle cx="${p.x}" cy="${p.y}" r="6" fill="var(--primary)" stroke="var(--surface)" stroke-width="2.5" />
-                  <rect x="${p.x - 18}" y="${p.y - 25}" width="36" height="18" rx="5" fill="rgba(216,180,109,0.2)" stroke="var(--primary)" stroke-width="1" />
-                  <text x="${p.x}" y="${p.y - 12}" font-size="10" font-weight="900" fill="var(--primary)" text-anchor="middle" font-family="JetBrains Mono">${p.val}</text>
-                `).join('')}
-
-                <!-- Points & Labels for Line 2 (Approved HSBT Claims) -->
-                ${pointsDuyet.map(p => `
-                  <circle cx="${p.x}" cy="${p.y}" r="6" fill="#10b981" stroke="var(--surface)" stroke-width="2.5" />
-                  <rect x="${p.x - 18}" y="${p.y + 10}" width="36" height="18" rx="5" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="1" />
-                  <text x="${p.x}" y="${p.y + 23}" font-size="10" font-weight="900" fill="#10b981" text-anchor="middle" font-family="JetBrains Mono">${p.val}</text>
-                `).join('')}
-
-                <!-- X Axis Labels (GĐV Names) -->
-                ${pointsOpen.map(p => `
-                  <text x="${p.x}" y="${chartHeight - 15}" font-size: "11" font-weight="850" fill="var(--text-main)" text-anchor="middle">${escapeHtmlOutput(p.name.split(' ')[0])}</text>
-                `).join('')}
-              </svg>
-            </div>
-          </div>
-
-          <!-- GĐV PERFORMANCE CARDS GRID -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;">
-            ${gdvRows.map(r => {
-              const kpiAchievementRate = Math.round((r.duyetHsbtCount / 70) * 100);
-              let kpiBadgeBg = 'rgba(239,68,68,0.12)';
-              let kpiBadgeBorder = 'rgba(239,68,68,0.3)';
-              let kpiBadgeColor = '#ef4444';
-              let kpiStatusLabel = 'CHƯA ĐẠT KPI';
-
-              if (r.duyetHsbtCount >= 70) {
-                kpiBadgeBg = 'rgba(16,185,129,0.15)';
-                kpiBadgeBorder = 'rgba(16,185,129,0.35)';
-                kpiBadgeColor = '#10b981';
-                kpiStatusLabel = 'ĐẠT KPI TÍNH LƯƠNG';
-              } else if (r.duyetHsbtCount >= 50) {
-                kpiBadgeBg = 'rgba(234,179,8,0.15)';
-                kpiBadgeBorder = 'rgba(234,179,8,0.35)';
-                kpiBadgeColor = '#eab308';
-                kpiStatusLabel = 'GẦN ĐẠT KPI';
-              }
-
-              const initials = getGdvInitials(r.gdvName);
-
-              return `
-                <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 20px; box-shadow: var(--shadow-sm);">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                      <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); font-weight: 850; font-size: 13px; display: grid; place-items: center;">
-                        ${initials}
-                      </div>
-                      <div>
-                        <strong style="display: block; font-size: 14.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(r.gdvName)}</strong>
-                        <span style="font-size: 11.5px; color: var(--text-soft);">${escapeHtmlOutput(r.branch)}</span>
-                      </div>
-                    </div>
-                    <span style="font-size: 10.5px; font-weight: 850; padding: 4px 10px; border-radius: 99px; background: ${kpiBadgeBg}; border: 1px solid ${kpiBadgeBorder}; color: ${kpiBadgeColor}; font-family: 'JetBrains Mono';">
-                      ${kpiStatusLabel}
-                    </span>
-                  </div>
-
-                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; border-top: 1px dashed var(--border); padding-top: 12px; margin-top: 6px;">
-                    <div>
-                      <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Số HS tiếp nhận</span>
-                      <strong style="display: block; font-size: 16px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} ca</strong>
-                    </div>
-                    <div>
-                      <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Đã duyệt HSBT</span>
-                      <strong style="display: block; font-size: 16px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${r.duyetHsbtCount} ca</strong>
-                    </div>
-                    <div>
-                      <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Tỷ lệ đạt KPI</span>
-                      <strong style="display: block; font-size: 16px; color: ${kpiBadgeColor}; font-family: 'JetBrains Mono'; font-weight: 850;">${kpiAchievementRate}%</strong>
-                    </div>
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-      `;
     }
 
 
