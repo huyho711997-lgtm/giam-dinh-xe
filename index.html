@@ -4976,26 +4976,44 @@
     function parseDateParts(dateInput) {
       if (dateInput === null || dateInput === undefined || dateInput === '') return null;
 
-      const num = Number(dateInput);
-      // Excel Serial Date Number Check (30000 to 75000)
+      const str = String(dateInput).trim();
+      if (!str || str === '—' || str === '0' || str === 'null' || str === 'undefined' || str.includes('1970')) return null;
+
+      const num = Number(str);
+      // 1. Check Excel Serial Date Number (30000 to 75000)
       if (!isNaN(num) && num >= 30000 && num <= 75000) {
-        const jsDate = new Date(Math.round((num - 25569) * 86400 * 1000));
+        const totalSeconds = Math.round((num - 25569) * 86400);
+        const jsDate = new Date(totalSeconds * 1000);
         if (!isNaN(jsDate.getTime())) {
-          return { day: jsDate.getUTCDate(), month: jsDate.getUTCMonth() + 1, year: jsDate.getUTCFullYear() };
+          return {
+            day: jsDate.getUTCDate(),
+            month: jsDate.getUTCMonth() + 1,
+            year: jsDate.getUTCFullYear(),
+            hours: jsDate.getUTCHours(),
+            minutes: jsDate.getUTCMinutes(),
+            seconds: jsDate.getUTCSeconds(),
+            hasTime: (jsDate.getUTCHours() > 0 || jsDate.getUTCMinutes() > 0 || jsDate.getUTCSeconds() > 0)
+          };
         }
       }
 
-      // Timestamp in ms
+      // 2. Check Millisecond Unix Timestamp (e.g. 1700000000000)
       if (!isNaN(num) && num > 100000000000) {
         const dt = new Date(num);
-        if (!isNaN(dt.getTime())) {
-          return { day: dt.getDate(), month: dt.getMonth() + 1, year: dt.getFullYear() };
+        if (!isNaN(dt.getTime()) && dt.getFullYear() > 1970) {
+          return {
+            day: dt.getDate(),
+            month: dt.getMonth() + 1,
+            year: dt.getFullYear(),
+            hours: dt.getHours(),
+            minutes: dt.getMinutes(),
+            seconds: dt.getSeconds(),
+            hasTime: (dt.getHours() > 0 || dt.getMinutes() > 0 || dt.getSeconds() > 0)
+          };
         }
       }
 
-      const str = String(dateInput).trim();
-      if (!str || str === '—' || str === 'null' || str === 'undefined') return null;
-
+      // 3. String split by separators (YYYY-MM-DD or DD/MM/YYYY)
       const parts = str.split(/[\/\-\.\sT]/).filter(Boolean);
       if (parts.length >= 3) {
         let p1 = parseInt(parts[0], 10);
@@ -5003,26 +5021,43 @@
         let p3 = parseInt(parts[2], 10);
 
         if (p1 > 1000) {
-          // YYYY-MM-DD format
-          return { day: p3, month: p2, year: p1 };
+          // YYYY-MM-DD
+          let hours = 0, minutes = 0, seconds = 0, hasTime = false;
+          if (parts.length >= 4) {
+            hours = parseInt(parts[3], 10) || 0;
+            minutes = parseInt(parts[4], 10) || 0;
+            seconds = parseInt(parts[5], 10) || 0;
+            hasTime = true;
+          }
+          return { day: p3, month: p2, year: p1, hours, minutes, seconds, hasTime };
         } else if (p3 > 1000) {
           // MM/DD/YYYY or DD/MM/YYYY
-          let day = p1;
-          let month = p2;
-          if (p1 <= 12 && p2 > 12) {
-            month = p1;
-            day = p2;
-          } else if (p1 > 12 && p2 <= 12) {
-            day = p1;
-            month = p2;
+          let day = p1, month = p2;
+          if (p1 <= 12 && p2 > 12) { month = p1; day = p2; }
+          else if (p1 > 12 && p2 <= 12) { day = p1; month = p2; }
+
+          let hours = 0, minutes = 0, seconds = 0, hasTime = false;
+          if (parts.length >= 4) {
+            hours = parseInt(parts[3], 10) || 0;
+            minutes = parseInt(parts[4], 10) || 0;
+            seconds = parseInt(parts[5], 10) || 0;
+            hasTime = true;
           }
-          return { day, month, year: p3 };
+          return { day, month, year: p3, hours, minutes, seconds, hasTime };
         }
       }
 
       const d = new Date(str);
       if (!isNaN(d.getTime()) && d.getFullYear() > 1970) {
-        return { day: d.getDate(), month: d.getMonth() + 1, year: d.getFullYear() };
+        return {
+          day: d.getDate(),
+          month: d.getMonth() + 1,
+          year: d.getFullYear(),
+          hours: d.getHours(),
+          minutes: d.getMinutes(),
+          seconds: d.getSeconds(),
+          hasTime: (d.getHours() > 0 || d.getMinutes() > 0 || d.getSeconds() > 0)
+        };
       }
 
       return null;
@@ -5181,9 +5216,16 @@
       if (dp) {
         if (dp.year <= 1970) return '—';
         let res = `${String(dp.day).padStart(2,'0')}/${String(dp.month).padStart(2,'0')}/${dp.year}`;
-        const timeMatch = str.match(/\b([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?\b/);
-        if (timeMatch && (timeMatch[1] !== '00' || timeMatch[2] !== '00')) {
-          res += ` ${timeMatch[1].padStart(2,'0')}:${timeMatch[2]}`;
+        if (dp.hasTime || (dp.hours > 0 || dp.minutes > 0)) {
+          res += ` ${String(dp.hours).padStart(2,'0')}:${String(dp.minutes).padStart(2,'0')}`;
+          if (dp.seconds > 0) {
+            res += `:${String(dp.seconds).padStart(2,'0')}`;
+          }
+        } else {
+          const timeMatch = str.match(/\b([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?\b/);
+          if (timeMatch && (timeMatch[1] !== '00' || timeMatch[2] !== '00')) {
+            res += ` ${timeMatch[1].padStart(2,'0')}:${timeMatch[2]}`;
+          }
         }
         return res;
       }
