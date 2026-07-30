@@ -10677,8 +10677,17 @@
         gdvRows = gdvRows.filter(r => r.gdvName.toLowerCase().includes(activeGdvReportSearch) || r.branch.toLowerCase().includes(activeGdvReportSearch));
       }
 
-      // Sort by total opened count descending (highest volume first)
-      gdvRows.sort((a, b) => b.totalOpenedCount - a.totalOpenedCount);
+      // Prioritize the 3 default GĐVs requested by user: Nguyễn Quang Huy_DL, Hồ Quang Huy, Huỳnh Văn Phúc
+      const defaultTargetGdvs = ['Nguyễn Quang Huy_DL', 'Hồ Quang Huy', 'Huỳnh Văn Phúc'];
+      gdvRows.sort((a, b) => {
+        const idxA = defaultTargetGdvs.findIndex(name => a.gdvName.toLowerCase().trim() === name.toLowerCase().trim());
+        const idxB = defaultTargetGdvs.findIndex(name => b.gdvName.toLowerCase().trim() === name.toLowerCase().trim());
+
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return b.totalOpenedCount - a.totalOpenedCount;
+      });
 
       const totalFilteredClaims = filteredClaims.length;
       const totalDuyetHsbtCount = filteredClaims.filter(item => isDuyetHsbtApproved(item.raw)).length;
@@ -10752,15 +10761,15 @@
             </div>
           </div>
 
-          <!-- UNIFIED REPORT TYPE SEGMENTED TOGGLE BAR -->
+          <!-- UNIFIED REPORT TYPE SEGMENTED TOGGLE BAR WITH CLEAN SVG ICONS -->
           <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 6px; margin-bottom: 20px; display: inline-flex; gap: 6px; box-shadow: var(--shadow-xs);">
             <button type="button" onclick="switchGdvReportView('table')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'table' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-              <span>📊 Bảng Báo cáo Thống kê Chi tiết</span>
+              <span>Bảng Báo cáo Thống kê Chi tiết</span>
             </button>
             <button type="button" onclick="switchGdvReportView('chart')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'chart' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-              <span>📈 Biểu đồ Đường KPI & Lương GĐV</span>
+              <span>Biểu đồ Đường KPI & Lương GĐV</span>
             </button>
           </div>
 
