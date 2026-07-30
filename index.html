@@ -2487,7 +2487,7 @@
 
             <div class="form-group">
               <label style="font-size: 12px; font-weight: 750; color: #10b981; margin-bottom: 4px; display: block;">Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)</label>
-              <input id="modalPendingToTrinhNgayDuyet" class="input-premium" type="text" placeholder="YYYY-MM-DD HH:mm:ss" style="font-weight: 750; color: #10b981;" />
+              <input id="modalPendingToTrinhNgayDuyet" class="input-premium" type="text" placeholder="DD/MM/YYYY hoặc DD/MM/YYYY HH:mm:ss" style="font-weight: 750; color: #10b981;" />
             </div>
             <div class="form-group">
               <label style="font-size: 12px; font-weight: 750; color: #10b981; margin-bottom: 4px; display: block;">TTBT - Tổng số tiền bồi thường (Số tiền duyệt HSBT)</label>
@@ -4666,10 +4666,8 @@
       setVal('modalPendingSoHd', item.soHd || '');
       setVal('modalPendingSoGcn', item.soGcn || '');
       setVal('modalPendingNguoiCapDon', item.nguoiCapDon || '');
-      const cleanNgayHieuLuc = formatDateDisplay(item.ngayHieuLuc);
-      setVal('modalPendingNgayHieuLuc', cleanNgayHieuLuc !== '—' ? cleanNgayHieuLuc : (item.ngayHieuLuc || ''));
-      const cleanNgayHetHan = formatDateDisplay(item.ngayHetHan);
-      setVal('modalPendingNgayHetHan', cleanNgayHetHan !== '—' ? cleanNgayHetHan : (item.ngayHetHan || ''));
+      setVal('modalPendingNgayHieuLuc', formatCleanDateField(item.ngayHieuLuc));
+      setVal('modalPendingNgayHetHan', formatCleanDateField(item.ngayHetHan));
       setVal('modalPendingKenhKhaiThac', item.kenhKhaiThac || '');
       setVal('modalPendingGiaTriXe', formatCurrencyInputNumber(item.giaTriXe));
       setVal('modalPendingSoTienBh', formatCurrencyInputNumber(item.soTienBh));
@@ -4689,17 +4687,9 @@
       setVal('modalPendingVcx', item.vcx || (isVcxCode ? (spCodeVal || 'VCX') : ''));
       setVal('modalPendingTnds', item.tnds || (isTndsCode ? (spCodeVal || 'TNDS') : ''));
 
-      const formatFieldDate = (raw) => {
-        if (!raw || raw === '—' || raw === 'null' || raw === 'undefined') return '';
-        const formatted = formatDateDisplay(raw);
-        return (formatted !== '—' && !formatted.includes('1970')) ? formatted : '';
-      };
-      setVal('modalPendingNgayThongBao', formatFieldDate(item.ngayThongBao) || (isEditing ? '' : new Date().toLocaleString('vi-VN')));
-      const cleanNgayMoHs = formatDateDisplay(item.ngayMoHs);
-      setVal('modalPendingNgayMoHs', cleanNgayMoHs !== '—' ? cleanNgayMoHs : (item.ngayMoHs || ''));
-      const rawNgayVTT = item.ngayVTT || item.ngayTonThat || item.date || item.ngayMoHs;
-      const cleanNgayVTT = formatDateDisplay(rawNgayVTT);
-      setVal('modalPendingNgayVTT', cleanNgayVTT !== '—' ? cleanNgayVTT : (item.ngayVTT || item.ngayTonThat || ''));
+      setVal('modalPendingNgayThongBao', formatCleanDateField(item.ngayThongBao) || (isEditing ? '' : new Date().toLocaleString('vi-VN')));
+      setVal('modalPendingNgayMoHs', formatCleanDateField(item.ngayMoHs));
+      setVal('modalPendingNgayVTT', formatCleanDateField(item.ngayVTT || item.ngayTonThat || item.date || item.ngayMoHs));
       setVal('modalPendingTinhTonThat', item.tinhTonThat || '');
       setVal('modalPendingDiaDiemVTT', item.diaDiemVTT || item.diaDiemTonThat || '');
       setVal('modalPendingHienTruong', item.hienTruong || item.diaDiemTonThat || '');
@@ -4719,15 +4709,13 @@
       setVal('modalPendingPascSoTienDuyet', formatCurrencyInputNumber(item.pascSoTienDuyet || item.soTienDuyetBT));
       setVal('modalPendingPascNguoiDuyet', item.pascNguoiDuyet || '');
       setVal('modalPendingToTrinhNguoiDuyet', item.toTrinhNguoiDuyet || '');
-      const rawToTrinhDate = item.toTrinhNgayDuyet || item.pascNgayDuyet;
-      const cleanToTrinhDisplay = formatDateDisplay(rawToTrinhDate);
-      setVal('modalPendingToTrinhNgayDuyet', cleanToTrinhDisplay !== '—' ? cleanToTrinhDisplay : '');
+      setVal('modalPendingToTrinhNgayDuyet', formatCleanDateField(item.toTrinhNgayDuyet || item.pascNgayDuyet));
       const rawTtbtAmt = item.ttbtTongSoTienBoiThuong || item.tongBoiThuongSauThue || item.pascSoTienDuyet || item.soTienDuyetBT || item.ttbtSoTienBoiThuong || item.amount;
       setVal('modalPendingTtbtTongSoTienBoiThuong', formatCurrencyInputNumber(rawTtbtAmt));
       setVal('modalPendingDuPhongBoiThuong', formatCurrencyInputNumber(item.duPhongBoiThuong));
       setVal('modalPendingSoTienDaThanhToan', formatCurrencyInputNumber(item.soTienDaThanhToan));
-      setVal('modalPendingNgayThanhToan', formatDateDisplay(item.ngayThanhToan) !== '—' ? formatDateDisplay(item.ngayThanhToan) : '');
-      setVal('modalPendingNgayKtXacNhan', formatDateDisplay(item.ngayKtXacNhan) !== '—' ? formatDateDisplay(item.ngayKtXacNhan) : '');
+      setVal('modalPendingNgayThanhToan', formatCleanDateField(item.ngayThanhToan));
+      setVal('modalPendingNgayKtXacNhan', formatCleanDateField(item.ngayKtXacNhan));
       setVal('modalPendingGhiChu', item.ghiChu || '');
 
       switchEditClaimTab('Policy');
@@ -5171,7 +5159,15 @@
       return null;
     }
 
-    function formatDateDisplay(val) {
+        function formatCleanDateField(val) {
+      if (val === null || val === undefined || val === '' || val === '—' || val === '0' || val === 0 || val === 'null' || val === 'undefined') return '';
+      const str = String(val).trim();
+      if (!str || str === '—' || str === '0' || str === 'null' || str === 'undefined' || str.includes('1970') || str.includes('1/1/1970') || str.includes('01/01/1970')) return '';
+      const res = formatDateDisplay(str);
+      return (res !== '—' && !res.includes('1970')) ? res : '';
+    }
+
+function formatDateDisplay(val) {
       if (!val) return '—';
       const str = String(val).trim();
       if (!str || str === '—' || str === '0' || str === 'null' || str === 'undefined' || str === '1970-01-01' || str.includes('1970') || str.includes('1/1/1970') || str.includes('01/01/1970')) return '—';
@@ -5441,13 +5437,13 @@
           giaTriXe: getVal(r, colMap.giaTriXe),
           soTienBh: getVal(r, colMap.soTienBh),
           soGcn: getVal(r, colMap.soGcn),
-          ngayHieuLuc: formatDateDisplay(getVal(r, colMap.ngayHieuLuc)),
-          ngayHetHan: formatDateDisplay(getVal(r, colMap.ngayHetHan)),
+          ngayHieuLuc: formatCleanDateField(getVal(r, colMap.ngayHieuLuc)),
+          ngayHetHan: formatCleanDateField(getVal(r, colMap.ngayHetHan)),
           kenhKhaiThac: getVal(r, colMap.kenhKhaiThac),
           chiTietKenh: getVal(r, colMap.chiTietKenh),
           maKhaiThac: getVal(r, colMap.maKhaiThac),
           hinhThucCapDon: getVal(r, colMap.hinhThucCapDon),
-          ngayThanhToanPhi: formatDateDisplay(getVal(r, colMap.ngayThanhToanPhi)),
+          ngayThanhToanPhi: formatCleanDateField(getVal(r, colMap.ngayThanhToanPhi)),
           phiBh: getVal(r, colMap.phiBh),
           khachHang: getVal(r, colMap.khachHang),
           loaiXe: getVal(r, colMap.loaiXe),
@@ -5457,7 +5453,7 @@
           maSpNghiepVu: getVal(r, colMap.maSpNghiepVu),
           vcx: getVal(r, colMap.vcx) || (String(getVal(r, colMap.maSpNghiepVu)).toUpperCase().includes('VCX') ? getVal(r, colMap.maSpNghiepVu) : ''),
           tnds: getVal(r, colMap.tnds) || (String(getVal(r, colMap.maSpNghiepVu)).toUpperCase().includes('TNDS') ? getVal(r, colMap.maSpNghiepVu) : ''),
-          ngayMoHs: formatDateDisplay(getVal(r, colMap.ngayMoHs)),
+          ngayMoHs: formatCleanDateField(getVal(r, colMap.ngayMoHs)),
           doiTuongTonThat: getVal(r, colMap.doiTuongTonThat),
           tinhTonThat: getVal(r, colMap.tinhTonThat),
           dienBienTonThat: getVal(r, colMap.dienBienTonThat),
@@ -5466,10 +5462,10 @@
           maGara: getVal(r, colMap.maGara),
           gdvHo: getVal(r, colMap.gdvHo),
           uocThietHai: getVal(r, colMap.uocThietHai),
-          pascNgayDuyet: formatDateDisplay(getVal(r, colMap.pascNgayDuyet)),
+          pascNgayDuyet: formatCleanDateField(getVal(r, colMap.pascNgayDuyet)),
           pascNguoiDuyet: getVal(r, colMap.pascNguoiDuyet),
           pascSoTienDuyet: getVal(r, colMap.pascSoTienDuyet),
-          toTrinhNgayDuyet: formatDateDisplay(getVal(r, colMap.toTrinhNgayDuyet)) !== '—' ? formatDateDisplay(getVal(r, colMap.toTrinhNgayDuyet)) : '',
+          toTrinhNgayDuyet: formatCleanDateField(getVal(r, colMap.toTrinhNgayDuyet)),
           toTrinhNguoiDuyet: getVal(r, colMap.toTrinhNguoiDuyet),
           ttbtSoTienBoiThuong: getVal(r, colMap.ttbtSoTienBoiThuong),
           ttbtTongSoTienBoiThuong: getVal(r, colMap.ttbtTongSoTienBoiThuong) || getVal(r, colMap.tongBoiThuongSauThue) || getVal(r, colMap.amount) || getVal(r, colMap.ttbtSoTienBoiThuong) || getVal(r, colMap.pascSoTienDuyet),
@@ -5483,12 +5479,12 @@
           dongBhFollowSoTien: getVal(r, colMap.dongBhFollowSoTien),
           tongBoiThuongSauThue: getVal(r, colMap.tongBoiThuongSauThue),
           vat: getVal(r, colMap.vat),
-          ngayNhanDuHoSo: formatDateDisplay(getVal(r, colMap.ngayNhanDuHoSo)),
-          ngayDuyetDnttDauTien: formatDateDisplay(getVal(r, colMap.ngayDuyetDnttDauTien)),
-          ngayDuyetDnttCuoiCung: formatDateDisplay(getVal(r, colMap.ngayDuyetDnttCuoiCung)),
-          ngayKtXacNhan: formatDateDisplay(getVal(r, colMap.ngayKtXacNhan)),
+          ngayNhanDuHoSo: formatCleanDateField(getVal(r, colMap.ngayNhanDuHoSo)),
+          ngayDuyetDnttDauTien: formatCleanDateField(getVal(r, colMap.ngayDuyetDnttDauTien)),
+          ngayDuyetDnttCuoiCung: formatCleanDateField(getVal(r, colMap.ngayDuyetDnttCuoiCung)),
+          ngayKtXacNhan: formatCleanDateField(getVal(r, colMap.ngayKtXacNhan)),
           soTienDaThanhToan: getVal(r, colMap.soTienDaThanhToan),
-          ngayThanhToan: formatDateDisplay(getVal(r, colMap.ngayThanhToan)),
+          ngayThanhToan: formatCleanDateField(getVal(r, colMap.ngayThanhToan)),
           ghiChu: getVal(r, colMap.ghiChu),
           lyDoHuy: getVal(r, colMap.lyDoHuy),
           agentUniqCode: getVal(r, colMap.agentUniqCode),
