@@ -10679,15 +10679,37 @@ function formatDateDisplay(val) {
 
         let cachedCurrentGarageRows = [];
 
+    let cachedContainerRect = null;
+
     window.showGarageChartTooltip = function(evt, garageKey) {
       const tooltip = document.getElementById('garageChartTooltip');
+      const container = document.getElementById('garageChartWrapContainer');
       if (!tooltip || !cachedCurrentGarageRows) return;
       const g = cachedCurrentGarageRows.find(row => row.key === garageKey);
       if (!g) return;
 
+      if (container) {
+        cachedContainerRect = container.getBoundingClientRect();
+      }
+
       const qh = g.gdvBreakdown['Nguyễn Quang Huy_DL'] || { opened: 0, amount: 0 };
       const hqh = g.gdvBreakdown['Hồ Quang Huy'] || { opened: 0, amount: 0 };
       const hvp = g.gdvBreakdown['Huỳnh Văn Phúc'] || { opened: 0, amount: 0 };
+
+      // Sort GĐV by claim count (opened) descending
+      const gdvList = [
+        { name: 'Nguyễn Quang Huy_DL', data: qh, color: '#93c5fd' },
+        { name: 'Hồ Quang Huy', data: hqh, color: '#fde047' },
+        { name: 'Huỳnh Văn Phúc', data: hvp, color: '#6ee7b7' }
+      ];
+      gdvList.sort((a, b) => (b.data.opened || 0) - (a.data.opened || 0));
+
+      const gdvBreakdownHtml = gdvList.map(item => `
+        <div style="color: ${item.color}; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <span style="display: flex; align-items: center; gap: 5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ${escapeHtmlOutput(item.name)}:</span>
+          <strong style="font-family: 'JetBrains Mono';">${item.data.opened} ca (${formatCurrencyInputNumber(item.data.amount)}đ)</strong>
+        </div>
+      `).join('');
 
       tooltip.innerHTML = `
         <div style="font-weight: 850; font-size: 13.5px; color: #ffffff; margin-bottom: 3px;">${escapeHtmlOutput(g.name)}</div>
@@ -10705,18 +10727,7 @@ function formatDateDisplay(val) {
           
           <div style="border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 6px; margin-top: 4px; font-size: 11.5px; display: flex; flex-direction: column; gap: 4px;">
             <div style="color: rgba(255,255,255,0.95); font-weight: 800;">Phân bổ Giám định viên:</div>
-            <div style="color: #93c5fd; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-              <span style="display: flex; align-items: center; gap: 5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Nguyễn Quang Huy_DL:</span>
-              <strong style="font-family: 'JetBrains Mono';">${qh.opened} ca (${formatCurrencyInputNumber(qh.amount)}đ)</strong>
-            </div>
-            <div style="color: #fde047; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-              <span style="display: flex; align-items: center; gap: 5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Hồ Quang Huy:</span>
-              <strong style="font-family: 'JetBrains Mono';">${hqh.opened} ca (${formatCurrencyInputNumber(hqh.amount)}đ)</strong>
-            </div>
-            <div style="color: #6ee7b7; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-              <span style="display: flex; align-items: center; gap: 5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Huỳnh Văn Phúc:</span>
-              <strong style="font-family: 'JetBrains Mono';">${hvp.opened} ca (${formatCurrencyInputNumber(hvp.amount)}đ)</strong>
-            </div>
+            ${gdvBreakdownHtml}
           </div>
         </div>
       `;
@@ -10727,17 +10738,15 @@ function formatDateDisplay(val) {
 
     window.moveGarageChartTooltip = function(evt) {
       const tooltip = document.getElementById('garageChartTooltip');
-      const container = document.getElementById('garageChartWrapContainer');
-      if (!tooltip || !container) return;
+      if (!tooltip || !cachedContainerRect) return;
 
-      const rect = container.getBoundingClientRect();
-      const mouseX = evt.clientX - rect.left;
-      const mouseY = evt.clientY - rect.top;
+      const mouseX = evt.clientX - cachedContainerRect.left;
+      const mouseY = evt.clientY - cachedContainerRect.top;
 
       let left = mouseX + 15;
       let top = mouseY - 80;
 
-      if (left + 280 > rect.width) {
+      if (left + 280 > cachedContainerRect.width) {
         left = mouseX - 295;
       }
       if (top < 10) top = 10;
@@ -11155,6 +11164,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
           </div>
 
+          ${activeGdvReportView !== 'garage' ? `
           <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
@@ -11185,6 +11195,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </strong>
             </div>
           </div>
+          ` : ''}
 
           <!-- CONDITIONAL RENDERING BASED ON activeGdvReportView -->
           ${activeGdvReportView === 'garage' ? `
