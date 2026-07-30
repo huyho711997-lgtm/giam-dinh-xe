@@ -10509,13 +10509,20 @@
     function clearActiveObjectUrls() { activeObjectUrls.forEach(url => URL.revokeObjectURL(url)); activeObjectUrls = []; }
   
     /****************************************************
-     * BÁO CÁO KHỐI LƯỢNG HỒ SƠ & TỜ TRÌNH BT THEO GĐV
-     * LUXURY EXECUTIVE DASHBOARD DESIGN SYSTEM (ULTRA-PREMIUM)
+     * TRUNG TÂM BÁO CÁO QUẢN TRỊ BỒI THƯỜNG (EXECUTIVE REPORT HUB)
+     * System Architected for Auto Insurance Claims Operations
+     * 4 Pillars: GĐV Workload, Aging SLA, Garage Network, Loss Analytics
      ****************************************************/
+    let activeReportSubTab = 'gdv'; // 'gdv' | 'aging' | 'garage' | 'branch'
     let activeGdvReportMonth = 'all';
     let activeGdvReportYear = 'all';
     let activeGdvReportBranch = 'all';
     let activeGdvReportSearch = '';
+
+    function switchReportSubTab(subTab) {
+      activeReportSubTab = subTab;
+      renderGdvMonthlyReportPage();
+    }
 
     function isToTrinhBtApproved(c) {
       if (c.toTrinhNgayDuyet && c.toTrinhNgayDuyet !== '—' && String(c.toTrinhNgayDuyet).trim() !== '') return true;
@@ -10546,6 +10553,19 @@
       const parts = clean.split(' ').filter(Boolean);
       if (parts.length >= 2) return (parts[parts.length - 2][0] + parts[parts.length - 1][0]).toUpperCase();
       return clean.substring(0, 2).toUpperCase();
+    }
+
+    function calculateClaimAgeDays(dateStr, createdAt) {
+      const dp = parseDateParts(dateStr);
+      const now = Date.now();
+      if (dp && dp.year && dp.month && dp.day) {
+        const claimDate = new Date(dp.year, dp.month - 1, dp.day).getTime();
+        return Math.max(0, Math.floor((now - claimDate) / (1000 * 60 * 60 * 24)));
+      }
+      if (createdAt) {
+        return Math.max(0, Math.floor((now - createdAt) / (1000 * 60 * 60 * 24)));
+      }
+      return 0;
     }
 
     function renderGdvMonthlyReportPage(targetContainer) {
@@ -10582,10 +10602,13 @@
         const branch = c.donViCapDon || c.chiNhanh || c.chiNhanhXuly;
         if (branch && branch !== '—') branchSet.add(branch);
 
+        const ageDays = calculateClaimAgeDays(c.ngayMoHs || c.ngayTonThat, c.createdAt);
+
         parsedClaims.push({
           raw: c,
           year: yr,
-          month: mo
+          month: mo,
+          ageDays
         });
       }
 
@@ -10603,7 +10626,128 @@
         return true;
       });
 
-      // Group claims by Giám định viên
+      const totalFilteredClaims = filteredClaims.length;
+      const timeLabelText = activeGdvReportMonth === 'all' 
+        ? (activeGdvReportYear === 'all' ? 'Tất cả thời gian' : `Toàn bộ năm ${activeGdvReportYear}`)
+        : (activeGdvReportYear === 'all' ? `Tháng ${activeGdvReportMonth} (Tất cả năm)` : `Tháng ${activeGdvReportMonth}/${activeGdvReportYear}`);
+
+      // RENDER EXECUTIVE HUB SHELL
+      container.innerHTML = `
+        <div style="padding: 28px 32px; max-width: 1600px; margin: 0 auto;">
+          
+          <!-- HERO HEADER BANNER -->
+          <div style="background: linear-gradient(135deg, rgba(15,23,42,0.96) 0%, rgba(30,41,59,0.96) 100%); border: 1px solid rgba(216,180,109,0.3); border-radius: 20px; padding: 26px 32px; margin-bottom: 24px; box-shadow: 0 12px 32px rgba(0,0,0,0.3); position: relative; overflow: hidden; backdrop-filter: blur(16px);">
+            <div style="position: absolute; right: -50px; top: -50px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(216,180,109,0.18) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none;"></div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
+              <div>
+                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(216,180,109,0.14); border: 1px solid rgba(216,180,109,0.35); color: var(--primary); padding: 5px 14px; border-radius: 99px; font-size: 11.5px; font-weight: 850; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                  <span>CENTRAL CLAIMS INTELLIGENCE HUB</span>
+                </div>
+                <h1 style="font-size: 26px; font-weight: 850; color: #ffffff; margin: 0; letter-spacing: -0.02em; line-height: 1.25;">
+                  Trung tâm Báo cáo Quản trị Bồi thường & Giám định Xe cơ giới
+                </h1>
+                <p style="margin-top: 8px; font-size: 13.5px; color: var(--text-soft); max-width: 820px; margin-bottom: 0;">
+                  Phân tích dữ liệu vận hành bồi thường toàn diện: Năng suất GĐV, Tiến độ tồn đọng SLA, Mạng lưới Gara đối tác & Chi phí bồi thường trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>).
+                </p>
+              </div>
+
+              <!-- Export Button -->
+              <div>
+                <button type="button" onclick="exportGdvMonthlyReportExcel()" style="padding: 0 24px; height: 46px; font-size: 13px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 6px 20px rgba(16,185,129,0.35); transition: all 0.2s ease;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Xuất Báo cáo Excel (.xlsx)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- EXECUTIVE SUB-NAVIGATION BAR (4 PILLARS) -->
+          <div style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 2px solid var(--border); padding-bottom: 12px; flex-wrap: wrap;">
+            <button onclick="switchReportSubTab('gdv')" style="padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeReportSubTab === 'gdv' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 14px rgba(216,180,109,0.35);' : 'background: var(--surface); color: var(--text-soft); border: 1px solid var(--border);'}">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+              <span>1. Năng suất GĐV & Tờ trình BT</span>
+            </button>
+
+            <button onclick="switchReportSubTab('aging')" style="padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeReportSubTab === 'aging' ? 'background: #ef4444; color: #ffffff; box-shadow: 0 4px 14px rgba(239,68,68,0.35);' : 'background: var(--surface); color: var(--text-soft); border: 1px solid var(--border);'}">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>2. Phân tích Tồn đọng & SLA (Aging)</span>
+            </button>
+
+            <button onclick="switchReportSubTab('garage')" style="padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeReportSubTab === 'garage' ? 'background: #3b82f6; color: #ffffff; box-shadow: 0 4px 14px rgba(59,130,246,0.35);' : 'background: var(--surface); color: var(--text-soft); border: 1px solid var(--border);'}">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+              <span>3. Mạng lưới Gara & Chi phí BT</span>
+            </button>
+
+            <button onclick="switchReportSubTab('branch')" style="padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeReportSubTab === 'branch' ? 'background: #a855f7; color: #ffffff; box-shadow: 0 4px 14px rgba(168,85,247,0.35);' : 'background: var(--surface); color: var(--text-soft); border: 1px solid var(--border);'}">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              <span>4. Chi nhánh & Nguyên nhân Tổn thất</span>
+            </button>
+          </div>
+
+          <!-- GLOBAL FILTER CONTROL PANEL -->
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 16px 22px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: var(--shadow-sm);">
+            
+            <!-- Left Controls -->
+            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--primary); background: rgba(216,180,109,0.08); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(216,180,109,0.2);">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>Mốc thời gian:</span>
+              </div>
+
+              <!-- Month Selector -->
+              <select id="selGdvReportMonth" onchange="changeGdvReportMonthYear(this.value, document.getElementById('selGdvReportYear').value)" class="input-premium" style="width: 170px; padding: 9px 14px; font-weight: 800; border-radius: 11px; cursor: pointer; background: var(--bg-soft); border: 1px solid var(--border); font-size: 13px; color: var(--text-main);">
+                <option value="all" ${activeGdvReportMonth === 'all' ? 'selected' : ''}>Tất cả các tháng</option>
+                ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `<option value="${m}" ${String(m) === String(activeGdvReportMonth) ? 'selected' : ''}>Tháng ${m}</option>`).join('')}
+              </select>
+
+              <!-- Year Selector -->
+              <select id="selGdvReportYear" onchange="changeGdvReportMonthYear(document.getElementById('selGdvReportMonth').value, this.value)" class="input-premium" style="width: 150px; padding: 9px 14px; font-weight: 800; border-radius: 11px; cursor: pointer; background: var(--bg-soft); border: 1px solid var(--border); font-size: 13px; color: var(--text-main);">
+                <option value="all" ${activeGdvReportYear === 'all' ? 'selected' : ''}>Tất cả các năm</option>
+                ${yearList.map(y => `<option value="${y}" ${String(y) === String(activeGdvReportYear) ? 'selected' : ''}>Năm ${y}</option>`).join('')}
+              </select>
+
+              <!-- Branch Selector -->
+              <select id="selGdvReportBranch" onchange="changeGdvReportBranch(this.value)" class="input-premium" style="width: 220px; padding: 9px 14px; font-weight: 750; border-radius: 11px; cursor: pointer; background: var(--bg-soft); border: 1px solid var(--border); font-size: 13px; color: var(--text-main);">
+                <option value="all">Tất cả chi nhánh cấp đơn</option>
+                ${branchList.filter(b => b !== 'all').map(b => `<option value="${escapeAttributeData(b)}" ${b === activeGdvReportBranch ? 'selected' : ''}>${escapeHtmlOutput(b)}</option>`).join('')}
+              </select>
+            </div>
+
+            <!-- Right Search Bar -->
+            <div class="search-wrap" style="margin: 0; min-width: 240px; max-width: 320px; flex: 1;">
+              <input type="text" class="input-premium search-input" placeholder="Tìm kiếm nội dung..." value="${escapeAttributeData(activeGdvReportSearch)}" oninput="changeGdvReportSearch(this.value)" style="padding-left: 38px; border-radius: 11px; height: 42px; font-size: 13px;" />
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-soft);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+          </div>
+
+          <!-- DYNAMIC SUB-TAB CONTENT RENDERER -->
+          <div id="executiveReportContentArea">
+            ${renderExecutiveSubTabContent(filteredClaims, totalFilteredClaims, timeLabelText)}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderExecutiveSubTabContent(filteredClaims, totalFilteredClaims, timeLabelText) {
+      if (activeReportSubTab === 'aging') {
+        return renderAgingSlaReportContent(filteredClaims, timeLabelText);
+      }
+      if (activeReportSubTab === 'garage') {
+        return renderGarageNetworkReportContent(filteredClaims, timeLabelText);
+      }
+      if (activeReportSubTab === 'branch') {
+        return renderBranchLossReportContent(filteredClaims, timeLabelText);
+      }
+      // Default: 'gdv'
+      return renderGdvWorkloadReportContent(filteredClaims, totalFilteredClaims, timeLabelText);
+    }
+
+    /* ----------------------------------------------------
+     * SUB-TAB 1: GĐV WORKLOAD & TỜ TRÌNH BT REPORT
+     * ---------------------------------------------------- */
+    function renderGdvWorkloadReportContent(filteredClaims, totalFilteredClaims, timeLabelText) {
       const gdvMap = {};
       for (let i = 0; i < filteredClaims.length; i++) {
         const item = filteredClaims[i];
@@ -10639,288 +10783,515 @@
 
       let gdvRows = Object.values(gdvMap);
 
-      // Filter by search text
       if (activeGdvReportSearch) {
         gdvRows = gdvRows.filter(r => r.gdvName.toLowerCase().includes(activeGdvReportSearch) || r.branch.toLowerCase().includes(activeGdvReportSearch));
       }
 
-      // Sort by total opened count descending (highest volume first)
       gdvRows.sort((a, b) => b.totalOpenedCount - a.totalOpenedCount);
 
-      const totalFilteredClaims = filteredClaims.length;
       const totalToTrinhApproved = filteredClaims.filter(item => isToTrinhBtApproved(item.raw)).length;
       const overallApprovalRate = totalFilteredClaims > 0 ? Math.round((totalToTrinhApproved / totalFilteredClaims) * 100) : 0;
       const topGdvObj = gdvRows[0];
       const topGdvName = topGdvObj ? topGdvObj.gdvName : 'Chưa có';
-
-      const timeLabelText = activeGdvReportMonth === 'all' 
-        ? (activeGdvReportYear === 'all' ? 'Tất cả thời gian' : `Toàn bộ năm ${activeGdvReportYear}`)
-        : (activeGdvReportYear === 'all' ? `Tháng ${activeGdvReportMonth} (Tất cả năm)` : `Tháng ${activeGdvReportMonth}/${activeGdvReportYear}`);
-
       const top3Performers = gdvRows.slice(0, 3);
 
-      container.innerHTML = `
-        <div style="padding: 28px 32px; max-width: 1600px; margin: 0 auto;">
-          
-          <!-- LUXURY HERO BANNER HEADER -->
-          <div style="background: linear-gradient(135deg, rgba(20,24,33,0.95) 0%, rgba(30,37,50,0.95) 100%); border: 1px solid rgba(216,180,109,0.25); border-radius: 20px; padding: 28px 32px; margin-bottom: 24px; box-shadow: 0 12px 32px rgba(0,0,0,0.25); position: relative; overflow: hidden; backdrop-filter: blur(16px);">
-            <div style="position: absolute; right: -40px; top: -40px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(216,180,109,0.15) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none;"></div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
-              <div>
-                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); padding: 5px 14px; border-radius: 99px; font-size: 11.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px;">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                  <span>EXECUTIVE WORKLOAD REPORT</span>
-                </div>
-                <h1 style="font-size: 26px; font-weight: 850; color: #ffffff; margin: 0; letter-spacing: -0.02em; line-height: 1.25;">
-                  Báo cáo Khối lượng Hồ sơ & Duyệt Tờ trình BT theo Giám định viên
-                </h1>
-                <p style="margin-top: 8px; font-size: 13.5px; color: var(--text-soft); max-width: 780px; margin-bottom: 0;">
-                  Thống kê tổng hợp khối lượng hồ sơ mở trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>), tiến độ phê duyệt Tờ trình BT và phân bổ trạng thái theo từng cán bộ Giám định viên.
-                </p>
-              </div>
-
-              <!-- Export Button -->
-              <div>
-                <button type="button" onclick="exportGdvMonthlyReportExcel()" style="padding: 0 24px; height: 46px; font-size: 13px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; box-shadow: 0 6px 20px rgba(16,185,129,0.35); transition: all 0.2s ease;">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  <span>Xuất Báo cáo Excel (.xlsx)</span>
-                </button>
+      return `
+        <!-- KPI METRIC CARDS -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 28px;">
+          <div class="p-card stat-widget" style="padding: 22px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: linear-gradient(135deg, rgba(216,180,109,0.12) 0%, rgba(216,180,109,0.02) 100%); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">TỔNG SỐ HS TRONG KỲ</span>
+              <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(216,180,109,0.2); color: var(--primary); display: grid; place-items: center;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
               </div>
             </div>
+            <strong style="display: block; font-size: 32px; color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 12px; font-weight: 850;">
+              ${totalFilteredClaims} <span style="font-size: 15px; font-weight: 750; color: var(--text-soft);">ca</span>
+            </strong>
           </div>
 
-          <!-- CONTROL HUB FILTER BAR -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 18px 24px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: var(--shadow-sm);">
-            
-            <!-- Left Controls: Selectors -->
-            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-              <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--primary); background: rgba(216,180,109,0.08); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(216,180,109,0.2);">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                <span>Bộ lọc thời gian:</span>
-              </div>
-
-              <!-- Month Selector -->
-              <div style="position: relative;">
-                <select id="selGdvReportMonth" onchange="changeGdvReportMonthYear(this.value, document.getElementById('selGdvReportYear').value)" class="input-premium" style="width: 170px; padding: 9px 14px; font-weight: 800; border-radius: 11px; cursor: pointer; background: var(--bg-soft); border: 1px solid var(--border); font-size: 13px; color: var(--text-main);">
-                  <option value="all" ${activeGdvReportMonth === 'all' ? 'selected' : ''}>Tất cả các tháng</option>
-                  ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `<option value="${m}" ${String(m) === String(activeGdvReportMonth) ? 'selected' : ''}>Tháng ${m}</option>`).join('')}
-                </select>
-              </div>
-
-              <!-- Year Selector -->
-              <div style="position: relative;">
-                <select id="selGdvReportYear" onchange="changeGdvReportMonthYear(document.getElementById('selGdvReportMonth').value, this.value)" class="input-premium" style="width: 150px; padding: 9px 14px; font-weight: 800; border-radius: 11px; cursor: pointer; background: var(--bg-soft); border: 1px solid var(--border); font-size: 13px; color: var(--text-main);">
-                  <option value="all" ${activeGdvReportYear === 'all' ? 'selected' : ''}>Tất cả các năm</option>
-                  ${yearList.map(y => `<option value="${y}" ${String(y) === String(activeGdvReportYear) ? 'selected' : ''}>Năm ${y}</option>`).join('')}
-                </select>
-              </div>
-
-              <!-- Branch Selector -->
-              <div style="position: relative;">
-                <select id="selGdvReportBranch" onchange="changeGdvReportBranch(this.value)" class="input-premium" style="width: 220px; padding: 9px 14px; font-weight: 750; border-radius: 11px; cursor: pointer; background: var(--bg-soft); border: 1px solid var(--border); font-size: 13px; color: var(--text-main);">
-                  <option value="all">Tất cả chi nhánh cấp đơn</option>
-                  ${branchList.filter(b => b !== 'all').map(b => `<option value="${escapeAttributeData(b)}" ${b === activeGdvReportBranch ? 'selected' : ''}>${escapeHtmlOutput(b)}</option>`).join('')}
-                </select>
+          <div class="p-card stat-widget" style="padding: 22px; border-radius: 18px; border: 1px solid rgba(16,185,129,0.35); background: linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(16,185,129,0.02) 100%); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">ĐÃ DUYỆT TỜ TRÌNH BT</span>
+              <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(16,185,129,0.2); color: #10b981; display: grid; place-items: center;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"></polyline></svg>
               </div>
             </div>
-
-            <!-- Right Controls: Search GĐV -->
-            <div class="search-wrap" style="margin: 0; min-width: 240px; max-width: 320px; flex: 1;">
-              <input type="text" class="input-premium search-input" placeholder="Tìm kiếm GĐV hoặc Chi nhánh..." value="${escapeAttributeData(activeGdvReportSearch)}" oninput="changeGdvReportSearch(this.value)" style="padding-left: 38px; border-radius: 11px; height: 42px; font-size: 13px;" />
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-soft);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            </div>
+            <strong style="display: block; font-size: 32px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 12px; font-weight: 850;">
+              ${totalToTrinhApproved} <span style="font-size: 15px; font-weight: 750; color: var(--text-soft);">ca</span>
+            </strong>
           </div>
 
-          <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 28px;">
-            
-            <!-- Card 1: Total Claims -->
-            <div class="p-card stat-widget" style="padding: 22px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: linear-gradient(135deg, rgba(216,180,109,0.12) 0%, rgba(216,180,109,0.02) 100%); box-shadow: 0 4px 20px rgba(0,0,0,0.15); transition: transform 0.2s ease;">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase; letter-spacing: 0.05em;">TỔNG SỐ HS TRONG KỲ</span>
-                <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(216,180,109,0.2); color: var(--primary); display: grid; place-items: center; border: 1px solid rgba(216,180,109,0.4);">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                </div>
+          <div class="p-card stat-widget" style="padding: 22px; border-radius: 18px; border: 1px solid rgba(59,130,246,0.35); background: linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(59,130,246,0.02) 100%); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">TỶ LỆ DUYỆT TỜ TRÌNH</span>
+              <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59,130,246,0.2); color: #3b82f6; display: grid; place-items: center;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
               </div>
-              <strong style="display: block; font-size: 32px; color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 12px; font-weight: 850; letter-spacing: -0.03em;">
-                ${totalFilteredClaims} <span style="font-size: 15px; font-weight: 750; color: var(--text-soft);">ca</span>
-              </strong>
             </div>
-
-            <!-- Card 2: Approved Tờ Trình BT -->
-            <div class="p-card stat-widget" style="padding: 22px; border-radius: 18px; border: 1px solid rgba(16,185,129,0.35); background: linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(16,185,129,0.02) 100%); box-shadow: 0 4px 20px rgba(0,0,0,0.15); transition: transform 0.2s ease;">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase; letter-spacing: 0.05em;">ĐÃ DUYỆT TỜ TRÌNH BT</span>
-                <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(16,185,129,0.2); color: #10b981; display: grid; place-items: center; border: 1px solid rgba(16,185,129,0.4);">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-              </div>
-              <strong style="display: block; font-size: 32px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 12px; font-weight: 850; letter-spacing: -0.03em;">
-                ${totalToTrinhApproved} <span style="font-size: 15px; font-weight: 750; color: var(--text-soft);">ca</span>
-              </strong>
-            </div>
-
-            <!-- Card 3: Approval Rate -->
-            <div class="p-card stat-widget" style="padding: 22px; border-radius: 18px; border: 1px solid rgba(59,130,246,0.35); background: linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(59,130,246,0.02) 100%); box-shadow: 0 4px 20px rgba(0,0,0,0.15); transition: transform 0.2s ease;">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase; letter-spacing: 0.05em;">TỶ LỆ DUYỆT TỜ TRÌNH</span>
-                <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(59,130,246,0.2); color: #3b82f6; display: grid; place-items: center; border: 1px solid rgba(59,130,246,0.4);">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                </div>
-              </div>
-              <strong style="display: block; font-size: 32px; color: #3b82f6; font-family: 'JetBrains Mono'; margin-top: 12px; font-weight: 850; letter-spacing: -0.03em;">
-                ${overallApprovalRate}%
-              </strong>
-            </div>
-
-            <!-- Card 4: Top Performer -->
-            <div class="p-card stat-widget" style="padding: 22px; border-radius: 18px; border: 1px solid rgba(168,85,247,0.35); background: linear-gradient(135deg, rgba(168,85,247,0.12) 0%, rgba(168,85,247,0.02) 100%); box-shadow: 0 4px 20px rgba(0,0,0,0.15); transition: transform 0.2s ease;">
-              <div style="display: flex; align-items: center; justify-content: space-between;">
-                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase; letter-spacing: 0.05em;">GĐV DẪN ĐẦU KHỐI LƯỢNG</span>
-                <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(168,85,247,0.2); color: #a855f7; display: grid; place-items: center; border: 1px solid rgba(168,85,247,0.4);">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="7"></circle><polyline points="8 21 12 17 16 21"></polyline></svg>
-                </div>
-              </div>
-              <strong style="display: block; font-size: 17px; color: #a855f7; margin-top: 14px; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(topGdvName)}">
-                🥇 ${escapeHtmlOutput(topGdvName)}
-              </strong>
-            </div>
+            <strong style="display: block; font-size: 32px; color: #3b82f6; font-family: 'JetBrains Mono'; margin-top: 12px; font-weight: 850;">
+              ${overallApprovalRate}%
+            </strong>
           </div>
 
-          <!-- TOP 3 PODIUM SHOWCASE (LEADERBOARD) -->
-          ${top3Performers.length > 0 ? `
-            <div style="margin-bottom: 28px;">
-              <div style="font-size: 13px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>
-                <span>Vinh danh Top 3 GĐV Phụ trách Khối lượng lớn nhất</span>
+          <div class="p-card stat-widget" style="padding: 22px; border-radius: 18px; border: 1px solid rgba(168,85,247,0.35); background: linear-gradient(135deg, rgba(168,85,247,0.12) 0%, rgba(168,85,247,0.02) 100%); box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">GĐV DẪN ĐẦU KHỐI LƯỢNG</span>
+              <div style="width: 42px; height: 42px; border-radius: 12px; background: rgba(168,85,247,0.2); color: #a855f7; display: grid; place-items: center;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="7"></circle><polyline points="8 21 12 17 16 21"></polyline></svg>
               </div>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;">
-                ${top3Performers.map((p, pIdx) => {
-                  const medals = ['🥇 Top 1', '🥈 Top 2', '🥉 Top 3'];
-                  const borders = ['rgba(216,180,109,0.5)', 'rgba(148,163,184,0.5)', 'rgba(217,119,6,0.5)'];
-                  const bgGradients = [
-                    'linear-gradient(135deg, rgba(216,180,109,0.15) 0%, rgba(20,24,33,0.9) 100%)',
-                    'linear-gradient(135deg, rgba(148,163,184,0.15) 0%, rgba(20,24,33,0.9) 100%)',
-                    'linear-gradient(135deg, rgba(217,119,6,0.15) 0%, rgba(20,24,33,0.9) 100%)'
-                  ];
-                  const initials = getGdvInitials(p.gdvName);
-                  const rateToTrinh = p.totalOpenedCount > 0 ? Math.round((p.toTrinhApprovedCount / p.totalOpenedCount) * 100) : 0;
+            </div>
+            <strong style="display: block; font-size: 17px; color: #a855f7; margin-top: 14px; font-weight: 850; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(topGdvName)}">
+              🥇 ${escapeHtmlOutput(topGdvName)}
+            </strong>
+          </div>
+        </div>
 
-                  return `
-                    <div style="background: ${bgGradients[pIdx]}; border: 1px solid ${borders[pIdx]}; border-radius: 18px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); position: relative; backdrop-filter: blur(12px);">
-                      <div style="position: absolute; right: 16px; top: 16px; font-size: 11px; font-weight: 850; padding: 4px 10px; border-radius: 99px; background: rgba(0,0,0,0.3); border: 1px solid ${borders[pIdx]}; color: #ffffff;">
-                        ${medals[pIdx]}
+        <!-- TOP 3 PODIUM -->
+        ${top3Performers.length > 0 ? `
+          <div style="margin-bottom: 28px;">
+            <div style="font-size: 13px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>
+              <span>Vinh danh Top 3 GĐV Phụ trách Khối lượng lớn nhất</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;">
+              ${top3Performers.map((p, pIdx) => {
+                const medals = ['🥇 Top 1', '🥈 Top 2', '🥉 Top 3'];
+                const borders = ['rgba(216,180,109,0.5)', 'rgba(148,163,184,0.5)', 'rgba(217,119,6,0.5)'];
+                const bgGradients = [
+                  'linear-gradient(135deg, rgba(216,180,109,0.15) 0%, rgba(20,24,33,0.9) 100%)',
+                  'linear-gradient(135deg, rgba(148,163,184,0.15) 0%, rgba(20,24,33,0.9) 100%)',
+                  'linear-gradient(135deg, rgba(217,119,6,0.15) 0%, rgba(20,24,33,0.9) 100%)'
+                ];
+                const initials = getGdvInitials(p.gdvName);
+                const rateToTrinh = p.totalOpenedCount > 0 ? Math.round((p.toTrinhApprovedCount / p.totalOpenedCount) * 100) : 0;
+
+                return `
+                  <div style="background: ${bgGradients[pIdx]}; border: 1px solid ${borders[pIdx]}; border-radius: 18px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); position: relative; backdrop-filter: blur(12px);">
+                    <div style="position: absolute; right: 16px; top: 16px; font-size: 11px; font-weight: 850; padding: 4px 10px; border-radius: 99px; background: rgba(0,0,0,0.3); border: 1px solid ${borders[pIdx]}; color: #ffffff;">
+                      ${medals[pIdx]}
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 14px;">
+                      <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #b8944d); color: #111; font-weight: 900; font-size: 16px; display: grid; place-items: center; border: 2px solid rgba(255,255,255,0.4);">
+                        ${initials}
                       </div>
-                      <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 14px;">
-                        <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), #b8944d); color: #111; font-weight: 900; font-size: 16px; display: grid; place-items: center; border: 2px solid rgba(255,255,255,0.4); box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                      <div>
+                        <strong style="display: block; font-size: 15px; color: #ffffff; font-weight: 850;">${escapeHtmlOutput(p.gdvName)}</strong>
+                        <span style="font-size: 11.5px; color: var(--text-soft);">${escapeHtmlOutput(p.branch)}</span>
+                      </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 12px; margin-top: 4px;">
+                      <div>
+                        <span style="font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Số lượng HS mở</span>
+                        <strong style="display: block; font-size: 17px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${p.totalOpenedCount} ca</strong>
+                      </div>
+                      <div>
+                        <span style="font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Duyệt Tờ trình BT</span>
+                        <strong style="display: block; font-size: 17px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${p.toTrinhApprovedCount} ca (${rateToTrinh}%)</strong>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- MASTER TABLE -->
+        <div class="table-container" style="border: 1px solid var(--border-strong); border-radius: 20px; background: var(--surface); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
+          <div style="padding: 16px 24px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+              1. Bảng Khối lượng Giám định viên & Tiến độ Tờ trình BT (${gdvRows.length} nhân sự)
+            </span>
+          </div>
+
+          <table class="p-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: rgba(0,0,0,0.2);">
+                <th style="width: 55px; text-align: center;">STT</th>
+                <th style="width: 240px;">Giám định viên</th>
+                <th style="width: 160px;">Đơn vị / Chi nhánh</th>
+                <th style="width: 190px; text-align: center;">Số lượng HS phát sinh</th>
+                <th style="width: 170px; text-align: center;">Đã duyệt Tờ trình BT</th>
+                <th style="width: 170px; text-align: center;">Tỷ lệ duyệt Tờ trình BT</th>
+                <th>Phân bổ 14 Trạng thái</th>
+                <th style="width: 170px; text-align: right; padding-right: 24px;">Tổng tiền duyệt BT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${gdvRows.length === 0 ? `
+                <tr><td colspan="8" class="empty-state-text" style="padding: 40px; text-align: center; color: var(--text-muted); font-size: 14px;">Không tìm thấy dữ liệu hồ sơ nào trong mốc thời gian đã chọn (${timeLabelText}).</td></tr>
+              ` : gdvRows.map((r, idx) => {
+                const percentTotal = totalFilteredClaims > 0 ? Math.round((r.totalOpenedCount / totalFilteredClaims) * 100) : 0;
+                const rateToTrinh = r.totalOpenedCount > 0 ? Math.round((r.toTrinhApprovedCount / r.totalOpenedCount) * 100) : 0;
+                const initials = getGdvInitials(r.gdvName);
+
+                let rankBadge = '';
+                if (idx === 0) rankBadge = '<span style="font-size: 15px;">🥇</span>';
+                else if (idx === 1) rankBadge = '<span style="font-size: 15px;">🥈</span>';
+                else if (idx === 2) rankBadge = '<span style="font-size: 15px;">🥉</span>';
+
+                return `
+                  <tr>
+                    <td style="text-align: center; font-weight: 800; color: var(--text-muted); font-size: 12.5px;">${String(idx + 1).padStart(2, '0')}</td>
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 34px; height: 34px; border-radius: 50%; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); font-weight: 850; font-size: 11.5px; display: grid; place-items: center; flex-shrink: 0;">
                           ${initials}
                         </div>
                         <div>
-                          <strong style="display: block; font-size: 15px; color: #ffffff; font-weight: 850;">${escapeHtmlOutput(p.gdvName)}</strong>
-                          <span style="font-size: 11.5px; color: var(--text-soft);">${escapeHtmlOutput(p.branch)}</span>
-                        </div>
-                      </div>
-                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 12px; margin-top: 4px;">
-                        <div>
-                          <span style="font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Số lượng HS mở</span>
-                          <strong style="display: block; font-size: 17px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${p.totalOpenedCount} ca</strong>
-                        </div>
-                        <div>
-                          <span style="font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Duyệt Tờ trình BT</span>
-                          <strong style="display: block; font-size: 17px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${p.toTrinhApprovedCount} ca (${rateToTrinh}%)</strong>
-                        </div>
-                      </div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            </div>
-          ` : ''}
-
-          <!-- MASTER DATA TABLE CONTAINER -->
-          <div class="table-container" style="border: 1px solid var(--border-strong); border-radius: 20px; background: var(--surface); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
-            <div style="padding: 16px 24px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                Danh sách Khối lượng Giám định viên (${gdvRows.length} nhân sự)
-              </span>
-            </div>
-
-            <table class="p-table" style="width: 100%; border-collapse: collapse;">
-              <thead>
-                <tr style="background: rgba(0,0,0,0.2);">
-                  <th style="width: 55px; text-align: center;">STT</th>
-                  <th style="width: 240px;">Giám định viên</th>
-                  <th style="width: 160px;">Đơn vị / Chi nhánh</th>
-                  <th style="width: 190px; text-align: center;">Số lượng HS phát sinh</th>
-                  <th style="width: 170px; text-align: center;">Đã duyệt Tờ trình BT</th>
-                  <th style="width: 170px; text-align: center;">Tỷ lệ duyệt Tờ trình BT</th>
-                  <th>Phân bổ 14 Trạng thái</th>
-                  <th style="width: 170px; text-align: right; padding-right: 24px;">Tổng tiền duyệt BT</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${gdvRows.length === 0 ? `
-                  <tr><td colspan="8" class="empty-state-text" style="padding: 40px; text-align: center; color: var(--text-muted); font-size: 14px;">Không tìm thấy dữ liệu hồ sơ nào trong mốc thời gian đã chọn (${timeLabelText}).</td></tr>
-                ` : gdvRows.map((r, idx) => {
-                  const percentTotal = totalFilteredClaims > 0 ? Math.round((r.totalOpenedCount / totalFilteredClaims) * 100) : 0;
-                  const rateToTrinh = r.totalOpenedCount > 0 ? Math.round((r.toTrinhApprovedCount / r.totalOpenedCount) * 100) : 0;
-                  const initials = getGdvInitials(r.gdvName);
-
-                  let rankBadge = '';
-                  if (idx === 0) rankBadge = '<span style="font-size: 15px;">🥇</span>';
-                  else if (idx === 1) rankBadge = '<span style="font-size: 15px;">🥈</span>';
-                  else if (idx === 2) rankBadge = '<span style="font-size: 15px;">🥉</span>';
-
-                  return `
-                    <tr style="transition: background 0.15s ease;">
-                      <td style="text-align: center; font-weight: 800; color: var(--text-muted); font-size: 12.5px;">${String(idx + 1).padStart(2, '0')}</td>
-                      <td>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                          <div style="width: 34px; height: 34px; border-radius: 50%; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); font-weight: 850; font-size: 11.5px; display: grid; place-items: center; flex-shrink: 0;">
-                            ${initials}
-                          </div>
-                          <div>
-                            <div style="display: flex; align-items: center; gap: 6px;">
-                              ${rankBadge}
-                              <strong style="color: var(--text-main); font-size: 13.5px; font-weight: 850;">${escapeHtmlOutput(r.gdvName)}</strong>
-                            </div>
+                          <div style="display: flex; align-items: center; gap: 6px;">
+                            ${rankBadge}
+                            <strong style="color: var(--text-main); font-size: 13.5px; font-weight: 850;">${escapeHtmlOutput(r.gdvName)}</strong>
                           </div>
                         </div>
-                      </td>
-                      <td><span style="font-size: 12px; color: var(--text-soft); font-weight: 600;">${escapeHtmlOutput(r.branch)}</span></td>
-                      <td style="text-align: center;">
-                        <strong style="font-size: 16px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
-                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">${percentTotal}% tổng kỳ</div>
-                      </td>
-                      <td style="text-align: center;">
-                        <strong style="font-size: 15.5px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${r.toTrinhApprovedCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
-                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Chờ duyệt: ${r.toTrinhPendingCount} ca</div>
-                      </td>
-                      <td style="text-align: center;">
-                        <strong style="font-size: 13.5px; color: #3b82f6; font-family: 'JetBrains Mono'; font-weight: 850;">${rateToTrinh}%</strong>
-                        <div style="width: 100%; height: 6px; background: rgba(59,130,246,0.15); border-radius: 99px; margin-top: 4px; overflow: hidden; border: 1px solid rgba(59,130,246,0.3);">
-                          <div style="width: ${rateToTrinh}%; height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); border-radius: 99px;"></div>
-                        </div>
-                      </td>
-                      <td>
-                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                          ${Object.entries(r.statusMap).map(([stKey, stCount]) => {
-                            const cfg = PENDING_STATUS_MAP[stKey] || PENDING_STATUS_MAP['moi'];
-                            return `<span style="background: ${cfg.bg}; color: ${cfg.color}; border: 1px solid ${cfg.border}; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 99px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">${cfg.label}: ${stCount}</span>`;
-                          }).join('')}
-                        </div>
-                      </td>
-                      <td style="text-align: right; padding-right: 24px; font-family: 'JetBrains Mono'; font-weight: 850; color: var(--primary); font-size: 13.5px;">
-                        ${r.totalApprovedAmount > 0 ? formatCurrencyInputNumber(r.totalApprovedAmount) + ' đ' : '—'}
-                      </td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
+                      </div>
+                    </td>
+                    <td><span style="font-size: 12px; color: var(--text-soft); font-weight: 600;">${escapeHtmlOutput(r.branch)}</span></td>
+                    <td style="text-align: center;">
+                      <strong style="font-size: 16px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
+                      <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">${percentTotal}% tổng kỳ</div>
+                    </td>
+                    <td style="text-align: center;">
+                      <strong style="font-size: 15.5px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${r.toTrinhApprovedCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
+                      <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">Chờ duyệt: ${r.toTrinhPendingCount} ca</div>
+                    </td>
+                    <td style="text-align: center;">
+                      <strong style="font-size: 13.5px; color: #3b82f6; font-family: 'JetBrains Mono'; font-weight: 850;">${rateToTrinh}%</strong>
+                      <div style="width: 100%; height: 6px; background: rgba(59,130,246,0.15); border-radius: 99px; margin-top: 4px; overflow: hidden; border: 1px solid rgba(59,130,246,0.3);">
+                        <div style="width: ${rateToTrinh}%; height: 100%; background: linear-gradient(90deg, #3b82f6, #60a5fa); border-radius: 99px;"></div>
+                      </div>
+                    </td>
+                    <td>
+                      <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        ${Object.entries(r.statusMap).map(([stKey, stCount]) => {
+                          const cfg = PENDING_STATUS_MAP[stKey] || PENDING_STATUS_MAP['moi'];
+                          return `<span style="background: ${cfg.bg}; color: ${cfg.color}; border: 1px solid ${cfg.border}; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 99px; white-space: nowrap;">${cfg.label}: ${stCount}</span>`;
+                        }).join('')}
+                      </div>
+                    </td>
+                    <td style="text-align: right; padding-right: 24px; font-family: 'JetBrains Mono'; font-weight: 850; color: var(--primary); font-size: 13.5px;">
+                      ${r.totalApprovedAmount > 0 ? formatCurrencyInputNumber(r.totalApprovedAmount) + ' đ' : '—'}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    /* ----------------------------------------------------
+     * SUB-TAB 2: AGING & SLA BOTTLENECK ANALYSIS
+     * ---------------------------------------------------- */
+    function renderAgingSlaReportContent(filteredClaims, timeLabelText) {
+      let groupUnder7 = 0;
+      let group7To15 = 0;
+      let group15To30 = 0;
+      let groupOver30 = 0;
+
+      const openClaims = filteredClaims.filter(item => item.raw.trangThai !== 'da_thanh_toan' && item.raw.trangThai !== 'kt_duyet');
+      const totalOpen = openClaims.length;
+
+      const statusBottlenecks = {};
+
+      for (let i = 0; i < openClaims.length; i++) {
+        const item = openClaims[i];
+        const age = item.ageDays;
+        const st = item.raw.trangThai || 'moi';
+        statusBottlenecks[st] = (statusBottlenecks[st] || 0) + 1;
+
+        if (age <= 7) groupUnder7++;
+        else if (age <= 15) group7To15++;
+        else if (age <= 30) group15To30++;
+        else groupOver30++;
+      }
+
+      // Filter list for search
+      let overdueList = openClaims.filter(item => item.ageDays > 15);
+      if (activeGdvReportSearch) {
+        overdueList = overdueList.filter(item => {
+          const bs = (item.raw.bienSo || '').toLowerCase();
+          const gdv = (item.raw.gdvTiepNhan || '').toLowerCase();
+          return bs.includes(activeGdvReportSearch) || gdv.includes(activeGdvReportSearch);
+        });
+      }
+      overdueList.sort((a, b) => b.ageDays - a.ageDays);
+
+      return `
+        <!-- 4 AGING WIDGET CARDS -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 28px;">
+          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(16,185,129,0.35); background: linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(16,185,129,0.02) 100%);">
+            <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850;">🟢 TRONG HẠN SLA (&lt; 7 NGÀY)</span>
+            <strong style="display: block; font-size: 30px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">${groupUnder7} <span style="font-size: 14px;">ca</span></strong>
           </div>
+
+          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(234,179,8,0.35); background: linear-gradient(135deg, rgba(234,179,8,0.12) 0%, rgba(234,179,8,0.02) 100%);">
+            <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850;">🟡 CẢNH BÁO TIẾN ĐỘ (7 - 15 NGÀY)</span>
+            <strong style="display: block; font-size: 30px; color: #eab308; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">${group7To15} <span style="font-size: 14px;">ca</span></strong>
+          </div>
+
+          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(249,115,22,0.35); background: linear-gradient(135deg, rgba(249,115,22,0.12) 0%, rgba(249,115,22,0.02) 100%);">
+            <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850;">🟠 CẦN CAN THIỆP (15 - 30 NGÀY)</span>
+            <strong style="display: block; font-size: 30px; color: #f97316; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">${group15To30} <span style="font-size: 14px;">ca</span></strong>
+          </div>
+
+          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(239,68,68,0.35); background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(239,68,68,0.02) 100%);">
+            <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850;">🔴 QUÁ HẠN NGIÊM TRỌNG (&gt; 30 NGÀY)</span>
+            <strong style="display: block; font-size: 30px; color: #ef4444; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">${groupOver30} <span style="font-size: 14px;">ca</span></strong>
+          </div>
+        </div>
+
+        <!-- BOTTLENECK STATUS BREAKDOWN -->
+        <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 28px;">
+          <div style="font-size: 13px; font-weight: 850; color: var(--primary); text-transform: uppercase; margin-bottom: 16px;">
+            ⚠️ Phân tích Điểm nghẽn Tồn đọng (Bottleneck Breakdown by Status)
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+            ${Object.entries(statusBottlenecks).map(([stKey, cnt]) => {
+              const cfg = PENDING_STATUS_MAP[stKey] || PENDING_STATUS_MAP['moi'];
+              const pct = totalOpen > 0 ? Math.round((cnt / totalOpen) * 100) : 0;
+              return `
+                <div style="background: rgba(0,0,0,0.25); border: 1px solid ${cfg.border}; padding: 12px 16px; border-radius: 14px;">
+                  <span style="font-size: 11px; font-weight: 800; color: ${cfg.color}; display: block;">${cfg.label}</span>
+                  <strong style="font-size: 20px; color: #ffffff; font-family: 'JetBrains Mono'; font-weight: 850; display: block; margin-top: 4px;">${cnt} <span style="font-size: 12px; font-weight: 600; color: var(--text-soft);">ca</span></strong>
+                  <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">${pct}% tổng tồn</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- OVERDUE TABLE (> 15 DAYS) -->
+        <div class="table-container" style="border: 1px solid var(--border-strong); border-radius: 20px; background: var(--surface); overflow: hidden;">
+          <div style="padding: 16px 24px; background: rgba(239,68,68,0.08); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 850; color: #ef4444; text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+              Danh sách Hồ sơ Cần Đôn đốc Quá hạn &gt; 15 Ngày (${overdueList.length} ca)
+            </span>
+          </div>
+
+          <table class="p-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: rgba(0,0,0,0.2);">
+                <th style="width: 50px; text-align: center;">STT</th>
+                <th style="width: 130px;">Biển số xe</th>
+                <th style="width: 160px;">Mã vụ tổn thất</th>
+                <th style="width: 150px;">Ngày mở HS</th>
+                <th style="width: 130px; text-align: center;">Tuổi hồ sơ</th>
+                <th style="width: 160px;">Trạng thái hiện tại</th>
+                <th style="width: 180px;">Giám định viên</th>
+                <th>Gara chỉ định</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${overdueList.length === 0 ? `
+                <tr><td colspan="8" class="empty-state-text" style="padding: 30px; text-align: center; color: #10b981; font-weight: 800;">🎉 Tuyệt vời! Không có hồ sơ nào bị quá hạn &gt; 15 ngày trong kỳ này.</td></tr>
+              ` : overdueList.map((item, idx) => {
+                const c = item.raw;
+                const cfg = PENDING_STATUS_MAP[c.trangThai] || PENDING_STATUS_MAP['moi'];
+                return `
+                  <tr>
+                    <td style="text-align: center; font-weight: 800; color: var(--text-muted);">${String(idx + 1).padStart(2, '0')}</td>
+                    <td><strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${escapeHtmlOutput(c.bienSo)}</strong></td>
+                    <td><span style="font-size: 11.5px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(c.maVuTonThat || '—')}</span></td>
+                    <td><span style="font-size: 12px; color: var(--text-soft);">${escapeHtmlOutput(c.ngayMoHs || c.ngayTonThat || '—')}</span></td>
+                    <td style="text-align: center;">
+                      <span style="background: ${item.ageDays > 30 ? 'rgba(239,68,68,0.2)' : 'rgba(249,115,22,0.2)'}; color: ${item.ageDays > 30 ? '#ef4444' : '#f97316'}; border: 1px solid ${item.ageDays > 30 ? '#ef4444' : '#f97316'}; font-weight: 850; font-size: 12px; padding: 3px 10px; border-radius: 99px;">
+                        ${item.ageDays} ngày
+                      </span>
+                    </td>
+                    <td><span style="background: ${cfg.bg}; color: ${cfg.color}; border: 1px solid ${cfg.border}; font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 99px;">${cfg.label}</span></td>
+                    <td><strong style="font-size: 12.5px; color: var(--text-main);">${escapeHtmlOutput(c.gdvTiepNhan || c.canBoXuLy || '—')}</strong></td>
+                    <td><span style="font-size: 12px; color: var(--text-soft);">${escapeHtmlOutput(c.garaSuaChua || '—')}</span></td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    /* ----------------------------------------------------
+     * SUB-TAB 3: GARAGE NETWORK & COST ANALYSIS
+     * ---------------------------------------------------- */
+    function renderGarageNetworkReportContent(filteredClaims, timeLabelText) {
+      const garageMap = {};
+      const brandMap = {};
+
+      for (let i = 0; i < filteredClaims.length; i++) {
+        const c = filteredClaims[i].raw;
+        const gName = (c.garaSuaChua || 'Chưa chỉ định Gara').trim();
+        const brand = (c.hangXe || 'Khác').trim().toUpperCase();
+
+        const amtStr = String(c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
+        const amtVal = parseInt(amtStr, 10) || 0;
+
+        if (!garageMap[gName]) {
+          garageMap[gName] = { name: gName, count: 0, approvedAmt: 0 };
+        }
+        garageMap[gName].count++;
+        garageMap[gName].approvedAmt += amtVal;
+
+        if (!brandMap[brand]) {
+          brandMap[brand] = { brand, count: 0, approvedAmt: 0 };
+        }
+        brandMap[brand].count++;
+        brandMap[brand].approvedAmt += amtVal;
+      }
+
+      let garageList = Object.values(garageMap).sort((a, b) => b.count - a.count);
+      let brandList = Object.values(brandMap).sort((a, b) => b.count - a.count);
+
+      if (activeGdvReportSearch) {
+        garageList = garageList.filter(g => g.name.toLowerCase().includes(activeGdvReportSearch));
+      }
+
+      return `
+        <!-- VEHICLE BRAND COST SUMMARY CARDS -->
+        <div style="margin-bottom: 28px;">
+          <div style="font-size: 13px; font-weight: 850; color: #3b82f6; text-transform: uppercase; margin-bottom: 14px;">
+            🚗 Phân bổ Chi phí Bồi thường theo Hãng Xe
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+            ${brandList.slice(0, 6).map(b => `
+              <div style="background: var(--surface); border: 1px solid var(--border); padding: 16px; border-radius: 16px;">
+                <span style="font-size: 12px; font-weight: 850; color: var(--primary);">${escapeHtmlOutput(b.brand)}</span>
+                <strong style="font-size: 22px; color: #ffffff; font-family: 'JetBrains Mono'; font-weight: 850; display: block; margin-top: 4px;">${b.count} <span style="font-size: 12px; color: var(--text-soft);">ca</span></strong>
+                <div style="font-size: 12px; color: #10b981; font-weight: 800; font-family: 'JetBrains Mono'; margin-top: 4px;">
+                  ${b.approvedAmt > 0 ? formatCurrencyInputNumber(b.approvedAmt) + ' đ' : '—'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- GARAGE MASTER TABLE -->
+        <div class="table-container" style="border: 1px solid var(--border-strong); border-radius: 20px; background: var(--surface); overflow: hidden;">
+          <div style="padding: 16px 24px; background: rgba(59,130,246,0.08); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 850; color: #3b82f6; text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+              Bảng Thống kê Sản lượng & Chi phí Bồi thường theo Gara Sửa chữa (${garageList.length} gara)
+            </span>
+          </div>
+
+          <table class="p-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: rgba(0,0,0,0.2);">
+                <th style="width: 55px; text-align: center;">STT</th>
+                <th>Tên Gara Sửa chữa đối tác</th>
+                <th style="width: 180px; text-align: center;">Số lượng xe tiếp nhận</th>
+                <th style="width: 200px; text-align: right;">Tổng chi phí duyệt BT</th>
+                <th style="width: 200px; text-align: right; padding-right: 24px;">Chi phí TB / Xe</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${garageList.length === 0 ? `
+                <tr><td colspan="5" class="empty-state-text" style="padding: 30px; text-align: center;">Không có dữ liệu gara trong kỳ.</td></tr>
+              ` : garageList.map((g, idx) => {
+                const avgVal = g.count > 0 ? Math.round(g.approvedAmt / g.count) : 0;
+                return `
+                  <tr>
+                    <td style="text-align: center; font-weight: 800; color: var(--text-muted);">${String(idx + 1).padStart(2, '0')}</td>
+                    <td><strong style="color: var(--text-main); font-size: 13.5px;">${escapeHtmlOutput(g.name)}</strong></td>
+                    <td style="text-align: center;"><strong style="font-size: 16px; color: #3b82f6; font-family: 'JetBrains Mono'; font-weight: 850;">${g.count} ca</strong></td>
+                    <td style="text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; color: #10b981; font-size: 13.5px;">${g.approvedAmt > 0 ? formatCurrencyInputNumber(g.approvedAmt) + ' đ' : '—'}</td>
+                    <td style="text-align: right; padding-right: 24px; font-family: 'JetBrains Mono'; font-weight: 850; color: var(--primary); font-size: 13.5px;">${avgVal > 0 ? formatCurrencyInputNumber(avgVal) + ' đ' : '—'}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    /* ----------------------------------------------------
+     * SUB-TAB 4: BRANCH & LOSS CAUSE ANALYTICS
+     * ---------------------------------------------------- */
+    function renderBranchLossReportContent(filteredClaims, timeLabelText) {
+      const branchMap = {};
+      const causeMap = {};
+
+      for (let i = 0; i < filteredClaims.length; i++) {
+        const c = filteredClaims[i].raw;
+        const branch = (c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || 'Chưa rõ Chi nhánh').trim();
+        const cause = (c.nguyenNhan || c.nhomNguyenNhan || 'Khác / Chưa mô tả').trim();
+
+        const amtStr = String(c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
+        const amtVal = parseInt(amtStr, 10) || 0;
+
+        if (!branchMap[branch]) {
+          branchMap[branch] = { name: branch, count: 0, approvedAmt: 0 };
+        }
+        branchMap[branch].count++;
+        branchMap[branch].approvedAmt += amtVal;
+
+        if (!causeMap[cause]) {
+          causeMap[cause] = { name: cause, count: 0 };
+        }
+        causeMap[cause].count++;
+      }
+
+      let branchList = Object.values(branchMap).sort((a, b) => b.count - a.count);
+      let causeList = Object.values(causeMap).sort((a, b) => b.count - a.count);
+
+      if (activeGdvReportSearch) {
+        branchList = branchList.filter(b => b.name.toLowerCase().includes(activeGdvReportSearch));
+      }
+
+      return `
+        <!-- LOSS CAUSE BREAKDOWN -->
+        <div style="margin-bottom: 28px;">
+          <div style="font-size: 13px; font-weight: 850; color: #a855f7; text-transform: uppercase; margin-bottom: 14px;">
+            💥 Phân tích Nhóm Nguyên nhân Tổn thất hàng đầu
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+            ${causeList.slice(0, 6).map(cs => `
+              <div style="background: var(--surface); border: 1px solid var(--border); padding: 16px; border-radius: 16px;">
+                <span style="font-size: 12px; font-weight: 850; color: #a855f7;">${escapeHtmlOutput(cs.name)}</span>
+                <strong style="font-size: 22px; color: #ffffff; font-family: 'JetBrains Mono'; font-weight: 850; display: block; margin-top: 4px;">${cs.count} <span style="font-size: 12px; color: var(--text-soft);">vụ</span></strong>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- BRANCH MASTER TABLE -->
+        <div class="table-container" style="border: 1px solid var(--border-strong); border-radius: 20px; background: var(--surface); overflow: hidden;">
+          <div style="padding: 16px 24px; background: rgba(168,85,247,0.08); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: 850; color: #a855f7; text-transform: uppercase; display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+              Bảng Thống kê Sản lượng Hồ sơ theo Chi nhánh Cấp đơn (${branchList.length} chi nhánh)
+            </span>
+          </div>
+
+          <table class="p-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: rgba(0,0,0,0.2);">
+                <th style="width: 55px; text-align: center;">STT</th>
+                <th>Chi nhánh cấp đơn</th>
+                <th style="width: 200px; text-align: center;">Số lượng HS phát sinh</th>
+                <th style="width: 220px; text-align: right; padding-right: 24px;">Tổng tiền duyệt BT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${branchList.length === 0 ? `
+                <tr><td colspan="4" class="empty-state-text" style="padding: 30px; text-align: center;">Không có dữ liệu chi nhánh trong kỳ.</td></tr>
+              ` : branchList.map((b, idx) => {
+                return `
+                  <tr>
+                    <td style="text-align: center; font-weight: 800; color: var(--text-muted);">${String(idx + 1).padStart(2, '0')}</td>
+                    <td><strong style="color: var(--text-main); font-size: 13.5px;">${escapeHtmlOutput(b.name)}</strong></td>
+                    <td style="text-align: center;"><strong style="font-size: 16px; color: #a855f7; font-family: 'JetBrains Mono'; font-weight: 850;">${b.count} ca</strong></td>
+                    <td style="text-align: right; padding-right: 24px; font-family: 'JetBrains Mono'; font-weight: 850; color: var(--primary); font-size: 13.5px;">${b.approvedAmt > 0 ? formatCurrencyInputNumber(b.approvedAmt) + ' đ' : '—'}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
         </div>
       `;
     }
@@ -10995,8 +11366,8 @@
       if (window.XLSX) {
         const ws = XLSX.utils.json_to_sheet(excelData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'BaoCao_KhoiLuong_GDV');
-        XLSX.writeFile(wb, `Bao_Cao_KhoiLuong_GDV_${activeGdvReportMonth}_${activeGdvReportYear}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, 'BaoCao_QuanTri_BoiThuong');
+        XLSX.writeFile(wb, `Bao_Cao_QuanTri_BoiThuong_${activeGdvReportMonth}_${activeGdvReportYear}.xlsx`);
         triggerToast('Đã xuất file Excel thành công!', 'success');
       } else {
         triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
@@ -11008,7 +11379,7 @@
   
     /****************************************************
      * BÁO CÁO KHỐI LƯỢNG HỒ SƠ & TỜ TRÌNH BT THEO GĐV
-     * Ultra Fast Single-Pass O(N) Engine - 0.001s Response
+     * LUXURY EXECUTIVE DASHBOARD DESIGN SYSTEM (ULTRA-PREMIUM)
      ****************************************************/
     </script>
 </body>
