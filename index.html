@@ -5954,8 +5954,20 @@
       claimsList.forEach(c => { if (c.gdvTiepNhan && c.gdvTiepNhan !== '—' && c.gdvTiepNhan !== 'Chưa phân công') gdvTeamSet.add(c.gdvTiepNhan); });
       const gdvTeamList = Array.from(gdvTeamSet);
 
-      // Sort by newest created first
-      filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            // Sort strictly by Ngày mở HS (from date closest to present / newest down to past)
+      function getClaimTimeVal(c) {
+        if (!c) return 0;
+        const dateStr = c.ngayMoHs || c.ngayTonThat || c.ngayVTT;
+        if (dateStr && dateStr !== '—') {
+          const dp = parseDateParts(dateStr);
+          if (dp && dp.year && dp.month && dp.day) {
+            return new Date(dp.year, dp.month - 1, dp.day, dp.hour || 0, dp.minute || 0, dp.second || 0).getTime();
+          }
+        }
+        return c.createdAt || 0;
+      }
+
+      filtered.sort((a, b) => getClaimTimeVal(b) - getClaimTimeVal(a));
 
       const totalFilteredCount = filtered.length;
       const perPage = pendingClaimsPerPage === 'all' ? (totalFilteredCount || 1) : (parseInt(pendingClaimsPerPage, 10) || 10);
