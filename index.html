@@ -2875,6 +2875,20 @@
           firebase.initializeApp(CONFIG.FIREBASE);
         }
         dbNodeInstance = firebase.database();
+        if (dbNodeInstance) {
+          dbNodeInstance.ref('system_config/kpi_config').on('value', (snapshot) => {
+            const val = snapshot.val();
+            if (val) {
+              localStorage.setItem('kpiCoefficientConfig', JSON.stringify(val));
+              if (activeDashboardTab === 'users' && activeSystemAdminSubTab === 'kpi-config') {
+                const subTabContainer = document.getElementById('systemAdminSubTabContainer');
+                if (subTabContainer && typeof renderKpiConfigSubTabUI === 'function') {
+                  renderKpiConfigSubTabUI(subTabContainer);
+                }
+              }
+            }
+          });
+        }
       } catch (err) {
         console.error("Firebase init failed:", err);
       }
@@ -3505,6 +3519,14 @@
 
     function switchSystemAdminSubTab(subTabName) {
       activeSystemAdminSubTab = subTabName;
+      
+      // Update visual active state of subtab pills dynamically
+      document.querySelectorAll('button[onclick^="switchSystemAdminSubTab"]').forEach(btn => {
+        const onclickAttr = btn.getAttribute('onclick') || '';
+        const isCurrent = onclickAttr.includes(subTabName);
+        btn.classList.toggle('active', isCurrent);
+      });
+
       renderSystemAdminTabContent();
     }
 
@@ -11759,7 +11781,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
     function saveKpiCoefConfig(cfg) {
       try {
         localStorage.setItem('kpiCoefficientConfig', JSON.stringify(cfg));
-        if (window.dbNodeInstance) {
+        if (dbNodeInstance) {
           dbNodeInstance.ref('system_config/kpi_config').set(cfg).catch(() => {});
         }
       } catch(e){}
