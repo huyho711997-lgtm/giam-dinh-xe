@@ -4003,6 +4003,14 @@
             </svg>
             <span class="nav-btn-text">Hồ sơ tồn</span>
           </button>
+          <button id="headerNavGdvReportBtn" class="header-nav-btn ${activeDashboardTab === 'gdv_report' ? 'active' : ''}" onclick="navigateHeaderTab('gdv_report')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            <span class="nav-btn-text">Báo cáo GĐV</span>
+          </button>
           <button id="headerNavCreateBtn" class="header-nav-btn ${createActive}" onclick="navigateHeaderTab('create')">${SVGS.SPARKLES} <span class="nav-btn-text">Khởi tạo hồ sơ</span></button>
           ${isAdmin ? `
             <button id="headerNavUsersBtn" class="header-nav-btn ${usersActive}" onclick="navigateHeaderTab('users')">
@@ -6351,11 +6359,13 @@
       const homeBtn = document.getElementById('headerNavHomeBtn');
       const listBtn = document.getElementById('headerNavListBtn');
       const pendingBtn = document.getElementById('headerNavPendingBtn');
+      const gdvReportBtn = document.getElementById('headerNavGdvReportBtn');
       const createBtn = document.getElementById('headerNavCreateBtn');
       const usersBtn = document.getElementById('headerNavUsersBtn');
       if (homeBtn) homeBtn.classList.toggle('active', tabName === 'home');
       if (listBtn) listBtn.classList.toggle('active', tabName === 'list');
       if (pendingBtn) pendingBtn.classList.toggle('active', tabName === 'pending');
+      if (gdvReportBtn) gdvReportBtn.classList.toggle('active', tabName === 'gdv_report');
       if (createBtn) createBtn.classList.toggle('active', tabName === 'create');
       if (usersBtn) usersBtn.classList.toggle('active', tabName === 'users');
 
@@ -6368,6 +6378,11 @@
     function renderActiveTabContent() {
       const container = document.getElementById('tabContentContainer');
       if (!container) return;
+
+      if (activeDashboardTab === 'gdv_report') {
+        renderGdvMonthlyReportPage(container);
+        return;
+      }
 
       if (activeDashboardTab === 'home') {
         container.innerHTML = `
@@ -6543,10 +6558,7 @@
                   <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft);">Quản lý danh sách hồ sơ tổn thất tồn đọng trong team, phân công Giám định viên và theo dõi báo cáo tuần.</p>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                  <button type="button" class="btn-premium btn-secondary" onclick="openExportWeeklyReportModal()" style="width: auto !important; padding: 0 18px; min-height: 42px; font-size: 12.5px; border-radius: 10px; font-weight: 750; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span>Xuất Báo cáo tuần</span>
-                  </button>
+
                   <button type="button" class="btn-premium" onclick="openImportExcelModal()" style="width: auto !important; padding: 0 24px; height: 42px; font-size: 13px; border-radius: 10px; font-weight: 850; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.35);">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h8"></path><path d="M8 17h8"></path><path d="M10 9h4"></path></svg>
                     <span>Nhập & Cập nhật Hồ sơ từ Excel</span>
@@ -10498,3 +10510,344 @@
   </script>
 </body>
 </html>
+    /****************************************************
+     * BÁO CÁO PHÁT SINH TRONG THÁNG THEO GIÁM ĐỊNH VIÊN
+     ****************************************************/
+    let activeGdvReportMonth = new Date().getMonth() + 1;
+    let activeGdvReportYear = new Date().getFullYear();
+    let activeGdvReportBranch = 'all';
+    let activeGdvReportSearch = '';
+
+    function changeGdvReportMonthYear(month, year) {
+      activeGdvReportMonth = parseInt(month, 10);
+      activeGdvReportYear = parseInt(year, 10);
+      renderGdvMonthlyReportPage();
+    }
+
+    function changeGdvReportBranch(branch) {
+      activeGdvReportBranch = branch;
+      renderGdvMonthlyReportPage();
+    }
+
+    function changeGdvReportSearch(txt) {
+      activeGdvReportSearch = (txt || '').toLowerCase().trim();
+      renderGdvMonthlyReportPage();
+    }
+
+    function renderGdvMonthlyReportPage(targetContainer) {
+      const container = targetContainer || document.getElementById('tabContentContainer');
+      if (!container) return;
+
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+
+      // Extract all available years & branches from dataset
+      const yearSet = new Set([new Date().getFullYear()]);
+      const branchSet = new Set(['all']);
+
+      claimsList.forEach(c => {
+        const dateStr = c.ngayMoHs || c.ngayTonThat;
+        if (dateStr && dateStr !== '—') {
+          const dp = parseDateParts(dateStr);
+          if (dp && dp.year) yearSet.add(dp.year);
+        }
+        const branch = c.donViCapDon || c.chiNhanh || c.chiNhanhXuly;
+        if (branch && branch !== '—') branchSet.add(branch);
+      });
+
+      const yearList = Array.from(yearSet).sort((a, b) => b - a);
+      const branchList = Array.from(branchSet);
+
+      // Auto-set year to newest year in dataset if current year has 0 claims
+      if (!claimsList.some(c => {
+        const dp = parseDateParts(c.ngayMoHs || c.ngayTonThat);
+        return dp && dp.year === activeGdvReportYear && dp.month === activeGdvReportMonth;
+      }) && yearList.length > 0) {
+        // Find most recent month & year with data
+        let foundMostRecent = false;
+        for (const yr of yearList) {
+          for (let m = 12; m >= 1; m--) {
+            const hasData = claimsList.some(c => {
+              const dp = parseDateParts(c.ngayMoHs || c.ngayTonThat);
+              return dp && dp.year === yr && dp.month === m;
+            });
+            if (hasData) {
+              activeGdvReportYear = yr;
+              activeGdvReportMonth = m;
+              foundMostRecent = true;
+              break;
+            }
+          }
+          if (foundMostRecent) break;
+        }
+      }
+
+      // Filter claims for selected Month & Year & Branch
+      const monthClaims = claimsList.filter(c => {
+        const dateStr = c.ngayMoHs || c.ngayTonThat;
+        const dp = parseDateParts(dateStr);
+        if (!dp) return false;
+        if (dp.year !== activeGdvReportYear || dp.month !== activeGdvReportMonth) return false;
+        if (activeGdvReportBranch !== 'all') {
+          const b = c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '';
+          if (b !== activeGdvReportBranch) return false;
+        }
+        return true;
+      });
+
+      // Group claims by Giám định viên
+      const gdvMap = {};
+      monthClaims.forEach(c => {
+        const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
+        if (!gdvMap[gdvName]) {
+          gdvMap[gdvName] = {
+            gdvName,
+            branch: c.donViCapDon || c.chiNhanh || '—',
+            totalCount: 0,
+            completedCount: 0,
+            pendingCount: 0,
+            totalApprovedAmount: 0,
+            statusMap: {}
+          };
+        }
+        gdvMap[gdvName].totalCount++;
+        const stKey = PENDING_STATUS_MAP[c.trangThai] ? c.trangThai : 'moi';
+        gdvMap[gdvName].statusMap[stKey] = (gdvMap[gdvName].statusMap[stKey] || 0) + 1;
+
+        if (c.trangThai === 'da_thanh_toan' || c.trangThai === 'kt_duyet') {
+          gdvMap[gdvName].completedCount++;
+        } else {
+          gdvMap[gdvName].pendingCount++;
+        }
+
+        const amtStr = String(c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
+        const amtVal = parseInt(amtStr, 10) || 0;
+        gdvMap[gdvName].totalApprovedAmount += amtVal;
+      });
+
+      let gdvRows = Object.values(gdvMap);
+
+      // Filter by search text
+      if (activeGdvReportSearch) {
+        gdvRows = gdvRows.filter(r => r.gdvName.toLowerCase().includes(activeGdvReportSearch) || r.branch.toLowerCase().includes(activeGdvReportSearch));
+      }
+
+      // Sort by total claim count descending (highest volume first)
+      gdvRows.sort((a, b) => b.totalCount - a.totalCount);
+
+      const monthTotalClaims = monthClaims.length;
+      const totalGdvCount = gdvRows.length;
+      const avgPerGdv = totalGdvCount > 0 ? Math.round(monthTotalClaims / totalGdvCount) : 0;
+      const topGdv = gdvRows[0] ? gdvRows[0].gdvName : 'Chưa có';
+
+      container.innerHTML = `
+        <div style="padding: 24px 28px;">
+          <!-- Top Page Header -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <div class="eyebrow" style="margin-bottom: 6px;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                <span>BÁO CÁO NHÂN SỰ & KHỐI LƯỢNG CÔNG VIỆC</span>
+              </div>
+              <h2 style="font-size: 24px; font-weight: 800; color: var(--text-main); margin: 0;">Báo cáo số lượng hồ sơ phát sinh trong tháng theo Giám định viên</h2>
+              <p style="margin-top: 6px; font-size: 13.5px; color: var(--text-soft);">Thống kê chi tiết khối lượng hồ sơ bồi thường phát sinh, phân bổ trạng thái và tỷ lệ hoàn thành của từng Giám định viên.</p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <button type="button" class="btn-premium" onclick="exportGdvMonthlyReportExcel()" style="width: auto !important; padding: 0 22px; height: 42px; font-size: 13px; border-radius: 10px; font-weight: 800; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.35);">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Xuất Báo cáo Excel (.xlsx)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Month & Year & Filter Controls Bar -->
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; background: var(--surface); padding: 16px 22px; border-radius: 16px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
+            <!-- Left Controls: Month & Year Selector -->
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--primary);">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>Thời gian báo cáo:</span>
+              </div>
+              <select id="selGdvReportMonth" onchange="changeGdvReportMonthYear(this.value, document.getElementById('selGdvReportYear').value)" class="input-premium" style="width: 140px; padding: 8px 12px; font-weight: 800; border-radius: 10px; cursor: pointer;">
+                ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `<option value="${m}" ${m === activeGdvReportMonth ? 'selected' : ''}>Tháng ${m}</option>`).join('')}
+              </select>
+              <select id="selGdvReportYear" onchange="changeGdvReportMonthYear(document.getElementById('selGdvReportMonth').value, this.value)" class="input-premium" style="width: 120px; padding: 8px 12px; font-weight: 800; border-radius: 10px; cursor: pointer;">
+                ${yearList.map(y => `<option value="${y}" ${y === activeGdvReportYear ? 'selected' : ''}>Năm ${y}</option>`).join('')}
+              </select>
+              <select id="selGdvReportBranch" onchange="changeGdvReportBranch(this.value)" class="input-premium" style="width: 200px; padding: 8px 12px; font-weight: 750; border-radius: 10px; cursor: pointer;">
+                <option value="all">Tất cả chi nhánh cấp đơn</option>
+                ${branchList.filter(b => b !== 'all').map(b => `<option value="${escapeAttributeData(b)}" ${b === activeGdvReportBranch ? 'selected' : ''}>${escapeHtmlOutput(b)}</option>`).join('')}
+              </select>
+            </div>
+
+            <!-- Right Controls: Search GĐV -->
+            <div class="search-wrap" style="margin: 0; min-width: 220px; max-width: 300px; flex: 1;">
+              <input type="text" class="input-premium search-input" placeholder="Tìm tên GĐV..." value="${escapeAttributeData(activeGdvReportSearch)}" oninput="changeGdvReportSearch(this.value)" style="padding-left: 36px; border-radius: 10px;" />
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-soft);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+          </div>
+
+          <!-- Overview Metric Widgets Cards -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(216,180,109,0.3); background: linear-gradient(135deg, rgba(216,180,109,0.08) 0%, rgba(216,180,109,0.02) 100%); box-shadow: var(--shadow-sm);">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">Tổng hồ sơ phát sinh</span>
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(216,180,109,0.15); color: var(--primary); display: grid; place-items: center; flex-shrink: 0;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                </div>
+              </div>
+              <strong style="display: block; font-size: 26px; color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800;">${monthTotalClaims} <span style="font-size: 14px; font-weight: 750;">ca</span></strong>
+            </div>
+
+            <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(59,130,246,0.3); background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(59,130,246,0.02) 100%); box-shadow: var(--shadow-sm);">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">GĐV tham gia xử lý</span>
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(59,130,246,0.15); color: #3b82f6; display: grid; place-items: center; flex-shrink: 0;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                </div>
+              </div>
+              <strong style="display: block; font-size: 26px; color: #3b82f6; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800;">${totalGdvCount} <span style="font-size: 14px; font-weight: 750;">người</span></strong>
+            </div>
+
+            <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(16,185,129,0.3); background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.02) 100%); box-shadow: var(--shadow-sm);">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">Năng suất trung bình</span>
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(16,185,129,0.15); color: #10b981; display: grid; place-items: center; flex-shrink: 0;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                </div>
+              </div>
+              <strong style="display: block; font-size: 26px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800;">${avgPerGdv} <span style="font-size: 14px; font-weight: 750;">ca / GĐV</span></strong>
+            </div>
+
+            <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(168,85,247,0.3); background: linear-gradient(135deg, rgba(168,85,247,0.08) 0%, rgba(168,85,247,0.02) 100%); box-shadow: var(--shadow-sm);">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">GĐV dẫn đầu khối lượng</span>
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(168,85,247,0.15); color: #a855f7; display: grid; place-items: center; flex-shrink: 0;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="7"></circle><polyline points="8 21 12 17 16 21"></polyline></svg>
+                </div>
+              </div>
+              <strong style="display: block; font-size: 16px; color: #a855f7; margin-top: 10px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(topGdv)}">🥇 ${escapeHtmlOutput(topGdv)}</strong>
+            </div>
+          </div>
+
+          <!-- Main Table Container -->
+          <div class="table-container" style="border: 1px solid var(--border); border-radius: 16px; background: var(--bg-soft); overflow: hidden; box-shadow: var(--shadow-md);">
+            <table class="p-table" style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr>
+                  <th style="width: 50px; text-align: center;">#</th>
+                  <th style="width: 220px;">Tên Giám định viên</th>
+                  <th style="width: 160px;">Đơn vị / Chi nhánh</th>
+                  <th style="width: 180px; text-align: center;">Số lượng HS phát sinh</th>
+                  <th>Phân bổ Trạng thái (14 Trạng thái)</th>
+                  <th style="width: 140px; text-align: center;">Hoàn thành</th>
+                  <th style="width: 160px; text-align: right; padding-right: 20px;">Tổng duyệt BT (VNĐ)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${gdvRows.length === 0 ? `
+                  <tr><td colspan="7" class="empty-state-text">Không tìm thấy dữ liệu phát sinh trong Tháng ${activeGdvReportMonth}/${activeGdvReportYear}.</td></tr>
+                ` : gdvRows.map((r, idx) => {
+                  const percentTotal = monthTotalClaims > 0 ? Math.round((r.totalCount / monthTotalClaims) * 100) : 0;
+                  const rateCompleted = r.totalCount > 0 ? Math.round((r.completedCount / r.totalCount) * 100) : 100;
+                  
+                  let medal = '';
+                  if (idx === 0) medal = '🥇';
+                  else if (idx === 1) medal = '🥈';
+                  else if (idx === 2) medal = '🥉';
+
+                  return `
+                    <tr>
+                      <td style="text-align: center; font-weight: 800; color: var(--text-muted);">${String(idx + 1).padStart(2, '0')}</td>
+                      <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <span style="font-size: 14px;">${medal}</span>
+                          <strong style="color: var(--text-main); font-size: 13.5px;">${escapeHtmlOutput(r.gdvName)}</strong>
+                        </div>
+                      </td>
+                      <td><span style="font-size: 12px; color: var(--text-soft);">${escapeHtmlOutput(r.branch)}</span></td>
+                      <td style="text-align: center;">
+                        <strong style="font-size: 16px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 800;">${r.totalCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
+                        <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">${percentTotal}% tổng tháng</div>
+                      </td>
+                      <td>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                          ${Object.entries(r.statusMap).map(([stKey, stCount]) => {
+                            const cfg = PENDING_STATUS_MAP[stKey] || PENDING_STATUS_MAP['moi'];
+                            return `<span style="background: ${cfg.bg}; color: ${cfg.color}; border: 1px solid ${cfg.border}; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 99px; white-space: nowrap;">${cfg.label}: ${stCount}</span>`;
+                          }).join('')}
+                        </div>
+                      </td>
+                      <td style="text-align: center;">
+                        <strong style="font-size: 13px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 800;">${r.completedCount} ca</strong>
+                        <div style="width: 100%; height: 5px; background: rgba(16,185,129,0.15); border-radius: 99px; margin-top: 4px; overflow: hidden;">
+                          <div style="width: ${rateCompleted}%; height: 100%; background: #10b981; border-radius: 99px;"></div>
+                        </div>
+                        <span style="font-size: 10px; color: var(--text-muted);">${rateCompleted}% hoàn thành</span>
+                      </td>
+                      <td style="text-align: right; padding-right: 20px; font-family: 'JetBrains Mono'; font-weight: 800; color: var(--primary); font-size: 13px;">
+                        ${r.totalApprovedAmount > 0 ? formatCurrencyInputNumber(r.totalApprovedAmount) + ' đ' : '—'}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function exportGdvMonthlyReportExcel() {
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+      const monthClaims = claimsList.filter(c => {
+        const dateStr = c.ngayMoHs || c.ngayTonThat;
+        const dp = parseDateParts(dateStr);
+        if (!dp) return false;
+        if (dp.year !== activeGdvReportYear || dp.month !== activeGdvReportMonth) return false;
+        if (activeGdvReportBranch !== 'all') {
+          const b = c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '';
+          if (b !== activeGdvReportBranch) return false;
+        }
+        return true;
+      });
+
+      const gdvMap = {};
+      monthClaims.forEach(c => {
+        const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
+        if (!gdvMap[gdvName]) {
+          gdvMap[gdvName] = { gdvName, branch: c.donViCapDon || c.chiNhanh || '—', totalCount: 0, completedCount: 0, pendingCount: 0, totalApprovedAmount: 0 };
+        }
+        gdvMap[gdvName].totalCount++;
+        if (c.trangThai === 'da_thanh_toan' || c.trangThai === 'kt_duyet') gdvMap[gdvName].completedCount++;
+        else gdvMap[gdvName].pendingCount++;
+        const amtStr = String(c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
+        gdvMap[gdvName].totalApprovedAmount += (parseInt(amtStr, 10) || 0);
+      });
+
+      const rows = Object.values(gdvMap).sort((a, b) => b.totalCount - a.totalCount);
+      if (rows.length === 0) {
+        triggerToast('Không có dữ liệu để xuất file Excel cho tháng này.', 'warning');
+        return;
+      }
+
+      const excelData = rows.map((r, idx) => ({
+        'STT': idx + 1,
+        'Giám định viên': r.gdvName,
+        'Chi nhánh / Đơn vị': r.branch,
+        'Tổng HS phát sinh trong tháng': r.totalCount,
+        'Hồ sơ đã hoàn thành': r.completedCount,
+        'Hồ sơ tồn đọng': r.pendingCount,
+        'Tỷ lệ hoàn thành (%)': r.totalCount > 0 ? Math.round((r.completedCount / r.totalCount) * 100) + '%' : '100%',
+        'Tổng số tiền đã duyệt BT (VNĐ)': r.totalApprovedAmount
+      }));
+
+      if (window.XLSX) {
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'BaoCao_GDV_Thang');
+        XLSX.writeFile(wb, `Bao_Cao_Ho_So_Theo_GDV_Thang_${activeGdvReportMonth}_${activeGdvReportYear}.xlsx`);
+        triggerToast('Đã xuất file Excel thành công!', 'success');
+      } else {
+        triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
+      }
+    }
