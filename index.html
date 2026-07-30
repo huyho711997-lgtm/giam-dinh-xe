@@ -10782,12 +10782,13 @@ function formatDateDisplay(val) {
       const top3Performers = gdvRows.slice(0, 3);
 
       // ULTRA-SLEEK LINE CHART CALCULATIONS
-      const chartWidth = 900;
-      const chartHeight = 280;
-      const paddingLeft = 50;
+      const chartWidth = 960;
+      const chartHeight = 290;
+      const paddingLeft = 115;
+      const paddingRight = 115;
       const paddingTop = 30;
       const paddingBottom = 45;
-      const plotWidth = chartWidth - paddingLeft - 30;
+      const plotWidth = chartWidth - paddingLeft - paddingRight;
       const plotHeight = chartHeight - paddingTop - paddingBottom;
 
       const maxY = Math.max(100, ...gdvRows.map(r => Math.max(r.totalOpenedCount, r.weightedKpiCount || r.duyetHsbtCount)));
@@ -11010,15 +11011,15 @@ function formatDateDisplay(val) {
                     const yVal = Math.round(maxY * r);
                     const yPos = paddingTop + plotHeight - r * plotHeight;
                     return `
-                      <line x1="${paddingLeft}" y1="${yPos}" x2="${chartWidth - 30}" y2="${yPos}" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" />
-                      <text x="${paddingLeft - 8}" y="${yPos + 3}" font-size="9.5" font-weight="700" fill="var(--text-muted)" text-anchor="end" font-family="JetBrains Mono">${yVal}</text>
+                      <line x1="${paddingLeft}" y1="${yPos}" x2="${chartWidth - paddingRight}" y2="${yPos}" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" />
+                      <text x="${paddingLeft - 10}" y="${yPos + 3}" font-size="10" font-weight="700" fill="var(--text-muted)" text-anchor="end" font-family="JetBrains Mono">${yVal}</text>
                     `;
                   }).join('')}
 
                   <!-- KPI RED BENCHMARK FINE LINE (70 CA) -->
-                  <line x1="${paddingLeft}" y1="${yKpi}" x2="${chartWidth - 30}" y2="${yKpi}" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.9" />
-                  <rect x="${chartWidth - 110}" y="${yKpi - 9}" width="80" height="18" rx="4" fill="#ef4444" opacity="0.9" />
-                  <text x="${chartWidth - 70}" y="${yKpi + 3}" font-size="9" font-weight="850" fill="#ffffff" text-anchor="middle" font-family="JetBrains Mono">KPI: 70 CA</text>
+                  <line x1="${paddingLeft}" y1="${yKpi}" x2="${chartWidth - paddingRight}" y2="${yKpi}" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.9" />
+                  <rect x="${chartWidth - paddingRight - 85}" y="${yKpi - 9}" width="80" height="18" rx="4" fill="#ef4444" opacity="0.9" />
+                  <text x="${chartWidth - paddingRight - 45}" y="${yKpi + 3}" font-size="9" font-weight="850" fill="#ffffff" text-anchor="middle" font-family="JetBrains Mono">KPI: 70 CA</text>
 
                   <!-- Line 1: Opened Claims (Primary Gold - Fine Line 2px) -->
                   ${pointsOpen.length > 1 ? `<path d="${pathOpenStr}" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />` : ''}
@@ -11040,7 +11041,7 @@ function formatDateDisplay(val) {
 
                   <!-- X Axis Labels (GĐV Names - Sleek Font) -->
                   ${pointsOpen.map(p => `
-                    <text x="${p.x}" y="${chartHeight - 12}" font-size="10" font-weight="800" fill="var(--text-main)" text-anchor="middle">${escapeHtmlOutput(p.name)}</text>
+                    <text x="${p.x}" y="${chartHeight - 12}" font-size="11" font-weight="850" fill="var(--text-main)" text-anchor="middle">${escapeHtmlOutput(p.name)}</text>
                   `).join('')}
                 </svg>
               </div>
