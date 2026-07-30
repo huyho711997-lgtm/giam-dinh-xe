@@ -10672,16 +10672,16 @@ function formatDateDisplay(val) {
           
           <div style="border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 6px; margin-top: 4px; font-size: 11.5px; display: flex; flex-direction: column; gap: 4px;">
             <div style="color: rgba(255,255,255,0.95); font-weight: 800;">Phân bổ Giám định viên:</div>
-            <div style="color: #93c5fd; display: flex; justify-content: space-between; gap: 10px;">
-              <span>🔹 Nguyễn Quang Huy_DL:</span>
+            <div style="color: #93c5fd; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+              <span style="display: flex; align-items: center; gap: 5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Nguyễn Quang Huy_DL:</span>
               <strong style="font-family: 'JetBrains Mono';">${qh.opened} ca (${formatCurrencyInputNumber(qh.amount)}đ)</strong>
             </div>
-            <div style="color: #fde047; display: flex; justify-content: space-between; gap: 10px;">
-              <span>🔸 Hồ Quang Huy:</span>
+            <div style="color: #fde047; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+              <span style="display: flex; align-items: center; gap: 5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Hồ Quang Huy:</span>
               <strong style="font-family: 'JetBrains Mono';">${hqh.opened} ca (${formatCurrencyInputNumber(hqh.amount)}đ)</strong>
             </div>
-            <div style="color: #6ee7b7; display: flex; justify-content: space-between; gap: 10px;">
-              <span>🟢 Huỳnh Văn Phúc:</span>
+            <div style="color: #6ee7b7; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+              <span style="display: flex; align-items: center; gap: 5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Huỳnh Văn Phúc:</span>
               <strong style="font-family: 'JetBrains Mono';">${hvp.opened} ca (${formatCurrencyInputNumber(hvp.amount)}đ)</strong>
             </div>
           </div>
@@ -11285,7 +11285,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <span>Chi tiết Phân bổ Bồi thường & Hồ sơ GĐV theo từng Gara</span>
               </div>
               <div style="display: flex; flex-direction: column; gap: 16px;">
-              <div style="display: flex; flex-direction: column; gap: 16px;">
                 ${garageRows.length === 0 ? `
                   <div style="padding: 40px; text-align: center; color: var(--text-muted); font-size: 14px;">Chưa có dữ liệu hồ sơ bồi thường gara nào trong mốc thời gian này.</div>
                 ` : garageRows.map((g, gIdx) => {
@@ -11321,27 +11320,51 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         <div style="height: 100%; width: ${pct}%; background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%); border-radius: 99px; transition: width 0.4s ease;"></div>
                       </div>
 
-                      <!-- GĐV Breakdown Badges -->
-                      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 11.5px; border-top: 1px dashed var(--border); padding-top: 10px;">
-                        <span style="font-size: 11px; font-weight: 850; color: var(--text-muted); text-transform: uppercase;">Phân bổ GĐV:</span>
+                      <!-- EXECUTIVE PREMIUM GĐV BREAKDOWN GRID WITH PERSON SVG ICONS -->
+                      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; border-top: 1px dashed var(--border); padding-top: 12px; margin-top: 4px;">
                         
-                        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); padding: 4px 10px; border-radius: 8px; color: #3b82f6; font-weight: 750;">
-                          <span>🔹 Nguyễn Quang Huy_DL:</span>
-                          <strong style="font-family: 'JetBrains Mono'; font-weight: 850;">${qh.opened} ca</strong>
-                          <span style="font-size: 10.5px; color: var(--text-soft);">(${formatCurrencyInputNumber(qh.amount)}đ)</span>
+                        <!-- GĐV 1: Nguyễn Quang Huy_DL -->
+                        <div style="background: rgba(59,130,246,0.05); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; box-shadow: var(--shadow-xs);">
+                          <div style="display: flex; align-items: center; gap: 9px; min-width: 0;">
+                            <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(59,130,246,0.14); border: 1px solid rgba(59,130,246,0.3); color: #3b82f6; display: grid; place-items: center; flex-shrink: 0;">
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </div>
+                            <div style="overflow: hidden;">
+                              <strong style="display: block; font-size: 12.5px; color: var(--text-main); font-weight: 850; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Nguyễn Quang Huy_DL</strong>
+                              <span style="font-size: 11px; color: var(--text-soft); font-family: 'JetBrains Mono'; font-weight: 750;">${formatCurrencyInputNumber(qh.amount)} đ</span>
+                            </div>
+                          </div>
+                          <span style="font-size: 12.5px; font-weight: 850; color: #3b82f6; font-family: 'JetBrains Mono'; background: rgba(59,130,246,0.12); padding: 3px 10px; border-radius: 8px; border: 1px solid rgba(59,130,246,0.25); flex-shrink: 0;">${qh.opened} ca</span>
                         </div>
 
-                        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); padding: 4px 10px; border-radius: 8px; color: var(--primary); font-weight: 750;">
-                          <span>🔸 Hồ Quang Huy:</span>
-                          <strong style="font-family: 'JetBrains Mono'; font-weight: 850;">${hqh.opened} ca</strong>
-                          <span style="font-size: 10.5px; color: var(--text-soft);">(${formatCurrencyInputNumber(hqh.amount)}đ)</span>
+                        <!-- GĐV 2: Hồ Quang Huy -->
+                        <div style="background: rgba(216,180,109,0.05); border: 1px solid rgba(216,180,109,0.22); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; box-shadow: var(--shadow-xs);">
+                          <div style="display: flex; align-items: center; gap: 9px; min-width: 0;">
+                            <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(216,180,109,0.16); border: 1px solid rgba(216,180,109,0.35); color: var(--primary); display: grid; place-items: center; flex-shrink: 0;">
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </div>
+                            <div style="overflow: hidden;">
+                              <strong style="display: block; font-size: 12.5px; color: var(--text-main); font-weight: 850; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Hồ Quang Huy</strong>
+                              <span style="font-size: 11px; color: var(--text-soft); font-family: 'JetBrains Mono'; font-weight: 750;">${formatCurrencyInputNumber(hqh.amount)} đ</span>
+                            </div>
+                          </div>
+                          <span style="font-size: 12.5px; font-weight: 850; color: var(--primary); font-family: 'JetBrains Mono'; background: rgba(216,180,109,0.14); padding: 3px 10px; border-radius: 8px; border: 1px solid rgba(216,180,109,0.3); flex-shrink: 0;">${hqh.opened} ca</span>
                         </div>
 
-                        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); padding: 4px 10px; border-radius: 8px; color: #10b981; font-weight: 750;">
-                          <span>🟢 Huỳnh Văn Phúc:</span>
-                          <strong style="font-family: 'JetBrains Mono'; font-weight: 850;">${hvp.opened} ca</strong>
-                          <span style="font-size: 10.5px; color: var(--text-soft);">(${formatCurrencyInputNumber(hvp.amount)}đ)</span>
+                        <!-- GĐV 3: Huỳnh Văn Phúc -->
+                        <div style="background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.22); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; box-shadow: var(--shadow-xs);">
+                          <div style="display: flex; align-items: center; gap: 9px; min-width: 0;">
+                            <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(16,185,129,0.16); border: 1px solid rgba(16,185,129,0.35); color: #10b981; display: grid; place-items: center; flex-shrink: 0;">
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </div>
+                            <div style="overflow: hidden;">
+                              <strong style="display: block; font-size: 12.5px; color: var(--text-main); font-weight: 850; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Huỳnh Văn Phúc</strong>
+                              <span style="font-size: 11px; color: var(--text-soft); font-family: 'JetBrains Mono'; font-weight: 750;">${formatCurrencyInputNumber(hvp.amount)} đ</span>
+                            </div>
+                          </div>
+                          <span style="font-size: 12.5px; font-weight: 850; color: #10b981; font-family: 'JetBrains Mono'; background: rgba(16,185,129,0.14); padding: 3px 10px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3); flex-shrink: 0;">${hvp.opened} ca</span>
                         </div>
+
                       </div>
                     </div>
                   `;
