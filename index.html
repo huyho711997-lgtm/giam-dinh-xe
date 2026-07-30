@@ -10512,8 +10512,8 @@
      * BÁO CÁO SỐ LƯỢNG HỒ SƠ ĐANG TIẾP NHẬN & DUYỆT HSBT THEO GIÁM ĐỊNH VIÊN
      * ULTRA-PREMIUM EXECUTIVE TABLE DESIGN SYSTEM
      ****************************************************/
-    let activeGdvReportMonth = 'all';
-    let activeGdvReportYear = 'all';
+    let activeGdvReportMonth = String(new Date().getMonth() + 1);
+    let activeGdvReportYear = String(new Date().getFullYear());
     let activeGdvReportBranch = 'all';
     let activeGdvReportSearch = '';
 
