@@ -10713,7 +10713,7 @@
       const totalFilteredClaims = filteredClaims.length;
       const totalDuyetHsbtCount = filteredClaims.filter(item => isDuyetHsbtApproved(item.raw)).length;
       const overallHsbtRate = totalFilteredClaims > 0 ? Math.round((totalDuyetHsbtCount / totalFilteredClaims) * 100) : 0;
-      const passKpiCount = gdvRows.filter(r => r.duyetHsbtCount >= 70).length;
+      const passKpiCount = gdvRows.filter(r => (r.weightedKpiCount || r.duyetHsbtCount) >= 70).length;
       const topGdvObj = gdvRows[0];
       const topGdvName = topGdvObj ? topGdvObj.gdvName : 'Chưa có';
 
@@ -10732,7 +10732,7 @@
       const plotWidth = chartWidth - paddingLeft - 30;
       const plotHeight = chartHeight - paddingTop - paddingBottom;
 
-      const maxY = Math.max(100, ...gdvRows.map(r => Math.max(r.totalOpenedCount, r.duyetHsbtCount)));
+      const maxY = Math.max(100, ...gdvRows.map(r => Math.max(r.totalOpenedCount, r.weightedKpiCount || r.duyetHsbtCount)));
       const stepX = gdvRows.length > 1 ? plotWidth / (gdvRows.length - 1) : plotWidth / 2;
 
       const pointsOpen = [];
@@ -10740,11 +10740,12 @@
 
       gdvRows.forEach((r, idx) => {
         const x = gdvRows.length === 1 ? paddingLeft + plotWidth / 2 : paddingLeft + idx * stepX;
+        const kpiVal = Math.round((r.weightedKpiCount || r.duyetHsbtCount) * 10) / 10;
         const yOpen = paddingTop + plotHeight - (r.totalOpenedCount / maxY) * plotHeight;
-        const yDuyet = paddingTop + plotHeight - (r.duyetHsbtCount / maxY) * plotHeight;
+        const yDuyet = paddingTop + plotHeight - (kpiVal / maxY) * plotHeight;
 
         pointsOpen.push({ x, y: yOpen, val: r.totalOpenedCount, name: r.gdvName });
-        pointsDuyet.push({ x, y: yDuyet, val: r.duyetHsbtCount, name: r.gdvName });
+        pointsDuyet.push({ x, y: yDuyet, val: kpiVal, name: r.gdvName });
       });
 
       const yKpi = paddingTop + plotHeight - (70 / maxY) * plotHeight;
@@ -10792,10 +10793,7 @@
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
               <span>Biểu đồ Đường KPI & Lương GĐV</span>
             </button>
-            <button type="button" onclick="openKpiConfigDirectly()" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: 1px dashed rgba(216,180,109,0.4); cursor: pointer; display: flex; align-items: center; gap: 8px; background: rgba(216,180,109,0.08); color: var(--primary); transition: all 0.2s ease;">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
-              <span>⚙️ Cấu hình Hệ số KPI Hồ sơ</span>
-            </button>
+            
           </div>
 
           <!-- CONTROL HUB FILTER BAR WITH CUSTOM GLASSMORPHI DROPDOWNS -->
@@ -10993,18 +10991,19 @@
             <!-- GĐV KPI CARDS GRID -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
               ${gdvRows.map(r => {
-                const kpiAchievementRate = Math.round((r.duyetHsbtCount / 70) * 100);
+                const kpiVal = Math.round((r.weightedKpiCount || r.duyetHsbtCount) * 10) / 10;
+                const kpiAchievementRate = Math.round((kpiVal / 70) * 100);
                 let kpiBadgeBg = 'rgba(239,68,68,0.12)';
                 let kpiBadgeBorder = 'rgba(239,68,68,0.3)';
                 let kpiBadgeColor = '#ef4444';
                 let kpiStatusLabel = 'CHƯA ĐẠT KPI';
 
-                if (r.duyetHsbtCount >= 70) {
+                if (kpiVal >= 70) {
                   kpiBadgeBg = 'rgba(16,185,129,0.15)';
                   kpiBadgeBorder = 'rgba(16,185,129,0.35)';
                   kpiBadgeColor = '#10b981';
                   kpiStatusLabel = 'ĐẠT KPI TÍNH LƯƠNG';
-                } else if (r.duyetHsbtCount >= 50) {
+                } else if (kpiVal >= 50) {
                   kpiBadgeBg = 'rgba(234,179,8,0.15)';
                   kpiBadgeBorder = 'rgba(234,179,8,0.35)';
                   kpiBadgeColor = '#eab308';
@@ -11036,8 +11035,8 @@
                         <strong style="display: block; font-size: 15px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} ca</strong>
                       </div>
                       <div>
-                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Đã duyệt HSBT</span>
-                        <strong style="display: block; font-size: 15px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${r.duyetHsbtCount} ca</strong>
+                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Duyệt KPI quy đổi</span>
+                        <strong style="display: block; font-size: 15px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${kpiVal} ca <span style="font-size: 10px; color: var(--text-soft);">(${r.duyetHsbtCount} gốc)</span></strong>
                       </div>
                       <div>
                         <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Tỷ lệ KPI</span>
@@ -11118,7 +11117,7 @@
                     <th style="width: 55px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">STT</th>
                     <th style="width: 230px; padding: 14px 14px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Giám định viên</th>
                     <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Số HS tiếp nhận</th>
-                    <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Đã duyệt HSBT</th>
+                    <th style="width: 175px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Duyệt HSBT (Gốc / KPI)</th>
                     <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Tỷ lệ duyệt HSBT</th>
                     <th style="padding: 14px 16px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Phân bổ Trạng thái Nghiệp vụ</th>
                     <th style="width: 170px; text-align: right; padding: 14px 24px 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Tổng tiền duyệt BT (VNĐ)</th>
@@ -11170,8 +11169,8 @@
                           <div style="font-size: 10.5px; font-weight: 800; color: var(--text-soft); background: rgba(0,0,0,0.04); padding: 1px 7px; border-radius: 99px; display: inline-block; margin-top: 3px;">${percentTotal}% tổng kỳ</div>
                         </td>
                         <td style="text-align: center; padding: 14px 12px;">
-                          <strong style="font-size: 16px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${r.duyetHsbtCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
-                          <div style="font-size: 10.5px; font-weight: 750; color: var(--text-muted); margin-top: 3px;">Chờ duyệt: ${r.pendingHsbtCount} ca</div>
+                          <strong style="font-size: 16px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${Math.round((r.weightedKpiCount || r.duyetHsbtCount) * 10) / 10} <span style="font-size: 12px; font-weight: 600;">ca KPI</span></strong>
+                          <div style="font-size: 10.5px; font-weight: 750; color: var(--text-muted); margin-top: 3px;">Gốc: ${r.duyetHsbtCount} ca | Chờ: ${r.pendingHsbtCount} ca</div>
                         </td>
                         <td style="text-align: center; padding: 14px 12px;">
                           <strong style="font-size: 14px; color: ${rateColor}; font-family: 'JetBrains Mono'; font-weight: 850;">${rateHsbt}%</strong>
