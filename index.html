@@ -5273,21 +5273,20 @@ function formatDateDisplay(val) {
           else if (text.includes('mã gara sửa chữa')) colMap.maGara = colIdx;
           else if (text.includes('gđv ho')) colMap.gdvHo = colIdx;
           else if (text.includes('ước thiệt hại')) colMap.uocThietHai = colIdx;
+          else if (text.includes('tờ trình bt - ngày duyệt cuối') || text.includes('tờ trình bt - ngày duyệt') || text.includes('tờ trình - ngày duyệt') || text.includes('tờ trình ngày duyệt')) colMap.toTrinhNgayDuyet = colIdx;
+          else if (text.includes('tờ trình bt - người duyệt')) colMap.toTrinhNguoiDuyet = colIdx;
           else if (text.includes('pasc - ngày duyệt')) colMap.pascNgayDuyet = colIdx;
           else if (text.includes('pasc - người duyệt')) colMap.pascNguoiDuyet = colIdx;
           else if (text.includes('pasc - số tiền')) colMap.pascSoTienDuyet = colIdx;
           else if (text.includes('tên gara (viết tắt)')) colMap.tenGaraVietTat = colIdx;
           else if (text.includes('gara sửa chữa') || text.includes('gara') || text.includes('xưởng')) colMap.gara = colIdx;
-          else if (text.includes('tờ trình bt - ngày duyệt') || text.includes('ngày duyệt') || text.includes('ngày tờ trình')) colMap.toTrinhNgayDuyet = colIdx;
-          else if (text.includes('tờ trình bt - người duyệt')) colMap.toTrinhNguoiDuyet = colIdx;
           else if (text.includes('ttbt - số tiền bồi thường')) colMap.ttbtSoTienBoiThuong = colIdx;
           else if (text.includes('ttbt - chi phí giám định')) colMap.chiPhiGiamDinh = colIdx;
           else if (text.includes('ttbt - chi phí cứu hộ')) colMap.chiPhiCuuHo = colIdx;
           else if (text.includes('ttbt - chi phí khác')) colMap.chiPhiKhac = colIdx;
           else if (text.includes('ttbt - tổng số tiền bồi thường sau thuế')) colMap.tongBoiThuongSauThue = colIdx;
           else if (text.includes('ttbt - tổng số tiền bồi thường')) colMap.ttbtTongSoTienBoiThuong = colIdx;
-          else if (text.includes('tổ trình bt - ngày duyệt cuối') || text.includes('tờ trình bt - ngày duyệt')) colMap.toTrinhNgayDuyet = colIdx;
-          else if (text.includes('tổng số tiền bồi thường') || text.includes('bồi thường') || text.includes('tiền')) colMap.amount = colIdx;
+          else if (text.includes('tổng số tiền bồi thường')) colMap.amount = colIdx;
           else if (text.includes('dự phòng bồi thường')) colMap.duPhongBoiThuong = colIdx;
           else if (text.includes('thu đòi đồng bảo hiểm - tỷ lệ')) colMap.thuDoiDongBhTyLe = colIdx;
           else if (text.includes('thu đòi đồng bảo hiểm - số tiền')) colMap.thuDoiDongBhSoTien = colIdx;
@@ -5465,7 +5464,7 @@ function formatDateDisplay(val) {
           pascNgayDuyet: formatCleanDateField(getVal(r, colMap.pascNgayDuyet)),
           pascNguoiDuyet: getVal(r, colMap.pascNguoiDuyet),
           pascSoTienDuyet: getVal(r, colMap.pascSoTienDuyet),
-          toTrinhNgayDuyet: formatCleanDateField(getVal(r, colMap.toTrinhNgayDuyet)),
+          toTrinhNgayDuyet: formatCleanDateField(getVal(r, colMap.toTrinhNgayDuyet)) || formatCleanDateField(getVal(r, colMap.pascNgayDuyet)),
           toTrinhNguoiDuyet: getVal(r, colMap.toTrinhNguoiDuyet),
           ttbtSoTienBoiThuong: getVal(r, colMap.ttbtSoTienBoiThuong),
           ttbtTongSoTienBoiThuong: getVal(r, colMap.ttbtTongSoTienBoiThuong) || getVal(r, colMap.tongBoiThuongSauThue) || getVal(r, colMap.amount) || getVal(r, colMap.ttbtSoTienBoiThuong) || getVal(r, colMap.pascSoTienDuyet),
