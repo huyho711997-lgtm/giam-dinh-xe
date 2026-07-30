@@ -2486,12 +2486,16 @@
             </div>
 
             <div class="form-group">
-              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Tờ trình BT - Người duyệt</label>
-              <input id="modalPendingToTrinhNguoiDuyet" class="input-premium" type="text" placeholder="Người duyệt tờ trình" />
+              <label style="font-size: 12px; font-weight: 750; color: #10b981; margin-bottom: 4px; display: block;">Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)</label>
+              <input id="modalPendingToTrinhNgayDuyet" class="input-premium" type="text" placeholder="YYYY-MM-DD HH:mm:ss" style="font-weight: 750; color: #10b981;" />
             </div>
             <div class="form-group">
-              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Tờ trình BT - Ngày duyệt</label>
-              <input id="modalPendingToTrinhNgayDuyet" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
+              <label style="font-size: 12px; font-weight: 750; color: #10b981; margin-bottom: 4px; display: block;">TTBT - Tổng số tiền bồi thường (Số tiền duyệt HSBT)</label>
+              <input id="modalPendingTtbtTongSoTienBoiThuong" class="input-premium" type="text" placeholder="VNĐ" oninput="formatCurrencyInputEvent(this)" style="font-weight: 800; color: #10b981;" />
+            </div>
+            <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Tờ trình BT - Người duyệt</label>
+              <input id="modalPendingToTrinhNguoiDuyet" class="input-premium" type="text" placeholder="Người duyệt tờ trình" />
             </div>
             <div class="form-group">
               <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Dự phòng bồi thường (VNĐ)</label>
@@ -4712,7 +4716,10 @@
       setVal('modalPendingPascSoTienDuyet', formatCurrencyInputNumber(item.pascSoTienDuyet || item.soTienDuyetBT));
       setVal('modalPendingPascNguoiDuyet', item.pascNguoiDuyet || '');
       setVal('modalPendingToTrinhNguoiDuyet', item.toTrinhNguoiDuyet || '');
-      setVal('modalPendingToTrinhNgayDuyet', formatDateDisplay(item.toTrinhNgayDuyet) !== '—' ? formatDateDisplay(item.toTrinhNgayDuyet) : '');
+      const rawToTrinhDate = item.toTrinhNgayDuyet || item.pascNgayDuyet;
+      setVal('modalPendingToTrinhNgayDuyet', (rawToTrinhDate && formatDateDisplay(rawToTrinhDate) !== '—') ? rawToTrinhDate : '');
+      const rawTtbtAmt = item.ttbtTongSoTienBoiThuong || item.tongBoiThuongSauThue || item.pascSoTienDuyet || item.soTienDuyetBT || item.ttbtSoTienBoiThuong || item.amount;
+      setVal('modalPendingTtbtTongSoTienBoiThuong', formatCurrencyInputNumber(rawTtbtAmt));
       setVal('modalPendingDuPhongBoiThuong', formatCurrencyInputNumber(item.duPhongBoiThuong));
       setVal('modalPendingSoTienDaThanhToan', formatCurrencyInputNumber(item.soTienDaThanhToan));
       setVal('modalPendingNgayThanhToan', formatDateDisplay(item.ngayThanhToan) !== '—' ? formatDateDisplay(item.ngayThanhToan) : '');
@@ -4883,7 +4890,9 @@
         ngayHieuLuc: getVal('modalPendingNgayHieuLuc') || existingItem.ngayHieuLuc || '',
         ngayHetHan: getVal('modalPendingNgayHetHan') || existingItem.ngayHetHan || '',
         uocThietHai: getVal('modalPendingUocThietHai') || existingItem.uocThietHai || '',
-        pascSoTienDuyet: getVal('modalPendingPascSoTienDuyet') || existingItem.pascSoTienDuyet || '',
+        pascSoTienDuyet: getVal('modalPendingTtbtTongSoTienBoiThuong') || getVal('modalPendingPascSoTienDuyet') || existingItem.pascSoTienDuyet || '',
+        ttbtTongSoTienBoiThuong: getVal('modalPendingTtbtTongSoTienBoiThuong') || existingItem.ttbtTongSoTienBoiThuong || '',
+        soTienDuyetBT: getVal('modalPendingTtbtTongSoTienBoiThuong') || existingItem.soTienDuyetBT || '',
         pascNguoiDuyet: getVal('modalPendingPascNguoiDuyet') || existingItem.pascNguoiDuyet || '',
         soKhungSoMay: getVal('modalPendingSoKhungSoMay') || existingItem.soKhungSoMay || '',
         nguoiCapDon: getVal('modalPendingNguoiCapDon') || existingItem.nguoiCapDon || '',
@@ -4901,6 +4910,7 @@
         garaSuaChua: getVal('modalPendingGaraSuaChua') || existingItem.garaSuaChua || '',
         tenGaraVietTat: getVal('modalPendingTenGaraVietTat') || existingItem.tenGaraVietTat || '',
         toTrinhNgayDuyet: getVal('modalPendingToTrinhNgayDuyet') || existingItem.toTrinhNgayDuyet || '',
+        pascNgayDuyet: getVal('modalPendingToTrinhNgayDuyet') || existingItem.pascNgayDuyet || '',
         duPhongBoiThuong: getVal('modalPendingDuPhongBoiThuong') || existingItem.duPhongBoiThuong || '',
         ngayKtXacNhan: getVal('modalPendingNgayKtXacNhan') || existingItem.ngayKtXacNhan || '',
         ngayThanhToan: getVal('modalPendingNgayThanhToan') || existingItem.ngayThanhToan || '',
@@ -5181,7 +5191,7 @@
         tongBoiThuongSauThue: -1, vat: -1, ngayNhanDuHoSo: -1, ngayDuyetDnttDauTien: -1,
         ngayDuyetDnttCuoiCung: -1, ngayKtXacNhan: -1, soTienDaThanhToan: -1, ngayThanhToan: -1,
         ghiChu: -1, lyDoHuy: -1, agentUniqCode: -1, garageUniqCode: -1, zoneBoiThuong: -1,
-        khuVucGiamDinh: -1, tenGaraVietTat: -1, vtt: -1, vcx: -1, tnds: -1
+        khuVucGiamDinh: -1, tenGaraVietTat: -1, vtt: -1, vcx: -1, tnds: -1, ttbtTongSoTienBoiThuong: -1
       };
 
       for (let i = 0; i < Math.min(10, rows.length); i++) {
@@ -5244,7 +5254,9 @@
           else if (text.includes('ttbt - chi phí cứu hộ')) colMap.chiPhiCuuHo = colIdx;
           else if (text.includes('ttbt - chi phí khác')) colMap.chiPhiKhac = colIdx;
           else if (text.includes('ttbt - tổng số tiền bồi thường sau thuế')) colMap.tongBoiThuongSauThue = colIdx;
-          else if (text.includes('ttbt - tổng số tiền bồi thường') || text.includes('tổng số tiền bồi thường') || text.includes('bồi thường') || text.includes('tiền')) colMap.amount = colIdx;
+          else if (text.includes('ttbt - tổng số tiền bồi thường')) colMap.ttbtTongSoTienBoiThuong = colIdx;
+          else if (text.includes('tổ trình bt - ngày duyệt cuối') || text.includes('tờ trình bt - ngày duyệt')) colMap.toTrinhNgayDuyet = colIdx;
+          else if (text.includes('tổng số tiền bồi thường') || text.includes('bồi thường') || text.includes('tiền')) colMap.amount = colIdx;
           else if (text.includes('dự phòng bồi thường')) colMap.duPhongBoiThuong = colIdx;
           else if (text.includes('thu đòi đồng bảo hiểm - tỷ lệ')) colMap.thuDoiDongBhTyLe = colIdx;
           else if (text.includes('thu đòi đồng bảo hiểm - số tiền')) colMap.thuDoiDongBhSoTien = colIdx;
@@ -5425,6 +5437,7 @@
           toTrinhNgayDuyet: formatDateDisplay(getVal(r, colMap.toTrinhNgayDuyet)),
           toTrinhNguoiDuyet: getVal(r, colMap.toTrinhNguoiDuyet),
           ttbtSoTienBoiThuong: getVal(r, colMap.ttbtSoTienBoiThuong),
+          ttbtTongSoTienBoiThuong: getVal(r, colMap.ttbtTongSoTienBoiThuong) || getVal(r, colMap.tongBoiThuongSauThue) || getVal(r, colMap.amount) || getVal(r, colMap.ttbtSoTienBoiThuong) || getVal(r, colMap.pascSoTienDuyet),
           chiPhiGiamDinh: getVal(r, colMap.chiPhiGiamDinh),
           chiPhiCuuHo: getVal(r, colMap.chiPhiCuuHo),
           chiPhiKhac: getVal(r, colMap.chiPhiKhac),
@@ -10614,7 +10627,8 @@
 
       for (let i = 0; i < claimsList.length; i++) {
         const c = claimsList[i];
-        const dateStr = c.ngayMoHs || c.ngayTonThat || c.ngayVTT;
+        const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayThanhToan;
+        const dateStr = isDuyetHsbtApproved(c) ? (duyetDateStr || c.ngayMoHs || c.ngayTonThat || c.ngayVTT) : (c.ngayMoHs || c.ngayTonThat || c.ngayVTT);
         let yr = null;
         let mo = null;
 
@@ -10680,7 +10694,7 @@
         const stKey = PENDING_STATUS_MAP[c.trangThai] ? c.trangThai : 'moi';
         gdvMap[gdvName].statusMap[stKey] = (gdvMap[gdvName].statusMap[stKey] || 0) + 1;
 
-        const amtStr = String(c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
+        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
         const amtVal = parseInt(amtStr, 10) || 0;
         gdvMap[gdvName].totalApprovedAmount += amtVal;
 
