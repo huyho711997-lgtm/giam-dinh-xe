@@ -4051,6 +4051,7 @@
             <span class="nav-btn-text">Báo cáo GĐV</span>
           </button>
           <button id="headerNavCreateBtn" class="header-nav-btn ${createActive}" onclick="navigateHeaderTab('create')">${SVGS.SPARKLES} <span class="nav-btn-text">Khởi tạo hồ sơ</span></button>
+          ${isAdmin ? `
           <button id="headerNavUsersBtn" class="header-nav-btn ${usersActive}" onclick="navigateHeaderTab('users')">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -4060,6 +4061,7 @@
             </svg>
             <span class="nav-btn-text">Quản lý User</span>
           </button>
+          ` : ''}
         </div>
       `;
     }
@@ -4376,6 +4378,12 @@
     }
 
     async function triggerDeleteUserAccount(uid, displayName) {
+      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+      if (!isAdmin) {
+        triggerToast('Bạn không có quyền thực hiện thao tác này!', 'error');
+        return;
+      }
+
       const confirmed = await showConfirmModal(
         'Xóa quyền truy cập', 
         `Bạn có chắc chắn muốn xóa quyền truy cập của người dùng "${displayName}" khỏi hệ thống không?`, 
@@ -5849,6 +5857,8 @@ function formatDateDisplay(val) {
 
     function executeUIRenderPendingClaims() {
       const tbody = document.getElementById('tblPendingClaimsBodyContainer');
+      const currentUser = firebase.auth().currentUser;
+      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
       const statsContainer = document.getElementById('pendingWeeklyStatsContainer');
       if (!tbody) return;
 
@@ -6197,9 +6207,11 @@ function formatDateDisplay(val) {
             </td>
             <td style="width: 70px; text-align: center; padding-right: 12px;">
               <div style="display: inline-flex; justify-content: center; align-items: center; width: 100%;">
+                ${(isAdmin || item.createdByUid === currentUser?.uid || item.nguoiTao?.uid === currentUser?.uid) ? `
                 <button type="button" class="btn-premium btn-danger-p" onclick="event.stopPropagation(); deletePendingClaim('${item.id}', '${escapeAttributeData(item.bienSo)}')" title="Xóa hồ sơ tồn" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; padding: 0; display: grid; place-items: center; border-radius: 8px; margin: 0; cursor: pointer; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444;">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 </button>
+                ` : ''}
               </div>
             </td>
           </tr>
@@ -6305,6 +6317,16 @@ function formatDateDisplay(val) {
     }
 
     async function deletePendingClaim(claimId, bienSo) {
+      const currentUser = firebase.auth().currentUser;
+      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+      
+      const targetClaim = cachedPendingClaimsPayload ? cachedPendingClaimsPayload[claimId] : null;
+      const isCreator = targetClaim && (targetClaim.createdByUid === currentUser?.uid || targetClaim.nguoiTao?.uid === currentUser?.uid);
+      
+      if (!isAdmin && !isCreator) {
+        triggerToast('Bạn không có quyền xóa hồ sơ tồn này!', 'error');
+        return;
+      }
       const confirmAction = await showConfirmModal('Xóa hồ sơ tồn', `Bạn có chắc chắn muốn xóa vụ tổn thất xe ${bienSo} khỏi danh sách hồ sơ tồn không?`);
       if (confirmAction) {
         try {
@@ -6374,12 +6396,54 @@ function formatDateDisplay(val) {
         return casesPayload; // Admins can see everything
       }
       
+      const userProfile = activeUserProfile || {};
+      const userDisplayName = String(userProfile.displayName || '').trim().toLowerCase();
+      const userEmail = String(userProfile.email || currentUserInstance.email || '').trim().toLowerCase();
+      
       const filtered = {};
       Object.entries(casesPayload || {}).forEach(([key, val]) => {
-        if (val.nguoiTao && val.nguoiTao.uid === currentUserInstance.uid) {
+        const creatorUid = val.nguoiTao?.uid || '';
+        const gdvName = String(val.gdvTiepNhan || '').trim().toLowerCase();
+        const cbxlName = String(val.canBoXuLy || '').trim().toLowerCase();
+        
+        const isCreator = (creatorUid === currentUserInstance.uid);
+        const isAssignedGdv = gdvName && (gdvName === userDisplayName || gdvName === userEmail);
+        const isAssignedCbxl = cbxlName && (cbxlName === userDisplayName || cbxlName === userEmail);
+        
+        if (isCreator || isAssignedGdv || isAssignedCbxl || !val.nguoiTao) {
           filtered[key] = val;
-        } else if (!val.nguoiTao) {
-          filtered[key] = val; // Backward compatibility for legacy cases
+        }
+      });
+      return filtered;
+    }
+
+    function filterPendingClaimsByUserPrivileges(claimsPayload, currentUserInstance) {
+      if (!currentUserInstance) return {};
+      
+      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+      if (isAdmin) {
+        return claimsPayload; // Admins can see everything
+      }
+      
+      const userProfile = activeUserProfile || {};
+      const userDisplayName = String(userProfile.displayName || '').trim().toLowerCase();
+      const userEmail = String(userProfile.email || currentUserInstance.email || '').trim().toLowerCase();
+      
+      const filtered = {};
+      Object.entries(claimsPayload || {}).forEach(([key, val]) => {
+        const creatorUid = val.createdByUid || val.nguoiTao?.uid || '';
+        const gdvName = String(val.gdvTiepNhan || '').trim().toLowerCase();
+        const cbxlName = String(val.canBoXuLy || '').trim().toLowerCase();
+        
+        const isCreator = (creatorUid === currentUserInstance.uid);
+        const isAssignedGdv = gdvName && (gdvName === userDisplayName || gdvName === userEmail);
+        const isAssignedCbxl = cbxlName && (cbxlName === userDisplayName || cbxlName === userEmail);
+        
+        // Also support backward compatibility for items with no creator info
+        const hasNoCreator = !val.createdByUid && !val.nguoiTao;
+        
+        if (isCreator || isAssignedGdv || isAssignedCbxl || hasNoCreator) {
+          filtered[key] = val;
         }
       });
       return filtered;
@@ -6420,7 +6484,9 @@ function formatDateDisplay(val) {
       });
 
       dbNodeInstance.ref('pending_claims').on('value', (snapshot) => {
-        cachedPendingClaimsPayload = snapshot.val() || {};
+        const val = snapshot.val() || {};
+        const currentUser = firebase.auth().currentUser;
+        cachedPendingClaimsPayload = filterPendingClaimsByUserPrivileges(val, currentUser);
         if (activeDashboardTab === 'pending') {
           executeUIRenderPendingClaims();
         }
@@ -6428,6 +6494,10 @@ function formatDateDisplay(val) {
     }
 
     function switchWorkspaceTab(tabName) {
+      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+      if (tabName === 'users' && !isAdmin) {
+        tabName = 'home'; // Redirect non-admins to home if trying to access user settings
+      }
       if (activeDashboardTab === tabName) return;
       activeDashboardTab = tabName;
       
@@ -7987,7 +8057,7 @@ function formatDateDisplay(val) {
               <button title="Xem link Garage" class="btn-premium btn-secondary" onclick="navigateToCase('${uniqueKeyToken}')">${SVGS.EXTERNAL}<span class="action-label">Garage</span></button>
               ${editButtonMarkup}
               <button title="Xem kết quả đối chiếu" class="btn-premium btn-dark" onclick="navigateToCase('${uniqueKeyToken}', 'result')">${SVGS.CHECK_CIRCLE}<span class="action-label">Kết quả</span></button>
-              <button title="Xóa hồ sơ" class="btn-premium btn-danger-p" onclick="triggerDestructiveDeleteCase('${uniqueKeyToken}','${escapeAttributeData(entityNode.bienSo)}')">${SVGS.TRASH}<span class="action-label">Xóa</span></button>
+              ${(isAdmin || isCreator) ? `<button title="Xóa hồ sơ" class="btn-premium btn-danger-p" onclick="triggerDestructiveDeleteCase('${uniqueKeyToken}','${escapeAttributeData(entityNode.bienSo)}')">${SVGS.TRASH}<span class="action-label">Xóa</span></button>` : ''}
             </div></td>
           </tr>`;
       }).join('');
@@ -8010,6 +8080,17 @@ function formatDateDisplay(val) {
     }
 
     async function triggerDestructiveDeleteCase(caseKey, friendlyPlateName) {
+      const currentUser = firebase.auth().currentUser;
+      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+      
+      // Get the case from cached cases to check creator
+      const targetCase = cachedCasesPayload ? cachedCasesPayload[caseKey] : null;
+      const isCreator = targetCase && targetCase.nguoiTao?.uid === currentUser?.uid;
+      
+      if (!isAdmin && !isCreator) {
+        triggerToast('Bạn không có quyền xóa hồ sơ này!', 'error');
+        return;
+      }
       const confirmAction = await showConfirmModal('Xóa bỏ ca xe', `Hành động này sẽ xóa vĩnh viễn tài nguyên thuộc ca xe: ${friendlyPlateName}. Xác nhận hủy?`);
       if (confirmAction) {
         await dbNodeInstance.ref(`cases/${caseKey}`).remove();
@@ -11782,6 +11863,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
     }
 
     function saveKpiCoefConfig(cfg) {
+      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+      if (!isAdmin) {
+        triggerToast('Bạn không có quyền thực hiện thao tác này!', 'error');
+        return;
+      }
+
       try {
         localStorage.setItem('kpiCoefficientConfig', JSON.stringify(cfg));
         if (dbNodeInstance) {
