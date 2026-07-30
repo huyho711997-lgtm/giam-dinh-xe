@@ -4717,10 +4717,7 @@
       setVal('modalPendingPascNguoiDuyet', item.pascNguoiDuyet || '');
       setVal('modalPendingToTrinhNguoiDuyet', item.toTrinhNguoiDuyet || '');
       const rawToTrinhDate = item.toTrinhNgayDuyet || item.pascNgayDuyet;
-      let cleanToTrinhDisplay = formatDateDisplay(rawToTrinhDate);
-      if (cleanToTrinhDisplay === '—' && rawToTrinhDate && rawToTrinhDate !== '—') {
-        cleanToTrinhDisplay = String(rawToTrinhDate).trim();
-      }
+      const cleanToTrinhDisplay = formatDateDisplay(rawToTrinhDate);
       setVal('modalPendingToTrinhNgayDuyet', cleanToTrinhDisplay !== '—' ? cleanToTrinhDisplay : '');
       const rawTtbtAmt = item.ttbtTongSoTienBoiThuong || item.tongBoiThuongSauThue || item.pascSoTienDuyet || item.soTienDuyetBT || item.ttbtSoTienBoiThuong || item.amount;
       setVal('modalPendingTtbtTongSoTienBoiThuong', formatCurrencyInputNumber(rawTtbtAmt));
@@ -5172,7 +5169,7 @@
     function formatDateDisplay(val) {
       if (!val) return '—';
       const str = String(val).trim();
-      if (!str || str === '—' || str === '0' || str === 'null' || str === 'undefined' || str === '1970-01-01' || str.startsWith('01/01/1970')) return '—';
+      if (!str || str === '—' || str === '0' || str === 'null' || str === 'undefined' || str === '1970-01-01' || str.includes('1970') || str.includes('1/1/1970') || str.includes('01/01/1970')) return '—';
 
       const dp = parseDateParts(str);
       if (dp) {
@@ -5184,7 +5181,7 @@
         }
         return res;
       }
-      return str;
+      return str.includes('1970') ? '—' : str;
     }
 
     function isSameDateString(d1, d2) {
@@ -5460,7 +5457,7 @@
           pascNgayDuyet: formatDateDisplay(getVal(r, colMap.pascNgayDuyet)),
           pascNguoiDuyet: getVal(r, colMap.pascNguoiDuyet),
           pascSoTienDuyet: getVal(r, colMap.pascSoTienDuyet),
-          toTrinhNgayDuyet: (formatDateDisplay(getVal(r, colMap.toTrinhNgayDuyet)) !== '—') ? formatDateDisplay(getVal(r, colMap.toTrinhNgayDuyet)) : (getVal(r, colMap.toTrinhNgayDuyet) || ''),
+          toTrinhNgayDuyet: formatDateDisplay(getVal(r, colMap.toTrinhNgayDuyet)) !== '—' ? formatDateDisplay(getVal(r, colMap.toTrinhNgayDuyet)) : '',
           toTrinhNguoiDuyet: getVal(r, colMap.toTrinhNguoiDuyet),
           ttbtSoTienBoiThuong: getVal(r, colMap.ttbtSoTienBoiThuong),
           ttbtTongSoTienBoiThuong: getVal(r, colMap.ttbtTongSoTienBoiThuong) || getVal(r, colMap.tongBoiThuongSauThue) || getVal(r, colMap.amount) || getVal(r, colMap.ttbtSoTienBoiThuong) || getVal(r, colMap.pascSoTienDuyet),
