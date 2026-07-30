@@ -4689,15 +4689,12 @@
       setVal('modalPendingVcx', item.vcx || (isVcxCode ? (spCodeVal || 'VCX') : ''));
       setVal('modalPendingTnds', item.tnds || (isTndsCode ? (spCodeVal || 'TNDS') : ''));
 
-      const rawNgayThongBao = item.ngayThongBao;
-      const cleanNgayThongBao = formatDateDisplay(rawNgayThongBao);
-      if (cleanNgayThongBao !== '—' && !cleanNgayThongBao.includes('1970')) {
-        setVal('modalPendingNgayThongBao', cleanNgayThongBao);
-      } else if (rawNgayThongBao && rawNgayThongBao !== '—') {
-        setVal('modalPendingNgayThongBao', String(rawNgayThongBao).trim());
-      } else {
-        setVal('modalPendingNgayThongBao', isEditing ? '' : new Date().toLocaleString('vi-VN'));
-      }
+      const formatFieldDate = (raw) => {
+        if (!raw || raw === '—' || raw === 'null' || raw === 'undefined') return '';
+        const formatted = formatDateDisplay(raw);
+        return (formatted !== '—' && !formatted.includes('1970')) ? formatted : '';
+      };
+      setVal('modalPendingNgayThongBao', formatFieldDate(item.ngayThongBao) || (isEditing ? '' : new Date().toLocaleString('vi-VN')));
       const cleanNgayMoHs = formatDateDisplay(item.ngayMoHs);
       setVal('modalPendingNgayMoHs', cleanNgayMoHs !== '—' ? cleanNgayMoHs : (item.ngayMoHs || ''));
       const rawNgayVTT = item.ngayVTT || item.ngayTonThat || item.date || item.ngayMoHs;
@@ -4973,95 +4970,7 @@
       }
     }
 
-    function parseDateParts(dateInput) {
-      if (dateInput === null || dateInput === undefined || dateInput === '') return null;
 
-      const str = String(dateInput).trim();
-      if (!str || str === '—' || str === '0' || str === 'null' || str === 'undefined' || str.includes('1970')) return null;
-
-      const num = Number(str);
-      // 1. Check Excel Serial Date Number (30000 to 75000)
-      if (!isNaN(num) && num >= 30000 && num <= 75000) {
-        const totalSeconds = Math.round((num - 25569) * 86400);
-        const jsDate = new Date(totalSeconds * 1000);
-        if (!isNaN(jsDate.getTime())) {
-          return {
-            day: jsDate.getUTCDate(),
-            month: jsDate.getUTCMonth() + 1,
-            year: jsDate.getUTCFullYear(),
-            hours: jsDate.getUTCHours(),
-            minutes: jsDate.getUTCMinutes(),
-            seconds: jsDate.getUTCSeconds(),
-            hasTime: (jsDate.getUTCHours() > 0 || jsDate.getUTCMinutes() > 0 || jsDate.getUTCSeconds() > 0)
-          };
-        }
-      }
-
-      // 2. Check Millisecond Unix Timestamp (e.g. 1700000000000)
-      if (!isNaN(num) && num > 100000000000) {
-        const dt = new Date(num);
-        if (!isNaN(dt.getTime()) && dt.getFullYear() > 1970) {
-          return {
-            day: dt.getDate(),
-            month: dt.getMonth() + 1,
-            year: dt.getFullYear(),
-            hours: dt.getHours(),
-            minutes: dt.getMinutes(),
-            seconds: dt.getSeconds(),
-            hasTime: (dt.getHours() > 0 || dt.getMinutes() > 0 || dt.getSeconds() > 0)
-          };
-        }
-      }
-
-      // 3. String split by separators (YYYY-MM-DD or DD/MM/YYYY)
-      const parts = str.split(/[\/\-\.\sT]/).filter(Boolean);
-      if (parts.length >= 3) {
-        let p1 = parseInt(parts[0], 10);
-        let p2 = parseInt(parts[1], 10);
-        let p3 = parseInt(parts[2], 10);
-
-        if (p1 > 1000) {
-          // YYYY-MM-DD
-          let hours = 0, minutes = 0, seconds = 0, hasTime = false;
-          if (parts.length >= 4) {
-            hours = parseInt(parts[3], 10) || 0;
-            minutes = parseInt(parts[4], 10) || 0;
-            seconds = parseInt(parts[5], 10) || 0;
-            hasTime = true;
-          }
-          return { day: p3, month: p2, year: p1, hours, minutes, seconds, hasTime };
-        } else if (p3 > 1000) {
-          // MM/DD/YYYY or DD/MM/YYYY
-          let day = p1, month = p2;
-          if (p1 <= 12 && p2 > 12) { month = p1; day = p2; }
-          else if (p1 > 12 && p2 <= 12) { day = p1; month = p2; }
-
-          let hours = 0, minutes = 0, seconds = 0, hasTime = false;
-          if (parts.length >= 4) {
-            hours = parseInt(parts[3], 10) || 0;
-            minutes = parseInt(parts[4], 10) || 0;
-            seconds = parseInt(parts[5], 10) || 0;
-            hasTime = true;
-          }
-          return { day, month, year: p3, hours, minutes, seconds, hasTime };
-        }
-      }
-
-      const d = new Date(str);
-      if (!isNaN(d.getTime()) && d.getFullYear() > 1970) {
-        return {
-          day: d.getDate(),
-          month: d.getMonth() + 1,
-          year: d.getFullYear(),
-          hours: d.getHours(),
-          minutes: d.getMinutes(),
-          seconds: d.getSeconds(),
-          hasTime: (d.getHours() > 0 || d.getMinutes() > 0 || d.getSeconds() > 0)
-        };
-      }
-
-      return null;
-    }
 
     function isSameDateString(d1, d2) {
       if (!d1 || !d2) return false;
@@ -5175,22 +5084,46 @@
     }
 
     function parseDateParts(dateInput) {
-      if (!dateInput) return null;
-      if (typeof dateInput === 'number' || (!isNaN(dateInput) && String(dateInput).length >= 10 && !String(dateInput).includes('/') && !String(dateInput).includes('-'))) {
-        const dt = new Date(Number(dateInput));
-        if (!isNaN(dt.getTime())) {
-          return { day: dt.getDate(), month: dt.getMonth() + 1, year: dt.getFullYear() };
+      if (dateInput === null || dateInput === undefined || dateInput === '') return null;
+
+      const str = String(dateInput).trim();
+      if (!str || str === '—' || str === '0' || str === 'null' || str === 'undefined' || str.includes('1970')) return null;
+
+      const num = Number(str);
+      // 1. Check Excel Serial Date Floating Number (30000 to 75000)
+      if (!isNaN(num) && num >= 30000 && num <= 75000) {
+        const totalSeconds = Math.round((num - 25569) * 86400);
+        const jsDate = new Date(totalSeconds * 1000);
+        if (!isNaN(jsDate.getTime())) {
+          return {
+            day: jsDate.getUTCDate(),
+            month: jsDate.getUTCMonth() + 1,
+            year: jsDate.getUTCFullYear(),
+            hours: jsDate.getUTCHours(),
+            minutes: jsDate.getUTCMinutes(),
+            seconds: jsDate.getUTCSeconds(),
+            hasTime: (jsDate.getUTCHours() > 0 || jsDate.getUTCMinutes() > 0 || jsDate.getUTCSeconds() > 0)
+          };
         }
       }
-      
-      const str = String(dateInput).trim();
-      if (!str) return null;
 
-      if (!isNaN(str) && Number(str) > 30000 && Number(str) < 60000) {
-        const jsDate = new Date(Math.round((Number(str) - (25567 + 2)) * 86400 * 1000));
-        return { day: jsDate.getDate(), month: jsDate.getMonth() + 1, year: jsDate.getFullYear() };
+      // 2. Check Millisecond Unix Timestamp
+      if (!isNaN(num) && num > 100000000000) {
+        const dt = new Date(num);
+        if (!isNaN(dt.getTime()) && dt.getFullYear() > 1970) {
+          return {
+            day: dt.getDate(),
+            month: dt.getMonth() + 1,
+            year: dt.getFullYear(),
+            hours: dt.getHours(),
+            minutes: dt.getMinutes(),
+            seconds: dt.getSeconds(),
+            hasTime: (dt.getHours() > 0 || dt.getMinutes() > 0 || dt.getSeconds() > 0)
+          };
+        }
       }
 
+      // 3. String split by separators (YYYY-MM-DD or DD/MM/YYYY)
       const parts = str.split(/[\/\-\.\sT]/).filter(Boolean);
       if (parts.length >= 3) {
         let p1 = parseInt(parts[0], 10);
@@ -5198,10 +5131,41 @@
         let p3 = parseInt(parts[2], 10);
 
         if (p1 > 1000) {
-          return { day: p3, month: p2, year: p1 };
+          let hours = 0, minutes = 0, seconds = 0, hasTime = false;
+          if (parts.length >= 4) {
+            hours = parseInt(parts[3], 10) || 0;
+            minutes = parseInt(parts[4], 10) || 0;
+            seconds = parseInt(parts[5], 10) || 0;
+            hasTime = true;
+          }
+          return { day: p3, month: p2, year: p1, hours, minutes, seconds, hasTime };
         } else if (p3 > 1000) {
-          return { day: p1, month: p2, year: p3 };
+          let day = p1, month = p2;
+          if (p1 <= 12 && p2 > 12) { month = p1; day = p2; }
+          else if (p1 > 12 && p2 <= 12) { day = p1; month = p2; }
+
+          let hours = 0, minutes = 0, seconds = 0, hasTime = false;
+          if (parts.length >= 4) {
+            hours = parseInt(parts[3], 10) || 0;
+            minutes = parseInt(parts[4], 10) || 0;
+            seconds = parseInt(parts[5], 10) || 0;
+            hasTime = true;
+          }
+          return { day, month, year: p3, hours, minutes, seconds, hasTime };
         }
+      }
+
+      const d = new Date(str);
+      if (!isNaN(d.getTime()) && d.getFullYear() > 1970) {
+        return {
+          day: d.getDate(),
+          month: d.getMonth() + 1,
+          year: d.getFullYear(),
+          hours: d.getHours(),
+          minutes: d.getMinutes(),
+          seconds: d.getSeconds(),
+          hasTime: (d.getHours() > 0 || d.getMinutes() > 0 || d.getSeconds() > 0)
+        };
       }
 
       return null;
