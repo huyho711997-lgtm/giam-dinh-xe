@@ -10931,7 +10931,6 @@
                 <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong);">
                   <th style="width: 55px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">STT</th>
                   <th style="width: 230px; padding: 14px 14px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Giám định viên</th>
-                  <th style="width: 150px; padding: 14px 14px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Đơn vị / Chi nhánh</th>
                   <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Số HS tiếp nhận</th>
                   <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Đã duyệt HSBT</th>
                   <th style="width: 160px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">Tỷ lệ duyệt HSBT</th>
@@ -10941,7 +10940,7 @@
               </thead>
               <tbody>
                 ${gdvRows.length === 0 ? `
-                  <tr><td colspan="8" class="empty-state-text" style="padding: 45px; text-align: center; color: var(--text-muted); font-size: 14px;">Không tìm thấy dữ liệu hồ sơ nào trong mốc thời gian đã chọn (${timeLabelText}).</td></tr>
+                  <tr><td colspan="7" class="empty-state-text" style="padding: 45px; text-align: center; color: var(--text-muted); font-size: 14px;">Không tìm thấy dữ liệu hồ sơ nào trong mốc thời gian đã chọn (${timeLabelText}).</td></tr>
                 ` : gdvRows.map((r, idx) => {
                   const percentTotal = totalFilteredClaims > 0 ? Math.round((r.totalOpenedCount / totalFilteredClaims) * 100) : 0;
                   const rateHsbt = r.totalOpenedCount > 0 ? Math.round((r.duyetHsbtCount / r.totalOpenedCount) * 100) : 0;
@@ -10988,10 +10987,6 @@
                         </div>
                       </td>
 
-                      <!-- Chi nhánh -->
-                      <td style="padding: 14px 14px;">
-                        <span style="font-size: 12px; color: var(--text-soft); font-weight: 650;">${escapeHtmlOutput(r.branch)}</span>
-                      </td>
 
                       <!-- Số HS tiếp nhận -->
                       <td style="text-align: center; padding: 14px 12px;">
