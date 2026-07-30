@@ -5901,50 +5901,89 @@
         }).join('');
       }
 
-      // Render Weekly Stats Cards
+      // Render Dynamic Metric Stats Cards based on selected Time Period
       if (statsContainer) {
-        const thisWeekClaims = claimsList.filter(c => new Date(c.createdAt || Date.now()) >= startOfThisWeek);
-        const thisWeekTotal = thisWeekClaims.length;
-        const thisWeekCompleted = thisWeekClaims.filter(c => c.trangThai === 'da_thanh_toan' || c.trangThai === 'kt_duyet').length;
-        const thisWeekPending = thisWeekTotal - thisWeekCompleted;
-        const rate = thisWeekTotal > 0 ? Math.round((thisWeekCompleted / thisWeekTotal) * 100) : 100;
+        function getClaimTimeValForStats(c) {
+          const dateStr = c.ngayMoHs || c.ngayTonThat || c.ngayVTT;
+          if (dateStr && dateStr !== '—') {
+            const dp = parseDateParts(dateStr);
+            if (dp && dp.year && dp.month && dp.day) {
+              return new Date(dp.year, dp.month - 1, dp.day, dp.hour || 0, dp.minute || 0, dp.second || 0).getTime();
+            }
+          }
+          return c.createdAt || 0;
+        }
+
+        let periodClaims = claimsList;
+        let titleTotal = 'TỔNG SỐ HỒ SƠ';
+        let titleCompleted = 'HỒ SƠ HOÀN THÀNH';
+        let titlePending = 'HỒ SƠ ĐANG TỒN ĐỌNG';
+        let titleRate = 'TỶ LỆ XỬ LÝ TOÀN BỘ';
+
+        if (periodFilter === 'this_week') {
+          periodClaims = claimsList.filter(c => getClaimTimeValForStats(c) >= startOfThisWeek.getTime());
+          titleTotal = 'CA PHÁT SINH TUẦN NÀY';
+          titleCompleted = 'HOÀN THÀNH TUẦN NÀY';
+          titlePending = 'TỒN ĐỌNG TUẦN NÀY';
+          titleRate = 'TỶ LỆ XỬ LÝ TUẦN';
+        } else if (periodFilter === 'last_week') {
+          periodClaims = claimsList.filter(c => {
+            const t = getClaimTimeValForStats(c);
+            return t >= startOfLastWeek.getTime() && t < endOfLastWeek.getTime();
+          });
+          titleTotal = 'CA PHÁT SINH TUẦN TRƯỚC';
+          titleCompleted = 'HOÀN THÀNH TUẦN TRƯỚC';
+          titlePending = 'TỒN ĐỌNG TUẦN TRƯỚC';
+          titleRate = 'TỶ LỆ XỬ LÝ TUẦN TRƯỚC';
+        } else if (periodFilter === 'this_month') {
+          periodClaims = claimsList.filter(c => getClaimTimeValForStats(c) >= startOfThisMonth.getTime());
+          titleTotal = 'CA PHÁT SINH THÁNG NÀY';
+          titleCompleted = 'HOÀN THÀNH THÁNG NÀY';
+          titlePending = 'TỒN ĐỌNG THÁNG NÀY';
+          titleRate = 'TỶ LỆ XỬ LÝ THÁNG';
+        }
+
+        const statTotal = periodClaims.length;
+        const statCompleted = periodClaims.filter(c => c.trangThai === 'da_thanh_toan' || c.trangThai === 'kt_duyet').length;
+        const statPending = statTotal - statCompleted;
+        const statRate = statTotal > 0 ? Math.round((statCompleted / statTotal) * 100) : 100;
 
         statsContainer.innerHTML = `
           <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(216,180,109,0.3); background: linear-gradient(135deg, rgba(216,180,109,0.08) 0%, rgba(216,180,109,0.02) 100%); transition: all 0.25s ease; box-shadow: var(--shadow-sm);">
             <div style="display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">Ca phát sinh tuần này</span>
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">${titleTotal}</span>
               <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(216,180,109,0.15); color: var(--primary); display: grid; place-items: center; flex-shrink: 0;">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
               </div>
             </div>
-            <strong style="display: block; font-size: 26px; color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(thisWeekTotal).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
+            <strong style="display: block; font-size: 26px; color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(statTotal).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
           </div>
           <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(16,185,129,0.3); background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.02) 100%); transition: all 0.25s ease; box-shadow: var(--shadow-sm);">
             <div style="display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">Hồ sơ hoàn thành</span>
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">${titleCompleted}</span>
               <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(16,185,129,0.15); color: #10b981; display: grid; place-items: center; flex-shrink: 0;">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
               </div>
             </div>
-            <strong style="display: block; font-size: 26px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(thisWeekCompleted).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
+            <strong style="display: block; font-size: 26px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(statCompleted).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
           </div>
           <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(239,68,68,0.3); background: linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.02) 100%); transition: all 0.25s ease; box-shadow: var(--shadow-sm);">
             <div style="display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">Hồ sơ đang tồn đọng</span>
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">${titlePending}</span>
               <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(239,68,68,0.15); color: #ef4444; display: grid; place-items: center; flex-shrink: 0;">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
             </div>
-            <strong style="display: block; font-size: 26px; color: #ef4444; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(thisWeekPending).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
+            <strong style="display: block; font-size: 26px; color: #ef4444; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(statPending).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
           </div>
           <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(59,130,246,0.3); background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(59,130,246,0.02) 100%); transition: all 0.25s ease; box-shadow: var(--shadow-sm);">
             <div style="display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">Tỷ lệ xử lý tuần</span>
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">${titleRate}</span>
               <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(59,130,246,0.15); color: #3b82f6; display: grid; place-items: center; flex-shrink: 0;">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
               </div>
             </div>
-            <strong style="display: block; font-size: 26px; color: #3b82f6; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800; line-height: 1.1;">${rate}%</strong>
+            <strong style="display: block; font-size: 26px; color: #3b82f6; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800; line-height: 1.1;">${statRate}%</strong>
           </div>
         `;
       }
