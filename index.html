@@ -10790,6 +10790,60 @@ function formatDateDisplay(val) {
 
       const top3Performers = gdvRowsSorted.slice(0, 3);
 
+      // GARAGE CLAIM AGGREGATION BY MÃ GARA & TÊN GARA VIẾT TẮT
+      const garageMap = {};
+      for (let i = 0; i < filteredClaims.length; i++) {
+        const item = filteredClaims[i];
+        const c = item.raw;
+
+        const rawGdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '').trim();
+        const targetGdvName = resolveTargetGdv(rawGdvName);
+        if (!targetGdvName) continue;
+
+        const rawGaraCode = (c.maGara || c.garageUniqCode || '').trim();
+        const rawGaraName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || c.maGara || '').trim();
+        const garageKey = rawGaraName || rawGaraCode || 'Gara chưa xác định';
+
+        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+        const amtVal = parseInt(amtStr, 10) || 0;
+
+        if (!garageMap[garageKey]) {
+          garageMap[garageKey] = {
+            key: garageKey,
+            code: rawGaraCode || 'N/A',
+            name: rawGaraName || rawGaraCode || 'Gara chưa xác định',
+            totalApprovedAmount: 0,
+            totalClaimsCount: 0,
+            gdvBreakdown: {
+              'Nguyễn Quang Huy_DL': { opened: 0, approved: 0, amount: 0 },
+              'Hồ Quang Huy': { opened: 0, approved: 0, amount: 0 },
+              'Huỳnh Văn Phúc': { opened: 0, approved: 0, amount: 0 }
+            }
+          };
+        }
+
+        garageMap[garageKey].totalClaimsCount++;
+        garageMap[garageKey].totalApprovedAmount += amtVal;
+
+        if (garageMap[garageKey].gdvBreakdown[targetGdvName]) {
+          garageMap[garageKey].gdvBreakdown[targetGdvName].opened++;
+          if (isDuyetHsbtApproved(c)) {
+            garageMap[garageKey].gdvBreakdown[targetGdvName].approved++;
+          }
+          garageMap[garageKey].gdvBreakdown[targetGdvName].amount += amtVal;
+        }
+      }
+
+      let garageRows = Object.values(garageMap).sort((a, b) => b.totalApprovedAmount - a.totalApprovedAmount);
+
+      if (activeGdvReportSearch) {
+        garageRows = garageRows.filter(g => g.name.toLowerCase().includes(activeGdvReportSearch) || g.code.toLowerCase().includes(activeGdvReportSearch));
+      }
+
+      const totalGaragePayout = garageRows.reduce((sum, g) => sum + g.totalApprovedAmount, 0);
+      const activeGarageCount = garageRows.length;
+      const topGarageObj = garageRows[0] || null;
+
       // ULTRA-SLEEK LINE CHART CALCULATIONS
       const chartWidth = 960;
       const chartHeight = 290;
@@ -10860,6 +10914,10 @@ function formatDateDisplay(val) {
             <button type="button" onclick="switchGdvReportView('chart')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'chart' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
               <span>Biểu đồ Đường KPI & Lương GĐV</span>
+            </button>
+            <button type="button" onclick="switchGdvReportView('garage')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'garage' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 21h18"></path><path d="M19 21v-4a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v4"></path><path d="M5 15V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"></path></svg>
+              <span>Biểu đồ & Báo cáo Bồi thường theo Gara</span>
             </button>
             
           </div>
@@ -10986,7 +11044,114 @@ function formatDateDisplay(val) {
           </div>
 
           <!-- CONDITIONAL RENDERING BASED ON activeGdvReportView -->
-          ${activeGdvReportView === 'chart' ? `
+          ${activeGdvReportView === 'garage' ? `
+            
+            <!-- EXECUTIVE GARAGE REPORT DASHBOARD -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
+              <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
+                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">TỔNG TIỀN BỒI THƯỜNG GARA</span>
+                <strong style="display: block; font-size: 26px; color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
+                  ${formatCurrencyInputNumber(totalGaragePayout)} <span style="font-size: 14px; color: var(--text-soft);">đ</span>
+                </strong>
+              </div>
+
+              <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(16,185,129,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
+                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">TỔNG SỐ GARA PHÁT SINH</span>
+                <strong style="display: block; font-size: 26px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
+                  ${activeGarageCount} <span style="font-size: 14px; color: var(--text-soft);">đơn vị</span>
+                </strong>
+              </div>
+
+              <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(59,130,246,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
+                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">GARA BỒI THƯỜNG LỚN NHẤT</span>
+                <strong style="display: block; font-size: 16px; color: #3b82f6; margin-top: 10px; font-weight: 850; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                  ${topGarageObj ? escapeHtmlOutput(topGarageObj.name) : 'Chưa có'}
+                </strong>
+                <span style="font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono';">
+                  ${topGarageObj ? formatCurrencyInputNumber(topGarageObj.totalApprovedAmount) + ' đ' : '0 đ'}
+                </span>
+              </div>
+            </div>
+
+            <!-- GARAGE HORIZONTAL BAR CHART & BREAKDOWN -->
+            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <div style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    <span>Biểu đồ & Xếp hạng Số tiền Bồi thường theo Gara</span>
+                  </div>
+                  <p style="font-size: 12px; color: var(--text-soft); margin-top: 4px; margin-bottom: 0;">
+                    Thống kê tổng số tiền duyệt HSBT theo cột <strong style="color: var(--primary);">TTBT - Tổng số tiền bồi thường</strong> và phân bổ số lượng hồ sơ của từng Giám định viên tại mỗi Gara.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Sleek Visual Bar List -->
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                ${garageRows.length === 0 ? `
+                  <div style="padding: 40px; text-align: center; color: var(--text-muted); font-size: 14px;">Chưa có dữ liệu hồ sơ bồi thường gara nào trong mốc thời gian này.</div>
+                ` : garageRows.map((g, gIdx) => {
+                  const maxAmt = garageRows[0] ? garageRows[0].totalApprovedAmount || 1 : 1;
+                  const pct = Math.min(100, Math.max(5, Math.round((g.totalApprovedAmount / maxAmt) * 100)));
+                  const qh = g.gdvBreakdown['Nguyễn Quang Huy_DL'] || { opened: 0, amount: 0 };
+                  const hqh = g.gdvBreakdown['Hồ Quang Huy'] || { opened: 0, amount: 0 };
+                  const hvp = g.gdvBreakdown['Huỳnh Văn Phúc'] || { opened: 0, amount: 0 };
+
+                  return `
+                    <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px; padding: 16px; transition: all 0.2s ease;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                          <span style="font-size: 12px; font-weight: 900; color: var(--primary); font-family: 'JetBrains Mono'; background: rgba(216,180,109,0.15); width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;">#${gIdx + 1}</span>
+                          <div>
+                            <strong style="font-size: 14.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(g.name)}</strong>
+                            ${g.code !== 'N/A' && g.code !== g.name ? `<span style="font-size: 11px; color: var(--text-soft); margin-left: 8px;">(Mã: ${escapeHtmlOutput(g.code)})</span>` : ''}
+                          </div>
+                        </div>
+
+                        <div style="text-align: right;">
+                          <strong style="font-size: 16.5px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">
+                            ${formatCurrencyInputNumber(g.totalApprovedAmount)} đ
+                          </strong>
+                          <span style="display: block; font-size: 11px; color: var(--text-soft); font-weight: 750;">
+                            ${g.totalClaimsCount} hồ sơ
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- Progress Bar -->
+                      <div style="height: 8px; width: 100%; background: var(--border); border-radius: 99px; overflow: hidden; margin-bottom: 12px;">
+                        <div style="height: 100%; width: ${pct}%; background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%); border-radius: 99px; transition: width 0.4s ease;"></div>
+                      </div>
+
+                      <!-- GĐV Breakdown Badges -->
+                      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: 11.5px; border-top: 1px dashed var(--border); padding-top: 10px;">
+                        <span style="font-size: 11px; font-weight: 850; color: var(--text-muted); text-transform: uppercase;">Phân bổ GĐV:</span>
+                        
+                        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); padding: 4px 10px; border-radius: 8px; color: #3b82f6; font-weight: 750;">
+                          <span>🔹 Nguyễn Quang Huy_DL:</span>
+                          <strong style="font-family: 'JetBrains Mono'; font-weight: 850;">${qh.opened} ca</strong>
+                          <span style="font-size: 10.5px; color: var(--text-soft);">(${formatCurrencyInputNumber(qh.amount)}đ)</span>
+                        </div>
+
+                        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); padding: 4px 10px; border-radius: 8px; color: var(--primary); font-weight: 750;">
+                          <span>🔸 Hồ Quang Huy:</span>
+                          <strong style="font-family: 'JetBrains Mono'; font-weight: 850;">${hqh.opened} ca</strong>
+                          <span style="font-size: 10.5px; color: var(--text-soft);">(${formatCurrencyInputNumber(hqh.amount)}đ)</span>
+                        </div>
+
+                        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); padding: 4px 10px; border-radius: 8px; color: #10b981; font-weight: 750;">
+                          <span>🟢 Huỳnh Văn Phúc:</span>
+                          <strong style="font-family: 'JetBrains Mono'; font-weight: 850;">${hvp.opened} ca</strong>
+                          <span style="font-size: 10.5px; color: var(--text-soft);">(${formatCurrencyInputNumber(hvp.amount)}đ)</span>
+                        </div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          ` : activeGdvReportView === 'chart' ? `
             
             <!-- ULTRA-SLEEK FINE-LINED SVG LINE CHART SECTION -->
             <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
