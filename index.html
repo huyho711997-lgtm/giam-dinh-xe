@@ -2877,7 +2877,18 @@
         dbNodeInstance = firebase.database();
         if (dbNodeInstance) {
           dbNodeInstance.ref('system_config/kpi_config').on('value', (snapshot) => {
-            const val = snapshot.val();
+            let val = snapshot.val();
+            const needsMigration = !val || 
+              !Array.isArray(val) || 
+              val.length !== 5 || 
+              !val.find(r => r.id === 'vcx_4' && r.coef === 4.0) ||
+              !val.find(r => r.id === 'tnds_1' && r.coef === 3.0);
+              
+            if (needsMigration) {
+              dbNodeInstance.ref('system_config/kpi_config').set(defaultKpiCoefConfig);
+              val = defaultKpiCoefConfig;
+            }
+            
             if (val) {
               localStorage.setItem('kpiCoefficientConfig', JSON.stringify(val));
               if (activeDashboardTab === 'users' && activeSystemAdminSubTab === 'kpi-config') {
@@ -11759,15 +11770,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
      * CẤU HÌNH HỆ SỐ KPI HỒ SƠ THEO SỐ TIỀN BỒI THƯỜNG & LOẠI HỒ SƠ (VCX / TNDS)
      ****************************************************/
     let defaultKpiCoefConfig = [
-      { id: 'vcx_1', type: 'VCX', fromAmt: 0, toAmt: 10000000, coef: 1.0, label: 'Dưới 10 triệu VNĐ' },
-      { id: 'vcx_2', type: 'VCX', fromAmt: 10000001, toAmt: 50000000, coef: 1.2, label: 'Từ 10tr - 50tr VNĐ' },
-      { id: 'vcx_3', type: 'VCX', fromAmt: 50000001, toAmt: 100000000, coef: 1.5, label: 'Từ 50tr - 100tr VNĐ' },
-      { id: 'vcx_4', type: 'VCX', fromAmt: 100000001, toAmt: 999999999999, coef: 2.0, label: 'Trên 100 triệu VNĐ' },
-
-      { id: 'tnds_1', type: 'TNDS', fromAmt: 0, toAmt: 10000000, coef: 1.0, label: 'Dưới 10 triệu VNĐ' },
-      { id: 'tnds_2', type: 'TNDS', fromAmt: 10000001, toAmt: 50000000, coef: 1.2, label: 'Từ 10tr - 50tr VNĐ' },
-      { id: 'tnds_3', type: 'TNDS', fromAmt: 50000001, toAmt: 100000000, coef: 1.5, label: 'Từ 50tr - 100tr VNĐ' },
-      { id: 'tnds_4', type: 'TNDS', fromAmt: 100000001, toAmt: 999999999999, coef: 2.0, label: 'Trên 100 triệu VNĐ' }
+      { id: 'vcx_1', type: 'VCX', fromAmt: 0, toAmt: 49999999, coef: 1.0, label: 'Dưới 50 triệu VNĐ' },
+      { id: 'vcx_2', type: 'VCX', fromAmt: 50000000, toAmt: 99999999, coef: 1.5, label: 'Từ 50tr - dưới 100tr VNĐ' },
+      { id: 'vcx_3', type: 'VCX', fromAmt: 100000000, toAmt: 200000000, coef: 2.0, label: 'Từ 100tr - 200tr VNĐ' },
+      { id: 'vcx_4', type: 'VCX', fromAmt: 200000001, toAmt: 999999999999, coef: 4.0, label: 'Trên 200 triệu VNĐ' },
+      { id: 'tnds_1', type: 'TNDS', fromAmt: 0, toAmt: 999999999999, coef: 3.0, label: 'Mọi hạn mức TNDS' }
     ];
 
     function getStoredKpiCoefConfig() {
