@@ -4302,12 +4302,175 @@
       return { displayName, email, role, department, initials: deriveInitials(displayName), isConfigured: Boolean(profile.isConfigured || userInstance?.displayName || (profile.displayName && profile.displayName !== 'Giám định viên')) };
     }
 
+    
+    /* CUSTOM GLASSMORPHIC CONFIRMATION MODAL */
+    function showCustomConfirmModal({ title, message, confirmText, confirmBg, onConfirm }) {
+      const existing = document.getElementById('customConfirmModalOverlay');
+      if (existing) existing.remove();
+
+      const overlay = document.createElement('div');
+      overlay.id = 'customConfirmModalOverlay';
+      overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(11, 15, 25, 0.82); backdrop-filter: blur(16px); z-index: 999999; display: grid; place-items: center; padding: 16px;';
+
+      overlay.innerHTML = `
+        <div style="background: var(--surface-strong); border: 1px solid var(--border-strong); border-radius: 24px; width: min(480px, 92vw); padding: 26px 28px; box-shadow: 0 28px 70px rgba(0,0,0,0.6); text-align: center; position: relative;">
+          
+          <div style="width: 56px; height: 56px; border-radius: 18px; background: ${confirmBg || 'rgba(239,68,68,0.14)'}; color: ${confirmBg === '#10b981' ? '#10b981' : '#ef4444'}; border: 1px solid rgba(239,68,68,0.3); display: grid; place-items: center; margin: 0 auto 16px;">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 1-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          </div>
+
+          <h3 style="font-size: 19px; font-weight: 850; color: var(--text-main); margin: 0 0 8px;">${escapeHtmlOutput(title || 'Xác nhận Thao tác')}</h3>
+          <p style="font-size: 13.5px; color: var(--text-soft); margin: 0 0 24px; line-height: 1.5;">${escapeHtmlOutput(message || 'Bạn có chắc chắn muốn thực hiện hành động này không?')}</p>
+
+          <div style="display: flex; gap: 12px; justify-content: center;">
+            <button type="button" id="btnCustomConfirmCancel" style="flex: 1; height: 44px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-main); border: 1px solid var(--border); cursor: pointer;">Hủy bỏ</button>
+            <button type="button" id="btnCustomConfirmOk" style="flex: 1; height: 44px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: ${confirmBg || '#ef4444'}; color: #ffffff; border: none; cursor: pointer; box-shadow: 0 4px 18px rgba(239,68,68,0.35);">${escapeHtmlOutput(confirmText || 'Đồng ý xóa')}</button>
+          </div>
+
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      document.getElementById('btnCustomConfirmCancel').onclick = () => overlay.remove();
+      document.getElementById('btnCustomConfirmOk').onclick = () => {
+        overlay.remove();
+        if (typeof onConfirm === 'function') onConfirm();
+      };
+    }
+
+    /* TOP NOTIFICATION CENTER CONTROLLER */
+    function toggleNotificationCenterDropdown(evt) {
+      if (evt) evt.stopPropagation();
+      const menu = document.getElementById('notificationCenterDropdownMenu');
+      if (!menu) return;
+      
+      const isVisible = menu.style.display === 'block';
+      menu.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) renderNotificationCenterItems();
+    }
+
+    function renderNotificationCenterItems() {
+      const holder = document.getElementById('notificationItemsHolder');
+      const badge = document.getElementById('navNotificationBadge');
+      const unreadLbl = document.getElementById('lblNotifUnreadCount');
+      if (!holder) return;
+
+      const transfers = Object.values(cachedAccountingTransfersPayload || {});
+      const notifications = [];
+
+      transfers.forEach(t => {
+        const batchId = t.transferId || 'PBG_N/A';
+        const dateStr = t.ngayBanGiao ? formatDateDisplay(t.ngayBanGiao) : '';
+
+        if (t.trangThai === 'can_bo_sung') {
+          notifications.push({
+            id: batchId,
+            type: 'warning',
+            title: '⚠️ Yêu cầu bổ sung Phiếu ' + batchId,
+            desc: (t.ghiChuKeToan ? ('Kế toán phản hồi: ' + t.ghiChuKeToan) : 'Kế toán yêu cầu bổ sung chứng từ cho phiếu bàn giao này.'),
+            date: dateStr,
+            transferId: batchId
+          });
+        } else if (t.trangThai === 'da_nhan_ho_so') {
+          notifications.push({
+            id: batchId,
+            type: 'info',
+            title: '📥 Phiếu mới trình Kế toán ' + batchId,
+            desc: 'GĐV ' + (t.gdvName || '') + ' đã tạo phiếu bàn giao ' + (t.danhSachHoSo?.length || 1) + ' hồ sơ.',
+            date: dateStr,
+            transferId: batchId
+          });
+        } else if (t.trangThai === 'da_trinh_dntt') {
+          notifications.push({
+            id: batchId,
+            type: 'success',
+            title: '✅ Đã trình ĐNTT Phiếu ' + batchId,
+            desc: 'Phiếu bàn giao ' + batchId + ' đã được Kế toán duyệt trình đề nghị thanh toán.',
+            date: dateStr,
+            transferId: batchId
+          });
+        }
+      });
+
+      if (badge) {
+        if (notifications.length > 0) {
+          badge.style.display = 'grid';
+          badge.textContent = notifications.length;
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+
+      if (unreadLbl) {
+        unreadLbl.textContent = notifications.length + ' tin mới';
+      }
+
+      if (notifications.length === 0) {
+        holder.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--text-soft); font-size: 13px;">Hiện chưa có thông báo mới nào từ hệ thống.</div>`;
+        return;
+      }
+
+      holder.innerHTML = notifications.map(item => {
+        const isWarning = item.type === 'warning';
+        const isSuccess = item.type === 'success';
+        
+        const bgColor = isWarning ? 'rgba(239,68,68,0.08)' : isSuccess ? 'rgba(16,185,129,0.08)' : 'rgba(59,130,246,0.08)';
+        const borderColor = isWarning ? 'rgba(239,68,68,0.3)' : isSuccess ? 'rgba(16,185,129,0.3)' : 'rgba(59,130,246,0.3)';
+        const textColor = isWarning ? '#ef4444' : isSuccess ? '#10b981' : '#3b82f6';
+
+        const clickHandler = (getLoggedInUserAccountingRole() === 'ketoan') ? `openKeToanReviewModal('${item.transferId}')` : `openAddAccountingTransferModal('${item.transferId}')`;
+
+        return `
+          <div onclick="${clickHandler}" style="padding: 12px 14px; border-radius: 12px; background: ${bgColor}; border: 1px solid ${borderColor}; cursor: pointer; transition: all 0.15s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <strong style="font-size: 13px; color: ${textColor}; font-weight: 850;">${escapeHtmlOutput(item.title)}</strong>
+              <span style="font-size: 10.5px; color: var(--text-soft);">${escapeHtmlOutput(item.date)}</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-main); line-height: 1.4;">${escapeHtmlOutput(item.desc)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Close notification dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const wrapper = document.getElementById('navNotificationWrapper');
+      const menu = document.getElementById('notificationCenterDropdownMenu');
+      if (wrapper && menu && !wrapper.contains(e.target)) {
+        menu.style.display = 'none';
+      }
+    });
+
     function renderNavigationUserProfile(userInstance, targetNode) {
       if (!targetNode) return;
       const profile = getAuthenticatedUserPresentation(userInstance);
       const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
       targetNode.innerHTML = `
         <div class="nav-user-zone">
+          
+          <!-- TOP NOTIFICATION BELL COMPONENT -->
+          <div style="position: relative;" id="navNotificationWrapper">
+            <button type="button" class="btn-premium btn-secondary nav-logout-icon" title="Thông báo hệ thống" onclick="toggleNotificationCenterDropdown(event)" style="position: relative; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; cursor: pointer;">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              <span id="navNotificationBadge" style="display: none; position: absolute; top: -3px; right: -3px; background: #ef4444; color: #ffffff; font-size: 10px; font-weight: 850; padding: 2px 6px; border-radius: 99px; font-family: 'JetBrains Mono'; border: 2px solid var(--surface); box-shadow: 0 2px 6px rgba(239,68,68,0.4);">0</span>
+            </button>
+
+            <!-- FLOATING NOTIFICATION CENTER DROPDOWN PANEL -->
+            <div id="notificationCenterDropdownMenu" style="display: none; position: absolute; top: calc(100% + 10px); right: 0; width: 380px; z-index: 99999; background: var(--surface-strong); border: 1px solid var(--border-strong); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); padding: 0; overflow: hidden;">
+              <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface);">
+                <strong style="font-size: 14px; color: var(--text-main); font-weight: 850; display: flex; align-items: center; gap: 8px;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                  <span>Thông báo Hệ thống</span>
+                </strong>
+                <span id="lblNotifUnreadCount" style="font-size: 11px; background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850; padding: 3px 10px; border-radius: 99px;">0 mới</span>
+              </div>
+              <div id="notificationItemsHolder" style="max-height: 360px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Dynamic notification items -->
+              </div>
+            </div>
+          </div>
+
           <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện Sáng/Tối" onclick="toggleTheme()">${activeThemeIcon}</button>
           <button type="button" class="nav-user-card" title="Mở hồ sơ người dùng" onclick="openUserProfileModal()">
             <div class="nav-user-avatar">${escapeHtmlOutput(profile.initials)}</div>
@@ -12623,19 +12786,26 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
     });
 
-    /* DELETE ACCOUNTING TRANSFER BATCH */
-    async function deleteAccountingTransfer(transferId) {
+    /* DELETE ACCOUNTING TRANSFER BATCH WITH CUSTOM GLASSMORPHIC CONFIRM MODAL */
+    function deleteAccountingTransfer(transferId) {
       if (!transferId) return;
-      if (!confirm('Bạn có chắc chắn muốn xóa Phiếu bàn giao ' + transferId + '? Hành động này không thể hoàn tác.')) return;
 
-      try {
-        await dbNodeInstance.ref('accounting_transfers/' + transferId).remove();
-        triggerToast('Đã xóa Phiếu bàn giao ' + transferId + ' thành công!', 'success');
-        renderAccountingTransferPage();
-      } catch (err) {
-        console.error(err);
-        triggerToast('Lỗi xóa phiếu bàn giao: ' + err.message, 'error');
-      }
+      showCustomConfirmModal({
+        title: 'Xác nhận xóa Phiếu Bàn giao',
+        message: 'Bạn có chắc chắn muốn xóa Phiếu bàn giao ' + transferId + '? Hành động này không thể hoàn tác và các hồ sơ liên quan sẽ được mở lại.',
+        confirmText: 'Đồng ý xóa Phiếu',
+        confirmBg: '#ef4444',
+        onConfirm: async () => {
+          try {
+            await dbNodeInstance.ref('accounting_transfers/' + transferId).remove();
+            triggerToast('Đã xóa Phiếu bàn giao ' + transferId + ' thành công!', 'success');
+            renderAccountingTransferPage();
+          } catch (err) {
+            console.error(err);
+            triggerToast('Lỗi xóa phiếu bàn giao: ' + err.message, 'error');
+          }
+        }
+      });
     }
 
     /* RENDER MAIN OVERVIEW PAGE - AUTO ROLE IDENTIFICATION (MANUAL ROLE TOGGLE REMOVED) */
