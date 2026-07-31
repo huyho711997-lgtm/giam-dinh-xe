@@ -230,8 +230,8 @@
     .svg-icon-lg { width: 2.2rem; height: 2.2rem; }
     .svg-icon-sm { width: 1rem; height: 1rem; }
 
-    .app-container { width: 100%; max-width: 100%; margin: 0 auto; padding: 16px 24px 80px; }
-    @media (min-width: 768px) { .app-container { padding: 16px 32px 100px; } }
+    .app-container { width: min(1660px, 96%); margin: 0 auto; padding: 16px 20px 80px; }
+    @media (min-width: 768px) { .app-container { padding: 16px 24px 100px; } }
 
     .premium-nav {
       position: sticky;
@@ -2138,7 +2138,7 @@
 
   <!-- Thêm thành viên mới Modal -->
   <div id="createUserModalOverlay" class="p-modal-overlay" aria-hidden="true" style="display: none;">
-    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="createUserModalTitle" style="max-width: 500px;">
+    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="createUserModalTitle" style="max-width: 660px;">
       <button type="button" class="btn-premium btn-secondary profile-close" onclick="closeCreateUserModal()" aria-label="Đóng" style="display: grid; place-items: center;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       <div class="profile-modal-hero">
         <div class="profile-avatar-large" style="background: var(--primary-gradient); color: #080b11; display: grid; place-items: center;">
@@ -2176,6 +2176,85 @@
             <label>Đơn vị / Phòng ban</label>
             <input id="newAdminDepartment" class="input-premium" type="text" maxlength="100" placeholder="Ví dụ: Bộ phận Giám định" autocomplete="off" />
           </div>
+          
+        <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; grid-column: span 2;">
+          <label style="font-size: 13px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--primary);">🛡️</span>
+              <span>Phân quyền Chi tiết Chức năng & Quyền Thao tác:</span>
+            </span>
+            <span style="font-size: 11px; color: var(--text-soft); font-weight: 700;">(Xem / Thêm / Sửa / Xóa)</span>
+          </label>
+          
+          <div style="background: var(--surface-soft); border: 1px solid var(--border); border-radius: 16px; padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow-sm);">
+            
+            <!-- Module 1: Quản lý Hồ sơ -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">📁</span>
+                <strong style="font-size: 12.5px; color: var(--text-main); font-weight: 850;">1. Quản lý Hồ sơ Bồi thường</strong>
+              </div>
+              <div style="display: flex; gap: 14px; font-size: 12px; font-weight: 750; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_list_view" checked style="accent-color: var(--primary);" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_list_add" checked style="accent-color: var(--primary);" /> Thêm</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_list_edit" checked style="accent-color: var(--primary);" /> Sửa</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_list_delete" style="accent-color: #ef4444;" /> Xóa</label>
+              </div>
+            </div>
+
+            <!-- Module 2: Hồ sơ tồn -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">📋</span>
+                <strong style="font-size: 12.5px; color: var(--text-main); font-weight: 850;">2. Hồ sơ tồn (Excel Core)</strong>
+              </div>
+              <div style="display: flex; gap: 14px; font-size: 12px; font-weight: 750; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_pending_view" checked style="accent-color: var(--primary);" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_pending_add" checked style="accent-color: var(--primary);" /> Thêm</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_pending_edit" checked style="accent-color: var(--primary);" /> Sửa</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_pending_delete" style="accent-color: #ef4444;" /> Xóa</label>
+              </div>
+            </div>
+
+            <!-- Module 3: Báo cáo GĐV -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">📊</span>
+                <strong style="font-size: 12.5px; color: var(--text-main); font-weight: 850;">3. Báo cáo & Thống kê GĐV</strong>
+              </div>
+              <div style="display: flex; gap: 14px; font-size: 12px; font-weight: 750; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_report_view" checked style="accent-color: var(--primary);" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_report_export" checked style="accent-color: var(--primary);" /> Xuất Báo cáo</label>
+              </div>
+            </div>
+
+            <!-- Module 4: Chuyển giao Kế toán -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">🧾</span>
+                <strong style="font-size: 12.5px; color: var(--text-main); font-weight: 850;">4. Chuyển giao Kế toán</strong>
+              </div>
+              <div style="display: flex; gap: 14px; font-size: 12px; font-weight: 750; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_accounting_view" checked style="accent-color: var(--primary);" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_accounting_create" checked style="accent-color: var(--primary);" /> Tạo phiếu bàn giao</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_accounting_review" style="accent-color: #10b981;" /> Xét duyệt Kế toán</label>
+              </div>
+            </div>
+
+            <!-- Module 5: Quản lý User -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">⚙️</span>
+                <strong style="font-size: 12.5px; color: var(--text-main); font-weight: 850;">5. Quản lý User & Cấu hình Hệ thống</strong>
+              </div>
+              <div style="display: flex; gap: 14px; font-size: 12px; font-weight: 750; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_users_view" style="accent-color: var(--primary);" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="newPerm_users_admin" style="accent-color: var(--primary);" /> Quyền Admin Quản trị</label>
+              </div>
+            </div>
+
+          </div>
+        </div>
         </div>
         <div class="profile-modal-actions" style="margin-top: 24px;">
           <button type="button" class="btn-premium btn-secondary" onclick="closeCreateUserModal()">Hủy bỏ</button>
@@ -2187,7 +2266,7 @@
 
   <!-- Chỉnh sửa thành viên Modal -->
   <div id="editUserModalOverlay" class="p-modal-overlay" aria-hidden="true" style="display: none;">
-    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="editUserModalTitle" style="max-width: 500px;">
+    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="editUserModalTitle" style="max-width: 660px;">
       <button type="button" class="btn-premium btn-secondary profile-close" onclick="closeEditUserModal()" aria-label="Đóng" style="display: grid; place-items: center;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       <div class="profile-modal-hero">
         <div class="profile-avatar-large" style="background: var(--primary-gradient); color: #080b11; display: grid; place-items: center;">
@@ -2222,6 +2301,85 @@
             <label>Đơn vị / Phòng ban</label>
             <input id="editAdminDepartment" class="input-premium" type="text" maxlength="100" placeholder="Ví dụ: Bộ phận Giám định" autocomplete="off" />
           </div>
+          
+        <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; grid-column: span 2;">
+          <label style="font-size: 13px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span style="color: var(--primary);">🛡️</span>
+              <span>Phân quyền Chi tiết Chức năng & Quyền Thao tác:</span>
+            </span>
+            <span style="font-size: 11px; color: var(--text-soft); font-weight: 700;">(Xem / Thêm / Sửa / Xóa)</span>
+          </label>
+          
+          <div style="background: var(--surface-soft); border: 1px solid var(--border); border-radius: 16px; padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow-sm);">
+            
+            <!-- Module 1: Quản lý Hồ sơ -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">📁</span>
+                <strong style="font-size: 12.5px; color: var(--text-main); font-weight: 850;">1. Quản lý Hồ sơ Bồi thường</strong>
+              </div>
+              <div style="display: flex; gap: 14px; font-size: 12px; font-weight: 750; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_list_view" checked style="accent-color: var(--primary);" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_list_add" checked style="accent-color: var(--primary);" /> Thêm</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_list_edit" checked style="accent-color: var(--primary);" /> Sửa</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_list_delete" style="accent-color: #ef4444;" /> Xóa</label>
+              </div>
+            </div>
+
+            <!-- Module 2: Hồ sơ tồn -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">📋</span>
+                <strong style="font-size: 12.5px; color: var(--text-main); font-weight: 850;">2. Hồ sơ tồn (Excel Core)</strong>
+              </div>
+              <div style="display: flex; gap: 14px; font-size: 12px; font-weight: 750; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_pending_view" checked style="accent-color: var(--primary);" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_pending_add" checked style="accent-color: var(--primary);" /> Thêm</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_pending_edit" checked style="accent-color: var(--primary);" /> Sửa</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_pending_delete" style="accent-color: #ef4444;" /> Xóa</label>
+              </div>
+            </div>
+
+            <!-- Module 3: Báo cáo GĐV -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">📊</span>
+                <strong style="font-size: 12.5px; color: var(--text-main); font-weight: 850;">3. Báo cáo & Thống kê GĐV</strong>
+              </div>
+              <div style="display: flex; gap: 14px; font-size: 12px; font-weight: 750; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_report_view" checked style="accent-color: var(--primary);" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_report_export" checked style="accent-color: var(--primary);" /> Xuất Báo cáo</label>
+              </div>
+            </div>
+
+            <!-- Module 4: Chuyển giao Kế toán -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">🧾</span>
+                <strong style="font-size: 12.5px; color: var(--text-main); font-weight: 850;">4. Chuyển giao Kế toán</strong>
+              </div>
+              <div style="display: flex; gap: 14px; font-size: 12px; font-weight: 750; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_accounting_view" checked style="accent-color: var(--primary);" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_accounting_create" checked style="accent-color: var(--primary);" /> Tạo phiếu bàn giao</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_accounting_review" style="accent-color: #10b981;" /> Xét duyệt Kế toán</label>
+              </div>
+            </div>
+
+            <!-- Module 5: Quản lý User -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 14px;">⚙️</span>
+                <strong style="font-size: 12.5px; color: var(--text-main); font-weight: 850;">5. Quản lý User & Cấu hình Hệ thống</strong>
+              </div>
+              <div style="display: flex; gap: 14px; font-size: 12px; font-weight: 750; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_users_view" style="accent-color: var(--primary);" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;"><input type="checkbox" id="editPerm_users_admin" style="accent-color: var(--primary);" /> Quyền Admin Quản trị</label>
+              </div>
+            </div>
+
+          </div>
+        </div>
         </div>
         <div class="profile-modal-actions" style="margin-top: 24px;">
           <button type="button" class="btn-premium btn-secondary" onclick="closeEditUserModal()">Hủy bỏ</button>
@@ -4279,6 +4437,80 @@
       overlay.setAttribute('aria-hidden', 'true');
     }
 
+    
+    /* GRANULAR PERMISSIONS HELPER FUNCTIONS */
+    function getFormUserPermissions(prefix) {
+      return {
+        list: {
+          view: document.getElementById(prefix + 'Perm_list_view')?.checked || false,
+          add: document.getElementById(prefix + 'Perm_list_add')?.checked || false,
+          edit: document.getElementById(prefix + 'Perm_list_edit')?.checked || false,
+          delete: document.getElementById(prefix + 'Perm_list_delete')?.checked || false
+        },
+        pending: {
+          view: document.getElementById(prefix + 'Perm_pending_view')?.checked || false,
+          add: document.getElementById(prefix + 'Perm_pending_add')?.checked || false,
+          edit: document.getElementById(prefix + 'Perm_pending_edit')?.checked || false,
+          delete: document.getElementById(prefix + 'Perm_pending_delete')?.checked || false
+        },
+        report: {
+          view: document.getElementById(prefix + 'Perm_report_view')?.checked || false,
+          export: document.getElementById(prefix + 'Perm_report_export')?.checked || false
+        },
+        accounting: {
+          view: document.getElementById(prefix + 'Perm_accounting_view')?.checked || false,
+          create: document.getElementById(prefix + 'Perm_accounting_create')?.checked || false,
+          review: document.getElementById(prefix + 'Perm_accounting_review')?.checked || false
+        },
+        users: {
+          view: document.getElementById(prefix + 'Perm_users_view')?.checked || false,
+          admin: document.getElementById(prefix + 'Perm_users_admin')?.checked || false
+        }
+      };
+    }
+
+    function setFormUserPermissions(prefix, permObj, roleVal) {
+      const p = permObj || {};
+      const r = (roleVal || '').toLowerCase();
+      
+      const isRoleAdmin = r === 'admin';
+      const isRoleKeToan = r.includes('kế toán') || r.includes('ke toan') || r.includes('ketoan');
+
+      const setCheck = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = Boolean(val);
+      };
+
+      setCheck(prefix + 'Perm_list_view', p.list?.view ?? true);
+      setCheck(prefix + 'Perm_list_add', p.list?.add ?? !isRoleKeToan);
+      setCheck(prefix + 'Perm_list_edit', p.list?.edit ?? true);
+      setCheck(prefix + 'Perm_list_delete', p.list?.delete ?? isRoleAdmin);
+
+      setCheck(prefix + 'Perm_pending_view', p.pending?.view ?? true);
+      setCheck(prefix + 'Perm_pending_add', p.pending?.add ?? !isRoleKeToan);
+      setCheck(prefix + 'Perm_pending_edit', p.pending?.edit ?? true);
+      setCheck(prefix + 'Perm_pending_delete', p.pending?.delete ?? isRoleAdmin);
+
+      setCheck(prefix + 'Perm_report_view', p.report?.view ?? true);
+      setCheck(prefix + 'Perm_report_export', p.report?.export ?? true);
+
+      setCheck(prefix + 'Perm_accounting_view', p.accounting?.view ?? true);
+      setCheck(prefix + 'Perm_accounting_create', p.accounting?.create ?? !isRoleKeToan);
+      setCheck(prefix + 'Perm_accounting_review', p.accounting?.review ?? (isRoleKeToan || isRoleAdmin));
+
+      setCheck(prefix + 'Perm_users_view', p.users?.view ?? isRoleAdmin);
+      setCheck(prefix + 'Perm_users_admin', p.users?.admin ?? isRoleAdmin);
+    }
+
+    // Auto update permissions preset when role selection changes
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.id === 'newAdminRole') {
+        setFormUserPermissions('new', null, e.target.value);
+      } else if (e.target && e.target.id === 'editAdminRole') {
+        setFormUserPermissions('edit', null, e.target.value);
+      }
+    });
+
     async function submitCreateUserAccount() {
       const displayName = String(document.getElementById('newAdminDisplayName')?.value || '').trim();
       const email = String(document.getElementById('newAdminEmail')?.value || '').trim();
@@ -4303,11 +4535,13 @@
         
         await userCredential.user.updateProfile({ displayName });
         
+        const permissions = getFormUserPermissions('new');
         const payload = {
           displayName,
           email,
           role,
           department,
+          permissions,
           createdAt: Date.now()
         };
         
@@ -4342,6 +4576,7 @@
       document.getElementById('editAdminEmail').value = profile.email || 'Chưa có email';
       document.getElementById('editAdminRole').value = profile.role || 'Giám định viên';
       document.getElementById('editAdminDepartment').value = profile.department || '';
+      setFormUserPermissions('edit', profile.permissions, profile.role);
       
       const overlay = document.getElementById('editUserModalOverlay');
       if (!overlay) return;
@@ -4371,11 +4606,13 @@
       
       try {
         const currentProfile = (cachedUsersPayload[uid] && cachedUsersPayload[uid].profile) || {};
+        const permissions = getFormUserPermissions('edit');
         const updatedProfile = {
           ...currentProfile,
           displayName,
           role,
           department,
+          permissions,
           updatedAt: Date.now()
         };
         
