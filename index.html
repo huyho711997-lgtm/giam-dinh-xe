@@ -12882,7 +12882,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           <!-- Modal Header -->
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; border-bottom: 1px solid var(--border); background: var(--surface);">
             <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="color: var(--primary);">${${ACC_SVGS.FOLDER}}</span>
+              <span style="color: var(--primary);">${ACC_SVGS.FOLDER}</span>
               <h3 style="font-size: 17px; font-weight: 850; color: var(--text-main); margin: 0;">Chi tiết Hồ sơ & Yêu cầu Bổ sung</h3>
             </div>
             <button type="button" onclick="closeAccountingClaimDetailModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 16px; color: var(--text-soft); cursor: pointer; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;">✕</button>
@@ -12911,8 +12911,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
           <!-- Modal Footer -->
           <div style="padding: 14px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--surface);">
             <button type="button" onclick="closeAccountingClaimDetailModal()" style="padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Đóng</button>
-            <button type="button" onclick="submitAccountingClaimNoteFromModal('${transferId}', ${item.claimIndex}, 'save')" style="padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 850; background: var(--bg-soft); color: var(--text-main); border: 1px solid var(--border-strong); cursor: pointer;">Lưu ghi chú</button>
-            <button type="button" onclick="submitAccountingClaimNoteFromModal('${transferId}', ${item.claimIndex}, 'supplement')" style="padding: 9px 20px; border-radius: 10px; font-size: 13px; font-weight: 850; background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+            <button type="button" onclick="submitAccountingClaimNoteFromModal('${transferId}', ${claimIndex}, 'save')" style="padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 850; background: var(--bg-soft); color: var(--text-main); border: 1px solid var(--border-strong); cursor: pointer;">Lưu ghi chú</button>
+            <button type="button" onclick="submitAccountingClaimNoteFromModal('${transferId}', ${claimIndex}, 'supplement')" style="padding: 9px 20px; border-radius: 10px; font-size: 13px; font-weight: 850; background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
               ${ACC_SVGS.WARNING} Yêu cầu bổ sung
             </button>
           </div>
