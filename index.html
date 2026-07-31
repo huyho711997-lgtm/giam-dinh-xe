@@ -12058,7 +12058,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
 
     /****************************************************
-     * ACCOUNTING TRANSFER MODULE (QUẢN LÝ BÀN GIAO KẾ TOÁN) - NEAR FULL-SCREEN MODAL WITH FIXED STICKY FOOTER
+     * ACCOUNTING TRANSFER MODULE (QUẢN LÝ BÀN GIAO KẾ TOÁN) - ULTRA PREMIUM SVG & DRIVER LINK FIX
      ****************************************************/
     let cachedAccountingTransfersPayload = {};
     let activeAccountingStatusFilter = 'all';
@@ -12074,10 +12074,32 @@ function renderGdvMonthlyReportPage(targetContainer) {
       return el ? el.value.trim() : '';
     }
 
+    // Helper to extract Owner / Driver name cleanly with comprehensive fallbacks
+    function extractClaimOwnerName(c) {
+      if (!c) return 'N/A';
+      const name = c.laiXe || c.tenChuXe || c.chuXe || c.tenLaiXe || c.hoTenChuXe || c.hoTenLaiXe || c.tenKhachHang || c.nguoiYeuCauBT || '';
+      if (!name || name === '—' || name.trim() === '') return 'N/A';
+      return name.trim();
+    }
+
+    // SVG Vectors Definition for Clean Render
+    const ACC_SVGS = {
+      INBOX: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="8 17 12 21 16 17"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"></path></svg>`,
+      WARNING: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
+      CHECK_CIRCLE: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+      USER: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`,
+      BRIEFCASE: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>`,
+      SEARCH: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`,
+      LIST: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>`,
+      EDIT: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
+      REFRESH: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>`,
+      TRASH: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`
+    };
+
     const ACCOUNTING_STATUS_MAP = {
-      'da_nhan_ho_so': { label: 'Đã nhận hồ sơ từ GĐV', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.3)', text: '#3b82f6', icon: '📥' },
-      'can_bo_sung': { label: 'Yêu cầu bổ sung / Chưa đạt', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', text: '#ef4444', icon: '⚠️' },
-      'da_trinh_dntt': { label: 'Đã trình đề nghị thanh toán', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.35)', text: '#10b981', icon: '🟢' }
+      'da_nhan_ho_so': { label: 'Đã nhận hồ sơ từ GĐV', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.3)', text: '#3b82f6', svg: ACC_SVGS.INBOX },
+      'can_bo_sung': { label: 'Yêu cầu bổ sung / Chưa đạt', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', text: '#ef4444', svg: ACC_SVGS.WARNING },
+      'da_trinh_dntt': { label: 'Đã trình đề nghị thanh toán', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.35)', text: '#10b981', svg: ACC_SVGS.CHECK_CIRCLE }
     };
 
     function switchAccountingStatusFilter(statusKey) {
@@ -12122,7 +12144,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             (c.soHoSoBoiThuong || '').toLowerCase().includes(kw) ||
             (c.bienSo || '').toLowerCase().includes(kw) ||
             (c.tenGara || '').toLowerCase().includes(kw) ||
-            (c.tenChuXe || '').toLowerCase().includes(kw)
+            (extractClaimOwnerName(c)).toLowerCase().includes(kw)
           );
           const matchLegacy = (t.soHoSoBoiThuong || '').toLowerCase().includes(kw) || (t.bienSo || '').toLowerCase().includes(kw);
           return matchBatchId || matchGdv || matchClaims || matchLegacy;
@@ -12133,7 +12155,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       filteredTransfers.sort((a, b) => (b.ngayBanGiao || 0) - (a.ngayBanGiao || 0));
 
       container.innerHTML = `
-        <div style="padding: 24px 28px; max-width: 1600px; margin: 0 auto;">
+        <div style="padding: 24px 28px; max-width: 1680px; margin: 0 auto;">
           
           <!-- HERO BANNER HEADER -->
           <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 20px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
@@ -12142,7 +12164,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
               <div>
                 <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3); color: #3b82f6; padding: 5px 14px; border-radius: 99px; font-size: 11.5px; font-weight: 850; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px;">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="12" y2="16"></line></svg>
+                  ${ACC_SVGS.LIST}
                   <span>NGHIỆP VỤ BÀN GIAO CHỨNG TỪ & XÉT DUYỆT ĐNTT (GOM PHIẾU NHIỀU HỒ SƠ)</span>
                 </div>
                 <h1 style="font-size: 24px; font-weight: 850; color: var(--text-main); margin: 0; letter-spacing: -0.02em; line-height: 1.25;">
@@ -12173,21 +12195,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
 
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(59,130,246,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">📥 ĐÃ NHẬN HỒ SƠ TỪ GĐV</span>
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">${ACC_SVGS.INBOX} ĐÃ NHẬN HỒ SƠ TỪ GĐV</span>
               <strong style="display: block; font-size: 28px; color: #3b82f6; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 850;">
                 ${statNhanHoSo} <span style="font-size: 14px; color: var(--text-soft);">phiếu</span>
               </strong>
             </div>
 
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(239,68,68,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">⚠️ YÊU CẦU BỔ SUNG / CHƯA ĐẠT</span>
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">${ACC_SVGS.WARNING} YÊU CẦU BỔ SUNG / CHƯA ĐẠT</span>
               <strong style="display: block; font-size: 28px; color: #ef4444; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 850;">
                 ${statCanBoSung} <span style="font-size: 14px; color: var(--text-soft);">phiếu</span>
               </strong>
             </div>
 
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(16,185,129,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">🟢 ĐÃ TRÌNH ĐỀ NGHỊ THANH TOÁN</span>
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">${ACC_SVGS.CHECK_CIRCLE} ĐÃ TRÌNH ĐỀ NGHỊ THANH TOÁN</span>
               <strong style="display: block; font-size: 28px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 850;">
                 ${statTrinhDntt} <span style="font-size: 14px; color: var(--text-soft);">phiếu (${formatCurrencyInputNumber(totalMoneyTrinhDntt)}đ)</span>
               </strong>
@@ -12202,25 +12224,25 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <button type="button" onclick="switchAccountingStatusFilter('all')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; border: none; cursor: pointer; transition: all 0.2s ease; ${activeAccountingStatusFilter === 'all' ? 'background: var(--primary); color: #111111;' : 'background: var(--bg-soft); color: var(--text-soft);'}">
                 Tất cả (${statTotal})
               </button>
-              <button type="button" onclick="switchAccountingStatusFilter('da_nhan_ho_so')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; border: none; cursor: pointer; transition: all 0.2s ease; ${activeAccountingStatusFilter === 'da_nhan_ho_so' ? 'background: #3b82f6; color: #ffffff;' : 'background: rgba(59,130,246,0.1); color: #3b82f6;'}">
-                📥 Đã nhận từ GĐV (${statNhanHoSo})
+              <button type="button" onclick="switchAccountingStatusFilter('da_nhan_ho_so')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; border: none; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; ${activeAccountingStatusFilter === 'da_nhan_ho_so' ? 'background: #3b82f6; color: #ffffff;' : 'background: rgba(59,130,246,0.1); color: #3b82f6;'}">
+                ${ACC_SVGS.INBOX} Đã nhận từ GĐV (${statNhanHoSo})
               </button>
-              <button type="button" onclick="switchAccountingStatusFilter('can_bo_sung')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; border: none; cursor: pointer; transition: all 0.2s ease; ${activeAccountingStatusFilter === 'can_bo_sung' ? 'background: #ef4444; color: #ffffff;' : 'background: rgba(239,68,68,0.1); color: #ef4444;'}">
-                ⚠️ Yêu cầu bổ sung (${statCanBoSung})
+              <button type="button" onclick="switchAccountingStatusFilter('can_bo_sung')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; border: none; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; ${activeAccountingStatusFilter === 'can_bo_sung' ? 'background: #ef4444; color: #ffffff;' : 'background: rgba(239,68,68,0.1); color: #ef4444;'}">
+                ${ACC_SVGS.WARNING} Yêu cầu bổ sung (${statCanBoSung})
               </button>
-              <button type="button" onclick="switchAccountingStatusFilter('da_trinh_dntt')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; border: none; cursor: pointer; transition: all 0.2s ease; ${activeAccountingStatusFilter === 'da_trinh_dntt' ? 'background: #10b981; color: #ffffff;' : 'background: rgba(16,185,129,0.1); color: #10b981;'}">
-                🟢 Đã trình ĐNTT (${statTrinhDntt})
+              <button type="button" onclick="switchAccountingStatusFilter('da_trinh_dntt')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; border: none; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; ${activeAccountingStatusFilter === 'da_trinh_dntt' ? 'background: #10b981; color: #ffffff;' : 'background: rgba(16,185,129,0.1); color: #10b981;'}">
+                ${ACC_SVGS.CHECK_CIRCLE} Đã trình ĐNTT (${statTrinhDntt})
               </button>
             </div>
 
             <!-- Right: Role Switcher & Search -->
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
               <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 4px; display: inline-flex; gap: 4px;">
-                <button type="button" onclick="switchAccountingRoleMode('gdv')" style="padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 850; border: none; cursor: pointer; ${activeAccountingRoleMode === 'gdv' ? 'background: var(--primary); color: #111111;' : 'background: transparent; color: var(--text-soft);'}">
-                  🧑‍💼 Vai trò GĐV
+                <button type="button" onclick="switchAccountingRoleMode('gdv')" style="padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 850; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; ${activeAccountingRoleMode === 'gdv' ? 'background: var(--primary); color: #111111;' : 'background: transparent; color: var(--text-soft);'}">
+                  ${ACC_SVGS.USER} Vai trò GĐV
                 </button>
-                <button type="button" onclick="switchAccountingRoleMode('ketoan')" style="padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 850; border: none; cursor: pointer; ${activeAccountingRoleMode === 'ketoan' ? 'background: var(--primary); color: #111111;' : 'background: transparent; color: var(--text-soft);'}">
-                  💼 Vai trò Kế toán
+                <button type="button" onclick="switchAccountingRoleMode('ketoan')" style="padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 850; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; ${activeAccountingRoleMode === 'ketoan' ? 'background: var(--primary); color: #111111;' : 'background: transparent; color: var(--text-soft);'}">
+                  ${ACC_SVGS.BRIEFCASE} Vai trò Kế toán
                 </button>
               </div>
 
@@ -12257,7 +12279,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     // Parse claims list inside batch
                     let claimsInBatch = t.danhSachHoSo || [];
                     if (claimsInBatch.length === 0 && (t.soHoSoBoiThuong || t.bienSo)) {
-                      // Fallback for single legacy transfer records
                       claimsInBatch = [{ soHoSoBoiThuong: t.soHoSoBoiThuong, bienSo: t.bienSo, tenGara: t.tenGara, soTienDeNghi: t.soTienDeNghi }];
                     }
 
@@ -12278,11 +12299,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
                               ${claimsInBatch.length} hồ sơ
                             </span>
                           </div>
-                          <div style="display: flex; flex-direction: column; gap: 4px; max-height: 80px; overflow-y: auto;">
+                          <div style="display: flex; flex-direction: column; gap: 4px; max-height: 90px; overflow-y: auto;">
                             ${claimsInBatch.map(c => `
                               <div style="font-size: 12px; color: var(--text-main);">
                                 <strong style="font-weight: 800;">${escapeHtmlOutput(c.bienSo || 'N/A')}</strong> - ${escapeHtmlOutput(c.soHoSoBoiThuong || 'Vụ chưa mã')} 
-                                <span style="color: var(--text-soft); font-size: 11px;">(${escapeHtmlOutput(c.tenGara || 'Chưa Gara')})</span>
+                                <span style="color: var(--text-soft); font-size: 11px;">(Lái xe: ${escapeHtmlOutput(extractClaimOwnerName(c))} | Gara: ${escapeHtmlOutput(c.tenGara || 'Chưa Gara')})</span>
                               </div>
                             `).join('')}
                           </div>
@@ -12300,7 +12321,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                         <td style="padding: 14px 16px; text-align: center;">
                           <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; padding: 4px 10px; border-radius: 999px; background: ${st.bg}; border: 1px solid ${st.border}; color: ${st.text};">
-                            <span>${st.icon}</span>
+                            <span>${st.svg}</span>
                             <span>${st.label}</span>
                           </span>
                           ${isCanBoSung && t.ghiChuKeToan ? `
@@ -12313,12 +12334,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         <td style="padding: 14px 16px; text-align: center;">
                           <div style="display: flex; justify-content: center; gap: 6px;">
                             ${activeAccountingRoleMode === 'ketoan' ? `
-                              <button type="button" onclick="openKeToanReviewModal('${t.transferId}')" style="padding: 6px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 850; background: var(--primary); color: #111111; border: none; cursor: pointer;">
-                                💼 Xét duyệt
+                              <button type="button" onclick="openKeToanReviewModal('${t.transferId}')" style="padding: 6px 14px; border-radius: 8px; font-size: 11.5px; font-weight: 850; background: var(--primary); color: #111111; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                                ${ACC_SVGS.BRIEFCASE} Xét duyệt
                               </button>
                             ` : `
-                              <button type="button" onclick="openAddAccountingTransferModal('${t.transferId}')" style="padding: 6px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 850; background: ${isCanBoSung ? '#ef4444' : 'var(--bg-soft)'}; color: ${isCanBoSung ? '#ffffff' : 'var(--text-main)'}; border: 1px solid var(--border); cursor: pointer;">
-                                ${isCanBoSung ? '⚠️ Bổ sung' : '✏️ Xem/Sửa'}
+                              <button type="button" onclick="openAddAccountingTransferModal('${t.transferId}')" style="padding: 6px 14px; border-radius: 8px; font-size: 11.5px; font-weight: 850; background: ${isCanBoSung ? '#ef4444' : 'var(--bg-soft)'}; color: ${isCanBoSung ? '#ffffff' : 'var(--text-main)'}; border: 1px solid var(--border); cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                                ${isCanBoSung ? ACC_SVGS.WARNING + ' Bổ sung' : ACC_SVGS.EDIT + ' Xem/Sửa'}
                               </button>
                             `}
                           </div>
@@ -12335,7 +12356,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       `;
     }
 
-    /* MODAL 1: GĐV TẠO / SỬA / BỔ SUNG PHIẾU BÀN GIAO NHIỀU HỒ SƠ - NEAR FULL-SCREEN MODAL WITH FIXED STICKY FOOTER */
+    /* MODAL 1: GĐV TẠO / SỬA / BỔ SUNG PHIẾU BÀN GIAO NHIỀU HỒ SƠ - ULTRA WIDE FULLSCREEN (1520px x 94vh) */
     function openAddAccountingTransferModal(transferId) {
       let existing = null;
       if (transferId && cachedAccountingTransfersPayload[transferId]) {
@@ -12351,7 +12372,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             claimId: existing.claimId || '',
             soHoSoBoiThuong: existing.soHoSoBoiThuong || '',
             bienSo: existing.bienSo || '',
-            tenChuXe: existing.tenChuXe || '',
+            tenChuXe: extractClaimOwnerName(existing),
             tenGara: existing.tenGara || '',
             soTienDeNghi: existing.soTienDeNghi || 0
           }];
@@ -12362,60 +12383,63 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       const modalOverlay = document.createElement('div');
       modalOverlay.id = 'accountingTransferModalOverlay';
-      modalOverlay.style.cssText = 'position: fixed; inset: 0; background: rgba(11, 15, 25, 0.76); backdrop-filter: blur(14px); z-index: 99999; display: grid; place-items: center; padding: 15px;';
+      modalOverlay.style.cssText = 'position: fixed; inset: 0; background: rgba(11, 15, 25, 0.78); backdrop-filter: blur(16px); z-index: 99999; display: grid; place-items: center; padding: 12px;';
 
       const attachedDocs = existing?.danhSachChungTu || ['Hóa đơn GTGT (VAT)', 'Biên bản nghiệm thu bàn giao xe', 'Báo giá chi tiết Gara'];
 
       modalOverlay.innerHTML = `
-        <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 24px; width: min(1380px, 96vw); height: 92vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.5); position: relative;">
+        <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 24px; width: min(1520px, 98vw); height: 94vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 28px 70px rgba(0,0,0,0.55); position: relative;">
           
           <!-- FIXED HEADER -->
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 28px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface); z-index: 10;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface); z-index: 10;">
             <div style="display: flex; align-items: center; gap: 14px;">
               <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, rgba(216,180,109,0.2) 0%, rgba(216,180,109,0.05) 100%); border: 1px solid rgba(216,180,109,0.4); color: var(--primary); display: grid; place-items: center; flex-shrink: 0;">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                ${ACC_SVGS.LIST}
               </div>
               <div>
                 <h3 style="font-size: 20px; font-weight: 850; color: var(--text-main); margin: 0; letter-spacing: -0.01em;">
-                  ${existing ? (existing.trangThai === 'can_bo_sung' ? '⚠️ Bổ sung Phiếu Bàn giao Kế toán' : 'Chỉnh sửa Phiếu Bàn giao Kế toán') : '+ Tạo Phiếu Bàn giao Kế toán Mới (Gom nhiều Hồ sơ)'}
+                  ${existing ? (existing.trangThai === 'can_bo_sung' ? 'Yêu cầu Bổ sung Phiếu Bàn giao Kế toán' : 'Chỉnh sửa Phiếu Bàn giao Kế toán') : '+ Tạo Phiếu Bàn giao Kế toán Mới (Gom nhiều Hồ sơ)'}
                 </h3>
                 <p style="font-size: 12.5px; color: var(--text-soft); margin-top: 3px; margin-bottom: 0;">
-                  Không gian mở rộng gần toàn màn hình · Nhập biển số xe, số HSBT hoặc tên lái xe/chủ xe để chọn nhiều hồ sơ gom vào 1 Phiếu bàn giao duy nhất.
+                  Không gian thao tác siêu rộng · Nhập biển số xe, số HSBT hoặc tên lái xe/chủ xe để tích chọn nhiều hồ sơ gom vào 1 Phiếu bàn giao duy nhất.
                 </p>
               </div>
             </div>
-            <button type="button" onclick="closeAccountingTransferModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; transition: all 0.2s ease;">✕</button>
+            <button type="button" onclick="closeAccountingTransferModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; transition: all 0.2s ease;">✕</button>
           </div>
 
           <!-- SCROLLABLE FORM BODY -->
           <form id="frmAccountingTransferBatch" onsubmit="saveAccountingTransferBatchFromModal(event, '${transferId || ''}')" style="display: flex; flex-direction: column; flex: 1; min-height: 0; margin: 0;">
             
-            <div style="flex: 1; overflow-y: auto; padding: 24px 28px;">
+            <div style="flex: 1; overflow-y: auto; padding: 24px 30px;">
               
               <!-- WARNING FEEDBACK IF CAN_BO_SUNG -->
               ${existing && existing.trangThai === 'can_bo_sung' && existing.ghiChuKeToan ? `
-                <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); border-radius: 14px; padding: 14px 18px; margin-bottom: 20px; color: #ef4444;">
-                  <strong style="display: block; font-size: 13px; margin-bottom: 4px; font-weight: 850;">⚠️ PHẢN HỒI YÊU CẦU BỔ SUNG TỪ KẾ TOÁN:</strong>
-                  <div style="font-size: 12.5px; line-height: 1.5;">${escapeHtmlOutput(existing.ghiChuKeToan)}</div>
+                <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); border-radius: 14px; padding: 14px 18px; margin-bottom: 22px; color: #ef4444; display: flex; align-items: flex-start; gap: 10px;">
+                  <span style="margin-top: 2px;">${ACC_SVGS.WARNING}</span>
+                  <div>
+                    <strong style="display: block; font-size: 13px; margin-bottom: 4px; font-weight: 850;">PHẢN HỒI YÊU CẦU BỔ SUNG TỪ KẾ TOÁN:</strong>
+                    <div style="font-size: 12.5px; line-height: 1.5;">${escapeHtmlOutput(existing.ghiChuKeToan)}</div>
+                  </div>
                 </div>
               ` : ''}
 
               <!-- EXPANDED SIDE-BY-SIDE SEARCH & SELECTION ZONE -->
-              <div style="display: grid; grid-template-columns: 1fr 1.35fr; gap: 24px; margin-bottom: 24px; align-items: start;">
+              <div style="display: grid; grid-template-columns: 1fr 1.4fr; gap: 24px; margin-bottom: 24px; align-items: start;">
                 
                 <!-- LEFT COL: SEARCH & PICK LIST -->
                 <div style="background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 18px; padding: 18px 20px;">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <label style="font-size: 13px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; gap: 7px;">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                      <span>🔍 Tìm & Tích chọn Hồ sơ bồi thường:</span>
+                    <label style="font-size: 13px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                      <span style="color: var(--primary);">${ACC_SVGS.SEARCH}</span>
+                      <span>Tìm & Tích chọn Hồ sơ bồi thường:</span>
                     </label>
                     <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 750;">Gõ Biển số / HSBT / Lái xe</span>
                   </div>
                   
                   <input type="text" id="accClaimSearchBox" class="input-premium" placeholder="Gõ biển số (VD: 47A-85640), số HSBT, tên lái xe..." oninput="renderAccClaimSearchResults(this.value)" style="width: 100%; height: 44px; border-radius: 12px; margin-bottom: 12px; font-size: 13.5px; padding-left: 16px;" />
 
-                  <div id="accClaimSearchResultsHolder" style="max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 10px;">
+                  <div id="accClaimSearchResultsHolder" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 10px;">
                     <!-- Dynamic JS insertion -->
                   </div>
                 </div>
@@ -12424,12 +12448,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <label style="font-size: 13.5px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2.5"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
-                      <span>📋 Danh sách Hồ sơ trong Phiếu bàn giao này (<strong id="lblAccBatchCount" style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 14px;">${currentBatchSelectedClaims.length}</strong> hồ sơ):</span>
+                      <span style="color: #3b82f6;">${ACC_SVGS.CHECK_CIRCLE}</span>
+                      <span>Danh sách Hồ sơ trong Phiếu bàn giao (<strong id="lblAccBatchCount" style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 14px;">${currentBatchSelectedClaims.length}</strong> hồ sơ):</span>
                     </label>
                   </div>
 
-                  <div style="border: 1px solid var(--border-strong); border-radius: 16px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow-sm); max-height: 425px; display: flex; flex-direction: column;">
+                  <div style="border: 1px solid var(--border-strong); border-radius: 16px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow-sm); max-height: 440px; display: flex; flex-direction: column;">
                     <div style="overflow-y: auto; flex: 1;">
                       <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
                         <thead style="position: sticky; top: 0; z-index: 5; background: var(--bg-soft);">
@@ -12490,11 +12514,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
 
             <!-- FIXED STICKY FOOTER ACTIONS (LUÔN CỐ ĐỊNH Ở ĐÁY FORM) -->
-            <div style="position: sticky; bottom: 0; padding: 16px 28px; border-top: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(14px); z-index: 10; flex-shrink: 0; display: flex; justify-content: flex-end; gap: 14px;">
+            <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(14px); z-index: 10; flex-shrink: 0; display: flex; justify-content: flex-end; gap: 14px;">
               <button type="button" onclick="closeAccountingTransferModal()" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Hủy bỏ</button>
               <button type="submit" style="padding: 11px 30px; border-radius: 12px; font-size: 14px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(216,180,109,0.4); display: flex; align-items: center; gap: 8px;">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                <span>${existing ? (existing.trangThai === 'can_bo_sung' ? '🔄 Gửi lại Phiếu cho Kế toán' : 'Lưu cập nhật Phiếu') : '📥 Bàn giao Phiếu cho Kế toán'}</span>
+                ${ACC_SVGS.INBOX}
+                <span>${existing ? (existing.trangThai === 'can_bo_sung' ? 'Gửi lại Phiếu cho Kế toán' : 'Lưu cập nhật Phiếu') : 'Bàn giao Phiếu cho Kế toán'}</span>
               </button>
             </div>
 
@@ -12514,7 +12538,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (el) el.remove();
     }
 
-    /* RENDER SEARCH RESULTS FOR CLAIMS TO PICK */
+    /* RENDER SEARCH RESULTS FOR CLAIMS TO PICK (WITH DRIVER/OWNER FALLBACK & SVG) */
     function renderAccClaimSearchResults(keyword) {
       const holder = document.getElementById('accClaimSearchResultsHolder');
       if (!holder) return;
@@ -12528,9 +12552,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
           (c.bienSo || '').toLowerCase().includes(kw) ||
           (c.soHoSoBoiThuong || '').toLowerCase().includes(kw) ||
           (c.maVuTonThat || '').toLowerCase().includes(kw) ||
-          (c.tenChuXe || '').toLowerCase().includes(kw) ||
-          (c.tenLaiXe || '').toLowerCase().includes(kw) ||
-          (c.tenGaraVietTat || c.garaSuaChua || '').toLowerCase().includes(kw)
+          (extractClaimOwnerName(c)).toLowerCase().includes(kw) ||
+          (c.tenGaraVietTat || c.garaSuaChua || c.gara || '').toLowerCase().includes(kw)
         );
       }
 
@@ -12539,11 +12562,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
         return;
       }
 
-      holder.innerHTML = matched.slice(0, 30).map(c => {
+      holder.innerHTML = matched.slice(0, 35).map(c => {
         const isChecked = currentBatchSelectedClaims.some(item => item.claimId === c.id || item.soHoSoBoiThuong === (c.soHoSoBoiThuong || c.maVuTonThat));
         const bienSo = c.bienSo || 'N/A';
         const hsbt = c.soHoSoBoiThuong || c.maVuTonThat || 'Chưa có mã';
-        const chuXe = c.tenChuXe || c.tenLaiXe || 'N/A';
+        const chuXe = extractClaimOwnerName(c);
         const gara = c.tenGaraVietTat || c.garaSuaChua || c.gara || 'Chưa Gara';
         const money = c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || 0;
 
@@ -12557,7 +12580,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <span style="font-size: 11.5px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 750;">${escapeHtmlOutput(hsbt)}</span>
                 </div>
                 <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 2px;">
-                  Lái/Chủ xe: <strong>${escapeHtmlOutput(chuXe)}</strong> | Gara: ${escapeHtmlOutput(gara)}
+                  Lái/Chủ xe: <strong style="color: var(--text-main);">${escapeHtmlOutput(chuXe)}</strong> | Gara: ${escapeHtmlOutput(gara)}
                 </div>
               </div>
             </div>
@@ -12583,7 +12606,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           claimId: c.id,
           soHoSoBoiThuong: c.soHoSoBoiThuong || c.maVuTonThat || 'Vụ chưa mã',
           bienSo: c.bienSo || 'N/A',
-          tenChuXe: c.tenChuXe || c.tenLaiXe || 'N/A',
+          tenChuXe: extractClaimOwnerName(c),
           tenGara: c.tenGaraVietTat || c.garaSuaChua || c.gara || 'N/A',
           soTienDeNghi: amtClean
         });
@@ -12616,7 +12639,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (lblTotal) lblTotal.textContent = formatCurrencyInputNumber(totalSum) + ' đ';
     }
 
-    /* RENDER BATCH SELECTED CLAIMS TABLE */
+    /* RENDER BATCH SELECTED CLAIMS TABLE (WITH EXTRACTED OWNER NAME & SVG REMOVE BUTTON) */
     function renderAccBatchSelectedTable() {
       const body = document.getElementById('tblAccBatchSelectedBody');
       const countLbl = document.getElementById('lblAccBatchCount');
@@ -12637,13 +12660,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(item.bienSo)}</strong>
             <span style="display: block; font-size: 11.5px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(item.soHoSoBoiThuong)}</span>
           </td>
-          <td style="padding: 12px; font-size: 12.5px; color: var(--text-main);">${escapeHtmlOutput(item.tenChuXe || 'N/A')}</td>
+          <td style="padding: 12px; font-size: 12.5px; color: var(--text-main); font-weight: 750;">${escapeHtmlOutput(item.tenChuXe || 'N/A')}</td>
           <td style="padding: 12px; font-size: 12.5px; color: var(--text-main);">${escapeHtmlOutput(item.tenGara || 'N/A')}</td>
           <td style="padding: 12px; text-align: right;">
             <input type="text" class="input-premium" value="${formatCurrencyInputNumber(item.soTienDeNghi)}" oninput="this.value = formatCurrencyInputNumber(this.value); updateAccBatchItemMoney(${idx}, this.value)" style="width: 145px; height: 36px; font-size: 13px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; color: #10b981; border-radius: 8px;" />
           </td>
           <td style="padding: 12px; text-align: center;">
-            <button type="button" onclick="removeAccClaimFromBatchTable(${idx})" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; display: grid; place-items: center; font-weight: 850;" title="Xóa hồ sơ này khỏi phiếu">✕</button>
+            <button type="button" onclick="removeAccClaimFromBatchTable(${idx})" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; display: grid; place-items: center; font-weight: 850;" title="Xóa hồ sơ này khỏi phiếu">${ACC_SVGS.TRASH}</button>
           </td>
         </tr>
       `).join('');
@@ -12705,25 +12728,28 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       let claimsInBatch = t.danhSachHoSo || [];
       if (claimsInBatch.length === 0 && (t.soHoSoBoiThuong || t.bienSo)) {
-        claimsInBatch = [{ soHoSoBoiThuong: t.soHoSoBoiThuong, bienSo: t.bienSo, tenGara: t.tenGara, soTienDeNghi: t.soTienDeNghi }];
+        claimsInBatch = [{ soHoSoBoiThuong: t.soHoSoBoiThuong, bienSo: t.bienSo, tenGara: t.tenGara, soTienDeNghi: t.soTienDeNghi, tenChuXe: extractClaimOwnerName(t) }];
       }
 
       const modalOverlay = document.createElement('div');
       modalOverlay.id = 'keToanReviewModalOverlay';
-      modalOverlay.style.cssText = 'position: fixed; inset: 0; background: rgba(11, 15, 25, 0.76); backdrop-filter: blur(14px); z-index: 99999; display: grid; place-items: center; padding: 15px;';
+      modalOverlay.style.cssText = 'position: fixed; inset: 0; background: rgba(11, 15, 25, 0.78); backdrop-filter: blur(16px); z-index: 99999; display: grid; place-items: center; padding: 12px;';
 
       modalOverlay.innerHTML = `
-        <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 24px; width: min(1000px, 96vw); height: 88vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.5);">
+        <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 24px; width: min(1100px, 96vw); height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 28px 70px rgba(0,0,0,0.55);">
           
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 28px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface);">
-            <div>
-              <h3 style="font-size: 19px; font-weight: 850; color: var(--text-main); margin: 0;">💼 Xét duyệt Phiếu Bàn giao Kế toán</h3>
-              <span style="font-size: 12px; color: var(--text-soft); font-family: 'JetBrains Mono';">Mã Phiếu: ${t.transferId} (${formatDateDisplay(t.ngayBanGiao)})</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="color: var(--primary);">${ACC_SVGS.BRIEFCASE}</div>
+              <div>
+                <h3 style="font-size: 19px; font-weight: 850; color: var(--text-main); margin: 0;">Xét duyệt Phiếu Bàn giao Kế toán</h3>
+                <span style="font-size: 12px; color: var(--text-soft); font-family: 'JetBrains Mono';">Mã Phiếu: ${t.transferId} (${formatDateDisplay(t.ngayBanGiao)})</span>
+              </div>
             </div>
-            <button type="button" onclick="closeKeToanReviewModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;">✕</button>
+            <button type="button" onclick="closeKeToanReviewModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;">✕</button>
           </div>
 
-          <div style="flex: 1; overflow-y: auto; padding: 24px 28px;">
+          <div style="flex: 1; overflow-y: auto; padding: 24px 30px;">
             <!-- BATCH META SUMMARY -->
             <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
               <div><strong>GĐV Bàn giao:</strong> ${escapeHtmlOutput(t.gdvName)}</div>
@@ -12757,7 +12783,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           <strong style="color: var(--text-main);">${escapeHtmlOutput(c.bienSo || 'N/A')}</strong>
                           <span style="display: block; font-size: 11px; color: var(--text-soft);">${escapeHtmlOutput(c.soHoSoBoiThuong || '')}</span>
                         </td>
-                        <td style="padding: 10px 12px;">${escapeHtmlOutput(c.tenChuXe || 'N/A')}</td>
+                        <td style="padding: 10px 12px; font-weight: 750;">${escapeHtmlOutput(extractClaimOwnerName(c))}</td>
                         <td style="padding: 10px 12px;">${escapeHtmlOutput(c.tenGara || 'N/A')}</td>
                         <td style="padding: 10px 12px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; color: #10b981;">${formatCurrencyInputNumber(c.soTienDeNghi)} đ</td>
                       </tr>
@@ -12777,12 +12803,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
           </div>
 
           <!-- FIXED FOOTER ACTION BUTTONS -->
-          <div style="position: sticky; bottom: 0; padding: 16px 28px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 14px;">
-            <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'can_bo_sung')" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer;">
-              ⚠️ Yêu cầu Bổ sung / Chưa đạt
+          <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 14px;">
+            <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'can_bo_sung')" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+              ${ACC_SVGS.WARNING} Yêu cầu Bổ sung / Chưa đạt
             </button>
-            <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_trinh_dntt')" style="padding: 11px 28px; border-radius: 12px; font-size: 14px; font-weight: 850; background: #10b981; color: #ffffff; border: none; cursor: pointer; box-shadow: 0 4px 18px rgba(16,185,129,0.35);">
-              🟢 Trình Đề nghị Thanh toán
+            <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_trinh_dntt')" style="padding: 11px 28px; border-radius: 12px; font-size: 14px; font-weight: 850; background: #10b981; color: #ffffff; border: none; cursor: pointer; box-shadow: 0 4px 18px rgba(16,185,129,0.35); display: inline-flex; align-items: center; gap: 6px;">
+              ${ACC_SVGS.CHECK_CIRCLE} Trình Đề nghị Thanh toán
             </button>
           </div>
 
