@@ -4050,6 +4050,15 @@
             </svg>
             <span class="nav-btn-text">Báo cáo GĐV</span>
           </button>
+          <button id="headerNavAccountingBtn" class="header-nav-btn ${activeDashboardTab === 'accounting_transfer' ? 'active' : ''}" onclick="navigateHeaderTab('accounting_transfer')">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+              <line x1="6" y1="8" x2="18" y2="8"></line>
+              <line x1="6" y1="12" x2="18" y2="12"></line>
+              <line x1="6" y1="16" x2="12" y2="16"></line>
+            </svg>
+            <span class="nav-btn-text">Chuyển giao Kế toán</span>
+          </button>
           <button id="headerNavCreateBtn" class="header-nav-btn ${createActive}" onclick="navigateHeaderTab('create')">${SVGS.SPARKLES} <span class="nav-btn-text">Khởi tạo hồ sơ</span></button>
           ${isAdmin ? `
           <button id="headerNavUsersBtn" class="header-nav-btn ${usersActive}" onclick="navigateHeaderTab('users')">
@@ -6491,6 +6500,13 @@ function formatDateDisplay(val) {
           executeUIRenderPendingClaims();
         }
       });
+
+      dbNodeInstance.ref('accounting_transfers').on('value', (snapshot) => {
+        cachedAccountingTransfersPayload = snapshot.val() || {};
+        if (activeDashboardTab === 'accounting_transfer') {
+          renderAccountingTransferPage();
+        }
+      });
     }
 
     function switchWorkspaceTab(tabName) {
@@ -6515,10 +6531,12 @@ function formatDateDisplay(val) {
       const gdvReportBtn = document.getElementById('headerNavGdvReportBtn');
       const createBtn = document.getElementById('headerNavCreateBtn');
       const usersBtn = document.getElementById('headerNavUsersBtn');
+      const accountingBtn = document.getElementById('headerNavAccountingBtn');
       if (homeBtn) homeBtn.classList.toggle('active', tabName === 'home');
       if (listBtn) listBtn.classList.toggle('active', tabName === 'list');
       if (pendingBtn) pendingBtn.classList.toggle('active', tabName === 'pending');
       if (gdvReportBtn) gdvReportBtn.classList.toggle('active', tabName === 'gdv_report');
+      if (accountingBtn) accountingBtn.classList.toggle('active', tabName === 'accounting_transfer');
       if (createBtn) createBtn.classList.toggle('active', tabName === 'create');
       if (usersBtn) usersBtn.classList.toggle('active', tabName === 'users');
 
@@ -6534,6 +6552,11 @@ function formatDateDisplay(val) {
 
       if (activeDashboardTab === 'gdv_report') {
         renderGdvMonthlyReportPage(container);
+        return;
+      }
+
+      if (activeDashboardTab === 'accounting_transfer') {
+        renderAccountingTransferPage(container);
         return;
       }
 
