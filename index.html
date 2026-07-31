@@ -13104,7 +13104,31 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (el) el.remove();
     }
 
-    /* RENDER ALL SEARCH RESULTS FOR CLAIMS - STRICTLY FILTERS BY "ĐÃ DUYỆT HSBT" */
+    /* HELPER TO GET SET OF CLAIMS ALREADY ADDED TO ANY ACCOUNTING TRANSFER BATCH */
+    function getAlreadyTransferredClaimIdsSet(editingTransferId) {
+      const transferredSet = new Set();
+      const transfers = Object.values(cachedAccountingTransfersPayload || {});
+
+      transfers.forEach(t => {
+        // Exclude claims of current batch being edited so they stay selectable
+        if (editingTransferId && t.transferId === editingTransferId) return;
+
+        const list = t.danhSachHoSo || [];
+        list.forEach(c => {
+          if (c.claimId) transferredSet.add(String(c.claimId));
+          if (c.soHoSoBoiThuong) transferredSet.add(String(c.soHoSoBoiThuong).toLowerCase().trim());
+        });
+
+        if (list.length === 0 && (t.soHoSoBoiThuong || t.bienSo)) {
+          if (t.claimId) transferredSet.add(String(t.claimId));
+          if (t.soHoSoBoiThuong) transferredSet.add(String(t.soHoSoBoiThuong).toLowerCase().trim());
+        }
+      });
+
+      return transferredSet;
+    }
+
+    /* RENDER ALL SEARCH RESULTS FOR CLAIMS - FILTERS BY "ĐÃ DUYỆT HSBT" AND NOT ALREADY IN A BATCH */
     function renderAccClaimSearchResults(keyword) {
       const holder = document.getElementById('accClaimSearchResultsHolder');
       const counterLbl = document.getElementById('lblAccClaimSearchCounter');
@@ -13113,10 +13137,20 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const rawMap = (rawPendingClaimsPayload && Object.keys(rawPendingClaimsPayload).length > 0) ? rawPendingClaimsPayload : (cachedPendingClaimsPayload || {});
       const allClaims = Object.values(rawMap).filter(c => c && typeof c === 'object');
 
-      // STRICT FILTER: Only claims with status "Đã duyệt HSBT" (da_duyet_hsbt)
+      const currentTransferId = getAccInputValue('accBatchTransferId') || '';
+      const alreadyTransferredSet = getAlreadyTransferredClaimIdsSet(currentTransferId);
+
+      // STRICT FILTER: Only claims with status "Đã duyệt HSBT" AND NOT ALREADY IN ANOTHER BATCH
       const approvedClaims = allClaims.filter(c => {
         const st = String(c.trangThai || '').toLowerCase().trim();
-        return st === 'da_duyet_hsbt' || st.includes('đã duyệt hsbt') || st.includes('da_duyet_pasc') || st.includes('da_duyet');
+        const isApproved = st === 'da_duyet_hsbt' || st.includes('đã duyệt hsbt') || st.includes('da_duyet_pasc') || st.includes('da_duyet');
+        if (!isApproved) return false;
+
+        const cId = String(c.id || '');
+        const hsbt = String(c.soHoSoBoiThuong || c.maVuTonThat || '').toLowerCase().trim();
+
+        const isAlreadyInBatch = (cId && alreadyTransferredSet.has(cId)) || (hsbt && alreadyTransferredSet.has(hsbt));
+        return !isAlreadyInBatch;
       });
 
       const kw = (keyword || '').toLowerCase().trim();
