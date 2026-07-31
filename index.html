@@ -4350,8 +4350,8 @@
         navContainer.insertBefore(tabsContainer, userSpace);
       }
 
-      const isGroup1Active = ['list', 'pending', 'create'].includes(activeDashboardTab);
-      const isGroup2Active = ['accounting_transfer', 'gdv_report'].includes(activeDashboardTab);
+      const isGroup1Active = ['list', 'pending', 'gdv_report', 'create'].includes(activeDashboardTab);
+      const isAccActive = activeDashboardTab === 'accounting_transfer' ? 'active' : '';
       const isGroup3Active = ['users', 'system'].includes(activeDashboardTab);
 
       const homeActive = activeDashboardTab === 'home' ? 'active' : '';
@@ -4365,7 +4365,7 @@
             ${SVGS.HOME} <span class="nav-btn-text">Trang chủ</span>
           </button>
 
-          <!-- 2. QUẢN LÝ HỒ SƠ DROPDOWN GROUP -->
+          <!-- 2. QUẢN LÝ HỒ SƠ DROPDOWN GROUP (NƠI CHỨA BÁO CÁO GĐV & CÁC CHỨC NĂNG HỒ SƠ) -->
           <div class="header-nav-dropdown-wrapper">
             <button type="button" class="header-nav-btn ${isGroup1Active ? 'active' : ''}" onclick="toggleHeaderSubmenu(event, 'submenuClaimMgmt')">
               ${SVGS.FOLDER}
@@ -4387,6 +4387,13 @@
                   <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Theo dõi tồn đọng & nhập Excel</span>
                 </div>
               </div>
+              <div class="header-nav-submenu-item ${activeDashboardTab === 'gdv_report' ? 'active' : ''}" onclick="navigateHeaderTab('gdv_report')">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #a855f7;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                <div>
+                  <div style="line-height: 1.2;">Báo cáo & Thống kê GĐV</div>
+                  <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Xem biểu đồ KPI & trích xuất báo cáo</span>
+                </div>
+              </div>
               <div class="header-nav-submenu-item ${activeDashboardTab === 'create' ? 'active' : ''}" onclick="navigateHeaderTab('create')">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #10b981;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 <div>
@@ -4397,30 +4404,11 @@
             </div>
           </div>
 
-          <!-- 3. NGHIỆP VỤ & KẾ TOÁN DROPDOWN GROUP -->
-          <div class="header-nav-dropdown-wrapper">
-            <button type="button" class="header-nav-btn ${isGroup2Active ? 'active' : ''}" onclick="toggleHeaderSubmenu(event, 'submenuOpsAcc')">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="12" y2="16"></line></svg>
-              <span class="nav-btn-text">Nghiệp vụ & Kế toán</span>
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left: 2px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </button>
-            <div id="submenuOpsAcc" class="header-nav-submenu">
-              <div class="header-nav-submenu-item ${activeDashboardTab === 'accounting_transfer' ? 'active' : ''}" onclick="navigateHeaderTab('accounting_transfer')">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #10b981;"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="12" y2="16"></line></svg>
-                <div>
-                  <div style="line-height: 1.2;">Chuyển giao Kế toán</div>
-                  <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Bàn giao phiếu gộp & duyệt ĐNTT</span>
-                </div>
-              </div>
-              <div class="header-nav-submenu-item ${activeDashboardTab === 'gdv_report' ? 'active' : ''}" onclick="navigateHeaderTab('gdv_report')">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #a855f7;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                <div>
-                  <div style="line-height: 1.2;">Báo cáo & Thống kê GĐV</div>
-                  <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Xem biểu đồ KPI & trích xuất báo cáo</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <!-- 3. CHUYỂN GIAO KẾ TOÁN (DIRECT TAB BUTTON) -->
+          <button id="headerNavAccountingBtn" class="header-nav-btn ${isAccActive}" onclick="navigateHeaderTab('accounting_transfer')">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="12" y2="16"></line></svg>
+            <span class="nav-btn-text">Chuyển giao Kế toán</span>
+          </button>
 
           <!-- 4. QUẢN TRỊ SYSTEM DROPDOWN GROUP (ADMIN) -->
           ${isAdmin ? `
@@ -4452,6 +4440,9 @@
     }
 
     function navigateHeaderTab(tabName) {
+      // Auto-close open dropdown submenus on item select
+      document.querySelectorAll('.header-nav-submenu').forEach(s => s.style.display = 'none');
+
       const URLQueryStrings = new URLSearchParams(window.location.search);
       const caseIdToken = URLQueryStrings.get('idCa');
       
