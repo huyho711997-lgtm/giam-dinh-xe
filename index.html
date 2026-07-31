@@ -7071,16 +7071,7 @@ function formatDateDisplay(val) {
       renderActiveTabContent();
 
       // Update header tabs active states
-      const homeBtn = document.getElementById('headerNavHomeBtn');
-      const listBtn = document.getElementById('headerNavListBtn');
-      const pendingBtn = document.getElementById('headerNavPendingBtn');
-      const createBtn = document.getElementById('headerNavCreateBtn');
-      const usersBtn = document.getElementById('headerNavUsersBtn');
-      if (homeBtn) homeBtn.classList.toggle('active', activeDashboardTab === 'home');
-      if (listBtn) listBtn.classList.toggle('active', activeDashboardTab === 'list');
-      if (pendingBtn) pendingBtn.classList.toggle('active', activeDashboardTab === 'pending');
-      if (createBtn) createBtn.classList.toggle('active', activeDashboardTab === 'create');
-      if (usersBtn) usersBtn.classList.toggle('active', activeDashboardTab === 'users');
+      renderHeaderNavigationLinks();
 
       dbNodeInstance.ref('cases').on('value', (dataSnapshot) => {
         const val = dataSnapshot.val() || {};
@@ -7130,20 +7121,7 @@ function formatDateDisplay(val) {
         }
       }
       
-      const homeBtn = document.getElementById('headerNavHomeBtn');
-      const listBtn = document.getElementById('headerNavListBtn');
-      const pendingBtn = document.getElementById('headerNavPendingBtn');
-      const gdvReportBtn = document.getElementById('headerNavGdvReportBtn');
-      const createBtn = document.getElementById('headerNavCreateBtn');
-      const usersBtn = document.getElementById('headerNavUsersBtn');
-      const accountingBtn = document.getElementById('headerNavAccountingBtn');
-      if (homeBtn) homeBtn.classList.toggle('active', tabName === 'home');
-      if (listBtn) listBtn.classList.toggle('active', tabName === 'list');
-      if (pendingBtn) pendingBtn.classList.toggle('active', tabName === 'pending');
-      if (gdvReportBtn) gdvReportBtn.classList.toggle('active', tabName === 'gdv_report');
-      if (accountingBtn) accountingBtn.classList.toggle('active', tabName === 'accounting_transfer');
-      if (createBtn) createBtn.classList.toggle('active', tabName === 'create');
-      if (usersBtn) usersBtn.classList.toggle('active', tabName === 'users');
+      renderHeaderNavigationLinks();
 
       const outputCardBox = document.getElementById('panelOutputResultAnchor');
       if (outputCardBox) outputCardBox.style.display = 'none';
