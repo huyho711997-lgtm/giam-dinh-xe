@@ -2167,6 +2167,7 @@
             <label>Vai trò hệ thống</label>
             <select id="newAdminRole" class="input-premium">
               <option value="Giám định viên">Giám định viên</option>
+              <option value="Kế toán">Kế toán (Xét duyệt)</option>
               <option value="Admin">Admin (Quản trị)</option>
               <option value="Garage">Garage</option>
             </select>
@@ -2212,6 +2213,7 @@
             <label>Vai trò hệ thống</label>
             <select id="editAdminRole" class="input-premium">
               <option value="Giám định viên">Giám định viên</option>
+              <option value="Kế toán">Kế toán (Xét duyệt)</option>
               <option value="Admin">Admin (Quản trị)</option>
               <option value="Garage">Garage</option>
             </select>
@@ -3577,6 +3579,7 @@
                 <button class="filter-pill active" data-user-filter="all" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Tất cả</button>
                 <button class="filter-pill" data-user-filter="Admin" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Admin</button>
                 <button class="filter-pill" data-user-filter="Giám định viên" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Giám định viên</button>
+                <button class="filter-pill" data-user-filter="Kế toán" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Kế toán</button>
                 <button class="filter-pill" data-user-filter="Garage" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Garage</button>
               </div>
               <button type="button" class="btn-premium" onclick="openCreateUserModal()" style="width: auto !important; padding: 0 24px; min-height: unset; height: 42px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; margin: 0; background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.35); cursor: pointer; transition: all 0.2s ease;">
@@ -3861,8 +3864,10 @@
         let matchRole = true;
         if (activeUserFilter === 'Admin') {
           matchRole = role === 'admin';
+        } else if (activeUserFilter === 'Kế toán') {
+          matchRole = role.includes('kế toán') || role.includes('ke toan') || role.includes('ketoan') || role.includes('accounting');
         } else if (activeUserFilter === 'Giám định viên') {
-          matchRole = role !== 'admin' && role !== 'garage';
+          matchRole = role !== 'admin' && role !== 'garage' && !role.includes('kế toán') && !role.includes('ke toan') && !role.includes('ketoan');
         } else if (activeUserFilter === 'Garage') {
           matchRole = role === 'garage';
         }
@@ -3884,8 +3889,11 @@
         const initials = deriveInitials(displayName);
         
         let roleBadge = '';
+        const roleLower = role.toLowerCase();
         if (role === 'Admin') {
           roleBadge = `<span class="badge-status" style="background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.25); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Admin</span>`;
+        } else if (role === 'Kế toán' || roleLower.includes('kế toán') || roleLower.includes('ke toan') || roleLower.includes('ketoan') || roleLower.includes('accounting')) {
+          roleBadge = `<span class="badge-status" style="background: rgba(216,180,109,0.18); color: var(--primary); border: 1px solid rgba(216,180,109,0.4); font-weight: 850; padding: 4px 10px; border-radius: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Kế toán</span>`;
         } else if (role === 'Garage') {
           roleBadge = `<span class="badge-status" style="background: rgba(72,215,161,0.12); color: var(--success); border: 1px solid rgba(72,215,161,0.25); font-weight: 800; padding: 4px 10px; border-radius: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Garage</span>`;
         } else {
@@ -3896,7 +3904,7 @@
           <tr style="transition: background 0.15s ease;">
             <td data-label="Thành viên">
               <div class="vehicle-cell" style="display: flex; align-items: center; gap: 16px;">
-                <div class="vehicle-avatar" style="width: 46px; height: 46px; border-radius: 50%; background: ${role === 'Admin' ? 'linear-gradient(135deg, #d8b46d, #9b6c22)' : role === 'Garage' ? 'linear-gradient(135deg, #48d7a1, #047857)' : 'linear-gradient(135deg, #5ba9ff, #1d4ed8)'}; color: ${role === 'Giám định viên' ? '#ffffff' : '#080b11'}; font-weight: 800; border: 1px solid var(--border-strong); text-shadow: 0 1px 1px rgba(0,0,0,0.15); display: grid; place-items: center; font-size: 13.5px;">${initials}</div>
+                <div class="vehicle-avatar" style="width: 46px; height: 46px; border-radius: 50%; background: ${role === 'Admin' ? 'linear-gradient(135deg, #d8b46d, #9b6c22)' : (role === 'Kế toán' || role.toLowerCase().includes('kế toán') || role.toLowerCase().includes('ke toan') || role.toLowerCase().includes('ketoan')) ? 'linear-gradient(135deg, #f59e0b, #d97706)' : role === 'Garage' ? 'linear-gradient(135deg, #48d7a1, #047857)' : 'linear-gradient(135deg, #5ba9ff, #1d4ed8)'}; color: ${role === 'Giám định viên' ? '#ffffff' : '#080b11'}; font-weight: 800; border: 1px solid var(--border-strong); text-shadow: 0 1px 1px rgba(0,0,0,0.15); display: grid; place-items: center; font-size: 13.5px;">${initials}</div>
                 <div>
                   <div class="vehicle-name" style="font-weight: 750; color: var(--text-main); font-size: 14.5px; line-height: 1.25;">${displayName}</div>
                   <div style="font-size: 12.5px; color: var(--text-soft); margin-top: 3px; font-family: 'JetBrains Mono';">${email}</div>
