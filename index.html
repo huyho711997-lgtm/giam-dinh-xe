@@ -12060,7 +12060,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
 
     /****************************************************
-     * ACCOUNTING TRANSFER MODULE (QUẢN LÝ BÀN GIAO KẾ TOÁN) - REORDERED STATUS COL, CLICKABLE ROW, TRASH DELETE, PREMIUM GDV SELECT
+     * ACCOUNTING TRANSFER MODULE (QUẢN LÝ BÀN GIAO KẾ TOÁN) - CUSTOM GLASSMORPHIC PREMIUM USER DROPDOWN
      ****************************************************/
     let cachedAccountingTransfersPayload = {};
     let activeAccountingStatusFilter = 'all';
@@ -12082,6 +12082,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const name = c.khachHang || c.tenChuXe || c.chuXe || c.tenKhachHang || c.hoTenChuXe || c.laiXe || c.tenLaiXe || c.hoTenLaiXe || c.nguoiYeuCauBT || c.nguoiLienHe || '';
       if (!name || name === '—' || name.trim() === '' || name.trim() === 'N/A') return 'N/A';
       return name.trim();
+    }
+
+    // Helper to get name initials for user avatar badge
+    function getAccUserInitials(nameStr) {
+      if (!nameStr) return 'GDV';
+      const parts = nameStr.trim().split(/\s+/);
+      if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
 
     // SVG Vectors Definition for Clean Render
@@ -12120,6 +12128,56 @@ function renderGdvMonthlyReportPage(targetContainer) {
       renderAccountingTransferPage();
     }
 
+    /* CUSTOM USER DROPDOWN CONTROLLERS */
+    function toggleAccGdvCustomDropdown(evt) {
+      if (evt) evt.stopPropagation();
+      const menu = document.getElementById('accGdvDropdownMenu');
+      const arrow = document.getElementById('accGdvChevronArrow');
+      if (!menu) return;
+      
+      const isVisible = menu.style.display === 'block';
+      menu.style.display = isVisible ? 'none' : 'block';
+      if (arrow) arrow.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+
+    function selectAccGdvUserOption(userName) {
+      const input = document.getElementById('accBatchGdvName');
+      const lbl = document.getElementById('lblAccSelectedGdvName');
+      const avatar = document.getElementById('accSelectedUserAvatar');
+      const menu = document.getElementById('accGdvDropdownMenu');
+      const arrow = document.getElementById('accGdvChevronArrow');
+
+      if (input) input.value = userName;
+      if (lbl) lbl.textContent = userName;
+      if (avatar) avatar.textContent = getAccUserInitials(userName);
+      if (menu) menu.style.display = 'none';
+      if (arrow) arrow.style.transform = 'rotate(0deg)';
+
+      // Re-render checkmarks in options
+      const items = document.querySelectorAll('.acc-gdv-user-item');
+      items.forEach(el => {
+        const val = el.getAttribute('data-value');
+        if (val === userName) {
+          el.style.background = 'rgba(216,180,109,0.15)';
+          el.style.color = 'var(--primary)';
+        } else {
+          el.style.background = 'transparent';
+          el.style.color = 'var(--text-main)';
+        }
+      });
+    }
+
+    // Close custom dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const wrapper = document.getElementById('accGdvDropdownWrapper');
+      const menu = document.getElementById('accGdvDropdownMenu');
+      const arrow = document.getElementById('accGdvChevronArrow');
+      if (wrapper && menu && !wrapper.contains(e.target)) {
+        menu.style.display = 'none';
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+      }
+    });
+
     /* DELETE ACCOUNTING TRANSFER BATCH */
     async function deleteAccountingTransfer(transferId) {
       if (!transferId) return;
@@ -12135,7 +12193,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
     }
 
-    /* RENDER MAIN OVERVIEW PAGE - STATUS COL REORDERED TO 2ND POSITION, CLICKABLE ROW, TRASH DELETE BUTTON */
+    /* RENDER MAIN OVERVIEW PAGE */
     function renderAccountingTransferPage(targetContainer) {
       const container = targetContainer || document.getElementById('tabContentContainer');
       if (!container) return;
@@ -12280,7 +12338,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
           </div>
 
-          <!-- MASTER DATA TABLE (STATUS COL MOVED TO 2ND POSITION AFTER STT, CLICKABLE ROW, TRASH DELETE BUTTON) -->
+          <!-- MASTER DATA TABLE -->
           <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-sm);">
             <div style="overflow-x: auto;">
               <table class="p-table" style="width: 100%; border-collapse: collapse;">
@@ -12319,7 +12377,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           #${String(idx + 1).padStart(2,'0')}
                         </td>
                         
-                        <!-- 2. TRẠNG THÁI (MOVED TO 2ND COL AFTER STT!) -->
+                        <!-- 2. TRẠNG THÁI -->
                         <td style="padding: 16px 18px; text-align: center;">
                           <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 850; padding: 5px 12px; border-radius: 999px; background: ${st.bg}; border: 1px solid ${st.border}; color: ${st.text};">
                             <span>${st.svg}</span>
@@ -12358,7 +12416,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           </strong>
                         </td>
 
-                        <!-- 7. THAO TÁC (REMOVED XEM/SỬA BUTTON, ADDED TRASH DELETE BUTTON) -->
+                        <!-- 7. THAO TÁC (TRASH DELETE BUTTON) -->
                         <td style="padding: 16px 18px; text-align: center;">
                           <button type="button" onclick="event.stopPropagation(); deleteAccountingTransfer('${t.transferId}')" style="background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; width: 36px; height: 36px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease;" title="Xóa Phiếu bàn giao này">
                             ${ACC_SVGS.TRASH}
@@ -12376,7 +12434,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       `;
     }
 
-    /* MODAL 1: GĐV TẠO / SỬA / BỔ SUNG PHIẾU BÀN GIAO - EXECUTIVE ULTRA PREMIUM GDV USER DROPDOWN */
+    /* MODAL 1: GĐV TẠO / SỬA / BỔ SUNG PHIẾU BÀN GIAO - 100% CUSTOM GLASSMORPHIC PREMIUM USER DROPDOWN */
     function openAddAccountingTransferModal(transferId) {
       let existing = null;
       if (transferId && cachedAccountingTransfersPayload[transferId]) {
@@ -12404,7 +12462,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         currentBatchSelectedClaims = [];
       }
 
-      // User List Generation for GĐV Bàn Giao Dropdown
+      // User List Generation for GĐV Bàn Giao Custom Dropdown
       const rawUserEntries = Object.values(cachedUsersPayload || {});
       let userOptionsList = rawUserEntries.map(u => u.profile?.displayName || u.displayName || u.email || '').filter(Boolean);
       userOptionsList = Array.from(new Set(userOptionsList));
@@ -12462,23 +12520,48 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 </div>
               ` : ''}
 
-              <!-- 1. TOP META BAR: MÃ PHIẾU & GĐV BÀN GIAO (PREMIUM SELECTABLE USER DROPDOWN) -->
+              <!-- 1. TOP META BAR: MÃ PHIẾU & GĐV BÀN GIAO (100% CUSTOM GLASSMORPHIC PREMIUM DROPDOWN) -->
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 22px; background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px;">
                 <div>
                   <label style="display: block; font-size: 12px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">Mã Phiếu Bàn giao (*):</label>
                   <input id="accBatchTransferId" type="text" class="input-premium" value="${escapeAttributeData(existing?.transferId || ('PBG_' + Date.now()))}" readonly style="height: 44px; border-radius: 12px; font-family: 'JetBrains Mono'; font-weight: 850; background: var(--surface); color: var(--primary);" />
                 </div>
+                
                 <div>
                   <label style="display: block; font-size: 12px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">GĐV Bàn giao (*):</label>
-                  <div style="position: relative;">
-                    <select id="accBatchGdvName" class="select-premium" required style="height: 44px; border-radius: 12px; background: var(--surface); font-weight: 850; width: 100%; font-size: 13.5px; padding-left: 38px; color: var(--text-main); border: 1px solid var(--border); box-shadow: var(--shadow-sm); cursor: pointer;">
-                      ${userOptionsList.map(uName => `
-                        <option value="${escapeAttributeData(uName)}" ${uName === defaultGdvVal ? 'selected' : ''}>${escapeHtmlOutput(uName)}</option>
-                      `).join('')}
-                    </select>
-                    <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none; display: flex;">
-                      ${ACC_SVGS.USER}
-                    </span>
+                  
+                  <!-- CUSTOM LUXURY USER DROPDOWN COMPONENT -->
+                  <div style="position: relative;" id="accGdvDropdownWrapper">
+                    <input type="hidden" id="accBatchGdvName" value="${escapeAttributeData(defaultGdvVal)}" />
+                    
+                    <div id="accGdvTriggerBtn" onclick="toggleAccGdvCustomDropdown(event)" style="height: 44px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); padding: 0 14px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <div id="accSelectedUserAvatar" style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(216,180,109,0.3) 0%, rgba(216,180,109,0.1) 100%); border: 1px solid rgba(216,180,109,0.5); color: var(--primary); display: grid; place-items: center; font-size: 11px; font-weight: 850; flex-shrink: 0; font-family: 'JetBrains Mono';">
+                          ${getAccUserInitials(defaultGdvVal)}
+                        </div>
+                        <strong id="lblAccSelectedGdvName" style="font-size: 13.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(defaultGdvVal)}</strong>
+                      </div>
+                      <svg id="accGdvChevronArrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft); transition: transform 0.2s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+
+                    <!-- FLOATING GLASSMORPHIC MENU -->
+                    <div id="accGdvDropdownMenu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 1000; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 18px 45px rgba(0,0,0,0.45); backdrop-filter: blur(20px); padding: 6px; max-height: 250px; overflow-y: auto;">
+                      ${userOptionsList.map(uName => {
+                        const isSel = uName === defaultGdvVal;
+                        return `
+                          <div class="acc-gdv-user-item" data-value="${escapeAttributeData(uName)}" onclick="selectAccGdvUserOption('${escapeAttributeData(uName)}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; ${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary);' : 'color: var(--text-main);'}">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                              <div style="width: 26px; height: 26px; border-radius: 50%; background: ${isSel ? 'var(--primary)' : 'var(--bg-soft)'}; color: ${isSel ? '#111111' : 'var(--text-soft)'}; display: grid; place-items: center; font-size: 10.5px; font-weight: 850; font-family: 'JetBrains Mono';">
+                                ${getAccUserInitials(uName)}
+                              </div>
+                              <strong style="font-size: 13px; font-weight: 850;">${escapeHtmlOutput(uName)}</strong>
+                            </div>
+                            ${isSel ? `<span style="color: var(--primary);">${ACC_SVGS.CHECK_CIRCLE}</span>` : ''}
+                          </div>
+                        `;
+                      }).join('')}
+                    </div>
+
                   </div>
                 </div>
               </div>
@@ -12486,7 +12569,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <!-- 2. EXPANDED SIDE-BY-SIDE SEARCH & SELECTION ZONE (SYNCHRONIZED SISTER CARDS: 540px HEIGHT) -->
               <div style="display: grid; grid-template-columns: 1fr 1.4fr; gap: 24px; margin-bottom: 22px; align-items: stretch;">
                 
-                <!-- LEFT SISTER CARD: SEARCH & PICK LIST (FIXED CONTAINER HEIGHT 540px) -->
+                <!-- LEFT SISTER CARD: SEARCH & PICK LIST -->
                 <div style="background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 18px; padding: 18px 20px; height: 540px; display: flex; flex-direction: column;">
                   <div style="display: flex; justify-content: space-between; align-items: center; height: 36px; margin-bottom: 10px; flex-shrink: 0;">
                     <label style="font-size: 13.5px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
@@ -12508,7 +12591,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </div>
                 </div>
 
-                <!-- RIGHT SISTER CARD: SELECTED CLAIMS BATCH TABLE (FIXED CONTAINER HEIGHT 540px) -->
+                <!-- RIGHT SISTER CARD: SELECTED CLAIMS BATCH TABLE -->
                 <div style="background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 18px; padding: 18px 20px; height: 540px; display: flex; flex-direction: column;">
                   <div style="display: flex; justify-content: space-between; align-items: center; height: 36px; margin-bottom: 10px; flex-shrink: 0;">
                     <label style="font-size: 13.5px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
