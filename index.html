@@ -12058,7 +12058,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
 
     /****************************************************
-     * ACCOUNTING TRANSFER MODULE (QUẢN LÝ BÀN GIAO KẾ TOÁN) - ULTRA PREMIUM SVG & DRIVER LINK FIX
+     * ACCOUNTING TRANSFER MODULE (QUẢN LÝ BÀN GIAO KẾ TOÁN) - EXACT KHACHHANG PROPERTY MAPPING
      ****************************************************/
     let cachedAccountingTransfersPayload = {};
     let activeAccountingStatusFilter = 'all';
@@ -12074,11 +12074,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
       return el ? el.value.trim() : '';
     }
 
-    // Helper to extract Owner / Driver name cleanly with comprehensive fallbacks
+    // Helper to extract Owner / Driver name cleanly - PRIORITIZES c.khachHang FROM EDIT FORM & EXCEL CORE
     function extractClaimOwnerName(c) {
       if (!c) return 'N/A';
-      const name = c.laiXe || c.tenChuXe || c.chuXe || c.tenLaiXe || c.hoTenChuXe || c.hoTenLaiXe || c.tenKhachHang || c.nguoiYeuCauBT || '';
-      if (!name || name === '—' || name.trim() === '') return 'N/A';
+      const name = c.khachHang || c.tenChuXe || c.chuXe || c.tenKhachHang || c.hoTenChuXe || c.laiXe || c.tenLaiXe || c.hoTenLaiXe || c.nguoiYeuCauBT || c.nguoiLienHe || '';
+      if (!name || name === '—' || name.trim() === '' || name.trim() === 'N/A') return 'N/A';
       return name.trim();
     }
 
@@ -12279,7 +12279,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     // Parse claims list inside batch
                     let claimsInBatch = t.danhSachHoSo || [];
                     if (claimsInBatch.length === 0 && (t.soHoSoBoiThuong || t.bienSo)) {
-                      claimsInBatch = [{ soHoSoBoiThuong: t.soHoSoBoiThuong, bienSo: t.bienSo, tenGara: t.tenGara, soTienDeNghi: t.soTienDeNghi }];
+                      claimsInBatch = [{ soHoSoBoiThuong: t.soHoSoBoiThuong, bienSo: t.bienSo, tenGara: t.tenGara, soTienDeNghi: t.soTienDeNghi, tenChuXe: extractClaimOwnerName(t) }];
                     }
 
                     return `
@@ -12303,7 +12303,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                             ${claimsInBatch.map(c => `
                               <div style="font-size: 12px; color: var(--text-main);">
                                 <strong style="font-weight: 800;">${escapeHtmlOutput(c.bienSo || 'N/A')}</strong> - ${escapeHtmlOutput(c.soHoSoBoiThuong || 'Vụ chưa mã')} 
-                                <span style="color: var(--text-soft); font-size: 11px;">(Lái xe: ${escapeHtmlOutput(extractClaimOwnerName(c))} | Gara: ${escapeHtmlOutput(c.tenGara || 'Chưa Gara')})</span>
+                                <span style="color: var(--text-soft); font-size: 11px;">(Chủ xe/Khách hàng: <strong style="color: var(--text-main); font-weight: 750;">${escapeHtmlOutput(extractClaimOwnerName(c))}</strong> | Gara: ${escapeHtmlOutput(c.tenGara || 'Chưa Gara')})</span>
                               </div>
                             `).join('')}
                           </div>
@@ -12367,6 +12367,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (existing) {
         if (existing.danhSachHoSo && existing.danhSachHoSo.length > 0) {
           currentBatchSelectedClaims = JSON.parse(JSON.stringify(existing.danhSachHoSo));
+          // Ensure tenChuXe is mapped cleanly for every claim in batch
+          currentBatchSelectedClaims.forEach(item => {
+            item.tenChuXe = extractClaimOwnerName(item);
+          });
         } else if (existing.soHoSoBoiThuong || existing.bienSo) {
           currentBatchSelectedClaims = [{
             claimId: existing.claimId || '',
@@ -12401,7 +12405,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   ${existing ? (existing.trangThai === 'can_bo_sung' ? 'Yêu cầu Bổ sung Phiếu Bàn giao Kế toán' : 'Chỉnh sửa Phiếu Bàn giao Kế toán') : '+ Tạo Phiếu Bàn giao Kế toán Mới (Gom nhiều Hồ sơ)'}
                 </h3>
                 <p style="font-size: 12.5px; color: var(--text-soft); margin-top: 3px; margin-bottom: 0;">
-                  Không gian thao tác siêu rộng · Nhập biển số xe, số HSBT hoặc tên lái xe/chủ xe để tích chọn nhiều hồ sơ gom vào 1 Phiếu bàn giao duy nhất.
+                  Không gian thao tác siêu rộng · Nhập biển số xe, số HSBT hoặc tên chủ xe/lái xe để tích chọn nhiều hồ sơ gom vào 1 Phiếu bàn giao duy nhất.
                 </p>
               </div>
             </div>
@@ -12434,10 +12438,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
                       <span style="color: var(--primary);">${ACC_SVGS.SEARCH}</span>
                       <span>Tìm & Tích chọn Hồ sơ bồi thường:</span>
                     </label>
-                    <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 750;">Gõ Biển số / HSBT / Lái xe</span>
+                    <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 750;">Gõ Biển số / HSBT / Chủ xe</span>
                   </div>
                   
-                  <input type="text" id="accClaimSearchBox" class="input-premium" placeholder="Gõ biển số (VD: 47A-85640), số HSBT, tên lái xe..." oninput="renderAccClaimSearchResults(this.value)" style="width: 100%; height: 44px; border-radius: 12px; margin-bottom: 12px; font-size: 13.5px; padding-left: 16px;" />
+                  <input type="text" id="accClaimSearchBox" class="input-premium" placeholder="Gõ biển số (VD: 47A-85640), số HSBT, tên chủ xe..." oninput="renderAccClaimSearchResults(this.value)" style="width: 100%; height: 44px; border-radius: 12px; margin-bottom: 12px; font-size: 13.5px; padding-left: 16px;" />
 
                   <div id="accClaimSearchResultsHolder" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 10px;">
                     <!-- Dynamic JS insertion -->
@@ -12460,7 +12464,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           <tr style="border-bottom: 1px solid var(--border-strong);">
                             <th style="padding: 12px 14px; text-align: center; width: 50px; font-size: 11px; font-weight: 850; color: var(--text-muted); text-transform: uppercase;">STT</th>
                             <th style="padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 850; color: var(--text-muted); text-transform: uppercase;">Biển số & HSBT</th>
-                            <th style="padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 850; color: var(--text-muted); text-transform: uppercase;">Lái xe / Chủ xe</th>
+                            <th style="padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 850; color: var(--text-muted); text-transform: uppercase;">Chủ xe / Khách hàng</th>
                             <th style="padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 850; color: var(--text-muted); text-transform: uppercase;">Gara</th>
                             <th style="padding: 12px 14px; text-align: right; width: 170px; font-size: 11px; font-weight: 850; color: var(--text-muted); text-transform: uppercase;">Tiền Đề nghị</th>
                             <th style="padding: 12px 14px; text-align: center; width: 50px; font-size: 11px; font-weight: 850; color: var(--text-muted); text-transform: uppercase;">Xóa</th>
@@ -12513,7 +12517,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
             </div>
 
-            <!-- FIXED STICKY FOOTER ACTIONS (LUÔN CỐ ĐỊNH Ở ĐÁY FORM) -->
+            <!-- FIXED STICKY FOOTER ACTIONS -->
             <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(14px); z-index: 10; flex-shrink: 0; display: flex; justify-content: flex-end; gap: 14px;">
               <button type="button" onclick="closeAccountingTransferModal()" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Hủy bỏ</button>
               <button type="submit" style="padding: 11px 30px; border-radius: 12px; font-size: 14px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(216,180,109,0.4); display: flex; align-items: center; gap: 8px;">
@@ -12538,7 +12542,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (el) el.remove();
     }
 
-    /* RENDER SEARCH RESULTS FOR CLAIMS TO PICK (WITH DRIVER/OWNER FALLBACK & SVG) */
+    /* RENDER SEARCH RESULTS FOR CLAIMS TO PICK (WITH DIRECT c.khachHang MAPPING & SVG) */
     function renderAccClaimSearchResults(keyword) {
       const holder = document.getElementById('accClaimSearchResultsHolder');
       if (!holder) return;
@@ -12580,7 +12584,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <span style="font-size: 11.5px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 750;">${escapeHtmlOutput(hsbt)}</span>
                 </div>
                 <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 2px;">
-                  Lái/Chủ xe: <strong style="color: var(--text-main);">${escapeHtmlOutput(chuXe)}</strong> | Gara: ${escapeHtmlOutput(gara)}
+                  Chủ xe/Khách hàng: <strong style="color: var(--text-main); font-weight: 750;">${escapeHtmlOutput(chuXe)}</strong> | Gara: ${escapeHtmlOutput(gara)}
                 </div>
               </div>
             </div>
@@ -12639,7 +12643,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (lblTotal) lblTotal.textContent = formatCurrencyInputNumber(totalSum) + ' đ';
     }
 
-    /* RENDER BATCH SELECTED CLAIMS TABLE (WITH EXTRACTED OWNER NAME & SVG REMOVE BUTTON) */
+    /* RENDER BATCH SELECTED CLAIMS TABLE */
     function renderAccBatchSelectedTable() {
       const body = document.getElementById('tblAccBatchSelectedBody');
       const countLbl = document.getElementById('lblAccBatchCount');
@@ -12660,7 +12664,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(item.bienSo)}</strong>
             <span style="display: block; font-size: 11.5px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(item.soHoSoBoiThuong)}</span>
           </td>
-          <td style="padding: 12px; font-size: 12.5px; color: var(--text-main); font-weight: 750;">${escapeHtmlOutput(item.tenChuXe || 'N/A')}</td>
+          <td style="padding: 12px; font-size: 12.5px; color: var(--text-main); font-weight: 750;">${escapeHtmlOutput(extractClaimOwnerName(item))}</td>
           <td style="padding: 12px; font-size: 12.5px; color: var(--text-main);">${escapeHtmlOutput(item.tenGara || 'N/A')}</td>
           <td style="padding: 12px; text-align: right;">
             <input type="text" class="input-premium" value="${formatCurrencyInputNumber(item.soTienDeNghi)}" oninput="this.value = formatCurrencyInputNumber(this.value); updateAccBatchItemMoney(${idx}, this.value)" style="width: 145px; height: 36px; font-size: 13px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; color: #10b981; border-radius: 8px;" />
@@ -12770,7 +12774,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     <tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
                       <th style="padding: 10px 12px; text-align: center; width: 45px;">STT</th>
                       <th style="padding: 10px 12px; text-align: left;">Biển số & Số HSBT</th>
-                      <th style="padding: 10px 12px; text-align: left;">Lái xe / Chủ xe</th>
+                      <th style="padding: 10px 12px; text-align: left;">Chủ xe / Khách hàng</th>
                       <th style="padding: 10px 12px; text-align: left;">Gara</th>
                       <th style="padding: 10px 12px; text-align: right;">Tiền Đề nghị</th>
                     </tr>
