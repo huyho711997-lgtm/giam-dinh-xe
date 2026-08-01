@@ -12576,6 +12576,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
     function renderWeeklyZoneReportTableHtml() {
       const { period, list } = getWeeklyZoneReportData();
       let sumPhatSinh = 0, sumDaDuyet = 0, sumChuaDuyet = 0, sumTonHoaDon = 0, sumChuyenDntt = 0, sumCarpla = 0, sumTndsTon = 0;
+      let sumHsTonOver30 = 0, totalSumAmtUnder10M = 0, totalCountUnder10M = 0, sumCarplaCumulativeRev = 0;
+
+      const currentMonth = (period.startDate ? period.startDate.getMonth() + 1 : (new Date().getMonth() + 1));
 
       list.forEach(r => {
         const chuaDuyetVal = r.chuaDuyetPasc || Math.max(0, r.phatSinh - r.daDuyetHsb);
@@ -12586,7 +12589,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
         sumChuyenDntt += r.chuyenDntt;
         sumCarpla += r.carplaCount;
         sumTndsTon += r.tndsTonLuyKe;
+
+        sumHsTonOver30 += r.hsTonOver30Days || 0;
+        totalSumAmtUnder10M += r.sumAmtUnder10M || 0;
+        totalCountUnder10M += r.countUnder10M || 0;
+        sumCarplaCumulativeRev += r.carplaCumulativeRevenue || 0;
       });
+
+      const overallAvgUnder10M = totalCountUnder10M > 0 ? Math.round(totalSumAmtUnder10M / totalCountUnder10M) : 0;
 
       return `
         <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 26px 30px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
@@ -12604,8 +12614,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <table style="width: 100%; border-collapse: collapse; font-size: 12.5px; text-align: center;">
               <thead>
                 <tr style="background: var(--bg-soft); border: 1px solid var(--border-strong);">
-                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: var(--text-main); width: 50px;">STT</th>
-                  <th style="padding: 12px 14px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: var(--text-main); text-align: left; min-width: 160px;">GDV</th>
+                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: var(--text-main); width: 45px;">STT</th>
+                  <th style="padding: 12px 14px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: var(--text-main); text-align: left; min-width: 150px;">GDV</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #3b82f6;">PHÁT SINH</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #10b981;">ĐÃ DUYỆT HSB</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #f59e0b;">CHƯA DUYỆT PASC</th>
@@ -12613,11 +12623,15 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #ec4899;">CHUYỂN ĐNTT</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #06b6d4;">Lượng xe Carpla</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #6366f1;">HỒ SƠ TNDS TỒN LŨY KẾ</th>
+                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #dc2626;">HS tồn &gt; 30 ngày</th>
+                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #2563eb;">Số tiền bình quân dưới 10tr</th>
+                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #854d0e; background: #fef08a;">Doanh số Carpla lũy kế tháng ${currentMonth}</th>
                 </tr>
               </thead>
               <tbody>
                 ${list.map((r, idx) => {
                   const chuaDuyetVal = r.chuaDuyetPasc || Math.max(0, r.phatSinh - r.daDuyetHsb);
+                  const avgUnder10M = r.countUnder10M > 0 ? Math.round(r.sumAmtUnder10M / r.countUnder10M) : 0;
                   return `
                     <tr style="border: 1px solid var(--border); ${idx % 2 === 0 ? 'background: var(--surface);' : 'background: var(--bg-soft);'}">
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: var(--primary); font-family: 'JetBrains Mono';">${idx + 1}</td>
@@ -12629,6 +12643,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #ec4899; font-family: 'JetBrains Mono';">${r.chuyenDntt ? (r.chuyenDntt + ' HS') : ''}</td>
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #06b6d4; font-family: 'JetBrains Mono';">${r.carplaCount ? (r.carplaCount + ' HS') : ''}</td>
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #6366f1; font-family: 'JetBrains Mono';">${r.tndsTonLuyKe}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #dc2626; font-family: 'JetBrains Mono';">${r.hsTonOver30Days || 0}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #2563eb; font-family: 'JetBrains Mono';">${avgUnder10M ? formatCurrencyInputNumber(avgUnder10M) + ' đ' : '0 đ'}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #854d0e; background: #fef9c3; font-family: 'JetBrains Mono';">${r.carplaCumulativeRevenue ? formatCurrencyInputNumber(r.carplaCumulativeRevenue) + ' đ' : '0 đ'}</td>
                     </tr>
                   `;
                 }).join('')}
@@ -12637,13 +12654,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <tr style="background: rgba(59,130,246,0.08); border: 2px solid var(--border-strong); font-weight: 850;">
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #3b82f6;">TỔNG</td>
                   <td style="padding: 13px 14px; border: 1px solid var(--border); text-align: left; color: #3b82f6;">Tổng Cộng</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #3b82f6; font-family: 'JetBrains Mono'; font-size: 14px;">${sumPhatSinh}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #10b981; font-family: 'JetBrains Mono'; font-size: 14px;">${sumDaDuyet}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #f59e0b; font-family: 'JetBrains Mono'; font-size: 14px;">${sumChuaDuyet}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #8b5cf6; font-family: 'JetBrains Mono'; font-size: 14px;">${sumTonHoaDon}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #ec4899; font-family: 'JetBrains Mono'; font-size: 14px;">${sumChuyenDntt ? (sumChuyenDntt + ' HS') : '0'}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #06b6d4; font-family: 'JetBrains Mono'; font-size: 14px;">${sumCarpla ? (sumCarpla + ' HS') : '0'}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #6366f1; font-family: 'JetBrains Mono'; font-size: 14px;">${sumTndsTon}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #3b82f6; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumPhatSinh}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #10b981; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumDaDuyet}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #f59e0b; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumChuaDuyet}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #8b5cf6; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumTonHoaDon}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #ec4899; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumChuyenDntt ? (sumChuyenDntt + ' HS') : '0'}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #06b6d4; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumCarpla ? (sumCarpla + ' HS') : '0'}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #6366f1; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumTndsTon}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #dc2626; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumHsTonOver30}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #2563eb; font-family: 'JetBrains Mono'; font-size: 13.5px;">${overallAvgUnder10M ? formatCurrencyInputNumber(overallAvgUnder10M) + ' đ' : '0 đ'}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #854d0e; background: #fef08a; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumCarplaCumulativeRev ? formatCurrencyInputNumber(sumCarplaCumulativeRev) + ' đ' : '0 đ'}</td>
                 </tr>
               </tfoot>
             </table>
@@ -12827,31 +12847,50 @@ function renderGdvMonthlyReportPage(targetContainer) {
       rawUserEntries.forEach(u => {
         const name = (u.profile?.displayName || u.displayName || u.name || '').trim();
         if (name && !gdvMap[name]) {
-          gdvMap[name] = { gdvName: name, phatSinh: 0, daDuyetHsb: 0, chuaDuyetPasc: 0, tonHoaDon: 0, chuyenDntt: 0, carplaCount: 0, tndsTonLuyKe: 0 };
+          gdvMap[name] = { gdvName: name, phatSinh: 0, daDuyetHsb: 0, chuaDuyetPasc: 0, tonHoaDon: 0, chuyenDntt: 0, carplaCount: 0, tndsTonLuyKe: 0, hsTonOver30Days: 0, sumAmtUnder10M: 0, countUnder10M: 0, carplaCumulativeRevenue: 0 };
         }
       });
 
       claimsList.forEach(c => {
         const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || c.canBoBoiThuong || c.gdvName || c.createdByName || 'Chưa phân công').trim();
         if (!gdvMap[gdvName]) {
-          gdvMap[gdvName] = { gdvName, phatSinh: 0, daDuyetHsb: 0, chuaDuyetPasc: 0, tonHoaDon: 0, chuyenDntt: 0, carplaCount: 0, tndsTonLuyKe: 0 };
+          gdvMap[gdvName] = { gdvName, phatSinh: 0, daDuyetHsb: 0, chuaDuyetPasc: 0, tonHoaDon: 0, chuyenDntt: 0, carplaCount: 0, tndsTonLuyKe: 0, hsTonOver30Days: 0, sumAmtUnder10M: 0, countUnder10M: 0, carplaCumulativeRevenue: 0 };
         }
 
-        // 1. TNDS TỒN LŨY KẾ: RUN ACROSS ALL TIME (NO DATE RANGE FILTER), UNPAID TNDS CLAIMS
-        if (isTndsClaim(c) && isUnpaidClaim(c)) {
-          gdvMap[gdvName].tndsTonLuyKe++;
-        }
-
-        // 2. PERIOD-SPECIFIC METRICS (FILTERED BY START & END DATE RANGE)
+        const item = gdvMap[gdvName];
         const claimTime = getClaimTimestamp(c);
+        const isApproved = isDuyetHsbtApproved(c);
+
+        // 1. TNDS TỒN LŨY KẾ: RUN ACROSS ALL TIME, UNPAID TNDS CLAIMS
+        if (isTndsClaim(c) && isUnpaidClaim(c)) {
+          item.tndsTonLuyKe++;
+        }
+
+        // 2. HS TỒN > 30 NGÀY: UNPAID & UNAPPROVED CLAIMS OLDER THAN 30 DAYS
+        const nowMs = Date.now();
+        if (!isApproved && isUnpaidClaim(c) && claimTime > 0 && (nowMs - claimTime > 30 * 86400 * 1000)) {
+          item.hsTonOver30Days++;
+        }
+
+        // 3. SỐ TIỀN BÌNH QUÂN DƯỚI 10TR & DOANH SỐ CARPLA
+        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+        const amtVal = parseInt(amtStr, 10) || 0;
+        if (amtVal > 0 && amtVal < 10000000) {
+          item.sumAmtUnder10M += amtVal;
+          item.countUnder10M++;
+        }
+
+        const garaName = String(c.tenGaraVietTat || c.garaSuaChua || c.gara || '').toLowerCase();
+        if (garaName.includes('carpla')) {
+          item.carplaCumulativeRevenue += amtVal;
+        }
+
+        // 4. PERIOD-SPECIFIC METRICS (FILTERED BY START & END DATE RANGE)
         if (claimTime < startTime || claimTime > endTime) {
           return;
         }
 
-        const item = gdvMap[gdvName];
         item.phatSinh++;
-
-        const isApproved = isDuyetHsbtApproved(c);
         if (isApproved) {
           item.daDuyetHsb++;
         } else {
@@ -12863,7 +12902,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
           item.tonHoaDon++;
         }
 
-        const garaName = String(c.tenGaraVietTat || c.garaSuaChua || c.gara || '').toLowerCase();
         if (garaName.includes('carpla')) {
           item.carplaCount++;
         }
@@ -12903,23 +12941,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
 
       const { period, list } = getWeeklyZoneReportData();
+      const currentMonth = (period.startDate ? period.startDate.getMonth() + 1 : (new Date().getMonth() + 1));
 
       const aoa = [
-        ['', '', '', '', 'BÁO CÁO TUẦN TRƯỜNG ZONE', '', '', '', ''],
-        ['', '', '', period.label, '', '', '', '', ''],
-        ['STT', 'GDV', 'PHÁT SINH', 'ĐÃ DUYỆT HSB', 'CHƯA DUYỆT PASC', 'TỒN HÓA ĐƠN', 'CHUYỂN ĐNTT', 'Lượng xe Carpla', 'HỒ SƠ TNDS TỒN LŨY KẾ']
+        ['', '', '', '', 'BÁO CÁO TUẦN TRƯỜNG ZONE', '', '', '', '', '', '', ''],
+        ['', '', '', period.label, '', '', '', '', '', '', '', ''],
+        ['STT', 'GDV', 'PHÁT SINH', 'ĐÃ DUYỆT HSB', 'CHƯA DUYỆT PASC', 'TỒN HÓA ĐƠN', 'CHUYỂN ĐNTT', 'Lượng xe Carpla', 'HỒ SƠ TNDS TỒN LŨY KẾ', 'HS tồn > 30 ngày', 'Số tiền bình quân dưới 10tr', `Doanh số Carpla lũy kế tháng ${currentMonth}`]
       ];
 
-      let sumPhatSinh = 0;
-      let sumDaDuyet = 0;
-      let sumChuaDuyet = 0;
-      let sumTonHoaDon = 0;
-      let sumChuyenDntt = 0;
-      let sumCarpla = 0;
-      let sumTndsTon = 0;
+      let sumPhatSinh = 0, sumDaDuyet = 0, sumChuaDuyet = 0, sumTonHoaDon = 0, sumChuyenDntt = 0, sumCarpla = 0, sumTndsTon = 0;
+      let sumHsTonOver30 = 0, totalSumAmtUnder10M = 0, totalCountUnder10M = 0, sumCarplaCumulativeRev = 0;
 
       list.forEach((r, idx) => {
         const chuaDuyetVal = r.chuaDuyetPasc || Math.max(0, r.phatSinh - r.daDuyetHsb);
+        const avgUnder10M = r.countUnder10M > 0 ? Math.round(r.sumAmtUnder10M / r.countUnder10M) : 0;
+
         sumPhatSinh += r.phatSinh;
         sumDaDuyet += r.daDuyetHsb;
         sumChuaDuyet += chuaDuyetVal;
@@ -12927,6 +12963,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
         sumChuyenDntt += r.chuyenDntt;
         sumCarpla += r.carplaCount;
         sumTndsTon += r.tndsTonLuyKe;
+
+        sumHsTonOver30 += r.hsTonOver30Days || 0;
+        totalSumAmtUnder10M += r.sumAmtUnder10M || 0;
+        totalCountUnder10M += r.countUnder10M || 0;
+        sumCarplaCumulativeRev += r.carplaCumulativeRevenue || 0;
 
         aoa.push([
           idx + 1,
@@ -12937,9 +12978,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
           r.tonHoaDon || '',
           r.chuyenDntt ? (r.chuyenDntt + ' HS') : '',
           r.carplaCount ? (r.carplaCount + ' HS') : '',
-          r.tndsTonLuyKe
+          r.tndsTonLuyKe,
+          r.hsTonOver30Days || 0,
+          avgUnder10M ? formatCurrencyInputNumber(avgUnder10M) + ' đ' : '0 đ',
+          r.carplaCumulativeRevenue ? formatCurrencyInputNumber(r.carplaCumulativeRevenue) + ' đ' : '0 đ'
         ]);
       });
+
+      const overallAvgUnder10M = totalCountUnder10M > 0 ? Math.round(totalSumAmtUnder10M / totalCountUnder10M) : 0;
 
       aoa.push([
         'TỔNG',
@@ -12950,7 +12996,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
         sumTonHoaDon,
         sumChuyenDntt ? (sumChuyenDntt + ' HS') : '0',
         sumCarpla ? (sumCarpla + ' HS') : '0',
-        sumTndsTon
+        sumTndsTon,
+        sumHsTonOver30,
+        overallAvgUnder10M ? formatCurrencyInputNumber(overallAvgUnder10M) + ' đ' : '0 đ',
+        sumCarplaCumulativeRev ? formatCurrencyInputNumber(sumCarplaCumulativeRev) + ' đ' : '0 đ'
       ]);
 
       const ws = XLSX.utils.aoa_to_sheet(aoa);
