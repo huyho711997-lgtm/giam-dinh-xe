@@ -11901,12 +11901,43 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const bY = gPaddingTop + gPlotHeight - bHeight;
         const lY = gPaddingTop + gPlotHeight - (g.totalClaimsCount / maxGClaims) * gPlotHeight;
 
+        let amountY = bY - 6;
+        let amountColor = '#10b981';
+        let amountFontWeight = '850';
+        let showInside = false;
+
+        if (bHeight > 16) {
+          amountY = bY + 11;
+          amountColor = '#ffffff';
+          amountFontWeight = '800';
+          showInside = true;
+        }
+
+        let claimsY = lY - 8;
+
+        if (!showInside) {
+          const diff = Math.abs(amountY - claimsY);
+          if (diff < 12) {
+            if (claimsY < amountY) {
+              claimsY = lY - 14;
+              amountY = bY - 4;
+            } else {
+              claimsY = lY - 6;
+              amountY = bY - 14;
+            }
+          }
+        }
+
         return {
           ...g,
           cx,
           bY,
           bHeight,
-          lY
+          lY,
+          amountY,
+          amountColor,
+          amountFontWeight,
+          claimsY
         };
       });
 
@@ -12281,7 +12312,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         <rect x="${p.cx - barW/2}" y="${p.bY}" width="${barW}" height="${p.bHeight}" rx="6" fill="url(#garageBarGrad)" style="transition: all 0.2s ease;" />
                         
                         <!-- Bar Top Money Label -->
-                        <text x="${p.cx}" y="${p.bY - 8}" font-size="7" font-weight="850" fill="#10b981" text-anchor="middle" font-family="JetBrains Mono">
+                        <text x="${p.cx}" y="${p.amountY}" font-size="7" font-weight="${p.amountFontWeight}" fill="${p.amountColor}" text-anchor="middle" font-family="JetBrains Mono">
                           ${p.totalApprovedAmount >= 1e6 ? (p.totalApprovedAmount / 1e6).toFixed(1) + 'M' : formatCurrencyInputNumber(p.totalApprovedAmount)}
                         </text>
 
@@ -12299,8 +12330,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <!-- Line Dots & Value Tags -->
                   ${gPoints.map(p => `
                     <g pointer-events="none">
-                      <circle cx="${p.cx}" cy="${p.lY}" r="4.5" fill="var(--surface)" stroke="#3b82f6" stroke-width="2.5" />
-                      <text x="${p.cx}" y="${p.lY - 12}" font-size="7" font-weight="900" fill="#3b82f6" text-anchor="middle" font-family="JetBrains Mono">${p.totalClaimsCount} ca</text>
+                      <circle cx="${p.cx}" cy="${p.lY}" r="2.5" fill="var(--surface)" stroke="#3b82f6" stroke-width="1.8" />
+                      <text x="${p.cx}" y="${p.claimsY}" font-size="7" font-weight="900" fill="#3b82f6" text-anchor="middle" font-family="JetBrains Mono">${p.totalClaimsCount} ca</text>
                     </g>
                   `).join('')}
                 </svg>
