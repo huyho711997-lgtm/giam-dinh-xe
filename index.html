@@ -12996,9 +12996,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
                             <span>${st.svg}</span>
                             <span>${st.label}</span>
                           </span>
-                          ${isCanBoSung && t.ghiChuKeToan ? `
-                            <div style="font-size: 10.5px; color: #ef4444; margin-top: 4px; font-weight: 750; max-width: 180px; margin-left: auto; margin-right: auto; line-height: 1.2;">
-                              Ghi chú Kế toán: ${escapeHtmlOutput(t.ghiChuKeToan)}
+                          ${isCanBoSung ? `
+                            <div style="font-size: 11px; color: #ef4444; margin-top: 5px; font-weight: 850; line-height: 1.3;">
+                              ${(() => {
+                                const suppClaims = (t.danhSachHoSo || []).filter(c => c.canBoSung);
+                                return suppClaims.length > 0 ? (suppClaims.length + ' hồ sơ cần bổ sung') : 'Cần bổ sung chứng từ';
+                              })()}
                             </div>
                           ` : ''}
                         </td>
@@ -13440,11 +13443,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
 
       body.innerHTML = currentBatchSelectedClaims.map((item, idx) => `
-        <tr style="border-bottom: 1px solid var(--border); transition: background 0.15s ease;">
+        <tr style="border-bottom: 1px solid var(--border); transition: background 0.15s ease; ${item.canBoSung ? 'background: rgba(239,68,68,0.04);' : ''}">
           <td style="padding: 12px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${idx + 1}</td>
           <td style="padding: 12px;">
             <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(item.bienSo)}</strong>
             <span style="display: block; font-size: 11.5px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(item.soHoSoBoiThuong)}</span>
+            ${item.canBoSung ? `<span style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); font-size: 10px; font-weight: 850; padding: 2px 6px; border-radius: 99px; display: inline-block; margin-top: 4px;">⚠️ YÊU CẦU BỔ SUNG</span>` : ''}
           </td>
           <td style="padding: 12px; font-size: 12.5px; color: var(--text-main); font-weight: 750;">${escapeHtmlOutput(extractClaimOwnerName(item))}</td>
           <td style="padding: 12px; font-size: 12.5px; color: var(--text-main);">${escapeHtmlOutput(item.tenGara || 'N/A')}</td>
@@ -13455,6 +13459,19 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <button type="button" onclick="removeAccClaimFromBatchTable(${idx})" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; display: grid; place-items: center; font-weight: 850;" title="Xóa hồ sơ này khỏi phiếu">${ACC_SVGS.TRASH}</button>
           </td>
         </tr>
+        ${item.canBoSung || item.ghiChuBoSung ? `
+          <tr style="background: rgba(239,68,68,0.06); border-bottom: 1px solid rgba(239,68,68,0.25);">
+            <td colspan="6" style="padding: 10px 16px;">
+              <div style="display: flex; align-items: flex-start; gap: 8px; color: #ef4444; font-size: 12px;">
+                <span style="margin-top: 1px;">${ACC_SVGS.WARNING}</span>
+                <div>
+                  <strong style="display: block; font-weight: 850; margin-bottom: 2px;">KẾ TOÁN YÊU CẦU BỔ SUNG CHO HỒ SƠ NÀY (${escapeHtmlOutput(item.bienSo)}):</strong>
+                  <span style="line-height: 1.4;">${escapeHtmlOutput(item.ghiChuBoSung || 'Đề nghị GĐV kiểm tra và bổ sung chứng từ theo phản hồi của Kế toán.')}</span>
+                </div>
+              </div>
+            </td>
+          </tr>
+        ` : ''}
       `).join('');
 
       recalcAccBatchTotalMoney();
@@ -13541,7 +13558,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               ${t.ghiChuGdv ? `<div><strong>Ghi chú GĐV:</strong> <em>${escapeHtmlOutput(t.ghiChuGdv)}</em></div>` : ''}
             </div>
 
-            <!-- CLAIMS LIST TABLE IN BATCH -->
+            <!-- CLAIMS LIST TABLE IN BATCH WITH PER-CLAIM BO SUNG CHECKBOXES -->
             <div style="margin-bottom: 22px;">
               <label style="display: block; font-size: 13px; font-weight: 850; color: var(--text-main); margin-bottom: 8px;">
                 📋 Chi tiết các Hồ sơ Bồi thường trong Phiếu:
@@ -13550,6 +13567,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
                   <thead>
                     <tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
+                      <th style="padding: 10px 12px; text-align: center; width: 60px; color: #ef4444; font-weight: 850;">Bổ sung</th>
                       <th style="padding: 10px 12px; text-align: center; width: 45px;">STT</th>
                       <th style="padding: 10px 12px; text-align: left;">Biển số & Số HSBT</th>
                       <th style="padding: 10px 12px; text-align: left;">Chủ xe / Khách hàng</th>
@@ -13559,7 +13577,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </thead>
                   <tbody>
                     ${claimsInBatch.map((c, idx) => `
-                      <tr style="border-bottom: 1px solid var(--border);">
+                      <tr style="border-bottom: 1px solid var(--border); ${c.canBoSung ? 'background: rgba(239,68,68,0.04);' : ''}">
+                        <td style="padding: 10px 12px; text-align: center;">
+                          <input type="checkbox" id="chkClaimBoSung_${idx}" onchange="toggleKeToanClaimBoSungInput(${idx})" ${c.canBoSung ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer; accent-color: #ef4444;" />
+                        </td>
                         <td style="padding: 10px 12px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${idx + 1}</td>
                         <td style="padding: 10px 12px;">
                           <strong style="color: var(--text-main);">${escapeHtmlOutput(c.bienSo || 'N/A')}</strong>
@@ -13569,18 +13590,31 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         <td style="padding: 10px 12px;">${escapeHtmlOutput(c.tenGara || 'N/A')}</td>
                         <td style="padding: 10px 12px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; color: #10b981;">${formatCurrencyInputNumber(c.soTienDeNghi)} đ</td>
                       </tr>
+                      <tr id="trClaimBoSungNote_${idx}" style="${c.canBoSung ? '' : 'display: none;'} background: rgba(239,68,68,0.04); border-bottom: 1px solid rgba(239,68,68,0.2);">
+                        <td colspan="6" style="padding: 8px 14px 12px 14px;">
+                          <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #ef4444; font-weight: 850; margin-bottom: 4px;">
+                            ${ACC_SVGS.WARNING}
+                            <span>Chứng từ / Lý do Kế toán yêu cầu bổ sung riêng cho hồ sơ này (${escapeHtmlOutput(c.bienSo)}):</span>
+                          </div>
+                          <input type="text" id="txtClaimBoSungNote_${idx}" class="input-premium" placeholder="Ví dụ: Thiếu Hóa đơn GTGT bản gốc cho vụ này, đề nghị GĐV bổ sung..." value="${escapeAttributeData(c.ghiChuBoSung || '')}" style="height: 38px; border-radius: 8px; font-size: 12.5px; border-color: rgba(239,68,68,0.4);" />
+                        </td>
+                      </tr>
                     `).join('')}
                   </tbody>
                 </table>
               </div>
+              <div style="background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.25); border-radius: 10px; padding: 8px 12px; margin-top: 8px; font-size: 11.5px; color: #ef4444; display: flex; align-items: center; gap: 6px;">
+                ${ACC_SVGS.WARNING}
+                <span>Tích chọn các hồ sơ cần bổ sung. Mỗi hồ sơ được chọn sẽ có nội dung ghi chú yêu cầu riêng.</span>
+              </div>
             </div>
 
-            <!-- KE TOAN FEEDBACK INPUT -->
+            <!-- KE TOAN GENERAL FEEDBACK INPUT -->
             <div style="margin-bottom: 10px;">
               <label style="display: block; font-size: 12.5px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">
-                Ghi chú phản hồi của Kế toán (Bắt buộc nếu Yêu cầu Bổ sung):
+                Ghi chú chung của Kế toán (không bắt buộc):
               </label>
-              <textarea id="txtKeToanGhiChu" class="textarea-premium" placeholder="Ví dụ: Thiếu Hóa đơn GTGT bản gốc cho vụ 48H-01669, đề nghị GĐV bổ sung..." style="width: 100%; height: 85px; border-radius: 12px; font-size: 13px;">${escapeHtmlOutput(t.ghiChuKeToan || '')}</textarea>
+              <textarea id="txtKeToanGhiChu" class="textarea-premium" placeholder="Ví dụ: Đã nhận được bản scan, đề nghị GĐV hoàn thiện bản cứng gửi bộ phận Kế toán..." style="width: 100%; height: 85px; border-radius: 12px; font-size: 13px;">${escapeHtmlOutput(t.ghiChuKeToan || '')}</textarea>
             </div>
           </div>
 
@@ -13605,20 +13639,55 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (el) el.remove();
     }
 
+
+    function toggleKeToanClaimBoSungInput(idx) {
+      const chk = document.getElementById('chkClaimBoSung_' + idx);
+      const trNote = document.getElementById('trClaimBoSungNote_' + idx);
+      if (chk && trNote) {
+        trNote.style.display = chk.checked ? '' : 'none';
+      }
+    }
+
     async function saveKeToanReviewAction(transferId, targetStatus) {
+      if (!transferId || !cachedAccountingTransfersPayload[transferId]) return;
+      const t = cachedAccountingTransfersPayload[transferId];
       const ghiChuKeToan = getAccInputValue('txtKeToanGhiChu');
 
-      if (targetStatus === 'can_bo_sung' && !ghiChuKeToan) {
-        triggerToast('Vui lòng nhập ghi chú phản hồi lý do yêu cầu bổ sung!', 'warning');
-        return;
+      let claimsInBatch = t.danhSachHoSo || [];
+      if (claimsInBatch.length === 0 && (t.soHoSoBoiThuong || t.bienSo)) {
+        claimsInBatch = [{ soHoSoBoiThuong: t.soHoSoBoiThuong, bienSo: t.bienSo, tenGara: t.tenGara, soTienDeNghi: t.soTienDeNghi, tenChuXe: extractClaimOwnerName(t) }];
+      }
+
+      // Collect per-claim bo sung status and notes
+      let countBoSung = 0;
+      const updatedClaims = claimsInBatch.map((c, idx) => {
+        const chk = document.getElementById('chkClaimBoSung_' + idx);
+        const txt = document.getElementById('txtClaimBoSungNote_' + idx);
+        const isBoSung = chk ? chk.checked : Boolean(c.canBoSung);
+        const noteBoSung = txt ? txt.value.trim() : (c.ghiChuBoSung || '');
+        if (isBoSung) countBoSung++;
+
+        return {
+          ...c,
+          canBoSung: isBoSung,
+          ghiChuBoSung: isBoSung ? noteBoSung : ''
+        };
+      });
+
+      if (targetStatus === 'can_bo_sung') {
+        if (countBoSung === 0 && !ghiChuKeToan) {
+          triggerToast('Vui lòng tích chọn ít nhất 1 hồ sơ cần bổ sung hoặc nhập Ghi chú phản hồi!', 'warning');
+          return;
+        }
       }
 
       try {
         await dbNodeInstance.ref('accounting_transfers/' + transferId + '/trangThai').set(targetStatus);
         await dbNodeInstance.ref('accounting_transfers/' + transferId + '/ghiChuKeToan').set(ghiChuKeToan);
+        await dbNodeInstance.ref('accounting_transfers/' + transferId + '/danhSachHoSo').set(updatedClaims);
         await dbNodeInstance.ref('accounting_transfers/' + transferId + '/ngayXetDuyet').set(Date.now());
 
-        const statusMsg = targetStatus === 'da_trinh_dntt' ? 'Đã duyệt trình Đề nghị thanh toán!' : 'Đã phản hồi yêu cầu bổ sung cho GĐV!';
+        const statusMsg = targetStatus === 'da_trinh_dntt' ? 'Đã duyệt trình Đề nghị thanh toán!' : ('Đã phản hồi yêu cầu bổ sung (' + countBoSung + ' hồ sơ) cho GĐV!');
         triggerToast(statusMsg, 'success');
         closeKeToanReviewModal();
         renderAccountingTransferPage();
@@ -13627,6 +13696,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         triggerToast('Lỗi cập nhật trạng thái xét duyệt: ' + err.message, 'error');
       }
     }
+
 
 </script>
 </body>
