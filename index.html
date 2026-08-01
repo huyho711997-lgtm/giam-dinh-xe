@@ -12034,24 +12034,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 </div>
               </div>
 
-              <!-- Start Date & End Date Pickers + Áp dụng Button -->
-              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-soft); border: 1px solid var(--border-strong); padding: 5px 12px; border-radius: 12px;">
-                  <span style="font-size: 12px; font-weight: 850; color: var(--text-soft);">Từ ngày:</span>
-                  <input type="date" value="${activeGdvReportStartDate || getGdvReportDefaultDates().startYmd}" onchange="changeGdvReportStartDate(this.value)" style="height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-size: 13px; font-weight: 850; font-family: 'JetBrains Mono'; padding: 0 10px;" />
-                </div>
-
-                <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-soft); border: 1px solid var(--border-strong); padding: 5px 12px; border-radius: 12px;">
-                  <span style="font-size: 12px; font-weight: 850; color: var(--text-soft);">Đến ngày:</span>
-                  <input type="date" value="${activeGdvReportEndDate || getGdvReportDefaultDates().endYmd}" onchange="changeGdvReportEndDate(this.value)" style="height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-size: 13px; font-weight: 850; font-family: 'JetBrains Mono'; padding: 0 10px;" />
-                </div>
-
-                <button type="button" onclick="applyGdvReportFilter()" style="padding: 0 20px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; border: none; font-size: 13px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(59,130,246,0.35); transition: all 0.2s ease;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <span>Áp dụng</span>
-                </button>
-              </div>
-
               <!-- Custom Branch Dropdown -->
               <div class="custom-select-wrapper" style="position: relative;">
                 <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportBranchMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 220px; justify-content: space-between; box-shadow: var(--shadow-xs);">
@@ -12074,6 +12056,24 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     </div>
                   `).join('')}
                 </div>
+              </div>
+
+              <!-- Start Date & End Date Pickers + Áp dụng Button -->
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-soft); border: 1px solid var(--border-strong); padding: 5px 12px; border-radius: 12px;">
+                  <span style="font-size: 12px; font-weight: 850; color: var(--text-soft);">Từ ngày:</span>
+                  <input type="date" value="${activeGdvReportStartDate || getGdvReportDefaultDates().startYmd}" onchange="changeGdvReportStartDate(this.value)" style="height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-size: 13px; font-weight: 850; font-family: 'JetBrains Mono'; padding: 0 10px;" />
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 6px; background: var(--bg-soft); border: 1px solid var(--border-strong); padding: 5px 12px; border-radius: 12px;">
+                  <span style="font-size: 12px; font-weight: 850; color: var(--text-soft);">Đến ngày:</span>
+                  <input type="date" value="${activeGdvReportEndDate || getGdvReportDefaultDates().endYmd}" onchange="changeGdvReportEndDate(this.value)" style="height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-main); font-size: 13px; font-weight: 850; font-family: 'JetBrains Mono'; padding: 0 10px;" />
+                </div>
+
+                <button type="button" onclick="applyGdvReportFilter()" style="padding: 0 20px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; border: none; font-size: 13px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(59,130,246,0.35); transition: all 0.2s ease;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Áp dụng</span>
+                </button>
               </div>
             </div>
 
