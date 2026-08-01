@@ -6129,7 +6129,7 @@ function formatDateDisplay(val) {
           else if (text.includes('đồng bảo hiểm follow - tỷ lệ')) colMap.dongBhFollowTyLe = colIdx;
           else if (text.includes('đồng bảo hiểm follow - số tiền')) colMap.dongBhFollowSoTien = colIdx;
           else if (text.includes('vat')) colMap.vat = colIdx;
-          else if (text.includes('ngày nhận đủ hồ sơ')) colMap.ngayNhanDuHoSo = colIdx;
+          else if (text.includes('ngày nhận đủ hồ sơ') || text.includes('ngày nhận đủ hs') || text.includes('nhận đủ hồ sơ') || text.includes('nhận đủ hs') || text.includes('ngay nhan du ho so') || text.includes('ngay_nhan_du_ho_so') || text.includes('ngày nhận đủ') || text.includes('nhận đủ')) colMap.ngayNhanDuHoSo = colIdx;
           else if (text.includes('ngày duyệt đntt đầu tiên')) colMap.ngayDuyetDnttDauTien = colIdx;
           else if (text.includes('ngày duyệt đntt cuối cùng')) colMap.ngayDuyetDnttCuoiCung = colIdx;
           else if (text.includes('ngày kt xác nhận')) colMap.ngayKtXacNhan = colIdx;
@@ -6407,6 +6407,7 @@ function formatDateDisplay(val) {
             }
             if (r.rawAmount && r.rawAmount !== '—') updates.soTienDuyetBT = r.rawAmount;
             if (r.rawVtt && r.rawVtt !== '—' && r.rawVtt !== r.matchedClaim.maVuTonThat) updates.maVuTonThat = r.rawVtt;
+            if (r.fullRowMeta?.ngayNhanDuHoSo && r.fullRowMeta.ngayNhanDuHoSo !== '—') updates.ngayNhanDuHoSo = r.fullRowMeta.ngayNhanDuHoSo;
 
             if (r.fullRowMeta && typeof r.fullRowMeta === 'object') {
               Object.entries(r.fullRowMeta).forEach(([k, v]) => {
