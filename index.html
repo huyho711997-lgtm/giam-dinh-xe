@@ -11462,7 +11462,7 @@ function formatDateDisplay(val) {
 
     function switchGdvReportView(viewMode) {
       activeGdvReportView = viewMode;
-      renderGdvMonthlyReportPage();
+      renderGdvReportPage();
     }
 
     function toggleCustomDropdownMenu(menuId, event) {
@@ -11603,7 +11603,9 @@ function formatDateDisplay(val) {
       if (tooltip) tooltip.style.display = 'none';
     };
 
+const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyReportPage(targetContainer); };
 function renderGdvMonthlyReportPage(targetContainer) {
+
       const container = targetContainer || document.getElementById('tabContentContainer');
       if (!container) return;
 
@@ -11648,21 +11650,29 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const yearList = Array.from(yearSet).sort((a, b) => b - a);
       const branchList = Array.from(branchSet);
 
-      // Filter claims based on selected Month, Year, and Branch
+      const period = getWeeklyZoneReportPeriod();
+      const startTime = period.startDate.getTime();
+      const endTime = period.endDate.getTime();
+
+      // Filter claims based on selected Start Date & End Date range and Branch across ALL tabs
       const filteredClaims = parsedClaims.filter(item => {
-        if (activeGdvReportYear !== 'all' && item.year !== parseInt(activeGdvReportYear, 10)) return false;
-        if (activeGdvReportMonth !== 'all' && item.month !== parseInt(activeGdvReportMonth, 10)) return false;
+        const c = item.raw;
+        const claimTime = getClaimTimestamp(c);
+        if (claimTime < startTime || claimTime > endTime) return false;
+
         if (activeGdvReportBranch !== 'all') {
-          const b = item.raw.donViCapDon || item.raw.chiNhanh || item.raw.chiNhanhXuly || '';
+          const b = c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '';
           if (b !== activeGdvReportBranch) return false;
         }
         return true;
       });
 
-      // STRICT FILTERING: Only manage and display the 3 primary GĐVs requested by user
-      const defaultTargetGdvs = ['Nguyễn Quang Huy_DL', 'Hồ Quang Huy', 'Huỳnh Văn Phúc'];
+      const selectedGdvList = (activeSelectedGdvNames && activeSelectedGdvNames.length > 0)
+        ? activeSelectedGdvNames
+        : getAllAvailableGdvNames();
+
       const gdvMap = {};
-      defaultTargetGdvs.forEach(name => {
+      selectedGdvList.forEach(name => {
         gdvMap[name] = {
           gdvName: name,
           branch: '—',
@@ -11678,10 +11688,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       function resolveTargetGdv(rawName) {
         if (!rawName) return null;
         const clean = String(rawName).trim().toLowerCase();
-        if (clean.includes('nguyễn quang huy') || clean.includes('quang huy_dl') || clean.includes('huy_dl')) return 'Nguyễn Quang Huy_DL';
-        if (clean.includes('hồ quang huy')) return 'Hồ Quang Huy';
-        if (clean.includes('huỳnh văn phúc') || clean.includes('văn phúc') || clean.includes('phúc')) return 'Huỳnh Văn Phúc';
-        return null;
+        return selectedGdvList.find(s => s.trim().toLowerCase() === clean || clean.includes(s.trim().toLowerCase())) || null;
       }
 
       for (let i = 0; i < filteredClaims.length; i++) {
@@ -11720,7 +11727,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         }
       }
 
-      let gdvRows = defaultTargetGdvs.map(name => gdvMap[name]);
+      let gdvRows = Object.values(gdvMap);
 
       // Filter by search text if user searches
       if (activeGdvReportSearch) {
@@ -11743,9 +11750,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const topGdvObj = gdvRowsSorted[0];
       const topGdvName = topGdvObj ? topGdvObj.gdvName : 'Chưa có';
 
-      const timeLabelText = activeGdvReportMonth === 'all' 
-        ? (activeGdvReportYear === 'all' ? 'Tất cả thời gian' : `Toàn bộ năm ${activeGdvReportYear}`)
-        : (activeGdvReportYear === 'all' ? `Tháng ${activeGdvReportMonth} (Tất cả năm)` : `Tháng ${activeGdvReportMonth}/${activeGdvReportYear}`);
+      const timeLabelText = period.label;
 
       const top3Performers = gdvRowsSorted.slice(0, 3);
 
