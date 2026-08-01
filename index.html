@@ -11906,8 +11906,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
         let amountFontWeight = '850';
         let showInside = false;
 
-        if (bHeight > 16) {
-          amountY = bY + 11;
+        if (bHeight > 25) {
+          amountY = bY + 12;
           amountColor = '#ffffff';
           amountFontWeight = '800';
           showInside = true;
@@ -11915,14 +11915,19 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
         let claimsY = lY - 8;
 
-        if (!showInside) {
+        if (showInside) {
           const diff = Math.abs(amountY - claimsY);
-          if (diff < 12) {
+          if (diff < 14) {
+            claimsY = bY - 10;
+          }
+        } else {
+          const diff = Math.abs(amountY - claimsY);
+          if (diff < 14) {
             if (claimsY < amountY) {
               claimsY = lY - 14;
               amountY = bY - 4;
             } else {
-              claimsY = lY - 6;
+              claimsY = lY + 11;
               amountY = bY - 14;
             }
           }
@@ -12330,7 +12335,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <!-- Line Dots & Value Tags -->
                   ${gPoints.map(p => `
                     <g pointer-events="none">
-                      <circle cx="${p.cx}" cy="${p.lY}" r="2.5" fill="var(--surface)" stroke="#3b82f6" stroke-width="1.8" />
+                      <circle cx="${p.cx}" cy="${p.lY}" r="2" fill="var(--surface)" stroke="#3b82f6" stroke-width="1.5" />
                       <text x="${p.cx}" y="${p.claimsY}" font-size="7" font-weight="900" fill="#3b82f6" text-anchor="middle" font-family="JetBrains Mono">${p.totalClaimsCount} ca</text>
                     </g>
                   `).join('')}
