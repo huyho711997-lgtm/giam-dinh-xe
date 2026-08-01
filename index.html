@@ -12377,6 +12377,66 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
           ` : activeGdvReportView === 'chart' ? `
             
+            <!-- GĐV KPI CARDS GRID -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+              ${gdvRows.map(r => {
+                const kpiVal = Math.round((r.weightedKpiCount || r.duyetHsbtCount) * 10) / 10;
+                const kpiAchievementRate = Math.round((kpiVal / 70) * 100);
+                let kpiBadgeBg = 'rgba(239,68,68,0.12)';
+                let kpiBadgeBorder = 'rgba(239,68,68,0.3)';
+                let kpiBadgeColor = '#ef4444';
+                let kpiStatusLabel = 'CHƯA ĐẠT KPI';
+
+                if (kpiVal >= 70) {
+                  kpiBadgeBg = 'rgba(16,185,129,0.15)';
+                  kpiBadgeBorder = 'rgba(16,185,129,0.35)';
+                  kpiBadgeColor = '#10b981';
+                  kpiStatusLabel = 'ĐẠT KPI TÍNH LƯƠNG';
+                } else if (kpiVal >= 50) {
+                  kpiBadgeBg = 'rgba(234,179,8,0.15)';
+                  kpiBadgeBorder = 'rgba(234,179,8,0.35)';
+                  kpiBadgeColor = '#eab308';
+                  kpiStatusLabel = 'GẦN ĐẠT KPI';
+                }
+
+                const initials = getGdvInitials(r.gdvName);
+
+                return `
+                  <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 18px; box-shadow: var(--shadow-sm);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); font-weight: 850; font-size: 12px; display: grid; place-items: center;">
+                          ${initials}
+                        </div>
+                        <div>
+                          <strong style="display: block; font-size: 12px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(r.gdvName)}</strong>
+                          <span style="font-size: 11px; color: var(--text-soft);">${escapeHtmlOutput(r.branch)}</span>
+                        </div>
+                      </div>
+                      <span style="font-size: 10px; font-weight: 850; padding: 3px 8px; border-radius: 99px; background: ${kpiBadgeBg}; border: 1px solid ${kpiBadgeBorder}; color: ${kpiBadgeColor}; font-family: 'JetBrains Mono';">
+                        ${kpiStatusLabel}
+                      </span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;">
+                      <div>
+                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Số HS làm</span>
+                        <strong style="display: block; font-size: 15px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} ca</strong>
+                      </div>
+                      <div>
+                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Duyệt KPI quy đổi</span>
+                        <strong style="display: block; font-size: 15px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${kpiVal} ca <span style="font-size: 10px; color: var(--text-soft);">(${r.duyetHsbtCount} gốc)</span></strong>
+                      </div>
+                      <div>
+                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Tỷ lệ KPI</span>
+                        <strong style="display: block; font-size: 15px; color: ${kpiBadgeColor}; font-family: 'JetBrains Mono'; font-weight: 850;">${kpiAchievementRate}%</strong>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
             <!-- ULTRA-SLEEK FINE-LINED SVG LINE CHART SECTION -->
             <div id="kpiChartCardContainer" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm); position: relative;">
               
@@ -12425,8 +12485,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                   <!-- KPI RED BENCHMARK FINE LINE (70 CA) -->
                   <line x1="${paddingLeft}" y1="${yKpi}" x2="${chartWidth - paddingRight}" y2="${yKpi}" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.9" />
-                  <rect x="${paddingLeft - 105}" y="${yKpi - 9}" width="96" height="18" rx="4" fill="#ef4444" opacity="0.95" />
-                  <text x="${paddingLeft - 57}" y="${yKpi + 3}" font-size="9" font-weight="850" fill="#ffffff" text-anchor="middle" font-family="JetBrains Mono">KPI: 70 CA/THÁNG</text>
+                  <rect x="${chartWidth - paddingRight + 8}" y="${yKpi - 9}" width="102" height="18" rx="4" fill="#ef4444" opacity="0.95" />
+                  <text x="${chartWidth - paddingRight + 59}" y="${yKpi + 3}" font-size="9" font-weight="850" fill="#ffffff" text-anchor="middle" font-family="JetBrains Mono">KPI: 70 CA/THÁNG</text>
 
                   <!-- Line 1: Opened Claims (Primary Gold - Fine Line 2px) -->
                   ${pointsOpen.length > 1 ? `<path d="${pathOpenStr}" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />` : ''}
@@ -12448,70 +12508,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                   <!-- X Axis Labels (GĐV Names - Sleek Font) -->
                   ${pointsOpen.map(p => `
-                    <text x="${p.x}" y="${chartHeight - 12}" font-size="11" font-weight="850" fill="var(--text-main)" text-anchor="middle">${escapeHtmlOutput(p.name)}</text>
+                    <text x="${p.x}" y="${chartHeight - 12}" font-size="9.5" font-weight="850" fill="var(--text-main)" text-anchor="middle">${escapeHtmlOutput(p.name)}</text>
                   `).join('')}
                 </svg>
               </div>
-            </div>
-
-            <!-- GĐV KPI CARDS GRID -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
-              ${gdvRows.map(r => {
-                const kpiVal = Math.round((r.weightedKpiCount || r.duyetHsbtCount) * 10) / 10;
-                const kpiAchievementRate = Math.round((kpiVal / 70) * 100);
-                let kpiBadgeBg = 'rgba(239,68,68,0.12)';
-                let kpiBadgeBorder = 'rgba(239,68,68,0.3)';
-                let kpiBadgeColor = '#ef4444';
-                let kpiStatusLabel = 'CHƯA ĐẠT KPI';
-
-                if (kpiVal >= 70) {
-                  kpiBadgeBg = 'rgba(16,185,129,0.15)';
-                  kpiBadgeBorder = 'rgba(16,185,129,0.35)';
-                  kpiBadgeColor = '#10b981';
-                  kpiStatusLabel = 'ĐẠT KPI TÍNH LƯƠNG';
-                } else if (kpiVal >= 50) {
-                  kpiBadgeBg = 'rgba(234,179,8,0.15)';
-                  kpiBadgeBorder = 'rgba(234,179,8,0.35)';
-                  kpiBadgeColor = '#eab308';
-                  kpiStatusLabel = 'GẦN ĐẠT KPI';
-                }
-
-                const initials = getGdvInitials(r.gdvName);
-
-                return `
-                  <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 18px; box-shadow: var(--shadow-sm);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                      <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); font-weight: 850; font-size: 12px; display: grid; place-items: center;">
-                          ${initials}
-                        </div>
-                        <div>
-                          <strong style="display: block; font-size: 13.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(r.gdvName)}</strong>
-                          <span style="font-size: 11px; color: var(--text-soft);">${escapeHtmlOutput(r.branch)}</span>
-                        </div>
-                      </div>
-                      <span style="font-size: 10px; font-weight: 850; padding: 3px 8px; border-radius: 99px; background: ${kpiBadgeBg}; border: 1px solid ${kpiBadgeBorder}; color: ${kpiBadgeColor}; font-family: 'JetBrains Mono';">
-                        ${kpiStatusLabel}
-                      </span>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;">
-                      <div>
-                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Số HS làm</span>
-                        <strong style="display: block; font-size: 15px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} ca</strong>
-                      </div>
-                      <div>
-                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Duyệt KPI quy đổi</span>
-                        <strong style="display: block; font-size: 15px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${kpiVal} ca <span style="font-size: 10px; color: var(--text-soft);">(${r.duyetHsbtCount} gốc)</span></strong>
-                      </div>
-                      <div>
-                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Tỷ lệ KPI</span>
-                        <strong style="display: block; font-size: 15px; color: ${kpiBadgeColor}; font-family: 'JetBrains Mono'; font-weight: 850;">${kpiAchievementRate}%</strong>
-                      </div>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
             </div>
 
           ` : `
