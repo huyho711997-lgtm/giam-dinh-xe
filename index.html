@@ -11888,12 +11888,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const gPlotWidth = gChartWidth - gPaddingLeft - gPaddingRight;
       const gPlotHeight = gChartHeight - gPaddingTop - gPaddingBottom;
 
-      const topGaragesChart = garageRows.slice(0, 10);
+      const topGaragesChart = garageRows.slice(0, 20);
       const maxGAmount = Math.max(1, ...topGaragesChart.map(g => g.totalApprovedAmount));
       const maxGClaims = Math.max(1, ...topGaragesChart.map(g => g.totalClaimsCount));
 
       const stepGX = topGaragesChart.length > 0 ? gPlotWidth / topGaragesChart.length : gPlotWidth;
-      const barW = Math.min(46, Math.max(18, stepGX * 0.42));
+      const barW = Math.min(32, Math.max(12, stepGX * 0.36));
 
       const gPoints = topGaragesChart.map((g, idx) => {
         const cx = gPaddingLeft + (idx + 0.5) * stepGX;
@@ -12203,7 +12203,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
 
             <!-- COMBO BAR + LINE VECTOR CHART SECTION FOR GARAGES -->
-            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+            <div id="garageChartCardContainer" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm); position: relative;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
                 <div>
                   <div style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
@@ -12215,9 +12215,19 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </p>
                 </div>
 
-                <div style="display: flex; align-items: center; gap: 14px; font-size: 11.5px; font-weight: 800; background: var(--bg-soft); padding: 6px 14px; border-radius: 10px; border: 1px solid var(--border);">
-                  <span style="display: flex; align-items: center; gap: 6px; color: #10b981;"><span style="width: 12px; height: 10px; background: linear-gradient(180deg, #10b981 0%, #059669 100%); border-radius: 3px;"></span> Tiền bồi thường (Cột Trái)</span>
-                  <span style="display: flex; align-items: center; gap: 6px; color: #3b82f6;"><span style="width: 12px; height: 2.5px; background: #3b82f6; border-radius: 99px;"></span> Số hồ sơ (Đường Phải)</span>
+                <!-- Legend & Export Actions -->
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                  <!-- Legend -->
+                  <div style="display: flex; align-items: center; gap: 14px; font-size: 11.5px; font-weight: 800; background: var(--bg-soft); padding: 6px 14px; border-radius: 10px; border: 1px solid var(--border);">
+                    <span style="display: flex; align-items: center; gap: 6px; color: #10b981;"><span style="width: 12px; height: 10px; background: linear-gradient(180deg, #10b981 0%, #059669 100%); border-radius: 3px;"></span> Tiền bồi thường (Cột Trái)</span>
+                    <span style="display: flex; align-items: center; gap: 6px; color: #3b82f6;"><span style="width: 12px; height: 2.5px; background: #3b82f6; border-radius: 99px;"></span> Số hồ sơ (Đường Phải)</span>
+                  </div>
+
+                  <!-- Download Image Button -->
+                  <button type="button" class="hide-on-screenshot" onclick="downloadGarageChartImage('png')" style="padding: 8px 16px; border-radius: 11px; background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(245,158,11,0.12) 100%); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; font-size: 12.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Tải ảnh biểu đồ (PNG/JPG)">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <span>Tải Ảnh Biểu Đồ</span>
+                  </button>
                 </div>
               </div>
 
@@ -12252,15 +12262,15 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                     return `
                       <line x1="${gPaddingLeft}" y1="${yPos}" x2="${gChartWidth - gPaddingRight}" y2="${yPos}" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" />
-                      <text x="${gPaddingLeft - 10}" y="${yPos + 3}" font-size="10" font-weight="750" fill="#10b981" text-anchor="end" font-family="JetBrains Mono">${moneyLabel}</text>
-                      <text x="${gChartWidth - gPaddingRight + 10}" y="${yPos + 3}" font-size="10" font-weight="750" fill="#3b82f6" text-anchor="start" font-family="JetBrains Mono">${claimsVal} ca</text>
+                      <text x="${gPaddingLeft - 10}" y="${yPos + 3}" font-size="7.5" font-weight="750" fill="#10b981" text-anchor="end" font-family="JetBrains Mono">${moneyLabel}</text>
+                      <text x="${gChartWidth - gPaddingRight + 10}" y="${yPos + 3}" font-size="7.5" font-weight="750" fill="#3b82f6" text-anchor="start" font-family="JetBrains Mono">${claimsVal} ca</text>
                     `;
                   }).join('')}
 
                   <!-- INTERACTIVE VERTICAL BARS & ROTATED LABELS GROUP -->
                   ${gPoints.map(p => {
                     const fullName = p.name || '';
-                    const displayShortName = fullName.length > 22 ? fullName.substring(0, 20) + '...' : fullName;
+                    const displayShortName = fullName.length > 25 ? fullName.substring(0, 23) + '...' : fullName;
 
                     return `
                       <g class="garage-chart-col-group" cursor="pointer" onmouseenter="showGarageChartTooltip(event, '${escapeAttributeData(p.key)}')" onmousemove="moveGarageChartTooltip(event)" onmouseleave="hideGarageChartTooltip()">
@@ -12271,12 +12281,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         <rect x="${p.cx - barW/2}" y="${p.bY}" width="${barW}" height="${p.bHeight}" rx="6" fill="url(#garageBarGrad)" style="transition: all 0.2s ease;" />
                         
                         <!-- Bar Top Money Label -->
-                        <text x="${p.cx}" y="${p.bY - 8}" font-size="9.5" font-weight="850" fill="#10b981" text-anchor="middle" font-family="JetBrains Mono">
+                        <text x="${p.cx}" y="${p.bY - 8}" font-size="7" font-weight="850" fill="#10b981" text-anchor="middle" font-family="JetBrains Mono">
                           ${p.totalApprovedAmount >= 1e6 ? (p.totalApprovedAmount / 1e6).toFixed(1) + 'M' : formatCurrencyInputNumber(p.totalApprovedAmount)}
                         </text>
 
                         <!-- Rotated Clean X-Axis Label (-38deg) -->
-                        <text x="${p.cx}" y="${gChartHeight - 95}" transform="rotate(-38, ${p.cx}, ${gChartHeight - 95})" font-size="10.5" font-weight="850" fill="var(--text-main)" text-anchor="end">
+                        <text x="${p.cx}" y="${gChartHeight - 95}" transform="rotate(-38, ${p.cx}, ${gChartHeight - 95})" font-size="7" font-weight="850" fill="var(--text-main)" text-anchor="end">
                           ${escapeHtmlOutput(displayShortName)}
                         </text>
                       </g>
@@ -12290,7 +12300,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   ${gPoints.map(p => `
                     <g pointer-events="none">
                       <circle cx="${p.cx}" cy="${p.lY}" r="4.5" fill="var(--surface)" stroke="#3b82f6" stroke-width="2.5" />
-                      <text x="${p.cx}" y="${p.lY - 12}" font-size="10" font-weight="900" fill="#3b82f6" text-anchor="middle" font-family="JetBrains Mono">${p.totalClaimsCount} ca</text>
+                      <text x="${p.cx}" y="${p.lY - 12}" font-size="7" font-weight="900" fill="#3b82f6" text-anchor="middle" font-family="JetBrains Mono">${p.totalClaimsCount} ca</text>
                     </g>
                   `).join('')}
                 </svg>
@@ -13129,6 +13139,42 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }).then(canvas => {
         const link = document.createElement('a');
         link.download = `Bieu_Do_KPI_Luong_GDV_${Date.now()}.${ext}`;
+        link.href = canvas.toDataURL(`image/${imgFormat}`, 0.95);
+        link.click();
+        triggerToast(`Đã tải ảnh biểu đồ thành công!`, 'success');
+      }).catch(err => {
+        console.error(err);
+        triggerToast('Có lỗi xảy ra khi xuất ảnh biểu đồ!', 'error');
+      });
+    }
+
+    function downloadGarageChartImage(format) {
+      const cardEl = document.getElementById('garageChartCardContainer');
+      if (!cardEl) {
+        triggerToast('Không tìm thấy khung biểu đồ bồi thường theo Gara!', 'error');
+        return;
+      }
+      if (typeof html2canvas === 'undefined') {
+        triggerToast('Thư viện tạo ảnh đang tải, vui lòng thử lại sau 2 giây...', 'warning');
+        return;
+      }
+
+      const imgFormat = format === 'jpg' || format === 'jpeg' ? 'jpeg' : 'png';
+      const ext = imgFormat === 'jpeg' ? 'jpg' : 'png';
+
+      triggerToast(`Đang tạo ảnh Biểu đồ Gara (${ext.toUpperCase()})...`, 'info');
+
+      html2canvas(cardEl, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        ignoreElements: function(element) {
+          return element.classList && element.classList.contains('hide-on-screenshot');
+        }
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Bieu_Do_Boi_Thuong_Gara_${Date.now()}.${ext}`;
         link.href = canvas.toDataURL(`image/${imgFormat}`, 0.95);
         link.click();
         triggerToast(`Đã tải ảnh biểu đồ thành công!`, 'success');
