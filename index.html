@@ -11440,6 +11440,7 @@ function formatDateDisplay(val) {
      * BÁO CÁO GIÁM ĐỊNH VIÊN & BIỂU ĐỒ KPI TÍNH LƯƠNG (UNIFIED)
      * TOGGLE BETWEEN MASTER TABLE & ULTRA-SLEEK LINE CHART
      ****************************************************/
+    let activeGdvReportWeek = "current";
     let activeGdvReportMonth = String(new Date().getMonth() + 1);
     let activeGdvReportYear = String(new Date().getFullYear());
     let activeGdvReportBranch = 'all';
@@ -11929,6 +11930,48 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--primary); background: rgba(216,180,109,0.08); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(216,180,109,0.2);">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 <span>Mốc thời gian:</span>
+              </div>
+
+              <!-- Custom Week Dropdown -->
+              <div class="custom-select-wrapper" style="position: relative;">
+                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportWeekMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); font-size: 13px; font-weight: 850; color: #3b82f6; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 185px; justify-content: space-between; box-shadow: var(--shadow-xs);">
+                  <span style="display: flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #3b82f6;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span>${activeGdvReportWeek === 'current' ? 'Tuần hiện tại' : (activeGdvReportWeek === 'all' ? 'Tất cả các tuần' : 'Tuần ' + activeGdvReportWeek.replace('w',''))}</span>
+                  </span>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #3b82f6;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                <div id="ddReportWeekMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 220px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
+                  <div class="custom-select-item ${activeGdvReportWeek === 'current' ? 'active' : ''}" onclick="selectGdvReportWeek('current')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportWeek === 'current' ? 'background: rgba(59,130,246,0.15); color: #3b82f6; font-weight: 850;' : ''}">
+                    <span>Tuần hiện tại (T7 ➔ T6)</span>
+                    ${activeGdvReportWeek === 'current' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  <div class="custom-select-item ${activeGdvReportWeek === 'w1' ? 'active' : ''}" onclick="selectGdvReportWeek('w1')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportWeek === 'w1' ? 'background: rgba(59,130,246,0.15); color: #3b82f6; font-weight: 850;' : ''}">
+                    <span>Tuần 1 (Từ ngày 1 ➔ 7)</span>
+                    ${activeGdvReportWeek === 'w1' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  <div class="custom-select-item ${activeGdvReportWeek === 'w2' ? 'active' : ''}" onclick="selectGdvReportWeek('w2')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportWeek === 'w2' ? 'background: rgba(59,130,246,0.15); color: #3b82f6; font-weight: 850;' : ''}">
+                    <span>Tuần 2 (Từ ngày 8 ➔ 14)</span>
+                    ${activeGdvReportWeek === 'w2' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  <div class="custom-select-item ${activeGdvReportWeek === 'w3' ? 'active' : ''}" onclick="selectGdvReportWeek('w3')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportWeek === 'w3' ? 'background: rgba(59,130,246,0.15); color: #3b82f6; font-weight: 850;' : ''}">
+                    <span>Tuần 3 (Từ ngày 15 ➔ 21)</span>
+                    ${activeGdvReportWeek === 'w3' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  <div class="custom-select-item ${activeGdvReportWeek === 'w4' ? 'active' : ''}" onclick="selectGdvReportWeek('w4')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportWeek === 'w4' ? 'background: rgba(59,130,246,0.15); color: #3b82f6; font-weight: 850;' : ''}">
+                    <span>Tuần 4 (Từ ngày 22 ➔ 28)</span>
+                    ${activeGdvReportWeek === 'w4' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  <div class="custom-select-item ${activeGdvReportWeek === 'w5' ? 'active' : ''}" onclick="selectGdvReportWeek('w5')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportWeek === 'w5' ? 'background: rgba(59,130,246,0.15); color: #3b82f6; font-weight: 850;' : ''}">
+                    <span>Tuần 5 (Từ ngày 29 ➔ 31)</span>
+                    ${activeGdvReportWeek === 'w5' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  <div class="custom-select-item ${activeGdvReportWeek === 'all' ? 'active' : ''}" onclick="selectGdvReportWeek('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportWeek === 'all' ? 'background: rgba(59,130,246,0.15); color: #3b82f6; font-weight: 850;' : ''}">
+                    <span>Tất cả các tuần trong tháng</span>
+                    ${activeGdvReportWeek === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                </div>
               </div>
 
               <!-- Custom Month Dropdown -->
@@ -12613,25 +12656,63 @@ function renderGdvMonthlyReportPage(targetContainer) {
       `;
     }
 
+    function selectGdvReportWeek(weekVal) {
+      activeGdvReportWeek = weekVal;
+      const menu = document.getElementById('ddReportWeekMenu');
+      if (menu) menu.style.display = 'none';
+      renderGdvReportPage();
+    }
+
     function getWeeklyZoneReportPeriod() {
-      const now = new Date();
-      const dayOfWeek = now.getDay(); // 0 is Sun, 6 is Sat
-      const diffToSat = (dayOfWeek === 6) ? 0 : (dayOfWeek + 1);
-      const startDate = new Date(now);
-      startDate.setDate(now.getDate() - diffToSat);
+      const selectedYear = (activeGdvReportYear && activeGdvReportYear !== 'all') ? parseInt(activeGdvReportYear, 10) : new Date().getFullYear();
+      const selectedMonth = (activeGdvReportMonth && activeGdvReportMonth !== 'all') ? parseInt(activeGdvReportMonth, 10) : (new Date().getMonth() + 1);
 
-      const endDate = new Date(startDate);
-      endDate.setDate(startDate.getDate() + 6);
+      let startDate, endDate, labelStr;
 
-      const startStr = formatDateDisplay(startDate.toISOString());
-      const endStr = formatDateDisplay(endDate.toISOString());
+      if (activeGdvReportWeek === 'current') {
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        const diffToSat = (dayOfWeek === 6) ? 0 : (dayOfWeek + 1);
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - diffToSat);
+        startDate.setHours(0, 0, 0, 0);
+
+        endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+
+        const startStr = formatDateDisplay(startDate.toISOString());
+        const endStr = formatDateDisplay(endDate.toISOString());
+        labelStr = `Từ ngày ${startStr}-${endStr}( THỨ 7 TUẦN TRƯỚC ĐẾN THỨ 6 TUẦN SAU)`;
+      } else if (activeGdvReportWeek === 'all') {
+        startDate = new Date(selectedYear, selectedMonth - 1, 1, 0, 0, 0);
+        const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
+        endDate = new Date(selectedYear, selectedMonth - 1, lastDay, 23, 59, 59);
+
+        const startStr = formatDateDisplay(startDate.toISOString());
+        const endStr = formatDateDisplay(endDate.toISOString());
+        labelStr = `Báo cáo Tháng ${selectedMonth}/${selectedYear} (${startStr} - ${endStr})`;
+      } else {
+        const weekNum = parseInt(activeGdvReportWeek.replace('w', ''), 10) || 1;
+        const startDay = (weekNum - 1) * 7 + 1;
+        const lastDayOfMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+        const clampedStartDay = Math.min(startDay, lastDayOfMonth);
+        const clampedEndDay = Math.min(startDay + 6, lastDayOfMonth);
+
+        startDate = new Date(selectedYear, selectedMonth - 1, clampedStartDay, 0, 0, 0);
+        endDate = new Date(selectedYear, selectedMonth - 1, clampedEndDay, 23, 59, 59);
+
+        const startStr = formatDateDisplay(startDate.toISOString());
+        const endStr = formatDateDisplay(endDate.toISOString());
+        labelStr = `Báo cáo Tuần ${weekNum} (${startStr} - ${endStr})`;
+      }
 
       return {
-        startStr,
-        endStr,
+        startStr: formatDateDisplay(startDate.toISOString()),
+        endStr: formatDateDisplay(endDate.toISOString()),
         startDate,
         endDate,
-        label: `Từ ngày ${startStr}-${endStr}( THỨ 7 TUẦN TRƯỚC ĐẾN THỨ 6 TUẦN SAU)`
+        label: labelStr
       };
     }
 
@@ -12639,6 +12720,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const period = getWeeklyZoneReportPeriod();
       const claimsList = Object.values(cachedPendingClaimsPayload || {});
       const transfersList = Object.values(cachedAccountingTransfersPayload || {});
+
+      const startTime = period.startDate.getTime();
+      const endTime = period.endDate.getTime();
 
       const gdvMap = {};
 
@@ -12651,6 +12735,19 @@ function renderGdvMonthlyReportPage(targetContainer) {
       });
 
       claimsList.forEach(c => {
+        let claimTime = c.createdAt || c.timestamp || 0;
+        if (!claimTime && c.ngayMoHs) {
+          const dp = parseDateParts(c.ngayMoHs);
+          if (dp && dp.year && dp.month && dp.day) {
+            claimTime = new Date(dp.year, dp.month - 1, dp.day).getTime();
+          }
+        }
+        if (!claimTime) claimTime = Date.now();
+
+        if (claimTime < startTime || claimTime > endTime) {
+          return;
+        }
+
         const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || c.canBoBoiThuong || c.gdvName || c.createdByName || 'Chưa phân công').trim();
         if (!gdvMap[gdvName]) {
           gdvMap[gdvName] = { gdvName, phatSinh: 0, daDuyetHsb: 0, chuaDuyetPasc: 0, tonHoaDon: 0, chuyenDntt: 0, carplaCount: 0, tndsTonLuyKe: 0 };
@@ -12683,9 +12780,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
       });
 
       transfersList.forEach(t => {
-        const gdvName = String(t.gdvName || '').trim();
-        if (gdvName && gdvMap[gdvName]) {
-          gdvMap[gdvName].chuyenDntt += (t.danhSachHoSo?.length || 1);
+        const tTime = t.ngayBanGiao || t.createdAt || Date.now();
+        if (tTime >= startTime && tTime <= endTime) {
+          const gdvName = String(t.gdvName || '').trim();
+          if (gdvName && gdvMap[gdvName]) {
+            gdvMap[gdvName].chuyenDntt += (t.danhSachHoSo?.length || 1);
+          }
         }
       });
 
