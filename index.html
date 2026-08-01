@@ -12880,22 +12880,23 @@ function renderGdvMonthlyReportPage(targetContainer) {
           item.hsTonOver30Days++;
         }
 
-        // 3. SỐ TIỀN BÌNH QUÂN DƯỚI 10TR
-        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
-        const amtVal = parseInt(amtStr, 10) || 0;
-        if (amtVal > 0 && amtVal < 10000000) {
-          item.sumAmtUnder10M += amtVal;
-          item.countUnder10M++;
-        }
-
-        // 4. PERIOD-SPECIFIC METRICS (FILTERED BY START & END DATE RANGE)
+        // 3. PERIOD-SPECIFIC METRICS (FILTERED BY START & END DATE RANGE)
         if (claimTime < startTime || claimTime > endTime) {
           return;
         }
 
         item.phatSinh++;
+        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+        const amtVal = parseInt(amtStr, 10) || 0;
+
         if (isApproved) {
           item.daDuyetHsb++;
+
+          // SỐ TIỀN BÌNH QUÂN DƯỚI 10TR: FILTERED BY DATE RANGE, APPROVED STATUS ('Đã duyệt HSBT'), AND AMOUNT < 10TR
+          if (amtVal > 0 && amtVal < 10000000) {
+            item.sumAmtUnder10M += amtVal;
+            item.countUnder10M++;
+          }
         } else {
           item.chuaDuyetPasc++;
         }
