@@ -13179,7 +13179,18 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       // Auto-detect role mode from active logged-in user profile
       const activeAccountingRoleMode = getLoggedInUserAccountingRole();
-      const transfersList = Object.values(cachedAccountingTransfersPayload || {});
+      const isKeToanOrAdmin = activeAccountingRoleMode === 'ketoan' || (activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin');
+      const currentLoggedInGdvName = String(activeUserProfile?.fullName || activeUserProfile?.displayName || activeUserProfile?.name || firebase.auth().currentUser?.displayName || '').trim().toLowerCase();
+
+      let transfersList = Object.values(cachedAccountingTransfersPayload || {});
+
+      // For regular Giám định viên (non-ketoan, non-admin), ONLY show transfer batches created by/assigned to themselves!
+      if (!isKeToanOrAdmin && currentLoggedInGdvName) {
+        transfersList = transfersList.filter(t => {
+          const tGdv = String(t.gdvName || '').trim().toLowerCase();
+          return tGdv.includes(currentLoggedInGdvName) || currentLoggedInGdvName.includes(tGdv);
+        });
+      }
 
       // Stat counters
       const statTotal = transfersList.length;
@@ -13660,24 +13671,27 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       transfers.forEach(t => {
         // Exclude claims of current batch being edited so they stay selectable
-        if (editingTransferId && t.transferId === editingTransferId) return;
+        if (editingTransferId && String(t.transferId) === String(editingTransferId)) return;
 
         const list = t.danhSachHoSo || [];
         list.forEach(c => {
           if (c.claimId) transferredSet.add(String(c.claimId));
+          if (c.id) transferredSet.add(String(c.id));
           if (c.soHoSoBoiThuong) transferredSet.add(String(c.soHoSoBoiThuong).toLowerCase().trim());
+          if (c.bienSo) transferredSet.add(String(c.bienSo).toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
         });
 
         if (list.length === 0 && (t.soHoSoBoiThuong || t.bienSo)) {
           if (t.claimId) transferredSet.add(String(t.claimId));
           if (t.soHoSoBoiThuong) transferredSet.add(String(t.soHoSoBoiThuong).toLowerCase().trim());
+          if (t.bienSo) transferredSet.add(String(t.bienSo).toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
         }
       });
 
       return transferredSet;
     }
 
-    /* RENDER ALL SEARCH RESULTS FOR CLAIMS - FILTERS BY "ĐÃ DUYỆT HSBT" AND NOT ALREADY IN A BATCH */
+    /* RENDER ALL SEARCH RESULTS FOR CLAIMS - FILTERS BY "ĐÃ DUYỆT HSBT", LOGGED-IN GĐV AND NOT ALREADY IN A BATCH */
     function renderAccClaimSearchResults(keyword) {
       const holder = document.getElementById('accClaimSearchResultsHolder');
       const counterLbl = document.getElementById('lblAccClaimSearchCounter');
@@ -13689,18 +13703,33 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const currentTransferId = getAccInputValue('accBatchTransferId') || '';
       const alreadyTransferredSet = getAlreadyTransferredClaimIdsSet(currentTransferId);
 
-      // STRICT FILTER: Only claims with status "Đã duyệt HSBT" AND NOT ALREADY IN ANOTHER BATCH
-      const approvedClaims = allClaims.filter(c => {
+      const isKeToanOrAdmin = getLoggedInUserAccountingRole() === 'ketoan' || (activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin');
+      const currentLoggedInGdvName = String(activeUserProfile?.fullName || activeUserProfile?.displayName || activeUserProfile?.name || firebase.auth().currentUser?.displayName || '').trim().toLowerCase();
+
+      // STRICT FILTER: Only claims with status "Đã duyệt HSBT", belonging to current GĐV, AND NOT ALREADY IN ANOTHER BATCH
+      let approvedClaims = allClaims.filter(c => {
         const st = String(c.trangThai || '').toLowerCase().trim();
         const isApproved = st === 'da_duyet_hsbt' || st.includes('đã duyệt hsbt') || st.includes('da_duyet_pasc') || st.includes('da_duyet');
         if (!isApproved) return false;
 
         const cId = String(c.id || '');
         const hsbt = String(c.soHoSoBoiThuong || c.maVuTonThat || '').toLowerCase().trim();
+        const bienSoClean = String(c.bienSo || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 
-        const isAlreadyInBatch = (cId && alreadyTransferredSet.has(cId)) || (hsbt && alreadyTransferredSet.has(hsbt));
+        const isAlreadyInBatch = (cId && alreadyTransferredSet.has(cId)) || 
+                                 (hsbt && alreadyTransferredSet.has(hsbt)) ||
+                                 (bienSoClean && alreadyTransferredSet.has(bienSoClean));
         return !isAlreadyInBatch;
       });
+
+      // If user is a regular GĐV, filter claims to ONLY include those assigned to them
+      if (!isKeToanOrAdmin && currentLoggedInGdvName) {
+        approvedClaims = approvedClaims.filter(c => {
+          const claimGdv = String(c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || c.canBoBoiThuong || c.canBoGiamDinh || c.gdvName || c.createdByName || '').trim().toLowerCase();
+          if (!claimGdv) return true;
+          return claimGdv.includes(currentLoggedInGdvName) || currentLoggedInGdvName.includes(claimGdv);
+        });
+      }
 
       const kw = (keyword || '').toLowerCase().trim();
 
