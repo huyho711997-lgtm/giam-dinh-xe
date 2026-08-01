@@ -5727,6 +5727,45 @@
 
     let parsedExcelBatchRows = [];
 
+        async function clearAllPendingClaimsDataByAdmin() {
+      const isAdmin = activeUserProfile && (
+        String(activeUserProfile.role || '').trim().toLowerCase() === 'admin' ||
+        String(activeUserProfile.role || '').trim().toLowerCase() === 'truong_nhom' ||
+        activeUserProfile.isAdmin === true
+      );
+
+      if (!isAdmin) {
+        triggerToast('Chỉ tài khoản Admin mới có quyền xóa toàn bộ dữ liệu!', 'error');
+        return;
+      }
+
+      const totalClaimsCount = Object.keys(cachedPendingClaimsPayload || {}).length;
+      if (totalClaimsCount === 0) {
+        triggerToast('Hiện tại không có dữ liệu hồ sơ tồn nào để xóa.', 'info');
+        return;
+      }
+
+      const confirmText = prompt(
+        `⚠️ CẢNH BÁO NGHÊM TRỌNG:\nHành động này sẽ XÓA VĨNH VIỄN toàn bộ ${totalClaimsCount} hồ sơ tồn trong hệ thống!\n\nĐể xác nhận, vui lòng nhập chính xác chữ: XOA TAT CA`
+      );
+
+      if (!confirmText || confirmText.trim().toUpperCase() !== 'XOA TAT CA') {
+        triggerToast('Đã hủy thao tác xóa dữ liệu.', 'info');
+        return;
+      }
+
+      try {
+        triggerToast('Đang tiến hành xóa toàn bộ dữ liệu hồ sơ tồn...', 'info');
+        await dbNodeInstance.ref('pending_claims').remove();
+        cachedPendingClaimsPayload = {};
+        triggerToast('Đã xóa toàn bộ dữ liệu hồ sơ tồn thành công!', 'success');
+        executeUIRenderPendingClaims();
+      } catch (err) {
+        console.error(err);
+        triggerToast('Lỗi khi xóa dữ liệu: ' + err.message, 'error');
+      }
+    }
+
     function openImportExcelModal() {
       const modal = document.getElementById('importExcelModalOverlay');
       if (modal) {
@@ -7451,6 +7490,12 @@ function formatDateDisplay(val) {
                   <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft);">Quản lý danh sách hồ sơ tổn thất tồn đọng trong team, phân công Giám định viên và theo dõi báo cáo tuần.</p>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                  ${isAdmin ? `
+                    <button type="button" onclick="clearAllPendingClaimsDataByAdmin()" style="padding: 0 18px; height: 42px; font-size: 13px; border-radius: 10px; font-weight: 850; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(239,68,68,0.35); transition: all 0.2s ease;" title="Chỉ Admin mới có quyền xóa toàn bộ hồ sơ tồn">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                      <span>Xóa toàn bộ hồ sơ tồn</span>
+                    </button>
+                  ` : ''}
 
                   <button type="button" class="btn-premium" onclick="openImportExcelModal()" style="width: auto !important; padding: 0 24px; height: 42px; font-size: 13px; border-radius: 10px; font-weight: 850; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.35);">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h8"></path><path d="M8 17h8"></path><path d="M10 9h4"></path></svg>
