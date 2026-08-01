@@ -13933,7 +13933,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <span style="font-size: 12px; color: var(--text-soft); font-family: 'JetBrains Mono';">Mã Phiếu: ${t.transferId} (${formatDateDisplay(t.ngayBanGiao)})</span>
               </div>
             </div>
-            <button type="button" onclick="closeKeToanReviewModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;">✕</button>
+
+            <!-- HEADER ACTIONS FOR KE TOAN ROLE -->
+            <div style="display: flex; align-items: center; gap: 10px;">
+              ${isKeToanRole ? `
+                <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_nhan_du_ho_so')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(139,92,246,0.13); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.32); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+                  ${ACC_SVGS.CHECK_CIRCLE} Đã nhận đủ hồ sơ
+                </button>
+              ` : ''}
+              <button type="button" onclick="closeKeToanReviewModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;">✕</button>
+            </div>
           </div>
 
           <!-- MODAL BODY -->
@@ -14046,14 +14055,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           <!-- FIXED FOOTER ACTION BUTTONS DEDICATED PER ROLE -->
           <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 14px;">
             ${isKeToanRole ? `
-              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'can_bo_sung')" style="padding: 11px 18px; border-radius: 12px; font-size: 13px; font-weight: 850; background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                  ${ACC_SVGS.WARNING} Yêu cầu Bổ sung
-                </button>
-                <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_nhan_du_ho_so')" style="padding: 11px 18px; border-radius: 12px; font-size: 13px; font-weight: 850; background: rgba(139,92,246,0.13); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.32); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                  ${ACC_SVGS.CHECK_CIRCLE} Đã nhận đủ hồ sơ
-                </button>
-              </div>
+              <button type="button" onclick="closeKeToanReviewModal()" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Đóng</button>
               <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_trinh_dntt')" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: #10b981; color: #ffffff; border: none; cursor: pointer; box-shadow: 0 4px 18px rgba(16,185,129,0.35); display: inline-flex; align-items: center; gap: 6px;">
                 ${ACC_SVGS.CHECK_CIRCLE} Trình Đề nghị Thanh toán
               </button>
@@ -14096,11 +14098,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
         };
       });
 
-      if (targetStatus === 'can_bo_sung') {
-        if (hoSoYeuCauBoSung.length === 0) {
-          triggerToast('Vui lòng chọn ít nhất một hồ sơ cần bổ sung!', 'warning');
-          return;
-        }
+      // If supplement checkboxes are ticked, automatically route status as 'can_bo_sung'
+      if (hoSoYeuCauBoSung.length > 0) {
+        targetStatus = 'can_bo_sung';
         if (hoSoYeuCauBoSung.some(item => !item.ghiChu.trim())) {
           triggerToast('Vui lòng nhập nội dung cần bổ sung cho từng hồ sơ đã chọn!', 'warning');
           return;
