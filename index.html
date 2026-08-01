@@ -18,6 +18,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
     /* ==========================================================================
@@ -11922,7 +11923,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 </button>
                 <button type="button" onclick="exportWeeklyZoneReportExcel()" style="padding: 0 18px; height: 42px; font-size: 12.5px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(59,130,246,0.3); transition: all 0.2s ease;">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                  <span>📊 Tải Báo cáo Tuần (.xlsx)</span>
+                  <span>Tải Báo cáo Tuần (.xlsx)</span>
                 </button>
               </div>
             </div>
@@ -12043,11 +12044,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </div>
             </div>
 
-            <!-- Right Controls: Search GĐV -->
-            <div class="search-wrap" style="margin: 0; min-width: 240px; max-width: 320px; flex: 1;">
-              <input type="text" class="input-premium search-input" placeholder="Tìm kiếm GĐV hoặc Chi nhánh..." value="${escapeAttributeData(activeGdvReportSearch)}" oninput="changeGdvReportSearch(this.value)" style="padding-left: 38px; border-radius: 11px; height: 42px; font-size: 13px;" />
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-soft);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            </div>
+
           </div>
 
           ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone') ? `
@@ -12599,7 +12596,18 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const overallAvgUnder10M = totalCountUnder10M > 0 ? Math.round(totalSumAmtUnder10M / totalCountUnder10M) : 0;
 
       return `
-        <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 26px 30px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+        <div id="weeklyZoneReportCardContainer" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 26px 30px; margin-bottom: 24px; box-shadow: var(--shadow-sm); position: relative;">
+          
+          <div style="position: absolute; right: 26px; top: 22px; display: flex; gap: 8px; flex-wrap: wrap; z-index: 10;">
+            <button type="button" onclick="downloadWeeklyZoneReportImage('png')" style="padding: 7px 14px; border-radius: 10px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Tải ảnh PNG chất lượng cao">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              <span>Tải Ảnh (PNG)</span>
+            </button>
+            <button type="button" onclick="downloadWeeklyZoneReportImage('jpg')" style="padding: 7px 14px; border-radius: 10px; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: #d97706; font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Tải ảnh JPG">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              <span>Tải Ảnh (JPG)</span>
+            </button>
+          </div>
           
           <div style="text-align: center; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
             <h2 style="color: #ef4444; font-size: 22px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3;">
@@ -12933,6 +12941,39 @@ function renderGdvMonthlyReportPage(targetContainer) {
       list = list.sort((a, b) => b.phatSinh - a.phatSinh);
 
       return { period, list };
+    }
+
+        function downloadWeeklyZoneReportImage(format) {
+      const cardEl = document.getElementById('weeklyZoneReportCardContainer');
+      if (!cardEl) {
+        triggerToast('Không tìm thấy khung báo cáo!', 'error');
+        return;
+      }
+      if (typeof html2canvas === 'undefined') {
+        triggerToast('Thư viện tạo ảnh đang tải, vui lòng thử lại sau 2 giây...', 'warning');
+        return;
+      }
+
+      const imgFormat = format === 'jpg' || format === 'jpeg' ? 'jpeg' : 'png';
+      const ext = imgFormat === 'jpeg' ? 'jpg' : 'png';
+
+      triggerToast(`Đang tạo ảnh Báo cáo Tuần (${ext.toUpperCase()})...`, 'info');
+
+      html2canvas(cardEl, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Bao_Cao_Tuan_Truong_Zone_${Date.now()}.${ext}`;
+        link.href = canvas.toDataURL(`image/${imgFormat}`, 0.95);
+        link.click();
+        triggerToast(`Đã tải ảnh báo cáo dạng ${ext.toUpperCase()} thành công!`, 'success');
+      }).catch(err => {
+        console.error(err);
+        triggerToast('Có lỗi xảy ra khi xuất ảnh báo cáo!', 'error');
+      });
     }
 
     function exportWeeklyZoneReportExcel() {
