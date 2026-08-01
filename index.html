@@ -7312,403 +7312,68 @@ function formatDateDisplay(val) {
 
 
       if (activeDashboardTab === 'home') {
-        const currentUser = firebase.auth().currentUser;
-        const allCases = cachedCasesPayload || {};
-        const allEntries = Object.values(allCases);
-        const totalCases = allEntries.length;
-        const completedCases = allEntries.filter(c => c.trangThai === STATUS_COMPLETED).length;
-        const pendingCases = totalCases - completedCases;
-
-        const recentPending = Object.entries(allCases)
-          .filter(([,item]) => item.trangThai !== STATUS_COMPLETED)
-          .sort((a,b) => Number(b[1].createdAt || 0) - Number(a[1].createdAt || 0))
-          .slice(0, 3);
-
-        let pendingRowsHtml = '';
-        if (recentPending.length === 0) {
-          pendingRowsHtml = `
-            <div style="text-align: center; padding: 32px; color: var(--text-muted); font-size: 13px;">
-              ✨ Tuyệt vời! Hiện tại không có hồ sơ nào đang chờ xử lý.
-            </div>
-          `;
-        } else {
-          pendingRowsHtml = recentPending.map(([key, item]) => {
-            const plate = escapeHtmlOutput(item.bienSo || 'Chưa rõ biển số');
-            const garaName = escapeHtmlOutput(item.tenGara || 'Chưa chỉ định Gara');
-            const dateStr = formatCaseTimestamp(item.createdAt);
-            const initials = plate.replace(/[^A-Za-z0-9]/g, '').slice(0,2).toUpperCase() || 'XE';
-            return `
-              <div class="pending-case-row" onclick="navigateToCase('${key}')">
-                <div style="display: flex; align-items: center; gap: 16px;">
-                  <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(216,180,109,0.08); color: var(--primary); display: grid; place-items: center; font-weight: 850; font-size: 13px; border: 1px solid rgba(216,180,109,0.15);">
-                    ${initials}
-                  </div>
-                  <div>
-                    <div style="font-weight: 800; font-size: 14px; color: var(--text-main);">${plate}</div>
-                    <div style="font-size: 12px; color: var(--text-soft); margin-top: 3px;">
-                      Gara: <span style="font-weight: 700; color: var(--text-main);">${garaName}</span> • Tạo ngày: ${dateStr}
-                    </div>
-                  </div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <span style="font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 99px; background: rgba(245, 158, 11, 0.14); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25);">
-                    Chờ nhập ảnh
-                  </span>
-                  <button type="button" class="btn-action-premium btn-action-primary" style="height: 32px; padding: 0 14px; font-size: 11.5px; border-radius: 8px; font-weight: 850;" onclick="event.stopPropagation(); navigateToCase('${key}')">
-                    Xử lý ngay
-                  </button>
-                </div>
-              </div>
-            `;
-          }).join('');
-        }
-
-        const userDisplayName = activeUserProfile?.displayName || currentUser?.email || 'Thành viên';
-
         container.innerHTML = `
-          <!-- Premium Self-Contained Styles for Homepage -->
-          <style>
-            .premium-home-container {
-              animation: fadeIn 0.5s ease-out;
-            }
-            .interactive-hero {
-              position: relative;
-              background: linear-gradient(135deg, rgba(20, 26, 38, 0.95) 0%, rgba(8, 12, 18, 0.95) 100%);
-              border: 1px solid rgba(255, 255, 255, 0.08);
-              border-radius: 24px;
-              padding: 40px;
-              display: grid;
-              grid-template-columns: 1.2fr 0.8fr;
-              gap: 32px;
-              align-items: center;
-              overflow: hidden;
-              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-              margin-bottom: 24px;
-            }
-            body.light-mode .interactive-hero {
-              background: linear-gradient(135deg, #eae8e1 0%, #f4f3ed 100%);
-              border: 1px solid rgba(28, 31, 38, 0.12);
-              box-shadow: 0 20px 40px rgba(0,0,0,0.06);
-            }
-            .interactive-hero::before {
-              content: '';
-              position: absolute;
-              top: -50%;
-              right: -30%;
-              width: 500px;
-              height: 500px;
-              border-radius: 50%;
-              background: radial-gradient(circle, rgba(216, 180, 109, 0.15) 0%, rgba(216, 180, 109, 0) 70%);
-              pointer-events: none;
-            }
-            .hero-badge {
-              display: inline-flex;
-              align-items: center;
-              gap: 6px;
-              background: rgba(216, 180, 109, 0.1);
-              border: 1px solid rgba(216, 180, 109, 0.25);
-              color: var(--primary);
-              padding: 5px 12px;
-              border-radius: 99px;
-              font-size: 11px;
-              font-weight: 800;
-              letter-spacing: 0.08em;
-              text-transform: uppercase;
-              margin-bottom: 16px;
-            }
-            .hero-title {
-              font-size: clamp(24px, 3.4vw, 36px);
-              font-weight: 900;
-              line-height: 1.2;
-              color: var(--text-main);
-              margin-bottom: 12px;
-              letter-spacing: -0.02em;
-            }
-            .hero-title span {
-              background: linear-gradient(135deg, #f2d998 0%, #c79b4b 100%);
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-            }
-            .hero-desc {
-              font-size: 14px;
-              color: var(--text-soft);
-              line-height: 1.5;
-              max-width: 580px;
-              margin-bottom: 24px;
-            }
-            .hero-actions {
-              display: flex;
-              gap: 12px;
-              flex-wrap: wrap;
-            }
-            .btn-action-premium {
-              padding: 0 20px;
-              height: 44px;
-              border-radius: 12px;
-              font-size: 13px;
-              font-weight: 800;
-              cursor: pointer;
-              display: inline-flex;
-              align-items: center;
-              gap: 8px;
-              transition: all 0.2s ease;
-            }
-            .btn-action-primary {
-              background: var(--primary-gradient);
-              color: #111111;
-              border: none;
-              box-shadow: 0 8px 16px -4px rgba(216, 180, 109, 0.3);
-            }
-            .btn-action-primary:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 12px 20px -4px rgba(216, 180, 109, 0.45);
-            }
-            .btn-action-secondary {
-              background: rgba(255, 255, 255, 0.03);
-              color: var(--text-main);
-              border: 1px solid var(--border-strong);
-            }
-            .btn-action-secondary:hover {
-              background: var(--surface-hover);
-              border-color: var(--primary);
-              transform: translateY(-2px);
-            }
-            
-            /* Stats Widget Card layout */
-            .quick-stats-grid {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 14px;
-            }
-            .quick-stat-card {
-              background: rgba(14, 19, 28, 0.6);
-              backdrop-filter: blur(12px);
-              border: 1px solid rgba(255, 255, 255, 0.05);
-              border-radius: 16px;
-              padding: 16px 20px;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-            }
-            body.light-mode .quick-stat-card {
-              background: rgba(255, 255, 255, 0.8);
-              border: 1px solid rgba(28, 31, 38, 0.08);
-            }
-            .stat-card-label {
-              font-size: 11px;
-              font-weight: 800;
-              color: var(--text-soft);
-              text-transform: uppercase;
-              letter-spacing: 0.05em;
-            }
-            .stat-card-val {
-              font-family: 'JetBrains Mono';
-              font-size: 26px;
-              font-weight: 900;
-              margin-top: 6px;
-              color: var(--text-main);
-            }
-            
-            /* Quick Access Shortcuts Grid */
-            .shortcuts-section {
-              margin-bottom: 28px;
-            }
-            .shortcuts-header {
-              font-size: 15px;
-              font-weight: 850;
-              color: var(--text-main);
-              margin-bottom: 14px;
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            }
-            .shortcuts-grid {
-              display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-              gap: 14px;
-            }
-            .shortcut-card {
-              background: var(--surface);
-              border: 1px solid var(--border-strong);
-              border-radius: 16px;
-              padding: 18px 20px;
-              cursor: pointer;
-              display: flex;
-              align-items: center;
-              gap: 14px;
-              transition: all 0.2s ease;
-            }
-            .shortcut-card:hover {
-              transform: translateY(-3px);
-              border-color: var(--primary);
-              box-shadow: var(--shadow-sm);
-              background: var(--surface-strong);
-            }
-            .shortcut-icon {
-              width: 38px;
-              height: 38px;
-              border-radius: 10px;
-              display: grid;
-              place-items: center;
-              font-size: 16px;
-            }
-
-            /* My Case Worklist rows */
-            .worklist-section {
-              background: var(--surface);
-              border: 1px solid var(--border-strong);
-              border-radius: 20px;
-              padding: 24px;
-              box-shadow: var(--shadow-sm);
-            }
-            .worklist-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 18px;
-              border-bottom: 1px dashed var(--border);
-              padding-bottom: 12px;
-            }
-            .pending-case-row {
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              padding: 14px 20px;
-              border-radius: 12px;
-              border: 1px solid var(--border);
-              background: var(--bg-soft);
-              cursor: pointer;
-              transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-              margin-bottom: 10px;
-            }
-            .pending-case-row:last-child {
-              margin-bottom: 0;
-            }
-            .pending-case-row:hover {
-              border-color: var(--primary);
-              transform: translateX(4px);
-              background: var(--surface-hover);
-            }
-
-            /* Animations */
-            @keyframes fadeIn {
-              from { opacity: 0; transform: translateY(8px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-
-            @media (max-width: 992px) {
-              .interactive-hero { grid-template-columns: 1fr; padding: 32px 24px; }
-              .quick-stats-grid { grid-template-columns: 1fr; gap: 10px; }
-            }
-          </style>
-          
-          <div class="premium-home-container">
-            <!-- Glassmorphic Banner with Interactive Status Panel -->
-            <section class="interactive-hero">
-              <div>
-                <div class="hero-badge">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                  <span>Chào mừng trở lại, ${escapeHtmlOutput(userDisplayName)}</span>
-                </div>
-                
-                <h2 class="hero-title">
-                  Giám định - Bồi thường<br>
-                  <span>Tasco Insurtech.</span>
-                </h2>
-                
-                <p class="hero-desc">
-                  Hệ thống hỗ trợ Giám định viên điều phối tác nghiệp nhanh chóng với các đơn vị Gara, đối chiếu dữ liệu hư hại thực tế và hoàn thiện hồ sơ phê duyệt bồi thường trực tuyến.
-                </p>
-                
-                <div class="hero-actions">
-                  <button type="button" class="btn-action-premium btn-action-primary" onclick="switchWorkspaceTab('list')">
-                    ${SVGS.FOLDER}
-                    <span>Vào danh sách hồ sơ</span>
-                  </button>
-                  <button type="button" class="btn-action-premium btn-action-secondary" onclick="switchWorkspaceTab('create')">
-                    ${SVGS.SPARKLES}
-                    <span>Khởi tạo hồ sơ mới</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- High Tech Status Panel -->
-              <div class="quick-stats-grid">
-                <div class="quick-stat-card">
-                  <span class="stat-card-label">Tổng số ca tiếp nhận</span>
-                  <span class="stat-card-val" style="color: var(--primary);">${totalCases}</span>
-                </div>
-                <div class="quick-stat-card">
-                  <span class="stat-card-label">Hồ sơ chờ duyệt/ảnh</span>
-                  <span class="stat-card-val" style="color: var(--warning);">${pendingCases}</span>
-                </div>
-                <div class="quick-stat-card">
-                  <span class="stat-card-label">Ca bồi thường hoàn tất</span>
-                  <span class="stat-card-val" style="color: var(--success);">${completedCases}</span>
-                </div>
-              </div>
-            </section>
-
-            <!-- Lối tắt tác nghiệp nhanh -->
-            <div class="shortcuts-section">
-              <div class="shortcuts-header">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
-                <span>Lối tắt tác nghiệp nhanh</span>
-              </div>
-              <div class="shortcuts-grid">
-                <div class="shortcut-card" onclick="switchWorkspaceTab('create')">
-                  <div class="shortcut-icon" style="background: rgba(216,180,109,0.08); color: var(--primary);">
-                    ${SVGS.SPARKLES}
-                  </div>
-                  <div>
-                    <div style="font-weight: 850; font-size: 13.5px; color: var(--text-main);">Tạo hồ sơ mới</div>
-                    <span style="font-size: 11px; color: var(--text-soft);">Khai báo biển số & chỉ định Gara</span>
-                  </div>
-                </div>
-
-                <div class="shortcut-card" onclick="switchWorkspaceTab('list')">
-                  <div class="shortcut-icon" style="background: rgba(96,165,250,0.08); color: #60a5fa;">
-                    ${SVGS.FOLDER}
-                  </div>
-                  <div>
-                    <div style="font-weight: 850; font-size: 13.5px; color: var(--text-main);">Danh sách hồ sơ</div>
-                    <span style="font-size: 11px; color: var(--text-soft);">Xem tiến độ & tải ảnh đối chiếu</span>
-                  </div>
-                </div>
-
-                <div class="shortcut-card" onclick="switchWorkspaceTab('gdv_report')">
-                  <div class="shortcut-icon" style="background: rgba(72,215,161,0.08); color: var(--success);">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
-                  </div>
-                  <div>
-                    <div style="font-weight: 850; font-size: 13.5px; color: var(--text-main);">Doanh thu Gara</div>
-                    <span style="font-size: 11px; color: var(--text-soft);">Báo cáo bồi thường chi tiết Gara</span>
-                  </div>
-                </div>
-
-                <div class="shortcut-card" onclick="switchWorkspaceTab('accounting_transfer')">
-                  <div class="shortcut-icon" style="background: rgba(167,139,250,0.08); color: #a78bfa;">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="12" y2="16"></line></svg>
-                  </div>
-                  <div>
-                    <div style="font-weight: 850; font-size: 13.5px; color: var(--text-main);">Chuyển giao Kế toán</div>
-                    <span style="font-size: 11px; color: var(--text-soft);">Duyệt chuyển giao phiếu thanh toán</span>
-                  </div>
-                </div>
+          <section class="hero-panel" style="margin-bottom: 24px; padding: 48px 32px;">
+            <div>
+              <div class="eyebrow">${SVGS.SPARKLES} Nền tảng Giám định số Tasco Insurtech</div>
+              <h2 style="font-size: 32px; line-height: 1.2;">Giám định - Bồi thường Tasco<br><span>Nhìn rõ tổn thất · Chốt đúng phương án.</span></h2>
+              <p style="max-width: 600px; margin-top: 14px; font-size: 14px; color: var(--text-soft);">
+                Hệ thống hỗ trợ giám định viên và Gara đối chiếu hình ảnh hiện trạng, lập danh sách phụ tùng và đồng bộ phương án sửa chữa thời gian thực.
+              </p>
+              <div style="margin-top: 24px; display: flex; gap: 12px;">
+                <button type="button" class="btn-premium" style="max-width: 200px;" onclick="switchWorkspaceTab('list')">${SVGS.FOLDER} Vào quản lý hồ sơ</button>
+                <button type="button" class="btn-premium btn-secondary" style="max-width: 200px;" onclick="switchWorkspaceTab('create')">${SVGS.SPARKLES} Khởi tạo hồ sơ mới</button>
               </div>
             </div>
+            <div class="hero-signature">
+              <div class="seal">${SVGS.SPARKLES}</div>
+              <small>Realtime secured</small>
+            </div>
+          </section>
 
-            <!-- Hồ sơ cần xử lý khẩn cấp -->
-            <div class="worklist-section">
-              <div class="worklist-header">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--warning)" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                  <span style="font-weight: 850; font-size: 15px; color: var(--text-main);">Hồ sơ cần chú ý hôm nay</span>
-                </div>
-                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 750;">Hiển thị 3 hồ sơ tồn mới nhất</span>
+          <div style="margin-top: 32px; margin-bottom: 32px;">
+            <h3 style="font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 18px; text-align: center;">Chức năng nổi bật của phần mềm</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+              <div class="p-card" style="padding: 24px;">
+                <div style="width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: rgba(216,180,109,0.08); color: var(--primary); margin-bottom: 16px;">${SVGS.CAR}</div>
+                <h4 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--text-main);">Tác nghiệp song song 2 chiều</h4>
+                <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Giám định viên tạo yêu cầu trực tuyến. Garage nhận link truy cập ngay lập tức để tải lên hình ảnh chứng cứ mà không cần tài khoản đăng nhập rườm rà.</p>
               </div>
-              <div id="homeRecentPendingContainer">
-                ${pendingRowsHtml}
+              <div class="p-card" style="padding: 24px;">
+                <div style="width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: rgba(40,167,69,0.08); color: var(--success); margin-bottom: 16px;">${SVGS.CHECK_CIRCLE}</div>
+                <h4 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--text-main);">Đồng bộ Realtime siêu tốc</h4>
+                <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Mọi hình ảnh tải lên và ghi chú của Gara được đẩy trực tiếp lên Cloudinary và lưu trữ đồng bộ tức thời qua cơ sở dữ liệu Firebase Realtime Database.</p>
+              </div>
+              <div class="p-card" style="padding: 24px;">
+                <div style="width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: rgba(23,162,184,0.08); color: #17a2b8; margin-bottom: 16px;">${SVGS.FOLDER}</div>
+                <h4 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--text-main);">Bảng phụ tùng Excel thông minh</h4>
+                <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Nhập nhanh danh sách bằng cách dán hàng loạt từ file Excel. Di chuyển mượt mà bằng bàn phím (Enter, Arrow Keys) giúp tối ưu hóa thời gian xử lý.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-card" style="padding: 32px; margin-bottom: 24px;">
+            <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 24px; text-align: center;">Luồng quy trình nghiệp vụ chuẩn</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; position: relative;">
+              <div style="text-align: center; position: relative;">
+                <div style="font-family: 'JetBrains Mono'; font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">01</div>
+                <h5 style="font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text-main);">Khởi tạo hồ sơ</h5>
+                <p style="font-size: 11.5px; color: var(--text-muted);">GĐV nhập biển số, Gara phụ trách và lập bảng phụ tùng.</p>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-family: 'JetBrains Mono'; font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">02</div>
+                <h5 style="font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text-main);">Garage tải ảnh</h5>
+                <p style="font-size: 11.5px; color: var(--text-muted);">Gara mở link, chụp ảnh hiện trạng và khớp minh chứng cho từng phụ tùng.</p>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-family: 'JetBrains Mono'; font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">03</div>
+                <h5 style="font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text-main);">Đối chiếu tổn thất</h5>
+                <p style="font-size: 11.5px; color: var(--text-muted);">Hệ thống tự động hiển thị so sánh ảnh và các phương án của hai bên.</p>
+              </div>
+              <div style="text-align: center;">
+                <div style="font-family: 'JetBrains Mono'; font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">04</div>
+                <h5 style="font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text-main);">Duyệt phương án</h5>
+                <p style="font-size: 11.5px; color: var(--text-muted);">Giám định viên chốt phương án bồi thường và hoàn tất hồ sơ.</p>
               </div>
             </div>
           </div>
