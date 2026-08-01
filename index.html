@@ -7295,6 +7295,12 @@ function formatDateDisplay(val) {
       const container = document.getElementById('tabContentContainer');
       if (!container) return;
 
+      const isAdmin = activeUserProfile && (
+        String(activeUserProfile.role || '').trim().toLowerCase() === 'admin' ||
+        String(activeUserProfile.role || '').trim().toLowerCase() === 'truong_nhom' ||
+        activeUserProfile.isAdmin === true
+      );
+
       if (activeDashboardTab === 'gdv_report') {
         renderGdvMonthlyReportPage(container);
         return;
