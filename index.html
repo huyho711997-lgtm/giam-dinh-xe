@@ -12840,14 +12840,27 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <th style="padding: 13px 14px; text-align: center; width: 140px;">Thao tác</th>
                 </tr></thead>
                 <tbody>${items.length ? items.map((item, index) => {
-                  const status = ACCOUNTING_STATUS_MAP[item.transfer.trangThai] || ACCOUNTING_STATUS_MAP.da_nhan_ho_so;
-                  return `<tr onclick="openAccountingClaimDetailModal('${item.transfer.transferId}', ${item.claimIndex})" style="border-bottom: 1px solid var(--border); vertical-align: top; cursor: pointer; transition: background 0.15s ease;" title="Nhấp vào dòng để xem chi tiết / yêu cầu bổ sung">
+                  const suppList = item.transfer.hoSoYeuCauBoSung || [];
+                  const isClaimBoSung = suppList.some(s => Number(s.chiSo) === Number(item.claimIndex) || (s.soHoSoBoiThuong && s.soHoSoBoiThuong === item.claim.soHoSoBoiThuong) || (s.bienSo && s.bienSo === item.claim.bienSo));
+                  
+                  let status = ACCOUNTING_STATUS_MAP[item.transfer.trangThai] || ACCOUNTING_STATUS_MAP.da_nhan_ho_so;
+                  if (item.transfer.trangThai === 'can_bo_sung') {
+                    if (isClaimBoSung) {
+                      status = { label: '⚠️ Yêu cầu bổ sung', bg: 'rgba(239,68,68,0.14)', border: 'rgba(239,68,68,0.35)', text: '#ef4444', svg: ACC_SVGS.WARNING };
+                    } else {
+                      status = { label: '🟢 Đạt (Bình thường)', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)', text: '#10b981', svg: ACC_SVGS.CHECK_CIRCLE };
+                    }
+                  }
+
+                  const noteText = (isClaimBoSung && item.note.ghiChu) ? item.note.ghiChu : (item.note.ghiChu || '—');
+
+                  return `<tr onclick="openAccountingClaimDetailModal('${item.transfer.transferId}', ${item.claimIndex})" style="border-bottom: 1px solid var(--border); vertical-align: top; cursor: pointer; transition: background 0.15s ease; ${isClaimBoSung ? 'background: rgba(239,68,68,0.03);' : ''}" title="Nhấp vào dòng để xem chi tiết / yêu cầu bổ sung">
                     <td style="padding: 14px; text-align: center; font-family: 'JetBrains Mono'; font-weight: 850; color: var(--primary);">#${index + 1}</td>
                     <td style="padding: 14px;"><strong>${escapeHtmlOutput(item.claim.bienSo || 'N/A')}</strong><span style="display:block; color:var(--text-soft); font-size:11px; margin-top:3px;">${escapeHtmlOutput(item.claim.soHoSoBoiThuong || '')}</span><span style="display:block; margin-top:5px; font-weight:750;">${escapeHtmlOutput(extractClaimOwnerName(item.claim) || 'N/A')}</span></td>
                     <td style="padding: 14px;">${escapeHtmlOutput(item.claim.tenGara || 'N/A')}</td>
                     <td style="padding: 14px;"><strong style="font-family:'JetBrains Mono';">${escapeHtmlOutput(item.transfer.transferId || 'N/A')}</strong><span style="display:block; color:var(--text-soft); font-size:11px; margin-top:3px;">GĐV: ${escapeHtmlOutput(item.transfer.gdvName || 'N/A')}</span></td>
                     <td style="padding: 14px; text-align:center;"><span style="display:inline-flex; gap:5px; align-items:center; padding:5px 9px; border-radius:999px; color:${status.text}; background:${status.bg}; border:1px solid ${status.border}; font-size:10.5px; font-weight:850;">${status.svg}${status.label}</span></td>
-                    <td style="padding: 14px; max-width: 320px; word-wrap: break-word; color: var(--text-main); font-weight: 500; line-height: 1.4;">${escapeHtmlOutput(item.note.ghiChu || '—')}</td>
+                    <td style="padding: 14px; max-width: 320px; word-wrap: break-word; color: ${isClaimBoSung ? '#ef4444' : 'var(--text-main)'}; font-weight: ${isClaimBoSung ? '750' : '500'}; line-height: 1.4;">${escapeHtmlOutput(noteText)}</td>
                     <td style="padding: 14px; text-align:center; vertical-align: middle;"><button type="button" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border-strong); background:var(--bg-soft); color:var(--text-main); font-size:11.5px; font-weight:850; cursor:pointer; pointer-events: none;">Xem chi tiết</button></td>
                   </tr>`;
                 }).join('') : `<tr><td colspan="7" style="padding:42px; text-align:center; color:var(--text-soft);">Không tìm thấy hồ sơ phù hợp.</td></tr>`}</tbody>
@@ -12868,28 +12881,55 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const claim = claims[claimIndex];
       if (!claim) return;
 
-      const noteObj = (transfer.ghiChuTheoHoSo || []).find(item => Number(item.chiSo) === Number(claimIndex)) ||
-        (transfer.hoSoYeuCauBoSung || []).find(item => Number(item.chiSo) === Number(claimIndex)) || {};
-      const currentNote = noteObj.ghiChu || '';
+      const suppList = transfer.hoSoYeuCauBoSung || [];
+      const suppItem = suppList.find(s => Number(s.chiSo) === Number(claimIndex) || (s.soHoSoBoiThuong && s.soHoSoBoiThuong === claim.soHoSoBoiThuong) || (s.bienSo && s.bienSo === claim.bienSo));
+      
+      const noteObj = (transfer.ghiChuTheoHoSo || []).find(item => Number(item.chiSo) === Number(claimIndex)) || suppItem || {};
+      const currentNote = suppItem ? (suppItem.ghiChu || noteObj.ghiChu || '') : (noteObj.ghiChu || '');
+      const isClaimBoSung = Boolean(suppItem);
+
+      const isKeToanRole = getLoggedInUserAccountingRole() === 'ketoan';
 
       const modalOverlay = document.createElement('div');
       modalOverlay.id = 'accountingClaimDetailModalOverlay';
       modalOverlay.style.cssText = 'position: fixed; inset: 0; background: rgba(11, 15, 25, 0.78); backdrop-filter: blur(16px); z-index: 99999; display: grid; place-items: center; padding: 12px;';
 
       modalOverlay.innerHTML = `
-        <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 24px; width: min(650px, 95vw); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 28px 70px rgba(0,0,0,0.55);">
+        <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 24px; width: min(680px, 95vw); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 28px 70px rgba(0,0,0,0.55);">
           
           <!-- Modal Header -->
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; border-bottom: 1px solid var(--border); background: var(--surface);">
             <div style="display: flex; align-items: center; gap: 10px;">
               <span style="color: var(--primary);">${ACC_SVGS.FOLDER}</span>
-              <h3 style="font-size: 17px; font-weight: 850; color: var(--text-main); margin: 0;">Chi tiết Hồ sơ & Yêu cầu Bổ sung</h3>
+              <div>
+                <h3 style="font-size: 17px; font-weight: 850; color: var(--text-main); margin: 0;">Chi tiết Hồ sơ & Yêu cầu Bổ sung</h3>
+                <span style="font-size: 11.5px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(claim.bienSo || '')} - ${escapeHtmlOutput(claim.soHoSoBoiThuong || '')}</span>
+              </div>
             </div>
             <button type="button" onclick="closeAccountingClaimDetailModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 16px; color: var(--text-soft); cursor: pointer; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;">✕</button>
           </div>
 
           <!-- Modal Body -->
           <div style="padding: 20px 24px; overflow-y: auto; max-height: 70vh;">
+            
+            <!-- PROMINENT KE TOAN FEEDBACK ALERT BOX FOR GDV -->
+            ${isClaimBoSung ? `
+              <div style="background: rgba(239,68,68,0.09); border: 1px solid rgba(239,68,68,0.35); border-radius: 16px; padding: 16px 18px; margin-bottom: 18px; color: #ef4444;">
+                <div style="display: flex; align-items: center; gap: 8px; font-weight: 850; font-size: 13.5px; margin-bottom: 6px;">
+                  ${ACC_SVGS.WARNING}
+                  <span>KẾ TOÁN YÊU CẦU BỔ SUNG CHỨNG TỪ CHO HỒ SƠ NÀY:</span>
+                </div>
+                <div style="font-size: 13px; color: var(--text-main); line-height: 1.5; background: var(--surface); padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(239,68,68,0.25); font-weight: 600;">
+                  ${escapeHtmlOutput(currentNote || 'Đề nghị GĐV bổ sung chứng từ theo yêu cầu của Kế toán.')}
+                </div>
+              </div>
+            ` : `
+              <div style="background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); border-radius: 14px; padding: 12px 16px; margin-bottom: 18px; color: #10b981; display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 750;">
+                ${ACC_SVGS.CHECK_CIRCLE}
+                <span>Hồ sơ đạt yêu cầu / Không có yêu cầu bổ sung riêng cho hồ sơ này.</span>
+              </div>
+            `}
+
             <!-- Claim Metadata -->
             <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 18px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 12.5px;">
               <div><strong style="color: var(--text-soft);">Biển số xe:</strong> <strong style="color: var(--text-main); font-size:13.5px;">${escapeHtmlOutput(claim.bienSo || 'N/A')}</strong></div>
@@ -12901,20 +12941,28 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <div style="grid-column: span 2;"><strong style="color: var(--text-soft);">Số tiền đề nghị chi:</strong> <strong style="color: #10b981; font-size:14px; font-family: 'JetBrains Mono';">${formatCurrencyInputNumber(claim.soTienDeNghi || transfer.soTienDeNghi)} đ</strong></div>
             </div>
 
-            <!-- Input area for notes -->
+            <!-- Input area for notes (Editable by Ke Toan or GDV) -->
             <div>
-              <label style="display: block; font-size: 12.5px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">Ghi chú Kế toán / Nội dung Yêu cầu bổ sung:</label>
-              <textarea id="modalAccountingClaimNoteInput" class="textarea-premium" placeholder="Nhập ghi chú hoặc lý do yêu cầu bổ sung cho hồ sơ này..." style="width: 100%; height: 110px; border-radius: 10px; font-size: 13px;">${escapeHtmlOutput(currentNote)}</textarea>
+              <label style="display: block; font-size: 12.5px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">${isKeToanRole ? 'Nhập Ghi chú Kế toán / Nội dung Yêu cầu bổ sung:' : 'Phản hồi / Ghi chú của GĐV:'}</label>
+              <textarea id="modalAccountingClaimNoteInput" class="textarea-premium" placeholder="${isKeToanRole ? 'Nhập ghi chú hoặc lý do yêu cầu bổ sung cho hồ sơ này...' : 'Nhập thông tin chứng từ bổ sung...'}" style="width: 100%; height: 95px; border-radius: 10px; font-size: 13px;">${escapeHtmlOutput(currentNote)}</textarea>
             </div>
           </div>
 
           <!-- Modal Footer -->
-          <div style="padding: 14px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; background: var(--surface);">
+          <div style="padding: 14px 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--surface);">
             <button type="button" onclick="closeAccountingClaimDetailModal()" style="padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Đóng</button>
-            <button type="button" onclick="submitAccountingClaimNoteFromModal('${transferId}', ${claimIndex}, 'save')" style="padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 850; background: var(--bg-soft); color: var(--text-main); border: 1px solid var(--border-strong); cursor: pointer;">Lưu ghi chú</button>
-            <button type="button" onclick="submitAccountingClaimNoteFromModal('${transferId}', ${claimIndex}, 'supplement')" style="padding: 9px 20px; border-radius: 10px; font-size: 13px; font-weight: 850; background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-              ${ACC_SVGS.WARNING} Yêu cầu bổ sung
-            </button>
+            <div style="display: flex; gap: 10px;">
+              <button type="button" onclick="submitAccountingClaimNoteFromModal('${transferId}', ${claimIndex}, 'save')" style="padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 850; background: var(--bg-soft); color: var(--text-main); border: 1px solid var(--border-strong); cursor: pointer;">${isKeToanRole ? 'Lưu ghi chú' : 'Lưu phản hồi'}</button>
+              ${isKeToanRole ? `
+                <button type="button" onclick="submitAccountingClaimNoteFromModal('${transferId}', ${claimIndex}, 'supplement')" style="padding: 9px 20px; border-radius: 10px; font-size: 13px; font-weight: 850; background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  ${ACC_SVGS.WARNING} Yêu cầu bổ sung
+                </button>
+              ` : `
+                <button type="button" onclick="closeAccountingClaimDetailModal(); openAddAccountingTransferModal('${transferId}')" style="padding: 9px 20px; border-radius: 10px; font-size: 13px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  ✏️ Sửa / Bổ sung Phiếu này
+                </button>
+              `}
+            </div>
           </div>
 
         </div>
