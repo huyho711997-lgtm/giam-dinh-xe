@@ -11440,6 +11440,7 @@ function formatDateDisplay(val) {
      * BÁO CÁO GIÁM ĐỊNH VIÊN & BIỂU ĐỒ KPI TÍNH LƯƠNG (UNIFIED)
      * TOGGLE BETWEEN MASTER TABLE & ULTRA-SLEEK LINE CHART
      ****************************************************/
+    let activeSelectedGdvNames = ['Hồ Quang Huy', 'Huỳnh Văn Phúc', 'Nguyễn Quang Huy_DL'];
     let activeGdvReportWeek = "current";
     let activeGdvReportMonth = String(new Date().getMonth() + 1);
     let activeGdvReportYear = String(new Date().getFullYear());
@@ -11930,6 +11931,47 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--primary); background: rgba(216,180,109,0.08); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(216,180,109,0.2);">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 <span>Mốc thời gian:</span>
+              </div>
+
+              <!-- Custom GDV Multi-Select Dropdown -->
+              <div class="custom-select-wrapper" style="position: relative;" id="accGdvReportFilterWrapper">
+                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportGdvMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); font-size: 13px; font-weight: 850; color: #10b981; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 210px; justify-content: space-between; box-shadow: var(--shadow-xs);">
+                  <span style="display: flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #10b981;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span>GĐV (${activeSelectedGdvNames.length} đã chọn)</span>
+                  </span>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #10b981;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                <div id="ddReportGdvMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 270px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; backdrop-filter: blur(16px); max-height: 320px; overflow-y: auto;">
+                  
+                  <!-- Action Toolbar -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--border); gap: 6px; flex-wrap: wrap;">
+                    <button type="button" onclick="resetGdvSelectionToDefault(event)" style="background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); font-size: 11px; font-weight: 850; padding: 4px 8px; border-radius: 6px; cursor: pointer;" title="Đặt lại 3 GĐV mặc định">↺ 3 Mặc định</button>
+                    <div style="display: flex; gap: 4px;">
+                      <button type="button" onclick="selectAllGdvOptions(event)" style="background: var(--bg-soft); border: 1px solid var(--border); color: #3b82f6; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 6px; cursor: pointer;">Tất cả</button>
+                      <button type="button" onclick="clearAllGdvOptions(event)" style="background: var(--bg-soft); border: 1px solid var(--border); color: #ef4444; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 6px; cursor: pointer;">Xóa</button>
+                    </div>
+                  </div>
+
+                  <!-- GDV Checkbox List -->
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    ${getAllAvailableGdvNames().map(gName => {
+                      const isSel = activeSelectedGdvNames.some(s => s.trim().toLowerCase() === gName.trim().toLowerCase());
+                      const isDefault3 = ['Hồ Quang Huy', 'Huỳnh Văn Phúc', 'Nguyễn Quang Huy_DL'].includes(gName);
+
+                      return `
+                        <label onclick="toggleGdvSelectionOption('${escapeAttributeData(gName)}', event)" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: background 0.15s ease; ${isSel ? 'background: rgba(16,185,129,0.1); color: #10b981; font-weight: 850;' : 'color: var(--text-main); font-weight: 750;'}">
+                          <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" ${isSel ? 'checked' : ''} style="width: 15px; height: 15px; accent-color: #10b981; cursor: pointer;" />
+                            <span style="font-size: 12.5px;">${escapeHtmlOutput(gName)}</span>
+                          </div>
+                          ${isDefault3 ? `<span style="font-size: 10px; background: rgba(216,180,109,0.2); color: var(--primary); padding: 1px 5px; border-radius: 4px; font-weight: 850;">Mặc định</span>` : ''}
+                        </label>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
               </div>
 
               <!-- Custom Week Dropdown -->
@@ -12656,6 +12698,49 @@ function renderGdvMonthlyReportPage(targetContainer) {
       `;
     }
 
+    
+    function getAllAvailableGdvNames() {
+      const setObj = new Set(['Hồ Quang Huy', 'Huỳnh Văn Phúc', 'Nguyễn Quang Huy_DL']);
+      Object.values(cachedUsersPayload || {}).forEach(u => {
+        const name = (u.profile?.displayName || u.displayName || u.name || '').trim();
+        if (name) setObj.add(name);
+      });
+      Object.values(cachedPendingClaimsPayload || {}).forEach(c => {
+        const name = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || c.canBoBoiThuong || c.gdvName || '').trim();
+        if (name && name !== 'Chưa phân công') setObj.add(name);
+      });
+      return Array.from(setObj).sort();
+    }
+
+    function toggleGdvSelectionOption(gdvName, evt) {
+      if (evt) evt.stopPropagation();
+      const index = activeSelectedGdvNames.indexOf(gdvName);
+      if (index > -1) {
+        activeSelectedGdvNames.splice(index, 1);
+      } else {
+        activeSelectedGdvNames.push(gdvName);
+      }
+      renderGdvReportPage();
+    }
+
+    function selectAllGdvOptions(evt) {
+      if (evt) evt.stopPropagation();
+      activeSelectedGdvNames = getAllAvailableGdvNames();
+      renderGdvReportPage();
+    }
+
+    function clearAllGdvOptions(evt) {
+      if (evt) evt.stopPropagation();
+      activeSelectedGdvNames = [];
+      renderGdvReportPage();
+    }
+
+    function resetGdvSelectionToDefault(evt) {
+      if (evt) evt.stopPropagation();
+      activeSelectedGdvNames = ['Hồ Quang Huy', 'Huỳnh Văn Phúc', 'Nguyễn Quang Huy_DL'];
+      renderGdvReportPage();
+    }
+
     function selectGdvReportWeek(weekVal) {
       activeGdvReportWeek = weekVal;
       const menu = document.getElementById('ddReportWeekMenu');
@@ -12789,10 +12874,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
         }
       });
 
-      let list = Object.values(gdvMap).filter(g => g.phatSinh > 0 || g.daDuyetHsb > 0 || g.chuyenDntt > 0 || g.tndsTonLuyKe > 0);
-      if (list.length === 0 && Object.keys(gdvMap).length > 0) {
-        list = Object.values(gdvMap).slice(0, 10);
+      let list = Object.values(gdvMap);
+      if (activeSelectedGdvNames && activeSelectedGdvNames.length > 0) {
+        list = list.filter(g => activeSelectedGdvNames.some(sel => sel.trim().toLowerCase() === g.gdvName.trim().toLowerCase()));
       }
+      list = list.sort((a, b) => b.phatSinh - a.phatSinh);
 
       return { period, list };
     }
