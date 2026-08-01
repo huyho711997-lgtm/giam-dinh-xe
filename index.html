@@ -12909,7 +12909,18 @@ function renderGdvMonthlyReportPage(targetContainer) {
           item.hsTonOver30Days++;
         }
 
-        // 3. PERIOD-SPECIFIC METRICS (FILTERED BY START & END DATE RANGE)
+        // 3. CHUYỂN ĐNTT: COUNT CLAIMS OF GDV WHERE 'NGÀY NHẬN ĐỦ HỒ SƠ' (ngayNhanDuHoSo) FALLS WITHIN DATE RANGE [startTime ➔ endTime]
+        if (c.ngayNhanDuHoSo) {
+          const dpNhanDu = parseDateParts(c.ngayNhanDuHoSo);
+          if (dpNhanDu && dpNhanDu.year > 1970 && dpNhanDu.month && dpNhanDu.day) {
+            const nhanDuMs = new Date(dpNhanDu.year, dpNhanDu.month - 1, dpNhanDu.day, 12, 0, 0).getTime();
+            if (nhanDuMs >= startTime && nhanDuMs <= endTime) {
+              item.chuyenDntt++;
+            }
+          }
+        }
+
+        // 4. PERIOD-SPECIFIC METRICS (FILTERED BY START & END DATE RANGE)
         if (claimTime < startTime || claimTime > endTime) {
           return;
         }
