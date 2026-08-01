@@ -13339,8 +13339,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (existing) {
         if (existing.danhSachHoSo && existing.danhSachHoSo.length > 0) {
           currentBatchSelectedClaims = JSON.parse(JSON.stringify(existing.danhSachHoSo));
-          currentBatchSelectedClaims.forEach(item => {
+          const suppList = existing.hoSoYeuCauBoSung || [];
+          currentBatchSelectedClaims.forEach((item, idx) => {
             item.tenChuXe = extractClaimOwnerName(item);
+            const suppItem = suppList.find(s => Number(s.chiSo) === idx || (s.soHoSoBoiThuong && s.soHoSoBoiThuong === item.soHoSoBoiThuong) || (s.bienSo && s.bienSo === item.bienSo));
+            item.canBoSung = Boolean(suppItem || item.canBoSung);
+            item.ghiChuBoSung = suppItem ? (suppItem.ghiChu || suppItem.ghiChuBoSung || '') : (item.ghiChuBoSung || '');
           });
         } else if (existing.soHoSoBoiThuong || existing.bienSo) {
           currentBatchSelectedClaims = [{
@@ -13402,18 +13406,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
             
             <div style="flex: 1; overflow-y: auto; padding: 22px 30px;">
               
-              <!-- WARNING FEEDBACK IF CAN_BO_SUNG -->
-              ${existing && existing.trangThai === 'can_bo_sung' && (existing.ghiChuKeToan || (existing.hoSoYeuCauBoSung || []).length) ? `
-                <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); border-radius: 14px; padding: 14px 18px; margin-bottom: 20px; color: #ef4444; display: flex; align-items: flex-start; gap: 10px;">
-                  <span style="margin-top: 2px;">${ACC_SVGS.WARNING}</span>
-                  <div>
-                    <strong style="display: block; font-size: 13px; margin-bottom: 4px; font-weight: 850;">PHẢN HỒI YÊU CẦU BỔ SUNG TỪ KẾ TOÁN:</strong>
-                    ${existing.ghiChuKeToan ? `<div style="font-size: 12.5px; line-height: 1.5;">${escapeHtmlOutput(existing.ghiChuKeToan)}</div>` : ''}
-                    ${(existing.hoSoYeuCauBoSung || []).length ? `
-                      <div style="margin-top: 8px; display: grid; gap: 5px;">
-                        ${(existing.hoSoYeuCauBoSung || []).map(item => `<div style="font-size: 12px; line-height: 1.45;"><strong>${escapeHtmlOutput(item.bienSo || item.soHoSoBoiThuong || 'Hồ sơ')}</strong>: ${escapeHtmlOutput(item.ghiChu || '')}</div>`).join('')}
-                      </div>
-                    ` : ''}
+              <!-- GENERAL KE TOAN NOTE IF PRESENT -->
+              ${existing && existing.trangThai === 'can_bo_sung' && existing.ghiChuKeToan ? `
+                <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); border-radius: 14px; padding: 12px 16px; margin-bottom: 20px; color: #ef4444; display: flex; align-items: center; gap: 10px;">
+                  <span>${ACC_SVGS.WARNING}</span>
+                  <div style="font-size: 12.5px; line-height: 1.4;">
+                    <strong style="font-weight: 850;">Ghi chú chung của Kế toán:</strong> ${escapeHtmlOutput(existing.ghiChuKeToan)}
                   </div>
                 </div>
               ` : ''}
@@ -13725,23 +13723,41 @@ function renderGdvMonthlyReportPage(targetContainer) {
         return;
       }
 
-      body.innerHTML = currentBatchSelectedClaims.map((item, idx) => `
-        <tr style="border-bottom: 1px solid var(--border); transition: background 0.15s ease;">
-          <td style="padding: 12px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${idx + 1}</td>
-          <td style="padding: 12px;">
-            <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(item.bienSo)}</strong>
-            <span style="display: block; font-size: 11.5px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(item.soHoSoBoiThuong)}</span>
-          </td>
-          <td style="padding: 12px; font-size: 12.5px; color: var(--text-main); font-weight: 750;">${escapeHtmlOutput(extractClaimOwnerName(item))}</td>
-          <td style="padding: 12px; font-size: 12.5px; color: var(--text-main);">${escapeHtmlOutput(item.tenGara || 'N/A')}</td>
-          <td style="padding: 12px; text-align: right;">
-            <input type="text" class="input-premium" value="${formatCurrencyInputNumber(item.soTienDeNghi)}" oninput="this.value = formatCurrencyInputNumber(this.value); updateAccBatchItemMoney(${idx}, this.value)" style="width: 145px; height: 36px; font-size: 13px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; color: #10b981; border-radius: 8px;" />
-          </td>
-          <td style="padding: 12px; text-align: center;">
-            <button type="button" onclick="removeAccClaimFromBatchTable(${idx})" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; display: grid; place-items: center; font-weight: 850;" title="Xóa hồ sơ này khỏi phiếu">${ACC_SVGS.TRASH}</button>
-          </td>
-        </tr>
-      `).join('');
+      body.innerHTML = currentBatchSelectedClaims.map((item, idx) => {
+        const isSupp = Boolean(item.canBoSung || item.ghiChuBoSung);
+
+        return `
+          <tr style="border-bottom: 1px solid var(--border); transition: background 0.15s ease; ${isSupp ? 'background: rgba(239,68,68,0.04);' : ''}">
+            <td style="padding: 12px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${idx + 1}</td>
+            <td style="padding: 12px;">
+              <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(item.bienSo)}</strong>
+              <span style="display: block; font-size: 11.5px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(item.soHoSoBoiThuong)}</span>
+              ${isSupp ? `<span style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); font-size: 10px; font-weight: 850; padding: 2px 6px; border-radius: 99px; display: inline-block; margin-top: 4px;">⚠️ YÊU CẦU BỔ SUNG</span>` : ''}
+            </td>
+            <td style="padding: 12px; font-size: 12.5px; color: var(--text-main); font-weight: 750;">${escapeHtmlOutput(extractClaimOwnerName(item))}</td>
+            <td style="padding: 12px; font-size: 12.5px; color: var(--text-main);">${escapeHtmlOutput(item.tenGara || 'N/A')}</td>
+            <td style="padding: 12px; text-align: right;">
+              <input type="text" class="input-premium" value="${formatCurrencyInputNumber(item.soTienDeNghi)}" oninput="this.value = formatCurrencyInputNumber(this.value); updateAccBatchItemMoney(${idx}, this.value)" style="width: 145px; height: 36px; font-size: 13px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; color: #10b981; border-radius: 8px;" />
+            </td>
+            <td style="padding: 12px; text-align: center;">
+              <button type="button" onclick="removeAccClaimFromBatchTable(${idx})" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; display: grid; place-items: center; font-weight: 850;" title="Xóa hồ sơ này khỏi phiếu">${ACC_SVGS.TRASH}</button>
+            </td>
+          </tr>
+          ${isSupp ? `
+            <tr style="background: rgba(239,68,68,0.06); border-bottom: 1px solid rgba(239,68,68,0.25);">
+              <td colspan="6" style="padding: 10px 16px;">
+                <div style="display: flex; align-items: flex-start; gap: 8px; color: #ef4444; font-size: 12px;">
+                  <span style="margin-top: 1px;">${ACC_SVGS.WARNING}</span>
+                  <div>
+                    <strong style="display: block; font-weight: 850; margin-bottom: 2px;">KẾ TOÁN YÊU CẦU BỔ SUNG RIÊNG CHO HỒ SƠ NÀY (${escapeHtmlOutput(item.bienSo)}):</strong>
+                    <span style="line-height: 1.4;">${escapeHtmlOutput(item.ghiChuBoSung || 'Đề nghị GĐV bổ sung chứng từ theo phản hồi của Kế toán.')}</span>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          ` : ''}
+        `;
+      }).join('');
 
       recalcAccBatchTotalMoney();
     }
