@@ -6169,42 +6169,17 @@ function formatDateDisplay(val) {
         const normSoHsbt = rawSoHsbt.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 
         let matchedClaim = null;
-        let matchType = '';
+        let matchType = 'new_claim';
 
-        // Priority 1: Exact Match by Số Hồ Sơ Bồi Thường
+        // STRICT MATCHING RULE: Only use 'Số hồ sơ bồi thường' as the primary unique key
         if (normSoHsbt) {
-          matchedClaim = allClaims.find(c => (c.soHoSoBoiThuong || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase() === normSoHsbt);
-          if (matchedClaim) matchType = 'so_hsbt';
-        }
-
-        // Priority 2: Biển số xe AND Ngày tổn thất MUST BOTH MATCH
-        if (!matchedClaim && normBsx && (rawDateRaw || rawDate)) {
           matchedClaim = allClaims.find(c => {
-            const claimBsx = (c.bienSo || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-            if (claimBsx !== normBsx) return false;
-            const dateToCompare = c.ngayTonThat || c.ngayMoHs || c.createdAt;
-            return isSameDateString(rawDateRaw, dateToCompare) || isSameDateString(rawDate, dateToCompare);
+            const existingKey = (c.soHoSoBoiThuong || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            return existingKey && existingKey === normSoHsbt;
           });
-          if (matchedClaim) matchType = 'bsx_date';
-        }
-
-        // Priority 3: Fallback Match by Biển số xe
-        if (!matchedClaim && normBsx) {
-          matchedClaim = allClaims.find(c => {
-            const claimBsx = (c.bienSo || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-            return claimBsx === normBsx;
-          });
-          if (matchedClaim) matchType = 'bsx';
-        }
-
-        // Priority 4: Fallback Match by Mã vụ tổn thất
-        if (!matchedClaim && normVtt) {
-          matchedClaim = allClaims.find(c => (c.maVuTonThat || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase() === normVtt);
-          if (matchedClaim) matchType = 'vtt';
-        }
-
-        if (!matchedClaim) {
-          matchType = 'new_claim';
+          if (matchedClaim) {
+            matchType = 'so_hsbt';
+          }
         }
 
         const fullRowMeta = {
