@@ -7312,25 +7312,78 @@ function formatDateDisplay(val) {
 
 
       if (activeDashboardTab === 'home') {
+        const currentUser = firebase.auth().currentUser;
+        const allCases = cachedCasesPayload || {};
+        const allEntries = Object.values(allCases);
+        const totalCases = allEntries.length;
+        const completedCases = allEntries.filter(c => c.trangThai === STATUS_COMPLETED).length;
+        const pendingCases = totalCases - completedCases;
+
+        const recentPending = Object.entries(allCases)
+          .filter(([,item]) => item.trangThai !== STATUS_COMPLETED)
+          .sort((a,b) => Number(b[1].createdAt || 0) - Number(a[1].createdAt || 0))
+          .slice(0, 3);
+
+        let pendingRowsHtml = '';
+        if (recentPending.length === 0) {
+          pendingRowsHtml = `
+            <div style="text-align: center; padding: 32px; color: var(--text-muted); font-size: 13px;">
+              ✨ Tuyệt vời! Hiện tại không có hồ sơ nào đang chờ xử lý.
+            </div>
+          `;
+        } else {
+          pendingRowsHtml = recentPending.map(([key, item]) => {
+            const plate = escapeHtmlOutput(item.bienSo || 'Chưa rõ biển số');
+            const garaName = escapeHtmlOutput(item.tenGara || 'Chưa chỉ định Gara');
+            const dateStr = formatCaseTimestamp(item.createdAt);
+            const initials = plate.replace(/[^A-Za-z0-9]/g, '').slice(0,2).toUpperCase() || 'XE';
+            return `
+              <div class="pending-case-row" onclick="navigateToCase('${key}')">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                  <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(216,180,109,0.08); color: var(--primary); display: grid; place-items: center; font-weight: 850; font-size: 13px; border: 1px solid rgba(216,180,109,0.15);">
+                    ${initials}
+                  </div>
+                  <div>
+                    <div style="font-weight: 800; font-size: 14px; color: var(--text-main);">${plate}</div>
+                    <div style="font-size: 12px; color: var(--text-soft); margin-top: 3px;">
+                      Gara: <span style="font-weight: 700; color: var(--text-main);">${garaName}</span> • Tạo ngày: ${dateStr}
+                    </div>
+                  </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span style="font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 99px; background: rgba(245, 158, 11, 0.14); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25);">
+                    Chờ nhập ảnh
+                  </span>
+                  <button type="button" class="btn-action-premium btn-action-primary" style="height: 32px; padding: 0 14px; font-size: 11.5px; border-radius: 8px; font-weight: 850;" onclick="event.stopPropagation(); navigateToCase('${key}')">
+                    Xử lý ngay
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        const userDisplayName = activeUserProfile?.displayName || currentUser?.email || 'Thành viên';
+
         container.innerHTML = `
           <!-- Premium Self-Contained Styles for Homepage -->
           <style>
             .premium-home-container {
-              animation: fadeIn 0.6s ease-out;
+              animation: fadeIn 0.5s ease-out;
             }
             .interactive-hero {
               position: relative;
               background: linear-gradient(135deg, rgba(20, 26, 38, 0.95) 0%, rgba(8, 12, 18, 0.95) 100%);
               border: 1px solid rgba(255, 255, 255, 0.08);
               border-radius: 24px;
-              padding: 48px 40px;
+              padding: 40px;
               display: grid;
               grid-template-columns: 1.2fr 0.8fr;
               gap: 32px;
               align-items: center;
               overflow: hidden;
               box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-              margin-bottom: 32px;
+              margin-bottom: 24px;
             }
             body.light-mode .interactive-hero {
               background: linear-gradient(135deg, #eae8e1 0%, #f4f3ed 100%);
@@ -7351,25 +7404,24 @@ function formatDateDisplay(val) {
             .hero-badge {
               display: inline-flex;
               align-items: center;
-              gap: 8px;
+              gap: 6px;
               background: rgba(216, 180, 109, 0.1);
               border: 1px solid rgba(216, 180, 109, 0.25);
               color: var(--primary);
-              padding: 6px 14px;
+              padding: 5px 12px;
               border-radius: 99px;
-              font-size: 11.5px;
+              font-size: 11px;
               font-weight: 800;
-              letter-spacing: 0.1em;
+              letter-spacing: 0.08em;
               text-transform: uppercase;
-              margin-bottom: 18px;
-              animation: pulse-glow 3s infinite alternate;
+              margin-bottom: 16px;
             }
             .hero-title {
-              font-size: clamp(26px, 3.8vw, 42px);
+              font-size: clamp(24px, 3.4vw, 36px);
               font-weight: 900;
-              line-height: 1.15;
+              line-height: 1.2;
               color: var(--text-main);
-              margin-bottom: 16px;
+              margin-bottom: 12px;
               letter-spacing: -0.02em;
             }
             .hero-title span {
@@ -7378,38 +7430,38 @@ function formatDateDisplay(val) {
               -webkit-text-fill-color: transparent;
             }
             .hero-desc {
-              font-size: 14.5px;
+              font-size: 14px;
               color: var(--text-soft);
-              line-height: 1.6;
-              max-width: 620px;
-              margin-bottom: 28px;
+              line-height: 1.5;
+              max-width: 580px;
+              margin-bottom: 24px;
             }
             .hero-actions {
               display: flex;
-              gap: 14px;
+              gap: 12px;
               flex-wrap: wrap;
             }
             .btn-action-premium {
-              padding: 0 24px;
-              height: 48px;
-              border-radius: 14px;
-              font-size: 13.5px;
-              font-weight: 850;
+              padding: 0 20px;
+              height: 44px;
+              border-radius: 12px;
+              font-size: 13px;
+              font-weight: 800;
               cursor: pointer;
               display: inline-flex;
               align-items: center;
-              gap: 10px;
-              transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+              gap: 8px;
+              transition: all 0.2s ease;
             }
             .btn-action-primary {
               background: var(--primary-gradient);
               color: #111111;
               border: none;
-              box-shadow: 0 10px 20px -5px rgba(216, 180, 109, 0.35);
+              box-shadow: 0 8px 16px -4px rgba(216, 180, 109, 0.3);
             }
             .btn-action-primary:hover {
-              transform: translateY(-2px) scale(1.02);
-              box-shadow: 0 15px 25px -5px rgba(216, 180, 109, 0.5);
+              transform: translateY(-2px);
+              box-shadow: 0 12px 20px -4px rgba(216, 180, 109, 0.45);
             }
             .btn-action-secondary {
               background: rgba(255, 255, 255, 0.03);
@@ -7421,227 +7473,132 @@ function formatDateDisplay(val) {
               border-color: var(--primary);
               transform: translateY(-2px);
             }
-            /* High Tech Interactive Live Monitor Panel */
-            .live-monitor-card {
+            
+            /* Stats Widget Card layout */
+            .quick-stats-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 14px;
+            }
+            .quick-stat-card {
               background: rgba(14, 19, 28, 0.6);
               backdrop-filter: blur(12px);
               border: 1px solid rgba(255, 255, 255, 0.05);
-              border-radius: 20px;
-              padding: 24px;
-              box-shadow: inset 0 0 20px rgba(255,255,255,0.01), 0 20px 40px rgba(0,0,0,0.3);
-              position: relative;
+              border-radius: 16px;
+              padding: 16px 20px;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
             }
-            body.light-mode .live-monitor-card {
+            body.light-mode .quick-stat-card {
               background: rgba(255, 255, 255, 0.8);
               border: 1px solid rgba(28, 31, 38, 0.08);
-              box-shadow: 0 10px 25px rgba(0,0,0,0.04);
             }
-            .live-monitor-header {
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              border-bottom: 1px dashed var(--border);
-              padding-bottom: 14px;
-              margin-bottom: 16px;
-            }
-            .pulse-dot {
-              width: 8px;
-              height: 8px;
-              background-color: var(--success);
-              border-radius: 50%;
-              box-shadow: 0 0 0 0 rgba(72, 215, 161, 0.7);
-              animation: statusPulse 1.6s infinite;
-            }
-            .monitor-row {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              padding: 10px 0;
-              font-size: 12px;
-              border-bottom: 1px solid rgba(255, 255, 255, 0.02);
-            }
-            .monitor-label {
+            .stat-card-label {
+              font-size: 11px;
+              font-weight: 800;
               color: var(--text-soft);
-              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
             }
-            .monitor-value {
+            .stat-card-val {
               font-family: 'JetBrains Mono';
-              font-weight: 850;
+              font-size: 26px;
+              font-weight: 900;
+              margin-top: 6px;
               color: var(--text-main);
             }
-            .feature-section-header {
-              text-align: center;
+            
+            /* Quick Access Shortcuts Grid */
+            .shortcuts-section {
               margin-bottom: 28px;
             }
-            .feature-section-header h3 {
-              font-size: 20px;
-              font-weight: 900;
+            .shortcuts-header {
+              font-size: 15px;
+              font-weight: 850;
               color: var(--text-main);
-              letter-spacing: -0.01em;
+              margin-bottom: 14px;
+              display: flex;
+              align-items: center;
+              gap: 8px;
             }
-            .feature-section-header p {
-              font-size: 13px;
-              color: var(--text-soft);
-              margin-top: 4px;
-            }
-            /* Translucent Glass Feature Cards */
-            .glass-feature-grid {
+            .shortcuts-grid {
               display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-              gap: 20px;
-              margin-bottom: 36px;
+              grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+              gap: 14px;
             }
-            .glass-feature-card {
-              position: relative;
+            .shortcut-card {
+              background: var(--surface);
+              border: 1px solid var(--border-strong);
+              border-radius: 16px;
+              padding: 18px 20px;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              gap: 14px;
+              transition: all 0.2s ease;
+            }
+            .shortcut-card:hover {
+              transform: translateY(-3px);
+              border-color: var(--primary);
+              box-shadow: var(--shadow-sm);
+              background: var(--surface-strong);
+            }
+            .shortcut-icon {
+              width: 38px;
+              height: 38px;
+              border-radius: 10px;
+              display: grid;
+              place-items: center;
+              font-size: 16px;
+            }
+
+            /* My Case Worklist rows */
+            .worklist-section {
               background: var(--surface);
               border: 1px solid var(--border-strong);
               border-radius: 20px;
-              padding: 28px 24px;
+              padding: 24px;
               box-shadow: var(--shadow-sm);
-              overflow: hidden;
-              cursor: pointer;
-              transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             }
-            .glass-feature-card::before {
-              content: '';
-              position: absolute;
-              left: 0;
-              top: 0;
-              width: 100%;
-              height: 4px;
-              background: transparent;
-              transition: background 0.3s ease;
+            .worklist-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 18px;
+              border-bottom: 1px dashed var(--border);
+              padding-bottom: 12px;
             }
-            .glass-feature-card:hover {
-              transform: translateY(-6px);
-              box-shadow: 0 20px 35px rgba(0, 0, 0, 0.3);
-              border-color: rgba(216, 180, 109, 0.4);
-            }
-            body.light-mode .glass-feature-card:hover {
-              box-shadow: 0 15px 30px rgba(0,0,0,0.06);
-            }
-            .glass-feature-card:hover::before {
-              background: var(--primary-gradient);
-            }
-            .feature-icon-wrapper {
-              width: 50px;
-              height: 50px;
+            .pending-case-row {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 14px 20px;
               border-radius: 12px;
-              display: grid;
-              place-items: center;
-              margin-bottom: 20px;
-              font-size: 20px;
-              transition: all 0.3s ease;
-            }
-            .glass-feature-card:hover .feature-icon-wrapper {
-              transform: scale(1.1) rotate(3deg);
-            }
-            /* Pipeline/Workflow */
-            .interactive-flow-card {
-              background: var(--surface);
-              border: 1px solid var(--border-strong);
-              border-radius: 22px;
-              padding: 36px 28px;
-              box-shadow: var(--shadow-sm);
-              margin-bottom: 24px;
-            }
-            .flow-pipeline {
-              display: grid;
-              grid-template-columns: repeat(4, 1fr);
-              gap: 20px;
-              position: relative;
-            }
-            .flow-line {
-              position: absolute;
-              top: 24px;
-              left: 12.5%;
-              right: 12.5%;
-              height: 2px;
-              background: rgba(216, 180, 109, 0.15);
-              z-index: 1;
-            }
-            .flow-line-progress {
-              position: absolute;
-              top: 24px;
-              left: 12.5%;
-              width: 75%;
-              height: 2px;
-              background: var(--primary-gradient);
-              z-index: 1;
-              transform-origin: left;
-              animation: flowProgress 4s infinite alternate;
-            }
-            .flow-node {
-              text-align: center;
-              position: relative;
-              z-index: 2;
-              cursor: pointer;
-            }
-            .node-circle {
-              width: 50px;
-              height: 50px;
-              border-radius: 50%;
+              border: 1px solid var(--border);
               background: var(--bg-soft);
-              border: 2px solid rgba(216, 180, 109, 0.3);
-              display: grid;
-              place-items: center;
-              margin: 0 auto 16px auto;
-              font-family: 'JetBrains Mono';
-              font-size: 16px;
-              font-weight: 850;
-              color: var(--primary);
-              box-shadow: var(--shadow-sm);
-              transition: all 0.3s ease;
+              cursor: pointer;
+              transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+              margin-bottom: 10px;
             }
-            .flow-node:hover .node-circle {
-              transform: scale(1.15);
+            .pending-case-row:last-child {
+              margin-bottom: 0;
+            }
+            .pending-case-row:hover {
               border-color: var(--primary);
-              box-shadow: 0 0 18px rgba(216, 180, 109, 0.4);
-              color: #111;
-              background: var(--primary);
-            }
-            .node-title {
-              font-size: 13.5px;
-              font-weight: 850;
-              color: var(--text-main);
-              margin-bottom: 6px;
-              transition: color 0.2s ease;
-            }
-            .flow-node:hover .node-title {
-              color: var(--primary);
-            }
-            .node-desc {
-              font-size: 11.5px;
-              color: var(--text-muted);
-              line-height: 1.5;
-              max-width: 170px;
-              margin: 0 auto;
+              transform: translateX(4px);
+              background: var(--surface-hover);
             }
 
             /* Animations */
             @keyframes fadeIn {
-              from { opacity: 0; transform: translateY(12px); }
+              from { opacity: 0; transform: translateY(8px); }
               to { opacity: 1; transform: translateY(0); }
             }
-            @keyframes statusPulse {
-              0% { box-shadow: 0 0 0 0 rgba(72, 215, 161, 0.5); }
-              70% { box-shadow: 0 0 0 10px rgba(72, 215, 161, 0); }
-              100% { box-shadow: 0 0 0 0 rgba(72, 215, 161, 0); }
-            }
-            @keyframes pulse-glow {
-              from { box-shadow: 0 0 8px rgba(216, 180, 109, 0.15); }
-              to { box-shadow: 0 0 16px rgba(216, 180, 109, 0.35); }
-            }
-            @keyframes flowProgress {
-              0% { transform: scaleX(0.1); }
-              100% { transform: scaleX(1); }
-            }
 
-            /* Responsiveness */
             @media (max-width: 992px) {
               .interactive-hero { grid-template-columns: 1fr; padding: 32px 24px; }
-              .flow-pipeline { grid-template-columns: 1fr 1fr; gap: 32px; }
-              .flow-line, .flow-line-progress { display: none; }
+              .quick-stats-grid { grid-template-columns: 1fr; gap: 10px; }
             }
           </style>
           
@@ -7651,134 +7608,112 @@ function formatDateDisplay(val) {
               <div>
                 <div class="hero-badge">
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                  <span>Nền tảng số Tasco Insurtech</span>
+                  <span>Chào mừng trở lại, ${escapeHtmlOutput(userDisplayName)}</span>
                 </div>
                 
                 <h2 class="hero-title">
                   Giám định - Bồi thường<br>
-                  <span>Tự Động & Tin Cậy.</span>
+                  <span>Tasco Insurtech.</span>
                 </h2>
                 
                 <p class="hero-desc">
-                  Giải pháp số hóa toàn diện quy trình xử lý hồ sơ bồi thường xe cơ giới. Hỗ trợ giám định viên & Gara kết nối tác nghiệp thời gian thực, đối chiếu hình ảnh minh chứng và chốt phương án bồi thường thông minh.
+                  Hệ thống hỗ trợ Giám định viên điều phối tác nghiệp nhanh chóng với các đơn vị Gara, đối chiếu dữ liệu hư hại thực tế và hoàn thiện hồ sơ phê duyệt bồi thường trực tuyến.
                 </p>
                 
                 <div class="hero-actions">
                   <button type="button" class="btn-action-premium btn-action-primary" onclick="switchWorkspaceTab('list')">
                     ${SVGS.FOLDER}
-                    <span>Quản lý hồ sơ</span>
+                    <span>Vào danh sách hồ sơ</span>
                   </button>
                   <button type="button" class="btn-action-premium btn-action-secondary" onclick="switchWorkspaceTab('create')">
                     ${SVGS.SPARKLES}
-                    <span>Tạo hồ sơ mới</span>
+                    <span>Khởi tạo hồ sơ mới</span>
                   </button>
                 </div>
               </div>
 
               <!-- High Tech Status Panel -->
-              <div class="live-monitor-card">
-                <div class="live-monitor-header">
-                  <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.1em; text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--primary)" stroke-width="3"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
-                    Trạng thái vận hành
-                  </span>
-                  <div style="display: flex; align-items: center; gap: 6px;">
-                    <div class="pulse-dot"></div>
-                    <span style="font-size: 10px; font-weight: 850; color: var(--success); font-family: 'JetBrains Mono';">ONLINE</span>
-                  </div>
+              <div class="quick-stats-grid">
+                <div class="quick-stat-card">
+                  <span class="stat-card-label">Tổng số ca tiếp nhận</span>
+                  <span class="stat-card-val" style="color: var(--primary);">${totalCases}</span>
                 </div>
-
-                <div class="monitor-row">
-                  <span class="monitor-label">Độ trễ truyền tải</span>
-                  <span class="monitor-value" style="color: var(--success);">~12ms</span>
+                <div class="quick-stat-card">
+                  <span class="stat-card-label">Hồ sơ chờ duyệt/ảnh</span>
+                  <span class="stat-card-val" style="color: var(--warning);">${pendingCases}</span>
                 </div>
-                <div class="monitor-row">
-                  <span class="monitor-label">Liên kết lưu trữ</span>
-                  <span class="monitor-value" style="color: #60a5fa;">Cloudinary CDN</span>
-                </div>
-                <div class="monitor-row">
-                  <span class="monitor-label">Độ an toàn dữ liệu</span>
-                  <span class="monitor-value" style="color: var(--primary);">Firebase SSL</span>
-                </div>
-                <div class="monitor-row">
-                  <span class="monitor-label">Cơ chế đồng bộ</span>
-                  <span class="monitor-value" style="color: #a78bfa;">Realtime PubSub</span>
+                <div class="quick-stat-card">
+                  <span class="stat-card-label">Ca bồi thường hoàn tất</span>
+                  <span class="stat-card-val" style="color: var(--success);">${completedCases}</span>
                 </div>
               </div>
             </section>
 
-            <!-- Features Highlights Grid -->
-            <div>
-              <div class="feature-section-header">
-                <h3>Chức năng nổi bật hệ thống</h3>
-                <p>Nền tảng số hóa tối ưu hóa toàn bộ thao tác tác nghiệp và xử lý hồ sơ</p>
+            <!-- Lối tắt tác nghiệp nhanh -->
+            <div class="shortcuts-section">
+              <div class="shortcuts-header">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                <span>Lối tắt tác nghiệp nhanh</span>
               </div>
-
-              <div class="glass-feature-grid">
-                <div class="glass-feature-card" onclick="switchWorkspaceTab('list')">
-                  <div class="feature-icon-wrapper" style="background: rgba(216,180,109,0.08); color: var(--primary);">
-                    ${SVGS.CAR}
+              <div class="shortcuts-grid">
+                <div class="shortcut-card" onclick="switchWorkspaceTab('create')">
+                  <div class="shortcut-icon" style="background: rgba(216,180,109,0.08); color: var(--primary);">
+                    ${SVGS.SPARKLES}
                   </div>
-                  <h4 style="font-size: 15px; font-weight: 850; margin-bottom: 8px; color: var(--text-main);">Tương tác đa chiều</h4>
-                  <p style="font-size: 12.5px; color: var(--text-soft); line-height: 1.6;">Khởi tạo yêu cầu giám định trực tiếp từ GĐV. Hệ thống tự động tạo liên kết chia sẻ bảo mật tức thì gửi đến Gara để chụp ảnh hiện trạng không cần tạo tài khoản.</p>
+                  <div>
+                    <div style="font-weight: 850; font-size: 13.5px; color: var(--text-main);">Tạo hồ sơ mới</div>
+                    <span style="font-size: 11px; color: var(--text-soft);">Khai báo biển số & chỉ định Gara</span>
+                  </div>
                 </div>
 
-                <div class="glass-feature-card" onclick="switchWorkspaceTab('list')">
-                  <div class="feature-icon-wrapper" style="background: rgba(72,215,161,0.08); color: var(--success);">
-                    ${SVGS.CHECK_CIRCLE}
-                  </div>
-                  <h4 style="font-size: 15px; font-weight: 850; margin-bottom: 8px; color: var(--text-main);">Đồng bộ ảnh siêu tốc</h4>
-                  <p style="font-size: 12.5px; color: var(--text-soft); line-height: 1.6;">Ứng dụng công nghệ xử lý ảnh CDN tiên tiến, đồng bộ tức thời mọi chứng cứ hư hại từ hiện trường hiện trạng lên hệ thống máy chủ phục vụ giám định viên.</p>
-                </div>
-
-                <div class="glass-feature-card" onclick="switchWorkspaceTab('create')">
-                  <div class="feature-icon-wrapper" style="background: rgba(96,165,250,0.08); color: #60a5fa;">
+                <div class="shortcut-card" onclick="switchWorkspaceTab('list')">
+                  <div class="shortcut-icon" style="background: rgba(96,165,250,0.08); color: #60a5fa;">
                     ${SVGS.FOLDER}
                   </div>
-                  <h4 style="font-size: 15px; font-weight: 850; margin-bottom: 8px; color: var(--text-main);">Nhập phụ tùng thông minh</h4>
-                  <p style="font-size: 12.5px; color: var(--text-soft); line-height: 1.6;">Hỗ trợ dán dữ liệu (Copy/Paste) hàng loạt trực tiếp từ bảng tính Excel. Trải nghiệm thao tác ô mượt mà với đầy đủ bộ phím di chuyển thông minh.</p>
+                  <div>
+                    <div style="font-weight: 850; font-size: 13.5px; color: var(--text-main);">Danh sách hồ sơ</div>
+                    <span style="font-size: 11px; color: var(--text-soft);">Xem tiến độ & tải ảnh đối chiếu</span>
+                  </div>
+                </div>
+
+                <div class="shortcut-card" onclick="switchWorkspaceTab('gdv_report')">
+                  <div class="shortcut-icon" style="background: rgba(72,215,161,0.08); color: var(--success);">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
+                  </div>
+                  <div>
+                    <div style="font-weight: 850; font-size: 13.5px; color: var(--text-main);">Doanh thu Gara</div>
+                    <span style="font-size: 11px; color: var(--text-soft);">Báo cáo bồi thường chi tiết Gara</span>
+                  </div>
+                </div>
+
+                <div class="shortcut-card" onclick="switchWorkspaceTab('accounting_transfer')">
+                  <div class="shortcut-icon" style="background: rgba(167,139,250,0.08); color: #a78bfa;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="12" y2="16"></line></svg>
+                  </div>
+                  <div>
+                    <div style="font-weight: 850; font-size: 13.5px; color: var(--text-main);">Chuyển giao Kế toán</div>
+                    <span style="font-size: 11px; color: var(--text-soft);">Duyệt chuyển giao phiếu thanh toán</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Workflow Pipeline -->
-            <div class="interactive-flow-card">
-              <div class="feature-section-header" style="margin-bottom: 36px;">
-                <h3>Quy trình nghiệp vụ vận hành</h3>
-                <p>Khép kín quy trình bồi thường tự động từ hiện trường tới phê duyệt</p>
+            <!-- Hồ sơ cần xử lý khẩn cấp -->
+            <div class="worklist-section">
+              <div class="worklist-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--warning)" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  <span style="font-weight: 850; font-size: 15px; color: var(--text-main);">Hồ sơ cần chú ý hôm nay</span>
+                </div>
+                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 750;">Hiển thị 3 hồ sơ tồn mới nhất</span>
               </div>
-
-              <div class="flow-pipeline">
-                <div class="flow-line"></div>
-                <div class="flow-line-progress"></div>
-
-                <div class="flow-node" onclick="switchWorkspaceTab('create')">
-                  <div class="node-circle">01</div>
-                  <div class="node-title">Khởi tạo hồ sơ</div>
-                  <div class="node-desc">GĐV lập thông tin biển số, chỉ định Gara và tải lên danh sách phụ tùng cần kiểm tra.</div>
-                </div>
-
-                <div class="flow-node" onclick="switchWorkspaceTab('list')">
-                  <div class="node-circle">02</div>
-                  <div class="node-title">Gara chụp ảnh</div>
-                  <div class="node-desc">Gara nhận tin nhắn chứa link, tải ảnh minh chứng thực tế cho từng phụ tùng hư hại.</div>
-                </div>
-
-                <div class="flow-node" onclick="switchWorkspaceTab('list')">
-                  <div class="node-circle">03</div>
-                  <div class="node-title">Đối chiếu phương án</div>
-                  <div class="node-desc">Hệ thống phân tích, so sánh ảnh tổn thất gốc và ảnh báo giá của Gara trực quan.</div>
-                </div>
-
-                <div class="flow-node" onclick="switchWorkspaceTab('list')">
-                  <div class="node-circle">04</div>
-                  <div class="node-title">Phê duyệt bồi thường</div>
-                  <div class="node-desc">Giám định viên chốt phương án cuối cùng, chuyển giao duyệt thanh toán và kết thúc hồ sơ.</div>
-                </div>
+              <div id="homeRecentPendingContainer">
+                ${pendingRowsHtml}
               </div>
             </div>
           </div>
         `;
+      }
       } else if (activeDashboardTab === 'list') {
         container.innerHTML = `
           <section class="premium-stats">
