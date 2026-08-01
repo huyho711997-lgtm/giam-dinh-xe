@@ -2846,6 +2846,10 @@
               <input id="modalPendingNgayThanhToan" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
             </div>
             <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày nhận đủ hồ sơ</label>
+              <input id="modalPendingNgayNhanDuHoSo" class="input-premium" type="text" placeholder="DD/MM/YYYY" style="font-weight: 750; color: #3b82f6;" />
+            </div>
+            <div class="form-group">
               <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ngày Kế toán xác nhận</label>
               <input id="modalPendingNgayKtXacNhan" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
             </div>
@@ -5512,6 +5516,7 @@
       setVal('modalPendingDuPhongBoiThuong', formatCurrencyInputNumber(item.duPhongBoiThuong));
       setVal('modalPendingSoTienDaThanhToan', formatCurrencyInputNumber(item.soTienDaThanhToan));
       setVal('modalPendingNgayThanhToan', formatCleanDateField(item.ngayThanhToan));
+      setVal('modalPendingNgayNhanDuHoSo', formatCleanDateField(item.ngayNhanDuHoSo));
       setVal('modalPendingNgayKtXacNhan', formatCleanDateField(item.ngayKtXacNhan));
       setVal('modalPendingGhiChu', item.ghiChu || '');
 
@@ -5701,7 +5706,8 @@
         toTrinhNgayDuyet: getVal('modalPendingToTrinhNgayDuyet') || existingItem.toTrinhNgayDuyet || '',
         pascNgayDuyet: getVal('modalPendingToTrinhNgayDuyet') || existingItem.pascNgayDuyet || '',
         duPhongBoiThuong: getVal('modalPendingDuPhongBoiThuong') || existingItem.duPhongBoiThuong || '',
-        ngayKtXacNhan: getVal('modalPendingNgayKtXacNhan') || existingItem.ngayKtXacNhan || '',
+        ngayNhanDuHoSo: formatCleanDateField(getVal('modalPendingNgayNhanDuHoSo')) || getVal('modalPendingNgayNhanDuHoSo') || existingItem.ngayNhanDuHoSo || '',
+          ngayKtXacNhan: formatCleanDateField(getVal('modalPendingNgayKtXacNhan')) || getVal('modalPendingNgayKtXacNhan') || existingItem.ngayKtXacNhan || '',
         ngayThanhToan: getVal('modalPendingNgayThanhToan') || existingItem.ngayThanhToan || '',
         ghiChu: getVal('modalPendingGhiChu') || existingItem.ghiChu || '',
         trangThai: existingItem.trangThai || 'moi',
