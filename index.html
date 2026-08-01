@@ -3639,6 +3639,16 @@
           </tr>
         `;
       }).join('');
+
+      if (matched.length > limit) {
+        cardsHTML += `
+          <button type="button" onclick="window._accClaimSearchLimit = (window._accClaimSearchLimit || 25) + 30; renderAccClaimSearchResults(document.getElementById('accClaimSearchBox')?.value || '')" style="width: 100%; padding: 12px; margin-top: 6px; border-radius: 12px; background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); font-size: 13px; font-weight: 850; cursor: pointer; text-align: center; transition: all 0.2s ease;">
+            👇 Xem thêm 30 hồ sơ nữa (Còn ${matched.length - limit} hồ sơ)
+          </button>
+        `;
+      }
+
+      holder.innerHTML = cardsHTML;
     }
 
     function formatAuditLogDate(timestamp) {
@@ -12910,7 +12920,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       const modalOverlay = document.createElement('div');
       modalOverlay.id = 'accountingClaimDetailModalOverlay';
-      modalOverlay.style.cssText = 'position: fixed; inset: 0; background: rgba(11, 15, 25, 0.78); backdrop-filter: blur(16px); z-index: 99999; display: grid; place-items: center; padding: 12px;';
+      modalOverlay.style.cssText = 'position: fixed; inset: 0; background: rgba(10, 14, 23, 0.88); z-index: 99999; display: grid; place-items: center; padding: 12px;';
 
       modalOverlay.innerHTML = `
         <div style="background: var(--surface-strong); border: 1px solid var(--border-strong); border-radius: 24px; width: min(680px, 95vw); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 28px 70px rgba(0,0,0,0.55);">
@@ -13588,7 +13598,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     <button type="button" onclick="document.getElementById('accClaimSearchBox').value=''; renderAccClaimSearchResults('');" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; font-size: 14px; color: var(--text-muted); cursor: pointer;" title="Xóa từ khóa">✕</button>
                   </div>
 
-                  <div id="accClaimSearchResultsHolder" style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 10px; will-change: scroll-position; transform: translateZ(0); -webkit-overflow-scrolling: touch; contain: content;">
+                  <div id="accClaimSearchResultsHolder" style="height: 480px; max-height: 52vh; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 10px; will-change: scroll-position; transform: translateZ(0); -webkit-overflow-scrolling: touch; contain: content;">
                     <!-- Dynamic JS insertion -->
                   </div>
                 </div>
@@ -13693,6 +13703,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
     /* RENDER ALL SEARCH RESULTS FOR CLAIMS - FILTERS BY "ĐÃ DUYỆT HSBT", LOGGED-IN GĐV AND NOT ALREADY IN A BATCH */
     function renderAccClaimSearchResults(keyword) {
+      if (!keyword && !window._accClaimSearchLimitReset) { window._accClaimSearchLimit = 25; }
       const holder = document.getElementById('accClaimSearchResultsHolder');
       const counterLbl = document.getElementById('lblAccClaimSearchCounter');
       if (!holder) return;
@@ -13753,7 +13764,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
         return;
       }
 
-      holder.innerHTML = matched.map(c => {
+      const limit = window._accClaimSearchLimit || 25;
+      const visibleMatched = matched.slice(0, limit);
+
+      let cardsHTML = visibleMatched.map(c => {
         const isChecked = currentBatchSelectedClaims.some(item => item.claimId === c.id || item.soHoSoBoiThuong === (c.soHoSoBoiThuong || c.maVuTonThat));
         const bienSo = c.bienSo || 'N/A';
         const hsbt = c.soHoSoBoiThuong || c.maVuVuTonThat || c.maVuTonThat || 'Chưa có mã';
