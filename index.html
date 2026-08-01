@@ -12976,10 +12976,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <table style="width: 100%; min-width: 1120px; border-collapse: collapse; font-size: 12.5px;">
                 <thead><tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
                   <th style="padding: 13px 14px; text-align: center; width: 60px;">STT</th>
+                  <th style="padding: 13px 14px; text-align: center; width: 150px;">Trạng thái</th>
                   <th style="padding: 13px 14px; text-align: left;">Hồ sơ / Khách hàng</th>
-                  <th style="padding: 13px 14px; text-align: left;">Gara</th>
                   <th style="padding: 13px 14px; text-align: left;">Phiếu bàn giao</th>
-                  <th style="padding: 13px 14px; text-align: center;">Trạng thái</th>
                   <th style="padding: 13px 14px; text-align: left; min-width: 320px;">Ghi chú Kế toán theo hồ sơ</th>
                   <th style="padding: 13px 14px; text-align: center; width: 140px;">Thao tác</th>
                 </tr></thead>
@@ -13000,14 +12999,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                   return `<tr onclick="openAccountingClaimDetailModal('${item.transfer.transferId}', ${item.claimIndex})" style="border-bottom: 1px solid var(--border); vertical-align: top; cursor: pointer; transition: background 0.15s ease; ${isClaimBoSung ? 'background: rgba(239,68,68,0.03);' : ''}" title="Nhấp vào dòng để xem chi tiết / yêu cầu bổ sung">
                     <td style="padding: 14px; text-align: center; font-family: 'JetBrains Mono'; font-weight: 850; color: var(--primary);">#${index + 1}</td>
-                    <td style="padding: 14px;"><strong>${escapeHtmlOutput(item.claim.bienSo || 'N/A')}</strong><span style="display:block; color:var(--text-soft); font-size:11px; margin-top:3px;">${escapeHtmlOutput(item.claim.soHoSoBoiThuong || '')}</span><span style="display:block; margin-top:5px; font-weight:750;">${escapeHtmlOutput(extractClaimOwnerName(item.claim) || 'N/A')}</span></td>
-                    <td style="padding: 14px;">${escapeHtmlOutput(item.claim.tenGara || 'N/A')}</td>
-                    <td style="padding: 14px;"><strong style="font-family:'JetBrains Mono';">${escapeHtmlOutput(item.transfer.transferId || 'N/A')}</strong><span style="display:block; color:var(--text-soft); font-size:11px; margin-top:3px;">GĐV: ${escapeHtmlOutput(item.transfer.gdvName || 'N/A')}</span></td>
                     <td style="padding: 14px; text-align:center;"><span style="display:inline-flex; gap:5px; align-items:center; padding:5px 9px; border-radius:999px; color:${status.text}; background:${status.bg}; border:1px solid ${status.border}; font-size:10.5px; font-weight:850;">${status.svg}${status.label}</span></td>
+                    <td style="padding: 14px;"><strong>${escapeHtmlOutput(item.claim.bienSo || 'N/A')}</strong><span style="display:block; color:var(--text-soft); font-size:11px; margin-top:3px;">${escapeHtmlOutput(item.claim.soHoSoBoiThuong || '')}</span><span style="display:block; margin-top:5px; font-weight:750;">${escapeHtmlOutput(extractClaimOwnerName(item.claim) || 'N/A')}</span></td>
+                    <td style="padding: 14px;"><strong style="font-family:'JetBrains Mono';">${escapeHtmlOutput(item.transfer.transferId || 'N/A')}</strong><span style="display:block; color:var(--text-soft); font-size:11px; margin-top:3px;">GĐV: ${escapeHtmlOutput(item.transfer.gdvName || 'N/A')}</span></td>
                     <td style="padding: 14px; max-width: 320px; word-wrap: break-word; color: ${isClaimBoSung ? '#ef4444' : 'var(--text-main)'}; font-weight: ${isClaimBoSung ? '750' : '500'}; line-height: 1.4;">${escapeHtmlOutput(noteText)}</td>
                     <td style="padding: 14px; text-align:center; vertical-align: middle;"><button type="button" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border-strong); background:var(--bg-soft); color:var(--text-main); font-size:11.5px; font-weight:850; cursor:pointer; pointer-events: none;">Xem chi tiết</button></td>
                   </tr>`;
-                }).join('') : `<tr><td colspan="7" style="padding:42px; text-align:center; color:var(--text-soft);">Không tìm thấy hồ sơ phù hợp.</td></tr>`}</tbody>
+                }).join('') : `<tr><td colspan="6" style="padding:42px; text-align:center; color:var(--text-soft);">Không tìm thấy hồ sơ phù hợp.</td></tr>`}</tbody>
               </table>
             </div>
           </div>
