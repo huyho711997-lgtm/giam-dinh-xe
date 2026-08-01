@@ -11502,6 +11502,25 @@ function formatDateDisplay(val) {
       }, 50);
     }
 
+    
+    function isTndsClaim(c) {
+      if (!c) return false;
+      const text = String(
+        c.loaiHoSo || c.nhomBoiThuong || c.tnds || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.nghiepVu || c.tenHoSo || ''
+      ).toLowerCase();
+      return text.includes('tnds');
+    }
+
+    function isUnpaidClaim(c) {
+      if (!c) return false;
+      const st = String(c.trangThai || '').toLowerCase();
+      if (st.includes('da_thanh_toan') || st.includes('đã thanh toán') || st.includes('da_hoan_thanh') || st.includes('đã hoàn thành')) {
+        return false;
+      }
+      if (c.ngayThanhToan) return false;
+      return true;
+    }
+
     function isDuyetHsbtApproved(c) {
       const approvedHsbtStatuses = ['da_duyet_hsbt', 'cho_duyet_dntt', 'cho_kt_duyet', 'kt_duyet', 'da_thanh_toan'];
       return approvedHsbtStatuses.includes(c.trangThai);
@@ -12813,15 +12832,20 @@ function renderGdvMonthlyReportPage(targetContainer) {
       });
 
       claimsList.forEach(c => {
-        const claimTime = getClaimTimestamp(c);
-
-        if (claimTime < startTime || claimTime > endTime) {
-          return;
-        }
-
         const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || c.canBoBoiThuong || c.gdvName || c.createdByName || 'Chưa phân công').trim();
         if (!gdvMap[gdvName]) {
           gdvMap[gdvName] = { gdvName, phatSinh: 0, daDuyetHsb: 0, chuaDuyetPasc: 0, tonHoaDon: 0, chuyenDntt: 0, carplaCount: 0, tndsTonLuyKe: 0 };
+        }
+
+        // 1. TNDS TỒN LŨY KẾ: RUN ACROSS ALL TIME (NO DATE RANGE FILTER), UNPAID TNDS CLAIMS
+        if (isTndsClaim(c) && isUnpaidClaim(c)) {
+          gdvMap[gdvName].tndsTonLuyKe++;
+        }
+
+        // 2. PERIOD-SPECIFIC METRICS (FILTERED BY START & END DATE RANGE)
+        const claimTime = getClaimTimestamp(c);
+        if (claimTime < startTime || claimTime > endTime) {
+          return;
         }
 
         const item = gdvMap[gdvName];
@@ -12842,11 +12866,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const garaName = String(c.tenGaraVietTat || c.garaSuaChua || c.gara || '').toLowerCase();
         if (garaName.includes('carpla')) {
           item.carplaCount++;
-        }
-
-        const loaiHs = String(c.loaiHoSo || c.nhomBoiThuong || '').toLowerCase();
-        if (loaiHs.includes('tnds') && !isApproved) {
-          item.tndsTonLuyKe++;
         }
       });
 
