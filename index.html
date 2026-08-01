@@ -11878,15 +11878,15 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       cachedCurrentGarageRows = garageRows;
 
-      // GARAGE COMBO BAR + LINE CHART CALCULATIONS (EXPANDED HEIGHT & BOT PADDING FOR ROTATED LABELS)
+      // GARAGE DUAL-PANEL SYNCHRONIZED CHART (PREVENTS ANY COLLISION BETWEEN BARS & TREND LINE)
       const gChartWidth = 980;
-      const gChartHeight = 400;
+      const gChartHeight = 510;
       const gPaddingLeft = 85;
       const gPaddingRight = 65;
-      const gPaddingTop = 45;
+      const gPaddingTop = 35;
       const gPaddingBottom = 115;
       const gPlotWidth = gChartWidth - gPaddingLeft - gPaddingRight;
-      const gPlotHeight = gChartHeight - gPaddingTop - gPaddingBottom;
+      const panelH = 155;
 
       const topGaragesChart = garageRows.slice(0, 20);
       const maxGAmount = Math.max(1, ...topGaragesChart.map(g => g.totalApprovedAmount));
@@ -11897,41 +11897,15 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       const gPoints = topGaragesChart.map((g, idx) => {
         const cx = gPaddingLeft + (idx + 0.5) * stepGX;
-        const bHeight = (g.totalApprovedAmount / maxGAmount) * gPlotHeight;
-        const bY = gPaddingTop + gPlotHeight - bHeight;
-        const lY = gPaddingTop + gPlotHeight - (g.totalClaimsCount / maxGClaims) * gPlotHeight;
+        
+        // Panel 1 (Top: Payout Amount)
+        const bHeight = (g.totalApprovedAmount / maxGAmount) * panelH;
+        const bY = 35 + panelH - bHeight;
+        const amountY = bY - 6;
 
-        let amountY = bY - 6;
-        let amountColor = '#10b981';
-        let amountFontWeight = '850';
-        let showInside = false;
-
-        if (bHeight > 25) {
-          amountY = bY + 12;
-          amountColor = '#ffffff';
-          amountFontWeight = '800';
-          showInside = true;
-        }
-
-        let claimsY = lY - 8;
-
-        if (showInside) {
-          const diff = Math.abs(amountY - claimsY);
-          if (diff < 14) {
-            claimsY = bY - 10;
-          }
-        } else {
-          const diff = Math.abs(amountY - claimsY);
-          if (diff < 14) {
-            if (claimsY < amountY) {
-              claimsY = lY - 14;
-              amountY = bY - 4;
-            } else {
-              claimsY = lY + 11;
-              amountY = bY - 14;
-            }
-          }
-        }
+        // Panel 2 (Bottom: Claims Count)
+        const lY = 220 + panelH - (g.totalClaimsCount / maxGClaims) * panelH;
+        const claimsY = lY - 8;
 
         return {
           ...g,
@@ -11940,8 +11914,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
           bHeight,
           lY,
           amountY,
-          amountColor,
-          amountFontWeight,
           claimsY
         };
       });
@@ -12285,11 +12257,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     </linearGradient>
                   </defs>
 
-                  <!-- Horizontal Grid Lines & Dual Y-Axes -->
+                  <!-- Panel 1 (Top: Tiền bồi thường) Grid Lines & Y-Axis -->
                   ${[0, 0.25, 0.5, 0.75, 1].map(r => {
-                    const yPos = gPaddingTop + gPlotHeight - r * gPlotHeight;
+                    const yPos = 35 + panelH - r * panelH;
                     const moneyVal = maxGAmount * r;
-                    const claimsVal = Math.round(maxGClaims * r);
                     
                     let moneyLabel = '0 đ';
                     if (moneyVal >= 1e9) moneyLabel = (moneyVal / 1e9).toFixed(1) + ' Tỷ';
@@ -12297,11 +12268,28 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     else if (moneyVal > 0) moneyLabel = Math.round(moneyVal / 1e3) + ' k';
 
                     return `
-                      <line x1="${gPaddingLeft}" y1="${yPos}" x2="${gChartWidth - gPaddingRight}" y2="${yPos}" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" />
+                      <line x1="${gPaddingLeft}" y1="${yPos}" x2="${gChartWidth - gPaddingRight}" y2="${yPos}" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.5" />
                       <text x="${gPaddingLeft - 10}" y="${yPos + 3}" font-size="7.5" font-weight="750" fill="#10b981" text-anchor="end" font-family="JetBrains Mono">${moneyLabel}</text>
+                    `;
+                  }).join('')}
+
+                  <!-- Panel 2 (Bottom: Số ca bồi thường) Grid Lines & Y-Axis -->
+                  ${[0, 0.25, 0.5, 0.75, 1].map(r => {
+                    const yPos = 220 + panelH - r * panelH;
+                    const claimsVal = Math.round(maxGClaims * r);
+
+                    return `
+                      <line x1="${gPaddingLeft}" y1="${yPos}" x2="${gChartWidth - gPaddingRight}" y2="${yPos}" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.5" />
                       <text x="${gChartWidth - gPaddingRight + 10}" y="${yPos + 3}" font-size="7.5" font-weight="750" fill="#3b82f6" text-anchor="start" font-family="JetBrains Mono">${claimsVal} ca</text>
                     `;
                   }).join('')}
+
+                  <!-- Panel Indicators Inside SVG -->
+                  <text x="${gPaddingLeft + 8}" y="26" font-size="8.5" font-weight="900" fill="#10b981" opacity="0.8">TIỀN BỒI THƯỜNG (CỘT)</text>
+                  <text x="${gPaddingLeft + 8}" y="211" font-size="8.5" font-weight="900" fill="#3b82f6" opacity="0.8">SỐ HỒ SƠ (ĐƯỜNG XU HƯỚNG)</text>
+
+                  <!-- Panel Separator Line -->
+                  <line x1="${gPaddingLeft}" y1="202" x2="${gChartWidth - gPaddingRight}" y2="202" stroke="var(--border-strong)" stroke-width="1" stroke-dasharray="4 4" opacity="0.75" />
 
                   <!-- INTERACTIVE VERTICAL BARS & ROTATED LABELS GROUP -->
                   ${gPoints.map(p => {
@@ -12310,29 +12298,29 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                     return `
                       <g class="garage-chart-col-group" cursor="pointer" onmouseenter="showGarageChartTooltip(event, '${escapeAttributeData(p.key)}')" onmousemove="moveGarageChartTooltip(event)" onmouseleave="hideGarageChartTooltip()">
-                        <!-- Invisible Hit Box Target for easy hovering -->
-                        <rect x="${p.cx - stepGX/2}" y="${gPaddingTop}" width="${stepGX}" height="${gPlotHeight + 110}" fill="transparent" />
+                        <!-- Invisible Hit Box Target for easy hovering across both panels -->
+                        <rect x="${p.cx - stepGX/2}" y="35" width="${stepGX}" height="350" fill="transparent" />
 
-                        <!-- Vertical Bar -->
-                        <rect x="${p.cx - barW/2}" y="${p.bY}" width="${barW}" height="${p.bHeight}" rx="6" fill="url(#garageBarGrad)" style="transition: all 0.2s ease;" />
+                        <!-- Vertical Bar in Panel 1 -->
+                        <rect x="${p.cx - barW/2}" y="${p.bY}" width="${barW}" height="${p.bHeight}" rx="4" fill="url(#garageBarGrad)" style="transition: all 0.2s ease;" />
                         
-                        <!-- Bar Top Money Label -->
-                        <text x="${p.cx}" y="${p.amountY}" font-size="7" font-weight="${p.amountFontWeight}" fill="${p.amountColor}" text-anchor="middle" font-family="JetBrains Mono">
+                        <!-- Bar Top Money Label in Panel 1 -->
+                        <text x="${p.cx}" y="${p.amountY}" font-size="7" font-weight="850" fill="#10b981" text-anchor="middle" font-family="JetBrains Mono">
                           ${p.totalApprovedAmount >= 1e6 ? (p.totalApprovedAmount / 1e6).toFixed(1) + 'M' : formatCurrencyInputNumber(p.totalApprovedAmount)}
                         </text>
 
-                        <!-- Rotated Clean X-Axis Label (-38deg) -->
-                        <text x="${p.cx}" y="${gChartHeight - 95}" transform="rotate(-38, ${p.cx}, ${gChartHeight - 95})" font-size="7" font-weight="850" fill="var(--text-main)" text-anchor="end">
+                        <!-- Rotated Clean X-Axis Label (-38deg) under Panel 2 -->
+                        <text x="${p.cx}" y="395" transform="rotate(-38, ${p.cx}, 395)" font-size="7" font-weight="850" fill="var(--text-main)" text-anchor="end">
                           ${escapeHtmlOutput(displayShortName)}
                         </text>
                       </g>
                     `;
                   }).join('')}
 
-                  <!-- TREND LINE (Claim Count) -->
-                  ${gPoints.length > 1 ? `<path d="${gLinePathStr}" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pointer-events="none" />` : ''}
+                  <!-- TREND LINE (Claim Count) in Panel 2 -->
+                  ${gPoints.length > 1 ? `<path d="${gLinePathStr}" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" pointer-events="none" />` : ''}
 
-                  <!-- Line Dots & Value Tags -->
+                  <!-- Line Dots & Value Tags in Panel 2 -->
                   ${gPoints.map(p => `
                     <g pointer-events="none">
                       <circle cx="${p.cx}" cy="${p.lY}" r="2" fill="var(--surface)" stroke="#3b82f6" stroke-width="1.5" />
