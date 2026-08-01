@@ -12650,10 +12650,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   const eY = period.endDate.getFullYear();
                   const lastDay = new Date(sY, sM + 1, 0).getDate();
                   if (sM === eM && sY === eY && sD === 1 && eD === lastDay) {
-                    return 'BÁO CÁO THÁNG TRƯỜNG ZONE';
+                    return 'BÁO CÁO THÁNG TRƯỞNG ZONE';
                   }
                 }
-                return 'BÁO CÁO TUẦN TRƯỜNG ZONE';
+                return 'BÁO CÁO TUẦN TRƯỞNG ZONE';
               })()}
             </h2>
             <div style="color: #ef4444; font-size: 13.5px; font-weight: 850; margin-top: 6px; font-family: 'JetBrains Mono';">
@@ -13054,10 +13054,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
             const eY = period.endDate.getFullYear();
             const lastDay = new Date(sY, sM + 1, 0).getDate();
             if (sM === eM && sY === eY && sD === 1 && eD === lastDay) {
-              return 'BÁO CÁO THÁNG TRƯỜNG ZONE';
+              return 'BÁO CÁO THÁNG TRƯỞNG ZONE';
             }
           }
-          return 'BÁO CÁO TUẦN TRƯỜNG ZONE';
+          return 'BÁO CÁO TUẦN TRƯỞNG ZONE';
         })(), '', '', '', '', '', '', ''],
         ['', '', '', period.label, '', '', '', '', '', '', '', ''],
         ['STT', 'GDV', 'PHÁT SINH', 'ĐÃ DUYỆT HSB', 'CHƯA DUYỆT PASC', 'TỒN HÓA ĐƠN', 'CHUYỂN ĐNTT', 'Lượng xe Carpla', 'HỒ SƠ TNDS TỒN LŨY KẾ', 'HS tồn > 30 ngày', 'Số tiền bình quân dưới 10tr', `Doanh số Carpla lũy kế tháng ${currentMonth}`]
