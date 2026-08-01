@@ -12640,7 +12640,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
           
           <div style="text-align: center; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
             <h2 style="color: #ef4444; font-size: 22px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3;">
-              BÁO CÁO TUẦN TRƯỜNG ZONE
+              ${(function() {
+                if (period && period.startDate && period.endDate) {
+                  const sD = period.startDate.getDate();
+                  const sM = period.startDate.getMonth();
+                  const sY = period.startDate.getFullYear();
+                  const eD = period.endDate.getDate();
+                  const eM = period.endDate.getMonth();
+                  const eY = period.endDate.getFullYear();
+                  const lastDay = new Date(sY, sM + 1, 0).getDate();
+                  if (sM === eM && sY === eY && sD === 1 && eD === lastDay) {
+                    return 'BÁO CÁO THÁNG TRƯỜNG ZONE';
+                  }
+                }
+                return 'BÁO CÁO TUẦN TRƯỜNG ZONE';
+              })()}
             </h2>
             <div style="color: #ef4444; font-size: 13.5px; font-weight: 850; margin-top: 6px; font-family: 'JetBrains Mono';">
               ${period.label}
@@ -13030,7 +13044,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const currentMonth = (period.startDate ? period.startDate.getMonth() + 1 : (new Date().getMonth() + 1));
 
       const aoa = [
-        ['', '', '', '', 'BÁO CÁO TUẦN TRƯỜNG ZONE', '', '', '', '', '', '', ''],
+        ['', '', '', '', (function() {
+          if (period && period.startDate && period.endDate) {
+            const sD = period.startDate.getDate();
+            const sM = period.startDate.getMonth();
+            const sY = period.startDate.getFullYear();
+            const eD = period.endDate.getDate();
+            const eM = period.endDate.getMonth();
+            const eY = period.endDate.getFullYear();
+            const lastDay = new Date(sY, sM + 1, 0).getDate();
+            if (sM === eM && sY === eY && sD === 1 && eD === lastDay) {
+              return 'BÁO CÁO THÁNG TRƯỜNG ZONE';
+            }
+          }
+          return 'BÁO CÁO TUẦN TRƯỜNG ZONE';
+        })(), '', '', '', '', '', '', ''],
         ['', '', '', period.label, '', '', '', '', '', '', '', ''],
         ['STT', 'GDV', 'PHÁT SINH', 'ĐÃ DUYỆT HSB', 'CHƯA DUYỆT PASC', 'TỒN HÓA ĐƠN', 'CHUYỂN ĐNTT', 'Lượng xe Carpla', 'HỒ SƠ TNDS TỒN LŨY KẾ', 'HS tồn > 30 ngày', 'Số tiền bình quân dưới 10tr', `Doanh số Carpla lũy kế tháng ${currentMonth}`]
       ];
@@ -13106,7 +13134,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
       XLSX.utils.book_append_sheet(wb, ws, 'BaoCao_Tuan_Truong_Zone');
       const startClean = period.startStr.replace(/[^0-9]/g, '');
       const endClean = period.endStr.replace(/[^0-9]/g, '');
-      XLSX.writeFile(wb, `Bao_Cao_Tuan_Truong_Zone_${startClean}_${endClean}.xlsx`);
+      const isFullM = (function() {
+        if (period && period.startDate && period.endDate) {
+          const sD = period.startDate.getDate();
+          const sM = period.startDate.getMonth();
+          const sY = period.startDate.getFullYear();
+          const eD = period.endDate.getDate();
+          const eM = period.endDate.getMonth();
+          const eY = period.endDate.getFullYear();
+          const lastDay = new Date(sY, sM + 1, 0).getDate();
+          return sM === eM && sY === eY && sD === 1 && eD === lastDay;
+        }
+        return false;
+      })();
+      const filePrefix = isFullM ? 'Bao_Cao_Thang_Truong_Zone' : 'Bao_Cao_Tuan_Truong_Zone';
+      XLSX.writeFile(wb, `${filePrefix}_${startClean}_${endClean}.xlsx`);
       triggerToast('Đã tải Báo cáo Tuần Trưởng Zone (.xlsx) thành công!', 'success');
     }
 
