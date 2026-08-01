@@ -12866,6 +12866,37 @@ function renderGdvMonthlyReportPage(targetContainer) {
       return 'accountingClaimNote_' + encodeURIComponent(transferId || '') + '_' + claimIndex;
     }
 
+        /* CUSTOM ACCOUNTING CLAIM STATUS FILTER DROPDOWN CONTROLLER */
+    function toggleAccClaimStatusFilterDropdown(evt) {
+      if (evt) evt.stopPropagation();
+      const menu = document.getElementById('accClaimStatusFilterMenu');
+      const arrow = document.getElementById('accClaimFilterChevron');
+      if (!menu) return;
+      
+      const isVis = menu.style.display === 'block';
+      menu.style.display = isVis ? 'none' : 'block';
+      if (arrow) arrow.style.transform = isVis ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+
+    function selectAccClaimStatusFilterOption(statusVal) {
+      activeAccountingClaimStatus = statusVal;
+      const menu = document.getElementById('accClaimStatusFilterMenu');
+      const arrow = document.getElementById('accClaimFilterChevron');
+      if (menu) menu.style.display = 'none';
+      if (arrow) arrow.style.transform = 'rotate(0deg)';
+      renderAccountingClaimsPage();
+    }
+
+    document.addEventListener('click', function(e) {
+      const wrapper = document.getElementById('accClaimStatusFilterWrapper');
+      const menu = document.getElementById('accClaimStatusFilterMenu');
+      const arrow = document.getElementById('accClaimFilterChevron');
+      if (wrapper && menu && !wrapper.contains(e.target)) {
+        menu.style.display = 'none';
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+      }
+    });
+
     function changeAccountingClaimFilter(status) {
       activeAccountingClaimStatus = status;
       renderAccountingClaimsPage();
@@ -13080,7 +13111,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               ` : `
                 ${isClaimBoSung ? `
                   <button type="button" onclick="submitAccountingClaimNoteFromModal('${transferId}', ${claimIndex}, 'reject_supplement')" style="padding: 10px 18px; border-radius: 12px; font-size: 13px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.28); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                    🔄 Trả lại / Từ chối
+                    ${ACC_SVGS.REFRESH} Trả lại / Từ chối
                   </button>
                   <button type="button" onclick="submitAccountingClaimNoteFromModal('${transferId}', ${claimIndex}, 'resolve_supplement')" style="padding: 10px 22px; border-radius: 12px; font-size: 13px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; cursor: pointer; box-shadow: 0 4px 18px rgba(16,185,129,0.35); display: inline-flex; align-items: center; gap: 6px;">
                     ${ACC_SVGS.CHECK_CIRCLE} Đã bổ sung chứng từ
@@ -14093,7 +14124,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               ${t.ghiChuGdv ? `<div><strong>Ghi chú GĐV:</strong> <em>${escapeHtmlOutput(t.ghiChuGdv)}</em></div>` : ''}
               ${t.trangThai === 'can_bo_sung' && t.ghiChuKeToan ? `
                 <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); border-radius: 10px; padding: 8px 12px; color: #ef4444; margin-top: 4px; font-weight: 750;">
-                  ⚠️ Ghi chú chung từ Kế toán: ${escapeHtmlOutput(t.ghiChuKeToan)}
+                  ${ACC_SVGS.WARNING} Ghi chú chung từ Kế toán: ${escapeHtmlOutput(t.ghiChuKeToan)}
                 </div>
               ` : ''}
             </div>
@@ -14101,7 +14132,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <!-- CLAIMS LIST TABLE IN BATCH -->
             <div style="margin-bottom: 22px;">
               <label style="display: block; font-size: 13px; font-weight: 850; color: var(--text-main); margin-bottom: 8px;">
-                📋 Chi tiết các Hồ sơ Bồi thường trong Phiếu:
+                ${ACC_SVGS.LIST} Chi tiết các Hồ sơ Bồi thường trong Phiếu:
               </label>
               <div style="border: 1px solid var(--border); border-radius: 14px; overflow-x: auto; background: var(--surface);">
                 <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
