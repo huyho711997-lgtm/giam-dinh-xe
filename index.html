@@ -12050,7 +12050,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
           </div>
 
-          ${activeGdvReportView !== 'garage' ? `
+          ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone') ? `
           <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
@@ -12872,17 +12872,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
           item.hsTonOver30Days++;
         }
 
-        // 3. SỐ TIỀN BÌNH QUÂN DƯỚI 10TR & DOANH SỐ CARPLA
+        // 3. SỐ TIỀN BÌNH QUÂN DƯỚI 10TR
         const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
         const amtVal = parseInt(amtStr, 10) || 0;
         if (amtVal > 0 && amtVal < 10000000) {
           item.sumAmtUnder10M += amtVal;
           item.countUnder10M++;
-        }
-
-        const garaName = String(c.tenGaraVietTat || c.garaSuaChua || c.gara || '').toLowerCase();
-        if (garaName.includes('carpla')) {
-          item.carplaCumulativeRevenue += amtVal;
         }
 
         // 4. PERIOD-SPECIFIC METRICS (FILTERED BY START & END DATE RANGE)
@@ -12902,8 +12897,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
           item.tonHoaDon++;
         }
 
+        const garaName = String(c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || '').toLowerCase();
         if (garaName.includes('carpla')) {
           item.carplaCount++;
+          
+          // DOANH SỐ CARPLA LŨY KẾ: CLAIMS WITHIN DATE RANGE, APPROVED STATUS ('Đã duyệt HSBT'), AND GARAGE CONTAINS 'CARPLA'
+          if (isApproved) {
+            item.carplaCumulativeRevenue += amtVal;
+          }
         }
       });
 
