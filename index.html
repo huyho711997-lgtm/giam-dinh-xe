@@ -12598,14 +12598,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
       return `
         <div id="weeklyZoneReportCardContainer" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 26px 30px; margin-bottom: 24px; box-shadow: var(--shadow-sm); position: relative;">
           
-          <div style="position: absolute; right: 26px; top: 22px; display: flex; gap: 8px; flex-wrap: wrap; z-index: 10;">
-            <button type="button" onclick="downloadWeeklyZoneReportImage('png')" style="padding: 7px 14px; border-radius: 10px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Tải ảnh PNG chất lượng cao">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-              <span>Tải Ảnh (PNG)</span>
-            </button>
-            <button type="button" onclick="downloadWeeklyZoneReportImage('jpg')" style="padding: 7px 14px; border-radius: 10px; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); color: #d97706; font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Tải ảnh JPG">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-              <span>Tải Ảnh (JPG)</span>
+          <div class="hide-on-screenshot" style="position: absolute; right: 26px; top: 22px; z-index: 10;">
+            <button type="button" onclick="downloadWeeklyZoneReportImage('png')" style="padding: 8px 16px; border-radius: 11px; background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(245,158,11,0.12) 100%); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; font-size: 12.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Tải ảnh báo cáo tuần (PNG/JPG)">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              <span>Tải Ảnh Báo Cáo</span>
             </button>
           </div>
           
@@ -12964,13 +12960,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
-        logging: false
+        logging: false,
+        ignoreElements: function(element) {
+          return element.classList && element.classList.contains('hide-on-screenshot');
+        }
       }).then(canvas => {
         const link = document.createElement('a');
         link.download = `Bao_Cao_Tuan_Truong_Zone_${Date.now()}.${ext}`;
         link.href = canvas.toDataURL(`image/${imgFormat}`, 0.95);
         link.click();
-        triggerToast(`Đã tải ảnh báo cáo dạng ${ext.toUpperCase()} thành công!`, 'success');
+        triggerToast(`Đã tải ảnh báo cáo thành công!`, 'success');
       }).catch(err => {
         console.error(err);
         triggerToast('Có lỗi xảy ra khi xuất ảnh báo cáo!', 'error');
