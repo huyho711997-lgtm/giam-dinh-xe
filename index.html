@@ -13697,6 +13697,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
     // SVG Vectors Definition for Clean Render
     const ACC_SVGS = {
+      FIRE: `<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" stroke="none"><path d="M12 23c4.97 0 9-3.58 9-8 0-4.17-3.07-6.27-4.66-8.08C14.77 5.11 14 3 14 1c-1.5 2-3 4.5-3 7 0 .55.45 1 1 1s1-.45 1-1c0-1.2.7-2.7 1.6-4.1 1.25 1.54 3.4 3.32 3.4 6.6 0 2.76-2.24 5-5 5s-5-2.24-5-5c0-1.8 1.1-3.6 2-4.9-1.8.8-4 2.8-4 5.9 0 4.42 4.03 8 9 8z"/></svg>`,
       INBOX: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="8 17 12 21 16 17"></polyline><line x1="12" y1="12" x2="12" y2="21"></line><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"></path></svg>`,
       WARNING: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`,
       CHECK_CIRCLE: `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
@@ -14641,8 +14642,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
       modalOverlay.innerHTML = `
         <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 24px; width: min(1560px, 98vw); height: 95vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 28px 70px rgba(0,0,0,0.55); position: relative;">
           
-          <!-- FIXED HEADER -->
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 30px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface); z-index: 10;">
+          <!-- FIXED HEADER WITH ACTION BUTTONS TOP RIGHT -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 18px 30px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface); z-index: 10; gap: 16px;">
             <div style="display: flex; align-items: center; gap: 14px;">
               <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, rgba(216,180,109,0.2) 0%, rgba(216,180,109,0.05) 100%); border: 1px solid rgba(216,180,109,0.4); color: var(--primary); display: grid; place-items: center; flex-shrink: 0;">
                 ${ACC_SVGS.LIST}
@@ -14656,7 +14657,28 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 </p>
               </div>
             </div>
-            <button type="button" onclick="closeAccountingTransferModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; transition: all 0.2s ease;">✕</button>
+
+            <!-- ACTION BUTTONS MOVED TO HEADER TOP RIGHT -->
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              ${(editingTransferId && cachedAccountingTransfersPayload[editingTransferId]?.trangThai === 'cho_xac_nhan') ? `
+                <button type="button" onclick="revertTransferToDraft('${editingTransferId}')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(245,158,11,0.14); color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  ${ACC_SVGS.REFRESH} Trả lại (Hủy gửi bàn giao)
+                </button>
+              ` : ''}
+
+              <button type="button" onclick="saveAccountingTransferBatchFromModal(event, '${editingTransferId || ''}', 'cho_xac_nhan')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; box-shadow: 0 4px 16px rgba(216,180,109,0.35); display: inline-flex; align-items: center; gap: 6px;">
+                ${ACC_SVGS.CHECK_CIRCLE}
+                <span>Bàn giao hồ sơ cho Kế toán</span>
+              </button>
+
+              ${editingTransferId ? `
+                <button type="button" onclick="deleteAccountingTransferBatch('${editingTransferId}')" style="padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Xóa phiếu bàn giao này">
+                  ${ACC_SVGS.TRASH} Xóa phiếu
+                </button>
+              ` : ''}
+
+              <button type="button" onclick="closeAccountingTransferModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; transition: all 0.2s ease;">✕</button>
+            </div>
           </div>
 
           <!-- SCROLLABLE FORM BODY -->
@@ -14791,26 +14813,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
             </div>
 
-            <!-- FIXED STICKY FOOTER ACTIONS -->
-            <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(14px); z-index: 10; flex-shrink: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap;">
-              ${(editingTransferId && cachedAccountingTransfersPayload[editingTransferId]?.trangThai === 'cho_xac_nhan') ? `
-                <button type="button" onclick="revertTransferToDraft('${editingTransferId}')" style="padding: 11px 20px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer;">
-                  ${ACC_SVGS.REFRESH} Trả lại (Hủy gửi bàn giao)
-                </button>
-              ` : ''}
-              <button type="button" onclick="closeAccountingTransferModal()" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Hủy bỏ</button>
-              <button type="button" onclick="saveAccountingTransferBatchFromModal(event, '${editingTransferId || ''}', 'moi')" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-main); border: 1px solid var(--border-strong); cursor: pointer;">
-                💾 Lưu nháp
+            <!-- FIXED STICKY FOOTER: HỦY BỎ & LƯU NHÁP AT BOTTOM RIGHT -->
+            <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(14px); z-index: 10; flex-shrink: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px;">
+              <button type="button" onclick="closeAccountingTransferModal()" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s ease;">Hủy bỏ</button>
+              <button type="button" onclick="saveAccountingTransferBatchFromModal(event, '${editingTransferId || ''}', 'moi')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+                ${ACC_SVGS.BRIEFCASE}
+                <span>Lưu nháp</span>
               </button>
-              <button type="button" onclick="saveAccountingTransferBatchFromModal(event, '${editingTransferId || ''}', 'cho_xac_nhan')" style="padding: 11px 26px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(216,180,109,0.4); display: flex; align-items: center; gap: 8px;">
-                ${ACC_SVGS.CHECK_CIRCLE}
-                <span>Bàn giao hồ sơ cho Kế toán</span>
-              </button>
-              ${editingTransferId ? `
-                <button type="button" onclick="deleteAccountingTransferBatch('${editingTransferId}')" style="padding: 11px 18px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                  ${ACC_SVGS.TRASH} Xóa phiếu
-                </button>
-              ` : ''}
             </div>
 
           </form>
@@ -15052,8 +15061,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <strong style="color: var(--text-main); font-size: 13px;">${escapeHtmlOutput(item.bienSo || 'N/A')}</strong>
               <span style="display: inline-block; font-size: 11px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(item.soHoSoBoiThuong || '')}</span>
-              <button type="button" onclick="toggleAccBatchItemPriority(${idx})" style="padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; ${item.isUuTien ? 'background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.35);' : 'background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border);'}" title="Đánh dấu hồ sơ ưu tiên xử lý">
-                ${item.isUuTien ? '🔥 ƯU TIÊN' : '+ Ưu tiên'}
+              <button type="button" onclick="toggleAccBatchItemPriority(${idx})" style="padding: 3px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 4px; ${item.isUuTien ? 'background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.35);' : 'background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border);'}" title="Đánh dấu hồ sơ ưu tiên xử lý">
+                ${item.isUuTien ? `${ACC_SVGS.FIRE} <span>ƯU TIÊN</span>` : `<span>+ Ưu tiên</span>`}
               </button>
             </div>
           </td>
