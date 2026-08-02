@@ -15152,18 +15152,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
     }
 
-    function openKeToanReviewModal(transferId) {
+        function openKeToanReviewModal(transferId) {
       if (!transferId || !cachedAccountingTransfersPayload[transferId]) return;
       const t = cachedAccountingTransfersPayload[transferId];
 
-      const isKeToanRole = getLoggedInUserAccountingRole() === 'ketoan';
+      const isKeToanRole = getLoggedInUserAccountingRole() === 'ketoan' || (activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin');
 
       let claimsInBatch = t.danhSachHoSo || [];
       if (claimsInBatch.length === 0 && (t.soHoSoBoiThuong || t.bienSo)) {
         claimsInBatch = [{ soHoSoBoiThuong: t.soHoSoBoiThuong, bienSo: t.bienSo, tenGara: t.tenGara, soTienDeNghi: t.soTienDeNghi, tenChuXe: extractClaimOwnerName(t) }];
       }
-
-      const suppList = t.hoSoYeuCauBoSung || [];
 
       const modalOverlay = document.createElement('div');
       modalOverlay.id = 'keToanReviewModalOverlay';
@@ -15178,44 +15176,34 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <div style="color: var(--primary);">${ACC_SVGS.BRIEFCASE}</div>
               <div>
                 <h3 style="font-size: 19px; font-weight: 850; color: var(--text-main); margin: 0;">
-                  ${isKeToanRole ? 'Xét duyệt Phiếu Bàn giao Kế toán' : 'Chi tiết Phiếu Bàn giao & Phản hồi Kế toán'}
+                  Chi tiết Phiếu Bàn giao Hồ sơ
                 </h3>
                 <span style="font-size: 12px; color: var(--text-soft); font-family: 'JetBrains Mono';">Mã Phiếu: ${t.transferId} (${formatDateDisplay(t.ngayBanGiao)})</span>
               </div>
             </div>
 
-                        <!-- HEADER ACTIONS FOR KE TOAN & ADMIN ROLES -->
+            <!-- HEADER ACTIONS FOR KE TOAN, ADMIN & GDV ROLES -->
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              ${(t.trangThai === 'cho_xac_nhan' || t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so' || t.trangThai === 'can_bo_sung') ? `
+                <button type="button" onclick="revertTransferToDraft('${t.transferId}')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(245,158,11,0.14); color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;" title="Hoàn trả phiếu về trạng thái Mới (Nháp) để Giám định viên điều chỉnh">
+                  ${ACC_SVGS.REFRESH} Trả lại trạng thái Mới
+                </button>
+              ` : ''}
+
               ${isKeToanRole ? `
-                ${(t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so') ? `
-                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'can_bo_sung')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(239,68,68,0.13); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
-                    ${ACC_SVGS.WARNING} Trả lại GĐV
-                  </button>
-                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_trinh_dntt')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(16,185,129,0.35); transition: all 0.2s ease;">
-                    ${ACC_SVGS.CHECK_CIRCLE} Trình Đề nghị Thanh toán
-                  </button>
-                ` : (t.trangThai === 'da_trinh_dntt' ? `
-                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'can_bo_sung')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(239,68,68,0.13); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
-                    ${ACC_SVGS.REFRESH} Trả lại GĐV
-                  </button>
-                  <span style="padding: 6px 14px; border-radius: 99px; font-size: 11.5px; font-weight: 850; background: rgba(16,185,129,0.14); color: #10b981; border: 1px solid rgba(16,185,129,0.3); display: inline-flex; align-items: center; gap: 6px;">
-                    ${ACC_SVGS.CHECK_CIRCLE} Đã trình ĐNTT
-                  </span>
-                ` : `
+                ${(t.trangThai === 'cho_xac_nhan' || t.trangThai === 'can_bo_sung' || t.trangThai === 'moi') ? `
                   <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_xac_nhan')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
                     ${ACC_SVGS.CHECK_CIRCLE} Xác nhận nhận đủ hồ sơ
                   </button>
-                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'can_bo_sung')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(239,68,68,0.13); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
-                    ${ACC_SVGS.WARNING} Trả lại GĐV
-                  </button>
-                `)}
-              ` : `
-                ${t.trangThai === 'cho_xac_nhan' ? `
-                  <button type="button" onclick="revertTransferToDraft('${t.transferId}')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(239,68,68,0.13); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer;">
-                    ${ACC_SVGS.REFRESH} Trả lại (Hủy gửi bàn giao)
+                ` : ''}
+
+                ${(t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so') ? `
+                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_trinh_dntt')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(16,185,129,0.35); transition: all 0.2s ease;">
+                    ${ACC_SVGS.CHECK_CIRCLE} Trình Đề nghị Thanh toán
                   </button>
                 ` : ''}
-              `}
+              ` : ''}
+
               <button type="button" onclick="deleteAccountingTransferBatch('${t.transferId}')" style="padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Xóa phiếu bàn giao này">
                 ${ACC_SVGS.TRASH} Xóa phiếu
               </button>
@@ -15231,82 +15219,65 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <div><strong>Tổng số hồ sơ trong phiếu:</strong> <strong style="color: #3b82f6;">${claimsInBatch.length} hồ sơ</strong></div>
               <div><strong>Tổng số tiền đề nghị chi toàn phiếu:</strong> <strong style="color: #10b981; font-family: 'JetBrains Mono'; font-size: 16.5px;">${formatCurrencyInputNumber(t.soTienDeNghi)} đ</strong></div>
               ${t.ghiChuGdv ? `<div><strong>Ghi chú GĐV:</strong> <em>${escapeHtmlOutput(t.ghiChuGdv)}</em></div>` : ''}
-              ${t.trangThai === 'can_bo_sung' && t.ghiChuKeToan ? `
-                <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); border-radius: 10px; padding: 8px 12px; color: #ef4444; margin-top: 4px; font-weight: 750;">
-                  ${ACC_SVGS.WARNING} Ghi chú chung từ Kế toán: ${escapeHtmlOutput(t.ghiChuKeToan)}
-                </div>
-              ` : ''}
             </div>
 
-            <!-- CLAIMS LIST TABLE IN BATCH -->
+            <!-- CLAIMS LIST TABLE IN BATCH (PURE VIEW-ONLY DETAIL) -->
             <div style="margin-bottom: 22px;">
               <label style="display: block; font-size: 13px; font-weight: 850; color: var(--text-main); margin-bottom: 8px;">
-                ${ACC_SVGS.LIST} Chi tiết các Hồ sơ Bồi thường trong Phiếu:
+                ${ACC_SVGS.LIST} Chi tiết các Hồ sơ Bồi thường trong Phiếu bàn giao:
               </label>
               <div style="border: 1px solid var(--border); border-radius: 14px; overflow-x: auto; background: var(--surface);">
                 <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
                   <thead>
                     <tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
-                      ${isKeToanRole ? `<th style="padding: 10px 12px; text-align: center; width: 55px; color: #ef4444;">Bổ sung</th>` : `<th style="padding: 10px 12px; text-align: center; width: 130px;">Trạng thái</th>`}
                       <th style="padding: 10px 12px; text-align: center; width: 45px;">STT</th>
                       <th style="padding: 10px 12px; text-align: left;">Biển số & Số HSBT</th>
                       <th style="padding: 10px 12px; text-align: left;">Chủ xe / Khách hàng</th>
                       <th style="padding: 10px 12px; text-align: left;">Gara</th>
-                      <th style="padding: 10px 12px; text-align: right;">Tiền Đề nghị</th>
+                      <th style="padding: 10px 12px; text-align: right; width: 140px;">Tiền Đề nghị</th>
+                      <th style="padding: 10px 12px; text-align: center; width: 130px;">Trạng thái</th>
                     </tr>
                   </thead>
                   <tbody>
                     ${claimsInBatch.map((c, idx) => {
-                      const suppItem = suppList.find(s => Number(s.chiSo) === idx || (s.soHoSoBoiThuong && s.soHoSoBoiThuong === c.soHoSoBoiThuong) || (s.bienSo && s.bienSo === c.bienSo));
-                      const isSupp = Boolean(suppItem);
-                      const suppNote = suppItem ? (suppItem.ghiChu || suppItem.ghiChuBoSung || '') : '';
+                      const isPriority = Boolean(c.isUuTien);
+                      const isSupp = c.trangThaiBoSung === 'yeu_cau_bo_sung';
+                      const suppNote = c.noiDungBoSung || '';
 
                       return `
-                        <tr style="border-bottom: 1px solid var(--border); ${isSupp ? 'background: rgba(239,68,68,0.04);' : ''}">
-                          ${isKeToanRole ? `
-                            <td style="padding: 10px 12px; text-align: center;">
-                              <input type="checkbox" class="ke-toan-supplement-checkbox" data-index="${idx}" data-hsbt="${escapeAttributeData(c.soHoSoBoiThuong || '')}" data-bien-so="${escapeAttributeData(c.bienSo || '')}" ${isSupp ? 'checked' : ''} onchange="toggleKeToanSupplementClaim(${idx}, this.checked)" title="Chọn hồ sơ cần bổ sung" style="width: 17px; height: 17px; accent-color: #ef4444; cursor: pointer;" />
-                            </td>
-                          ` : `
-                            <td style="padding: 10px 12px; text-align: center;">
-                              ${isSupp ? `
-                                <span style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 99px; display: inline-block;">⚠️ CẦN BỔ SUNG</span>
-                              ` : `
-                                <span style="background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 99px; display: inline-block;">🟢 ĐẠT</span>
-                              `}
-                            </td>
-                          `}
+                        <tr style="border-bottom: 1px solid var(--border); ${isPriority ? 'background: rgba(245,158,11,0.04);' : (isSupp ? 'background: rgba(239,68,68,0.04);' : '')}">
                           <td style="padding: 10px 12px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${idx + 1}</td>
                           <td style="padding: 10px 12px;">
-                            <strong style="color: var(--text-main);">${escapeHtmlOutput(c.bienSo || 'N/A')}</strong>
-                            <span style="display: block; font-size: 11px; color: var(--text-soft);">${escapeHtmlOutput(c.soHoSoBoiThuong || '')}</span>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                              <strong style="color: var(--text-main); font-size: 13px;">${escapeHtmlOutput(c.bienSo || 'N/A')}</strong>
+                              <span style="font-size: 11px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(c.soHoSoBoiThuong || '')}</span>
+                              ${isPriority ? `<span style="font-size: 9.5px; font-weight: 850; color: #ef4444; background: rgba(239,68,68,0.12); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(239,68,68,0.25);">🔥 ƯU TIÊN</span>` : ''}
+                            </div>
                           </td>
                           <td style="padding: 10px 12px; font-weight: 750;">${escapeHtmlOutput(extractClaimOwnerName(c))}</td>
                           <td style="padding: 10px 12px;">${escapeHtmlOutput(c.tenGara || 'N/A')}</td>
                           <td style="padding: 10px 12px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; color: #10b981;">${formatCurrencyInputNumber(c.soTienDeNghi)} đ</td>
+                          <td style="padding: 10px 12px; text-align: center;">
+                            ${isSupp ? `
+                              <span style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 99px; display: inline-block;">⚠️ CẦN BỔ SUNG</span>
+                            ` : `
+                              <span style="background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 99px; display: inline-block;">🟢 ĐẠT</span>
+                            `}
+                          </td>
                         </tr>
-
-                        <!-- KE TOAN FEEDBACK CALLOUT ROW FOR SPECIFIC CLAIM -->
-                        ${isKeToanRole ? `
-                          <tr id="keToanSupplementNoteRow_${idx}" style="${isSupp ? '' : 'display: none;'} background: rgba(239,68,68,0.035); border-bottom: 1px solid var(--border);">
-                            <td colspan="6" style="padding: 10px 12px 12px 68px;">
-                              <label style="display: block; font-size: 11.5px; color: #ef4444; font-weight: 850; margin-bottom: 5px;">Nội dung cần bổ sung cho hồ sơ #${idx + 1} (${escapeHtmlOutput(c.bienSo)}):</label>
-                              <input id="keToanSupplementNote_${idx}" class="input-premium" type="text" placeholder="Ví dụ: Bổ sung hóa đơn GTGT bản gốc..." value="${escapeAttributeData(suppNote)}" style="width: 100%; height: 38px; border-radius: 99px; font-size: 12.5px; border-color: rgba(239,68,68,0.35);" />
-                            </td>
-                          </tr>
-                        ` : (isSupp ? `
-                          <tr style="background: rgba(239,68,68,0.06); border-bottom: 1px solid rgba(239,68,68,0.25);">
+                        ${isSupp ? `
+                          <tr style="background: rgba(239,68,68,0.05); border-bottom: 1px solid rgba(239,68,68,0.25);">
                             <td colspan="6" style="padding: 10px 16px;">
-                              <div style="display: flex; align-items: flex-start; gap: 8px; color: #ef4444; font-size: 12.5px;">
-                                <span style="margin-top: 1px;">${ACC_SVGS.WARNING}</span>
+                              <div style="display: flex; align-items: flex-start; gap: 8px; color: #ef4444; font-size: 12px;">
+                                <span>${ACC_SVGS.WARNING}</span>
                                 <div>
-                                  <strong style="display: block; font-weight: 850; margin-bottom: 2px;">KẾ TOÁN YÊU CẦU BỔ SUNG CHO HỒ SƠ NÀY (${escapeHtmlOutput(c.bienSo)}):</strong>
-                                  <span style="line-height: 1.45; font-weight: 600; color: var(--text-main);">${escapeHtmlOutput(suppNote || 'Đề nghị GĐV bổ sung chứng từ theo phản hồi của Kế toán.')}</span>
+                                  <strong style="font-weight: 850;">Nội dung Yêu cầu bổ sung cho hồ sơ này:</strong>
+                                  <span style="color: var(--text-main); font-weight: 600; margin-left: 6px;">${escapeHtmlOutput(suppNote)}</span>
                                 </div>
                               </div>
                             </td>
                           </tr>
-                        ` : '')}
+                        ` : ''}
                       `;
                     }).join('')}
                   </tbody>
@@ -15314,36 +15285,40 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </div>
             </div>
 
-            ${isKeToanRole ? `
-              <div style="display: flex; align-items: center; gap: 8px; padding: 10px 13px; margin: -8px 0 14px; border-radius: 10px; background: rgba(239,68,68,0.06); color: #ef4444; font-size: 12px; font-weight: 750;">
-                ${ACC_SVGS.WARNING} Chỉ tích các hồ sơ cần bổ sung. Mỗi hồ sơ được chọn cần có nội dung phản hồi riêng.
-              </div>
-
-              <!-- KE TOAN GENERAL FEEDBACK INPUT -->
-              <div style="margin-bottom: 10px;">
-                <label style="display: block; font-size: 12.5px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">
-                  Ghi chú chung của Kế toán (không bắt buộc):
-                </label>
-                <textarea id="txtKeToanGhiChu" class="textarea-premium" placeholder="Ví dụ: Thiếu Hóa đơn GTGT bản gốc cho vụ 48H-01669, đề nghị GĐV bổ sung..." style="width: 100%; height: 85px; border-radius: 12px; font-size: 13px;">${escapeHtmlOutput(t.ghiChuKeToan || '')}</textarea>
-              </div>
-            ` : ''}
-
           </div>
 
-          <!-- FIXED FOOTER ACTION BUTTONS DEDICATED PER ROLE -->
-          <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 14px;">
-            ${isKeToanRole ? `
-              <button type="button" onclick="closeKeToanReviewModal()" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Đóng</button>
-              <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_trinh_dntt')" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: #10b981; color: #ffffff; border: none; cursor: pointer; box-shadow: 0 4px 18px rgba(16,185,129,0.35); display: inline-flex; align-items: center; gap: 6px;">
-                ${ACC_SVGS.CHECK_CIRCLE} Trình Đề nghị Thanh toán
-              </button>
-            ` : `
-              <button type="button" onclick="closeKeToanReviewModal()" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Đóng</button>
-              <button type="button" onclick="closeKeToanReviewModal(); openAddAccountingTransferModal('${t.transferId}')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(216,180,109,0.4); display: flex; align-items: center; gap: 8px;">
-                ${ACC_SVGS.EDIT}
-                <span>Sửa & Bổ sung Phiếu này</span>
-              </button>
-            `}
+          <!-- FIXED FOOTER ACTION BUTTONS -->
+          <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="button" onclick="closeKeToanReviewModal()" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Đóng</button>
+              ${(t.trangThai === 'cho_xac_nhan' || t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so' || t.trangThai === 'can_bo_sung') ? `
+                <button type="button" onclick="revertTransferToDraft('${t.transferId}')" style="padding: 11px 20px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(245,158,11,0.14); color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); cursor: pointer;">
+                  ${ACC_SVGS.REFRESH} Trả lại trạng thái Mới
+                </button>
+              ` : ''}
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center;">
+              ${isKeToanRole ? `
+                ${(t.trangThai === 'cho_xac_nhan' || t.trangThai === 'can_bo_sung' || t.trangThai === 'moi') ? `
+                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_xac_nhan')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    ${ACC_SVGS.CHECK_CIRCLE} Xác nhận nhận đủ hồ sơ
+                  </button>
+                ` : ''}
+                ${(t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so') ? `
+                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_trinh_dntt')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; cursor: pointer; box-shadow: 0 4px 18px rgba(16,185,129,0.35); display: inline-flex; align-items: center; gap: 6px;">
+                    ${ACC_SVGS.CHECK_CIRCLE} Trình Đề nghị Thanh toán
+                  </button>
+                ` : ''}
+              ` : `
+                ${(!isKeToanRole && (t.trangThai === 'moi' || t.trangThai === 'can_bo_sung')) ? `
+                  <button type="button" onclick="closeKeToanReviewModal(); openAddAccountingTransferModal('${t.transferId}')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(216,180,109,0.4); display: flex; align-items: center; gap: 8px;">
+                    ${ACC_SVGS.EDIT}
+                    <span>Sửa & Bổ sung Phiếu này</span>
+                  </button>
+                ` : ''}
+              `}
+            </div>
           </div>
 
         </div>
