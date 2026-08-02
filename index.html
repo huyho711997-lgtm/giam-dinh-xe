@@ -13713,13 +13713,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
     };
 
     const ACCOUNTING_STATUS_MAP = {
-      'moi': { label: 'Mới (Nháp)', bg: 'rgba(148,163,184,0.14)', border: 'rgba(148,163,184,0.3)', text: '#94a3b8', svg: ACC_SVGS.EDIT },
-      'cho_xac_nhan': { label: 'Chờ xác nhận', bg: 'rgba(245,158,11,0.14)', border: 'rgba(245,158,11,0.35)', text: '#f59e0b', svg: ACC_SVGS.INBOX },
+      'moi': { label: 'Mới (Nháp)', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.32)', text: '#3b82f6', svg: ACC_SVGS.EDIT },
+      'cho_xac_nhan': { label: 'Chờ xác nhận', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.32)', text: '#f59e0b', svg: ACC_SVGS.INBOX },
       'da_nhan_ho_so': { label: 'Đã nhận từ GĐV', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.3)', text: '#3b82f6', svg: ACC_SVGS.INBOX },
-      'da_xac_nhan': { label: 'Đã xác nhận', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.32)', text: '#3b82f6', svg: ACC_SVGS.CHECK_CIRCLE },
-      'da_nhan_du_ho_so': { label: 'Đã xác nhận', bg: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.32)', text: '#3b82f6', svg: ACC_SVGS.CHECK_CIRCLE },
+      'da_xac_nhan': { label: 'Đã xác nhận', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.32)', text: '#10b981', svg: ACC_SVGS.CHECK_CIRCLE },
+      'da_nhan_du_ho_so': { label: 'Đã xác nhận', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.32)', text: '#10b981', svg: ACC_SVGS.CHECK_CIRCLE },
       'can_bo_sung': { label: 'Yêu cầu bổ sung', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', text: '#ef4444', svg: ACC_SVGS.WARNING },
-      'da_trinh_dntt': { label: 'Đã trình ĐNTT', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.35)', text: '#10b981', svg: ACC_SVGS.CHECK_CIRCLE }
+      'da_trinh_dntt': { label: 'Đã trình ĐNTT', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.32)', text: '#8b5cf6', svg: ACC_SVGS.CHECK_CIRCLE }
     };
 
     let activeAccountingClaimStatus = 'all';
@@ -13939,11 +13939,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
 
             <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.05em;">
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.05em;">
                 ${ACC_SVGS.CHECK_CIRCLE}
                 <span>ĐÃ XÁC NHẬN</span>
               </div>
-              <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #3b82f6; margin-top: 6px;">
+              <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #10b981; margin-top: 6px;">
                 ${statDaXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
               </div>
             </div>
@@ -13959,11 +13959,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
 
             <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.05em;">
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #8b5cf6; text-transform: uppercase; letter-spacing: 0.05em;">
                 ${ACC_SVGS.CHECK_CIRCLE}
                 <span>ĐÃ TRÌNH ĐỀ NGHỊ THANH TOÁN</span>
               </div>
-              <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #10b981; margin-top: 6px;">
+              <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #8b5cf6; margin-top: 6px;">
                 ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
               </div>
             </div>
@@ -13975,9 +13975,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <!-- Filter Pills -->
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
               <button class="filter-pill ${activeAccountingClaimStatus === 'all' ? 'active' : ''}" onclick="changeAccountingClaimFilter('all')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 850;">Tất cả (${statTotal})</button>
-              <button class="filter-pill ${activeAccountingClaimStatus === 'da_xac_nhan' ? 'active' : ''}" onclick="changeAccountingClaimFilter('da_xac_nhan')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 850; color: #3b82f6;">Đã xác nhận (${statDaXacNhan})</button>
+              <button class="filter-pill ${activeAccountingClaimStatus === 'da_xac_nhan' ? 'active' : ''}" onclick="changeAccountingClaimFilter('da_xac_nhan')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 850; color: #10b981;">Đã xác nhận (${statDaXacNhan})</button>
               <button class="filter-pill ${activeAccountingClaimStatus === 'can_bo_sung' ? 'active' : ''}" onclick="changeAccountingClaimFilter('can_bo_sung')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 850; color: #ef4444;">Yêu cầu bổ sung (${statCanBoSung})</button>
-              <button class="filter-pill ${activeAccountingClaimStatus === 'da_trinh_dntt' ? 'active' : ''}" onclick="changeAccountingClaimFilter('da_trinh_dntt')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 750; color: #10b981;">Đã trình ĐNTT (${statTrinhDntt})</button>
+              <button class="filter-pill ${activeAccountingClaimStatus === 'da_trinh_dntt' ? 'active' : ''}" onclick="changeAccountingClaimFilter('da_trinh_dntt')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 750; color: #8b5cf6;">Đã trình ĐNTT (${statTrinhDntt})</button>
             </div>
 
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
@@ -14537,11 +14537,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
 
             <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.05em;">
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.05em;">
                 ${ACC_SVGS.CHECK_CIRCLE}
                 <span>ĐÃ XÁC NHẬN</span>
               </div>
-              <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #3b82f6; margin-top: 6px;">
+              <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #10b981; margin-top: 6px;">
                 ${statDaXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">phiếu</span>
               </div>
             </div>
@@ -14560,11 +14560,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
 
             <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.05em;">
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #8b5cf6; text-transform: uppercase; letter-spacing: 0.05em;">
                 ${ACC_SVGS.CHECK_CIRCLE}
                 <span>ĐÃ TRÌNH ĐỀ NGHỊ THANH TOÁN</span>
               </div>
-              <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #10b981; margin-top: 6px;">
+              <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #8b5cf6; margin-top: 6px;">
                 ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">phiếu (${formatCurrencyInputNumber(totalMoneyTrinhDntt)}đ)</span>
               </div>
             </div>
@@ -14576,11 +14576,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <!-- Filter Pills -->
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
               <button class="filter-pill ${activeAccountingStatusFilter === 'all' ? 'active' : ''}" onclick="changeAccountingStatusFilter('all')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 850;">Tất cả (${statTotal})</button>
-              <button class="filter-pill ${activeAccountingStatusFilter === 'moi' ? 'active' : ''}" onclick="changeAccountingStatusFilter('moi')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 850;">Mới / Nháp (${statMoi})</button>
+              <button class="filter-pill ${activeAccountingStatusFilter === 'moi' ? 'active' : ''}" onclick="changeAccountingStatusFilter('moi')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 850; color: #3b82f6;">Mới / Nháp (${statMoi})</button>
               <button class="filter-pill ${activeAccountingStatusFilter === 'cho_xac_nhan' ? 'active' : ''}" onclick="changeAccountingStatusFilter('cho_xac_nhan')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 850; color: #f59e0b;">Chờ xác nhận (${statChoXacNhan})</button>
-              <button class="filter-pill ${activeAccountingStatusFilter === 'da_xac_nhan' ? 'active' : ''}" onclick="changeAccountingStatusFilter('da_xac_nhan')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 850; color: #3b82f6;">Đã xác nhận (${statDaXacNhan})</button>
+              <button class="filter-pill ${activeAccountingStatusFilter === 'da_xac_nhan' ? 'active' : ''}" onclick="changeAccountingStatusFilter('da_xac_nhan')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 850; color: #10b981;">Đã xác nhận (${statDaXacNhan})</button>
               <button class="filter-pill ${activeAccountingStatusFilter === 'can_bo_sung' ? 'active' : ''}" onclick="changeAccountingStatusFilter('can_bo_sung')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 850; color: #ef4444;">Yêu cầu bổ sung (${statCanBoSung})</button>
-              <button class="filter-pill ${activeAccountingStatusFilter === 'da_trinh_dntt' ? 'active' : ''}" onclick="changeAccountingStatusFilter('da_trinh_dntt')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 750; color: #10b981;">Đã trình ĐNTT (${statTrinhDntt})</button>
+              <button class="filter-pill ${activeAccountingStatusFilter === 'da_trinh_dntt' ? 'active' : ''}" onclick="changeAccountingStatusFilter('da_trinh_dntt')" style="padding: 7px 14px; border-radius: 10px; font-size: 12.5px; font-weight: 750; color: #8b5cf6;">Đã trình ĐNTT (${statTrinhDntt})</button>
             </div>
 
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
