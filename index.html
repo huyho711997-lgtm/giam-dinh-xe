@@ -14584,7 +14584,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     <th style="padding: 13px 14px; text-align: center; width: 60px;">STT</th>
                     <th style="padding: 13px 14px; text-align: center; width: 170px;">Trạng thái</th>
                     <th style="padding: 13px 14px; text-align: left;">Mã phiếu & Ngày bàn giao</th>
-                    <th style="padding: 13px 14px; text-align: center; width: 140px;">Số lượng hồ sơ</th>
+                    <th style="padding: 13px 14px; text-align: center; width: 240px;">Số lượng hồ sơ</th>
                     <th style="padding: 13px 14px; text-align: left;">GĐV Bàn giao</th>
                     <th style="padding: 13px 14px; text-align: right;">Tổng tiền chi (VNĐ)</th>
                     <th style="padding: 13px 14px; text-align: center; width: 80px;">Thao tác</th>
@@ -14613,12 +14613,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
                             <span style="display: inline-flex; gap: 5px; align-items: center; padding: 5px 12px; border-radius: 999px; color: ${statusObj.text}; background: ${statusObj.bg}; border: 1px solid ${statusObj.border}; font-size: 10.5px; font-weight: 850; text-transform: uppercase; letter-spacing: 0.02em;">
                               ${statusObj.svg} ${statusObj.label}
                             </span>
-                            ${suppClaimsCount > 0 ? `
-                              <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 8px; background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.22); color: #f43f5e; font-size: 10.5px; font-weight: 850; animation: pulseRed 2.5s infinite;">
-                                <span style="display: inline-flex; align-items: center; transform: scale(0.85); color: #f43f5e;">${ACC_SVGS.WARNING}</span>
-                                <span>Cần bổ sung (${suppClaimsCount})</span>
-                              </span>
-                            ` : ''}
                             ${hasPriority ? `
                               <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 8px; background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(245,158,11,0.15) 100%); border: 1px solid rgba(239,68,68,0.35); color: #ef4444; font-size: 10px; font-weight: 850; letter-spacing: 0.02em; animation: pulseAmber 2.5s infinite;">
                                 <span style="display: inline-flex; align-items: center; transform: scale(0.85); color: #ef4444;">${ACC_SVGS.FIRE}</span>
@@ -14632,9 +14626,17 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           <span style="display: block; color: var(--text-soft); font-size: 11px; margin-top: 2px;">Bàn giao: ${formatDateDisplay(t.ngayBanGiao)}</span>
                         </td>
                         <td style="padding: 14px; text-align: center;">
-                          <span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 8px; background: rgba(59,130,246,0.08); color: #3b82f6; font-size: 12px; font-weight: 850; border: 1px solid rgba(59,130,246,0.2);">
-                            ${ACC_SVGS.FOLDER} <span style="margin-left: 2px;">${claimsCount} hồ sơ</span>
-                          </span>
+                          <div style="display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
+                            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 8px; background: rgba(59,130,246,0.08); color: #3b82f6; font-size: 12px; font-weight: 850; border: 1px solid rgba(59,130,246,0.2);">
+                              ${ACC_SVGS.FOLDER} <span style="margin-left: 2px;">${claimsCount} hồ sơ</span>
+                            </span>
+                            ${suppClaimsCount > 0 ? `
+                              <span style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 8px; background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.22); color: #f43f5e; font-size: 11px; font-weight: 850; animation: pulseRed 2.5s infinite;" title="${suppClaimsCount} hồ sơ đang yêu cầu bổ sung">
+                                <span style="display: inline-flex; align-items: center; transform: scale(0.85); color: #f43f5e;">${ACC_SVGS.WARNING}</span>
+                                <span>Cần bổ sung (${suppClaimsCount})</span>
+                              </span>
+                            ` : ''}
+                          </div>
                         </td>
                         <td style="padding: 14px; font-weight: 750; color: var(--text-main);">
                           ${escapeHtmlOutput(t.gdvName)}
