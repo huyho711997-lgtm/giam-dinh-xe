@@ -14664,9 +14664,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         </td>
                         <td style="padding: 14px; text-align: center;" onclick="event.stopPropagation();">
                           <div style="display: flex; gap: 6px; align-items: center; justify-content: center;">
-                            <button type="button" onclick="${rowClickHandler}" style="background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: grid; place-items: center;" title="Xem chi tiết phiếu">
-                              ${ACC_SVGS.LIST}
-                            </button>
                             ${(isKeToanOrAdmin || t.trangThai === 'moi' || t.trangThai === 'can_bo_sung' || t.trangThai === 'cho_xac_nhan') ? `
                               <button type="button" onclick="deleteAccountingTransferBatch('${t.transferId}')" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: grid; place-items: center; transition: all 0.2s ease;" title="Xóa phiếu bàn giao này">
                                 ${ACC_SVGS.TRASH}
