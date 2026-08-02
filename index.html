@@ -14430,7 +14430,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const statMoi = transfersList.filter(t => t.trangThai === 'moi').length;
       const statChoXacNhan = transfersList.filter(t => t.trangThai === 'cho_xac_nhan').length;
       const statDaXacNhan = transfersList.filter(t => t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so').length;
-      const statCanBoSung = transfersList.filter(t => t.trangThai === 'can_bo_sung').length;
+      // Helper to check if transfer batch contains claims needing supplement
+      const isTransferNeedingSupplement = t => {
+        if (t.trangThai === 'can_bo_sung') return true;
+        const suppList = t.hoSoYeuCauBoSung || [];
+        if (suppList.length > 0) return true;
+        const claims = t.danhSachHoSo || [];
+        return claims.some(c => c.trangThaiBoSung === 'yeu_cau_bo_sung');
+      };
+
+      const statCanBoSung = transfersList.filter(isTransferNeedingSupplement).length;
       const statTrinhDntt = transfersList.filter(t => t.trangThai === 'da_trinh_dntt').length;
       const totalMoneyTrinhDntt = transfersList.filter(t => t.trangThai === 'da_trinh_dntt').reduce((sum, t) => sum + (parseInt(t.soTienDeNghi, 10) || 0), 0);
 
@@ -14439,6 +14448,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (activeAccountingStatusFilter !== 'all') {
         filteredTransfers = filteredTransfers.filter(t => {
           if (activeAccountingStatusFilter === 'da_xac_nhan') return t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so';
+          if (activeAccountingStatusFilter === 'can_bo_sung') return isTransferNeedingSupplement(t);
           return t.trangThai === activeAccountingStatusFilter;
         });
       }
@@ -14584,6 +14594,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     const claimsCount = claimsList.length || 1;
                     const totalMoney = parseInt(t.soTienDeNghi, 10) || 0;
 
+                    const suppList = t.hoSoYeuCauBoSung || [];
+                    const suppClaimsCount = claimsList.filter((c, cIdx) => c.trangThaiBoSung === 'yeu_cau_bo_sung' || suppList.some(s => Number(s.chiSo) === cIdx || (s.soHoSoBoiThuong && s.soHoSoBoiThuong === c.soHoSoBoiThuong) || (s.bienSo && s.bienSo === c.bienSo))).length || (t.trangThai === 'can_bo_sung' ? (suppList.length || 1) : 0);
+
                     const isDraftOrReturned = t.trangThai === 'moi' || t.trangThai === 'can_bo_sung';
                     const rowClickHandler = isDraftOrReturned ? `openAddAccountingTransferModal('${t.transferId}')` : `openKeToanReviewModal('${t.transferId}')`;
 
@@ -14597,6 +14610,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                             <span style="display: inline-flex; gap: 5px; align-items: center; padding: 5px 11px; border-radius: 999px; color: ${statusObj.text}; background: ${statusObj.bg}; border: 1px solid ${statusObj.border}; font-size: 10.5px; font-weight: 850;">
                               ${statusObj.svg} ${statusObj.label}
                             </span>
+                            ${suppClaimsCount > 0 ? `<span style="font-size: 9.5px; font-weight: 850; color: #ef4444; background: rgba(239,68,68,0.12); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(239,68,68,0.3); display: inline-flex; align-items: center; gap: 3px;">⚠️ CÓ ${suppClaimsCount} HS CẦN BỔ SUNG</span>` : ''}
                             ${hasPriority ? `<span style="font-size: 9.5px; font-weight: 850; color: #ef4444; background: rgba(239,68,68,0.12); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(239,68,68,0.25);">🔥 CÓ HS ƯU TIÊN</span>` : ''}
                           </div>
                         </td>
@@ -14608,6 +14622,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           <span style="padding: 4px 10px; border-radius: 8px; background: rgba(59,130,246,0.08); color: #3b82f6; font-size: 12px; font-weight: 850; border: 1px solid rgba(59,130,246,0.2);">
                             ${ACC_SVGS.FOLDER} ${claimsCount} hồ sơ
                           </span>
+                          ${suppClaimsCount > 0 ? `<div style="margin-top: 4px; font-size: 10.5px; font-weight: 850; color: #ef4444; display: flex; align-items: center; justify-content: center; gap: 3px;"><span style="display: inline-block; padding: 1px 6px; border-radius: 4px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25);">⚠️ ${suppClaimsCount} hồ sơ cần BS</span></div>` : ''}
                         </td>
                         <td style="padding: 14px; font-weight: 750; color: var(--text-main);">
                           ${escapeHtmlOutput(t.gdvName)}
