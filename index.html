@@ -14260,9 +14260,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
         await dbNodeInstance.ref('accounting_transfers/' + transferId + '/danhSachHoSo/' + claimIndex + '/noiDungBoSung').set(noteVal);
         await dbNodeInstance.ref('accounting_transfers/' + transferId + '/danhSachHoSo/' + claimIndex + '/trangThaiBoSung').set('yeu_cau_bo_sung');
         await dbNodeInstance.ref('accounting_transfers/' + transferId + '/danhSachHoSo/' + claimIndex + '/lichSuTuongTac').set(history);
-        
-        // Also update batch status to can_bo_sung
-        await dbNodeInstance.ref('accounting_transfers/' + transferId + '/trangThai').set('can_bo_sung');
 
         // Dispatch instant notification to managing GĐV!
         await sendAppNotification('gdv', transfer.gdvName, 'Cần bổ sung hồ sơ ' + (claim.bienSo || ''), 'Kế toán yêu cầu: ' + noteVal, transferId, claimIndex, claim.soHoSoBoiThuong, claim.bienSo, 'supplement_request');
@@ -15401,19 +15398,20 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
     async function saveKeToanReviewAction(transferId, targetStatus) {
       const ghiChuKeToan = getAccInputValue('txtKeToanGhiChu');
+      const transfer = cachedAccountingTransfersPayload[transferId];
+      let claims = transfer ? (transfer.danhSachHoSo || []) : [];
+
       const hoSoYeuCauBoSung = Array.from(document.querySelectorAll('.ke-toan-supplement-checkbox:checked')).map(input => {
-        const index = input.getAttribute('data-index');
+        const index = Number(input.getAttribute('data-index'));
         return {
-          chiSo: Number(index),
+          chiSo: index,
           soHoSoBoiThuong: input.getAttribute('data-hsbt') || '',
           bienSo: input.getAttribute('data-bien-so') || '',
           ghiChu: getAccInputValue('keToanSupplementNote_' + index)
         };
       });
 
-      // If supplement checkboxes are ticked or targetStatus is 'can_bo_sung'
-      if (hoSoYeuCauBoSung.length > 0 || targetStatus === 'can_bo_sung') {
-        targetStatus = 'can_bo_sung';
+      if (targetStatus === 'can_bo_sung') {
         if (hoSoYeuCauBoSung.length > 0 && hoSoYeuCauBoSung.some(item => !item.ghiChu.trim())) {
           triggerToast('Vui lòng nhập nội dung cần bổ sung cho từng hồ sơ đã chọn!', 'warning');
           return;
@@ -15425,12 +15423,34 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
 
       try {
+        // Sync supplement status into individual claims in danhSachHoSo
+        if (claims.length > 0 && hoSoYeuCauBoSung.length > 0) {
+          const currentUser = firebase.auth().currentUser;
+          const userName = String(activeUserProfile?.fullName || activeUserProfile?.displayName || currentUser?.displayName || 'Kế toán').trim();
+
+          hoSoYeuCauBoSung.forEach(item => {
+            if (claims[item.chiSo]) {
+              claims[item.chiSo].trangThaiBoSung = 'yeu_cau_bo_sung';
+              claims[item.chiSo].noiDungBoSung = item.ghiChu;
+              const history = claims[item.chiSo].lichSuTuongTac || [];
+              history.unshift({
+                time: Date.now(),
+                user: userName,
+                action: 'Yêu cầu bổ sung',
+                detail: item.ghiChu
+              });
+              claims[item.chiSo].lichSuTuongTac = history;
+            }
+          });
+          await dbNodeInstance.ref('accounting_transfers/' + transferId + '/danhSachHoSo').set(claims);
+        }
+
         await dbNodeInstance.ref('accounting_transfers/' + transferId + '/trangThai').set(targetStatus);
         await dbNodeInstance.ref('accounting_transfers/' + transferId + '/ghiChuKeToan').set(ghiChuKeToan);
-        await dbNodeInstance.ref('accounting_transfers/' + transferId + '/hoSoYeuCauBoSung').set(targetStatus === 'can_bo_sung' ? hoSoYeuCauBoSung : []);
+        await dbNodeInstance.ref('accounting_transfers/' + transferId + '/hoSoYeuCauBoSung').set(hoSoYeuCauBoSung);
         await dbNodeInstance.ref('accounting_transfers/' + transferId + '/ngayXetDuyet').set(Date.now());
 
-        const statusMsg = targetStatus === 'da_trinh_dntt' ? 'Đã duyệt trình Đề nghị thanh toán!' : (targetStatus === 'da_nhan_du_ho_so' ? 'Đã xác nhận nhận đủ hồ sơ!' : 'Đã phản hồi yêu cầu bổ sung cho GĐV!');
+        const statusMsg = targetStatus === 'da_trinh_dntt' ? 'Đã duyệt trình Đề nghị thanh toán!' : (targetStatus === 'da_nhan_du_ho_so' ? 'Đã xác nhận nhận đủ hồ sơ!' : 'Đã phản hồi yêu cầu bổ sung!');
         triggerToast(statusMsg, 'success');
         closeKeToanReviewModal();
         renderAccountingTransferPage();
