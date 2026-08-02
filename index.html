@@ -14625,13 +14625,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           <strong style="font-family: 'JetBrains Mono'; color: var(--text-main); font-size: 13.5px;">${escapeHtmlOutput(t.transferId)}</strong>
                           <span style="display: block; color: var(--text-soft); font-size: 11px; margin-top: 2px;">Bàn giao: ${formatDateDisplay(t.ngayBanGiao)}</span>
                         </td>
-                        <td style="padding: 14px; text-align: center;">
-                          <div style="display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
-                            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 8px; background: rgba(59,130,246,0.08); color: #3b82f6; font-size: 12px; font-weight: 850; border: 1px solid rgba(59,130,246,0.2);">
+                        <td style="padding: 14px; text-align: center; white-space: nowrap;">
+                          <div style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;">
+                            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 8px; background: rgba(59,130,246,0.08); color: #3b82f6; font-size: 12px; font-weight: 850; border: 1px solid rgba(59,130,246,0.2); white-space: nowrap;">
                               ${ACC_SVGS.FOLDER} <span style="margin-left: 2px;">${claimsCount} hồ sơ</span>
                             </span>
                             ${suppClaimsCount > 0 ? `
-                              <span style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 8px; background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.22); color: #f43f5e; font-size: 11px; font-weight: 850; animation: pulseRed 2.5s infinite;" title="${suppClaimsCount} hồ sơ đang yêu cầu bổ sung">
+                              <span style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 8px; background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.22); color: #f43f5e; font-size: 11px; font-weight: 850; animation: pulseRed 2.5s infinite; white-space: nowrap;" title="${suppClaimsCount} hồ sơ đang yêu cầu bổ sung">
                                 <span style="display: inline-flex; align-items: center; transform: scale(0.85); color: #f43f5e;">${ACC_SVGS.WARNING}</span>
                                 <span>Cần bổ sung (${suppClaimsCount})</span>
                               </span>
