@@ -15157,7 +15157,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
     }
 
-            function openKeToanReviewModal(transferId) {
+                function openKeToanReviewModal(transferId) {
       if (!transferId || !cachedAccountingTransfersPayload[transferId]) return;
       const t = cachedAccountingTransfersPayload[transferId];
 
@@ -15175,8 +15175,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
       modalOverlay.innerHTML = `
         <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 24px; width: min(1480px, 97vw); height: 92vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 28px 70px rgba(0,0,0,0.55);">
           
-          <!-- MODAL HEADER -->
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface);">
+          <!-- MODAL HEADER WITH ALL ACTION BUTTONS IN TOP RIGHT -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface); gap: 16px;">
             <div style="display: flex; align-items: center; gap: 14px;">
               <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.35); color: var(--primary); display: grid; place-items: center; flex-shrink: 0;">
                 ${ACC_SVGS.BRIEFCASE}
@@ -15189,7 +15189,40 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </div>
             </div>
 
-            <button type="button" onclick="closeKeToanReviewModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; transition: all 0.2s ease;">✕</button>
+            <!-- ACTION BUTTONS MOVED TO HEADER TOP RIGHT -->
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              ${(t.trangThai === 'cho_xac_nhan' || t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so' || t.trangThai === 'can_bo_sung') ? `
+                <button type="button" onclick="revertTransferToDraft('${t.transferId}')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(245,158,11,0.14); color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;" title="Hoàn trả phiếu về trạng thái Mới (Nháp) để Giám định viên điều chỉnh">
+                  ${ACC_SVGS.REFRESH} Trả lại trạng thái Mới
+                </button>
+              ` : ''}
+
+              ${isKeToanRole ? `
+                ${(t.trangThai === 'cho_xac_nhan' || t.trangThai === 'can_bo_sung' || t.trangThai === 'moi') ? `
+                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_xac_nhan')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+                    ${ACC_SVGS.CHECK_CIRCLE} Xác nhận nhận đủ hồ sơ
+                  </button>
+                ` : ''}
+
+                ${(t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so') ? `
+                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_trinh_dntt')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(16,185,129,0.35); transition: all 0.2s ease;">
+                    ${ACC_SVGS.CHECK_CIRCLE} Trình Đề nghị Thanh toán
+                  </button>
+                ` : ''}
+              ` : `
+                ${(!isKeToanRole && (t.trangThai === 'moi' || t.trangThai === 'can_bo_sung')) ? `
+                  <button type="button" onclick="closeKeToanReviewModal(); openAddAccountingTransferModal('${t.transferId}')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                    ${ACC_SVGS.EDIT} Sửa & Bổ sung Phiếu này
+                  </button>
+                ` : ''}
+              `}
+
+              <button type="button" onclick="deleteAccountingTransferBatch('${t.transferId}')" style="padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Xóa phiếu bàn giao này">
+                ${ACC_SVGS.TRASH} Xóa phiếu
+              </button>
+
+              <button type="button" onclick="closeKeToanReviewModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; transition: all 0.2s ease;">✕</button>
+            </div>
           </div>
 
           <!-- MODAL BODY -->
@@ -15272,41 +15305,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
           </div>
 
-          <!-- FIXED FOOTER ACTION BUTTONS -->
-          <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              <button type="button" onclick="closeKeToanReviewModal()" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Đóng</button>
-              ${(t.trangThai === 'cho_xac_nhan' || t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so' || t.trangThai === 'can_bo_sung') ? `
-                <button type="button" onclick="revertTransferToDraft('${t.transferId}')" style="padding: 11px 20px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(245,158,11,0.14); color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                  ${ACC_SVGS.REFRESH} Trả lại trạng thái Mới
-                </button>
-              ` : ''}
-            </div>
-
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              ${isKeToanRole ? `
-                ${(t.trangThai === 'cho_xac_nhan' || t.trangThai === 'can_bo_sung' || t.trangThai === 'moi') ? `
-                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_xac_nhan')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                    ${ACC_SVGS.CHECK_CIRCLE} Xác nhận nhận đủ hồ sơ
-                  </button>
-                ` : ''}
-                ${(t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so') ? `
-                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_trinh_dntt')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; cursor: pointer; box-shadow: 0 4px 18px rgba(16,185,129,0.35); display: inline-flex; align-items: center; gap: 6px;">
-                    ${ACC_SVGS.CHECK_CIRCLE} Trình Đề nghị Thanh toán
-                  </button>
-                ` : ''}
-                <button type="button" onclick="deleteAccountingTransferBatch('${t.transferId}')" style="padding: 11px 18px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
-                  ${ACC_SVGS.TRASH} Xóa phiếu
-                </button>
-              ` : `
-                ${(!isKeToanRole && (t.trangThai === 'moi' || t.trangThai === 'can_bo_sung')) ? `
-                  <button type="button" onclick="closeKeToanReviewModal(); openAddAccountingTransferModal('${t.transferId}')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(216,180,109,0.4); display: flex; align-items: center; gap: 8px;">
-                    ${ACC_SVGS.EDIT}
-                    <span>Sửa & Bổ sung Phiếu này</span>
-                  </button>
-                ` : ''}
-              `}
-            </div>
+          <!-- FIXED FOOTER WITH ONLY CLOSE BUTTON AT BOTTOM RIGHT -->
+          <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; display: flex; justify-content: flex-end; align-items: center;">
+            <button type="button" onclick="closeKeToanReviewModal()" style="padding: 11px 28px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s ease;">Đóng</button>
           </div>
 
         </div>
