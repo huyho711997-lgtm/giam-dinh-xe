@@ -15157,7 +15157,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
     }
 
-        function openKeToanReviewModal(transferId) {
+            function openKeToanReviewModal(transferId) {
       if (!transferId || !cachedAccountingTransfersPayload[transferId]) return;
       const t = cachedAccountingTransfersPayload[transferId];
 
@@ -15173,74 +15173,50 @@ function renderGdvMonthlyReportPage(targetContainer) {
       modalOverlay.style.cssText = 'position: fixed; inset: 0; background: rgba(11, 15, 25, 0.78); backdrop-filter: blur(16px); z-index: 99999; display: grid; place-items: center; padding: 12px;';
 
       modalOverlay.innerHTML = `
-        <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 24px; width: min(1100px, 96vw); height: 90vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 28px 70px rgba(0,0,0,0.55);">
+        <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 24px; width: min(1480px, 97vw); height: 92vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 28px 70px rgba(0,0,0,0.55);">
           
           <!-- MODAL HEADER -->
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface);">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="color: var(--primary);">${ACC_SVGS.BRIEFCASE}</div>
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.35); color: var(--primary); display: grid; place-items: center; flex-shrink: 0;">
+                ${ACC_SVGS.BRIEFCASE}
+              </div>
               <div>
-                <h3 style="font-size: 19px; font-weight: 850; color: var(--text-main); margin: 0;">
+                <h3 style="font-size: 20px; font-weight: 850; color: var(--text-main); margin: 0; letter-spacing: -0.01em;">
                   Chi tiết Phiếu Bàn giao Hồ sơ
                 </h3>
-                <span style="font-size: 12px; color: var(--text-soft); font-family: 'JetBrains Mono';">Mã Phiếu: ${t.transferId} (${formatDateDisplay(t.ngayBanGiao)})</span>
+                <span style="font-size: 12.5px; color: var(--text-soft); font-family: 'JetBrains Mono'; font-weight: 750;">Mã Phiếu: ${t.transferId} (${formatDateDisplay(t.ngayBanGiao)})</span>
               </div>
             </div>
 
-            <!-- HEADER ACTIONS FOR KE TOAN, ADMIN & GDV ROLES -->
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-              ${(t.trangThai === 'cho_xac_nhan' || t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so' || t.trangThai === 'can_bo_sung') ? `
-                <button type="button" onclick="revertTransferToDraft('${t.transferId}')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(245,158,11,0.14); color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;" title="Hoàn trả phiếu về trạng thái Mới (Nháp) để Giám định viên điều chỉnh">
-                  ${ACC_SVGS.REFRESH} Trả lại trạng thái Mới
-                </button>
-              ` : ''}
-
-              ${isKeToanRole ? `
-                ${(t.trangThai === 'cho_xac_nhan' || t.trangThai === 'can_bo_sung' || t.trangThai === 'moi') ? `
-                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_xac_nhan')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
-                    ${ACC_SVGS.CHECK_CIRCLE} Xác nhận nhận đủ hồ sơ
-                  </button>
-                ` : ''}
-
-                ${(t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so') ? `
-                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_trinh_dntt')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(16,185,129,0.35); transition: all 0.2s ease;">
-                    ${ACC_SVGS.CHECK_CIRCLE} Trình Đề nghị Thanh toán
-                  </button>
-                ` : ''}
-              ` : ''}
-
-              <button type="button" onclick="deleteAccountingTransferBatch('${t.transferId}')" style="padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Xóa phiếu bàn giao này">
-                ${ACC_SVGS.TRASH} Xóa phiếu
-              </button>
-              <button type="button" onclick="closeKeToanReviewModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;">✕</button>
-            </div>
+            <button type="button" onclick="closeKeToanReviewModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; transition: all 0.2s ease;">✕</button>
           </div>
 
           <!-- MODAL BODY -->
           <div style="flex: 1; overflow-y: auto; padding: 24px 30px;">
             <!-- BATCH META SUMMARY -->
-            <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 16px; padding: 16px 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
-              <div><strong>GĐV Bàn giao:</strong> ${escapeHtmlOutput(t.gdvName)}</div>
+            <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 16px; padding: 18px 22px; margin-bottom: 22px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px;">
+              <div><strong>GĐV Bàn giao:</strong> <span style="font-weight: 750; color: var(--text-main);">${escapeHtmlOutput(t.gdvName)}</span></div>
               <div><strong>Tổng số hồ sơ trong phiếu:</strong> <strong style="color: #3b82f6;">${claimsInBatch.length} hồ sơ</strong></div>
-              <div><strong>Tổng số tiền đề nghị chi toàn phiếu:</strong> <strong style="color: #10b981; font-family: 'JetBrains Mono'; font-size: 16.5px;">${formatCurrencyInputNumber(t.soTienDeNghi)} đ</strong></div>
+              <div><strong>Tổng số tiền đề nghị chi toàn phiếu:</strong> <strong style="color: #10b981; font-family: 'JetBrains Mono'; font-size: 17px;">${formatCurrencyInputNumber(t.soTienDeNghi)} đ</strong></div>
               ${t.ghiChuGdv ? `<div><strong>Ghi chú GĐV:</strong> <em>${escapeHtmlOutput(t.ghiChuGdv)}</em></div>` : ''}
             </div>
 
-            <!-- CLAIMS LIST TABLE IN BATCH (PURE VIEW-ONLY DETAIL) -->
+            <!-- CLAIMS LIST TABLE IN BATCH -->
             <div style="margin-bottom: 22px;">
-              <label style="display: block; font-size: 13px; font-weight: 850; color: var(--text-main); margin-bottom: 8px;">
+              <label style="display: block; font-size: 13.5px; font-weight: 850; color: var(--text-main); margin-bottom: 10px;">
                 ${ACC_SVGS.LIST} Chi tiết các Hồ sơ Bồi thường trong Phiếu bàn giao:
               </label>
-              <div style="border: 1px solid var(--border); border-radius: 14px; overflow-x: auto; background: var(--surface);">
-                <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+              <div style="border: 1px solid var(--border); border-radius: 16px; overflow-x: auto; background: var(--surface);">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                   <thead>
                     <tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
-                      <th style="padding: 10px 12px; text-align: center; width: 45px;">STT</th>
-                      <th style="padding: 10px 12px; text-align: left;">Biển số & Số HSBT</th>
-                      <th style="padding: 10px 12px; text-align: left;">Chủ xe / Khách hàng</th>
-                      <th style="padding: 10px 12px; text-align: left;">Gara</th>
-                      <th style="padding: 10px 12px; text-align: right; width: 140px;">Tiền Đề nghị</th>
-                      <th style="padding: 10px 12px; text-align: center; width: 130px;">Trạng thái</th>
+                      <th style="padding: 12px 14px; text-align: center; width: 55px;">STT</th>
+                      <th style="padding: 12px 14px; text-align: left;">Biển số & Số HSBT</th>
+                      <th style="padding: 12px 14px; text-align: left;">Chủ xe / Khách hàng</th>
+                      <th style="padding: 12px 14px; text-align: left;">Gara</th>
+                      <th style="padding: 12px 14px; text-align: right; width: 160px;">Tiền Đề nghị</th>
+                      <th style="padding: 12px 14px; text-align: center; width: 150px;">Trạng thái</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -15251,29 +15227,33 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                       return `
                         <tr style="border-bottom: 1px solid var(--border); ${isPriority ? 'background: rgba(245,158,11,0.04);' : (isSupp ? 'background: rgba(239,68,68,0.04);' : '')}">
-                          <td style="padding: 10px 12px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${idx + 1}</td>
-                          <td style="padding: 10px 12px;">
+                          <td style="padding: 12px 14px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${idx + 1}</td>
+                          <td style="padding: 12px 14px;">
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                              <strong style="color: var(--text-main); font-size: 13px;">${escapeHtmlOutput(c.bienSo || 'N/A')}</strong>
-                              <span style="font-size: 11px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(c.soHoSoBoiThuong || '')}</span>
-                              ${isPriority ? `<span style="font-size: 9.5px; font-weight: 850; color: #ef4444; background: rgba(239,68,68,0.12); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(239,68,68,0.25);">🔥 ƯU TIÊN</span>` : ''}
+                              <strong style="color: var(--text-main); font-size: 13.5px;">${escapeHtmlOutput(c.bienSo || 'N/A')}</strong>
+                              <span style="font-size: 11.5px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(c.soHoSoBoiThuong || '')}</span>
+                              ${isPriority ? `<span style="font-size: 9.5px; font-weight: 850; color: #ef4444; background: rgba(239,68,68,0.12); padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(239,68,68,0.25);">🔥 ƯU TIÊN</span>` : ''}
                             </div>
                           </td>
-                          <td style="padding: 10px 12px; font-weight: 750;">${escapeHtmlOutput(extractClaimOwnerName(c))}</td>
-                          <td style="padding: 10px 12px;">${escapeHtmlOutput(c.tenGara || 'N/A')}</td>
-                          <td style="padding: 10px 12px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; color: #10b981;">${formatCurrencyInputNumber(c.soTienDeNghi)} đ</td>
-                          <td style="padding: 10px 12px; text-align: center;">
+                          <td style="padding: 12px 14px; font-weight: 750;">${escapeHtmlOutput(extractClaimOwnerName(c))}</td>
+                          <td style="padding: 12px 14px; color: var(--text-soft);">${escapeHtmlOutput(c.tenGara || 'N/A')}</td>
+                          <td style="padding: 12px 14px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; color: #10b981;">${formatCurrencyInputNumber(c.soTienDeNghi)} đ</td>
+                          <td style="padding: 12px 14px; text-align: center;">
                             ${isSupp ? `
-                              <span style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 99px; display: inline-block;">⚠️ CẦN BỔ SUNG</span>
+                              <span style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); font-size: 11px; font-weight: 850; padding: 4px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 5px;">
+                                ${ACC_SVGS.WARNING} <span>CẦN BỔ SUNG</span>
+                              </span>
                             ` : `
-                              <span style="background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 99px; display: inline-block;">🟢 ĐẠT</span>
+                              <span style="background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); font-size: 11px; font-weight: 850; padding: 4px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 5px;">
+                                ${ACC_SVGS.CHECK_CIRCLE} <span>ĐẠT</span>
+                              </span>
                             `}
                           </td>
                         </tr>
                         ${isSupp ? `
                           <tr style="background: rgba(239,68,68,0.05); border-bottom: 1px solid rgba(239,68,68,0.25);">
                             <td colspan="6" style="padding: 10px 16px;">
-                              <div style="display: flex; align-items: flex-start; gap: 8px; color: #ef4444; font-size: 12px;">
+                              <div style="display: flex; align-items: flex-start; gap: 8px; color: #ef4444; font-size: 12.5px;">
                                 <span>${ACC_SVGS.WARNING}</span>
                                 <div>
                                   <strong style="font-weight: 850;">Nội dung Yêu cầu bổ sung cho hồ sơ này:</strong>
@@ -15294,16 +15274,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
           <!-- FIXED FOOTER ACTION BUTTONS -->
           <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
-            <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
               <button type="button" onclick="closeKeToanReviewModal()" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Đóng</button>
               ${(t.trangThai === 'cho_xac_nhan' || t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so' || t.trangThai === 'can_bo_sung') ? `
-                <button type="button" onclick="revertTransferToDraft('${t.transferId}')" style="padding: 11px 20px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(245,158,11,0.14); color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); cursor: pointer;">
+                <button type="button" onclick="revertTransferToDraft('${t.transferId}')" style="padding: 11px 20px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(245,158,11,0.14); color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
                   ${ACC_SVGS.REFRESH} Trả lại trạng thái Mới
                 </button>
               ` : ''}
             </div>
 
-            <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
               ${isKeToanRole ? `
                 ${(t.trangThai === 'cho_xac_nhan' || t.trangThai === 'can_bo_sung' || t.trangThai === 'moi') ? `
                   <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_xac_nhan')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
@@ -15315,6 +15295,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     ${ACC_SVGS.CHECK_CIRCLE} Trình Đề nghị Thanh toán
                   </button>
                 ` : ''}
+                <button type="button" onclick="deleteAccountingTransferBatch('${t.transferId}')" style="padding: 11px 18px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                  ${ACC_SVGS.TRASH} Xóa phiếu
+                </button>
               ` : `
                 ${(!isKeToanRole && (t.trangThai === 'moi' || t.trangThai === 'can_bo_sung')) ? `
                   <button type="button" onclick="closeKeToanReviewModal(); openAddAccountingTransferModal('${t.transferId}')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(216,180,109,0.4); display: flex; align-items: center; gap: 8px;">
