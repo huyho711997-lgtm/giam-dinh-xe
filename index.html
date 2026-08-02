@@ -13938,17 +13938,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
             <!-- TABLE OF ACCOUNTING CLAIMS -->
             <div class="table-container">
-              <table class="p-table" style="min-width: 1150px;">
+              <table class="p-table" style="min-width: 1020px;">
                 <thead>
                   <tr>
                     <th style="text-align: center; width: 110px;">STT / Ưu tiên</th>
-                    <th style="text-align: center; width: 160px;">Trạng thái</th>
+                    <th style="text-align: center; width: 180px;">Trạng thái</th>
                     <th style="text-align: left;">Số HSBT</th>
                     <th style="text-align: left;">Tên khách hàng / BKS</th>
                     <th style="text-align: left;">Tên GĐV</th>
-                    <th style="text-align: left;">Ngày bàn giao</th>
+                    <th style="text-align: left; width: 150px;">Ngày bàn giao</th>
                     <th style="text-align: left;">Số phiếu bàn giao</th>
-                    <th style="text-align: center; width: 120px;">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>${items.length ? items.map((item, index) => {
@@ -13965,14 +13964,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                   const isPriority = Boolean(item.claim.isUuTien);
 
-                  return `<tr onclick="openAccountingClaimDetailModal('${item.transfer.transferId}', ${item.claimIndex})" style="${isPriority ? 'background: rgba(245,158,11,0.035);' : (isClaimBoSung ? 'background: rgba(239,68,68,0.035);' : '')}" title="Nhấp vào dòng để xem chi tiết / yêu cầu bổ sung">
+                  return `<tr onclick="openAccountingClaimDetailModal('${item.transfer.transferId}', ${item.claimIndex})" style="cursor: pointer; ${isPriority ? 'background: rgba(245,158,11,0.035);' : (isClaimBoSung ? 'background: rgba(239,68,68,0.035);' : '')}" title="Nhấp vào dòng để xem chi tiết">
                     <td style="text-align: center; vertical-align: middle;">
-                      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                      <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
                         <span class="acc-stt-badge">#${index + 1}</span>
-                        ${isPriority ? `<span class="acc-priority-badge">🔥 ƯU TIÊN</span>` : ''}
+                        ${isPriority ? `<span class="acc-priority-badge">${ACC_SVGS.FIRE} ƯU TIÊN</span>` : ''}
                       </div>
                     </td>
-                    <td style="text-align: center; width: 160px; vertical-align: middle;">
+                    <td style="text-align: center; vertical-align: middle;">
                       <span class="acc-status-pill" style="color:${status.text}; background:${status.bg}; border:1px solid ${status.border};">
                         ${status.svg} <span style="margin-left: 2px;">${status.label}</span>
                       </span>
@@ -13993,11 +13992,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     <td style="vertical-align: middle;">
                       <strong style="font-family:'JetBrains Mono'; font-size: 12.5px; color: var(--text-main);">${escapeHtmlOutput(item.transfer.transferId || 'N/A')}</strong>
                     </td>
-                    <td style="text-align: center; vertical-align: middle;">
-                      <button type="button" class="btn-view-detail">Xem chi tiết</button>
-                    </td>
                   </tr>`;
-                }).join('') : `<tr><td colspan="8" style="padding:42px; text-align:center; color:var(--text-soft);">Không tìm thấy hồ sơ phù hợp.</td></tr>`}</tbody>
+                }).join('') : `<tr><td colspan="7" style="padding:42px; text-align:center; color:var(--text-soft);">Không tìm thấy hồ sơ phù hợp.</td></tr>`}</tbody>
               </table>
             </div>
           </section>
