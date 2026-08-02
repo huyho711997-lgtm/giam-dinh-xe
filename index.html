@@ -14961,11 +14961,33 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
 
             <!-- HEADER ACTIONS FOR KE TOAN ROLE -->
-            <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
               ${isKeToanRole ? `
-                <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_nhan_du_ho_so')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(139,92,246,0.13); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.32); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
-                  ${ACC_SVGS.CHECK_CIRCLE} Đã nhận đủ hồ sơ
-                </button>
+                ${t.trangThai === 'da_nhan_du_ho_so' ? `
+                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'can_bo_sung')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(239,68,68,0.13); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+                    ${ACC_SVGS.WARNING} Trả lại / Yêu cầu bổ sung
+                  </button>
+                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_trinh_dntt')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(16,185,129,0.35); transition: all 0.2s ease;">
+                    ${ACC_SVGS.CHECK_CIRCLE} Trình Đề nghị Thanh toán
+                  </button>
+                ` : (t.trangThai === 'da_trinh_dntt' ? `
+                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'can_bo_sung')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(239,68,68,0.13); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+                    ${ACC_SVGS.REFRESH} Trả lại phiếu này
+                  </button>
+                  <span style="padding: 6px 14px; border-radius: 99px; font-size: 11.5px; font-weight: 850; background: rgba(16,185,129,0.14); color: #10b981; border: 1px solid rgba(16,185,129,0.3); display: inline-flex; align-items: center; gap: 6px;">
+                    ${ACC_SVGS.CHECK_CIRCLE} Đã trình ĐNTT
+                  </span>
+                ` : `
+                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_nhan_du_ho_so')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(139,92,246,0.13); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.32); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+                    ${ACC_SVGS.CHECK_CIRCLE} Đã nhận đủ hồ sơ
+                  </button>
+                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'can_bo_sung')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(239,68,68,0.13); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+                    ${ACC_SVGS.WARNING} Trả lại / Yêu cầu bổ sung
+                  </button>
+                  <button type="button" onclick="saveKeToanReviewAction('${t.transferId}', 'da_trinh_dntt')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 14px rgba(16,185,129,0.35); transition: all 0.2s ease;">
+                    ${ACC_SVGS.CHECK_CIRCLE} Trình Đề nghị Thanh toán
+                  </button>
+                `)}
               ` : ''}
               <button type="button" onclick="closeKeToanReviewModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;">✕</button>
             </div>
@@ -15124,11 +15146,15 @@ function renderGdvMonthlyReportPage(targetContainer) {
         };
       });
 
-      // If supplement checkboxes are ticked, automatically route status as 'can_bo_sung'
-      if (hoSoYeuCauBoSung.length > 0) {
+      // If supplement checkboxes are ticked or targetStatus is 'can_bo_sung'
+      if (hoSoYeuCauBoSung.length > 0 || targetStatus === 'can_bo_sung') {
         targetStatus = 'can_bo_sung';
-        if (hoSoYeuCauBoSung.some(item => !item.ghiChu.trim())) {
+        if (hoSoYeuCauBoSung.length > 0 && hoSoYeuCauBoSung.some(item => !item.ghiChu.trim())) {
           triggerToast('Vui lòng nhập nội dung cần bổ sung cho từng hồ sơ đã chọn!', 'warning');
+          return;
+        }
+        if (hoSoYeuCauBoSung.length === 0 && !ghiChuKeToan.trim()) {
+          triggerToast('Vui lòng chọn ít nhất 1 hồ sơ cần bổ sung hoặc nhập Ghi chú chung của Kế toán để trả lại!', 'warning');
           return;
         }
       }
