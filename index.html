@@ -14408,6 +14408,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (!transferId) return;
       
       const t = cachedAccountingTransfersPayload[transferId];
+      if (t && (t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so' || t.trangThai === 'da_trinh_dntt')) {
+        triggerToast('Không thể xóa Phiếu bàn giao đã được xác nhận!', 'warning');
+        return;
+      }
       const batchLabel = t ? (t.transferId + ' (' + ((t.danhSachHoSo && t.danhSachHoSo.length) || 1) + ' hồ sơ)') : transferId;
 
       if (!confirm('Bạn có chắc chắn muốn xóa Phiếu bàn giao ' + batchLabel + ' không?\nHành động này không thể hoàn tác!')) {
@@ -14664,7 +14668,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         </td>
                         <td style="padding: 14px; text-align: center;" onclick="event.stopPropagation();">
                           <div style="display: flex; gap: 6px; align-items: center; justify-content: center;">
-                            ${(isKeToanOrAdmin || t.trangThai === 'moi' || t.trangThai === 'can_bo_sung' || t.trangThai === 'cho_xac_nhan') ? `
+                            ${(!['da_xac_nhan', 'da_nhan_du_ho_so', 'da_trinh_dntt'].includes(t.trangThai) && (isKeToanOrAdmin || t.trangThai === 'moi' || t.trangThai === 'can_bo_sung')) ? `
                               <button type="button" onclick="deleteAccountingTransferBatch('${t.transferId}')" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: grid; place-items: center; transition: all 0.2s ease;" title="Xóa phiếu bàn giao này">
                                 ${ACC_SVGS.TRASH}
                               </button>
@@ -15329,9 +15333,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 ` : ''}
               `}
 
-              <button type="button" onclick="deleteAccountingTransferBatch('${t.transferId}')" style="padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Xóa phiếu bàn giao này">
-                ${ACC_SVGS.TRASH} Xóa phiếu
-              </button>
+              ${!['da_xac_nhan', 'da_nhan_du_ho_so', 'da_trinh_dntt'].includes(t.trangThai) ? `
+                <button type="button" onclick="deleteAccountingTransferBatch('${t.transferId}')" style="padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Xóa phiếu bàn giao này">
+                  ${ACC_SVGS.TRASH} Xóa phiếu
+                </button>
+              ` : ''}
 
               <button type="button" onclick="closeKeToanReviewModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; transition: all 0.2s ease;">✕</button>
             </div>
