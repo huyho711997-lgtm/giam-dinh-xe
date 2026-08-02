@@ -14524,7 +14524,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     const claimsCount = claimsList.length || 1;
                     const totalMoney = parseInt(t.soTienDeNghi, 10) || 0;
 
-                    const rowClickHandler = isKeToanOrAdmin ? `openKeToanReviewModal('${t.transferId}')` : `openAddAccountingTransferModal('${t.transferId}')`;
+                    const isDraftOrReturned = t.trangThai === 'moi' || t.trangThai === 'can_bo_sung';
+                    const rowClickHandler = isDraftOrReturned ? `openAddAccountingTransferModal('${t.transferId}')` : `openKeToanReviewModal('${t.transferId}')`;
 
                     const hasPriority = claimsList.some(c => c.isUuTien);
 
@@ -15142,10 +15143,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (!transferId) return;
       try {
         await dbNodeInstance.ref('accounting_transfers/' + transferId + '/trangThai').set('moi');
+        if (cachedAccountingTransfersPayload && cachedAccountingTransfersPayload[transferId]) {
+          cachedAccountingTransfersPayload[transferId].trangThai = 'moi';
+        }
         triggerToast('Đã hoàn trả phiếu bàn giao về trạng thái Mới (Nháp) để điều chỉnh!', 'success');
         closeAccountingTransferModal();
         closeKeToanReviewModal();
         renderAccountingTransferPage();
+        openAddAccountingTransferModal(transferId);
       } catch (err) {
         console.error(err);
         triggerToast('Lỗi trả lại phiếu nháp: ' + err.message, 'error');
