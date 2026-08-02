@@ -14586,6 +14586,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
     /* MODAL 1: GĐV TẠO / SỬA / BỔ SUNG PHIẾU BÀN GIAO */
     function openAddAccountingTransferModal(transferId) {
+      const editingTransferId = transferId || '';
       let existing = null;
       if (transferId && cachedAccountingTransfersPayload[transferId]) {
         existing = cachedAccountingTransfersPayload[transferId];
