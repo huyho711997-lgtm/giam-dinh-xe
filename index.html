@@ -14790,12 +14790,25 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
 
             <!-- FIXED STICKY FOOTER ACTIONS -->
-            <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(14px); z-index: 10; flex-shrink: 0; display: flex; justify-content: flex-end; gap: 14px;">
-              <button type="button" onclick="closeAccountingTransferModal()" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Hủy bỏ</button>
-              <button type="submit" style="padding: 11px 30px; border-radius: 12px; font-size: 14px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(216,180,109,0.4); display: flex; align-items: center; gap: 8px;">
-                ${ACC_SVGS.INBOX}
-                <span>${existing ? (existing.trangThai === 'can_bo_sung' ? 'Gửi lại Phiếu cho Kế toán' : 'Lưu cập nhật Phiếu') : 'Bàn giao Phiếu cho Kế toán'}</span>
+            <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(14px); z-index: 10; flex-shrink: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px; flex-wrap: wrap;">
+              ${(editingTransferId && cachedAccountingTransfersPayload[editingTransferId]?.trangThai === 'cho_xac_nhan') ? `
+                <button type="button" onclick="revertTransferToDraft('${editingTransferId}')" style="padding: 11px 20px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer;">
+                  ${ACC_SVGS.REFRESH} Trả lại (Hủy gửi bàn giao)
+                </button>
+              ` : ''}
+              <button type="button" onclick="closeAccountingTransferModal()" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer;">Hủy bỏ</button>
+              <button type="button" onclick="saveAccountingTransferBatchFromModal(event, '${editingTransferId || ''}', 'moi')" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-main); border: 1px solid var(--border-strong); cursor: pointer;">
+                💾 Lưu nháp
               </button>
+              <button type="button" onclick="saveAccountingTransferBatchFromModal(event, '${editingTransferId || ''}', 'cho_xac_nhan')" style="padding: 11px 26px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(216,180,109,0.4); display: flex; align-items: center; gap: 8px;">
+                ${ACC_SVGS.CHECK_CIRCLE}
+                <span>Bàn giao hồ sơ cho Kế toán</span>
+              </button>
+              ${editingTransferId ? `
+                <button type="button" onclick="deleteAccountingTransferBatch('${editingTransferId}')" style="padding: 11px 18px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                  ${ACC_SVGS.TRASH} Xóa phiếu
+                </button>
+              ` : ''}
             </div>
 
           </form>
@@ -14999,78 +15012,70 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
     /* RENDER BATCH SELECTED CLAIMS TABLE */
     
+        /* TOGGLE CLAIM PRIORITY FLAG IN BATCH */
     function toggleAccBatchItemPriority(index) {
-      if (!caseRequestedItemsDraft[index]) return;
-      caseRequestedItemsDraft[index].isUuTien = !caseRequestedItemsDraft[index].isUuTien;
+      if (!currentBatchSelectedClaims[index]) return;
+      currentBatchSelectedClaims[index].isUuTien = !currentBatchSelectedClaims[index].isUuTien;
       renderAccBatchSelectedTable();
     }
 
+    /* RENDER BATCH SELECTED CLAIMS TABLE */
     function renderAccBatchSelectedTable() {
-      const container = document.getElementById('accBatchSelectedTableContainer');
-      if (!container) return;
-
-      if (caseRequestedItemsDraft.length === 0) {
-        container.innerHTML = `
-          <div style="text-align: center; padding: 32px 20px; color: var(--text-soft); font-size: 13px;">
-            Chưa chọn hồ sơ nào. Hãy tìm kiếm ở cột bên trái và bấm <strong>+ Thêm vào phiếu</strong>.
-          </div>
-        `;
-        recalcAccBatchTotalMoney();
-        return;
+      const tbody = document.getElementById('tblAccBatchSelectedBody');
+      const counterLbl = document.getElementById('lblAccBatchCount');
+      
+      if (counterLbl) {
+        counterLbl.textContent = currentBatchSelectedClaims.length;
       }
-
-      container.innerHTML = `
-        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-          <thead>
-            <tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
-              <th style="padding: 10px 12px; text-align: center; width: 45px;">STT</th>
-              <th style="padding: 10px 12px; text-align: center; width: 90px;">Ưu tiên</th>
-              <th style="padding: 10px 12px; text-align: left;">Biển số & Số HSBT</th>
-              <th style="padding: 10px 12px; text-align: left;">Chủ xe / Khách hàng</th>
-              <th style="padding: 10px 12px; text-align: left;">Gara</th>
-              <th style="padding: 10px 12px; text-align: right; width: 140px;">Tiền Đề nghị (VNĐ)</th>
-              <th style="padding: 10px 12px; text-align: center; width: 50px;">Xóa</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${caseRequestedItemsDraft.map((item, idx) => `
-              <tr style="border-bottom: 1px solid var(--border); ${item.isUuTien ? 'background: rgba(245,158,11,0.04);' : ''}">
-                <td style="padding: 10px 12px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${idx + 1}</td>
-                <td style="padding: 10px 12px; text-align: center;">
-                  <button type="button" onclick="toggleAccBatchItemPriority(${idx})" style="padding: 4px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; ${item.isUuTien ? 'background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.35);' : 'background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border);'}" title="Đánh dấu hồ sơ ưu tiên xử lý">
-                    ${item.isUuTien ? '🔥 ƯU TIÊN' : '+ Ưu tiên'}
-                  </button>
-                </td>
-                <td style="padding: 10px 12px;">
-                  <strong style="color: var(--text-main); font-size: 13px;">${escapeHtmlOutput(item.bienSo || 'N/A')}</strong>
-                  <span style="display: block; font-size: 11px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(item.soHoSoBoiThuong || '')}</span>
-                </td>
-                <td style="padding: 10px 12px; font-weight: 750;">${escapeHtmlOutput(extractClaimOwnerName(item))}</td>
-                <td style="padding: 10px 12px;">${escapeHtmlOutput(item.tenGara || 'N/A')}</td>
-                <td style="padding: 10px 12px; text-align: right;">
-                  <input type="text" class="input-premium" value="${formatCurrencyInputNumber(item.soTienDeNghi)}" oninput="updateAccBatchItemMoney(${idx}, this.value)" style="width: 120px; height: 32px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; font-size: 12px; color: #10b981;" />
-                </td>
-                <td style="padding: 10px 12px; text-align: center;">
-                  <button type="button" onclick="removeAccClaimFromBatchTable(${idx})" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: grid; place-items: center;" title="Bỏ hồ sơ này khỏi phiếu">✕</button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
 
       recalcAccBatchTotalMoney();
-    }
 
-        async function saveAccountingTransferBatchFromModal(evt, existingId, targetStatus) {
-      if (evt) evt.preventDefault();
+      if (!tbody) return;
 
-      if (caseRequestedItemsDraft.length === 0) {
-        triggerToast('Vui lòng chọn ít nhất 1 hồ sơ bồi thường vào Phiếu bàn giao!', 'warning');
+      if (currentBatchSelectedClaims.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 32px 20px; color: var(--text-soft); font-size: 13px;">
+              Chưa chọn hồ sơ nào. Vui lòng tích chọn các hồ sơ ở cột bên trái để gộp vào phiếu bàn giao.
+            </td>
+          </tr>
+        `;
         return;
       }
 
-      const isKeToanRole = getLoggedInUserAccountingRole() === 'ketoan';
+      tbody.innerHTML = currentBatchSelectedClaims.map((item, idx) => `
+        <tr style="border-bottom: 1px solid var(--border); ${item.isUuTien ? 'background: rgba(245,158,11,0.04);' : ''}">
+          <td style="padding: 10px 12px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${idx + 1}</td>
+          <td style="padding: 10px 12px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <strong style="color: var(--text-main); font-size: 13px;">${escapeHtmlOutput(item.bienSo || 'N/A')}</strong>
+              <span style="display: inline-block; font-size: 11px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(item.soHoSoBoiThuong || '')}</span>
+              <button type="button" onclick="toggleAccBatchItemPriority(${idx})" style="padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; ${item.isUuTien ? 'background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.35);' : 'background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border);'}" title="Đánh dấu hồ sơ ưu tiên xử lý">
+                ${item.isUuTien ? '🔥 ƯU TIÊN' : '+ Ưu tiên'}
+              </button>
+            </div>
+          </td>
+          <td style="padding: 10px 12px; font-weight: 750; color: var(--text-main);">${escapeHtmlOutput(extractClaimOwnerName(item))}</td>
+          <td style="padding: 10px 12px; color: var(--text-soft);">${escapeHtmlOutput(item.tenGara || 'N/A')}</td>
+          <td style="padding: 10px 12px; text-align: right;">
+            <input type="text" class="input-premium" value="${formatCurrencyInputNumber(item.soTienDeNghi)}" oninput="updateAccBatchItemMoney(${idx}, this.value)" style="width: 125px; height: 32px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; font-size: 12.5px; color: #10b981;" />
+          </td>
+          <td style="padding: 10px 12px; text-align: center;">
+            <button type="button" onclick="removeAccClaimFromBatchTable(${idx})" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: grid; place-items: center;" title="Bỏ hồ sơ này khỏi phiếu">✕</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    /* SAVE ACCOUNTING TRANSFER BATCH FROM MODAL */
+    async function saveAccountingTransferBatchFromModal(evt, existingId, targetStatus) {
+      if (evt) evt.preventDefault();
+
+      if (currentBatchSelectedClaims.length === 0) {
+        triggerToast('Vui lòng tích chọn ít nhất 1 hồ sơ bồi thường ở cột bên trái!', 'warning');
+        return;
+      }
+
       const currentUser = firebase.auth().currentUser;
       const gdvName = String(activeUserProfile?.fullName || activeUserProfile?.displayName || currentUser?.displayName || 'Giám định viên').trim();
       const gdvEmail = String(currentUser?.email || '').trim();
@@ -15079,10 +15084,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const transferId = existingId || ('PBG_' + Date.now());
 
       let totalMoney = 0;
-      const finalItems = caseRequestedItemsDraft.map(c => {
+      const finalItems = currentBatchSelectedClaims.map(c => {
         const val = parseInt(c.soTienDeNghi, 10) || 0;
         totalMoney += val;
         return {
+          claimId: c.claimId || c.id || '',
           soHoSoBoiThuong: c.soHoSoBoiThuong || '',
           bienSo: c.bienSo || '',
           tenGara: c.tenGara || '',
@@ -15094,7 +15100,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         };
       });
 
-      const ghiChuGdv = getAccInputValue('txtAccBatchGhiChuGdv');
+      const ghiChuGdv = getAccInputValue('txtAccBatchGhiChuGdv') || getAccInputValue('accBatchGhiChuGdv');
 
       // Status: 'moi' for Draft, 'cho_xac_nhan' for Handover Submitted
       const statusToSave = targetStatus || 'cho_xac_nhan';
@@ -15115,7 +15121,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
         await dbNodeInstance.ref('accounting_transfers/' + transferId).set(payload);
 
         if (statusToSave === 'cho_xac_nhan') {
-          // Notify Kế toán role instantly!
           await sendAppNotification('ketoan', '', 'Phiếu bàn giao mới từ GĐV ' + gdvName, 'GĐV ' + gdvName + ' đã bàn giao ' + finalItems.length + ' hồ sơ (Mã phiếu: ' + transferId + '). Vui lòng kiểm tra và xác nhận.', transferId, 0, '', '', 'handover_submitted');
           triggerToast('Đã bàn giao hồ sơ thành công! Phiếu đang ở trạng thái Chờ xác nhận.', 'success');
         } else {
