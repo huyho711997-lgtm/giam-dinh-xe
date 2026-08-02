@@ -596,9 +596,9 @@
     .search-wrap .svg-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted); pointer-events: none; }
     .search-wrap .input-premium { padding-left: 42px; }
     .filter-pills { display: flex; align-items: center; gap: 6px; padding: 5px; border: 1px solid var(--border); border-radius: 13px; background: var(--surface-soft); }
-    .filter-pill { padding: 6px 14px; cursor: pointer; color: var(--text-muted); border: 0; border-radius: 9px; background: transparent; font-size: 11.5px; font-weight: 800; white-space: nowrap; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); outline: none; opacity: 0.85; }
-    .filter-pill:hover { opacity: 1; color: var(--text-main); background: var(--surface-hover); transform: translateY(-1px); }
-    .filter-pill.active { opacity: 1; color: #080b11 !important; background: var(--primary-gradient) !important; box-shadow: 0 4px 14px rgba(216, 180, 109, 0.35); font-weight: 850; }
+    .filter-pill { padding: 5px 13px; cursor: pointer; color: var(--text-soft); border: 1px solid var(--border-strong); border-radius: 9px; background: var(--surface); font-size: 11.5px; font-weight: 800; white-space: nowrap; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); outline: none; opacity: 0.85; }
+    .filter-pill:hover { opacity: 1; color: var(--text-main); background: var(--surface-hover); border-color: var(--border-strong); transform: translateY(-1px); }
+    .filter-pill.active { opacity: 1; color: #080b11 !important; background: var(--primary-gradient) !important; border-color: var(--primary) !important; box-shadow: 0 4px 14px rgba(216, 180, 109, 0.35); font-weight: 850; }
     .filter-pill.active .badge-count { background: rgba(8, 11, 17, 0.2) !important; color: #080b11 !important; }
     @media (max-width: 680px) { .cases-toolbar { grid-template-columns: 1fr; } .filter-pills { overflow-x: auto; } .filter-pill { flex: 1; } }
 
@@ -13918,21 +13918,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
               <div>
                 <h1 style="font-size: 24px; font-weight: 850; color: var(--text-main); margin: 0; letter-spacing: -0.02em; line-height: 1.25;">
-                  Hồ sơ Kế toán đã nhận
+                  Quản lý hồ sơ đã nhận
                 </h1>
                 <p style="font-size: 13px; color: var(--text-soft); margin: 6px 0 0; max-width: 780px;">
                   Quản lý toàn bộ hồ sơ đã bàn giao từ Giám định viên, theo dõi tiến độ xét duyệt &amp; gửi yêu cầu bổ sung.
                 </p>
               </div>
               
-              <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                <span style="font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: 99px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); color: #60a5fa; text-transform: uppercase;">
-                  ${statTotal} HỒ SƠ ĐÃ NHẬN
-                </span>
-                <span style="font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: 99px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); color: #f87171; text-transform: uppercase;">
-                  ${statCanBoSung} CẦN BỔ SUNG
-                </span>
-              </div>
+
             </div>
           </div>
 
@@ -13988,10 +13981,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
 
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-              <span style="font-size: 11.5px; font-weight: 850; padding: 6px 12px; border-radius: 8px; background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.25);">
-                ${ACC_SVGS.BRIEFCASE} Quyền hạn: ${isKeToanOrAdmin ? 'Kế toán Xét duyệt' : 'Giám định viên Bàn giao'}
-              </span>
-              
               <!-- Search Input -->
               <div style="position: relative; width: 260px;">
                 <input class="input-premium" value="${escapeAttributeData(activeAccountingClaimSearch)}" oninput="changeAccountingClaimSearch(this.value)" placeholder="Tìm Số HSBT, BKS, Tên KH, GĐV..." style="width: 100%; height: 38px; border-radius: 10px; font-size: 12.5px; padding-left: 32px;" />
@@ -14562,10 +14551,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
 
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-              <span style="font-size: 11.5px; font-weight: 850; padding: 6px 12px; border-radius: 8px; background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.25);">
-                ${ACC_SVGS.BRIEFCASE} Quyền hạn: ${isKeToanOrAdmin ? 'Kế toán Xét duyệt' : 'Giám định viên Bàn giao'}
-              </span>
-              
               <!-- Search Input -->
               <div style="position: relative; width: 240px;">
                 <input class="input-premium" value="${escapeAttributeData(activeAccountingSearch)}" oninput="changeAccountingSearch(this.value)" placeholder="Tìm theo Mã phiếu, HSBT, BKS..." style="width: 100%; height: 38px; border-radius: 10px; font-size: 12.5px; padding-left: 32px;" />
