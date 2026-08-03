@@ -12139,8 +12139,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
         <div style="padding: 24px 28px; max-width: 1600px; margin: 0 auto;">
           
           <!-- ADAPTIVE HERO BANNER HEADER -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 20px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-            <div style="position: absolute; right: -40px; top: -40px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(216,180,109,0.12) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none;"></div>
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 20px; box-shadow: var(--shadow-sm); position: relative;">
+            <div style="position: absolute; inset: 0; border-radius: 20px; overflow: hidden; pointer-events: none; z-index: 1;">
+              <div style="position: absolute; right: -40px; top: -40px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(216,180,109,0.12) 0%, rgba(0,0,0,0) 70%); border-radius: 50%;"></div>
+            </div>
             
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
               <div>
