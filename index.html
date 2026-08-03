@@ -14738,9 +14738,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
       const batchLabel = t ? (t.transferId + ' (' + ((t.danhSachHoSo && t.danhSachHoSo.length) || 1) + ' hồ sơ)') : transferId;
 
-      if (!confirm('Bạn có chắc chắn muốn xóa Phiếu bàn giao ' + batchLabel + ' không?\nHành động này không thể hoàn tác!')) {
-        return;
-      }
+      const isConfirmed = await showConfirmModal(
+        'Xác nhận xóa phiếu',
+        `Bạn có chắc chắn muốn xóa Phiếu bàn giao ${batchLabel} không? Hành động này không thể hoàn tác!`,
+        'Đồng ý xóa',
+        'Hủy bỏ'
+      );
+      if (!isConfirmed) return;
 
       try {
         await dbNodeInstance.ref('accounting_transfers/' + transferId).remove();
