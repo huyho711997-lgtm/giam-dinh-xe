@@ -12158,21 +12158,33 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
               <!-- Export Buttons Area -->
               ${hasUserPermission('report', 'export') ? `
-              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button type="button" onclick="exportGdvMonthlyReportExcel()" style="padding: 0 18px; height: 42px; font-size: 12.5px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.3); transition: all 0.2s ease;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  <span>Báo cáo Tháng (.xlsx)</span>
+              <div class="custom-select-wrapper" style="position: relative;" id="accExportMenuWrapper">
+                <button type="button" class="btn-premium" onclick="toggleCustomDropdownMenu('ddExportOptions', event)" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.3); transition: all 0.2s ease; padding: 0 18px; height: 42px; font-size: 12.5px; border-radius: 12px; font-weight: 850; min-width: 190px; justify-content: space-between;">
+                  <span style="display: flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Tải báo cáo (.xlsx)</span>
+                  </span>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(255,255,255,0.7);"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
-                <button type="button" onclick="exportWeeklyZoneReportExcel()" style="padding: 0 18px; height: 42px; font-size: 12.5px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(59,130,246,0.3); transition: all 0.2s ease;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                  <span>Tải Báo cáo Tuần (.xlsx)</span>
-                </button>
-                ${activeGdvReportView === 'daklak_reserve' ? `
-                <button type="button" onclick="exportDakLakReserveReportExcel()" style="padding: 0 18px; height: 42px; font-size: 12.5px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.3); transition: all 0.2s ease;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  <span>Báo cáo Đắk Lắk (.xlsx)</span>
-                </button>
-                ` : ''}
+
+                <div id="ddExportOptions" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddExportOptions' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); right: 0; min-width: 240px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px);">
+                  <div class="custom-select-item" onclick="triggerGdvMonthlyReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s ease;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    <span>Báo cáo Tháng (.xlsx)</span>
+                  </div>
+
+                  <div class="custom-select-item" onclick="triggerWeeklyZoneReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s ease;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    <span>Báo cáo Tuần (.xlsx)</span>
+                  </div>
+
+                  ${activeGdvReportView === 'daklak_reserve' ? `
+                  <div class="custom-select-item" onclick="triggerDakLakReserveReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px dashed var(--border); transition: background 0.15s ease;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    <span style="color: var(--primary); font-weight: 850;">Báo cáo Đắk Lắk (.xlsx)</span>
+                  </div>
+                  ` : ''}
+                </div>
               </div>
               ` : ''}
             </div>
@@ -12384,7 +12396,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
           </div>
 
-          ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone') ? `
+          ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone' && activeGdvReportView !== 'daklak_reserve') ? `
           <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
@@ -15968,6 +15980,27 @@ function renderGdvMonthlyReportPage(targetContainer) {
       } else {
         triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
       }
+    }
+
+    function triggerGdvMonthlyReportExcelExport(event) {
+      if (event) event.stopPropagation();
+      document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      activeOpenDropdownId = null;
+      exportGdvMonthlyReportExcel();
+    }
+
+    function triggerWeeklyZoneReportExcelExport(event) {
+      if (event) event.stopPropagation();
+      document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      activeOpenDropdownId = null;
+      exportWeeklyZoneReportExcel();
+    }
+
+    function triggerDakLakReserveReportExcelExport(event) {
+      if (event) event.stopPropagation();
+      document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      activeOpenDropdownId = null;
+      exportDakLakReserveReportExcel();
     }
 
 </script>
