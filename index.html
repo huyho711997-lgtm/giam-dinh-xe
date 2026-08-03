@@ -15569,22 +15569,43 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       const dateStr = formatDateDisplay(t.ngayBanGiao).split(' ')[0] || new Date(t.ngayBanGiao).toLocaleDateString('vi-VN');
 
-      const excelData = claimsInBatch.map((c, idx) => ({
-        'STT': idx + 1,
-        'Biển số xe': c.bienSo || '',
-        'Số HSBT': c.soHoSoBoiThuong || '',
-        'TÊN KHÁCH HÀNG': String(extractClaimOwnerName(c)).toUpperCase(),
-        'Ngày gửi hồ sơ': dateStr
-      }));
-
       if (window.XLSX) {
-        const ws = XLSX.utils.json_to_sheet(excelData);
-        
+        // Build array of arrays (AOA) matching print structure
+        const aoa = [
+          ['Danh sách chuyển hồ sơ làm thanh toán', '', '', '', ''], // Row 1 (will merge A1:E1)
+          ['STT', 'Biển số xe', 'Số HSBT', 'TÊN KHÁCH HÀNG', 'Ngày gửi hồ sơ']  // Row 2
+        ];
+
+        claimsInBatch.forEach((c, idx) => {
+          aoa.push([
+            idx + 1,
+            c.bienSo || '',
+            c.soHoSoBoiThuong || '',
+            String(extractClaimOwnerName(c)).toUpperCase(),
+            dateStr
+          ]);
+        });
+
+        // Blank spacer row
+        aoa.push(['', '', '', '', '']);
+
+        // Signatures row
+        aoa.push(['', 'Bên nhận', '', 'Bên giao', '']);
+
+        // Convert array of arrays to sheet
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+        // Apply merge for the title row (A1:E1)
+        ws['!merges'] = [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }
+        ];
+
+        // Column widths matching print proportionality
         ws['!cols'] = [
           { wch: 8 },  // STT
-          { wch: 15 }, // Biển số xe
-          { wch: 25 }, // Số HSBT
-          { wch: 30 }, // TÊN KHÁCH HÀNG
+          { wch: 16 }, // Biển số xe
+          { wch: 26 }, // Số HSBT
+          { wch: 32 }, // TÊN KHÁCH HÀNG
           { wch: 18 }  // Ngày gửi hồ sơ
         ];
 
