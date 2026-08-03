@@ -3879,6 +3879,9 @@
     }
 
     function switchSystemAdminSubTab(subTabName) {
+      if (['api-keys', 'cloudinary', 'kpi-config'].includes(subTabName) && !hasUserPermission('users', 'admin')) {
+        subTabName = 'users';
+      }
       activeSystemAdminSubTab = subTabName;
       
       // Update visual active state of subtab pills dynamically
@@ -3919,10 +3922,12 @@
                 <button class="filter-pill" data-user-filter="Kế toán" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Kế toán</button>
                 <button class="filter-pill" data-user-filter="Garage" style="padding: 6px 14px; font-size: 12px; border-radius: 8px; font-weight: 700; height: 32px; min-height: unset; line-height: 1;">Garage</button>
               </div>
+              ${hasUserPermission('users', 'admin') ? `
               <button type="button" class="btn-premium" onclick="openCreateUserModal()" style="width: auto !important; padding: 0 24px; min-height: unset; height: 42px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; margin: 0; background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 4px 14px rgba(216,180,109,0.35); cursor: pointer; transition: all 0.2s ease;">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 <span>Thêm thành viên mới</span>
               </button>
+              ` : ''}
             </div>
           </div>
           
@@ -4257,6 +4262,7 @@
             </td>
             <td data-label="Thao tác" style="text-align: right; padding-right: 24px; vertical-align: middle;">
               <div style="display: inline-flex; gap: 8px; justify-content: flex-end; align-items: center;">
+                ${hasUserPermission('users', 'admin') ? `
                 <button type="button" class="btn-premium btn-secondary" onclick="openEditUserModal('${uid}')" style="padding: 6px 14px; min-height: unset; height: 32px; font-size: 12px; font-weight: 700; border-radius: 6px; margin: 0; display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); cursor: pointer;">
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                   <span>Sửa</span>
@@ -4265,6 +4271,7 @@
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                   <span>Xóa</span>
                 </button>
+                ` : '—'}
               </div>
             </td>
           </tr>
@@ -4656,9 +4663,14 @@
 
       const isGroup1Active = ['list', 'pending', 'gdv_report', 'create'].includes(activeDashboardTab);
       const isAccActive = ['accounting_transfer', 'accounting_claims'].includes(activeDashboardTab) ? 'active' : '';
+      const isGroup3Active = ['users', 'system'].includes(activeDashboardTab);
 
       const homeActive = activeDashboardTab === 'home' ? 'active' : '';
-      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+      const showList = hasUserPermission('list', 'view');
+      const showPending = hasUserPermission('pending', 'view');
+      const showReport = hasUserPermission('report', 'view');
+      const showCreate = hasUserPermission('list', 'add');
+      const showGroup1 = showList || showPending || showReport || showCreate;
 
       tabsContainer.innerHTML = `
         <div class="header-nav-tabs">
@@ -4669,6 +4681,7 @@
           </button>
 
           <!-- 2. QUẢN LÝ HỒ SƠ DROPDOWN GROUP (NƠI CHỨA BÁO CÁO GĐV & CÁC CHỨC NĂNG HỒ SƠ) -->
+          ${showGroup1 ? `
           <div class="header-nav-dropdown-wrapper">
             <button type="button" class="header-nav-btn ${isGroup1Active ? 'active' : ''}" onclick="toggleHeaderSubmenu(event, 'submenuClaimMgmt')">
               ${SVGS.FOLDER}
@@ -4676,55 +4689,74 @@
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left: 2px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
             <div id="submenuClaimMgmt" class="header-nav-submenu">
+              ${showList ? `
               <div class="header-nav-submenu-item ${activeDashboardTab === 'list' ? 'active' : ''}" onclick="navigateHeaderTab('list')">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #3b82f6;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                 <div>
                   <div style="line-height: 1.2;">Hồ sơ giám định</div>
                   <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Danh sách ca xe, PASC & duyệt HSBT</span>
                 </div>
-              </div>
+              </div>` : ''}
+              ${showPending ? `
               <div class="header-nav-submenu-item ${activeDashboardTab === 'pending' ? 'active' : ''}" onclick="navigateHeaderTab('pending')">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
                 <div>
                   <div style="line-height: 1.2;">Hồ sơ bồi thường</div>
                   <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Theo dõi tồn đọng & nhập Excel</span>
                 </div>
-              </div>
+              </div>` : ''}
+              ${showReport ? `
               <div class="header-nav-submenu-item ${activeDashboardTab === 'gdv_report' ? 'active' : ''}" onclick="navigateHeaderTab('gdv_report')">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #a855f7;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
                 <div>
                   <div style="line-height: 1.2;">Báo cáo & Thống kê GĐV</div>
                   <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Xem biểu đồ KPI & trích xuất báo cáo</span>
                 </div>
-              </div>
+              </div>` : ''}
+              ${showCreate ? `
               <div class="header-nav-submenu-item ${activeDashboardTab === 'create' ? 'active' : ''}" onclick="navigateHeaderTab('create')">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #10b981;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 <div>
                   <div style="line-height: 1.2;">Tạo mới hồ sơ giám định</div>
                   <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Tạo ca giám định bồi thường mới</span>
                 </div>
-              </div>
+              </div>` : ''}
             </div>
           </div>
+          ` : ''}
 
           <!-- 3. KẾ TOÁN (DIRECT TAB BUTTONS - ROLE BASED) -->
-          ${(getLoggedInUserAccountingRole() === 'ketoan' || (activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin')) ? `
+          ${hasUserPermission('accounting', 'review') ? `
             <button id="headerNavAccountingClaimsBtn" class="header-nav-btn ${activeDashboardTab === 'accounting_claims' ? 'active' : ''}" onclick="navigateHeaderTab('accounting_claims')">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
               <span class="nav-btn-text">Hồ sơ Kế toán</span>
             </button>
           ` : ''}
+          ${hasUserPermission('accounting', 'view') ? `
           <button id="headerNavAccountingBtn" class="header-nav-btn ${activeDashboardTab === 'accounting_transfer' ? 'active' : ''}" onclick="navigateHeaderTab('accounting_transfer')">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="12" y2="16"></line></svg>
-            <span class="nav-btn-text">Bàn giao hồ sơ</span>
+            <span class="nav-btn-text">Chuyển giao Kế toán</span>
           </button>
+          ` : ''}
 
-          <!-- 4. QUẢN TRỊ SYSTEM DIRECT TAB BUTTON (ADMIN) -->
-          ${isAdmin ? `
-            <button id="headerNavSystemAdminBtn" class="header-nav-btn ${activeDashboardTab === 'users' ? 'active' : ''}" onclick="navigateHeaderTab('users')">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <!-- 4. QUẢN TRỊ SYSTEM DROPDOWN GROUP (ADMIN) -->
+          ${hasUserPermission('users', 'view') ? `
+          <div class="header-nav-dropdown-wrapper">
+            <button type="button" class="header-nav-btn ${isGroup3Active ? 'active' : ''}" onclick="toggleHeaderSubmenu(event, 'submenuSystemAdmin')">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
               <span class="nav-btn-text">Quản trị System</span>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left: 2px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
+            <div id="submenuSystemAdmin" class="header-nav-submenu">
+              <div class="header-nav-submenu-item ${activeDashboardTab === 'users' ? 'active' : ''}" onclick="navigateHeaderTab('users')">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #f59e0b;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                <div>
+                  <div style="line-height: 1.2;">Quản lý User & Phân quyền</div>
+                  <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Tài khoản & ma trận phân quyền</span>
+                </div>
+              </div>
+            </div>
+          </div>
           ` : ''}
 
         </div>
@@ -4984,6 +5016,26 @@
       setCheck(prefix + 'Perm_users_admin', p.users?.admin ?? isRoleAdmin);
     }
 
+    function hasUserPermission(moduleKey, actionKey) {
+      if (activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin') {
+        return true;
+      }
+      if (!activeUserProfile || !activeUserProfile.permissions) {
+        const role = String((activeUserProfile && activeUserProfile.role) || '').trim().toLowerCase();
+        const isKeToan = role.includes('kế toán') || role.includes('ke toan') || role.includes('ketoan');
+        
+        if (moduleKey === 'users') return false;
+        if (moduleKey === 'accounting' && actionKey === 'review') return isKeToan;
+        return true;
+      }
+      
+      const permObj = activeUserProfile.permissions;
+      if (permObj[moduleKey] && permObj[moduleKey][actionKey] !== undefined) {
+        return Boolean(permObj[moduleKey][actionKey]);
+      }
+      return false;
+    }
+
     // Auto update permissions preset when role selection changes
     document.addEventListener('change', function(e) {
       if (e.target && e.target.id === 'newAdminRole') {
@@ -4994,6 +5046,10 @@
     });
 
     async function submitCreateUserAccount() {
+      if (!hasUserPermission('users', 'admin')) {
+        triggerToast('Bạn không có quyền tạo tài khoản thành viên.', 'error');
+        return;
+      }
       const displayName = String(document.getElementById('newAdminDisplayName')?.value || '').trim();
       const email = String(document.getElementById('newAdminEmail')?.value || '').trim();
       const password = String(document.getElementById('newAdminPassword')?.value || '').trim();
@@ -5050,6 +5106,10 @@
     }
 
     function openEditUserModal(uid) {
+      if (!hasUserPermission('users', 'admin')) {
+        triggerToast('Bạn không có quyền chỉnh sửa thông tin thành viên.', 'warning');
+        return;
+      }
       const data = cachedUsersPayload[uid] || {};
       const profile = data.profile || {};
       
@@ -5074,6 +5134,10 @@
     }
 
     async function submitEditUserAccount() {
+      if (!hasUserPermission('users', 'admin')) {
+        triggerToast('Bạn không có quyền chỉnh sửa thông tin thành viên.', 'error');
+        return;
+      }
       const uid = document.getElementById('editAdminUid').value;
       if (!uid) return;
       
@@ -5125,9 +5189,8 @@
     }
 
     async function triggerDeleteUserAccount(uid, displayName) {
-      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
-      if (!isAdmin) {
-        triggerToast('Bạn không có quyền thực hiện thao tác này!', 'error');
+      if (!hasUserPermission('users', 'admin')) {
+        triggerToast('Bạn không có quyền xóa tài khoản thành viên.', 'error');
         return;
       }
 
@@ -5371,6 +5434,10 @@
     }
 
     function openAddPendingClaimModal() {
+      if (!hasUserPermission('pending', 'add')) {
+        triggerToast('Bạn không có quyền tiếp nhận hồ sơ tổn thất mới.', 'warning');
+        return;
+      }
       const modal = document.getElementById('addPendingClaimModalOverlay');
       if (!modal) return;
 
@@ -5424,6 +5491,21 @@
 
     function openEditPendingClaimModal(claimId) {
       if (!claimId || !cachedPendingClaimsPayload) return;
+      
+      const btnSubmit = document.getElementById('btnSubmitAddPendingClaim');
+      if (btnSubmit) {
+        if (!hasUserPermission('pending', 'edit')) {
+          btnSubmit.disabled = true;
+          btnSubmit.style.opacity = '0.5';
+          btnSubmit.style.pointerEvents = 'none';
+          btnSubmit.title = 'Bạn không có quyền chỉnh sửa hồ sơ này';
+        } else {
+          btnSubmit.disabled = false;
+          btnSubmit.style.opacity = '1';
+          btnSubmit.style.pointerEvents = 'auto';
+          btnSubmit.title = '';
+        }
+      }
       const item = cachedPendingClaimsPayload[claimId];
       if (!item) {
         triggerToast('Không tìm thấy dữ liệu hồ sơ để chỉnh sửa.', 'error');
@@ -5600,6 +5682,18 @@
     }
 
     async function saveAddPendingClaimFromModal() {
+      const isEditing = !!editingPendingClaimId;
+      if (isEditing) {
+        if (!hasUserPermission('pending', 'edit')) {
+          triggerToast('Bạn không có quyền chỉnh sửa hồ sơ bồi thường.', 'error');
+          return;
+        }
+      } else {
+        if (!hasUserPermission('pending', 'add')) {
+          triggerToast('Bạn không có quyền tiếp nhận hồ sơ tổn thất mới.', 'error');
+          return;
+        }
+      }
       const getVal = (id) => (document.getElementById(id)?.value || '').trim();
 
       const bienSo = getVal('modalPendingBienSo');
@@ -5611,7 +5705,7 @@
         return;
       }
 
-      const isEditing = !!editingPendingClaimId;
+      // const isEditing = !!editingPendingClaimId;
       const targetClaimId = isEditing ? editingPendingClaimId : ('claim_' + Date.now());
       const existingItem = isEditing ? (cachedPendingClaimsPayload[editingPendingClaimId] || {}) : {};
 
@@ -6971,7 +7065,7 @@ function formatDateDisplay(val) {
             </td>
             <td style="width: 70px; text-align: center; padding-right: 12px;">
               <div style="display: inline-flex; justify-content: center; align-items: center; width: 100%;">
-                ${(isAdmin || item.createdByUid === currentUser?.uid || item.nguoiTao?.uid === currentUser?.uid) ? `
+                ${hasUserPermission('pending', 'delete') ? `
                 <button type="button" class="btn-premium btn-danger-p" onclick="event.stopPropagation(); deletePendingClaim('${item.id}', '${escapeAttributeData(item.bienSo)}')" title="Xóa hồ sơ tồn" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; padding: 0; display: grid; place-items: center; border-radius: 8px; margin: 0; cursor: pointer; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444;">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 </button>
@@ -7081,6 +7175,10 @@ function formatDateDisplay(val) {
     }
 
     async function deletePendingClaim(claimId, bienSo) {
+      if (!hasUserPermission('pending', 'delete')) {
+        triggerToast('Bạn không có quyền xóa hồ sơ bồi thường tồn.', 'error');
+        return;
+      }
       const currentUser = firebase.auth().currentUser;
       const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
       
@@ -7256,16 +7354,42 @@ function formatDateDisplay(val) {
     }
 
     function switchWorkspaceTab(tabName) {
-      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
-      const isKeToanOrAdmin = getLoggedInUserAccountingRole() === 'ketoan' || isAdmin;
+      if (tabName === 'list' && !hasUserPermission('list', 'view')) {
+        triggerToast('Bạn không có quyền truy cập danh sách hồ sơ giám định.', 'warning');
+        if (activeDashboardTab === 'list') activeDashboardTab = 'home';
+        return;
+      }
+      if (tabName === 'pending' && !hasUserPermission('pending', 'view')) {
+        triggerToast('Bạn không có quyền truy cập hồ sơ bồi thường tồn.', 'warning');
+        if (activeDashboardTab === 'pending') activeDashboardTab = 'home';
+        return;
+      }
+      if (tabName === 'gdv_report' && !hasUserPermission('report', 'view')) {
+        triggerToast('Bạn không có quyền truy cập báo cáo & thống kê GĐV.', 'warning');
+        if (activeDashboardTab === 'gdv_report') activeDashboardTab = 'home';
+        return;
+      }
+      if (tabName === 'create' && !hasUserPermission('list', 'add')) {
+        triggerToast('Bạn không có quyền tạo mới hồ sơ giám định.', 'warning');
+        if (activeDashboardTab === 'create') activeDashboardTab = 'home';
+        return;
+      }
+      if (tabName === 'accounting_claims' && !hasUserPermission('accounting', 'review')) {
+        triggerToast('Trang "Hồ sơ Kế toán" dành riêng cho bộ phận Kế toán & Admin có quyền xét duyệt.', 'warning');
+        if (activeDashboardTab === 'accounting_claims') activeDashboardTab = 'home';
+        return;
+      }
+      if (tabName === 'accounting_transfer' && !hasUserPermission('accounting', 'view')) {
+        triggerToast('Bạn không có quyền truy cập trang chuyển giao kế toán.', 'warning');
+        if (activeDashboardTab === 'accounting_transfer') activeDashboardTab = 'home';
+        return;
+      }
+      if (tabName === 'users' && !hasUserPermission('users', 'view')) {
+        triggerToast('Bạn không có quyền truy cập trang quản lý người dùng.', 'warning');
+        if (activeDashboardTab === 'users') activeDashboardTab = 'home';
+        return;
+      }
 
-      if (tabName === 'users' && !isAdmin) {
-        tabName = 'home'; // Redirect non-admins to home if trying to access user settings
-      }
-      if (tabName === 'accounting_claims' && !isKeToanOrAdmin) {
-        tabName = 'accounting_transfer';
-        triggerToast('Trang "Hồ sơ Kế toán" dành riêng cho bộ phận Kế toán & Admin.', 'info');
-      }
       if (activeDashboardTab === tabName) return;
       activeDashboardTab = tabName;
       
@@ -7321,8 +7445,8 @@ function formatDateDisplay(val) {
                 Hệ thống hỗ trợ giám định viên và Gara đối chiếu hình ảnh hiện trạng, lập danh sách phụ tùng và đồng bộ phương án sửa chữa thời gian thực.
               </p>
               <div style="margin-top: 24px; display: flex; gap: 12px;">
-                <button type="button" class="btn-premium" style="max-width: 200px;" onclick="switchWorkspaceTab('list')">${SVGS.FOLDER} Vào quản lý hồ sơ</button>
-                <button type="button" class="btn-premium btn-secondary" style="max-width: 200px;" onclick="switchWorkspaceTab('create')">${SVGS.SPARKLES} Khởi tạo hồ sơ mới</button>
+                ${hasUserPermission('list', 'view') ? `<button type="button" class="btn-premium" style="max-width: 200px;" onclick="switchWorkspaceTab('list')">${SVGS.FOLDER} Vào quản lý hồ sơ</button>` : ''}
+                ${hasUserPermission('list', 'add') ? `<button type="button" class="btn-premium btn-secondary" style="max-width: 200px;" onclick="switchWorkspaceTab('create')">${SVGS.SPARKLES} Khởi tạo hồ sơ mới</button>` : ''}
               </div>
             </div>
             <div class="hero-signature">
@@ -7444,6 +7568,7 @@ function formatDateDisplay(val) {
                     <span>1. Quản lý Tài khoản</span>
                   </button>
 
+                  ${hasUserPermission('users', 'admin') ? `
                   <button type="button" class="filter-pill ${activeSubTab === 'api-keys' ? 'active' : ''}" onclick="switchSystemAdminSubTab('api-keys')" style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 10px; font-weight: 800; font-size: 12.5px;">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
                     <span>2. Cấu hình Gemini API Keys</span>
@@ -7453,16 +7578,19 @@ function formatDateDisplay(val) {
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
                     <span>3. Tài khoản & Dung lượng Cloudinary</span>
                   </button>
+                  ` : ''}
 
                   <button type="button" class="filter-pill ${activeSubTab === 'audit-logs' ? 'active' : ''}" onclick="switchSystemAdminSubTab('audit-logs')" style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 10px; font-weight: 800; font-size: 12.5px;">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     <span>4. Lịch sử hoạt động người dùng</span>
                   </button>
 
+                  ${hasUserPermission('users', 'admin') ? `
                   <button type="button" class="filter-pill ${activeSubTab === 'kpi-config' ? 'active' : ''}" onclick="switchSystemAdminSubTab('kpi-config')" style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: 10px; font-weight: 800; font-size: 12.5px;">
                     <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
                     <span>5. Cấu hình Hệ số KPI Hồ sơ & Lương</span>
                   </button>
+                  ` : ''}
                 </div>
               </div>
 
@@ -7490,17 +7618,19 @@ function formatDateDisplay(val) {
                   <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft);">Quản lý danh sách hồ sơ tổn thất tồn đọng trong team, phân công Giám định viên và theo dõi báo cáo tuần.</p>
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                  ${isAdmin ? `
+                  ${hasUserPermission('pending', 'delete') ? `
                     <button type="button" onclick="clearAllPendingClaimsDataByAdmin()" style="padding: 0 18px; height: 42px; font-size: 13px; border-radius: 10px; font-weight: 850; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(239,68,68,0.35); transition: all 0.2s ease;" title="Chỉ Admin mới có quyền xóa toàn bộ hồ sơ tồn">
                       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                       <span>Xóa toàn bộ hồ sơ tồn</span>
                     </button>
                   ` : ''}
 
+                  ${hasUserPermission('pending', 'add') ? `
                   <button type="button" class="btn-premium" onclick="openImportExcelModal()" style="width: auto !important; padding: 0 24px; height: 42px; font-size: 13px; border-radius: 10px; font-weight: 850; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.35);">
                     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h8"></path><path d="M8 17h8"></path><path d="M10 9h4"></path></svg>
                     <span>Nhập & Cập nhật Hồ sơ từ Excel</span>
                   </button>
+                  ` : ''}
                 </div>
               </div>
 
@@ -8859,15 +8989,8 @@ function formatDateDisplay(val) {
     }
 
     async function triggerDestructiveDeleteCase(caseKey, friendlyPlateName) {
-      const currentUser = firebase.auth().currentUser;
-      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
-      
-      // Get the case from cached cases to check creator
-      const targetCase = cachedCasesPayload ? cachedCasesPayload[caseKey] : null;
-      const isCreator = targetCase && targetCase.nguoiTao?.uid === currentUser?.uid;
-      
-      if (!isAdmin && !isCreator) {
-        triggerToast('Bạn không có quyền xóa hồ sơ này!', 'error');
+      if (!hasUserPermission('list', 'delete')) {
+        triggerToast('Bạn không có quyền xóa hồ sơ giám định.', 'error');
         return;
       }
       const confirmAction = await showConfirmModal('Xóa bỏ ca xe', `Hành động này sẽ xóa vĩnh viễn tài nguyên thuộc ca xe: ${friendlyPlateName}. Xác nhận hủy?`);
@@ -8878,6 +9001,10 @@ function formatDateDisplay(val) {
     }
 
     function triggerEditCaseFlow(caseId) {
+      if (!hasUserPermission('list', 'edit')) {
+        triggerToast('Bạn không có quyền chỉnh sửa hồ sơ bồi thường.', 'warning');
+        return;
+      }
       console.log('triggerEditCaseFlow matching caseId:', caseId);
       
       let caseEntity = null;
@@ -12020,6 +12147,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </div>
 
               <!-- Export Buttons Area -->
+              ${hasUserPermission('report', 'export') ? `
               <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button type="button" onclick="exportGdvMonthlyReportExcel()" style="padding: 0 18px; height: 42px; font-size: 12.5px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.3); transition: all 0.2s ease;">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -12030,6 +12158,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <span>Tải Báo cáo Tuần (.xlsx)</span>
                 </button>
               </div>
+              ` : ''}
             </div>
           </div>
 
@@ -13263,6 +13392,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
     }
 
     function exportWeeklyZoneReportExcel() {
+      if (!hasUserPermission('report', 'export')) {
+        triggerToast('Bạn không có quyền xuất dữ liệu báo cáo.', 'warning');
+        return;
+      }
       if (!window.XLSX) {
         triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
         return;
@@ -13381,6 +13514,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
     }
 
     function exportGdvMonthlyReportExcel() {
+      if (!hasUserPermission('report', 'export')) {
+        triggerToast('Bạn không có quyền xuất dữ liệu báo cáo.', 'warning');
+        return;
+      }
       const claimsList = Object.values(cachedPendingClaimsPayload || {});
       const parsedClaims = [];
 
@@ -14405,6 +14542,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
         
     /* DELETE ACCOUNTING TRANSFER BATCH FUNCTION */
     async function deleteAccountingTransferBatch(transferId) {
+      if (!hasUserPermission('accounting', 'create')) {
+        triggerToast('Bạn không có quyền xóa phiếu bàn giao.', 'error');
+        return;
+      }
       if (!transferId) return;
       
       const t = cachedAccountingTransfersPayload[transferId];
@@ -14514,10 +14655,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 </p>
               </div>
               
+              ${hasUserPermission('accounting', 'create') ? `
               <button type="button" onclick="openAddAccountingTransferModal()" style="padding: 0 24px; height: 46px; font-size: 13.5px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 16px rgba(216,180,109,0.35); transition: all 0.2s ease;">
                 ${ACC_SVGS.PLUS_CIRCLE}
                 <span>Tạo Phiếu Bàn giao Mới</span>
               </button>
+              ` : ''}
             </div>
           </div>
 
@@ -14668,11 +14811,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         </td>
                         <td style="padding: 14px; text-align: center;" onclick="event.stopPropagation();">
                           <div style="display: flex; gap: 6px; align-items: center; justify-content: center;">
-                            ${(!['da_xac_nhan', 'da_nhan_du_ho_so', 'da_trinh_dntt'].includes(t.trangThai) && (isKeToanOrAdmin || t.trangThai === 'moi' || t.trangThai === 'can_bo_sung')) ? `
+                            ${(hasUserPermission('accounting', 'create') && !['da_xac_nhan', 'da_nhan_du_ho_so', 'da_trinh_dntt'].includes(t.trangThai)) ? `
                               <button type="button" onclick="deleteAccountingTransferBatch('${t.transferId}')" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: grid; place-items: center; transition: all 0.2s ease;" title="Xóa phiếu bàn giao này">
                                 ${ACC_SVGS.TRASH}
                               </button>
-                            ` : ''}
+                            ` : '—'}
                           </div>
                         </td>
                       </tr>
@@ -15463,6 +15606,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
     }
 
     async function saveKeToanReviewAction(transferId, targetStatus) {
+      if (!hasUserPermission('accounting', 'review')) {
+        triggerToast('Bạn không có quyền xét duyệt chứng từ kế toán.', 'error');
+        return;
+      }
       const ghiChuKeToan = getAccInputValue('txtKeToanGhiChu');
       const transfer = cachedAccountingTransfersPayload[transferId];
       let claims = transfer ? (transfer.danhSachHoSo || []) : [];
