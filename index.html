@@ -15191,6 +15191,15 @@ function renderGdvMonthlyReportPage(targetContainer) {
       return transferredSet;
     }
 
+    // Debounce helper to prevent search lagging on keystrokes
+    let searchDebounceTimeout = null;
+    function debouncedRenderAccClaimSearchResults(val) {
+      clearTimeout(searchDebounceTimeout);
+      searchDebounceTimeout = setTimeout(() => {
+        renderAccClaimSearchResults(val);
+      }, 200);
+    }
+
     /* RENDER ALL SEARCH RESULTS FOR CLAIMS - FILTERS BY "ĐÃ DUYỆT HSBT", LOGGED-IN GĐV AND NOT ALREADY IN A BATCH */
     function renderAccClaimSearchResults(keyword) {
       if (!keyword && !window._accClaimSearchLimitReset) { window._accClaimSearchLimit = 50; }
