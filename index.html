@@ -12157,6 +12157,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                   <span>Tải Báo cáo Tuần (.xlsx)</span>
                 </button>
+                ${activeGdvReportView === 'daklak_reserve' ? `
+                <button type="button" onclick="exportDakLakReserveReportExcel()" style="padding: 0 18px; height: 42px; font-size: 12.5px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.3); transition: all 0.2s ease;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Báo cáo Đắk Lắk (.xlsx)</span>
+                </button>
+                ` : ''}
               </div>
               ` : ''}
             </div>
@@ -12179,6 +12185,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <button type="button" onclick="switchGdvReportView('garage')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'garage' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 21h18"></path><path d="M19 21v-4a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v4"></path><path d="M5 15V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"></path></svg>
               <span>Báo cáo doanh thu DV gara</span>
+            </button>
+            <button type="button" onclick="switchGdvReportView('daklak_reserve')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'daklak_reserve' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+              <span>BC Đắk Lắk > 100tr</span>
             </button>
             
           </div>
@@ -12360,7 +12370,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           ` : ''}
 
           <!-- CONDITIONAL RENDERING BASED ON activeGdvReportView -->
-          ${activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'garage' ? `
+          ${activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'daklak_reserve' ? renderDakLakReserveReportTableHtml() : activeGdvReportView === 'garage' ? `
             
             <!-- EXECUTIVE GARAGE REPORT DASHBOARD -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
@@ -15670,6 +15680,167 @@ function renderGdvMonthlyReportPage(targetContainer) {
       } catch (err) {
         console.error(err);
         triggerToast('Lỗi cập nhật trạng thái xét duyệt: ' + err.message, 'error');
+      }
+    }
+
+    /* RENDER DAK LAK RESERVE REPORT TABLE HTML */
+    function renderDakLakReserveReportTableHtml() {
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+      const filtered = claimsList.filter(c => {
+        const cleanReserveVal = parseInt(String(c.duPhongBoiThuong || '').replace(/\D/g, ''), 10) || 0;
+        const branch = String(c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '').trim().toLowerCase();
+        const matchBranch = branch.includes('đắk lắk') || branch.includes('dak lak') || branch.includes('daklak');
+        return cleanReserveVal > 100000000 && matchBranch;
+      });
+
+      filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+      const rowsHtml = filtered.map((c, idx) => {
+        const bsx = c.bienSo || '—';
+        const hsbt = c.soHoSoBoiThuong || '—';
+        const gara = c.tenGara || c.garaSuaChua || '—';
+        const gdv = c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '—';
+        const reserve = formatCurrencyInputNumber(c.duPhongBoiThuong) || '—';
+        const statusConfig = PENDING_STATUS_MAP[c.trangThai] || PENDING_STATUS_MAP['moi'];
+        const statusLabel = statusConfig ? statusConfig.label : (c.trangThai || 'Mới');
+        const statusColor = statusConfig ? statusConfig.color : '#3b82f6';
+        
+        const vuongMac = c.vuongMac || '';
+        const ngayDuKien = c.ngayDuKien || '';
+
+        return `
+          <tr style="border-bottom: 1px solid var(--border); font-size: 13px;">
+            <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 44px;">${idx + 1}</td>
+            <td style="padding: 12px 10px; font-weight: 800; font-family: 'JetBrains Mono'; color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
+            <td style="padding: 12px 10px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
+            <td style="padding: 12px 10px; text-align: left; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(gara)}">${escapeHtmlOutput(gara)}</td>
+            <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
+            <td style="padding: 12px 10px; font-weight: 850; font-family: 'JetBrains Mono'; color: #10b981; text-align: right; font-size: 13.5px;">${reserve} đ</td>
+            <td style="padding: 12px 10px; text-align: center;">
+              <span style="display: inline-block; padding: 3px 8px; border-radius: 99px; font-size: 10px; font-weight: 850; background: rgba(59,130,246,0.06); color: ${statusColor}; border: 1px solid ${statusColor};">
+                ${statusLabel}
+              </span>
+            </td>
+            <td style="padding: 6px 8px; text-align: left; width: 250px;">
+              <textarea 
+                placeholder="Nhập vướng mắc..." 
+                onchange="updateDakLakClaimField('${c.id}', 'vuongMac', this.value)"
+                style="width: 100%; height: 38px; min-height: 38px; max-height: 100px; padding: 6px 8px; border-radius: 8px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12px; font-family: inherit; resize: vertical;"
+              >${escapeHtmlOutput(vuongMac)}</textarea>
+            </td>
+            <td style="padding: 6px 8px; text-align: center; width: 150px;">
+              <input 
+                type="text" 
+                placeholder="Ngày dự kiến..." 
+                value="${escapeAttributeData(ngayDuKien)}"
+                onchange="updateDakLakClaimField('${c.id}', 'ngayDuKien', this.value)"
+                style="width: 100%; height: 34px; padding: 4px 8px; border-radius: 8px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12px; text-align: center; font-family: inherit;"
+              />
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <div class="p-card" style="padding: 26px 30px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
+            <div>
+              <h2 style="font-size: 18px; font-weight: 850; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                Danh sách Hồ sơ Dự phòng bồi thường Đắk Lắk > 100.000.000 VNĐ
+              </h2>
+              <p style="font-size: 12.5px; color: var(--text-soft); margin-top: 4px; margin-bottom: 0;">
+                Tự động lọc các hồ sơ thuộc Chi nhánh Đắk Lắk có Dự phòng bồi thường trên 100 triệu VNĐ. Nhập vướng mắc và ngày dự kiến trực tiếp vào bảng để tự động lưu.
+              </p>
+            </div>
+            <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: #10b981; padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; font-family: 'JetBrains Mono';">
+              Tổng số: ${filtered.length} hồ sơ
+            </div>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="p-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+              <thead>
+                <tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border-strong);">
+                  <th style="padding: 12px 10px; width: 44px; text-align: center;">STT</th>
+                  <th style="padding: 12px 10px; width: 110px;">Biển số xe</th>
+                  <th style="padding: 12px 10px; width: 140px;">Số HSBT</th>
+                  <th style="padding: 12px 10px;">Gara sửa chữa</th>
+                  <th style="padding: 12px 10px;">Giám định viên</th>
+                  <th style="padding: 12px 10px; text-align: right; width: 150px;">Dự phòng BT</th>
+                  <th style="padding: 12px 10px; text-align: center; width: 110px;">Trạng thái</th>
+                  <th style="padding: 12px 10px; width: 250px;">Vướng mắc / Khó khăn</th>
+                  <th style="padding: 12px 10px; width: 150px; text-align: center;">Ngày dự kiến HT</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filtered.length === 0 ? `
+                  <tr><td colspan="9" class="empty-state-text" style="text-align: center; padding: 30px;">Không có hồ sơ nào thỏa mãn điều kiện.</td></tr>
+                ` : rowsHtml}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    async function updateDakLakClaimField(claimId, fieldKey, value) {
+      if (!claimId) return;
+      try {
+        await dbNodeInstance.ref('pending_claims/' + claimId + '/' + fieldKey).set(value);
+        if (cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId]) {
+          cachedPendingClaimsPayload[claimId][fieldKey] = value;
+        }
+        triggerToast('Đã lưu dữ liệu tự động!', 'success');
+      } catch (err) {
+        console.error(err);
+        triggerToast('Lỗi lưu dữ liệu: ' + err.message, 'error');
+      }
+    }
+
+    function exportDakLakReserveReportExcel() {
+      if (!hasUserPermission('report', 'export')) {
+        triggerToast('Bạn không có quyền xuất dữ liệu báo cáo.', 'warning');
+        return;
+      }
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+      const filtered = claimsList.filter(c => {
+        const cleanReserveVal = parseInt(String(c.duPhongBoiThuong || '').replace(/\D/g, ''), 10) || 0;
+        const branch = String(c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '').trim().toLowerCase();
+        const matchBranch = branch.includes('đắk lắk') || branch.includes('dak lak') || branch.includes('daklak');
+        return cleanReserveVal > 100000000 && matchBranch;
+      });
+
+      if (filtered.length === 0) {
+        triggerToast('Không có hồ sơ nào để xuất Excel.', 'warning');
+        return;
+      }
+
+      const excelData = filtered.map((c, idx) => {
+        const statusConfig = PENDING_STATUS_MAP[c.trangThai] || PENDING_STATUS_MAP['moi'];
+        return {
+          'STT': idx + 1,
+          'Biển số xe': c.bienSo || '',
+          'Số HSBT': c.soHoSoBoiThuong || '',
+          'Mã vụ tổn thất': c.maVuTonThat || '',
+          'Đơn vị cấp đơn': c.donViCapDon || c.chiNhanh || '',
+          'Gara sửa chữa': c.tenGara || c.garaSuaChua || '',
+          'Giám định viên': c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '',
+          'Dự phòng bồi thường (VNĐ)': parseInt(String(c.duPhongBoiThuong || '').replace(/\D/g, ''), 10) || 0,
+          'Trạng thái': statusConfig ? statusConfig.label : (c.trangThai || 'Mới'),
+          'Vướng mắc': c.vuongMac || '',
+          'Ngày dự kiến hoàn thành': c.ngayDuKien || ''
+        };
+      });
+
+      if (window.XLSX) {
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'BC_DakLak_Tren_100M');
+        XLSX.writeFile(wb, 'Bao_Cao_Du_Phong_DakLak_Tren_100M_' + new Date().toLocaleDateString('vi-VN').replace(/\//g, '-') + '.xlsx');
+        triggerToast('Đã xuất file Excel thành công!', 'success');
+      } else {
+        triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
       }
     }
 
