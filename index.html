@@ -15600,12 +15600,18 @@ function renderGdvMonthlyReportPage(targetContainer) {
         // Signatures row
         aoa.push(['', 'Bên nhận', '', 'Bên giao', '']);
 
+        const totalRows = claimsInBatch.length;
+        const sigRow = 4 + totalRows + 2;
+        const sigRowIdx = sigRow - 1;
+
         // Convert array of arrays to sheet
         const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-        // Apply merge for the title row (A1:E1)
+        // Apply merges for title row and signature rows
         ws['!merges'] = [
-          { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Title (A1:E1)
+          { s: { r: sigRowIdx, c: 1 }, e: { r: sigRowIdx, c: 2 } }, // Bên nhận (B9:C9 or equivalent)
+          { s: { r: sigRowIdx, c: 3 }, e: { r: sigRowIdx, c: 4 } }  // Bên giao (D9:E9 or equivalent)
         ];
 
         // Style A1 (Title)
@@ -15634,7 +15640,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
         });
 
         // Style Data Rows
-        const totalRows = claimsInBatch.length;
         for (let i = 0; i < totalRows; i++) {
           const rowNum = 4 + i;
           
@@ -15715,7 +15720,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
         }
 
         // Style Signatures (Row = 4 + totalRows + 2)
-        const sigRow = 4 + totalRows + 2;
         
         const cellSigB = 'B' + sigRow;
         if (ws[cellSigB]) {
