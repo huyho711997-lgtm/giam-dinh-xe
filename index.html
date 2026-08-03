@@ -15578,21 +15578,23 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (window.XLSX) {
         // Build array of arrays (AOA) matching print structure
         const aoa = [
-          ['Danh sách chuyển hồ sơ làm thanh toán', '', '', '', ''], // Row 1 (will merge A1:E1)
-          ['STT', 'Biển số xe', 'Số HSBT', 'TÊN KHÁCH HÀNG', 'Ngày gửi hồ sơ']  // Row 2
+          ['DANH SÁCH CHUYỂN HỒ SƠ LÀM THANH TOÁN', '', '', '', ''], // Row 1 (will merge A1:E1)
+          ['', '', '', '', ''],                                     // Row 2 (blank spacer)
+          ['STT', 'Biển số xe', 'Số HSBT', 'TÊN KHÁCH HÀNG', 'Ngày gửi hồ sơ']  // Row 3 (headers)
         ];
 
         claimsInBatch.forEach((c, idx) => {
           aoa.push([
             idx + 1,
-            c.bienSo || '',
+            String(c.bienSo || '').toUpperCase(),
             c.soHoSoBoiThuong || '',
             String(extractClaimOwnerName(c)).toUpperCase(),
             dateStr
           ]);
         });
 
-        // Blank spacer row
+        // Blank spacer rows (2 rows) to give space before signature section
+        aoa.push(['', '', '', '', '']);
         aoa.push(['', '', '', '', '']);
 
         // Signatures row
