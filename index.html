@@ -11597,7 +11597,8 @@ function formatDateDisplay(val) {
     let activeGdvReportBranch = 'all';
     let activeGdvReportSearch = '';
     let activeGdvReportView = 'weekly_zone'; // 'table' | 'chart'
-    let activeSelectedDakLakStatuses = ['moi', 'cho_giam_dinh_ht', 'da_giam_dinh_ht', 'cho_gdct', 'da_gdct', 'cho_duyet_pasc', 'da_duyet_pasc', 'cho_duyet_hsbt', 'da_duyet_hsbt', 'cho_duyet_dntt', 'cho_kt_duyet', 'kt_duyet', 'da_thanh_toan', 'tu_choi'];
+    let activeSelectedDakLakStatuses = ['da_duyet_pasc', 'cho_duyet_hsbt'];
+    let activeOpenDropdownId = null;
 
     // Global Click Listener to Close Custom Dropdowns
     if (!window.hasRegisteredCustomDropdownListener) {
@@ -11605,12 +11606,14 @@ function formatDateDisplay(val) {
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.custom-select-wrapper')) {
           document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+          activeOpenDropdownId = null;
         }
       });
     }
 
     function switchGdvReportView(viewMode) {
       activeGdvReportView = viewMode;
+      activeOpenDropdownId = null;
       renderGdvReportPage();
     }
 
@@ -11622,24 +11625,30 @@ function formatDateDisplay(val) {
       document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
       if (!isVisible) {
         menu.style.display = 'block';
+        activeOpenDropdownId = menuId;
+      } else {
+        activeOpenDropdownId = null;
       }
     }
 
     function selectGdvReportMonth(month) {
       activeGdvReportMonth = month;
       document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      activeOpenDropdownId = null;
       renderGdvMonthlyReportPage();
     }
 
     function selectGdvReportYear(year) {
       activeGdvReportYear = year;
       document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      activeOpenDropdownId = null;
       renderGdvMonthlyReportPage();
     }
 
     function selectGdvReportBranch(branch) {
       activeGdvReportBranch = branch;
       document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      activeOpenDropdownId = null;
       renderGdvMonthlyReportPage();
     }
 
@@ -12216,7 +12225,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
 
-                <div id="ddReportGdvMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 270px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; backdrop-filter: blur(16px); max-height: 320px; overflow-y: auto;">
+                <div id="ddReportGdvMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddReportGdvMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); left: 0; min-width: 270px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; backdrop-filter: blur(16px); max-height: 320px; overflow-y: auto;">
                   
                   <!-- Action Toolbar -->
                   <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--border); gap: 6px; flex-wrap: wrap;">
@@ -12258,7 +12267,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
 
-                <div id="ddReportDakLakStatusMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 270px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; backdrop-filter: blur(16px); max-height: 320px; overflow-y: auto;">
+                <div id="ddReportDakLakStatusMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddReportDakLakStatusMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); left: 0; min-width: 270px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; backdrop-filter: blur(16px); max-height: 320px; overflow-y: auto;">
                   
                   <!-- Action Toolbar -->
                   <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--border); gap: 6px; flex-wrap: wrap;">
