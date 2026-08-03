@@ -15496,21 +15496,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 35px; font-size: 14.5px;">
             <thead>
               <tr>
-                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 60px; font-weight: bold;">STT</th>
-                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 140px; font-weight: bold;">Biển số xe</th>
-                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 240px; font-weight: bold;">Số HSBT</th>
-                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: left; font-weight: bold;">TÊN KHÁCH HÀNG</th>
-                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 140px; font-weight: bold;">Ngày gửi hồ sơ</th>
+                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 6%; font-weight: bold;">STT</th>
+                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 18%; font-weight: bold;">Biển số xe</th>
+                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 28%; font-weight: bold;">Số HSBT</th>
+                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: left; width: 32%; font-weight: bold;">TÊN KHÁCH HÀNG</th>
+                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 16%; font-weight: bold;">Ngày gửi hồ sơ</th>
               </tr>
             </thead>
             <tbody>
               ${claimsInBatch.map((c, idx) => `
                 <tr>
-                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: center;">${idx + 1}</td>
-                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: center; font-weight: bold;">${escapeHtmlOutput(c.bienSo || '')}</td>
-                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: center;">${escapeHtmlOutput(c.soHoSoBoiThuong || '')}</td>
-                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: left; text-transform: uppercase;">${escapeHtmlOutput(extractClaimOwnerName(c))}</td>
-                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: center;">${dateStr}</td>
+                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 6%;">${idx + 1}</td>
+                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: center; font-weight: bold; width: 18%;">${escapeHtmlOutput(c.bienSo || '')}</td>
+                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 28%;">${escapeHtmlOutput(c.soHoSoBoiThuong || '')}</td>
+                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: left; text-transform: uppercase; width: 32%;">${escapeHtmlOutput(extractClaimOwnerName(c))}</td>
+                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 16%;">${dateStr}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -15548,6 +15548,53 @@ function renderGdvMonthlyReportPage(targetContainer) {
           document.body.removeChild(iframe);
         }, 1000);
       }, 500);
+    }
+
+    function exportAccountingTransferBatchExcel(transferId) {
+      if (!transferId || !cachedAccountingTransfersPayload[transferId]) {
+        triggerToast('Không tìm thấy thông tin phiếu bàn giao.', 'error');
+        return;
+      }
+      const t = cachedAccountingTransfersPayload[transferId];
+      
+      let claimsInBatch = t.danhSachHoSo || [];
+      if (claimsInBatch.length === 0 && (t.soHoSoBoiThuong || t.bienSo)) {
+        claimsInBatch = [{ soHoSoBoiThuong: t.soHoSoBoiThuong, bienSo: t.bienSo, tenGara: t.tenGara, soTienDeNghi: t.soTienDeNghi, tenChuXe: extractClaimOwnerName(t) }];
+      }
+
+      if (claimsInBatch.length === 0) {
+        triggerToast('Phiếu bàn giao này không chứa hồ sơ nào.', 'warning');
+        return;
+      }
+
+      const dateStr = formatDateDisplay(t.ngayBanGiao).split(' ')[0] || new Date(t.ngayBanGiao).toLocaleDateString('vi-VN');
+
+      const excelData = claimsInBatch.map((c, idx) => ({
+        'STT': idx + 1,
+        'Biển số xe': c.bienSo || '',
+        'Số HSBT': c.soHoSoBoiThuong || '',
+        'TÊN KHÁCH HÀNG': String(extractClaimOwnerName(c)).toUpperCase(),
+        'Ngày gửi hồ sơ': dateStr
+      }));
+
+      if (window.XLSX) {
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        
+        ws['!cols'] = [
+          { wch: 8 },  // STT
+          { wch: 15 }, // Biển số xe
+          { wch: 25 }, // Số HSBT
+          { wch: 30 }, // TÊN KHÁCH HÀNG
+          { wch: 18 }  // Ngày gửi hồ sơ
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Danh_Sach_Ban_Giao');
+        XLSX.writeFile(wb, 'Danh_sach_ban_giao_ho_so_' + transferId + '.xlsx');
+        triggerToast('Đã tải file Excel thành công!', 'success');
+      } else {
+        triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
+      }
     }
 
     async function revertTransferToDraft(transferId) {
@@ -15634,6 +15681,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 </button>
               ` : ''}
 
+              <button type="button" onclick="exportAccountingTransferBatchExcel('${t.transferId}')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(59,130,246,0.15); color: #3b82f6; border: 1px solid rgba(59,130,246,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;" title="Tải file Excel bàn giao hồ sơ">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                <span>Xuất Excel</span>
+              </button>
+              
               <button type="button" onclick="printAccountingTransferBatch('${t.transferId}')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;" title="In phiếu bàn giao làm thanh toán">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                 <span>In phiếu bàn giao</span>
