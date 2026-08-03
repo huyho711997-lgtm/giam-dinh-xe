@@ -11852,8 +11852,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
           const dp = parseDateParts(duyetDateStr);
           if (!dp || !dp.year || !dp.month) return false;
 
-          if (dp.year !== parseInt(activeGdvReportYear, 10)) return false;
-          if (dp.month !== parseInt(activeGdvReportMonth, 10)) return false;
+          if (activeGdvReportYear !== 'all' && dp.year !== parseInt(activeGdvReportYear, 10)) return false;
+          if (activeGdvReportMonth !== 'all' && dp.month !== parseInt(activeGdvReportMonth, 10)) return false;
 
           return true;
         }
@@ -12358,12 +12358,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportMonthMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 140px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
                     <span style="display: flex; align-items: center; gap: 6px;">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                      <span>Tháng ${activeGdvReportMonth}</span>
+                      <span>${activeGdvReportMonth === 'all' ? 'Toàn bộ tháng' : 'Tháng ' + activeGdvReportMonth}</span>
                     </span>
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
                   </button>
 
-                  <div id="ddReportMonthMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 140px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
+                  <div id="ddReportMonthMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 160px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
+                    <div class="custom-select-item ${activeGdvReportMonth === 'all' ? 'active' : ''}" onclick="selectGdvReportMonth('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportMonth === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                      <span>Toàn bộ tháng</span>
+                      ${activeGdvReportMonth === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                    </div>
                     ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `
                       <div class="custom-select-item ${String(m) === String(activeGdvReportMonth) ? 'active' : ''}" onclick="selectGdvReportMonth('${m}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(m) === String(activeGdvReportMonth) ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
                         <span>Tháng ${m}</span>
@@ -13660,7 +13664,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const ws = XLSX.utils.json_to_sheet(excelData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'BaoCao_Duyet_HSBT_Theo_GDV');
-        XLSX.writeFile(wb, `Bao_Cao_Duyet_HSBT_Theo_GDV_${activeGdvReportMonth}_${activeGdvReportYear}.xlsx`);
+        XLSX.writeFile(wb, `Bao_Cao_Duyet_HSBT_Theo_GDV_${activeGdvReportMonth === 'all' ? 'ToanBoThang' : activeGdvReportMonth}_${activeGdvReportYear}.xlsx`);
         triggerToast('Đã xuất file Excel thành công!', 'success');
       } else {
         triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
@@ -15969,6 +15973,26 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const matchBranch = branch.includes('đắk lắk') || branch.includes('dak lak') || branch.includes('daklak');
         if (!matchBranch) return false;
 
+        // Date monthly filter
+        let yr = null;
+        let mo = null;
+        const dateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || c.ngayMoHs;
+        if (dateStr && dateStr !== '—') {
+          const dp = parseDateParts(dateStr);
+          if (dp && dp.year && dp.month) {
+            yr = dp.year;
+            mo = dp.month;
+          }
+        }
+        if (!yr) {
+          const d = new Date(c.createdAt || Date.now());
+          yr = d.getFullYear();
+          mo = d.getMonth() + 1;
+        }
+
+        if (activeGdvReportYear !== 'all' && yr !== parseInt(activeGdvReportYear, 10)) return false;
+        if (activeGdvReportMonth !== 'all' && mo !== parseInt(activeGdvReportMonth, 10)) return false;
+
         // GĐV filter
         const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
         const matchGdv = activeSelectedGdvNames.some(s => s.trim().toLowerCase() === gdvName.toLowerCase());
@@ -16099,6 +16123,26 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const branch = String(c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '').trim().toLowerCase();
         const matchBranch = branch.includes('đắk lắk') || branch.includes('dak lak') || branch.includes('daklak');
         if (!matchBranch) return false;
+
+        // Date monthly filter
+        let yr = null;
+        let mo = null;
+        const dateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || c.ngayMoHs;
+        if (dateStr && dateStr !== '—') {
+          const dp = parseDateParts(dateStr);
+          if (dp && dp.year && dp.month) {
+            yr = dp.year;
+            mo = dp.month;
+          }
+        }
+        if (!yr) {
+          const d = new Date(c.createdAt || Date.now());
+          yr = d.getFullYear();
+          mo = d.getMonth() + 1;
+        }
+
+        if (activeGdvReportYear !== 'all' && yr !== parseInt(activeGdvReportYear, 10)) return false;
+        if (activeGdvReportMonth !== 'all' && mo !== parseInt(activeGdvReportMonth, 10)) return false;
 
         const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
         const matchGdv = activeSelectedGdvNames.some(s => s.trim().toLowerCase() === gdvName.toLowerCase());
