@@ -15468,6 +15468,88 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
     /* MODAL 2: BÀN GIAO & XÉT DUYỆT PHIẾU (DỰA TRÊN QUYỀN VAI TRÒ GĐV VS KẾ TOÁN) */
     
+    function printAccountingTransferBatch(transferId) {
+      if (!transferId || !cachedAccountingTransfersPayload[transferId]) {
+        triggerToast('Không tìm thấy thông tin phiếu bàn giao.', 'error');
+        return;
+      }
+      const t = cachedAccountingTransfersPayload[transferId];
+      
+      let claimsInBatch = t.danhSachHoSo || [];
+      if (claimsInBatch.length === 0 && (t.soHoSoBoiThuong || t.bienSo)) {
+        claimsInBatch = [{ soHoSoBoiThuong: t.soHoSoBoiThuong, bienSo: t.bienSo, tenGara: t.tenGara, soTienDeNghi: t.soTienDeNghi, tenChuXe: extractClaimOwnerName(t) }];
+      }
+
+      if (claimsInBatch.length === 0) {
+        triggerToast('Phiếu bàn giao này không chứa hồ sơ nào.', 'warning');
+        return;
+      }
+
+      const dateStr = formatDateDisplay(t.ngayBanGiao).split(' ')[0] || new Date(t.ngayBanGiao).toLocaleDateString('vi-VN');
+
+      const printHtml = `
+        <div style="font-family: 'Times New Roman', Times, serif; color: #000000; padding: 20px; line-height: 1.5;">
+          <h1 style="text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 0.05em;">
+            Danh sách chuyển hồ sơ làm thanh toán
+          </h1>
+          
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 35px; font-size: 14.5px;">
+            <thead>
+              <tr>
+                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 60px; font-weight: bold;">STT</th>
+                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 140px; font-weight: bold;">Biển số xe</th>
+                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 240px; font-weight: bold;">Số HSBT</th>
+                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: left; font-weight: bold;">TÊN KHÁCH HÀNG</th>
+                <th style="border: 1px solid #000000; padding: 10px 8px; text-align: center; width: 140px; font-weight: bold;">Ngày gửi hồ sơ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${claimsInBatch.map((c, idx) => `
+                <tr>
+                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: center;">${idx + 1}</td>
+                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: center; font-weight: bold;">${escapeHtmlOutput(c.bienSo || '')}</td>
+                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: center;">${escapeHtmlOutput(c.soHoSoBoiThuong || '')}</td>
+                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: left; text-transform: uppercase;">${escapeHtmlOutput(extractClaimOwnerName(c))}</td>
+                  <td style="border: 1px solid #000000; padding: 10px 8px; text-align: center;">${dateStr}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div style="display: flex; justify-content: space-between; margin-top: 40px; padding: 0 80px; font-size: 16px;">
+            <div style="text-align: center; width: 220px; font-weight: bold;">
+              Bên nhận
+            </div>
+            <div style="text-align: center; width: 220px; font-weight: bold;">
+              Bên giao
+            </div>
+          </div>
+        </div>
+      `;
+
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentWindow.document;
+      iframeDoc.open();
+      iframeDoc.write('<html><head><title>In Phieu Ban Giao</title></head><body>' + printHtml + '</body></html>');
+      iframeDoc.close();
+
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      }, 500);
+    }
+
     async function revertTransferToDraft(transferId) {
       if (!transferId) return;
       try {
@@ -15552,6 +15634,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 </button>
               ` : ''}
 
+              <button type="button" onclick="printAccountingTransferBatch('${t.transferId}')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;" title="In phiếu bàn giao làm thanh toán">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink: 0;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <span>In phiếu bàn giao</span>
+              </button>
+              
               <button type="button" onclick="closeKeToanReviewModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; transition: all 0.2s ease;">✕</button>
             </div>
           </div>
