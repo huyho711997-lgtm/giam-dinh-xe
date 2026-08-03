@@ -11597,6 +11597,7 @@ function formatDateDisplay(val) {
     let activeGdvReportBranch = 'all';
     let activeGdvReportSearch = '';
     let activeGdvReportView = 'weekly_zone'; // 'table' | 'chart'
+    let activeSelectedDakLakStatuses = ['moi', 'cho_giam_dinh_ht', 'da_giam_dinh_ht', 'cho_gdct', 'da_gdct', 'cho_duyet_pasc', 'da_duyet_pasc', 'cho_duyet_hsbt', 'da_duyet_hsbt', 'cho_duyet_dntt', 'cho_kt_duyet', 'kt_duyet', 'da_thanh_toan', 'tu_choi'];
 
     // Global Click Listener to Close Custom Dropdowns
     if (!window.hasRegisteredCustomDropdownListener) {
@@ -12245,6 +12246,44 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </div>
                 </div>
               </div>
+
+              <!-- Custom Status Multi-Select Dropdown for Dak Lak Report -->
+              ${activeGdvReportView === 'daklak_reserve' ? `
+              <div class="custom-select-wrapper" style="position: relative;" id="accDakLakStatusFilterWrapper">
+                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportDakLakStatusMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 220px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
+                  <span style="display: flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>Trạng thái (${activeSelectedDakLakStatuses.length} đã chọn)</span>
+                  </span>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                <div id="ddReportDakLakStatusMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 270px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; backdrop-filter: blur(16px); max-height: 320px; overflow-y: auto;">
+                  
+                  <!-- Action Toolbar -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--border); gap: 6px; flex-wrap: wrap;">
+                    <button type="button" onclick="selectAllDakLakStatusOptions(event)" style="background: var(--bg-soft); border: 1px solid var(--border); color: #3b82f6; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 6px; cursor: pointer;">Tất cả</button>
+                    <button type="button" onclick="clearAllDakLakStatusOptions(event)" style="background: var(--bg-soft); border: 1px solid var(--border); color: #ef4444; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 6px; cursor: pointer;">Xóa</button>
+                  </div>
+
+                  <!-- Status Checkbox List -->
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    ${Object.entries(PENDING_STATUS_MAP).map(([sKey, sVal]) => {
+                      const isSel = activeSelectedDakLakStatuses.includes(sKey);
+                      return `
+                        <label onclick="toggleDakLakStatusOption('${sKey}', event)" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: background 0.15s ease; ${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : 'color: var(--text-main); font-weight: 750;'}">
+                          <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" ${isSel ? 'checked' : ''} style="width: 15px; height: 15px; accent-color: #d8b46d; cursor: pointer;" />
+                            <span style="font-size: 12.5px;">${escapeHtmlOutput(sVal.label)}</span>
+                          </div>
+                          <span style="width: 8px; height: 8px; border-radius: 50%; background: ${sVal.color};"></span>
+                        </label>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              </div>
+              ` : ''}
 
               ${activeGdvReportView === 'weekly_zone' ? `
                 <!-- Custom Branch Dropdown -->
@@ -15684,13 +15723,80 @@ function renderGdvMonthlyReportPage(targetContainer) {
     }
 
     /* RENDER DAK LAK RESERVE REPORT TABLE HTML */
+        /* HELPER FUNCTIONS FOR DAK LAK EXPECTED DATE FORMATS */
+    function convertDmyToYmd(dmyStr) {
+      if (!dmyStr) return '';
+      const parts = dmyStr.split('/');
+      if (parts.length === 3) {
+        return parts[2] + '-' + parts[1].padStart(2, '0') + '-' + parts[0].padStart(2, '0');
+      }
+      return dmyStr;
+    }
+
+    function formatYmdToDmy(ymdStr) {
+      if (!ymdStr) return '';
+      const parts = ymdStr.split('-');
+      if (parts.length === 3) {
+        return parts[2] + '/' + parts[1] + '/' + parts[0];
+      }
+      return ymdStr;
+    }
+
+    /* TOGGLE AND MANAGE DAK LAK STATUS SELECT DRD */
+    function toggleDakLakStatusOption(statusKey, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      const idx = activeSelectedDakLakStatuses.indexOf(statusKey);
+      if (idx === -1) {
+        activeSelectedDakLakStatuses.push(statusKey);
+      } else {
+        activeSelectedDakLakStatuses.splice(idx, 1);
+      }
+      renderGdvReportPage();
+    }
+
+    function selectAllDakLakStatusOptions(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      activeSelectedDakLakStatuses = Object.keys(PENDING_STATUS_MAP);
+      renderGdvReportPage();
+    }
+
+    function clearAllDakLakStatusOptions(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      activeSelectedDakLakStatuses = [];
+      renderGdvReportPage();
+    }
+
+    /* RENDER DAK LAK RESERVE REPORT TABLE HTML */
     function renderDakLakReserveReportTableHtml() {
       const claimsList = Object.values(cachedPendingClaimsPayload || {});
       const filtered = claimsList.filter(c => {
         const cleanReserveVal = parseInt(String(c.duPhongBoiThuong || '').replace(/\D/g, ''), 10) || 0;
+        if (cleanReserveVal <= 100000000) return false;
+
         const branch = String(c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '').trim().toLowerCase();
         const matchBranch = branch.includes('đắk lắk') || branch.includes('dak lak') || branch.includes('daklak');
-        return cleanReserveVal > 100000000 && matchBranch;
+        if (!matchBranch) return false;
+
+        // GĐV filter
+        const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
+        const matchGdv = activeSelectedGdvNames.some(s => s.trim().toLowerCase() === gdvName.toLowerCase());
+        if (!matchGdv) return false;
+
+        // Status filter
+        const claimStatus = c.trangThai || 'moi';
+        const matchStatus = activeSelectedDakLakStatuses.includes(claimStatus);
+        if (!matchStatus) return false;
+
+        return true;
       });
 
       filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -15698,7 +15804,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const rowsHtml = filtered.map((c, idx) => {
         const bsx = c.bienSo || '—';
         const hsbt = c.soHoSoBoiThuong || '—';
-        const gara = c.tenGara || c.garaSuaChua || '—';
+        const gara = c.tenGaraVietTat || c.tenGara || c.garaSuaChua || '—';
         const gdv = c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '—';
         const reserve = formatCurrencyInputNumber(c.duPhongBoiThuong) || '—';
         const statusConfig = PENDING_STATUS_MAP[c.trangThai] || PENDING_STATUS_MAP['moi'];
@@ -15730,11 +15836,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </td>
             <td style="padding: 6px 8px; text-align: center; width: 150px;">
               <input 
-                type="text" 
-                placeholder="Ngày dự kiến..." 
-                value="${escapeAttributeData(ngayDuKien)}"
-                onchange="updateDakLakClaimField('${c.id}', 'ngayDuKien', this.value)"
-                style="width: 100%; height: 34px; padding: 4px 8px; border-radius: 8px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12px; text-align: center; font-family: inherit;"
+                type="date" 
+                value="${escapeAttributeData(convertDmyToYmd(ngayDuKien))}"
+                onchange="updateDakLakClaimField('${c.id}', 'ngayDuKien', formatYmdToDmy(this.value))"
+                style="width: 100%; height: 34px; padding: 4px 8px; border-radius: 8px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12px; text-align: center; font-family: inherit; cursor: pointer;"
               />
             </td>
           </tr>
@@ -15754,7 +15859,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </p>
             </div>
             <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: #10b981; padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; font-family: 'JetBrains Mono';">
-              Tổng số: ${filtered.length} hồ sơ
+              Tổng số: ${filtered.length} hồ sơ (Được lọc theo GĐV & Trạng thái)
             </div>
           </div>
 
@@ -15765,7 +15870,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <th style="padding: 12px 10px; width: 44px; text-align: center;">STT</th>
                   <th style="padding: 12px 10px; width: 110px;">Biển số xe</th>
                   <th style="padding: 12px 10px; width: 140px;">Số HSBT</th>
-                  <th style="padding: 12px 10px;">Gara sửa chữa</th>
+                  <th style="padding: 12px 10px;">Gara sửa chữa (Viết tắt)</th>
                   <th style="padding: 12px 10px;">Giám định viên</th>
                   <th style="padding: 12px 10px; text-align: right; width: 150px;">Dự phòng BT</th>
                   <th style="padding: 12px 10px; text-align: center; width: 110px;">Trạng thái</th>
@@ -15775,7 +15880,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </thead>
               <tbody>
                 ${filtered.length === 0 ? `
-                  <tr><td colspan="9" class="empty-state-text" style="text-align: center; padding: 30px;">Không có hồ sơ nào thỏa mãn điều kiện.</td></tr>
+                  <tr><td colspan="9" class="empty-state-text" style="text-align: center; padding: 30px;">Không có hồ sơ nào thỏa mãn điều kiện lọc.</td></tr>
                 ` : rowsHtml}
               </tbody>
             </table>
@@ -15806,9 +15911,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const claimsList = Object.values(cachedPendingClaimsPayload || {});
       const filtered = claimsList.filter(c => {
         const cleanReserveVal = parseInt(String(c.duPhongBoiThuong || '').replace(/\D/g, ''), 10) || 0;
+        if (cleanReserveVal <= 100000000) return false;
+
         const branch = String(c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '').trim().toLowerCase();
         const matchBranch = branch.includes('đắk lắk') || branch.includes('dak lak') || branch.includes('daklak');
-        return cleanReserveVal > 100000000 && matchBranch;
+        if (!matchBranch) return false;
+
+        const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
+        const matchGdv = activeSelectedGdvNames.some(s => s.trim().toLowerCase() === gdvName.toLowerCase());
+        if (!matchGdv) return false;
+
+        const claimStatus = c.trangThai || 'moi';
+        const matchStatus = activeSelectedDakLakStatuses.includes(claimStatus);
+        if (!matchStatus) return false;
+
+        return true;
       });
 
       if (filtered.length === 0) {
@@ -15824,12 +15941,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
           'Số HSBT': c.soHoSoBoiThuong || '',
           'Mã vụ tổn thất': c.maVuTonThat || '',
           'Đơn vị cấp đơn': c.donViCapDon || c.chiNhanh || '',
-          'Gara sửa chữa': c.tenGara || c.garaSuaChua || '',
+          'Gara sửa chữa': c.tenGaraVietTat || c.tenGara || c.garaSuaChua || '',
           'Giám định viên': c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '',
           'Dự phòng bồi thường (VNĐ)': parseInt(String(c.duPhongBoiThuong || '').replace(/\D/g, ''), 10) || 0,
           'Trạng thái': statusConfig ? statusConfig.label : (c.trangThai || 'Mới'),
           'Vướng mắc': c.vuongMac || '',
-          'Ngày dự kiến hoàn thành': c.ngayDuKien || ''
+          'Ngày dự kiến hoàn thành': formatYmdToDmy(c.ngayDuKien) || c.ngayDuKien || ''
         };
       });
 
