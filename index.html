@@ -14728,6 +14728,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (!transferId) return;
       
       const t = cachedAccountingTransfersPayload[transferId];
+      if (t && t.gdvUid && t.gdvUid !== firebase.auth().currentUser?.uid) {
+        triggerToast('Chỉ có người tạo phiếu mới được quyền xóa phiếu này!', 'warning');
+        return;
+      }
       if (t && (t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so' || t.trangThai === 'da_trinh_dntt')) {
         triggerToast('Không thể xóa Phiếu bàn giao đã được xác nhận!', 'warning');
         return;
@@ -15060,6 +15064,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const currentLoggedInName = activeUserProfile?.displayName || firebase.auth().currentUser?.displayName || firebase.auth().currentUser?.email || 'Huỳnh Văn Phúc';
       const defaultGdvVal = existing?.gdvName || currentLoggedInName;
 
+      const currentUserId = firebase.auth().currentUser?.uid;
+      const isCreator = !existing || !existing.gdvUid || existing.gdvUid === currentUserId;
+
       if (!userOptionsList.includes(defaultGdvVal)) {
         userOptionsList.unshift(defaultGdvVal);
       }
@@ -15090,21 +15097,32 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <!-- ACTION BUTTONS MOVED TO HEADER TOP RIGHT -->
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
               ${(editingTransferId && cachedAccountingTransfersPayload[editingTransferId]?.trangThai === 'cho_xac_nhan') ? `
-                <button type="button" onclick="revertTransferToDraft('${editingTransferId}')" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: rgba(245,158,11,0.14); color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                <button type="button" onclick="${isCreator ? `revertTransferToDraft('${editingTransferId}')` : `triggerToast('Chỉ có người tạo phiếu mới được quyền trả lại nháp!', 'warning')`}" style="padding: 8px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: ${isCreator ? 'rgba(245,158,11,0.14)' : 'var(--bg-soft)'}; color: ${isCreator ? '#f59e0b' : 'var(--text-muted)'}; border: 1px solid ${isCreator ? 'rgba(245,158,11,0.35)' : 'var(--border)'}; cursor: ${isCreator ? 'pointer' : 'not-allowed'}; display: inline-flex; align-items: center; gap: 6px; ${isCreator ? '' : 'opacity: 0.65;'}">
                   ${ACC_SVGS.REFRESH} Trả lại (Hủy gửi bàn giao)
                 </button>
               ` : ''}
 
-              <button type="button" onclick="saveAccountingTransferBatchFromModal(event, '${editingTransferId || ''}', 'cho_xac_nhan')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; box-shadow: 0 4px 16px rgba(216,180,109,0.35); display: inline-flex; align-items: center; gap: 6px;">
-                ${ACC_SVGS.CHECK_CIRCLE}
-                <span>Bàn giao hồ sơ cho Kế toán</span>
-              </button>
+              ${isCreator ? `
+                <button type="button" onclick="saveAccountingTransferBatchFromModal(event, '${editingTransferId || ''}', 'cho_xac_nhan')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: linear-gradient(135deg, var(--primary) 0%, #b89243 100%); color: #111111; border: none; cursor: pointer; box-shadow: 0 4px 16px rgba(216,180,109,0.35); display: inline-flex; align-items: center; gap: 6px;">
+                  ${ACC_SVGS.CHECK_CIRCLE}
+                  <span>Bàn giao hồ sơ cho Kế toán</span>
+                </button>
+              ` : `
+                <button type="button" onclick="triggerToast('Chỉ có người tạo phiếu mới được quyền bàn giao hồ sơ!', 'warning')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-muted); border: 1px solid var(--border); cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px; opacity: 0.65;">
+                  ${ACC_SVGS.CHECK_CIRCLE}
+                  <span>Bàn giao hồ sơ cho Kế toán</span>
+                </button>
+              `}
 
-              ${editingTransferId ? `
+              ${editingTransferId ? (isCreator ? `
                 <button type="button" onclick="deleteAccountingTransferBatch('${editingTransferId}')" style="padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" title="Xóa phiếu bàn giao này">
                   ${ACC_SVGS.TRASH} Xóa phiếu
                 </button>
-              ` : ''}
+              ` : `
+                <button type="button" onclick="triggerToast('Chỉ có người tạo phiếu mới được quyền xóa phiếu!', 'warning')" style="padding: 8px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; background: var(--bg-soft); color: var(--text-muted); border: 1px solid var(--border); cursor: not-allowed; display: inline-flex; align-items: center; gap: 5px; opacity: 0.65;" title="Xóa phiếu bàn giao này">
+                  ${ACC_SVGS.TRASH} Xóa phiếu
+                </button>
+              `) : ''}
 
               <button type="button" onclick="closeAccountingTransferModal()" style="background: var(--bg-soft); border: 1px solid var(--border); font-size: 18px; color: var(--text-soft); cursor: pointer; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; transition: all 0.2s ease;">✕</button>
             </div>
@@ -15139,7 +15157,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <div style="position: relative;" id="accGdvDropdownWrapper">
                     <input type="hidden" id="accBatchGdvName" value="${escapeAttributeData(defaultGdvVal)}" />
                     
-                    <div id="accGdvTriggerBtn" onclick="toggleAccGdvCustomDropdown(event)" style="height: 44px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); padding: 0 14px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+                    <div id="accGdvTriggerBtn" onclick="${isCreator ? 'toggleAccGdvCustomDropdown(event)' : `triggerToast('Không thể thay đổi người bàn giao của phiếu này!', 'warning')`}" style="height: 44px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); padding: 0 14px; cursor: ${isCreator ? 'pointer' : 'not-allowed'}; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-sm); transition: all 0.2s ease; ${isCreator ? '' : 'opacity: 0.75;' }">
                       <div style="display: flex; align-items: center; gap: 10px;">
                         <div id="accSelectedUserAvatar" style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(216,180,109,0.3) 0%, rgba(216,180,109,0.1) 100%); border: 1px solid rgba(216,180,109,0.5); color: var(--primary); display: grid; place-items: center; font-size: 11px; font-weight: 850; flex-shrink: 0; font-family: 'JetBrains Mono';">
                           ${getAccUserInitials(defaultGdvVal)}
@@ -15245,10 +15263,17 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <!-- FIXED STICKY FOOTER: HỦY BỎ & LƯU NHÁP AT BOTTOM RIGHT -->
             <div style="position: sticky; bottom: 0; padding: 16px 30px; border-top: 1px solid var(--border); background: var(--surface); backdrop-filter: blur(14px); z-index: 10; flex-shrink: 0; display: flex; justify-content: flex-end; align-items: center; gap: 12px;">
               <button type="button" onclick="closeAccountingTransferModal()" style="padding: 11px 22px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border); cursor: pointer; transition: all 0.2s ease;">Hủy bỏ</button>
-              <button type="button" onclick="saveAccountingTransferBatchFromModal(event, '${editingTransferId || ''}', 'moi')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
-                ${ACC_SVGS.BRIEFCASE}
-                <span>Lưu nháp</span>
-              </button>
+              ${isCreator ? `
+                <button type="button" onclick="saveAccountingTransferBatchFromModal(event, '${editingTransferId || ''}', 'moi')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+                  ${ACC_SVGS.BRIEFCASE}
+                  <span>Lưu nháp</span>
+                </button>
+              ` : `
+                <button type="button" onclick="triggerToast('Chỉ có người tạo phiếu mới được quyền chỉnh sửa hoặc lưu nháp!', 'warning')" style="padding: 11px 24px; border-radius: 12px; font-size: 13.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-muted); border: 1px solid var(--border); cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px; opacity: 0.65;">
+                  ${ACC_SVGS.BRIEFCASE}
+                  <span>Lưu nháp</span>
+                </button>
+              `}
             </div>
 
           </form>
@@ -15519,6 +15544,15 @@ function renderGdvMonthlyReportPage(targetContainer) {
     /* SAVE ACCOUNTING TRANSFER BATCH FROM MODAL */
     async function saveAccountingTransferBatchFromModal(evt, existingId, targetStatus) {
       if (evt) evt.preventDefault();
+
+      if (existingId && cachedAccountingTransfersPayload[existingId]) {
+        const existingBatch = cachedAccountingTransfersPayload[existingId];
+        const currentUserId = firebase.auth().currentUser?.uid;
+        if (existingBatch.gdvUid && existingBatch.gdvUid !== currentUserId) {
+          triggerToast('Chỉ có người tạo phiếu mới được quyền bàn giao hoặc chỉnh sửa hồ sơ này!', 'warning');
+          return;
+        }
+      }
 
       if (currentBatchSelectedClaims.length === 0) {
         triggerToast('Vui lòng tích chọn ít nhất 1 hồ sơ bồi thường ở cột bên trái!', 'warning');
