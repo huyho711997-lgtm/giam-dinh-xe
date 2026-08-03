@@ -17,7 +17,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
@@ -15607,6 +15607,141 @@ function renderGdvMonthlyReportPage(targetContainer) {
         ws['!merges'] = [
           { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }
         ];
+
+        // Style A1 (Title)
+        ws['A1'].s = {
+          font: { name: 'Arial', sz: 16, bold: true },
+          alignment: { horizontal: 'center', vertical: 'center' }
+        };
+
+        // Style Headers (A3 to E3)
+        const headerCols = ['A', 'B', 'C', 'D', 'E'];
+        headerCols.forEach(col => {
+          const cellKey = col + '3';
+          if (ws[cellKey]) {
+            ws[cellKey].s = {
+              font: { name: 'Arial', sz: 11, bold: true },
+              fill: { fgColor: { rgb: 'E2E8F0' } }, // Light gray background
+              alignment: { horizontal: 'center', vertical: 'center' },
+              border: {
+                top: { style: 'thin', color: { rgb: '475569' } },
+                bottom: { style: 'thin', color: { rgb: '475569' } },
+                left: { style: 'thin', color: { rgb: '475569' } },
+                right: { style: 'thin', color: { rgb: '475569' } }
+              }
+            };
+          }
+        });
+
+        // Style Data Rows
+        const totalRows = claimsInBatch.length;
+        for (let i = 0; i < totalRows; i++) {
+          const rowNum = 4 + i;
+          
+          // STT
+          const cellA = 'A' + rowNum;
+          if (ws[cellA]) {
+            ws[cellA].s = {
+              font: { name: 'Arial', sz: 11 },
+              alignment: { horizontal: 'center', vertical: 'center' },
+              border: {
+                top: { style: 'thin', color: { rgb: '94A3B8' } },
+                bottom: { style: 'thin', color: { rgb: '94A3B8' } },
+                left: { style: 'thin', color: { rgb: '94A3B8' } },
+                right: { style: 'thin', color: { rgb: '94A3B8' } }
+              }
+            };
+          }
+
+          // Biển số xe
+          const cellB = 'B' + rowNum;
+          if (ws[cellB]) {
+            ws[cellB].s = {
+              font: { name: 'Arial', sz: 11, bold: true },
+              alignment: { horizontal: 'center', vertical: 'center' },
+              border: {
+                top: { style: 'thin', color: { rgb: '94A3B8' } },
+                bottom: { style: 'thin', color: { rgb: '94A3B8' } },
+                left: { style: 'thin', color: { rgb: '94A3B8' } },
+                right: { style: 'thin', color: { rgb: '94A3B8' } }
+              }
+            };
+          }
+
+          // Số HSBT
+          const cellC = 'C' + rowNum;
+          if (ws[cellC]) {
+            ws[cellC].s = {
+              font: { name: 'Arial', sz: 11 },
+              alignment: { horizontal: 'center', vertical: 'center' },
+              border: {
+                top: { style: 'thin', color: { rgb: '94A3B8' } },
+                bottom: { style: 'thin', color: { rgb: '94A3B8' } },
+                left: { style: 'thin', color: { rgb: '94A3B8' } },
+                right: { style: 'thin', color: { rgb: '94A3B8' } }
+              }
+            };
+          }
+
+          // TÊN KHÁCH HÀNG
+          const cellD = 'D' + rowNum;
+          if (ws[cellD]) {
+            ws[cellD].s = {
+              font: { name: 'Arial', sz: 11 },
+              alignment: { horizontal: 'left', vertical: 'center' },
+              border: {
+                top: { style: 'thin', color: { rgb: '94A3B8' } },
+                bottom: { style: 'thin', color: { rgb: '94A3B8' } },
+                left: { style: 'thin', color: { rgb: '94A3B8' } },
+                right: { style: 'thin', color: { rgb: '94A3B8' } }
+              }
+            };
+          }
+
+          // Ngày gửi hồ sơ
+          const cellE = 'E' + rowNum;
+          if (ws[cellE]) {
+            ws[cellE].s = {
+              font: { name: 'Arial', sz: 11 },
+              alignment: { horizontal: 'center', vertical: 'center' },
+              border: {
+                top: { style: 'thin', color: { rgb: '94A3B8' } },
+                bottom: { style: 'thin', color: { rgb: '94A3B8' } },
+                left: { style: 'thin', color: { rgb: '94A3B8' } },
+                right: { style: 'thin', color: { rgb: '94A3B8' } }
+              }
+            };
+          }
+        }
+
+        // Style Signatures (Row = 4 + totalRows + 2)
+        const sigRow = 4 + totalRows + 2;
+        
+        const cellSigB = 'B' + sigRow;
+        if (ws[cellSigB]) {
+          ws[cellSigB].s = {
+            font: { name: 'Arial', sz: 12, bold: true },
+            alignment: { horizontal: 'center', vertical: 'center' }
+          };
+        }
+
+        const cellSigD = 'D' + sigRow;
+        if (ws[cellSigD]) {
+          ws[cellSigD].s = {
+            font: { name: 'Arial', sz: 12, bold: true },
+            alignment: { horizontal: 'center', vertical: 'center' }
+          };
+        }
+
+        // Set row heights
+        ws['!rows'] = [
+          { hpt: 35 }, // Row 1 (Title)
+          { hpt: 15 }, // Row 2 (Spacer)
+          { hpt: 25 }  // Row 3 (Headers)
+        ];
+        for (let i = 0; i < totalRows; i++) {
+          ws['!rows'].push({ hpt: 22 });
+        }
 
         // Column widths matching print proportionality
         ws['!cols'] = [
