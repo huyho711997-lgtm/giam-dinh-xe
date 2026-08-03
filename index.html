@@ -4480,32 +4480,36 @@
         const dateStr = t.ngayBanGiao ? formatDateDisplay(t.ngayBanGiao) : '';
         const isRead = readSet.has(String(batchId));
 
-        if (t.trangThai === 'can_bo_sung') {
+        const claimsList = t.danhSachHoSo || [];
+        const suppList = t.hoSoYeuCauBoSung || [];
+        const suppClaimsCount = claimsList.filter((c, cIdx) => c.trangThaiBoSung === 'yeu_cau_bo_sung' || suppList.some(s => Number(s.chiSo) === cIdx || (s.soHoSoBoiThuong && s.soHoSoBoiThuong === c.soHoSoBoiThuong) || (s.bienSo && s.bienSo === c.bienSo))).length || (t.trangThai === 'can_bo_sung' ? (suppList.length || 1) : 0);
+
+        if (t.trangThai === 'can_bo_sung' || suppClaimsCount > 0) {
           notifications.push({
             id: batchId,
             type: 'warning',
             title: 'Yêu cầu bổ sung Phiếu ' + batchId,
-            desc: (t.ghiChuKeToan ? ('Kế toán phản hồi: ' + t.ghiChuKeToan) : 'Kế toán yêu cầu bổ sung chứng từ cho phiếu bàn giao này.'),
+            desc: (t.ghiChuKeToan ? ('Kế toán phản hồi: ' + t.ghiChuKeToan) : `Kế toán yêu cầu bổ sung chứng từ cho ${suppClaimsCount} hồ sơ trong phiếu này.`),
             date: dateStr,
             transferId: batchId,
             isRead
           });
-        } else if (t.trangThai === 'da_nhan_ho_so') {
+        } else if (t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so') {
+          notifications.push({
+            id: batchId,
+            type: 'success',
+            title: 'Đã xác nhận Phiếu ' + batchId,
+            desc: 'Kế toán đã xác nhận nhận hồ sơ cho phiếu bàn giao ' + batchId + '.',
+            date: dateStr,
+            transferId: batchId,
+            isRead
+          });
+        } else if (t.trangThai === 'cho_xac_nhan' || t.trangThai === 'da_nhan_ho_so') {
           notifications.push({
             id: batchId,
             type: 'info',
             title: 'Phiếu mới trình Kế toán ' + batchId,
-            desc: 'GĐV ' + (t.gdvName || '') + ' đã tạo phiếu bàn giao ' + (t.danhSachHoSo?.length || 1) + ' hồ sơ.',
-            date: dateStr,
-            transferId: batchId,
-            isRead
-          });
-        } else if (t.trangThai === 'da_nhan_du_ho_so') {
-          notifications.push({
-            id: batchId,
-            type: 'success',
-            title: 'Đã nhận đủ hồ sơ Phiếu ' + batchId,
-            desc: 'Kế toán đã xác nhận nhận đủ hồ sơ cho phiếu bàn giao ' + batchId + '.',
+            desc: 'GĐV ' + (t.gdvName || '') + ' đã tạo phiếu bàn giao ' + (claimsList.length || 1) + ' hồ sơ.',
             date: dateStr,
             transferId: batchId,
             isRead
