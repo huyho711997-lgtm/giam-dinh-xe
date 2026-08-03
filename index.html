@@ -6210,7 +6210,7 @@ function formatDateDisplay(val) {
           else if (text.includes('ttbt - tổng số tiền bồi thường sau thuế')) colMap.tongBoiThuongSauThue = colIdx;
           else if (text.includes('ttbt - tổng số tiền bồi thường')) colMap.ttbtTongSoTienBoiThuong = colIdx;
           else if (text.includes('tổng số tiền bồi thường')) colMap.amount = colIdx;
-          else if (text.includes('dự phòng bồi thường')) colMap.duPhongBoiThuong = colIdx;
+          else if (text.includes('dự phòng bồi thường') || text === 'dự phòng' || text === 'dpbt' || text.includes('dự phòng bt')) colMap.duPhongBoiThuong = colIdx;
           else if (text.includes('thu đòi đồng bảo hiểm - tỷ lệ')) colMap.thuDoiDongBhTyLe = colIdx;
           else if (text.includes('thu đòi đồng bảo hiểm - số tiền')) colMap.thuDoiDongBhSoTien = colIdx;
           else if (text.includes('đồng bảo hiểm follow - tỷ lệ')) colMap.dongBhFollowTyLe = colIdx;
