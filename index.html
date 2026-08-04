@@ -16893,7 +16893,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           <tr style="background: var(--bg-soft); font-weight: 850; border-bottom: 1px solid var(--border-strong);">
             <td colspan="9" style="padding: 12px 14px; color: var(--primary); font-size: 13px; text-align: left; background: var(--bg-soft);">
               <span style="display: inline-flex; align-items: center; gap: 8px;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5" style="flex-shrink: 0;"><path d="M3 21h18"></path><path d="M19 21v-4a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v4"></path><path d="M5 15V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"></path></svg>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5" style="flex-shrink: 0;"><path d="M3 21h18"></path><path d="M19 21v-4a2 2 0 0 0-2 2v4"></path><path d="M5 15V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"></path></svg>
                 <span>Gara: <strong style="font-size: 13.5px; color: var(--text-main);">${escapeHtmlOutput(garaName)}</strong> (${claims.length} hồ sơ tồn - Tổng tiền duyệt: <strong style="color: #10b981;">${formatCurrencyInputNumber(totalGaraAmt)} đ</strong>)</span>
               </span>
             </td>
@@ -17133,7 +17133,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             const cellKey = col + rowNum;
             if (ws[cellKey]) {
               if (isGroupRow) {
-                // Style group row
+                // Style group row - remove left/right borders for inner cells to render clean merge
                 ws[cellKey].s = {
                   font: { name: 'Arial', sz: 10.5, bold: true, color: { rgb: '1E293B' } },
                   fill: { fgColor: { rgb: 'F1F5F9' } },
@@ -17141,8 +17141,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   border: {
                     top: { style: 'thin', color: { rgb: 'CBD5E1' } },
                     bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
-                    left: { style: 'thin', color: { rgb: 'CBD5E1' } },
-                    right: { style: 'thin', color: { rgb: 'CBD5E1' } }
+                    left: col === 'A' ? { style: 'thin', color: { rgb: 'CBD5E1' } } : undefined,
+                    right: col === 'J' ? { style: 'thin', color: { rgb: 'CBD5E1' } } : undefined
                   }
                 };
               } else {
@@ -17199,13 +17199,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
           { wch: 6 },
           { wch: 22 },
           { wch: 14 },
-          { wch: 26 },
+          { wch: 28 },
           { wch: 16 },
           { wch: 16 },
-          { wch: 22 },
+          { wch: 24 },
+          { wch: 24 },
           { wch: 20 },
-          { wch: 16 },
-          { wch: 18 }
+          { wch: 20 }
         ];
 
         const wb = XLSX.utils.book_new();
