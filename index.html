@@ -12767,12 +12767,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportYearMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 120px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
                     <span style="display: flex; align-items: center; gap: 6px;">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                      <span>Năm ${activeGdvReportYear}</span>
+                      <span>${activeGdvReportYear === 'all' ? 'Tất cả các năm' : 'Năm ' + activeGdvReportYear}</span>
                     </span>
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
                   </button>
 
-                  <div id="ddReportYearMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 120px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
+                  <div id="ddReportYearMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 140px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
+                    <div class="custom-select-item ${activeGdvReportYear === 'all' ? 'active' : ''}" onclick="selectGdvReportYear('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportYear === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                      <span>Tất cả các năm</span>
+                      ${activeGdvReportYear === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                    </div>
                     ${yearList.map(y => `
                       <div class="custom-select-item ${String(y) === String(activeGdvReportYear) ? 'active' : ''}" onclick="selectGdvReportYear('${y}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(y) === String(activeGdvReportYear) ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
                         <span>Năm ${y}</span>
@@ -16866,6 +16870,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
       sortedGaraNames.forEach(garaName => {
         const claims = groups[garaName];
         
+        // Calculate total amount for this Gara
+        let totalGaraAmt = 0;
+        claims.forEach(c => {
+          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+          totalGaraAmt += parseInt(amtStr, 10) || 0;
+        });
+
         // Sort claims within group by days since approved descending (oldest first)
         claims.sort((a, b) => {
           const dateAStr = a.toTrinhNgayDuyet || a.pascNgayDuyet || a.ngayDuyetHsbt || '';
@@ -16877,11 +16888,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
           return valB - valA;
         });
 
-        // Add Gara header row
+        // Add Gara header row with SVG icon instead of emoji, and displaying total Gara amount
         rowsHtml += `
           <tr style="background: var(--bg-soft); font-weight: 850; border-bottom: 1px solid var(--border-strong);">
             <td colspan="9" style="padding: 12px 14px; color: var(--primary); font-size: 13px; text-align: left; background: var(--bg-soft);">
-              🏢 Gara: <strong style="font-size: 13.5px; color: var(--text-main);">${escapeHtmlOutput(garaName)}</strong> (${claims.length} hồ sơ tồn)
+              <span style="display: inline-flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5" style="flex-shrink: 0;"><path d="M3 21h18"></path><path d="M19 21v-4a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v4"></path><path d="M5 15V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"></path></svg>
+                <span>Gara: <strong style="font-size: 13.5px; color: var(--text-main);">${escapeHtmlOutput(garaName)}</strong> (${claims.length} hồ sơ tồn - Tổng tiền duyệt: <strong style="color: #10b981;">${formatCurrencyInputNumber(totalGaraAmt)} đ</strong>)</span>
+              </span>
             </td>
           </tr>
         `;
@@ -17038,6 +17052,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
       sortedGaraNames.forEach(garaName => {
         const claims = groups[garaName];
         
+        // Calculate total amount for this Gara
+        let totalGaraAmt = 0;
+        claims.forEach(c => {
+          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+          totalGaraAmt += parseInt(amtStr, 10) || 0;
+        });
+
         // Sort claims within group by days since approved descending
         claims.sort((a, b) => {
           const dateAStr = a.toTrinhNgayDuyet || a.pascNgayDuyet || a.ngayDuyetHsbt || '';
@@ -17049,9 +17070,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
           return valB - valA;
         });
 
-        // Push Gara group header row
+        // Push Gara group header row with Gara total amount (no emoji in Excel)
         const groupRowIdx = aoa.length;
-        aoa.push([`🏢 Gara: ${garaName} (${claims.length} hồ sơ tồn)`, '', '', '', '', '', '', '', '', '']);
+        aoa.push([`Gara: ${garaName} (${claims.length} hồ sơ tồn - Tổng tiền duyệt: ${formatCurrencyInputNumber(totalGaraAmt)} đ)`, '', '', '', '', '', '', '', '', '']);
         merges.push({ s: { r: groupRowIdx, c: 0 }, e: { r: groupRowIdx, c: 9 } });
 
         claims.forEach(c => {
@@ -17106,7 +17127,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         // Style Data Rows (Row 2 onwards)
         for (let i = 0; i < aoa.length - 1; i++) {
           const rowNum = 2 + i;
-          const isGroupRow = String(aoa[rowNum - 1][0]).startsWith('🏢 Gara:');
+          const isGroupRow = String(aoa[rowNum - 1][0]).startsWith('Gara:');
           
           cols.forEach(col => {
             const cellKey = col + rowNum;
@@ -17170,7 +17191,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
         ws['!rows'] = [{ hpt: 26 }];
         for (let i = 0; i < aoa.length - 1; i++) {
-          const isGroupRow = String(aoa[i + 1][0]).startsWith('🏢 Gara:');
+          const isGroupRow = String(aoa[i + 1][0]).startsWith('Gara:');
           ws['!rows'].push({ hpt: isGroupRow ? 24 : 20 });
         }
 
@@ -17201,7 +17222,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
       document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
       activeOpenDropdownId = null;
       exportTonChuaHoaDonReportExcel();
-    }
-</script>
+    }</script>
 </body>
 </html>
