@@ -4801,6 +4801,14 @@
             { id: generateUniqueReqId(), tenHangMuc: '' }
           ];
         }
+      } else if (mode === 'combined') {
+        if (caseRequestedItemsDraft.length === 0) {
+          caseRequestedItemsDraft = [
+            { id: generateUniqueReqId(), tenHangMuc: '' },
+            { id: generateUniqueReqId(), tenHangMuc: '' },
+            { id: generateUniqueReqId(), tenHangMuc: '' }
+          ];
+        }
       } else if (mode === 'image') {
         caseRequestedItemsDraft = [];
       }
@@ -7888,13 +7896,25 @@ function formatDateDisplay(val) {
                   <div class="creation-option-card" onclick="switchCreateFlow('template')">
                     <div class="creation-card-watermark">04</div>
                     <div class="creation-card-icon-wrap" style="background: rgba(23,162,184,0.08); color: #17a2b8;">
-                      ${SVGS.SPARKLES}
+                      \${SVGS.SPARKLES}
                     </div>
                     <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">4. Dùng mẫu va chạm khác</h3>
                     <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Khởi tạo nhanh bằng các mẫu va chạm tiêu chuẩn của hãng (Đâm đầu xe, va chạm đuôi xe, ngập nước...) để tự động điền bảng.
                     </p>
-                    <button type="button" class="btn-premium" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;"><span>Xem các mẫu chuẩn</span> ${SVGS.ARROW_RIGHT}</button>
+                    <button type="button" class="btn-premium" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;"><span>Xem các mẫu chuẩn</span> \${SVGS.ARROW_RIGHT}</button>
+                  </div>
+
+                  <div class="creation-option-card" onclick="switchCreateFlow('combined')">
+                    <div class="creation-card-watermark">05</div>
+                    <div class="creation-card-icon-wrap" style="background: rgba(216,180,109,0.12); color: var(--primary);">
+                      \${SVGS.SPARKLES}
+                    </div>
+                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">5. Khởi tạo kết hợp (Hạng mục & Ảnh)</h3>
+                    <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
+                      Nhập danh sách hạng mục cần đối chiếu VÀ tải kèm bộ ảnh giám định gốc để Gara tự khớp ảnh sau.
+                    </p>
+                    <button type="button" class="btn-premium" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;"><span>Tạo kết hợp</span> \${SVGS.ARROW_RIGHT}</button>
                   </div>
                 </div>
               </section>
@@ -7976,13 +7996,14 @@ function formatDateDisplay(val) {
               </section>
             </div>
           `;
-        } else if (activeCreateFlowMode === 'excel' || activeCreateFlowMode === 'standard') {
+        } else if (activeCreateFlowMode === 'excel' || activeCreateFlowMode === 'standard' || activeCreateFlowMode === 'combined') {
           const isExcelMode = (activeCreateFlowMode === 'excel');
-          const pageTitle = isExcelMode ? 'Bổ sung hình ảnh theo hạng mục chỉ định' : 'Hồ sơ Giám định Tiêu chuẩn';
-          const pageSubtitle = isExcelMode ? 'Lập danh sách bằng bảng Excel thông minh hoặc trích xuất báo giá AI OCR.' : 'Mẫu khởi tạo tiêu chuẩn: Giấy tờ xe, Ảnh 4 góc chéo, Tem đăng kiểm và Số khung (VIN).';
-          const sectionNum = isExcelMode ? '02' : '01';
+          const isCombinedMode = (activeCreateFlowMode === 'combined');
+          const pageTitle = isCombinedMode ? 'Khởi tạo kết hợp (Hạng mục & Ảnh)' : (isExcelMode ? 'Bổ sung hình ảnh theo hạng mục chỉ định' : 'Hồ sơ Giám định Tiêu chuẩn');
+          const pageSubtitle = isCombinedMode ? 'Nhập danh sách hạng mục cần đối chiếu và tải kèm bộ ảnh giám định gốc để Gara tự khớp.' : (isExcelMode ? 'Lập danh sách bằng bảng Excel thông minh hoặc trích xuất báo giá AI OCR.' : 'Mẫu khởi tạo tiêu chuẩn: Giấy tờ xe, Ảnh 4 góc chéo, Tem đăng kiểm và Số khung (VIN).');
+          const sectionNum = isCombinedMode ? '05' : (isExcelMode ? '02' : '01');
 
-          const ocrBlockMarkup = isExcelMode ? `
+          const ocrBlockMarkup = (isExcelMode || isCombinedMode) ? `
                 <div class="form-group" style="margin-bottom: 24px;">
                   <div style="border-left: 4px solid var(--primary); padding-left: 12px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; box-sizing: border-box;">
                     <span style="display: inline-flex; align-items: center; gap: 8px;">
@@ -8116,8 +8137,21 @@ function formatDateDisplay(val) {
                   </div>
                 </div>
 
+                \${isCombinedMode ? `
+                <div class="workflow-divider">Ảnh giám định đính kèm (Bắt buộc)</div>
+                <div class="form-group" style="margin-bottom: 28px;">
+                  <label>Tải lên bộ ảnh giám định để Gara tự khớp với hạng mục</label>
+                  <div class="dropzone" id="imageDropzone" onclick="document.getElementById('fileImageUploader').click()">
+                    <div><div class="dropzone-icon">\\\${SVGS.IMAGE}</div><strong>Chọn hoặc kéo thả ảnh giám định vào đây</strong><p>Gara sẽ tự khớp các ảnh này với các hạng mục tương ứng ở cổng Gara</p></div>
+                    <input id="fileImageUploader" type="file" accept="image/*" multiple hidden />
+                  </div>
+                  <div id="lblDropzoneSummary" class="file-summary">Chưa có ảnh nào được chọn.</div>
+                  <div id="boxPreviewsHolder" class="preview-grid-premium"></div>
+                </div>
+                ` : ''}
+
                 <div style="margin-top: 32px; max-width: 320px; margin-left: auto;">
-                  <button id="btnCreateCaseSubmit" class="btn-premium" style="min-height: 52px; font-size: 13px;">${SVGS.SPARKLES} Khởi tạo hồ sơ trực tuyến</button>
+                  <button id="btnCreateCaseSubmit" class="btn-premium" style="min-height: 52px; font-size: 13px;">\${SVGS.SPARKLES} Khởi tạo hồ sơ trực tuyến</button>
                 </div>
               </section>
             </div>
@@ -9253,8 +9287,12 @@ function formatDateDisplay(val) {
         triggerToast('Vui lòng tải lên ít nhất một ảnh hiện trường.', 'error');
         return;
       }
-      if (activeCreateFlowMode === 'excel' && !requestedItemNames.length) {
+      if ((activeCreateFlowMode === 'excel' || activeCreateFlowMode === 'combined') && !requestedItemNames.length) {
         triggerToast('Vui lòng nhập ít nhất một hạng mục phụ tùng cần yêu cầu ảnh.', 'error');
+        return;
+      }
+      if (activeCreateFlowMode === 'combined' && !imagesFileList.length) {
+        triggerToast('Vui lòng tải lên ít nhất một ảnh giám định.', 'error');
         return;
       }
 
@@ -9997,16 +10035,55 @@ function formatDateDisplay(val) {
       if (!localActiveImageStack.length && !localActiveRequestedItems.length && !localActiveCaseNode) return renderErrorLayoutState('Hồ sơ hiện tại chưa có nội dung yêu cầu Garage xử lý.');
       garagePortalMounted = true;
 
-      const imageInputSection = localActiveImageStack.length ? `
-        <div class="workspace-section-head"><div><h2>01 · Xác định hạng mục từ ảnh hiện trạng</h2><p>Nội dung được tự động lưu trong khi Garage nhập, không bị mất khi tải ảnh ở nhóm bên dưới.</p></div><div class="workspace-section-index">${String(localActiveImageStack.length).padStart(2,'0')} FRAMES</div></div>
-        ${localActiveImageStack.map((item, index) => `
-          <article class="premium-image-card">
-            <div class="img-display-pane"><span class="img-pane-indicator">Ảnh hiện trạng ${String(index + 1).padStart(2,'0')}</span><img src="${escapeAttributeData(item.linkAnh)}" alt="Ảnh tổn thất ${index + 1}" loading="lazy" onclick="openLightbox(localActiveImageStack.map(x => x.linkAnh), ${index})" /></div>
-            <div class="inputs-entry-pane">
-              <div><div class="image-sequence">DAMAGE FRAME / ${String(index + 1).padStart(2,'0')}</div><div class="form-group" style="margin:0"><label>Tên bộ phận và phương án khắc phục</label><textarea class="garage-quote-textarea-node input-premium" data-index-token="${index}" placeholder="Ví dụ:\n• Thay mới cụm đèn pha trước phải\n• Gò nắn phục hồi tai bắt cản\n• Sơn hoàn thiện vè trước phải">${escapeHtmlOutput(item.hangMucBaoGia || '')}</textarea><div id="garageNoteSaveState_${index}" class="autosave-state">Đã bật tự động lưu</div></div></div>
-              <button class="btn-premium btn-secondary btn-inline" onclick="window.open('${escapeAttributeData(item.linkAnh)}','_blank')">${SVGS.EXTERNAL} Mở ảnh nguyên bản</button>
+      let imageInputSection = '';
+      if (localActiveImageStack.length > 0) {
+        if (localActiveRequestedItems.length > 0) {
+          imageInputSection = `
+            <div class="workspace-section-head">
+              <div>
+                <h2>01 · Bể ảnh giám định từ Giám định viên</h2>
+                <p>Kho ảnh chụp hiện trạng tổn thất do GĐV tải lên lúc lập hồ sơ. Gara đối chiếu và chọn ảnh tương ứng cho từng hạng mục bên dưới.</p>
+              </div>
+              <div class="workspace-section-index">\${String(localActiveImageStack.length).padStart(2,'0')} FRAMES</div>
             </div>
-          </article>`).join('')}` : '';
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm);">
+              \${localActiveImageStack.map((item, index) => {
+                const mappedItems = [];
+                localActiveRequestedItems.forEach((reqItem, reqIdx) => {
+                  const urls = normalizeEvidenceImageUrls(reqItem);
+                  if (urls.includes(item.linkAnh)) {
+                    mappedItems.push(reqItem.tenHangMuc || \`Hạng mục \${reqIdx + 1}\`);
+                  }
+                });
+                const isMapped = mappedItems.length > 0;
+                const mapLabel = isMapped 
+                  ? \`<div id="imageMapLabel_\${index}" style="width: 100%; text-align: center;"><span style="background: rgba(16,185,129,0.15); color: #10b981; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px;">Đã khớp: \${mappedItems.join(', ')}</span></div>\`
+                  : \`<div id="imageMapLabel_\${index}" style="width: 100%; text-align: center;"><span style="background: var(--surface-soft); color: var(--text-muted); font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">Chưa phân loại</span></div>\`;
+                return \`
+                  <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                    <div class="preview-thumb" style="width: 100%; aspect-ratio: 4/3; margin-bottom: 4px; cursor: zoom-in;" onclick="openLightbox(localActiveImageStack.map(x => x.linkAnh), \${index})">
+                      <img src="\${escapeAttributeData(item.linkAnh)}" style="width:100%; height:100%; object-fit:cover; border-radius: 8px;" />
+                    </div>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; color: var(--text-soft);">Ảnh \${index + 1}</span>
+                    \${mapLabel}
+                  </div>
+                \`;
+              }).join('')}
+            </div>
+          `;
+        } else {
+          imageInputSection = `
+            <div class="workspace-section-head"><div><h2>01 · Xác định hạng mục từ ảnh hiện trạng</h2><p>Nội dung được tự động lưu trong khi Garage nhập, không bị mất khi tải ảnh ở nhóm bên dưới.</p></div><div class="workspace-section-index">\${String(localActiveImageStack.length).padStart(2,'0')} FRAMES</div></div>
+            \${localActiveImageStack.map((item, index) => \`
+              <article class="premium-image-card">
+                <div class="img-display-pane"><span class="img-pane-indicator">Ảnh hiện trạng \${String(index + 1).padStart(2,'0')}</span><img src="\${escapeAttributeData(item.linkAnh)}" alt="Ảnh tổn thất \${index + 1}" loading="lazy" onclick="openLightbox(localActiveImageStack.map(x => x.linkAnh), \${index})" /></div>
+                <div class="inputs-entry-pane">
+                  <div><div class="image-sequence">DAMAGE FRAME / \${String(index + 1).padStart(2,'0')}</div><div class="form-group" style="margin:0"><label>Tên bộ phận và phương án khắc phục</label><textarea class="garage-quote-textarea-node input-premium" data-index-token="\${index}" placeholder="Ví dụ:\\n• Thay mới cụm đèn pha trước phải\\n• Gò nắn phục hồi tai bắt cản\\n• Sơn hoàn thiện vè trước phải">\${escapeHtmlOutput(item.hangMucBaoGia || '')}</textarea><div id="garageNoteSaveState_\${index}" class="autosave-state">Đã bật tự động lưu</div></div></div>
+                  <button class="btn-premium btn-secondary btn-inline" onclick="window.open('\${escapeAttributeData(item.linkAnh)}','_blank')">\${SVGS.EXTERNAL} Mở ảnh nguyên bản</button>
+                </div>
+              </article>\`).join('')}`;
+        }
+      }
 
       const groupedDefinitions = [
         {
@@ -10070,18 +10147,24 @@ function formatDateDisplay(val) {
         const isDocumentGroupItem = (groupInfo.key === 'documents');
 
         const actionButtonsMarkup = `
-          ${hiddenFileInputMarkup}
+          \${hiddenFileInputMarkup}
           <div class="evidence-upload-actions" style="margin-bottom: 8px; width: 100%; display: flex; gap: 6px; flex-wrap: wrap;">
-            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="${isDocumentGroupItem ? 'flex: 1; min-width: 135px;' : 'width: 100%;'} min-height: 38px; font-size: 12px; border-radius: 8px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 12px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+            \${localActiveImageStack.length > 0 ? \`
+              <button type="button" class="btn-premium btn-secondary" onclick="toggleAppraisalPicker(\${index}, event)" style="width: 100%; min-height: 38px; font-size: 12px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-color: rgba(216,180,109,0.3); background: rgba(216,180,109,0.06); color: var(--primary);">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>Khớp ảnh từ kho giám định</span>
+              </button>
+            \` : ''}
+            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(\${index})" style="\${isDocumentGroupItem ? 'flex: 1; min-width: 135px;' : 'width: 100%;'} min-height: 38px; font-size: 12px; border-radius: 8px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 12px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-              <span>Chụp từ Camera ${isDocumentGroupItem ? '' : '(Bắt buộc)'}</span>
+              <span>Chụp từ Camera \${isDocumentGroupItem || localActiveImageStack.length > 0 ? '' : '(Bắt buộc)'}</span>
             </button>
-            ${isDocumentGroupItem ? `
-              <button type="button" class="btn-premium btn-secondary" onclick="triggerUploadFromGallery(${index})" style="flex: 1; min-width: 135px; min-height: 38px; font-size: 12px; border-radius: 8px; background: var(--surface); color: var(--text-main); font-weight: 800; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+            \${isDocumentGroupItem || localActiveImageStack.length > 0 ? \`
+              <button type="button" class="btn-premium btn-secondary" onclick="triggerUploadFromGallery(\${index})" style="\${isDocumentGroupItem ? 'flex: 1; min-width: 135px;' : 'width: 100%;'} min-height: 38px; font-size: 12px; border-radius: 8px; background: var(--surface); color: var(--text-main); font-weight: 800; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#3b82f6" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
                 <span>Tải từ Thư viện</span>
               </button>
-            ` : ''}
+            \` : ''}
           </div>
         `;
 
@@ -10120,31 +10203,44 @@ function formatDateDisplay(val) {
 
         const isCardCollapsed = (window.cardCollapseState && index in window.cardCollapseState) ? !!window.cardCollapseState[index] : true;
 
-        return `<article id="evidenceRequestCard_${index}" class="evidence-request-card ${urls.length ? 'is-complete' : ''}" style="margin-bottom: 8px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); transition: all 0.2s ease;">
-          <div class="evidence-request-head" onclick="toggleSingleCardCollapse(${index})" style="cursor: pointer; padding: 10px 12px; background: var(--bg-soft); user-select: none; display: flex; flex-direction: column; gap: 4px;">
+        const appraisalPickerMarkup = localActiveImageStack.length > 0 ? `
+          <div id="appraisalPicker_\${index}" style="display: none; padding: 10px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px;">
+            <div style="font-size: 11px; font-weight: 800; color: var(--text-soft); margin-bottom: 8px; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between;">
+              <span>Chọn các ảnh tương ứng dưới đây:</span>
+              <button type="button" onclick="toggleAppraisalPicker(\${index}, event)" style="background: none; border: none; color: var(--text-muted); font-size: 10.5px; font-weight: 700; cursor: pointer;">Đóng [x]</button>
+            </div>
+            <div id="appraisalPickerGrid_\${index}" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;">
+              \${renderAppraisalPickerHtml(index)}
+            </div>
+          </div>
+        ` : '';
+
+        return `<article id="evidenceRequestCard_\${index}" class="evidence-request-card \${urls.length ? 'is-complete' : ''}" style="margin-bottom: 8px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); transition: all 0.2s ease;">
+          <div class="evidence-request-head" onclick="toggleSingleCardCollapse(\${index})" style="cursor: pointer; padding: 10px 12px; background: var(--bg-soft); user-select: none; display: flex; flex-direction: column; gap: 4px;">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
               <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
-                <span class="evidence-request-number">${String(index+1).padStart(2,'0')}</span>
-                ${categoryBadge}
+                <span class="evidence-request-number">\${String(index+1).padStart(2,'0')}</span>
+                \${categoryBadge}
               </div>
               <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                <span id="evidenceStatus_${index}" class="evidence-request-status badge-status ${urls.length ? 'completed' : 'pending'}">${urls.length ? `${urls.length} ảnh đã lưu` : 'Chưa có ảnh'}</span>
-                ${canDeleteCustomItem ? `
-                  <button type="button" class="btn-premium btn-secondary" title="Xóa hạng mục này" onclick="event.stopPropagation();triggerRemoveGarageCustomItem(${index})" style="width: 26px !important; min-height: 26px !important; height: 26px !important; padding: 0; border-radius: 6px; color: var(--danger); flex-shrink: 0;">
-                    ${SVGS.TRASH}
+                <span id="evidenceStatus_\${index}" class="evidence-request-status badge-status \${urls.length ? 'completed' : 'pending'}">\${urls.length ? \`\${urls.length} ảnh đã lưu\` : 'Chưa có ảnh'}</span>
+                \${canDeleteCustomItem ? \`
+                  <button type="button" class="btn-premium btn-secondary" title="Xóa hạng mục này" onclick="event.stopPropagation();triggerRemoveGarageCustomItem(\${index})" style="width: 26px !important; min-height: 26px !important; height: 26px !important; padding: 0; border-radius: 6px; color: var(--danger); flex-shrink: 0;">
+                    \${SVGS.TRASH}
                   </button>
-                ` : ''}
-                <div id="evidenceCardChevron_${index}" style="width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: grid; place-items: center; color: var(--text-muted); flex-shrink: 0; transition: transform 0.2s ease; transform: ${isCardCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'};">
+                \` : ''}
+                <div id="evidenceCardChevron_\${index}" style="width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border); display: grid; place-items: center; color: var(--text-muted); flex-shrink: 0; transition: transform 0.2s ease; transform: \${isCardCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)'};">
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </div>
               </div>
             </div>
-            <h3 style="margin: 0; font-size: 14.5px; font-weight: 800; color: var(--text-main); line-height: 1.35; word-break: break-word;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3>
+            <h3 style="margin: 0; font-size: 14.5px; font-weight: 800; color: var(--text-main); line-height: 1.35; word-break: break-word;">\${escapeHtmlOutput(item.tenHangMuc || \`Hạng mục \${index+1}\`)}</h3>
           </div>
-          <div id="evidenceCardBody_${index}" class="evidence-request-body" style="padding: 10px 12px; display: ${isCardCollapsed ? 'none' : 'block'}; border-top: 1px solid var(--border);">
-            ${actionButtonsMarkup}
-            ${damageMetaSelectorMarkup}
-            <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
+          <div id="evidenceCardBody_\${index}" class="evidence-request-body" style="padding: 10px 12px; display: \${isCardCollapsed ? 'none' : 'block'}; border-top: 1px solid var(--border);">
+            \${actionButtonsMarkup}
+            \${appraisalPickerMarkup}
+            \${damageMetaSelectorMarkup}
+            <div id="evidenceGalleryContainer_\${index}" class="evidence-existing-wrap" style="\${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_\${index}">\${urls.length} ảnh</span></div><div id="garageEvidencePreview_\${index}" class="evidence-preview-grid">\${renderEvidenceGalleryMarkup(item,index)}</div></div>
           </div>
         </article>`;
       };
@@ -11028,11 +11124,97 @@ function formatDateDisplay(val) {
       if (status) { status.className = `evidence-request-status badge-status ${urls.length ? 'completed' : 'pending'}`; status.textContent = urls.length ? `${urls.length} ảnh đã lưu` : 'Chưa có ảnh'; }
       if (card) card.classList.toggle('is-complete', Boolean(urls.length));
       if (container) container.style.display = urls.length ? 'block' : 'none';
+
+      const pickerGrid = document.getElementById(`appraisalPickerGrid_${index}`);
+      if (pickerGrid) {
+        pickerGrid.innerHTML = renderAppraisalPickerHtml(index);
+      }
     }
 
     function refreshAllEvidenceCardsFromState() {
       localActiveRequestedItems.forEach((_,index) => refreshSingleEvidenceCard(index));
+      refreshAppraisalPoolMapLabels();
     }
+
+    function renderAppraisalPickerHtml(itemIndex) {
+      const item = localActiveRequestedItems[itemIndex];
+      if (!item || !localActiveImageStack.length) return '';
+      const urls = normalizeEvidenceImageUrls(item);
+      return localActiveImageStack.map((imgItem, imgIdx) => {
+        const isSelected = urls.includes(imgItem.linkAnh);
+        return `
+          <div style="position: relative; aspect-ratio: 4/3; cursor: pointer; border-radius: 6px; overflow: hidden; border: 2.5px solid \${isSelected ? 'var(--primary)' : 'transparent'}; transition: border-color var(--transition);" onclick="toggleMapImageFromPool(\${itemIndex}, \${imgIdx}, event)">
+            <img src="\${escapeAttributeData(imgItem.linkAnh)}" style="width: 100%; height: 100%; object-fit: cover;" />
+            \${isSelected ? \`
+              <div style="position: absolute; inset: 0; background: rgba(216,180,109,0.25); display: grid; place-items: center; color: #fff;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+            \` : ''}
+            <div style="position: absolute; left: 4px; bottom: 4px; background: rgba(0,0,0,0.6); color: #fff; font-family: 'JetBrains Mono'; font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 3px;">\${imgIdx + 1}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function refreshAppraisalPoolMapLabels() {
+      if (!localActiveImageStack.length || !localActiveRequestedItems.length) return;
+      localActiveImageStack.forEach((item, imgIdx) => {
+        const mappedItems = [];
+        localActiveRequestedItems.forEach((reqItem, reqIdx) => {
+          const urls = normalizeEvidenceImageUrls(reqItem);
+          if (urls.includes(item.linkAnh)) {
+            mappedItems.push(reqItem.tenHangMuc || \`Hạng mục \${reqIdx + 1}\`);
+          }
+        });
+        const labelContainer = document.getElementById(\`imageMapLabel_\${imgIdx}\`);
+        if (labelContainer) {
+          const isMapped = mappedItems.length > 0;
+          labelContainer.innerHTML = isMapped 
+            ? \`<span style="background: rgba(16,185,129,0.15); color: #10b981; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px;">Đã khớp: \${escapeHtmlOutput(mappedItems.join(', '))}</span>\`
+            : \`<span style="background: var(--surface-soft); color: var(--text-muted); font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">Chưa phân loại</span>\`;
+        }
+      });
+    }
+
+    function toggleAppraisalPicker(index, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      const picker = document.getElementById(\`appraisalPicker_\${index}\`);
+      if (!picker) return;
+      const isHidden = picker.style.display === 'none';
+      picker.style.display = isHidden ? 'block' : 'none';
+    }
+
+    async function toggleMapImageFromPool(itemIndex, imgIndex, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      const item = localActiveRequestedItems[itemIndex];
+      const imgItem = localActiveImageStack[imgIndex];
+      if (!item || !imgItem) return;
+
+      const urls = normalizeEvidenceImageUrls(item);
+      let newUrls = [];
+      if (urls.includes(imgItem.linkAnh)) {
+        newUrls = urls.filter(u => u !== imgItem.linkAnh);
+      } else {
+        newUrls = [...urls, imgItem.linkAnh];
+      }
+
+      item.hinhAnhGarage = newUrls;
+      try {
+        await dbNodeInstance.ref(\`cases/\${localActiveCaseNode.idCa}/hangMucYeuCauAnh\`).set(localActiveRequestedItems);
+        triggerToast('Đã cập nhật liên kết ảnh giám định thành công!', 'success');
+      } catch (error) {
+        triggerToast('Lỗi liên kết ảnh: ' + error.message, 'error');
+      }
+    }
+
+    window.toggleAppraisalPicker = toggleAppraisalPicker;
+    window.toggleMapImageFromPool = toggleMapImageFromPool;
 
     function scheduleGarageImageNoteAutosave(index, value) {
       if (!localActiveImageStack[index]) return;
@@ -11222,8 +11404,39 @@ function formatDateDisplay(val) {
       const completedItems = localActiveImageStack.filter(item => String(item.hangMucBaoGia || '').trim()).length;
       const completedEvidenceItems = localActiveRequestedItems.filter(item => normalizeEvidenceImageUrls(item).length).length;
 
-      // Lược bỏ hoàn toàn mục 01 (dư thừa dữ liệu hình ảnh) để tập trung xem ảnh theo hạng mục
-      const imageResultsSection = '';
+      const imageResultsSection = (localActiveImageStack.length && localActiveRequestedItems.length) ? `
+        <div class="workspace-section-head" style="margin-bottom: 12px; margin-top: 16px;">
+          <div>
+            <h2>Bể ảnh giám định gốc</h2>
+            <p>Kho ảnh chụp hiện trạng tổn thất do Giám định viên tải lên lúc lập hồ sơ.</p>
+          </div>
+          <div class="workspace-section-index">\${String(localActiveImageStack.length).padStart(2,'0')} ẢNH</div>
+        </div>
+        <div class="p-card" style="padding: 16px; margin-bottom: 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-sm);">
+          \${localActiveImageStack.map((item, index) => {
+            const mappedItems = [];
+            localActiveRequestedItems.forEach((reqItem, reqIdx) => {
+              const urls = normalizeEvidenceImageUrls(reqItem);
+              if (urls.includes(item.linkAnh)) {
+                mappedItems.push(reqItem.tenHangMuc || \`Hạng mục \${reqIdx + 1}\`);
+              }
+            });
+            const isMapped = mappedItems.length > 0;
+            const mapLabel = isMapped 
+              ? \`<span style="background: rgba(16,185,129,0.12); color: #10b981; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px;">Đã khớp: \${mappedItems.join(', ')}</span>\`
+              : \`<span style="background: var(--surface-soft); color: var(--text-muted); font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">Chưa phân loại</span>\`;
+            return \`
+              <div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                <div class="preview-thumb" style="width: 100%; aspect-ratio: 4/3; margin-bottom: 4px; cursor: zoom-in;" onclick="openLightbox(localActiveImageStack.map(x => x.linkAnh), \${index})">
+                  <img src="\${escapeAttributeData(item.linkAnh)}" style="width:100%; height:100%; object-fit:cover; border-radius: 8px;" />
+                </div>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; color: var(--text-soft);">Ảnh \${index + 1}</span>
+                \${mapLabel}
+              </div>
+            \`;
+          }).join('')}
+        </div>
+      ` : '';
 
       const evidenceResultsSection = localActiveRequestedItems.length ? `
         <div class="workspace-section-head" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
