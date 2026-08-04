@@ -17166,7 +17166,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   fontStyle.bold = true;
                 }
 
-                let fillStyle = {};
+                let fillStyle = null;
                 const days = aoa[rowNum - 1][9];
                 if (col === 'J' && typeof days === 'number') {
                   if (days > 30) {
@@ -17183,7 +17183,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 ws[cellKey].s = {
                   font: fontStyle,
                   alignment: align,
-                  fill: fillStyle,
                   border: {
                     top: { style: 'thin', color: { rgb: 'E2E8F0' } },
                     bottom: { style: 'thin', color: { rgb: 'E2E8F0' } },
@@ -17191,6 +17190,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     right: { style: 'thin', color: { rgb: 'E2E8F0' } }
                   }
                 };
+                if (fillStyle) {
+                  ws[cellKey].s.fill = fillStyle;
+                }
               }
             }
           });
