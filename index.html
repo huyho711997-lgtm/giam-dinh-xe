@@ -16793,8 +16793,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const claimsList = Object.values(cachedPendingClaimsPayload || {});
       const garas = new Set();
       claimsList.forEach(c => {
-        if (isDuyetHsbtApproved(c)) {
-          const gName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || '').trim();
+        if (c.trangThai === 'da_duyet_hsbt') {
+          const gName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || 'Gara chưa xác định').trim();
           if (gName && gName !== '—') garas.add(gName);
         }
       });
@@ -16818,7 +16818,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const claimsList = Object.values(cachedPendingClaimsPayload || {});
       
       const filtered = claimsList.filter(c => {
-        if (!isDuyetHsbtApproved(c)) return false;
+        if (c.trangThai !== 'da_duyet_hsbt') return false;
 
         let yr = null;
         let mo = null;
@@ -16844,66 +16844,93 @@ function renderGdvMonthlyReportPage(targetContainer) {
         if (!matchGdv) return false;
 
         if (activeGdvReportGara !== 'all') {
-          const garaName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || '').trim();
+          const garaName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || 'Gara chưa xác định').trim();
           if (garaName !== activeGdvReportGara) return false;
         }
 
         return true;
       });
 
-      filtered.sort((a, b) => {
-        const dateAStr = a.toTrinhNgayDuyet || a.pascNgayDuyet || a.ngayDuyetHsbt || '';
-        const dateBStr = b.toTrinhNgayDuyet || b.pascNgayDuyet || b.ngayDuyetHsbt || '';
-        const dpA = parseDateParts(dateAStr);
-        const dpB = parseDateParts(dateBStr);
-        const timeA = dpA ? new Date(dpA.year, dpA.month - 1, dpA.day).getTime() : 0;
-        const timeB = dpB ? new Date(dpB.year, dpB.month - 1, dpB.day).getTime() : 0;
-        return timeB - timeA;
+      // Group claims by Gara
+      const groups = {};
+      filtered.forEach(c => {
+        const garaName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || 'Gara chưa xác định').trim();
+        if (!groups[garaName]) groups[garaName] = [];
+        groups[garaName].push(c);
       });
 
-      const rowsHtml = filtered.map((c, idx) => {
-        const bsx = c.bienSo || '—';
-        const hsbt = c.soHoSoBoiThuong || c.maVuTonThat || '—';
-        const chuXe = extractClaimOwnerName(c) || '—';
-        const hangXe = c.hangXe || '—';
-        const hieuXe = c.hieuXe || '—';
-        const carBrandModel = hieuXe !== '—' && hieuXe !== hangXe ? `${hangXe} / ${hieuXe}` : hangXe;
-        const gdv = c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '—';
-        
-        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
-        const amtVal = parseInt(amtStr, 10) || 0;
-        const amtDisplay = amtVal > 0 ? formatCurrencyInputNumber(amtVal) + ' đ' : '—';
-        
-        const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || '—';
-        const daysCount = calculateDaysSinceApproved(duyetDateStr);
+      let globalIdx = 0;
+      let rowsHtml = '';
 
-        let badgeStyle = 'background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.25);';
-        if (typeof daysCount === 'number') {
-          if (daysCount > 30) {
-            badgeStyle = 'background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); font-weight: 850; animation: pulseRed 2.5s infinite;';
-          } else if (daysCount > 15) {
-            badgeStyle = 'background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); font-weight: 800;';
-          }
-        }
+      const sortedGaraNames = Object.keys(groups).sort();
+      sortedGaraNames.forEach(garaName => {
+        const claims = groups[garaName];
+        
+        // Sort claims within group by days since approved descending (oldest first)
+        claims.sort((a, b) => {
+          const dateAStr = a.toTrinhNgayDuyet || a.pascNgayDuyet || a.ngayDuyetHsbt || '';
+          const dateBStr = b.toTrinhNgayDuyet || b.pascNgayDuyet || b.ngayDuyetHsbt || '';
+          const daysA = calculateDaysSinceApproved(dateAStr);
+          const daysB = calculateDaysSinceApproved(dateBStr);
+          const valA = typeof daysA === 'number' ? daysA : 0;
+          const valB = typeof daysB === 'number' ? daysB : 0;
+          return valB - valA;
+        });
 
-        return `
-          <tr style="border-bottom: 1px solid var(--border); font-size: 13px;">
-            <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 44px;">${idx + 1}</td>
-            <td style="padding: 12px 10px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
-            <td style="padding: 12px 10px; font-weight: 800; font-family: 'JetBrains Mono'; color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
-            <td style="padding: 12px 10px; text-align: left; font-weight: 750;">${escapeHtmlOutput(chuXe)}</td>
-            <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(carBrandModel)}</td>
-            <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
-            <td style="padding: 12px 10px; font-weight: 850; font-family: 'JetBrains Mono'; color: #10b981; text-align: right; font-size: 13.5px;">${amtDisplay}</td>
-            <td style="padding: 12px 10px; text-align: center; font-family: 'JetBrains Mono'; font-weight: 750;">${escapeHtmlOutput(duyetDateStr)}</td>
-            <td style="padding: 12px 10px; text-align: center;">
-              <span class="acc-status-pill" style="padding: 3px 10px; border-radius: 8px; font-size: 11px; ${badgeStyle}">
-                ${typeof daysCount === 'number' ? daysCount + ' ngày' : daysCount}
-              </span>
+        // Add Gara header row
+        rowsHtml += `
+          <tr style="background: var(--bg-soft); font-weight: 850; border-bottom: 1px solid var(--border-strong);">
+            <td colspan="9" style="padding: 12px 14px; color: var(--primary); font-size: 13px; text-align: left; background: var(--bg-soft);">
+              🏢 Gara: <strong style="font-size: 13.5px; color: var(--text-main);">${escapeHtmlOutput(garaName)}</strong> (${claims.length} hồ sơ tồn)
             </td>
           </tr>
         `;
-      }).join('');
+
+        claims.forEach(c => {
+          globalIdx++;
+          const bsx = c.bienSo || '—';
+          const hsbt = c.soHoSoBoiThuong || c.maVuTonThat || '—';
+          const chuXe = extractClaimOwnerName(c) || '—';
+          const hangXe = c.hangXe || '—';
+          const hieuXe = c.hieuXe || '—';
+          const carBrandModel = hieuXe !== '—' && hieuXe !== hangXe ? `${hangXe} / ${hieuXe}` : hangXe;
+          const gdv = c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '—';
+          
+          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+          const amtVal = parseInt(amtStr, 10) || 0;
+          const amtDisplay = amtVal > 0 ? formatCurrencyInputNumber(amtVal) + ' đ' : '—';
+          
+          const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || '—';
+          const daysCount = calculateDaysSinceApproved(duyetDateStr);
+
+          let badgeStyle = 'background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.25);';
+          if (typeof daysCount === 'number') {
+            if (daysCount > 30) {
+              badgeStyle = 'background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); font-weight: 850; animation: pulseRed 2s infinite;';
+            } else if (daysCount > 15) {
+              badgeStyle = 'background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); font-weight: 800;';
+            }
+          }
+
+          rowsHtml += `
+            <tr style="border-bottom: 1px solid var(--border); font-size: 13px;">
+              <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 44px;">${globalIdx}</td>
+              <td style="padding: 12px 10px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
+              <td style="padding: 12px 10px; font-weight: 800; font-family: 'JetBrains Mono'; color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
+              <td style="padding: 12px 10px; text-align: left; font-weight: 750;">${escapeHtmlOutput(chuXe)}</td>
+              <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(carBrandModel)}</td>
+              <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
+              <td style="padding: 12px 10px; font-weight: 850; font-family: 'JetBrains Mono'; color: #10b981; text-align: right; font-size: 13.5px;">${amtDisplay}</td>
+              <td style="padding: 12px 10px; text-align: center; font-family: 'JetBrains Mono'; font-weight: 750;">${escapeHtmlOutput(duyetDateStr)}</td>
+              <td style="padding: 12px 10px; text-align: center;">
+                <span class="acc-status-pill" style="padding: 3px 10px; border-radius: 8px; font-size: 11px; ${badgeStyle}">
+                  ${typeof daysCount === 'number' ? daysCount + ' ngày' : daysCount}
+                </span>
+              </td>
+            </tr>
+          `;
+        });
+      });
 
       return `
         <div class="p-card" style="padding: 26px 30px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface);">
@@ -16953,7 +16980,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
       const claimsList = Object.values(cachedPendingClaimsPayload || {});
       const filtered = claimsList.filter(c => {
-        if (!isDuyetHsbtApproved(c)) return false;
+        if (c.trangThai !== 'da_duyet_hsbt') return false;
 
         let yr = null;
         let mo = null;
@@ -16979,7 +17006,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         if (!matchGdv) return false;
 
         if (activeGdvReportGara !== 'all') {
-          const garaName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || '').trim();
+          const garaName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || 'Gara chưa xác định').trim();
           if (garaName !== activeGdvReportGara) return false;
         }
 
@@ -16991,43 +17018,74 @@ function renderGdvMonthlyReportPage(targetContainer) {
         return;
       }
 
-      filtered.sort((a, b) => {
-        const dateAStr = a.toTrinhNgayDuyet || a.pascNgayDuyet || a.ngayDuyetHsbt || '';
-        const dateBStr = b.toTrinhNgayDuyet || b.pascNgayDuyet || b.ngayDuyetHsbt || '';
-        const dpA = parseDateParts(dateAStr);
-        const dpB = parseDateParts(dateBStr);
-        const timeA = dpA ? new Date(dpA.year, dpA.month - 1, dpA.day).getTime() : 0;
-        const timeB = dpB ? new Date(dpB.year, dpB.month - 1, dpB.day).getTime() : 0;
-        return timeB - timeA;
+      // Group claims by Gara
+      const groups = {};
+      filtered.forEach(c => {
+        const garaName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || 'Gara chưa xác định').trim();
+        if (!groups[garaName]) groups[garaName] = [];
+        groups[garaName].push(c);
       });
 
-      const excelData = filtered.map((c, idx) => {
-        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
-        const amtVal = parseInt(amtStr, 10) || 0;
-        const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || '—';
-        const daysCount = calculateDaysSinceApproved(duyetDateStr);
-        const chuXe = extractClaimOwnerName(c) || '—';
-        const hangXe = c.hangXe || '—';
-        const hieuXe = c.hieuXe || '—';
+      // Construct AOA
+      const aoa = [
+        ['STT', 'Số HSBT', 'Biển số xe', 'Tên chủ xe / Khách hàng', 'Hãng xe', 'Hiệu xe', 'Cán bộ xử lý (CBXL)', 'Tiền duyệt HSBT (VNĐ)', 'Ngày duyệt HSBT', 'Số ngày đã duyệt']
+      ];
+      
+      const merges = [];
+      let globalIdx = 0;
+      
+      const sortedGaraNames = Object.keys(groups).sort();
+      sortedGaraNames.forEach(garaName => {
+        const claims = groups[garaName];
+        
+        // Sort claims within group by days since approved descending
+        claims.sort((a, b) => {
+          const dateAStr = a.toTrinhNgayDuyet || a.pascNgayDuyet || a.ngayDuyetHsbt || '';
+          const dateBStr = b.toTrinhNgayDuyet || b.pascNgayDuyet || b.ngayDuyetHsbt || '';
+          const daysA = calculateDaysSinceApproved(dateAStr);
+          const daysB = calculateDaysSinceApproved(dateBStr);
+          const valA = typeof daysA === 'number' ? daysA : 0;
+          const valB = typeof daysB === 'number' ? daysB : 0;
+          return valB - valA;
+        });
 
-        return {
-          'STT': idx + 1,
-          'Số HSBT': c.soHoSoBoiThuong || c.maVuTonThat || '',
-          'Biển số xe': (c.bienSo || '').toUpperCase(),
-          'Tên chủ xe / Khách hàng': chuXe,
-          'Hãng xe': hangXe,
-          'Hiệu xe': hieuXe,
-          'Cán bộ xử lý (CBXL)': c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '',
-          'Tiền duyệt HSBT (VNĐ)': amtVal,
-          'Ngày duyệt HSBT': duyetDateStr,
-          'Số ngày đã duyệt': typeof daysCount === 'number' ? daysCount : 0
-        };
+        // Push Gara group header row
+        const groupRowIdx = aoa.length;
+        aoa.push([`🏢 Gara: ${garaName} (${claims.length} hồ sơ tồn)`, '', '', '', '', '', '', '', '', '']);
+        merges.push({ s: { r: groupRowIdx, c: 0 }, e: { r: groupRowIdx, c: 9 } });
+
+        claims.forEach(c => {
+          globalIdx++;
+          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+          const amtVal = parseInt(amtStr, 10) || 0;
+          const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || '—';
+          const daysCount = calculateDaysSinceApproved(duyetDateStr);
+          const chuXe = extractClaimOwnerName(c) || '—';
+          const hangXe = c.hangXe || '—';
+          const hieuXe = c.hieuXe || '—';
+
+          aoa.push([
+            globalIdx,
+            c.soHoSoBoiThuong || c.maVuTonThat || '',
+            (c.bienSo || '').toUpperCase(),
+            chuXe,
+            hangXe,
+            hieuXe,
+            c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '',
+            amtVal,
+            duyetDateStr,
+            typeof daysCount === 'number' ? daysCount : 0
+          ]);
+        });
       });
 
       if (window.XLSX) {
-        const ws = XLSX.utils.json_to_sheet(excelData);
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws['!merges'] = merges;
         
         const cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        
+        // Header Row Styling (Row 1)
         cols.forEach(col => {
           const cellKey = col + '1';
           if (ws[cellKey]) {
@@ -17045,54 +17103,75 @@ function renderGdvMonthlyReportPage(targetContainer) {
           }
         });
 
-        for (let i = 0; i < excelData.length; i++) {
+        // Style Data Rows (Row 2 onwards)
+        for (let i = 0; i < aoa.length - 1; i++) {
           const rowNum = 2 + i;
+          const isGroupRow = String(aoa[rowNum - 1][0]).startsWith('🏢 Gara:');
           
           cols.forEach(col => {
             const cellKey = col + rowNum;
             if (ws[cellKey]) {
-              let align = { horizontal: 'left', vertical: 'center' };
-              if (['A', 'C', 'G', 'I', 'J'].includes(col)) {
-                align.horizontal = 'center';
-              } else if (col === 'H') {
-                align.horizontal = 'right';
-              }
-
-              let fontStyle = { name: 'Arial', sz: 10 };
-              if (col === 'C') {
-                fontStyle.bold = true;
-              }
-
-              let fillStyle = {};
-              const days = excelData[i]['Số ngày đã duyệt'];
-              if (col === 'J' && days > 30) {
-                fillStyle = { fgColor: { rgb: 'FEE2E2' } };
-                fontStyle.color = { rgb: 'EF4444' };
-                fontStyle.bold = true;
-              } else if (col === 'J' && days > 15) {
-                fillStyle = { fgColor: { rgb: 'FEF3C7' } };
-                fontStyle.color = { rgb: 'F59E0B' };
-                fontStyle.bold = true;
-              }
-
-              ws[cellKey].s = {
-                font: fontStyle,
-                alignment: align,
-                fill: fillStyle,
-                border: {
-                  top: { style: 'thin', color: { rgb: 'CBD5E1' } },
-                  bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
-                  left: { style: 'thin', color: { rgb: 'CBD5E1' } },
-                  right: { style: 'thin', color: { rgb: 'CBD5E1' } }
+              if (isGroupRow) {
+                // Style group row
+                ws[cellKey].s = {
+                  font: { name: 'Arial', sz: 10.5, bold: true, color: { rgb: '1E293B' } },
+                  fill: { fgColor: { rgb: 'F1F5F9' } },
+                  alignment: { horizontal: 'left', vertical: 'center' },
+                  border: {
+                    top: { style: 'thin', color: { rgb: 'CBD5E1' } },
+                    bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
+                    left: { style: 'thin', color: { rgb: 'CBD5E1' } },
+                    right: { style: 'thin', color: { rgb: 'CBD5E1' } }
+                  }
+                };
+              } else {
+                // Style normal claim row
+                let align = { horizontal: 'left', vertical: 'center' };
+                if (['A', 'C', 'G', 'I', 'J'].includes(col)) {
+                  align.horizontal = 'center';
+                } else if (col === 'H') {
+                  align.horizontal = 'right';
                 }
-              };
+
+                let fontStyle = { name: 'Arial', sz: 10 };
+                if (col === 'C') {
+                  fontStyle.bold = true;
+                }
+
+                let fillStyle = {};
+                const days = aoa[rowNum - 1][9];
+                if (col === 'J' && typeof days === 'number') {
+                  if (days > 30) {
+                    fillStyle = { fgColor: { rgb: 'FEE2E2' } };
+                    fontStyle.color = { rgb: 'EF4444' };
+                    fontStyle.bold = true;
+                  } else if (days > 15) {
+                    fillStyle = { fgColor: { rgb: 'FEF3C7' } };
+                    fontStyle.color = { rgb: 'F59E0B' };
+                    fontStyle.bold = true;
+                  }
+                }
+
+                ws[cellKey].s = {
+                  font: fontStyle,
+                  alignment: align,
+                  fill: fillStyle,
+                  border: {
+                    top: { style: 'thin', color: { rgb: 'E2E8F0' } },
+                    bottom: { style: 'thin', color: { rgb: 'E2E8F0' } },
+                    left: { style: 'thin', color: { rgb: 'E2E8F0' } },
+                    right: { style: 'thin', color: { rgb: 'E2E8F0' } }
+                  }
+                };
+              }
             }
           });
         }
 
         ws['!rows'] = [{ hpt: 26 }];
-        for (let i = 0; i < excelData.length; i++) {
-          ws['!rows'].push({ hpt: 20 });
+        for (let i = 0; i < aoa.length - 1; i++) {
+          const isGroupRow = String(aoa[i + 1][0]).startsWith('🏢 Gara:');
+          ws['!rows'].push({ hpt: isGroupRow ? 24 : 20 });
         }
 
         ws['!cols'] = [
@@ -17123,7 +17202,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
       activeOpenDropdownId = null;
       exportTonChuaHoaDonReportExcel();
     }
-
 </script>
 </body>
 </html>
