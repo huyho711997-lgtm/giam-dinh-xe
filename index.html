@@ -10147,28 +10147,56 @@ function formatDateDisplay(val) {
         const groupInfo = getCategoryGroupInfo(item.tenHangMuc, isGarageCustomItem);
         const isDocumentGroupItem = (groupInfo.key === 'documents');
 
-        const actionButtonFlexStyle = (localActiveImageStack.length > 0 || isDocumentGroupItem) ? 'flex: 1; min-width: 120px;' : 'width: 100%;';
-        const actionButtonsMarkup = `
-          ${hiddenFileInputMarkup}
-          <div class="evidence-upload-actions" style="margin-bottom: 8px; width: 100%; display: flex; gap: 8px; flex-wrap: wrap;">
-            ${localActiveImageStack.length > 0 ? `
-              <button type="button" class="btn-premium btn-secondary" onclick="toggleAppraisalPicker(${index}, event)" style="width: 100%; min-height: 40px; font-size: 12px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-color: rgba(216,180,109,0.4); background: rgba(216,180,109,0.08); color: var(--primary); font-weight: 850;">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                <span>Khớp ảnh từ kho giám định</span>
+        let actionButtonsMarkup = '';
+        let appraisalPickerMarkup = '';
+
+        if (localActiveImageStack.length > 0) {
+          appraisalPickerMarkup = `
+            <div style="margin-bottom: 12px; padding: 12px; background: var(--bg-soft); border: 1.5px dashed var(--primary); border-radius: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+              <div style="font-size: 11.5px; font-weight: 850; color: var(--primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 5px;">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>Chọn ảnh khớp từ bể ảnh giám định:</span>
+              </div>
+              <div id="appraisalPickerGrid_${index}" style="display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 8px 0; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
+                ${renderAppraisalPickerHtml(index)}
+              </div>
+            </div>
+          `;
+
+          actionButtonsMarkup = `
+            ${hiddenFileInputMarkup}
+            <div class="evidence-upload-actions" style="margin-bottom: 12px; padding-top: 8px; border-top: 1px dashed var(--border); width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+              <span style="font-size: 11.5px; font-weight: 800; color: var(--text-soft);">Hoặc tự chụp/tải ảnh mới:</span>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn-premium btn-secondary" onclick="openMobileCameraForEvidence(${index})" style="min-height: 32px; padding: 0 12px; font-size: 11px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border-color: rgba(216,180,109,0.3); background: rgba(216,180,109,0.06); color: var(--primary); font-weight: 800;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  <span>Chụp ảnh</span>
+                </button>
+                <button type="button" class="btn-premium btn-secondary" onclick="triggerUploadFromGallery(${index})" style="min-height: 32px; padding: 0 12px; font-size: 11px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; background: var(--surface); color: var(--text-main); font-weight: 800; border: 1px solid var(--border);">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#3b82f6" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+                  <span>Thư viện</span>
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          appraisalPickerMarkup = '';
+          actionButtonsMarkup = `
+            ${hiddenFileInputMarkup}
+            <div class="evidence-upload-actions" style="margin-bottom: 8px; width: 100%; display: flex; gap: 6px; flex-wrap: wrap;">
+              <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="${isDocumentGroupItem ? 'flex: 1; min-width: 135px;' : 'width: 100%;'} min-height: 38px; font-size: 12px; border-radius: 8px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 12px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <span>Chụp từ Camera ${isDocumentGroupItem ? '' : '(Bắt buộc)'}</span>
               </button>
-            ` : ''}
-            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="${actionButtonFlexStyle} min-height: 40px; font-size: 12px; border-radius: 8px; background: var(--primary-gradient); color: #080b11; font-weight: 800; border: none; box-shadow: 0 4px 10px rgba(216,180,109,0.2); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-              <span>Chụp từ Camera ${isDocumentGroupItem || localActiveImageStack.length > 0 ? '' : '(Bắt buộc)'}</span>
-            </button>
-            ${isDocumentGroupItem || localActiveImageStack.length > 0 ? `
-              <button type="button" class="btn-premium btn-secondary" onclick="triggerUploadFromGallery(${index})" style="${actionButtonFlexStyle} min-height: 40px; font-size: 12px; border-radius: 8px; background: var(--surface); color: var(--text-main); font-weight: 800; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
-                <span>Tải từ Thư viện</span>
-              </button>
-            ` : ''}
-          </div>
-        `;
+              ${isDocumentGroupItem ? `
+                <button type="button" class="btn-premium btn-secondary" onclick="triggerUploadFromGallery(${index})" style="flex: 1; min-width: 135px; min-height: 38px; font-size: 12px; border-radius: 8px; background: var(--surface); color: var(--text-main); font-weight: 800; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#3b82f6" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+                  <span>Tải từ Thư viện</span>
+                </button>
+              ` : ''}
+            </div>
+          `;
+        }
 
         const isDamageItem = getCategoryGroupInfo(item.tenHangMuc, isGarageCustomItem).key === 'damages';
         const DAMAGE_TAG_ICONS = {
@@ -10205,18 +10233,6 @@ function formatDateDisplay(val) {
 
         const isCardCollapsed = (window.cardCollapseState && index in window.cardCollapseState) ? !!window.cardCollapseState[index] : true;
 
-        const appraisalPickerMarkup = localActiveImageStack.length > 0 ? `
-          <div id="appraisalPicker_${index}" style="display: none; padding: 10px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px;">
-            <div style="font-size: 11px; font-weight: 800; color: var(--text-soft); margin-bottom: 8px; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between;">
-              <span>Chọn các ảnh tương ứng dưới đây:</span>
-              <button type="button" onclick="toggleAppraisalPicker(${index}, event)" style="background: none; border: none; color: var(--text-muted); font-size: 10.5px; font-weight: 700; cursor: pointer;">Đóng [x]</button>
-            </div>
-            <div id="appraisalPickerGrid_${index}" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;">
-              ${renderAppraisalPickerHtml(index)}
-            </div>
-          </div>
-        ` : '';
-
         return `<article id="evidenceRequestCard_${index}" class="evidence-request-card ${urls.length ? 'is-complete' : ''}" style="margin-bottom: 8px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--surface); transition: all 0.2s ease;">
           <div class="evidence-request-head" onclick="toggleSingleCardCollapse(${index})" style="cursor: pointer; padding: 10px 12px; background: var(--bg-soft); user-select: none; display: flex; flex-direction: column; gap: 4px;">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;">
@@ -10239,8 +10255,8 @@ function formatDateDisplay(val) {
             <h3 style="margin: 0; font-size: 14.5px; font-weight: 800; color: var(--text-main); line-height: 1.35; word-break: break-word;">${escapeHtmlOutput(item.tenHangMuc || `Hạng mục ${index+1}`)}</h3>
           </div>
           <div id="evidenceCardBody_${index}" class="evidence-request-body" style="padding: 10px 12px; display: ${isCardCollapsed ? 'none' : 'block'}; border-top: 1px solid var(--border);">
-            ${actionButtonsMarkup}
             ${appraisalPickerMarkup}
+            ${actionButtonsMarkup}
             ${damageMetaSelectorMarkup}
             <div id="evidenceGalleryContainer_${index}" class="evidence-existing-wrap" style="${urls.length ? '' : 'display: none;'}"><div class="evidence-existing-title"><span>Ảnh đã lưu trên hệ thống</span><span id="evidenceCount_${index}">${urls.length} ảnh</span></div><div id="garageEvidencePreview_${index}" class="evidence-preview-grid">${renderEvidenceGalleryMarkup(item,index)}</div></div>
           </div>
@@ -11145,14 +11161,16 @@ function formatDateDisplay(val) {
       return localActiveImageStack.map((imgItem, imgIdx) => {
         const isSelected = urls.includes(imgItem.linkAnh);
         return `
-          <div style="position: relative; aspect-ratio: 4/3; cursor: pointer; border-radius: 6px; overflow: hidden; border: 2.5px solid ${isSelected ? 'var(--primary)' : 'transparent'}; transition: border-color var(--transition);" onclick="toggleMapImageFromPool(${itemIndex}, ${imgIdx}, event)">
-            <img src="${escapeAttributeData(imgItem.linkAnh)}" style="width: 100%; height: 100%; object-fit: cover;" />
+          <div style="position: relative; height: 68px; aspect-ratio: 4/3; cursor: pointer; border-radius: 8px; overflow: hidden; border: 2.5px solid ${isSelected ? 'var(--primary)' : 'transparent'}; flex-shrink: 0; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);" onclick="toggleMapImageFromPool(${itemIndex}, ${imgIdx}, event)" class="appraisal-picker-item">
+            <img src="${escapeAttributeData(imgItem.linkAnh)}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.25s ease;" />
             ${isSelected ? `
-              <div style="position: absolute; inset: 0; background: rgba(216,180,109,0.25); display: grid; place-items: center; color: #fff;">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <div style="position: absolute; inset: 0; background: rgba(8,11,17,0.3); backdrop-filter: blur(1.5px); display: grid; place-items: center; color: #fff;">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary); display: grid; place-items: center; box-shadow: 0 4px 10px rgba(216,180,109,0.4);">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#080b11" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
               </div>
             ` : ''}
-            <div style="position: absolute; left: 4px; bottom: 4px; background: rgba(0,0,0,0.6); color: #fff; font-family: 'JetBrains Mono'; font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 3px;">${imgIdx + 1}</div>
+            <div style="position: absolute; left: 4px; bottom: 4px; background: rgba(8,11,17,0.75); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-family: 'JetBrains Mono'; font-size: 8px; font-weight: 800; padding: 1px 4px; border-radius: 3px;">${imgIdx + 1}</div>
           </div>
         `;
       }).join('');
