@@ -11935,6 +11935,7 @@ function formatDateDisplay(val) {
     let activeGdvReportMonth = String(new Date().getMonth() + 1);
     let activeGdvReportYear = String(new Date().getFullYear());
     let activeGdvReportBranch = 'all';
+    let activeGdvReportGara = 'all';
     let activeGdvReportSearch = '';
     let activeGdvReportView = 'weekly_zone'; // 'table' | 'chart'
     let activeSelectedDakLakStatuses = ['da_duyet_pasc', 'cho_duyet_hsbt'];
@@ -11987,6 +11988,13 @@ function formatDateDisplay(val) {
 
     function selectGdvReportBranch(branch) {
       activeGdvReportBranch = branch;
+      document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      activeOpenDropdownId = null;
+      renderGdvMonthlyReportPage();
+    }
+
+    function selectGdvReportGara(gara) {
+      activeGdvReportGara = gara;
       document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
       activeOpenDropdownId = null;
       renderGdvMonthlyReportPage();
@@ -12526,6 +12534,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     <span style="color: var(--primary); font-weight: 850;">Báo cáo Đắk Lắk (.xlsx)</span>
                   </div>
                   ` : ''}
+
+                  ${activeGdvReportView === 'ton_chua_hoa_don' ? `
+                  <div class="custom-select-item" onclick="triggerTonChuaHoaDonReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px dashed var(--border); transition: background 0.15s ease;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    <span style="color: #ef4444; font-weight: 850;">Tồn chưa Hóa đơn (.xlsx)</span>
+                  </div>
+                  ` : ''}
                 </div>
               </div>
               ` : ''}
@@ -12553,6 +12568,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <button type="button" onclick="switchGdvReportView('daklak_reserve')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'daklak_reserve' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
               <span>BC Đắk Lắk > 100tr</span>
+            </button>
+            <button type="button" onclick="switchGdvReportView('ton_chua_hoa_don')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'ton_chua_hoa_don' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>BC Tồn chưa HĐ</span>
             </button>
             
           </div>
@@ -12609,6 +12628,32 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </div>
                 </div>
               </div>
+
+              <!-- Custom Gara Selection Dropdown for Outstanding No Invoice Report -->
+              ${activeGdvReportView === 'ton_chua_hoa_don' ? `
+              <div class="custom-select-wrapper" style="position: relative;" id="accReportGaraFilterWrapper">
+                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportGaraMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 200px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
+                  <span style="display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M3 21h18"></path><path d="M19 21v-4a2 2 0 0 0-2 2v4"></path><path d="M5 15V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"></path></svg>
+                    <span>${activeGdvReportGara === 'all' ? 'Tất cả Gara' : activeGdvReportGara}</span>
+                  </span>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                <div id="ddReportGaraMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddReportGaraMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); left: 0; min-width: 240px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
+                  <div class="custom-select-item ${activeGdvReportGara === 'all' ? 'active' : ''}" onclick="selectGdvReportGara('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportGara === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                    <span>Tất cả Gara</span>
+                    ${activeGdvReportGara === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  ${getAvailableGaraNamesForOutstandingReport().map(g => `
+                    <div class="custom-select-item ${g === activeGdvReportGara ? 'active' : ''}" onclick="selectGdvReportGara('${escapeAttributeData(g)}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${g === activeGdvReportGara ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                      <span>${escapeHtmlOutput(g)}</span>
+                      ${g === activeGdvReportGara ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+              ` : ''}
 
               <!-- Custom Status Multi-Select Dropdown for Dak Lak Report -->
               ${activeGdvReportView === 'daklak_reserve' ? `
@@ -12742,7 +12787,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
           </div>
 
-          ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone' && activeGdvReportView !== 'daklak_reserve') ? `
+          ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone' && activeGdvReportView !== 'daklak_reserve' && activeGdvReportView !== 'ton_chua_hoa_don') ? `
           <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
@@ -12776,7 +12821,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           ` : ''}
 
           <!-- CONDITIONAL RENDERING BASED ON activeGdvReportView -->
-          ${activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'daklak_reserve' ? renderDakLakReserveReportTableHtml() : activeGdvReportView === 'garage' ? `
+          ${activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'daklak_reserve' ? renderDakLakReserveReportTableHtml() : activeGdvReportView === 'ton_chua_hoa_don' ? renderTonChuaHoaDonReportTableHtml() : activeGdvReportView === 'garage' ? `
             
             <!-- EXECUTIVE GARAGE REPORT DASHBOARD -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
@@ -16735,6 +16780,348 @@ function renderGdvMonthlyReportPage(targetContainer) {
       document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
       activeOpenDropdownId = null;
       exportDakLakReserveReportExcel();
+    }
+
+    function triggerTonChuaHoaDonReportExcelExport(event) {
+      if (event) event.stopPropagation();
+      document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      activeOpenDropdownId = null;
+      exportTonChuaHoaDonReportExcel();
+    }
+
+    function getAvailableGaraNamesForOutstandingReport() {
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+      const garas = new Set();
+      claimsList.forEach(c => {
+        if (isDuyetHsbtApproved(c)) {
+          const gName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || '').trim();
+          if (gName && gName !== '—') garas.add(gName);
+        }
+      });
+      return Array.from(garas).sort();
+    }
+
+    function calculateDaysSinceApproved(approveDateStr) {
+      if (!approveDateStr || approveDateStr === '—') return '—';
+      const dp = parseDateParts(approveDateStr);
+      if (!dp || !dp.year || !dp.month || !dp.day) return '—';
+      const approveDate = new Date(dp.year, dp.month - 1, dp.day);
+      const today = new Date();
+      approveDate.setHours(0,0,0,0);
+      today.setHours(0,0,0,0);
+      const diffTime = today - approveDate;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays >= 0 ? diffDays : 0;
+    }
+
+    function renderTonChuaHoaDonReportTableHtml() {
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+      
+      const filtered = claimsList.filter(c => {
+        if (!isDuyetHsbtApproved(c)) return false;
+
+        let yr = null;
+        let mo = null;
+        const dateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || c.ngayMoHs;
+        if (dateStr && dateStr !== '—') {
+          const dp = parseDateParts(dateStr);
+          if (dp && dp.year && dp.month) {
+            yr = dp.year;
+            mo = dp.month;
+          }
+        }
+        if (!yr) {
+          const d = new Date(c.createdAt || Date.now());
+          yr = d.getFullYear();
+          mo = d.getMonth() + 1;
+        }
+
+        if (activeGdvReportYear !== 'all' && yr !== parseInt(activeGdvReportYear, 10)) return false;
+        if (activeGdvReportMonth !== 'all' && mo !== parseInt(activeGdvReportMonth, 10)) return false;
+
+        const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
+        const matchGdv = activeSelectedGdvNames.some(s => s.trim().toLowerCase() === gdvName.toLowerCase());
+        if (!matchGdv) return false;
+
+        if (activeGdvReportGara !== 'all') {
+          const garaName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || '').trim();
+          if (garaName !== activeGdvReportGara) return false;
+        }
+
+        return true;
+      });
+
+      filtered.sort((a, b) => {
+        const dateAStr = a.toTrinhNgayDuyet || a.pascNgayDuyet || a.ngayDuyetHsbt || '';
+        const dateBStr = b.toTrinhNgayDuyet || b.pascNgayDuyet || b.ngayDuyetHsbt || '';
+        const dpA = parseDateParts(dateAStr);
+        const dpB = parseDateParts(dateBStr);
+        const timeA = dpA ? new Date(dpA.year, dpA.month - 1, dpA.day).getTime() : 0;
+        const timeB = dpB ? new Date(dpB.year, dpB.month - 1, dpB.day).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      const rowsHtml = filtered.map((c, idx) => {
+        const bsx = c.bienSo || '—';
+        const hsbt = c.soHoSoBoiThuong || c.maVuTonThat || '—';
+        const chuXe = extractClaimOwnerName(c) || '—';
+        const hangXe = c.hangXe || '—';
+        const hieuXe = c.hieuXe || '—';
+        const carBrandModel = hieuXe !== '—' && hieuXe !== hangXe ? `${hangXe} / ${hieuXe}` : hangXe;
+        const gdv = c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '—';
+        
+        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+        const amtVal = parseInt(amtStr, 10) || 0;
+        const amtDisplay = amtVal > 0 ? formatCurrencyInputNumber(amtVal) + ' đ' : '—';
+        
+        const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || '—';
+        const daysCount = calculateDaysSinceApproved(duyetDateStr);
+
+        let badgeStyle = 'background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.25);';
+        if (typeof daysCount === 'number') {
+          if (daysCount > 30) {
+            badgeStyle = 'background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); font-weight: 850; animation: pulseRed 2.5s infinite;';
+          } else if (daysCount > 15) {
+            badgeStyle = 'background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); font-weight: 800;';
+          }
+        }
+
+        return `
+          <tr style="border-bottom: 1px solid var(--border); font-size: 13px;">
+            <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 44px;">${idx + 1}</td>
+            <td style="padding: 12px 10px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
+            <td style="padding: 12px 10px; font-weight: 800; font-family: 'JetBrains Mono'; color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
+            <td style="padding: 12px 10px; text-align: left; font-weight: 750;">${escapeHtmlOutput(chuXe)}</td>
+            <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(carBrandModel)}</td>
+            <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
+            <td style="padding: 12px 10px; font-weight: 850; font-family: 'JetBrains Mono'; color: #10b981; text-align: right; font-size: 13.5px;">${amtDisplay}</td>
+            <td style="padding: 12px 10px; text-align: center; font-family: 'JetBrains Mono'; font-weight: 750;">${escapeHtmlOutput(duyetDateStr)}</td>
+            <td style="padding: 12px 10px; text-align: center;">
+              <span class="acc-status-pill" style="padding: 3px 10px; border-radius: 8px; font-size: 11px; ${badgeStyle}">
+                ${typeof daysCount === 'number' ? daysCount + ' ngày' : daysCount}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <div class="p-card" style="padding: 26px 30px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
+            <div>
+              <h2 style="font-size: 18px; font-weight: 850; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                Danh sách Hồ sơ tồn chưa có hóa đơn (Đã duyệt HSBT)
+              </h2>
+              <p style="font-size: 12.5px; color: var(--text-soft); margin-top: 4px; margin-bottom: 0;">
+                Theo dõi các hồ sơ đã duyệt phương án nhưng chưa phát sinh hóa đơn. Các hồ sơ tồn quá 30 ngày sẽ nhấp nháy đỏ để cảnh báo.
+              </p>
+            </div>
+            <div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; font-family: 'JetBrains Mono';">
+              Tổng số tồn: ${filtered.length} hồ sơ (Được lọc theo bộ lọc)
+            </div>
+          </div>
+
+          <div class="table-container" style="margin-top: 10px;">
+            <table class="p-table" style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
+                  <th style="padding: 12px 10px; text-align: center; width: 50px;">STT</th>
+                  <th style="padding: 12px 10px; text-align: left; width: 220px;">Số HSBT</th>
+                  <th style="padding: 12px 10px; text-align: left; width: 130px;">Biển số xe</th>
+                  <th style="padding: 12px 10px; text-align: left;">Chủ xe / Khách hàng</th>
+                  <th style="padding: 12px 10px; text-align: left; width: 180px;">Hãng / Hiệu xe</th>
+                  <th style="padding: 12px 10px; text-align: left; width: 180px;">Cán bộ xử lý (CBXL)</th>
+                  <th style="padding: 12px 10px; text-align: right; width: 160px;">Tiền duyệt HSBT</th>
+                  <th style="padding: 12px 10px; text-align: center; width: 140px;">Ngày duyệt HSBT</th>
+                  <th style="padding: 12px 10px; text-align: center; width: 140px;">Số ngày đã duyệt</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml || `<tr><td colspan="9" style="padding: 42px; text-align: center; color: var(--text-soft);">Không có hồ sơ tồn chưa có hóa đơn nào phù hợp bộ lọc.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function exportTonChuaHoaDonReportExcel() {
+      if (!hasUserPermission('report', 'export')) {
+        triggerToast('Bạn không có quyền xuất dữ liệu báo cáo.', 'warning');
+        return;
+      }
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+      const filtered = claimsList.filter(c => {
+        if (!isDuyetHsbtApproved(c)) return false;
+
+        let yr = null;
+        let mo = null;
+        const dateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || c.ngayMoHs;
+        if (dateStr && dateStr !== '—') {
+          const dp = parseDateParts(dateStr);
+          if (dp && dp.year && dp.month) {
+            yr = dp.year;
+            mo = dp.month;
+          }
+        }
+        if (!yr) {
+          const d = new Date(c.createdAt || Date.now());
+          yr = d.getFullYear();
+          mo = d.getMonth() + 1;
+        }
+
+        if (activeGdvReportYear !== 'all' && yr !== parseInt(activeGdvReportYear, 10)) return false;
+        if (activeGdvReportMonth !== 'all' && mo !== parseInt(activeGdvReportMonth, 10)) return false;
+
+        const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
+        const matchGdv = activeSelectedGdvNames.some(s => s.trim().toLowerCase() === gdvName.toLowerCase());
+        if (!matchGdv) return false;
+
+        if (activeGdvReportGara !== 'all') {
+          const garaName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || '').trim();
+          if (garaName !== activeGdvReportGara) return false;
+        }
+
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        triggerToast('Không có hồ sơ nào để xuất Excel.', 'warning');
+        return;
+      }
+
+      filtered.sort((a, b) => {
+        const dateAStr = a.toTrinhNgayDuyet || a.pascNgayDuyet || a.ngayDuyetHsbt || '';
+        const dateBStr = b.toTrinhNgayDuyet || b.pascNgayDuyet || b.ngayDuyetHsbt || '';
+        const dpA = parseDateParts(dateAStr);
+        const dpB = parseDateParts(dateBStr);
+        const timeA = dpA ? new Date(dpA.year, dpA.month - 1, dpA.day).getTime() : 0;
+        const timeB = dpB ? new Date(dpB.year, dpB.month - 1, dpB.day).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      const excelData = filtered.map((c, idx) => {
+        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+        const amtVal = parseInt(amtStr, 10) || 0;
+        const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || '—';
+        const daysCount = calculateDaysSinceApproved(duyetDateStr);
+        const chuXe = extractClaimOwnerName(c) || '—';
+        const hangXe = c.hangXe || '—';
+        const hieuXe = c.hieuXe || '—';
+
+        return {
+          'STT': idx + 1,
+          'Số HSBT': c.soHoSoBoiThuong || c.maVuTonThat || '',
+          'Biển số xe': (c.bienSo || '').toUpperCase(),
+          'Tên chủ xe / Khách hàng': chuXe,
+          'Hãng xe': hangXe,
+          'Hiệu xe': hieuXe,
+          'Cán bộ xử lý (CBXL)': c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '',
+          'Tiền duyệt HSBT (VNĐ)': amtVal,
+          'Ngày duyệt HSBT': duyetDateStr,
+          'Số ngày đã duyệt': typeof daysCount === 'number' ? daysCount : 0
+        };
+      });
+
+      if (window.XLSX) {
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        
+        const cols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        cols.forEach(col => {
+          const cellKey = col + '1';
+          if (ws[cellKey]) {
+            ws[cellKey].s = {
+              font: { name: 'Arial', sz: 11, bold: true },
+              fill: { fgColor: { rgb: 'E2E8F0' } },
+              alignment: { horizontal: 'center', vertical: 'center' },
+              border: {
+                top: { style: 'thin', color: { rgb: '475569' } },
+                bottom: { style: 'thin', color: { rgb: '475569' } },
+                left: { style: 'thin', color: { rgb: '475569' } },
+                right: { style: 'thin', color: { rgb: '475569' } }
+              }
+            };
+          }
+        });
+
+        for (let i = 0; i < excelData.length; i++) {
+          const rowNum = 2 + i;
+          
+          cols.forEach(col => {
+            const cellKey = col + rowNum;
+            if (ws[cellKey]) {
+              let align = { horizontal: 'left', vertical: 'center' };
+              if (['A', 'C', 'G', 'I', 'J'].includes(col)) {
+                align.horizontal = 'center';
+              } else if (col === 'H') {
+                align.horizontal = 'right';
+              }
+
+              let fontStyle = { name: 'Arial', sz: 10 };
+              if (col === 'C') {
+                fontStyle.bold = true;
+              }
+
+              let fillStyle = {};
+              const days = excelData[i]['Số ngày đã duyệt'];
+              if (col === 'J' && days > 30) {
+                fillStyle = { fgColor: { rgb: 'FEE2E2' } };
+                fontStyle.color = { rgb: 'EF4444' };
+                fontStyle.bold = true;
+              } else if (col === 'J' && days > 15) {
+                fillStyle = { fgColor: { rgb: 'FEF3C7' } };
+                fontStyle.color = { rgb: 'F59E0B' };
+                fontStyle.bold = true;
+              }
+
+              ws[cellKey].s = {
+                font: fontStyle,
+                alignment: align,
+                fill: fillStyle,
+                border: {
+                  top: { style: 'thin', color: { rgb: 'CBD5E1' } },
+                  bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
+                  left: { style: 'thin', color: { rgb: 'CBD5E1' } },
+                  right: { style: 'thin', color: { rgb: 'CBD5E1' } }
+                }
+              };
+            }
+          });
+        }
+
+        ws['!rows'] = [{ hpt: 26 }];
+        for (let i = 0; i < excelData.length; i++) {
+          ws['!rows'].push({ hpt: 20 });
+        }
+
+        ws['!cols'] = [
+          { wch: 6 },
+          { wch: 22 },
+          { wch: 14 },
+          { wch: 26 },
+          { wch: 16 },
+          { wch: 16 },
+          { wch: 22 },
+          { wch: 20 },
+          { wch: 16 },
+          { wch: 18 }
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'BC_Ton_Chua_Hoa_Don');
+        XLSX.writeFile(wb, 'Bao_Cao_Ho_So_Ton_Chua_Hoa_Don_' + new Date().toLocaleDateString('vi-VN').replace(/\//g, '-') + '.xlsx');
+        triggerToast('Đã xuất file Excel thành công!', 'success');
+      } else {
+        triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
+      }
+    }
+
+    function triggerTonChuaHoaDonReportExcelExport(event) {
+      if (event) event.stopPropagation();
+      document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      activeOpenDropdownId = null;
+      exportTonChuaHoaDonReportExcel();
     }
 
 </script>
