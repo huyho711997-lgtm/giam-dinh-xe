@@ -11936,6 +11936,7 @@ function formatDateDisplay(val) {
     let activeGdvReportYear = String(new Date().getFullYear());
     let activeGdvReportBranch = 'all';
     let activeGdvReportGara = 'all';
+    let activeGdvReportDaysRange = 'all';
     let activeGdvReportSearch = '';
     let activeGdvReportView = 'weekly_zone'; // 'table' | 'chart'
     let activeSelectedDakLakStatuses = ['da_duyet_pasc', 'cho_duyet_hsbt'];
@@ -11995,6 +11996,13 @@ function formatDateDisplay(val) {
 
     function selectGdvReportGara(gara) {
       activeGdvReportGara = gara;
+      document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      activeOpenDropdownId = null;
+      renderGdvMonthlyReportPage();
+    }
+
+    function selectGdvReportDaysRange(range) {
+      activeGdvReportDaysRange = range;
       document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
       activeOpenDropdownId = null;
       renderGdvMonthlyReportPage();
@@ -12651,6 +12659,32 @@ function renderGdvMonthlyReportPage(targetContainer) {
                       ${g === activeGdvReportGara ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                     </div>
                   `).join('')}
+                </div>
+              </div>
+
+              <!-- Custom Days Range Selection Dropdown for Outstanding No Invoice Report -->
+              <div class="custom-select-wrapper" style="position: relative;" id="accReportDaysRangeFilterWrapper">
+                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportDaysRangeMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 170px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
+                  <span style="display: flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>${activeGdvReportDaysRange === 'all' ? 'Tất cả số ngày' : activeGdvReportDaysRange === 'over_30' ? 'Trên 30 ngày' : 'Dưới 30 ngày'}</span>
+                  </span>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                <div id="ddReportDaysRangeMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddReportDaysRangeMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); left: 0; min-width: 170px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px);">
+                  <div class="custom-select-item ${activeGdvReportDaysRange === 'all' ? 'active' : ''}" onclick="selectGdvReportDaysRange('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportDaysRange === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                    <span>Tất cả</span>
+                    ${activeGdvReportDaysRange === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  <div class="custom-select-item ${activeGdvReportDaysRange === 'over_30' ? 'active' : ''}" onclick="selectGdvReportDaysRange('over_30')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportDaysRange === 'over_30' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                    <span>Trên 30 ngày</span>
+                    ${activeGdvReportDaysRange === 'over_30' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  <div class="custom-select-item ${activeGdvReportDaysRange === 'under_30' ? 'active' : ''}" onclick="selectGdvReportDaysRange('under_30')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportDaysRange === 'under_30' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                    <span>Dưới 30 ngày</span>
+                    ${activeGdvReportDaysRange === 'under_30' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
                 </div>
               </div>
               ` : ''}
@@ -16798,6 +16832,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const garas = new Set();
       claimsList.forEach(c => {
         if (c.trangThai === 'da_duyet_hsbt') {
+          if (activeGdvReportDaysRange !== 'all') {
+            const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || '—';
+            const daysCount = calculateDaysSinceApproved(duyetDateStr);
+            if (typeof daysCount === 'number') {
+              if (activeGdvReportDaysRange === 'over_30' && daysCount <= 30) return;
+              if (activeGdvReportDaysRange === 'under_30' && daysCount > 30) return;
+            } else {
+              return;
+            }
+          }
           const gName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || 'Gara chưa xác định').trim();
           if (gName && gName !== '—') garas.add(gName);
         }
@@ -16850,6 +16894,17 @@ function renderGdvMonthlyReportPage(targetContainer) {
         if (activeGdvReportGara !== 'all') {
           const garaName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || 'Gara chưa xác định').trim();
           if (garaName !== activeGdvReportGara) return false;
+        }
+
+        if (activeGdvReportDaysRange !== 'all') {
+          const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || '—';
+          const daysCount = calculateDaysSinceApproved(duyetDateStr);
+          if (typeof daysCount === 'number') {
+            if (activeGdvReportDaysRange === 'over_30' && daysCount <= 30) return false;
+            if (activeGdvReportDaysRange === 'under_30' && daysCount > 30) return false;
+          } else {
+            return false;
+          }
         }
 
         return true;
@@ -17029,6 +17084,17 @@ function renderGdvMonthlyReportPage(targetContainer) {
         if (activeGdvReportGara !== 'all') {
           const garaName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || 'Gara chưa xác định').trim();
           if (garaName !== activeGdvReportGara) return false;
+        }
+
+        if (activeGdvReportDaysRange !== 'all') {
+          const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || '—';
+          const daysCount = calculateDaysSinceApproved(duyetDateStr);
+          if (typeof daysCount === 'number') {
+            if (activeGdvReportDaysRange === 'over_30' && daysCount <= 30) return false;
+            if (activeGdvReportDaysRange === 'under_30' && daysCount > 30) return false;
+          } else {
+            return false;
+          }
         }
 
         return true;
@@ -17262,7 +17328,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         link.download = `Bao_Cao_Ho_So_Ton_Chua_Hoa_Don_${Date.now()}.${ext}`;
         link.href = canvas.toDataURL(`image/${imgFormat}`, 0.95);
         link.click();
-        triggerToast(`Đã tải ảnh báo cáo thành công!`, 'success');
+        triggerToast('Đã tải ảnh báo cáo thành công!', 'success');
       }).catch(err => {
         console.error(err);
         triggerToast('Có lỗi xảy ra khi xuất ảnh báo cáo!', 'error');
