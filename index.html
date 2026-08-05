@@ -3180,7 +3180,13 @@
     document.addEventListener('DOMContentLoaded', initApplicationState);
     window.addEventListener('popstate', () => { if (window.firebase?.auth) evaluateViewRoutingState(firebase.auth().currentUser); });
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && document.getElementById('lightbox')?.classList.contains('show')) closeLightbox();
+      const lightboxEl = document.getElementById('lightbox');
+      const isLightboxOpen = lightboxEl && lightboxEl.classList.contains('show');
+      if (isLightboxOpen) {
+        if (event.key === 'Escape') { closeLightbox(); return; }
+        if (event.key === 'ArrowLeft') { event.preventDefault(); navigateLightbox(-1); return; }
+        if (event.key === 'ArrowRight') { event.preventDefault(); navigateLightbox(1); return; }
+      }
       if (event.key === 'Escape' && document.getElementById('customCameraModal')?.style.display === 'flex') closeCustomCameraModal(false);
       if (event.key === 'Escape' && document.getElementById('profileModalOverlay')?.style.display === 'grid') closeUserProfileModal();
       if (event.key === 'Escape' && document.getElementById('createUserModalOverlay')?.style.display === 'grid') closeCreateUserModal();
@@ -3385,6 +3391,40 @@
       result = result.replace(/_+/g, '_');
       result = result.replace(/^_+|_+$/g, '');
       return result || 'hang_muc';
+    }
+
+    function filterHangMucRows(searchTerm) {
+      const table = document.getElementById('hangMucEvidenceTable');
+      if (!table) return;
+      const tbody = table.querySelector('tbody');
+      if (!tbody) return;
+      const rows = tbody.querySelectorAll('tr');
+      const term = (searchTerm || '').trim().toLowerCase();
+      let visibleCount = 0;
+
+      rows.forEach(row => {
+        if (row.id === 'noHangMucResultRow') { row.remove(); return; }
+        const hangMucCell = row.querySelector('td[data-label="Hạng mục"]');
+        if (!hangMucCell) return;
+        const text = (hangMucCell.textContent || '').toLowerCase();
+        if (!term || text.includes(term)) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+
+      // Show/hide no-result message
+      const existingNoResult = document.getElementById('noHangMucResultRow');
+      if (existingNoResult) existingNoResult.remove();
+      if (term && visibleCount === 0) {
+        const noResultRow = document.createElement('tr');
+        noResultRow.id = 'noHangMucResultRow';
+        const colCount = table.querySelector('thead tr')?.children.length || 5;
+        noResultRow.innerHTML = '<td colspan="' + colCount + '" style="padding: 36px; text-align: center; color: var(--text-soft); font-size: 13px; font-style: italic;">Không tìm thấy hạng mục nào khớp với "<strong style="color: var(--primary);">' + escapeHtmlOutput(searchTerm) + '</strong>"</td>';
+        tbody.appendChild(noResultRow);
+      }
     }
 
     async function downloadCategoryImages(index) {
@@ -11474,8 +11514,12 @@ function formatDateDisplay(val) {
             <div class="workspace-section-index" style="margin: 0; flex-shrink: 0;">${String(completedEvidenceItems).padStart(2,'0')}/${String(localActiveRequestedItems.length).padStart(2,'0')}</div>
           </div>
         </div>
+        <div style="margin-bottom: 14px; position: relative;">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--text-muted)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="searchHangMucInput" placeholder="Tìm kiếm hạng mục... (VD: cản trước, kính, vè...)" oninput="filterHangMucRows(this.value)" style="width: 100%; padding: 10px 14px 10px 40px; border-radius: 12px; border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text-main); font-size: 13px; font-weight: 600; font-family: inherit; outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease;" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 3px rgba(216,180,109,0.15)';" onblur="this.style.borderColor='var(--border-strong)'; this.style.boxShadow='none';" />
+        </div>
         <div class="p-card" style="padding: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-xl); background: var(--surface); box-shadow: var(--shadow-sm);">
-          <table class="p-table" style="width: 100%; border-collapse: collapse;">
+          <table class="p-table" id="hangMucEvidenceTable" style="width: 100%; border-collapse: collapse;">
             <thead>
               <tr>
                 <th style="width: 60px; text-align: center;">#</th>
