@@ -1025,7 +1025,14 @@
     }
     .premium-lightbox { position: fixed; inset: 0; z-index: 6000; display: none; place-items: center; padding: 20px; opacity: 0; background: rgba(2,4,7,.96); backdrop-filter: blur(18px); transition: opacity .2s ease; }
     .premium-lightbox.show { display: grid; opacity: 1; }
-    .premium-lightbox img { max-width: min(1400px,96vw); max-height: 90vh; object-fit: contain; border: 1px solid var(--border); border-radius: 17px; box-shadow: 0 36px 100px rgba(0,0,0,.8); }
+    .premium-lightbox img { max-width: min(1400px,96vw); max-height: 90vh; object-fit: contain; border: 1px solid var(--border); border-radius: 17px; box-shadow: 0 36px 100px rgba(0,0,0,.8); transition: transform 0.25s cubic-bezier(.25,.8,.25,1); cursor: grab; }
+    .premium-lightbox img:active { cursor: grabbing; }
+    .lightbox-toolbar { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; padding: 6px 10px; background: rgba(15,12,8,0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.18); border-radius: 14px; z-index: 12; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    .lightbox-toolbar button { width: 38px; height: 38px; border: none; background: transparent; color: rgba(255,255,255,0.85); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s, transform 0.12s; padding: 0; }
+    .lightbox-toolbar button:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .lightbox-toolbar button:active { transform: scale(0.9); background: rgba(255,255,255,0.18); }
+    .lightbox-toolbar .toolbar-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.15); margin: 0 4px; flex-shrink: 0; }
+    .lightbox-toolbar .zoom-label { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.7); font-family: 'JetBrains Mono', monospace; min-width: 42px; text-align: center; user-select: none; letter-spacing: 0.02em; }
     .lightbox-close-btn { position: absolute; top: 20px; right: 20px; z-index: 2; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; border: 1px solid var(--border-strong); border-radius: 50%; background: rgba(255,255,255,.06); transition: transform .3s cubic-bezier(.25, .8, .25, 1), background var(--transition); padding: 0; }
     .lightbox-close-btn:hover { transform: rotate(90deg); background: rgba(255,255,255,.11); }
 
@@ -1060,7 +1067,7 @@
     
     .lightbox-delete-btn {
       position: absolute;
-      bottom: 30px;
+      bottom: 90px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(239, 83, 80, 0.12);
@@ -1105,7 +1112,7 @@
     }
     .lightbox-thumbnails-indicator {
       position: absolute;
-      bottom: 82px;
+      bottom: 100px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
@@ -3021,6 +3028,26 @@
     <button class="lightbox-nav-btn next" id="lightboxNextBtn" onclick="navigateLightbox(1, event)" aria-label="Ảnh tiếp"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
     <img id="lightboxImg" src="" alt="Zoomed View" onclick="event.stopPropagation()">
     <div class="lightbox-thumbnails-indicator" id="lightboxThumbsIndicator" onclick="event.stopPropagation()"></div>
+    <div class="lightbox-toolbar" id="lightboxToolbar" onclick="event.stopPropagation()">
+      <button type="button" onclick="lightboxZoom(-1)" title="Thu nhỏ (-)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+      </button>
+      <span class="zoom-label" id="lightboxZoomLabel">100%</span>
+      <button type="button" onclick="lightboxZoom(1)" title="Phóng to (+)">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+      </button>
+      <div class="toolbar-divider"></div>
+      <button type="button" onclick="lightboxRotate(-1)" title="Xoay trái (Shift+R)">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+      </button>
+      <button type="button" onclick="lightboxRotate(1)" title="Xoay phải (R)">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+      </button>
+      <div class="toolbar-divider"></div>
+      <button type="button" onclick="lightboxResetTransform()" title="Đặt lại (0)">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+      </button>
+    </div>
     <button class="lightbox-delete-btn" id="lightboxDeleteBtn" onclick="deleteCurrentImageFromLightbox(event)" style="display: none;">
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
       <span>Xóa ảnh</span>
@@ -3186,6 +3213,11 @@
         if (event.key === 'Escape') { closeLightbox(); return; }
         if (event.key === 'ArrowLeft') { event.preventDefault(); navigateLightbox(-1); return; }
         if (event.key === 'ArrowRight') { event.preventDefault(); navigateLightbox(1); return; }
+        if (event.key === '+' || event.key === '=') { event.preventDefault(); lightboxZoom(1); return; }
+        if (event.key === '-' || event.key === '_') { event.preventDefault(); lightboxZoom(-1); return; }
+        if (event.key === 'r' && !event.shiftKey) { event.preventDefault(); lightboxRotate(1); return; }
+        if (event.key === 'R' && event.shiftKey) { event.preventDefault(); lightboxRotate(-1); return; }
+        if (event.key === '0') { event.preventDefault(); lightboxResetTransform(); return; }
       }
       if (event.key === 'Escape' && document.getElementById('customCameraModal')?.style.display === 'flex') closeCustomCameraModal(false);
       if (event.key === 'Escape' && document.getElementById('profileModalOverlay')?.style.display === 'grid') closeUserProfileModal();
@@ -11806,6 +11838,37 @@ function formatDateDisplay(val) {
     let lightboxRequestIndex = null;
     let lightboxTouchStartX = 0;
     let lightboxTouchEndX = 0;
+    let lightboxZoomLevel = 1;
+    let lightboxRotation = 0;
+
+    function applyLightboxTransform() {
+      const img = document.getElementById('lightboxImg');
+      if (!img) return;
+      img.style.transform = `scale(${lightboxZoomLevel}) rotate(${lightboxRotation}deg)`;
+      const label = document.getElementById('lightboxZoomLabel');
+      if (label) label.textContent = Math.round(lightboxZoomLevel * 100) + '%';
+    }
+
+    function lightboxZoom(direction) {
+      const step = 0.2;
+      if (direction > 0) {
+        lightboxZoomLevel = Math.min(5, lightboxZoomLevel + step);
+      } else {
+        lightboxZoomLevel = Math.max(0.2, lightboxZoomLevel - step);
+      }
+      applyLightboxTransform();
+    }
+
+    function lightboxRotate(direction) {
+      lightboxRotation += direction * 90;
+      applyLightboxTransform();
+    }
+
+    function lightboxResetTransform() {
+      lightboxZoomLevel = 1;
+      lightboxRotation = 0;
+      applyLightboxTransform();
+    }
 
     function openLightbox(imageSource, indexOrUrl = 0, requestIndex = null) {
       const lightboxContainer = document.getElementById('lightbox');
@@ -11820,6 +11883,8 @@ function formatDateDisplay(val) {
       }
       
       lightboxRequestIndex = requestIndex;
+      lightboxZoomLevel = 1;
+      lightboxRotation = 0;
       updateLightboxContent();
       lightboxContainer.classList.add('show');
     }
@@ -11828,15 +11893,20 @@ function formatDateDisplay(val) {
       const lightboxContainer = document.getElementById('lightbox');
       if (lightboxContainer) lightboxContainer.classList.remove('show');
       const img = document.getElementById('lightboxImg');
-      if (img) img.src = '';
+      if (img) { img.src = ''; img.style.transform = ''; }
       lightboxUrls = [];
       lightboxCurrentIndex = 0;
       lightboxRequestIndex = null;
+      lightboxZoomLevel = 1;
+      lightboxRotation = 0;
     }
 
     function updateLightboxContent() {
       const img = document.getElementById('lightboxImg');
       if (!img) return;
+      lightboxZoomLevel = 1;
+      lightboxRotation = 0;
+      applyLightboxTransform();
       
       img.src = lightboxUrls[lightboxCurrentIndex] || '';
       
@@ -11942,6 +12012,15 @@ function formatDateDisplay(val) {
       if (lightboxContainer) {
         lightboxContainer.addEventListener('touchstart', handleLightboxTouchStart, { passive: true });
         lightboxContainer.addEventListener('touchend', handleLightboxTouchEnd, { passive: true });
+        lightboxContainer.addEventListener('wheel', (e) => {
+          if (!lightboxContainer.classList.contains('show')) return;
+          e.preventDefault();
+          if (e.deltaY < 0) {
+            lightboxZoom(1);
+          } else {
+            lightboxZoom(-1);
+          }
+        }, { passive: false });
       }
     });
 
