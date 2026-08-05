@@ -3167,6 +3167,7 @@
     let localActiveCaseNode = null;
     let localActiveImageStack = [];
     let localActiveRequestedItems = [];
+    let portalSearchTerm = '';
     let activeObjectUrls = [];
     let cachedCasesPayload = null;
     let activeCaseFilter = 'all';
@@ -9799,6 +9800,85 @@ function formatDateDisplay(val) {
       }
     }
 
+    function filterPortalHangMucCards(searchTerm) {
+      portalSearchTerm = searchTerm;
+      const term = (searchTerm || '').trim().toLowerCase();
+      const sections = document.querySelectorAll('.evidence-group-section');
+      
+      sections.forEach(section => {
+        const cards = section.querySelectorAll('.evidence-request-card');
+        let visibleCardsInGroup = 0;
+        
+        cards.forEach(card => {
+          const titleEl = card.querySelector('h3');
+          if (!titleEl) return;
+          const text = (titleEl.textContent || '').toLowerCase();
+          
+          if (!term || text.includes(term)) {
+            card.style.display = '';
+            visibleCardsInGroup++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+        
+        if (term && visibleCardsInGroup === 0) {
+          section.style.display = 'none';
+        } else {
+          section.style.display = '';
+          const body = section.querySelector('.evidence-cards-list');
+          const chevron = section.querySelector('.evidence-group-header div[id^="evidenceGroupChevron_"]');
+          const header = section.querySelector('.evidence-group-header');
+          if (term) {
+            if (body) {
+              body.style.display = 'flex';
+              body.classList.remove('is-hidden');
+            }
+            if (chevron) {
+              chevron.style.transform = 'rotate(0deg)';
+            }
+            if (header) {
+              header.style.marginBottom = '8px';
+            }
+          } else {
+            const key = header?.id?.replace('evidenceGroupHeader_', '');
+            const isCollapsed = key ? !!(window.sectionCollapseState && window.sectionCollapseState[key]) : true;
+            if (body) {
+              body.style.display = isCollapsed ? 'none' : 'flex';
+              if (isCollapsed) body.classList.add('is-hidden');
+              else body.classList.remove('is-hidden');
+            }
+            if (chevron) {
+              chevron.style.transform = isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+            }
+            if (header) {
+              header.style.marginBottom = isCollapsed ? '0' : '8px';
+            }
+          }
+        }
+      });
+      
+      const existingNoResult = document.getElementById('noPortalHangMucResult');
+      if (existingNoResult) existingNoResult.remove();
+      
+      const allCards = document.querySelectorAll('.evidence-request-card');
+      let totalVisible = 0;
+      allCards.forEach(c => {
+        if (c.style.display !== 'none') totalVisible++;
+      });
+      
+      if (term && totalVisible === 0) {
+        const noResultDiv = document.createElement('div');
+        noResultDiv.id = 'noPortalHangMucResult';
+        noResultDiv.style.cssText = 'padding: 24px; text-align: center; color: var(--text-soft); font-size: 13px; font-style: italic; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-top: 8px;';
+        noResultDiv.innerHTML = 'Không tìm thấy hạng mục nào khớp với "<strong style="color: var(--primary);">' + escapeHtmlOutput(searchTerm) + '</strong>"';
+        const searchInput = document.getElementById('searchPortalHangMucInput');
+        if (searchInput && searchInput.parentNode) {
+          searchInput.parentNode.parentNode.insertBefore(noResultDiv, searchInput.parentNode.nextSibling);
+        }
+      }
+    }
+
     function toggleEvidenceGroupSection(groupKey) {
       if (!window.sectionCollapseState) window.sectionCollapseState = {};
       const currentState = !!window.sectionCollapseState[groupKey];
@@ -10097,6 +10177,7 @@ function formatDateDisplay(val) {
     window.triggerAddNewGarageItemFromPortal = triggerAddNewGarageItemFromPortal;
     window.triggerRemoveGarageCustomItem = triggerRemoveGarageCustomItem;
     window.toggleEvidenceGroupSection = toggleEvidenceGroupSection;
+    window.filterPortalHangMucCards = filterPortalHangMucCards;
     window.toggleDamageSeverityTag = toggleDamageSeverityTag;
     window.setProposedAction = setProposedAction;
     window.saveDamageSeverityCustom = saveDamageSeverityCustom;
@@ -10359,6 +10440,10 @@ function formatDateDisplay(val) {
             </button>
           </div>
         </div>
+        <div style="margin-bottom: 12px; position: relative;">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--text-muted)" stroke-width="2.5" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="searchPortalHangMucInput" value="${escapeAttributeData(portalSearchTerm || '')}" placeholder="Tìm nhanh hạng mục cần chụp ảnh..." oninput="filterPortalHangMucCards(this.value)" style="width: 100%; padding: 8px 12px 8px 34px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-main); font-size: 12px; font-weight: 600; font-family: inherit; outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease;" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 2px rgba(216,180,109,0.15)';" onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';" />
+        </div>
       `;
 
       const evidenceRequestSection = localActiveRequestedItems.length ? toggleAllToolbarMarkup + groupedDefinitions.map(def => {
@@ -10411,6 +10496,10 @@ function formatDateDisplay(val) {
           </div>
         `;
       }).join('') : '';
+
+      const searchActive = document.activeElement && document.activeElement.id === 'searchPortalHangMucInput';
+      const selStart = searchActive ? document.activeElement.selectionStart : null;
+      const selEnd = searchActive ? document.activeElement.selectionEnd : null;
 
       const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
       const nodeData = localActiveCaseNode || {};
@@ -10494,6 +10583,18 @@ function formatDateDisplay(val) {
 
       initializeSidebarCollapse();
       refreshGarageProgressUI();
+      if (portalSearchTerm) {
+        filterPortalHangMucCards(portalSearchTerm);
+      }
+      if (searchActive) {
+        const inputEl = document.getElementById('searchPortalHangMucInput');
+        if (inputEl) {
+          inputEl.focus();
+          if (selStart !== null && selEnd !== null) {
+            inputEl.setSelectionRange(selStart, selEnd);
+          }
+        }
+      }
     }
 
     let lastFetchedGpsCoords = null;
