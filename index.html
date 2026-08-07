@@ -15085,8 +15085,19 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </div>
             </div>
             
-            <div style="display: flex; gap: 4px; align-items: center;">
-              ${pageBtnsHtml}
+            <!-- Right Controls: Prev / Page Buttons / Next -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" onclick="setAccClaimsPage(${accClaimsCurrentPage - 1})" ${accClaimsCurrentPage <= 1 ? 'disabled' : ''} style="width: 32px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accClaimsCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${accClaimsCurrentPage <= 1 ? 'none' : 'auto'};" title="Trang trước">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+
+              <div style="display: flex; gap: 4px; align-items: center;">
+                ${pageBtnsHtml}
+              </div>
+
+              <button type="button" onclick="setAccClaimsPage(${accClaimsCurrentPage + 1})" ${accClaimsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 32px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accClaimsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${accClaimsCurrentPage >= totalPages ? 'none' : 'auto'};" title="Trang sau">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
             </div>
           </div>
         </div>`;
