@@ -15112,6 +15112,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   Quản lý toàn bộ hồ sơ đã bàn giao từ Giám định viên, theo dõi tiến độ xét duyệt & gửi yêu cầu bổ sung.
                 </p>
               </div>
+              
+              <!-- Export Action Area -->
+              <div style="display: flex; align-items: center; gap: 12px;">
+                ${hasUserPermission('accounting', 'export') ? `
+                  <button type="button" class="btn-premium" onclick="exportAccountingClaimsToExcel()" style="padding: 0 20px; height: 42px; border-radius: 12px; font-size: 13.5px; font-weight: 850; display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%); border: 1px solid rgba(16, 185, 129, 0.4); color: #10b981; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.15); transition: all 0.2s ease; letter-spacing: 0.01em;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(16, 185, 129, 0.25)'; this.style.background='linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(16, 185, 129, 0.15)'; this.style.background='linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)';">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Xuất dữ liệu Excel
+                  </button>
+                ` : ''}
+              </div>
             </div>
           </div>
 
@@ -15239,14 +15249,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   }).join('')}
                 </div>
               </div>
-              
-              <!-- Export Data Button (conditionally rendered) -->
-              ${hasUserPermission('accounting', 'export') ? `
-                <button type="button" class="btn-premium" onclick="exportAccountingClaimsToExcel()" style="padding: 0 16px; height: 38px; border-radius: 10px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; box-shadow: none; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(16, 185, 129, 0.2)'; this.style.borderColor='rgba(16, 185, 129, 0.5)';" onmouseout="this.style.background='rgba(16, 185, 129, 0.1)'; this.style.borderColor='rgba(16, 185, 129, 0.3)';">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  Xuất dữ liệu
-                </button>
-              ` : ''}
             </div>
 
             <!-- Pagination Controls Right -->
@@ -16913,7 +16915,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const th = formatMoneyStr(c.thuHoi);
         const gt = formatMoneyStr(c.giamTru);
         const st = formatMoneyStr(c.soTienDeNghiThem);
-        const tsDate = (t.createdAt) ? formatTimestamp(t.createdAt) : '';
+        const tsDate = (t.createdAt) ? formatCaseTimestamp(t.createdAt) : '';
 
         rows.push([
           index + 1,
@@ -16955,7 +16957,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
 
       XLSX.utils.book_append_sheet(wb, ws, "HoSoDaNhan");
-      const filename = `HoSoKeToan_Export_${formatDateYYYYMMDD(new Date())}.xlsx`;
+      const filename = `HoSoKeToan_Export_${new Date().toISOString().slice(0, 10)}.xlsx`;
       XLSX.writeFile(wb, filename);
       triggerToast('Đã xuất dữ liệu ra Excel!', 'success');
     }
