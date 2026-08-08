@@ -16956,7 +16956,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
 
       XLSX.utils.book_append_sheet(wb, ws, "HoSoDaNhan");
-      const filename = `HoSoKeToan_Export_${formatDateYYYYMMDD(new Date())}.xlsx`;
+      const filename = `HoSoKeToan_Export_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.xlsx`;
       XLSX.writeFile(wb, filename);
       triggerToast('Đã xuất dữ liệu ra Excel!', 'success');
     }
