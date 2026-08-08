@@ -15149,11 +15149,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
           </div>
 
           <!-- CONTROL HUB FILTER BAR & ROLE BADGE -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 14px 20px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: var(--shadow-sm);">
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 14px 20px; margin-bottom: 22px; display: flex; justify-content: flex-start; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: var(--shadow-sm);">
             
-            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; width: 100%;">
               <!-- Search Input -->
-              <div style="position: relative; width: 260px;">
+              <div style="position: relative; flex: 1; max-width: 320px;">
                 <input id="accountingSearchInput" class="input-premium" value="${escapeAttributeData(typeof activeAccountingClaimSearchRaw !== 'undefined' ? activeAccountingClaimSearchRaw : activeAccountingClaimSearch)}" oninput="changeAccountingClaimSearch(this.value)" placeholder="Tìm Số HSBT, BKS, Tên KH, GĐV..." style="width: 100%; height: 38px; border-radius: 10px; font-size: 12.5px; padding-left: 32px; padding-right: 32px;" />
                 <div style="position: absolute; left: 10px; top: 10px; color: var(--text-soft); pointer-events: none;">${ACC_SVGS.SEARCH}</div>
                 ${(typeof activeAccountingClaimSearchRaw !== 'undefined' ? activeAccountingClaimSearchRaw : activeAccountingClaimSearch) ? `
@@ -15162,41 +15162,41 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </button>
                 ` : ''}
               </div>
-            </div>
 
-            <!-- Filter Dropdown -->
-            <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
-              <button id="btnAccClaimsStatusFilterDropdown" type="button" onclick="toggleAccClaimsStatusFilterDropdown(event)" style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 13px; font-weight: 800; padding: 9px 18px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: all 0.2s ease; min-width: 240px; box-shadow: var(--shadow-sm);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="color: var(--text-soft); font-weight: 600;">Lọc theo trạng thái:</span>
-                  <span style="color: var(--primary);">
-                    ${activeAccountingClaimStatus === 'all' ? `Tất cả (${statTotal})` :
-                      activeAccountingClaimStatus === 'da_xac_nhan' ? `Đã xác nhận (${statDaXacNhan})` :
-                      activeAccountingClaimStatus === 'can_bo_sung' ? `Yêu cầu bổ sung (${statCanBoSung})` :
-                      activeAccountingClaimStatus === 'da_trinh_dntt' ? `Đã trình ĐNTT (${statTrinhDntt})` : `Tất cả (${statTotal})`
-                    }
-                  </span>
-                </div>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </button>
+              <!-- Filter Dropdown -->
+              <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
+                <button id="btnAccClaimsStatusFilterDropdown" type="button" onclick="toggleAccClaimsStatusFilterDropdown(event)" style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 13px; font-weight: 800; padding: 9px 18px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: all 0.2s ease; min-width: 240px; box-shadow: var(--shadow-sm);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: var(--text-soft); font-weight: 600;">Lọc theo trạng thái:</span>
+                    <span style="color: var(--primary);">
+                      ${activeAccountingClaimStatus === 'all' ? `Tất cả (${statTotal})` :
+                        activeAccountingClaimStatus === 'da_xac_nhan' ? `Đã xác nhận (${statDaXacNhan})` :
+                        activeAccountingClaimStatus === 'can_bo_sung' ? `Yêu cầu bổ sung (${statCanBoSung})` :
+                        activeAccountingClaimStatus === 'da_trinh_dntt' ? `Đã trình ĐNTT (${statTrinhDntt})` : `Tất cả (${statTotal})`
+                      }
+                    </span>
+                  </div>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
 
-              <div id="ddAccClaimsStatusFilter" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddAccClaimsStatusFilter' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); right: 0; min-width: 260px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px);">
-                ${[
-                  { id: 'all', label: 'Tất cả', count: statTotal, color: 'var(--text-main)' },
-                  { id: 'da_xac_nhan', label: 'Đã xác nhận', count: statDaXacNhan, color: '#10b981' },
-                  { id: 'can_bo_sung', label: 'Yêu cầu bổ sung', count: statCanBoSung, color: '#ef4444' },
-                  { id: 'da_trinh_dntt', label: 'Đã trình ĐNTT', count: statTrinhDntt, color: '#8b5cf6' }
-                ].map(opt => {
-                  const isAct = activeAccountingClaimStatus === opt.id;
-                  return `
-                    <div class="custom-dropdown-item ${isAct ? 'selected' : ''}" onclick="changeAccountingClaimFilter('${opt.id}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isAct ? 'background: rgba(216,180,109,0.12);' : ''}">
-                      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: ${isAct ? '800' : '650'}; color: ${isAct ? 'var(--primary)' : opt.color};">
-                        ${opt.label} <span style="font-weight: 850; font-family: 'JetBrains Mono'; padding: 2px 6px; border-radius: 6px; background: var(--bg-soft); color: var(--text-main); font-size: 11px;">${opt.count}</span>
+                <div id="ddAccClaimsStatusFilter" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddAccClaimsStatusFilter' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); left: 0; min-width: 260px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px);">
+                  ${[
+                    { id: 'all', label: 'Tất cả', count: statTotal, color: 'var(--text-main)' },
+                    { id: 'da_xac_nhan', label: 'Đã xác nhận', count: statDaXacNhan, color: '#10b981' },
+                    { id: 'can_bo_sung', label: 'Yêu cầu bổ sung', count: statCanBoSung, color: '#ef4444' },
+                    { id: 'da_trinh_dntt', label: 'Đã trình ĐNTT', count: statTrinhDntt, color: '#8b5cf6' }
+                  ].map(opt => {
+                    const isAct = activeAccountingClaimStatus === opt.id;
+                    return `
+                      <div class="custom-dropdown-item ${isAct ? 'selected' : ''}" onclick="changeAccountingClaimFilter('${opt.id}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isAct ? 'background: rgba(216,180,109,0.12);' : ''}">
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: ${isAct ? '800' : '650'}; color: ${isAct ? 'var(--primary)' : opt.color};">
+                          ${opt.label} <span style="font-weight: 850; font-family: 'JetBrains Mono'; padding: 2px 6px; border-radius: 6px; background: var(--bg-soft); color: var(--text-main); font-size: 11px;">${opt.count}</span>
+                        </div>
+                        ${isAct ? `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
                       </div>
-                      ${isAct ? `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
-                    </div>
-                  `;
-                }).join('')}
+                    `;
+                  }).join('')}
+                </div>
               </div>
             </div>
 
@@ -15934,11 +15934,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
           </div>
 
           <!-- CONTROL HUB FILTER BAR & ROLE BADGE -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 14px 20px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: var(--shadow-sm);">
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 14px 20px; margin-bottom: 22px; display: flex; justify-content: flex-start; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: var(--shadow-sm);">
             
-            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; width: 100%;">
               <!-- Search Input -->
-              <div style="position: relative; width: 260px;">
+              <div style="position: relative; flex: 1; max-width: 320px;">
                 <input id="accountingTransferSearchInput" class="input-premium" value="${escapeAttributeData(typeof activeAccountingSearchRaw !== 'undefined' ? activeAccountingSearchRaw : activeAccountingSearch)}" oninput="changeAccountingSearch(this.value)" placeholder="Tìm theo Mã phiếu, HSBT, BKS..." style="width: 100%; height: 38px; border-radius: 10px; font-size: 12.5px; padding-left: 32px; padding-right: 32px;" />
                 <div style="position: absolute; left: 10px; top: 10px; color: var(--text-soft); pointer-events: none;">${ACC_SVGS.SEARCH}</div>
                 ${(typeof activeAccountingSearchRaw !== 'undefined' ? activeAccountingSearchRaw : activeAccountingSearch) ? `
@@ -15947,43 +15947,43 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </button>
                 ` : ''}
               </div>
-            </div>
 
-            <!-- Filter Dropdown -->
-            <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
-              <button id="btnAccTransfersStatusFilterDropdown" type="button" onclick="toggleAccTransfersStatusFilterDropdown(event)" style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 13px; font-weight: 800; padding: 9px 18px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: all 0.2s ease; min-width: 240px; box-shadow: var(--shadow-sm);">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span style="color: var(--text-soft); font-weight: 600;">Lọc theo trạng thái:</span>
-                  <span style="color: var(--primary);">
-                    ${activeAccountingStatusFilter === 'moi' ? `Mới / Nháp (${statMoi})` :
-                      activeAccountingStatusFilter === 'cho_xac_nhan' ? `Chờ xác nhận (${statChoXacNhan})` :
-                      activeAccountingStatusFilter === 'da_xac_nhan' ? `Đã xác nhận (${statDaXacNhan})` :
-                      activeAccountingStatusFilter === 'can_bo_sung' ? `Yêu cầu bổ sung (${statCanBoSung})` :
-                      activeAccountingStatusFilter === 'da_trinh_dntt' ? `Đã trình ĐNTT (${statTrinhDntt})` :
-                      `Tất cả (${statTotal})`}
-                  </span>
-                </div>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </button>
-              <div id="menuAccTransfersStatusFilterDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; min-width: 240px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 40px -4px rgba(0,0,0,0.18), 0 8px 16px rgba(0,0,0,0.08); padding: 8px; z-index: 1000; backdrop-filter: blur(12px);">
-                ${[
-                  { id: 'all', label: 'Tất cả', count: statTotal, color: 'var(--text-main)' },
-                  { id: 'moi', label: 'Mới / Nháp', count: statMoi, color: '#3b82f6' },
-                  { id: 'cho_xac_nhan', label: 'Chờ xác nhận', count: statChoXacNhan, color: '#f59e0b' },
-                  { id: 'da_xac_nhan', label: 'Đã xác nhận', count: statDaXacNhan, color: '#10b981' },
-                  { id: 'can_bo_sung', label: 'Yêu cầu bổ sung', count: statCanBoSung, color: '#ef4444' },
-                  { id: 'da_trinh_dntt', label: 'Đã trình ĐNTT', count: statTrinhDntt, color: '#8b5cf6' }
-                ].map(opt => {
-                  const isAct = activeAccountingStatusFilter === opt.id;
-                  return `
-                    <div class="custom-dropdown-item ${isAct ? 'selected' : ''}" onclick="changeAccountingStatusFilter('${opt.id}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isAct ? 'background: rgba(216,180,109,0.12);' : ''}">
-                      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: ${isAct ? '800' : '650'}; color: ${isAct ? 'var(--primary)' : opt.color};">
-                        ${opt.label} <span style="font-weight: 850; font-family: 'JetBrains Mono'; padding: 2px 6px; border-radius: 6px; background: var(--bg-soft); color: var(--text-main); font-size: 11px;">${opt.count}</span>
+              <!-- Filter Dropdown -->
+              <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
+                <button id="btnAccTransfersStatusFilterDropdown" type="button" onclick="toggleAccTransfersStatusFilterDropdown(event)" style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 13px; font-weight: 800; padding: 9px 18px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: all 0.2s ease; min-width: 240px; box-shadow: var(--shadow-sm);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: var(--text-soft); font-weight: 600;">Lọc theo trạng thái:</span>
+                    <span style="color: var(--primary);">
+                      ${activeAccountingStatusFilter === 'moi' ? `Mới / Nháp (${statMoi})` :
+                        activeAccountingStatusFilter === 'cho_xac_nhan' ? `Chờ xác nhận (${statChoXacNhan})` :
+                        activeAccountingStatusFilter === 'da_xac_nhan' ? `Đã xác nhận (${statDaXacNhan})` :
+                        activeAccountingStatusFilter === 'can_bo_sung' ? `Yêu cầu bổ sung (${statCanBoSung})` :
+                        activeAccountingStatusFilter === 'da_trinh_dntt' ? `Đã trình ĐNTT (${statTrinhDntt})` :
+                        `Tất cả (${statTotal})`}
+                    </span>
+                  </div>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div id="menuAccTransfersStatusFilterDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; min-width: 240px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 40px -4px rgba(0,0,0,0.18), 0 8px 16px rgba(0,0,0,0.08); padding: 8px; z-index: 1000; backdrop-filter: blur(12px);">
+                  ${[
+                    { id: 'all', label: 'Tất cả', count: statTotal, color: 'var(--text-main)' },
+                    { id: 'moi', label: 'Mới / Nháp', count: statMoi, color: '#3b82f6' },
+                    { id: 'cho_xac_nhan', label: 'Chờ xác nhận', count: statChoXacNhan, color: '#f59e0b' },
+                    { id: 'da_xac_nhan', label: 'Đã xác nhận', count: statDaXacNhan, color: '#10b981' },
+                    { id: 'can_bo_sung', label: 'Yêu cầu bổ sung', count: statCanBoSung, color: '#ef4444' },
+                    { id: 'da_trinh_dntt', label: 'Đã trình ĐNTT', count: statTrinhDntt, color: '#8b5cf6' }
+                  ].map(opt => {
+                    const isAct = activeAccountingStatusFilter === opt.id;
+                    return `
+                      <div class="custom-dropdown-item ${isAct ? 'selected' : ''}" onclick="changeAccountingStatusFilter('${opt.id}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isAct ? 'background: rgba(216,180,109,0.12);' : ''}">
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: ${isAct ? '800' : '650'}; color: ${isAct ? 'var(--primary)' : opt.color};">
+                          ${opt.label} <span style="font-weight: 850; font-family: 'JetBrains Mono'; padding: 2px 6px; border-radius: 6px; background: var(--bg-soft); color: var(--text-main); font-size: 11px;">${opt.count}</span>
+                        </div>
+                        ${isAct ? `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
                       </div>
-                      ${isAct ? `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
-                    </div>
-                  `;
-                }).join('')}
+                    `;
+                  }).join('')}
+                </div>
               </div>
             </div>
 
