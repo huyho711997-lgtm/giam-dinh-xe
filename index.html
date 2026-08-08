@@ -7764,54 +7764,101 @@ function formatDateDisplay(val) {
       } else if (activeDashboardTab === 'list') {
         container.innerHTML = `
           <!-- ADAPTIVE HERO BANNER HEADER -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 22px; box-shadow: var(--shadow-sm); position: relative;">
-            <div style="position: absolute; inset: 0; border-radius: 20px; overflow: hidden; pointer-events: none; z-index: 1;">
-              <div style="position: absolute; right: -40px; top: -40px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(216,180,109,0.12) 0%, rgba(0,0,0,0) 70%); border-radius: 50%;"></div>
-            </div>
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 22px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+            <!-- Decorative Orbs -->
+            <div style="position: absolute; right: -50px; top: -50px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(216,180,109,0.2) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(24px);"></div>
+            <div style="position: absolute; left: 5%; bottom: -60px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
             
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
-              <div>
-                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); padding: 5px 14px; border-radius: 99px; font-size: 11.5px; font-weight: 850; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px;">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                  <span>Hồ sơ giám định</span>
+              <div style="flex: 1; min-width: 320px;">
+                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); border-radius: 16px; font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                  Hồ sơ giám định
                 </div>
-                <h1 style="font-size: 24px; font-weight: 850; color: var(--text-main); margin: 0; letter-spacing: -0.02em; line-height: 1.25;">
+                <h1 style="font-size: 28px; font-weight: 900; background: linear-gradient(135deg, var(--text-main) 0%, #9ca3af 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 10px 0; letter-spacing: -0.02em; line-height: 1.2;">
                   Quản lý hồ sơ giám định
                 </h1>
-                <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft); max-width: 850px; margin-bottom: 0;">
+                <p style="font-size: 13px; color: var(--text-soft); margin: 0; max-width: 800px; line-height: 1.5;">
                   Quản lý toàn bộ hồ sơ giám định bồi thường, theo dõi trạng thái khai báo ảnh tổn thất từ Garage & lập phương án.
                 </p>
               </div>
             </div>
           </div>
 
-          <section class="premium-stats">
-            <div class="stat-box" style="cursor: pointer;" onclick="switchWorkspaceTab('list')">
-              <div class="stat-info"><div class="stat-lbl">Tổng hồ sơ</div><div class="stat-val" id="lblTotalCases">0</div><div class="stat-note">Toàn bộ ca đã khởi tạo</div></div>
-              <div class="stat-icon-wrap" style="color:var(--primary)">${SVGS.FOLDER}</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-info"><div class="stat-lbl">Đang chờ Garage</div><div class="stat-val" id="lblPendingCases" style="color:var(--warning)">0</div><div class="stat-note">Chưa hoàn tất khai báo</div></div>
-              <div class="stat-icon-wrap" style="color:var(--warning)">${SVGS.CLOCK}</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-info"><div class="stat-lbl">Đã có kết quả</div><div class="stat-val" id="lblCompletedCases" style="color:var(--success)">0</div><div class="stat-note">Sẵn sàng đối chiếu</div></div>
-              <div class="stat-icon-wrap" style="color:var(--success)">${SVGS.CHECK_CIRCLE}</div>
-            </div>
-          </section>
-
-          <div class="workspace-grid single-col">
-            <section class="p-card cases-panel">
-              <div class="p-card-head"><div><h2>Danh sách hồ sơ</h2><p>Dữ liệu cập nhật tự động theo thời gian thực.</p></div><div class="section-number">01</div></div>
-              <div class="cases-toolbar">
-                <div class="search-wrap">${SVGS.SEARCH}<input id="caseSearchInput" class="input-premium" type="search" placeholder="Tìm biển số hoặc Garage..." /></div>
-                <div class="filter-pills">
-                  <button class="filter-pill active" data-case-filter="all">Tất cả</button>
-                  <button class="filter-pill" data-case-filter="pending">Chờ nhập</button>
-                  <button class="filter-pill" data-case-filter="completed">Hoàn tất</button>
+          <!-- SUMMARY METRIC STATS CARDS -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px;">
+            <!-- CARD 1: Tổng số -->
+            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.04)'" onclick="setCaseFilter('all')">
+              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.03; transform: scale(3);">
+                ${SVGS.FOLDER}
+              </div>
+              <div style="position: relative; z-index: 2;">
+                <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">Tổng hồ sơ</span>
+                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
+                  <span id="lblTotalCases">0</span> <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); font-family: sans-serif;">hồ sơ</span>
                 </div>
               </div>
-              <div class="table-container">
+            </div>
+            
+            <!-- CARD 2: Đang chờ Garage -->
+            <div style="background: rgba(245,158,11,0.03); border: 1px solid rgba(245,158,11,0.2); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(245,158,11,0.05); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(245,158,11,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(245,158,11,0.05)'" onclick="setCaseFilter('pending')">
+              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.03; transform: scale(3); color: #f59e0b;">
+                ${SVGS.CLOCK}
+              </div>
+              <div style="position: relative; z-index: 2;">
+                <span style="font-size: 11px; font-weight: 850; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  Đang chờ Garage
+                </span>
+                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #d97706; display: flex; align-items: baseline; gap: 6px;">
+                  <span id="lblPendingCases">0</span> <span style="font-size: 13px; font-weight: 700; color: #f59e0b; font-family: sans-serif;">hồ sơ</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- CARD 3: Đã có kết quả -->
+            <div style="background: rgba(16,185,129,0.03); border: 1px solid rgba(16,185,129,0.2); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(16,185,129,0.05); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(16,185,129,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(16,185,129,0.05)'" onclick="setCaseFilter('completed')">
+              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.03; transform: scale(3); color: #10b981;">
+                ${SVGS.CHECK_CIRCLE}
+              </div>
+              <div style="position: relative; z-index: 2;">
+                <span style="font-size: 11px; font-weight: 850; color: #10b981; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  Đã có kết quả
+                </span>
+                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #059669; display: flex; align-items: baseline; gap: 6px;">
+                  <span id="lblCompletedCases">0</span> <span style="font-size: 13px; font-weight: 700; color: #10b981; font-family: sans-serif;">hồ sơ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DETACHED FILTER BAR -->
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 300px;">
+              <div style="position: relative; width: 300px;">
+                <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input id="caseSearchInput" type="text" placeholder="Tìm biển số hoặc Garage..." style="width: 100%; height: 38px; padding: 0 12px 0 36px; border-radius: 8px; border: 1px solid var(--border); font-size: 13.5px; background: var(--bg-main); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'" />
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 13px; color: var(--text-soft); font-weight: 600;">Lọc theo trạng thái:</span>
+                <select id="caseFilterDropdown" style="height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 13.5px; font-weight: 700; color: var(--text-main); background: var(--surface); outline: none; cursor: pointer; min-width: 140px;" onchange="setCaseFilter(this.value)">
+                  <option value="all">Tất cả</option>
+                  <option value="pending">Chờ nhập</option>
+                  <option value="completed">Hoàn tất</option>
+                </select>
+              </div>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 16px; color: var(--text-main); font-size: 13px; font-weight: 700;">
+              <!-- Pagination dummy (for visual consistency) -->
+              <span id="casePaginationText">-- / --</span>
+            </div>
+          </div>
+
+          <div class="workspace-grid single-col" style="padding: 0;">
+            <section class="p-card cases-panel" style="border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); border-radius: 12px; overflow: hidden; background: var(--surface); padding: 0;">
+              <div class="table-container" style="border-radius: 0;">
                 <table class="p-table">
                   <thead><tr><th>Phương tiện</th><th>Khởi tạo</th><th>Nội dung</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th></tr></thead>
                   <tbody id="tblCasesBodyContainer"><tr><td colspan="5" class="empty-state-text">Đang đồng bộ dữ liệu...</td></tr></tbody>
@@ -7822,7 +7869,6 @@ function formatDateDisplay(val) {
         `;
         
         document.getElementById('caseSearchInput').addEventListener('input', () => executeUIRenderCasesTable());
-        document.querySelectorAll('[data-case-filter]').forEach(btn => btn.addEventListener('click', () => setCaseFilter(btn.dataset.caseFilter)));
         
         updateStatsCounters(cachedCasesPayload);
         executeUIRenderCasesTable(cachedCasesPayload);
@@ -9219,6 +9265,11 @@ function formatDateDisplay(val) {
         return matchesText && matchesStatus;
       });
       
+      const paginationText = document.getElementById('casePaginationText');
+      if (paginationText) {
+        paginationText.textContent = `${filteredEntries.length} hồ sơ`;
+      }
+      
       if (!filteredEntries.length) {
         tableBody.innerHTML = `<tr><td colspan="5"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không tìm thấy hồ sơ phù hợp</strong><p>Thử thay đổi từ khóa hoặc bộ lọc trạng thái.</p></div></td></tr>`;
         return;
@@ -9282,6 +9333,8 @@ function formatDateDisplay(val) {
     function setCaseFilter(filterValue) {
       activeCaseFilter = filterValue;
       document.querySelectorAll('[data-case-filter]').forEach(btn => btn.classList.toggle('active', btn.dataset.caseFilter === filterValue));
+      const dropdown = document.getElementById('caseFilterDropdown');
+      if (dropdown) dropdown.value = filterValue;
       executeUIRenderCasesTable();
     }
 
