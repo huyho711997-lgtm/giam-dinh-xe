@@ -14592,6 +14592,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
     let activeAccountingSearch = '';
     let activeAccountingSearchRaw = '';
     let accountingTransferSearchTimeout = null;
+    let accTransfersCurrentPage = 1;
+    let accTransfersPerPage = 10;
     
     // In-memory selection state for modal
     let currentBatchSelectedClaims = [];
@@ -14687,6 +14689,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const menu = document.getElementById('menuAccCustomPerPageDropdown');
       if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
         menu.style.display = 'none';
+      }
+      
+      const btnT = document.getElementById('btnAccTransfersCustomPerPageDropdown');
+      const menuT = document.getElementById('menuAccTransfersCustomPerPageDropdown');
+      if (menuT && btnT && !btnT.contains(e.target) && !menuT.contains(e.target)) {
+        menuT.style.display = 'none';
+        const arrowT = btnT.querySelector('svg');
+        if (arrowT) arrowT.style.transform = 'rotate(0deg)';
       }
     });
 
@@ -15593,6 +15603,46 @@ function renderGdvMonthlyReportPage(targetContainer) {
       // Sort by date newest first
       filteredTransfers.sort((a, b) => (b.ngayBanGiao || 0) - (a.ngayBanGiao || 0));
 
+      const totalFilteredCount = filteredTransfers.length;
+      const totalPages = Math.ceil(totalFilteredCount / accTransfersPerPage) || 1;
+      if (accTransfersCurrentPage > totalPages) accTransfersCurrentPage = totalPages;
+      if (accTransfersCurrentPage < 1) accTransfersCurrentPage = 1;
+
+      const startIndex = (accTransfersCurrentPage - 1) * accTransfersPerPage;
+      const paginatedTransfers = filteredTransfers.slice(startIndex, startIndex + accTransfersPerPage);
+      const displayStart = totalFilteredCount === 0 ? 0 : startIndex + 1;
+      const displayEnd = Math.min(startIndex + accTransfersPerPage, totalFilteredCount);
+
+      // Smart pagination buttons with ellipsis
+      let pageBtnsHtml = '';
+      const maxVisibleButtons = 5;
+      let startPage = Math.max(1, accTransfersCurrentPage - 2);
+      let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
+      if (endPage - startPage < maxVisibleButtons - 1) {
+        startPage = Math.max(1, endPage - maxVisibleButtons + 1);
+      }
+
+      if (startPage > 1) {
+        pageBtnsHtml += `<button type="button" onclick="setAccTransfersPage(1)" style="min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">1</button>`;
+        if (startPage > 2) {
+          pageBtnsHtml += `<span style="font-size: 12px; color: var(--text-muted); padding: 0 2px;">...</span>`;
+        }
+      }
+
+      for (let p = startPage; p <= endPage; p++) {
+        const isAct = p === accTransfersCurrentPage;
+        pageBtnsHtml += `
+          <button type="button" onclick="setAccTransfersPage(${p})" style="min-width: 32px; height: 32px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${isAct ? 'background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 2px 8px rgba(216,180,109,0.35);' : 'background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main);'}">${p}</button>
+        `;
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          pageBtnsHtml += `<span style="font-size: 12px; color: var(--text-muted); padding: 0 2px;">...</span>`;
+        }
+        pageBtnsHtml += `<button type="button" onclick="setAccTransfersPage(${totalPages})" style="min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">${totalPages}</button>`;
+      }
+
       container.innerHTML = `
         <div style="padding: 24px 28px; max-width: 100%; margin: 0 auto;">
           
@@ -15711,7 +15761,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </tr>
                 </thead>
                 <tbody>
-                  ${filteredTransfers.length ? filteredTransfers.map((t, idx) => {
+                  ${paginatedTransfers.length ? paginatedTransfers.map((t, idx) => {
+                    const globalIdx = startIndex + idx;
                     const statusObj = ACCOUNTING_STATUS_MAP[t.trangThai] || ACCOUNTING_STATUS_MAP.cho_xac_nhan;
                     const claimsList = t.danhSachHoSo || [];
                     const claimsCount = claimsList.length || 1;
@@ -15727,7 +15778,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                     return `
                       <tr onclick="${rowClickHandler}" style="border-bottom: 1px solid var(--border); vertical-align: middle; cursor: pointer; transition: all 0.2s ease; ${suppClaimsCount > 0 ? 'background: linear-gradient(90deg, rgba(244,63,94,0.05) 0%, rgba(244,63,94,0.01) 100%); border-left: 4px solid #f43f5e;' : ''}" title="Nhấp để xem chi tiết phiếu bàn giao">
-                        <td style="padding: 14px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${String(idx + 1).padStart(2, '0')}</td>
+                        <td style="padding: 14px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${String(globalIdx + 1).padStart(2, '0')}</td>
                         <td style="padding: 14px; text-align: center;">
                           <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
                             <span style="display: inline-flex; gap: 5px; align-items: center; padding: 5px 12px; border-radius: 999px; color: ${statusObj.text}; background: ${statusObj.bg}; border: 1px solid ${statusObj.border}; font-size: 10.5px; font-weight: 850; text-transform: uppercase; letter-spacing: 0.02em;">
@@ -15784,6 +15835,50 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   `}
                 </tbody>
               </table>
+            </div>
+          </div>
+          
+          <!-- Pagination Component -->
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 18px; background: var(--surface); border-radius: 14px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); margin-top: 16px;">
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+              <span style="font-size: 12.5px; color: var(--text-soft); font-weight: 600;">
+                Hiển thị <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 800;">${displayStart} - ${displayEnd}</strong> trên tổng số <strong style="color: var(--text-main); font-family: 'JetBrains Mono'; font-weight: 800;">${totalFilteredCount}</strong> phiếu
+              </span>
+
+              <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-soft); font-weight: 600;">
+                <span>Hiển thị:</span>
+                <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
+                  <button id="btnAccTransfersCustomPerPageDropdown" type="button" onclick="toggleAccTransfersCustomPerPageDropdown(event)" style="background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); font-size: 12px; font-weight: 800; padding: 5px 28px 5px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: all 0.2s ease;">
+                    <span>${accTransfersPerPage} / trang</span>
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </button>
+                  <div id="menuAccTransfersCustomPerPageDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; bottom: calc(100% + 5px); left: 0; min-width: 110px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
+                    ${[10, 25, 50, 100].map(num => {
+                      const isSel = accTransfersPerPage === num;
+                      return `
+                        <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="setAccTransfersPerPage(${num})" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
+                          <span style="font-size: 11.5px; font-family: 'JetBrains Mono';">${num} / trang</span>
+                          ${isSel ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" onclick="setAccTransfersPage(${accTransfersCurrentPage - 1})" ${accTransfersCurrentPage <= 1 ? 'disabled' : ''} style="width: 32px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accTransfersCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${accTransfersCurrentPage <= 1 ? 'none' : 'auto'};" title="Trang trước">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+              </button>
+
+              <div style="display: flex; gap: 4px; align-items: center;">
+                ${pageBtnsHtml}
+              </div>
+
+              <button type="button" onclick="setAccTransfersPage(${accTransfersCurrentPage + 1})" ${accTransfersCurrentPage >= totalPages ? 'disabled' : ''} style="width: 32px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accTransfersCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${accTransfersCurrentPage >= totalPages ? 'none' : 'auto'};" title="Trang sau">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
             </div>
           </div>
 
