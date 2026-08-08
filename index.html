@@ -14590,6 +14590,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
     let cachedAccountingTransfersPayload = {};
     let activeAccountingStatusFilter = 'all';
     let activeAccountingSearch = '';
+    let activeAccountingSearchRaw = '';
+    let accountingTransferSearchTimeout = null;
     
     // In-memory selection state for modal
     let currentBatchSelectedClaims = [];
@@ -14738,6 +14740,27 @@ function renderGdvMonthlyReportPage(targetContainer) {
         renderAccountingClaimsPage();
         setTimeout(() => {
           const searchInput = document.getElementById('accountingSearchInput');
+          if (searchInput) {
+            searchInput.focus();
+            searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+          }
+        }, 10);
+      }, 500);
+    }
+
+    function changeAccountingStatusFilter(status) {
+      activeAccountingStatusFilter = status;
+      renderAccountingTransferPage();
+    }
+
+    function changeAccountingSearch(text) {
+      activeAccountingSearchRaw = text;
+      clearTimeout(accountingTransferSearchTimeout);
+      accountingTransferSearchTimeout = setTimeout(() => {
+        activeAccountingSearch = (text || '').toLowerCase().trim();
+        renderAccountingTransferPage();
+        setTimeout(() => {
+          const searchInput = document.getElementById('accountingTransferSearchInput');
           if (searchInput) {
             searchInput.focus();
             searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
@@ -15665,7 +15688,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
               <!-- Search Input -->
               <div style="position: relative; width: 240px;">
-                <input class="input-premium" value="${escapeAttributeData(activeAccountingSearch)}" oninput="changeAccountingSearch(this.value)" placeholder="Tìm theo Mã phiếu, HSBT, BKS..." style="width: 100%; height: 38px; border-radius: 10px; font-size: 12.5px; padding-left: 32px;" />
+                <input id="accountingTransferSearchInput" class="input-premium" value="${escapeAttributeData(typeof activeAccountingSearchRaw !== 'undefined' ? activeAccountingSearchRaw : activeAccountingSearch)}" oninput="changeAccountingSearch(this.value)" placeholder="Tìm theo Mã phiếu, HSBT, BKS..." style="width: 100%; height: 38px; border-radius: 10px; font-size: 12.5px; padding-left: 32px;" />
                 <div style="position: absolute; left: 10px; top: 10px; color: var(--text-soft); pointer-events: none;">${ACC_SVGS.SEARCH}</div>
               </div>
             </div>
