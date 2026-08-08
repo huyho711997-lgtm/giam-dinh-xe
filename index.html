@@ -15047,59 +15047,96 @@ function renderGdvMonthlyReportPage(targetContainer) {
         <div style="padding: 24px 28px; max-width: 100%; margin: 0 auto;">
           
           <!-- HERO BANNER HEADER -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 22px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-            <div style="position: absolute; right: -40px; top: -40px; width: 240px; height: 240px; background: radial-gradient(circle, rgba(216,180,109,0.15) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none;"></div>
+          <div style="background: linear-gradient(145deg, rgba(216,180,109,0.04) 0%, rgba(216,180,109,0.1) 100%), var(--surface); border: 1px solid rgba(216,180,109,0.25); border-radius: 20px; padding: 24px 32px; margin-bottom: 24px; box-shadow: 0 8px 30px -8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.08); position: relative; overflow: hidden; backdrop-filter: blur(20px);">
+            <!-- Decorative Orbs -->
+            <div style="position: absolute; right: -50px; top: -50px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(216,180,109,0.2) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(24px);"></div>
+            <div style="position: absolute; left: 5%; bottom: -60px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
             
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
-              <div>
-                <h1 style="font-size: 24px; font-weight: 850; color: var(--text-main); margin: 0; letter-spacing: -0.02em; line-height: 1.25;">
+              <div style="flex: 1; min-width: 320px;">
+                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); border-radius: 16px; font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                  Hồ sơ Kế toán
+                </div>
+                <h1 style="font-size: 28px; font-weight: 900; background: linear-gradient(135deg, var(--text-main) 0%, #9ca3af 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 10px 0; letter-spacing: -0.02em; line-height: 1.2;">
                   Quản lý hồ sơ đã nhận
                 </h1>
-                <p style="font-size: 13px; color: var(--text-soft); margin: 6px 0 0; max-width: 780px;">
-                  Quản lý toàn bộ hồ sơ đã bàn giao từ Giám định viên, theo dõi tiến độ xét duyệt &amp; gửi yêu cầu bổ sung.
+                <p style="font-size: 13px; color: var(--text-soft); margin: 0; max-width: 800px; line-height: 1.5;">
+                  Quản lý toàn bộ hồ sơ đã bàn giao từ Giám định viên, theo dõi tiến độ xét duyệt & gửi yêu cầu bổ sung.
                 </p>
               </div>
-              
-
             </div>
           </div>
 
           <!-- SUMMARY METRIC STATS CARDS -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 22px;">
-            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: var(--shadow-sm);">
-              <span style="font-size: 11px; font-weight: 800; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em;">Tổng số hồ sơ đã nhận</span>
-              <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: var(--text-main); margin-top: 6px;">
-                ${statTotal} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px;">
+            <!-- CARD 1: Tổng số -->
+            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.04)'">
+              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.03; transform: scale(3);">
+                ${ACC_SVGS.FOLDER}
+              </div>
+              <div style="position: relative; z-index: 2;">
+                <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">Tổng số hồ sơ đã nhận</span>
+                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
+                  ${statTotal} <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); font-family: sans-serif;">hồ sơ</span>
+                </div>
               </div>
             </div>
 
-            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.05em;">
+            <!-- CARD 2: Đã xác nhận -->
+            <div style="background: linear-gradient(180deg, rgba(16,185,129,0.03) 0%, rgba(16,185,129,0.06) 100%), var(--surface); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(16,185,129,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(16,185,129,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(16,185,129,0.04)'">
+              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.05; color: #10b981; transform: scale(3);">
                 ${ACC_SVGS.CHECK_CIRCLE}
-                <span>ĐÃ XÁC NHẬN</span>
               </div>
-              <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #10b981; margin-top: 6px;">
-                ${statDaXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
+              <div style="position: relative; z-index: 2;">
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: #10b981; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
+                  <div style="width: 22px; height: 22px; border-radius: 6px; background: rgba(16,185,129,0.15); display: grid; place-items: center;">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  </div>
+                  <span>Đã xác nhận</span>
+                </div>
+                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #10b981; display: flex; align-items: baseline; gap: 6px;">
+                  ${statDaXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
+                </div>
               </div>
             </div>
 
-            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #ef4444; text-transform: uppercase; letter-spacing: 0.05em;">
+            <!-- CARD 3: Yêu cầu bổ sung -->
+            <div style="background: ${statCanBoSung > 0 ? 'linear-gradient(180deg, rgba(239,68,68,0.05) 0%, rgba(239,68,68,0.1) 100%)' : 'var(--surface)'}; border: 1px solid ${statCanBoSung > 0 ? 'rgba(239,68,68,0.4)' : 'var(--border-strong)'}; border-radius: 16px; padding: 16px 20px; box-shadow: ${statCanBoSung > 0 ? '0 2px 12px rgba(239,68,68,0.08)' : '0 2px 10px rgba(0,0,0,0.04)'}; position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" ${statCanBoSung > 0 ? `onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(239,68,68,0.18)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 12px rgba(239,68,68,0.08)'"` : `onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.04)'"`}>
+              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.05; color: #ef4444; transform: scale(3);">
                 ${ACC_SVGS.WARNING}
-                <span>YÊU CẦU BỔ SUNG</span>
               </div>
-              <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #ef4444; margin-top: 6px;">
-                ${statCanBoSung} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
+              <div style="position: relative; z-index: 2;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                  <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: #ef4444; text-transform: uppercase; letter-spacing: 0.06em;">
+                    <div style="width: 22px; height: 22px; border-radius: 6px; background: rgba(239,68,68,0.15); display: grid; place-items: center;">
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    </div>
+                    <span>Yêu cầu bổ sung</span>
+                  </div>
+                  ${statCanBoSung > 0 ? `<div style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: pulseRed 2s infinite;"></div>` : ''}
+                </div>
+                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #ef4444; display: flex; align-items: baseline; gap: 6px;">
+                  ${statCanBoSung} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
+                </div>
               </div>
             </div>
 
-            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #8b5cf6; text-transform: uppercase; letter-spacing: 0.05em;">
-                ${ACC_SVGS.CHECK_CIRCLE}
-                <span>ĐÃ TRÌNH ĐỀ NGHỊ THANH TOÁN</span>
+            <!-- CARD 4: Đã trình ĐNTT -->
+            <div style="background: linear-gradient(180deg, rgba(139,92,246,0.03) 0%, rgba(139,92,246,0.06) 100%), var(--surface); border: 1px solid rgba(139,92,246,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(139,92,246,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(139,92,246,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(139,92,246,0.04)'">
+              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.05; color: #8b5cf6; transform: scale(3);">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
               </div>
-              <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #8b5cf6; margin-top: 6px;">
-                ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
+              <div style="position: relative; z-index: 2;">
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: #8b5cf6; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
+                  <div style="width: 22px; height: 22px; border-radius: 6px; background: rgba(139,92,246,0.15); display: grid; place-items: center;">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                  </div>
+                  <span>Đã trình Đề nghị Thanh toán</span>
+                </div>
+                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #8b5cf6; display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;">
+                  ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
+                </div>
               </div>
             </div>
           </div>
