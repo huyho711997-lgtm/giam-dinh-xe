@@ -15827,28 +15827,23 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </div>
             </div>
 
-            <!-- CARD 5: Đã trình ĐNTT (Full width in row if it breaks) -->
-            <div style="background: linear-gradient(180deg, rgba(139,92,246,0.03) 0%, rgba(139,92,246,0.08) 100%), var(--surface); border: 1px solid rgba(139,92,246,0.25); border-radius: 20px; padding: 24px 32px; box-shadow: 0 4px 16px rgba(139,92,246,0.06); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 24px;" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 28px rgba(139,92,246,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(139,92,246,0.06)'">
-              <div style="position: absolute; right: 20px; top: -30px; opacity: 0.04; color: #8b5cf6; transform: scale(5);">
+            <!-- CARD 5: Đã trình ĐNTT -->
+            <div style="background: linear-gradient(180deg, rgba(139,92,246,0.03) 0%, rgba(139,92,246,0.08) 100%), var(--surface); border: 1px solid rgba(139,92,246,0.25); border-radius: 20px; padding: 24px; box-shadow: 0 4px 16px rgba(139,92,246,0.06); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 12px 28px rgba(139,92,246,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 16px rgba(139,92,246,0.06)'">
+              <div style="position: absolute; right: -16px; top: -16px; opacity: 0.05; color: #8b5cf6; transform: scale(3.5);">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
               </div>
-              
               <div style="position: relative; z-index: 2;">
                 <div style="display: flex; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 850; color: #8b5cf6; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;">
                   <div style="width: 26px; height: 26px; border-radius: 8px; background: rgba(139,92,246,0.15); display: grid; place-items: center;">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                   </div>
-                  <span>Đã trình Đề nghị Thanh toán</span>
+                  <span>Đã trình ĐNTT</span>
                 </div>
-                <div style="font-family: 'JetBrains Mono'; font-size: 38px; font-weight: 900; color: #8b5cf6; display: flex; align-items: baseline; gap: 10px;">
-                  ${statTrinhDntt} <span style="font-size: 15px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">phiếu</span>
+                <div style="font-family: 'JetBrains Mono'; font-size: 34px; font-weight: 900; color: #8b5cf6; display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
+                  ${statTrinhDntt} <span style="font-size: 14px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">phiếu</span>
                 </div>
-              </div>
-
-              <div style="position: relative; z-index: 2; text-align: right; min-width: 200px;">
-                <span style="font-size: 12px; font-weight: 800; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px;">Tổng số tiền</span>
-                <div style="font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 900; color: #8b5cf6;">
-                  ${formatCurrencyInputNumber(totalMoneyTrinhDntt)} <span style="font-size: 16px; font-weight: 700;">VNĐ</span>
+                <div style="font-size: 13px; font-weight: 800; color: var(--text-soft); margin-top: 2px;">
+                  ${formatCurrencyInputNumber(totalMoneyTrinhDntt)} <span style="font-size: 11px;">VNĐ</span>
                 </div>
               </div>
             </div>
