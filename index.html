@@ -14779,6 +14779,46 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }, 500);
     }
 
+    function setAccTransfersPage(page) {
+      accTransfersCurrentPage = page;
+      renderAccountingTransferPage();
+    }
+
+    function setAccTransfersPerPage(num) {
+      accTransfersPerPage = num;
+      accTransfersCurrentPage = 1;
+      renderAccountingTransferPage();
+    }
+
+    function toggleAccTransfersCustomPerPageDropdown(e) {
+      if (e) e.stopPropagation();
+      const menu = document.getElementById('menuAccTransfersCustomPerPageDropdown');
+      const wrapper = document.getElementById('btnAccTransfersCustomPerPageDropdown');
+      if (!menu) return;
+      const isVisible = menu.style.display === 'block';
+      
+      // Attempt to close other dropdowns safely
+      if (typeof closeAllCustomDropdowns === 'function') {
+        closeAllCustomDropdowns();
+      }
+      const menuClaim = document.getElementById('menuAccCustomPerPageDropdown');
+      if (menuClaim) menuClaim.style.display = 'none';
+      
+      if (!isVisible) {
+        menu.style.display = 'block';
+        if (wrapper) {
+            const arrow = wrapper.querySelector('svg');
+            if (arrow) arrow.style.transform = 'rotate(180deg)';
+        }
+      } else {
+        menu.style.display = 'none';
+        if (wrapper) {
+            const arrow = wrapper.querySelector('svg');
+            if (arrow) arrow.style.transform = 'rotate(0deg)';
+        }
+      }
+    }
+
     
     /* REAL-TIME NOTIFICATIONS & DEEP LINKING HELPER */
     async function sendAppNotification(targetRole, targetUserIdentifier, title, message, transferId, claimIndex, soHoSoBoiThuong, bienSo, notifType) {
