@@ -3208,6 +3208,8 @@
     let activeObjectUrls = [];
     let cachedCasesPayload = null;
     let activeCaseFilter = 'all';
+    let activeCasePage = 1;
+    let activeCasePerPage = 10;
     let activeUserFilter = 'all';
     let activeDashboardTab = 'home'; 
     let activeCreateFlowMode = 'select';
@@ -7833,26 +7835,61 @@ function formatDateDisplay(val) {
             </div>
           </div>
 
-          <!-- DETACHED FILTER BAR -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 300px;">
-              <div style="position: relative; width: 300px;">
-                <svg style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input id="caseSearchInput" type="text" placeholder="Tìm biển số hoặc Garage..." style="width: 100%; height: 38px; padding: 0 12px 0 36px; border-radius: 8px; border: 1px solid var(--border); font-size: 13.5px; background: var(--bg-main); outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'" />
+          <!-- DETACHED FILTER BAR (Matches acc_transfers) -->
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 14px 20px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: var(--shadow-sm);">
+            
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <!-- Search Input -->
+              <div style="position: relative; width: 260px;">
+                <input id="caseSearchInput" class="input-premium" type="search" placeholder="Tìm biển số hoặc Garage..." style="width: 100%; height: 38px; border-radius: 10px; font-size: 12.5px; padding-left: 32px; padding-right: 32px;" oninput="activeCasePage=1; executeUIRenderCasesTable()" />
+                <div style="position: absolute; left: 10px; top: 10px; color: var(--text-soft); pointer-events: none;">${SVGS.SEARCH}</div>
               </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 13px; color: var(--text-soft); font-weight: 600;">Lọc theo trạng thái:</span>
-                <select id="caseFilterDropdown" style="height: 38px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 13.5px; font-weight: 700; color: var(--text-main); background: var(--surface); outline: none; cursor: pointer; min-width: 140px;" onchange="setCaseFilter(this.value)">
-                  <option value="all">Tất cả</option>
-                  <option value="pending">Chờ nhập</option>
-                  <option value="completed">Hoàn tất</option>
-                </select>
+
+              <!-- Filter Dropdown (Custom UI to match sample) -->
+              <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
+                <button type="button" onclick="const el=document.getElementById('ddCaseStatusFilter'); el.style.display=el.style.display==='none'?'block':'none';" style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 13px; font-weight: 800; padding: 9px 18px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: all 0.2s ease; min-width: 240px; box-shadow: var(--shadow-sm);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: var(--text-soft); font-weight: 600;">Lọc theo trạng thái:</span>
+                    <span style="color: var(--primary);" id="lblCaseFilterSelected">Tất cả</span>
+                  </div>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                <div id="ddCaseStatusFilter" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 260px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px);">
+                  <div class="custom-dropdown-item" onclick="setCaseFilter('all'); document.getElementById('ddCaseStatusFilter').style.display='none'" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--primary);">Tất cả</div>
+                  </div>
+                  <div class="custom-dropdown-item" onclick="setCaseFilter('pending'); document.getElementById('ddCaseStatusFilter').style.display='none'" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 650; color: #f59e0b;">Chờ nhập</div>
+                  </div>
+                  <div class="custom-dropdown-item" onclick="setCaseFilter('completed'); document.getElementById('ddCaseStatusFilter').style.display='none'" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 650; color: #10b981;">Hoàn tất</div>
+                  </div>
+                </div>
               </div>
             </div>
             
-            <div style="display: flex; align-items: center; gap: 16px; color: var(--text-main); font-size: 13px; font-weight: 700;">
-              <!-- Pagination dummy (for visual consistency) -->
-              <span id="casePaginationText">-- / --</span>
+            <!-- Pagination Controls Right -->
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+              <span style="font-size: 13px; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--text-soft);">
+                <span id="casePaginationRange" style="color: var(--primary); font-weight: 800;">0-0</span> / <span id="casePaginationTotal">0</span>
+              </span>
+
+              <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
+                <button type="button" onclick="const el=document.getElementById('menuCasePerPageDropdown'); el.style.display=el.style.display==='none'?'block':'none';" style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12.5px; font-weight: 800; padding: 6px 14px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: all 0.2s ease; box-shadow: var(--shadow-xs);">
+                  <span id="lblCasePerPage">10/trang</span>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div id="menuCasePerPageDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); right: 0; min-width: 100px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
+                  <div class="custom-dropdown-item" onclick="setCasePerPage(10); document.getElementById('menuCasePerPageDropdown').style.display='none'" style="padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: 'JetBrains Mono'; font-weight: 800; color: var(--primary);">10 / trang</div>
+                  <div class="custom-dropdown-item" onclick="setCasePerPage(20); document.getElementById('menuCasePerPageDropdown').style.display='none'" style="padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: 'JetBrains Mono'; font-weight: 600; color: var(--text-main);">20 / trang</div>
+                  <div class="custom-dropdown-item" onclick="setCasePerPage(50); document.getElementById('menuCasePerPageDropdown').style.display='none'" style="padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: 'JetBrains Mono'; font-weight: 600; color: var(--text-main);">50 / trang</div>
+                </div>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 4px;" id="casePaginationControls">
+                <!-- Controls injected by JS -->
+              </div>
             </div>
           </div>
 
@@ -7867,8 +7904,6 @@ function formatDateDisplay(val) {
             </section>
           </div>
         `;
-        
-        document.getElementById('caseSearchInput').addEventListener('input', () => executeUIRenderCasesTable());
         
         updateStatsCounters(cachedCasesPayload);
         executeUIRenderCasesTable(cachedCasesPayload);
@@ -9265,16 +9300,63 @@ function formatDateDisplay(val) {
         return matchesText && matchesStatus;
       });
       
-      const paginationText = document.getElementById('casePaginationText');
-      if (paginationText) {
-        paginationText.textContent = `${filteredEntries.length} hồ sơ`;
+      const totalFiltered = filteredEntries.length;
+      
+      const lblFilter = document.getElementById('lblCaseFilterSelected');
+      if (lblFilter) {
+        lblFilter.innerHTML = activeCaseFilter === 'completed' ? `Hoàn tất (${totalFiltered})` : 
+                              activeCaseFilter === 'pending' ? `Chờ nhập (${totalFiltered})` : 
+                              `Tất cả (${totalFiltered})`;
       }
       
-      if (!filteredEntries.length) {
+      const lblRange = document.getElementById('casePaginationRange');
+      const lblTotal = document.getElementById('casePaginationTotal');
+      const pageControls = document.getElementById('casePaginationControls');
+      const lblPerPage = document.getElementById('lblCasePerPage');
+      if (lblPerPage) lblPerPage.innerText = activeCasePerPage + '/trang';
+      
+      if (!totalFiltered) {
+        if (lblRange) lblRange.innerText = '0-0';
+        if (lblTotal) lblTotal.innerText = '0';
+        if (pageControls) pageControls.innerHTML = '';
         tableBody.innerHTML = `<tr><td colspan="5"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không tìm thấy hồ sơ phù hợp</strong><p>Thử thay đổi từ khóa hoặc bộ lọc trạng thái.</p></div></td></tr>`;
         return;
       }
-      tableBody.innerHTML = filteredEntries.map(([uniqueKeyToken, entityNode]) => {
+      
+      const totalPages = Math.ceil(totalFiltered / activeCasePerPage);
+      if (activeCasePage > totalPages) activeCasePage = totalPages;
+      if (activeCasePage < 1) activeCasePage = 1;
+      
+      const startIndex = (activeCasePage - 1) * activeCasePerPage;
+      const endIndex = Math.min(startIndex + activeCasePerPage, totalFiltered);
+      
+      if (lblRange) lblRange.innerText = `${startIndex + 1}-${endIndex}`;
+      if (lblTotal) lblTotal.innerText = totalFiltered;
+      
+      if (pageControls) {
+        let btnsHTML = '';
+        const maxPagesToShow = 5;
+        let startPageBtn = Math.max(1, activeCasePage - 2);
+        let endPageBtn = Math.min(totalPages, startPageBtn + maxPagesToShow - 1);
+        if (endPageBtn - startPageBtn + 1 < maxPagesToShow) {
+          startPageBtn = Math.max(1, endPageBtn - maxPagesToShow + 1);
+        }
+        
+        for (let p = startPageBtn; p <= endPageBtn; p++) {
+          const isAct = p === activeCasePage;
+          btnsHTML += `<button type="button" class="pagination-btn" onclick="setCasePage(${p})" style="width: 30px; height: 30px; border-radius: 8px; font-size: 13px; font-weight: 800; font-family: 'JetBrains Mono'; background: ${isAct ? 'var(--primary)' : 'var(--surface)'}; color: ${isAct ? '#fff' : 'var(--text-main)'}; border: 1px solid ${isAct ? 'var(--primary)' : 'var(--border-strong)'}; display: grid; place-items: center; cursor: pointer; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">${p}</button>`;
+        }
+        
+        pageControls.innerHTML = `
+          <button type="button" class="pagination-btn" onclick="setCasePage(${activeCasePage - 1})" ${activeCasePage <= 1 ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${activeCasePage <= 1 ? '0.4' : '1'}; pointer-events: ${activeCasePage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+          <div style="display: flex; gap: 4px; align-items: center;">${btnsHTML}</div>
+          <button type="button" class="pagination-btn" onclick="setCasePage(${activeCasePage + 1})" ${activeCasePage >= totalPages ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${activeCasePage >= totalPages ? '0.4' : '1'}; pointer-events: ${activeCasePage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+        `;
+      }
+
+      const pagedEntries = filteredEntries.slice(startIndex, endIndex);
+      
+      tableBody.innerHTML = pagedEntries.map(([uniqueKeyToken, entityNode]) => {
         const isCaseDone = entityNode.trangThai === STATUS_COMPLETED;
         const targetBadgeClass = isCaseDone ? 'completed' : 'pending';
         const partnerPortalInputLink = `${getCleanOriginBaseUrl()}?idCa=${uniqueKeyToken}`;
@@ -9332,9 +9414,18 @@ function formatDateDisplay(val) {
 
     function setCaseFilter(filterValue) {
       activeCaseFilter = filterValue;
-      document.querySelectorAll('[data-case-filter]').forEach(btn => btn.classList.toggle('active', btn.dataset.caseFilter === filterValue));
-      const dropdown = document.getElementById('caseFilterDropdown');
-      if (dropdown) dropdown.value = filterValue;
+      activeCasePage = 1;
+      executeUIRenderCasesTable();
+    }
+    
+    function setCasePage(page) {
+      activeCasePage = page;
+      executeUIRenderCasesTable();
+    }
+    
+    function setCasePerPage(perPage) {
+      activeCasePerPage = perPage;
+      activeCasePage = 1;
       executeUIRenderCasesTable();
     }
 
