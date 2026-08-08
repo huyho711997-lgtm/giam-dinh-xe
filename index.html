@@ -2392,6 +2392,7 @@
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="newPerm_accounting_view" checked style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Xem</label>
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="newPerm_accounting_create" checked style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Tạo phiếu bàn giao</label>
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(16,185,129,0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3); color: #10b981;"><input type="checkbox" id="newPerm_accounting_review" style="accent-color: #10b981; width: 16px; height: 16px; cursor: pointer;" /> Xét duyệt Kế toán</label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="newPerm_accounting_export" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Xuất dữ liệu</label>
               </div>
             </div>
 
@@ -2563,6 +2564,7 @@
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="editPerm_accounting_view" checked style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Xem</label>
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="editPerm_accounting_create" checked style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Tạo phiếu bàn giao</label>
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(16,185,129,0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3); color: #10b981;"><input type="checkbox" id="editPerm_accounting_review" style="accent-color: #10b981; width: 16px; height: 16px; cursor: pointer;" /> Xét duyệt Kế toán</label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="editPerm_accounting_export" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Xuất dữ liệu</label>
               </div>
             </div>
 
@@ -5095,7 +5097,8 @@
         accounting: {
           view: document.getElementById(prefix + 'Perm_accounting_view')?.checked || false,
           create: document.getElementById(prefix + 'Perm_accounting_create')?.checked || false,
-          review: document.getElementById(prefix + 'Perm_accounting_review')?.checked || false
+          review: document.getElementById(prefix + 'Perm_accounting_review')?.checked || false,
+          export: document.getElementById(prefix + 'Perm_accounting_export')?.checked || false
         },
         users: {
           view: document.getElementById(prefix + 'Perm_users_view')?.checked || false,
@@ -5132,6 +5135,7 @@
       setCheck(prefix + 'Perm_accounting_view', p.accounting?.view ?? true);
       setCheck(prefix + 'Perm_accounting_create', p.accounting?.create ?? !isRoleKeToan);
       setCheck(prefix + 'Perm_accounting_review', p.accounting?.review ?? (isRoleKeToan || isRoleAdmin));
+      setCheck(prefix + 'Perm_accounting_export', p.accounting?.export ?? (isRoleKeToan || isRoleAdmin));
 
       setCheck(prefix + 'Perm_users_view', p.users?.view ?? isRoleAdmin);
       setCheck(prefix + 'Perm_users_admin', p.users?.admin ?? isRoleAdmin);
@@ -5147,6 +5151,7 @@
         
         if (moduleKey === 'users') return false;
         if (moduleKey === 'accounting' && actionKey === 'review') return isKeToan;
+        if (moduleKey === 'accounting' && actionKey === 'export') return isKeToan;
         return true;
       }
       
@@ -15234,6 +15239,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   }).join('')}
                 </div>
               </div>
+              
+              <!-- Export Data Button (conditionally rendered) -->
+              ${hasUserPermission('accounting', 'export') ? `
+                <button type="button" class="btn-premium" onclick="exportAccountingClaimsToExcel()" style="padding: 0 16px; height: 38px; border-radius: 10px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; box-shadow: none; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(16, 185, 129, 0.2)'; this.style.borderColor='rgba(16, 185, 129, 0.5)';" onmouseout="this.style.background='rgba(16, 185, 129, 0.1)'; this.style.borderColor='rgba(16, 185, 129, 0.3)';">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Xuất dữ liệu
+                </button>
+              ` : ''}
             </div>
 
             <!-- Pagination Controls Right -->
@@ -16836,6 +16849,115 @@ function renderGdvMonthlyReportPage(targetContainer) {
           document.body.removeChild(iframe);
         }, 1000);
       }, 500);
+    }
+
+    function exportAccountingClaimsToExcel() {
+      if (!hasUserPermission('accounting', 'export')) {
+        triggerToast('Bạn không có quyền xuất dữ liệu kế toán.', 'error');
+        return;
+      }
+      
+      const allItems = getAccountingClaimsFlatList();
+      const confirmedTransfers = ['da_xac_nhan', 'da_nhan_du_ho_so', 'da_trinh_dntt', 'can_bo_sung'];
+      const activeItems = allItems.filter(item => confirmedTransfers.includes(item.transfer.trangThai));
+
+      let items = activeItems.filter(item => {
+        if (activeAccountingClaimStatus === 'all') return true;
+        if (activeAccountingClaimStatus === 'da_xac_nhan') return item.transfer.trangThai === 'da_xac_nhan' || item.transfer.trangThai === 'da_nhan_du_ho_so';
+        if (activeAccountingClaimStatus === 'can_bo_sung') {
+          const suppList = item.transfer.hoSoYeuCauBoSung || [];
+          return suppList.some(s => Number(s.chiSo) === Number(item.claimIndex) || (s.soHoSoBoiThuong && s.soHoSoBoiThuong === item.claim.soHoSoBoiThuong) || (s.bienSo && s.bienSo === item.claim.bienSo)) || item.claim.trangThaiBoSung === 'yeu_cau_bo_sung' || item.transfer.trangThai === 'can_bo_sung';
+        }
+        return item.transfer.trangThai === activeAccountingClaimStatus;
+      });
+
+      if (activeAccountingClaimSearch) {
+        const keyword = activeAccountingClaimSearch;
+        items = items.filter(item => [
+          item.transfer.transferId, item.transfer.gdvName, item.claim.bienSo, item.claim.soHoSoBoiThuong,
+          item.claim.tenGara, extractClaimOwnerName(item.claim), item.note.ghiChu
+        ].some(value => String(value || '').toLowerCase().includes(keyword)));
+      }
+
+      if (items.length === 0) {
+        triggerToast('Không có dữ liệu để xuất.', 'warning');
+        return;
+      }
+
+      const rows = [
+        ['STT', 'Trạng thái', 'Số HSBT', 'Biển số', 'Khách hàng', 'Giám định viên', 'Tên Gara', 'Tổng duyệt giá', 'Thu hồi', 'Giảm trừ', 'Số tiền đề nghị', 'Số phiếu bàn giao', 'Ngày bàn giao', 'Ghi chú']
+      ];
+
+      items.forEach((item, index) => {
+        const c = item.claim;
+        const t = item.transfer;
+        
+        let statusText = '';
+        if (t.trangThai === 'da_trinh_dntt') statusText = 'ĐÃ TRÌNH ĐNTT';
+        else if (t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so') statusText = 'ĐÃ XÁC NHẬN';
+        else if (t.trangThai === 'can_bo_sung') statusText = 'CẦN BỔ SUNG';
+        else statusText = 'CHỜ XÁC NHẬN';
+        
+        const suppList = t.hoSoYeuCauBoSung || [];
+        const isSupp = suppList.some(s => Number(s.chiSo) === Number(item.claimIndex) || (s.soHoSoBoiThuong && s.soHoSoBoiThuong === c.soHoSoBoiThuong) || (s.bienSo && s.bienSo === c.bienSo)) || c.trangThaiBoSung === 'yeu_cau_bo_sung';
+        if (isSupp) statusText = 'YÊU CẦU BỔ SUNG';
+        
+        const formatMoneyStr = (val) => {
+          if (!val) return '0';
+          const clean = String(val).replace(/\D/g, '');
+          if (!clean) return '0';
+          return parseInt(clean, 10).toLocaleString('vi-VN');
+        };
+
+        const dtg = formatMoneyStr(c.tongDuyetGia);
+        const th = formatMoneyStr(c.thuHoi);
+        const gt = formatMoneyStr(c.giamTru);
+        const st = formatMoneyStr(c.soTienDeNghiThem);
+        const tsDate = (t.createdAt) ? formatTimestamp(t.createdAt) : '';
+
+        rows.push([
+          index + 1,
+          statusText,
+          c.soHoSoBoiThuong || '',
+          c.bienSo || '',
+          extractClaimOwnerName(c) || '',
+          t.gdvName || '',
+          c.tenGara || '',
+          dtg,
+          th,
+          gt,
+          st,
+          t.transferId || '',
+          tsDate,
+          item.note.ghiChu || ''
+        ]);
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+
+      // Simple column widths
+      ws['!cols'] = [
+        { wch: 6 }, { wch: 20 }, { wch: 25 }, { wch: 15 }, { wch: 25 }, 
+        { wch: 25 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, 
+        { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 35 }
+      ];
+
+      // Bold header
+      for (let C = 0; C < rows[0].length; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({c: C, r: 0});
+        if (!ws[cellAddress]) continue;
+        ws[cellAddress].s = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "0F172A" } },
+          alignment: { horizontal: "center", vertical: "center" }
+        };
+      }
+
+      XLSX.utils.book_append_sheet(wb, ws, "HoSoDaNhan");
+      const filename = `HoSoKeToan_Export_${formatDateYYYYMMDD(new Date())}.xlsx`;
+      XLSX.writeFile(wb, filename);
+      triggerToast('Đã xuất dữ liệu ra Excel!', 'success');
     }
 
     function exportAccountingTransferBatchExcel(transferId) {
