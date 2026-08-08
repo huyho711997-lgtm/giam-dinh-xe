@@ -15013,7 +15013,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
 
       if (startPage > 1) {
-        pageBtnsHtml += `<button type="button" onclick="setAccClaimsPage(1)" style="min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">1</button>`;
+        pageBtnsHtml += `<button type="button" onclick="setAccClaimsPage(1)" style="min-width: 30px; height: 30px; padding: 0 8px; border-radius: 8px; font-size: 12.5px; font-weight: 750; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); cursor: pointer; box-shadow: var(--shadow-xs);">1</button>`;
         if (startPage > 2) {
           pageBtnsHtml += `<span style="font-size: 12px; color: var(--text-muted); padding: 0 2px;">...</span>`;
         }
@@ -15022,7 +15022,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       for (let p = startPage; p <= endPage; p++) {
         const isAct = p === accClaimsCurrentPage;
         pageBtnsHtml += `
-          <button type="button" onclick="setAccClaimsPage(${p})" style="min-width: 32px; height: 32px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${isAct ? 'background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 2px 8px rgba(216,180,109,0.35);' : 'background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main);'}">${p}</button>
+          <button type="button" onclick="setAccClaimsPage(${p})" style="min-width: 30px; height: 30px; padding: 0 8px; border-radius: 8px; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${isAct ? 'background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 4px 10px rgba(216,180,109,0.4);' : 'background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); box-shadow: var(--shadow-xs);'}">${p}</button>
         `;
       }
 
@@ -15203,21 +15203,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
             <!-- Pagination Controls Right -->
             <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-              <span style="font-size: 12px; color: var(--text-soft); font-weight: 600;">
-                <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 800;">${displayStart}-${displayEnd}</strong> / <strong style="color: var(--text-main); font-family: 'JetBrains Mono'; font-weight: 800;">${totalFilteredCount}</strong>
+              <span style="font-size: 13px; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--text-soft);">
+                <span style="color: var(--primary); font-weight: 800;">${displayStart}-${displayEnd}</span> / ${totalFilteredCount}
               </span>
 
               <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
-                <button id="btnAccCustomPerPageDropdown" type="button" onclick="toggleAccCustomPerPageDropdown(event)" style="background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 6px; transition: all 0.2s ease;">
+                <button id="btnAccCustomPerPageDropdown" type="button" onclick="toggleAccCustomPerPageDropdown(event)" style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12.5px; font-weight: 800; padding: 6px 14px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: all 0.2s ease; box-shadow: var(--shadow-xs);">
                   <span>${accClaimsPerPage}/trang</span>
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 <div id="menuAccCustomPerPageDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); right: 0; min-width: 100px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
                   ${[10, 25, 50, 100].map(num => {
                     const isSel = accClaimsPerPage === num;
                     return `
                       <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="setAccClaimsPerPage(${num})" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
-                        <span style="font-size: 11.5px; font-family: 'JetBrains Mono';">${num} / trang</span>
+                        <span style="font-size: 12px; font-family: 'JetBrains Mono';">${num} / trang</span>
                         ${isSel ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
                       </div>
                     `;
@@ -15226,13 +15226,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </div>
               
               <div style="display: flex; align-items: center; gap: 4px;">
-                <button type="button" onclick="setAccClaimsPage(${accClaimsCurrentPage - 1})" ${accClaimsCurrentPage <= 1 ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accClaimsCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${accClaimsCurrentPage <= 1 ? 'none' : 'auto'};" title="Trang trước">
+                <button type="button" onclick="setAccClaimsPage(${accClaimsCurrentPage - 1})" ${accClaimsCurrentPage <= 1 ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accClaimsCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${accClaimsCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
-                <div style="display: flex; gap: 2px; align-items: center;">
+                <div style="display: flex; gap: 4px; align-items: center;">
                   ${pageBtnsHtml}
                 </div>
-                <button type="button" onclick="setAccClaimsPage(${accClaimsCurrentPage + 1})" ${accClaimsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accClaimsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${accClaimsCurrentPage >= totalPages ? 'none' : 'auto'};" title="Trang sau">
+                <button type="button" onclick="setAccClaimsPage(${accClaimsCurrentPage + 1})" ${accClaimsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accClaimsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${accClaimsCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
               </div>
@@ -15781,7 +15781,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
 
       if (startPage > 1) {
-        pageBtnsHtml += `<button type="button" onclick="setAccTransfersPage(1)" style="min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">1</button>`;
+        pageBtnsHtml += `<button type="button" onclick="setAccTransfersPage(1)" style="min-width: 30px; height: 30px; padding: 0 8px; border-radius: 8px; font-size: 12.5px; font-weight: 750; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); cursor: pointer; box-shadow: var(--shadow-xs);">1</button>`;
         if (startPage > 2) {
           pageBtnsHtml += `<span style="font-size: 12px; color: var(--text-muted); padding: 0 2px;">...</span>`;
         }
@@ -15790,7 +15790,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       for (let p = startPage; p <= endPage; p++) {
         const isAct = p === accTransfersCurrentPage;
         pageBtnsHtml += `
-          <button type="button" onclick="setAccTransfersPage(${p})" style="min-width: 32px; height: 32px; padding: 0 10px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${isAct ? 'background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 2px 8px rgba(216,180,109,0.35);' : 'background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main);'}">${p}</button>
+          <button type="button" onclick="setAccTransfersPage(${p})" style="min-width: 30px; height: 30px; padding: 0 8px; border-radius: 8px; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${isAct ? 'background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 4px 10px rgba(216,180,109,0.4);' : 'background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); box-shadow: var(--shadow-xs);'}">${p}</button>
         `;
       }
 
@@ -15984,21 +15984,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
             <!-- Pagination Controls Right -->
             <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-              <span style="font-size: 12px; color: var(--text-soft); font-weight: 600;">
-                <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 800;">${displayStart}-${displayEnd}</strong> / <strong style="color: var(--text-main); font-family: 'JetBrains Mono'; font-weight: 800;">${totalFilteredCount}</strong>
+              <span style="font-size: 13px; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--text-soft);">
+                <span style="color: var(--primary); font-weight: 800;">${displayStart}-${displayEnd}</span> / ${totalFilteredCount}
               </span>
 
               <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
-                <button id="btnAccTransfersCustomPerPageDropdown" type="button" onclick="toggleAccTransfersCustomPerPageDropdown(event)" style="background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 6px; transition: all 0.2s ease;">
+                <button id="btnAccTransfersCustomPerPageDropdown" type="button" onclick="toggleAccTransfersCustomPerPageDropdown(event)" style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12.5px; font-weight: 800; padding: 6px 14px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: all 0.2s ease; box-shadow: var(--shadow-xs);">
                   <span>${accTransfersPerPage}/trang</span>
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 <div id="menuAccTransfersCustomPerPageDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); right: 0; min-width: 100px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
                   ${[10, 25, 50, 100].map(num => {
                     const isSel = accTransfersPerPage === num;
                     return `
                       <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="setAccTransfersPerPage(${num})" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
-                        <span style="font-size: 11.5px; font-family: 'JetBrains Mono';">${num} / trang</span>
+                        <span style="font-size: 12px; font-family: 'JetBrains Mono';">${num} / trang</span>
                         ${isSel ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
                       </div>
                     `;
@@ -16007,13 +16007,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </div>
               
               <div style="display: flex; align-items: center; gap: 4px;">
-                <button type="button" onclick="setAccTransfersPage(${accTransfersCurrentPage - 1})" ${accTransfersCurrentPage <= 1 ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accTransfersCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${accTransfersCurrentPage <= 1 ? 'none' : 'auto'};" title="Trang trước">
+                <button type="button" onclick="setAccTransfersPage(${accTransfersCurrentPage - 1})" ${accTransfersCurrentPage <= 1 ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accTransfersCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${accTransfersCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
-                <div style="display: flex; gap: 2px; align-items: center;">
+                <div style="display: flex; gap: 4px; align-items: center;">
                   ${pageBtnsHtml}
                 </div>
-                <button type="button" onclick="setAccTransfersPage(${accTransfersCurrentPage + 1})" ${accTransfersCurrentPage >= totalPages ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accTransfersCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${accTransfersCurrentPage >= totalPages ? 'none' : 'auto'};" title="Trang sau">
+                <button type="button" onclick="setAccTransfersPage(${accTransfersCurrentPage + 1})" ${accTransfersCurrentPage >= totalPages ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accTransfersCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${accTransfersCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
               </div>
