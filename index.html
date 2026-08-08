@@ -4580,6 +4580,18 @@
       renderNotificationCenterItems();
     }
 
+    function dismissAllNotifications() {
+      const dismissedSet = getDismissedNotificationIdsSet();
+      const transfers = Object.values(cachedAccountingTransfersPayload || {});
+      transfers.forEach(t => {
+        if (t.transferId && t.trangThai) dismissedSet.add(String(t.transferId + '_' + t.trangThai));
+        if (t.transferId) dismissedSet.add(String(t.transferId)); // backward compat
+      });
+      saveDismissedNotificationIdsSet(dismissedSet);
+      triggerToast('Đã xóa tất cả thông báo.', 'success');
+      renderNotificationCenterItems();
+    }
+
     function toggleNotificationCenterDropdown(evt) {
       if (evt) evt.stopPropagation();
       const menu = document.getElementById('notificationCenterDropdownMenu');
@@ -4760,6 +4772,7 @@
                   <span>Thông báo Hệ thống</span>
                 </strong>
                 <div style="display: flex; align-items: center; gap: 10px;">
+                  <button type="button" onclick="dismissAllNotifications()" style="background: transparent; border: none; font-size: 11.5px; color: var(--text-soft); font-weight: 850; cursor: pointer; text-decoration: underline; transition: color 0.2s;" onmouseover="this.style.color='var(--text-main)';" onmouseout="this.style.color='var(--text-soft)';">Xóa tất cả</button>
                   <button type="button" onclick="markAllNotificationsAsRead()" style="background: transparent; border: none; font-size: 11.5px; color: var(--primary); font-weight: 850; cursor: pointer; text-decoration: underline;">Đã đọc tất cả</button>
                   <span id="lblNotifUnreadCount" style="font-size: 11px; background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850; padding: 3px 10px; border-radius: 99px;">0 mới</span>
                 </div>
