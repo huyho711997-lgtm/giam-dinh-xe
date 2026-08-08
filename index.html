@@ -4522,6 +4522,31 @@
       } catch (e) {}
     }
 
+    function getDismissedNotificationIdsSet() {
+      try {
+        const uid = activeUserProfile?.uid || firebase.auth().currentUser?.uid || 'default';
+        const raw = localStorage.getItem('dismissed_notifs_' + uid);
+        return new Set(raw ? JSON.parse(raw) : []);
+      } catch (e) {
+        return new Set();
+      }
+    }
+
+    function saveDismissedNotificationIdsSet(setObj) {
+      try {
+        const uid = activeUserProfile?.uid || firebase.auth().currentUser?.uid || 'default';
+        localStorage.setItem('dismissed_notifs_' + uid, JSON.stringify(Array.from(setObj)));
+      } catch (e) {}
+    }
+
+    function dismissNotification(evt, notifId) {
+      if (evt) evt.stopPropagation();
+      const dismissedSet = getDismissedNotificationIdsSet();
+      if (notifId) dismissedSet.add(String(notifId));
+      saveDismissedNotificationIdsSet(dismissedSet);
+      renderNotificationCenterItems();
+    }
+
     function markNotificationAsRead(evt, notifId, transferId) {
       if (evt) evt.stopPropagation();
       const readSet = getReadNotificationIdsSet();
@@ -4547,7 +4572,8 @@
       const readSet = getReadNotificationIdsSet();
       const transfers = Object.values(cachedAccountingTransfersPayload || {});
       transfers.forEach(t => {
-        if (t.transferId) readSet.add(String(t.transferId));
+        if (t.transferId && t.trangThai) readSet.add(String(t.transferId + '_' + t.trangThai));
+        if (t.transferId) readSet.add(String(t.transferId)); // backward compat
       });
       saveReadNotificationIdsSet(readSet);
       triggerToast('Đã đánh dấu đọc tất cả thông báo.', 'success');
@@ -4584,12 +4610,17 @@
       }
 
       const readSet = getReadNotificationIdsSet();
+      const dismissedSet = getDismissedNotificationIdsSet();
       const notifications = [];
 
       transfers.forEach(t => {
         const batchId = t.transferId || 'PBG_N/A';
+        const notifId = batchId + '_' + (t.trangThai || 'unknown');
         const dateStr = t.ngayBanGiao ? formatDateDisplay(t.ngayBanGiao) : '';
-        const isRead = readSet.has(String(batchId));
+        const isRead = readSet.has(String(notifId)) || readSet.has(String(batchId));
+        const isDismissed = dismissedSet.has(String(notifId)) || dismissedSet.has(String(batchId));
+
+        if (isDismissed) return; // Skip dismissed
 
         const claimsList = t.danhSachHoSo || [];
         const suppList = t.hoSoYeuCauBoSung || [];
@@ -4597,7 +4628,7 @@
 
         if (t.trangThai === 'can_bo_sung' || suppClaimsCount > 0) {
           notifications.push({
-            id: batchId,
+            id: notifId,
             type: 'warning',
             title: 'Yêu cầu bổ sung Phiếu ' + batchId,
             desc: (t.ghiChuKeToan ? ('Kế toán phản hồi: ' + t.ghiChuKeToan) : `Kế toán yêu cầu bổ sung chứng từ cho ${suppClaimsCount} hồ sơ trong phiếu này.`),
@@ -4607,7 +4638,7 @@
           });
         } else if (t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so') {
           notifications.push({
-            id: batchId,
+            id: notifId,
             type: 'success',
             title: 'Đã xác nhận Phiếu ' + batchId,
             desc: 'Kế toán đã xác nhận nhận hồ sơ cho phiếu bàn giao ' + batchId + '.',
@@ -4617,7 +4648,7 @@
           });
         } else if (t.trangThai === 'cho_xac_nhan' || t.trangThai === 'da_nhan_ho_so') {
           notifications.push({
-            id: batchId,
+            id: notifId,
             type: 'info',
             title: 'Phiếu mới trình Kế toán ' + batchId,
             desc: 'GĐV ' + (t.gdvName || '') + ' đã tạo phiếu bàn giao ' + (claimsList.length || 1) + ' hồ sơ.',
@@ -4627,7 +4658,7 @@
           });
         } else if (t.trangThai === 'da_trinh_dntt') {
           notifications.push({
-            id: batchId,
+            id: notifId,
             type: 'success',
             title: 'Đã trình ĐNTT Phiếu ' + batchId,
             desc: 'Phiếu bàn giao ' + batchId + ' đã được Kế toán duyệt trình đề nghị thanh toán.',
@@ -4674,7 +4705,12 @@
                 ${isUnread ? `<span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>` : ''}
                 <strong style="font-size: 13px; color: ${textColor}; font-weight: 850;">${escapeHtmlOutput(item.title)}</strong>
               </div>
-              <span style="font-size: 10.5px; color: var(--text-soft); font-family: 'JetBrains Mono'; font-weight: 750; flex-shrink: 0;">${escapeHtmlOutput(item.date)}</span>
+              <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                <span style="font-size: 10.5px; color: var(--text-soft); font-family: 'JetBrains Mono'; font-weight: 750;">${escapeHtmlOutput(item.date)}</span>
+                <button type="button" onclick="dismissNotification(event, '${item.id}')" style="background: transparent; border: none; color: var(--text-soft); padding: 4px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 2px; transition: all 0.2s;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)';" onmouseout="this.style.background='transparent'; this.style.color='var(--text-soft)';" title="Xóa thông báo">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
             </div>
 
             <div style="font-size: 12px; color: var(--text-main); line-height: 1.45; margin-bottom: 8px;">${escapeHtmlOutput(item.desc)}</div>
