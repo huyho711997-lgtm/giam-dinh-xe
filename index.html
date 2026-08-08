@@ -7557,6 +7557,9 @@ function formatDateDisplay(val) {
         cachedAccountingTransfersPayload = snapshot.val() || {};
         if (activeDashboardTab === 'accounting_transfer') renderAccountingTransferPage();
         if (activeDashboardTab === 'accounting_claims') renderAccountingClaimsPage();
+        
+        // Cập nhật số đếm chuông thông báo
+        renderNotificationCenterItems();
       });
     }
 
