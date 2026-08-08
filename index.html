@@ -14657,6 +14657,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
     let activeAccountingClaimStatus = 'all';
     let activeAccountingClaimSearch = '';
+    let activeAccountingClaimSearchRaw = '';
+    let accountingSearchTimeout = null;
     let accClaimsCurrentPage = 1;
     let accClaimsPerPage = 10;
 
@@ -14728,9 +14730,20 @@ function renderGdvMonthlyReportPage(targetContainer) {
     }
 
     function changeAccountingClaimSearch(text) {
-      activeAccountingClaimSearch = (text || '').toLowerCase().trim();
-      accClaimsCurrentPage = 1;
-      renderAccountingClaimsPage();
+      activeAccountingClaimSearchRaw = text;
+      clearTimeout(accountingSearchTimeout);
+      accountingSearchTimeout = setTimeout(() => {
+        activeAccountingClaimSearch = (text || '').toLowerCase().trim();
+        accClaimsCurrentPage = 1;
+        renderAccountingClaimsPage();
+        setTimeout(() => {
+          const searchInput = document.getElementById('accountingSearchInput');
+          if (searchInput) {
+            searchInput.focus();
+            searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+          }
+        }, 10);
+      }, 500);
     }
 
     
@@ -14986,7 +14999,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
               <!-- Search Input -->
               <div style="position: relative; width: 260px;">
-                <input class="input-premium" value="${escapeAttributeData(activeAccountingClaimSearch)}" oninput="changeAccountingClaimSearch(this.value)" placeholder="Tìm Số HSBT, BKS, Tên KH, GĐV..." style="width: 100%; height: 38px; border-radius: 10px; font-size: 12.5px; padding-left: 32px;" />
+                <input id="accountingSearchInput" class="input-premium" value="${escapeAttributeData(typeof activeAccountingClaimSearchRaw !== 'undefined' ? activeAccountingClaimSearchRaw : activeAccountingClaimSearch)}" oninput="changeAccountingClaimSearch(this.value)" placeholder="Tìm Số HSBT, BKS, Tên KH, GĐV..." style="width: 100%; height: 38px; border-radius: 10px; font-size: 12.5px; padding-left: 32px;" />
                 <div style="position: absolute; left: 10px; top: 10px; color: var(--text-soft); pointer-events: none;">${SVGS.SEARCH}</div>
               </div>
             </div>
