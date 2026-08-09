@@ -19253,7 +19253,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <div style="position: relative;">
                     <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Biển số xe KH <span style="color:#ef4444">*</span></label>
                     <input type="text" id="reimbInputBS" class="p-input" placeholder="VD: 47A-123.45" style="width:100%; padding: 12px; border-radius: 10px;" oninput="lookupCaseInfoByBS(this.value)" autocomplete="off">
-                    <div id="reimbBSDropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 100; max-height: 240px; overflow-y: auto; overflow-x: hidden;"></div>
+                    <div id="reimbBSDropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.12); z-index: 1000; max-height: 240px; overflow-y: auto; overflow-x: hidden;"></div>
                   </div>
                   <div>
                     <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Số HSBT</label>
