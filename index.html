@@ -19026,20 +19026,29 @@ function renderGdvMonthlyReportPage(targetContainer) {
     function autoCalculateTravelCost() {
       const kmStr = document.getElementById('reimbInputKm')?.value;
       const vehicle = document.getElementById('reimbInputVehicle')?.value;
+      const specialCase = document.getElementById('reimbInputSpecialCase')?.checked;
       const costInput = document.getElementById('reimbInputTravelCost');
       
       if (!costInput) return;
 
+      const km = parseFloat(kmStr) || 0;
+
+      if (vehicle === 'Ô tô cơ quan') {
+        costInput.value = 0;
+        return;
+      }
+
+      if (km <= 30 && !specialCase) {
+        costInput.value = 0;
+        return;
+      }
+
       if (vehicle === 'Phương tiện cá nhân') {
-        const km = parseFloat(kmStr) || 0;
         let rate = 4000;
         if (km >= 100) rate = 3000;
         const totalCost = (km * 2) * rate; // paid 2-way
         costInput.value = totalCost;
-      } else if (vehicle === 'Ô tô cơ quan') {
-        costInput.value = 0;
       }
-      // For other vehicles, we leave the input alone (user enters actual receipt cost)
     }
 
     function calculateFieldCost(distanceKm, dateStr, isHolidayChecked) {
@@ -19138,10 +19147,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <label style="display: block; font-size: 14px; color: var(--text-soft); font-weight: 700; margin-bottom: 12px;">Giờ kết thúc GĐ <span style="color:#ef4444">*</span></label>
                   <input type="datetime-local" id="reimbInputDate" class="p-input" style="width:100%; padding: 12px;">
                 </div>
-                <div style="padding-bottom: 12px;">
+                <div style="padding-bottom: 12px; display: flex; gap: 24px;">
                   <label style="display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; color: var(--text-main); cursor: pointer; height: 44px;">
                     <input type="checkbox" id="reimbInputHoliday" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
                     Ngày Lễ?
+                  </label>
+                  <label style="display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; color: var(--text-main); cursor: pointer; height: 44px;" title="Áp dụng cho Cao tốc cấm xe máy hoặc Đặc thù (Có phê duyệt)">
+                    <input type="checkbox" id="reimbInputSpecialCase" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);" onchange="autoCalculateTravelCost()">
+                    Đặc thù/Cao tốc
                   </label>
                 </div>
               </div>
@@ -19225,6 +19238,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const vehicle = document.getElementById('reimbInputVehicle').value;
       const travelCost = parseFloat(document.getElementById('reimbInputTravelCost').value) || 0;
       const location = document.getElementById('reimbInputLocation').value.trim();
+      const isSpecialCase = document.getElementById('reimbInputSpecialCase').checked;
       
       const perDiem = parseFloat(document.getElementById('reimbInputPerDiem').value) || 0;
       const hotelCost = parseFloat(document.getElementById('reimbInputHotelCost').value) || 0;
@@ -19243,6 +19257,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         datetime: date,
         distanceKm: km,
         isHolidayChecked: isHoliday,
+        isSpecialCase: isSpecialCase,
         vehicle: vehicle,
         travelCost: travelCost,
         location: location,
@@ -19257,6 +19272,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       document.getElementById('reimbInputStartDate').value = '';
       document.getElementById('reimbInputDate').value = '';
       document.getElementById('reimbInputHoliday').checked = false;
+      document.getElementById('reimbInputSpecialCase').checked = false;
       document.getElementById('reimbInputVehicle').selectedIndex = 0;
       document.getElementById('reimbInputTravelCost').value = '';
       document.getElementById('reimbInputLocation').value = '';
@@ -19314,6 +19330,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         let noteStr = [];
         if (item.calcResult.isWeekendOrHoliday) noteStr.push('Lễ/Cuối tuần');
         else if (item.calcResult.isAfterHours) noteStr.push('Ngoài giờ');
+        if (item.isSpecialCase) noteStr.push('Đặc thù/Cao tốc');
         
         return `
           <tr style="border-bottom: 1px solid var(--border);">
