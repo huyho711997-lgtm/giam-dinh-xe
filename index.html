@@ -19232,17 +19232,17 @@ function renderGdvMonthlyReportPage(targetContainer) {
             
               <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px dashed var(--border-strong);">
                 <div style="display: flex; align-items: center; gap: 16px;">
-                  <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(16,185,129,0.15); color: #10b981; display: flex; align-items: center; justify-content: center;">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                  <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(16,185,129,0.15); color: #10b981; display: flex; align-items: center; justify-content: center;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
                   </div>
                   <div>
-                    <div style="font-size: 13px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Tạm tính vụ này</div>
-                    <div id="quickReimbPreviewAmount" style="font-size: 24px; font-weight: 900; color: #10b981; line-height: 1;">0 đ</div>
+                    <div style="font-size: 11.5px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Tạm tính vụ này</div>
+                    <div id="quickReimbPreviewAmount" style="font-size: 20px; font-weight: 900; color: #10b981; line-height: 1;">0 đ</div>
                   </div>
                 </div>
                 
-                <button type="button" class="btn-premium" style="width: auto; min-width: 180px; flex-shrink: 0; padding: 0 32px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, #d8b46d, #b98c3e); box-shadow: 0 8px 20px rgba(216,180,109,0.3); color: #fff; border: none; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; cursor: pointer;" onclick="addReimbursementItemFromForm()">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <button type="button" class="btn-premium" style="width: auto; min-width: 150px; flex-shrink: 0; padding: 0 24px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #d8b46d, #b98c3e); box-shadow: 0 6px 16px rgba(216,180,109,0.3); color: #fff; border: none; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; cursor: pointer;" onclick="addReimbursementItemFromForm()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                   Thêm vụ này
                 </button>
               </div>
@@ -19259,13 +19259,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
           
           <div style="padding:20px 32px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface-strong);">
             <div style="display:flex; flex-direction:column;">
-              <span style="font-size:12px; color:var(--text-soft); font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Tổng cộng</span>
-              <span id="reimbDraftTotalAmount" style="color: #10b981; font-size: 24px; font-weight: 900; line-height:1.2;">0 đ</span>
+              <span style="font-size:11.5px; color:var(--text-soft); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px;">Tổng cộng</span>
+              <span id="reimbDraftTotalAmount" style="color: #10b981; font-size: 20px; font-weight: 900; line-height:1;">0 đ</span>
             </div>
             <div style="display:flex; gap:12px;">
-              <button class="btn-premium btn-secondary" style="padding: 12px 24px; border-radius:12px; font-weight:700;" onclick="document.getElementById('createFieldReimbModal').remove()">Đóng</button>
-              <button class="btn-premium" style="padding: 12px 24px; border-radius:12px; font-weight:800; box-shadow: 0 8px 24px rgba(216,180,109,0.3);" onclick="submitFieldReimbursementBatch()" id="btnSubmitReimb">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              <button class="btn-premium btn-secondary" style="height: 44px; padding: 0 24px; border-radius:12px; font-weight:700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('createFieldReimbModal').remove()">Đóng</button>
+              <button class="btn-premium" style="height: 44px; padding: 0 24px; border-radius:12px; font-weight:800; font-size: 14px; box-shadow: 0 6px 16px rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;" onclick="submitFieldReimbursementBatch()" id="btnSubmitReimb">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 Gửi Đề Nghị
               </button>
             </div>
