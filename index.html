@@ -18985,7 +18985,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       m.id = 'createFieldReimbModal';
       m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); backdrop-filter:blur(8px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
       m.innerHTML = `
-        <div style="background:var(--surface); border-radius:24px; width:100%; max-width:1100px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div style="background:var(--surface); border-radius:24px; width:95vw; max-width:1400px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
           
           <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background: var(--surface); position: relative; overflow: hidden;">
             <div style="position: absolute; right: -20px; top: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(216,180,109,0.15) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
@@ -19028,13 +19028,33 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ bắt đầu GĐ</label>
                   <input type="datetime-local" id="reimbInputStartDate" class="p-input" style="width:100%;">
                 </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; align-items: end; margin-bottom: 24px;">
                 <div>
-                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ kết thúc GĐ <span style="color:#ef4444">*</span></label>
-                  <input type="datetime-local" id="reimbInputDate" class="p-input" style="width:100%;">
+                  <label style="display: block; font-size: 14px; color: var(--text-soft); font-weight: 700; margin-bottom: 12px;">Biển số xe KH <span style="color:#ef4444">*</span></label>
+                  <input type="text" id="reimbInputBS" class="p-input" placeholder="VD: 47A-123.45" style="width:100%; padding: 12px;">
                 </div>
-                <div style="padding-bottom: 6px;">
-                  <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text-main); cursor: pointer; height: 36px;">
-                    <input type="checkbox" id="reimbInputHoliday" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);">
+                <div>
+                  <label style="display: block; font-size: 14px; color: var(--text-soft); font-weight: 700; margin-bottom: 12px;">Số HSBT</label>
+                  <input type="text" id="reimbInputHSBT" class="p-input" placeholder="VD: HSBT/XCG/..." style="width:100%; padding: 12px;">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 14px; color: var(--text-soft); font-weight: 700; margin-bottom: 12px;">Khoảng cách (km) <span style="color:#ef4444">*</span></label>
+                  <input type="number" id="reimbInputKm" class="p-input" min="0" step="1" placeholder="VD: 35" style="width:100%; padding: 12px;">
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 24px; align-items: end; margin-bottom: 24px;">
+                <div>
+                  <label style="display: block; font-size: 14px; color: var(--text-soft); font-weight: 700; margin-bottom: 12px;">Giờ bắt đầu GĐ</label>
+                  <input type="datetime-local" id="reimbInputStartDate" class="p-input" style="width:100%; padding: 12px;">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 14px; color: var(--text-soft); font-weight: 700; margin-bottom: 12px;">Giờ kết thúc GĐ <span style="color:#ef4444">*</span></label>
+                  <input type="datetime-local" id="reimbInputDate" class="p-input" style="width:100%; padding: 12px;">
+                </div>
+                <div style="padding-bottom: 12px;">
+                  <label style="display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; color: var(--text-main); cursor: pointer; height: 44px;">
+                    <input type="checkbox" id="reimbInputHoliday" style="width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);">
                     Ngày Lễ?
                   </label>
                 </div>
@@ -19152,37 +19172,70 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
 
       let total = 0;
-      container.innerHTML = localFieldReimbursementDraft.map((item, idx) => {
-        total += item.calcResult.finalCost;
+      let html = `
+        <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; white-space: nowrap;">
+            <thead style="background: var(--surface-strong); border-bottom: 1px solid var(--border-strong);">
+              <tr>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">STT</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">Bắt đầu</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">Kết thúc</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">Biển số xe KH</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">Số HSBT</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: center;">Khoảng cách</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Thù lao GĐ</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">Phương tiện</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Chi phí đi lại</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Công tác phí</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Lưu trú</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">Địa bàn</th>
+                <th style="padding: 10px; text-align: right;">Thành tiền</th>
+                <th style="padding: 10px; text-align: center;">Xóa</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      html += localFieldReimbursementDraft.map((item, idx) => {
+        let subtotal = (item.calcResult.finalCost || 0) + (item.travelCost || 0) + (item.perDiem || 0) + (item.hotelCost || 0);
+        total += subtotal;
+        
         let noteStr = [];
-        if (item.calcResult.isWeekendOrHoliday) noteStr.push('Cuối tuần/Lễ (x3)');
-        else if (item.calcResult.isAfterHours) noteStr.push('Ngoài giờ (x2)');
+        if (item.calcResult.isWeekendOrHoliday) noteStr.push('Lễ/Cuối tuần');
+        else if (item.calcResult.isAfterHours) noteStr.push('Ngoài giờ');
         
         return `
-          <div style="padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: var(--surface);">
-            <div>
-              <div style="font-weight: 850; color: var(--text-main); font-size: 14px;">${escapeHtmlOutput(item.bienSo)}</div>
-              <div style="font-size: 12px; color: var(--text-soft); margin-top: 4px; display: flex; gap: 12px;">
-                <span>${formatDateDisplay(item.datetime).replace('—', item.datetime.replace('T', ' '))}</span>
-                <span>${item.distanceKm} km</span>
-                ${noteStr.length ? `<span style="color: #f59e0b; font-weight: 750;">${noteStr.join(', ')}</span>` : ''}
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 16px;">
-              <div style="text-align: right;">
-                <div style="font-size: 10px; color: var(--text-muted); text-decoration: line-through;">
-                  ${item.calcResult.multiplier > 1 && (item.calcResult.baseFee * item.calcResult.multiplier > item.calcResult.maxCap) ? (item.calcResult.baseFee * item.calcResult.multiplier).toLocaleString('vi-VN') + 'đ' : ''}
-                </div>
-                <strong style="color: #10b981; font-size: 15px;">${item.calcResult.finalCost.toLocaleString('vi-VN')} đ</strong>
-              </div>
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px 10px; text-align: center; border-right: 1px solid var(--border);">${idx + 1}</td>
+            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${item.startDatetime ? formatDateDisplay(item.startDatetime).replace('—', '<br>') : '-'}</td>
+            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${formatDateDisplay(item.datetime).replace('—', '<br>')}
+              ${noteStr.length ? `<br><span style="color:#f59e0b; font-size:10px; font-weight:700;">${noteStr.join(',')}</span>` : ''}
+            </td>
+            <td style="padding: 8px 10px; font-weight: 700; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.bienSo)}</td>
+            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.soHSBT || '')}</td>
+            <td style="padding: 8px 10px; text-align: center; border-right: 1px solid var(--border);">${item.distanceKm} km</td>
+            <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.calcResult.finalCost.toLocaleString('vi-VN')} đ</td>
+            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.vehicle || '')}</td>
+            <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.travelCost ? item.travelCost.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+            <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.perDiem ? item.perDiem.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+            <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.hotelCost ? item.hotelCost.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.location || '')}</td>
+            <td style="padding: 8px 10px; text-align: right; color: #10b981; font-weight: 800;">${subtotal.toLocaleString('vi-VN')} đ</td>
+            <td style="padding: 8px 10px; text-align: center;">
               <button onclick="removeReimbursementItem(${idx})" style="background: rgba(239,68,68,0.1); color: #ef4444; border: none; padding: 6px; border-radius: 8px; cursor: pointer;" title="Xóa vụ này">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
               </button>
-            </div>
-          </div>
+            </td>
+          </tr>
         `;
       }).join('');
       
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+      container.innerHTML = html;
       totalLbl.textContent = total.toLocaleString('vi-VN') + ' đ';
     }
 
@@ -19239,7 +19292,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       else if (payload.status === 'rejected') statusHtml = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#ef4444; display:inline-block;"></span>Từ chối</span>';
 
       m.innerHTML = `
-        <div style="background:var(--surface); border-radius:24px; width:100%; max-width:750px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div style="background:var(--surface); border-radius:24px; width:95vw; max-width:1400px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
           <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface); position:relative; overflow:hidden;">
             <div style="position: absolute; right: -20px; top: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
             
@@ -19265,7 +19318,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <div style="display: flex; flex-direction: column; gap: 12px;">
               <h4 style="margin: 0 0 8px 0; color: var(--text-main); font-size: 15px; font-weight: 800; display:flex; align-items:center; gap:8px;">Danh sách vụ giám định (${(payload.items || []).length})</h4>
               <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);">
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; white-space: nowrap;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; white-space: nowrap;">
                   <thead style="background: var(--surface-strong); border-bottom: 1px solid var(--border-strong);">
                     <tr>
                       <th style="padding: 10px; border-right: 1px solid var(--border);">STT</th>
