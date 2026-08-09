@@ -19008,26 +19008,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 </span>
                 Khai báo thông tin vụ giám định
               </h4>
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; align-items: end; margin-bottom: 16px;">
-                <div>
-                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Biển số xe KH <span style="color:#ef4444">*</span></label>
-                  <input type="text" id="reimbInputBS" class="p-input" placeholder="VD: 47A-123.45" style="width:100%;">
-                </div>
-                <div>
-                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Số HSBT</label>
-                  <input type="text" id="reimbInputHSBT" class="p-input" placeholder="VD: HSBT/XCG/..." style="width:100%;">
-                </div>
-                <div>
-                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Khoảng cách (km) <span style="color:#ef4444">*</span></label>
-                  <input type="number" id="reimbInputKm" class="p-input" min="0" step="1" placeholder="VD: 35" style="width:100%;">
-                </div>
-              </div>
-
-              <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: end; margin-bottom: 16px;">
-                <div>
-                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ bắt đầu GĐ</label>
-                  <input type="datetime-local" id="reimbInputStartDate" class="p-input" style="width:100%;">
-                </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; align-items: end; margin-bottom: 24px;">
                 <div>
                   <label style="display: block; font-size: 14px; color: var(--text-soft); font-weight: 700; margin-bottom: 12px;">Biển số xe KH <span style="color:#ef4444">*</span></label>
@@ -19060,38 +19040,39 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 </div>
               </div>
 
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; align-items: end; margin-bottom: 16px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; align-items: end; margin-bottom: 24px;">
                 <div>
-                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Phương tiện di chuyển</label>
-                  <select id="reimbInputVehicle" class="p-input" style="width:100%;">
+                  <label style="display: block; font-size: 14px; color: var(--text-soft); font-weight: 700; margin-bottom: 12px;">Phương tiện di chuyển</label>
+                  <select id="reimbInputVehicle" class="p-input" style="width:100%; padding: 12px;">
                     <option value="Phương tiện cá nhân">Phương tiện cá nhân</option>
                     <option value="Ô tô cơ quan">Ô tô cơ quan</option>
                     <option value="Xe khách">Xe khách</option>
                     <option value="Taxi">Taxi</option>
-                    <option value="Khác">Khác</option>
+                    <option value="Tàu hỏa">Tàu hỏa</option>
+                    <option value="Máy bay">Máy bay</option>
                   </select>
                 </div>
                 <div>
-                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Chi phí đi lại (đ)</label>
-                  <input type="number" id="reimbInputTravelCost" class="p-input" min="0" step="1000" placeholder="0" style="width:100%;">
+                  <label style="display: block; font-size: 14px; color: var(--text-soft); font-weight: 700; margin-bottom: 12px;">Chi phí đi lại (đ)</label>
+                  <input type="number" id="reimbInputTravelCost" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px;">
                 </div>
                 <div>
-                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Địa bàn giám định</label>
-                  <input type="text" id="reimbInputLocation" class="p-input" placeholder="Nhập địa bàn" style="width:100%;">
+                  <label style="display: block; font-size: 14px; color: var(--text-soft); font-weight: 700; margin-bottom: 12px;">Địa bàn giám định</label>
+                  <input type="text" id="reimbInputLocation" class="p-input" placeholder="Nhập địa bàn" style="width:100%; padding: 12px;">
                 </div>
               </div>
 
-              <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: end;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 24px; align-items: end;">
                 <div>
-                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Công tác phí (> 15h) (đ)</label>
-                  <input type="number" id="reimbInputPerDiem" class="p-input" min="0" step="1000" placeholder="0" style="width:100%;">
+                  <label style="display: block; font-size: 14px; color: var(--text-soft); font-weight: 700; margin-bottom: 12px;">Công tác phí (> 15h) (đ)</label>
+                  <input type="number" id="reimbInputPerDiem" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px;">
                 </div>
                 <div>
-                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Chi phí lưu trú (đ)</label>
-                  <input type="number" id="reimbInputHotelCost" class="p-input" min="0" step="1000" placeholder="0" style="width:100%;">
+                  <label style="display: block; font-size: 14px; color: var(--text-soft); font-weight: 700; margin-bottom: 12px;">Chi phí lưu trú (đ)</label>
+                  <input type="number" id="reimbInputHotelCost" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px;">
                 </div>
                 <div>
-                  <button type="button" class="btn-premium" style="padding: 12px 24px; border-radius:12px; width:100%; height: 42px; background: linear-gradient(135deg, #d8b46d, #b98c3e); box-shadow: 0 4px 14px rgba(216,180,109,0.25); color: #fff; border: none; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="addReimbursementItemFromForm()">
+                  <button type="button" class="btn-premium" style="padding: 12px 24px; border-radius:12px; width:100%; height: 46px; background: linear-gradient(135deg, #d8b46d, #b98c3e); box-shadow: 0 4px 14px rgba(216,180,109,0.25); color: #fff; border: none; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="addReimbursementItemFromForm()">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Thêm vụ
                   </button>
                 </div>
