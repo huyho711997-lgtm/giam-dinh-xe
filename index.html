@@ -18829,7 +18829,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       allReimb.sort((a,b) => b.createdAt - a.createdAt);
 
-      const canCreate = !isKeToan;
+      const canCreate = !isKeToan || (activeUserProfile && String(activeUserProfile.role || '').toLowerCase() === 'admin');
 
       container.innerHTML = `
         <div style="padding: 24px; max-width: 1400px; margin: 0 auto;">
