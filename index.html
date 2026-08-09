@@ -4549,7 +4549,7 @@
       renderNotificationCenterItems();
     }
 
-    function markNotificationAsRead(evt, notifId, transferId) {
+    function markNotificationAsRead(evt, notifId, transferId, isCase = false) {
       if (evt) evt.stopPropagation();
       const readSet = getReadNotificationIdsSet();
       if (notifId) readSet.add(String(notifId));
@@ -4561,6 +4561,13 @@
       if (transferId) {
         const menu = document.getElementById('notificationCenterDropdownMenu');
         if (menu) menu.style.display = 'none';
+        
+        if (isCase) {
+           window.history.pushState({}, '', `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(transferId)}`);
+           evaluateViewRoutingState(firebase.auth().currentUser);
+           return;
+        }
+
         const isKeToan = getLoggedInUserAccountingRole() === 'ketoan';
         if (isKeToan) {
           openKeToanReviewModal(transferId);
@@ -4682,6 +4689,38 @@
           });
         }
       });
+      
+      // Also inject completed cases notifications for the creator
+      if (cachedCasesPayload) {
+        Object.entries(cachedCasesPayload).forEach(([caseId, caseObj]) => {
+          if (caseObj.trangThai === STATUS_COMPLETED) {
+            const creatorEmail = String(caseObj.nguoiTao?.email || '').trim().toLowerCase();
+            const creatorUid = String(caseObj.nguoiTao?.uid || '').trim().toLowerCase();
+            const myUid = String(activeUserProfile?.uid || firebase.auth().currentUser?.uid || '').trim().toLowerCase();
+            const myEmail = String(activeUserProfile?.email || firebase.auth().currentUser?.email || '').trim().toLowerCase();
+            
+            if ((creatorEmail && creatorEmail === myEmail) || (creatorUid && creatorUid === myUid)) {
+              const notifId = 'case_completed_' + caseId;
+              const isRead = readSet.has(String(notifId)) || readSet.has(String(caseId));
+              const isDismissed = dismissedSet.has(String(notifId)) || dismissedSet.has(String(caseId));
+              
+              if (!isDismissed) {
+                const dateStr = caseObj.garageSubmittedAt ? formatDateDisplay(caseObj.garageSubmittedAt) : '';
+                notifications.push({
+                  id: notifId,
+                  type: 'success',
+                  title: 'Gara hoàn tất hồ sơ: ' + (caseObj.bienSo || 'N/A'),
+                  desc: 'Gara ' + (caseObj.tenGara || 'N/A') + ' đã tải lên đủ hình ảnh giám định và yêu cầu kiểm tra.',
+                  date: dateStr,
+                  transferId: caseId,
+                  isRead,
+                  isCase: true
+                });
+              }
+            }
+          }
+        });
+      }
 
       const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -4718,7 +4757,7 @@
         let textColor = isWarning ? '#ef4444' : (isSuccess ? '#10b981' : '#3b82f6');
 
         return `
-          <div onclick="markNotificationAsRead(event, '${item.id}', '${item.transferId}')" style="padding: 12px 14px; border-radius: 14px; background: ${bgColor}; border: 1px solid ${borderColor}; cursor: pointer; transition: all 0.15s ease; position: relative;">
+          <div onclick="markNotificationAsRead(event, '${item.id}', '${item.transferId}', ${item.isCase ? 'true' : 'false'})" style="padding: 12px 14px; border-radius: 14px; background: ${bgColor}; border: 1px solid ${borderColor}; cursor: pointer; transition: all 0.15s ease; position: relative;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; gap: 8px;">
               <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                 ${isUnread ? `<span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>` : ''}
@@ -11793,6 +11832,21 @@ function formatDateDisplay(val) {
           garageSubmittedAt: firebase.database.ServerValue.TIMESTAMP
         });
         logUserActivity('GARAGE_SUBMIT', `Garage gửi kết quả hoàn tất giám định cho xe BKS: ${localActiveCaseNode.bienSo || 'N/A'}`, { idCa: localActiveCaseNode.idCa, bienSo: localActiveCaseNode.bienSo });
+        
+        if (localActiveCaseNode.nguoiTao?.email) {
+          await sendAppNotification(
+            '',
+            localActiveCaseNode.nguoiTao.email,
+            'Gara hoàn tất hồ sơ',
+            `Gara ${localActiveCaseNode.tenGara || ''} đã hoàn thành ảnh cho xe ${localActiveCaseNode.bienSo || ''}.`,
+            localActiveCaseNode.idCa,
+            0,
+            '',
+            localActiveCaseNode.bienSo,
+            'success'
+          );
+        }
+        
         triggerToast('Garage đã gửi đầy đủ hạng mục và ảnh minh chứng.');
         window.history.replaceState({}, '', `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(localActiveCaseNode.idCa)}`);
       } catch (err) {
