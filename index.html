@@ -19033,7 +19033,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
       
       const normalizedQuery = removeVietnameseTones(bs.trim().toUpperCase().replace(/[-.\s]/g, ''));
-      const allCases = cachedCasesPayload || {};
+      const allCases = cachedPendingClaimsPayload || {};
       let matchedCases = [];
       
       for (const key in allCases) {
