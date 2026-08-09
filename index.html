@@ -3207,6 +3207,7 @@
     let portalSearchTerm = '';
     let activeObjectUrls = [];
     let cachedCasesPayload = null;
+    let cachedFieldReimbursementsPayload = null;
     let activeCaseFilter = 'all';
     let activeCasePage = 1;
     let activeCasePerPage = 10;
@@ -4968,6 +4969,12 @@
           <button id="headerNavAccountingBtn" class="header-nav-btn ${activeDashboardTab === 'accounting_transfer' ? 'active' : ''}" onclick="navigateHeaderTab('accounting_transfer')">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="12" y2="16"></line></svg>
             <span class="nav-btn-text">Chuyển giao Kế toán</span>
+          </button>
+          ` : ''}
+          ${hasUserPermission('list', 'view') || hasUserPermission('accounting', 'view') ? `
+          <button id="headerNavFieldReimbursementBtn" class="header-nav-btn ${activeDashboardTab === 'field_reimbursements' ? 'active' : ''}" onclick="navigateHeaderTab('field_reimbursements')">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            <span class="nav-btn-text">TT hiện trường</span>
           </button>
           ` : ''}
 
@@ -7678,6 +7685,13 @@ function formatDateDisplay(val) {
         // Cập nhật số đếm chuông thông báo
         renderNotificationCenterItems();
       });
+
+      dbNodeInstance.ref('field_reimbursements').on('value', (snapshot) => {
+        cachedFieldReimbursementsPayload = snapshot.val() || {};
+        if (activeDashboardTab === 'field_reimbursements') {
+          if (typeof renderFieldReimbursementsPage === 'function') renderFieldReimbursementsPage();
+        }
+      });
     }
 
     function switchWorkspaceTab(tabName) {
@@ -7714,6 +7728,11 @@ function formatDateDisplay(val) {
       if (tabName === 'users' && !hasUserPermission('users', 'view')) {
         triggerToast('Bạn không có quyền truy cập trang quản lý người dùng.', 'warning');
         if (activeDashboardTab === 'users') activeDashboardTab = 'home';
+        return;
+      }
+      if (tabName === 'field_reimbursements' && !hasUserPermission('list', 'view') && !hasUserPermission('accounting', 'view')) {
+        triggerToast('Bạn không có quyền truy cập trang thanh toán hiện trường.', 'warning');
+        if (activeDashboardTab === 'field_reimbursements') activeDashboardTab = 'home';
         return;
       }
 
@@ -7753,6 +7772,11 @@ function formatDateDisplay(val) {
 
       if (activeDashboardTab === 'accounting_transfer') {
         renderAccountingTransferPage(container);
+        return;
+      }
+
+      if (activeDashboardTab === 'field_reimbursements') {
+        if (typeof renderFieldReimbursementsPage === 'function') renderFieldReimbursementsPage(container);
         return;
       }
 
@@ -18784,6 +18808,387 @@ function renderGdvMonthlyReportPage(targetContainer) {
       } catch (err) {
         console.error(err);
         triggerToast('Lỗi khi xoá bộ lọc!', 'error');
+      }
+    }
+    // --- FIELD REIMBURSEMENTS (THANH TOÁN HIỆN TRƯỜNG) MODULE ---
+    let localFieldReimbursementDraft = [];
+
+    function renderFieldReimbursementsPage(containerDOM) {
+      const container = containerDOM || document.getElementById('tabContentContainer');
+      if (!container) return;
+
+      const isKeToan = getLoggedInUserAccountingRole() === 'ketoan';
+      const currentUser = firebase.auth().currentUser;
+      const myUid = currentUser?.uid;
+
+      let allReimb = Object.values(cachedFieldReimbursementsPayload || {});
+      const isKeToanOrAdmin = isKeToan || (activeUserProfile && activeUserProfile.isAdmin);
+      if (!isKeToanOrAdmin) {
+        allReimb = allReimb.filter(r => r.gdvUid === myUid);
+      }
+
+      allReimb.sort((a,b) => b.createdAt - a.createdAt);
+
+      const canCreate = !isKeToan;
+
+      container.innerHTML = `
+        <div style="padding: 24px; max-width: 1400px; margin: 0 auto;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div>
+              <h2 style="font-size: 24px; color: var(--text-main); margin-bottom: 4px;">Phiếu thanh toán đi hiện trường</h2>
+              <p style="color: var(--text-soft); font-size: 14px;">Quản lý các đề nghị thanh toán chi phí di chuyển khi giám định hiện trường</p>
+            </div>
+            ${canCreate ? `
+              <button class="btn-premium" onclick="openCreateFieldReimbursementModal()">
+                ${SVGS.PLUS} TẠO PHIẾU MỚI
+              </button>
+            ` : ''}
+          </div>
+
+          <div class="p-card" style="padding: 0;">
+            <div style="overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+                <thead style="background: var(--surface-strong); color: var(--text-muted); font-size: 11px; text-transform: uppercase; font-family: 'Inter', sans-serif;">
+                  <tr>
+                    <th style="padding: 16px;">Mã Phiếu</th>
+                    <th style="padding: 16px;">Ngày tạo</th>
+                    <th style="padding: 16px;">Người tạo</th>
+                    <th style="padding: 16px; text-align: center;">Số lượng vụ</th>
+                    <th style="padding: 16px; text-align: right;">Tổng thanh toán</th>
+                    <th style="padding: 16px; text-align: center;">Trạng thái</th>
+                    <th style="padding: 16px; text-align: center;">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody style="color: var(--text-main);">
+                  ${allReimb.length === 0 ? `
+                    <tr><td colspan="7" style="padding: 32px; text-align: center; color: var(--text-soft); font-style: italic;">Chưa có phiếu thanh toán nào.</td></tr>
+                  ` : allReimb.map(r => {
+                    let statusHtml = '';
+                    if (r.status === 'pending') statusHtml = '<span style="background: rgba(234,179,8,0.15); color: #eab308; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Chờ duyệt</span>';
+                    else if (r.status === 'approved') statusHtml = '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Đã duyệt</span>';
+                    else if (r.status === 'rejected') statusHtml = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Từ chối</span>';
+
+                    return `
+                      <tr style="border-bottom: 1px solid var(--border); transition: background 0.2s;">
+                        <td style="padding: 16px; font-weight: 750; color: var(--primary); font-family: 'JetBrains Mono';">${escapeHtmlOutput(r.id)}</td>
+                        <td style="padding: 16px; font-family: 'JetBrains Mono'; color: var(--text-soft);">${formatDateDisplay(r.createdAt)}</td>
+                        <td style="padding: 16px;"><strong>${escapeHtmlOutput(r.gdvName)}</strong></td>
+                        <td style="padding: 16px; text-align: center; font-family: 'JetBrains Mono';"><strong>${(r.items || []).length}</strong></td>
+                        <td style="padding: 16px; text-align: right; font-weight: 850; color: #10b981;">${r.totalAmount ? r.totalAmount.toLocaleString('vi-VN') : '0'} đ</td>
+                        <td style="padding: 16px; text-align: center;">${statusHtml}</td>
+                        <td style="padding: 16px; text-align: center;">
+                          <button class="btn-premium btn-secondary" style="padding: 6px 12px; font-size: 11px;" onclick="viewFieldReimbursementDetail('${r.id}')">Xem chi tiết</button>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function calculateFieldCost(distanceKm, dateStr, isHolidayChecked) {
+      let baseFee = 0;
+      if (distanceKm <= 30) baseFee = 100000;
+      else if (distanceKm <= 100) baseFee = 200000;
+      else baseFee = 400000;
+
+      let isAfterHours = false;
+      let isWeekend = false;
+
+      if (dateStr) {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          const hour = d.getHours();
+          const day = d.getDay();
+          if (hour < 8 || hour >= 18) isAfterHours = true;
+          if (day === 0) isWeekend = true;
+        }
+      }
+
+      let multiplier = 1;
+      let maxCap = Infinity;
+
+      if (isHolidayChecked || isWeekend) {
+        multiplier = 3;
+        maxCap = 1000000;
+      } else if (isAfterHours) {
+        multiplier = 2;
+        maxCap = 500000;
+      }
+
+      let finalCost = baseFee * multiplier;
+      if (finalCost > maxCap) finalCost = maxCap;
+
+      return {
+        baseFee,
+        multiplier,
+        maxCap,
+        finalCost,
+        isAfterHours,
+        isWeekendOrHoliday: isHolidayChecked || isWeekend
+      };
+    }
+
+    function openCreateFieldReimbursementModal() {
+      localFieldReimbursementDraft = [];
+      const m = document.createElement('div');
+      m.id = 'createFieldReimbModal';
+      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); backdrop-filter:blur(5px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;';
+      m.innerHTML = `
+        <div style="background:var(--surface); border-radius:24px; width:100%; max-width:800px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3); border:1px solid var(--border-strong); overflow:hidden;">
+          <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface-strong);">
+            <h3 style="margin:0; font-size:20px; font-weight:850; color:var(--text-main);">Tạo Phiếu Thanh Toán Đi Hiện Trường</h3>
+            <button onclick="document.getElementById('createFieldReimbModal').remove()" style="background:transparent; border:none; color:var(--text-soft); cursor:pointer; padding:8px; border-radius:12px; transition:background 0.2s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='transparent'">${SVGS.CLOSE}</button>
+          </div>
+          
+          <div style="padding:24px 32px; flex:1; overflow-y:auto;">
+            <div style="margin-bottom: 24px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 16px;">
+              <h4 style="margin: 0 0 12px 0; color: var(--primary); font-size: 14px; font-weight: 750;">Thêm vụ giám định</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end;">
+                <div>
+                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 750; margin-bottom: 6px;">Biển số / Mã vụ</label>
+                  <input type="text" id="reimbInputBS" class="p-input" placeholder="VD: 47A-123.45">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 750; margin-bottom: 6px;">Giờ kết thúc GĐ</label>
+                  <input type="datetime-local" id="reimbInputDate" class="p-input">
+                </div>
+                <div>
+                  <label style="display: block; font-size: 12px; color: var(--text-soft); font-weight: 750; margin-bottom: 6px;">Khoảng cách (km)</label>
+                  <input type="number" id="reimbInputKm" class="p-input" min="0" step="1" placeholder="VD: 35">
+                </div>
+                <div>
+                  <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--text-main); margin-bottom: 12px; cursor: pointer;">
+                    <input type="checkbox" id="reimbInputHoliday" style="width: 16px; height: 16px; cursor: pointer;">
+                    Ngày Lễ?
+                  </label>
+                  <button type="button" class="btn-premium" style="padding: 10px 16px;" onclick="addReimbursementItemFromForm()">
+                    ${SVGS.PLUS} Thêm
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <h4 style="margin: 0 0 12px 0; color: var(--text-main); font-size: 14px; font-weight: 850;">Danh sách các vụ thanh toán</h4>
+            <div id="reimbDraftItemsContainer"></div>
+          </div>
+          
+          <div style="padding:24px 32px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface);">
+            <div style="font-size: 18px; font-weight: 850; color: var(--text-main);">
+              Tổng tiền: <span id="reimbDraftTotalAmount" style="color: #10b981;">0 đ</span>
+            </div>
+            <div style="display:flex; gap:12px;">
+              <button class="btn-premium btn-secondary" onclick="document.getElementById('createFieldReimbModal').remove()">Hủy</button>
+              <button class="btn-premium" onclick="submitFieldReimbursementBatch()" id="btnSubmitReimb">Trình Kế toán</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(m);
+      renderReimbursementDraftItems();
+    }
+
+    function addReimbursementItemFromForm() {
+      const bs = document.getElementById('reimbInputBS').value.trim();
+      const date = document.getElementById('reimbInputDate').value;
+      const km = parseFloat(document.getElementById('reimbInputKm').value);
+      const isHoliday = document.getElementById('reimbInputHoliday').checked;
+
+      if (!bs) return triggerToast('Vui lòng nhập Biển số xe', 'error');
+      if (!date) return triggerToast('Vui lòng chọn thời gian kết thúc', 'error');
+      if (isNaN(km) || km < 0) return triggerToast('Vui lòng nhập số km hợp lệ', 'error');
+
+      const calc = calculateFieldCost(km, date, isHoliday);
+
+      localFieldReimbursementDraft.push({
+        idCa: Date.now().toString(),
+        bienSo: bs,
+        datetime: date,
+        distanceKm: km,
+        isHolidayChecked: isHoliday,
+        calcResult: calc
+      });
+
+      document.getElementById('reimbInputBS').value = '';
+      document.getElementById('reimbInputDate').value = '';
+      document.getElementById('reimbInputKm').value = '';
+      document.getElementById('reimbInputHoliday').checked = false;
+
+      renderReimbursementDraftItems();
+    }
+
+    function removeReimbursementItem(index) {
+      localFieldReimbursementDraft.splice(index, 1);
+      renderReimbursementDraftItems();
+    }
+
+    function renderReimbursementDraftItems() {
+      const container = document.getElementById('reimbDraftItemsContainer');
+      const totalLbl = document.getElementById('reimbDraftTotalAmount');
+      if (!container || !totalLbl) return;
+
+      if (localFieldReimbursementDraft.length === 0) {
+        container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-soft); font-style: italic; border: 1px dashed var(--border-strong); border-radius: 12px;">Chưa thêm vụ nào.</div>';
+        totalLbl.textContent = '0 đ';
+        return;
+      }
+
+      let total = 0;
+      container.innerHTML = localFieldReimbursementDraft.map((item, idx) => {
+        total += item.calcResult.finalCost;
+        let noteStr = [];
+        if (item.calcResult.isWeekendOrHoliday) noteStr.push('Cuối tuần/Lễ (x3)');
+        else if (item.calcResult.isAfterHours) noteStr.push('Ngoài giờ (x2)');
+        
+        return `
+          <div style="padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: var(--surface);">
+            <div>
+              <div style="font-weight: 850; color: var(--text-main); font-size: 14px;">${escapeHtmlOutput(item.bienSo)}</div>
+              <div style="font-size: 12px; color: var(--text-soft); margin-top: 4px; display: flex; gap: 12px;">
+                <span>${formatDateDisplay(item.datetime).replace('—', item.datetime.replace('T', ' '))}</span>
+                <span>${item.distanceKm} km</span>
+                ${noteStr.length ? `<span style="color: #f59e0b; font-weight: 750;">${noteStr.join(', ')}</span>` : ''}
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <div style="text-align: right;">
+                <div style="font-size: 10px; color: var(--text-muted); text-decoration: line-through;">
+                  ${item.calcResult.multiplier > 1 && (item.calcResult.baseFee * item.calcResult.multiplier > item.calcResult.maxCap) ? (item.calcResult.baseFee * item.calcResult.multiplier).toLocaleString('vi-VN') + 'đ' : ''}
+                </div>
+                <strong style="color: #10b981; font-size: 15px;">${item.calcResult.finalCost.toLocaleString('vi-VN')} đ</strong>
+              </div>
+              <button onclick="removeReimbursementItem(${idx})" style="background: rgba(239,68,68,0.1); color: #ef4444; border: none; padding: 6px; border-radius: 8px; cursor: pointer;" title="Xóa vụ này">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      totalLbl.textContent = total.toLocaleString('vi-VN') + ' đ';
+    }
+
+    async function submitFieldReimbursementBatch() {
+      if (localFieldReimbursementDraft.length === 0) return triggerToast('Vui lòng thêm ít nhất một vụ giám định.', 'warning');
+      const currentUser = firebase.auth().currentUser;
+      if (!currentUser) return;
+
+      const btn = document.getElementById('btnSubmitReimb');
+      if (btn) { btn.disabled = true; btn.innerHTML = 'Đang lưu...'; }
+
+      const totalAmount = localFieldReimbursementDraft.reduce((acc, curr) => acc + curr.calcResult.finalCost, 0);
+      const batchId = 'HT_' + Date.now().toString(36).toUpperCase();
+
+      const payload = {
+        id: batchId,
+        gdvUid: currentUser.uid,
+        gdvName: activeUserProfile?.displayName || currentUser.email,
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        status: 'pending',
+        totalAmount: totalAmount,
+        items: localFieldReimbursementDraft
+      };
+
+      try {
+        await dbNodeInstance.ref(`field_reimbursements/${batchId}`).set(payload);
+        triggerToast('Tạo phiếu thanh toán hiện trường thành công!', 'success');
+        document.getElementById('createFieldReimbModal').remove();
+        logUserActivity('CREATE_FIELD_REIMB', `Tạo phiếu thanh toán hiện trường ${batchId} (Tổng: ${totalAmount.toLocaleString('vi-VN')}đ)`);
+      } catch (err) {
+        console.error(err);
+        triggerToast('Lỗi khi lưu phiếu thanh toán.', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = 'Trình Kế toán'; }
+      }
+    }
+
+    function viewFieldReimbursementDetail(batchId) {
+      const payload = cachedFieldReimbursementsPayload[batchId];
+      if (!payload) return;
+
+      const isKeToan = getLoggedInUserAccountingRole() === 'ketoan';
+      const isKeToanOrAdmin = isKeToan || (activeUserProfile && activeUserProfile.isAdmin);
+      
+      const m = document.createElement('div');
+      m.id = 'viewFieldReimbModal';
+      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); backdrop-filter:blur(5px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;';
+      
+      let statusHtml = '';
+      if (payload.status === 'pending') statusHtml = '<span style="background: rgba(234,179,8,0.15); color: #eab308; padding: 4px 10px; border-radius: 99px; font-weight: 750; font-size: 12px;">Chờ duyệt</span>';
+      else if (payload.status === 'approved') statusHtml = '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 4px 10px; border-radius: 99px; font-weight: 750; font-size: 12px;">Đã duyệt</span>';
+      else if (payload.status === 'rejected') statusHtml = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 4px 10px; border-radius: 99px; font-weight: 750; font-size: 12px;">Từ chối</span>';
+
+      m.innerHTML = `
+        <div style="background:var(--surface); border-radius:24px; width:100%; max-width:700px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3); border:1px solid var(--border-strong); overflow:hidden;">
+          <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface-strong);">
+            <div>
+              <h3 style="margin:0 0 6px 0; font-size:20px; font-weight:850; color:var(--text-main); font-family: 'JetBrains Mono';">${escapeHtmlOutput(payload.id)}</h3>
+              <div style="display: flex; gap: 12px; font-size: 13px; color: var(--text-soft);">
+                <span>Người tạo: <strong style="color: var(--primary);">${escapeHtmlOutput(payload.gdvName)}</strong></span>
+                <span>Ngày tạo: <strong>${formatDateDisplay(payload.createdAt)}</strong></span>
+              </div>
+            </div>
+            ${statusHtml}
+          </div>
+          
+          <div style="padding:24px 32px; flex:1; overflow-y:auto; background: var(--surface);">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              ${(payload.items || []).map(item => {
+                let noteStr = [];
+                if (item.calcResult.isWeekendOrHoliday) noteStr.push('Cuối tuần/Lễ (x3)');
+                else if (item.calcResult.isAfterHours) noteStr.push('Ngoài giờ (x2)');
+                return `
+                  <div style="padding: 14px 18px; border: 1px solid var(--border); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; background: var(--surface-strong);">
+                    <div>
+                      <div style="font-weight: 850; color: var(--text-main); font-size: 15px;">${escapeHtmlOutput(item.bienSo)}</div>
+                      <div style="font-size: 12.5px; color: var(--text-soft); margin-top: 6px; display: flex; gap: 12px;">
+                        <span>${formatDateDisplay(item.datetime).replace('—', item.datetime.replace('T', ' '))}</span>
+                        <span style="color: var(--primary); font-weight: 600;">${item.distanceKm} km</span>
+                        ${noteStr.length ? `<span style="color: #f59e0b; font-weight: 750;">${noteStr.join(', ')}</span>` : ''}
+                      </div>
+                    </div>
+                    <div style="text-align: right;">
+                      <div style="font-size: 11px; color: var(--text-muted); text-decoration: line-through;">
+                        ${item.calcResult.multiplier > 1 && (item.calcResult.baseFee * item.calcResult.multiplier > item.calcResult.maxCap) ? (item.calcResult.baseFee * item.calcResult.multiplier).toLocaleString('vi-VN') + 'đ' : ''}
+                      </div>
+                      <strong style="color: #10b981; font-size: 16px;">${item.calcResult.finalCost.toLocaleString('vi-VN')} đ</strong>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+          
+          <div style="padding:24px 32px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface-strong);">
+            <div style="font-size: 18px; font-weight: 850; color: var(--text-main);">
+              Tổng tiền: <span style="color: #10b981; font-size: 24px;">${payload.totalAmount ? payload.totalAmount.toLocaleString('vi-VN') : '0'} đ</span>
+            </div>
+            <div style="display:flex; gap:12px;">
+              <button class="btn-premium btn-secondary" onclick="document.getElementById('viewFieldReimbModal').remove()">Đóng</button>
+              ${isKeToanOrAdmin && payload.status === 'pending' ? `
+                <button class="btn-premium" style="background: #ef4444; color: #fff; box-shadow: 0 4px 14px rgba(239,68,68,0.3);" onclick="actionFieldReimbursement('${payload.id}', 'rejected')">${SVGS.CLOSE} Từ chối</button>
+                <button class="btn-premium" style="background: #10b981; color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,0.3);" onclick="actionFieldReimbursement('${payload.id}', 'approved')">${SVGS.CHECK} Phê duyệt</button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(m);
+    }
+
+    async function actionFieldReimbursement(batchId, action) {
+      if (!confirm(`Bạn chắc chắn muốn ${action === 'approved' ? 'phê duyệt' : 'từ chối'} phiếu này?`)) return;
+      try {
+        await dbNodeInstance.ref(`field_reimbursements/${batchId}/status`).set(action);
+        triggerToast('Đã cập nhật trạng thái!', 'success');
+        document.getElementById('viewFieldReimbModal').remove();
+        logUserActivity('FIELD_REIMB_ACTION', `${action === 'approved' ? 'Phê duyệt' : 'Từ chối'} phiếu thanh toán hiện trường ${batchId}`);
+      } catch (err) {
+        console.error(err);
+        triggerToast('Lỗi khi cập nhật.', 'error');
       }
     }
 </script>
