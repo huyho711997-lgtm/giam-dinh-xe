@@ -19031,6 +19031,17 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const perDiem = parseFloat(document.getElementById('reimbInputPerDiem')?.value) || 0;
       const hotelCost = parseFloat(document.getElementById('reimbInputHotelCost')?.value) || 0;
 
+      const locationContainer = document.getElementById('reimbInputLocationContainer');
+      const locationInput = document.getElementById('reimbInputLocation');
+      if (locationContainer && locationInput) {
+        if (hotelCost > 0) {
+          locationContainer.style.display = 'block';
+        } else {
+          locationContainer.style.display = 'none';
+          locationInput.value = '';
+        }
+      }
+
       const calc = calculateFieldCost(km, date, isHoliday);
       const total = calc.finalCost + travelCost + perDiem + hotelCost;
 
@@ -19154,8 +19165,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Số HSBT</label>
                     <input type="text" id="reimbInputHSBT" class="p-input" placeholder="VD: HSBT/XCG/..." style="width:100%; padding: 12px; border-radius: 10px;">
                   </div>
-                  <div>
-                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Địa bàn giám định</label>
+                  <div id="reimbInputLocationContainer" style="display: none;">
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Địa bàn giám định <span style="color:#ef4444">*</span></label>
                     <input type="text" id="reimbInputLocation" class="p-input" placeholder="Nhập địa bàn" style="width:100%; padding: 12px; border-radius: 10px;">
                   </div>
                 </div>
@@ -19285,6 +19296,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (!bs) return triggerToast('Vui lòng nhập Biển số xe', 'error');
       if (!date) return triggerToast('Vui lòng chọn thời gian kết thúc', 'error');
       if (isNaN(km) || km < 0) return triggerToast('Vui lòng nhập số km hợp lệ', 'error');
+      if (hotelCost > 0 && !location) return triggerToast('Vui lòng nhập Địa bàn giám định (bắt buộc khi có lưu trú)', 'error');
 
       const calc = calculateFieldCost(km, date, isHoliday);
 
