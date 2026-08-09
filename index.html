@@ -4638,6 +4638,12 @@
         const batchId = t.transferId || 'PBG_N/A';
         const notifId = batchId + '_' + (t.trangThai || 'unknown');
         const dateStr = t.ngayBanGiao ? formatDateDisplay(t.ngayBanGiao) : '';
+        let notifTimestamp = 0;
+        if (t.ngayBanGiao) {
+           const dp = parseDateParts(t.ngayBanGiao);
+           if (dp) notifTimestamp = new Date(dp.year, dp.month - 1, dp.day, dp.hours || 0, dp.minutes || 0, dp.seconds || 0).getTime();
+        }
+
         const isRead = readSet.has(String(notifId)) || readSet.has(String(batchId));
         const isDismissed = dismissedSet.has(String(notifId)) || dismissedSet.has(String(batchId));
 
@@ -4654,6 +4660,7 @@
             title: 'Yêu cầu bổ sung Phiếu ' + batchId,
             desc: (t.ghiChuKeToan ? ('Kế toán phản hồi: ' + t.ghiChuKeToan) : `Kế toán yêu cầu bổ sung chứng từ cho ${suppClaimsCount} hồ sơ trong phiếu này.`),
             date: dateStr,
+            timestamp: notifTimestamp,
             transferId: batchId,
             isRead
           });
@@ -4664,6 +4671,7 @@
             title: 'Đã xác nhận Phiếu ' + batchId,
             desc: 'Kế toán đã xác nhận nhận hồ sơ cho phiếu bàn giao ' + batchId + '.',
             date: dateStr,
+            timestamp: notifTimestamp,
             transferId: batchId,
             isRead
           });
@@ -4674,6 +4682,7 @@
             title: 'Phiếu mới trình Kế toán ' + batchId,
             desc: 'GĐV ' + (t.gdvName || '') + ' đã tạo phiếu bàn giao ' + (claimsList.length || 1) + ' hồ sơ.',
             date: dateStr,
+            timestamp: notifTimestamp,
             transferId: batchId,
             isRead
           });
@@ -4684,6 +4693,7 @@
             title: 'Đã trình ĐNTT Phiếu ' + batchId,
             desc: 'Phiếu bàn giao ' + batchId + ' đã được Kế toán duyệt trình đề nghị thanh toán.',
             date: dateStr,
+            timestamp: notifTimestamp,
             transferId: batchId,
             isRead
           });
@@ -4706,12 +4716,19 @@
               
               if (!isDismissed) {
                 const dateStr = caseObj.garageSubmittedAt ? formatDateDisplay(caseObj.garageSubmittedAt) : '';
+                let notifTimestamp = 0;
+                if (caseObj.garageSubmittedAt) {
+                  const dp = parseDateParts(caseObj.garageSubmittedAt);
+                  if (dp) notifTimestamp = new Date(dp.year, dp.month - 1, dp.day, dp.hours || 0, dp.minutes || 0, dp.seconds || 0).getTime();
+                  else notifTimestamp = Number(caseObj.garageSubmittedAt) || 0;
+                }
                 notifications.push({
                   id: notifId,
                   type: 'success',
                   title: 'Gara hoàn tất hồ sơ: ' + (caseObj.bienSo || 'N/A'),
                   desc: 'Gara ' + (caseObj.tenGara || 'N/A') + ' đã tải lên đủ hình ảnh giám định và yêu cầu kiểm tra.',
                   date: dateStr,
+                  timestamp: notifTimestamp,
                   transferId: caseId,
                   isRead,
                   isCase: true
@@ -4721,6 +4738,8 @@
           }
         });
       }
+
+      notifications.sort((a, b) => b.timestamp - a.timestamp);
 
       const unreadCount = notifications.filter(n => !n.isRead).length;
 
