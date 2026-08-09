@@ -2426,7 +2426,7 @@
             </div>
 
             <!-- Module 5: Quản lý User -->
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 12px;">
               <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245,158,11,0.14); color: #f59e0b; display: grid; place-items: center;">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -2439,6 +2439,24 @@
               <div style="display: flex; gap: 16px; font-size: 12.5px; font-weight: 800; color: var(--text-main);">
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="newPerm_users_view" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Xem</label>
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(245,158,11,0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(245,158,11,0.3); color: #f59e0b;"><input type="checkbox" id="newPerm_users_admin" style="accent-color: #f59e0b; width: 16px; height: 16px; cursor: pointer;" /> Quyền Admin Quản trị</label>
+              </div>
+            </div>
+
+            <!-- Module 6: TT Hiện trường -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(216,180,109,0.14); color: var(--primary); display: grid; place-items: center;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+                <div>
+                  <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850; display: block;">6. Thanh toán Hiện trường</strong>
+                  <span style="font-size: 11px; color: var(--text-soft);">Tạo và phê duyệt đề nghị thanh toán chi phí đi hiện trường</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 16px; font-size: 12.5px; font-weight: 800; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="newPerm_field_reimb_view" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="newPerm_field_reimb_create" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Tạo phiếu</label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(16,185,129,0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3); color: #10b981;"><input type="checkbox" id="newPerm_field_reimb_review" style="accent-color: #10b981; width: 16px; height: 16px; cursor: pointer;" /> Phê duyệt</label>
               </div>
             </div>
 
@@ -2598,7 +2616,7 @@
             </div>
 
             <!-- Module 5: Quản lý User -->
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 12px;">
               <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245,158,11,0.14); color: #f59e0b; display: grid; place-items: center;">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -2611,6 +2629,24 @@
               <div style="display: flex; gap: 16px; font-size: 12.5px; font-weight: 800; color: var(--text-main);">
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="editPerm_users_view" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Xem</label>
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(245,158,11,0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(245,158,11,0.3); color: #f59e0b;"><input type="checkbox" id="editPerm_users_admin" style="accent-color: #f59e0b; width: 16px; height: 16px; cursor: pointer;" /> Quyền Admin Quản trị</label>
+              </div>
+            </div>
+
+            <!-- Module 6: TT Hiện trường -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(216,180,109,0.14); color: var(--primary); display: grid; place-items: center;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+                <div>
+                  <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850; display: block;">6. Thanh toán Hiện trường</strong>
+                  <span style="font-size: 11px; color: var(--text-soft);">Tạo và phê duyệt đề nghị thanh toán chi phí đi hiện trường</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 16px; font-size: 12.5px; font-weight: 800; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="editPerm_field_reimb_view" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="editPerm_field_reimb_create" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Tạo phiếu</label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(16,185,129,0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3); color: #10b981;"><input type="checkbox" id="editPerm_field_reimb_review" style="accent-color: #10b981; width: 16px; height: 16px; cursor: pointer;" /> Phê duyệt</label>
               </div>
             </div>
 
@@ -5000,7 +5036,7 @@
             <span class="nav-btn-text">Chuyển giao Kế toán</span>
           </button>
           ` : ''}
-          ${hasUserPermission('list', 'view') || hasUserPermission('accounting', 'view') ? `
+          ${hasUserPermission('field_reimb', 'view') ? `
           <button id="headerNavFieldReimbursementBtn" class="header-nav-btn ${activeDashboardTab === 'field_reimbursements' ? 'active' : ''}" onclick="navigateHeaderTab('field_reimbursements')">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
             <span class="nav-btn-text">TT hiện trường</span>
@@ -5256,6 +5292,11 @@
         users: {
           view: document.getElementById(prefix + 'Perm_users_view')?.checked || false,
           admin: document.getElementById(prefix + 'Perm_users_admin')?.checked || false
+        },
+        field_reimb: {
+          view: document.getElementById(prefix + 'Perm_field_reimb_view')?.checked || false,
+          create: document.getElementById(prefix + 'Perm_field_reimb_create')?.checked || false,
+          review: document.getElementById(prefix + 'Perm_field_reimb_review')?.checked || false
         }
       };
     }
@@ -5292,6 +5333,10 @@
 
       setCheck(prefix + 'Perm_users_view', p.users?.view ?? isRoleAdmin);
       setCheck(prefix + 'Perm_users_admin', p.users?.admin ?? isRoleAdmin);
+
+      setCheck(prefix + 'Perm_field_reimb_view', p.field_reimb?.view ?? true);
+      setCheck(prefix + 'Perm_field_reimb_create', p.field_reimb?.create ?? !isRoleKeToan);
+      setCheck(prefix + 'Perm_field_reimb_review', p.field_reimb?.review ?? (isRoleKeToan || isRoleAdmin));
     }
 
     function hasUserPermission(moduleKey, actionKey) {
@@ -5305,6 +5350,11 @@
         if (moduleKey === 'users') return false;
         if (moduleKey === 'accounting' && actionKey === 'review') return isKeToan;
         if (moduleKey === 'accounting' && actionKey === 'export') return isKeToan;
+        
+        if (moduleKey === 'field_reimb') {
+          if (actionKey === 'create') return !isKeToan;
+          if (actionKey === 'review') return isKeToan;
+        }
         return true;
       }
       
@@ -7759,7 +7809,7 @@ function formatDateDisplay(val) {
         if (activeDashboardTab === 'users') activeDashboardTab = 'home';
         return;
       }
-      if (tabName === 'field_reimbursements' && !hasUserPermission('list', 'view') && !hasUserPermission('accounting', 'view')) {
+      if (tabName === 'field_reimbursements' && !hasUserPermission('field_reimb', 'view')) {
         triggerToast('Bạn không có quyền truy cập trang thanh toán hiện trường.', 'warning');
         if (activeDashboardTab === 'field_reimbursements') activeDashboardTab = 'home';
         return;
@@ -18846,19 +18896,18 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const container = containerDOM || document.getElementById('tabContentContainer');
       if (!container) return;
 
-      const isKeToan = getLoggedInUserAccountingRole() === 'ketoan';
       const currentUser = firebase.auth().currentUser;
       const myUid = currentUser?.uid;
 
       let allReimb = Object.values(cachedFieldReimbursementsPayload || {});
-      const isKeToanOrAdmin = isKeToan || (activeUserProfile && activeUserProfile.isAdmin);
-      if (!isKeToanOrAdmin) {
+      const canReview = hasUserPermission('field_reimb', 'review');
+      if (!canReview) {
         allReimb = allReimb.filter(r => r.gdvUid === myUid);
       }
 
       allReimb.sort((a,b) => b.createdAt - a.createdAt);
 
-      const canCreate = !isKeToan || (activeUserProfile && String(activeUserProfile.role || '').toLowerCase() === 'admin');
+      const canCreate = hasUserPermission('field_reimb', 'create');
 
       container.innerHTML = `
         <!-- ADAPTIVE HERO BANNER HEADER -->
@@ -19260,8 +19309,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const payload = cachedFieldReimbursementsPayload[batchId];
       if (!payload) return;
 
-      const isKeToan = getLoggedInUserAccountingRole() === 'ketoan';
-      const isKeToanOrAdmin = isKeToan || (activeUserProfile && activeUserProfile.isAdmin);
+      const canReview = hasUserPermission('field_reimb', 'review');
       
       const m = document.createElement('div');
       m.id = 'viewFieldReimbModal';
@@ -19357,7 +19405,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <span style="color: #10b981; font-size: 28px; font-weight:900; line-height:1.2;">${payload.totalAmount ? payload.totalAmount.toLocaleString('vi-VN') : '0'} đ</span>
             </div>
             <div style="display:flex; gap:12px;">
-              ${isKeToanOrAdmin && payload.status === 'pending' ? `
+              ${canReview && payload.status === 'pending' ? `
                 <button class="btn-premium" style="background: #ef4444; color: #fff; box-shadow: 0 8px 20px rgba(239,68,68,0.25); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'rejected')">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   TỪ CHỐI
