@@ -19024,36 +19024,72 @@ function renderGdvMonthlyReportPage(targetContainer) {
     }
 
     function lookupCaseInfoByBS(bs) {
-      if (!bs || bs.trim().length < 5) return;
+      const dropdown = document.getElementById('reimbBSDropdown');
+      if (!dropdown) return;
+      
+      if (!bs || bs.trim().length < 4) {
+        dropdown.style.display = 'none';
+        return;
+      }
       
       const normalizedQuery = removeVietnameseTones(bs.trim().toUpperCase().replace(/[-.\s]/g, ''));
       const allCases = cachedCasesPayload || {};
-      let matchedCase = null;
-      let latestTime = 0;
+      let matchedCases = [];
       
       for (const key in allCases) {
         const c = allCases[key];
         if (c.bienSo) {
           const normalizedBs = removeVietnameseTones(c.bienSo.toUpperCase().replace(/[-.\s]/g, ''));
-          if (normalizedBs === normalizedQuery) {
-            if (c.createdAt > latestTime) {
-              latestTime = c.createdAt;
-              matchedCase = c;
-            }
+          if (normalizedBs.includes(normalizedQuery) || normalizedQuery.includes(normalizedBs)) {
+            matchedCases.push({...c, _id: key});
           }
         }
       }
       
-      if (matchedCase) {
+      if (matchedCases.length === 0) {
+        dropdown.style.display = 'none';
+        return;
+      }
+      
+      matchedCases.sort((a, b) => b.createdAt - a.createdAt);
+      
+      let html = '';
+      matchedCases.forEach(c => {
+        const hsbt = c.soHoSoBoiThuong || 'Chưa có số HSBT';
+        const ngay = c.ngayThongBao || 'Chưa có thông tin giờ TN';
+        const rawObj = encodeURIComponent(JSON.stringify({soHsbt: c.soHoSoBoiThuong, ngayThongBao: c.ngayThongBao, bienSo: c.bienSo}));
+        
+        html += `
+          <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;" 
+               onmouseover="this.style.background='var(--bg-soft)'" 
+               onmouseout="this.style.background='transparent'"
+               onclick="selectReimbCaseFromDropdown('${rawObj}')">
+            <div style="font-weight: 700; color: var(--text-main); font-size: 14px; margin-bottom: 4px;">${c.bienSo}</div>
+            <div style="font-size: 12px; color: var(--text-soft); display: flex; gap: 12px; align-items: center;">
+              <span><span style="font-weight: 600;">HSBT:</span> ${hsbt}</span>
+              <span style="display:flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ${ngay}</span>
+            </div>
+          </div>
+        `;
+      });
+      
+      dropdown.innerHTML = html;
+      dropdown.style.display = 'block';
+    }
+
+    function selectReimbCaseFromDropdown(encodedObj) {
+      try {
+        const data = JSON.parse(decodeURIComponent(encodedObj));
+        const bsInput = document.getElementById('reimbInputBS');
         const hsbtInput = document.getElementById('reimbInputHSBT');
         const startInput = document.getElementById('reimbInputStartDate');
+        const dropdown = document.getElementById('reimbBSDropdown');
         
-        if (matchedCase.soHoSoBoiThuong && !hsbtInput.value) {
-          hsbtInput.value = matchedCase.soHoSoBoiThuong;
-        }
+        if (data.bienSo) bsInput.value = data.bienSo;
+        if (data.soHsbt) hsbtInput.value = data.soHsbt;
         
-        if (matchedCase.ngayThongBao && !startInput.value) {
-           const parts = matchedCase.ngayThongBao.split(/[\s/:]+/);
+        if (data.ngayThongBao) {
+           const parts = data.ngayThongBao.split(/[\s/:]+/);
            if (parts.length >= 5) {
              const day = parts[0].padStart(2, '0');
              const month = parts[1].padStart(2, '0');
@@ -19063,8 +19099,22 @@ function renderGdvMonthlyReportPage(targetContainer) {
              startInput.value = `${year}-${month}-${day}T${hour}:${min}`;
            }
         }
+        
+        if (dropdown) dropdown.style.display = 'none';
+      } catch (e) {
+        console.error(e);
       }
     }
+    
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('reimbBSDropdown');
+      const input = document.getElementById('reimbInputBS');
+      if (dropdown && input) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.style.display = 'none';
+        }
+      }
+    });
 
     function updateQuickReimbPreview() {
       const km = parseFloat(document.getElementById('reimbInputKm')?.value) || 0;
@@ -19200,9 +19250,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <div style="display: flex; flex-direction: column; gap: 24px;">
                 <!-- Row 1: Thông tin cơ bản -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 20px;">
-                  <div>
+                  <div style="position: relative;">
                     <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Biển số xe KH <span style="color:#ef4444">*</span></label>
-                    <input type="text" id="reimbInputBS" class="p-input" placeholder="VD: 47A-123.45" style="width:100%; padding: 12px; border-radius: 10px;" onchange="lookupCaseInfoByBS(this.value)">
+                    <input type="text" id="reimbInputBS" class="p-input" placeholder="VD: 47A-123.45" style="width:100%; padding: 12px; border-radius: 10px;" oninput="lookupCaseInfoByBS(this.value)" autocomplete="off">
+                    <div id="reimbBSDropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 100; max-height: 240px; overflow-y: auto; overflow-x: hidden;"></div>
                   </div>
                   <div>
                     <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Số HSBT</label>
