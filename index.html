@@ -19023,6 +19023,49 @@ function renderGdvMonthlyReportPage(targetContainer) {
       `;
     }
 
+    function lookupCaseInfoByBS(bs) {
+      if (!bs || bs.trim().length < 5) return;
+      
+      const normalizedQuery = removeVietnameseTones(bs.trim().toUpperCase().replace(/[-.\s]/g, ''));
+      const allCases = cachedCasesPayload || {};
+      let matchedCase = null;
+      let latestTime = 0;
+      
+      for (const key in allCases) {
+        const c = allCases[key];
+        if (c.bienSo) {
+          const normalizedBs = removeVietnameseTones(c.bienSo.toUpperCase().replace(/[-.\s]/g, ''));
+          if (normalizedBs === normalizedQuery) {
+            if (c.createdAt > latestTime) {
+              latestTime = c.createdAt;
+              matchedCase = c;
+            }
+          }
+        }
+      }
+      
+      if (matchedCase) {
+        const hsbtInput = document.getElementById('reimbInputHSBT');
+        const startInput = document.getElementById('reimbInputStartDate');
+        
+        if (matchedCase.soHoSoBoiThuong && !hsbtInput.value) {
+          hsbtInput.value = matchedCase.soHoSoBoiThuong;
+        }
+        
+        if (matchedCase.ngayThongBao && !startInput.value) {
+           const parts = matchedCase.ngayThongBao.split(/[\s/:]+/);
+           if (parts.length >= 5) {
+             const day = parts[0].padStart(2, '0');
+             const month = parts[1].padStart(2, '0');
+             const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+             const hour = parts[3].padStart(2, '0');
+             const min = parts[4].padStart(2, '0');
+             startInput.value = `${year}-${month}-${day}T${hour}:${min}`;
+           }
+        }
+      }
+    }
+
     function updateQuickReimbPreview() {
       const km = parseFloat(document.getElementById('reimbInputKm')?.value) || 0;
       const date = document.getElementById('reimbInputDate')?.value;
@@ -19159,7 +19202,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 20px;">
                   <div>
                     <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Biển số xe KH <span style="color:#ef4444">*</span></label>
-                    <input type="text" id="reimbInputBS" class="p-input" placeholder="VD: 47A-123.45" style="width:100%; padding: 12px; border-radius: 10px;">
+                    <input type="text" id="reimbInputBS" class="p-input" placeholder="VD: 47A-123.45" style="width:100%; padding: 12px; border-radius: 10px;" onchange="lookupCaseInfoByBS(this.value)">
                   </div>
                   <div>
                     <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Số HSBT</label>
