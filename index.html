@@ -19142,87 +19142,84 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 </span>
                 Khai báo thông tin vụ giám định
               </h4>
-              
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-                <!-- Cột trái: Thông tin vụ & Thời gian -->
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div>
-                      <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Biển số xe KH <span style="color:#ef4444">*</span></label>
-                      <input type="text" id="reimbInputBS" class="p-input" placeholder="VD: 47A-123.45" style="width:100%; padding: 12px; border-radius: 10px;">
-                    </div>
-                    <div>
-                      <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Số HSBT</label>
-                      <input type="text" id="reimbInputHSBT" class="p-input" placeholder="VD: HSBT/XCG/..." style="width:100%; padding: 12px; border-radius: 10px;">
-                    </div>
+
+              <div style="display: flex; flex-direction: column; gap: 24px;">
+                <!-- Row 1: Thông tin cơ bản -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 20px;">
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Biển số xe KH <span style="color:#ef4444">*</span></label>
+                    <input type="text" id="reimbInputBS" class="p-input" placeholder="VD: 47A-123.45" style="width:100%; padding: 12px; border-radius: 10px;">
                   </div>
-                  
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div>
-                      <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ bắt đầu GĐ</label>
-                      <input type="datetime-local" id="reimbInputStartDate" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;">
-                    </div>
-                    <div>
-                      <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ kết thúc GĐ <span style="color:#ef4444">*</span></label>
-                      <input type="datetime-local" id="reimbInputDate" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
-                    </div>
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Số HSBT</label>
+                    <input type="text" id="reimbInputHSBT" class="p-input" placeholder="VD: HSBT/XCG/..." style="width:100%; padding: 12px; border-radius: 10px;">
                   </div>
-                  
                   <div>
                     <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Địa bàn giám định</label>
                     <input type="text" id="reimbInputLocation" class="p-input" placeholder="Nhập địa bàn" style="width:100%; padding: 12px; border-radius: 10px;">
                   </div>
                 </div>
                 
-                <!-- Cột phải: Khoảng cách & Chi phí -->
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div>
-                      <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Phương tiện di chuyển</label>
-                      <select id="reimbInputVehicle" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;" onchange="autoCalculateTravelCost()">
-                        <option value="Phương tiện cá nhân">Phương tiện cá nhân</option>
-                        <option value="Ô tô cơ quan">Ô tô cơ quan</option>
-                        <option value="Xe khách">Xe khách</option>
-                        <option value="Taxi">Taxi</option>
-                        <option value="Tàu hỏa">Tàu hỏa</option>
-                        <option value="Máy bay">Máy bay</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Khoảng cách (km) <span style="color:#ef4444">*</span></label>
-                      <input type="number" id="reimbInputKm" class="p-input" min="0" step="1" placeholder="VD: 35" style="width:100%; padding: 12px; border-radius: 10px;" oninput="autoCalculateTravelCost()">
-                    </div>
+                <!-- Row 2: Thời gian & Đặc thù -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 20px; align-items: end;">
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ bắt đầu GĐ</label>
+                    <input type="datetime-local" id="reimbInputStartDate" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;">
                   </div>
-                  
-                  <div style="display: flex; gap: 20px; align-items: center; padding: 12px 16px; background: var(--bg-soft); border-radius: 12px; border: 1px dashed var(--border-strong);">
-                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--text-main); cursor: pointer;">
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ kết thúc GĐ <span style="color:#ef4444">*</span></label>
+                    <input type="datetime-local" id="reimbInputDate" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
+                  </div>
+                  <div style="display: flex; gap: 20px; align-items: center; padding: 12px 16px; background: var(--bg-soft); border-radius: 10px; border: 1px dashed var(--border-strong); height: 46px; box-sizing: border-box;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--text-main); cursor: pointer; margin: 0;">
                       <input type="checkbox" id="reimbInputHoliday" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);" onchange="updateQuickReimbPreview()">
                       Ngày Lễ / Cuối tuần
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--text-main); cursor: pointer;" title="Áp dụng cho Cao tốc cấm xe máy hoặc Đặc thù (Có phê duyệt)">
+                    <div style="width: 1px; height: 16px; background: var(--border-strong);"></div>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--text-main); cursor: pointer; margin: 0;" title="Áp dụng cho Cao tốc cấm xe máy hoặc Đặc thù (Có phê duyệt)">
                       <input type="checkbox" id="reimbInputSpecialCase" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);" onchange="autoCalculateTravelCost()">
                       Đặc thù / Cao tốc
                     </label>
                   </div>
-            
-                  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-                    <div>
-                      <label style="display: block; font-size: 13px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Chi phí đi lại (đ)</label>
-                      <input type="number" id="reimbInputTravelCost" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
-                    </div>
-                    <div>
-                      <label style="display: block; font-size: 13px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Công tác phí (đ)</label>
-                      <input type="number" id="reimbInputPerDiem" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
-                    </div>
-                    <div>
-                      <label style="display: block; font-size: 13px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Lưu trú (đ)</label>
-                      <input type="number" id="reimbInputHotelCost" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
-                    </div>
+                </div>
+                
+                <!-- Row 3: Di chuyển -->
+                <div style="display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 20px;">
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Phương tiện di chuyển</label>
+                    <select id="reimbInputVehicle" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;" onchange="autoCalculateTravelCost()">
+                      <option value="Phương tiện cá nhân">Phương tiện cá nhân</option>
+                      <option value="Ô tô cơ quan">Ô tô cơ quan</option>
+                      <option value="Xe khách">Xe khách</option>
+                      <option value="Taxi">Taxi</option>
+                      <option value="Tàu hỏa">Tàu hỏa</option>
+                      <option value="Máy bay">Máy bay</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Khoảng cách (km) <span style="color:#ef4444">*</span></label>
+                    <input type="number" id="reimbInputKm" class="p-input" min="0" step="1" placeholder="VD: 35" style="width:100%; padding: 12px; border-radius: 10px;" oninput="autoCalculateTravelCost()">
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Chi phí đi lại (đ)</label>
+                    <input type="number" id="reimbInputTravelCost" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
+                  </div>
+                </div>
+
+                <!-- Row 4: Phụ phí -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Công tác phí (đ)</label>
+                    <input type="number" id="reimbInputPerDiem" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Lưu trú (đ)</label>
+                    <input type="number" id="reimbInputHotelCost" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
                   </div>
                 </div>
               </div>
             
-              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px dashed var(--border-strong);">
                 <div style="display: flex; align-items: center; gap: 16px;">
                   <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(16,185,129,0.15); color: #10b981; display: flex; align-items: center; justify-content: center;">
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
@@ -19233,7 +19230,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </div>
                 </div>
                 
-                <button type="button" class="btn-premium" style="padding: 0 32px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, #d8b46d, #b98c3e); box-shadow: 0 8px 20px rgba(216,180,109,0.3); color: #fff; border: none; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s;" onclick="addReimbursementItemFromForm()">
+                <button type="button" class="btn-premium" style="width: auto; min-width: 180px; flex-shrink: 0; padding: 0 32px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, #d8b46d, #b98c3e); box-shadow: 0 8px 20px rgba(216,180,109,0.3); color: #fff; border: none; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; transition: all 0.2s; cursor: pointer;" onclick="addReimbursementItemFromForm()">
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                   Thêm vụ này
                 </button>
