@@ -19557,27 +19557,17 @@ function renderGdvMonthlyReportPage(targetContainer) {
     }
 
     function deleteFieldReimbursement(batchId) {
-      Swal.fire({
-        title: 'Xoá phiếu thanh toán?',
-        text: 'Bạn có chắc chắn muốn xoá phiếu đề nghị này không? Thao tác này không thể hoàn tác.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Xoá phiếu',
-        cancelButtonText: 'Huỷ',
-        confirmButtonColor: '#ef4444'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          dbNodeInstance.ref('field_reimbursements/' + batchId).remove()
-            .then(() => {
-              triggerToast('Đã xoá phiếu thanh toán.', 'success');
-              logUserActivity('DELETE_FIELD_REIMB', `Xoá phiếu thanh toán ${batchId}`);
-            })
-            .catch(err => {
-              console.error(err);
-              triggerToast('Lỗi khi xoá phiếu.', 'error');
-            });
-        }
-      });
+      if (!confirm('Bạn có chắc chắn muốn xoá phiếu đề nghị này không? Thao tác này không thể hoàn tác.')) return;
+      
+      dbNodeInstance.ref('field_reimbursements/' + batchId).remove()
+        .then(() => {
+          triggerToast('Đã xoá phiếu thanh toán.', 'success');
+          logUserActivity('DELETE_FIELD_REIMB', `Xoá phiếu thanh toán ${batchId}`);
+        })
+        .catch(err => {
+          console.error(err);
+          triggerToast('Lỗi khi xoá phiếu.', 'error');
+        });
     }
 
     function viewFieldReimbursementDetail(batchId) {
