@@ -15713,7 +15713,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <table class="p-table" style="width: 100%; min-width: 1020px; border-collapse: collapse; font-size: 12.5px;">
                 <thead>
                   <tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
-                    <th style="padding: 13px 14px; text-align: center; width: 110px;">STT / Ưu tiên</th>
+                    <th style="padding: 13px 14px; text-align: center; width: 80px;">STT</th>
                     <th style="padding: 13px 14px; text-align: center; width: 180px;">Trạng thái</th>
                     <th style="padding: 13px 14px; text-align: left;">Số HSBT</th>
                     <th style="padding: 13px 14px; text-align: left;">Tên khách hàng / BKS</th>
@@ -15738,10 +15738,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                   return `<tr onclick="openAccountingClaimDetailModal('${item.transfer.transferId}', ${item.claimIndex})" style="cursor: pointer; ${isPriority ? 'background: rgba(245,158,11,0.035);' : (isClaimBoSung ? 'background: rgba(239,68,68,0.035);' : '')}" title="Nhấp vào dòng để xem chi tiết">
                     <td style="padding: 12px 14px; text-align: center; vertical-align: middle;">
-                      <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <span class="acc-stt-badge">#${startIndex + index + 1}</span>
-                        ${isPriority ? `<span class="acc-priority-badge">${ACC_SVGS.FIRE} ƯU TIÊN</span>` : ''}
-                      </div>
+                      <span class="acc-stt-badge">#${startIndex + index + 1}</span>
                     </td>
                     <td style="padding: 12px 14px; text-align: center; vertical-align: middle;">
                       <span class="acc-status-pill" style="color:${status.text}; background:${status.bg}; border:1px solid ${status.border};">
@@ -15749,7 +15746,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
                       </span>
                     </td>
                     <td style="padding: 12px 14px; vertical-align: middle;">
-                      <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 13px;">${escapeHtmlOutput(item.claim.soHoSoBoiThuong || 'Chưa có')}</strong>
+                      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 13px;">${escapeHtmlOutput(item.claim.soHoSoBoiThuong || 'Chưa có')}</strong>
+                        ${isPriority ? `<span class="acc-priority-badge" style="padding: 2px 7px; font-size: 9.5px; animation: pulseAmber 2.5s infinite;"><span style="transform: scale(0.85); display: inline-flex;">${ACC_SVGS.FIRE}</span>ƯU TIÊN</span>` : ''}
+                      </div>
                     </td>
                     <td style="padding: 12px 14px; vertical-align: middle;">
                       <strong style="color: var(--text-main); font-size: 13.5px; font-weight: 800; display: block;">${escapeHtmlOutput(extractClaimOwnerName(item.claim) || 'N/A')}</strong>
