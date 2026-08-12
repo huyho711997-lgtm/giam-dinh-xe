@@ -19557,17 +19557,59 @@ function renderGdvMonthlyReportPage(targetContainer) {
     }
 
     function deleteFieldReimbursement(batchId) {
-      if (!confirm('Bạn có chắc chắn muốn xoá phiếu đề nghị này không? Thao tác này không thể hoàn tác.')) return;
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(11, 15, 25, 0.82); backdrop-filter: blur(16px); z-index: 999999; display: grid; place-items: center; padding: 16px; opacity: 0; transition: opacity 0.2s ease;';
       
-      dbNodeInstance.ref('field_reimbursements/' + batchId).remove()
-        .then(() => {
-          triggerToast('Đã xoá phiếu thanh toán.', 'success');
-          logUserActivity('DELETE_FIELD_REIMB', `Xoá phiếu thanh toán ${batchId}`);
-        })
-        .catch(err => {
-          console.error(err);
-          triggerToast('Lỗi khi xoá phiếu.', 'error');
-        });
+      const modal = document.createElement('div');
+      modal.style.cssText = 'background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px; width: 100%; max-width: 360px; box-shadow: 0 24px 48px rgba(0,0,0,0.4); text-align: center; transform: scale(0.95); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);';
+      
+      modal.innerHTML = `
+        <div style="width: 56px; height: 56px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px;">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        </div>
+        <h3 style="margin: 0 0 10px; font-size: 18px; color: var(--text-main); font-weight: 800;">Xoá phiếu thanh toán?</h3>
+        <p style="margin: 0 0 24px; font-size: 14px; color: var(--text-soft); line-height: 1.5;">Bạn có chắc chắn muốn xoá phiếu đề nghị này không?<br>Thao tác này không thể hoàn tác.</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <button id="btnCancelDelete" style="padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-main); font-size: 14px; font-weight: 750; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='var(--surface-soft)'">Huỷ</button>
+          <button id="btnConfirmDelete" style="padding: 12px; border-radius: 12px; border: none; background: #ef4444; color: #fff; font-size: 14px; font-weight: 750; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(239,68,68,0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(239,68,68,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(239,68,68,0.3)'">Xoá phiếu</button>
+        </div>
+      `;
+      
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+      
+      requestAnimationFrame(() => {
+        overlay.style.opacity = '1';
+        modal.style.transform = 'scale(1)';
+      });
+      
+      const closeModal = () => {
+        overlay.style.opacity = '0';
+        modal.style.transform = 'scale(0.95)';
+        setTimeout(() => overlay.remove(), 200);
+      };
+      
+      document.getElementById('btnCancelDelete').onclick = closeModal;
+      
+      document.getElementById('btnConfirmDelete').onclick = () => {
+        const btn = document.getElementById('btnConfirmDelete');
+        btn.textContent = 'Đang xoá...';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        btn.style.cursor = 'not-allowed';
+        
+        dbNodeInstance.ref('field_reimbursements/' + batchId).remove()
+          .then(() => {
+            triggerToast('Đã xoá phiếu thanh toán.', 'success');
+            logUserActivity('DELETE_FIELD_REIMB', `Xoá phiếu thanh toán ${batchId}`);
+            closeModal();
+          })
+          .catch(err => {
+            console.error(err);
+            triggerToast('Lỗi khi xoá phiếu.', 'error');
+            closeModal();
+          });
+      };
     }
 
     function viewFieldReimbursementDetail(batchId) {
