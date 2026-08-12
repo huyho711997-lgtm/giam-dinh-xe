@@ -19012,8 +19012,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         <td style="padding: 18px 24px; text-align: center;">
                           <div style="display: flex; justify-content: center;">
                             ${(r.status === 'pending' && (r.gdvUid === myUid || canReview)) ? `
-                              <button class="btn-premium btn-secondary" style="width: 48px; min-height: 34px; padding: 0; border-radius: 10px; color: #ef4444; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.06);" onclick="event.stopPropagation(); deleteFieldReimbursement('${r.id}')" title="Xoá phiếu này">
-                                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path></svg>
+                              <button style="background: rgba(239,68,68,0.08); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); padding: 8px; border-radius: 8px; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.15)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'" onclick="if(typeof event !== 'undefined') event.stopPropagation(); deleteFieldReimbursement('${r.id}')" title="Xoá phiếu này">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path></svg>
                               </button>
                             ` : '-'}
                           </div>
