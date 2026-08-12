@@ -19010,7 +19010,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         <td style="padding: 18px 24px; text-align: right; font-weight: 850; color: #10b981;">${r.totalAmount ? r.totalAmount.toLocaleString('vi-VN') : '0'} đ</td>
                         <td style="padding: 18px 24px; text-align: center;">${statusHtml}</td>
                         <td style="padding: 18px 24px; text-align: center;">
-                          <button class="btn-premium btn-secondary" style="padding: 6px 12px; font-size: 11px;" onclick="viewFieldReimbursementDetail('${r.id}')">Xem chi tiết</button>
+                          <div style="display: flex; gap: 8px; justify-content: center;">
+                            <button class="btn-premium btn-secondary" style="padding: 6px 12px; font-size: 11px;" onclick="viewFieldReimbursementDetail('${r.id}')">Xem chi tiết</button>
+                            ${(r.status === 'pending' && (r.gdvUid === myUid || canReview)) ? `
+                              <button class="btn-premium btn-secondary" style="padding: 6px 12px; font-size: 11px; color: #ef4444; border-color: rgba(239,68,68,0.2); background: rgba(239,68,68,0.05);" onclick="deleteFieldReimbursement('${r.id}')" title="Xoá phiếu này">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path></svg>
+                              </button>
+                            ` : ''}
+                          </div>
                         </td>
                       </tr>
                     `;
@@ -19548,6 +19555,30 @@ function renderGdvMonthlyReportPage(targetContainer) {
         triggerToast('Lỗi khi lưu phiếu thanh toán.', 'error');
         if (btn) { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Tạo phiếu'; }
       }
+    }
+
+    function deleteFieldReimbursement(batchId) {
+      Swal.fire({
+        title: 'Xoá phiếu thanh toán?',
+        text: 'Bạn có chắc chắn muốn xoá phiếu đề nghị này không? Thao tác này không thể hoàn tác.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Xoá phiếu',
+        cancelButtonText: 'Huỷ',
+        confirmButtonColor: '#ef4444'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          dbNodeInstance.ref('field_reimbursements/' + batchId).remove()
+            .then(() => {
+              triggerToast('Đã xoá phiếu thanh toán.', 'success');
+              logUserActivity('DELETE_FIELD_REIMB', `Xoá phiếu thanh toán ${batchId}`);
+            })
+            .catch(err => {
+              console.error(err);
+              triggerToast('Lỗi khi xoá phiếu.', 'error');
+            });
+        }
+      });
     }
 
     function viewFieldReimbursementDetail(batchId) {
