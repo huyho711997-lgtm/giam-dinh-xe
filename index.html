@@ -16523,21 +16523,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
                       <tr onclick="${rowClickHandler}" style="border-bottom: 1px solid var(--border); vertical-align: middle; cursor: pointer; transition: all 0.2s ease; ${suppClaimsCount > 0 ? 'background: linear-gradient(90deg, rgba(244,63,94,0.05) 0%, rgba(244,63,94,0.01) 100%); border-left: 4px solid #f43f5e;' : ''}" title="Nhấp để xem chi tiết phiếu bàn giao">
                         <td style="padding: 14px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${String(globalIdx + 1).padStart(2, '0')}</td>
                         <td style="padding: 14px; text-align: center;">
-                          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                            <span style="display: inline-flex; gap: 5px; align-items: center; padding: 5px 12px; border-radius: 999px; color: ${statusObj.text}; background: ${statusObj.bg}; border: 1px solid ${statusObj.border}; font-size: 10.5px; font-weight: 850; text-transform: uppercase; letter-spacing: 0.02em;">
-                              ${statusObj.svg} ${statusObj.label}
-                            </span>
+                          <span style="display: inline-flex; gap: 5px; align-items: center; padding: 5px 12px; border-radius: 999px; color: ${statusObj.text}; background: ${statusObj.bg}; border: 1px solid ${statusObj.border}; font-size: 10.5px; font-weight: 850; text-transform: uppercase; letter-spacing: 0.02em;">
+                            ${statusObj.svg} ${statusObj.label}
+                          </span>
+                        </td>
+                        <td style="padding: 14px;">
+                          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 3px;">
+                            <strong style="font-family: 'JetBrains Mono'; color: var(--text-main); font-size: 13.5px;">${escapeHtmlOutput(t.transferId)}</strong>
                             ${hasPriority ? `
-                              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 8px; background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(245,158,11,0.15) 100%); border: 1px solid rgba(239,68,68,0.35); color: #ef4444; font-size: 10px; font-weight: 850; letter-spacing: 0.02em; animation: pulseAmber 2.5s infinite;">
-                                <span style="display: inline-flex; align-items: center; transform: scale(0.85); color: #ef4444;">${ACC_SVGS.FIRE}</span>
-                                <span>ƯU TIÊN</span>
+                              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 6px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; font-size: 9.5px; font-weight: 850; letter-spacing: 0.02em; animation: pulseAmber 2.5s infinite;">
+                                <span style="display: inline-flex; align-items: center; transform: scale(0.85);">${ACC_SVGS.FIRE}</span>
+                                ƯU TIÊN
                               </span>
                             ` : ''}
                           </div>
-                        </td>
-                        <td style="padding: 14px;">
-                          <strong style="font-family: 'JetBrains Mono'; color: var(--text-main); font-size: 13.5px;">${escapeHtmlOutput(t.transferId)}</strong>
-                          <span style="display: block; color: var(--text-soft); font-size: 11px; margin-top: 2px;">Bàn giao: ${formatDateDisplay(t.ngayBanGiao)}</span>
+                          <span style="display: block; color: var(--text-soft); font-size: 11px;">Bàn giao: ${formatDateDisplay(t.ngayBanGiao)}</span>
                         </td>
                         <td style="padding: 14px; text-align: center; white-space: nowrap;">
                           <div style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;">
