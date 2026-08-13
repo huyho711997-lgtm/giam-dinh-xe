@@ -18313,7 +18313,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         
         const mStr = activeCarBrandReportMonths.includes('all') ? 'All' : activeCarBrandReportMonths.join('_');
         const yStr = activeCarBrandReportYears.includes('all') ? 'All' : activeCarBrandReportYears.join('_');
-        XLSX.writeFile(wb, \`Bao_Cao_Ton_That_Theo_Hang_Xe_T\${mStr}_N\${yStr}.xlsx\`);
+        XLSX.writeFile(wb, `Bao_Cao_Ton_That_Theo_Hang_Xe_T${mStr}_N${yStr}.xlsx`);
         
         triggerToast('Đã xuất file Excel thành công!', 'success');
       } catch (err) {
