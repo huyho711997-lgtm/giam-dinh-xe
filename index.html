@@ -12900,16 +12900,28 @@ function renderGdvMonthlyReportPage(targetContainer) {
         let yr = null;
         let mo = null;
         let t = Date.now();
-        
-        if (c.createdAt) {
-          t = new Date(c.createdAt).getTime();
-          const d = new Date(t);
-          yr = d.getFullYear();
-          mo = d.getMonth() + 1;
-        } else {
-          const d = new Date(t);
-          yr = d.getFullYear();
-          mo = d.getMonth() + 1;
+
+        const dateStr = (c.ngayMoHs || '').trim();
+        if (dateStr && dateStr !== '—') {
+          const dp = parseDateParts(dateStr);
+          if (dp && dp.year && dp.month) {
+            yr = dp.year;
+            mo = dp.month;
+            t = new Date(dp.year, dp.month - 1, dp.day || 15, 12, 0, 0).getTime();
+          }
+        }
+
+        if (!yr) {
+          if (c.createdAt) {
+            t = new Date(c.createdAt).getTime();
+            const d = new Date(t);
+            yr = d.getFullYear();
+            mo = d.getMonth() + 1;
+          } else {
+            const d = new Date(t);
+            yr = d.getFullYear();
+            mo = d.getMonth() + 1;
+          }
         }
 
         yearSet.add(yr);
