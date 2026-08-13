@@ -11,7 +11,7 @@
   <!-- Google Fonts & Firebase SDK -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
@@ -8005,7 +8005,7 @@ function formatDateDisplay(val) {
               <div style="position: relative; z-index: 2;">
                 <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">Tổng hồ sơ</span>
                 <div style=" font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
-                  <span id="lblTotalCases">0</span> <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); font-family: sans-serif;">hồ sơ</span>
+                  <span id="lblTotalCases">0</span> <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); ">hồ sơ</span>
                 </div>
               </div>
             </div>
@@ -8021,7 +8021,7 @@ function formatDateDisplay(val) {
                   Đang chờ Garage
                 </span>
                 <div style=" font-size: 28px; font-weight: 900; color: #d97706; display: flex; align-items: baseline; gap: 6px;">
-                  <span id="lblPendingCases">0</span> <span style="font-size: 13px; font-weight: 700; color: #f59e0b; font-family: sans-serif;">hồ sơ</span>
+                  <span id="lblPendingCases">0</span> <span style="font-size: 13px; font-weight: 700; color: #f59e0b; ">hồ sơ</span>
                 </div>
               </div>
             </div>
@@ -8037,7 +8037,7 @@ function formatDateDisplay(val) {
                   Đã có kết quả
                 </span>
                 <div style=" font-size: 28px; font-weight: 900; color: #059669; display: flex; align-items: baseline; gap: 6px;">
-                  <span id="lblCompletedCases">0</span> <span style="font-size: 13px; font-weight: 700; color: #10b981; font-family: sans-serif;">hồ sơ</span>
+                  <span id="lblCompletedCases">0</span> <span style="font-size: 13px; font-weight: 700; color: #10b981; ">hồ sơ</span>
                 </div>
               </div>
             </div>
@@ -15553,7 +15553,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <div style="position: relative; z-index: 2;">
                 <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">Tổng số hồ sơ đã nhận</span>
                 <div style=" font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
-                  ${statTotal} <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); font-family: sans-serif;">hồ sơ</span>
+                  ${statTotal} <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); ">hồ sơ</span>
                 </div>
               </div>
             </div>
@@ -15571,7 +15571,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <span>Đã xác nhận</span>
                 </div>
                 <div style=" font-size: 28px; font-weight: 900; color: #10b981; display: flex; align-items: baseline; gap: 6px;">
-                  ${statDaXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
+                  ${statDaXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">hồ sơ</span>
                 </div>
               </div>
             </div>
@@ -15592,7 +15592,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   ${statCanBoSung > 0 ? `<div style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: pulseRed 2s infinite;"></div>` : ''}
                 </div>
                 <div style=" font-size: 28px; font-weight: 900; color: #ef4444; display: flex; align-items: baseline; gap: 6px;">
-                  ${statCanBoSung} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
+                  ${statCanBoSung} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">hồ sơ</span>
                 </div>
               </div>
             </div>
@@ -15610,7 +15610,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <span>Đã trình Đề nghị Thanh toán</span>
                 </div>
                 <div style=" font-size: 28px; font-weight: 900; color: #8b5cf6; display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;">
-                  ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
+                  ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">hồ sơ</span>
                 </div>
               </div>
             </div>
@@ -16313,7 +16313,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <div style="position: relative; z-index: 2;">
                 <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">Tổng phiếu bàn giao</span>
                 <div style=" font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
-                  ${statTotal} <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); font-family: sans-serif;">phiếu</span>
+                  ${statTotal} <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); ">phiếu</span>
                 </div>
               </div>
             </div>
@@ -16331,7 +16331,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <span>Chờ xác nhận</span>
                 </div>
                 <div style=" font-size: 28px; font-weight: 900; color: #f59e0b; display: flex; align-items: baseline; gap: 6px;">
-                  ${statChoXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">phiếu</span>
+                  ${statChoXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">phiếu</span>
                 </div>
               </div>
             </div>
@@ -16349,7 +16349,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <span>Đã xác nhận</span>
                 </div>
                 <div style=" font-size: 28px; font-weight: 900; color: #10b981; display: flex; align-items: baseline; gap: 6px;">
-                  ${statDaXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">phiếu</span>
+                  ${statDaXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">phiếu</span>
                 </div>
               </div>
             </div>
@@ -16370,7 +16370,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   ${statCanBoSung > 0 ? `<div style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: pulseRed 2s infinite;"></div>` : ''}
                 </div>
                 <div style=" font-size: 28px; font-weight: 900; color: #ef4444; display: flex; align-items: baseline; gap: 6px;">
-                  ${statCanBoSung} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">phiếu</span>
+                  ${statCanBoSung} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">phiếu</span>
                 </div>
               </div>
             </div>
@@ -16388,7 +16388,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <span>Đã trình ĐNTT</span>
                 </div>
                 <div style=" font-size: 28px; font-weight: 900; color: #8b5cf6; display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;">
-                  ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">phiếu</span>
+                  ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">phiếu</span>
                 </div>
                 <div style="font-size: 12px; font-weight: 800; color: var(--text-soft);">
                   ${formatCurrencyInputNumber(totalMoneyTrinhDntt)} <span style="font-size: 10px;">VNĐ</span>
