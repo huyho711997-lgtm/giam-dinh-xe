@@ -12899,7 +12899,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const c = claimsList[i];
         let yr = null;
         let mo = null;
-        let t = Date.now();
+        let t = 0;
 
         const dateStr = (c.ngayMoHs || '').trim();
         if (dateStr && dateStr !== '—') {
@@ -12908,19 +12908,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
             yr = dp.year;
             mo = dp.month;
             t = new Date(dp.year, dp.month - 1, dp.day || 15, 12, 0, 0).getTime();
-          }
-        }
-
-        if (!yr) {
-          if (c.createdAt) {
-            t = new Date(c.createdAt).getTime();
-            const d = new Date(t);
-            yr = d.getFullYear();
-            mo = d.getMonth() + 1;
-          } else {
-            const d = new Date(t);
-            yr = d.getFullYear();
-            mo = d.getMonth() + 1;
           }
         }
 
