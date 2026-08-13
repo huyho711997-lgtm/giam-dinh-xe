@@ -7454,7 +7454,7 @@ function formatDateDisplay(val) {
       const paginationContainer = document.getElementById('pendingClaimsPaginationContainer');
 
       if (totalFilteredCount === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="empty-state-text">Không tìm thấy hồ sơ tồn đọng nào phù hợp.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="empty-state-text">Không tìm thấy hồ sơ tồn đọng nào phù hợp.</td></tr>`;
         if (paginationContainer) paginationContainer.innerHTML = '';
         return;
       }
@@ -7493,6 +7493,9 @@ function formatDateDisplay(val) {
                   </button>
                 ` : ''}
               </div>
+            </td>
+            <td style="width: 180px; vertical-align: middle;">
+              <strong style="color: var(--text-main); font-size: 13px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(extractClaimOwnerName(item))}">${escapeHtmlOutput(extractClaimOwnerName(item))}</strong>
             </td>
             <td style="width: 190px;">
               <strong style="color: var(--text-main); font-size: 13px; display: block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData((item.hangXe || '') + ' ' + (item.hieuXe || ''))}">${escapeHtmlOutput(item.hangXe || '—')} ${escapeHtmlOutput(item.hieuXe || '')}</strong>
@@ -8279,6 +8282,7 @@ function formatDateDisplay(val) {
                       <th style="width: 44px; text-align: center;">#</th>
                       <th style="width: 110px; text-align: center;">Trạng thái hồ sơ</th>
                       <th style="width: 220px;">Biển số xe</th>
+                      <th style="width: 180px;">Tên chủ xe</th>
                       <th style="width: 190px;">Hãng xe & Đơn vị cấp</th>
                       <th style="width: 260px; min-width: 200px;">Nội dung tổn thất & Địa điểm</th>
                       <th style="width: 130px; text-align: right; padding-right: 15px;">Số tiền BT</th>
@@ -8287,7 +8291,7 @@ function formatDateDisplay(val) {
                     </tr>
                   </thead>
                   <tbody id="tblPendingClaimsBodyContainer">
-                    <tr><td colspan="8" class="empty-state-text">Đang đồng bộ danh sách hồ sơ tồn...</td></tr>
+                    <tr><td colspan="9" class="empty-state-text">Đang đồng bộ danh sách hồ sơ tồn...</td></tr>
                   </tbody>
                 </table>
               </div>
