@@ -2201,7 +2201,36 @@
       box-shadow: 0 4px 10px rgba(216,180,109,0.15) !important;
       transform: translateY(-1px);
     }
-  </style>
+      /* Premium Input Styling */
+      .p-input {
+        width: 100%;
+        background: var(--surface-soft);
+        border: 1px solid var(--border-strong);
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--text-main);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        box-sizing: border-box;
+      }
+      .p-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(216, 180, 109, 0.15);
+        background: var(--surface);
+      }
+      .p-input::placeholder {
+        color: var(--text-muted);
+      }
+      select.p-input {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        padding-right: 40px;
+      }
+    </style>
 </head>
 <body>
 
@@ -2397,7 +2426,7 @@
             </div>
 
             <!-- Module 5: Quản lý User -->
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 12px;">
               <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245,158,11,0.14); color: #f59e0b; display: grid; place-items: center;">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -2410,6 +2439,24 @@
               <div style="display: flex; gap: 16px; font-size: 12.5px; font-weight: 800; color: var(--text-main);">
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="newPerm_users_view" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Xem</label>
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(245,158,11,0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(245,158,11,0.3); color: #f59e0b;"><input type="checkbox" id="newPerm_users_admin" style="accent-color: #f59e0b; width: 16px; height: 16px; cursor: pointer;" /> Quyền Admin Quản trị</label>
+              </div>
+            </div>
+
+            <!-- Module 6: TT Hiện trường -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(216,180,109,0.14); color: var(--primary); display: grid; place-items: center;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+                <div>
+                  <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850; display: block;">6. Thanh toán Hiện trường</strong>
+                  <span style="font-size: 11px; color: var(--text-soft);">Tạo và phê duyệt đề nghị thanh toán chi phí đi hiện trường</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 16px; font-size: 12.5px; font-weight: 800; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="newPerm_field_reimb_view" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="newPerm_field_reimb_create" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Tạo phiếu</label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(16,185,129,0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3); color: #10b981;"><input type="checkbox" id="newPerm_field_reimb_review" style="accent-color: #10b981; width: 16px; height: 16px; cursor: pointer;" /> Phê duyệt</label>
               </div>
             </div>
 
@@ -2569,7 +2616,7 @@
             </div>
 
             <!-- Module 5: Quản lý User -->
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); flex-wrap: wrap; gap: 12px;">
               <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245,158,11,0.14); color: #f59e0b; display: grid; place-items: center;">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -2582,6 +2629,24 @@
               <div style="display: flex; gap: 16px; font-size: 12.5px; font-weight: 800; color: var(--text-main);">
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="editPerm_users_view" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Xem</label>
                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(245,158,11,0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(245,158,11,0.3); color: #f59e0b;"><input type="checkbox" id="editPerm_users_admin" style="accent-color: #f59e0b; width: 16px; height: 16px; cursor: pointer;" /> Quyền Admin Quản trị</label>
+              </div>
+            </div>
+
+            <!-- Module 6: TT Hiện trường -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(216,180,109,0.14); color: var(--primary); display: grid; place-items: center;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+                <div>
+                  <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850; display: block;">6. Thanh toán Hiện trường</strong>
+                  <span style="font-size: 11px; color: var(--text-soft);">Tạo và phê duyệt đề nghị thanh toán chi phí đi hiện trường</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 16px; font-size: 12.5px; font-weight: 800; color: var(--text-main);">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="editPerm_field_reimb_view" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Xem</label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);"><input type="checkbox" id="editPerm_field_reimb_create" style="accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;" /> Tạo phiếu</label>
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; background: rgba(16,185,129,0.1); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3); color: #10b981;"><input type="checkbox" id="editPerm_field_reimb_review" style="accent-color: #10b981; width: 16px; height: 16px; cursor: pointer;" /> Phê duyệt</label>
               </div>
             </div>
 
@@ -3207,7 +3272,10 @@
     let portalSearchTerm = '';
     let activeObjectUrls = [];
     let cachedCasesPayload = null;
+    let cachedFieldReimbursementsPayload = null;
     let activeCaseFilter = 'all';
+    let activeCasePage = 1;
+    let activeCasePerPage = 10;
     let activeUserFilter = 'all';
     let activeDashboardTab = 'home'; 
     let activeCreateFlowMode = 'select';
@@ -3224,6 +3292,14 @@
     let activeSystemAdminSubTab = 'users';
     let cachedAuditLogsPayload = {};
     let activeAuditLogsFilter = 'all';
+    let auditLogsCurrentPage = 1;
+    const auditLogsPerPage = 15;
+    
+    function setAuditLogsPage(page) {
+      auditLogsCurrentPage = page;
+      renderAuditLogsTableList();
+    }
+    
     let pendingClaimsCurrentPage = 1;
     let pendingClaimsPerPage = 10;
 
@@ -3693,6 +3769,7 @@
 
     function setAuditLogsFilter(filterValue) {
       activeAuditLogsFilter = filterValue;
+      auditLogsCurrentPage = 1;
       document.querySelectorAll('#auditLogActionPills .filter-pill').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.auditFilter === filterValue);
       });
@@ -3718,10 +3795,20 @@
         return matchesText && matchesFilter;
       });
 
+      const pContainer = document.getElementById('auditLogsPagination');
+      
       if (!filteredEntries.length) {
         tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không có nhật ký hoạt động nào</strong><p>Chưa ghi nhận dữ liệu phù hợp với bộ lọc.</p></div></td></tr>`;
+        if (pContainer) pContainer.innerHTML = '';
         return;
       }
+      
+      const totalPages = Math.ceil(filteredEntries.length / auditLogsPerPage) || 1;
+      if (auditLogsCurrentPage > totalPages) auditLogsCurrentPage = totalPages;
+      if (auditLogsCurrentPage < 1) auditLogsCurrentPage = 1;
+
+      const startIndex = (auditLogsCurrentPage - 1) * auditLogsPerPage;
+      const pagedEntries = filteredEntries.slice(startIndex, startIndex + auditLogsPerPage);
 
       const ACTION_BADGES = {
         'LOGIN': `<span class="badge-status" style="background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.KEY} Đăng nhập</span>`,
@@ -3730,10 +3817,10 @@
         'GARAGE_SAVE_DRAFT': `<span class="badge-status" style="background: rgba(255,189,89,0.12); color: var(--warning); border: 1px solid rgba(255,189,89,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.SAVE} Gara nháp</span>`,
         'GARAGE_SUBMIT': `<span class="badge-status" style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.4); display:inline-flex; align-items:center; gap:4px;">${SVGS.ROCKET} Gara gửi kết quả</span>`,
         'USER_MANAGE': `<span class="badge-status" style="background: rgba(168,85,247,0.12); color: #a855f7; border: 1px solid rgba(168,85,247,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.USER} Quản lý User</span>`,
-        'SYSTEM_SETTING': `<span class="badge-status" style="background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.LOCK} System Config</span>`
+        'SYSTEM_SETTING': `<span class="badge-status" style="background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.LOCK} Hệ thống</span>`
       };
 
-      tbody.innerHTML = filteredEntries.map(([, log]) => {
+      tbody.innerHTML = pagedEntries.map(([, log]) => {
         const dateStr = log.timestamp ? formatAuditLogDate(log.timestamp) : 'N/A';
         const badge = ACTION_BADGES[log.actionType] || `<span class="badge-status" style="background: var(--surface-soft); color: var(--text-soft); border: 1px solid var(--border);">${escapeHtmlOutput(log.actionType || 'HĐ')}</span>`;
         const initials = deriveInitials(log.userName || 'U');
@@ -3755,16 +3842,34 @@
           </tr>
         `;
       }).join('');
+      
+      if (pContainer) {
+        let startPage = Math.max(1, auditLogsCurrentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+        if (endPage - startPage < 4) {
+          startPage = Math.max(1, endPage - 4);
+        }
+        let pageBtns = '';
+        for (let p = startPage; p <= endPage; p++) {
+          const isAct = p === auditLogsCurrentPage;
+          pageBtns += `<button type="button" class="pagination-btn ${isAct ? 'active' : ''}" onclick="setAuditLogsPage(${p})" style="width: 30px; height: 30px; border-radius: 8px; font-size: 13px; font-weight: 700; ${isAct ? 'background: var(--primary); color: #fff; border: none; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-main); border: 1px solid transparent; cursor: pointer; transition: all 0.2s;'}">${p}</button>`;
+        }
 
-      if (matched.length > limit) {
-        cardsHTML += `
-          <button type="button" onclick="window._accClaimSearchLimit = (window._accClaimSearchLimit || 25) + 30; renderAccClaimSearchResults(document.getElementById('accClaimSearchBox')?.value || '')" style="width: 100%; padding: 12px; margin-top: 6px; border-radius: 12px; background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); font-size: 13px; font-weight: 850; cursor: pointer; text-align: center; transition: all 0.2s ease;">
-            👇 Xem thêm 30 hồ sơ nữa (Còn ${matched.length - limit} hồ sơ)
-          </button>
+        pContainer.innerHTML = `
+          <div style="font-size: 12.5px; color: var(--text-soft); font-weight: 700;">
+            Hiển thị ${startIndex + 1}-${Math.min(startIndex + auditLogsPerPage, filteredEntries.length)} / Tổng ${filteredEntries.length}
+          </div>
+          <div style="display: flex; gap: 6px; align-items: center; background: var(--surface-soft); padding: 4px; border-radius: 12px; border: 1px solid var(--border);">
+            <button type="button" class="pagination-btn" onclick="setAuditLogsPage(${auditLogsCurrentPage - 1})" ${auditLogsCurrentPage <= 1 ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${auditLogsCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${auditLogsCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            ${pageBtns}
+            <button type="button" class="pagination-btn" onclick="setAuditLogsPage(${auditLogsCurrentPage + 1})" ${auditLogsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${auditLogsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${auditLogsCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
         `;
       }
-
-      holder.innerHTML = cardsHTML;
     }
 
     function formatAuditLogDate(timestamp) {
@@ -4216,7 +4321,7 @@
                   <button class="filter-pill" data-audit-filter="CREATE_CASE" onclick="setAuditLogsFilter('CREATE_CASE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.FOLDER} <span>Khởi tạo ca</span></button>
                   <button class="filter-pill" data-audit-filter="GARAGE" onclick="setAuditLogsFilter('GARAGE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.ROCKET} <span>Gara khai báo</span></button>
                   <button class="filter-pill" data-audit-filter="USER_MANAGE" onclick="setAuditLogsFilter('USER_MANAGE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.USER} <span>Tài khoản</span></button>
-                  <button class="filter-pill" data-audit-filter="SYSTEM_SETTING" onclick="setAuditLogsFilter('SYSTEM_SETTING')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.LOCK} <span>System Cấu hình</span></button>
+                  <button class="filter-pill" data-audit-filter="SYSTEM_SETTING" onclick="setAuditLogsFilter('SYSTEM_SETTING')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.LOCK} <span>Hệ thống</span></button>
                 </div>
               </div>
 
@@ -4236,6 +4341,7 @@
                   </tbody>
                 </table>
               </div>
+              <div id="auditLogsPagination" class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding: 0 8px;"></div>
             </div>
           </div>
         `;
@@ -4522,7 +4628,32 @@
       } catch (e) {}
     }
 
-    function markNotificationAsRead(evt, notifId, transferId) {
+    function getDismissedNotificationIdsSet() {
+      try {
+        const uid = activeUserProfile?.uid || firebase.auth().currentUser?.uid || 'default';
+        const raw = localStorage.getItem('dismissed_notifs_' + uid);
+        return new Set(raw ? JSON.parse(raw) : []);
+      } catch (e) {
+        return new Set();
+      }
+    }
+
+    function saveDismissedNotificationIdsSet(setObj) {
+      try {
+        const uid = activeUserProfile?.uid || firebase.auth().currentUser?.uid || 'default';
+        localStorage.setItem('dismissed_notifs_' + uid, JSON.stringify(Array.from(setObj)));
+      } catch (e) {}
+    }
+
+    function dismissNotification(evt, notifId) {
+      if (evt) evt.stopPropagation();
+      const dismissedSet = getDismissedNotificationIdsSet();
+      if (notifId) dismissedSet.add(String(notifId));
+      saveDismissedNotificationIdsSet(dismissedSet);
+      renderNotificationCenterItems();
+    }
+
+    function markNotificationAsRead(evt, notifId, transferId, isCase = false) {
       if (evt) evt.stopPropagation();
       const readSet = getReadNotificationIdsSet();
       if (notifId) readSet.add(String(notifId));
@@ -4534,6 +4665,13 @@
       if (transferId) {
         const menu = document.getElementById('notificationCenterDropdownMenu');
         if (menu) menu.style.display = 'none';
+        
+        if (isCase) {
+           window.history.pushState({}, '', `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(transferId)}`);
+           evaluateViewRoutingState(firebase.auth().currentUser);
+           return;
+        }
+
         const isKeToan = getLoggedInUserAccountingRole() === 'ketoan';
         if (isKeToan) {
           openKeToanReviewModal(transferId);
@@ -4547,10 +4685,23 @@
       const readSet = getReadNotificationIdsSet();
       const transfers = Object.values(cachedAccountingTransfersPayload || {});
       transfers.forEach(t => {
-        if (t.transferId) readSet.add(String(t.transferId));
+        if (t.transferId && t.trangThai) readSet.add(String(t.transferId + '_' + t.trangThai));
+        if (t.transferId) readSet.add(String(t.transferId)); // backward compat
       });
       saveReadNotificationIdsSet(readSet);
       triggerToast('Đã đánh dấu đọc tất cả thông báo.', 'success');
+      renderNotificationCenterItems();
+    }
+
+    function dismissAllNotifications() {
+      const dismissedSet = getDismissedNotificationIdsSet();
+      const transfers = Object.values(cachedAccountingTransfersPayload || {});
+      transfers.forEach(t => {
+        if (t.transferId && t.trangThai) dismissedSet.add(String(t.transferId + '_' + t.trangThai));
+        if (t.transferId) dismissedSet.add(String(t.transferId)); // backward compat
+      });
+      saveDismissedNotificationIdsSet(dismissedSet);
+      triggerToast('Đã xóa tất cả thông báo.', 'success');
       renderNotificationCenterItems();
     }
 
@@ -4584,12 +4735,23 @@
       }
 
       const readSet = getReadNotificationIdsSet();
+      const dismissedSet = getDismissedNotificationIdsSet();
       const notifications = [];
 
       transfers.forEach(t => {
         const batchId = t.transferId || 'PBG_N/A';
+        const notifId = batchId + '_' + (t.trangThai || 'unknown');
         const dateStr = t.ngayBanGiao ? formatDateDisplay(t.ngayBanGiao) : '';
-        const isRead = readSet.has(String(batchId));
+        let notifTimestamp = 0;
+        if (t.ngayBanGiao) {
+           const dp = parseDateParts(t.ngayBanGiao);
+           if (dp) notifTimestamp = new Date(dp.year, dp.month - 1, dp.day, dp.hours || 0, dp.minutes || 0, dp.seconds || 0).getTime();
+        }
+
+        const isRead = readSet.has(String(notifId)) || readSet.has(String(batchId));
+        const isDismissed = dismissedSet.has(String(notifId)) || dismissedSet.has(String(batchId));
+
+        if (isDismissed) return; // Skip dismissed
 
         const claimsList = t.danhSachHoSo || [];
         const suppList = t.hoSoYeuCauBoSung || [];
@@ -4597,46 +4759,91 @@
 
         if (t.trangThai === 'can_bo_sung' || suppClaimsCount > 0) {
           notifications.push({
-            id: batchId,
+            id: notifId,
             type: 'warning',
             title: 'Yêu cầu bổ sung Phiếu ' + batchId,
             desc: (t.ghiChuKeToan ? ('Kế toán phản hồi: ' + t.ghiChuKeToan) : `Kế toán yêu cầu bổ sung chứng từ cho ${suppClaimsCount} hồ sơ trong phiếu này.`),
             date: dateStr,
+            timestamp: notifTimestamp,
             transferId: batchId,
             isRead
           });
         } else if (t.trangThai === 'da_xac_nhan' || t.trangThai === 'da_nhan_du_ho_so') {
           notifications.push({
-            id: batchId,
+            id: notifId,
             type: 'success',
             title: 'Đã xác nhận Phiếu ' + batchId,
             desc: 'Kế toán đã xác nhận nhận hồ sơ cho phiếu bàn giao ' + batchId + '.',
             date: dateStr,
+            timestamp: notifTimestamp,
             transferId: batchId,
             isRead
           });
         } else if (t.trangThai === 'cho_xac_nhan' || t.trangThai === 'da_nhan_ho_so') {
           notifications.push({
-            id: batchId,
+            id: notifId,
             type: 'info',
             title: 'Phiếu mới trình Kế toán ' + batchId,
             desc: 'GĐV ' + (t.gdvName || '') + ' đã tạo phiếu bàn giao ' + (claimsList.length || 1) + ' hồ sơ.',
             date: dateStr,
+            timestamp: notifTimestamp,
             transferId: batchId,
             isRead
           });
         } else if (t.trangThai === 'da_trinh_dntt') {
           notifications.push({
-            id: batchId,
+            id: notifId,
             type: 'success',
             title: 'Đã trình ĐNTT Phiếu ' + batchId,
             desc: 'Phiếu bàn giao ' + batchId + ' đã được Kế toán duyệt trình đề nghị thanh toán.',
             date: dateStr,
+            timestamp: notifTimestamp,
             transferId: batchId,
             isRead
           });
         }
       });
+      
+      // Also inject completed cases notifications for the creator
+      if (cachedCasesPayload) {
+        Object.entries(cachedCasesPayload).forEach(([caseId, caseObj]) => {
+          if (caseObj.trangThai === STATUS_COMPLETED) {
+            const creatorEmail = String(caseObj.nguoiTao?.email || '').trim().toLowerCase();
+            const creatorUid = String(caseObj.nguoiTao?.uid || '').trim().toLowerCase();
+            const myUid = String(activeUserProfile?.uid || firebase.auth().currentUser?.uid || '').trim().toLowerCase();
+            const myEmail = String(activeUserProfile?.email || firebase.auth().currentUser?.email || '').trim().toLowerCase();
+            
+            if ((creatorEmail && creatorEmail === myEmail) || (creatorUid && creatorUid === myUid)) {
+              const notifId = 'case_completed_' + caseId;
+              const isRead = readSet.has(String(notifId)) || readSet.has(String(caseId));
+              const isDismissed = dismissedSet.has(String(notifId)) || dismissedSet.has(String(caseId));
+              
+              if (!isDismissed) {
+                const dateStr = caseObj.garageSubmittedAt ? formatDateDisplay(caseObj.garageSubmittedAt) : '';
+                let notifTimestamp = 0;
+                if (caseObj.garageSubmittedAt) {
+                  const dp = parseDateParts(caseObj.garageSubmittedAt);
+                  if (dp) notifTimestamp = new Date(dp.year, dp.month - 1, dp.day, dp.hours || 0, dp.minutes || 0, dp.seconds || 0).getTime();
+                  else notifTimestamp = Number(caseObj.garageSubmittedAt) || 0;
+                }
+                notifications.push({
+                  id: notifId,
+                  type: 'success',
+                  title: 'Gara hoàn tất hồ sơ: ' + (caseObj.bienSo || 'N/A'),
+                  desc: 'Gara ' + (caseObj.tenGara || 'N/A') + ' đã tải lên đủ hình ảnh giám định và yêu cầu kiểm tra.',
+                  date: dateStr,
+                  timestamp: notifTimestamp,
+                  transferId: caseId,
+                  isRead,
+                  isCase: true
+                });
+              }
+            }
+          }
+        });
+      }
+
+      notifications.sort((a, b) => b.timestamp - a.timestamp);
 
       const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -4650,7 +4857,12 @@
       }
 
       if (unreadLbl) {
-        unreadLbl.textContent = unreadCount > 0 ? (unreadCount + ' chưa đọc') : 'Đã đọc hết';
+        if (unreadCount > 0) {
+          unreadLbl.style.display = 'inline-block';
+          unreadLbl.textContent = unreadCount + ' chưa đọc';
+        } else {
+          unreadLbl.style.display = 'none';
+        }
       }
 
       if (notifications.length === 0) {
@@ -4668,13 +4880,18 @@
         let textColor = isWarning ? '#ef4444' : (isSuccess ? '#10b981' : '#3b82f6');
 
         return `
-          <div onclick="markNotificationAsRead(event, '${item.id}', '${item.transferId}')" style="padding: 12px 14px; border-radius: 14px; background: ${bgColor}; border: 1px solid ${borderColor}; cursor: pointer; transition: all 0.15s ease; position: relative;">
+          <div onclick="markNotificationAsRead(event, '${item.id}', '${item.transferId}', ${item.isCase ? 'true' : 'false'})" style="padding: 12px 14px; border-radius: 14px; background: ${bgColor}; border: 1px solid ${borderColor}; cursor: pointer; transition: all 0.15s ease; position: relative;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; gap: 8px;">
               <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                 ${isUnread ? `<span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>` : ''}
                 <strong style="font-size: 13px; color: ${textColor}; font-weight: 850;">${escapeHtmlOutput(item.title)}</strong>
               </div>
-              <span style="font-size: 10.5px; color: var(--text-soft); font-family: 'JetBrains Mono'; font-weight: 750; flex-shrink: 0;">${escapeHtmlOutput(item.date)}</span>
+              <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                <span style="font-size: 10.5px; color: var(--text-soft); font-family: 'JetBrains Mono'; font-weight: 750;">${escapeHtmlOutput(item.date)}</span>
+                <button type="button" onclick="dismissNotification(event, '${item.id}')" style="background: transparent; border: none; color: var(--text-soft); padding: 4px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 2px; transition: all 0.2s;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)';" onmouseout="this.style.background='transparent'; this.style.color='var(--text-soft)';" title="Xóa thông báo">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
             </div>
 
             <div style="font-size: 12px; color: var(--text-main); line-height: 1.45; margin-bottom: 8px;">${escapeHtmlOutput(item.desc)}</div>
@@ -4717,15 +4934,19 @@
             </button>
 
             <!-- FLOATING NOTIFICATION CENTER DROPDOWN PANEL -->
-            <div id="notificationCenterDropdownMenu" style="display: none; position: absolute; top: calc(100% + 10px); right: 0; width: 380px; z-index: 99999; background: var(--surface-strong); border: 1px solid var(--border-strong); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); padding: 0; overflow: hidden;">
+            <div id="notificationCenterDropdownMenu" style="display: none; position: absolute; top: calc(100% + 10px); right: 0; width: 420px; z-index: 99999; background: var(--surface-strong); border: 1px solid var(--border-strong); border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); padding: 0; overflow: hidden;">
               <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface);">
-                <strong style="font-size: 14px; color: var(--text-main); font-weight: 850; display: flex; align-items: center; gap: 8px;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                  <span>Thông báo Hệ thống</span>
-                </strong>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                  <button type="button" onclick="markAllNotificationsAsRead()" style="background: transparent; border: none; font-size: 11.5px; color: var(--primary); font-weight: 850; cursor: pointer; text-decoration: underline;">Đã đọc tất cả</button>
-                  <span id="lblNotifUnreadCount" style="font-size: 11px; background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850; padding: 3px 10px; border-radius: 99px;">0 mới</span>
+                  <strong style="font-size: 14px; color: var(--text-main); font-weight: 850; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                    <span>Thông báo</span>
+                  </strong>
+                  <span id="lblNotifUnreadCount" style="font-size: 11px; background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850; padding: 3px 10px; border-radius: 99px; display: none;">0 mới</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <button type="button" onclick="markAllNotificationsAsRead()" style="background: transparent; border: none; font-size: 12px; color: var(--primary); font-weight: 800; cursor: pointer; text-decoration: underline; padding: 0;" title="Đánh dấu đã đọc tất cả">Đã đọc tất cả</button>
+                  <div style="width: 1px; height: 12px; background: var(--border-strong);"></div>
+                  <button type="button" onclick="dismissAllNotifications()" style="background: transparent; border: none; font-size: 12px; color: var(--text-soft); font-weight: 800; cursor: pointer; text-decoration: underline; transition: color 0.2s; padding: 0;" onmouseover="this.style.color='var(--text-main)';" onmouseout="this.style.color='var(--text-soft)';" title="Xóa tất cả">Xóa tất cả</button>
                 </div>
               </div>
               <div id="notificationItemsHolder" style="max-height: 360px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px;">
@@ -4851,6 +5072,12 @@
           <button id="headerNavAccountingBtn" class="header-nav-btn ${activeDashboardTab === 'accounting_transfer' ? 'active' : ''}" onclick="navigateHeaderTab('accounting_transfer')">
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="12" y2="16"></line></svg>
             <span class="nav-btn-text">Chuyển giao Kế toán</span>
+          </button>
+          ` : ''}
+          ${hasUserPermission('field_reimb', 'view') ? `
+          <button id="headerNavFieldReimbursementBtn" class="header-nav-btn ${activeDashboardTab === 'field_reimbursements' ? 'active' : ''}" onclick="navigateHeaderTab('field_reimbursements')">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            <span class="nav-btn-text">TT hiện trường</span>
           </button>
           ` : ''}
 
@@ -5103,6 +5330,11 @@
         users: {
           view: document.getElementById(prefix + 'Perm_users_view')?.checked || false,
           admin: document.getElementById(prefix + 'Perm_users_admin')?.checked || false
+        },
+        field_reimb: {
+          view: document.getElementById(prefix + 'Perm_field_reimb_view')?.checked || false,
+          create: document.getElementById(prefix + 'Perm_field_reimb_create')?.checked || false,
+          review: document.getElementById(prefix + 'Perm_field_reimb_review')?.checked || false
         }
       };
     }
@@ -5139,6 +5371,10 @@
 
       setCheck(prefix + 'Perm_users_view', p.users?.view ?? isRoleAdmin);
       setCheck(prefix + 'Perm_users_admin', p.users?.admin ?? isRoleAdmin);
+
+      setCheck(prefix + 'Perm_field_reimb_view', p.field_reimb?.view ?? true);
+      setCheck(prefix + 'Perm_field_reimb_create', p.field_reimb?.create ?? !isRoleKeToan);
+      setCheck(prefix + 'Perm_field_reimb_review', p.field_reimb?.review ?? (isRoleKeToan || isRoleAdmin));
     }
 
     function hasUserPermission(moduleKey, actionKey) {
@@ -5152,6 +5388,11 @@
         if (moduleKey === 'users') return false;
         if (moduleKey === 'accounting' && actionKey === 'review') return isKeToan;
         if (moduleKey === 'accounting' && actionKey === 'export') return isKeToan;
+        
+        if (moduleKey === 'field_reimb') {
+          if (actionKey === 'create') return !isKeToan;
+          if (actionKey === 'review') return isKeToan;
+        }
         return true;
       }
       
@@ -7557,6 +7798,16 @@ function formatDateDisplay(val) {
         cachedAccountingTransfersPayload = snapshot.val() || {};
         if (activeDashboardTab === 'accounting_transfer') renderAccountingTransferPage();
         if (activeDashboardTab === 'accounting_claims') renderAccountingClaimsPage();
+        
+        // Cập nhật số đếm chuông thông báo
+        renderNotificationCenterItems();
+      });
+
+      dbNodeInstance.ref('field_reimbursements').on('value', (snapshot) => {
+        cachedFieldReimbursementsPayload = snapshot.val() || {};
+        if (activeDashboardTab === 'field_reimbursements') {
+          if (typeof renderFieldReimbursementsPage === 'function') renderFieldReimbursementsPage();
+        }
       });
     }
 
@@ -7596,6 +7847,11 @@ function formatDateDisplay(val) {
         if (activeDashboardTab === 'users') activeDashboardTab = 'home';
         return;
       }
+      if (tabName === 'field_reimbursements' && !hasUserPermission('field_reimb', 'view')) {
+        triggerToast('Bạn không có quyền truy cập trang thanh toán hiện trường.', 'warning');
+        if (activeDashboardTab === 'field_reimbursements') activeDashboardTab = 'home';
+        return;
+      }
 
       if (activeDashboardTab === tabName) return;
       activeDashboardTab = tabName;
@@ -7633,6 +7889,11 @@ function formatDateDisplay(val) {
 
       if (activeDashboardTab === 'accounting_transfer') {
         renderAccountingTransferPage(container);
+        return;
+      }
+
+      if (activeDashboardTab === 'field_reimbursements') {
+        if (typeof renderFieldReimbursementsPage === 'function') renderFieldReimbursementsPage(container);
         return;
       }
 
@@ -7712,54 +7973,136 @@ function formatDateDisplay(val) {
       } else if (activeDashboardTab === 'list') {
         container.innerHTML = `
           <!-- ADAPTIVE HERO BANNER HEADER -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 22px; box-shadow: var(--shadow-sm); position: relative;">
-            <div style="position: absolute; inset: 0; border-radius: 20px; overflow: hidden; pointer-events: none; z-index: 1;">
-              <div style="position: absolute; right: -40px; top: -40px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(216,180,109,0.12) 0%, rgba(0,0,0,0) 70%); border-radius: 50%;"></div>
-            </div>
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 22px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+            <!-- Decorative Orbs -->
+            <div style="position: absolute; right: -50px; top: -50px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(216,180,109,0.2) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(24px);"></div>
+            <div style="position: absolute; left: 5%; bottom: -60px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
             
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
-              <div>
-                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); padding: 5px 14px; border-radius: 99px; font-size: 11.5px; font-weight: 850; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px;">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                  <span>Hồ sơ giám định</span>
+              <div style="flex: 1; min-width: 320px;">
+                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); border-radius: 16px; font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                  Hồ sơ giám định
                 </div>
-                <h1 style="font-size: 24px; font-weight: 850; color: var(--text-main); margin: 0; letter-spacing: -0.02em; line-height: 1.25;">
+                <h1 style="font-size: 28px; font-weight: 900; background: linear-gradient(135deg, var(--text-main) 0%, #9ca3af 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 10px 0; letter-spacing: -0.02em; line-height: 1.2;">
                   Quản lý hồ sơ giám định
                 </h1>
-                <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft); max-width: 850px; margin-bottom: 0;">
+                <p style="font-size: 13px; color: var(--text-soft); margin: 0; max-width: 800px; line-height: 1.5;">
                   Quản lý toàn bộ hồ sơ giám định bồi thường, theo dõi trạng thái khai báo ảnh tổn thất từ Garage & lập phương án.
                 </p>
               </div>
             </div>
           </div>
 
-          <section class="premium-stats">
-            <div class="stat-box" style="cursor: pointer;" onclick="switchWorkspaceTab('list')">
-              <div class="stat-info"><div class="stat-lbl">Tổng hồ sơ</div><div class="stat-val" id="lblTotalCases">0</div><div class="stat-note">Toàn bộ ca đã khởi tạo</div></div>
-              <div class="stat-icon-wrap" style="color:var(--primary)">${SVGS.FOLDER}</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-info"><div class="stat-lbl">Đang chờ Garage</div><div class="stat-val" id="lblPendingCases" style="color:var(--warning)">0</div><div class="stat-note">Chưa hoàn tất khai báo</div></div>
-              <div class="stat-icon-wrap" style="color:var(--warning)">${SVGS.CLOCK}</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-info"><div class="stat-lbl">Đã có kết quả</div><div class="stat-val" id="lblCompletedCases" style="color:var(--success)">0</div><div class="stat-note">Sẵn sàng đối chiếu</div></div>
-              <div class="stat-icon-wrap" style="color:var(--success)">${SVGS.CHECK_CIRCLE}</div>
-            </div>
-          </section>
-
-          <div class="workspace-grid single-col">
-            <section class="p-card cases-panel">
-              <div class="p-card-head"><div><h2>Danh sách hồ sơ</h2><p>Dữ liệu cập nhật tự động theo thời gian thực.</p></div><div class="section-number">01</div></div>
-              <div class="cases-toolbar">
-                <div class="search-wrap">${SVGS.SEARCH}<input id="caseSearchInput" class="input-premium" type="search" placeholder="Tìm biển số hoặc Garage..." /></div>
-                <div class="filter-pills">
-                  <button class="filter-pill active" data-case-filter="all">Tất cả</button>
-                  <button class="filter-pill" data-case-filter="pending">Chờ nhập</button>
-                  <button class="filter-pill" data-case-filter="completed">Hoàn tất</button>
+          <!-- SUMMARY METRIC STATS CARDS -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px;">
+            <!-- CARD 1: Tổng số -->
+            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.04)'" onclick="setCaseFilter('all')">
+              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.03; transform: scale(3);">
+                ${SVGS.FOLDER}
+              </div>
+              <div style="position: relative; z-index: 2;">
+                <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">Tổng hồ sơ</span>
+                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
+                  <span id="lblTotalCases">0</span> <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); font-family: sans-serif;">hồ sơ</span>
                 </div>
               </div>
-              <div class="table-container">
+            </div>
+            
+            <!-- CARD 2: Đang chờ Garage -->
+            <div style="background: rgba(245,158,11,0.03); border: 1px solid rgba(245,158,11,0.2); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(245,158,11,0.05); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(245,158,11,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(245,158,11,0.05)'" onclick="setCaseFilter('pending')">
+              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.03; transform: scale(3); color: #f59e0b;">
+                ${SVGS.CLOCK}
+              </div>
+              <div style="position: relative; z-index: 2;">
+                <span style="font-size: 11px; font-weight: 850; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  Đang chờ Garage
+                </span>
+                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #d97706; display: flex; align-items: baseline; gap: 6px;">
+                  <span id="lblPendingCases">0</span> <span style="font-size: 13px; font-weight: 700; color: #f59e0b; font-family: sans-serif;">hồ sơ</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- CARD 3: Đã có kết quả -->
+            <div style="background: rgba(16,185,129,0.03); border: 1px solid rgba(16,185,129,0.2); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(16,185,129,0.05); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(16,185,129,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(16,185,129,0.05)'" onclick="setCaseFilter('completed')">
+              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.03; transform: scale(3); color: #10b981;">
+                ${SVGS.CHECK_CIRCLE}
+              </div>
+              <div style="position: relative; z-index: 2;">
+                <span style="font-size: 11px; font-weight: 850; color: #10b981; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  Đã có kết quả
+                </span>
+                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #059669; display: flex; align-items: baseline; gap: 6px;">
+                  <span id="lblCompletedCases">0</span> <span style="font-size: 13px; font-weight: 700; color: #10b981; font-family: sans-serif;">hồ sơ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DETACHED FILTER BAR (Matches acc_transfers) -->
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 14px 20px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; box-shadow: var(--shadow-sm);">
+            
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <!-- Search Input -->
+              <div style="position: relative; width: 260px;">
+                <input id="caseSearchInput" class="input-premium" type="search" placeholder="Tìm biển số hoặc Garage..." style="width: 100%; height: 38px; border-radius: 10px; font-size: 12.5px; padding-left: 32px; padding-right: 32px;" oninput="activeCasePage=1; executeUIRenderCasesTable()" />
+                <div style="position: absolute; left: 10px; top: 10px; color: var(--text-soft); pointer-events: none;">${SVGS.SEARCH}</div>
+              </div>
+
+              <!-- Filter Dropdown (Custom UI to match sample) -->
+              <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
+                <button type="button" onclick="const el=document.getElementById('ddCaseStatusFilter'); el.style.display=el.style.display==='none'?'block':'none';" style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 13px; font-weight: 800; padding: 9px 18px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; transition: all 0.2s ease; min-width: 240px; box-shadow: var(--shadow-sm);">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: var(--text-soft); font-weight: 600;">Lọc theo trạng thái:</span>
+                    <span style="color: var(--primary);" id="lblCaseFilterSelected">Tất cả</span>
+                  </div>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                <div id="ddCaseStatusFilter" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 260px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px);">
+                  <div class="custom-dropdown-item" onclick="setCaseFilter('all'); document.getElementById('ddCaseStatusFilter').style.display='none'" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; color: var(--primary);">Tất cả</div>
+                  </div>
+                  <div class="custom-dropdown-item" onclick="setCaseFilter('pending'); document.getElementById('ddCaseStatusFilter').style.display='none'" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 650; color: #f59e0b;">Chờ nhập</div>
+                  </div>
+                  <div class="custom-dropdown-item" onclick="setCaseFilter('completed'); document.getElementById('ddCaseStatusFilter').style.display='none'" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 650; color: #10b981;">Hoàn tất</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Pagination Controls Right -->
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+              <span style="font-size: 13px; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--text-soft);">
+                <span id="casePaginationRange" style="color: var(--primary); font-weight: 800;">0-0</span> / <span id="casePaginationTotal">0</span>
+              </span>
+
+              <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
+                <button type="button" onclick="const el=document.getElementById('menuCasePerPageDropdown'); el.style.display=el.style.display==='none'?'block':'none';" style="background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12.5px; font-weight: 800; padding: 6px 14px; border-radius: 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: all 0.2s ease; box-shadow: var(--shadow-xs);">
+                  <span id="lblCasePerPage">10/trang</span>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div id="menuCasePerPageDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); right: 0; min-width: 100px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
+                  <div class="custom-dropdown-item" onclick="setCasePerPage(10); document.getElementById('menuCasePerPageDropdown').style.display='none'" style="padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: 'JetBrains Mono'; font-weight: 800; color: var(--primary);">10 / trang</div>
+                  <div class="custom-dropdown-item" onclick="setCasePerPage(20); document.getElementById('menuCasePerPageDropdown').style.display='none'" style="padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: 'JetBrains Mono'; font-weight: 600; color: var(--text-main);">20 / trang</div>
+                  <div class="custom-dropdown-item" onclick="setCasePerPage(50); document.getElementById('menuCasePerPageDropdown').style.display='none'" style="padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: 'JetBrains Mono'; font-weight: 600; color: var(--text-main);">50 / trang</div>
+                </div>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 4px;" id="casePaginationControls">
+                <!-- Controls injected by JS -->
+              </div>
+            </div>
+          </div>
+
+          <div class="workspace-grid single-col" style="padding: 0;">
+            <section class="p-card cases-panel" style="border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); border-radius: 12px; overflow: hidden; background: var(--surface); padding: 0;">
+              <div class="table-container" style="border-radius: 0;">
                 <table class="p-table">
                   <thead><tr><th>Phương tiện</th><th>Khởi tạo</th><th>Nội dung</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th></tr></thead>
                   <tbody id="tblCasesBodyContainer"><tr><td colspan="5" class="empty-state-text">Đang đồng bộ dữ liệu...</td></tr></tbody>
@@ -7768,9 +8111,6 @@ function formatDateDisplay(val) {
             </section>
           </div>
         `;
-        
-        document.getElementById('caseSearchInput').addEventListener('input', () => executeUIRenderCasesTable());
-        document.querySelectorAll('[data-case-filter]').forEach(btn => btn.addEventListener('click', () => setCaseFilter(btn.dataset.caseFilter)));
         
         updateStatsCounters(cachedCasesPayload);
         executeUIRenderCasesTable(cachedCasesPayload);
@@ -9167,11 +9507,63 @@ function formatDateDisplay(val) {
         return matchesText && matchesStatus;
       });
       
-      if (!filteredEntries.length) {
+      const totalFiltered = filteredEntries.length;
+      
+      const lblFilter = document.getElementById('lblCaseFilterSelected');
+      if (lblFilter) {
+        lblFilter.innerHTML = activeCaseFilter === 'completed' ? `Hoàn tất (${totalFiltered})` : 
+                              activeCaseFilter === 'pending' ? `Chờ nhập (${totalFiltered})` : 
+                              `Tất cả (${totalFiltered})`;
+      }
+      
+      const lblRange = document.getElementById('casePaginationRange');
+      const lblTotal = document.getElementById('casePaginationTotal');
+      const pageControls = document.getElementById('casePaginationControls');
+      const lblPerPage = document.getElementById('lblCasePerPage');
+      if (lblPerPage) lblPerPage.innerText = activeCasePerPage + '/trang';
+      
+      if (!totalFiltered) {
+        if (lblRange) lblRange.innerText = '0-0';
+        if (lblTotal) lblTotal.innerText = '0';
+        if (pageControls) pageControls.innerHTML = '';
         tableBody.innerHTML = `<tr><td colspan="5"><div class="empty-state-premium"><div class="empty-icon">${SVGS.SEARCH}</div><strong>Không tìm thấy hồ sơ phù hợp</strong><p>Thử thay đổi từ khóa hoặc bộ lọc trạng thái.</p></div></td></tr>`;
         return;
       }
-      tableBody.innerHTML = filteredEntries.map(([uniqueKeyToken, entityNode]) => {
+      
+      const totalPages = Math.ceil(totalFiltered / activeCasePerPage);
+      if (activeCasePage > totalPages) activeCasePage = totalPages;
+      if (activeCasePage < 1) activeCasePage = 1;
+      
+      const startIndex = (activeCasePage - 1) * activeCasePerPage;
+      const endIndex = Math.min(startIndex + activeCasePerPage, totalFiltered);
+      
+      if (lblRange) lblRange.innerText = `${startIndex + 1}-${endIndex}`;
+      if (lblTotal) lblTotal.innerText = totalFiltered;
+      
+      if (pageControls) {
+        let btnsHTML = '';
+        const maxPagesToShow = 5;
+        let startPageBtn = Math.max(1, activeCasePage - 2);
+        let endPageBtn = Math.min(totalPages, startPageBtn + maxPagesToShow - 1);
+        if (endPageBtn - startPageBtn + 1 < maxPagesToShow) {
+          startPageBtn = Math.max(1, endPageBtn - maxPagesToShow + 1);
+        }
+        
+        for (let p = startPageBtn; p <= endPageBtn; p++) {
+          const isAct = p === activeCasePage;
+          btnsHTML += `<button type="button" class="pagination-btn" onclick="setCasePage(${p})" style="width: 30px; height: 30px; border-radius: 8px; font-size: 13px; font-weight: 800; font-family: 'JetBrains Mono'; background: ${isAct ? 'var(--primary)' : 'var(--surface)'}; color: ${isAct ? '#fff' : 'var(--text-main)'}; border: 1px solid ${isAct ? 'var(--primary)' : 'var(--border-strong)'}; display: grid; place-items: center; cursor: pointer; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">${p}</button>`;
+        }
+        
+        pageControls.innerHTML = `
+          <button type="button" class="pagination-btn" onclick="setCasePage(${activeCasePage - 1})" ${activeCasePage <= 1 ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${activeCasePage <= 1 ? '0.4' : '1'}; pointer-events: ${activeCasePage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+          <div style="display: flex; gap: 4px; align-items: center;">${btnsHTML}</div>
+          <button type="button" class="pagination-btn" onclick="setCasePage(${activeCasePage + 1})" ${activeCasePage >= totalPages ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${activeCasePage >= totalPages ? '0.4' : '1'}; pointer-events: ${activeCasePage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+        `;
+      }
+
+      const pagedEntries = filteredEntries.slice(startIndex, endIndex);
+      
+      tableBody.innerHTML = pagedEntries.map(([uniqueKeyToken, entityNode]) => {
         const isCaseDone = entityNode.trangThai === STATUS_COMPLETED;
         const targetBadgeClass = isCaseDone ? 'completed' : 'pending';
         const partnerPortalInputLink = `${getCleanOriginBaseUrl()}?idCa=${uniqueKeyToken}`;
@@ -9229,7 +9621,18 @@ function formatDateDisplay(val) {
 
     function setCaseFilter(filterValue) {
       activeCaseFilter = filterValue;
-      document.querySelectorAll('[data-case-filter]').forEach(btn => btn.classList.toggle('active', btn.dataset.caseFilter === filterValue));
+      activeCasePage = 1;
+      executeUIRenderCasesTable();
+    }
+    
+    function setCasePage(page) {
+      activeCasePage = page;
+      executeUIRenderCasesTable();
+    }
+    
+    function setCasePerPage(perPage) {
+      activeCasePerPage = perPage;
+      activeCasePage = 1;
       executeUIRenderCasesTable();
     }
 
@@ -11591,6 +11994,21 @@ function formatDateDisplay(val) {
           garageSubmittedAt: firebase.database.ServerValue.TIMESTAMP
         });
         logUserActivity('GARAGE_SUBMIT', `Garage gửi kết quả hoàn tất giám định cho xe BKS: ${localActiveCaseNode.bienSo || 'N/A'}`, { idCa: localActiveCaseNode.idCa, bienSo: localActiveCaseNode.bienSo });
+        
+        if (localActiveCaseNode.nguoiTao?.email) {
+          await sendAppNotification(
+            '',
+            localActiveCaseNode.nguoiTao.email,
+            'Gara hoàn tất hồ sơ',
+            `Gara ${localActiveCaseNode.tenGara || ''} đã hoàn thành ảnh cho xe ${localActiveCaseNode.bienSo || ''}.`,
+            localActiveCaseNode.idCa,
+            0,
+            '',
+            localActiveCaseNode.bienSo,
+            'success'
+          );
+        }
+        
         triggerToast('Garage đã gửi đầy đủ hạng mục và ảnh minh chứng.');
         window.history.replaceState({}, '', `${getCleanOriginBaseUrl()}?idCa=${encodeURIComponent(localActiveCaseNode.idCa)}`);
       } catch (err) {
@@ -15112,7 +15530,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   Quản lý toàn bộ hồ sơ đã bàn giao từ Giám định viên, theo dõi tiến độ xét duyệt & gửi yêu cầu bổ sung.
                 </p>
               </div>
-              
               <!-- Export Action Area -->
               <div style="display: flex; align-items: center; gap: 12px;">
                 ${hasUserPermission('accounting', 'export') ? `
@@ -15249,6 +15666,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   }).join('')}
                 </div>
               </div>
+
             </div>
 
             <!-- Pagination Controls Right -->
@@ -15296,7 +15714,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <table class="p-table" style="width: 100%; min-width: 1020px; border-collapse: collapse; font-size: 12.5px;">
                 <thead>
                   <tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
-                    <th style="padding: 13px 14px; text-align: center; width: 110px;">STT / Ưu tiên</th>
+                    <th style="padding: 13px 14px; text-align: center; width: 80px;">STT</th>
                     <th style="padding: 13px 14px; text-align: center; width: 180px;">Trạng thái</th>
                     <th style="padding: 13px 14px; text-align: left;">Số HSBT</th>
                     <th style="padding: 13px 14px; text-align: left;">Tên khách hàng / BKS</th>
@@ -15321,10 +15739,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                   return `<tr onclick="openAccountingClaimDetailModal('${item.transfer.transferId}', ${item.claimIndex})" style="cursor: pointer; ${isPriority ? 'background: rgba(245,158,11,0.035);' : (isClaimBoSung ? 'background: rgba(239,68,68,0.035);' : '')}" title="Nhấp vào dòng để xem chi tiết">
                     <td style="padding: 12px 14px; text-align: center; vertical-align: middle;">
-                      <div style="display: flex; flex-direction: column; align-items: center; gap: 5px;">
-                        <span class="acc-stt-badge">#${startIndex + index + 1}</span>
-                        ${isPriority ? `<span class="acc-priority-badge">${ACC_SVGS.FIRE} ƯU TIÊN</span>` : ''}
-                      </div>
+                      <span class="acc-stt-badge">#${startIndex + index + 1}</span>
                     </td>
                     <td style="padding: 12px 14px; text-align: center; vertical-align: middle;">
                       <span class="acc-status-pill" style="color:${status.text}; background:${status.bg}; border:1px solid ${status.border};">
@@ -15332,7 +15747,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
                       </span>
                     </td>
                     <td style="padding: 12px 14px; vertical-align: middle;">
-                      <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 13px;">${escapeHtmlOutput(item.claim.soHoSoBoiThuong || 'Chưa có')}</strong>
+                      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 13px;">${escapeHtmlOutput(item.claim.soHoSoBoiThuong || 'Chưa có')}</strong>
+                        ${isPriority ? `<span class="acc-priority-badge" style="padding: 2px 7px; font-size: 9.5px; animation: pulseAmber 2.5s infinite;"><span style="transform: scale(0.85); display: inline-flex;">${ACC_SVGS.FIRE}</span>ƯU TIÊN</span>` : ''}
+                      </div>
                     </td>
                     <td style="padding: 12px 14px; vertical-align: middle;">
                       <strong style="color: var(--text-main); font-size: 13.5px; font-weight: 800; display: block;">${escapeHtmlOutput(extractClaimOwnerName(item.claim) || 'N/A')}</strong>
@@ -16106,21 +16524,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
                       <tr onclick="${rowClickHandler}" style="border-bottom: 1px solid var(--border); vertical-align: middle; cursor: pointer; transition: all 0.2s ease; ${suppClaimsCount > 0 ? 'background: linear-gradient(90deg, rgba(244,63,94,0.05) 0%, rgba(244,63,94,0.01) 100%); border-left: 4px solid #f43f5e;' : ''}" title="Nhấp để xem chi tiết phiếu bàn giao">
                         <td style="padding: 14px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${String(globalIdx + 1).padStart(2, '0')}</td>
                         <td style="padding: 14px; text-align: center;">
-                          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                            <span style="display: inline-flex; gap: 5px; align-items: center; padding: 5px 12px; border-radius: 999px; color: ${statusObj.text}; background: ${statusObj.bg}; border: 1px solid ${statusObj.border}; font-size: 10.5px; font-weight: 850; text-transform: uppercase; letter-spacing: 0.02em;">
-                              ${statusObj.svg} ${statusObj.label}
-                            </span>
+                          <span style="display: inline-flex; gap: 5px; align-items: center; padding: 5px 12px; border-radius: 999px; color: ${statusObj.text}; background: ${statusObj.bg}; border: 1px solid ${statusObj.border}; font-size: 10.5px; font-weight: 850; text-transform: uppercase; letter-spacing: 0.02em;">
+                            ${statusObj.svg} ${statusObj.label}
+                          </span>
+                        </td>
+                        <td style="padding: 14px;">
+                          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 3px;">
+                            <strong style="font-family: 'JetBrains Mono'; color: var(--text-main); font-size: 13.5px;">${escapeHtmlOutput(t.transferId)}</strong>
                             ${hasPriority ? `
-                              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 8px; background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(245,158,11,0.15) 100%); border: 1px solid rgba(239,68,68,0.35); color: #ef4444; font-size: 10px; font-weight: 850; letter-spacing: 0.02em; animation: pulseAmber 2.5s infinite;">
-                                <span style="display: inline-flex; align-items: center; transform: scale(0.85); color: #ef4444;">${ACC_SVGS.FIRE}</span>
-                                <span>ƯU TIÊN</span>
+                              <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 6px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; font-size: 9.5px; font-weight: 850; letter-spacing: 0.02em; animation: pulseAmber 2.5s infinite;">
+                                <span style="display: inline-flex; align-items: center; transform: scale(0.85);">${ACC_SVGS.FIRE}</span>
+                                ƯU TIÊN
                               </span>
                             ` : ''}
                           </div>
-                        </td>
-                        <td style="padding: 14px;">
-                          <strong style="font-family: 'JetBrains Mono'; color: var(--text-main); font-size: 13.5px;">${escapeHtmlOutput(t.transferId)}</strong>
-                          <span style="display: block; color: var(--text-soft); font-size: 11px; margin-top: 2px;">Bàn giao: ${formatDateDisplay(t.ngayBanGiao)}</span>
+                          <span style="display: block; color: var(--text-soft); font-size: 11px;">Bàn giao: ${formatDateDisplay(t.ngayBanGiao)}</span>
                         </td>
                         <td style="padding: 14px; text-align: center; white-space: nowrap;">
                           <div style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;">
@@ -16957,7 +17375,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
 
       XLSX.utils.book_append_sheet(wb, ws, "HoSoDaNhan");
-      const filename = `HoSoKeToan_Export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const filename = `HoSoKeToan_Export_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.xlsx`;
       XLSX.writeFile(wb, filename);
       triggerToast('Đã xuất dữ liệu ra Excel!', 'success');
     }
@@ -18508,6 +18926,822 @@ function renderGdvMonthlyReportPage(targetContainer) {
       } catch (err) {
         console.error(err);
         triggerToast('Lỗi khi xoá bộ lọc!', 'error');
+      }
+    }
+    // --- FIELD REIMBURSEMENTS (THANH TOÁN HIỆN TRƯỜNG) MODULE ---
+    let localFieldReimbursementDraft = [];
+
+    function renderFieldReimbursementsPage(containerDOM) {
+      const container = containerDOM || document.getElementById('tabContentContainer');
+      if (!container) return;
+
+      const currentUser = firebase.auth().currentUser;
+      const myUid = currentUser?.uid;
+
+      let allReimb = Object.values(cachedFieldReimbursementsPayload || {});
+      const canReview = hasUserPermission('field_reimb', 'review');
+      if (!canReview) {
+        allReimb = allReimb.filter(r => r.gdvUid === myUid);
+      }
+
+      allReimb.sort((a,b) => b.createdAt - a.createdAt);
+
+      const canCreate = hasUserPermission('field_reimb', 'create');
+
+      container.innerHTML = `
+        <!-- ADAPTIVE HERO BANNER HEADER -->
+        <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 22px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+          <!-- Decorative Orbs -->
+          <div style="position: absolute; right: -50px; top: -50px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(216,180,109,0.2) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(24px);"></div>
+          <div style="position: absolute; left: 5%; bottom: -60px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
+            <div style="flex: 1; min-width: 320px;">
+              <div style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); border-radius: 16px; font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                Thanh toán & Chi phí
+              </div>
+              <h1 style="font-size: 28px; font-weight: 900; background: linear-gradient(135deg, var(--text-main) 0%, #9ca3af 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 10px 0; letter-spacing: -0.02em; line-height: 1.2;">
+                Phiếu thanh toán đi hiện trường
+              </h1>
+              <p style="color: var(--text-soft); font-size: 13.5px; line-height: 1.5; margin: 0; max-width: 500px;">
+                Quản lý các đề nghị thanh toán chi phí di chuyển khi giám định hiện trường
+              </p>
+            </div>
+            
+            <div style="display: flex; gap: 12px; align-items: center;">
+              ${canCreate ? `
+                <button class="btn-premium" onclick="openCreateFieldReimbursementModal()" style="padding: 10px 20px; border-radius: 12px; box-shadow: 0 8px 24px rgba(216,180,109,0.25); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 12px 28px rgba(216,180,109,0.35)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 8px 24px rgba(216,180,109,0.25)'">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> TẠO PHIẾU MỚI
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div class="p-card" style="padding: 0; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid var(--border-strong);">
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+              <thead style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
+                <tr>
+                  <th style="padding: 14px 24px; font-weight: 700; color: var(--text-soft);">Mã Phiếu</th>
+                  <th style="padding: 14px 24px; font-weight: 700; color: var(--text-soft);">Ngày tạo</th>
+                  <th style="padding: 14px 24px; font-weight: 700; color: var(--text-soft);">Người tạo</th>
+                  <th style="padding: 14px 24px; text-align: center; font-weight: 700; color: var(--text-soft);">Số lượng vụ</th>
+                  <th style="padding: 14px 24px; text-align: right; font-weight: 700; color: var(--text-soft);">Tổng thanh toán</th>
+                  <th style="padding: 14px 24px; text-align: center; font-weight: 700; color: var(--text-soft);">Trạng thái</th>
+                  <th style="padding: 14px 24px; text-align: center; font-weight: 700; color: var(--text-soft);">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody style="color: var(--text-main);">
+                ${allReimb.length === 0 ? `
+                  <tr><td colspan="7"><div class="empty-state-premium" style="padding: 60px 20px; text-align: center; color: var(--text-soft);"><div class="empty-icon" style="margin-bottom: 16px;">${SVGS.SEARCH}</div><strong>Chưa có phiếu thanh toán nào</strong><p style="font-size: 13px; margin-top: 4px;">Bạn có thể tạo phiếu mới để bắt đầu.</p></div></td></tr>
+                ` : allReimb.map(r => {
+                  let statusHtml = '';
+                    if (r.status === 'pending') statusHtml = '<span style="background: rgba(234,179,8,0.15); color: #eab308; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Chờ duyệt</span>';
+                    else if (r.status === 'approved') statusHtml = '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Đã duyệt</span>';
+                    else if (r.status === 'rejected') statusHtml = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Từ chối</span>';
+
+                    return `
+                      <tr onclick="viewFieldReimbursementDetail('${r.id}')" style="border-bottom: 1px solid var(--border); transition: background 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 18px 24px; font-weight: 750; color: var(--primary);">${escapeHtmlOutput(r.id)}</td>
+                        <td style="padding: 18px 24px; color: var(--text-soft);">${formatDateDisplay(r.createdAt)}</td>
+                        <td style="padding: 18px 24px;"><strong>${escapeHtmlOutput(r.gdvName)}</strong></td>
+                        <td style="padding: 18px 24px; text-align: center;"><strong>${(r.items || []).length}</strong></td>
+                        <td style="padding: 18px 24px; text-align: right; font-weight: 850; color: #10b981;">${r.totalAmount ? r.totalAmount.toLocaleString('vi-VN') : '0'} đ</td>
+                        <td style="padding: 18px 24px; text-align: center;">${statusHtml}</td>
+                        <td style="padding: 18px 24px; text-align: center;">
+                          <div style="display: flex; justify-content: center;">
+                            ${(r.status === 'pending' && (r.gdvUid === myUid || canReview)) ? `
+                              <button style="background: rgba(239,68,68,0.08); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); padding: 8px; border-radius: 8px; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.15)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'" onclick="if(typeof event !== 'undefined') event.stopPropagation(); deleteFieldReimbursement('${r.id}')" title="Xoá phiếu này">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path></svg>
+                              </button>
+                            ` : '-'}
+                          </div>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function lookupCaseInfoByBS(bs) {
+      const dropdown = document.getElementById('reimbBSDropdown');
+      if (!dropdown) return;
+      
+      if (!bs || bs.trim().length < 4) {
+        dropdown.style.display = 'none';
+        return;
+      }
+      
+      const normalizedQuery = removeVietnameseTones(bs.trim().toUpperCase().replace(/[-.\s]/g, ''));
+      const allCases = cachedPendingClaimsPayload || {};
+      let matchedCases = [];
+      
+      for (const key in allCases) {
+        const c = allCases[key];
+        if (c.bienSo) {
+          const normalizedBs = removeVietnameseTones(c.bienSo.toUpperCase().replace(/[-.\s]/g, ''));
+          if (normalizedBs.includes(normalizedQuery) || normalizedQuery.includes(normalizedBs)) {
+            matchedCases.push({...c, _id: key});
+          }
+        }
+      }
+      
+      if (matchedCases.length === 0) {
+        dropdown.style.display = 'none';
+        return;
+      }
+      
+      matchedCases.sort((a, b) => b.createdAt - a.createdAt);
+      
+      let html = '';
+      matchedCases.forEach(c => {
+        const hsbt = c.soHoSoBoiThuong || 'Chưa có số HSBT';
+        const ngay = c.ngayThongBao || 'Chưa có thông tin giờ TN';
+        const rawObj = encodeURIComponent(JSON.stringify({soHsbt: c.soHoSoBoiThuong, ngayThongBao: c.ngayThongBao, bienSo: c.bienSo}));
+        
+        html += `
+          <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;" 
+               onmouseover="this.style.background='var(--bg-soft)'" 
+               onmouseout="this.style.background='transparent'"
+               onclick="selectReimbCaseFromDropdown('${rawObj}')">
+            <div style="font-weight: 700; color: var(--text-main); font-size: 14px; margin-bottom: 4px;">${c.bienSo}</div>
+            <div style="font-size: 12px; color: var(--text-soft); display: flex; gap: 12px; align-items: center;">
+              <span><span style="font-weight: 600;">HSBT:</span> ${hsbt}</span>
+              <span style="display:flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> ${ngay}</span>
+            </div>
+          </div>
+        `;
+      });
+      
+      dropdown.innerHTML = html;
+      dropdown.style.display = 'block';
+    }
+
+    function selectReimbCaseFromDropdown(encodedObj) {
+      try {
+        const data = JSON.parse(decodeURIComponent(encodedObj));
+        const bsInput = document.getElementById('reimbInputBS');
+        const hsbtInput = document.getElementById('reimbInputHSBT');
+        const startInput = document.getElementById('reimbInputStartDate');
+        const dropdown = document.getElementById('reimbBSDropdown');
+        
+        if (data.bienSo) bsInput.value = data.bienSo;
+        if (data.soHsbt) hsbtInput.value = data.soHsbt;
+        
+        if (data.ngayThongBao) {
+           const parts = data.ngayThongBao.split(/[\s/:]+/);
+           if (parts.length >= 5) {
+             const day = parts[0].padStart(2, '0');
+             const month = parts[1].padStart(2, '0');
+             const year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+             const hour = parts[3].padStart(2, '0');
+             const min = parts[4].padStart(2, '0');
+             startInput.value = `${year}-${month}-${day}T${hour}:${min}`;
+           }
+        }
+        
+        if (dropdown) dropdown.style.display = 'none';
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('reimbBSDropdown');
+      const input = document.getElementById('reimbInputBS');
+      if (dropdown && input) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.style.display = 'none';
+        }
+      }
+    });
+
+    function updateQuickReimbPreview() {
+      const km = parseFloat(document.getElementById('reimbInputKm')?.value) || 0;
+      const date = document.getElementById('reimbInputDate')?.value;
+      const isHoliday = document.getElementById('reimbInputHoliday')?.checked;
+      const travelCost = parseFloat(document.getElementById('reimbInputTravelCost')?.value) || 0;
+      const perDiem = parseFloat(document.getElementById('reimbInputPerDiem')?.value) || 0;
+      const hotelCost = parseFloat(document.getElementById('reimbInputHotelCost')?.value) || 0;
+
+      const locationContainer = document.getElementById('reimbInputLocationContainer');
+      const locationInput = document.getElementById('reimbInputLocation');
+      if (locationContainer && locationInput) {
+        if (hotelCost > 0) {
+          locationContainer.style.display = 'block';
+        } else {
+          locationContainer.style.display = 'none';
+          locationInput.value = '';
+        }
+      }
+
+      const calc = calculateFieldCost(km, date, isHoliday);
+      const total = calc.finalCost + travelCost + perDiem + hotelCost;
+
+      const previewLbl = document.getElementById('quickReimbPreviewAmount');
+      if (previewLbl) {
+        previewLbl.textContent = total.toLocaleString('vi-VN') + ' đ';
+      }
+    }
+
+    function autoCalculateTravelCost() {
+      const kmStr = document.getElementById('reimbInputKm')?.value;
+      const vehicle = document.getElementById('reimbInputVehicle')?.value;
+      const specialCase = document.getElementById('reimbInputSpecialCase')?.checked;
+      const costInput = document.getElementById('reimbInputTravelCost');
+      
+      if (!costInput) return;
+
+      const km = parseFloat(kmStr) || 0;
+
+      if (vehicle === 'Ô tô cơ quan') {
+        costInput.value = 0;
+        return;
+      }
+
+      if (km <= 30 && !specialCase) {
+        costInput.value = 0;
+        return;
+      }
+
+      if (vehicle === 'Phương tiện cá nhân') {
+        let rate = 4000;
+        if (km >= 100) rate = 3000;
+        const totalCost = (km * 2) * rate; // paid 2-way
+        costInput.value = totalCost;
+      }
+      
+      updateQuickReimbPreview();
+    }
+
+    function calculateFieldCost(distanceKm, dateStr, isHolidayChecked) {
+      let baseFee = 0;
+      if (distanceKm <= 30) baseFee = 100000;
+      else if (distanceKm <= 100) baseFee = 200000;
+      else baseFee = 400000;
+
+      let isAfterHours = false;
+      let isWeekend = false;
+
+      if (dateStr) {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          const hour = d.getHours();
+          const day = d.getDay();
+          if (hour < 8 || hour >= 18) isAfterHours = true;
+          if (day === 0) isWeekend = true;
+        }
+      }
+
+      let multiplier = 1;
+      let maxCap = Infinity;
+
+      if (isHolidayChecked || isWeekend) {
+        multiplier = 3;
+        maxCap = 1000000;
+      } else if (isAfterHours) {
+        multiplier = 2;
+        maxCap = 500000;
+      }
+
+      let finalCost = baseFee * multiplier;
+      if (finalCost > maxCap) finalCost = maxCap;
+
+      return {
+        baseFee,
+        multiplier,
+        maxCap,
+        finalCost,
+        isAfterHours,
+        isWeekendOrHoliday: isHolidayChecked || isWeekend
+      };
+    }
+
+    function openCreateFieldReimbursementModal() {
+      localFieldReimbursementDraft = [];
+      const m = document.createElement('div');
+      m.id = 'createFieldReimbModal';
+      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); backdrop-filter:blur(8px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
+      m.innerHTML = `
+        <div style="background:var(--surface); border-radius:24px; width:98vw; max-width:1600px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+          
+          <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background: var(--surface); position: relative; overflow: hidden;">
+            <div style="position: absolute; right: -20px; top: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(216,180,109,0.15) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
+            
+            <div style="position: relative; z-index: 2;">
+              <h3 style="margin:0 0 4px 0; font-size:22px; font-weight:900; background: linear-gradient(135deg, var(--text-main) 0%, #9ca3af 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.02em;">Tạo Phiếu Thanh Toán Đi Hiện Trường</h3>
+              <p style="margin:0; font-size:13px; color:var(--text-soft);">Thêm các vụ giám định đã hoàn tất để đề nghị thanh toán chi phí di chuyển.</p>
+            </div>
+            
+            <button onclick="document.getElementById('createFieldReimbModal').remove()" style="background:var(--surface-strong); border:1px solid var(--border); color:var(--text-soft); cursor:pointer; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:12px; transition:all 0.2s; position: relative; z-index: 2;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--surface-strong)'; this.style.color='var(--text-soft)'">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          
+          <div style="padding:32px; flex:1; overflow-y:auto; background: var(--bg-main);">
+            <div style="margin-bottom: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 24px;">
+              <h4 style="margin: 0; color: var(--text-main); font-size: 16px; font-weight: 800; display:flex; align-items:center; gap:8px;">
+                <span style="display:flex; align-items:center; justify-content:center; width:28px; height:28px; background:rgba(216,180,109,0.15); color:var(--primary); border-radius:10px;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </span>
+                Khai báo thông tin vụ giám định
+              </h4>
+
+              <div style="display: flex; flex-direction: column; gap: 24px;">
+                <!-- Row 1: Thông tin cơ bản -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 20px;">
+                  <div style="position: relative;">
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Biển số xe KH <span style="color:#ef4444">*</span></label>
+                    <input type="text" id="reimbInputBS" class="p-input" placeholder="VD: 47A-123.45" style="width:100%; padding: 12px; border-radius: 10px;" oninput="lookupCaseInfoByBS(this.value)" autocomplete="off">
+                    <div id="reimbBSDropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.12); z-index: 1000; max-height: 240px; overflow-y: auto; overflow-x: hidden;"></div>
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Số HSBT</label>
+                    <input type="text" id="reimbInputHSBT" class="p-input" placeholder="VD: HSBT/XCG/..." style="width:100%; padding: 12px; border-radius: 10px;">
+                  </div>
+                  <div id="reimbInputLocationContainer" style="display: none;">
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Địa bàn giám định <span style="color:#ef4444">*</span></label>
+                    <input type="text" id="reimbInputLocation" class="p-input" placeholder="Nhập địa bàn" style="width:100%; padding: 12px; border-radius: 10px;">
+                  </div>
+                </div>
+                
+                <!-- Row 2: Thời gian & Đặc thù -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 20px; align-items: end;">
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ bắt đầu GĐ</label>
+                    <input type="datetime-local" id="reimbInputStartDate" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;">
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ kết thúc GĐ <span style="color:#ef4444">*</span></label>
+                    <input type="datetime-local" id="reimbInputDate" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
+                  </div>
+                  <div style="display: flex; gap: 20px; align-items: center; padding: 12px 16px; background: var(--bg-soft); border-radius: 10px; border: 1px dashed var(--border-strong); height: 46px; box-sizing: border-box;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--text-main); cursor: pointer; margin: 0;">
+                      <input type="checkbox" id="reimbInputHoliday" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);" onchange="updateQuickReimbPreview()">
+                      Ngày Lễ / Cuối tuần
+                    </label>
+                    <div style="width: 1px; height: 16px; background: var(--border-strong);"></div>
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--text-main); cursor: pointer; margin: 0;" title="Áp dụng cho Cao tốc cấm xe máy hoặc Đặc thù (Có phê duyệt)">
+                      <input type="checkbox" id="reimbInputSpecialCase" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);" onchange="autoCalculateTravelCost()">
+                      Đặc thù / Cao tốc
+                    </label>
+                  </div>
+                </div>
+                
+                <!-- Row 3: Di chuyển -->
+                <div style="display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 20px;">
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Phương tiện di chuyển</label>
+                    <select id="reimbInputVehicle" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;" onchange="autoCalculateTravelCost()">
+                      <option value="Phương tiện cá nhân">Phương tiện cá nhân</option>
+                      <option value="Ô tô cơ quan">Ô tô cơ quan</option>
+                      <option value="Xe khách">Xe khách</option>
+                      <option value="Taxi">Taxi</option>
+                      <option value="Tàu hỏa">Tàu hỏa</option>
+                      <option value="Máy bay">Máy bay</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Khoảng cách (km) <span style="color:#ef4444">*</span></label>
+                    <input type="number" id="reimbInputKm" class="p-input" min="0" step="1" placeholder="VD: 35" style="width:100%; padding: 12px; border-radius: 10px;" oninput="autoCalculateTravelCost()">
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Chi phí đi lại (đ)</label>
+                    <input type="number" id="reimbInputTravelCost" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
+                  </div>
+                </div>
+
+                <!-- Row 4: Phụ phí -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Công tác phí (đ)</label>
+                    <input type="number" id="reimbInputPerDiem" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
+                  </div>
+                  <div>
+                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Lưu trú (đ)</label>
+                    <input type="number" id="reimbInputHotelCost" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
+                  </div>
+                </div>
+              </div>
+            
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px dashed var(--border-strong);">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                  <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(16,185,129,0.15); color: #10b981; display: flex; align-items: center; justify-content: center;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                  </div>
+                  <div>
+                    <div style="font-size: 11.5px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Tạm tính vụ này</div>
+                    <div id="quickReimbPreviewAmount" style="font-size: 20px; font-weight: 900; color: #10b981; line-height: 1;">0 đ</div>
+                  </div>
+                </div>
+                
+                <button type="button" class="btn-premium" style="width: auto; min-width: 150px; flex-shrink: 0; padding: 0 24px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #d8b46d, #b98c3e); box-shadow: 0 6px 16px rgba(216,180,109,0.3); color: #fff; border: none; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; cursor: pointer;" onclick="addReimbursementItemFromForm()">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  Thêm vụ này
+                </button>
+              </div>
+            </div>
+
+            <h4 style="margin: 0 0 16px 0; color: var(--text-main); font-size: 15px; font-weight: 800; display:flex; align-items:center; gap:8px;">
+               <span style="display:flex; align-items:center; justify-content:center; width:24px; height:24px; background:rgba(16,185,129,0.15); color:#10b981; border-radius:8px;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </span>
+              Danh sách chi tiết trong phiếu
+            </h4>
+            <div id="reimbDraftItemsContainer"></div>
+          </div>
+          
+          <div style="padding:20px 32px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface-strong);">
+            <div style="display:flex; flex-direction:column;">
+              <span style="font-size:11.5px; color:var(--text-soft); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px;">Tổng cộng</span>
+              <span id="reimbDraftTotalAmount" style="color: #10b981; font-size: 20px; font-weight: 900; line-height:1;">0 đ</span>
+            </div>
+            <div style="display:flex; gap:12px;">
+              <button class="btn-premium btn-secondary" style="height: 44px; padding: 0 24px; border-radius:12px; font-weight:700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('createFieldReimbModal').remove()">Đóng</button>
+              <button class="btn-premium" style="height: 44px; padding: 0 24px; border-radius:12px; font-weight:800; font-size: 14px; box-shadow: 0 6px 16px rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;" onclick="submitFieldReimbursementBatch()" id="btnSubmitReimb">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                Tạo phiếu
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(m);
+      renderReimbursementDraftItems();
+    }
+
+    function addReimbursementItemFromForm() {
+      const bs = document.getElementById('reimbInputBS').value.trim();
+      const hsbt = document.getElementById('reimbInputHSBT').value.trim();
+      const km = parseFloat(document.getElementById('reimbInputKm').value);
+      
+      const startDate = document.getElementById('reimbInputStartDate').value;
+      const date = document.getElementById('reimbInputDate').value;
+      const isHoliday = document.getElementById('reimbInputHoliday').checked;
+      
+      const vehicle = document.getElementById('reimbInputVehicle').value;
+      const travelCost = parseFloat(document.getElementById('reimbInputTravelCost').value) || 0;
+      const location = document.getElementById('reimbInputLocation').value.trim();
+      const isSpecialCase = document.getElementById('reimbInputSpecialCase').checked;
+      
+      const perDiem = parseFloat(document.getElementById('reimbInputPerDiem').value) || 0;
+      const hotelCost = parseFloat(document.getElementById('reimbInputHotelCost').value) || 0;
+
+      if (!bs) return triggerToast('Vui lòng nhập Biển số xe', 'error');
+      if (!date) return triggerToast('Vui lòng chọn thời gian kết thúc', 'error');
+      if (isNaN(km) || km < 0) return triggerToast('Vui lòng nhập số km hợp lệ', 'error');
+      if (hotelCost > 0 && !location) return triggerToast('Vui lòng nhập Địa bàn giám định (bắt buộc khi có lưu trú)', 'error');
+
+      const calc = calculateFieldCost(km, date, isHoliday);
+
+      localFieldReimbursementDraft.push({
+        idCa: Date.now().toString(),
+        bienSo: bs,
+        soHSBT: hsbt,
+        startDatetime: startDate,
+        datetime: date,
+        distanceKm: km,
+        isHolidayChecked: isHoliday,
+        isSpecialCase: isSpecialCase,
+        vehicle: vehicle,
+        travelCost: travelCost,
+        location: location,
+        perDiem: perDiem,
+        hotelCost: hotelCost,
+        calcResult: calc
+      });
+
+      document.getElementById('reimbInputBS').value = '';
+      document.getElementById('reimbInputHSBT').value = '';
+      document.getElementById('reimbInputKm').value = '';
+      document.getElementById('reimbInputStartDate').value = '';
+      document.getElementById('reimbInputDate').value = '';
+      document.getElementById('reimbInputHoliday').checked = false;
+      document.getElementById('reimbInputSpecialCase').checked = false;
+      document.getElementById('reimbInputVehicle').selectedIndex = 0;
+      document.getElementById('reimbInputTravelCost').value = '';
+      document.getElementById('reimbInputLocation').value = '';
+      document.getElementById('reimbInputPerDiem').value = '';
+      document.getElementById('reimbInputHotelCost').value = '';
+      
+      updateQuickReimbPreview();
+
+      renderReimbursementDraftItems();
+    }
+
+    function removeReimbursementItem(index) {
+      localFieldReimbursementDraft.splice(index, 1);
+      renderReimbursementDraftItems();
+    }
+
+    function renderReimbursementDraftItems() {
+      const container = document.getElementById('reimbDraftItemsContainer');
+      const totalLbl = document.getElementById('reimbDraftTotalAmount');
+      if (!container || !totalLbl) return;
+
+      if (localFieldReimbursementDraft.length === 0) {
+        container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-soft); font-style: italic; border: 1px dashed var(--border-strong); border-radius: 12px;">Chưa thêm vụ nào.</div>';
+        totalLbl.textContent = '0 đ';
+        return;
+      }
+
+      let total = 0;
+      let html = `
+        <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; white-space: nowrap;">
+            <thead style="background: var(--surface-strong); border-bottom: 1px solid var(--border-strong);">
+              <tr>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">STT</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">Bắt đầu</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">Kết thúc</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">Biển số xe KH</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">Số HSBT</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: center;">Khoảng cách</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Thù lao GĐ</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">Phương tiện</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Chi phí đi lại</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Công tác phí</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Lưu trú</th>
+                <th style="padding: 10px; border-right: 1px solid var(--border);">Địa bàn</th>
+                <th style="padding: 10px; text-align: right;">Thành tiền</th>
+                <th style="padding: 10px; text-align: center;">Xóa</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      html += localFieldReimbursementDraft.map((item, idx) => {
+        let subtotal = (item.calcResult.finalCost || 0) + (item.travelCost || 0) + (item.perDiem || 0) + (item.hotelCost || 0);
+        total += subtotal;
+        
+        let noteStr = [];
+        if (item.calcResult.isWeekendOrHoliday) noteStr.push('Lễ/Cuối tuần');
+        else if (item.calcResult.isAfterHours) noteStr.push('Ngoài giờ');
+        if (item.isSpecialCase) noteStr.push('Đặc thù/Cao tốc');
+        
+        return `
+          <tr style="border-bottom: 1px solid var(--border);">
+            <td style="padding: 8px 10px; text-align: center; border-right: 1px solid var(--border);">${idx + 1}</td>
+            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${item.startDatetime ? formatDateDisplay(item.startDatetime).replace('—', '<br>') : '-'}</td>
+            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${formatDateDisplay(item.datetime).replace('—', '<br>')}
+              ${noteStr.length ? `<br><span style="color:#f59e0b; font-size:10px; font-weight:700;">${noteStr.join(',')}</span>` : ''}
+            </td>
+            <td style="padding: 8px 10px; font-weight: 700; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.bienSo)}</td>
+            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.soHSBT || '')}</td>
+            <td style="padding: 8px 10px; text-align: center; border-right: 1px solid var(--border);">${item.distanceKm} km</td>
+            <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.calcResult.finalCost.toLocaleString('vi-VN')} đ</td>
+            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.vehicle || '')}</td>
+            <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.travelCost ? item.travelCost.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+            <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.perDiem ? item.perDiem.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+            <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.hotelCost ? item.hotelCost.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.location || '')}</td>
+            <td style="padding: 8px 10px; text-align: right; color: #10b981; font-weight: 800;">${subtotal.toLocaleString('vi-VN')} đ</td>
+            <td style="padding: 8px 10px; text-align: center;">
+              <button onclick="removeReimbursementItem(${idx})" style="background: rgba(239,68,68,0.1); color: #ef4444; border: none; padding: 6px; border-radius: 8px; cursor: pointer;" title="Xóa vụ này">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      
+      html += `
+            </tbody>
+          </table>
+        </div>
+      `;
+      container.innerHTML = html;
+      totalLbl.textContent = total.toLocaleString('vi-VN') + ' đ';
+    }
+
+    async function submitFieldReimbursementBatch() {
+      if (localFieldReimbursementDraft.length === 0) return triggerToast('Vui lòng thêm ít nhất một vụ giám định.', 'warning');
+      const currentUser = firebase.auth().currentUser;
+      if (!currentUser) return;
+
+      const btn = document.getElementById('btnSubmitReimb');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<span style="display:inline-block; animation:spin 1s linear infinite;">↻</span> Đang gửi...'; }
+
+      const totalAmount = localFieldReimbursementDraft.reduce((acc, curr) => {
+        return acc + (curr.calcResult.finalCost || 0) + (curr.travelCost || 0) + (curr.perDiem || 0) + (curr.hotelCost || 0);
+      }, 0);
+      
+      const batchId = 'HT_' + Date.now().toString(36).toUpperCase();
+
+      const payload = {
+        id: batchId,
+        gdvUid: currentUser.uid,
+        gdvName: activeUserProfile?.displayName || currentUser.email,
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        status: 'pending',
+        totalAmount: totalAmount,
+        items: localFieldReimbursementDraft
+      };
+
+      try {
+        await dbNodeInstance.ref(`field_reimbursements/${batchId}`).set(payload);
+        triggerToast('Tạo phiếu thanh toán hiện trường thành công!', 'success');
+        document.getElementById('createFieldReimbModal').remove();
+        logUserActivity('CREATE_FIELD_REIMB', `Tạo phiếu thanh toán hiện trường ${batchId} (Tổng: ${totalAmount.toLocaleString('vi-VN')}đ)`);
+      } catch (err) {
+        console.error(err);
+        triggerToast('Lỗi khi lưu phiếu thanh toán.', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg> Tạo phiếu'; }
+      }
+    }
+
+    function deleteFieldReimbursement(batchId) {
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(11, 15, 25, 0.82); backdrop-filter: blur(16px); z-index: 999999; display: grid; place-items: center; padding: 16px; opacity: 0; transition: opacity 0.2s ease;';
+      
+      const modal = document.createElement('div');
+      modal.style.cssText = 'background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px; width: 100%; max-width: 360px; box-shadow: 0 24px 48px rgba(0,0,0,0.4); text-align: center; transform: scale(0.95); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);';
+      
+      modal.innerHTML = `
+        <div style="width: 56px; height: 56px; background: rgba(239, 68, 68, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px;">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        </div>
+        <h3 style="margin: 0 0 10px; font-size: 18px; color: var(--text-main); font-weight: 800;">Xoá phiếu thanh toán?</h3>
+        <p style="margin: 0 0 24px; font-size: 14px; color: var(--text-soft); line-height: 1.5;">Bạn có chắc chắn muốn xoá phiếu đề nghị này không?<br>Thao tác này không thể hoàn tác.</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <button id="btnCancelDelete" style="padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-main); font-size: 14px; font-weight: 750; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='var(--surface-soft)'">Huỷ</button>
+          <button id="btnConfirmDelete" style="padding: 12px; border-radius: 12px; border: none; background: #ef4444; color: #fff; font-size: 14px; font-weight: 750; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(239,68,68,0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(239,68,68,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(239,68,68,0.3)'">Xoá phiếu</button>
+        </div>
+      `;
+      
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+      
+      requestAnimationFrame(() => {
+        overlay.style.opacity = '1';
+        modal.style.transform = 'scale(1)';
+      });
+      
+      const closeModal = () => {
+        overlay.style.opacity = '0';
+        modal.style.transform = 'scale(0.95)';
+        setTimeout(() => overlay.remove(), 200);
+      };
+      
+      document.getElementById('btnCancelDelete').onclick = closeModal;
+      
+      document.getElementById('btnConfirmDelete').onclick = () => {
+        const btn = document.getElementById('btnConfirmDelete');
+        btn.textContent = 'Đang xoá...';
+        btn.disabled = true;
+        btn.style.opacity = '0.7';
+        btn.style.cursor = 'not-allowed';
+        
+        dbNodeInstance.ref('field_reimbursements/' + batchId).remove()
+          .then(() => {
+            triggerToast('Đã xoá phiếu thanh toán.', 'success');
+            logUserActivity('DELETE_FIELD_REIMB', `Xoá phiếu thanh toán ${batchId}`);
+            closeModal();
+          })
+          .catch(err => {
+            console.error(err);
+            triggerToast('Lỗi khi xoá phiếu.', 'error');
+            closeModal();
+          });
+      };
+    }
+
+    function viewFieldReimbursementDetail(batchId) {
+      const payload = cachedFieldReimbursementsPayload[batchId];
+      if (!payload) return;
+
+      const canReview = hasUserPermission('field_reimb', 'review');
+      
+      const m = document.createElement('div');
+      m.id = 'viewFieldReimbModal';
+      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); backdrop-filter:blur(8px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
+      
+      let statusHtml = '';
+      if (payload.status === 'pending') statusHtml = '<span style="background: rgba(234,179,8,0.15); color: #eab308; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#eab308; display:inline-block;"></span>Chờ duyệt</span>';
+      else if (payload.status === 'approved') statusHtml = '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#10b981; display:inline-block;"></span>Đã duyệt</span>';
+      else if (payload.status === 'rejected') statusHtml = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#ef4444; display:inline-block;"></span>Từ chối</span>';
+
+      m.innerHTML = `
+        <div style="background:var(--surface); border-radius:24px; width:95vw; max-width:1400px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+          <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface); position:relative; overflow:hidden;">
+            <div style="position: absolute; right: -20px; top: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
+            
+            <div style="position:relative; z-index:2; display:flex; justify-content:space-between; width:100%; align-items:flex-start;">
+              <div>
+                <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:var(--surface-strong); border:1px solid var(--border); border-radius:12px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px;">MÃ PHIẾU: <strong style="color:var(--text-main); font-family:'JetBrains Mono'; font-size:12px;">${escapeHtmlOutput(payload.id)}</strong></div>
+                <h3 style="margin:0 0 12px 0; font-size:24px; font-weight:900; color:var(--text-main); letter-spacing:-0.02em;">Chi tiết đề nghị thanh toán</h3>
+                <div style="display: flex; gap: 20px; font-size: 13px; color: var(--text-soft);">
+                  <span style="display:flex; align-items:center; gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 1 0-16 0"></path></svg> <strong style="color: var(--primary);">${escapeHtmlOutput(payload.gdvName)}</strong></span>
+                  <span style="display:flex; align-items:center; gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> <strong>${formatDateDisplay(payload.createdAt)}</strong></span>
+                </div>
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:16px;">
+                <button onclick="document.getElementById('viewFieldReimbModal').remove()" style="background:var(--surface-strong); border:1px solid var(--border); color:var(--text-soft); cursor:pointer; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:12px; transition:all 0.2s;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--surface-strong)'; this.style.color='var(--text-soft)'">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                ${statusHtml}
+              </div>
+            </div>
+          </div>
+          
+          <div style="padding:32px; flex:1; overflow-y:auto; background: var(--bg-main);">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <h4 style="margin: 0 0 8px 0; color: var(--text-main); font-size: 15px; font-weight: 800; display:flex; align-items:center; gap:8px;">Danh sách vụ giám định (${(payload.items || []).length})</h4>
+              <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; white-space: nowrap;">
+                  <thead style="background: var(--surface-strong); border-bottom: 1px solid var(--border-strong);">
+                    <tr>
+                      <th style="padding: 10px; border-right: 1px solid var(--border);">STT</th>
+                      <th style="padding: 10px; border-right: 1px solid var(--border);">Bắt đầu</th>
+                      <th style="padding: 10px; border-right: 1px solid var(--border);">Kết thúc</th>
+                      <th style="padding: 10px; border-right: 1px solid var(--border);">Biển số xe KH</th>
+                      <th style="padding: 10px; border-right: 1px solid var(--border);">Số HSBT</th>
+                      <th style="padding: 10px; border-right: 1px solid var(--border); text-align: center;">Khoảng cách</th>
+                      <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Thù lao GĐ</th>
+                      <th style="padding: 10px; border-right: 1px solid var(--border);">Phương tiện</th>
+                      <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Chi phí đi lại</th>
+                      <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Công tác phí</th>
+                      <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Lưu trú</th>
+                      <th style="padding: 10px; border-right: 1px solid var(--border);">Địa bàn</th>
+                      <th style="padding: 10px; text-align: right;">Thành tiền</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${(payload.items || []).map((item, index) => {
+                      let noteStr = [];
+                      if (item.calcResult.isWeekendOrHoliday) noteStr.push('Lễ/Cuối tuần');
+                      else if (item.calcResult.isAfterHours) noteStr.push('Ngoài giờ');
+
+                      let subtotal = (item.calcResult.finalCost || 0) + (item.travelCost || 0) + (item.perDiem || 0) + (item.hotelCost || 0);
+
+                      return `
+                        <tr style="border-bottom: 1px solid var(--border);">
+                          <td style="padding: 8px 10px; text-align: center; border-right: 1px solid var(--border);">${index + 1}</td>
+                          <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${item.startDatetime ? formatDateDisplay(item.startDatetime).replace('—', '<br>') : '-'}</td>
+                          <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${formatDateDisplay(item.datetime).replace('—', '<br>')}
+                            ${noteStr.length ? `<br><span style="color:#f59e0b; font-size:10px; font-weight:700;">${noteStr.join(',')}</span>` : ''}
+                          </td>
+                          <td style="padding: 8px 10px; font-weight: 700; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.bienSo)}</td>
+                          <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.soHSBT || '')}</td>
+                          <td style="padding: 8px 10px; text-align: center; border-right: 1px solid var(--border);">${item.distanceKm} km</td>
+                          <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.calcResult.finalCost.toLocaleString('vi-VN')} đ</td>
+                          <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.vehicle || '')}</td>
+                          <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.travelCost ? item.travelCost.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+                          <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.perDiem ? item.perDiem.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+                          <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.hotelCost ? item.hotelCost.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+                          <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.location || '')}</td>
+                          <td style="padding: 8px 10px; text-align: right; color: #10b981; font-weight: 800;">${subtotal.toLocaleString('vi-VN')} đ</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <div style="padding:24px 32px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface-strong);">
+            <div style="display:flex; flex-direction:column;">
+              <span style="font-size:12px; color:var(--text-soft); font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Tổng tiền thanh toán</span>
+              <span style="color: #10b981; font-size: 28px; font-weight:900; line-height:1.2;">${payload.totalAmount ? payload.totalAmount.toLocaleString('vi-VN') : '0'} đ</span>
+            </div>
+            <div style="display:flex; gap:12px;">
+              ${canReview && payload.status === 'pending' ? `
+                <button class="btn-premium" style="background: #ef4444; color: #fff; box-shadow: 0 8px 20px rgba(239,68,68,0.25); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'rejected')">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  TỪ CHỐI
+                </button>
+                <button class="btn-premium" style="background: #10b981; color: #fff; box-shadow: 0 8px 20px rgba(16,185,129,0.25); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'approved')">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  PHÊ DUYỆT
+                </button>
+              ` : `
+                <button class="btn-premium btn-secondary" style="padding:12px 24px; border-radius:12px; font-weight:700;" onclick="document.getElementById('viewFieldReimbModal').remove()">Đóng chi tiết</button>
+              `}
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(m);
+    }
+
+    async function actionFieldReimbursement(batchId, action) {
+      if (!confirm(`Bạn chắc chắn muốn ${action === 'approved' ? 'phê duyệt' : 'từ chối'} phiếu này?`)) return;
+      try {
+        await dbNodeInstance.ref(`field_reimbursements/${batchId}/status`).set(action);
+        triggerToast('Đã cập nhật trạng thái!', 'success');
+        document.getElementById('viewFieldReimbModal').remove();
+        logUserActivity('FIELD_REIMB_ACTION', `${action === 'approved' ? 'Phê duyệt' : 'Từ chối'} phiếu thanh toán hiện trường ${batchId}`);
+      } catch (err) {
+        console.error(err);
+        triggerToast('Lỗi khi cập nhật.', 'error');
       }
     }
 </script>
