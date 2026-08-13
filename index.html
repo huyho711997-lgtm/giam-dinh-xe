@@ -7454,7 +7454,7 @@ function formatDateDisplay(val) {
       const paginationContainer = document.getElementById('pendingClaimsPaginationContainer');
 
       if (totalFilteredCount === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="empty-state-text">Không tìm thấy hồ sơ tồn đọng nào phù hợp.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state-text">Không tìm thấy hồ sơ tồn đọng nào phù hợp.</td></tr>`;
         if (paginationContainer) paginationContainer.innerHTML = '';
         return;
       }
@@ -7508,6 +7508,9 @@ function formatDateDisplay(val) {
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); flex-shrink: 0; margin-top: 2px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
                 <span>${escapeHtmlOutput(item.diaDiemVTT || item.tinhTonThat || '—')}</span>
               </div>
+            </td>
+            <td style="width: 130px; text-align: right; padding-right: 15px; vertical-align: middle;">
+              <strong style="color: #10b981; font-size: 13.5px;">${item.ttbtTongSoTienBoiThuong ? formatCurrencyInputNumber(item.ttbtTongSoTienBoiThuong) + ' đ' : '-'}</strong>
             </td>
             <td style="width: 145px;">
               <span style="font-size: 12.5px; font-weight: 750; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(item.gdvTiepNhan || 'Chưa phân công')}">${escapeHtmlOutput(item.gdvTiepNhan || 'Chưa phân công')}</span>
@@ -8278,12 +8281,13 @@ function formatDateDisplay(val) {
                       <th style="width: 220px;">Biển số xe</th>
                       <th style="width: 190px;">Hãng xe & Đơn vị cấp</th>
                       <th style="width: 260px; min-width: 200px;">Nội dung tổn thất & Địa điểm</th>
+                      <th style="width: 130px; text-align: right; padding-right: 15px;">Số tiền BT</th>
                       <th style="width: 145px;">Giám định viên</th>
                       <th style="width: 70px; text-align: center;">Thao tác</th>
                     </tr>
                   </thead>
                   <tbody id="tblPendingClaimsBodyContainer">
-                    <tr><td colspan="7" class="empty-state-text">Đang đồng bộ danh sách hồ sơ tồn...</td></tr>
+                    <tr><td colspan="8" class="empty-state-text">Đang đồng bộ danh sách hồ sơ tồn...</td></tr>
                   </tbody>
                 </table>
               </div>
