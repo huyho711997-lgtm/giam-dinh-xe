@@ -14215,7 +14215,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #3b82f6;">PHÁT SINH</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #10b981;">ĐÃ DUYỆT HSBT</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #f59e0b;">CHƯA DUYỆT PASC</th>
-                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #8b5cf6;">TỒN HÓA ĐƠN</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #ec4899;">CHUYỂN ĐNTT</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #06b6d4;">LƯỢNG XE CARPLA</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #6366f1;">HỒ SƠ TNDS TỔN LŨY KẾ</th>
@@ -14235,7 +14234,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #3b82f6; ">${r.phatSinh}</td>
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #10b981; ">${r.daDuyetHsb}</td>
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #f59e0b; ">${chuaDuyetVal}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: var(--text-muted); ">${r.tonHoaDon || ''}</td>
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #ec4899; ">${r.chuyenDntt || 0}</td>
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #06b6d4; ">${r.carplaCount || 0}</td>
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #6366f1; ">${r.tndsTonLuyKe}</td>
@@ -14248,12 +14246,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </tbody>
               <tfoot>
                 <tr style="background: rgba(59,130,246,0.08); border: 2px solid var(--border-strong); font-weight: 850;">
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #3b82f6;">TỔNG</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #3b82f6;"></td>
                   <td style="padding: 13px 14px; border: 1px solid var(--border); text-align: left; color: #3b82f6;">Tổng Cộng</td>
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #3b82f6;  font-size: 13.5px;">${sumPhatSinh}</td>
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #10b981;  font-size: 13.5px;">${sumDaDuyet}</td>
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #f59e0b;  font-size: 13.5px;">${sumChuaDuyet}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #8b5cf6;  font-size: 13.5px;">${sumTonHoaDon}</td>
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #ec4899;  font-size: 13.5px;">${sumChuyenDntt}</td>
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #06b6d4;  font-size: 13.5px;">${sumCarpla}</td>
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #6366f1;  font-size: 13.5px;">${sumTndsTon}</td>
@@ -14681,7 +14678,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           return 'BÁO CÁO TUẦN / THÁNG';
         })(), '', '', '', '', '', '', ''],
         ['', '', '', period.label, '', '', '', '', '', '', '', ''],
-        ['STT', 'GDV', 'PHÁT SINH', 'ĐÃ DUYỆT HSBT', 'CHƯA DUYỆT PASC', 'TỒN HÓA ĐƠN', 'CHUYỂN ĐNTT', 'LƯỢNG XE CARPLA', 'HỒ SƠ TNDS TỒN LŨY KẾ', 'HS TỒN > 30 NGÀY', 'SỐ TIỀN BÌNH QUÂN DƯỚI 10TR', `DOANH SỐ CARPLA LŨY KẾ THÁNG ${currentMonth}`]
+        ['STT', 'GDV', 'PHÁT SINH', 'ĐÃ DUYỆT HSBT', 'CHƯA DUYỆT PASC', 'CHUYỂN ĐNTT', 'LƯỢNG XE CARPLA', 'HỒ SƠ TNDS TỒN LŨY KẾ', 'HS TỒN > 30 NGÀY', 'SỐ TIỀN BÌNH QUÂN DƯỚI 10TR', `DOANH SỐ CARPLA LŨY KẾ THÁNG ${currentMonth}`]
       ];
 
       let sumPhatSinh = 0, sumDaDuyet = 0, sumChuaDuyet = 0, sumTonHoaDon = 0, sumChuyenDntt = 0, sumCarpla = 0, sumTndsTon = 0;
@@ -14710,7 +14707,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
           r.phatSinh,
           r.daDuyetHsb,
           chuaDuyetVal,
-          r.tonHoaDon || '',
           r.chuyenDntt || 0,
           r.carplaCount || 0,
           r.tndsTonLuyKe,
@@ -14723,12 +14719,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const overallAvgUnder10M = totalCountUnder10M > 0 ? Math.round(totalSumAmtUnder10M / totalCountUnder10M) : 0;
 
       aoa.push([
-        'TỔNG',
+        '',
         'Tổng Cộng',
         sumPhatSinh,
         sumDaDuyet,
         sumChuaDuyet,
-        sumTonHoaDon,
         sumChuyenDntt,
         sumCarpla,
         sumTndsTon,
