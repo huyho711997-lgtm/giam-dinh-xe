@@ -12897,20 +12897,17 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       for (let i = 0; i < claimsList.length; i++) {
         const c = claimsList[i];
-        const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayThanhToan;
-        const dateStr = isDuyetHsbtApproved(c) ? (duyetDateStr || c.ngayMoHs || c.ngayTonThat || c.ngayVTT) : (c.ngayMoHs || c.ngayTonThat || c.ngayVTT);
         let yr = null;
         let mo = null;
-
-        if (dateStr && dateStr !== '—') {
-          const dp = parseDateParts(dateStr);
-          if (dp && dp.year && dp.month) {
-            yr = dp.year;
-            mo = dp.month;
-          }
-        }
-        if (!yr) {
-          const d = new Date(c.createdAt || Date.now());
+        let t = Date.now();
+        
+        if (c.createdAt) {
+          t = new Date(c.createdAt).getTime();
+          const d = new Date(t);
+          yr = d.getFullYear();
+          mo = d.getMonth() + 1;
+        } else {
+          const d = new Date(t);
           yr = d.getFullYear();
           mo = d.getMonth() + 1;
         }
@@ -12922,7 +12919,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
         parsedClaims.push({
           raw: c,
           year: yr,
-          month: mo
+          month: mo,
+          timestamp: t
         });
       }
 
@@ -12938,7 +12936,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const c = item.raw;
 
         if (activeGdvReportView === 'weekly_zone') {
-          const claimTime = getClaimTimestamp(c);
+          const claimTime = item.timestamp;
           if (claimTime < startTime || claimTime > endTime) return false;
 
           if (activeGdvReportBranch !== 'all') {
