@@ -12320,6 +12320,7 @@ function formatDateDisplay(val) {
         const originalConfirmText = confirmButton.textContent;
         const originalCancelText = cancelButton.textContent;
         confirmButton.textContent = confirmText;
+
         cancelButton.textContent = cancelText;
 
         overlay.style.zIndex = '999999';
@@ -12625,6 +12626,8 @@ function formatDateDisplay(val) {
     let activeGdvReportWeek = "current";
     let activeGdvReportMonth = String(new Date().getMonth() + 1);
     let activeGdvReportYear = String(new Date().getFullYear());
+    let activeCarBrandReportMonths = ['all'];
+    let activeCarBrandReportYears = [String(new Date().getFullYear())];
     let activeGdvReportBranch = 'all';
     let activeGdvReportGara = 'all';
     let activeGdvReportDaysRange = 'all';
@@ -12660,7 +12663,9 @@ function formatDateDisplay(val) {
           endDate: activeGdvReportEndDate,
           week: activeGdvReportWeek,
           month: activeGdvReportMonth,
-          year: activeGdvReportYear
+          year: activeGdvReportYear,
+          carBrandMonths: [...activeCarBrandReportMonths],
+          carBrandYears: [...activeCarBrandReportYears]
         };
       }
       
@@ -12676,6 +12681,8 @@ function formatDateDisplay(val) {
         activeGdvReportWeek = state.week;
         activeGdvReportMonth = state.month;
         activeGdvReportYear = state.year;
+        activeCarBrandReportMonths = state.carBrandMonths ? [...state.carBrandMonths] : ['all'];
+        activeCarBrandReportYears = state.carBrandYears ? [...state.carBrandYears] : [String(new Date().getFullYear())];
       } else {
         activeSelectedGdvNames = ['Hồ Quang Huy', 'Huỳnh Văn Phúc', 'Nguyễn Quang Huy_DL'];
         activeSelectedDakLakStatuses = ['da_duyet_pasc', 'cho_duyet_hsbt'];
@@ -12684,6 +12691,8 @@ function formatDateDisplay(val) {
         activeGdvReportWeek = "current";
         activeGdvReportMonth = String(new Date().getMonth() + 1);
         activeGdvReportYear = String(new Date().getFullYear());
+        activeCarBrandReportMonths = ['all'];
+        activeCarBrandReportYears = [String(new Date().getFullYear())];
       }
       
       renderGdvReportPage();
@@ -12701,6 +12710,34 @@ function formatDateDisplay(val) {
       } else {
         activeOpenDropdownId = null;
       }
+    }
+
+    function toggleCarBrandMonth(val, evt) {
+      if (evt) evt.stopPropagation();
+      if (val === 'all') {
+        activeCarBrandReportMonths = ['all'];
+      } else {
+        activeCarBrandReportMonths = activeCarBrandReportMonths.filter(x => x !== 'all');
+        const idx = activeCarBrandReportMonths.indexOf(String(val));
+        if (idx > -1) activeCarBrandReportMonths.splice(idx, 1);
+        else activeCarBrandReportMonths.push(String(val));
+        if (activeCarBrandReportMonths.length === 0) activeCarBrandReportMonths = ['all'];
+      }
+      renderGdvReportPage();
+    }
+
+    function toggleCarBrandYear(val, evt) {
+      if (evt) evt.stopPropagation();
+      if (val === 'all') {
+        activeCarBrandReportYears = ['all'];
+      } else {
+        activeCarBrandReportYears = activeCarBrandReportYears.filter(x => x !== 'all');
+        const idx = activeCarBrandReportYears.indexOf(String(val));
+        if (idx > -1) activeCarBrandReportYears.splice(idx, 1);
+        else activeCarBrandReportYears.push(String(val));
+        if (activeCarBrandReportYears.length === 0) activeCarBrandReportYears = ['all'];
+      }
+      renderGdvReportPage();
     }
 
     function selectGdvReportMonth(month) {
@@ -13359,6 +13396,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               <span>BC Tồn chưa HĐ</span>
             </button>
+            <button type="button" onclick="switchGdvReportView('car_brand_loss')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'car_brand_loss' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+              <span>Tổn thất theo hãng xe</span>
+            </button>
             
           </div>
           
@@ -13565,6 +13606,64 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     <span>Áp dụng</span>
                   </button>
                 </div>
+              ` : activeGdvReportView === 'car_brand_loss' ? `
+                <!-- Car Brand Multi-Select Month Dropdown -->
+                <div class="custom-select-wrapper" style="position: relative;">
+                  <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportCarBrandMonthMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 140px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      <span>Tháng (${activeCarBrandReportMonths.length})</span>
+                    </span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </button>
+
+                  <div id="ddReportCarBrandMonthMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddReportCarBrandMonthMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); left: 0; min-width: 180px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
+                    <div class="custom-select-item ${activeCarBrandReportMonths.includes('all') ? 'active' : ''}" onclick="toggleCarBrandMonth('all', event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeCarBrandReportMonths.includes('all') ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                      <span>Tất cả các tháng</span>
+                      ${activeCarBrandReportMonths.includes('all') ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                    </div>
+                    ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => {
+                      const isSel = activeCarBrandReportMonths.includes(String(m));
+                      return \`
+                      <div class="custom-select-item \${isSel ? 'active' : ''}" onclick="toggleCarBrandMonth('\${m}', event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; \${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                        <span>Tháng \${m}</span>
+                        <div style="width: 16px; height: 16px; border-radius: 4px; border: 2px solid \${isSel ? 'var(--primary)' : 'var(--border-strong)'}; background: \${isSel ? 'var(--primary)' : 'transparent'}; display: flex; align-items: center; justify-content: center;">
+                          \${isSel ? '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#111" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                        </div>
+                      </div>
+                    \`;
+                    }).join('')}
+                  </div>
+                </div>
+
+                <!-- Car Brand Multi-Select Year Dropdown -->
+                <div class="custom-select-wrapper" style="position: relative;">
+                  <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportCarBrandYearMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 120px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      <span>Năm (${activeCarBrandReportYears.length})</span>
+                    </span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </button>
+
+                  <div id="ddReportCarBrandYearMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddReportCarBrandYearMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); left: 0; min-width: 140px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
+                    <div class="custom-select-item ${activeCarBrandReportYears.includes('all') ? 'active' : ''}" onclick="toggleCarBrandYear('all', event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeCarBrandReportYears.includes('all') ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                      <span>Tất cả các năm</span>
+                      ${activeCarBrandReportYears.includes('all') ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                    </div>
+                    ${yearList.map(y => {
+                      const isSel = activeCarBrandReportYears.includes(String(y));
+                      return \`
+                      <div class="custom-select-item \${isSel ? 'active' : ''}" onclick="toggleCarBrandYear('\${y}', event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; \${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                        <span>Năm \${y}</span>
+                        <div style="width: 16px; height: 16px; border-radius: 4px; border: 2px solid \${isSel ? 'var(--primary)' : 'var(--border-strong)'}; background: \${isSel ? 'var(--primary)' : 'transparent'}; display: flex; align-items: center; justify-content: center;">
+                          \${isSel ? '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#111" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                        </div>
+                      </div>
+                    \`;
+                    }).join('')}
+                  </div>
+                </div>
               ` : `
                 <!-- Month Selection Dropdown -->
                 <div class="custom-select-wrapper" style="position: relative;">
@@ -13653,7 +13752,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           ` : ''}
 
           <!-- CONDITIONAL RENDERING BASED ON activeGdvReportView -->
-          ${activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'daklak_reserve' ? renderDakLakReserveReportTableHtml() : activeGdvReportView === 'ton_chua_hoa_don' ? renderTonChuaHoaDonReportTableHtml() : activeGdvReportView === 'garage' ? `
+          ${activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'car_brand_loss' ? renderCarBrandLossReportTableHtml() : activeGdvReportView === 'daklak_reserve' ? renderDakLakReserveReportTableHtml() : activeGdvReportView === 'ton_chua_hoa_don' ? renderTonChuaHoaDonReportTableHtml() : activeGdvReportView === 'garage' ? `
             
             <!-- EXECUTIVE GARAGE REPORT DASHBOARD -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
@@ -18040,6 +18139,189 @@ function renderGdvMonthlyReportPage(targetContainer) {
     }
 
     /* RENDER DAK LAK RESERVE REPORT TABLE HTML */
+    function getCarBrandLossData() {
+      const allClaims = Object.values(cachedArchivedClaimsPayload || {}).concat(Object.values(cachedPendingClaimsPayload || {}));
+      
+      const brandMap = {};
+      
+      allClaims.forEach(c => {
+        const st = String(c.trangThai || '').toLowerCase().trim();
+        const isApproved = st === 'da_duyet_hsbt' || st.includes('đã duyệt hsbt') || st.includes('da_duyet_pasc') || st.includes('da_duyet') || st.includes('da duyệt');
+        if (!isApproved) return;
+
+        let yr = null;
+        let mo = null;
+        const dateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || c.ngayMoHs;
+        if (dateStr && dateStr !== '-') {
+          const dp = parseDateParts(dateStr);
+          if (dp) {
+            yr = dp.year;
+            mo = dp.month;
+          }
+        }
+
+        if (activeCarBrandReportYears.length > 0 && !activeCarBrandReportYears.includes('all')) {
+          if (yr === null || !activeCarBrandReportYears.includes(String(yr))) return;
+        }
+        
+        if (activeCarBrandReportMonths.length > 0 && !activeCarBrandReportMonths.includes('all')) {
+          if (mo === null || !activeCarBrandReportMonths.includes(String(mo))) return;
+        }
+
+        const rawHangXe = (c.hangXe || 'Chưa rõ').trim();
+        const hangXe = rawHangXe === '-' ? 'Chưa rõ' : rawHangXe;
+        
+        const moneyRaw = c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || 0;
+        const amtClean = parseInt(String(moneyRaw).replace(/[^0-9]/g, ''), 10) || 0;
+
+        if (!brandMap[hangXe]) {
+          brandMap[hangXe] = { count: 0, totalAmount: 0 };
+        }
+        brandMap[hangXe].count++;
+        brandMap[hangXe].totalAmount += amtClean;
+      });
+
+      const list = Object.keys(brandMap).map(k => ({
+        brand: k,
+        count: brandMap[k].count,
+        totalAmount: brandMap[k].totalAmount
+      }));
+
+      list.sort((a, b) => b.totalAmount - a.totalAmount);
+      return list;
+    }
+
+    function renderCarBrandLossReportTableHtml() {
+      const list = getCarBrandLossData();
+      let grandTotalCount = 0;
+      let grandTotalAmount = 0;
+
+      const rowsHtml = list.map((item, idx) => {
+        grandTotalCount += item.count;
+        grandTotalAmount += item.totalAmount;
+        return `
+          <tr style="border-bottom: 1px solid var(--border); ${idx % 2 === 0 ? 'background: var(--surface);' : 'background: var(--bg-soft);'}">
+            <td style="padding: 12px 14px; text-align: center; font-weight: 850; color: var(--text-soft);">${idx + 1}</td>
+            <td style="padding: 12px 14px; font-weight: 850; color: var(--primary);">${escapeHtmlOutput(item.brand)}</td>
+            <td style="padding: 12px 14px; text-align: right; font-weight: 800; color: var(--text-main);">${item.count}</td>
+            <td style="padding: 12px 14px; text-align: right; font-weight: 850; color: #ef4444;">${formatCurrencyInputNumber(item.totalAmount)} đ</td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <div style="background: var(--surface); border-radius: 18px; border: 1px solid var(--border-strong); padding: 24px; margin-top: 24px; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
+            <div>
+              <h2 style="font-size: 18px; font-weight: 850; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                TỔN THẤT THEO HÃNG XE
+              </h2>
+              <div style="color: var(--text-soft); font-size: 13.5px; margin-top: 6px;">
+                Thống kê số lượng hồ sơ và số tiền PASC đã duyệt theo từng hãng xe
+              </div>
+            </div>
+            ${hasUserPermission('report', 'export') ? `
+              <button type="button" onclick="exportCarBrandLossReportExcel()" style="padding: 9px 18px; border-radius: 12px; background: #10b981; color: white; border: none; font-size: 13px; font-weight: 850; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(16,185,129,0.3); transition: all 0.2s ease;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Tải báo cáo (.xlsx)</span>
+              </button>
+            ` : ''}
+          </div>
+
+          <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border-strong);">
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <thead>
+                <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong);">
+                  <th style="padding: 14px; text-align: center; color: var(--text-soft); font-weight: 850; width: 60px;">STT</th>
+                  <th style="padding: 14px; text-align: left; color: var(--text-main); font-weight: 850;">HÃNG XE</th>
+                  <th style="padding: 14px; text-align: right; color: var(--text-main); font-weight: 850; width: 200px;">SỐ LƯỢNG HỒ SƠ</th>
+                  <th style="padding: 14px; text-align: right; color: var(--text-main); font-weight: 850; width: 250px;">TỔNG TIỀN ĐÃ DUYỆT (VNĐ)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${list.length > 0 ? rowsHtml : `
+                  <tr>
+                    <td colspan="4" style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 14px; font-weight: 750;">
+                      Không có dữ liệu thống kê trong khoảng thời gian này
+                    </td>
+                  </tr>
+                `}
+              </tbody>
+              ${list.length > 0 ? `
+                <tfoot>
+                  <tr style="background: rgba(239, 68, 68, 0.08); border-top: 2px solid var(--border-strong);">
+                    <td colspan="2" style="padding: 16px 14px; text-align: right; font-weight: 850; color: #ef4444; font-size: 14px;">TỔNG CỘNG:</td>
+                    <td style="padding: 16px 14px; text-align: right; font-weight: 850; color: #ef4444; font-size: 14px;">${grandTotalCount}</td>
+                    <td style="padding: 16px 14px; text-align: right; font-weight: 850; color: #ef4444; font-size: 14px;">${formatCurrencyInputNumber(grandTotalAmount)} đ</td>
+                  </tr>
+                </tfoot>
+              ` : ''}
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function exportCarBrandLossReportExcel() {
+      if (!hasUserPermission('report', 'export')) {
+        triggerToast('Bạn không có quyền xuất dữ liệu báo cáo.', 'warning');
+        return;
+      }
+      try {
+        const list = getCarBrandLossData();
+        const aoa = [
+          ['BÁO CÁO TỔN THẤT THEO HÃNG XE', '', '', ''],
+          ['STT', 'HÃNG XE', 'SỐ LƯỢNG HỒ SƠ', 'TỔNG TIỀN ĐÃ DUYỆT (VNĐ)']
+        ];
+        
+        let grandTotalCount = 0;
+        let grandTotalAmount = 0;
+
+        list.forEach((item, idx) => {
+          grandTotalCount += item.count;
+          grandTotalAmount += item.totalAmount;
+          aoa.push([
+            idx + 1,
+            item.brand,
+            item.count,
+            item.totalAmount
+          ]);
+        });
+
+        aoa.push([
+          '',
+          'TỔNG CỘNG',
+          grandTotalCount,
+          grandTotalAmount
+        ]);
+
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        
+        if (!ws['!merges']) ws['!merges'] = [];
+        ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } });
+
+        ws['!cols'] = [
+          { wch: 6 },
+          { wch: 30 },
+          { wch: 20 },
+          { wch: 25 }
+        ];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Tổn thất Hãng Xe");
+        
+        const mStr = activeCarBrandReportMonths.includes('all') ? 'All' : activeCarBrandReportMonths.join('_');
+        const yStr = activeCarBrandReportYears.includes('all') ? 'All' : activeCarBrandReportYears.join('_');
+        XLSX.writeFile(wb, \`Bao_Cao_Ton_That_Theo_Hang_Xe_T\${mStr}_N\${yStr}.xlsx\`);
+        
+        triggerToast('Đã xuất file Excel thành công!', 'success');
+      } catch (err) {
+        console.error(err);
+        triggerToast('Lỗi xuất file Excel: ' + err.message, 'error');
+      }
+    }
+
     function renderDakLakReserveReportTableHtml() {
       const claimsList = Object.values(cachedPendingClaimsPayload || {});
       const filtered = claimsList.filter(c => {
