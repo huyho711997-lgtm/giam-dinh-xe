@@ -290,7 +290,7 @@
       border: 1px solid rgba(245,220,156,.4); 
       border-radius: 10px; 
       background: var(--primary-gradient); 
-      font-family: 'JetBrains Mono'; 
+       
       font-size: 12px; 
       font-weight: 800; 
     }
@@ -420,7 +420,7 @@
     .stat-box:hover { transform: translateY(-3px); border-color: var(--border-strong); background: var(--surface-strong); }
     .stat-box::after { content: ''; position: absolute; left: 0; bottom: 0; width: 38%; height: 2px; background: linear-gradient(90deg, var(--primary), transparent); }
     .stat-lbl { color: var(--text-muted); font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
-    .stat-val { margin-top: 5px; font-family: 'JetBrains Mono', monospace; font-size: clamp(24px,3.5vw,32px); font-weight: 700; line-height: 1; letter-spacing: -.06em; color: var(--text-main); }
+    .stat-val { margin-top: 5px;  font-size: clamp(24px,3.5vw,32px); font-weight: 700; line-height: 1; letter-spacing: -.06em; color: var(--text-main); }
     .stat-note { margin-top: 6px; color: var(--text-muted); font-size: 11px; }
     .stat-icon-wrap { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); }
     @media (max-width: 720px) { .premium-stats { grid-template-columns: 1fr; } .stat-box { min-height: 96px; } }
@@ -528,7 +528,7 @@
     .p-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 24px; padding-bottom: 19px; border-bottom: 1px solid var(--border); }
     .p-card-head h2 { font-size: 18px; font-weight: 800; letter-spacing: -.035em; color: var(--text-main); }
     .p-card-head p { margin-top: 5px; color: var(--text-muted); font-size: 12px; }
-    .section-number { width: 34px; height: 34px; display: grid; place-items: center; flex: 0 0 auto; color: var(--primary); border: 1px solid rgba(216,180,109,.22); border-radius: 11px; background: rgba(216,180,109,.05); font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 700; }
+    .section-number { width: 34px; height: 34px; display: grid; place-items: center; flex: 0 0 auto; color: var(--primary); border: 1px solid rgba(216,180,109,.22); border-radius: 11px; background: rgba(216,180,109,.05);  font-size: 11px; font-weight: 700; }
     @media (max-width: 600px) { .create-panel, .cases-panel { padding: 20px; border-radius: 21px; } }
 
     .form-group { margin-bottom: 19px; }
@@ -570,10 +570,10 @@
     .preview-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
     .preview-thumb:hover img { transform: scale(1.06); }
     .request-helper { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; color: var(--text-muted); font-size: 10px; }
-    .request-helper strong { color: var(--primary); font-family: 'JetBrains Mono'; font-size: 10px; }
+    .request-helper strong { color: var(--primary);  font-size: 10px; }
     .requested-items-preview { display: grid; gap: 7px; margin-top: 11px; }
     .requested-item-chip { display: grid; grid-template-columns: 25px minmax(0,1fr); gap: 9px; align-items: center; padding: 9px 10px; color: var(--text-soft); border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); font-size: 10px; }
-    .requested-item-chip span { width: 25px; height: 25px; display: grid; place-items: center; color: var(--primary); border: 1px solid rgba(216,180,109,.18); border-radius: 8px; background: rgba(216,180,109,.045); font-family: 'JetBrains Mono'; font-size: 8px; font-weight: 700; }
+    .requested-item-chip span { width: 25px; height: 25px; display: grid; place-items: center; color: var(--primary); border: 1px solid rgba(216,180,109,.18); border-radius: 8px; background: rgba(216,180,109,.045);  font-size: 8px; font-weight: 700; }
     .workflow-divider { display: flex; align-items: center; gap: 10px; margin: 23px 0 18px; color: var(--text-muted); font-size: 8px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
     .workflow-divider::before, .workflow-divider::after { content: ''; height: 1px; flex: 1; background: var(--border); }
 
@@ -682,7 +682,7 @@
     .p-share-row:hover { border-color: rgba(216,180,109,.22); background: var(--surface-hover); }
     .p-share-meta { min-width: 0; }
     .p-share-label { color: var(--text-soft); font-size: 11px; font-weight: 800; }
-    .p-share-url-preview { margin-top: 5px; overflow: hidden; color: var(--primary); font-family: 'JetBrains Mono'; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+    .p-share-url-preview { margin-top: 5px; overflow: hidden; color: var(--primary);  font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
     .p-share-actions { display: flex; gap: 7px; }
     .btn-share-action { width: auto; min-height: 38px; padding: 0 13px; font-size: 10px; }
     @media (max-width: 650px) { .p-share-row { display: grid; grid-template-columns: 1fr; } .p-share-actions { display: grid; grid-template-columns: 1fr 1fr; } .btn-share-action { width: 100%; } }
@@ -703,18 +703,18 @@
     .portal-topbar h1 { font-size: clamp(22px,3.4vw,35px); font-weight: 700; letter-spacing: -.045em; color: var(--text-main); }
     .portal-topbar p { margin-top: 6px; color: var(--text-muted); font-size: 12px; }
     .portal-counter { min-width: 118px; padding: 14px 16px; color: var(--text-muted); border: 1px solid var(--border); border-radius: 15px; background: var(--surface-soft); text-align: right; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-    .portal-counter strong { display: block; margin-top: 3px; color: var(--primary); font-family: 'JetBrains Mono'; font-size: 20px; letter-spacing: -.04em; }
+    .portal-counter strong { display: block; margin-top: 3px; color: var(--primary);  font-size: 20px; letter-spacing: -.04em; }
     .portal-counter-stack { display: flex; gap: 9px; align-items: center; }
     .portal-counter-stack .portal-counter { min-width: 112px; }
     .workspace-section-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 6px 3px 2px; }
     .workspace-section-head h2 { font-size: 15px; font-weight: 800; letter-spacing: -.025em; color: var(--text-main); }
     .workspace-section-head p { margin-top: 3px; color: var(--text-muted); font-size: 10px; }
-    .workspace-section-index { color: var(--primary); font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+    .workspace-section-index { color: var(--primary);  font-size: 10px; font-weight: 700; letter-spacing: .08em; }
     .focus-portal-layout { display: grid; grid-template-columns: 330px minmax(0,1fr); gap: 20px; align-items: start; }
     .sticky-sidebar { position: sticky; top: 105px; padding: 24px; }
     .case-id-chip { margin-bottom: 18px; padding: 13px; border: 1px dashed rgba(216,180,109,.3); border-radius: 13px; background: rgba(216,180,109,.035); }
     .case-id-chip span { display: block; color: var(--text-muted); font-size: 8px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-    .case-id-chip strong { display: block; margin-top: 5px; overflow: hidden; color: var(--primary); font-family: 'JetBrains Mono'; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .case-id-chip strong { display: block; margin-top: 5px; overflow: hidden; color: var(--primary);  font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
     .metadata-list { display: grid; gap: 1px; overflow: hidden; margin-bottom: 18px; border: 1px solid var(--border); border-radius: 15px; background: var(--border); }
     .metadata-row { padding: 13px 14px; background: var(--metadata-bg); }
     .metadata-row span { display: block; color: var(--text-muted); font-size: 8px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
@@ -730,7 +730,7 @@
     .img-pane-indicator { position: absolute; left: 15px; top: 15px; z-index: 2; display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; color: var(--text-main); border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); backdrop-filter: blur(12px); font-size: 9px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
     .img-pane-indicator::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 10px var(--primary); }
     .inputs-entry-pane { display: flex; flex-direction: column; justify-content: space-between; gap: 19px; padding: 28px; background: linear-gradient(145deg, rgba(255,255,255,.018), transparent); }
-    .image-sequence { margin-bottom: 14px; color: var(--primary); font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 700; letter-spacing: .09em; }
+    .image-sequence { margin-bottom: 14px; color: var(--primary);  font-size: 10px; font-weight: 700; letter-spacing: .09em; }
     .inputs-entry-pane textarea { min-height: 180px; padding: 16px; resize: vertical; font-size: 13px; line-height: 1.65; }
     
     .result-content { min-height: 165px; padding: 18px; color: var(--text-soft); border: 1px solid var(--border); border-left: 2px solid var(--primary); border-radius: 13px; background: var(--result-content-bg); font-size: 13px; font-weight: 600; line-height: 1.75; white-space: pre-wrap; }
@@ -752,7 +752,7 @@
       border-color: rgba(16,185,129,0.35);
     }
     .evidence-request-head { padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--bg-soft); }
-    .evidence-request-number { width: 28px; height: 28px; display: inline-grid; place-items: center; color: var(--primary); border: 1px solid rgba(216,180,109,.2); border-radius: 8px; background: rgba(216,180,109,.08); font-family: 'JetBrains Mono'; font-size: 11px; font-weight: 800; }
+    .evidence-request-number { width: 28px; height: 28px; display: inline-grid; place-items: center; color: var(--primary); border: 1px solid rgba(216,180,109,.2); border-radius: 8px; background: rgba(216,180,109,.08);  font-size: 11px; font-weight: 800; }
     .evidence-request-head h3 { margin: 0; color: var(--text-main); font-size: 15.5px; font-weight: 800; line-height: 1.35; }
     .evidence-request-body { padding: 14px 16px; }
     .evidence-dropzone { min-height: 140px; }
@@ -1033,7 +1033,7 @@
     .lightbox-toolbar button:hover { background: rgba(255,255,255,0.12); color: #fff; }
     .lightbox-toolbar button:active { transform: scale(0.9); background: rgba(255,255,255,0.18); }
     .lightbox-toolbar .toolbar-divider { width: 1px; height: 24px; background: rgba(255,255,255,0.15); margin: 0 4px; flex-shrink: 0; }
-    .lightbox-toolbar .zoom-label { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.7); font-family: 'JetBrains Mono', monospace; min-width: 42px; text-align: center; user-select: none; letter-spacing: 0.02em; }
+    .lightbox-toolbar .zoom-label { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.7);  min-width: 42px; text-align: center; user-select: none; letter-spacing: 0.02em; }
     .lightbox-close-btn { position: absolute; top: 20px; right: 20px; z-index: 2; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; border: 1px solid var(--border-strong); border-radius: 50%; background: rgba(255,255,255,.06); transition: transform .3s cubic-bezier(.25, .8, .25, 1), background var(--transition); padding: 0; }
     .lightbox-close-btn:hover { transform: rotate(90deg); background: rgba(255,255,255,.11); }
 
@@ -1153,13 +1153,13 @@
 
     .state-card { max-width: 680px; margin: 10vh auto 0; padding: 38px; text-align: center; }
     .state-icon { width: 54px; height: 54px; display: grid; place-items: center; margin: 0 auto 16px; color: var(--primary); border: 1px solid rgba(216,180,109,.2); border-radius: 18px; background: rgba(216,180,109,.045); }
-    .text-link-area { min-height: 80px; color: var(--primary); background: var(--surface-soft) !important; border-color: rgba(216,180,109,.16); font-family: 'JetBrains Mono'; font-size: 10px; }
+    .text-link-area { min-height: 80px; color: var(--primary); background: var(--surface-soft) !important; border-color: rgba(216,180,109,.16);  font-size: 10px; }
 
     /* New Luxury Theme Utility Overrides for Modal Components */
     .profile-modal-panel { background: var(--surface-strong); border: 1px solid var(--border-strong); border-radius: 24px; padding: 32px; width: min(580px, 100%); }
     .profile-avatar-large { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 18px; background: var(--primary-gradient); color: #171209; font-weight: 800; font-size: 24px; }
     .profile-email-lock { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-radius: 12px; background: var(--surface-soft); border: 1px solid var(--border); color: var(--text-soft); font-size: 13px; }
-    .profile-email-lock span { font-family: 'JetBrains Mono'; }
+    .profile-email-lock span {  }
     .profile-modal-hero { display: flex; align-items: center; gap: 20px; margin-bottom: 24px; }
     .profile-modal-hero h3 { font-size: 20px; font-weight: 800; color: var(--text-main); }
     .profile-modal-hero p { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
@@ -1237,7 +1237,7 @@
       position: absolute;
       top: 16px;
       right: 20px;
-      font-family: 'JetBrains Mono', monospace;
+      
       font-size: 32px;
       font-weight: 900;
       opacity: 0.08;
@@ -1320,7 +1320,7 @@
     
     .cell-stt {
       text-align: center;
-      font-family: 'JetBrains Mono';
+      
       font-size: 11px;
       font-weight: 700;
       color: var(--primary);
@@ -1391,7 +1391,7 @@
     .garage-progress-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .garage-progress-top strong { font-size: 14px; color: var(--text-main); font-weight: 800; }
     .garage-progress-top p { font-size: 12px; color: var(--text-muted); }
-    .garage-progress-percent { font-family: 'JetBrains Mono'; font-size: 16px; font-weight: 700; color: var(--primary); }
+    .garage-progress-percent {  font-size: 16px; font-weight: 700; color: var(--primary); }
     .garage-progress-track { height: 6px; border-radius: 99px; background: var(--surface-soft); overflow: hidden; }
     #garageProgressFill { height: 100%; width: 0; border-radius: inherit; background: var(--primary-gradient); transition: width .4s cubic-bezier(.25, .8, .25, 1); }
 
@@ -1463,7 +1463,7 @@
       white-space: nowrap;
     }
     .mobile-bottom-bar-percentage {
-      font-family: 'JetBrains Mono', monospace;
+      
       font-size: 16px;
       font-weight: 800;
       color: var(--primary);
@@ -2318,7 +2318,7 @@
             </div>
             <div>
               <label style="display: block; font-size: 12px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">Email đăng nhập (*):</label>
-              <input id="newAdminEmail" class="input-premium" type="email" placeholder="example@domain.com" autocomplete="off" style="height: 42px; border-radius: 10px; font-family: 'JetBrains Mono';" />
+              <input id="newAdminEmail" class="input-premium" type="email" placeholder="example@domain.com" autocomplete="off" style="height: 42px; border-radius: 10px; " />
             </div>
             <div>
               <label style="display: block; font-size: 12px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">Mật khẩu khởi tạo (*):</label>
@@ -2512,7 +2512,7 @@
             </div>
             <div>
               <label style="display: block; font-size: 12px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">Email đăng nhập (Cố định):</label>
-              <input id="editAdminEmail" class="input-premium" type="email" disabled style="height: 42px; border-radius: 10px; opacity: 0.75; cursor: not-allowed; font-family: 'JetBrains Mono';" />
+              <input id="editAdminEmail" class="input-premium" type="email" disabled style="height: 42px; border-radius: 10px; opacity: 0.75; cursor: not-allowed; " />
             </div>
             <div>
               <label style="display: block; font-size: 12px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">Vai trò hệ thống (*):</label>
@@ -3082,7 +3082,7 @@
       <div style="padding: 22px 24px;">
         <div style="margin-bottom: 16px;">
           <label style="font-size: 12px; font-weight: 800; color: var(--text-soft); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.04em;">Số hồ sơ bồi thường (Số HSBT)</label>
-          <input id="txtAssignSoHsbtInput" class="input-premium" type="text" placeholder="Ví dụ: HSBT-2026-00891" style="font-weight: 800; font-family: 'JetBrains Mono'; font-size: 14px; color: #10b981; height: 46px; border-radius: 12px; padding-left: 14px;" autocomplete="off" />
+          <input id="txtAssignSoHsbtInput" class="input-premium" type="text" placeholder="Ví dụ: HSBT-2026-00891" style="font-weight: 800;  font-size: 14px; color: #10b981; height: 46px; border-radius: 12px; padding-left: 14px;" autocomplete="off" />
         </div>
         <div style="font-size: 11.5px; color: var(--text-muted); background: var(--bg-soft); padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); line-height: 1.5; display: flex; align-items: center; gap: 8px;">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); flex-shrink: 0;"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
@@ -3828,7 +3828,7 @@
 
         return `
           <tr>
-            <td style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; color: var(--text-soft);">${dateStr}</td>
+            <td style=" font-size: 11.5px; font-weight: 700; color: var(--text-soft);">${dateStr}</td>
             <td>
               <div class="vehicle-cell">
                 <div class="vehicle-avatar" style="width: 32px; height: 32px; font-size: 11px;">${initials}</div>
@@ -4185,7 +4185,7 @@
               <div class="form-group" style="margin-bottom: 16px;">
                 <label style="font-size: 11px; font-weight: 800; color: var(--text-soft);">Gemini API Key (System Global / Key Cá Nhân)</label>
                 <div style="position: relative; display: flex; align-items: center; gap: 8px;">
-                  <input id="txtSystemGeminiApiKey" type="password" class="input-premium" placeholder="Nhập API Key: AIzaSy..." style="font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 0.05em; padding-right: 45px;" />
+                  <input id="txtSystemGeminiApiKey" type="password" class="input-premium" placeholder="Nhập API Key: AIzaSy..." style=" font-size: 13px; letter-spacing: 0.05em; padding-right: 45px;" />
                   <button type="button" onclick="toggleShowGeminiKeyVisibility()" style="position: absolute; right: 12px; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;" title="Hiện/Ẩn Key">
                     ${SVGS.EYE}
                   </button>
@@ -4220,7 +4220,7 @@
               <div class="stat-box" style="padding: 20px; border-radius: 16px; background: var(--surface);">
                 <div class="stat-info">
                   <div class="stat-lbl">TỔNG TỆP MEDIA TRÊN CLOUD</div>
-                  <div class="stat-val" id="lblCloudinaryTotalFiles" style="color: var(--primary); font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 850;">0</div>
+                  <div class="stat-val" id="lblCloudinaryTotalFiles" style="color: var(--primary);  font-size: 30px; font-weight: 850;">0</div>
                   <div class="stat-note">Tệp ảnh hiện trạng & ảnh minh chứng Gara</div>
                 </div>
                 <div class="stat-icon-wrap" style="color:var(--primary); font-size: 22px;">${SVGS.CAMERA}</div>
@@ -4229,7 +4229,7 @@
               <div class="stat-box" style="padding: 20px; border-radius: 16px; background: var(--surface);">
                 <div class="stat-info">
                   <div class="stat-lbl">DUNG LƯỢNG LƯU TRỮ ƯỚC TÍNH</div>
-                  <div class="stat-val" id="lblCloudinaryUsedSize" style="color: #10b981; font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 850;">0.0 MB</div>
+                  <div class="stat-val" id="lblCloudinaryUsedSize" style="color: #10b981;  font-size: 30px; font-weight: 850;">0.0 MB</div>
                   <div class="stat-note">Trung bình ~1.25 MB / ảnh độ phân giải cao</div>
                 </div>
                 <div class="stat-icon-wrap" style="color:#10b981; font-size: 22px;">${SVGS.SAVE}</div>
@@ -4239,8 +4239,8 @@
                 <div class="stat-info" style="width: 100%;">
                   <div class="stat-lbl">HẠN MỨC TÀI KHOẢN (FREE TIER 25GB)</div>
                   <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px;">
-                    <div class="stat-val" id="lblCloudinaryQuotaPercent" style="color: var(--text-main); font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 850;">0%</div>
-                    <span id="lblCloudinaryQuotaFraction" style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text-muted);">0.00 / 25.00 GB</span>
+                    <div class="stat-val" id="lblCloudinaryQuotaPercent" style="color: var(--text-main);  font-size: 24px; font-weight: 850;">0%</div>
+                    <span id="lblCloudinaryQuotaFraction" style="font-size: 11px;  color: var(--text-muted);">0.00 / 25.00 GB</span>
                   </div>
                   <div style="margin-top: 10px; height: 7px; border-radius: 99px; background: var(--bg-soft); overflow: hidden; border: 1px solid var(--border);">
                     <div id="cloudinaryQuotaProgressFill" style="height: 100%; width: 0%; border-radius: inherit; background: linear-gradient(90deg, #10b981 0%, #d8b46d 70%, #ef4444 100%); transition: width 0.5s ease;"></div>
@@ -4262,17 +4262,17 @@
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 16px;">
                 <div class="form-group" style="margin: 0;">
                   <label style="font-size: 11px; font-weight: 800; color: var(--text-soft);">Cloud Name *</label>
-                  <input id="txtCloudinaryCloudName" type="text" class="input-premium" placeholder="Ví dụ: ug4spdjp" style="font-family: 'JetBrains Mono', monospace;" />
+                  <input id="txtCloudinaryCloudName" type="text" class="input-premium" placeholder="Ví dụ: ug4spdjp" style="" />
                 </div>
 
                 <div class="form-group" style="margin: 0;">
                   <label style="font-size: 11px; font-weight: 800; color: var(--text-soft);">Upload Preset (Unsigned) *</label>
-                  <input id="txtCloudinaryUploadPreset" type="text" class="input-premium" placeholder="Ví dụ: giam_dinh_xe_unsigned" style="font-family: 'JetBrains Mono', monospace;" />
+                  <input id="txtCloudinaryUploadPreset" type="text" class="input-premium" placeholder="Ví dụ: giam_dinh_xe_unsigned" style="" />
                 </div>
 
                 <div class="form-group" style="margin: 0;">
                   <label style="font-size: 11px; font-weight: 800; color: var(--text-soft);">Thư mục lưu trữ (Folder)</label>
-                  <input id="txtCloudinaryFolder" type="text" class="input-premium" placeholder="Ví dụ: giam_dinh_xe" style="font-family: 'JetBrains Mono', monospace;" />
+                  <input id="txtCloudinaryFolder" type="text" class="input-premium" placeholder="Ví dụ: giam_dinh_xe" style="" />
                 </div>
               </div>
 
@@ -4467,7 +4467,7 @@
                 <div class="vehicle-avatar" style="width: 46px; height: 46px; border-radius: 50%; background: ${role === 'Admin' ? 'linear-gradient(135deg, #d8b46d, #9b6c22)' : (role === 'Kế toán' || role.toLowerCase().includes('kế toán') || role.toLowerCase().includes('ke toan') || role.toLowerCase().includes('ketoan')) ? 'linear-gradient(135deg, #f59e0b, #d97706)' : role === 'Garage' ? 'linear-gradient(135deg, #48d7a1, #047857)' : 'linear-gradient(135deg, #5ba9ff, #1d4ed8)'}; color: ${role === 'Giám định viên' ? '#ffffff' : '#080b11'}; font-weight: 800; border: 1px solid var(--border-strong); text-shadow: 0 1px 1px rgba(0,0,0,0.15); display: grid; place-items: center; font-size: 13.5px;">${initials}</div>
                 <div>
                   <div class="vehicle-name" style="font-weight: 750; color: var(--text-main); font-size: 14.5px; line-height: 1.25;">${displayName}</div>
-                  <div style="font-size: 12.5px; color: var(--text-soft); margin-top: 3px; font-family: 'JetBrains Mono';">${email}</div>
+                  <div style="font-size: 12.5px; color: var(--text-soft); margin-top: 3px; ">${email}</div>
                   <div style="font-size: 10px; color: var(--text-muted); font-family: monospace; margin-top: 2px; opacity: 0.7;">UID: ${uid}</div>
                 </div>
               </div>
@@ -4888,7 +4888,7 @@
                 <strong style="font-size: 13px; color: ${textColor}; font-weight: 850;">${escapeHtmlOutput(item.title)}</strong>
               </div>
               <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                <span style="font-size: 10.5px; color: var(--text-soft); font-family: 'JetBrains Mono'; font-weight: 750;">${escapeHtmlOutput(item.date)}</span>
+                <span style="font-size: 10.5px; color: var(--text-soft);  font-weight: 750;">${escapeHtmlOutput(item.date)}</span>
                 <button type="button" onclick="dismissNotification(event, '${item.id}')" style="background: transparent; border: none; color: var(--text-soft); padding: 4px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 2px; transition: all 0.2s;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)';" onmouseout="this.style.background='transparent'; this.style.color='var(--text-soft)';" title="Xóa thông báo">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
@@ -4931,7 +4931,7 @@
           <div style="position: relative;" id="navNotificationWrapper">
             <button type="button" class="btn-premium btn-secondary nav-logout-icon" title="Thông báo hệ thống" onclick="toggleNotificationCenterDropdown(event)" style="position: relative; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; cursor: pointer;">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-              <span id="navNotificationBadge" style="display: none; position: absolute; top: -3px; right: -3px; background: #ef4444; color: #ffffff; font-size: 10px; font-weight: 850; padding: 2px 6px; border-radius: 99px; font-family: 'JetBrains Mono'; border: 2px solid var(--surface); box-shadow: 0 2px 6px rgba(239,68,68,0.4);">0</span>
+              <span id="navNotificationBadge" style="display: none; position: absolute; top: -3px; right: -3px; background: #ef4444; color: #ffffff; font-size: 10px; font-weight: 850; padding: 2px 6px; border-radius: 99px;  border: 2px solid var(--surface); box-shadow: 0 2px 6px rgba(239,68,68,0.4);">0</span>
             </button>
 
             <!-- FLOATING NOTIFICATION CENTER DROPDOWN PANEL -->
@@ -6800,13 +6800,13 @@ function formatDateDisplay(val) {
             <tr style="${isMatched ? '' : 'background: rgba(16,185,129,0.02);'}">
               <td style="text-align: center; font-weight: 700;">${idx + 1}</td>
               <td>
-                <strong style="color: var(--primary); font-family: 'JetBrains Mono';">${escapeHtmlOutput(r.rawBsx || r.matchedClaim?.bienSo || '—')}</strong>
-                ${r.rawSoHsbt ? `<div style="font-size: 10.5px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 700;">HSBT: ${escapeHtmlOutput(r.rawSoHsbt)}</div>` : ''}
+                <strong style="color: var(--primary); ">${escapeHtmlOutput(r.rawBsx || r.matchedClaim?.bienSo || '—')}</strong>
+                ${r.rawSoHsbt ? `<div style="font-size: 10.5px; color: #10b981;  font-weight: 700;">HSBT: ${escapeHtmlOutput(r.rawSoHsbt)}</div>` : ''}
               </td>
-              <td><span style="font-family: 'JetBrains Mono'; font-size: 11px;">${escapeHtmlOutput(r.rawVtt || r.matchedClaim?.maVuTonThat || '—')}</span></td>
+              <td><span style=" font-size: 11px;">${escapeHtmlOutput(r.rawVtt || r.matchedClaim?.maVuTonThat || '—')}</span></td>
               <td>${escapeHtmlOutput(r.rawGara || r.matchedClaim?.garaSuaChua || '—')}</td>
               <td>${statusBadge}</td>
-              <td><span style="font-family: 'JetBrains Mono';">${escapeHtmlOutput(r.rawAmount || '—')}</span></td>
+              <td><span style="">${escapeHtmlOutput(r.rawAmount || '—')}</span></td>
               <td style="text-align: center; font-size: 11.5px;">${matchBadge}</td>
             </tr>
           `;
@@ -7253,7 +7253,7 @@ function formatDateDisplay(val) {
       if (lblSelected) {
         const curInfo = statusLabelMap[curStatus] || statusLabelMap['all'];
         const countVal = counts[curStatus] !== undefined ? counts[curStatus] : counts.all;
-        lblSelected.innerHTML = `${curInfo.label} <span style="font-family: 'JetBrains Mono'; opacity: 0.85; margin-left: 4px; font-weight: 800;">(${countVal})</span>`;
+        lblSelected.innerHTML = `${curInfo.label} <span style=" opacity: 0.85; margin-left: 4px; font-weight: 800;">(${countVal})</span>`;
       }
 
       const customMenu = document.getElementById('menuCustomStatusDropdown');
@@ -7267,7 +7267,7 @@ function formatDateDisplay(val) {
                 <span style="width: 7px; height: 7px; border-radius: 50%; background: ${item.color}; box-shadow: 0 0 5px ${item.color}; flex-shrink: 0;"></span>
                 <span>${item.label}</span>
               </div>
-              <span style="font-size: 10.5px; font-family: 'JetBrains Mono'; font-weight: 800; padding: 1px 6px; border-radius: 99px; background: ${isSel ? 'rgba(216,180,109,0.2)' : 'var(--bg-soft)'}; color: ${isSel ? 'var(--primary)' : 'var(--text-muted)'};">${countVal}</span>
+              <span style="font-size: 10.5px;  font-weight: 800; padding: 1px 6px; border-radius: 99px; background: ${isSel ? 'rgba(216,180,109,0.2)' : 'var(--bg-soft)'}; color: ${isSel ? 'var(--primary)' : 'var(--text-muted)'};">${countVal}</span>
             </div>
           `;
         }).join('');
@@ -7388,7 +7388,7 @@ function formatDateDisplay(val) {
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
               </div>
             </div>
-            <strong style="display: block; font-size: 26px; color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(statTotal).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
+            <strong style="display: block; font-size: 26px; color: var(--primary);  margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(statTotal).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
           </div>
           <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(16,185,129,0.3); background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.02) 100%); transition: all 0.25s ease; box-shadow: var(--shadow-sm);">
             <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -7397,7 +7397,7 @@ function formatDateDisplay(val) {
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
               </div>
             </div>
-            <strong style="display: block; font-size: 26px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(statCompleted).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
+            <strong style="display: block; font-size: 26px; color: #10b981;  margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(statCompleted).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
           </div>
           <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(239,68,68,0.3); background: linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.02) 100%); transition: all 0.25s ease; box-shadow: var(--shadow-sm);">
             <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -7406,7 +7406,7 @@ function formatDateDisplay(val) {
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
             </div>
-            <strong style="display: block; font-size: 26px; color: #ef4444; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(statPending).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
+            <strong style="display: block; font-size: 26px; color: #ef4444;  margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(statPending).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
           </div>
           <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(59,130,246,0.3); background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(59,130,246,0.02) 100%); transition: all 0.25s ease; box-shadow: var(--shadow-sm);">
             <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -7415,7 +7415,7 @@ function formatDateDisplay(val) {
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
               </div>
             </div>
-            <strong style="display: block; font-size: 26px; color: #3b82f6; font-family: 'JetBrains Mono'; margin-top: 8px; font-weight: 800; line-height: 1.1;">${statRate}%</strong>
+            <strong style="display: block; font-size: 26px; color: #3b82f6;  margin-top: 8px; font-weight: 800; line-height: 1.1;">${statRate}%</strong>
           </div>
         `;
       }
@@ -7480,10 +7480,10 @@ function formatDateDisplay(val) {
               </span>
             </td>
             <td style="width: 220px;">
-              <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 13.5px; display: block; word-break: break-all;" title="${escapeAttributeData(displayVinInfo ? ('Số khung/máy: ' + displayVinInfo) : displayBsx)}">${escapeHtmlOutput(displayBsx)}</strong>
-              <div style="font-size: 10.5px; color: var(--text-soft); font-family: 'JetBrains Mono'; margin: 1px 0;">Mở HS: <strong style="color: var(--text-main);">${escapeHtmlOutput(item.ngayMoHs || item.ngayTonThat || '—')}</strong></div>
+              <strong style="color: var(--primary);  font-size: 13.5px; display: block; word-break: break-all;" title="${escapeAttributeData(displayVinInfo ? ('Số khung/máy: ' + displayVinInfo) : displayBsx)}">${escapeHtmlOutput(displayBsx)}</strong>
+              <div style="font-size: 10.5px; color: var(--text-soft);  margin: 1px 0;">Mở HS: <strong style="color: var(--text-main);">${escapeHtmlOutput(item.ngayMoHs || item.ngayTonThat || '—')}</strong></div>
               <div style="margin-top: 3px; display: inline-flex; align-items: center; gap: 4px; max-width: 100%; flex-wrap: nowrap;">
-                <button type="button" onclick="event.stopPropagation(); promptAssignSoHoSoBoiThuong('${item.id}', '${escapeAttributeData(item.soHoSoBoiThuong || '')}')" title="Nhấp để gán / sửa Số hồ sơ bồi thường" style="border: none; background: ${item.soHoSoBoiThuong ? 'rgba(16,185,129,0.1)' : 'rgba(216,180,109,0.08)'}; color: ${item.soHoSoBoiThuong ? '#10b981' : 'var(--text-muted)'}; padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 750; font-family: 'JetBrains Mono'; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <button type="button" onclick="event.stopPropagation(); promptAssignSoHoSoBoiThuong('${item.id}', '${escapeAttributeData(item.soHoSoBoiThuong || '')}')" title="Nhấp để gán / sửa Số hồ sơ bồi thường" style="border: none; background: ${item.soHoSoBoiThuong ? 'rgba(16,185,129,0.1)' : 'rgba(216,180,109,0.08)'}; color: ${item.soHoSoBoiThuong ? '#10b981' : 'var(--text-muted)'}; padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 750;  cursor: pointer; display: inline-flex; align-items: center; gap: 4px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink: 0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
                   <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.soHoSoBoiThuong ? escapeHtmlOutput(item.soHoSoBoiThuong) : '+ Gán Số HSBT'}</span>
                 </button>
@@ -7565,7 +7565,7 @@ function formatDateDisplay(val) {
             <!-- Left Info: Counter & Items per page selector -->
             <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
               <span style="font-size: 12.5px; color: var(--text-soft); font-weight: 600;">
-                Hiển thị <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 800;">${displayStart} - ${displayEnd}</strong> trên tổng số <strong style="color: var(--text-main); font-family: 'JetBrains Mono'; font-weight: 800;">${totalFilteredCount}</strong> hồ sơ
+                Hiển thị <strong style="color: var(--primary);  font-weight: 800;">${displayStart} - ${displayEnd}</strong> trên tổng số <strong style="color: var(--text-main);  font-weight: 800;">${totalFilteredCount}</strong> hồ sơ
               </span>
 
               <!-- Custom Luxury Items per page selector -->
@@ -7583,7 +7583,7 @@ function formatDateDisplay(val) {
                       const isSel = perPage === num;
                       return `
                         <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="setPendingClaimsPerPage(${num})" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
-                          <span style="font-size: 11.5px; font-family: 'JetBrains Mono';">${num} / trang</span>
+                          <span style="font-size: 11.5px; ">${num} / trang</span>
                           ${isSel ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
                         </div>
                       `;
@@ -7949,22 +7949,22 @@ function formatDateDisplay(val) {
             <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 24px; text-align: center;">Luồng quy trình nghiệp vụ chuẩn</h3>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; position: relative;">
               <div style="text-align: center; position: relative;">
-                <div style="font-family: 'JetBrains Mono'; font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">01</div>
+                <div style=" font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">01</div>
                 <h5 style="font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text-main);">Khởi tạo hồ sơ</h5>
                 <p style="font-size: 11.5px; color: var(--text-muted);">GĐV nhập biển số, Gara phụ trách và lập bảng phụ tùng.</p>
               </div>
               <div style="text-align: center;">
-                <div style="font-family: 'JetBrains Mono'; font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">02</div>
+                <div style=" font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">02</div>
                 <h5 style="font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text-main);">Garage tải ảnh</h5>
                 <p style="font-size: 11.5px; color: var(--text-muted);">Gara mở link, chụp ảnh hiện trạng và khớp minh chứng cho từng phụ tùng.</p>
               </div>
               <div style="text-align: center;">
-                <div style="font-family: 'JetBrains Mono'; font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">03</div>
+                <div style=" font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">03</div>
                 <h5 style="font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text-main);">Đối chiếu tổn thất</h5>
                 <p style="font-size: 11.5px; color: var(--text-muted);">Hệ thống tự động hiển thị so sánh ảnh và các phương án của hai bên.</p>
               </div>
               <div style="text-align: center;">
-                <div style="font-family: 'JetBrains Mono'; font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">04</div>
+                <div style=" font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">04</div>
                 <h5 style="font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text-main);">Duyệt phương án</h5>
                 <p style="font-size: 11.5px; color: var(--text-muted);">Giám định viên chốt phương án bồi thường và hoàn tất hồ sơ.</p>
               </div>
@@ -8004,7 +8004,7 @@ function formatDateDisplay(val) {
               </div>
               <div style="position: relative; z-index: 2;">
                 <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">Tổng hồ sơ</span>
-                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
+                <div style=" font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
                   <span id="lblTotalCases">0</span> <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); font-family: sans-serif;">hồ sơ</span>
                 </div>
               </div>
@@ -8020,7 +8020,7 @@ function formatDateDisplay(val) {
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                   Đang chờ Garage
                 </span>
-                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #d97706; display: flex; align-items: baseline; gap: 6px;">
+                <div style=" font-size: 28px; font-weight: 900; color: #d97706; display: flex; align-items: baseline; gap: 6px;">
                   <span id="lblPendingCases">0</span> <span style="font-size: 13px; font-weight: 700; color: #f59e0b; font-family: sans-serif;">hồ sơ</span>
                 </div>
               </div>
@@ -8036,7 +8036,7 @@ function formatDateDisplay(val) {
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                   Đã có kết quả
                 </span>
-                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #059669; display: flex; align-items: baseline; gap: 6px;">
+                <div style=" font-size: 28px; font-weight: 900; color: #059669; display: flex; align-items: baseline; gap: 6px;">
                   <span id="lblCompletedCases">0</span> <span style="font-size: 13px; font-weight: 700; color: #10b981; font-family: sans-serif;">hồ sơ</span>
                 </div>
               </div>
@@ -8079,7 +8079,7 @@ function formatDateDisplay(val) {
             
             <!-- Pagination Controls Right -->
             <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-              <span style="font-size: 13px; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--text-soft);">
+              <span style="font-size: 13px;  font-weight: 700; color: var(--text-soft);">
                 <span id="casePaginationRange" style="color: var(--primary); font-weight: 800;">0-0</span> / <span id="casePaginationTotal">0</span>
               </span>
 
@@ -8089,9 +8089,9 @@ function formatDateDisplay(val) {
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 <div id="menuCasePerPageDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); right: 0; min-width: 100px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
-                  <div class="custom-dropdown-item" onclick="setCasePerPage(10); document.getElementById('menuCasePerPageDropdown').style.display='none'" style="padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: 'JetBrains Mono'; font-weight: 800; color: var(--primary);">10 / trang</div>
-                  <div class="custom-dropdown-item" onclick="setCasePerPage(20); document.getElementById('menuCasePerPageDropdown').style.display='none'" style="padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: 'JetBrains Mono'; font-weight: 600; color: var(--text-main);">20 / trang</div>
-                  <div class="custom-dropdown-item" onclick="setCasePerPage(50); document.getElementById('menuCasePerPageDropdown').style.display='none'" style="padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: 'JetBrains Mono'; font-weight: 600; color: var(--text-main);">50 / trang</div>
+                  <div class="custom-dropdown-item" onclick="setCasePerPage(10); document.getElementById('menuCasePerPageDropdown').style.display='none'" style="padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px;  font-weight: 800; color: var(--primary);">10 / trang</div>
+                  <div class="custom-dropdown-item" onclick="setCasePerPage(20); document.getElementById('menuCasePerPageDropdown').style.display='none'" style="padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px;  font-weight: 600; color: var(--text-main);">20 / trang</div>
+                  <div class="custom-dropdown-item" onclick="setCasePerPage(50); document.getElementById('menuCasePerPageDropdown').style.display='none'" style="padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 12px;  font-weight: 600; color: var(--text-main);">50 / trang</div>
                 </div>
               </div>
               
@@ -8660,7 +8660,7 @@ function formatDateDisplay(val) {
       if (filesList.length > 16) {
         const remainderCounterBadge = document.createElement('div');
         remainderCounterBadge.className = 'preview-thumb';
-        remainderCounterBadge.style.cssText = `display:grid;place-items:center;color:var(--primary-2);background:rgba(216,180,109,.05);font:700 12px 'JetBrains Mono';`;
+        remainderCounterBadge.style.cssText = `display:grid;place-items:center;color:var(--primary-2);background:rgba(216,180,109,.05);`;
         remainderCounterBadge.textContent = `+${filesList.length - 16}`;
         gridHolder.appendChild(remainderCounterBadge);
       }
@@ -8779,7 +8779,7 @@ function formatDateDisplay(val) {
                 <div style="flex: 1; min-width: 0;">
                   <div style="display: flex; align-items: center; gap: 6px;">
                     <span style="font-weight: 850; font-size: 12.5px; color: var(--text-main);">${cat.label}</span>
-                    <span style="font-size: 9.5px; font-weight: 850; font-family: 'JetBrains Mono', monospace; padding: 1px 6px; border-radius: 5px; background: ${cat.bg}; border: 1px solid ${cat.border}; color: ${cat.color};">${cat.code}</span>
+                    <span style="font-size: 9.5px; font-weight: 850;  padding: 1px 6px; border-radius: 5px; background: ${cat.bg}; border: 1px solid ${cat.border}; color: ${cat.color};">${cat.code}</span>
                   </div>
                   <span style="font-size: 10px; color: var(--text-muted); display: block; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cat.subtitle}</span>
                 </div>
@@ -9466,7 +9466,7 @@ function formatDateDisplay(val) {
                             <div style="display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1;">
                               <span class="cat-icon-slot" style="display: grid; place-items: center; flex-shrink: 0;">${catDef.svg}</span>
                               <span class="cat-label-slot" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; font-weight: 800;">${catDef.label}</span>
-                              <span class="cat-code-slot" style="font-size: 9px; font-weight: 850; font-family: 'JetBrains Mono', monospace; padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,0.1); flex-shrink: 0;">${catDef.code}</span>
+                              <span class="cat-code-slot" style="font-size: 9px; font-weight: 850;  padding: 1px 5px; border-radius: 4px; background: rgba(0,0,0,0.1); flex-shrink: 0;">${catDef.code}</span>
                             </div>
                             <svg id="excelCatArrow_${index}" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0; transition: transform 0.2s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
                           </button>
@@ -9552,7 +9552,7 @@ function formatDateDisplay(val) {
         
         for (let p = startPageBtn; p <= endPageBtn; p++) {
           const isAct = p === activeCasePage;
-          btnsHTML += `<button type="button" class="pagination-btn" onclick="setCasePage(${p})" style="width: 30px; height: 30px; border-radius: 8px; font-size: 13px; font-weight: 800; font-family: 'JetBrains Mono'; background: ${isAct ? 'var(--primary)' : 'var(--surface)'}; color: ${isAct ? '#fff' : 'var(--text-main)'}; border: 1px solid ${isAct ? 'var(--primary)' : 'var(--border-strong)'}; display: grid; place-items: center; cursor: pointer; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">${p}</button>`;
+          btnsHTML += `<button type="button" class="pagination-btn" onclick="setCasePage(${p})" style="width: 30px; height: 30px; border-radius: 8px; font-size: 13px; font-weight: 800;  background: ${isAct ? 'var(--primary)' : 'var(--surface)'}; color: ${isAct ? '#fff' : 'var(--text-main)'}; border: 1px solid ${isAct ? 'var(--primary)' : 'var(--border-strong)'}; display: grid; place-items: center; cursor: pointer; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">${p}</button>`;
         }
         
         pageControls.innerHTML = `
@@ -9603,7 +9603,7 @@ function formatDateDisplay(val) {
             <td data-label="Khởi tạo"><div class="date-mini">${dateInfo.date}<span>${dateInfo.time}</span></div></td>
             <td data-label="Nội dung">
               <div class="date-mini">
-                <strong style="font-family:'JetBrains Mono';font-size:11px;color:var(--text-soft)">${Number(entityNode.soLuongAnh || 0).toString().padStart(2,'0')} ảnh hiện trạng</strong>
+                <strong style="font-size:11px;color:var(--text-soft)">${Number(entityNode.soLuongAnh || 0).toString().padStart(2,'0')} ảnh hiện trạng</strong>
                 <span style="color: ${isCaseEvidenceComplete ? '#10b981' : 'var(--text-muted)'}; font-weight: ${isCaseEvidenceComplete ? '700' : '500'}">
                   ${completedReq}/${totalReq} hạng mục có ảnh
                 </span>
@@ -9949,7 +9949,7 @@ function formatDateDisplay(val) {
       outputCardBox.innerHTML = `
         <div class="success-heading">
           <div class="success-check">${SVGS.CHECK_CIRCLE}</div>
-          <div><h2>Hồ sơ đã được khởi tạo thành công</h2><p>Mã định danh: <strong style="color:var(--primary);font-family:'JetBrains Mono'">${escapeHtmlOutput(dataPayload.idCa)}</strong></p></div>
+          <div><h2>Hồ sơ đã được khởi tạo thành công</h2><p>Mã định danh: <strong style="color:var(--primary);">${escapeHtmlOutput(dataPayload.idCa)}</strong></p></div>
         </div>
         <div class="p-share-container">
           <div class="p-share-row"><div class="p-share-meta"><div class="p-share-label">Liên kết dành cho Garage nhập hạng mục và tải ảnh</div><div class="p-share-url-preview">${escapeHtmlOutput(shareLinkGara)}</div></div><div class="p-share-actions"><button class="btn-premium btn-share-action" onclick="executeTextCopyToClipboardRawString('${escapeAttributeData(shareLinkGara)}')">${SVGS.COPY} Sao chép</button><button class="btn-premium btn-secondary btn-share-action" onclick="window.open('${escapeAttributeData(shareLinkGara)}','_blank')">${SVGS.EXTERNAL} Mở link</button></div></div>
@@ -10046,7 +10046,7 @@ function formatDateDisplay(val) {
           </div>
           
           <div class="collapsible-summary-tag" onclick="toggleSidebarCollapse()" style="cursor: pointer; margin-top: 8px; padding: 6px 10px; background: var(--bg-soft); border-radius: 8px; font-size: 11px; color: var(--text-soft); display: flex; align-items: center; justify-content: space-between;">
-            <span>BKS: <strong style="color: var(--primary); font-family: 'JetBrains Mono';">${escapeHtmlOutput(node.bienSo || 'N/A')}</strong></span>
+            <span>BKS: <strong style="color: var(--primary); ">${escapeHtmlOutput(node.bienSo || 'N/A')}</strong></span>
             <span>Gara: <strong style="color: var(--text-main);">${escapeHtmlOutput(node.tenGara || 'N/A')}</strong></span>
           </div>
 
@@ -10662,7 +10662,7 @@ function formatDateDisplay(val) {
                     <div class="preview-thumb" style="width: 100%; aspect-ratio: 4/3; margin-bottom: 4px; cursor: zoom-in;" onclick="openLightbox(localActiveImageStack.map(x => x.linkAnh), ${index})">
                       <img src="${escapeAttributeData(item.linkAnh)}" style="width:100%; height:100%; object-fit:cover; border-radius: 8px;" />
                     </div>
-                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; color: var(--text-soft);">Ảnh ${index + 1}</span>
+                    <span style=" font-size: 10px; font-weight: 800; color: var(--text-soft);">Ảnh ${index + 1}</span>
                     ${mapLabel}
                   </div>
                 `;
@@ -10873,7 +10873,7 @@ function formatDateDisplay(val) {
           <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
             <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 8px var(--primary); flex-shrink: 0;"></div>
             <span style="font-size: 11.5px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;">NHÓM HẠNG MỤC GIÁM ĐỊNH</span>
-            <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.25); flex-shrink: 0;">3 NHÓM</span>
+            <span style=" font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px; background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.25); flex-shrink: 0;">3 NHÓM</span>
           </div>
           <div style="display: flex; gap: 6px; flex-shrink: 0;">
             <button type="button" onclick="toggleAllSections(false)" style="font-size: 10.5px; font-weight: 800; color: var(--text-muted); background: var(--bg-soft); border: 1px solid var(--border); padding: 4px 10px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">
@@ -10924,7 +10924,7 @@ function formatDateDisplay(val) {
                 </div>
               </div>
               <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 850; padding: 3px 10px; border-radius: 99px; background: ${completedCount === matchingIndices.length && matchingIndices.length > 0 ? 'rgba(16,185,129,0.12)' : 'var(--bg-soft)'}; border: 1px solid ${completedCount === matchingIndices.length && matchingIndices.length > 0 ? 'rgba(16,185,129,0.3)' : 'var(--border)'}; color: ${completedCount === matchingIndices.length && matchingIndices.length > 0 ? '#10b981' : 'var(--text-soft)'}; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
+                <div style=" font-size: 11px; font-weight: 850; padding: 3px 10px; border-radius: 99px; background: ${completedCount === matchingIndices.length && matchingIndices.length > 0 ? 'rgba(16,185,129,0.12)' : 'var(--bg-soft)'}; border: 1px solid ${completedCount === matchingIndices.length && matchingIndices.length > 0 ? 'rgba(16,185,129,0.3)' : 'var(--border)'}; color: ${completedCount === matchingIndices.length && matchingIndices.length > 0 ? '#10b981' : 'var(--text-soft)'}; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;">
                   <span style="width: 5px; height: 5px; border-radius: 50%; background: ${completedCount === matchingIndices.length && matchingIndices.length > 0 ? '#10b981' : 'var(--primary)'};"></span>
                   <span>${completedCount}/${matchingIndices.length}</span>
                 </div>
@@ -10965,16 +10965,16 @@ function formatDateDisplay(val) {
             <!-- Vehicle & Quick Metrics Bar -->
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border);">
               <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 850; color: var(--primary); padding: 3px 9px; border-radius: 8px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.25); display: inline-flex; align-items: center; gap: 5px;">
+                <div style=" font-size: 12.5px; font-weight: 850; color: var(--primary); padding: 3px 9px; border-radius: 8px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.25); display: inline-flex; align-items: center; gap: 5px;">
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9C2.1 11.2 2 11.6 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><circle cx="17" cy="17" r="2"></circle></svg>
                   <span>${escapeHtmlOutput(nodeData.bienSo || 'N/A')}</span>
                 </div>
                 <span style="font-size: 12px; font-weight: 750; color: var(--text-main);">${escapeHtmlOutput(nodeData.tenGara || 'N/A')}</span>
               </div>
               <div style="display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 700; color: var(--text-muted);">
-                <span>Ghi tên: <strong id="garageHeaderNoteCounter" style="color: var(--primary); font-family: 'JetBrains Mono', monospace; font-weight: 800;">00/00</strong></span>
+                <span>Ghi tên: <strong id="garageHeaderNoteCounter" style="color: var(--primary);  font-weight: 800;">00/00</strong></span>
                 <span style="opacity: 0.5;">•</span>
-                <span>Có ảnh: <strong id="garageHeaderEvidenceCounter" style="color: #10b981; font-family: 'JetBrains Mono', monospace; font-weight: 800;">00/00</strong></span>
+                <span>Có ảnh: <strong id="garageHeaderEvidenceCounter" style="color: #10b981;  font-weight: 800;">00/00</strong></span>
               </div>
             </div>
 
@@ -10983,7 +10983,7 @@ function formatDateDisplay(val) {
               <div style="flex: 1; height: 5px; border-radius: 99px; background: var(--bg-soft); overflow: hidden;">
                 <div id="garageProgressFill" style="height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #d8b46d 0%, #10b981 100%); transition: width 0.4s ease;"></div>
               </div>
-              <span id="garageProgressPercent" class="garage-progress-percent" style="font-size: 12px; font-weight: 850; color: var(--primary); font-family: 'JetBrains Mono', monospace; min-width: 30px; text-align: right;">0%</span>
+              <span id="garageProgressPercent" class="garage-progress-percent" style="font-size: 12px; font-weight: 850; color: var(--primary);  min-width: 30px; text-align: right;">0%</span>
             </div>
           </header>
 
@@ -11787,7 +11787,7 @@ function formatDateDisplay(val) {
                 </div>
               </div>
             ` : ''}
-            <div style="position: absolute; left: 4px; bottom: 4px; background: rgba(8,11,17,0.75); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-family: 'JetBrains Mono'; font-size: 8px; font-weight: 800; padding: 1px 4px; border-radius: 3px;">${imgIdx + 1}</div>
+            <div style="position: absolute; left: 4px; bottom: 4px; background: rgba(8,11,17,0.75); border: 1px solid rgba(255,255,255,0.15); color: #fff;  font-size: 8px; font-weight: 800; padding: 1px 4px; border-radius: 3px;">${imgIdx + 1}</div>
           </div>
         `;
       }).join('');
@@ -12082,7 +12082,7 @@ function formatDateDisplay(val) {
                 <div class="preview-thumb" style="width: 100%; aspect-ratio: 4/3; margin-bottom: 4px; cursor: zoom-in;" onclick="openLightbox(localActiveImageStack.map(x => x.linkAnh), ${index})">
                   <img src="${escapeAttributeData(item.linkAnh)}" style="width:100%; height:100%; object-fit:cover; border-radius: 8px;" />
                 </div>
-                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; color: var(--text-soft);">Ảnh ${index + 1}</span>
+                <span style=" font-size: 10px; font-weight: 800; color: var(--text-soft);">Ảnh ${index + 1}</span>
                 ${mapLabel}
               </div>
             `;
@@ -12206,19 +12206,19 @@ function formatDateDisplay(val) {
                   <!-- Đã bổ sung ảnh -->
                   <div class="portal-counter" style="border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.04); text-align: right; min-width: 122px;">
                     <span style="color: rgba(16, 185, 129, 0.8); font-weight: 800; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;">Đã bổ sung ảnh</span>
-                    <strong style="color: #10b981; display: block; margin-top: 3px; font-family: 'JetBrains Mono'; font-size: 20px; letter-spacing: -.04em;">${String(completed).padStart(2,'0')}</strong>
+                    <strong style="color: #10b981; display: block; margin-top: 3px;  font-size: 20px; letter-spacing: -.04em;">${String(completed).padStart(2,'0')}</strong>
                   </div>
                   
                   <!-- Chưa bổ sung ảnh -->
                   <div class="portal-counter" style="border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.04); text-align: right; min-width: 122px;">
                     <span style="color: rgba(239, 68, 68, 0.8); font-weight: 800; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;">Chưa có ảnh</span>
-                    <strong style="color: #ef4444; display: block; margin-top: 3px; font-family: 'JetBrains Mono'; font-size: 20px; letter-spacing: -.04em;">${String(pending).padStart(2,'0')}</strong>
+                    <strong style="color: #ef4444; display: block; margin-top: 3px;  font-size: 20px; letter-spacing: -.04em;">${String(pending).padStart(2,'0')}</strong>
                   </div>
                   
                   <!-- Tổng hạng mục -->
                   <div class="portal-counter" style="border: 1px solid rgba(216, 180, 109, 0.3); background: rgba(216, 180, 109, 0.04); text-align: right; min-width: 122px;">
                     <span style="color: rgba(216, 180, 109, 0.8); font-weight: 800; font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;">Tổng hạng mục</span>
-                    <strong style="color: #d8b46d; display: block; margin-top: 3px; font-family: 'JetBrains Mono'; font-size: 20px; letter-spacing: -.04em;">${String(total).padStart(2,'0')}</strong>
+                    <strong style="color: #d8b46d; display: block; margin-top: 3px;  font-size: 20px; letter-spacing: -.04em;">${String(total).padStart(2,'0')}</strong>
                   </div>
                 `;
               })()}
@@ -12771,7 +12771,7 @@ function formatDateDisplay(val) {
       const gdvBreakdownHtml = gdvList.map(item => `
         <div style="color: ${item.color}; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
           <span style="display: flex; align-items: center; gap: 5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ${escapeHtmlOutput(item.name)}:</span>
-          <strong style="font-family: 'JetBrains Mono';">${item.data.opened} ca (${formatCurrencyInputNumber(item.data.amount)}đ)</strong>
+          <strong style="">${item.data.opened} ca (${formatCurrencyInputNumber(item.data.amount)}đ)</strong>
         </div>
       `).join('');
 
@@ -12782,11 +12782,11 @@ function formatDateDisplay(val) {
         <div style="border-top: 1px solid rgba(255,255,255,0.15); padding-top: 8px; margin-top: 4px; display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
           <div style="display: flex; justify-content: space-between; gap: 14px;">
             <span style="color: rgba(255,255,255,0.8);">Tiền bồi thường:</span>
-            <strong style="color: #34d399; font-family: 'JetBrains Mono'; font-weight: 850;">${formatCurrencyInputNumber(g.totalApprovedAmount)} đ</strong>
+            <strong style="color: #34d399;  font-weight: 850;">${formatCurrencyInputNumber(g.totalApprovedAmount)} đ</strong>
           </div>
           <div style="display: flex; justify-content: space-between; gap: 14px;">
             <span style="color: rgba(255,255,255,0.8);">Tổng số hồ sơ:</span>
-            <strong style="color: #60a5fa; font-family: 'JetBrains Mono'; font-weight: 850;">${g.totalClaimsCount} ca</strong>
+            <strong style="color: #60a5fa;  font-weight: 850;">${g.totalClaimsCount} ca</strong>
           </div>
           
           <div style="border-top: 1px dashed rgba(255,255,255,0.15); padding-top: 6px; margin-top: 4px; font-size: 11.5px; display: flex; flex-direction: column; gap: 4px;">
@@ -13512,13 +13512,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-soft); border: 1px solid var(--border-strong); padding: 5px 14px; border-radius: 12px; box-shadow: var(--shadow-xs);">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                     <span style="font-size: 12.5px; font-weight: 800; color: var(--text-soft);">Từ ngày:</span>
-                    <input type="date" value="${activeGdvReportStartDate || getGdvReportDefaultDates().startYmd}" onchange="changeGdvReportStartDate(this.value)" style="height: 30px; border: none; background: transparent; color: var(--text-main); font-size: 13px; font-weight: 800; font-family: 'JetBrains Mono'; padding: 0; outline: none; cursor: pointer;" />
+                    <input type="date" value="${activeGdvReportStartDate || getGdvReportDefaultDates().startYmd}" onchange="changeGdvReportStartDate(this.value)" style="height: 30px; border: none; background: transparent; color: var(--text-main); font-size: 13px; font-weight: 800;  padding: 0; outline: none; cursor: pointer;" />
                   </div>
 
                   <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-soft); border: 1px solid var(--border-strong); padding: 5px 14px; border-radius: 12px; box-shadow: var(--shadow-xs);">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                     <span style="font-size: 12.5px; font-weight: 800; color: var(--text-soft);">Đến ngày:</span>
-                    <input type="date" value="${activeGdvReportEndDate || getGdvReportDefaultDates().endYmd}" onchange="changeGdvReportEndDate(this.value)" style="height: 30px; border: none; background: transparent; color: var(--text-main); font-size: 13px; font-weight: 800; font-family: 'JetBrains Mono'; padding: 0; outline: none; cursor: pointer;" />
+                    <input type="date" value="${activeGdvReportEndDate || getGdvReportDefaultDates().endYmd}" onchange="changeGdvReportEndDate(this.value)" style="height: 30px; border: none; background: transparent; color: var(--text-main); font-size: 13px; font-weight: 800;  padding: 0; outline: none; cursor: pointer;" />
                   </div>
 
                   <button type="button" onclick="applyGdvReportFilter()" style="padding: 0 20px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; border: none; font-size: 13px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(59,130,246,0.35); transition: all 0.2s ease;">
@@ -13585,28 +13585,28 @@ function renderGdvMonthlyReportPage(targetContainer) {
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
               <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">HỒ SƠ MỞ TRONG THÁNG</span>
-              <strong style="display: block; font-size: 30px; color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
+              <strong style="display: block; font-size: 30px; color: var(--primary);  margin-top: 10px; font-weight: 850;">
                 ${totalFilteredClaims} <span style="font-size: 14px; color: var(--text-soft);">ca</span>
               </strong>
             </div>
 
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(16,185,129,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
               <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">ĐÃ DUYỆT HSBT</span>
-              <strong style="display: block; font-size: 30px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
+              <strong style="display: block; font-size: 30px; color: #10b981;  margin-top: 10px; font-weight: 850;">
                 ${totalDuyetHsbtCount} <span style="font-size: 14px; color: var(--text-soft);">ca</span>
               </strong>
             </div>
 
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(59,130,246,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
               <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">TỶ LỆ DUYỆT TOÀN TEAM</span>
-              <strong style="display: block; font-size: 30px; color: #3b82f6; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
+              <strong style="display: block; font-size: 30px; color: #3b82f6;  margin-top: 10px; font-weight: 850;">
                 ${overallHsbtRate}%
               </strong>
             </div>
 
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(168,85,247,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
               <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">GĐV ĐẠT KPI LƯƠNG (70 CA)</span>
-              <strong style="display: block; font-size: 30px; color: #a855f7; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
+              <strong style="display: block; font-size: 30px; color: #a855f7;  margin-top: 10px; font-weight: 850;">
                 ${passKpiCount} <span style="font-size: 14px; color: var(--text-soft);">/ ${gdvRows.length} nhân sự</span>
               </strong>
             </div>
@@ -13620,14 +13620,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
               <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
                 <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">TỔNG TIỀN BỒI THƯỜNG GARA</span>
-                <strong style="display: block; font-size: 26px; color: var(--primary); font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
+                <strong style="display: block; font-size: 26px; color: var(--primary);  margin-top: 10px; font-weight: 850;">
                   ${formatCurrencyInputNumber(totalGaragePayout)} <span style="font-size: 14px; color: var(--text-soft);">đ</span>
                 </strong>
               </div>
 
               <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(16,185,129,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
                 <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">TỔNG SỐ GARA PHÁT SINH</span>
-                <strong style="display: block; font-size: 26px; color: #10b981; font-family: 'JetBrains Mono'; margin-top: 10px; font-weight: 850;">
+                <strong style="display: block; font-size: 26px; color: #10b981;  margin-top: 10px; font-weight: 850;">
                   ${activeGarageCount} <span style="font-size: 14px; color: var(--text-soft);">đơn vị</span>
                 </strong>
               </div>
@@ -13637,7 +13637,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <strong style="display: block; font-size: 16px; color: #3b82f6; margin-top: 10px; font-weight: 850; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                   ${topGarageObj ? escapeHtmlOutput(topGarageObj.name) : 'Chưa có'}
                 </strong>
-                <span style="font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono';">
+                <span style="font-size: 12px; color: var(--text-muted); ">
                   ${topGarageObj ? formatCurrencyInputNumber(topGarageObj.totalApprovedAmount) + ' đ' : '0 đ'}
                 </span>
               </div>
@@ -13703,8 +13703,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                     return `
                       <line x1="${gPaddingLeft}" y1="${yPos}" x2="${gChartWidth - gPaddingRight}" y2="${yPos}" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" />
-                      <text x="${gPaddingLeft - 10}" y="${yPos + 3}" font-size="7.5" font-weight="750" fill="#10b981" text-anchor="end" font-family="JetBrains Mono">${moneyLabel}</text>
-                      <text x="${gChartWidth - gPaddingRight + 10}" y="${yPos + 3}" font-size="7.5" font-weight="750" fill="#3b82f6" text-anchor="start" font-family="JetBrains Mono">${claimsVal} ca</text>
+                      <text x="${gPaddingLeft - 10}" y="${yPos + 3}" font-size="7.5" font-weight="750" fill="#10b981" text-anchor="end" >${moneyLabel}</text>
+                      <text x="${gChartWidth - gPaddingRight + 10}" y="${yPos + 3}" font-size="7.5" font-weight="750" fill="#3b82f6" text-anchor="start" >${claimsVal} ca</text>
                     `;
                   }).join('')}
 
@@ -13722,7 +13722,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         <rect x="${p.cx - barW/2}" y="${p.bY}" width="${barW}" height="${p.bHeight}" rx="4" fill="url(#garageBarGrad)" style="transition: all 0.2s ease;" />
                         
                         <!-- Bar Top Money Label -->
-                        <text x="${p.amountX}" y="${p.amountY}" font-size="7.5" font-weight="850" fill="#10b981" text-anchor="${p.amountAnchor}" font-family="JetBrains Mono">
+                        <text x="${p.amountX}" y="${p.amountY}" font-size="7.5" font-weight="850" fill="#10b981" text-anchor="${p.amountAnchor}" >
                           ${p.totalApprovedAmount >= 1e6 ? (p.totalApprovedAmount / 1e6).toFixed(1) + 'M' : formatCurrencyInputNumber(p.totalApprovedAmount)}
                         </text>
 
@@ -13741,7 +13741,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   ${gPoints.map(p => `
                     <g pointer-events="none">
                       <circle cx="${p.cx}" cy="${p.lY}" r="2" fill="var(--surface)" stroke="#3b82f6" stroke-width="1.5" />
-                      <text x="${p.claimsX}" y="${p.claimsY}" font-size="7.5" font-weight="900" fill="#3b82f6" text-anchor="${p.claimsAnchor}" font-family="JetBrains Mono">${p.totalClaimsCount} ca</text>
+                      <text x="${p.claimsX}" y="${p.claimsY}" font-size="7.5" font-weight="900" fill="#3b82f6" text-anchor="${p.claimsAnchor}" >${p.totalClaimsCount} ca</text>
                     </g>
                   `).join('')}
                 </svg>
@@ -13756,7 +13756,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                   <span>Chi tiết Phân bổ Bồi thường & Hồ sơ GĐV theo từng Gara</span>
                 </div>
-                <span style="font-size: 11px; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-soft); padding: 3px 10px; border-radius: 99px; font-family: 'JetBrains Mono'; font-weight: 850;">Top ${garageRows.length} Gara</span>
+                <span style="font-size: 11px; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-soft); padding: 3px 10px; border-radius: 99px;  font-weight: 850;">Top ${garageRows.length} Gara</span>
               </div>
               
               <div class="gara-premium-grid">
@@ -13789,10 +13789,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           </div>
                           <div style="overflow: hidden;">
                             <span style="display: block; font-size: 11.5px; font-weight: 800; color: var(--text-main); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHtmlOutput(item.name)}</span>
-                            <span style="font-size: 10px; color: var(--text-soft); font-family: 'JetBrains Mono'; font-weight: 750;">${amountStr} đ</span>
+                            <span style="font-size: 10px; color: var(--text-soft);  font-weight: 750;">${amountStr} đ</span>
                           </div>
                         </div>
-                        <span style="font-size: 10px; font-weight: 850; color: ${item.color}; font-family: 'JetBrains Mono'; background: ${item.bg}; padding: 2px 7px; border-radius: 6px; border: 1px solid ${item.border}; flex-shrink: 0;">${item.opened} ca</span>
+                        <span style="font-size: 10px; font-weight: 850; color: ${item.color};  background: ${item.bg}; padding: 2px 7px; border-radius: 6px; border: 1px solid ${item.border}; flex-shrink: 0;">${item.opened} ca</span>
                       </div>
                     `;
                   }).join('');
@@ -13815,15 +13815,15 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     <div class="gara-premium-card">
                       <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
                         <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-                          <span style="font-size: 10px; font-weight: 900; background: ${rankBg}; border: 1px solid ${rankBorder}; color: ${rankColor}; width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; flex-shrink: 0; box-shadow: ${rankShadow}; font-family: 'JetBrains Mono';">#${gIdx + 1}</span>
+                          <span style="font-size: 10px; font-weight: 900; background: ${rankBg}; border: 1px solid ${rankBorder}; color: ${rankColor}; width: 24px; height: 24px; border-radius: 6px; display: grid; place-items: center; flex-shrink: 0; box-shadow: ${rankShadow}; ">#${gIdx + 1}</span>
                           <div style="overflow: hidden;">
                             <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850; letter-spacing: -0.01em; display: block; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${escapeHtmlOutput(g.name)}">${escapeHtmlOutput(g.name)}</strong>
-                            ${g.code !== 'N/A' && g.code !== g.name ? `<span style="font-size: 9.5px; color: var(--text-soft); font-family: 'JetBrains Mono'; background: var(--bg-soft); border: 1px solid var(--border); padding: 1px 5px; border-radius: 4px; display: inline-block; margin-top: 2px;">${escapeHtmlOutput(g.code)}</span>` : ''}
+                            ${g.code !== 'N/A' && g.code !== g.name ? `<span style="font-size: 9.5px; color: var(--text-soft);  background: var(--bg-soft); border: 1px solid var(--border); padding: 1px 5px; border-radius: 4px; display: inline-block; margin-top: 2px;">${escapeHtmlOutput(g.code)}</span>` : ''}
                           </div>
                         </div>
 
                         <div style="text-align: right; flex-shrink: 0;">
-                          <strong style="font-size: 14.5px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850; display: block; line-height: 1.2;">
+                          <strong style="font-size: 14.5px; color: #10b981;  font-weight: 850; display: block; line-height: 1.2;">
                             ${formatCurrencyInputNumber(g.totalApprovedAmount)}<span style="font-size: 10px; font-weight: 700; color: var(--text-soft); margin-left: 1px;">đ</span>
                           </strong>
                           <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 750; display: block; margin-top: 2px;">
@@ -13884,7 +13884,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           <span style="font-size: 11px; color: var(--text-soft);">${escapeHtmlOutput(r.branch)}</span>
                         </div>
                       </div>
-                      <span style="font-size: 10px; font-weight: 850; padding: 3px 8px; border-radius: 99px; background: ${kpiBadgeBg}; border: 1px solid ${kpiBadgeBorder}; color: ${kpiBadgeColor}; font-family: 'JetBrains Mono';">
+                      <span style="font-size: 10px; font-weight: 850; padding: 3px 8px; border-radius: 99px; background: ${kpiBadgeBg}; border: 1px solid ${kpiBadgeBorder}; color: ${kpiBadgeColor}; ">
                         ${kpiStatusLabel}
                       </span>
                     </div>
@@ -13892,15 +13892,15 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;">
                       <div>
                         <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Số HS làm</span>
-                        <strong style="display: block; font-size: 15px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} ca</strong>
+                        <strong style="display: block; font-size: 15px; color: var(--primary);  font-weight: 850;">${r.totalOpenedCount} ca</strong>
                       </div>
                       <div>
                         <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Duyệt KPI quy đổi</span>
-                        <strong style="display: block; font-size: 15px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${kpiVal} ca <span style="font-size: 10px; color: var(--text-soft);">(${r.duyetHsbtCount} gốc)</span></strong>
+                        <strong style="display: block; font-size: 15px; color: #10b981;  font-weight: 850;">${kpiVal} ca <span style="font-size: 10px; color: var(--text-soft);">(${r.duyetHsbtCount} gốc)</span></strong>
                       </div>
                       <div>
                         <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Tỷ lệ KPI</span>
-                        <strong style="display: block; font-size: 15px; color: ${kpiBadgeColor}; font-family: 'JetBrains Mono'; font-weight: 850;">${kpiAchievementRate}%</strong>
+                        <strong style="display: block; font-size: 15px; color: ${kpiBadgeColor};  font-weight: 850;">${kpiAchievementRate}%</strong>
                       </div>
                     </div>
                   </div>
@@ -13950,14 +13950,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     const yPos = paddingTop + plotHeight - r * plotHeight;
                     return `
                       <line x1="${paddingLeft}" y1="${yPos}" x2="${chartWidth - paddingRight}" y2="${yPos}" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" />
-                      <text x="${paddingLeft - 10}" y="${yPos + 3}" font-size="10" font-weight="700" fill="var(--text-muted)" text-anchor="end" font-family="JetBrains Mono">${yVal}</text>
+                      <text x="${paddingLeft - 10}" y="${yPos + 3}" font-size="10" font-weight="700" fill="var(--text-muted)" text-anchor="end" >${yVal}</text>
                     `;
                   }).join('')}
 
                   <!-- KPI RED BENCHMARK FINE LINE (70 CA) -->
                   <line x1="${paddingLeft}" y1="${yKpi}" x2="${chartWidth - paddingRight}" y2="${yKpi}" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.9" />
                   <rect x="${chartWidth - paddingRight + 8}" y="${yKpi - 9}" width="102" height="18" rx="4" fill="#ef4444" opacity="0.95" />
-                  <text x="${chartWidth - paddingRight + 59}" y="${yKpi + 3}" font-size="9" font-weight="850" fill="#ffffff" text-anchor="middle" font-family="JetBrains Mono">KPI: 70 CA/THÁNG</text>
+                  <text x="${chartWidth - paddingRight + 59}" y="${yKpi + 3}" font-size="9" font-weight="850" fill="#ffffff" text-anchor="middle" >KPI: 70 CA/THÁNG</text>
 
                   <!-- Line 1: Opened Claims (Primary Gold - Fine Line 2px) -->
                   ${pointsOpen.length > 1 ? `<path d="${pathOpenStr}" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />` : ''}
@@ -13968,13 +13968,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <!-- Compact Points & Value Tags for Line 1 -->
                   ${pointsOpen.map(p => `
                     <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="var(--surface)" stroke="var(--primary)" stroke-width="2" />
-                    <text x="${p.x}" y="${p.y - 8}" font-size="9.5" font-weight="850" fill="var(--primary)" text-anchor="middle" font-family="JetBrains Mono">${p.val}</text>
+                    <text x="${p.x}" y="${p.y - 8}" font-size="9.5" font-weight="850" fill="var(--primary)" text-anchor="middle" >${p.val}</text>
                   `).join('')}
 
                   <!-- Compact Points & Value Tags for Line 2 -->
                   ${pointsDuyet.map(p => `
                     <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="var(--surface)" stroke="#10b981" stroke-width="2" />
-                    <text x="${p.x}" y="${p.y + 15}" font-size="9.5" font-weight="850" fill="#10b981" text-anchor="middle" font-family="JetBrains Mono">${p.val}</text>
+                    <text x="${p.x}" y="${p.y + 15}" font-size="9.5" font-weight="850" fill="#10b981" text-anchor="middle" >${p.val}</text>
                   `).join('')}
 
                   <!-- X Axis Labels (GĐV Names - Sleek Font) -->
@@ -14019,11 +14019,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;">
                           <div>
                             <span style="font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Số HS tiếp nhận</span>
-                            <strong style="display: block; font-size: 16px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${p.totalOpenedCount} ca</strong>
+                            <strong style="display: block; font-size: 16px; color: var(--primary);  font-weight: 850;">${p.totalOpenedCount} ca</strong>
                           </div>
                           <div>
                             <span style="font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Đã duyệt HSBT</span>
-                            <strong style="display: block; font-size: 16px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${p.duyetHsbtCount} ca (${rateHsbt}%)</strong>
+                            <strong style="display: block; font-size: 16px; color: #10b981;  font-weight: 850;">${p.duyetHsbtCount} ca (${rateHsbt}%)</strong>
                           </div>
                         </div>
                       </div>
@@ -14087,7 +14087,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                     return `
                       <tr style="transition: background 0.15s ease; border-bottom: 1px solid var(--border);">
-                        <td style="text-align: center; font-weight: 850; color: var(--text-muted); font-size: 12.5px; padding: 14px 12px; font-family: 'JetBrains Mono';">${String(idx + 1).padStart(2, '0')}</td>
+                        <td style="text-align: center; font-weight: 850; color: var(--text-muted); font-size: 12.5px; padding: 14px 12px; ">${String(idx + 1).padStart(2, '0')}</td>
                         <td style="padding: 14px 14px;">
                           <div style="display: flex; align-items: center; gap: 10px;">
                             <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, rgba(216,180,109,0.2) 0%, rgba(216,180,109,0.05) 100%); border: 1.5px solid rgba(216,180,109,0.4); color: var(--primary); font-weight: 900; font-size: 12px; display: grid; place-items: center; flex-shrink: 0;">
@@ -14102,15 +14102,15 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           </div>
                         </td>
                         <td style="text-align: center; padding: 14px 12px;">
-                          <strong style="font-size: 16px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 850;">${r.totalOpenedCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
+                          <strong style="font-size: 16px; color: var(--primary);  font-weight: 850;">${r.totalOpenedCount} <span style="font-size: 12px; font-weight: 600;">ca</span></strong>
                           <div style="font-size: 10.5px; font-weight: 800; color: var(--text-soft); background: rgba(0,0,0,0.04); padding: 1px 7px; border-radius: 99px; display: inline-block; margin-top: 3px;">${percentTotal}% tổng kỳ</div>
                         </td>
                         <td style="text-align: center; padding: 14px 12px;">
-                          <strong style="font-size: 16px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">${Math.round((r.weightedKpiCount || r.duyetHsbtCount) * 10) / 10} <span style="font-size: 12px; font-weight: 600;">ca KPI</span></strong>
+                          <strong style="font-size: 16px; color: #10b981;  font-weight: 850;">${Math.round((r.weightedKpiCount || r.duyetHsbtCount) * 10) / 10} <span style="font-size: 12px; font-weight: 600;">ca KPI</span></strong>
                           <div style="font-size: 10.5px; font-weight: 750; color: var(--text-muted); margin-top: 3px;">Gốc: ${r.duyetHsbtCount} ca | Chờ: ${r.pendingHsbtCount} ca</div>
                         </td>
                         <td style="text-align: center; padding: 14px 12px;">
-                          <strong style="font-size: 14px; color: ${rateColor}; font-family: 'JetBrains Mono'; font-weight: 850;">${rateHsbt}%</strong>
+                          <strong style="font-size: 14px; color: ${rateColor};  font-weight: 850;">${rateHsbt}%</strong>
                           <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.06); border-radius: 99px; margin-top: 5px; overflow: hidden; padding: 1px; border: 1px solid rgba(0,0,0,0.08);">
                             <div style="width: ${rateHsbt}%; height: 100%; background: ${gradColor}; border-radius: 99px;"></div>
                           </div>
@@ -14119,11 +14119,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           <div style="display: flex; gap: 5px; flex-wrap: wrap; align-items: center;">
                             ${activeStatuses.map(([stKey, stCount]) => {
                               const cfg = PENDING_STATUS_MAP[stKey] || PENDING_STATUS_MAP['moi'];
-                              return `<span style="background: ${cfg.bg}; color: ${cfg.color}; border: 1px solid ${cfg.border}; font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 8px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"><span>${cfg.label}:</span> <strong style="font-family: 'JetBrains Mono'; font-size: 11px;">${stCount}</strong></span>`;
+                              return `<span style="background: ${cfg.bg}; color: ${cfg.color}; border: 1px solid ${cfg.border}; font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 8px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"><span>${cfg.label}:</span> <strong style=" font-size: 11px;">${stCount}</strong></span>`;
                             }).join('')}
                           </div>
                         </td>
-                        <td style="text-align: right; padding: 14px 24px 14px 12px; font-family: 'JetBrains Mono'; font-weight: 850; color: var(--primary); font-size: 14px;">
+                        <td style="text-align: right; padding: 14px 24px 14px 12px;  font-weight: 850; color: var(--primary); font-size: 14px;">
                           ${r.totalApprovedAmount > 0 ? formatCurrencyInputNumber(r.totalApprovedAmount) + ' đ' : '—'}
                         </td>
                       </tr>
@@ -14196,7 +14196,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 return 'BÁO CÁO TUẦN / THÁNG';
               })()}
             </h2>
-            <div style="color: #ef4444; font-size: 13.5px; font-weight: 850; margin-top: 6px; font-family: 'JetBrains Mono';">
+            <div style="color: #ef4444; font-size: 13.5px; font-weight: 850; margin-top: 6px; ">
               ${period.label}
             </div>
           </div>
@@ -14225,18 +14225,18 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   const avgUnder10M = r.countUnder10M > 0 ? Math.round(r.sumAmtUnder10M / r.countUnder10M) : 0;
                   return `
                     <tr style="border: 1px solid var(--border); ${idx % 2 === 0 ? 'background: var(--surface);' : 'background: var(--bg-soft);'}">
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: var(--primary); font-family: 'JetBrains Mono';">${idx + 1}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: var(--primary); ">${idx + 1}</td>
                       <td style="padding: 11px 14px; border: 1px solid var(--border); text-align: left; font-weight: 850; color: var(--text-main);">${escapeHtmlOutput(r.gdvName)}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #3b82f6; font-family: 'JetBrains Mono';">${r.phatSinh}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #10b981; font-family: 'JetBrains Mono';">${r.daDuyetHsb}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #f59e0b; font-family: 'JetBrains Mono';">${chuaDuyetVal}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: var(--text-muted); font-family: 'JetBrains Mono';">${r.tonHoaDon || ''}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #ec4899; font-family: 'JetBrains Mono';">${r.chuyenDntt || 0}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #06b6d4; font-family: 'JetBrains Mono';">${r.carplaCount || 0}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #6366f1; font-family: 'JetBrains Mono';">${r.tndsTonLuyKe}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #dc2626; font-family: 'JetBrains Mono';">${r.hsTonOver30Days || 0}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #2563eb; font-family: 'JetBrains Mono';">${avgUnder10M ? formatCurrencyInputNumber(avgUnder10M) + ' đ' : '0 đ'}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #854d0e; background: #fef9c3; font-family: 'JetBrains Mono';">${r.carplaCumulativeRevenue ? formatCurrencyInputNumber(r.carplaCumulativeRevenue) + ' đ' : '0 đ'}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #3b82f6; ">${r.phatSinh}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #10b981; ">${r.daDuyetHsb}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #f59e0b; ">${chuaDuyetVal}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: var(--text-muted); ">${r.tonHoaDon || ''}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #ec4899; ">${r.chuyenDntt || 0}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #06b6d4; ">${r.carplaCount || 0}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #6366f1; ">${r.tndsTonLuyKe}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #dc2626; ">${r.hsTonOver30Days || 0}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #2563eb; ">${avgUnder10M ? formatCurrencyInputNumber(avgUnder10M) + ' đ' : '0 đ'}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #854d0e; background: #fef9c3; ">${r.carplaCumulativeRevenue ? formatCurrencyInputNumber(r.carplaCumulativeRevenue) + ' đ' : '0 đ'}</td>
                     </tr>
                   `;
                 }).join('')}
@@ -14245,16 +14245,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <tr style="background: rgba(59,130,246,0.08); border: 2px solid var(--border-strong); font-weight: 850;">
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #3b82f6;">TỔNG</td>
                   <td style="padding: 13px 14px; border: 1px solid var(--border); text-align: left; color: #3b82f6;">Tổng Cộng</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #3b82f6; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumPhatSinh}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #10b981; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumDaDuyet}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #f59e0b; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumChuaDuyet}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #8b5cf6; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumTonHoaDon}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #ec4899; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumChuyenDntt}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #06b6d4; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumCarpla}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #6366f1; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumTndsTon}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #dc2626; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumHsTonOver30}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #2563eb; font-family: 'JetBrains Mono'; font-size: 13.5px;">${overallAvgUnder10M ? formatCurrencyInputNumber(overallAvgUnder10M) + ' đ' : '0 đ'}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #854d0e; background: #fef08a; font-family: 'JetBrains Mono'; font-size: 13.5px;">${sumCarplaCumulativeRev ? formatCurrencyInputNumber(sumCarplaCumulativeRev) + ' đ' : '0 đ'}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #3b82f6;  font-size: 13.5px;">${sumPhatSinh}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #10b981;  font-size: 13.5px;">${sumDaDuyet}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #f59e0b;  font-size: 13.5px;">${sumChuaDuyet}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #8b5cf6;  font-size: 13.5px;">${sumTonHoaDon}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #ec4899;  font-size: 13.5px;">${sumChuyenDntt}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #06b6d4;  font-size: 13.5px;">${sumCarpla}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #6366f1;  font-size: 13.5px;">${sumTndsTon}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #dc2626;  font-size: 13.5px;">${sumHsTonOver30}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #2563eb;  font-size: 13.5px;">${overallAvgUnder10M ? formatCurrencyInputNumber(overallAvgUnder10M) + ' đ' : '0 đ'}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #854d0e; background: #fef08a;  font-size: 13.5px;">${sumCarplaCumulativeRev ? formatCurrencyInputNumber(sumCarplaCumulativeRev) + ' đ' : '0 đ'}</td>
                 </tr>
               </tfoot>
             </table>
@@ -14940,9 +14940,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <tbody>
                   ${vcxRules.map((r, idx) => `
                     <tr>
-                      <td style="text-align: center; font-weight: 850; color: var(--text-muted); font-family: 'JetBrains Mono';">${idx + 1}</td>
+                      <td style="text-align: center; font-weight: 850; color: var(--text-muted); ">${idx + 1}</td>
                       <td>
-                        <div style="display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono'; font-weight: 750;">
+                        <div style="display: flex; align-items: center; gap: 8px;  font-weight: 750;">
                           <input type="text" class="input-premium" value="${formatCurrencyInputNumber(r.fromAmt)}" onchange="updateKpiRuleValue('${r.id}', 'fromAmt', this.value)" style="width: 140px; height: 36px; font-size: 12.5px; text-align: right;" />
                           <span style="color: var(--text-muted);">đến</span>
                           <input type="text" class="input-premium" value="${r.toAmt >= 999999999999 ? 'Không giới hạn' : formatCurrencyInputNumber(r.toAmt)}" onchange="updateKpiRuleValue('${r.id}', 'toAmt', this.value)" style="width: 150px; height: 36px; font-size: 12.5px; text-align: right;" />
@@ -14950,7 +14950,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         </div>
                       </td>
                       <td style="text-align: center;">
-                        <input type="number" step="0.1" min="0.1" max="10" class="input-premium" value="${r.coef}" onchange="updateKpiRuleValue('${r.id}', 'coef', this.value)" style="width: 90px; height: 36px; font-size: 13px; font-weight: 850; font-family: 'JetBrains Mono'; text-align: center; color: var(--primary); display: inline-block;" />
+                        <input type="number" step="0.1" min="0.1" max="10" class="input-premium" value="${r.coef}" onchange="updateKpiRuleValue('${r.id}', 'coef', this.value)" style="width: 90px; height: 36px; font-size: 13px; font-weight: 850;  text-align: center; color: var(--primary); display: inline-block;" />
                       </td>
                       <td>
                         <span style="font-size: 12px; font-weight: 700; color: var(--text-soft);">${escapeHtmlOutput(r.label)}</span>
@@ -14987,9 +14987,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <tbody>
                   ${tndsRules.map((r, idx) => `
                     <tr>
-                      <td style="text-align: center; font-weight: 850; color: var(--text-muted); font-family: 'JetBrains Mono';">${idx + 1}</td>
+                      <td style="text-align: center; font-weight: 850; color: var(--text-muted); ">${idx + 1}</td>
                       <td>
-                        <div style="display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono'; font-weight: 750;">
+                        <div style="display: flex; align-items: center; gap: 8px;  font-weight: 750;">
                           <input type="text" class="input-premium" value="${formatCurrencyInputNumber(r.fromAmt)}" onchange="updateKpiRuleValue('${r.id}', 'fromAmt', this.value)" style="width: 140px; height: 36px; font-size: 12.5px; text-align: right;" />
                           <span style="color: var(--text-muted);">đến</span>
                           <input type="text" class="input-premium" value="${r.toAmt >= 999999999999 ? 'Không giới hạn' : formatCurrencyInputNumber(r.toAmt)}" onchange="updateKpiRuleValue('${r.id}', 'toAmt', this.value)" style="width: 150px; height: 36px; font-size: 12.5px; text-align: right;" />
@@ -14997,7 +14997,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         </div>
                       </td>
                       <td style="text-align: center;">
-                        <input type="number" step="0.1" min="0.1" max="10" class="input-premium" value="${r.coef}" onchange="updateKpiRuleValue('${r.id}', 'coef', this.value)" style="width: 90px; height: 36px; font-size: 13px; font-weight: 850; font-family: 'JetBrains Mono'; text-align: center; color: #3b82f6; display: inline-block;" />
+                        <input type="number" step="0.1" min="0.1" max="10" class="input-premium" value="${r.coef}" onchange="updateKpiRuleValue('${r.id}', 'coef', this.value)" style="width: 90px; height: 36px; font-size: 13px; font-weight: 850;  text-align: center; color: #3b82f6; display: inline-block;" />
                       </td>
                       <td>
                         <span style="font-size: 12px; font-weight: 700; color: var(--text-soft);">${escapeHtmlOutput(r.label)}</span>
@@ -15506,7 +15506,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           }
           .acc-stt-badge {
             display: inline-block; background: rgba(216, 180, 109, 0.06); border: 1px solid rgba(216, 180, 109, 0.15);
-            color: var(--primary); padding: 4px 10px; border-radius: 8px; font-family: 'JetBrains Mono'; font-weight: 850; font-size: 12px;
+            color: var(--primary); padding: 4px 10px; border-radius: 8px;  font-weight: 850; font-size: 12px;
           }
         </style>
 
@@ -15552,7 +15552,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </div>
               <div style="position: relative; z-index: 2;">
                 <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">Tổng số hồ sơ đã nhận</span>
-                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
+                <div style=" font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
                   ${statTotal} <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); font-family: sans-serif;">hồ sơ</span>
                 </div>
               </div>
@@ -15570,7 +15570,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </div>
                   <span>Đã xác nhận</span>
                 </div>
-                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #10b981; display: flex; align-items: baseline; gap: 6px;">
+                <div style=" font-size: 28px; font-weight: 900; color: #10b981; display: flex; align-items: baseline; gap: 6px;">
                   ${statDaXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
                 </div>
               </div>
@@ -15591,7 +15591,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </div>
                   ${statCanBoSung > 0 ? `<div style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: pulseRed 2s infinite;"></div>` : ''}
                 </div>
-                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #ef4444; display: flex; align-items: baseline; gap: 6px;">
+                <div style=" font-size: 28px; font-weight: 900; color: #ef4444; display: flex; align-items: baseline; gap: 6px;">
                   ${statCanBoSung} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
                 </div>
               </div>
@@ -15609,7 +15609,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </div>
                   <span>Đã trình Đề nghị Thanh toán</span>
                 </div>
-                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #8b5cf6; display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;">
+                <div style=" font-size: 28px; font-weight: 900; color: #8b5cf6; display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;">
                   ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">hồ sơ</span>
                 </div>
               </div>
@@ -15659,7 +15659,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     return `
                       <div class="custom-dropdown-item ${isAct ? 'selected' : ''}" onclick="changeAccountingClaimFilter('${opt.id}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isAct ? 'background: rgba(216,180,109,0.12);' : ''}">
                         <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: ${isAct ? '800' : '650'}; color: ${isAct ? 'var(--primary)' : opt.color};">
-                          ${opt.label} <span style="font-weight: 850; font-family: 'JetBrains Mono'; padding: 2px 6px; border-radius: 6px; background: var(--bg-soft); color: var(--text-main); font-size: 11px;">${opt.count}</span>
+                          ${opt.label} <span style="font-weight: 850;  padding: 2px 6px; border-radius: 6px; background: var(--bg-soft); color: var(--text-main); font-size: 11px;">${opt.count}</span>
                         </div>
                         ${isAct ? `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
                       </div>
@@ -15672,7 +15672,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
             <!-- Pagination Controls Right -->
             <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-              <span style="font-size: 13px; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--text-soft);">
+              <span style="font-size: 13px;  font-weight: 700; color: var(--text-soft);">
                 <span style="color: var(--primary); font-weight: 800;">${displayStart}-${displayEnd}</span> / ${totalFilteredCount}
               </span>
 
@@ -15686,7 +15686,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     const isSel = accClaimsPerPage === num;
                     return `
                       <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="setAccClaimsPerPage(${num})" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
-                        <span style="font-size: 12px; font-family: 'JetBrains Mono';">${num} / trang</span>
+                        <span style="font-size: 12px; ">${num} / trang</span>
                         ${isSel ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
                       </div>
                     `;
@@ -15749,7 +15749,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     </td>
                     <td style="padding: 12px 14px; vertical-align: middle;">
                       <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 13px;">${escapeHtmlOutput(item.claim.soHoSoBoiThuong || 'Chưa có')}</strong>
+                        <strong style="color: var(--primary);  font-size: 13px;">${escapeHtmlOutput(item.claim.soHoSoBoiThuong || 'Chưa có')}</strong>
                         ${isPriority ? `<span class="acc-priority-badge" style="padding: 2px 7px; font-size: 9.5px; animation: pulseAmber 2.5s infinite;"><span style="transform: scale(0.85); display: inline-flex;">${ACC_SVGS.FIRE}</span>ƯU TIÊN</span>` : ''}
                       </div>
                     </td>
@@ -15760,11 +15760,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     <td style="padding: 12px 14px; vertical-align: middle; font-weight: 750;">
                       ${escapeHtmlOutput(item.transfer.gdvName || 'N/A')}
                     </td>
-                    <td style="padding: 12px 14px; vertical-align: middle; font-size: 12px; color: var(--text-soft); font-family: 'JetBrains Mono';">
+                    <td style="padding: 12px 14px; vertical-align: middle; font-size: 12px; color: var(--text-soft); ">
                       ${formatDateDisplay(item.transfer.ngayBanGiao)}
                     </td>
                     <td style="padding: 12px 14px; vertical-align: middle;">
-                      <strong style="font-family:'JetBrains Mono'; font-size: 12.5px; color: var(--text-main);">${escapeHtmlOutput(item.transfer.transferId || 'N/A')}</strong>
+                      <strong style=" font-size: 12.5px; color: var(--text-main);">${escapeHtmlOutput(item.transfer.transferId || 'N/A')}</strong>
                     </td>
                   </tr>`;
                 }).join('') : `<tr><td colspan="7" style="padding:42px; text-align:center; color:var(--text-soft);">Không tìm thấy hồ sơ phù hợp.</td></tr>`}</tbody>
@@ -15818,7 +15818,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   ${isPriority ? `<span style="background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(245,158,11,0.15) 100%); border: 1px solid rgba(239,68,68,0.35); color: #ef4444; font-size: 10.5px; font-weight: 850; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; animation: pulseAmber 2.5s infinite;"><span style="display: inline-flex; align-items: center; transform: scale(0.9);">${ACC_SVGS.FIRE}</span><span>HỒ SƠ ƯU TIÊN</span></span>` : ''}
                 </div>
                 <div style="font-size: 12px; color: var(--text-soft); font-weight: 600; margin-top: 3px;">
-                  HSBT: <span style="color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 750;">${escapeHtmlOutput(claim.soHoSoBoiThuong || 'Chưa có')}</span> · 
+                  HSBT: <span style="color: var(--primary);  font-weight: 750;">${escapeHtmlOutput(claim.soHoSoBoiThuong || 'Chưa có')}</span> · 
                   BKS: <span style="color: var(--text-main); font-weight: 750;">${escapeHtmlOutput(claim.bienSo || 'N/A')}</span>
                 </div>
               </div>
@@ -15861,12 +15861,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <!-- CLAIM METADATA GRID -->
               <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 18px; padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; font-size: 12.5px; box-shadow: var(--shadow-xs);">
                 <div><span style="color: var(--text-soft); display: block; margin-bottom: 3px; font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.02em;">Biển số xe</span> <strong style="color: var(--text-main); font-size:14.5px; font-weight: 850;">${escapeHtmlOutput(claim.bienSo || 'N/A')}</strong></div>
-                <div><span style="color: var(--text-soft); display: block; margin-bottom: 3px; font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.02em;">Số HSBT</span> <strong style="color: var(--primary); font-family: 'JetBrains Mono'; font-size:14.5px; font-weight: 850;">${escapeHtmlOutput(claim.soHoSoBoiThuong || 'Chưa có')}</strong></div>
+                <div><span style="color: var(--text-soft); display: block; margin-bottom: 3px; font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.02em;">Số HSBT</span> <strong style="color: var(--primary);  font-size:14.5px; font-weight: 850;">${escapeHtmlOutput(claim.soHoSoBoiThuong || 'Chưa có')}</strong></div>
                 <div style="grid-column: span 2;"><span style="color: var(--text-soft); display: block; margin-bottom: 3px; font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.02em;">Chủ xe / Khách hàng</span> <strong style="color: var(--text-main); font-size:13.5px; font-weight: 800;">${escapeHtmlOutput(extractClaimOwnerName(claim))}</strong></div>
                 <div style="grid-column: span 2;"><span style="color: var(--text-soft); display: block; margin-bottom: 3px; font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.02em;">Gara sửa chữa</span> <span style="color: var(--text-main); font-size: 13px; font-weight: 700;">${escapeHtmlOutput(claim.tenGara || 'N/A')}</span></div>
-                <div><span style="color: var(--text-soft); display: block; margin-bottom: 3px; font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.02em;">Số phiếu bàn giao</span> <span style="font-family: 'JetBrains Mono'; font-size:13px; font-weight: 750; color: var(--text-main);">${escapeHtmlOutput(transfer.transferId || 'N/A')}</span></div>
+                <div><span style="color: var(--text-soft); display: block; margin-bottom: 3px; font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.02em;">Số phiếu bàn giao</span> <span style=" font-size:13px; font-weight: 750; color: var(--text-main);">${escapeHtmlOutput(transfer.transferId || 'N/A')}</span></div>
                 <div><span style="color: var(--text-soft); display: block; margin-bottom: 3px; font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.02em;">GĐV Phụ trách</span> <span style="font-size:13px; font-weight: 750; color: var(--text-main);">${escapeHtmlOutput(transfer.gdvName || 'N/A')}</span></div>
-                <div style="grid-column: span 2; padding-top: 14px; border-top: 1px dashed var(--border); margin-top: 4px;"><span style="color: var(--text-soft); display: block; margin-bottom: 3px; font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.02em;">Số tiền đề nghị chi</span> <strong style="color: #10b981; font-size:18px; font-family: 'JetBrains Mono'; font-weight: 900;">${formatCurrencyInputNumber(claim.soTienDeNghi || transfer.soTienDeNghi)} đ</strong></div>
+                <div style="grid-column: span 2; padding-top: 14px; border-top: 1px dashed var(--border); margin-top: 4px;"><span style="color: var(--text-soft); display: block; margin-bottom: 3px; font-size: 11px; font-weight: 750; text-transform: uppercase; letter-spacing: 0.02em;">Số tiền đề nghị chi</span> <strong style="color: #10b981; font-size:18px;  font-weight: 900;">${formatCurrencyInputNumber(claim.soTienDeNghi || transfer.soTienDeNghi)} đ</strong></div>
               </div>
 
               <!-- KE TOAN INPUT FORM FOR SUPPLEMENT REQUEST -->
@@ -15931,7 +15931,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           <div style="background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 12px; padding: 12px; transition: all 0.2s ease;">
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 4px;">
                               <strong style="color: var(--primary); font-size: 12px; font-weight: 800;">${escapeHtmlOutput(h.user)}</strong>
-                              <span style="font-family: 'JetBrains Mono'; color: var(--text-soft); font-size: 10.5px; font-weight: 600;">${formatDateDisplay(h.time)}</span>
+                              <span style=" color: var(--text-soft); font-size: 10.5px; font-weight: 600;">${formatDateDisplay(h.time)}</span>
                             </div>
                             <div style="margin-bottom: 6px;">
                               <span style="display: inline-block; padding: 2px 8px; border-radius: 6px; background: ${dotBg}; border: 1px solid rgba(255,255,255,0.05); color: ${dotColor}; font-size: 10.5px; font-weight: 850;">
@@ -16312,7 +16312,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </div>
               <div style="position: relative; z-index: 2;">
                 <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">Tổng phiếu bàn giao</span>
-                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
+                <div style=" font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
                   ${statTotal} <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); font-family: sans-serif;">phiếu</span>
                 </div>
               </div>
@@ -16330,7 +16330,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </div>
                   <span>Chờ xác nhận</span>
                 </div>
-                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #f59e0b; display: flex; align-items: baseline; gap: 6px;">
+                <div style=" font-size: 28px; font-weight: 900; color: #f59e0b; display: flex; align-items: baseline; gap: 6px;">
                   ${statChoXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">phiếu</span>
                 </div>
               </div>
@@ -16348,7 +16348,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </div>
                   <span>Đã xác nhận</span>
                 </div>
-                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #10b981; display: flex; align-items: baseline; gap: 6px;">
+                <div style=" font-size: 28px; font-weight: 900; color: #10b981; display: flex; align-items: baseline; gap: 6px;">
                   ${statDaXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">phiếu</span>
                 </div>
               </div>
@@ -16369,7 +16369,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </div>
                   ${statCanBoSung > 0 ? `<div style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: pulseRed 2s infinite;"></div>` : ''}
                 </div>
-                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #ef4444; display: flex; align-items: baseline; gap: 6px;">
+                <div style=" font-size: 28px; font-weight: 900; color: #ef4444; display: flex; align-items: baseline; gap: 6px;">
                   ${statCanBoSung} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">phiếu</span>
                 </div>
               </div>
@@ -16387,7 +16387,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   </div>
                   <span>Đã trình ĐNTT</span>
                 </div>
-                <div style="font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 900; color: #8b5cf6; display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;">
+                <div style=" font-size: 28px; font-weight: 900; color: #8b5cf6; display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;">
                   ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); font-family: sans-serif;">phiếu</span>
                 </div>
                 <div style="font-size: 12px; font-weight: 800; color: var(--text-soft);">
@@ -16441,7 +16441,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     return `
                       <div class="custom-dropdown-item ${isAct ? 'selected' : ''}" onclick="changeAccountingStatusFilter('${opt.id}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isAct ? 'background: rgba(216,180,109,0.12);' : ''}">
                         <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: ${isAct ? '800' : '650'}; color: ${isAct ? 'var(--primary)' : opt.color};">
-                          ${opt.label} <span style="font-weight: 850; font-family: 'JetBrains Mono'; padding: 2px 6px; border-radius: 6px; background: var(--bg-soft); color: var(--text-main); font-size: 11px;">${opt.count}</span>
+                          ${opt.label} <span style="font-weight: 850;  padding: 2px 6px; border-radius: 6px; background: var(--bg-soft); color: var(--text-main); font-size: 11px;">${opt.count}</span>
                         </div>
                         ${isAct ? `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
                       </div>
@@ -16453,7 +16453,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
             <!-- Pagination Controls Right -->
             <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-              <span style="font-size: 13px; font-family: 'JetBrains Mono'; font-weight: 700; color: var(--text-soft);">
+              <span style="font-size: 13px;  font-weight: 700; color: var(--text-soft);">
                 <span style="color: var(--primary); font-weight: 800;">${displayStart}-${displayEnd}</span> / ${totalFilteredCount}
               </span>
 
@@ -16467,7 +16467,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     const isSel = accTransfersPerPage === num;
                     return `
                       <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="setAccTransfersPerPage(${num})" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
-                        <span style="font-size: 12px; font-family: 'JetBrains Mono';">${num} / trang</span>
+                        <span style="font-size: 12px; ">${num} / trang</span>
                         ${isSel ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
                       </div>
                     `;
@@ -16523,7 +16523,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                     return `
                       <tr onclick="${rowClickHandler}" style="border-bottom: 1px solid var(--border); vertical-align: middle; cursor: pointer; transition: all 0.2s ease; ${suppClaimsCount > 0 ? 'background: linear-gradient(90deg, rgba(244,63,94,0.05) 0%, rgba(244,63,94,0.01) 100%); border-left: 4px solid #f43f5e;' : ''}" title="Nhấp để xem chi tiết phiếu bàn giao">
-                        <td style="padding: 14px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${String(globalIdx + 1).padStart(2, '0')}</td>
+                        <td style="padding: 14px; text-align: center; font-weight: 850;  color: var(--primary);">#${String(globalIdx + 1).padStart(2, '0')}</td>
                         <td style="padding: 14px; text-align: center;">
                           <span style="display: inline-flex; gap: 5px; align-items: center; padding: 5px 12px; border-radius: 999px; color: ${statusObj.text}; background: ${statusObj.bg}; border: 1px solid ${statusObj.border}; font-size: 10.5px; font-weight: 850; text-transform: uppercase; letter-spacing: 0.02em;">
                             ${statusObj.svg} ${statusObj.label}
@@ -16531,7 +16531,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         </td>
                         <td style="padding: 14px;">
                           <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 3px;">
-                            <strong style="font-family: 'JetBrains Mono'; color: var(--text-main); font-size: 13.5px;">${escapeHtmlOutput(t.transferId)}</strong>
+                            <strong style=" color: var(--text-main); font-size: 13.5px;">${escapeHtmlOutput(t.transferId)}</strong>
                             ${hasPriority ? `
                               <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 6px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; font-size: 9.5px; font-weight: 850; letter-spacing: 0.02em; animation: pulseAmber 2.5s infinite;">
                                 <span style="display: inline-flex; align-items: center; transform: scale(0.85);">${ACC_SVGS.FIRE}</span>
@@ -16557,7 +16557,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         <td style="padding: 14px; font-weight: 750; color: var(--text-main);">
                           ${escapeHtmlOutput(t.gdvName)}
                         </td>
-                        <td style="padding: 14px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; color: #10b981; font-size: 14px;">
+                        <td style="padding: 14px; text-align: right;  font-weight: 850; color: #10b981; font-size: 14px;">
                           ${formatCurrencyInputNumber(totalMoney)} đ
                         </td>
                         <td style="padding: 14px; text-align: center;" onclick="event.stopPropagation();">
@@ -16717,7 +16717,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 22px; background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px;">
                 <div>
                   <label style="display: block; font-size: 12px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">Mã Phiếu Bàn giao (*):</label>
-                  <input id="accBatchTransferId" type="text" class="input-premium" value="${escapeAttributeData(existing?.transferId || ('PBG_' + Date.now()))}" readonly style="height: 44px; border-radius: 12px; font-family: 'JetBrains Mono'; font-weight: 850; background: var(--surface); color: var(--primary);" />
+                  <input id="accBatchTransferId" type="text" class="input-premium" value="${escapeAttributeData(existing?.transferId || ('PBG_' + Date.now()))}" readonly style="height: 44px; border-radius: 12px;  font-weight: 850; background: var(--surface); color: var(--primary);" />
                 </div>
                 
                 <div>
@@ -16729,7 +16729,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     
                     <div id="accGdvTriggerBtn" onclick="${isCreator ? 'toggleAccGdvCustomDropdown(event)' : `triggerToast('Không thể thay đổi người bàn giao của phiếu này!', 'warning')`}" style="height: 44px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); padding: 0 14px; cursor: ${isCreator ? 'pointer' : 'not-allowed'}; display: flex; align-items: center; justify-content: space-between; box-shadow: var(--shadow-sm); transition: all 0.2s ease; ${isCreator ? '' : 'opacity: 0.75;' }">
                       <div style="display: flex; align-items: center; gap: 10px;">
-                        <div id="accSelectedUserAvatar" style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(216,180,109,0.3) 0%, rgba(216,180,109,0.1) 100%); border: 1px solid rgba(216,180,109,0.5); color: var(--primary); display: grid; place-items: center; font-size: 11px; font-weight: 850; flex-shrink: 0; font-family: 'JetBrains Mono';">
+                        <div id="accSelectedUserAvatar" style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(216,180,109,0.3) 0%, rgba(216,180,109,0.1) 100%); border: 1px solid rgba(216,180,109,0.5); color: var(--primary); display: grid; place-items: center; font-size: 11px; font-weight: 850; flex-shrink: 0; ">
                           ${getAccUserInitials(defaultGdvVal)}
                         </div>
                         <strong id="lblAccSelectedGdvName" style="font-size: 13.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(defaultGdvVal)}</strong>
@@ -16744,7 +16744,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                         return `
                           <div class="acc-gdv-user-item" data-value="${escapeAttributeData(uName)}" onclick="selectAccGdvUserOption('${escapeAttributeData(uName)}')" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.15s ease; ${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary);' : 'color: var(--text-main);'}">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                              <div style="width: 26px; height: 26px; border-radius: 50%; background: ${isSel ? 'var(--primary)' : 'var(--bg-soft)'}; color: ${isSel ? '#111111' : 'var(--text-soft)'}; display: grid; place-items: center; font-size: 10.5px; font-weight: 850; font-family: 'JetBrains Mono';">
+                              <div style="width: 26px; height: 26px; border-radius: 50%; background: ${isSel ? 'var(--primary)' : 'var(--bg-soft)'}; color: ${isSel ? '#111111' : 'var(--text-soft)'}; display: grid; place-items: center; font-size: 10.5px; font-weight: 850; ">
                                 ${getAccUserInitials(uName)}
                               </div>
                               <strong style="font-size: 13px; font-weight: 850;">${escapeHtmlOutput(uName)}</strong>
@@ -16789,7 +16789,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <div style="display: flex; justify-content: space-between; align-items: center; height: 36px; margin-bottom: 10px; flex-shrink: 0;">
                     <label style="font-size: 13.5px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
                       <span style="color: #3b82f6;">${ACC_SVGS.CHECK_CIRCLE}</span>
-                      <span>Danh sách Hồ sơ trong Phiếu bàn giao (<strong id="lblAccBatchCount" style="color: var(--primary); font-family: 'JetBrains Mono'; font-size: 14px;">${currentBatchSelectedClaims.length}</strong> hồ sơ):</span>
+                      <span>Danh sách Hồ sơ trong Phiếu bàn giao (<strong id="lblAccBatchCount" style="color: var(--primary);  font-size: 14px;">${currentBatchSelectedClaims.length}</strong> hồ sơ):</span>
                     </label>
                   </div>
 
@@ -16815,7 +16815,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     <!-- TOTAL MONEY BANNER AT BOTTOM OF TABLE -->
                     <div style="background: linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(16,185,129,0.03) 100%); border-top: 2px solid rgba(16,185,129,0.35); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
                       <span style="font-weight: 850; color: var(--text-main); font-size: 13.5px;">TỔNG TIỀN ĐỀ NGHỊ CHI TOÀN PHIẾU BÀN GIAO:</span>
-                      <strong id="lblAccBatchTotalMoney" style="font-size: 20px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850;">0 đ</strong>
+                      <strong id="lblAccBatchTotalMoney" style="font-size: 20px; color: #10b981;  font-weight: 850;">0 đ</strong>
                     </div>
                   </div>
                 </div>
@@ -16979,7 +16979,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <div style="min-width: 0;">
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                   <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850;">${escapeHtmlOutput(bienSo)}</strong>
-                  <span style="font-size: 11.5px; color: var(--primary); font-family: 'JetBrains Mono'; font-weight: 750;">${escapeHtmlOutput(hsbt)}</span>
+                  <span style="font-size: 11.5px; color: var(--primary);  font-weight: 750;">${escapeHtmlOutput(hsbt)}</span>
                   <span style="background: rgba(20,184,166,0.14); color: #14b8a6; border: 1px solid rgba(20,184,166,0.3); font-size: 10px; font-weight: 850; padding: 1px 6px; border-radius: 99px;">Đã duyệt HSBT</span>
                 </div>
                 <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 3px;">
@@ -16987,7 +16987,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 </div>
               </div>
             </div>
-            <strong style="font-size: 13.5px; color: #10b981; font-family: 'JetBrains Mono'; font-weight: 850; flex-shrink: 0;">${formatCurrencyInputNumber(money)} đ</strong>
+            <strong style="font-size: 13.5px; color: #10b981;  font-weight: 850; flex-shrink: 0;">${formatCurrencyInputNumber(money)} đ</strong>
           </label>
         `;
       }).join('');
@@ -17089,11 +17089,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       tbody.innerHTML = currentBatchSelectedClaims.map((item, idx) => `
         <tr style="border-bottom: 1px solid var(--border); ${item.isUuTien ? 'background: rgba(245,158,11,0.04);' : ''}">
-          <td style="padding: 10px 12px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${idx + 1}</td>
+          <td style="padding: 10px 12px; text-align: center; font-weight: 850;  color: var(--primary);">#${idx + 1}</td>
           <td style="padding: 10px 12px;">
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <strong style="color: var(--text-main); font-size: 13px;">${escapeHtmlOutput(item.bienSo || 'N/A')}</strong>
-              <span style="display: inline-block; font-size: 11px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(item.soHoSoBoiThuong || '')}</span>
+              <span style="display: inline-block; font-size: 11px; color: var(--text-soft); ">${escapeHtmlOutput(item.soHoSoBoiThuong || '')}</span>
               <button type="button" onclick="toggleAccBatchItemPriority(${idx})" style="padding: 3px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 4px; ${item.isUuTien ? 'background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.35);' : 'background: var(--bg-soft); color: var(--text-soft); border: 1px solid var(--border);'}" title="Đánh dấu hồ sơ ưu tiên xử lý">
                 ${item.isUuTien ? `${ACC_SVGS.FIRE} <span>ƯU TIÊN</span>` : `<span>+ Ưu tiên</span>`}
               </button>
@@ -17102,7 +17102,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           <td style="padding: 10px 12px; font-weight: 750; color: var(--text-main);">${escapeHtmlOutput(extractClaimOwnerName(item))}</td>
           <td style="padding: 10px 12px; color: var(--text-soft);">${escapeHtmlOutput(item.tenGara || 'N/A')}</td>
           <td style="padding: 10px 12px; text-align: right;">
-            <input type="text" class="input-premium" value="${formatCurrencyInputNumber(item.soTienDeNghi)}" oninput="updateAccBatchItemMoney(${idx}, this.value)" style="width: 125px; height: 32px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; font-size: 12.5px; color: #10b981;" />
+            <input type="text" class="input-premium" value="${formatCurrencyInputNumber(item.soTienDeNghi)}" oninput="updateAccBatchItemMoney(${idx}, this.value)" style="width: 125px; height: 32px; text-align: right;  font-weight: 850; font-size: 12.5px; color: #10b981;" />
           </td>
           <td style="padding: 10px 12px; text-align: center;">
             <button type="button" onclick="removeAccClaimFromBatchTable(${idx})" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: grid; place-items: center;" title="Bỏ hồ sơ này khỏi phiếu">✕</button>
@@ -17676,7 +17676,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <h3 style="font-size: 20px; font-weight: 850; color: var(--text-main); margin: 0; letter-spacing: -0.01em;">
                   Chi tiết Phiếu Bàn giao Hồ sơ
                 </h3>
-                <span style="font-size: 12.5px; color: var(--text-soft); font-family: 'JetBrains Mono'; font-weight: 750;">Mã Phiếu: ${t.transferId} (${formatDateDisplay(t.ngayBanGiao)})</span>
+                <span style="font-size: 12.5px; color: var(--text-soft);  font-weight: 750;">Mã Phiếu: ${t.transferId} (${formatDateDisplay(t.ngayBanGiao)})</span>
               </div>
             </div>
 
@@ -17750,7 +17750,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 16px; padding: 18px 22px; margin-bottom: 22px; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px;">
               <div><strong>GĐV Bàn giao:</strong> <span style="font-weight: 750; color: var(--text-main);">${escapeHtmlOutput(t.gdvName)}</span></div>
               <div><strong>Tổng số hồ sơ trong phiếu:</strong> <strong style="color: #3b82f6;">${claimsInBatch.length} hồ sơ</strong></div>
-              <div><strong>Tổng số tiền đề nghị chi toàn phiếu:</strong> <strong style="color: #10b981; font-family: 'JetBrains Mono'; font-size: 17px;">${formatCurrencyInputNumber(t.soTienDeNghi)} đ</strong></div>
+              <div><strong>Tổng số tiền đề nghị chi toàn phiếu:</strong> <strong style="color: #10b981;  font-size: 17px;">${formatCurrencyInputNumber(t.soTienDeNghi)} đ</strong></div>
               ${t.ghiChuGdv ? `<div><strong>Ghi chú GĐV:</strong> <em>${escapeHtmlOutput(t.ghiChuGdv)}</em></div>` : ''}
             </div>
 
@@ -17779,17 +17779,17 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
                       return `
                         <tr style="border-bottom: 1px solid var(--border); ${isPriority ? 'background: rgba(245,158,11,0.04);' : (isSupp ? 'background: rgba(239,68,68,0.04);' : '')}">
-                          <td style="padding: 12px 14px; text-align: center; font-weight: 850; font-family: 'JetBrains Mono'; color: var(--primary);">#${idx + 1}</td>
+                          <td style="padding: 12px 14px; text-align: center; font-weight: 850;  color: var(--primary);">#${idx + 1}</td>
                           <td style="padding: 12px 14px;">
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                               <strong style="color: var(--text-main); font-size: 13.5px;">${escapeHtmlOutput(c.bienSo || 'N/A')}</strong>
-                              <span style="font-size: 11.5px; color: var(--text-soft); font-family: 'JetBrains Mono';">${escapeHtmlOutput(c.soHoSoBoiThuong || '')}</span>
+                              <span style="font-size: 11.5px; color: var(--text-soft); ">${escapeHtmlOutput(c.soHoSoBoiThuong || '')}</span>
                               ${isPriority ? `<span style="font-size: 10px; font-weight: 850; color: #ef4444; background: rgba(239,68,68,0.12); padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(239,68,68,0.25); display: inline-flex; align-items: center; gap: 4px; animation: pulseAmber 2.5s infinite;"><span style="display: inline-flex; align-items: center; transform: scale(0.85); color: #ef4444;">${ACC_SVGS.FIRE}</span><span>ƯU TIÊN</span></span>` : ''}
                             </div>
                           </td>
                           <td style="padding: 12px 14px; font-weight: 750;">${escapeHtmlOutput(extractClaimOwnerName(c))}</td>
                           <td style="padding: 12px 14px; color: var(--text-soft);">${escapeHtmlOutput(c.tenGara || 'N/A')}</td>
-                          <td style="padding: 12px 14px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 850; color: #10b981;">${formatCurrencyInputNumber(c.soTienDeNghi)} đ</td>
+                          <td style="padding: 12px 14px; text-align: right;  font-weight: 850; color: #10b981;">${formatCurrencyInputNumber(c.soTienDeNghi)} đ</td>
                           <td style="padding: 12px 14px; text-align: center;">
                             ${isSupp ? `
                               <span style="background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); font-size: 11px; font-weight: 850; padding: 4px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 5px;">
@@ -17844,7 +17844,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                               <div style="display: flex; align-items: center; gap: 8px;">
                                 <strong style="font-size: 13.5px; color: ${evt.color};">${escapeHtmlOutput(evt.action)}</strong>
                               </div>
-                              <span style="font-size: 11.5px; font-family: 'JetBrains Mono'; color: var(--text-soft); font-weight: 600;">${timeStr}</span>
+                              <span style="font-size: 11.5px;  color: var(--text-soft); font-weight: 600;">${timeStr}</span>
                             </div>
                             <div style="font-size: 13px; color: var(--text-main); font-weight: 600; margin-bottom: 6px;">
                               Người thực hiện: <span style="font-weight: 850;">${escapeHtmlOutput(evt.user)}</span>
@@ -18067,11 +18067,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
         return `
           <tr style="border-bottom: 1px solid var(--border); font-size: 13px;">
             <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 44px;">${idx + 1}</td>
-            <td style="padding: 12px 10px; font-weight: 800; font-family: 'JetBrains Mono'; color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
-            <td style="padding: 12px 10px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
+            <td style="padding: 12px 10px; font-weight: 800;  color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
+            <td style="padding: 12px 10px; font-weight: 700;  color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
             <td style="padding: 12px 10px; text-align: left; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(gara)}">${escapeHtmlOutput(gara)}</td>
             <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
-            <td style="padding: 12px 10px; font-weight: 850; font-family: 'JetBrains Mono'; color: #10b981; text-align: right; font-size: 13.5px;">${reserve} đ</td>
+            <td style="padding: 12px 10px; font-weight: 850;  color: #10b981; text-align: right; font-size: 13.5px;">${reserve} đ</td>
             <td style="padding: 12px 10px; text-align: center;">
               <span style="display: inline-block; padding: 3px 8px; border-radius: 99px; font-size: 10px; font-weight: 850; background: rgba(59,130,246,0.06); color: ${statusColor}; border: 1px solid ${statusColor};">
                 ${statusLabel}
@@ -18108,7 +18108,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 Tự động lọc các hồ sơ thuộc Chi nhánh Đắk Lắk có Dự phòng bồi thường trên 100 triệu VNĐ. Nhập vướng mắc và ngày dự kiến trực tiếp vào bảng để tự động lưu.
               </p>
             </div>
-            <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: #10b981; padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; font-family: 'JetBrains Mono';">
+            <div style="background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: #10b981; padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; ">
               Tổng số: ${filtered.length} hồ sơ (Được lọc theo GĐV & Trạng thái)
             </div>
           </div>
@@ -18416,13 +18416,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
           rowsHtml += `
             <tr style="border-bottom: 1px solid var(--border); font-size: 13px;">
               <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 44px;">${globalIdx}</td>
-              <td style="padding: 12px 10px; font-weight: 700; font-family: 'JetBrains Mono'; color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
-              <td style="padding: 12px 10px; font-weight: 800; font-family: 'JetBrains Mono'; color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
+              <td style="padding: 12px 10px; font-weight: 700;  color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
+              <td style="padding: 12px 10px; font-weight: 800;  color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
               <td style="padding: 12px 10px; text-align: left; font-weight: 750;">${escapeHtmlOutput(chuXe)}</td>
               <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(carBrandModel)}</td>
               <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
-              <td style="padding: 12px 10px; font-weight: 850; font-family: 'JetBrains Mono'; color: #10b981; text-align: right; font-size: 13.5px;">${amtDisplay}</td>
-              <td style="padding: 12px 10px; text-align: center; font-family: 'JetBrains Mono'; font-weight: 750;">${escapeHtmlOutput(duyetDateStr)}</td>
+              <td style="padding: 12px 10px; font-weight: 850;  color: #10b981; text-align: right; font-size: 13.5px;">${amtDisplay}</td>
+              <td style="padding: 12px 10px; text-align: center;  font-weight: 750;">${escapeHtmlOutput(duyetDateStr)}</td>
               <td style="padding: 12px 10px; text-align: center;">
                 <span class="acc-status-pill" style="padding: 3px 10px; border-radius: 8px; font-size: 11px; ${badgeStyle}">
                   ${typeof daysCount === 'number' ? daysCount + ' ngày' : daysCount}
@@ -18447,7 +18447,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </p>
             </div>
             <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
-              <div class="hide-on-screenshot" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; font-family: 'JetBrains Mono';">
+              <div class="hide-on-screenshot" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; ">
                 Tổng số tồn: ${filtered.length} hồ sơ (Được lọc theo bộ lọc)
               </div>
               <button type="button" class="btn-premium hide-on-screenshot" onclick="downloadTonChuaHoaDonReportImage('png')" style="padding: 0 14px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(245,158,11,0.12) 100%); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Tải ảnh báo cáo (PNG/JPG)">
@@ -19636,7 +19636,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             
             <div style="position:relative; z-index:2; display:flex; justify-content:space-between; width:100%; align-items:flex-start;">
               <div>
-                <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:var(--surface-strong); border:1px solid var(--border); border-radius:12px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px;">MÃ PHIẾU: <strong style="color:var(--text-main); font-family:'JetBrains Mono'; font-size:12px;">${escapeHtmlOutput(payload.id)}</strong></div>
+                <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:var(--surface-strong); border:1px solid var(--border); border-radius:12px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px;">MÃ PHIẾU: <strong style="color:var(--text-main);  font-size:12px;">${escapeHtmlOutput(payload.id)}</strong></div>
                 <h3 style="margin:0 0 12px 0; font-size:24px; font-weight:900; color:var(--text-main); letter-spacing:-0.02em;">Chi tiết đề nghị thanh toán</h3>
                 <div style="display: flex; gap: 20px; font-size: 13px; color: var(--text-soft);">
                   <span style="display:flex; align-items:center; gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 1 0-16 0"></path></svg> <strong style="color: var(--primary);">${escapeHtmlOutput(payload.gdvName)}</strong></span>
