@@ -18140,7 +18140,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
     /* RENDER DAK LAK RESERVE REPORT TABLE HTML */
     function getCarBrandLossData() {
-      const allClaims = Object.values(cachedArchivedClaimsPayload || {}).concat(Object.values(cachedPendingClaimsPayload || {}));
+      const allClaims = Object.values(cachedPendingClaimsPayload || {});
       
       const brandMap = {};
       
