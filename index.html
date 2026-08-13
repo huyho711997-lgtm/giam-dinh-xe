@@ -13624,14 +13624,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     </div>
                     ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => {
                       const isSel = activeCarBrandReportMonths.includes(String(m));
-                      return \`
-                      <div class="custom-select-item \${isSel ? 'active' : ''}" onclick="toggleCarBrandMonth('\${m}', event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; \${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
-                        <span>Tháng \${m}</span>
-                        <div style="width: 16px; height: 16px; border-radius: 4px; border: 2px solid \${isSel ? 'var(--primary)' : 'var(--border-strong)'}; background: \${isSel ? 'var(--primary)' : 'transparent'}; display: flex; align-items: center; justify-content: center;">
-                          \${isSel ? '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#111" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                      return `
+                      <div class="custom-select-item ${isSel ? 'active' : ''}" onclick="toggleCarBrandMonth('${m}', event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                        <span>Tháng ${m}</span>
+                        <div style="width: 16px; height: 16px; border-radius: 4px; border: 2px solid ${isSel ? 'var(--primary)' : 'var(--border-strong)'}; background: ${isSel ? 'var(--primary)' : 'transparent'}; display: flex; align-items: center; justify-content: center;">
+                          ${isSel ? '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#111" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                         </div>
                       </div>
-                    \`;
+                    `;
                     }).join('')}
                   </div>
                 </div>
@@ -13653,14 +13653,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     </div>
                     ${yearList.map(y => {
                       const isSel = activeCarBrandReportYears.includes(String(y));
-                      return \`
-                      <div class="custom-select-item \${isSel ? 'active' : ''}" onclick="toggleCarBrandYear('\${y}', event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; \${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
-                        <span>Năm \${y}</span>
-                        <div style="width: 16px; height: 16px; border-radius: 4px; border: 2px solid \${isSel ? 'var(--primary)' : 'var(--border-strong)'}; background: \${isSel ? 'var(--primary)' : 'transparent'}; display: flex; align-items: center; justify-content: center;">
-                          \${isSel ? '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#111" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                      return `
+                      <div class="custom-select-item ${isSel ? 'active' : ''}" onclick="toggleCarBrandYear('${y}', event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                        <span>Năm ${y}</span>
+                        <div style="width: 16px; height: 16px; border-radius: 4px; border: 2px solid ${isSel ? 'var(--primary)' : 'var(--border-strong)'}; background: ${isSel ? 'var(--primary)' : 'transparent'}; display: flex; align-items: center; justify-content: center;">
+                          ${isSel ? '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#111" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                         </div>
                       </div>
-                    \`;
+                    `;
                     }).join('')}
                   </div>
                 </div>
