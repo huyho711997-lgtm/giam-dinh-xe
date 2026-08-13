@@ -12649,9 +12649,43 @@ function formatDateDisplay(val) {
       });
     }
 
+    const tabFilterState = {};
+
     function switchGdvReportView(viewMode) {
+      if (activeGdvReportView) {
+        tabFilterState[activeGdvReportView] = {
+          gdvNames: [...activeSelectedGdvNames],
+          dakLakStatuses: [...activeSelectedDakLakStatuses],
+          startDate: activeGdvReportStartDate,
+          endDate: activeGdvReportEndDate,
+          week: activeGdvReportWeek,
+          month: activeGdvReportMonth,
+          year: activeGdvReportYear
+        };
+      }
+      
       activeGdvReportView = viewMode;
       activeOpenDropdownId = null;
+
+      if (tabFilterState[viewMode]) {
+        const state = tabFilterState[viewMode];
+        activeSelectedGdvNames = [...state.gdvNames];
+        activeSelectedDakLakStatuses = [...state.dakLakStatuses];
+        activeGdvReportStartDate = state.startDate;
+        activeGdvReportEndDate = state.endDate;
+        activeGdvReportWeek = state.week;
+        activeGdvReportMonth = state.month;
+        activeGdvReportYear = state.year;
+      } else {
+        activeSelectedGdvNames = ['Hồ Quang Huy', 'Huỳnh Văn Phúc', 'Nguyễn Quang Huy_DL'];
+        activeSelectedDakLakStatuses = ['da_duyet_pasc', 'cho_duyet_hsbt'];
+        activeGdvReportStartDate = "";
+        activeGdvReportEndDate = "";
+        activeGdvReportWeek = "current";
+        activeGdvReportMonth = String(new Date().getMonth() + 1);
+        activeGdvReportYear = String(new Date().getFullYear());
+      }
+      
       renderGdvReportPage();
     }
 
