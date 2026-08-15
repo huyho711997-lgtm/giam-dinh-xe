@@ -12813,6 +12813,32 @@ function formatDateDisplay(val) {
       return st === 'da_duyet_hsbt' || st.includes('da_duyet_hsbt') || st.includes('đã duyệt hsbt') || st.includes('da duyet hsbt');
     }
 
+    function isHsDuPhongOver50M(c) {
+      if (!c) return false;
+      const reserveStr = String(c.duPhongBoiThuong || c.soTienDuPhong || c.duPhong || '0').replace(/[^0-9]/g, '');
+      const reserveVal = parseInt(reserveStr, 10) || 0;
+      if (reserveVal <= 50000000) return false;
+
+      const st = String(c.trangThai || '').toLowerCase().trim();
+      const validKeys = ['moi', 'cho_giam_dinh_ht', 'da_giam_dinh_ht', 'cho_gdct', 'da_gdct', 'cho_duyet_pasc'];
+      if (validKeys.includes(st)) return true;
+
+      if (
+        st === 'mới' || st === 'moi' ||
+        st.includes('chờ giám định ht') || st.includes('cho giam dinh ht') ||
+        st.includes('đã giám định ht') || st.includes('da giam dinh ht') ||
+        st.includes('chờ gđct') || st.includes('cho gdct') ||
+        st.includes('đã gđct') || st.includes('da gdct') ||
+        st.includes('chờ duyệt pasc') || st.includes('cho duyet pasc')
+      ) {
+        if (st.includes('đã duyệt pasc') || st.includes('da_duyet_pasc') || st.includes('da duyet pasc')) {
+          return false;
+        }
+        return true;
+      }
+      return false;
+    }
+
     function changeGdvReportSearch(txt) {
       activeGdvReportSearch = (txt || '').toLowerCase().trim();
       renderGdvMonthlyReportPage();
@@ -14290,7 +14316,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
     function renderWeeklyZoneReportTableHtml() {
       const { period, list } = getWeeklyZoneReportData();
       let sumPhatSinh = 0, sumDaDuyet = 0, sumChuaDuyet = 0, sumTonHoaDon = 0, sumChuyenDntt = 0, sumCarpla = 0, sumTndsTon = 0;
-      let sumHsTonOver30 = 0, totalSumAmtUnder10M = 0, totalCountUnder10M = 0, sumCarplaCumulativeRev = 0;
+      let sumHsTonOver30 = 0, sumHsDuPhongOver50M = 0, totalSumAmtUnder10M = 0, totalCountUnder10M = 0, sumCarplaCumulativeRev = 0;
 
       const currentMonth = (period.startDate ? period.startDate.getMonth() + 1 : (new Date().getMonth() + 1));
 
@@ -14305,6 +14331,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         sumTndsTon += r.tndsTonLuyKe;
 
         sumHsTonOver30 += r.hsTonOver30Days || 0;
+        sumHsDuPhongOver50M += r.hsDuPhongOver50M || 0;
         totalSumAmtUnder10M += r.sumAmtUnder10M || 0;
         totalCountUnder10M += r.countUnder10M || 0;
         sumCarplaCumulativeRev += r.carplaCumulativeRevenue || 0;
@@ -14358,6 +14385,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #06b6d4;">LƯỢNG XE CARPLA</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #6366f1;">HỒ SƠ TNDS TỔN LŨY KẾ</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #dc2626;">HS TỒN &gt; 30 NGÀY</th>
+                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #e11d48;">HS DPBT &gt; 50TR</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #2563eb;">SỐ TIỀN BÌNH QUÂN DƯỚI 10TR</th>
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #854d0e; background: #fef08a;">DOANH SỐ CARPLA LŨY KẾ THÁNG ${currentMonth}</th>
                 </tr>
@@ -14377,6 +14405,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #06b6d4; ">${r.carplaCount || 0}</td>
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #6366f1; ">${r.tndsTonLuyKe}</td>
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #dc2626; ">${r.hsTonOver30Days || 0}</td>
+                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #e11d48; ">${r.hsDuPhongOver50M || 0}</td>
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #2563eb; ">${avgUnder10M ? formatCurrencyInputNumber(avgUnder10M) + ' đ' : '0 đ'}</td>
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #854d0e; background: #fef9c3; ">${r.carplaCumulativeRevenue ? formatCurrencyInputNumber(r.carplaCumulativeRevenue) + ' đ' : '0 đ'}</td>
                     </tr>
@@ -14394,6 +14423,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #06b6d4;  font-size: 13.5px;">${sumCarpla}</td>
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #6366f1;  font-size: 13.5px;">${sumTndsTon}</td>
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #dc2626;  font-size: 13.5px;">${sumHsTonOver30}</td>
+                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #e11d48;  font-size: 13.5px;">${sumHsDuPhongOver50M}</td>
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #2563eb;  font-size: 13.5px;">${overallAvgUnder10M ? formatCurrencyInputNumber(overallAvgUnder10M) + ' đ' : '0 đ'}</td>
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #854d0e; background: #fef08a;  font-size: 13.5px;">${sumCarplaCumulativeRev ? formatCurrencyInputNumber(sumCarplaCumulativeRev) + ' đ' : '0 đ'}</td>
                 </tr>
@@ -14579,14 +14609,14 @@ function renderGdvMonthlyReportPage(targetContainer) {
       rawUserEntries.forEach(u => {
         const name = (u.profile?.displayName || u.displayName || u.name || '').trim();
         if (name && !gdvMap[name]) {
-          gdvMap[name] = { gdvName: name, phatSinh: 0, daDuyetHsb: 0, chuaDuyetPasc: 0, tonHoaDon: 0, chuyenDntt: 0, carplaCount: 0, tndsTonLuyKe: 0, hsTonOver30Days: 0, sumAmtUnder10M: 0, countUnder10M: 0, carplaCumulativeRevenue: 0 };
+          gdvMap[name] = { gdvName: name, phatSinh: 0, daDuyetHsb: 0, chuaDuyetPasc: 0, tonHoaDon: 0, chuyenDntt: 0, carplaCount: 0, tndsTonLuyKe: 0, hsTonOver30Days: 0, hsDuPhongOver50M: 0, sumAmtUnder10M: 0, countUnder10M: 0, carplaCumulativeRevenue: 0 };
         }
       });
 
       claimsList.forEach(c => {
         const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || c.canBoBoiThuong || c.gdvName || c.createdByName || 'Chưa phân công').trim();
         if (!gdvMap[gdvName]) {
-          gdvMap[gdvName] = { gdvName, phatSinh: 0, daDuyetHsb: 0, chuaDuyetPasc: 0, tonHoaDon: 0, chuyenDntt: 0, carplaCount: 0, tndsTonLuyKe: 0, hsTonOver30Days: 0, sumAmtUnder10M: 0, countUnder10M: 0, carplaCumulativeRevenue: 0 };
+          gdvMap[gdvName] = { gdvName, phatSinh: 0, daDuyetHsb: 0, chuaDuyetPasc: 0, tonHoaDon: 0, chuyenDntt: 0, carplaCount: 0, tndsTonLuyKe: 0, hsTonOver30Days: 0, hsDuPhongOver50M: 0, sumAmtUnder10M: 0, countUnder10M: 0, carplaCumulativeRevenue: 0 };
         }
 
         const item = gdvMap[gdvName];
@@ -14602,6 +14632,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const nowMs = Date.now();
         if (isOnlyDaDuyetHsbt(c) && claimTime > 0 && (nowMs - claimTime > 30 * 86400 * 1000)) {
           item.hsTonOver30Days++;
+        }
+
+        // 2.5. HS DỰ PHÒNG > 50TR: DỰ PHÒNG BỒI THƯỜNG > 50TR Ở CÁC TRẠNG THÁI (MỚI, CHỜ GĐ HT, ĐÃ GĐ HT, CHỜ GĐCT, ĐÃ GĐCT, CHỜ DUYỆT PASC)
+        if (isHsDuPhongOver50M(c)) {
+          item.hsDuPhongOver50M++;
         }
 
         // 3. CHUYỂN ĐNTT: COUNT CLAIMS OF GDV WHERE 'NGÀY NHẬN ĐỦ HỒ SƠ' (ngayNhanDuHoSo) FALLS WITHIN DATE RANGE [startTime ➔ endTime]
@@ -14817,11 +14852,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
           return 'BÁO CÁO TUẦN / THÁNG';
         })(), '', '', '', '', '', '', ''],
         ['', '', '', period.label, '', '', '', '', '', '', '', ''],
-        ['STT', 'GDV', 'PHÁT SINH', 'ĐÃ DUYỆT HSBT', 'CHƯA DUYỆT PASC', 'CHUYỂN ĐNTT', 'LƯỢNG XE CARPLA', 'HỒ SƠ TNDS TỒN LŨY KẾ', 'HS TỒN > 30 NGÀY', 'SỐ TIỀN BÌNH QUÂN DƯỚI 10TR', `DOANH SỐ CARPLA LŨY KẾ THÁNG ${currentMonth}`]
+        ['STT', 'GDV', 'PHÁT SINH', 'ĐÃ DUYỆT HSBT', 'CHƯA DUYỆT PASC', 'CHUYỂN ĐNTT', 'LƯỢNG XE CARPLA', 'HỒ SƠ TNDS TỒN LŨY KẾ', 'HS TỒN > 30 NGÀY', 'HS DPBT > 50TR', 'SỐ TIỀN BÌNH QUÂN DƯỚI 10TR', `DOANH SỐ CARPLA LŨY KẾ THÁNG ${currentMonth}`]
       ];
 
       let sumPhatSinh = 0, sumDaDuyet = 0, sumChuaDuyet = 0, sumTonHoaDon = 0, sumChuyenDntt = 0, sumCarpla = 0, sumTndsTon = 0;
-      let sumHsTonOver30 = 0, totalSumAmtUnder10M = 0, totalCountUnder10M = 0, sumCarplaCumulativeRev = 0;
+      let sumHsTonOver30 = 0, sumHsDuPhongOver50M = 0, totalSumAmtUnder10M = 0, totalCountUnder10M = 0, sumCarplaCumulativeRev = 0;
 
       list.forEach((r, idx) => {
         const chuaDuyetVal = r.chuaDuyetPasc || Math.max(0, r.phatSinh - r.daDuyetHsb);
@@ -14836,6 +14871,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         sumTndsTon += r.tndsTonLuyKe;
 
         sumHsTonOver30 += r.hsTonOver30Days || 0;
+        sumHsDuPhongOver50M += r.hsDuPhongOver50M || 0;
         totalSumAmtUnder10M += r.sumAmtUnder10M || 0;
         totalCountUnder10M += r.countUnder10M || 0;
         sumCarplaCumulativeRev += r.carplaCumulativeRevenue || 0;
@@ -14850,6 +14886,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           r.carplaCount || 0,
           r.tndsTonLuyKe,
           r.hsTonOver30Days || 0,
+          r.hsDuPhongOver50M || 0,
           avgUnder10M ? formatCurrencyInputNumber(avgUnder10M) + ' đ' : '0 đ',
           r.carplaCumulativeRevenue ? formatCurrencyInputNumber(r.carplaCumulativeRevenue) + ' đ' : '0 đ'
         ]);
@@ -14867,6 +14904,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         sumCarpla,
         sumTndsTon,
         sumHsTonOver30,
+        sumHsDuPhongOver50M,
         overallAvgUnder10M ? formatCurrencyInputNumber(overallAvgUnder10M) + ' đ' : '0 đ',
         sumCarplaCumulativeRev ? formatCurrencyInputNumber(sumCarplaCumulativeRev) + ' đ' : '0 đ'
       ]);
@@ -14882,7 +14920,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
         { wch: 16 },
         { wch: 16 },
         { wch: 18 },
-        { wch: 24 }
+        { wch: 24 },
+        { wch: 18 },
+        { wch: 28 },
+        { wch: 32 }
       ];
 
       const wb = XLSX.utils.book_new();
