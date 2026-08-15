@@ -12807,33 +12807,10 @@ function formatDateDisplay(val) {
       return approvedHsbtStatuses.includes(c.trangThai);
     }
 
-    function isExcludedFromHsTonOver30(c) {
-      if (!c) return true;
+    function isOnlyDaDuyetHsbt(c) {
+      if (!c) return false;
       const st = String(c.trangThai || '').toLowerCase().trim();
-      const excludedStatuses = ['cho_duyet_dntt', 'cho_kt_duyet', 'kt_duyet', 'da_thanh_toan', 'tu_choi'];
-      if (excludedStatuses.includes(st)) return true;
-      if (
-        st.includes('cho_duyet_dntt') ||
-        st.includes('cho_kt_duyet') ||
-        st.includes('kt_duyet') ||
-        st.includes('da_thanh_toan') ||
-        st.includes('tu_choi') ||
-        st.includes('chờ duyệt đntt') ||
-        st.includes('cho duyet dntt') ||
-        st.includes('chờ kt') ||
-        st.includes('cho kt') ||
-        st.includes('kt duyệt') ||
-        st.includes('kt duyet') ||
-        st.includes('kế toán duyệt') ||
-        st.includes('đã thanh toán') ||
-        st.includes('da thanh toan') ||
-        st.includes('từ chối') ||
-        st.includes('tu choi')
-      ) {
-        return true;
-      }
-      if (c.ngayThanhToan) return true;
-      return false;
+      return st === 'da_duyet_hsbt' || st.includes('da_duyet_hsbt') || st.includes('đã duyệt hsbt') || st.includes('da duyet hsbt');
     }
 
     function changeGdvReportSearch(txt) {
@@ -14621,9 +14598,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
           item.tndsTonLuyKe++;
         }
 
-        // 2. HS TỒN > 30 NGÀY: UNPAID CLAIMS OLDER THAN 30 DAYS, EXCLUDING (Chờ duyệt ĐNTT, Chờ KT duyệt, KT duyệt, Đã Thanh toán, Từ chối)
+        // 2. HS TỒN > 30 NGÀY: CHỈ LẤY TRẠNG THÁI 'ĐÃ DUYỆT HSBT' VÀ TUỔI HỒ SƠ > 30 NGÀY
         const nowMs = Date.now();
-        if (!isExcludedFromHsTonOver30(c) && claimTime > 0 && (nowMs - claimTime > 30 * 86400 * 1000)) {
+        if (isOnlyDaDuyetHsbt(c) && claimTime > 0 && (nowMs - claimTime > 30 * 86400 * 1000)) {
           item.hsTonOver30Days++;
         }
 
