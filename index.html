@@ -8375,7 +8375,7 @@ function formatDateDisplay(val) {
                     </div>
                     <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">5. Bổ sung hình ảnh theo hạng mục báo giá</h3>
                     <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
-                      Nhập danh sách hạng mục cần đối chiếu VÀ tải kèm bộ ảnh giám định gốc để Gara tự khớp ảnh sau.
+                      Nhập danh sách hạng mục cần đối chiếu từ báo giá để Gara tiến hành chụp và bổ sung ảnh.
                     </p>
                     <button type="button" class="btn-premium" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;"><span>Tạo kết hợp</span> ${SVGS.ARROW_RIGHT}</button>
                   </div>
@@ -8463,7 +8463,7 @@ function formatDateDisplay(val) {
           const isExcelMode = (activeCreateFlowMode === 'excel');
           const isCombinedMode = (activeCreateFlowMode === 'combined');
           const pageTitle = isCombinedMode ? 'Bổ sung hình ảnh theo hạng mục báo giá' : (isExcelMode ? 'Bổ sung hình ảnh theo hạng mục chỉ định' : 'Hồ sơ Giám định Tiêu chuẩn');
-          const pageSubtitle = isCombinedMode ? 'Nhập danh sách hạng mục cần đối chiếu và tải kèm bộ ảnh giám định gốc để Gara tự khớp.' : (isExcelMode ? 'Lập danh sách bằng bảng Excel thông minh hoặc trích xuất báo giá AI OCR.' : 'Mẫu khởi tạo tiêu chuẩn: Giấy tờ xe, Ảnh 4 góc chéo, Tem đăng kiểm và Số khung (VIN).');
+          const pageSubtitle = isCombinedMode ? 'Nhập danh sách hạng mục cần đối chiếu từ báo giá để Gara bổ sung ảnh.' : (isExcelMode ? 'Lập danh sách bằng bảng Excel thông minh hoặc trích xuất báo giá AI OCR.' : 'Mẫu khởi tạo tiêu chuẩn: Giấy tờ xe, Ảnh 4 góc chéo, Tem đăng kiểm và Số khung (VIN).');
           const sectionNum = isCombinedMode ? '05' : (isExcelMode ? '02' : '01');
 
           const ocrBlockMarkup = (isExcelMode || isCombinedMode) ? `
@@ -8600,18 +8600,7 @@ function formatDateDisplay(val) {
                   </div>
                 </div>
 
-                ${isCombinedMode ? `
-                <div class="workflow-divider">Ảnh giám định đính kèm (Bắt buộc)</div>
-                <div class="form-group" style="margin-bottom: 28px;">
-                  <label>Tải lên bộ ảnh giám định để Gara tự khớp với hạng mục</label>
-                  <div class="dropzone" id="imageDropzone" onclick="document.getElementById('fileImageUploader').click()">
-                    <div><div class="dropzone-icon">${SVGS.IMAGE}</div><strong>Chọn hoặc kéo thả ảnh giám định vào đây</strong><p>Gara sẽ tự khớp các ảnh này với các hạng mục tương ứng ở cổng Gara</p></div>
-                    <input id="fileImageUploader" type="file" accept="image/*" multiple hidden />
-                  </div>
-                  <div id="lblDropzoneSummary" class="file-summary">Chưa có ảnh nào được chọn.</div>
-                  <div id="boxPreviewsHolder" class="preview-grid-premium"></div>
-                </div>
-                ` : ''}
+
 
                 <div style="margin-top: 32px; max-width: 320px; margin-left: auto;">
                   <button id="btnCreateCaseSubmit" class="btn-premium" style="min-height: 52px; font-size: 13px;">${SVGS.SPARKLES} Khởi tạo hồ sơ trực tuyến</button>
@@ -9822,10 +9811,7 @@ function formatDateDisplay(val) {
         triggerToast('Vui lòng nhập ít nhất một hạng mục phụ tùng cần yêu cầu ảnh.', 'error');
         return;
       }
-      if (activeCreateFlowMode === 'combined' && !imagesFileList.length) {
-        triggerToast('Vui lòng tải lên ít nhất một ảnh giám định.', 'error');
-        return;
-      }
+
 
       toggleUploadOverlay(true, imagesFileList.length ? 'Đang mã hóa dữ liệu hình ảnh...' : 'Đang khởi tạo yêu cầu...', 'Chuẩn bị cấu trúc hồ sơ đối chiếu hai chiều...', 0);
 
