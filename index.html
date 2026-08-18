@@ -17080,13 +17080,11 @@ function renderGdvMonthlyReportPage(targetContainer) {
           if (c.claimId) transferredSet.add(String(c.claimId));
           if (c.id) transferredSet.add(String(c.id));
           if (c.soHoSoBoiThuong) transferredSet.add(String(c.soHoSoBoiThuong).toLowerCase().trim());
-          if (c.bienSo) transferredSet.add(String(c.bienSo).toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
         });
 
         if (list.length === 0 && (t.soHoSoBoiThuong || t.bienSo)) {
           if (t.claimId) transferredSet.add(String(t.claimId));
           if (t.soHoSoBoiThuong) transferredSet.add(String(t.soHoSoBoiThuong).toLowerCase().trim());
-          if (t.bienSo) transferredSet.add(String(t.bienSo).toLowerCase().trim().replace(/[^a-z0-9]/g, ''));
         }
       });
 
@@ -17126,11 +17124,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
         const cId = String(c.id || '');
         const hsbt = String(c.soHoSoBoiThuong || c.maVuTonThat || '').toLowerCase().trim();
-        const bienSoClean = String(c.bienSo || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 
         const isAlreadyInBatch = (cId && alreadyTransferredSet.has(cId)) || 
-                                 (hsbt && alreadyTransferredSet.has(hsbt)) ||
-                                 (bienSoClean && alreadyTransferredSet.has(bienSoClean));
+                                 (hsbt && alreadyTransferredSet.has(hsbt));
         return !isAlreadyInBatch;
       });
 
