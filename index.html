@@ -8373,7 +8373,7 @@ function formatDateDisplay(val) {
                     <div class="creation-card-icon-wrap" style="background: rgba(216,180,109,0.12); color: var(--primary);">
                       ${SVGS.SPARKLES}
                     </div>
-                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">5. Khởi tạo kết hợp (Hạng mục & Ảnh)</h3>
+                    <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">5. Bổ sung hình ảnh theo hạng mục báo giá</h3>
                     <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Nhập danh sách hạng mục cần đối chiếu VÀ tải kèm bộ ảnh giám định gốc để Gara tự khớp ảnh sau.
                     </p>
@@ -8462,7 +8462,7 @@ function formatDateDisplay(val) {
         } else if (activeCreateFlowMode === 'excel' || activeCreateFlowMode === 'standard' || activeCreateFlowMode === 'combined') {
           const isExcelMode = (activeCreateFlowMode === 'excel');
           const isCombinedMode = (activeCreateFlowMode === 'combined');
-          const pageTitle = isCombinedMode ? 'Khởi tạo kết hợp (Hạng mục & Ảnh)' : (isExcelMode ? 'Bổ sung hình ảnh theo hạng mục chỉ định' : 'Hồ sơ Giám định Tiêu chuẩn');
+          const pageTitle = isCombinedMode ? 'Bổ sung hình ảnh theo hạng mục báo giá' : (isExcelMode ? 'Bổ sung hình ảnh theo hạng mục chỉ định' : 'Hồ sơ Giám định Tiêu chuẩn');
           const pageSubtitle = isCombinedMode ? 'Nhập danh sách hạng mục cần đối chiếu và tải kèm bộ ảnh giám định gốc để Gara tự khớp.' : (isExcelMode ? 'Lập danh sách bằng bảng Excel thông minh hoặc trích xuất báo giá AI OCR.' : 'Mẫu khởi tạo tiêu chuẩn: Giấy tờ xe, Ảnh 4 góc chéo, Tem đăng kiểm và Số khung (VIN).');
           const sectionNum = isCombinedMode ? '05' : (isExcelMode ? '02' : '01');
 
