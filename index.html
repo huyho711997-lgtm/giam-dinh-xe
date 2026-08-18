@@ -8483,7 +8483,7 @@ function formatDateDisplay(val) {
                       <div style="display: flex; gap: 8px;">
                         <button type="button" id="tabOcrImageBtn" onclick="switchOcrTab('image')" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 800; border: 1px solid var(--primary); background: var(--primary-gradient); color: #080b11; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
                           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                          <span>Quét ảnh báo giá / Đơn hàng (AI OCR)</span>
+                          <span>Quét ảnh/PDF báo giá / Đơn hàng (AI OCR)</span>
                         </button>
                         <button type="button" id="tabOcrTextBtn" onclick="switchOcrTab('text')" style="padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 750; border: 1px solid var(--border); background: var(--surface); color: var(--text-soft); cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
                           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
@@ -8496,11 +8496,11 @@ function formatDateDisplay(val) {
                     <!-- Content Panel: Image Upload Scan -->
                     <div id="panelOcrImage" style="display: block;">
                       <div id="ocrDropzone" onclick="document.getElementById('fileOcrInput').click()" style="border: 2px dashed var(--border); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; background: var(--bg-soft); transition: all 0.2s ease;">
-                        <input id="fileOcrInput" type="file" accept="image/*" onchange="handleOcrImageUpload(event)" hidden />
+                        <input id="fileOcrInput" type="file" accept="image/*,application/pdf" onchange="handleOcrImageUpload(event)" hidden />
                         <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(216,180,109,0.12); color: var(--primary); display: grid; place-items: center; margin: 0 auto 12px auto;">
                           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                         </div>
-                        <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 700;">Tải lên ảnh chụp báo giá của Gara</strong>
+                        <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 700;">Tải lên ảnh chụp hoặc file PDF báo giá của Gara</strong>
                         <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px; max-width: 380px; line-height: 1.6; margin-left: auto; margin-right: auto;">Hệ thống AI sẽ tự động phân tích và trích xuất danh sách các hạng mục phụ tùng xe cơ giới.</p>
                       </div>
 
@@ -8513,7 +8513,7 @@ function formatDateDisplay(val) {
                         </div>
                         <div style="margin-top: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                           <div class="spinner-premium" style="width:28px; height:28px; margin-bottom: 10px;"></div>
-                          <strong style="font-size: 13.5px; color: var(--primary); display: block; font-weight: 750;">Đang quét ảnh báo giá bằng AI...</strong>
+                          <strong style="font-size: 13.5px; color: var(--primary); display: block; font-weight: 750;">Đang quét dữ liệu báo giá bằng AI...</strong>
                           <span style="font-size: 12px; color: var(--text-muted); margin-top: 4px; display: block;">Áp dụng bộ lọc khử nhiễu & trích xuất hạng mục tiếng Việt...</span>
                         </div>
                       </div>
@@ -8984,7 +8984,12 @@ function formatDateDisplay(val) {
       const previewImg = document.getElementById('ocrPreviewImg');
       
       if (previewImg) {
-        previewImg.src = URL.createObjectURL(file);
+        if (file.type === 'application/pdf') {
+          previewImg.style.display = 'none';
+        } else {
+          previewImg.style.display = 'block';
+          previewImg.src = URL.createObjectURL(file);
+        }
       }
       
       if (dropzone) dropzone.style.display = 'none';
