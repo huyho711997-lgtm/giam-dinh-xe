@@ -20074,6 +20074,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
               ` : `
                 <button class="btn-premium btn-secondary" style="padding:12px 24px; border-radius:12px; font-weight:700;" onclick="document.getElementById('viewFieldReimbModal').remove()">Đóng chi tiết</button>
               `}
+              <button class="btn-premium" style="padding:12px 24px; border-radius:12px; font-weight:800; background: #3b82f6; color: #fff; box-shadow: 0 8px 20px rgba(59,130,246,0.25);" onclick="exportFieldReimbursementToExcel('${payload.id}')">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                XUẤT BẢNG KÊ (EXCEL)
+              </button>
             </div>
           </div>
         </div>
@@ -20092,6 +20096,162 @@ function renderGdvMonthlyReportPage(targetContainer) {
         console.error(err);
         triggerToast('Lỗi khi cập nhật.', 'error');
       }
+    }
+
+    function exportFieldReimbursementToExcel(batchId) {
+      if (!window.XLSX) {
+        triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
+        return;
+      }
+      const payload = cachedFieldReimbursementsPayload[batchId];
+      if (!payload) return;
+
+      const items = payload.items || [];
+      const d = new Date(payload.createdAt);
+      const mStr = d.getMonth() + 1;
+      const yStr = d.getFullYear();
+
+      const aoa = [
+        ['BẢNG KÊ CHI TIẾT CHI PHÍ GIÁM ĐỊNH HIỆN TRƯỜNG', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+        [`Tháng ${mStr} Năm ${yStr}`, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
+        [
+          'STT', 'Mã NV', 'Họ và tên',
+          'Thời gian làm thực tế (08:20 không nhập 8h20)', '', '', '',
+          'Trong giờ hành chính\n(8h00 - 18h00)',
+          'Ngoài giờ hành chính\n(18h00 - 8h00)',
+          'Ngày nghỉ\n(chỉ tính ngày chủ nhật), ngày lễ',
+          'Chi tiết Khách hàng giám định', '',
+          'Khoảng cách', 'Chi phí thù lao giám định', 'Phương tiện di chuyển',
+          'Chi phí phát sinh', '', '', ''
+        ],
+        [
+          '', '', '',
+          'Ngày/ tháng/năm', 'Thứ', 'Bắt đầu', 'Kết thúc',
+          '', '', '',
+          'Biển số xe của KH', 'Số HSBT',
+          '', '', '',
+          'Chi phí đi lại', 'Công tác phí\n(nếu thời gian giám định > 15 giờ)', 'Chi phí lưu trú\n(nếu có)', 'Địa bàn giám định\n(trường hợp phát sinh CP lưu trú)'
+        ]
+      ];
+
+      items.forEach((item, idx) => {
+        let dStart = new Date(item.startDatetime || item.datetime);
+        let dEnd = new Date(item.datetime);
+        
+        let dateStr = dEnd.toLocaleDateString('en-GB');
+        let dayOfWeek = dEnd.getDay() === 0 ? 'CN' : (dEnd.getDay() + 1).toString();
+        let startTime = item.startDatetime ? dStart.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'}) : '';
+        let endTime = dEnd.toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'});
+
+        let isInOfficeHours = (!item.calcResult.isAfterHours && !item.calcResult.isWeekendOrHoliday) ? 'x' : '';
+        let isAfterHours = (item.calcResult.isAfterHours && !item.calcResult.isWeekendOrHoliday) ? 'x' : '';
+        let isWeekendHoliday = item.calcResult.isWeekendOrHoliday ? 'x' : '';
+
+        if (item.calcResult.isWeekendOrHoliday) {
+           isInOfficeHours = '';
+           isAfterHours = '';
+           isWeekendHoliday = 'x';
+        } else if (item.calcResult.isAfterHours) {
+           isInOfficeHours = '';
+           isAfterHours = 'x';
+           isWeekendHoliday = '';
+        }
+
+        aoa.push([
+          idx + 1,
+          payload.gdvUid ? payload.gdvUid.substring(0, 7).toUpperCase() : '',
+          payload.gdvName,
+          dateStr,
+          dayOfWeek,
+          startTime,
+          endTime,
+          isInOfficeHours,
+          isAfterHours,
+          isWeekendHoliday,
+          item.bienSo,
+          item.soHSBT || '',
+          item.distanceKm,
+          item.calcResult.finalCost || 0,
+          item.vehicle || 'Phương tiện cá nhân',
+          item.travelCost || '',
+          item.perDiem || '',
+          item.hotelCost || '',
+          item.location || ''
+        ]);
+      });
+
+      for(let i=0; i<3; i++) aoa.push(Array(19).fill(''));
+      
+      aoa.push(['NGƯỜI LẬP', '', '', '', '', '', '', '', '', '', '', '', '', '', 'XÁC NHẬN CỦA TRƯỞNG TRUNG TÂM GIÁM ĐỊNH', '', '', '', '']);
+
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+      ws['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 18 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 18 } },
+        { s: { r: 2, c: 0 }, e: { r: 3, c: 0 } },
+        { s: { r: 2, c: 1 }, e: { r: 3, c: 1 } },
+        { s: { r: 2, c: 2 }, e: { r: 3, c: 2 } },
+        { s: { r: 2, c: 3 }, e: { r: 2, c: 6 } },
+        { s: { r: 2, c: 7 }, e: { r: 3, c: 7 } },
+        { s: { r: 2, c: 8 }, e: { r: 3, c: 8 } },
+        { s: { r: 2, c: 9 }, e: { r: 3, c: 9 } },
+        { s: { r: 2, c: 10 }, e: { r: 2, c: 11 } },
+        { s: { r: 2, c: 12 }, e: { r: 3, c: 12 } },
+        { s: { r: 2, c: 13 }, e: { r: 3, c: 13 } },
+        { s: { r: 2, c: 14 }, e: { r: 3, c: 14 } },
+        { s: { r: 2, c: 15 }, e: { r: 2, c: 18 } },
+        { s: { r: aoa.length - 1, c: 0 }, e: { r: aoa.length - 1, c: 3 } },
+        { s: { r: aoa.length - 1, c: 14 }, e: { r: aoa.length - 1, c: 18 } }
+      ];
+
+      for (let R = 0; R < aoa.length; ++R) {
+        for (let C = 0; C < 19; ++C) {
+          let cellAddress = {c: C, r: R};
+          let cellRef = XLSX.utils.encode_cell(cellAddress);
+          if (!ws[cellRef]) continue;
+          
+          if (!ws[cellRef].s) ws[cellRef].s = {};
+          
+          ws[cellRef].s.font = { name: "Times New Roman", sz: 11 };
+          ws[cellRef].s.alignment = { vertical: "center", horizontal: "center", wrapText: true };
+          
+          if (R > 1 && R < aoa.length - 1) {
+            ws[cellRef].s.border = {
+               top: { style: "thin", color: { auto: 1 } },
+               bottom: { style: "thin", color: { auto: 1 } },
+               left: { style: "thin", color: { auto: 1 } },
+               right: { style: "thin", color: { auto: 1 } }
+            };
+          }
+
+          if (R === 0) {
+            ws[cellRef].s.font = { name: "Times New Roman", sz: 14, bold: true };
+          } else if (R === 1) {
+             ws[cellRef].s.font = { name: "Times New Roman", sz: 11, bold: false, italic: true };
+          } else if (R === 2 || R === 3) {
+            ws[cellRef].s.font = { name: "Times New Roman", sz: 10, bold: true };
+            if (C === 7 || C === 8 || C === 9 || (R===2 && C===3)) {
+               ws[cellRef].s.font.color = { rgb: "FF0000" };
+            }
+          } else if (R === aoa.length - 1) {
+            ws[cellRef].s.font = { name: "Times New Roman", sz: 11, bold: true };
+          }
+        }
+      }
+
+      ws['!cols'] = [
+        { wch: 5 }, { wch: 10 }, { wch: 20 },
+        { wch: 12 }, { wch: 5 }, { wch: 8 }, { wch: 8 },
+        { wch: 15 }, { wch: 15 }, { wch: 15 },
+        { wch: 15 }, { wch: 25 },
+        { wch: 10 }, { wch: 15 }, { wch: 15 },
+        { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 20 }
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'BangKe_ChiPhiHT');
+      XLSX.writeFile(wb, `BangKe_ChiPhi_HienTruong_${batchId}.xlsx`);
     }
 </script>
 </body>
