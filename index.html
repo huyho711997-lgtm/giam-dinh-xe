@@ -19550,7 +19550,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
 
       let multiplier = 1;
-      let maxCap = Infinity;
+      let maxCap = null;
 
       if (isHolidayChecked || isWeekend) {
         multiplier = 3;
@@ -19561,7 +19561,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
 
       let finalCost = baseFee * multiplier;
-      if (finalCost > maxCap) finalCost = maxCap;
+      if (maxCap !== null && finalCost > maxCap) finalCost = maxCap;
 
       return {
         baseFee,
