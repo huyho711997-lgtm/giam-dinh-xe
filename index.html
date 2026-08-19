@@ -19720,8 +19720,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <span id="reimbDraftTotalAmount" style="color: #10b981; font-size: 20px; font-weight: 900; line-height:1;">0 đ</span>
             </div>
             <div style="display:flex; gap:12px;">
-              <button class="btn-premium btn-secondary" style="height: 44px; padding: 0 24px; border-radius:12px; font-weight:700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('createFieldReimbModal').remove()">Đóng</button>
-              <button class="btn-premium" style="height: 44px; padding: 0 24px; border-radius:12px; font-weight:800; font-size: 14px; box-shadow: 0 6px 16px rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; white-space: nowrap; min-width: 140px;" onclick="submitFieldReimbursementBatch()" id="btnSubmitReimb">
+              <button class="btn-premium btn-secondary" style="width: auto !important; height: 44px; padding: 0 24px; border-radius:12px; font-weight:700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('createFieldReimbModal').remove()">Đóng</button>
+              <button class="btn-premium" style="width: auto !important; height: 44px; padding: 0 24px; border-radius:12px; font-weight:800; font-size: 14px; box-shadow: 0 6px 16px rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; white-space: nowrap; min-width: 140px;" onclick="submitFieldReimbursementBatch()" id="btnSubmitReimb">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                 Tạo phiếu
               </button>
@@ -20070,18 +20070,18 @@ function renderGdvMonthlyReportPage(targetContainer) {
             </div>
             <div style="display:flex; gap:12px;">
               ${canReview && payload.status === 'pending' ? `
-                <button class="btn-premium" style="background: #ef4444; color: #fff; box-shadow: 0 8px 20px rgba(239,68,68,0.25); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'rejected')">
+                <button class="btn-premium" style="width: auto !important; background: #ef4444; color: #fff; box-shadow: 0 8px 20px rgba(239,68,68,0.25); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'rejected')">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   TỪ CHỐI
                 </button>
-                <button class="btn-premium" style="background: #10b981; color: #fff; box-shadow: 0 8px 20px rgba(16,185,129,0.25); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'approved')">
+                <button class="btn-premium" style="width: auto !important; background: #10b981; color: #fff; box-shadow: 0 8px 20px rgba(16,185,129,0.25); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'approved')">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
                   PHÊ DUYỆT
                 </button>
               ` : `
-                <button class="btn-premium btn-secondary" style="padding:12px 24px; border-radius:12px; font-weight:700;" onclick="document.getElementById('viewFieldReimbModal').remove()">Đóng chi tiết</button>
+                <button class="btn-premium btn-secondary" style="width: auto !important; padding:12px 24px; border-radius:12px; font-weight:700;" onclick="document.getElementById('viewFieldReimbModal').remove()">Đóng chi tiết</button>
               `}
-              <button class="btn-premium" style="padding:12px 24px; border-radius:12px; font-weight:800; background: #3b82f6; color: #fff; box-shadow: 0 8px 20px rgba(59,130,246,0.25);" onclick="exportFieldReimbursementToExcel('${payload.id}')">
+              <button class="btn-premium" style="width: auto !important; white-space: nowrap; padding:12px 24px; border-radius:12px; font-weight:800; background: #3b82f6; color: #fff; box-shadow: 0 8px 20px rgba(59,130,246,0.25);" onclick="exportFieldReimbursementToExcel('${payload.id}')">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 XUẤT BẢNG KÊ (EXCEL)
               </button>
