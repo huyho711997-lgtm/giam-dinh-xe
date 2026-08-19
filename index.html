@@ -2664,7 +2664,7 @@
 
   <!-- Modal Tiếp Nhận Hồ Sơ Tồn (Dán tin & Nhập biểu mẫu riêng biệt) -->
   <div id="addPendingClaimModalOverlay" class="p-modal-overlay" aria-hidden="true" style="display: none;">
-    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="addPendingClaimModalTitle" style="width: 96vw; height: 92vh; max-width: 1400px; min-width: 900px; max-height: 92vh; min-height: 600px; display: flex; flex-direction: column; overflow: hidden; padding: 0; border-radius: 16px; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5);">
+    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="addPendingClaimModalTitle" style="width: 96vw; height: 92vh; max-width: 98vw; min-width: 900px; max-height: 92vh; min-height: 600px; display: flex; flex-direction: column; overflow: hidden; padding: 0; border-radius: 16px; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5);">
       <!-- Header -->
       <div style="padding: 20px 28px 14px; border-bottom: 1px solid var(--border); background: var(--surface-strong); flex-shrink: 0;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -13300,7 +13300,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             box-shadow: var(--shadow-xs) !important;
           }
         </style>
-        <div style="padding: 24px 28px; max-width: 1600px; margin: 0 auto;">
+        <div style="padding: 24px 28px; max-width: 98vw; margin: 0 auto;">
           
           <!-- ADAPTIVE HERO BANNER HEADER -->
           <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 20px; box-shadow: var(--shadow-sm); position: relative;">
@@ -19586,7 +19586,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       m.id = 'createFieldReimbModal';
       m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); backdrop-filter:blur(8px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
       m.innerHTML = `
-        <div style="background:var(--surface); border-radius:24px; width:98vw; max-width:1600px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div style="background:var(--surface); border-radius:24px; width:98vw; max-width:98vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
           
           <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background: var(--surface); position: relative; overflow: hidden;">
             <div style="position: absolute; right: -20px; top: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(216,180,109,0.15) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
@@ -19985,7 +19985,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       else if (payload.status === 'rejected') statusHtml = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#ef4444; display:inline-block;"></span>Từ chối</span>';
 
       m.innerHTML = `
-        <div style="background:var(--surface); border-radius:24px; width:95vw; max-width:1400px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div style="background:var(--surface); border-radius:24px; width:95vw; max-width:98vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
           <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface); position:relative; overflow:hidden;">
             <div style="position: absolute; right: -20px; top: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
             
