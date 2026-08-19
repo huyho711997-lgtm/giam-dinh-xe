@@ -2333,10 +2333,7 @@
                 <option value="Garage">Garage</option>
               </select>
             </div>
-            <div style="grid-column: span 2;">
-              <label style="display: block; font-size: 12px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">Đơn vị / Phòng ban:</label>
-              <input id="newAdminDepartment" class="input-premium" type="text" maxlength="100" placeholder="Ví dụ: Bộ phận Giám định Bồi thường" autocomplete="off" style="height: 42px; border-radius: 10px;" />
-            </div>
+            <div><label style="display: block; font-size: 12px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">Mã nhân viên (nếu có):</label><input id="newAdminEmployeeId" class="input-premium" type="text" maxlength="50" placeholder="VD: TIC0319" autocomplete="off" style="height: 42px; border-radius: 10px;" /></div><div><label style="display: block; font-size: 12px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">Đơn vị / Phòng ban:</label><input id="newAdminDepartment" class="input-premium" type="text" maxlength="100" placeholder="Ví dụ: Bộ phận Giám định" autocomplete="off" style="height: 42px; border-radius: 10px;" /></div>
           </div>
         </div>
 
@@ -2523,7 +2520,7 @@
                 <option value="Garage">Garage</option>
               </select>
             </div>
-            <div>
+            <div><label style="display: block; font-size: 12px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">Mã nhân viên (nếu có):</label><input id="editAdminEmployeeId" class="input-premium" type="text" maxlength="50" placeholder="VD: TIC0319" autocomplete="off" style="height: 42px; border-radius: 10px;" /></div><div>
               <label style="display: block; font-size: 12px; font-weight: 850; color: var(--text-main); margin-bottom: 6px;">Đơn vị / Phòng ban:</label>
               <input id="editAdminDepartment" class="input-premium" type="text" maxlength="100" placeholder="Ví dụ: Bộ phận Giám định Bồi thường" autocomplete="off" style="height: 42px; border-radius: 10px;" />
             </div>
@@ -4573,7 +4570,9 @@
       const displayName = String(profile.displayName || userInstance?.displayName || 'Giám định viên').trim();
       const role = String(profile.role || 'Giám định viên').trim();
       const department = String(profile.department || 'Bộ phận Giám định').trim();
-      return { displayName, email, role, department, initials: deriveInitials(displayName), isConfigured: Boolean(profile.isConfigured || userInstance?.displayName || (profile.displayName && profile.displayName !== 'Giám định viên')) };
+      const employeeId = String(profile.employeeId || '').trim();
+      return { displayName, email, role, department,
+          employeeId, initials: deriveInitials(displayName), isConfigured: Boolean(profile.isConfigured || userInstance?.displayName || (profile.displayName && profile.displayName !== 'Giám định viên')) };
     }
 
     
@@ -5255,10 +5254,12 @@
       const displayName = String(document.getElementById('profileDisplayName')?.value || '').trim();
       const role = String(document.getElementById('profileRole')?.value || '').trim() || 'Giám định viên';
       const department = String(document.getElementById('profileDepartment')?.value || '').trim() || 'Bộ phận Giám định';
+      const employeeId = activeUserProfile?.employeeId || '';
       if (displayName.length < 2) return triggerToast('Vui lòng nhập họ tên hiển thị hợp lệ.', 'error');
       const button = document.getElementById('btnSaveUserProfile');
       toggleButtonUIPendingState(button, true, 'Đang lưu...');
-      const payload = { displayName, role, department, email: user.email || '', updatedAt: Date.now() };
+      const payload = { displayName, role, department,
+          employeeId, email: user.email || '', updatedAt: Date.now() };
       try {
         await user.updateProfile({ displayName });
         activeUserProfile = payload;
@@ -5425,6 +5426,7 @@
       const password = String(document.getElementById('newAdminPassword')?.value || '').trim();
       const role = String(document.getElementById('newAdminRole')?.value || '').trim();
       const department = String(document.getElementById('newAdminDepartment')?.value || '').trim() || 'Bộ phận Giám định';
+      const employeeId = String(document.getElementById('newAdminEmployeeId')?.value || '').trim();
       
       if (!displayName) return triggerToast('Vui lòng nhập họ và tên hiển thị.', 'warning');
       if (!email) return triggerToast('Vui lòng nhập email đăng nhập.', 'warning');
@@ -5449,6 +5451,7 @@
           email,
           role,
           department,
+          employeeId,
           permissions,
           createdAt: Date.now()
         };
@@ -5514,6 +5517,7 @@
       const displayName = String(document.getElementById('editAdminDisplayName')?.value || '').trim();
       const role = String(document.getElementById('editAdminRole')?.value || '').trim();
       const department = String(document.getElementById('editAdminDepartment')?.value || '').trim() || 'Bộ phận Giám định';
+      const employeeId = String(document.getElementById('editAdminEmployeeId')?.value || '').trim();
       
       if (!displayName) return triggerToast('Vui lòng nhập họ và tên hiển thị.', 'warning');
       
@@ -5528,6 +5532,7 @@
           displayName,
           role,
           department,
+          employeeId,
           permissions,
           updatedAt: Date.now()
         };
