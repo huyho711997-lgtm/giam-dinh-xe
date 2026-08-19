@@ -19446,6 +19446,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const bsInput = document.getElementById('reimbInputBS');
         const hsbtInput = document.getElementById('reimbInputHSBT');
         const startInput = document.getElementById('reimbInputStartDate');
+        const endInput = document.getElementById('reimbInputDate');
         const dropdown = document.getElementById('reimbBSDropdown');
         
         if (data.bienSo) bsInput.value = data.bienSo;
@@ -19460,6 +19461,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
              const hour = parts[3].padStart(2, '0');
              const min = parts[4].padStart(2, '0');
              startInput.value = `${year}-${month}-${day}T${hour}:${min}`;
+             if (endInput) endInput.value = `${year}-${month}-${day}T${hour}:${min}`;
            }
         }
         
