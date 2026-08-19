@@ -20180,7 +20180,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         ]);
       });
 
-      
+      aoa.push(Array(19).fill(''));
       aoa.push(['NGƯỜI LẬP', '', '', '', '', '', '', '', '', '', '', '', '', '', 'XÁC NHẬN CỦA TRƯỞNG TRUNG TÂM GIÁM ĐỊNH', '', '', '', '']);
 
       const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -20215,7 +20215,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           ws[cellRef].s.font = { name: "Times New Roman", sz: 11 };
           ws[cellRef].s.alignment = { vertical: "center", horizontal: "center", wrapText: true };
           
-          if (R > 1 && R < aoa.length - 1) {
+          if (R > 1 && R < aoa.length - 2) {
             ws[cellRef].s.border = {
                top: { style: "thin", color: { auto: 1 } },
                bottom: { style: "thin", color: { auto: 1 } },
