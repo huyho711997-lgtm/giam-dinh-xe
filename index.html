@@ -4446,6 +4446,7 @@
         const email = escapeHtmlOutput(profile.email || 'Chưa cập nhật email');
         const role = String(profile.role || 'Giám định viên').trim();
         const department = escapeHtmlOutput(profile.department || 'Bộ phận Giám định');
+        const employeeId = escapeHtmlOutput(profile.employeeId || '');
         const initials = deriveInitials(displayName);
         
         let roleBadge = '';
