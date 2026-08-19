@@ -20116,7 +20116,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         [`Tháng ${mStr} Năm ${yStr}`, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
         [
           'STT', 'Mã NV', 'Họ và tên',
-          'Thời gian làm thực tế (08:20 không nhập 8h20)', '', '', '',
+          'Thời gian làm thực tế\n(08:20 không nhập 8h20)', '', '', '',
           'Trong giờ hành chính\n(8h00 - 18h00)',
           'Ngoài giờ hành chính\n(18h00 - 8h00)',
           'Ngày nghỉ\n(chỉ tính ngày chủ nhật), ngày lễ',
@@ -20180,7 +20180,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
         ]);
       });
 
-      for(let i=0; i<3; i++) aoa.push(Array(19).fill(''));
       
       aoa.push(['NGƯỜI LẬP', '', '', '', '', '', '', '', '', '', '', '', '', '', 'XÁC NHẬN CỦA TRƯỞNG TRUNG TÂM GIÁM ĐỊNH', '', '', '', '']);
 
@@ -20248,6 +20247,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
         { wch: 10 }, { wch: 15 }, { wch: 15 },
         { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 20 }
       ];
+
+      ws['!rows'] = [{hpt: 20}, {hpt: 20}, {hpt: 35}, {hpt: 55}];
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'BangKe_ChiPhiHT');
