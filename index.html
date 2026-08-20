@@ -18458,16 +18458,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
         return `
           <tr style="border-bottom: 1px solid var(--border); font-size: 13px;">
             <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 44px;">${idx + 1}</td>
-            <td style="padding: 12px 10px; font-weight: 800;  color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
-            <td style="padding: 12px 10px; font-weight: 700;  color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
-            <td style="padding: 12px 10px; text-align: left; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(gara)}">${escapeHtmlOutput(gara)}</td>
-            <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
-            <td style="padding: 12px 10px; font-weight: 850;  color: #10b981; text-align: right; font-size: 13.5px;">${reserve} đ</td>
             <td style="padding: 12px 10px; text-align: center;">
               <span style="display: inline-block; padding: 3px 8px; border-radius: 99px; font-size: 10px; font-weight: 850; background: rgba(59,130,246,0.06); color: ${statusColor}; border: 1px solid ${statusColor};">
                 ${statusLabel}
               </span>
             </td>
+            <td style="padding: 12px 10px; font-weight: 800;  color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
+            <td style="padding: 12px 10px; font-weight: 700;  color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
+            <td style="padding: 12px 10px; text-align: left; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(gara)}">${escapeHtmlOutput(gara)}</td>
+            <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
+            <td style="padding: 12px 10px; font-weight: 850;  color: #10b981; text-align: right; font-size: 13.5px;">${reserve} đ</td>
             <td style="padding: 6px 8px; text-align: left; width: 250px;">
               <textarea 
                 placeholder="Nhập vướng mắc..." 
@@ -18512,12 +18512,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <thead>
                 <tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border-strong);">
                   <th style="padding: 12px 10px; width: 44px; text-align: center;">STT</th>
+                  <th style="padding: 12px 10px; text-align: center; width: 110px;">Trạng thái</th>
                   <th style="padding: 12px 10px; width: 110px;">Biển số xe</th>
                   <th style="padding: 12px 10px; width: 140px;">Số HSBT</th>
                   <th style="padding: 12px 10px;">Gara sửa chữa (Viết tắt)</th>
                   <th style="padding: 12px 10px;">Giám định viên</th>
                   <th style="padding: 12px 10px; text-align: right; width: 150px;">Dự phòng BT</th>
-                  <th style="padding: 12px 10px; text-align: center; width: 110px;">Trạng thái</th>
                   <th style="padding: 12px 10px; width: 250px;">Vướng mắc / Khó khăn</th>
                   <th style="padding: 12px 10px; width: 150px; text-align: center;">Ngày dự kiến HT</th>
                 </tr>
