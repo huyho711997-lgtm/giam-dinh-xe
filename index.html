@@ -12942,6 +12942,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 if (f.activeGdvReportDaysRange) activeGdvReportDaysRange = f.activeGdvReportDaysRange;
                 if (f.activeSelectedDakLakStatuses) activeSelectedDakLakStatuses = f.activeSelectedDakLakStatuses;
                 
+                if (f.activeReportClaimType) activeReportClaimType = f.activeReportClaimType;
+                if (f.activeDakLakMinReserve) activeDakLakMinReserve = f.activeDakLakMinReserve;
                 hasAppliedDefaultFilter = true;
                 renderGdvMonthlyReportPage(container);
                 return;
@@ -19264,6 +19266,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (f.activeGdvReportGara) activeGdvReportGara = f.activeGdvReportGara;
       if (f.activeGdvReportDaysRange) activeGdvReportDaysRange = f.activeGdvReportDaysRange;
       if (f.activeSelectedDakLakStatuses) activeSelectedDakLakStatuses = f.activeSelectedDakLakStatuses;
+      if (f.activeReportClaimType) activeReportClaimType = f.activeReportClaimType;
+      if (f.activeDakLakMinReserve) activeDakLakMinReserve = f.activeDakLakMinReserve;
       
       triggerToast(`Đã áp dụng bộ lọc "${fav.name}"`, 'success');
       
@@ -19302,7 +19306,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
           activeGdvReportBranch: activeGdvReportBranch || 'all',
           activeGdvReportGara: activeGdvReportGara || 'all',
           activeGdvReportDaysRange: activeGdvReportDaysRange || 'all',
-          activeSelectedDakLakStatuses: activeSelectedDakLakStatuses || []
+          activeSelectedDakLakStatuses: activeSelectedDakLakStatuses || [],
+          activeReportClaimType: activeReportClaimType || 'all',
+          activeDakLakMinReserve: activeDakLakMinReserve || 100000000
         }
       };
       
