@@ -12600,6 +12600,7 @@ function formatDateDisplay(val) {
     let activeFavoriteFiltersUid = null;
     let activeGdvReportView = 'weekly_zone'; // 'table' | 'chart'
     let activeSelectedDakLakStatuses = ['da_duyet_pasc', 'cho_duyet_hsbt'];
+    let activeReportClaimType = 'all';
     let activeDakLakMinReserve = 100000000;
     let activeOpenDropdownId = null;
 
@@ -12998,6 +12999,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
       // Filter claims based on selected Start Date & End Date range and Branch across ALL tabs
       const filteredClaims = parsedClaims.filter(item => {
         const c = item.raw;
+
+        if (activeReportClaimType !== 'all') {
+          const spText = String(c.tnds || c.vcx || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.loaiHs || c.nghiepVu || '').toUpperCase();
+          const loaiType = (c.tnds || spText.includes('TNDS')) ? 'TNDS' : 'VCX';
+          if (activeReportClaimType !== loaiType) return false;
+        }
+
 
         if (activeGdvReportView === 'weekly_zone') {
           const claimTime = item.timestamp;
@@ -13518,7 +13526,33 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </div>
               ` : ''}
 
-              <!-- Custom Reserve Threshold & Status Dropdowns for Dak Lak Report -->
+              
+              <!-- Claim Type (Nghiệp vụ) Selection Dropdown -->
+              <div class="custom-select-wrapper" style="position: relative;" id="accReportClaimTypeFilterWrapper">
+                <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportClaimTypeMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 160px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
+                  <span style="display: flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                    <span>Loại HS: ${activeReportClaimType === 'all' ? 'Tất cả' : activeReportClaimType}</span>
+                  </span>
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+
+                <div id="ddReportClaimTypeMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddReportClaimTypeMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); left: 0; min-width: 160px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px);">
+                  <div class="custom-select-item ${activeReportClaimType === 'all' ? 'active' : ''}" onclick="selectReportClaimType('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeReportClaimType === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                    <span>Cả 2 (VCX & TNDS)</span>
+                    ${activeReportClaimType === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  <div class="custom-select-item ${activeReportClaimType === 'VCX' ? 'active' : ''}" onclick="selectReportClaimType('VCX')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeReportClaimType === 'VCX' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                    <span>Vật chất xe (VCX)</span>
+                    ${activeReportClaimType === 'VCX' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  <div class="custom-select-item ${activeReportClaimType === 'TNDS' ? 'active' : ''}" onclick="selectReportClaimType('TNDS')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeReportClaimType === 'TNDS' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                    <span>Trách nhiệm DS (TNDS)</span>
+                    ${activeReportClaimType === 'TNDS' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                </div>
+              </div>
+<!-- Custom Reserve Threshold & Status Dropdowns for Dak Lak Report -->
               ${activeGdvReportView === 'daklak_reserve' ? `
               <!-- Reserve Threshold Selection Dropdown (>50M vs >100M) -->
               <div class="custom-select-wrapper" style="position: relative;" id="accDakLakReserveThresholdFilterWrapper">
@@ -18164,6 +18198,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
       activeSelectedDakLakStatuses = [];
       renderGdvReportPage();
+    }
+
+    function selectReportClaimType(val) {
+      activeReportClaimType = val;
+      activeOpenDropdownId = null;
+      renderGdvMonthlyReportPage();
     }
 
     function selectDakLakMinReserve(val) {
