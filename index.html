@@ -14370,6 +14370,35 @@ function renderGdvMonthlyReportPage(targetContainer) {
       return `
         <div id="weeklyZoneReportCardContainer" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 26px 30px; margin-bottom: 24px; box-shadow: var(--shadow-sm); position: relative;">
           
+          <div class="hide-on-screenshot" style="position: absolute; left: 26px; top: 22px; z-index: 10;">
+            <div class="custom-select-wrapper" style="position: relative;">
+              <button type="button" class="btn-premium btn-secondary" onclick="toggleCustomDropdownMenu('ddWeeklyColsMenu', event)" style="padding: 8px 16px; border-radius: 11px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-xs);">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                <span>Ẩn/Hiện cột</span>
+              </button>
+              <div id="ddWeeklyColsMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddWeeklyColsMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); left: 0; min-width: 240px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; text-align: left;">
+                <div style="font-size: 11.5px; font-weight: 850; color: var(--text-soft); padding: 0 4px 8px 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px;">TÙY CHỌN HIỂN THỊ CỘT</div>
+                ${[
+                  { id: 'PHAT_SINH', label: 'Phát sinh' },
+                  { id: 'DA_DUYET', label: 'Đã duyệt HSBT' },
+                  { id: 'CHUA_DUYET', label: 'Chưa duyệt PASC' },
+                  { id: 'CHUYEN_DNTT', label: 'Chuyển ĐNTT' },
+                  { id: 'LGN_CARPLA', label: 'Lượng xe Carpla' },
+                  { id: 'TNDS_TON', label: 'Hồ sơ TNDS tồn lũy kế' },
+                  { id: 'HS_TON_30', label: 'HS Tồn > 30 ngày' },
+                  { id: 'HS_DPBT_50', label: 'HS DPBT > 50TR' },
+                  { id: 'AVG_10', label: 'Số tiền bình quân < 10TR' },
+                  { id: 'REV_CARPLA', label: 'Doanh số Carpla lũy kế tháng' }
+                ].map(col => `
+                  <label style="display: flex; align-items: center; gap: 8px; padding: 6px 4px; cursor: pointer;">
+                    <input type="checkbox" ${activeWeeklyReportCols.includes(col.id) ? 'checked' : ''} onclick="toggleWeeklyReportCol('${col.id}', event)" style="accent-color: var(--primary); width: 14px; height: 14px;">
+                    <span style="font-size: 13px; font-weight: 700; color: var(--text-main);">${col.label}</span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+
           <div class="hide-on-screenshot" style="position: absolute; right: 26px; top: 22px; z-index: 10;">
             <button type="button" onclick="downloadWeeklyZoneReportImage('png')" style="padding: 8px 16px; border-radius: 11px; background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(245,158,11,0.12) 100%); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; font-size: 12.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Tải ảnh báo cáo tuần (PNG/JPG)">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
