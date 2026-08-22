@@ -12603,6 +12603,17 @@ function formatDateDisplay(val) {
     let activeReportClaimType = 'all';
     let activeDakLakMinReserve = 100000000;
     let activeOpenDropdownId = null;
+    let activeWeeklyReportCols = ['PHAT_SINH', 'DA_DUYET', 'CHUA_DUYET', 'CHUYEN_DNTT', 'LGN_CARPLA', 'TNDS_TON', 'HS_TON_30', 'HS_DPBT_50', 'AVG_10', 'REV_CARPLA'];
+
+    function toggleWeeklyReportCol(col, event) {
+      if (event) event.stopPropagation();
+      if (activeWeeklyReportCols.includes(col)) {
+        activeWeeklyReportCols = activeWeeklyReportCols.filter(c => c !== col);
+      } else {
+        activeWeeklyReportCols.push(col);
+      }
+      renderGdvReportPage();
+    }
 
     // Global Click Listener to Close Custom Dropdowns
     if (!window.hasRegisteredCustomDropdownListener) {
@@ -14659,6 +14670,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       const startTime = period.startDate.getTime();
       const endTime = period.endDate.getTime();
+      const monthStartMs = new Date(period.endDate.getFullYear(), period.endDate.getMonth(), 1).getTime();
+      const monthEndMs = new Date(period.endDate.getFullYear(), period.endDate.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
 
       const gdvMap = {};
 
