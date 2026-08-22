@@ -14720,14 +14720,23 @@ function renderGdvMonthlyReportPage(targetContainer) {
           }
         }
 
+        const garaName = String(c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || '').toLowerCase();
+        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+        const amtVal = parseInt(amtStr, 10) || 0;
+
+        // DOANH SỐ CARPLA LŨY KẾ: CLAIMS WITHIN THE ENTIRE MONTH OF SELECTED END DATE, APPROVED STATUS, GARAGE CONTAINS 'CARPLA'
+        if (garaName.includes('carpla') && isApproved) {
+          if (claimTime >= monthStartMs && claimTime <= monthEndMs) {
+            item.carplaCumulativeRevenue += amtVal;
+          }
+        }
+
         // 4. PERIOD-SPECIFIC METRICS (FILTERED BY START & END DATE RANGE)
         if (claimTime < startTime || claimTime > endTime) {
           return;
         }
 
         item.phatSinh++;
-        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
-        const amtVal = parseInt(amtStr, 10) || 0;
 
         if (isApproved) {
           item.daDuyetHsb++;
@@ -14746,14 +14755,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
           item.tonHoaDon++;
         }
 
-        const garaName = String(c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || '').toLowerCase();
         if (garaName.includes('carpla')) {
           item.carplaCount++;
-          
-          // DOANH SỐ CARPLA LŨY KẾ: CLAIMS WITHIN DATE RANGE, APPROVED STATUS ('Đã duyệt HSBT'), AND GARAGE CONTAINS 'CARPLA'
-          if (isApproved) {
-            item.carplaCumulativeRevenue += amtVal;
-          }
         }
       });
 
