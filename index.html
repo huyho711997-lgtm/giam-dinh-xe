@@ -18845,6 +18845,25 @@ function renderGdvMonthlyReportPage(targetContainer) {
         return true;
       });
 
+
+        // Map Accounting Transfers
+        const accTransfers = Object.values(cachedAccountingTransfersPayload || {});
+        const hsbtToNgayXacNhanMap = {};
+        accTransfers.forEach(t => {
+          if (['da_xac_nhan', 'da_nhan_du_ho_so', 'da_trinh_dntt'].includes(t.trangThai)) {
+            const confirmTime = t.ngayXetDuyet || t.ngayBanGiao; 
+            const claimsList = t.danhSachHoSo || [];
+            claimsList.forEach(cItem => {
+               const hsbt = cItem.soHoSoBoiThuong || cItem.soHsbt;
+               if (hsbt) {
+                  if (!hsbtToNgayXacNhanMap[hsbt] || hsbtToNgayXacNhanMap[hsbt] < confirmTime) {
+                     hsbtToNgayXacNhanMap[hsbt] = confirmTime;
+                  }
+               }
+            });
+          }
+        });
+
       // Group claims by Gara
       const groups = {};
       filtered.forEach(c => {
@@ -18892,20 +18911,27 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
         claims.forEach(c => {
           globalIdx++;
-          const bsx = c.bienSo || '—';
-          const hsbt = c.soHoSoBoiThuong || c.maVuTonThat || '—';
-          const chuXe = extractClaimOwnerName(c) || '—';
-          const hangXe = c.hangXe || '—';
-          const hieuXe = c.hieuXe || '—';
-          const carBrandModel = hieuXe !== '—' && hieuXe !== hangXe ? `${hangXe} / ${hieuXe}` : hangXe;
-          const gdv = c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '—';
+          const bsx = c.bienSo || '-';
+          const hsbt = c.soHoSoBoiThuong || c.maVuTonThat || '-';
+          const chuXe = extractClaimOwnerName(c) || '-';
+          const hangXe = c.hangXe || '-';
+          const hieuXe = c.hieuXe || '-';
+          const carBrandModel = hieuXe !== '-' && hieuXe !== hangXe ? `${hangXe} / ${hieuXe}` : hangXe;
+          const gdv = c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '-';
           
           const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
           const amtVal = parseInt(amtStr, 10) || 0;
-          const amtDisplay = amtVal > 0 ? formatCurrencyInputNumber(amtVal) + ' đ' : '—';
+          const amtDisplay = amtVal > 0 ? formatCurrencyInputNumber(amtVal) + ' đ' : '-';
           
-          const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || '—';
+          const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || '-';
           const daysCount = calculateDaysSinceApproved(duyetDateStr);
+          
+          let ngayNhanDuHoSoStr = '-';
+          if (hsbt !== '-' && hsbtToNgayXacNhanMap[hsbt]) {
+             ngayNhanDuHoSoStr = formatDateDisplay(hsbtToNgayXacNhanMap[hsbt]);
+          } else if (c.ngayNhanDuHoSo) {
+             ngayNhanDuHoSoStr = String(c.ngayNhanDuHoSo);
+          }
 
           let badgeStyle = 'background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.25);';
           if (typeof daysCount === 'number') {
@@ -18919,15 +18945,15 @@ function renderGdvMonthlyReportPage(targetContainer) {
           rowsHtml += `
             <tr style="border-bottom: 1px solid var(--border); font-size: 13px;">
               <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 44px;">${globalIdx}</td>
-              <td style="padding: 12px 10px; font-weight: 700;  color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
-              <td style="padding: 12px 10px; font-weight: 800;  color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
+              <td style="display: ${activeTonChuaHdReportCols.includes('SO_HSBT') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 700;  color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
+              <td style="display: ${activeTonChuaHdReportCols.includes('BIEN_SO') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 800;  color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
               <td style="display: ${activeTonChuaHdReportCols.includes('CHU_XE') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left; font-weight: 750;">${escapeHtmlOutput(chuXe)}</td>
               <td style="display: ${activeTonChuaHdReportCols.includes('HANG_XE') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left;">${escapeHtmlOutput(carBrandModel)}</td>
-              <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
+              <td style="display: ${activeTonChuaHdReportCols.includes('CBXL') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
               <td style="display: ${activeTonChuaHdReportCols.includes('TIEN_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 850;  color: #10b981; text-align: right; font-size: 13.5px;">${amtDisplay}</td>
-              <td style="padding: 12px 10px; text-align: center;  font-weight: 750;">${escapeHtmlOutput(c.ngayNhanDuHoSo || '-')}</td>
+              <td style="display: ${activeTonChuaHdReportCols.includes('NGAY_NHAN_DU') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center;  font-weight: 750;">${escapeHtmlOutput(ngayNhanDuHoSoStr)}</td>
               <td style="display: ${activeTonChuaHdReportCols.includes('NGAY_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center;  font-weight: 750;">${escapeHtmlOutput(duyetDateStr)}</td>
-              <td style="padding: 12px 10px; text-align: center;">
+              <td style="display: ${activeTonChuaHdReportCols.includes('SO_NGAY_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center;">
                 <span class="acc-status-pill" style="padding: 3px 10px; border-radius: 8px; font-size: 11px; ${badgeStyle}">
                   ${typeof daysCount === 'number' ? daysCount + ' ngày' : daysCount}
                 </span>
