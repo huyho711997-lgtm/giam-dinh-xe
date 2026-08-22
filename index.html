@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
@@ -14387,7 +14387,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                 <span>Ẩn/Hiện cột</span>
               </button>
-              <div id="ddWeeklyColsMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddWeeklyColsMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); left: 0; min-width: 240px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; text-align: left;">
+              <div id="ddWeeklyColsMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddWeeklyColsMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); left: 0; min-width: 240px; background: var(--surface); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; text-align: left;">
                 <div style="font-size: 11.5px; font-weight: 850; color: var(--text-soft); padding: 0 4px 8px 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px;">TÙY CHỌN HIỂN THỊ CỘT</div>
                 ${[
                   { id: 'PHAT_SINH', label: 'Phát sinh' },
@@ -14446,16 +14446,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <tr style="background: var(--bg-soft); border: 1px solid var(--border-strong);">
                   <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: var(--text-main); width: 45px;">STT</th>
                   <th style="padding: 12px 14px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: var(--text-main); text-align: left; min-width: 150px;">GDV</th>
-                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #3b82f6;">PHÁT SINH</th>
-                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #10b981;">ĐÃ DUYỆT HSBT</th>
-                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #f59e0b;">CHƯA DUYỆT PASC</th>
-                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #ec4899;">CHUYỂN ĐNTT</th>
-                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #06b6d4;">LƯỢNG XE CARPLA</th>
-                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #6366f1;">HỒ SƠ TNDS TỔN LŨY KẾ</th>
-                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #dc2626;">HS TỒN &gt; 30 NGÀY</th>
-                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #e11d48;">HS DPBT &gt; 50TR</th>
-                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #2563eb;">SỐ TIỀN BÌNH QUÂN DƯỚI 10TR</th>
-                  <th style="padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #854d0e; background: #fef08a;">DOANH SỐ CARPLA LŨY KẾ THÁNG ${currentMonth}</th>
+                  <th style="display: ${activeWeeklyReportCols.includes('PHAT_SINH') ? 'table-cell' : 'none'}; padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #3b82f6;">PHÁT SINH</th>
+                  <th style="display: ${activeWeeklyReportCols.includes('DA_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #10b981;">ĐÃ DUYỆT HSBT</th>
+                  <th style="display: ${activeWeeklyReportCols.includes('CHUA_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #f59e0b;">CHƯA DUYỆT PASC</th>
+                  <th style="display: ${activeWeeklyReportCols.includes('CHUYEN_DNTT') ? 'table-cell' : 'none'}; padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #ec4899;">CHUYỂN ĐNTT</th>
+                  <th style="display: ${activeWeeklyReportCols.includes('LGN_CARPLA') ? 'table-cell' : 'none'}; padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #06b6d4;">LƯỢNG XE CARPLA</th>
+                  <th style="display: ${activeWeeklyReportCols.includes('TNDS_TON') ? 'table-cell' : 'none'}; padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #6366f1;">HỒ SƠ TNDS TỔN LŨY KẾ</th>
+                  <th style="display: ${activeWeeklyReportCols.includes('HS_TON_30') ? 'table-cell' : 'none'}; padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #dc2626;">HS TỒN &gt; 30 NGÀY</th>
+                  <th style="display: ${activeWeeklyReportCols.includes('HS_DPBT_50') ? 'table-cell' : 'none'}; padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #e11d48;">HS DPBT &gt; 50TR</th>
+                  <th style="display: ${activeWeeklyReportCols.includes('AVG_10') ? 'table-cell' : 'none'}; padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #2563eb;">SỐ TIỀN BÌNH QUÂN DƯỚI 10TR</th>
+                  <th style="display: ${activeWeeklyReportCols.includes('REV_CARPLA') ? 'table-cell' : 'none'}; padding: 12px 10px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #854d0e; background: #fef08a;">DOANH SỐ CARPLA LŨY KẾ THÁNG ${currentMonth}</th>
                 </tr>
               </thead>
               <tbody>
@@ -14466,16 +14466,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
                     <tr style="border: 1px solid var(--border); ${idx % 2 === 0 ? 'background: var(--surface);' : 'background: var(--bg-soft);'}">
                       <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: var(--primary); ">${idx + 1}</td>
                       <td style="padding: 11px 14px; border: 1px solid var(--border); text-align: left; font-weight: 850; color: var(--text-main);">${escapeHtmlOutput(r.gdvName)}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #3b82f6; ">${r.phatSinh}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #10b981; ">${r.daDuyetHsb}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #f59e0b; ">${chuaDuyetVal}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #ec4899; ">${r.chuyenDntt || 0}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #06b6d4; ">${r.carplaCount || 0}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #6366f1; ">${r.tndsTonLuyKe}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #dc2626; ">${r.hsTonOver30Days || 0}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #e11d48; ">${r.hsDuPhongOver50M || 0}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #2563eb; ">${avgUnder10M ? formatCurrencyInputNumber(avgUnder10M) + ' đ' : '0 đ'}</td>
-                      <td style="padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #854d0e; background: #fef9c3; ">${r.carplaCumulativeRevenue ? formatCurrencyInputNumber(r.carplaCumulativeRevenue) + ' đ' : '0 đ'}</td>
+                      <td style="display: ${activeWeeklyReportCols.includes('PHAT_SINH') ? 'table-cell' : 'none'}; padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #3b82f6; ">${r.phatSinh}</td>
+                      <td style="display: ${activeWeeklyReportCols.includes('DA_DUYET') ? 'table-cell' : 'none'}; padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #10b981; ">${r.daDuyetHsb}</td>
+                      <td style="display: ${activeWeeklyReportCols.includes('CHUA_DUYET') ? 'table-cell' : 'none'}; padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #f59e0b; ">${chuaDuyetVal}</td>
+                      <td style="display: ${activeWeeklyReportCols.includes('CHUYEN_DNTT') ? 'table-cell' : 'none'}; padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #ec4899; ">${r.chuyenDntt || 0}</td>
+                      <td style="display: ${activeWeeklyReportCols.includes('LGN_CARPLA') ? 'table-cell' : 'none'}; padding: 11px 10px; border: 1px solid var(--border); font-weight: 750; color: #06b6d4; ">${r.carplaCount || 0}</td>
+                      <td style="display: ${activeWeeklyReportCols.includes('TNDS_TON') ? 'table-cell' : 'none'}; padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #6366f1; ">${r.tndsTonLuyKe}</td>
+                      <td style="display: ${activeWeeklyReportCols.includes('HS_TON_30') ? 'table-cell' : 'none'}; padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #dc2626; ">${r.hsTonOver30Days || 0}</td>
+                      <td style="display: ${activeWeeklyReportCols.includes('HS_DPBT_50') ? 'table-cell' : 'none'}; padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #e11d48; ">${r.hsDuPhongOver50M || 0}</td>
+                      <td style="display: ${activeWeeklyReportCols.includes('AVG_10') ? 'table-cell' : 'none'}; padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #2563eb; ">${avgUnder10M ? formatCurrencyInputNumber(avgUnder10M) + ' đ' : '0 đ'}</td>
+                      <td style="display: ${activeWeeklyReportCols.includes('REV_CARPLA') ? 'table-cell' : 'none'}; padding: 11px 10px; border: 1px solid var(--border); font-weight: 850; color: #854d0e; background: #fef9c3; ">${r.carplaCumulativeRevenue ? formatCurrencyInputNumber(r.carplaCumulativeRevenue) + ' đ' : '0 đ'}</td>
                     </tr>
                   `;
                 }).join('')}
@@ -14484,16 +14484,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <tr style="background: rgba(59,130,246,0.08); border: 2px solid var(--border-strong); font-weight: 850;">
                   <td style="padding: 13px 10px; border: 1px solid var(--border); color: #3b82f6;"></td>
                   <td style="padding: 13px 14px; border: 1px solid var(--border); text-align: left; color: #3b82f6;">Tổng Cộng</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #3b82f6;  font-size: 13.5px;">${sumPhatSinh}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #10b981;  font-size: 13.5px;">${sumDaDuyet}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #f59e0b;  font-size: 13.5px;">${sumChuaDuyet}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #ec4899;  font-size: 13.5px;">${sumChuyenDntt}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #06b6d4;  font-size: 13.5px;">${sumCarpla}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #6366f1;  font-size: 13.5px;">${sumTndsTon}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #dc2626;  font-size: 13.5px;">${sumHsTonOver30}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #e11d48;  font-size: 13.5px;">${sumHsDuPhongOver50M}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #2563eb;  font-size: 13.5px;">${overallAvgUnder10M ? formatCurrencyInputNumber(overallAvgUnder10M) + ' đ' : '0 đ'}</td>
-                  <td style="padding: 13px 10px; border: 1px solid var(--border); color: #854d0e; background: #fef08a;  font-size: 13.5px;">${sumCarplaCumulativeRev ? formatCurrencyInputNumber(sumCarplaCumulativeRev) + ' đ' : '0 đ'}</td>
+                  <td style="display: ${activeWeeklyReportCols.includes('PHAT_SINH') ? 'table-cell' : 'none'}; padding: 13px 10px; border: 1px solid var(--border); color: #3b82f6;  font-size: 13.5px;">${sumPhatSinh}</td>
+                  <td style="display: ${activeWeeklyReportCols.includes('DA_DUYET') ? 'table-cell' : 'none'}; padding: 13px 10px; border: 1px solid var(--border); color: #10b981;  font-size: 13.5px;">${sumDaDuyet}</td>
+                  <td style="display: ${activeWeeklyReportCols.includes('CHUA_DUYET') ? 'table-cell' : 'none'}; padding: 13px 10px; border: 1px solid var(--border); color: #f59e0b;  font-size: 13.5px;">${sumChuaDuyet}</td>
+                  <td style="display: ${activeWeeklyReportCols.includes('CHUYEN_DNTT') ? 'table-cell' : 'none'}; padding: 13px 10px; border: 1px solid var(--border); color: #ec4899;  font-size: 13.5px;">${sumChuyenDntt}</td>
+                  <td style="display: ${activeWeeklyReportCols.includes('LGN_CARPLA') ? 'table-cell' : 'none'}; padding: 13px 10px; border: 1px solid var(--border); color: #06b6d4;  font-size: 13.5px;">${sumCarpla}</td>
+                  <td style="display: ${activeWeeklyReportCols.includes('TNDS_TON') ? 'table-cell' : 'none'}; padding: 13px 10px; border: 1px solid var(--border); color: #6366f1;  font-size: 13.5px;">${sumTndsTon}</td>
+                  <td style="display: ${activeWeeklyReportCols.includes('HS_TON_30') ? 'table-cell' : 'none'}; padding: 13px 10px; border: 1px solid var(--border); color: #dc2626;  font-size: 13.5px;">${sumHsTonOver30}</td>
+                  <td style="display: ${activeWeeklyReportCols.includes('HS_DPBT_50') ? 'table-cell' : 'none'}; padding: 13px 10px; border: 1px solid var(--border); color: #e11d48;  font-size: 13.5px;">${sumHsDuPhongOver50M}</td>
+                  <td style="display: ${activeWeeklyReportCols.includes('AVG_10') ? 'table-cell' : 'none'}; padding: 13px 10px; border: 1px solid var(--border); color: #2563eb;  font-size: 13.5px;">${overallAvgUnder10M ? formatCurrencyInputNumber(overallAvgUnder10M) + ' đ' : '0 đ'}</td>
+                  <td style="display: ${activeWeeklyReportCols.includes('REV_CARPLA') ? 'table-cell' : 'none'}; padding: 13px 10px; border: 1px solid var(--border); color: #854d0e; background: #fef08a;  font-size: 13.5px;">${sumCarplaCumulativeRev ? formatCurrencyInputNumber(sumCarplaCumulativeRev) + ' đ' : '0 đ'}</td>
                 </tr>
               </tfoot>
             </table>
