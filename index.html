@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
@@ -13561,7 +13561,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportDakLakReserveThresholdMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 160px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
                   <span style="display: flex; align-items: center; gap: 6px;">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                    <span>Mức DP: ${activeDakLakMinReserve === 50000000 ? '> 50 triệu' : '> 100 triệu'}</span>
+                    <span>Mức DP: > ${activeDakLakMinReserve === 50000000 ? '50 triệu' : activeDakLakMinReserve === 100000000 ? '100 triệu' : formatCurrencyInputNumber(activeDakLakMinReserve) + ' VNĐ'}</span>
                   </span>
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
@@ -13574,6 +13574,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <div class="custom-select-item ${activeDakLakMinReserve === 100000000 ? 'active' : ''}" onclick="selectDakLakMinReserve(100000000)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeDakLakMinReserve === 100000000 ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
                     <span>Trên 100 triệu</span>
                     ${activeDakLakMinReserve === 100000000 ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                  </div>
+                  <div style="padding: 10px 12px 6px 12px; border-top: 1px dashed var(--border-strong); margin-top: 4px;">
+                    <div style="font-size: 11px; font-weight: 800; color: var(--text-soft); margin-bottom: 8px;">HOẶC NHẬP SỐ KHÁC</div>
+                    <div style="display: flex; gap: 6px;">
+                      <input type="text" id="customDakLakMinReserveInput" placeholder="VD: 80000000" class="input-premium" style="height: 32px; border-radius: 8px; font-size: 13px; font-weight: 600; width: 120px; text-align: right;" oninput="formatCurrencyInputEvent(this)" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter') applyCustomDakLakMinReserve()" value="${activeDakLakMinReserve !== 50000000 && activeDakLakMinReserve !== 100000000 ? formatCurrencyInputNumber(activeDakLakMinReserve) : ''}">
+                      <button type="button" class="btn-premium" style="height: 32px; padding: 0 12px; border-radius: 8px; font-size: 12px; flex-shrink: 0; box-shadow: var(--shadow-xs);" onclick="applyCustomDakLakMinReserve(); event.stopPropagation()">Áp dụng</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -18489,8 +18496,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
         `;
       }).join('');
 
-      const thresholdText = activeDakLakMinReserve === 50000000 ? '50.000.000' : '100.000.000';
-      const thresholdLabel = activeDakLakMinReserve === 50000000 ? '50 triệu' : '100 triệu';
+      const thresholdText = activeDakLakMinReserve === 50000000 ? '50.000.000' : activeDakLakMinReserve === 100000000 ? '100.000.000' : formatCurrencyInputNumber(activeDakLakMinReserve);
+      const thresholdLabel = activeDakLakMinReserve === 50000000 ? '50 triệu' : activeDakLakMinReserve === 100000000 ? '100 triệu' : formatCurrencyInputNumber(activeDakLakMinReserve);
 
       return `
         <div class="p-card" id="dakLakReserveReportCardContainer" style="padding: 26px 30px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface);">
