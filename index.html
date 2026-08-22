@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
@@ -7461,7 +7461,7 @@ function formatDateDisplay(val) {
       const paginationContainer = document.getElementById('pendingClaimsPaginationContainer');
 
       if (totalFilteredCount === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="empty-state-text">Không tìm thấy hồ sơ tồn đọng nào phù hợp.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="empty-state-text">Không tìm thấy hồ sơ tồn đọng nào phù hợp.</td></tr>`;
         if (paginationContainer) paginationContainer.innerHTML = '';
         return;
       }
@@ -8298,7 +8298,7 @@ function formatDateDisplay(val) {
                     </tr>
                   </thead>
                   <tbody id="tblPendingClaimsBodyContainer">
-                    <tr><td colspan="9" class="empty-state-text">Đang đồng bộ danh sách hồ sơ tồn...</td></tr>
+                    <tr><td colspan="10" class="empty-state-text">Đang đồng bộ danh sách hồ sơ tồn...</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -18588,7 +18588,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </thead>
               <tbody>
                 ${filtered.length === 0 ? `
-                  <tr><td colspan="9" class="empty-state-text" style="text-align: center; padding: 30px;">Không có hồ sơ nào thỏa mãn điều kiện lọc.</td></tr>
+                  <tr><td colspan="10" class="empty-state-text" style="text-align: center; padding: 30px;">Không có hồ sơ nào thỏa mãn điều kiện lọc.</td></tr>
                 ` : rowsHtml}
               </tbody>
             </table>
@@ -18868,7 +18868,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         // Add Gara header row with SVG icon instead of emoji, and displaying total Gara amount
         rowsHtml += `
           <tr style="background: var(--bg-soft); font-weight: 850; border-bottom: 1px solid var(--border-strong);">
-            <td colspan="9" style="padding: 12px 14px; color: var(--primary); font-size: 13px; text-align: left; background: var(--bg-soft);">
+            <td colspan="10" style="padding: 12px 14px; color: var(--primary); font-size: 13px; text-align: left; background: var(--bg-soft);">
               <span style="display: inline-flex; align-items: center; gap: 8px;">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5" style="flex-shrink: 0;"><path d="M3 21h18"></path><path d="M19 21v-4a2 2 0 0 0-2 2v4"></path><path d="M5 15V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"></path></svg>
                 <span>Gara: <strong style="font-size: 13.5px; color: var(--text-main);">${escapeHtmlOutput(garaName)}</strong> (${claims.length} hồ sơ tồn - Tổng tiền duyệt: <strong style="color: #10b981;">${formatCurrencyInputNumber(totalGaraAmt)} đ</strong>)</span>
@@ -18912,6 +18912,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(carBrandModel)}</td>
               <td style="padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
               <td style="padding: 12px 10px; font-weight: 850;  color: #10b981; text-align: right; font-size: 13.5px;">${amtDisplay}</td>
+              <td style="padding: 12px 10px; text-align: center;  font-weight: 750;">${escapeHtmlOutput(c.ngayNhanDuHoSo || '-')}</td>
               <td style="padding: 12px 10px; text-align: center;  font-weight: 750;">${escapeHtmlOutput(duyetDateStr)}</td>
               <td style="padding: 12px 10px; text-align: center;">
                 <span class="acc-status-pill" style="padding: 3px 10px; border-radius: 8px; font-size: 11px; ${badgeStyle}">
@@ -18958,12 +18959,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <th style="padding: 12px 10px; text-align: left; width: 180px;">Hãng / Hiệu xe</th>
                   <th style="padding: 12px 10px; text-align: left; width: 180px;">Cán bộ xử lý (CBXL)</th>
                   <th style="padding: 12px 10px; text-align: right; width: 160px;">Tiền duyệt HSBT</th>
+                  <th style="padding: 12px 10px; text-align: center; width: 140px;">Ngày nhận đủ hồ sơ</th>
                   <th style="padding: 12px 10px; text-align: center; width: 140px;">Ngày duyệt HSBT</th>
                   <th style="padding: 12px 10px; text-align: center; width: 140px;">Số ngày đã duyệt</th>
                 </tr>
               </thead>
               <tbody>
-                ${rowsHtml || `<tr><td colspan="9" style="padding: 42px; text-align: center; color: var(--text-soft);">Không có hồ sơ tồn chưa có hóa đơn nào phù hợp bộ lọc.</td></tr>`}
+                ${rowsHtml || `<tr><td colspan="10" style="padding: 42px; text-align: center; color: var(--text-soft);">Không có hồ sơ tồn chưa có hóa đơn nào phù hợp bộ lọc.</td></tr>`}
               </tbody>
             </table>
           </div>
