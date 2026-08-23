@@ -19348,11 +19348,13 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const menu = document.getElementById('ddReportFavFiltersMenu');
       if (!menu) return;
       
+      const currentViewFilters = userFavoriteFilters.filter(f => f.filters && f.filters.activeGdvReportView === activeGdvReportView);
+      
       let listHtml = '';
-      if (userFavoriteFilters.length === 0) {
-        listHtml = '<div style="text-align: center; color: var(--text-soft); font-size: 12.5px; padding: 12px 0;">Chưa có bộ lọc ưa thích nào được lưu.</div>';
+      if (currentViewFilters.length === 0) {
+        listHtml = '<div style="text-align: center; color: var(--text-soft); font-size: 12.5px; padding: 12px 0;">Chưa có bộ lọc ưa thích nào được lưu cho báo cáo này.</div>';
       } else {
-        listHtml = userFavoriteFilters.map(f => {
+        listHtml = currentViewFilters.map(f => {
           const isDef = f.isDefault;
           const starFill = isDef ? '#f59e0b' : 'none';
           const starStroke = isDef ? '#f59e0b' : 'var(--text-soft)';
