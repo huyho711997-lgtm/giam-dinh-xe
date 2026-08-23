@@ -13098,7 +13098,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const stKey = PENDING_STATUS_MAP[c.trangThai] ? c.trangThai : 'moi';
         gdvMap[targetName].statusMap[stKey] = (gdvMap[targetName].statusMap[stKey] || 0) + 1;
 
-        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+        const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
         const amtVal = parseInt(amtStr, 10) || 0;
         gdvMap[targetName].totalApprovedAmount += amtVal;
 
@@ -13158,7 +13158,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const rawGaraName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || c.maGara || '').trim();
         const garageKey = rawGaraName || rawGaraCode || 'Gara chưa xác định';
 
-        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+        const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
         const amtVal = parseInt(amtStr, 10) || 0;
 
         if (!garageMap[garageKey]) {
@@ -14734,7 +14734,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         }
 
         const garaName = String(c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || '').toLowerCase();
-        const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+        const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
         const amtVal = parseInt(amtStr, 10) || 0;
 
         // DOANH SỐ CARPLA LŨY KẾ: CLAIMS WITHIN THE ENTIRE MONTH OF SELECTED END DATE, APPROVED STATUS, GARAGE CONTAINS 'CARPLA'
@@ -17232,7 +17232,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const hsbt = c.soHoSoBoiThuong || c.maVuVuTonThat || c.maVuTonThat || 'Chưa có mã';
         const chuXe = extractClaimOwnerName(c);
         const gara = c.tenGaraVietTat || c.garaSuaChua || c.gara || 'Chưa Gara';
-        const money = c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || 0;
+        const money = c.ttbtTongSoTienBoiThuong || 0;
 
         return `
           <label style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 15px; border-radius: 12px; background: ${isChecked ? 'rgba(59,130,246,0.08)' : 'var(--bg-soft)'}; border: 1px solid ${isChecked ? 'rgba(59,130,246,0.35)' : 'var(--border)'}; cursor: pointer; transition: background 0.1s ease;">
@@ -17276,7 +17276,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (idx >= 0) {
         currentBatchSelectedClaims.splice(idx, 1);
       } else {
-        const moneyRaw = c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || 0;
+        const moneyRaw = c.ttbtTongSoTienBoiThuong || 0;
         const amtClean = parseInt(String(moneyRaw).replace(/[^0-9]/g, ''), 10) || 0;
 
         currentBatchSelectedClaims.push({
@@ -18329,7 +18329,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const rawHangXe = (c.hangXe || 'Chưa rõ').trim();
         const hangXe = rawHangXe === '-' ? 'Chưa rõ' : rawHangXe;
         
-        const moneyRaw = c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || 0;
+        const moneyRaw = c.ttbtTongSoTienBoiThuong || 0;
         const amtClean = parseInt(String(moneyRaw).replace(/[^0-9]/g, ''), 10) || 0;
 
         if (!brandMap[hangXe]) {
@@ -18898,7 +18898,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         // Calculate total amount for this Gara
         let totalGaraAmt = 0;
         claims.forEach(c => {
-          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+          const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
           totalGaraAmt += parseInt(amtStr, 10) || 0;
         });
 
@@ -18935,7 +18935,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           const carBrandModel = hieuXe !== '-' && hieuXe !== hangXe ? `${hangXe} / ${hieuXe}` : hangXe;
           const gdv = c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '-';
           
-          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+          const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
           const amtVal = parseInt(amtStr, 10) || 0;
           const amtDisplay = amtVal > 0 ? formatCurrencyInputNumber(amtVal) + ' đ' : '-';
           
@@ -19137,7 +19137,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         // Calculate total amount for this Gara
         let totalGaraAmt = 0;
         claims.forEach(c => {
-          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+          const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
           totalGaraAmt += parseInt(amtStr, 10) || 0;
         });
 
@@ -19159,7 +19159,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
         claims.forEach(c => {
           globalIdx++;
-          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
+          const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
           const amtVal = parseInt(amtStr, 10) || 0;
           const duyetDateStr = c.toTrinhNgayDuyet || c.pascNgayDuyet || c.ngayDuyetHsbt || '—';
           const daysCount = calculateDaysSinceApproved(duyetDateStr);
