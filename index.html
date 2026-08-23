@@ -13602,7 +13602,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   <div style="padding: 10px 12px 6px 12px; border-top: 1px dashed var(--border-strong); margin-top: 4px;">
                     <div style="font-size: 11px; font-weight: 800; color: var(--text-soft); margin-bottom: 8px;">HOẶC NHẬP SỐ KHÁC</div>
                     <div style="display: flex; gap: 6px; flex-wrap: nowrap; align-items: center;">
-                      <input type="text" id="customDakLakMinReserveInput" placeholder="VD: 80000000" class="input-premium" style="flex: 1; height: 32px; border-radius: 8px; font-size: 13px; font-weight: 600; width: 100%; min-width: 0; text-align: right;" oninput="formatCurrencyInputEvent(this)" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter') applyCustomDakLakMinReserve()" value="${activeDakLakMinReserve !== 50000000 && activeDakLakMinReserve !== 100000000 ? formatCurrencyInputNumber(activeDakLakMinReserve) : ''}">
+                      <input type="text" id="customDakLakMinReserveInput" placeholder="VD: 80.000.000" class="input-premium" style="flex: 1; height: 32px; padding: 0 8px; border-radius: 8px; font-size: 13px; font-weight: 600; width: 100%; min-width: 0; text-align: right;" oninput="formatCurrencyInputEvent(this)" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter') applyCustomDakLakMinReserve()" value="${activeDakLakMinReserve !== 50000000 && activeDakLakMinReserve !== 100000000 ? formatCurrencyInputNumber(activeDakLakMinReserve) : ''}">
                       <button type="button" class="btn-premium" style="width: auto; height: 32px; padding: 0 12px; border-radius: 8px; font-size: 12px; flex-shrink: 0; white-space: nowrap; box-shadow: var(--shadow-xs);" onclick="applyCustomDakLakMinReserve(); event.stopPropagation()">Áp dụng</button>
                     </div>
                   </div>
@@ -18275,6 +18275,22 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
     function selectDakLakMinReserve(val) {
       activeDakLakMinReserve = parseInt(val, 10) || 100000000;
+      document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      activeOpenDropdownId = null;
+      renderGdvReportPage();
+    }
+
+    function applyCustomDakLakMinReserve() {
+      const inputEl = document.getElementById('customDakLakMinReserveInput');
+      if (inputEl) {
+        const cleanVal = inputEl.value.replace(/\D/g, '');
+        if (cleanVal) {
+          activeDakLakMinReserve = parseInt(cleanVal, 10);
+        } else {
+          // Do nothing if empty
+          return;
+        }
+      }
       document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
       activeOpenDropdownId = null;
       renderGdvReportPage();
