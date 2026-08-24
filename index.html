@@ -14733,13 +14733,22 @@ function renderGdvMonthlyReportPage(targetContainer) {
           }
         }
 
-        const garaName = String(c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || '').toLowerCase();
+        const garaName = String(c.tenGaraVietTat || '').toLowerCase();
         const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
         const amtVal = parseInt(amtStr, 10) || 0;
+        
+        let hsbtTime = 0;
+        const duyetDateStr = c.toTrinhNgayDuyet || c.ngayDuyetHsbt;
+        if (duyetDateStr && typeof duyetDateStr === 'string' && duyetDateStr !== '-' && duyetDateStr.trim() !== '') {
+          const dp = parseDateParts(duyetDateStr);
+          if (dp && dp.year && dp.month && dp.day) {
+            hsbtTime = new Date(dp.year, dp.month - 1, dp.day, 12, 0, 0).getTime();
+          }
+        }
 
-        // DOANH SỐ CARPLA LŨY KẾ: CLAIMS WITHIN THE ENTIRE MONTH OF SELECTED END DATE, APPROVED STATUS, GARAGE CONTAINS 'CARPLA'
+        // DOANH SỐ CARPLA LŨY KẾ: CHỈ LẤY tenGaraVietTat, TRẠNG THÁI ĐÃ DUYỆT, NGÀY DUYỆT HSBT TRONG KHOẢNG THỜI GIAN USER CHỌN
         if (garaName.includes('carpla') && isApproved) {
-          if (claimTime >= monthStartMs && claimTime <= monthEndMs) {
+          if (hsbtTime >= startTime && hsbtTime <= endTime) {
             item.carplaCumulativeRevenue += amtVal;
           }
         }
