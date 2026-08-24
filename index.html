@@ -13220,12 +13220,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
           garageMap[garageKey].gdvBreakdown[targetGdvName].approved++;
           garageMap[garageKey].gdvBreakdown[targetGdvName].amount += amtVal;
         }
-        }
-        garageMap[garageKey].gdvBreakdown[targetGdvName].opened++;
-        if (isDuyetHsbtApproved(c)) {
-          garageMap[garageKey].gdvBreakdown[targetGdvName].approved++;
-        }
-        garageMap[garageKey].gdvBreakdown[targetGdvName].amount += amtVal;
       }
 
       let garageRows = Object.values(garageMap).sort((a, b) => b.totalApprovedAmount - a.totalApprovedAmount);
