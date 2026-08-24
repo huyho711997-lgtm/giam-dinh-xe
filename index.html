@@ -12598,6 +12598,8 @@ function formatDateDisplay(val) {
     let userFavoriteFilters = [];
     let hasAppliedDefaultFilter = false;
     let activeFavoriteFiltersUid = null;
+    let activeCarBrandChartType = 'bar';
+    let carBrandChartInstance = null;
     let activeGdvReportView = 'weekly_zone'; // 'table' | 'chart'
     let activeSelectedDakLakStatuses = ['da_duyet_pasc', 'cho_duyet_hsbt'];
     let activeReportClaimType = 'all';
@@ -18408,6 +18410,105 @@ function renderGdvMonthlyReportPage(targetContainer) {
       return list;
     }
 
+    
+    window.initCarBrandChart = function() {
+      const canvas = document.getElementById('carBrandLossCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      
+      const fullList = getCarBrandLossData();
+      const list = fullList.slice(0, 10); // Top 10
+      
+      if (carBrandChartInstance) {
+        carBrandChartInstance.destroy();
+      }
+      
+      const isDark = document.body.classList.contains('dark-mode');
+      const textColor = isDark ? '#cbd5e1' : '#475569';
+      const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+      
+      const labels = list.map(item => item.brand);
+      const data = list.map(item => item.totalAmount);
+      
+      // Beautiful primary color palette
+      const bgColors = [
+        'rgba(216, 180, 109, 0.8)',
+        'rgba(239, 68, 68, 0.8)',
+        'rgba(16, 185, 129, 0.8)',
+        'rgba(59, 130, 246, 0.8)',
+        'rgba(245, 158, 11, 0.8)',
+        'rgba(139, 92, 246, 0.8)',
+        'rgba(20, 184, 166, 0.8)',
+        'rgba(236, 72, 153, 0.8)',
+        'rgba(99, 102, 241, 0.8)',
+        'rgba(14, 165, 233, 0.8)'
+      ];
+      const borderColors = bgColors.map(c => c.replace('0.8', '1'));
+
+      const config = {
+        type: activeCarBrandChartType,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Tổng tiền bồi thường (VNĐ)',
+            data: data,
+            backgroundColor: activeCarBrandChartType === 'pie' ? bgColors : bgColors[0],
+            borderColor: activeCarBrandChartType === 'pie' ? borderColors : borderColors[0],
+            borderWidth: 1,
+            borderRadius: activeCarBrandChartType === 'bar' ? 6 : 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: activeCarBrandChartType === 'pie',
+              position: 'right',
+              labels: { color: textColor, font: { family: "'Nunito Sans', sans-serif", weight: '700' } }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) { label += ': '; }
+                  if (context.parsed.y !== null && activeCarBrandChartType === 'bar') {
+                    label += formatCurrencyInputNumber(context.parsed.y) + ' đ';
+                  } else if (context.parsed !== null && activeCarBrandChartType === 'pie') {
+                    label += formatCurrencyInputNumber(context.parsed) + ' đ';
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+        }
+      };
+
+      if (activeCarBrandChartType === 'bar') {
+        config.options.scales = {
+          y: {
+            beginAtZero: true,
+            grid: { color: gridColor },
+            ticks: {
+              color: textColor,
+              callback: function(value) {
+                if (value >= 1000000) return (value / 1000000).toFixed(0) + 'Tr';
+                if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+                return value;
+              }
+            }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { color: textColor, font: { weight: '700' } }
+          }
+        };
+      }
+
+      carBrandChartInstance = new Chart(ctx, config);
+    };
+
     function renderCarBrandLossReportTableHtml() {
       const list = getCarBrandLossData();
       let grandTotalCount = 0;
@@ -18446,6 +18547,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
             ` : ''}
           </div>
 
+
+          <!-- Chart controls and Canvas -->
+          <div style="margin-bottom: 24px; background: var(--bg-soft); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <div style="font-size: 14px; font-weight: 800; color: var(--text-main);">BIỂU ĐỒ TỔN THẤT THEO HÃNG XE (Top 10)</div>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" onclick="activeCarBrandChartType='bar'; initCarBrandChart();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCarBrandChartType === 'bar' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Cột</button>
+                <button type="button" onclick="activeCarBrandChartType='pie'; initCarBrandChart();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCarBrandChartType === 'pie' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Tròn</button>
+              </div>
+            </div>
+            <div style="position: relative; height: 350px; width: 100%;">
+              <canvas id="carBrandLossCanvas"></canvas>
+              <img src="x" onerror="if(window.initCarBrandChart) setTimeout(window.initCarBrandChart, 50); this.remove();" style="display:none;" />
+            </div>
+          </div>
           <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border-strong);">
             <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
               <thead>
