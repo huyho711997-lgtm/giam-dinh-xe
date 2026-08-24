@@ -14748,7 +14748,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
         // DOANH SỐ CARPLA LŨY KẾ: CHỈ LẤY tenGaraVietTat, TRẠNG THÁI ĐÃ DUYỆT, NGÀY DUYỆT HSBT TRONG KHOẢNG THỜI GIAN USER CHỌN
         if (garaName.includes('carpla') && isApproved) {
-          if (hsbtTime >= startTime && hsbtTime <= endTime) {
+          if (hsbtTime >= monthStartMs && hsbtTime <= monthEndMs) {
             item.carplaCumulativeRevenue += amtVal;
           }
         }
@@ -20506,3 +20506,4 @@ function renderGdvMonthlyReportPage(targetContainer) {
 </script>
 </body>
 </html>
+
