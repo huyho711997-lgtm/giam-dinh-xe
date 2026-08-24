@@ -13155,8 +13155,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
         if (!targetGdvName) continue;
 
         const rawGaraCode = (c.maGara || c.garageUniqCode || '').trim();
-        const rawGaraName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || c.maGara || '').trim();
-        const garageKey = rawGaraName || rawGaraCode || 'Gara chưa xác định';
+        const rawGaraName = (c.tenGaraVietTat || '').trim();
+        const garageKey = rawGaraName || 'Gara chưa xác định';
 
         const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
         const amtVal = parseInt(amtStr, 10) || 0;
@@ -13165,7 +13165,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           garageMap[garageKey] = {
             key: garageKey,
             code: rawGaraCode || 'N/A',
-            name: rawGaraName || rawGaraCode || 'Gara chưa xác định',
+            name: rawGaraName || 'Gara chưa xác định',
             totalApprovedAmount: 0,
             totalClaimsCount: 0,
             gdvBreakdown: {
@@ -20506,4 +20506,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 </script>
 </body>
 </html>
+
+
+
 
