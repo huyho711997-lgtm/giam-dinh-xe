@@ -13139,19 +13139,58 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       const top3Performers = gdvRowsSorted.slice(0, 3);
 
-      // GARAGE CLAIM AGGREGATION BY MÃ GARA & TÊN GARA VIẾT TẮT
+                  // GARAGE CLAIM AGGREGATION (NEW LOGIC)
       const garageMap = {};
-      for (let i = 0; i < filteredClaims.length; i++) {
-        const item = filteredClaims[i];
+      for (let i = 0; i < parsedClaims.length; i++) {
+        const item = parsedClaims[i];
         const c = item.raw;
 
+        // 1. Filter by Claim Type
+        if (activeReportClaimType !== 'all') {
+          const spText = String(c.tnds || c.vcx || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.loaiHs || c.nghiepVu || '').toUpperCase();
+          const loaiType = (c.tnds || spText.includes('TNDS')) ? 'TNDS' : 'VCX';
+          if (activeReportClaimType !== loaiType) continue;
+        }
+
+        // 2. Filter by Branch
+        if (activeGdvReportBranch !== 'all') {
+          const b = c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '';
+          if (b !== activeGdvReportBranch) continue;
+        }
+
+        // 3. Filter by GDV
         const rawGdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '').trim();
         const targetGdvName = resolveTargetGdv(rawGdvName);
         if (!targetGdvName) continue;
 
+        // 4. Condition A (Amount): MUST be approved & Approval Date falls within selected Month & Year
+        let isApprovedInPeriod = false;
+        if (isDuyetHsbtApproved(c)) {
+          const duyetDateStr = c.toTrinhNgayDuyet || c.ngayDuyetHsbt;
+          if (duyetDateStr && typeof duyetDateStr === 'string' && duyetDateStr !== '-' && duyetDateStr.trim() !== '') {
+            const dp = parseDateParts(duyetDateStr);
+            if (dp && dp.year && dp.month) {
+              const matchesYear = activeGdvReportYear === 'all' || dp.year === parseInt(activeGdvReportYear, 10);
+              const matchesMonth = activeGdvReportMonth === 'all' || dp.month === parseInt(activeGdvReportMonth, 10);
+              if (matchesYear && matchesMonth) {
+                isApprovedInPeriod = true;
+              }
+            }
+          }
+        }
+
+        // 5. Condition B (Count): ALL statuses, 'Ngay mo HS' falls within selected Month & Year
+        const matchesOpenedYear = activeGdvReportYear === 'all' || item.year === parseInt(activeGdvReportYear, 10);
+        const matchesOpenedMonth = activeGdvReportMonth === 'all' || item.month === parseInt(activeGdvReportMonth, 10);
+        const isOpenedInPeriod = matchesOpenedYear && matchesOpenedMonth;
+
+        // If neither condition is met, skip this claim for this garage
+        if (!isApprovedInPeriod && !isOpenedInPeriod) continue;
+
         const rawGaraCode = (c.maGara || c.garageUniqCode || '').trim();
-        const rawGaraName = (c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || c.maGara || '').trim();
-        const garageKey = rawGaraName || rawGaraCode || 'Gara chưa xác định';
+        const rawGaraName = (c.tenGaraVietTat || '').trim();
+        if (!rawGaraName) continue;
+        const garageKey = rawGaraName || 'Gara chua x�c d?nh';
 
         const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
         const amtVal = parseInt(amtStr, 10) || 0;
@@ -13160,18 +13199,27 @@ function renderGdvMonthlyReportPage(targetContainer) {
           garageMap[garageKey] = {
             key: garageKey,
             code: rawGaraCode || 'N/A',
-            name: rawGaraName || rawGaraCode || 'Gara chưa xác định',
+            name: rawGaraName || 'Gara chua x�c d?nh',
             totalApprovedAmount: 0,
             totalClaimsCount: 0,
             gdvBreakdown: {}
           };
         }
 
-        garageMap[garageKey].totalClaimsCount++;
-        garageMap[garageKey].totalApprovedAmount += amtVal;
-
         if (!garageMap[garageKey].gdvBreakdown[targetGdvName]) {
           garageMap[garageKey].gdvBreakdown[targetGdvName] = { opened: 0, approved: 0, amount: 0 };
+        }
+
+        if (isOpenedInPeriod) {
+          garageMap[garageKey].totalClaimsCount++;
+          garageMap[garageKey].gdvBreakdown[targetGdvName].opened++;
+        }
+
+        if (isApprovedInPeriod) {
+          garageMap[garageKey].totalApprovedAmount += amtVal;
+          garageMap[garageKey].gdvBreakdown[targetGdvName].approved++;
+          garageMap[garageKey].gdvBreakdown[targetGdvName].amount += amtVal;
+        }
         }
         garageMap[garageKey].gdvBreakdown[targetGdvName].opened++;
         if (isDuyetHsbtApproved(c)) {
@@ -13863,10 +13911,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 <div>
                   <div style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                    <span>Báo cáo doanh thu DV gara - Biểu đồ Cột kết hợp Đường</span>
+                    <span>Báo cáo doanh thu bồi thường của các gara sửa chữa tại địa bàn - ${activeGdvReportMonth !== 'all' ? 'Tháng ' + activeGdvReportMonth : 'Tất cả các tháng'}${activeGdvReportYear !== 'all' ? '/' + activeGdvReportYear : ''}</span>
                   </div>
                   <p style="font-size: 12px; color: var(--text-soft); margin-top: 4px; margin-bottom: 0;">
-                    Biểu đồ cột (Trục trái) thể hiện <strong style="color: #10b981;">Tổng số tiền bồi thường (VNĐ)</strong> kết hợp đường xu hướng (Trục phải) thể hiện <strong style="color: #3b82f6;">Tổng số hồ sơ (Số ca)</strong> của từng Gara.
+                    Biểu đồ cột hiển thị số tiền bồi thường của từng gara, biểu đồ đường hiển thị số lượng vụ tổn thất của mỗi gara
                   </p>
                 </div>
 
@@ -14732,13 +14780,22 @@ function renderGdvMonthlyReportPage(targetContainer) {
           }
         }
 
-        const garaName = String(c.tenGaraVietTat || c.garaSuaChua || c.gara || c.tenGara || '').toLowerCase();
+        const garaName = String(c.tenGaraVietTat || '').toLowerCase();
         const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
         const amtVal = parseInt(amtStr, 10) || 0;
+        
+        let hsbtTime = 0;
+        const duyetDateStr = c.toTrinhNgayDuyet || c.ngayDuyetHsbt;
+        if (duyetDateStr && typeof duyetDateStr === 'string' && duyetDateStr !== '-' && duyetDateStr.trim() !== '') {
+          const dp = parseDateParts(duyetDateStr);
+          if (dp && dp.year && dp.month && dp.day) {
+            hsbtTime = new Date(dp.year, dp.month - 1, dp.day, 12, 0, 0).getTime();
+          }
+        }
 
-        // DOANH SỐ CARPLA LŨY KẾ: CLAIMS WITHIN THE ENTIRE MONTH OF SELECTED END DATE, APPROVED STATUS, GARAGE CONTAINS 'CARPLA'
+        // DOANH SỐ CARPLA LŨY KẾ: CHỈ LẤY tenGaraVietTat, TRẠNG THÁI ĐÃ DUYỆT, NGÀY DUYỆT HSBT TRONG KHOẢNG THỜI GIAN USER CHỌN
         if (garaName.includes('carpla') && isApproved) {
-          if (claimTime >= monthStartMs && claimTime <= monthEndMs) {
+          if (hsbtTime >= monthStartMs && hsbtTime <= monthEndMs) {
             item.carplaCumulativeRevenue += amtVal;
           }
         }
@@ -20496,3 +20553,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
 </script>
 </body>
 </html>
+
+
+
+
+
