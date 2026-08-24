@@ -13194,6 +13194,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
         const rawGaraCode = (c.maGara || c.garageUniqCode || '').trim();
         const rawGaraName = (c.tenGaraVietTat || '').trim();
+        if (!rawGaraName) continue;
         const garageKey = rawGaraName || 'Gara chua x�c d?nh';
 
         const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
@@ -20548,6 +20549,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 </script>
 </body>
 </html>
+
 
 
 
