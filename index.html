@@ -18353,9 +18353,18 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const brandMap = {};
       
       allClaims.forEach(c => {
-        const st = String(c.trangThai || '').toLowerCase().trim();
-        const isApproved = st === 'da_duyet_hsbt' || st.includes('đã duyệt hsbt') || st.includes('da_duyet_pasc') || st.includes('da_duyet') || st.includes('da duyệt');
-        if (!isApproved) return;
+        const stLower = String(c.trangThai || '').toLowerCase().trim();
+        const validKeywords = [
+          'da_duyet_pasc', 'đã duyệt pasc',
+          'cho_duyet_hsbt', 'chờ duyệt hsbt',
+          'da_duyet_hsbt', 'đã duyệt hsbt',
+          'cho_duyet_dntt', 'chờ duyệt đntt',
+          'cho_kt_duyet', 'chờ kt duyệt',
+          'kt_duyet', 'kt duyệt',
+          'da_thanh_toan', 'đã thanh toán'
+        ];
+        const isValid = validKeywords.some(kw => stLower.includes(kw));
+        if (!isValid) return;
 
         let yr = null;
         let mo = null;
@@ -18426,7 +18435,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 TỔN THẤT THEO HÃNG XE
               </h2>
               <div style="color: var(--text-soft); font-size: 13.5px; margin-top: 6px;">
-                Thống kê số lượng hồ sơ và số tiền PASC đã duyệt theo từng hãng xe
+                Thống kê số lượng hồ sơ và tổng tiền bồi thường theo từng hãng xe
               </div>
             </div>
             ${hasUserPermission('report', 'export') ? `
