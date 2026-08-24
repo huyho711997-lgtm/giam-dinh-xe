@@ -18427,48 +18427,81 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const isDark = document.body.classList.contains('dark-mode');
       const textColor = isDark ? '#cbd5e1' : '#475569';
       const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+      const surfaceColor = isDark ? '#0f172a' : '#ffffff';
       
       const labels = list.map(item => item.brand);
       const data = list.map(item => item.totalAmount);
       
-      // Beautiful primary color palette
-      const bgColors = [
-        'rgba(216, 180, 109, 0.8)',
-        'rgba(239, 68, 68, 0.8)',
-        'rgba(16, 185, 129, 0.8)',
-        'rgba(59, 130, 246, 0.8)',
-        'rgba(245, 158, 11, 0.8)',
-        'rgba(139, 92, 246, 0.8)',
-        'rgba(20, 184, 166, 0.8)',
-        'rgba(236, 72, 153, 0.8)',
-        'rgba(99, 102, 241, 0.8)',
-        'rgba(14, 165, 233, 0.8)'
+      // Ultra-Premium vibrant palette
+      const baseColors = [
+        '216, 180, 109', // Gold
+        '59, 130, 246',  // Blue
+        '16, 185, 129',  // Emerald
+        '239, 68, 68',   // Red
+        '245, 158, 11',  // Amber
+        '139, 92, 246',  // Violet
+        '20, 184, 166',  // Teal
+        '236, 72, 153',  // Pink
+        '99, 102, 241',  // Indigo
+        '14, 165, 233'   // Sky
       ];
-      const borderColors = bgColors.map(c => c.replace('0.8', '1'));
+      
+      const bgColors = baseColors.map(c => `rgba(${c}, 0.85)`);
+      const hoverBgColors = baseColors.map(c => `rgba(${c}, 1)`);
+      const borderColors = baseColors.map(c => `rgba(${c}, 1)`);
+
+      const actualType = activeCarBrandChartType === 'pie' ? 'doughnut' : 'bar';
 
       const config = {
-        type: activeCarBrandChartType,
+        type: actualType,
         data: {
           labels: labels,
           datasets: [{
-            label: 'Tổng tiền bồi thường (VNĐ)',
+            label: 'Tổng tiền bồi thường',
             data: data,
-            backgroundColor: activeCarBrandChartType === 'pie' ? bgColors : bgColors[0],
-            borderColor: activeCarBrandChartType === 'pie' ? borderColors : borderColors[0],
-            borderWidth: 1,
-            borderRadius: activeCarBrandChartType === 'bar' ? 6 : 0
+            backgroundColor: bgColors,
+            hoverBackgroundColor: hoverBgColors,
+            borderColor: activeCarBrandChartType === 'pie' ? surfaceColor : borderColors,
+            borderWidth: activeCarBrandChartType === 'pie' ? 3 : 1,
+            borderRadius: activeCarBrandChartType === 'bar' ? { topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0 } : 0,
+            hoverOffset: activeCarBrandChartType === 'pie' ? 10 : 0
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          cutout: activeCarBrandChartType === 'pie' ? '65%' : undefined,
+          layout: {
+            padding: activeCarBrandChartType === 'pie' ? { top: 10, bottom: 10, left: 10, right: 10 } : 0
+          },
+          animation: {
+            duration: 1200,
+            easing: 'easeOutQuart'
+          },
           plugins: {
             legend: {
               display: activeCarBrandChartType === 'pie',
               position: 'right',
-              labels: { color: textColor, font: { family: "'Nunito Sans', sans-serif", weight: '700' } }
+              labels: { 
+                color: textColor, 
+                font: { family: "'Nunito Sans', sans-serif", weight: '800', size: 12 },
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
             },
             tooltip: {
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+              titleColor: isDark ? '#ffffff' : '#0f172a',
+              bodyColor: isDark ? '#cbd5e1' : '#475569',
+              borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+              borderWidth: 1,
+              padding: 14,
+              cornerRadius: 12,
+              displayColors: true,
+              boxPadding: 6,
+              titleFont: { family: "'Nunito Sans', sans-serif", size: 13, weight: '800' },
+              bodyFont: { family: "'Nunito Sans', sans-serif", size: 13, weight: '700' },
               callbacks: {
                 label: function(context) {
                   let label = context.dataset.label || '';
@@ -18490,19 +18523,28 @@ function renderGdvMonthlyReportPage(targetContainer) {
         config.options.scales = {
           y: {
             beginAtZero: true,
-            grid: { color: gridColor },
+            grid: { color: gridColor, drawBorder: false, borderDash: [5, 5] },
+            border: { display: false },
             ticks: {
               color: textColor,
+              font: { family: "'Nunito Sans', sans-serif", weight: '700' },
+              padding: 10,
               callback: function(value) {
-                if (value >= 1000000) return (value / 1000000).toFixed(0) + 'Tr';
-                if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+                if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' Tỷ';
+                if (value >= 1000000) return (value / 1000000).toFixed(0) + ' Tr';
+                if (value >= 1000) return (value / 1000).toFixed(0) + ' K';
                 return value;
               }
             }
           },
           x: {
-            grid: { display: false },
-            ticks: { color: textColor, font: { weight: '700' } }
+            grid: { display: false, drawBorder: false },
+            border: { display: false },
+            ticks: { 
+              color: textColor, 
+              font: { family: "'Nunito Sans', sans-serif", weight: '800' },
+              padding: 10 
+            }
           }
         };
       }
