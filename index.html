@@ -12854,22 +12854,17 @@ function formatDateDisplay(val) {
         cachedContainerRect = container.getBoundingClientRect();
       }
 
-      const qh = g.gdvBreakdown['Nguyễn Quang Huy_DL'] || { opened: 0, amount: 0 };
-      const hqh = g.gdvBreakdown['Hồ Quang Huy'] || { opened: 0, amount: 0 };
-      const hvp = g.gdvBreakdown['Huỳnh Văn Phúc'] || { opened: 0, amount: 0 };
-
-      // Sort GĐV by claim count (opened) descending
-      const gdvList = [
-        { name: 'Nguyễn Quang Huy_DL', data: qh, color: '#93c5fd' },
-        { name: 'Hồ Quang Huy', data: hqh, color: '#fde047' },
-        { name: 'Huỳnh Văn Phúc', data: hvp, color: '#6ee7b7' }
-      ];
+      const colors2 = ['#93c5fd', '#fde047', '#6ee7b7', '#fca5a5', '#c4b5fd'];
+      const gdvList = selectedGdvList.map((gName, idx) => {
+        const data = g.gdvBreakdown[gName] || { opened: 0, amount: 0, approved: 0 };
+        return { name: gName, data: data, color: colors2[idx % colors2.length] };
+      });
       gdvList.sort((a, b) => (b.data.opened || 0) - (a.data.opened || 0));
 
       const gdvBreakdownHtml = gdvList.map(item => `
         <div style="color: ${item.color}; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
           <span style="display: flex; align-items: center; gap: 5px;"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> ${escapeHtmlOutput(item.name)}:</span>
-          <strong style="">${item.data.opened} ca (${formatCurrencyInputNumber(item.data.amount)}đ)</strong>
+          <strong style="">${item.data.approved} hồ sơ (${formatCurrencyInputNumber(item.data.amount)}đ)</strong>
         </div>
       `).join('');
 
@@ -13168,24 +13163,21 @@ function renderGdvMonthlyReportPage(targetContainer) {
             name: rawGaraName || rawGaraCode || 'Gara chưa xác định',
             totalApprovedAmount: 0,
             totalClaimsCount: 0,
-            gdvBreakdown: {
-              'Nguyễn Quang Huy_DL': { opened: 0, approved: 0, amount: 0 },
-              'Hồ Quang Huy': { opened: 0, approved: 0, amount: 0 },
-              'Huỳnh Văn Phúc': { opened: 0, approved: 0, amount: 0 }
-            }
+            gdvBreakdown: {}
           };
         }
 
         garageMap[garageKey].totalClaimsCount++;
         garageMap[garageKey].totalApprovedAmount += amtVal;
 
-        if (garageMap[garageKey].gdvBreakdown[targetGdvName]) {
-          garageMap[garageKey].gdvBreakdown[targetGdvName].opened++;
-          if (isDuyetHsbtApproved(c)) {
-            garageMap[garageKey].gdvBreakdown[targetGdvName].approved++;
-          }
-          garageMap[garageKey].gdvBreakdown[targetGdvName].amount += amtVal;
+        if (!garageMap[garageKey].gdvBreakdown[targetGdvName]) {
+          garageMap[garageKey].gdvBreakdown[targetGdvName] = { opened: 0, approved: 0, amount: 0 };
         }
+        garageMap[garageKey].gdvBreakdown[targetGdvName].opened++;
+        if (isDuyetHsbtApproved(c)) {
+          garageMap[garageKey].gdvBreakdown[targetGdvName].approved++;
+        }
+        garageMap[garageKey].gdvBreakdown[targetGdvName].amount += amtVal;
       }
 
       let garageRows = Object.values(garageMap).sort((a, b) => b.totalApprovedAmount - a.totalApprovedAmount);
@@ -13987,21 +13979,28 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 ` : garageRows.map((g, gIdx) => {
                   const maxAmt = garageRows[0] ? garageRows[0].totalApprovedAmount || 1 : 1;
                   const pct = Math.min(100, Math.max(5, Math.round((g.totalApprovedAmount / maxAmt) * 100)));
-                  const qh = g.gdvBreakdown['Nguyễn Quang Huy_DL'] || { opened: 0, amount: 0 };
-                  const hqh = g.gdvBreakdown['Hồ Quang Huy'] || { opened: 0, amount: 0 };
-                  const hvp = g.gdvBreakdown['Huỳnh Văn Phúc'] || { opened: 0, amount: 0 };
-
-                  const gdvList = [
-                    { name: 'Nguyễn Quang Huy_DL', opened: qh.opened, amount: qh.amount, color: '#3b82f6', bg: 'rgba(59,130,246,0.04)', border: 'rgba(59,130,246,0.2)' },
-                    { name: 'Hồ Quang Huy', opened: hqh.opened, amount: hqh.amount, color: 'var(--primary)', bg: 'rgba(216,180,109,0.04)', border: 'rgba(216,180,109,0.2)' },
-                    { name: 'Huỳnh Văn Phúc', opened: hvp.opened, amount: hvp.amount, color: '#10b981', bg: 'rgba(16,185,129,0.04)', border: 'rgba(16,185,129,0.2)' }
+                  const colors = [
+                    { color: '#3b82f6', bg: 'rgba(59,130,246,0.04)', border: 'rgba(59,130,246,0.2)' },
+                    { color: 'var(--primary)', bg: 'rgba(216,180,109,0.04)', border: 'rgba(216,180,109,0.2)' },
+                    { color: '#10b981', bg: 'rgba(16,185,129,0.04)', border: 'rgba(16,185,129,0.2)' }
                   ];
+                  const gdvList = selectedGdvList.map((gName, idx) => {
+                    const data = g.gdvBreakdown[gName] || { opened: 0, amount: 0, approved: 0 };
+                    const style = colors[idx % colors.length];
+                    return {
+                      name: gName,
+                      opened: data.opened,
+                      amount: data.amount,
+                      approved: data.approved,
+                      ...style
+                    };
+                  });
 
                   // Sort descending by claims count
                   gdvList.sort((a, b) => (b.opened || 0) - (a.opened || 0));
 
                   const gdvBreakdownHtml = gdvList.map(item => {
-                    const amountStr = item.amount >= 1e6 ? (item.amount / 1e6).toFixed(1) + 'M' : formatCurrencyInputNumber(item.amount);
+                    const amountStr = formatCurrencyInputNumber(item.amount);
                     const initials = getGdvInitials(item.name);
                     return `
                       <div class="gdv-micro-card">
@@ -14011,10 +14010,10 @@ function renderGdvMonthlyReportPage(targetContainer) {
                           </div>
                           <div style="overflow: hidden;">
                             <span style="display: block; font-size: 11.5px; font-weight: 800; color: var(--text-main); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHtmlOutput(item.name)}</span>
-                            <span style="font-size: 10px; color: var(--text-soft);  font-weight: 750;">${amountStr} đ</span>
+                            <span style="font-size: 10px; color: var(--text-soft);  font-weight: 750;">${amountStr}đ</span>
                           </div>
                         </div>
-                        <span style="font-size: 10px; font-weight: 850; color: ${item.color};  background: ${item.bg}; padding: 2px 7px; border-radius: 6px; border: 1px solid ${item.border}; flex-shrink: 0;">${item.opened} ca</span>
+                        <span style="font-size: 10px; font-weight: 850; color: ${item.color};  background: ${item.bg}; padding: 2px 7px; border-radius: 6px; border: 1px solid ${item.border}; flex-shrink: 0;">${item.approved} hồ sơ</span>
                       </div>
                     `;
                   }).join('');
