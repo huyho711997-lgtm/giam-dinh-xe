@@ -19041,35 +19041,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
               
             </div>
             <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
-              
-              
-              <div class="custom-select-wrapper hide-on-screenshot" style="position: relative;">
-                <button type="button" class="btn-premium btn-secondary" onclick="toggleCustomDropdownMenu('ddTonColsMenu', event)" style="padding: 0 14px; height: 32px; border-radius: 9px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-xs); white-space: nowrap;">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                  <span>Ẩn/Hiện cột</span>
-                </button>
-                <div id="ddTonColsMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddTonColsMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); right: 0; min-width: 200px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; text-align: left; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);">
-                  <div style="font-size: 11.5px; font-weight: 850; color: var(--text-soft); padding: 0 4px 8px 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px;">TÙY CHỌN HIỂN THỊ CỘT</div>
-                  ${[
-                    { id: 'SO_HSBT', label: 'Số HSBT' },
-                    { id: 'BIEN_SO', label: 'Biển số xe' },
-                    { id: 'CHU_XE', label: 'Chủ xe / Khách hàng' },
-                    { id: 'HANG_XE', label: 'Hãng / Hiệu xe' },
-                    { id: 'CBXL', label: 'Cán bộ xử lý (CBXL)' },
-                    { id: 'TIEN_DUYET', label: 'Tiền duyệt HSBT' },
-                    { id: 'NGAY_NHAN_DU', label: 'Ngày nhận đủ hồ sơ' },
-                    { id: 'NGAY_CHUYEN_KT', label: 'Ngày chuyển HSKT' },
-                    { id: 'NGAY_DUYET', label: 'Ngày duyệt HSBT' },
-                    { id: 'SO_NGAY_DUYET', label: 'Số ngày đã duyệt' }
-                  ].map(col => `
-                    <label style="display: flex; align-items: center; gap: 8px; padding: 6px 4px; cursor: pointer;">
-                      <input type="checkbox" ${activeTonChuaHdReportCols.includes(col.id) ? 'checked' : ''} onclick="toggleTonChuaHdReportCol('${col.id}', event)" style="accent-color: var(--primary); width: 14px; height: 14px;">
-                      <span style="font-size: 13px; font-weight: 700; color: var(--text-main);">${col.label}</span>
-                    </label>
-                  `).join('')}
-                </div>
-              </div>
-
               <div class="hide-on-screenshot" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; white-space: nowrap;">
                 Tổng số tồn: ${filtered.length} hồ sơ (Được lọc theo bộ lọc)
               </div>
