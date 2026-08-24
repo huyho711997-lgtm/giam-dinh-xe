@@ -13144,7 +13144,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       const top3Performers = gdvRowsSorted.slice(0, 3);
 
-            // GARAGE CLAIM AGGREGATION (NEW LOGIC)
+                  // GARAGE CLAIM AGGREGATION (NEW LOGIC)
       const garageMap = {};
       for (let i = 0; i < parsedClaims.length; i++) {
         const item = parsedClaims[i];
@@ -13168,23 +13168,29 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const targetGdvName = resolveTargetGdv(rawGdvName);
         if (!targetGdvName) continue;
 
-        // 4. Status Filter: MUST be approved
-        if (!isDuyetHsbtApproved(c)) continue;
-
-        // 5. Date Filter: Approval Date must fall within selected Month & Year
+        // 4. Condition A (Amount): MUST be approved & Approval Date falls within selected Month & Year
         let isApprovedInPeriod = false;
-        const duyetDateStr = c.toTrinhNgayDuyet || c.ngayDuyetHsbt;
-        if (duyetDateStr && typeof duyetDateStr === 'string' && duyetDateStr !== '-' && duyetDateStr.trim() !== '') {
-          const dp = parseDateParts(duyetDateStr);
-          if (dp && dp.year && dp.month) {
-            const matchesYear = activeGdvReportYear === 'all' || dp.year === parseInt(activeGdvReportYear, 10);
-            const matchesMonth = activeGdvReportMonth === 'all' || dp.month === parseInt(activeGdvReportMonth, 10);
-            if (matchesYear && matchesMonth) {
-              isApprovedInPeriod = true;
+        if (isDuyetHsbtApproved(c)) {
+          const duyetDateStr = c.toTrinhNgayDuyet || c.ngayDuyetHsbt;
+          if (duyetDateStr && typeof duyetDateStr === 'string' && duyetDateStr !== '-' && duyetDateStr.trim() !== '') {
+            const dp = parseDateParts(duyetDateStr);
+            if (dp && dp.year && dp.month) {
+              const matchesYear = activeGdvReportYear === 'all' || dp.year === parseInt(activeGdvReportYear, 10);
+              const matchesMonth = activeGdvReportMonth === 'all' || dp.month === parseInt(activeGdvReportMonth, 10);
+              if (matchesYear && matchesMonth) {
+                isApprovedInPeriod = true;
+              }
             }
           }
         }
-        if (!isApprovedInPeriod) continue;
+
+        // 5. Condition B (Count): ALL statuses, 'Ngay mo HS' falls within selected Month & Year
+        const matchesOpenedYear = activeGdvReportYear === 'all' || item.year === parseInt(activeGdvReportYear, 10);
+        const matchesOpenedMonth = activeGdvReportMonth === 'all' || item.month === parseInt(activeGdvReportMonth, 10);
+        const isOpenedInPeriod = matchesOpenedYear && matchesOpenedMonth;
+
+        // If neither condition is met, skip this claim for this garage
+        if (!isApprovedInPeriod && !isOpenedInPeriod) continue;
 
         const rawGaraCode = (c.maGara || c.garageUniqCode || '').trim();
         const rawGaraName = (c.tenGaraVietTat || '').trim();
@@ -13208,13 +13214,19 @@ function renderGdvMonthlyReportPage(targetContainer) {
           };
         }
 
-        garageMap[garageKey].totalClaimsCount++;
-        garageMap[garageKey].totalApprovedAmount += amtVal;
+        if (isOpenedInPeriod) {
+          garageMap[garageKey].totalClaimsCount++;
+          if (garageMap[garageKey].gdvBreakdown[targetGdvName]) {
+            garageMap[garageKey].gdvBreakdown[targetGdvName].opened++;
+          }
+        }
 
-        if (garageMap[garageKey].gdvBreakdown[targetGdvName]) {
-          garageMap[garageKey].gdvBreakdown[targetGdvName].opened++;
-          garageMap[garageKey].gdvBreakdown[targetGdvName].approved++;
-          garageMap[garageKey].gdvBreakdown[targetGdvName].amount += amtVal;
+        if (isApprovedInPeriod) {
+          garageMap[garageKey].totalApprovedAmount += amtVal;
+          if (garageMap[garageKey].gdvBreakdown[targetGdvName]) {
+            garageMap[garageKey].gdvBreakdown[targetGdvName].approved++;
+            garageMap[garageKey].gdvBreakdown[targetGdvName].amount += amtVal;
+          }
         }
       }
 
