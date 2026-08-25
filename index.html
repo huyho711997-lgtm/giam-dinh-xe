@@ -14835,23 +14835,6 @@ function renderGdvMonthlyReportPage(targetContainer) {
         }
       });
 
-      transfersList.forEach(t => {
-        let tTime = 0;
-        if (t.ngayBanGiao) {
-          const dp = parseDateParts(t.ngayBanGiao);
-          if (dp && dp.year && dp.month && dp.day) {
-            tTime = new Date(dp.year, dp.month - 1, dp.day, 12, 0, 0).getTime();
-          }
-        }
-        if (!tTime && t.createdAt) tTime = new Date(t.createdAt).getTime();
-
-        if (tTime >= startTime && tTime <= endTime) {
-          const gdvName = String(t.gdvName || '').trim();
-          if (gdvName && gdvMap[gdvName]) {
-            gdvMap[gdvName].chuyenDntt += (t.danhSachHoSo?.length || 1);
-          }
-        }
-      });
 
       let list = Object.values(gdvMap);
       if (activeSelectedGdvNames && activeSelectedGdvNames.length > 0) {
