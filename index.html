@@ -14808,7 +14808,20 @@ function renderGdvMonthlyReportPage(targetContainer) {
             item.sumAmtUnder10M += amtVal;
             item.countUnder10M++;
           }
-        } else {
+        }
+        
+        // CHƯA DUYỆT PASC: FILTER ONLY SPECIFIC 6 STATUSES
+        const stKeyCheck = String(c.trangThai || '').toLowerCase().trim();
+        const chuaDuyetPascKeys = ['moi', 'cho_giam_dinh_ht', 'da_giam_dinh_ht', 'cho_gdct', 'da_gdct', 'cho_duyet_pasc'];
+        const isChuaDuyetPascStatus = chuaDuyetPascKeys.includes(stKeyCheck) || 
+          stKeyCheck === 'mới' || 
+          stKeyCheck.includes('chờ giám định ht') || stKeyCheck.includes('cho giam dinh ht') ||
+          stKeyCheck.includes('đã giám định ht') || stKeyCheck.includes('da giam dinh ht') ||
+          stKeyCheck.includes('chờ gđct') || stKeyCheck.includes('cho gdct') ||
+          stKeyCheck.includes('đã gđct') || stKeyCheck.includes('da gdct') ||
+          stKeyCheck.includes('chờ duyệt pasc') || stKeyCheck.includes('cho duyet pasc');
+
+        if (isChuaDuyetPascStatus) {
           item.chuaDuyetPasc++;
         }
 
