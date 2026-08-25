@@ -18570,16 +18570,38 @@ function renderGdvMonthlyReportPage(targetContainer) {
         type: actualType,
         data: {
           labels: labels,
-          datasets: [{
-            label: 'Tổng tiền bồi thường',
-            data: data,
-            backgroundColor: bgColors,
-            hoverBackgroundColor: hoverBgColors,
-            borderColor: activeCarBrandChartType === 'pie' ? surfaceColor : borderColors,
-            borderWidth: activeCarBrandChartType === 'pie' ? 3 : 1,
-            borderRadius: activeCarBrandChartType === 'bar' ? { topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0 } : 0,
-            hoverOffset: activeCarBrandChartType === 'pie' ? 10 : 0
-          }]
+          datasets: (function() {
+            const ds = [{
+              type: actualType,
+              label: 'Tổng tiền bồi thường',
+              data: data,
+              backgroundColor: bgColors,
+              hoverBackgroundColor: hoverBgColors,
+              borderColor: actualType === 'doughnut' ? surfaceColor : borderColors,
+              borderWidth: actualType === 'doughnut' ? 3 : 1,
+              borderRadius: actualType === 'bar' ? { topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0 } : 0,
+              hoverOffset: actualType === 'doughnut' ? 10 : 0,
+              yAxisID: actualType === 'bar' ? 'y' : undefined
+            }];
+            if (actualType === 'bar') {
+              ds.push({
+                type: 'line',
+                label: 'Số lượng hồ sơ',
+                data: list.map(item => item.count),
+                borderColor: isDark ? '#f87171' : '#ef4444',
+                backgroundColor: isDark ? 'rgba(248, 113, 113, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                borderWidth: 3,
+                tension: 0.4,
+                pointBackgroundColor: isDark ? '#f87171' : '#ef4444',
+                pointBorderColor: surfaceColor,
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                yAxisID: 'y1'
+              });
+            }
+            return ds;
+          })()
         },
         options: {
           responsive: true,
@@ -18594,8 +18616,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
           },
           plugins: {
             legend: {
-              display: false, // hide legend since we have outlabels
-              position: 'right',
+              display: activeCarBrandChartType === 'bar',
+              position: 'top',
+              align: 'end',
               labels: { 
                 color: textColor, 
                 font: { family: "'Plus Jakarta Sans', sans-serif", weight: '800', size: 12 },
@@ -18620,10 +18643,15 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 label: function(context) {
                   let label = context.dataset.label || '';
                   if (label) { label += ': '; }
-                  if (context.parsed.y !== null && activeCarBrandChartType === 'bar') {
-                    label += formatCurrencyInputNumber(context.parsed.y) + ' đ';
-                  } else if (context.parsed !== null && activeCarBrandChartType === 'pie') {
-                    label += formatCurrencyInputNumber(context.parsed) + ' đ';
+                  
+                  if (context.dataset.type === 'line' || context.dataset.yAxisID === 'y1') {
+                    label += context.parsed.y + ' hồ sơ';
+                  } else {
+                    if (context.parsed.y !== null && activeCarBrandChartType === 'bar') {
+                      label += formatCurrencyInputNumber(context.parsed.y) + ' đ';
+                    } else if (context.parsed !== null && activeCarBrandChartType === 'pie') {
+                      label += formatCurrencyInputNumber(context.parsed) + ' đ';
+                    }
                   }
                   return label;
                 }
@@ -18636,6 +18664,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
       if (activeCarBrandChartType === 'bar') {
         config.options.scales = {
           y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
             beginAtZero: true,
             grid: { color: gridColor, drawBorder: false, borderDash: [5, 5] },
             border: { display: false },
@@ -18648,6 +18679,22 @@ function renderGdvMonthlyReportPage(targetContainer) {
                 if (value >= 1000000) return (value / 1000000).toFixed(0) + ' Tr';
                 if (value >= 1000) return (value / 1000).toFixed(0) + ' K';
                 return value;
+              }
+            }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            beginAtZero: true,
+            grid: { display: false },
+            border: { display: false },
+            ticks: {
+              color: isDark ? '#f87171' : '#ef4444',
+              font: { family: "'Plus Jakarta Sans', sans-serif", weight: '850' },
+              padding: 10,
+              callback: function(value) {
+                return value + ' hs';
               }
             }
           },
