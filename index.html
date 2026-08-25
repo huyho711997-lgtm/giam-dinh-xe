@@ -14706,16 +14706,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
     }
 
     function getClaimTimestamp(c) {
-      const dateStr = c.ngayMoHs || c.ngayTonThat || c.ngayVTT || c.ngayDuyetHsbt || c.pascNgayDuyet;
+      const dateStr = c.ngayMoHs;
       if (dateStr && typeof dateStr === 'string' && dateStr !== '—') {
         const dp = parseDateParts(dateStr);
         if (dp && dp.year && dp.month && dp.day) {
           return new Date(dp.year, dp.month - 1, dp.day, 12, 0, 0).getTime();
         }
-      }
-      if (c.createdAt) {
-        const t = new Date(c.createdAt).getTime();
-        if (!isNaN(t)) return t;
       }
       return 0;
     }
