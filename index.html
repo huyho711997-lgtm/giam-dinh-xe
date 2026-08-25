@@ -18428,8 +18428,17 @@ function renderGdvMonthlyReportPage(targetContainer) {
         carBrandChartInstance.destroy();
       }
       
+
       const isDark = document.body.classList.contains('dark-mode');
       const textColor = isDark ? '#cbd5e1' : '#475569';
+      
+      const canvasWrap = document.getElementById("carBrandLossCanvasWrap") || canvas.parentElement;
+      if (activeCarBrandChartType === 'pie') {
+        canvasWrap.style.height = activeCarBrandChartTopN > 10 ? '600px' : '500px';
+      } else {
+        canvasWrap.style.height = '400px';
+      }
+
       const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
       const surfaceColor = isDark ? '#0f172a' : '#ffffff';
       
@@ -18462,8 +18471,27 @@ function renderGdvMonthlyReportPage(targetContainer) {
           const total = dataset.data.reduce((a, b) => a + b, 0);
 
           ctx.save();
-          ctx.font = "700 11.5px 'Nunito Sans', sans-serif";
           ctx.textBaseline = 'middle';
+          
+          const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+          const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+          ctx.textAlign = 'center';
+          ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#94a3b8' : '#64748b';
+          ctx.font = "800 12px 'Nunito Sans', sans-serif";
+          ctx.fillText('TỔNG CỘNG', centerX, centerY - 10);
+          
+          ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#ffffff' : '#0f172a';
+          ctx.font = "850 16px 'Nunito Sans', sans-serif";
+          let totalStr = '';
+          if (total >= 1000000000) totalStr = (total / 1000000000).toFixed(2) + ' Tỷ';
+          else if (total >= 1000000) totalStr = (total / 1000000).toFixed(1) + ' Tr';
+          else totalStr = formatCurrencyInputNumber(total);
+          ctx.fillText(totalStr, centerX, centerY + 12);
+
+          let lastYRight = -9999;
+          let lastYLeft = 9999;
+          
+          ctx.font = "700 11.5px 'Nunito Sans', sans-serif";
 
           meta.data.forEach((element, index) => {
             const val = dataset.data[index];
@@ -18472,7 +18500,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             
             let valStr = '';
             if (val >= 1000000000) valStr = (val / 1000000000).toFixed(1) + ' Tỷ';
-            else if (val >= 1000000) valStr = (val / 1000000).toFixed(0) + ' Tr';
+            else if (val >= 1000000) valStr = (val / 1000000).toFixed(1) + ' Tr';
             else if (val >= 1000) valStr = (val / 1000).toFixed(0) + ' K';
             else valStr = val;
 
@@ -18491,24 +18519,33 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
             const isRight = Math.cos(angle) > 0;
             const endX = isRight ? elbowX + 25 : elbowX - 25;
-            const endY = elbowY;
+            let endY = elbowY;
+            
+            if (isRight) {
+              if (endY < lastYRight + 20) endY = lastYRight + 20;
+              lastYRight = endY;
+            } else {
+              if (endY > lastYLeft - 20) endY = lastYLeft - 20;
+              lastYLeft = endY;
+            }
 
             ctx.beginPath();
             ctx.moveTo(startX, startY);
-            ctx.lineTo(elbowX, elbowY);
+            ctx.lineTo(elbowX, endY);
             ctx.lineTo(endX, endY);
+            const surfaceColor = document.body.classList.contains('dark-mode') ? '#0f172a' : '#ffffff';
             ctx.strokeStyle = dataset.borderColor[index] === surfaceColor ? dataset.backgroundColor[index] : dataset.borderColor[index];
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            ctx.fillStyle = isDark ? '#cbd5e1' : '#475569';
+            ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#cbd5e1' : '#475569';
             ctx.textAlign = isRight ? 'left' : 'right';
-            ctx.fillText(labelStr, isRight ? endX + 6 : endX - 6, endY);
+            ctx.fillText(labelStr, isRight ? endX + 8 : endX - 8, endY);
           });
           ctx.restore();
         }
       };
-
+      
       const actualType = activeCarBrandChartType === 'pie' ? 'doughnut' : 'bar';
 
 
@@ -18532,7 +18569,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           maintainAspectRatio: false,
           cutout: activeCarBrandChartType === 'pie' ? '65%' : undefined,
           layout: {
-            padding: activeCarBrandChartType === 'pie' ? { top: 30, bottom: 30, left: 100, right: 100 } : 0
+            padding: activeCarBrandChartType === 'pie' ? { top: 40, bottom: 40, left: 160, right: 160 } : 0
           },
           animation: {
             duration: 1200,
@@ -18683,7 +18720,7 @@ const fullList = getCarBrandLossData();
                 <button type="button" onclick="activeCarBrandChartType='pie'; initCarBrandChart();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCarBrandChartType === 'pie' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Tròn</button>
               </div>
             </div>
-            <div style="position: relative; height: 350px; width: 100%;">
+            <div id="carBrandLossCanvasWrap" style="position: relative; height: 400px; width: 100%; transition: height 0.3s ease;">
               <canvas id="carBrandLossCanvas"></canvas>
               <img src="x" onerror="if(window.initCarBrandChart) setTimeout(window.initCarBrandChart, 50); this.remove();" style="display:none;" />
             </div>
