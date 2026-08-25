@@ -18724,7 +18724,56 @@ function renderGdvMonthlyReportPage(targetContainer) {
         }
       };
 
+      
+      const customBarLabelsPlugin = {
+        id: 'customBarLabels',
+        afterDatasetsDraw(chart, args, options) {
+          if (chart.config.type !== 'bar') return;
+          const { ctx } = chart;
+          ctx.save();
+          ctx.font = "800 10.5px 'Plus Jakarta Sans', sans-serif";
+          ctx.textAlign = 'center';
+          const isDark = document.body.classList.contains('dark-mode');
+
+          chart.data.datasets.forEach((dataset, i) => {
+            const meta = chart.getDatasetMeta(i);
+            if (meta.hidden) return;
+            
+            meta.data.forEach((element, index) => {
+              const val = dataset.data[index];
+              if (!val) return;
+              
+              let valStr = '';
+              if (dataset.type === 'line' || dataset.yAxisID === 'y1') {
+                valStr = val + '';
+                ctx.fillStyle = isDark ? '#fca5a5' : '#ef4444';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(valStr, element.x, element.y - 8);
+              } else {
+                if (val >= 1000000000) valStr = (val / 1000000000).toFixed(1) + 'T';
+                else if (val >= 1000000) valStr = (val / 1000000).toFixed(0) + 'Tr';
+                else if (val >= 1000) valStr = (val / 1000).toFixed(0) + 'K';
+                else valStr = val;
+                
+                const barHeight = element.base - element.y;
+                if (barHeight > 24) {
+                  ctx.fillStyle = 'rgba(255,255,255,0.9)'; 
+                  ctx.textBaseline = 'top';
+                  ctx.fillText(valStr, element.x, element.y + 6);
+                } else {
+                  ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+                  ctx.textBaseline = 'bottom';
+                  ctx.fillText(valStr, element.x, element.y - 4);
+                }
+              }
+            });
+          });
+          ctx.restore();
+        }
+      };
+
       config.plugins.push(customCanvasBackgroundColor);
+      config.plugins.push(customBarLabelsPlugin);
       config.plugins.push(customOutlabelsPlugin);
       carBrandChartInstance = new Chart(ctx, config);
     };
