@@ -12601,6 +12601,9 @@ function formatDateDisplay(val) {
     let activeFavoriteFiltersUid = null;
     let activeCarBrandChartTopN = 10;
     let activeCarBrandChartType = 'bar';
+    let activeGarageChartTopN = 20;
+    let activeGarageChartType = 'bar';
+    let garageLossChartInstance = null;
     let carBrandChartInstance = null;
     let activeGdvReportView = 'weekly_zone'; // 'table' | 'chart'
     let activeSelectedDakLakStatuses = ['da_duyet_pasc', 'cho_duyet_hsbt'];
@@ -13908,108 +13911,32 @@ function renderGdvMonthlyReportPage(targetContainer) {
               </div>
             </div>
 
+            
             <!-- COMBO BAR + LINE VECTOR CHART SECTION FOR GARAGES -->
-            <div id="garageChartCardContainer" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm); position: relative;">
+            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-                <div>
-                  <div style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                    <span>Báo cáo doanh thu bồi thường của các gara sửa chữa tại địa bàn - ${activeGdvReportMonth !== 'all' ? 'Tháng ' + activeGdvReportMonth : 'Tất cả các tháng'}${activeGdvReportYear !== 'all' ? '/' + activeGdvReportYear : ''}</span>
-                  </div>
-                  <p style="font-size: 12px; color: var(--text-soft); margin-top: 4px; margin-bottom: 0;">
-                    Biểu đồ cột hiển thị số tiền bồi thường của từng gara, biểu đồ đường hiển thị số lượng vụ tổn thất của mỗi gara
-                  </p>
+                <div style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
+                  BIỂU ĐỒ & BẢNG KÊ GARA
+                  <select onchange="activeGarageChartTopN=Number(this.value); renderGdvMonthlyReportPage();" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); padding: 5px 10px; border-radius: 8px; font-weight: 750; font-size: 12px; outline: none; cursor: pointer; box-shadow: var(--shadow-xs);">
+                    <option value="5" ${activeGarageChartTopN === 5 ? 'selected' : ''}>Top 5</option>
+                    <option value="10" ${activeGarageChartTopN === 10 ? 'selected' : ''}>Top 10</option>
+                    <option value="15" ${activeGarageChartTopN === 15 ? 'selected' : ''}>Top 15</option>
+                    <option value="20" ${activeGarageChartTopN === 20 ? 'selected' : ''}>Top 20</option>
+                    <option value="999" ${activeGarageChartTopN === 999 ? 'selected' : ''}>Tất cả</option>
+                  </select>
                 </div>
-
-                <!-- Legend & Export Actions -->
-                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                  <!-- Legend -->
-                  <div style="display: flex; align-items: center; gap: 14px; font-size: 11.5px; font-weight: 800; background: var(--bg-soft); padding: 6px 14px; border-radius: 10px; border: 1px solid var(--border);">
-                    <span style="display: flex; align-items: center; gap: 6px; color: #10b981;"><span style="width: 12px; height: 10px; background: linear-gradient(180deg, #10b981 0%, #059669 100%); border-radius: 3px;"></span> Tiền bồi thường (Cột Trái)</span>
-                    <span style="display: flex; align-items: center; gap: 6px; color: #3b82f6;"><span style="width: 12px; height: 2.5px; background: #3b82f6; border-radius: 99px;"></span> Số hồ sơ (Đường Phải)</span>
-                  </div>
-
-                  <!-- Download Image Button -->
-                  <button type="button" class="hide-on-screenshot" onclick="downloadGarageChartImage('png')" style="padding: 8px 16px; border-radius: 11px; background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(245,158,11,0.12) 100%); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; font-size: 12.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Tải ảnh biểu đồ (PNG/JPG)">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                    <span>Tải Ảnh Biểu Đồ</span>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" onclick="downloadGarageLossChartImage()" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-strong); font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; background: var(--surface); color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Tải ảnh
                   </button>
+                  <button type="button" onclick="activeGarageChartType='bar'; renderGdvMonthlyReportPage();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeGarageChartType === 'bar' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Cột</button>
+                  <button type="button" onclick="activeGarageChartType='pie'; renderGdvMonthlyReportPage();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeGarageChartType === 'pie' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Tròn</button>
                 </div>
               </div>
-
-              <!-- SVG COMBO BAR + LINE VECTOR CHART WITH INTERACTIVE HOVER & ROTATED LABELS -->
-              <div id="garageChartWrapContainer" style="position: relative; width: 100%; overflow-x: auto;">
-                
-                <!-- Floating Glassmorphic Interactive Tooltip Card -->
-                <div id="garageChartTooltip" style="display: none; position: absolute; z-index: 1000; min-width: 270px; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.22); border-radius: 14px; color: #ffffff; padding: 14px 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.45); pointer-events: none; transition: opacity 0.15s ease;"></div>
-
-                <svg viewBox="0 0 ${gChartWidth} ${gChartHeight}" style="width: 100%; height: auto; min-width: 850px; overflow: visible;">
-                  <defs>
-                    <linearGradient id="garageBarGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#10b981" stop-opacity="0.95" />
-                      <stop offset="100%" stop-color="#059669" stop-opacity="0.75" />
-                    </linearGradient>
-                    <linearGradient id="garageBarGradHover" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#34d399" stop-opacity="1" />
-                      <stop offset="100%" stop-color="#10b981" stop-opacity="0.9" />
-                    </linearGradient>
-                  </defs>
-
-                  <!-- Horizontal Grid Lines & Dual Y-Axes -->
-                  ${[0, 0.25, 0.5, 0.75, 1].map(r => {
-                    const yPos = gPaddingTop + gPlotHeight - r * gPlotHeight;
-                    const moneyVal = maxGAmount * r;
-                    const claimsVal = Math.round(maxGClaims * r);
-                    
-                    let moneyLabel = '0 đ';
-                    if (moneyVal >= 1e9) moneyLabel = (moneyVal / 1e9).toFixed(1) + ' Tỷ';
-                    else if (moneyVal >= 1e6) moneyLabel = (moneyVal / 1e6).toFixed(0) + ' Tr';
-                    else if (moneyVal > 0) moneyLabel = Math.round(moneyVal / 1e3) + ' k';
-
-                    return `
-                      <line x1="${gPaddingLeft}" y1="${yPos}" x2="${gChartWidth - gPaddingRight}" y2="${yPos}" stroke="var(--border)" stroke-width="0.8" stroke-dasharray="3 3" opacity="0.6" />
-                      <text x="${gPaddingLeft - 10}" y="${yPos + 3}" font-size="7.5" font-weight="750" fill="#10b981" text-anchor="end" >${moneyLabel}</text>
-                      <text x="${gChartWidth - gPaddingRight + 10}" y="${yPos + 3}" font-size="7.5" font-weight="750" fill="#3b82f6" text-anchor="start" >${claimsVal} ca</text>
-                    `;
-                  }).join('')}
-
-                  <!-- INTERACTIVE VERTICAL BARS & ROTATED LABELS GROUP -->
-                  ${gPoints.map(p => {
-                    const fullName = p.name || '';
-                    const displayShortName = fullName.length > 25 ? fullName.substring(0, 23) + '...' : fullName;
-
-                    return `
-                      <g class="garage-chart-col-group" cursor="pointer" onmouseenter="showGarageChartTooltip(event, '${escapeAttributeData(p.key)}')" onmousemove="moveGarageChartTooltip(event)" onmouseleave="hideGarageChartTooltip()">
-                        <!-- Invisible Hit Box Target for easy hovering -->
-                        <rect x="${p.cx - stepGX/2}" y="${gPaddingTop}" width="${stepGX}" height="${gPlotHeight + 110}" fill="transparent" />
-
-                        <!-- Vertical Bar -->
-                        <rect x="${p.cx - barW/2}" y="${p.bY}" width="${barW}" height="${p.bHeight}" rx="4" fill="url(#garageBarGrad)" style="transition: all 0.2s ease;" />
-                        
-                        <!-- Bar Top Money Label -->
-                        <text x="${p.amountX}" y="${p.amountY}" font-size="7.5" font-weight="850" fill="#10b981" text-anchor="${p.amountAnchor}" >
-                          ${p.totalApprovedAmount >= 1e6 ? (p.totalApprovedAmount / 1e6).toFixed(1) + 'M' : formatCurrencyInputNumber(p.totalApprovedAmount)}
-                        </text>
-
-                        <!-- Rotated Clean X-Axis Label (-38deg) -->
-                        <text x="${p.cx}" y="${gChartHeight - 95}" transform="rotate(-38, ${p.cx}, ${gChartHeight - 95})" font-size="7" font-weight="850" fill="var(--text-main)" text-anchor="end">
-                          ${escapeHtmlOutput(displayShortName)}
-                        </text>
-                      </g>
-                    `;
-                  }).join('')}
-
-                  <!-- TREND LINE (Claim Count) -->
-                  ${gPoints.length > 1 ? `<path d="${gLinePathStr}" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" pointer-events="none" />` : ''}
-
-                  <!-- Line Dots & Value Tags -->
-                  ${gPoints.map(p => `
-                    <g pointer-events="none">
-                      <circle cx="${p.cx}" cy="${p.lY}" r="2" fill="var(--surface)" stroke="#3b82f6" stroke-width="1.5" />
-                      <text x="${p.claimsX}" y="${p.claimsY}" font-size="7.5" font-weight="900" fill="#3b82f6" text-anchor="${p.claimsAnchor}" >${p.totalClaimsCount} ca</text>
-                    </g>
-                  `).join('')}
-                </svg>
+              <div id="garageLossCanvasWrap" style="position: relative; height: 400px; width: 100%; transition: height 0.3s ease;">
+                <canvas id="garageLossCanvas"></canvas>
+                <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onload="if(window.initGarageLossChart) setTimeout(window.initGarageLossChart, 50); this.remove();" style="display:none;" />
               </div>
             </div>
 
@@ -18799,6 +18726,401 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const a = document.createElement('a');
       a.href = url;
       a.download = `Bieu_do_ton_that_hang_xe.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+
+
+    window.initGarageLossChart = function() {
+      const canvas = document.getElementById('garageLossCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      
+      const fullList = cachedCurrentGarageRows || [];
+      let list = [];
+      if (activeGarageChartTopN >= fullList.length) {
+        list = fullList;
+      } else {
+        list = fullList.slice(0, activeGarageChartTopN);
+        const rest = fullList.slice(activeGarageChartTopN);
+        const restCount = rest.reduce((sum, item) => sum + item.totalClaimsCount, 0);
+        const restAmount = rest.reduce((sum, item) => sum + item.totalApprovedAmount, 0);
+        if (restCount > 0) {
+          list.push({ name: 'Các gara khác', count: restCount, totalAmount: restAmount });
+        }
+      }
+      
+      if (garageLossChartInstance) {
+        garageLossChartInstance.destroy();
+      }
+      
+
+      const isDark = document.body.classList.contains('dark-mode');
+      const textColor = isDark ? '#cbd5e1' : '#475569';
+      
+      const canvasWrap = document.getElementById("garageLossCanvasWrap") || canvas.parentElement;
+      if (activeGarageChartType === 'pie') {
+        canvasWrap.style.height = activeGarageChartTopN > 10 ? '600px' : '500px';
+      } else {
+        canvasWrap.style.height = '400px';
+      }
+
+      const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+      const surfaceColor = isDark ? '#0f172a' : '#ffffff';
+      
+      const labels = list.map(item => item.name);
+      const data = list.map(item => item.totalApprovedAmount);
+      
+      // Ultra-Premium vibrant palette (repeated if needed)
+      const coreColors = [
+        '216, 180, 109', '59, 130, 246', '16, 185, 129', '239, 68, 68', '245, 158, 11',
+        '139, 92, 246', '20, 184, 166', '236, 72, 153', '99, 102, 241', '14, 165, 233',
+        '244, 63, 94', '168, 85, 247', '14, 116, 144', '21, 128, 61', '161, 98, 7'
+      ];
+      const baseColors = list.map((_, i) => coreColors[i % coreColors.length]);
+      if (list.length > 0 && list[list.length-1].name === 'Các gara khác') {
+        baseColors[list.length-1] = '100, 116, 139'; // Slate for others
+      }
+      
+      const bgColors = baseColors.map(c => `rgba(${c}, 0.85)`);
+      const hoverBgColors = baseColors.map(c => `rgba(${c}, 1)`);
+      const borderColors = baseColors.map(c => `rgba(${c}, 1)`);
+
+      
+      const customOutlabelsPlugin = {
+        id: 'customOutlabels',
+        afterDraw: function(chart) {
+          if (chart.config.type !== 'doughnut') return;
+          const ctx = chart.ctx;
+          const dataset = chart.data.datasets[0];
+          const meta = chart.getDatasetMeta(0);
+          const total = dataset.data.reduce((a, b) => a + b, 0);
+
+          ctx.save();
+          ctx.textBaseline = 'middle';
+          
+          const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+          const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+          ctx.textAlign = 'center';
+          
+          const isDarkTheme = document.body.classList.contains('dark-mode');
+          
+          ctx.shadowColor = isDarkTheme ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.15)';
+          ctx.shadowBlur = 8;
+          ctx.shadowOffsetY = 4;
+          
+          ctx.fillStyle = isDarkTheme ? '#94a3b8' : '#64748b';
+          ctx.font = "700 13px 'Plus Jakarta Sans', sans-serif";
+          // Add letter spacing trick by manually spacing characters? No, just keep it clean.
+          ctx.fillText('TỔNG CỘNG', centerX, centerY - 16);
+          
+          ctx.fillStyle = isDarkTheme ? '#ffffff' : '#111827';
+          ctx.font = "900 28px 'Plus Jakarta Sans', sans-serif";
+          let totalStr = '';
+          if (total >= 1000000000) totalStr = (total / 1000000000).toFixed(2) + ' Tỷ';
+          else if (total >= 1000000) totalStr = (total / 1000000).toFixed(1) + ' Tr';
+          else totalStr = formatCurrencyInputNumber(total);
+          ctx.fillText(totalStr, centerX, centerY + 16);
+
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetY = 0;
+
+          let lastYRight = -9999;
+          let lastYLeft = 9999;
+          
+          ctx.font = "700 11.5px 'Plus Jakarta Sans', sans-serif";
+
+          meta.data.forEach((element, index) => {
+            const val = dataset.data[index];
+            if (!val) return;
+            const percentage = ((val / total) * 100).toFixed(1) + '%';
+            
+            let valStr = '';
+            if (val >= 1000000000) valStr = (val / 1000000000).toFixed(1) + ' Tỷ';
+            else if (val >= 1000000) valStr = (val / 1000000).toFixed(1) + ' Tr';
+            else if (val >= 1000) valStr = (val / 1000).toFixed(0) + ' K';
+            else valStr = val;
+
+            const labelStr = `${chart.data.labels[index]} ${percentage} (${valStr})`;
+
+            const chartCenter = { x: element.x, y: element.y };
+            const angle = (element.startAngle + element.endAngle) / 2;
+            const outerRadius = element.outerRadius;
+            
+            const startX = chartCenter.x + Math.cos(angle) * outerRadius;
+            const startY = chartCenter.y + Math.sin(angle) * outerRadius;
+
+            const isRight = Math.cos(angle) > 0;
+            const breakX = chartCenter.x + Math.cos(angle) * (outerRadius + 15);
+            const breakY = chartCenter.y + Math.sin(angle) * (outerRadius + 15);
+            
+            let targetY = breakY;
+            if (isRight) {
+              if (targetY < lastYRight + 20) targetY = lastYRight + 20;
+              lastYRight = targetY;
+            } else {
+              if (targetY > lastYLeft - 20) targetY = lastYLeft - 20;
+              lastYLeft = targetY;
+            }
+            
+            // Align all texts to a fixed horizontal distance from the center
+            const fixedX = chartCenter.x + (isRight ? outerRadius + 45 : -(outerRadius + 45));
+
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(breakX, targetY);
+            ctx.lineTo(fixedX, targetY);
+            const surfaceColor = document.body.classList.contains('dark-mode') ? '#0f172a' : '#ffffff';
+            ctx.strokeStyle = dataset.borderColor[index] === surfaceColor ? dataset.backgroundColor[index] : dataset.borderColor[index];
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#cbd5e1' : '#475569';
+            ctx.textAlign = isRight ? 'left' : 'right';
+            ctx.fillText(labelStr, isRight ? fixedX + 8 : fixedX - 8, targetY);
+          });
+          ctx.restore();
+        }
+      };
+      
+      const actualType = activeGarageChartType === 'pie' ? 'doughnut' : 'bar';
+
+
+      const config = {
+        type: actualType,
+        data: {
+          labels: labels,
+          datasets: (function() {
+            const ds = [{
+              type: actualType,
+              label: 'Tổng tiền bồi thường',
+              data: data,
+              backgroundColor: bgColors,
+              hoverBackgroundColor: hoverBgColors,
+              borderColor: actualType === 'doughnut' ? surfaceColor : borderColors,
+              borderWidth: actualType === 'doughnut' ? 3 : 1,
+              borderRadius: actualType === 'bar' ? { topLeft: 8, topRight: 8, bottomLeft: 0, bottomRight: 0 } : 0,
+              hoverOffset: actualType === 'doughnut' ? 10 : 0,
+              yAxisID: actualType === 'bar' ? 'y' : undefined
+            }];
+            if (actualType === 'bar') {
+              ds.push({
+                type: 'line',
+                label: 'Số lượng hồ sơ',
+                data: list.map(item => item.totalClaimsCount),
+                borderColor: isDark ? '#f87171' : '#ef4444',
+                backgroundColor: isDark ? 'rgba(248, 113, 113, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                borderWidth: 3,
+                tension: 0.4,
+                pointBackgroundColor: isDark ? '#f87171' : '#ef4444',
+                pointBorderColor: surfaceColor,
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                yAxisID: 'y1'
+              });
+            }
+            return ds;
+          })()
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: activeGarageChartType === 'pie' ? '65%' : undefined,
+          layout: {
+            padding: activeGarageChartType === 'pie' ? { top: 40, bottom: 40, left: 160, right: 160 } : 0
+          },
+          animation: {
+            duration: 1200,
+            easing: 'easeOutQuart'
+          },
+          plugins: {
+            legend: {
+              display: activeGarageChartType === 'bar',
+              position: 'top',
+              align: 'end',
+              labels: { 
+                color: textColor, 
+                font: { family: "'Plus Jakarta Sans', sans-serif", weight: '800', size: 12 },
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
+            },
+            tooltip: {
+              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+              titleColor: isDark ? '#ffffff' : '#0f172a',
+              bodyColor: isDark ? '#cbd5e1' : '#475569',
+              borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+              borderWidth: 1,
+              padding: 14,
+              cornerRadius: 12,
+              displayColors: true, usePointStyle: true,
+              boxPadding: 6,
+              titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13, weight: '800' },
+              bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13, weight: '700' },
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) { label += ': '; }
+                  
+                  if (context.dataset.type === 'line' || context.dataset.yAxisID === 'y1') {
+                    label += context.parsed.y + ' hồ sơ';
+                  } else {
+                    if (context.parsed.y !== null && activeGarageChartType === 'bar') {
+                      label += formatCurrencyInputNumber(context.parsed.y) + ' đ';
+                    } else if (context.parsed !== null && activeGarageChartType === 'pie') {
+                      label += formatCurrencyInputNumber(context.parsed) + ' đ';
+                    }
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+        }
+      };
+
+      if (activeGarageChartType === 'bar') {
+        config.options.scales = {
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            beginAtZero: true,
+            grid: { color: gridColor, drawBorder: false, borderDash: [5, 5] },
+            border: { display: false },
+            ticks: {
+              color: textColor,
+              font: { family: "'Plus Jakarta Sans', sans-serif", weight: '700' },
+              padding: 10,
+              callback: function(value) {
+                if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' Tỷ';
+                if (value >= 1000000) return (value / 1000000).toFixed(0) + ' Tr';
+                if (value >= 1000) return (value / 1000).toFixed(0) + ' K';
+                return value;
+              }
+            }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            beginAtZero: true,
+            grid: { display: false },
+            border: { display: false },
+            ticks: {
+              color: isDark ? '#f87171' : '#ef4444',
+              font: { family: "'Plus Jakarta Sans', sans-serif", weight: '850' },
+              padding: 10,
+              callback: function(value) {
+                return value + ' hs';
+              }
+            }
+          },
+          x: {
+            grid: { display: false, drawBorder: false },
+            border: { display: false },
+            ticks: { 
+              color: textColor, 
+              font: { family: "'Plus Jakarta Sans', sans-serif", weight: '800' },
+              padding: 10 
+            }
+          }
+        };
+      }
+
+      config.plugins = config.plugins || [];
+      
+      const customCanvasBackgroundColor = {
+        id: 'customCanvasBackgroundColor',
+        beforeDraw: (chart) => {
+          const {ctx} = chart;
+          ctx.save();
+          ctx.globalCompositeOperation = 'destination-over';
+          ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#1e293b' : '#ffffff'; // or use the background color variable
+          ctx.fillRect(0, 0, chart.width, chart.height);
+          ctx.restore();
+        }
+      };
+
+      
+      const customBarLabelsPlugin = {
+        id: 'customBarLabels',
+        afterDatasetsDraw(chart, args, options) {
+          if (chart.config.type !== 'bar') return;
+          const { ctx } = chart;
+          ctx.save();
+          ctx.font = "800 10.5px 'Plus Jakarta Sans', sans-serif";
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const isDark = document.body.classList.contains('dark-mode');
+
+          const barMeta = chart.getDatasetMeta(0);
+          const lineMeta = chart.data.datasets.length > 1 ? chart.getDatasetMeta(1) : null;
+          
+          if (barMeta.hidden) { ctx.restore(); return; }
+
+          barMeta.data.forEach((barEl, index) => {
+            const barVal = chart.data.datasets[0].data[index];
+            if (!barVal) return;
+            
+            let barStr = '';
+            if (barVal >= 1000000000) barStr = (barVal / 1000000000).toFixed(1) + ' Tỷ';
+            else if (barVal >= 1000000) barStr = (barVal / 1000000).toFixed(0) + ' Tr';
+            else if (barVal >= 1000) barStr = (barVal / 1000).toFixed(0) + ' K';
+            else barStr = barVal;
+
+            const barHeight = barEl.base - barEl.y;
+            let barTextY = barHeight > 24 ? barEl.y + 12 : barEl.y - 10;
+            let barTextColor = barHeight > 24 ? 'rgba(255,255,255,0.9)' : (isDark ? '#94a3b8' : '#64748b');
+
+            let lineTextY = null;
+            let lineStr = '';
+            
+            if (lineMeta && !lineMeta.hidden && lineMeta.data[index]) {
+              const lineEl = lineMeta.data[index];
+              const lineVal = chart.data.datasets[1].data[index];
+              if (lineVal) {
+                lineStr = lineVal + '';
+                lineTextY = lineEl.y - 14; 
+                
+                if (Math.abs(barTextY - lineTextY) < 16) {
+                   if (lineTextY <= barTextY) {
+                     lineTextY = barTextY - 16;
+                   } else {
+                     lineTextY = barTextY + 16;
+                   }
+                }
+                
+                ctx.fillStyle = isDark ? '#fca5a5' : '#ef4444';
+                ctx.fillText(lineStr, lineEl.x, lineTextY);
+              }
+            }
+
+            ctx.fillStyle = barTextColor;
+            ctx.fillText(barStr, barEl.x, barTextY);
+          });
+          
+          ctx.restore();
+        }
+      };
+
+      config.plugins.push(customCanvasBackgroundColor);
+      config.plugins.push(customBarLabelsPlugin);
+      config.plugins.push(customOutlabelsPlugin);
+      garageLossChartInstance = new Chart(ctx, config);
+    };
+
+    window.downloadGarageLossChartImage = function() {
+      const canvas = document.getElementById('garageLossCanvas');
+      if (!canvas) return;
+      const url = canvas.toDataURL('image/png', 1.0);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Bieu_do_doanh_thu_gara.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
