@@ -18659,9 +18659,36 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
 
       config.plugins = config.plugins || [];
+      
+      const customCanvasBackgroundColor = {
+        id: 'customCanvasBackgroundColor',
+        beforeDraw: (chart) => {
+          const {ctx} = chart;
+          ctx.save();
+          ctx.globalCompositeOperation = 'destination-over';
+          ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#1e293b' : '#ffffff'; // or use the background color variable
+          ctx.fillRect(0, 0, chart.width, chart.height);
+          ctx.restore();
+        }
+      };
+
+      config.plugins.push(customCanvasBackgroundColor);
       config.plugins.push(customOutlabelsPlugin);
       carBrandChartInstance = new Chart(ctx, config);
     };
+
+    window.downloadCarBrandChartImage = function() {
+      const canvas = document.getElementById('carBrandLossCanvas');
+      if (!canvas) return;
+      const url = canvas.toDataURL('image/png', 1.0);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Bieu_do_ton_that_hang_xe.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+
 
     function renderCarBrandLossReportTableHtml() {
 const fullList = getCarBrandLossData();
@@ -18728,8 +18755,12 @@ const fullList = getCarBrandLossData();
                 </select>
               </div>
               <div style="display: flex; gap: 8px;">
-                <button type="button" onclick="activeCarBrandChartType='bar'; initCarBrandChart();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCarBrandChartType === 'bar' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Cột</button>
-                <button type="button" onclick="activeCarBrandChartType='pie'; initCarBrandChart();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCarBrandChartType === 'pie' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Tròn</button>
+                <button type="button" onclick="downloadCarBrandChartImage()" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-strong); font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; background: var(--surface); color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  Tải ảnh
+                </button>
+                <button type="button" onclick="activeCarBrandChartType='bar'; renderGdvMonthlyReportPage();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCarBrandChartType === 'bar' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Cột</button>
+                <button type="button" onclick="activeCarBrandChartType='pie'; renderGdvMonthlyReportPage();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCarBrandChartType === 'pie' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Tròn</button>
               </div>
             </div>
             <div id="carBrandLossCanvasWrap" style="position: relative; height: 400px; width: 100%; transition: height 0.3s ease;">
