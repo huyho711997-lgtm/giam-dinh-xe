@@ -18513,26 +18513,26 @@ function renderGdvMonthlyReportPage(targetContainer) {
             const startX = chartCenter.x + Math.cos(angle) * outerRadius;
             const startY = chartCenter.y + Math.sin(angle) * outerRadius;
 
-            const elbowRadius = outerRadius + 20;
-            const elbowX = chartCenter.x + Math.cos(angle) * elbowRadius;
-            const elbowY = chartCenter.y + Math.sin(angle) * elbowRadius;
-
             const isRight = Math.cos(angle) > 0;
-            const endX = isRight ? elbowX + 25 : elbowX - 25;
-            let endY = elbowY;
+            const breakX = chartCenter.x + Math.cos(angle) * (outerRadius + 15);
+            const breakY = chartCenter.y + Math.sin(angle) * (outerRadius + 15);
             
+            let targetY = breakY;
             if (isRight) {
-              if (endY < lastYRight + 20) endY = lastYRight + 20;
-              lastYRight = endY;
+              if (targetY < lastYRight + 20) targetY = lastYRight + 20;
+              lastYRight = targetY;
             } else {
-              if (endY > lastYLeft - 20) endY = lastYLeft - 20;
-              lastYLeft = endY;
+              if (targetY > lastYLeft - 20) targetY = lastYLeft - 20;
+              lastYLeft = targetY;
             }
+            
+            // Align all texts to a fixed horizontal distance from the center
+            const fixedX = chartCenter.x + (isRight ? outerRadius + 45 : -(outerRadius + 45));
 
             ctx.beginPath();
             ctx.moveTo(startX, startY);
-            ctx.lineTo(elbowX, endY);
-            ctx.lineTo(endX, endY);
+            ctx.lineTo(breakX, targetY);
+            ctx.lineTo(fixedX, targetY);
             const surfaceColor = document.body.classList.contains('dark-mode') ? '#0f172a' : '#ffffff';
             ctx.strokeStyle = dataset.borderColor[index] === surfaceColor ? dataset.backgroundColor[index] : dataset.borderColor[index];
             ctx.lineWidth = 1.5;
@@ -18540,7 +18540,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
             ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#cbd5e1' : '#475569';
             ctx.textAlign = isRight ? 'left' : 'right';
-            ctx.fillText(labelStr, isRight ? endX + 8 : endX - 8, endY);
+            ctx.fillText(labelStr, isRight ? fixedX + 8 : fixedX - 8, targetY);
           });
           ctx.restore();
         }
@@ -18595,7 +18595,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               borderWidth: 1,
               padding: 14,
               cornerRadius: 12,
-              displayColors: true,
+              displayColors: true, usePointStyle: true,
               boxPadding: 6,
               titleFont: { family: "'Nunito Sans', sans-serif", size: 13, weight: '800' },
               bodyFont: { family: "'Nunito Sans', sans-serif", size: 13, weight: '700' },
