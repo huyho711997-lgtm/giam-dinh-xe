@@ -18476,17 +18476,29 @@ function renderGdvMonthlyReportPage(targetContainer) {
           const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
           const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
           ctx.textAlign = 'center';
-          ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#94a3b8' : '#64748b';
-          ctx.font = "800 12px 'Nunito Sans', sans-serif";
-          ctx.fillText('TỔNG CỘNG', centerX, centerY - 10);
           
-          ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#ffffff' : '#0f172a';
-          ctx.font = "850 16px 'Nunito Sans', sans-serif";
+          const isDarkTheme = document.body.classList.contains('dark-mode');
+          
+          ctx.shadowColor = isDarkTheme ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.15)';
+          ctx.shadowBlur = 8;
+          ctx.shadowOffsetY = 4;
+          
+          ctx.fillStyle = isDarkTheme ? '#94a3b8' : '#64748b';
+          ctx.font = "700 13px 'Nunito Sans', sans-serif";
+          // Add letter spacing trick by manually spacing characters? No, just keep it clean.
+          ctx.fillText('TỔNG CỘNG', centerX, centerY - 16);
+          
+          ctx.fillStyle = isDarkTheme ? '#ffffff' : '#111827';
+          ctx.font = "900 28px 'Nunito Sans', sans-serif";
           let totalStr = '';
           if (total >= 1000000000) totalStr = (total / 1000000000).toFixed(2) + ' Tỷ';
           else if (total >= 1000000) totalStr = (total / 1000000).toFixed(1) + ' Tr';
           else totalStr = formatCurrencyInputNumber(total);
-          ctx.fillText(totalStr, centerX, centerY + 12);
+          ctx.fillText(totalStr, centerX, centerY + 16);
+
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetY = 0;
 
           let lastYRight = -9999;
           let lastYLeft = 9999;
