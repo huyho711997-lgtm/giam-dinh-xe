@@ -18442,7 +18442,66 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const hoverBgColors = baseColors.map(c => `rgba(${c}, 1)`);
       const borderColors = baseColors.map(c => `rgba(${c}, 1)`);
 
+      
+      const customOutlabelsPlugin = {
+        id: 'customOutlabels',
+        afterDraw: function(chart) {
+          if (chart.config.type !== 'doughnut') return;
+          const ctx = chart.ctx;
+          const dataset = chart.data.datasets[0];
+          const meta = chart.getDatasetMeta(0);
+          const total = dataset.data.reduce((a, b) => a + b, 0);
+
+          ctx.save();
+          ctx.font = "700 11.5px 'Nunito Sans', sans-serif";
+          ctx.textBaseline = 'middle';
+
+          meta.data.forEach((element, index) => {
+            const val = dataset.data[index];
+            if (!val) return;
+            const percentage = ((val / total) * 100).toFixed(1) + '%';
+            
+            let valStr = '';
+            if (val >= 1000000000) valStr = (val / 1000000000).toFixed(1) + ' Tỷ';
+            else if (val >= 1000000) valStr = (val / 1000000).toFixed(0) + ' Tr';
+            else if (val >= 1000) valStr = (val / 1000).toFixed(0) + ' K';
+            else valStr = val;
+
+            const labelStr = `${chart.data.labels[index]} ${percentage} (${valStr})`;
+
+            const chartCenter = { x: element.x, y: element.y };
+            const angle = (element.startAngle + element.endAngle) / 2;
+            const outerRadius = element.outerRadius;
+            
+            const startX = chartCenter.x + Math.cos(angle) * outerRadius;
+            const startY = chartCenter.y + Math.sin(angle) * outerRadius;
+
+            const elbowRadius = outerRadius + 20;
+            const elbowX = chartCenter.x + Math.cos(angle) * elbowRadius;
+            const elbowY = chartCenter.y + Math.sin(angle) * elbowRadius;
+
+            const isRight = Math.cos(angle) > 0;
+            const endX = isRight ? elbowX + 25 : elbowX - 25;
+            const endY = elbowY;
+
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(elbowX, elbowY);
+            ctx.lineTo(endX, endY);
+            ctx.strokeStyle = dataset.borderColor[index] === surfaceColor ? dataset.backgroundColor[index] : dataset.borderColor[index];
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            ctx.fillStyle = isDark ? '#cbd5e1' : '#475569';
+            ctx.textAlign = isRight ? 'left' : 'right';
+            ctx.fillText(labelStr, isRight ? endX + 6 : endX - 6, endY);
+          });
+          ctx.restore();
+        }
+      };
+
       const actualType = activeCarBrandChartType === 'pie' ? 'doughnut' : 'bar';
+
 
       const config = {
         type: actualType,
@@ -18464,7 +18523,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           maintainAspectRatio: false,
           cutout: activeCarBrandChartType === 'pie' ? '65%' : undefined,
           layout: {
-            padding: activeCarBrandChartType === 'pie' ? { top: 10, bottom: 10, left: 10, right: 10 } : 0
+            padding: activeCarBrandChartType === 'pie' ? { top: 30, bottom: 30, left: 100, right: 100 } : 0
           },
           animation: {
             duration: 1200,
@@ -18472,7 +18531,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           },
           plugins: {
             legend: {
-              display: activeCarBrandChartType === 'pie',
+              display: false, // hide legend since we have outlabels
               position: 'right',
               labels: { 
                 color: textColor, 
@@ -18541,6 +18600,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
         };
       }
 
+      config.plugins = config.plugins || [];
+      config.plugins.push(customOutlabelsPlugin);
       carBrandChartInstance = new Chart(ctx, config);
     };
 
