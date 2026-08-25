@@ -12599,6 +12599,7 @@ function formatDateDisplay(val) {
     let userFavoriteFilters = [];
     let hasAppliedDefaultFilter = false;
     let activeFavoriteFiltersUid = null;
+    let activeCarBrandChartTopN = 10;
     let activeCarBrandChartType = 'bar';
     let carBrandChartInstance = null;
     let activeGdvReportView = 'weekly_zone'; // 'table' | 'chart'
@@ -18410,7 +18411,18 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const ctx = canvas.getContext('2d');
       
       const fullList = getCarBrandLossData();
-      const list = fullList.slice(0, 10); // Top 10
+      let list = [];
+      if (activeCarBrandChartTopN >= fullList.length) {
+        list = fullList;
+      } else {
+        list = fullList.slice(0, activeCarBrandChartTopN);
+        const rest = fullList.slice(activeCarBrandChartTopN);
+        const restCount = rest.reduce((sum, item) => sum + item.count, 0);
+        const restAmount = rest.reduce((sum, item) => sum + item.totalAmount, 0);
+        if (restCount > 0) {
+          list.push({ brand: 'Các hãng khác', count: restCount, totalAmount: restAmount });
+        }
+      }
       
       if (carBrandChartInstance) {
         carBrandChartInstance.destroy();
@@ -18424,19 +18436,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
       const labels = list.map(item => item.brand);
       const data = list.map(item => item.totalAmount);
       
-      // Ultra-Premium vibrant palette
-      const baseColors = [
-        '216, 180, 109', // Gold
-        '59, 130, 246',  // Blue
-        '16, 185, 129',  // Emerald
-        '239, 68, 68',   // Red
-        '245, 158, 11',  // Amber
-        '139, 92, 246',  // Violet
-        '20, 184, 166',  // Teal
-        '236, 72, 153',  // Pink
-        '99, 102, 241',  // Indigo
-        '14, 165, 233'   // Sky
+      // Ultra-Premium vibrant palette (repeated if needed)
+      const coreColors = [
+        '216, 180, 109', '59, 130, 246', '16, 185, 129', '239, 68, 68', '245, 158, 11',
+        '139, 92, 246', '20, 184, 166', '236, 72, 153', '99, 102, 241', '14, 165, 233',
+        '244, 63, 94', '168, 85, 247', '14, 116, 144', '21, 128, 61', '161, 98, 7'
       ];
+      const baseColors = list.map((_, i) => coreColors[i % coreColors.length]);
+      if (list.length > 0 && list[list.length-1].brand === 'Các hãng khác') {
+        baseColors[list.length-1] = '100, 116, 139'; // Slate for others
+      }
       
       const bgColors = baseColors.map(c => `rgba(${c}, 0.85)`);
       const hoverBgColors = baseColors.map(c => `rgba(${c}, 1)`);
@@ -18606,7 +18615,19 @@ function renderGdvMonthlyReportPage(targetContainer) {
     };
 
     function renderCarBrandLossReportTableHtml() {
-      const list = getCarBrandLossData();
+const fullList = getCarBrandLossData();
+      let list = [];
+      if (activeCarBrandChartTopN >= fullList.length) {
+        list = fullList;
+      } else {
+        list = fullList.slice(0, activeCarBrandChartTopN);
+        const rest = fullList.slice(activeCarBrandChartTopN);
+        const restCount = rest.reduce((sum, item) => sum + item.count, 0);
+        const restAmount = rest.reduce((sum, item) => sum + item.totalAmount, 0);
+        if (restCount > 0) {
+          list.push({ brand: 'Các hãng khác', count: restCount, totalAmount: restAmount, isOther: true });
+        }
+      }
       let grandTotalCount = 0;
       let grandTotalAmount = 0;
 
@@ -18615,8 +18636,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
         grandTotalAmount += item.totalAmount;
         return `
           <tr style="border-bottom: 1px solid var(--border); ${idx % 2 === 0 ? 'background: var(--surface);' : 'background: var(--bg-soft);'}">
-            <td style="padding: 12px 14px; text-align: center; font-weight: 850; color: var(--text-soft);">${idx + 1}</td>
-            <td style="padding: 12px 14px; font-weight: 850; color: var(--primary);">${escapeHtmlOutput(item.brand)}</td>
+            <td style="padding: 12px 14px; text-align: center; font-weight: 850; color: var(--text-soft);">${item.isOther ? '*' : idx + 1}</td>
+            <td style="padding: 12px 14px; font-weight: 850; color: ${item.isOther ? 'var(--text-soft)' : 'var(--primary)'}; font-style: ${item.isOther ? 'italic' : 'normal'};">${escapeHtmlOutput(item.brand)}</td>
             <td style="padding: 12px 14px; text-align: right; font-weight: 800; color: var(--text-main);">${item.count}</td>
             <td style="padding: 12px 14px; text-align: right; font-weight: 850; color: #ef4444;">${formatCurrencyInputNumber(item.totalAmount)} đ</td>
           </tr>
@@ -18647,7 +18668,16 @@ function renderGdvMonthlyReportPage(targetContainer) {
           <!-- Chart controls and Canvas -->
           <div style="margin-bottom: 24px; background: var(--bg-soft); padding: 16px; border-radius: 12px; border: 1px solid var(--border);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-              <div style="font-size: 14px; font-weight: 800; color: var(--text-main);">BIỂU ĐỒ TỔN THẤT THEO HÃNG XE (Top 10)</div>
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div style="font-size: 14px; font-weight: 800; color: var(--text-main); text-transform: uppercase;">Biểu đồ & Bảng kê Hãng xe</div>
+                <select onchange="activeCarBrandChartTopN=Number(this.value); renderGdvMonthlyReportPage();" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); padding: 5px 10px; border-radius: 8px; font-weight: 750; font-size: 12px; outline: none; cursor: pointer; box-shadow: var(--shadow-xs);">
+                  <option value="5" ${activeCarBrandChartTopN === 5 ? 'selected' : ''}>Top 5</option>
+                  <option value="10" ${activeCarBrandChartTopN === 10 ? 'selected' : ''}>Top 10</option>
+                  <option value="15" ${activeCarBrandChartTopN === 15 ? 'selected' : ''}>Top 15</option>
+                  <option value="20" ${activeCarBrandChartTopN === 20 ? 'selected' : ''}>Top 20</option>
+                  <option value="999" ${activeCarBrandChartTopN === 999 ? 'selected' : ''}>Tất cả</option>
+                </select>
+              </div>
               <div style="display: flex; gap: 8px;">
                 <button type="button" onclick="activeCarBrandChartType='bar'; initCarBrandChart();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCarBrandChartType === 'bar' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Cột</button>
                 <button type="button" onclick="activeCarBrandChartType='pie'; initCarBrandChart();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCarBrandChartType === 'pie' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Tròn</button>
