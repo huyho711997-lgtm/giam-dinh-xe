@@ -18733,41 +18733,55 @@ function renderGdvMonthlyReportPage(targetContainer) {
           ctx.save();
           ctx.font = "800 10.5px 'Plus Jakarta Sans', sans-serif";
           ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
           const isDark = document.body.classList.contains('dark-mode');
 
-          chart.data.datasets.forEach((dataset, i) => {
-            const meta = chart.getDatasetMeta(i);
-            if (meta.hidden) return;
+          const barMeta = chart.getDatasetMeta(0);
+          const lineMeta = chart.data.datasets.length > 1 ? chart.getDatasetMeta(1) : null;
+          
+          if (barMeta.hidden) { ctx.restore(); return; }
+
+          barMeta.data.forEach((barEl, index) => {
+            const barVal = chart.data.datasets[0].data[index];
+            if (!barVal) return;
             
-            meta.data.forEach((element, index) => {
-              const val = dataset.data[index];
-              if (!val) return;
-              
-              let valStr = '';
-              if (dataset.type === 'line' || dataset.yAxisID === 'y1') {
-                valStr = val + '';
-                ctx.fillStyle = isDark ? '#fca5a5' : '#ef4444';
-                ctx.textBaseline = 'bottom';
-                ctx.fillText(valStr, element.x, element.y - 8);
-              } else {
-                if (val >= 1000000000) valStr = (val / 1000000000).toFixed(1) + 'T';
-                else if (val >= 1000000) valStr = (val / 1000000).toFixed(0) + 'Tr';
-                else if (val >= 1000) valStr = (val / 1000).toFixed(0) + 'K';
-                else valStr = val;
+            let barStr = '';
+            if (barVal >= 1000000000) barStr = (barVal / 1000000000).toFixed(1) + ' Tỷ';
+            else if (barVal >= 1000000) barStr = (barVal / 1000000).toFixed(0) + ' Tr';
+            else if (barVal >= 1000) barStr = (barVal / 1000).toFixed(0) + ' K';
+            else barStr = barVal;
+
+            const barHeight = barEl.base - barEl.y;
+            let barTextY = barHeight > 24 ? barEl.y + 12 : barEl.y - 10;
+            let barTextColor = barHeight > 24 ? 'rgba(255,255,255,0.9)' : (isDark ? '#94a3b8' : '#64748b');
+
+            let lineTextY = null;
+            let lineStr = '';
+            
+            if (lineMeta && !lineMeta.hidden && lineMeta.data[index]) {
+              const lineEl = lineMeta.data[index];
+              const lineVal = chart.data.datasets[1].data[index];
+              if (lineVal) {
+                lineStr = lineVal + '';
+                lineTextY = lineEl.y - 14; 
                 
-                const barHeight = element.base - element.y;
-                if (barHeight > 24) {
-                  ctx.fillStyle = 'rgba(255,255,255,0.9)'; 
-                  ctx.textBaseline = 'top';
-                  ctx.fillText(valStr, element.x, element.y + 6);
-                } else {
-                  ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
-                  ctx.textBaseline = 'bottom';
-                  ctx.fillText(valStr, element.x, element.y - 4);
+                if (Math.abs(barTextY - lineTextY) < 16) {
+                   if (lineTextY <= barTextY) {
+                     lineTextY = barTextY - 16;
+                   } else {
+                     lineTextY = barTextY + 16;
+                   }
                 }
+                
+                ctx.fillStyle = isDark ? '#fca5a5' : '#ef4444';
+                ctx.fillText(lineStr, lineEl.x, lineTextY);
               }
-            });
+            }
+
+            ctx.fillStyle = barTextColor;
+            ctx.fillText(barStr, barEl.x, barTextY);
           });
+          
           ctx.restore();
         }
       };
