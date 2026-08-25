@@ -18484,12 +18484,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
           ctx.shadowOffsetY = 4;
           
           ctx.fillStyle = isDarkTheme ? '#94a3b8' : '#64748b';
-          ctx.font = "700 13px 'Nunito Sans', sans-serif";
+          ctx.font = "700 13px 'Plus Jakarta Sans', sans-serif";
           // Add letter spacing trick by manually spacing characters? No, just keep it clean.
           ctx.fillText('TỔNG CỘNG', centerX, centerY - 16);
           
           ctx.fillStyle = isDarkTheme ? '#ffffff' : '#111827';
-          ctx.font = "900 28px 'Nunito Sans', sans-serif";
+          ctx.font = "900 28px 'Plus Jakarta Sans', sans-serif";
           let totalStr = '';
           if (total >= 1000000000) totalStr = (total / 1000000000).toFixed(2) + ' Tỷ';
           else if (total >= 1000000) totalStr = (total / 1000000).toFixed(1) + ' Tr';
@@ -18503,7 +18503,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           let lastYRight = -9999;
           let lastYLeft = 9999;
           
-          ctx.font = "700 11.5px 'Nunito Sans', sans-serif";
+          ctx.font = "700 11.5px 'Plus Jakarta Sans', sans-serif";
 
           meta.data.forEach((element, index) => {
             const val = dataset.data[index];
@@ -18593,7 +18593,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
               position: 'right',
               labels: { 
                 color: textColor, 
-                font: { family: "'Nunito Sans', sans-serif", weight: '800', size: 12 },
+                font: { family: "'Plus Jakarta Sans', sans-serif", weight: '800', size: 12 },
                 padding: 20,
                 usePointStyle: true,
                 pointStyle: 'circle'
@@ -18609,8 +18609,8 @@ function renderGdvMonthlyReportPage(targetContainer) {
               cornerRadius: 12,
               displayColors: true, usePointStyle: true,
               boxPadding: 6,
-              titleFont: { family: "'Nunito Sans', sans-serif", size: 13, weight: '800' },
-              bodyFont: { family: "'Nunito Sans', sans-serif", size: 13, weight: '700' },
+              titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13, weight: '800' },
+              bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13, weight: '700' },
               callbacks: {
                 label: function(context) {
                   let label = context.dataset.label || '';
@@ -18636,7 +18636,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             border: { display: false },
             ticks: {
               color: textColor,
-              font: { family: "'Nunito Sans', sans-serif", weight: '700' },
+              font: { family: "'Plus Jakarta Sans', sans-serif", weight: '700' },
               padding: 10,
               callback: function(value) {
                 if (value >= 1000000000) return (value / 1000000000).toFixed(1) + ' Tỷ';
@@ -18651,7 +18651,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
             border: { display: false },
             ticks: { 
               color: textColor, 
-              font: { family: "'Nunito Sans', sans-serif", weight: '800' },
+              font: { family: "'Plus Jakarta Sans', sans-serif", weight: '800' },
               padding: 10 
             }
           }
