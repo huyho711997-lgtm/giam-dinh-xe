@@ -20400,7 +20400,7 @@ const fullList = getCarBrandLossData();
                     else if (r.status === 'rejected') statusHtml = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Từ chối</span>';
 
                     return `
-                      <tr onclick="if('${r.status}' === 'pending' && '${r.gdvUid}' === (firebase.auth().currentUser?.uid)) { openCreateFieldReimbursementModal('${r.id}'); } else { viewFieldReimbursementDetail('${r.id}'); }" style="border-bottom: 1px solid var(--border); transition: background 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='transparent'">
+                      <tr onclick="viewFieldReimbursementDetail('${r.id}')" style="border-bottom: 1px solid var(--border); transition: background 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='transparent'">
                         <td style="padding: 18px 24px; font-weight: 750; color: var(--primary);">${escapeHtmlOutput(r.id)}</td>
                         <td style="padding: 18px 24px; color: var(--text-soft);">${formatDateDisplay(r.createdAt)}</td>
                         <td style="padding: 18px 24px;"><strong>${escapeHtmlOutput(r.gdvName)}</strong></td>
