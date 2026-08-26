@@ -21438,17 +21438,17 @@ const fullList = getCarBrandLossData();
 
       const overlay = document.createElement('div');
       overlay.id = 'printOverlayModal';
-      overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:#e2e8f0; z-index:9999999; overflow-y:auto; display:flex; flex-direction:column; align-items:center; padding:30px 20px; box-sizing:border-box; animation: fadeIn 0.2s;';
+      overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:#e2e8f0; z-index:9999999; overflow-y:auto; padding:30px 20px; box-sizing:border-box; animation: fadeIn 0.2s;';
       
       overlay.innerHTML = `
         <style>
           #printOverlayModal * { box-sizing: border-box; }
-          .print-action-bar { width: 210mm; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+          .print-action-bar { width: 210mm; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; }
           .btn-print { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-family: 'Plus Jakarta Sans', Arial, sans-serif; box-shadow: 0 4px 15px rgba(59,130,246,0.3); transition: all 0.2s; }
           .btn-print:hover { background: #2563eb; transform: translateY(-1px); }
           .btn-close-print { background: #ef4444; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-family: 'Plus Jakarta Sans', Arial, sans-serif; box-shadow: 0 4px 15px rgba(239,68,68,0.3); transition: all 0.2s; }
           .btn-close-print:hover { background: #dc2626; transform: translateY(-1px); }
-          .print-page { background: white; width: 210mm; min-height: 297mm; padding: 20mm; box-shadow: 0 20px 40px rgba(0,0,0,0.2); margin-bottom: 40px; font-family: 'Times New Roman', serif; font-size: 12.5px; color: #000; flex-shrink: 0; }
+          .print-page { background: white; width: 210mm; min-height: 297mm; padding: 20mm; box-shadow: 0 20px 40px rgba(0,0,0,0.2); margin: 0 auto 40px auto; font-family: 'Times New Roman', serif; font-size: 12.5px; color: #000; overflow: hidden; }
           .print-page .header-logo { color: #004b87; font-weight: bold; font-family: Arial, sans-serif; font-size: 20px; line-height: 1.2; }
           .print-page .header-logo span { color: #00a4e4; font-weight: normal; font-size: 16px; display: block; }
           .print-page .title { text-align: center; font-weight: bold; font-size: 18px; margin-top: -20px; text-transform: uppercase; }
@@ -21465,7 +21465,16 @@ const fullList = getCarBrandLossData();
           .print-page .sig-header { flex-grow: 1; }
           .print-page .sig-footer { margin-top: 60px; text-align: left; white-space: nowrap; font-size: 13px; }
           @media print {
-            body > *:not(#printOverlayModal) { display: none !important; }
+              body > *:not(#printOverlayModal) { display: none !important; }
+              body { background: white !important; margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
+              #printOverlayModal { position: static !important; background: white !important; padding: 0 !important; width: 100% !important; height: auto !important; display: block !important; overflow: visible !important; box-shadow: none !important; }
+              .print-action-bar { display: none !important; }
+              .print-page { margin: 0 !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; min-height: auto !important; height: auto !important; page-break-after: auto !important; }
+              table { page-break-inside: auto !important; }
+              tr    { page-break-inside: avoid !important; page-break-after: auto !important; }
+              thead { display: table-header-group !important; }
+              tfoot { display: table-footer-group !important; }
+            }
             body { background: white; margin: 0; padding: 0; }
             #printOverlayModal { position: static; background: white; padding: 0; width: 100%; height: auto; display: block; overflow: visible; box-shadow: none; }
             .print-action-bar { display: none !important; }
