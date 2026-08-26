@@ -20755,7 +20755,25 @@ const fullList = getCarBrandLossData();
               Danh sách chi tiết trong phiếu
             </h4>
             <div id="reimbDraftItemsContainer"></div>
-          </div>
+            </div>
+            
+            <div style="padding: 20px 32px; background: var(--surface); border-top: 1px solid var(--border);">
+              <h4 style="margin: 0 0 12px 0; font-size: 14px; font-weight: 800; color: var(--text-main);">Thông tin chuyển khoản (Sẽ lưu mặc định cho lần sau)</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                <div>
+                  <label style="display:block; font-size:12px; font-weight:700; color:var(--text-soft); margin-bottom:4px;">Người thụ hưởng</label>
+                  <input type="text" id="reimbBeneficiaryName" value="${localStorage.getItem('savedBankBeneficiary') || escapeHtmlOutput(activeUserProfile?.displayName || firebase.auth().currentUser?.email || '')}" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:var(--bg-main); color:var(--text-main); font-weight:600; font-size:13px; outline:none; box-sizing:border-box;" placeholder="Ví dụ: NGUYEN VAN A">
+                </div>
+                <div>
+                  <label style="display:block; font-size:12px; font-weight:700; color:var(--text-soft); margin-bottom:4px;">Số tài khoản</label>
+                  <input type="text" id="reimbBankAccount" value="${localStorage.getItem('savedBankAccount') || ''}" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:var(--bg-main); color:var(--text-main); font-weight:600; font-size:13px; outline:none; box-sizing:border-box;" placeholder="Số tài khoản">
+                </div>
+                <div>
+                  <label style="display:block; font-size:12px; font-weight:700; color:var(--text-soft); margin-bottom:4px;">Tại ngân hàng</label>
+                  <input type="text" id="reimbBankName" value="${localStorage.getItem('savedBankName') || ''}" style="width:100%; padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:var(--bg-main); color:var(--text-main); font-weight:600; font-size:13px; outline:none; box-sizing:border-box;" placeholder="Ví dụ: Vietcombank CN Hà Nội">
+                </div>
+              </div>
+            </div>
           
           <div style="padding:20px 32px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface-strong);">
             <div style="display:flex; flex-direction:column;">
@@ -20934,15 +20952,26 @@ const fullList = getCarBrandLossData();
       
       const batchId = 'HT_' + Date.now().toString(36).toUpperCase();
 
-      const payload = {
-        id: batchId,
-        gdvUid: currentUser.uid,
-        gdvName: activeUserProfile?.displayName || currentUser.email,
-        createdAt: firebase.database.ServerValue.TIMESTAMP,
-        status: 'pending',
-        totalAmount: totalAmount,
-        items: localFieldReimbursementDraft
-      };
+      const bName = document.getElementById('reimbBeneficiaryName')?.value.trim();
+        const bAccount = document.getElementById('reimbBankAccount')?.value.trim();
+        const bBank = document.getElementById('reimbBankName')?.value.trim();
+        
+        if (bName) localStorage.setItem('savedBankBeneficiary', bName);
+        if (bAccount) localStorage.setItem('savedBankAccount', bAccount);
+        if (bBank) localStorage.setItem('savedBankName', bBank);
+
+        const payload = {
+          id: batchId,
+          gdvUid: currentUser.uid,
+          gdvName: activeUserProfile?.displayName || currentUser.email,
+          createdAt: firebase.database.ServerValue.TIMESTAMP,
+          status: 'pending',
+          totalAmount: totalAmount,
+          items: localFieldReimbursementDraft,
+          bankBeneficiary: bName || '',
+          bankAccount: bAccount || '',
+          bankName: bBank || ''
+        };
 
       try {
         await dbNodeInstance.ref(`field_reimbursements/${batchId}`).set(payload);
@@ -21350,9 +21379,9 @@ const fullList = getCarBrandLossData();
           
           <div style="margin-bottom: 20px; font-weight: bold;">
             Thông tin chuyển khoản / <i>information bank:</i>
-            <div style="margin-top: 5px; font-weight: normal;">Người thụ hưởng / <i>Beneficiary name:</i> <strong>${escapeHtmlOutput(payload.gdvName)}</strong></div>
-            <div style="font-weight: normal;">Tài khoản / <i>Account number:</i> ........................................</div>
-            <div style="font-weight: normal;">Tại ngân hàng / <i>At bank:</i> ........................................</div>
+            <div style="margin-top: 5px; font-weight: normal;">Người thụ hưởng / <i>Beneficiary name:</i> <strong>${payload.bankBeneficiary ? escapeHtmlOutput(payload.bankBeneficiary) : escapeHtmlOutput(payload.gdvName)}</strong></div>
+            <div style="font-weight: normal;">Tài khoản / <i>Account number:</i> ${payload.bankAccount ? escapeHtmlOutput(payload.bankAccount) : '........................................'}</div>
+            <div style="font-weight: normal;">Tại ngân hàng / <i>At bank:</i> ${payload.bankName ? escapeHtmlOutput(payload.bankName) : '........................................'}</div>
           </div>
 
           <div class="signatures">
