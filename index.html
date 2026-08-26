@@ -20395,8 +20395,8 @@ const fullList = getCarBrandLossData();
                   <tr><td colspan="7"><div class="empty-state-premium" style="padding: 60px 20px; text-align: center; color: var(--text-soft);"><div class="empty-icon" style="margin-bottom: 16px;">${SVGS.SEARCH}</div><strong>Chưa có phiếu thanh toán nào</strong><p style="font-size: 13px; margin-top: 4px;">Bạn có thể tạo phiếu mới để bắt đầu.</p></div></td></tr>
                 ` : allReimb.map(r => {
                   let statusHtml = '';
-                    if (r.status === 'pending') statusHtml = '<span style="background: rgba(234,179,8,0.15); color: #eab308; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Chờ duyệt</span>';
-                    else if (r.status === 'approved') statusHtml = '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Đã duyệt</span>';
+                    if (r.status === 'pending' || r.status === 'new') statusHtml = '<span style="background: rgba(59,130,246,0.15); color: #3b82f6; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Mới tạo</span>';
+                    else if (r.status === 'approved' || r.status === 'paid') statusHtml = '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Đã chi trả</span>';
                     else if (r.status === 'rejected') statusHtml = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Từ chối</span>';
 
                     return `
@@ -20409,7 +20409,7 @@ const fullList = getCarBrandLossData();
                         <td style="padding: 18px 24px; text-align: center;">${statusHtml}</td>
                         <td style="padding: 18px 24px; text-align: center;">
                           <div style="display: flex; justify-content: center;">
-                            ${(r.status === 'pending' && (r.gdvUid === myUid || canReview)) ? `
+                            ${( (r.status === 'pending' || r.status === 'new') && r.gdvUid === myUid ) ? `
                               <button style="background: rgba(239,68,68,0.08); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); padding: 8px; border-radius: 8px; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.15)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'" onclick="if(typeof event !== 'undefined') event.stopPropagation(); deleteFieldReimbursement('${r.id}')" title="Xoá phiếu này">
                                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path></svg>
                               </button>
@@ -21150,17 +21150,18 @@ const fullList = getCarBrandLossData();
               <span style="color: #10b981; font-size: 28px; font-weight:900; line-height:1.2;">${payload.totalAmount ? payload.totalAmount.toLocaleString('vi-VN') : '0'} đ</span>
             </div>
             <div style="display:flex; gap:12px;">
-              ${canReview && payload.status === 'pending' ? `
-                <button class="btn-premium" style="width: auto !important; background: #ef4444; color: #fff; box-shadow: 0 8px 20px rgba(239,68,68,0.25); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'rejected')">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                  TỪ CHỐI
-                </button>
-                <button class="btn-premium" style="width: auto !important; background: #10b981; color: #fff; box-shadow: 0 8px 20px rgba(16,185,129,0.25); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'approved')">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  PHÊ DUYỆT
-                </button>
-              ` : `
-                ${payload.status === 'pending' && payload.gdvUid === firebase.auth().currentUser?.uid ? `
+              ${( (payload.status === 'pending' || payload.status === 'new') && payload.gdvUid === firebase.auth().currentUser?.uid ) ? `
+                  <button class="btn-premium" style="width: auto !important; background: #10b981; color: #fff; box-shadow: 0 8px 20px rgba(16,185,129,0.25); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'paid')">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    ĐÁNH DẤU ĐÃ CHI TRẢ
+                  </button>
+                ` : ((payload.status === 'approved' || payload.status === 'paid') && payload.gdvUid === firebase.auth().currentUser?.uid) ? `
+                  <button class="btn-premium" style="width: auto !important; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'new')">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+                    CHUYỂN VỀ MỚI TẠO
+                  </button>
+                ` : `
+                ${(payload.status === 'pending' || payload.status === 'new') && payload.gdvUid === firebase.auth().currentUser?.uid ? `
                   <button class="btn-premium" style="width: auto !important; padding:12px 24px; border-radius:12px; font-weight:800; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); margin-right: 12px;" onclick="document.getElementById('viewFieldReimbModal').remove(); openCreateFieldReimbursementModal('${payload.id}')">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     SỬA PHIẾU
@@ -21184,12 +21185,12 @@ const fullList = getCarBrandLossData();
     }
 
     async function actionFieldReimbursement(batchId, action) {
-      if (!confirm(`Bạn chắc chắn muốn ${action === 'approved' ? 'phê duyệt' : 'từ chối'} phiếu này?`)) return;
+      if (!confirm(`Bạn chắc chắn muốn ${action === 'paid' ? 'đánh dấu Đã chi trả cho' : (action === 'new' ? 'chuyển về Mới tạo cho' : 'cập nhật')} phiếu này?`)) return;
       try {
         await dbNodeInstance.ref(`field_reimbursements/${batchId}/status`).set(action);
         triggerToast('Đã cập nhật trạng thái!', 'success');
         document.getElementById('viewFieldReimbModal').remove();
-        logUserActivity('FIELD_REIMB_ACTION', `${action === 'approved' ? 'Phê duyệt' : 'Từ chối'} phiếu thanh toán hiện trường ${batchId}`);
+        logUserActivity('FIELD_REIMB_ACTION', `${action === 'paid' ? 'Đánh dấu Đã chi trả' : 'Chuyển về Mới tạo'} phiếu thanh toán hiện trường ${batchId}`);
       } catch (err) {
         console.error(err);
         triggerToast('Lỗi khi cập nhật.', 'error');
