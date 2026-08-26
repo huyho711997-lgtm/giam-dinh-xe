@@ -21128,6 +21128,10 @@ const fullList = getCarBrandLossData();
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 XUẤT BẢNG KÊ (EXCEL)
               </button>
+              <button class="btn-premium" style="width: auto !important; white-space: nowrap; padding:12px 24px; border-radius:12px; font-weight:800; background: #eab308; color: #fff; box-shadow: 0 8px 20px rgba(234,179,8,0.25); margin-left: 12px;" onclick="printFieldReimbursementTemplate('${payload.id}')">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                IN PHIẾU
+              </button>
             </div>
           </div>
         </div>
@@ -21147,6 +21151,224 @@ const fullList = getCarBrandLossData();
         triggerToast('Lỗi khi cập nhật.', 'error');
       }
     }
+
+    
+    function numberToWordsVN(number) {
+      if (!number || number === 0) return "không đồng";
+      const units = ["", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
+      const places = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
+      let str = "";
+      let place = 0;
+      let num = Math.floor(number);
+      while (num > 0) {
+        let chunk = num % 1000;
+        num = Math.floor(num / 1000);
+        if (chunk > 0) {
+          let chunkStr = "";
+          let h = Math.floor(chunk / 100);
+          let t = Math.floor((chunk % 100) / 10);
+          let u = chunk % 10;
+          if (h > 0) chunkStr += units[h] + " trăm ";
+          else if (str !== "") chunkStr += "không trăm ";
+          
+          if (t === 0 && u > 0 && chunkStr !== "") chunkStr += "lẻ ";
+          else if (t === 1) chunkStr += "mười ";
+          else if (t > 1) chunkStr += units[t] + " mươi ";
+          
+          if (u === 1 && t > 1) chunkStr += "mốt ";
+          else if (u === 5 && t > 0) chunkStr += "lăm ";
+          else if (u === 4 && t > 1) chunkStr += "tư ";
+          else if (u > 0) chunkStr += units[u] + " ";
+          
+          str = chunkStr + places[place] + " " + str;
+        }
+        place++;
+      }
+      str = str.trim().replace(/\s+/g, ' ') + " đồng";
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function printFieldReimbursementTemplate(batchId) {
+      const payload = cachedFieldReimbursementsPayload[batchId];
+      if (!payload) return;
+
+      let rowsHtml = '';
+      let stt = 1;
+      let sumTotal = 0;
+
+      (payload.items || []).forEach(item => {
+        const hsbtStr = item.soHSBT ? item.soHSBT : item.bienSo;
+        
+        if (item.travelCost > 0) {
+          rowsHtml += `
+            <tr>
+              <td style="text-align: center;">${stt++}</td>
+              <td>Thanh toán xăng/chi phí đi lại hiện trường ${escapeHtmlOutput(hsbtStr)}</td>
+              <td></td>
+              <td style="text-align: right;"></td>
+              <td style="text-align: right;"></td>
+              <td style="text-align: right;">${item.travelCost.toLocaleString('vi-VN')}</td>
+              <td></td>
+            </tr>
+          `;
+          sumTotal += item.travelCost;
+        }
+
+        if (item.calcResult && item.calcResult.finalCost > 0) {
+          rowsHtml += `
+            <tr>
+              <td style="text-align: center;">${stt++}</td>
+              <td>Thanh toán thù lao đi hiện trường ${escapeHtmlOutput(hsbtStr)}</td>
+              <td></td>
+              <td style="text-align: right;"></td>
+              <td style="text-align: right;"></td>
+              <td style="text-align: right;">${item.calcResult.finalCost.toLocaleString('vi-VN')}</td>
+              <td></td>
+            </tr>
+          `;
+          sumTotal += item.calcResult.finalCost;
+        }
+
+        if (item.perDiem > 0) {
+          rowsHtml += `
+            <tr>
+              <td style="text-align: center;">${stt++}</td>
+              <td>Thanh toán công tác phí đi hiện trường ${escapeHtmlOutput(hsbtStr)}</td>
+              <td></td>
+              <td style="text-align: right;"></td>
+              <td style="text-align: right;"></td>
+              <td style="text-align: right;">${item.perDiem.toLocaleString('vi-VN')}</td>
+              <td></td>
+            </tr>
+          `;
+          sumTotal += item.perDiem;
+        }
+
+        if (item.hotelCost > 0) {
+          rowsHtml += `
+            <tr>
+              <td style="text-align: center;">${stt++}</td>
+              <td>Thanh toán lưu trú đi hiện trường ${escapeHtmlOutput(hsbtStr)}</td>
+              <td></td>
+              <td style="text-align: right;"></td>
+              <td style="text-align: right;"></td>
+              <td style="text-align: right;">${item.hotelCost.toLocaleString('vi-VN')}</td>
+              <td></td>
+            </tr>
+          `;
+          sumTotal += item.hotelCost;
+        }
+      });
+
+      const printWindow = window.open('', '_blank');
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>In Phiếu Thanh Toán Đi Hiện Trường</title>
+          <style>
+            body { font-family: 'Times New Roman', serif; font-size: 14px; margin: 40px; color: #000; }
+            .header-logo { color: #004b87; font-weight: bold; font-family: Arial, sans-serif; font-size: 20px; line-height: 1.2; }
+            .header-logo span { color: #00a4e4; font-weight: normal; font-size: 16px; display: block; }
+            .title { text-align: center; font-weight: bold; font-size: 18px; margin-top: -20px; text-transform: uppercase; }
+            .subtitle { text-align: center; font-style: italic; font-size: 14px; margin-bottom: 30px; }
+            .info-line { margin-bottom: 8px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 15px; }
+            th, td { border: 1px solid #000; padding: 6px 8px; vertical-align: middle; }
+            th { text-align: center; font-weight: bold; }
+            .total-row { font-weight: bold; }
+            .signatures { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; }
+            .sig-box { width: 22%; }
+            .sig-title { font-weight: bold; }
+            .sig-en { font-style: italic; font-size: 12px; margin-bottom: 60px; }
+            @media print {
+              body { margin: 0; padding: 20px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header-logo">TASCO<br><span>INSURANCE</span></div>
+          <div class="title">GIẤY ĐỀ NGHỊ THANH TOÁN</div>
+          <div class="subtitle">Payment requisition</div>
+          
+          <div class="info-line">Họ và tên / <i>Full name:</i> <strong>${escapeHtmlOutput(payload.gdvName)}</strong></div>
+          <div class="info-line">Bộ phận / <i>Division:</i> Ban GĐBT</div>
+          <div class="info-line">Nội dung thanh toán / <i>Description:</i> Thanh toán tiền chi phí giám định hiện trường</div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 5%;">STT<br><i>No.</i></th>
+                <th style="width: 35%;">Diễn giải<br><i>Details</i></th>
+                <th style="width: 15%;">Số hóa đơn<br><i>Invoice No</i></th>
+                <th style="width: 15%;">Số tiền<br>trước thuế<br><i>Amount before<br>VAT</i></th>
+                <th style="width: 10%;">Thuế GTGT<br><i>VAT</i></th>
+                <th style="width: 15%;">Tổng tiền<br><i>Total in ...</i></th>
+                <th style="width: 10%;">Ghi chú</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+              <tr class="total-row">
+                <td colspan="3" style="text-align: center;">Tổng cộng / Total</td>
+                <td style="text-align: right;"></td>
+                <td style="text-align: right;"></td>
+                <td style="text-align: right;">${sumTotal.toLocaleString('vi-VN')}</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="margin-bottom: 25px;">Bằng chữ / <i>in word:</i> ${numberToWordsVN(sumTotal)}.</div>
+
+          <div style="margin-bottom: 15px;">
+            <div>Tôi xác nhận số tiền đề nghị thanh toán/tạm ứng là trung thực, chính xác, đúng qui định và hợp pháp</div>
+            <div style="font-style: italic; font-size: 12px;">I confirm that the amounts requested for payment is genuine, validity, accuracy and legality</div>
+          </div>
+          
+          <div style="margin-bottom: 20px; font-weight: bold;">
+            Thông tin chuyển khoản / <i>information bank:</i>
+            <div style="margin-top: 5px; font-weight: normal;">Người thụ hưởng / <i>Beneficiary name:</i> <strong>${escapeHtmlOutput(payload.gdvName)}</strong></div>
+            <div style="font-weight: normal;">Tài khoản / <i>Account number:</i> ........................................</div>
+            <div style="font-weight: normal;">Tại ngân hàng / <i>At bank:</i> ........................................</div>
+          </div>
+
+          <div class="signatures">
+            <div class="sig-box">
+              <div class="sig-title">Chữ ký người đề nghị</div>
+              <div class="sig-en">Requester's signature</div>
+              <div style="text-align: left;">Tên/Name:</div>
+              <div style="text-align: left;">Ngày/Date: ......................</div>
+            </div>
+            <div class="sig-box">
+              <div class="sig-title">Xác nhận trưởng bộ phận</div>
+              <div class="sig-en">Verified by</div>
+              <div style="text-align: left;">Tên/Name:</div>
+              <div style="text-align: left;">Ngày/Date: ......................</div>
+            </div>
+            <div class="sig-box">
+              <div class="sig-title">Trưởng phòng KT vận hành</div>
+              <div class="sig-en">Approved</div>
+              <div style="text-align: left;">Tên/Name:</div>
+              <div style="text-align: left;">Ngày/Date: ......................</div>
+            </div>
+            <div class="sig-box">
+              <div class="sig-title">Lãnh đạo phê duyệt</div>
+              <div class="sig-en">Approved by</div>
+              <div style="text-align: left;"><br></div>
+              <div style="text-align: left;">Ngày/Date: ......................</div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => { printWindow.print(); }, 250);
+    }
+
 
     function exportFieldReimbursementToExcel(batchId) {
       if (!window.XLSX) {
