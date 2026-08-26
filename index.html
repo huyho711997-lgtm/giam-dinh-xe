@@ -20887,6 +20887,35 @@ const fullList = getCarBrandLossData();
       renderReimbursementDraftItems();
     }
 
+    
+    function loadReimbursementItemToForm(index) {
+      const item = localFieldReimbursementDraft[index];
+      document.getElementById('reimbInputBS').value = item.bienSo || '';
+      document.getElementById('reimbInputHSBT').value = item.soHSBT || '';
+      document.getElementById('reimbInputKm').value = item.distanceKm || '';
+      document.getElementById('reimbInputStartDate').value = item.startDatetime || '';
+      document.getElementById('reimbInputDate').value = item.datetime || '';
+      document.getElementById('reimbInputHoliday').checked = item.isHolidayChecked || false;
+      document.getElementById('reimbInputSpecialCase').checked = item.isSpecialCase || false;
+      document.getElementById('reimbInputVehicle').value = item.vehicle || 'Phương tiện cá nhân';
+      document.getElementById('reimbInputTravelCost').value = item.travelCost || '';
+      document.getElementById('reimbInputLocation').value = item.location || '';
+      document.getElementById('reimbInputPerDiem').value = item.perDiem || '';
+      document.getElementById('reimbInputHotelCost').value = item.hotelCost || '';
+      
+      localFieldReimbursementDraft.splice(index, 1);
+      
+      if (typeof autoCalculateTravelCost === 'function') autoCalculateTravelCost();
+      if (typeof updateQuickReimbPreview === 'function') updateQuickReimbPreview();
+      
+      renderReimbursementDraftItems();
+      
+      const modal = document.getElementById('createFieldReimbModal');
+      if(modal) {
+        modal.scrollTo({top: 0, behavior: 'smooth'});
+      }
+    }
+
     function renderReimbursementDraftItems() {
       const container = document.getElementById('reimbDraftItemsContainer');
       const totalLbl = document.getElementById('reimbDraftTotalAmount');
@@ -20917,7 +20946,7 @@ const fullList = getCarBrandLossData();
                 <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Lưu trú</th>
                 <th style="padding: 10px; border-right: 1px solid var(--border);">Địa bàn</th>
                 <th style="padding: 10px; text-align: right;">Thành tiền</th>
-                <th style="padding: 10px; text-align: center;">Xóa</th>
+                <th style="padding: 10px; text-align: center;">Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -20950,9 +20979,14 @@ const fullList = getCarBrandLossData();
             <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.location || '')}</td>
             <td style="padding: 8px 10px; text-align: right; color: #10b981; font-weight: 800;">${subtotal.toLocaleString('vi-VN')} đ</td>
             <td style="padding: 8px 10px; text-align: center;">
-              <button onclick="removeReimbursementItem(${idx})" style="background: rgba(239,68,68,0.1); color: #ef4444; border: none; padding: 6px; border-radius: 8px; cursor: pointer;" title="Xóa vụ này">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              </button>
+              <div style="display: flex; justify-content: center; gap: 6px;">
+                <button onclick="loadReimbursementItemToForm(${idx})" style="background: rgba(59,130,246,0.1); color: #3b82f6; border: none; padding: 6px; border-radius: 8px; cursor: pointer;" title="Sửa vụ này">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
+                <button onclick="removeReimbursementItem(${idx})" style="background: rgba(239,68,68,0.1); color: #ef4444; border: none; padding: 6px; border-radius: 8px; cursor: pointer;" title="Xóa vụ này">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+              </div>
             </td>
           </tr>
         `;
