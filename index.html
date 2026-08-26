@@ -18535,7 +18535,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           maintainAspectRatio: false,
           cutout: activeCarBrandChartType === 'pie' ? '65%' : undefined,
           layout: {
-            padding: activeCarBrandChartType === 'pie' ? { top: 40, bottom: 40, left: 160, right: 160 } : 0
+            padding: activeCarBrandChartType === 'pie' ? { top: 80, bottom: 60, left: 160, right: 160 } : 0
           },
           animation: {
             duration: 1200,
@@ -18747,7 +18747,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
         const restCount = rest.reduce((sum, item) => sum + item.totalClaimsCount, 0);
         const restAmount = rest.reduce((sum, item) => sum + item.totalApprovedAmount, 0);
         if (restCount > 0) {
-          list.push({ name: 'Các gara khác', count: restCount, totalAmount: restAmount });
+          list.push({ name: 'Các gara khác', totalClaimsCount: restCount, totalApprovedAmount: restAmount });
         }
       }
       
@@ -18930,7 +18930,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           maintainAspectRatio: false,
           cutout: activeGarageChartType === 'pie' ? '65%' : undefined,
           layout: {
-            padding: activeGarageChartType === 'pie' ? { top: 40, bottom: 40, left: 160, right: 160 } : 0
+            padding: activeGarageChartType === 'pie' ? { top: 80, bottom: 60, left: 160, right: 160 } : 0
           },
           animation: {
             duration: 1200,
