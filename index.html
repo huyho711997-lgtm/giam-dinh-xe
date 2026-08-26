@@ -20522,6 +20522,26 @@ const fullList = getCarBrandLossData();
       }
     });
 
+    
+    function checkSunday() {
+      const startDateStr = document.getElementById('reimbInputStartDate')?.value;
+      const endDateStr = document.getElementById('reimbInputDate')?.value;
+      const holidayCb = document.getElementById('reimbInputHoliday');
+      if (!holidayCb) return;
+
+      let isSunday = false;
+      if (startDateStr && new Date(startDateStr).getDay() === 0) isSunday = true;
+      if (endDateStr && new Date(endDateStr).getDay() === 0) isSunday = true;
+
+      if (isSunday) {
+        holidayCb.checked = true;
+      } else {
+        holidayCb.checked = false;
+      }
+      // Trigger preview update since checkbox changed
+      if (typeof updateQuickReimbPreview === 'function') updateQuickReimbPreview();
+    }
+
     function updateQuickReimbPreview() {
       const km = parseFloat(document.getElementById('reimbInputKm')?.value) || 0;
       const date = document.getElementById('reimbInputDate')?.value;
@@ -20679,11 +20699,11 @@ const fullList = getCarBrandLossData();
                 <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 20px; align-items: end;">
                   <div>
                     <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ bắt đầu GĐ</label>
-                    <input type="datetime-local" id="reimbInputStartDate" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;">
+                    <input type="datetime-local" id="reimbInputStartDate" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;" onchange="checkSunday(); updateQuickReimbPreview()">
                   </div>
                   <div>
                     <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ kết thúc GĐ <span style="color:#ef4444">*</span></label>
-                    <input type="datetime-local" id="reimbInputDate" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
+                    <input type="datetime-local" id="reimbInputDate" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;" onchange="checkSunday(); updateQuickReimbPreview()" oninput="updateQuickReimbPreview()">
                   </div>
                   <div style="display: flex; gap: 20px; align-items: center; padding: 12px 16px; background: var(--bg-soft); border-radius: 10px; border: 1px dashed var(--border-strong); height: 46px; box-sizing: border-box;">
                     <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--text-main); cursor: pointer; margin: 0;">
