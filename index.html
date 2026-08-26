@@ -21251,7 +21251,7 @@ const fullList = getCarBrandLossData();
               <td style="text-align: center;">${stt++}</td>
               <td>Thanh toán xăng/chi phí đi lại hiện trường ${escapeHtmlOutput(hsbtStr)}</td>
               <td></td>
-              <td style="text-align: right;"></td>
+              <td style="text-align: right;">${item.travelCost.toLocaleString('vi-VN')}</td>
               <td style="text-align: right;"></td>
               <td style="text-align: right;">${item.travelCost.toLocaleString('vi-VN')}</td>
               <td></td>
@@ -21266,7 +21266,7 @@ const fullList = getCarBrandLossData();
               <td style="text-align: center;">${stt++}</td>
               <td>Thanh toán thù lao đi hiện trường ${escapeHtmlOutput(hsbtStr)}</td>
               <td></td>
-              <td style="text-align: right;"></td>
+              <td style="text-align: right;">${item.calcResult.finalCost.toLocaleString('vi-VN')}</td>
               <td style="text-align: right;"></td>
               <td style="text-align: right;">${item.calcResult.finalCost.toLocaleString('vi-VN')}</td>
               <td></td>
@@ -21379,7 +21379,7 @@ const fullList = getCarBrandLossData();
               ${rowsHtml}
               <tr class="total-row">
                 <td colspan="3" style="text-align: center;">Tổng cộng / Total</td>
-                <td style="text-align: right;"></td>
+                <td style="text-align: right;">${sumTotal.toLocaleString('vi-VN')}</td>
                 <td style="text-align: right;"></td>
                 <td style="text-align: right;">${sumTotal.toLocaleString('vi-VN')}</td>
                 <td></td>
