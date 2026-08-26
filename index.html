@@ -18361,7 +18361,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
       
 
-      const isDark = document.body.classList.contains('dark-mode');
+      const isDark = !document.body.classList.contains('light-mode');
       const textColor = isDark ? '#cbd5e1' : '#475569';
       
       const canvasWrap = document.getElementById("carBrandLossCanvasWrap") || canvas.parentElement;
@@ -18409,7 +18409,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
           ctx.textAlign = 'center';
           
-          const isDarkTheme = document.body.classList.contains('dark-mode');
+          const isDarkTheme = !document.body.classList.contains('light-mode');
           
           ctx.shadowColor = isDarkTheme ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.15)';
           ctx.shadowBlur = 8;
@@ -18477,12 +18477,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
             ctx.moveTo(startX, startY);
             ctx.lineTo(breakX, targetY);
             ctx.lineTo(fixedX, targetY);
-            const surfaceColor = document.body.classList.contains('dark-mode') ? '#0f172a' : '#ffffff';
+            const surfaceColor = !document.body.classList.contains('light-mode') ? '#0f172a' : '#ffffff';
             ctx.strokeStyle = dataset.borderColor[index] === surfaceColor ? dataset.backgroundColor[index] : dataset.borderColor[index];
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#cbd5e1' : '#475569';
+            ctx.fillStyle = !document.body.classList.contains('light-mode') ? '#cbd5e1' : '#475569';
             ctx.textAlign = isRight ? 'left' : 'right';
             ctx.fillText(labelStr, isRight ? fixedX + 8 : fixedX - 8, targetY);
           });
@@ -18645,7 +18645,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           const {ctx} = chart;
           ctx.save();
           ctx.globalCompositeOperation = 'destination-over';
-          ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#1e293b' : '#ffffff'; // or use the background color variable
+          ctx.fillStyle = !document.body.classList.contains('light-mode') ? '#1e293b' : '#ffffff'; // or use the background color variable
           ctx.fillRect(0, 0, chart.width, chart.height);
           ctx.restore();
         }
@@ -18661,7 +18661,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           ctx.font = "800 10.5px 'Plus Jakarta Sans', sans-serif";
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          const isDark = document.body.classList.contains('dark-mode');
+          const isDark = !document.body.classList.contains('light-mode');
 
           const barMeta = chart.getDatasetMeta(0);
           const lineMeta = chart.data.datasets.length > 1 ? chart.getDatasetMeta(1) : null;
@@ -18756,7 +18756,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
       }
       
 
-      const isDark = document.body.classList.contains('dark-mode');
+      const isDark = !document.body.classList.contains('light-mode');
       const textColor = isDark ? '#cbd5e1' : '#475569';
       
       const canvasWrap = document.getElementById("garageLossCanvasWrap") || canvas.parentElement;
@@ -18804,7 +18804,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
           ctx.textAlign = 'center';
           
-          const isDarkTheme = document.body.classList.contains('dark-mode');
+          const isDarkTheme = !document.body.classList.contains('light-mode');
           
           ctx.shadowColor = isDarkTheme ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.15)';
           ctx.shadowBlur = 8;
@@ -18872,12 +18872,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
             ctx.moveTo(startX, startY);
             ctx.lineTo(breakX, targetY);
             ctx.lineTo(fixedX, targetY);
-            const surfaceColor = document.body.classList.contains('dark-mode') ? '#0f172a' : '#ffffff';
+            const surfaceColor = !document.body.classList.contains('light-mode') ? '#0f172a' : '#ffffff';
             ctx.strokeStyle = dataset.borderColor[index] === surfaceColor ? dataset.backgroundColor[index] : dataset.borderColor[index];
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#cbd5e1' : '#475569';
+            ctx.fillStyle = !document.body.classList.contains('light-mode') ? '#cbd5e1' : '#475569';
             ctx.textAlign = isRight ? 'left' : 'right';
             ctx.fillText(labelStr, isRight ? fixedX + 8 : fixedX - 8, targetY);
           });
@@ -19040,7 +19040,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           const {ctx} = chart;
           ctx.save();
           ctx.globalCompositeOperation = 'destination-over';
-          ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#1e293b' : '#ffffff'; // or use the background color variable
+          ctx.fillStyle = !document.body.classList.contains('light-mode') ? '#1e293b' : '#ffffff'; // or use the background color variable
           ctx.fillRect(0, 0, chart.width, chart.height);
           ctx.restore();
         }
@@ -19056,7 +19056,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           ctx.font = "800 10.5px 'Plus Jakarta Sans', sans-serif";
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          const isDark = document.body.classList.contains('dark-mode');
+          const isDark = !document.body.classList.contains('light-mode');
 
           const barMeta = chart.getDatasetMeta(0);
           const lineMeta = chart.data.datasets.length > 1 ? chart.getDatasetMeta(1) : null;
