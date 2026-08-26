@@ -21070,18 +21070,18 @@ const fullList = getCarBrandLossData();
       let headerActions = '';
       if (isCreator && isNew) {
         headerActions += `
-          <button class="btn-premium" style="width: auto !important; padding:10px 20px; border-radius:12px; font-weight:800; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); margin-right: 12px;" onclick="document.getElementById('viewFieldReimbModal').remove(); openCreateFieldReimbursementModal('${payload.id}')">
+          <button class="btn-premium" style="width: auto !important; padding:10px 20px; border-radius:12px; font-weight:800; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); " onclick="document.getElementById('viewFieldReimbModal').remove(); openCreateFieldReimbursementModal('${payload.id}')">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             SỬA PHIẾU
           </button>
-          <button class="btn-premium" style="width: auto !important; background: #10b981; color: #fff; box-shadow: 0 8px 20px rgba(16,185,129,0.25); padding:10px 20px; border-radius:12px; font-weight:800; margin-right: 12px;" onclick="actionFieldReimbursement('${payload.id}', 'paid')">
+          <button class="btn-premium" style="width: auto !important; background: #10b981; color: #fff; box-shadow: 0 8px 20px rgba(16,185,129,0.25); padding:10px 20px; border-radius:12px; font-weight:800; " onclick="actionFieldReimbursement('${payload.id}', 'paid')">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
             ĐÁNH DẤU ĐÃ CHI TRẢ
           </button>
         `;
       } else if (isCreator && isPaid) {
         headerActions += `
-          <button class="btn-premium" style="width: auto !important; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); padding:10px 20px; border-radius:12px; font-weight:800; margin-right: 12px;" onclick="actionFieldReimbursement('${payload.id}', 'new')">
+          <button class="btn-premium" style="width: auto !important; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); padding:10px 20px; border-radius:12px; font-weight:800; " onclick="actionFieldReimbursement('${payload.id}', 'new')">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
             CHUYỂN VỀ MỚI TẠO
           </button>
@@ -21089,7 +21089,7 @@ const fullList = getCarBrandLossData();
       }
       
       headerActions += `
-        <button class="btn-premium" style="width: auto !important; white-space: nowrap; padding:10px 20px; border-radius:12px; font-weight:800; background: #3b82f6; color: #fff; box-shadow: 0 8px 20px rgba(59,130,246,0.25); margin-right: 12px;" onclick="exportFieldReimbursementToExcel('${payload.id}')">
+        <button class="btn-premium" style="width: auto !important; white-space: nowrap; padding:10px 20px; border-radius:12px; font-weight:800; background: #3b82f6; color: #fff; box-shadow: 0 8px 20px rgba(59,130,246,0.25); " onclick="exportFieldReimbursementToExcel('${payload.id}')">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           XUẤT BẢNG KÊ
         </button>
@@ -21114,7 +21114,8 @@ const fullList = getCarBrandLossData();
                 </div>
               </div>
               <div style="display:flex; flex-direction:column; align-items:flex-end; gap:16px;">
-                <div style="display:flex; align-items:center;">
+                <div style="display:flex; align-items:center; gap: 12px;">
+                  ${headerActions}
                   <button onclick="document.getElementById('viewFieldReimbModal').remove()" style="background:var(--surface-strong); border:1px solid var(--border); color:var(--text-soft); cursor:pointer; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:12px; transition:all 0.2s;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--surface-strong)'; this.style.color='var(--text-soft)'">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </button>
@@ -21126,11 +21127,7 @@ const fullList = getCarBrandLossData();
             </div>
           </div>
           
-          <div style="padding:16px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:flex-end; align-items:center; background:var(--surface-soft);">
-            <div style="display:flex; align-items:center;">
-              ${headerActions}
-            </div>
-          </div>
+          
           
           <div style="padding:24px 32px; overflow-y:auto; flex:1; background:var(--bg-main);">
             <h4 style="margin:0 0 16px 0; font-size:14px; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:8px;">
@@ -21158,25 +21155,25 @@ const fullList = getCarBrandLossData();
                   </thead>
                   <tbody>
                     ${(payload.items || []).map((it, idx) => {
-                      const tlGD = it.thulaoGD || 0;
-                      const cpDL = it.chiphiDilai || 0;
-                      const ctp = it.congtacphi || 0;
-                      const lt = it.luutru || 0;
+                      const tlGD = it.calcResult?.finalCost || 0;
+                      const cpDL = it.travelCost || 0;
+                      const ctp = it.perDiem || 0;
+                      const lt = it.hotelCost || 0;
                       const rTotal = tlGD + cpDL + ctp + lt;
                       return `
                         <tr style="border-bottom:1px solid var(--border); background:${idx%2===0?'var(--surface)':'var(--bg-soft)'};">
                           <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${idx + 1}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.startTime)}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.endTime)}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${it.startDatetime ? formatDateDisplay(it.startDatetime).replace('—', '<br>') : '-'}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${formatDateDisplay(it.datetime).replace('—', '<br>')}</td>
                           <td style="padding:16px 20px; font-size:13px; font-weight:700; color:var(--text-main);">${escapeHtmlOutput(it.bienSo)}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.hsbt)}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.khoangCach)} km</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.soHSBT || '-')}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.distanceKm)} km</td>
                           <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${tlGD > 0 ? tlGD.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.phuongTien)}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.vehicle || '-')}</td>
                           <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${cpDL > 0 ? cpDL.toLocaleString('vi-VN') + ' đ' : '-'}</td>
                           <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${ctp > 0 ? ctp.toLocaleString('vi-VN') + ' đ' : '-'}</td>
                           <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${lt > 0 ? lt.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.diaBan)}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.location || '-')}</td>
                           <td style="padding:16px 20px; font-size:14px; font-weight:800; color:#10b981; text-align:right;">${rTotal.toLocaleString('vi-VN')} đ</td>
                         </tr>
                       `;
