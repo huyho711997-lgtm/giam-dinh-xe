@@ -20758,15 +20758,15 @@ const fullList = getCarBrandLossData();
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                 <div>
                   <label style="display:block; font-size:13px; font-weight:700; color:var(--text-soft); margin-bottom:6px;">Người thụ hưởng</label>
-                  <input type="text" id="reimbBeneficiaryName" value="${localStorage.getItem('savedBankBeneficiary') || escapeHtmlOutput(activeUserProfile?.displayName || firebase.auth().currentUser?.email || '')}" style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--border); background:var(--bg-main); color:var(--text-main); font-weight:600; font-size:14px; outline:none; box-sizing:border-box; transition: all 0.2s;" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 4px rgba(216,180,109,0.1)'" onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'" placeholder="Ví dụ: NGUYEN VAN A">
+                  <input type="text" id="reimbBeneficiaryName" value="${localStorage.getItem('savedBankBeneficiary') || escapeHtmlOutput(activeUserProfile?.displayName || firebase.auth().currentUser?.email || '')}" class="p-input" placeholder="Ví dụ: NGUYEN VAN A">
                 </div>
                 <div>
                   <label style="display:block; font-size:13px; font-weight:700; color:var(--text-soft); margin-bottom:6px;">Số tài khoản</label>
-                  <input type="text" id="reimbBankAccount" value="${localStorage.getItem('savedBankAccount') || ''}" style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--border); background:var(--bg-main); color:var(--text-main); font-weight:600; font-size:14px; outline:none; box-sizing:border-box; transition: all 0.2s;" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 4px rgba(216,180,109,0.1)'" onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'" placeholder="Số tài khoản">
+                  <input type="text" id="reimbBankAccount" value="${localStorage.getItem('savedBankAccount') || ''}" class="p-input" placeholder="Số tài khoản">
                 </div>
                 <div>
                   <label style="display:block; font-size:13px; font-weight:700; color:var(--text-soft); margin-bottom:6px;">Tại ngân hàng</label>
-                  <input type="text" id="reimbBankName" value="${localStorage.getItem('savedBankName') || ''}" style="width:100%; padding:12px 16px; border-radius:12px; border:1px solid var(--border); background:var(--bg-main); color:var(--text-main); font-weight:600; font-size:14px; outline:none; box-sizing:border-box; transition: all 0.2s;" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 4px rgba(216,180,109,0.1)'" onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'" placeholder="Ví dụ: Vietcombank CN Hà Nội">
+                  <input type="text" id="reimbBankName" value="${localStorage.getItem('savedBankName') || ''}" class="p-input" placeholder="Ví dụ: Vietcombank CN Hà Nội">
                 </div>
               </div>
             </div>
