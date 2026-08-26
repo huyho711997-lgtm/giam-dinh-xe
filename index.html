@@ -21054,16 +21054,50 @@ const fullList = getCarBrandLossData();
       const payload = cachedFieldReimbursementsPayload[batchId];
       if (!payload) return;
 
-      const canReview = hasUserPermission('field_reimb', 'review');
-      
       const m = document.createElement('div');
       m.id = 'viewFieldReimbModal';
       m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); backdrop-filter:blur(8px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
       
       let statusHtml = '';
-      if (payload.status === 'pending') statusHtml = '<span style="background: rgba(234,179,8,0.15); color: #eab308; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#eab308; display:inline-block;"></span>Chờ duyệt</span>';
-      else if (payload.status === 'approved') statusHtml = '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#10b981; display:inline-block;"></span>Đã duyệt</span>';
+      if (payload.status === 'pending' || payload.status === 'new') statusHtml = '<span style="background: rgba(59,130,246,0.15); color: #3b82f6; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#3b82f6; display:inline-block;"></span>Mới tạo</span>';
+      else if (payload.status === 'approved' || payload.status === 'paid') statusHtml = '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#10b981; display:inline-block;"></span>Đã chi trả</span>';
       else if (payload.status === 'rejected') statusHtml = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#ef4444; display:inline-block;"></span>Từ chối</span>';
+
+      const isCreator = payload.gdvUid === firebase.auth().currentUser?.uid;
+      const isNew = payload.status === 'pending' || payload.status === 'new';
+      const isPaid = payload.status === 'approved' || payload.status === 'paid';
+
+      let headerActions = '';
+      if (isCreator && isNew) {
+        headerActions += `
+          <button class="btn-premium" style="width: auto !important; padding:10px 20px; border-radius:12px; font-weight:800; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); margin-right: 12px;" onclick="document.getElementById('viewFieldReimbModal').remove(); openCreateFieldReimbursementModal('${payload.id}')">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            SỬA PHIẾU
+          </button>
+          <button class="btn-premium" style="width: auto !important; background: #10b981; color: #fff; box-shadow: 0 8px 20px rgba(16,185,129,0.25); padding:10px 20px; border-radius:12px; font-weight:800; margin-right: 12px;" onclick="actionFieldReimbursement('${payload.id}', 'paid')">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            ĐÁNH DẤU ĐÃ CHI TRẢ
+          </button>
+        `;
+      } else if (isCreator && isPaid) {
+        headerActions += `
+          <button class="btn-premium" style="width: auto !important; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); padding:10px 20px; border-radius:12px; font-weight:800; margin-right: 12px;" onclick="actionFieldReimbursement('${payload.id}', 'new')">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+            CHUYỂN VỀ MỚI TẠO
+          </button>
+        `;
+      }
+      
+      headerActions += `
+        <button class="btn-premium" style="width: auto !important; white-space: nowrap; padding:10px 20px; border-radius:12px; font-weight:800; background: #3b82f6; color: #fff; box-shadow: 0 8px 20px rgba(59,130,246,0.25); margin-right: 12px;" onclick="exportFieldReimbursementToExcel('${payload.id}')">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          XUẤT BẢNG KÊ
+        </button>
+        <button class="btn-premium" style="width: auto !important; white-space: nowrap; padding:10px 20px; border-radius:12px; font-weight:800; background: #eab308; color: #fff; box-shadow: 0 8px 20px rgba(234,179,8,0.25);" onclick="printFieldReimbursementTemplate('${payload.id}')">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          IN PHIẾU
+        </button>
+      `;
 
       m.innerHTML = `
         <div style="background:var(--surface); border-radius:24px; width:95vw; max-width:98vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
@@ -21072,7 +21106,7 @@ const fullList = getCarBrandLossData();
             
             <div style="position:relative; z-index:2; display:flex; justify-content:space-between; width:100%; align-items:flex-start;">
               <div>
-                <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:var(--surface-strong); border:1px solid var(--border); border-radius:12px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px;">MÃ PHIẾU: <strong style="color:var(--text-main);  font-size:12px;">${escapeHtmlOutput(payload.id)}</strong></div>
+                <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:var(--surface-strong); border:1px solid var(--border); border-radius:12px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:12px;">MÃ PHIẾU: <strong style="color:var(--text-main); font-size:12px;">${escapeHtmlOutput(payload.id)}</strong></div>
                 <h3 style="margin:0 0 12px 0; font-size:24px; font-weight:900; color:var(--text-main); letter-spacing:-0.02em;">Chi tiết đề nghị thanh toán</h3>
                 <div style="display: flex; gap: 20px; font-size: 13px; color: var(--text-soft);">
                   <span style="display:flex; align-items:center; gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 1 0-16 0"></path></svg> <strong style="color: var(--primary);">${escapeHtmlOutput(payload.gdvName)}</strong></span>
@@ -21080,61 +21114,70 @@ const fullList = getCarBrandLossData();
                 </div>
               </div>
               <div style="display:flex; flex-direction:column; align-items:flex-end; gap:16px;">
-                <button onclick="document.getElementById('viewFieldReimbModal').remove()" style="background:var(--surface-strong); border:1px solid var(--border); color:var(--text-soft); cursor:pointer; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:12px; transition:all 0.2s;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--surface-strong)'; this.style.color='var(--text-soft)'">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-                ${statusHtml}
+                <div style="display:flex; align-items:center;">
+                  <button onclick="document.getElementById('viewFieldReimbModal').remove()" style="background:var(--surface-strong); border:1px solid var(--border); color:var(--text-soft); cursor:pointer; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:12px; transition:all 0.2s;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--surface-strong)'; this.style.color='var(--text-soft)'">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  </button>
+                </div>
+                <div style="display:flex; align-items:center; gap: 16px;">
+                  ${statusHtml}
+                </div>
               </div>
             </div>
           </div>
           
-          <div style="padding:32px; flex:1; overflow-y:auto; background: var(--bg-main);">
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-              <h4 style="margin: 0 0 8px 0; color: var(--text-main); font-size: 15px; font-weight: 800; display:flex; align-items:center; gap:8px;">Danh sách vụ giám định (${(payload.items || []).length})</h4>
-              <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);">
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; white-space: nowrap;">
-                  <thead style="background: var(--surface-strong); border-bottom: 1px solid var(--border-strong);">
-                    <tr>
-                      <th style="padding: 10px; border-right: 1px solid var(--border);">STT</th>
-                      <th style="padding: 10px; border-right: 1px solid var(--border);">Bắt đầu</th>
-                      <th style="padding: 10px; border-right: 1px solid var(--border);">Kết thúc</th>
-                      <th style="padding: 10px; border-right: 1px solid var(--border);">Biển số xe KH</th>
-                      <th style="padding: 10px; border-right: 1px solid var(--border);">Số HSBT</th>
-                      <th style="padding: 10px; border-right: 1px solid var(--border); text-align: center;">Khoảng cách</th>
-                      <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Thù lao GĐ</th>
-                      <th style="padding: 10px; border-right: 1px solid var(--border);">Phương tiện</th>
-                      <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Chi phí đi lại</th>
-                      <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Công tác phí</th>
-                      <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Lưu trú</th>
-                      <th style="padding: 10px; border-right: 1px solid var(--border);">Địa bàn</th>
-                      <th style="padding: 10px; text-align: right;">Thành tiền</th>
+          <div style="padding:16px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:flex-end; align-items:center; background:var(--surface-soft);">
+            <div style="display:flex; align-items:center;">
+              ${headerActions}
+            </div>
+          </div>
+          
+          <div style="padding:24px 32px; overflow-y:auto; flex:1; background:var(--bg-main);">
+            <h4 style="margin:0 0 16px 0; font-size:14px; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:8px;">
+              Danh sách vụ giám định (${payload.items?.length || 0})
+            </h4>
+            <div style="background:var(--surface); border-radius:16px; border:1px solid var(--border); overflow:hidden;">
+              <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; text-align:left; white-space:nowrap;">
+                  <thead>
+                    <tr style="background:var(--surface-strong); border-bottom:1px solid var(--border);">
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">STT</th>
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Bắt đầu</th>
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Kết thúc</th>
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Biển số xe KH</th>
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Số HSBT</th>
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Khoảng cách</th>
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Thù lao GĐ</th>
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Phương tiện</th>
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Chi phí đi lại</th>
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Công tác phí</th>
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Lưu trú</th>
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Địa bàn</th>
+                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase; text-align:right;">Thành tiền</th>
                     </tr>
                   </thead>
                   <tbody>
-                    ${(payload.items || []).map((item, index) => {
-                      let noteStr = [];
-                      if (item.calcResult.isWeekendOrHoliday) noteStr.push('Lễ/Cuối tuần');
-                      else if (item.calcResult.isAfterHours) noteStr.push('Ngoài giờ');
-
-                      let subtotal = (item.calcResult.finalCost || 0) + (item.travelCost || 0) + (item.perDiem || 0) + (item.hotelCost || 0);
-
+                    ${(payload.items || []).map((it, idx) => {
+                      const tlGD = it.thulaoGD || 0;
+                      const cpDL = it.chiphiDilai || 0;
+                      const ctp = it.congtacphi || 0;
+                      const lt = it.luutru || 0;
+                      const rTotal = tlGD + cpDL + ctp + lt;
                       return `
-                        <tr style="border-bottom: 1px solid var(--border);">
-                          <td style="padding: 8px 10px; text-align: center; border-right: 1px solid var(--border);">${index + 1}</td>
-                          <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${item.startDatetime ? formatDateDisplay(item.startDatetime).replace('—', '<br>') : '-'}</td>
-                          <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${formatDateDisplay(item.datetime).replace('—', '<br>')}
-                            ${noteStr.length ? `<br><span style="color:#f59e0b; font-size:10px; font-weight:700;">${noteStr.join(',')}</span>` : ''}
-                          </td>
-                          <td style="padding: 8px 10px; font-weight: 700; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.bienSo)}</td>
-                          <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.soHSBT || '')}</td>
-                          <td style="padding: 8px 10px; text-align: center; border-right: 1px solid var(--border);">${item.distanceKm} km</td>
-                          <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.calcResult.finalCost.toLocaleString('vi-VN')} đ</td>
-                          <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.vehicle || '')}</td>
-                          <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.travelCost ? item.travelCost.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.perDiem ? item.perDiem.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.hotelCost ? item.hotelCost.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.location || '')}</td>
-                          <td style="padding: 8px 10px; text-align: right; color: #10b981; font-weight: 800;">${subtotal.toLocaleString('vi-VN')} đ</td>
+                        <tr style="border-bottom:1px solid var(--border); background:${idx%2===0?'var(--surface)':'var(--bg-soft)'};">
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${idx + 1}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.startTime)}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.endTime)}</td>
+                          <td style="padding:16px 20px; font-size:13px; font-weight:700; color:var(--text-main);">${escapeHtmlOutput(it.bienSo)}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.hsbt)}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.khoangCach)} km</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${tlGD > 0 ? tlGD.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.phuongTien)}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${cpDL > 0 ? cpDL.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${ctp > 0 ? ctp.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${lt > 0 ? lt.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.diaBan)}</td>
+                          <td style="padding:16px 20px; font-size:14px; font-weight:800; color:#10b981; text-align:right;">${rTotal.toLocaleString('vi-VN')} đ</td>
                         </tr>
                       `;
                     }).join('')}
@@ -21150,301 +21193,12 @@ const fullList = getCarBrandLossData();
               <span style="color: #10b981; font-size: 28px; font-weight:900; line-height:1.2;">${payload.totalAmount ? payload.totalAmount.toLocaleString('vi-VN') : '0'} đ</span>
             </div>
             <div style="display:flex; gap:12px;">
-              ${( (payload.status === 'pending' || payload.status === 'new') && payload.gdvUid === firebase.auth().currentUser?.uid ) ? `
-                  <button class="btn-premium" style="width: auto !important; background: #10b981; color: #fff; box-shadow: 0 8px 20px rgba(16,185,129,0.25); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'paid')">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                    ĐÁNH DẤU ĐÃ CHI TRẢ
-                  </button>
-                ` : ((payload.status === 'approved' || payload.status === 'paid') && payload.gdvUid === firebase.auth().currentUser?.uid) ? `
-                  <button class="btn-premium" style="width: auto !important; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); padding:12px 24px; border-radius:12px; font-weight:800;" onclick="actionFieldReimbursement('${payload.id}', 'new')">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
-                    CHUYỂN VỀ MỚI TẠO
-                  </button>
-                ` : `
-                ${(payload.status === 'pending' || payload.status === 'new') && payload.gdvUid === firebase.auth().currentUser?.uid ? `
-                  <button class="btn-premium" style="width: auto !important; padding:12px 24px; border-radius:12px; font-weight:800; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); margin-right: 12px;" onclick="document.getElementById('viewFieldReimbModal').remove(); openCreateFieldReimbursementModal('${payload.id}')">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                    SỬA PHIẾU
-                  </button>
-                ` : ''}
-                <button class="btn-premium btn-secondary" style="width: auto !important; padding:12px 24px; border-radius:12px; font-weight:700;" onclick="document.getElementById('viewFieldReimbModal').remove()">Đóng chi tiết</button>
-              `}
-              <button class="btn-premium" style="width: auto !important; white-space: nowrap; padding:12px 24px; border-radius:12px; font-weight:800; background: #3b82f6; color: #fff; box-shadow: 0 8px 20px rgba(59,130,246,0.25);" onclick="exportFieldReimbursementToExcel('${payload.id}')">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                XUẤT BẢNG KÊ (EXCEL)
-              </button>
-              <button class="btn-premium" style="width: auto !important; white-space: nowrap; padding:12px 24px; border-radius:12px; font-weight:800; background: #eab308; color: #fff; box-shadow: 0 8px 20px rgba(234,179,8,0.25); margin-left: 12px;" onclick="printFieldReimbursementTemplate('${payload.id}')">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                IN PHIẾU
-              </button>
+              <button class="btn-premium btn-secondary" style="width: auto !important; padding:12px 24px; border-radius:12px; font-weight:700;" onclick="document.getElementById('viewFieldReimbModal').remove()">Đóng chi tiết</button>
             </div>
           </div>
         </div>
       `;
       document.body.appendChild(m);
-    }
-
-    async function actionFieldReimbursement(batchId, action) {
-      if (!confirm(`Bạn chắc chắn muốn ${action === 'paid' ? 'đánh dấu Đã chi trả cho' : (action === 'new' ? 'chuyển về Mới tạo cho' : 'cập nhật')} phiếu này?`)) return;
-      try {
-        await dbNodeInstance.ref(`field_reimbursements/${batchId}/status`).set(action);
-        triggerToast('Đã cập nhật trạng thái!', 'success');
-        document.getElementById('viewFieldReimbModal').remove();
-        logUserActivity('FIELD_REIMB_ACTION', `${action === 'paid' ? 'Đánh dấu Đã chi trả' : 'Chuyển về Mới tạo'} phiếu thanh toán hiện trường ${batchId}`);
-      } catch (err) {
-        console.error(err);
-        triggerToast('Lỗi khi cập nhật.', 'error');
-      }
-    }
-
-    
-    function numberToWordsVN(number) {
-      if (!number || number === 0) return "không đồng";
-      const units = ["", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
-      const places = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
-      let str = "";
-      let place = 0;
-      let num = Math.floor(number);
-      while (num > 0) {
-        let chunk = num % 1000;
-        num = Math.floor(num / 1000);
-        if (chunk > 0) {
-          let chunkStr = "";
-          let h = Math.floor(chunk / 100);
-          let t = Math.floor((chunk % 100) / 10);
-          let u = chunk % 10;
-          if (h > 0) chunkStr += units[h] + " trăm ";
-          else if (str !== "") chunkStr += "không trăm ";
-          
-          if (t === 0 && u > 0 && chunkStr !== "") chunkStr += "lẻ ";
-          else if (t === 1) chunkStr += "mười ";
-          else if (t > 1) chunkStr += units[t] + " mươi ";
-          
-          if (u === 1 && t > 1) chunkStr += "mốt ";
-          else if (u === 5 && t > 0) chunkStr += "lăm ";
-          else if (u === 4 && t > 1) chunkStr += "tư ";
-          else if (u > 0) chunkStr += units[u] + " ";
-          
-          str = chunkStr + places[place] + " " + str;
-        }
-        place++;
-      }
-      str = str.trim().replace(/\s+/g, ' ') + " đồng";
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    function printFieldReimbursementTemplate(batchId) {
-      const payload = cachedFieldReimbursementsPayload[batchId];
-      if (!payload) return;
-
-      let rowsHtml = '';
-      let stt = 1;
-      let sumTotal = 0;
-
-      (payload.items || []).forEach(item => {
-        const hsbtStr = item.soHSBT ? item.soHSBT : item.bienSo;
-        
-        if (item.travelCost > 0) {
-          rowsHtml += `
-            <tr>
-              <td style="text-align: center;">${stt++}</td>
-              <td>Thanh toán xăng/chi phí đi lại hiện trường ${escapeHtmlOutput(hsbtStr)}</td>
-              <td></td>
-              <td style="text-align: right;"></td>
-              <td style="text-align: right;"></td>
-              <td style="text-align: right;">${item.travelCost.toLocaleString('vi-VN')}</td>
-              <td></td>
-            </tr>
-          `;
-          sumTotal += item.travelCost;
-        }
-
-        if (item.calcResult && item.calcResult.finalCost > 0) {
-          rowsHtml += `
-            <tr>
-              <td style="text-align: center;">${stt++}</td>
-              <td>Thanh toán thù lao đi hiện trường ${escapeHtmlOutput(hsbtStr)}</td>
-              <td></td>
-              <td style="text-align: right;"></td>
-              <td style="text-align: right;"></td>
-              <td style="text-align: right;">${item.calcResult.finalCost.toLocaleString('vi-VN')}</td>
-              <td></td>
-            </tr>
-          `;
-          sumTotal += item.calcResult.finalCost;
-        }
-
-        if (item.perDiem > 0) {
-          rowsHtml += `
-            <tr>
-              <td style="text-align: center;">${stt++}</td>
-              <td>Thanh toán công tác phí đi hiện trường ${escapeHtmlOutput(hsbtStr)}</td>
-              <td></td>
-              <td style="text-align: right;"></td>
-              <td style="text-align: right;"></td>
-              <td style="text-align: right;">${item.perDiem.toLocaleString('vi-VN')}</td>
-              <td></td>
-            </tr>
-          `;
-          sumTotal += item.perDiem;
-        }
-
-        if (item.hotelCost > 0) {
-          rowsHtml += `
-            <tr>
-              <td style="text-align: center;">${stt++}</td>
-              <td>Thanh toán lưu trú đi hiện trường ${escapeHtmlOutput(hsbtStr)}</td>
-              <td></td>
-              <td style="text-align: right;"></td>
-              <td style="text-align: right;"></td>
-              <td style="text-align: right;">${item.hotelCost.toLocaleString('vi-VN')}</td>
-              <td></td>
-            </tr>
-          `;
-          sumTotal += item.hotelCost;
-        }
-      });
-
-      const overlay = document.createElement('div');
-      overlay.id = 'printOverlayModal';
-      overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:#e2e8f0; z-index:9999999; overflow-y:auto; display:flex; flex-direction:column; align-items:center; padding:30px 20px; box-sizing:border-box; animation: fadeIn 0.2s;';
-      
-      overlay.innerHTML = `
-        <style>
-          #printOverlayModal * { box-sizing: border-box; }
-          .print-action-bar { width: 210mm; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-          .btn-print { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-family: 'Plus Jakarta Sans', Arial, sans-serif; box-shadow: 0 4px 15px rgba(59,130,246,0.3); transition: all 0.2s; }
-          .btn-print:hover { background: #2563eb; transform: translateY(-1px); }
-          .btn-close-print { background: #ef4444; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-family: 'Plus Jakarta Sans', Arial, sans-serif; box-shadow: 0 4px 15px rgba(239,68,68,0.3); transition: all 0.2s; }
-          .btn-close-print:hover { background: #dc2626; transform: translateY(-1px); }
-          .print-page { background: white; width: 210mm; min-height: 297mm; padding: 20mm; box-shadow: 0 20px 40px rgba(0,0,0,0.2); margin-bottom: 40px; font-family: 'Times New Roman', serif; font-size: 14px; color: #000; flex-shrink: 0; }
-          .print-page .header-logo { color: #004b87; font-weight: bold; font-family: Arial, sans-serif; font-size: 20px; line-height: 1.2; }
-          .print-page .header-logo span { color: #00a4e4; font-weight: normal; font-size: 16px; display: block; }
-          .print-page .title { text-align: center; font-weight: bold; font-size: 18px; margin-top: -20px; text-transform: uppercase; }
-          .print-page .subtitle { text-align: center; font-style: italic; font-size: 14px; margin-bottom: 30px; }
-          .print-page .info-line { margin-bottom: 8px; line-height: 1.5; }
-          .print-page table { width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 15px; }
-          .print-page th, .print-page td { border: 1px solid #000; padding: 8px 10px; vertical-align: middle; }
-          .print-page th { text-align: center; font-weight: bold; }
-          .print-page .total-row { font-weight: bold; }
-          .print-page .signatures { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; align-items: stretch; gap: 10px; }
-          .print-page .sig-box { flex: 1; display: flex; flex-direction: column; }
-          .print-page .sig-title { font-weight: bold; }
-          .print-page .sig-en { font-style: italic; font-size: 12px; }
-          .print-page .sig-header { flex-grow: 1; }
-          .print-page .sig-footer { margin-top: 60px; text-align: left; white-space: nowrap; font-size: 13px; }
-          @media print {
-            body > *:not(#printOverlayModal) { display: none !important; }
-            body { background: white; margin: 0; padding: 0; }
-            #printOverlayModal { position: static; background: white; padding: 0; width: 100%; height: auto; display: block; overflow: visible; box-shadow: none; }
-            .print-action-bar { display: none !important; }
-            .print-page { margin: 0; box-shadow: none; padding: 0; width: 100%; min-height: auto; }
-          }
-        </style>
-        
-        <div class="print-action-bar">
-          <button class="btn-close-print" onclick="document.getElementById('printOverlayModal').remove()">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            QUAY LẠI
-          </button>
-          <button class="btn-print" onclick="window.print()">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-            TIẾN HÀNH IN TÀI LIỆU
-          </button>
-        </div>
-        
-        <div class="print-page">
-          <div class="header-logo">TASCO<br><span>INSURANCE</span></div>
-          <div class="title">GIẤY ĐỀ NGHỊ THANH TOÁN</div>
-          <div class="subtitle">Payment requisition</div>
-          
-          <div class="info-line">Họ và tên / <i>Full name:</i> <strong>${escapeHtmlOutput(payload.gdvName)}</strong></div>
-          <div class="info-line">Bộ phận / <i>Division:</i> Ban GĐBT</div>
-          <div class="info-line">Nội dung thanh toán / <i>Description:</i> Thanh toán tiền chi phí giám định hiện trường</div>
-
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 5%;">STT<br><i>No.</i></th>
-                <th style="width: 35%;">Diễn giải<br><i>Details</i></th>
-                <th style="width: 15%;">Số hóa đơn<br><i>Invoice No</i></th>
-                <th style="width: 15%;">Số tiền<br>trước thuế<br><i>Amount before<br>VAT</i></th>
-                <th style="width: 10%;">Thuế GTGT<br><i>VAT</i></th>
-                <th style="width: 15%;">Tổng tiền<br><i>Total in ...</i></th>
-                <th style="width: 10%;">Ghi chú</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-              <tr class="total-row">
-                <td colspan="3" style="text-align: center;">Tổng cộng / Total</td>
-                <td style="text-align: right;"></td>
-                <td style="text-align: right;"></td>
-                <td style="text-align: right;">${sumTotal.toLocaleString('vi-VN')}</td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div style="margin-bottom: 25px;">Bằng chữ / <i>in word:</i> ${numberToWordsVN(sumTotal)}.</div>
-
-          <div style="margin-bottom: 15px;">
-            <div>Tôi xác nhận số tiền đề nghị thanh toán/tạm ứng là trung thực, chính xác, đúng qui định và hợp pháp</div>
-            <div style="font-style: italic; font-size: 12px;">I confirm that the amounts requested for payment is genuine, validity, accuracy and legality</div>
-          </div>
-          
-          <div style="margin-bottom: 20px; font-weight: bold;">
-            Thông tin chuyển khoản / <i>information bank:</i>
-            <div style="margin-top: 5px; font-weight: normal;">Người thụ hưởng / <i>Beneficiary name:</i> <strong>${payload.bankBeneficiary ? escapeHtmlOutput(payload.bankBeneficiary) : escapeHtmlOutput(payload.gdvName)}</strong></div>
-            <div style="font-weight: normal;">Tài khoản / <i>Account number:</i> ${payload.bankAccount ? escapeHtmlOutput(payload.bankAccount) : '........................................'}</div>
-            <div style="font-weight: normal;">Tại ngân hàng / <i>At bank:</i> ${payload.bankName ? escapeHtmlOutput(payload.bankName) : '........................................'}</div>
-          </div>
-
-          <div class="signatures">
-            <div class="sig-box">
-              <div class="sig-header">
-                <div class="sig-title">Chữ ký người đề nghị</div>
-                <div class="sig-en">Requester's signature</div>
-              </div>
-              <div class="sig-footer">
-                <div>Tên/Name:</div>
-                <div>Ngày/Date: ..............</div>
-              </div>
-            </div>
-            <div class="sig-box">
-              <div class="sig-header">
-                <div class="sig-title">Xác nhận trưởng bộ phận</div>
-                <div class="sig-en">Verified by</div>
-              </div>
-              <div class="sig-footer">
-                <div>Tên/Name:</div>
-                <div>Ngày/Date: ..............</div>
-              </div>
-            </div>
-            <div class="sig-box">
-              <div class="sig-header">
-                <div class="sig-title">Trưởng phòng KT vận hành</div>
-                <div class="sig-en">Approved</div>
-              </div>
-              <div class="sig-footer">
-                <div>Tên/Name:</div>
-                <div>Ngày/Date: ..............</div>
-              </div>
-            </div>
-            <div class="sig-box">
-              <div class="sig-header">
-                <div class="sig-title">Lãnh đạo phê duyệt</div>
-                <div class="sig-en">Approved by</div>
-              </div>
-              <div class="sig-footer">
-                <div>Tên/Name:</div>
-                <div>Ngày/Date: ..............</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(overlay);
     }
 
 
