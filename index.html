@@ -20916,6 +20916,49 @@ const fullList = getCarBrandLossData();
       }
     }
 
+    
+    window.editingReimbIndex = -1;
+
+    function enableInlineEdit(idx) {
+      window.editingReimbIndex = idx;
+      renderReimbursementDraftItems();
+    }
+
+    function cancelInlineEdit() {
+      window.editingReimbIndex = -1;
+      renderReimbursementDraftItems();
+    }
+
+    function saveInlineEdit(idx) {
+      const km = parseFloat(document.getElementById('inlineKm_' + idx).value) || 0;
+      const date = document.getElementById('inlineEnd_' + idx).value;
+      const isHol = document.getElementById('inlineHol_' + idx).checked;
+      const isSpec = document.getElementById('inlineSpec_' + idx).checked;
+      
+      const calc = calculateFieldCost(km, date, isHol);
+      
+      localFieldReimbursementDraft[idx] = {
+        ...localFieldReimbursementDraft[idx],
+        startDatetime: document.getElementById('inlineStart_' + idx).value,
+        datetime: date,
+        isHolidayChecked: isHol,
+        isSpecialCase: isSpec,
+        bienSo: document.getElementById('inlineBS_' + idx).value,
+        soHSBT: document.getElementById('inlineHSBT_' + idx).value,
+        distanceKm: km,
+        vehicle: document.getElementById('inlineVeh_' + idx).value,
+        travelCost: parseFloat(document.getElementById('inlineTrav_' + idx).value) || 0,
+        perDiem: parseFloat(document.getElementById('inlinePer_' + idx).value) || 0,
+        hotelCost: parseFloat(document.getElementById('inlineHot_' + idx).value) || 0,
+        location: document.getElementById('inlineLoc_' + idx).value,
+        calcResult: calc
+      };
+      
+      window.editingReimbIndex = -1;
+      if (typeof updateQuickReimbPreview === 'function') updateQuickReimbPreview();
+      renderReimbursementDraftItems();
+    }
+
     function renderReimbursementDraftItems() {
       const container = document.getElementById('reimbDraftItemsContainer');
       const totalLbl = document.getElementById('reimbDraftTotalAmount');
@@ -20961,6 +21004,39 @@ const fullList = getCarBrandLossData();
         else if (item.calcResult.isAfterHours) noteStr.push('Ngoài giờ');
         if (item.isSpecialCase) noteStr.push('Đặc thù/Cao tốc');
         
+        
+        if (window.editingReimbIndex === idx) {
+          return `
+            <tr style="border-bottom: 1px solid var(--border); background: rgba(59,130,246,0.05);">
+              <td style="padding: 4px; text-align: center;">${idx + 1}</td>
+              <td style="padding: 2px;"><input type="datetime-local" id="inlineStart_${idx}" value="${item.startDatetime || ''}" class="p-input" style="padding:4px; font-size:11px; width:125px; border-radius:6px;"></td>
+              <td style="padding: 2px;">
+                <input type="datetime-local" id="inlineEnd_${idx}" value="${item.datetime || ''}" class="p-input" style="padding:4px; font-size:11px; width:125px; border-radius:6px; margin-bottom:4px;">
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                  <label style="font-size:10px; display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" id="inlineHol_${idx}" ${item.isHolidayChecked ? 'checked' : ''} style="accent-color:var(--primary);"> Lễ/Cuối tuần</label>
+                  <label style="font-size:10px; display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" id="inlineSpec_${idx}" ${item.isSpecialCase ? 'checked' : ''} style="accent-color:var(--primary);"> Đặc thù/Cao tốc</label>
+                </div>
+              </td>
+              <td style="padding: 2px;"><input type="text" id="inlineBS_${idx}" value="${escapeHtmlOutput(item.bienSo)}" class="p-input" style="padding:4px; font-size:11px; width:80px; border-radius:6px;"></td>
+              <td style="padding: 2px;"><input type="text" id="inlineHSBT_${idx}" value="${escapeHtmlOutput(item.soHSBT || '')}" class="p-input" style="padding:4px; font-size:11px; width:100px; border-radius:6px;"></td>
+              <td style="padding: 2px;"><input type="number" id="inlineKm_${idx}" value="${item.distanceKm}" class="p-input" style="padding:4px; font-size:11px; width:50px; border-radius:6px;"></td>
+              <td style="padding: 2px; font-size: 11px; color: var(--text-soft); text-align:center;">(Tự động)</td>
+              <td style="padding: 2px;"><input type="text" id="inlineVeh_${idx}" value="${escapeHtmlOutput(item.vehicle || '')}" class="p-input" style="padding:4px; font-size:11px; width:80px; border-radius:6px;"></td>
+              <td style="padding: 2px;"><input type="number" id="inlineTrav_${idx}" value="${item.travelCost || ''}" class="p-input" style="padding:4px; font-size:11px; width:70px; border-radius:6px;"></td>
+              <td style="padding: 2px;"><input type="number" id="inlinePer_${idx}" value="${item.perDiem || ''}" class="p-input" style="padding:4px; font-size:11px; width:70px; border-radius:6px;"></td>
+              <td style="padding: 2px;"><input type="number" id="inlineHot_${idx}" value="${item.hotelCost || ''}" class="p-input" style="padding:4px; font-size:11px; width:70px; border-radius:6px;"></td>
+              <td style="padding: 2px;"><input type="text" id="inlineLoc_${idx}" value="${escapeHtmlOutput(item.location || '')}" class="p-input" style="padding:4px; font-size:11px; width:80px; border-radius:6px;"></td>
+              <td style="padding: 2px; font-size: 11px; color: var(--text-soft); text-align:center;">(Tự động)</td>
+              <td style="padding: 4px; text-align: center;">
+                <div style="display:flex; gap:4px; flex-direction:column;">
+                  <button onclick="saveInlineEdit(${idx})" style="background: #10b981; color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size:11px; font-weight:bold; cursor: pointer; box-shadow: 0 2px 5px rgba(16,185,129,0.3);">Lưu</button>
+                  <button onclick="cancelInlineEdit()" style="background: var(--surface-strong); color: var(--text-main); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size:11px; font-weight:bold; cursor: pointer;">Hủy</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }
+
         return `
           <tr style="border-bottom: 1px solid var(--border);">
             <td style="padding: 8px 10px; text-align: center; border-right: 1px solid var(--border);">${idx + 1}</td>
@@ -20980,7 +21056,7 @@ const fullList = getCarBrandLossData();
             <td style="padding: 8px 10px; text-align: right; color: #10b981; font-weight: 800;">${subtotal.toLocaleString('vi-VN')} đ</td>
             <td style="padding: 8px 10px; text-align: center;">
               <div style="display: flex; justify-content: center; gap: 6px;">
-                <button onclick="loadReimbursementItemToForm(${idx})" style="background: rgba(59,130,246,0.1); color: #3b82f6; border: none; padding: 6px; border-radius: 8px; cursor: pointer;" title="Sửa vụ này">
+                <button onclick="enableInlineEdit(${idx})" style="background: rgba(59,130,246,0.1); color: #3b82f6; border: none; padding: 6px; border-radius: 8px; cursor: pointer;" title="Sửa vụ này">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                 </button>
                 <button onclick="removeReimbursementItem(${idx})" style="background: rgba(239,68,68,0.1); color: #ef4444; border: none; padding: 6px; border-radius: 8px; cursor: pointer;" title="Xóa vụ này">
