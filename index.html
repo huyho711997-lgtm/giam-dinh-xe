@@ -20400,7 +20400,7 @@ const fullList = getCarBrandLossData();
                     else if (r.status === 'rejected') statusHtml = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Từ chối</span>';
 
                     return `
-                      <tr onclick="viewFieldReimbursementDetail('${r.id}')" style="border-bottom: 1px solid var(--border); transition: background 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='transparent'">
+                      <tr onclick="if('${r.status}' === 'pending' && '${r.gdvUid}' === (firebase.auth().currentUser?.uid)) { openCreateFieldReimbursementModal('${r.id}'); } else { viewFieldReimbursementDetail('${r.id}'); }" style="border-bottom: 1px solid var(--border); transition: background 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='transparent'">
                         <td style="padding: 18px 24px; font-weight: 750; color: var(--primary);">${escapeHtmlOutput(r.id)}</td>
                         <td style="padding: 18px 24px; color: var(--text-soft);">${formatDateDisplay(r.createdAt)}</td>
                         <td style="padding: 18px 24px;"><strong>${escapeHtmlOutput(r.gdvName)}</strong></td>
@@ -20623,8 +20623,12 @@ const fullList = getCarBrandLossData();
       };
     }
 
-    function openCreateFieldReimbursementModal() {
-      localFieldReimbursementDraft = [];
+    function openCreateFieldReimbursementModal(editBatchId = null) {
+      if (editBatchId && cachedFieldReimbursementsPayload[editBatchId]) {
+        localFieldReimbursementDraft = JSON.parse(JSON.stringify(cachedFieldReimbursementsPayload[editBatchId].items || []));
+      } else {
+        localFieldReimbursementDraft = [];
+      }
       const m = document.createElement('div');
       m.id = 'createFieldReimbModal';
       m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); backdrop-filter:blur(8px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
@@ -20635,7 +20639,7 @@ const fullList = getCarBrandLossData();
             <div style="position: absolute; right: -20px; top: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(216,180,109,0.15) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
             
             <div style="position: relative; z-index: 2;">
-              <h3 style="margin:0 0 4px 0; font-size:22px; font-weight:900; color: #080b11; letter-spacing: -0.02em;">Tạo Phiếu Thanh Toán Đi Hiện Trường</h3>
+              <h3 style="margin:0 0 4px 0; font-size:22px; font-weight:900; color: #080b11; letter-spacing: -0.02em;">${editBatchId ? 'Cập Nhật' : 'Tạo'} Phiếu Thanh Toán Đi Hiện Trường</h3>
               <p style="margin:0; font-size:13px; color:var(--text-soft);">Thêm các vụ giám định đã hoàn tất để đề nghị thanh toán chi phí di chuyển.</p>
             </div>
             
@@ -20758,15 +20762,15 @@ const fullList = getCarBrandLossData();
               <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
                 <div>
                   <label style="display:block; font-size:13px; font-weight:700; color:var(--text-soft); margin-bottom:6px;">Người thụ hưởng</label>
-                  <input type="text" id="reimbBeneficiaryName" value="${localStorage.getItem('savedBankBeneficiary') || escapeHtmlOutput(activeUserProfile?.displayName || firebase.auth().currentUser?.email || '')}" class="p-input" placeholder="Ví dụ: NGUYEN VAN A">
+                  <input type="text" id="reimbBeneficiaryName" value="${(editBatchId && cachedFieldReimbursementsPayload[editBatchId]?.bankBeneficiary) ? escapeHtmlOutput(cachedFieldReimbursementsPayload[editBatchId].bankBeneficiary) : (localStorage.getItem('savedBankBeneficiary') || escapeHtmlOutput(activeUserProfile?.displayName || firebase.auth().currentUser?.email || ''))}" class="p-input" placeholder="Ví dụ: NGUYEN VAN A">
                 </div>
                 <div>
                   <label style="display:block; font-size:13px; font-weight:700; color:var(--text-soft); margin-bottom:6px;">Số tài khoản</label>
-                  <input type="text" id="reimbBankAccount" value="${localStorage.getItem('savedBankAccount') || ''}" class="p-input" placeholder="Số tài khoản">
+                  <input type="text" id="reimbBankAccount" value="${(editBatchId && cachedFieldReimbursementsPayload[editBatchId]?.bankAccount) ? escapeHtmlOutput(cachedFieldReimbursementsPayload[editBatchId].bankAccount) : (localStorage.getItem('savedBankAccount') || '')}" class="p-input" placeholder="Số tài khoản">
                 </div>
                 <div>
                   <label style="display:block; font-size:13px; font-weight:700; color:var(--text-soft); margin-bottom:6px;">Tại ngân hàng</label>
-                  <input type="text" id="reimbBankName" value="${localStorage.getItem('savedBankName') || ''}" class="p-input" placeholder="Ví dụ: Vietcombank CN Hà Nội">
+                  <input type="text" id="reimbBankName" value="${(editBatchId && cachedFieldReimbursementsPayload[editBatchId]?.bankName) ? escapeHtmlOutput(cachedFieldReimbursementsPayload[editBatchId].bankName) : (localStorage.getItem('savedBankName') || '')}" class="p-input" placeholder="Ví dụ: Vietcombank CN Hà Nội">
                 </div>
               </div>
             </div>
@@ -20787,9 +20791,9 @@ const fullList = getCarBrandLossData();
             </div>
             <div style="display:flex; gap:12px;">
               <button class="btn-premium btn-secondary" style="width: auto !important; height: 44px; padding: 0 24px; border-radius:12px; font-weight:700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('createFieldReimbModal').remove()">Đóng</button>
-              <button class="btn-premium" style="width: auto !important; height: 44px; padding: 0 24px; border-radius:12px; font-weight:800; font-size: 14px; box-shadow: 0 6px 16px rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; white-space: nowrap; min-width: 140px;" onclick="submitFieldReimbursementBatch()" id="btnSubmitReimb">
+              <button class="btn-premium" style="width: auto !important; height: 44px; padding: 0 24px; border-radius:12px; font-weight:800; font-size: 14px; box-shadow: 0 6px 16px rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; white-space: nowrap; min-width: 140px;" onclick="submitFieldReimbursementBatch('${editBatchId || \'\'}')" id="btnSubmitReimb">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                Tạo phiếu
+                ${editBatchId ? 'Cập nhật phiếu' : 'Tạo phiếu'}
               </button>
             </div>
           </div>
@@ -20943,7 +20947,7 @@ const fullList = getCarBrandLossData();
       totalLbl.textContent = total.toLocaleString('vi-VN') + ' đ';
     }
 
-    async function submitFieldReimbursementBatch() {
+    async function submitFieldReimbursementBatch(existingId = '') {
       if (localFieldReimbursementDraft.length === 0) return triggerToast('Vui lòng thêm ít nhất một vụ giám định.', 'warning');
       const currentUser = firebase.auth().currentUser;
       if (!currentUser) return;
@@ -20955,7 +20959,7 @@ const fullList = getCarBrandLossData();
         return acc + (curr.calcResult.finalCost || 0) + (curr.travelCost || 0) + (curr.perDiem || 0) + (curr.hotelCost || 0);
       }, 0);
       
-      const batchId = 'HT_' + Date.now().toString(36).toUpperCase();
+      const batchId = existingId || ('HT_' + Date.now().toString(36).toUpperCase());
 
       const bName = document.getElementById('reimbBeneficiaryName')?.value.trim();
         const bAccount = document.getElementById('reimbBankAccount')?.value.trim();
@@ -21156,6 +21160,12 @@ const fullList = getCarBrandLossData();
                   PHÊ DUYỆT
                 </button>
               ` : `
+                ${payload.status === 'pending' && payload.gdvUid === firebase.auth().currentUser?.uid ? `
+                  <button class="btn-premium" style="width: auto !important; padding:12px 24px; border-radius:12px; font-weight:800; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); margin-right: 12px;" onclick="document.getElementById('viewFieldReimbModal').remove(); openCreateFieldReimbursementModal('${payload.id}')">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    SỬA PHIẾU
+                  </button>
+                ` : ''}
                 <button class="btn-premium btn-secondary" style="width: auto !important; padding:12px 24px; border-radius:12px; font-weight:700;" onclick="document.getElementById('viewFieldReimbModal').remove()">Đóng chi tiết</button>
               `}
               <button class="btn-premium" style="width: auto !important; white-space: nowrap; padding:12px 24px; border-radius:12px; font-weight:800; background: #3b82f6; color: #fff; box-shadow: 0 8px 20px rgba(59,130,246,0.25);" onclick="exportFieldReimbursementToExcel('${payload.id}')">
