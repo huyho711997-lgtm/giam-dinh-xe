@@ -21230,7 +21230,7 @@ const fullList = getCarBrandLossData();
       `;
 
       m.innerHTML = `
-        <div style="background:var(--surface); border-radius:24px; width:95vw; max-width:98vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div style="background:var(--surface); border-radius:24px; width:96vw; max-width:1440px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); position:relative;">
           <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface); position:relative; overflow:hidden;">
             <div style="position: absolute; right: -20px; top: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
             
@@ -21243,17 +21243,17 @@ const fullList = getCarBrandLossData();
                   <span style="display:flex; align-items:center; gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> <strong>${formatDateDisplay(payload.createdAt)}</strong></span>
                 </div>
               </div>
-              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:16px;">
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:16px; margin-right: 40px;">
                 <div style="display:flex; align-items:center; gap: 12px;">
                   ${headerActions}
-                  <button onclick="document.getElementById('viewFieldReimbModal').remove()" style="background:var(--surface-strong); border:1px solid var(--border); color:var(--text-soft); cursor:pointer; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:12px; transition:all 0.2s;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--surface-strong)'; this.style.color='var(--text-soft)'">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                  </button>
                 </div>
                 <div style="display:flex; align-items:center; gap: 16px;">
                   ${statusHtml}
                 </div>
               </div>
+              <button onclick="document.getElementById('viewFieldReimbModal').remove()" style="position:absolute; top:24px; right:32px; background:var(--surface-strong); border:1px solid var(--border); color:var(--text-soft); cursor:pointer; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:12px; transition:all 0.2s; z-index:10;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--danger)'" onmouseout="this.style.background='var(--surface-strong)'; this.style.color='var(--text-soft)'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
             </div>
           </div>
           
