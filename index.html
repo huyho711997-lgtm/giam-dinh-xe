@@ -3029,15 +3029,15 @@
 
           <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; max-height: 340px;">
             <table class="p-table" style="font-size: 12px; margin: 0;">
-              <thead><div style="margin-top: 15px;">
+                            <thead>
                 <tr style="background: var(--bg-soft);">
-                  <th style="width: 40px; text-align: center;">STT</div></th>
-                  <th><div style="margin-top: 15px;">Biển số xe</div></th>
-                  <th><div style="margin-top: 15px;">Mã VTT</div></th>
-                  <th><div style="margin-top: 15px;">Gara sửa chữa</div></th>
-                  <th><div style="margin-top: 15px;">Trạng thái mới</div></th>
-                  <th><div style="margin-top: 15px;">Số tiền duyệt</div></th>
-                  <th style="text-align: center;"><div style="margin-top: 15px;">Kết quả khớp</div></th>
+                  <th style="width: 40px; text-align: center;">STT</th>
+                  <th>Biển số xe</th>
+                  <th>Mã VTT</th>
+                  <th>Gara sửa chữa</th>
+                  <th>Trạng thái mới</th>
+                  <th>Số tiền duyệt</th>
+                  <th style="text-align: center;">Kết quả khớp</th>
                 </tr>
               </thead>
               <tbody id="tblExcelPreviewBody">
@@ -21502,8 +21502,8 @@ const fullList = getCarBrandLossData();
           .print-page th, .print-page td { border: 1px solid #000; padding: 4px 6px; vertical-align: middle; font-size: 12.5px; }
           .print-page th { text-align: center; font-weight: bold; padding-top: 12px !important; }
           .print-page .total-row { font-weight: bold; }
-          .print-page .signatures { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; align-items: stretch; gap: 10px; }
-          .print-page .sig-box { flex: 1; display: flex; flex-direction: column; }
+          .print-page .signatures { display: table; width: 100%; margin-top: 40px; text-align: center; page-break-inside: avoid !important; break-inside: avoid !important; border-collapse: separate; border-spacing: 10px 0; }
+          .print-page .sig-box { display: table-cell; width: 25%; vertical-align: top; }
           .print-page .sig-title { font-weight: bold; }
           .print-page .sig-en { font-style: italic; font-size: 12px; }
           .print-page .sig-header { flex-grow: 1; }
