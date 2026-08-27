@@ -21187,7 +21187,7 @@ const fullList = getCarBrandLossData();
 
       const m = document.createElement('div');
       m.id = 'viewFieldReimbModal';
-      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); backdrop-filter:blur(8px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
+      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(11,15,25,0.82); backdrop-filter:blur(16px); z-index:999999; display:flex; justify-content:center; align-items:center; padding:24px; overflow:hidden;';
       
       let statusHtml = '';
       if (payload.status === 'pending' || payload.status === 'new') statusHtml = '<span style="background: rgba(59,130,246,0.15); color: #3b82f6; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#3b82f6; display:inline-block;"></span>Mới tạo</span>';
@@ -21231,64 +21231,76 @@ const fullList = getCarBrandLossData();
       `;
 
       m.innerHTML = `
-        <div style="background:var(--surface); border-radius:24px; width:96vw; max-width:1440px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); position:relative;">
-          <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface); position:relative; overflow:hidden;">
-            <div style="position: absolute; right: -20px; top: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
-            
-            
-            <button onclick="document.getElementById('viewFieldReimbModal').remove()" style="position:absolute; top:24px; right:24px; background:var(--surface-strong); border:1px solid var(--border); color:var(--text-soft); cursor:pointer; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:12px; transition:all 0.2s; z-index:10;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--danger)'" onmouseout="this.style.background='var(--surface-strong)'; this.style.color='var(--text-soft)'">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-            <div style="position:relative; z-index:2; display:flex; flex-wrap:wrap; justify-content:space-between; width:100%; align-items:center; gap:20px; padding-right:48px;">
-              <div>
-                <h3 style="margin:0; font-size:26px; font-weight:900; color:var(--text-main); letter-spacing:-0.02em;">Chi tiết đề nghị thanh toán</h3>
-                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                  <div style="display:inline-flex; align-items:center; gap:8px; padding:6px 14px; background:var(--surface-strong); border:1px solid var(--border); border-radius:99px; font-size:12px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em;">
-                    MÃ PHIẾU: <strong style="color:var(--text-main);">${escapeHtmlOutput(payload.id)}</strong>
+        <section class="profile-modal-panel" role="dialog" style="width: 96vw; height: 92vh; max-width: 98vw; min-width: 900px; max-height: 92vh; min-height: 600px; display: flex; flex-direction: column; overflow: hidden; padding: 0; border-radius: 16px; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5); background: var(--surface); animation: zoomIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+          
+          <!-- Header -->
+          <div style="padding: 20px 28px 14px; border-bottom: 1px solid var(--border); background: var(--surface-strong); flex-shrink: 0;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
+              <div style="display: flex; gap: 16px;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--primary-gradient); color: #080b11; display: grid; place-items: center; flex-shrink: 0; box-shadow: var(--shadow-sm);">
+                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <div>
+                  <h3 style="font-size: 20px; font-weight: 850; color: var(--text-main); margin: 0 0 8px 0; letter-spacing: -0.01em;">Chi tiết đề nghị thanh toán</h3>
+                  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <div style="font-size: 13px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em;">
+                      MÃ PHIẾU: <strong style="color: var(--text-main);">${escapeHtmlOutput(payload.id)}</strong>
+                    </div>
+                    ${statusHtml}
+                    <div style="width: 1px; height: 14px; background: var(--border-strong);"></div>
+                    <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-soft); font-weight: 600;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 1 0-16 0"></path></svg>
+                      <strong style="color: var(--primary);">${escapeHtmlOutput(payload.gdvName)}</strong>
+                    </span>
+                    <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-soft); font-weight: 600;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                      ${new Date(payload.createdAt).toLocaleString('vi-VN')}
+                    </span>
                   </div>
-                  ${statusHtml}
-                  <div style="width: 1px; height: 16px; background: var(--border-strong);"></div>
-                  <span style="display:flex; align-items:center; gap:6px; font-size: 13px; color: var(--text-soft); font-weight: 600;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 1 0-16 0"></path></svg> <strong style="color: var(--primary);">${escapeHtmlOutput(payload.gdvName)}</strong>
-                  </span>
-                  <span style="display:flex; align-items:center; gap:6px; font-size: 13px; color: var(--text-soft); font-weight: 600;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> <strong>${formatDateDisplay(payload.createdAt)}</strong>
-                  </span>
                 </div>
               </div>
-              <div style="display:flex; align-items:center; gap: 12px; flex-wrap: wrap; justify-content: flex-end;">
+              <div style="display: flex; gap: 12px; align-items: flex-start;">
                 ${headerActions}
+                <button type="button" class="btn-premium" style="width: auto !important; background: var(--surface); color: var(--primary); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); padding: 0 16px; height: 38px; border-radius: 10px; font-weight: 800; font-size: 12.5px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;" onclick="exportFieldReimbursementToExcel('${payload.id}')">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  XUẤT BẢNG KÊ
+                </button>
+                <button type="button" class="btn-premium" style="width: auto !important; background: var(--primary); color: #111; border: none; box-shadow: 0 4px 15px rgba(216,180,109,0.3); padding: 0 16px; height: 38px; border-radius: 10px; font-weight: 800; font-size: 12.5px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;" onclick="printFieldReimbursementTemplate('${payload.id}')">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                  IN PHIẾU
+                </button>
+                <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('viewFieldReimbModal').remove()" aria-label="Đóng" style="width: 38px; height: 38px; min-width: 38px; min-height: 38px; padding: 0; border-radius: 10px; font-size: 18px; display: grid; place-items: center; cursor: pointer; margin-left: 4px;">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
               </div>
             </div>
           </div>
-          
-          
-          
-          <div style="padding:24px 32px; overflow-y:auto; flex:1; background:var(--bg-main);">
-            <h4 style="margin:0 0 16px 0; font-size:14px; font-weight:800; color:var(--text-main); display:flex; align-items:center; gap:8px;">
-              Danh sách vụ giám định (${payload.items?.length || 0})
-            </h4>
-            <div style="background:var(--surface); border-radius:16px; border:1px solid var(--border); overflow:hidden;">
-              <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; text-align:left; white-space:nowrap;">
-                  <thead>
-                    <tr style="background:var(--surface-strong); border-bottom:1px solid var(--border);">
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">STT</th>
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Bắt đầu</th>
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Kết thúc</th>
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Biển số xe KH</th>
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Số HSBT</th>
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Khoảng cách</th>
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Thù lao GĐ</th>
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Phương tiện</th>
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Chi phí đi lại</th>
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Công tác phí</th>
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Lưu trú</th>
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Địa bàn</th>
-                      <th style="padding:16px 20px; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase; text-align:right;">Thành tiền</th>
+
+          <!-- Content -->
+          <div style="flex-grow: 1; overflow-y: auto; background: var(--surface);">
+            <div style="padding: 24px 28px;">
+              <h4 style="font-size: 14.5px; font-weight: 800; color: var(--text-main); margin: 0 0 16px 0; letter-spacing: -0.01em;">Danh sách vụ giám định (${(payload.items || []).length})</h4>
+              
+              <div style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface-strong);">
+                <table class="p-table" style="margin: 0; white-space: nowrap;">
+                  <thead style="position: sticky; top: 0; z-index: 10;">
+                    <tr style="background: var(--bg-soft);">
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">STT</th>
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">Bắt đầu</th>
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">Kết thúc</th>
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">Biển số xe KH</th>
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">Số HSBT</th>
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); text-align:right;">Khoảng cách</th>
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); text-align:right;">Thù lao GĐ</th>
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">Phương tiện</th>
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); text-align:right;">Chi phí đi lại</th>
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); text-align:right;">Công tác phí</th>
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); text-align:right;">Lưu trú</th>
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">Địa bàn</th>
+                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); text-align:right;">Thành tiền</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody style="background: var(--surface);">
                     ${(payload.items || []).map((it, idx) => {
                       const tlGD = it.calcResult?.finalCost || 0;
                       const cpDL = it.travelCost || 0;
@@ -21297,19 +21309,19 @@ const fullList = getCarBrandLossData();
                       const rTotal = tlGD + cpDL + ctp + lt;
                       return `
                         <tr style="border-bottom:1px solid var(--border); background:${idx%2===0?'var(--surface)':'var(--bg-soft)'};">
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${idx + 1}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${it.startDatetime ? formatDateDisplay(it.startDatetime).replace('—', '<br>') : '-'}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${formatDateDisplay(it.datetime).replace('—', '<br>')}</td>
-                          <td style="padding:16px 20px; font-size:13px; font-weight:700; color:var(--text-main);">${escapeHtmlOutput(it.bienSo)}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.soHSBT || '-')}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.distanceKm)} km</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${tlGD > 0 ? tlGD.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.vehicle || '-')}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${cpDL > 0 ? cpDL.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${ctp > 0 ? ctp.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-soft);">${lt > 0 ? lt.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding:16px 20px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.location || '-')}</td>
-                          <td style="padding:16px 20px; font-size:14px; font-weight:800; color:#10b981; text-align:right;">${rTotal.toLocaleString('vi-VN')} đ</td>
+                          <td style="padding:12px 16px; font-size:13px; color:var(--text-soft); text-align:center;">${idx + 1}</td>
+                          <td style="padding:12px 16px; font-size:13px; color:var(--text-main);">${it.startDatetime ? formatDateDisplay(it.startDatetime).replace('—', '<br>') : '-'}</td>
+                          <td style="padding:12px 16px; font-size:13px; color:var(--text-main);">${formatDateDisplay(it.datetime).replace('—', '<br>')}</td>
+                          <td style="padding:12px 16px; font-size:13px; font-weight:700; color:var(--text-main);">${escapeHtmlOutput(it.bienSo)}</td>
+                          <td style="padding:12px 16px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.soHSBT || '-')}</td>
+                          <td style="padding:12px 16px; font-size:13px; color:var(--text-main); text-align:right;">${escapeHtmlOutput(it.distanceKm)} km</td>
+                          <td style="padding:12px 16px; font-size:13px; color:var(--text-soft); text-align:right;">${tlGD > 0 ? tlGD.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+                          <td style="padding:12px 16px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.vehicle || '-')}</td>
+                          <td style="padding:12px 16px; font-size:13px; color:var(--text-soft); text-align:right;">${cpDL > 0 ? cpDL.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+                          <td style="padding:12px 16px; font-size:13px; color:var(--text-soft); text-align:right;">${ctp > 0 ? ctp.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+                          <td style="padding:12px 16px; font-size:13px; color:var(--text-soft); text-align:right;">${lt > 0 ? lt.toLocaleString('vi-VN') + ' đ' : '-'}</td>
+                          <td style="padding:12px 16px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.location || '-')}</td>
+                          <td style="padding:12px 16px; font-size:14px; font-weight:800; color:#10b981; text-align:right;">${rTotal.toLocaleString('vi-VN')} đ</td>
                         </tr>
                       `;
                     }).join('')}
@@ -21318,18 +21330,19 @@ const fullList = getCarBrandLossData();
               </div>
             </div>
           </div>
-          
-          <div style="padding:24px 32px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface-strong);">
-            <div style="display:flex; flex-direction:column;">
-              <span style="font-size:12px; color:var(--text-soft); font-weight:700; text-transform:uppercase; letter-spacing:0.05em;">Tổng tiền thanh toán</span>
-              <span style="color: #10b981; font-size: 28px; font-weight:900; line-height:1.2;">${payload.totalAmount ? payload.totalAmount.toLocaleString('vi-VN') : '0'} đ</span>
+
+          <!-- Footer -->
+          <div style="padding: 20px 28px; border-top: 1px solid var(--border); background: var(--surface-strong); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 750; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Tổng tiền thanh toán</span>
+              <span style="color: #10b981; font-size: 24px; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em;">${payload.totalAmount ? payload.totalAmount.toLocaleString('vi-VN') : '0'} đ</span>
             </div>
-            <div style="display:flex; gap:12px;">
-              <button class="btn-premium btn-secondary" style="width: auto !important; padding:12px 24px; border-radius:12px; font-weight:700;" onclick="document.getElementById('viewFieldReimbModal').remove()">Đóng chi tiết</button>
+            <div style="display: flex; gap: 12px;">
+              <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('viewFieldReimbModal').remove()" style="width: auto !important; padding: 0 24px; height: 42px; cursor: pointer;">Đóng chi tiết</button>
             </div>
           </div>
-        </div>
-      `;
+
+        </section>`;
       document.body.appendChild(m);
     }
 
