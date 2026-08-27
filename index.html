@@ -4606,45 +4606,7 @@
 
       document.body.appendChild(overlay);
 
-      overlay.querySelector('#btnDownloadWord').onclick = function() {
-          console.log("Word button clicked!");
-          try {
-          var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Giay De Nghi Thanh Toan</title><style>table { border-collapse: collapse; width: 100%; margin-top: 20px; margin-bottom: 20px; } th, td { border: 1px solid black; padding: 5px; } .header-logo img { width: 150px; } .title { text-align: center; font-weight: bold; font-size: 18px; text-transform: uppercase; } .subtitle { text-align: center; font-style: italic; } .signatures { width: 100%; margin-top: 40px; } .sig-box { width: 25%; float: left; text-align: center; } .sig-title { font-weight: bold; } .sig-en { font-style: italic; font-size: 12px; } .sig-footer { margin-top: 60px; text-align: left; }</style></head><body>";
-          var clone = overlay.querySelector('.print-page').cloneNode(true);
-          
-          // Fix logo for Word (Word might struggle with max-width or object-fit)
-          var img = clone.querySelector('.header-logo img');
-          if (img) {
-              img.style.cssText = "width: 150px; height: auto;";
-          }
-          
-          // Reformat signatures to table for Word compatibility
-          var sigContainer = clone.querySelector('.signatures');
-          if(sigContainer) {
-             var newSig = document.createElement('table');
-             newSig.style.border = 'none';
-             newSig.innerHTML = '<tr><td style="border: none; text-align: center; width: 25%;"><b>Chữ ký người đề nghị</b><br><i>Requester\'s signature</i></td><td style="border: none; text-align: center; width: 25%;"><b>Xác nhận trưởng bộ phận</b><br><i>Verified by</i></td><td style="border: none; text-align: center; width: 25%;"><b>Trưởng phòng KT vận hành</b><br><i>Approved</i></td><td style="border: none; text-align: center; width: 25%;"><b>Lãnh đạo phê duyệt</b><br><i>Approved by</i></td></tr><tr style="height: 80px;"><td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td></tr><tr><td style="border: none; text-align: left;">Tên/Name:<br>Ngày/Date: ...............</td><td style="border: none; text-align: left;">Tên/Name:<br>Ngày/Date: ...............</td><td style="border: none; text-align: left;">Tên/Name:<br>Ngày/Date: ...............</td><td style="border: none; text-align: left;">Tên/Name:<br>Ngày/Date: ...............</td></tr>';
-             sigContainer.parentNode.replaceChild(newSig, sigContainer);
-          }
-
-          var postHtml = "</body></html>";
-          var wordHtml = preHtml + clone.innerHTML + postHtml;
-          
-          // Handle unicode BOM
-          var blob = new Blob(['\ufeff', wordHtml], { type: 'application/msword' });
-          var url = URL.createObjectURL(blob);
-          var link = document.createElement('a');
-          link.href = url;
-          link.download = 'Giay_De_Nghi_Thanh_Toan_' + payload.gdvName + '.doc';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          console.log("Download triggered successfully!");
-          } catch (e) {
-             console.error("Error in word export:", e);
-             alert("Error: " + e.message);
-          }
-      };
+      
 
       document.getElementById('btnCustomConfirmCancel').onclick = () => overlay.remove();
       document.getElementById('btnCustomConfirmOk').onclick = () => {
@@ -21625,12 +21587,43 @@ const fullList = getCarBrandLossData();
           </div>
         </div>
       `;
-      document.body.appendChild(overlay);
+      // EXPORT WORD DIRECTLY
+      try {
+          var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Giay De Nghi Thanh Toan</title><style>table { border-collapse: collapse; width: 100%; margin-top: 20px; margin-bottom: 20px; } th, td { border: 1px solid black; padding: 5px; } .header-logo img { width: 150px; } .title { text-align: center; font-weight: bold; font-size: 18px; text-transform: uppercase; } .subtitle { text-align: center; font-style: italic; } .signatures { width: 100%; margin-top: 40px; } .sig-box { width: 25%; float: left; text-align: center; } .sig-title { font-weight: bold; } .sig-en { font-style: italic; font-size: 12px; } .sig-footer { margin-top: 60px; text-align: left; }</style></head><body>";
+          var clone = overlay.querySelector('.print-page').cloneNode(true);
+          
+          var img = clone.querySelector('.header-logo img');
+          if (img) {
+              img.style = "width: 150px; height: auto;";
+          }
+          
+          var sigContainer = clone.querySelector('.signatures');
+          if(sigContainer) {
+             var newSig = document.createElement('table');
+             newSig.style.border = 'none';
+             newSig.innerHTML = '<tr><td style="border: none; text-align: center; width: 25%;"><b>Chữ ký người đề nghị</b><br><i>Requester\'s signature</i></td><td style="border: none; text-align: center; width: 25%;"><b>Xác nhận trưởng bộ phận</b><br><i>Verified by</i></td><td style="border: none; text-align: center; width: 25%;"><b>Trưởng phòng KT vận hành</b><br><i>Approved</i></td><td style="border: none; text-align: center; width: 25%;"><b>Lãnh đạo phê duyệt</b><br><i>Approved by</i></td></tr><tr style="height: 80px;"><td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td><td style="border:none;"></td></tr><tr><td style="border: none; text-align: left;">Tên/Name:<br>Ngày/Date: ...............</td><td style="border: none; text-align: left;">Tên/Name:<br>Ngày/Date: ...............</td><td style="border: none; text-align: left;">Tên/Name:<br>Ngày/Date: ...............</td><td style="border: none; text-align: left;">Tên/Name:<br>Ngày/Date: ...............</td></tr>';
+             sigContainer.parentNode.replaceChild(newSig, sigContainer);
+          }
+
+          var postHtml = "</body></html>";
+          var wordHtml = preHtml + clone.innerHTML + postHtml;
+          
+          var blob = new Blob(['\ufeff', wordHtml], { type: 'application/msword' });
+          var url = URL.createObjectURL(blob);
+          var link = document.createElement('a');
+          link.href = url;
+          link.download = 'Giay_De_Nghi_Thanh_Toan_' + payload.gdvName + '.doc';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          triggerToast('Đã tải xuống file Word', 'success');
+      } catch(e) {
+          console.error("Word export failed", e);
+          triggerToast('Có lỗi xảy ra khi tải file Word.', 'error');
+      }
     }
-
-
     
-
     function exportFieldReimbursementToExcel(batchId) {
       if (!window.XLSX) {
         triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
