@@ -21469,12 +21469,13 @@ const fullList = getCarBrandLossData();
           .print-page .sig-header { flex-grow: 1; }
           .print-page .sig-footer { margin-top: 60px; text-align: left; white-space: nowrap; font-size: 13px; }
           @media print {
+              @page { size: A4; margin-top: 10mm; margin-bottom: 15mm; margin-left: 15mm; margin-right: 15mm; }
               html, body { overflow: visible !important; overflow-x: visible !important; overflow-y: visible !important; height: auto !important; min-height: auto !important; max-width: none !important; width: auto !important; }
               body > *:not(#printOverlayModal) { display: none !important; }
               body { background: white !important; margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
-              #printOverlayModal { position: static !important; background: white !important; padding: 30px 0 30px 0 !important; width: 100% !important; height: auto !important; display: block !important; overflow: visible !important; box-shadow: none !important; }
+              #printOverlayModal { position: static !important; background: white !important; padding: 0 !important; width: 100% !important; height: auto !important; display: block !important; overflow: visible !important; box-shadow: none !important; }
               .print-action-bar { display: none !important; }
-              .print-page { margin: 0 !important; box-shadow: none !important; padding: 1px 0 30px 0 !important; width: 100% !important; min-height: auto !important; height: auto !important; page-break-after: auto !important; overflow: visible !important; }
+              .print-page { margin: 0 !important; box-shadow: none !important; padding: 1px 0 0 0 !important; width: 100% !important; min-height: auto !important; height: auto !important; page-break-after: auto !important; overflow: visible !important; }
               table { page-break-inside: auto !important; }
               tr, td, th { page-break-inside: avoid !important; break-inside: avoid !important; page-break-after: auto !important; }
               thead { display: table-row-group !important; }
