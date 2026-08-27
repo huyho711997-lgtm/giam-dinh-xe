@@ -4606,14 +4606,16 @@
 
       document.body.appendChild(overlay);
 
-      document.getElementById('btnDownloadWord').onclick = function() {
+      overlay.querySelector('#btnDownloadWord').onclick = function() {
+          console.log("Word button clicked!");
+          try {
           var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Giay De Nghi Thanh Toan</title><style>table { border-collapse: collapse; width: 100%; margin-top: 20px; margin-bottom: 20px; } th, td { border: 1px solid black; padding: 5px; } .header-logo img { width: 150px; } .title { text-align: center; font-weight: bold; font-size: 18px; text-transform: uppercase; } .subtitle { text-align: center; font-style: italic; } .signatures { width: 100%; margin-top: 40px; } .sig-box { width: 25%; float: left; text-align: center; } .sig-title { font-weight: bold; } .sig-en { font-style: italic; font-size: 12px; } .sig-footer { margin-top: 60px; text-align: left; }</style></head><body>";
-          var clone = document.querySelector('.print-page').cloneNode(true);
+          var clone = overlay.querySelector('.print-page').cloneNode(true);
           
           // Fix logo for Word (Word might struggle with max-width or object-fit)
           var img = clone.querySelector('.header-logo img');
           if (img) {
-              img.style = "width: 150px; height: auto;";
+              img.style.cssText = "width: 150px; height: auto;";
           }
           
           // Reformat signatures to table for Word compatibility
@@ -4637,6 +4639,11 @@
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
+          console.log("Download triggered successfully!");
+          } catch (e) {
+             console.error("Error in word export:", e);
+             alert("Error: " + e.message);
+          }
       };
 
       document.getElementById('btnCustomConfirmCancel').onclick = () => overlay.remove();
