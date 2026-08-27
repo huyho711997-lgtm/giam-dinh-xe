@@ -21236,14 +21236,19 @@ const fullList = getCarBrandLossData();
             
             <div style="position:relative; z-index:2; display:flex; justify-content:space-between; width:100%; align-items:center;">
               <div>
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                  <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:var(--surface-strong); border:1px solid var(--border); border-radius:12px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em;">MÃ PHIẾU: <strong style="color:var(--text-main); font-size:12px;">${escapeHtmlOutput(payload.id)}</strong></div>
+                <h3 style="margin:0 0 16px 0; font-size:26px; font-weight:900; color:var(--text-main); letter-spacing:-0.02em;">Chi tiết đề nghị thanh toán</h3>
+                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                  <div style="display:inline-flex; align-items:center; gap:8px; padding:6px 14px; background:var(--surface-strong); border:1px solid var(--border); border-radius:99px; font-size:12px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em;">
+                    MÃ PHIẾU: <strong style="color:var(--text-main);">${escapeHtmlOutput(payload.id)}</strong>
+                  </div>
                   ${statusHtml}
-                </div>
-                <h3 style="margin:0 0 12px 0; font-size:24px; font-weight:900; color:var(--text-main); letter-spacing:-0.02em;">Chi tiết đề nghị thanh toán</h3>
-                <div style="display: flex; gap: 20px; font-size: 13px; color: var(--text-soft);">
-                  <span style="display:flex; align-items:center; gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 1 0-16 0"></path></svg> <strong style="color: var(--primary);">${escapeHtmlOutput(payload.gdvName)}</strong></span>
-                  <span style="display:flex; align-items:center; gap:6px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> <strong>${formatDateDisplay(payload.createdAt)}</strong></span>
+                  <div style="width: 1px; height: 16px; background: var(--border-strong);"></div>
+                  <span style="display:flex; align-items:center; gap:6px; font-size: 13px; color: var(--text-soft); font-weight: 600;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 1 0-16 0"></path></svg> <strong style="color: var(--primary);">${escapeHtmlOutput(payload.gdvName)}</strong>
+                  </span>
+                  <span style="display:flex; align-items:center; gap:6px; font-size: 13px; color: var(--text-soft); font-weight: 600;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> <strong>${formatDateDisplay(payload.createdAt)}</strong>
+                  </span>
                 </div>
               </div>
               <div style="display:flex; align-items:center; gap: 16px;">
