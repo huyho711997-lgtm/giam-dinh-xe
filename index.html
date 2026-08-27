@@ -21502,8 +21502,8 @@ const fullList = getCarBrandLossData();
           .print-page th, .print-page td { border: 1px solid #000; padding: 4px 6px; vertical-align: middle; font-size: 12.5px; }
           .print-page th { text-align: center; font-weight: bold; padding-top: 12px !important; }
           .print-page .total-row { font-weight: bold; }
-          .print-page .signatures { display: table; width: 100%; margin-top: 40px; text-align: center; page-break-inside: avoid !important; break-inside: avoid !important; border-collapse: separate; border-spacing: 10px 0; }
-          .print-page .sig-box { display: table-cell; width: 25%; vertical-align: top; }
+          .print-page .signatures { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; align-items: stretch; gap: 10px; }
+          .print-page .sig-box { flex: 1; display: flex; flex-direction: column; }
           .print-page .sig-title { font-weight: bold; }
           .print-page .sig-en { font-style: italic; font-size: 12px; }
           .print-page .sig-header { flex-grow: 1; }
@@ -21515,7 +21515,7 @@ const fullList = getCarBrandLossData();
               body { background: white !important; margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
               #printOverlayModal { position: static !important; background: white !important; padding: 0 !important; width: 100% !important; height: auto !important; display: block !important; overflow: visible !important; box-shadow: none !important; }
               .print-action-bar { display: none !important; }
-              .print-page { margin: 0 !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; min-height: auto !important; height: auto !important; page-break-after: auto !important; overflow: visible !important; }
+              .print-page { margin: 0 !important; box-shadow: none !important; padding-top: 30px !important; padding-left: 0 !important; padding-right: 0 !important; padding-bottom: 0 !important; width: 100% !important; min-height: auto !important; height: auto !important; page-break-after: auto !important; overflow: visible !important; }
               table { page-break-inside: auto !important; }
               tr { page-break-inside: auto !important; page-break-after: auto !important; }
               td, th { page-break-inside: avoid !important; break-inside: avoid !important; page-break-after: auto !important; }
@@ -21622,7 +21622,8 @@ const fullList = getCarBrandLossData();
                 <div>Tên/Name:</div>
                 <div>Ngày/Date: ..............</div>
               </div>
-            </div>
+                        </div>
+          </div>
           </div>
         </div>
       `;
