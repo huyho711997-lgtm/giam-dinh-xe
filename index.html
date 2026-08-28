@@ -21476,13 +21476,13 @@ const fullList = getCarBrandLossData();
           .print-page .sig-header { flex-grow: 1; }
           .print-page .sig-footer { margin-top: 60px; text-align: left; white-space: nowrap; font-size: 13px; }
           @media print {
-              @page { size: A4; margin-top: 15mm; margin-bottom: 15mm; margin-left: 15mm; margin-right: 15mm; }
+              @page { size: A4; margin-top: 25mm; margin-bottom: 25mm; margin-left: 15mm; margin-right: 15mm; }
               html, body { overflow: visible !important; overflow-x: visible !important; overflow-y: visible !important; height: auto !important; min-height: auto !important; max-width: none !important; width: auto !important; }
               body > *:not(#printOverlayModal) { display: none !important; }
               body { background: white !important; margin: 0 !important; padding: 0 !important; height: auto !important; overflow: visible !important; }
               #printOverlayModal { position: static !important; background: white !important; padding: 0 !important; width: 100% !important; height: auto !important; display: block !important; overflow: visible !important; box-shadow: none !important; backdrop-filter: none !important; }
               .print-action-bar { display: none !important; }
-              .print-page { margin: 0 !important; box-shadow: none !important; padding-top: 15px !important; padding-left: 0 !important; padding-right: 0 !important; padding-bottom: 0 !important; width: 100% !important; min-height: auto !important; height: auto !important; page-break-after: auto !important; overflow: visible !important; }
+              .print-page { margin: 0 !important; box-shadow: none !important; padding-top: 25px !important; padding-left: 0 !important; padding-right: 0 !important; padding-bottom: 0 !important; width: 100% !important; min-height: auto !important; height: auto !important; page-break-after: auto !important; overflow: visible !important; }
               table { page-break-inside: auto !important; }
               tr { page-break-inside: auto !important; page-break-after: auto !important; }
               td, th { page-break-inside: avoid !important; break-inside: avoid !important; page-break-after: auto !important; }
@@ -21514,13 +21514,13 @@ const fullList = getCarBrandLossData();
           <table>
             <thead>
               <tr>
-                <th style="width: 5%;">STT<br><i>No.</i></th>
-                <th style="width: 30%;">Diễn giải<br><i>Details</i></th>
-                <th style="width: 12%;">Số hóa đơn<br><i>Invoice No</i></th>
-                <th style="width: 15%;">Số tiền<br>trước thuế<br><i>Amount before<br>VAT</i></th>
-                <th style="width: 8%;">Thuế GTGT<br><i>VAT</i></th>
-                <th style="width: 15%;">Tổng tiền<br><i>Total in ...</i></th>
-                <th style="width: 15%;">Ghi chú</th>
+                <th style="width: 5%;"><div style="padding-top: 15px;">STT<br><i>No.</i></div></th>
+                <th style="width: 30%;"><div style="padding-top: 15px;">Diễn giải<br><i>Details</i></div></th>
+                <th style="width: 12%;"><div style="padding-top: 15px;">Số hóa đơn<br><i>Invoice No</i></div></th>
+                <th style="width: 15%;"><div style="padding-top: 15px;">Số tiền<br>trước thuế<br><i>Amount before<br>VAT</i></div></th>
+                <th style="width: 8%;"><div style="padding-top: 15px;">Thuế GTGT<br><i>VAT</i></div></th>
+                <th style="width: 15%;"><div style="padding-top: 15px;">Tổng tiền<br><i>Total in ...</i></div></th>
+                <th style="width: 15%;"><div style="padding-top: 15px;">Ghi chú</div></th>
               </tr>
             </thead>
             <tbody>
@@ -21549,6 +21549,7 @@ const fullList = getCarBrandLossData();
             <div style="font-weight: normal;">Tại ngân hàng / <i>At bank:</i> ${payload.bankName ? escapeHtmlOutput(payload.bankName) : '........................................'}</div>
           </div>
 
+          <div style="display: inline-block; width: 100%; page-break-inside: avoid !important; break-inside: avoid !important;">
           <div class="signatures">
             <div class="sig-box">
               <div class="sig-header">
@@ -21590,6 +21591,7 @@ const fullList = getCarBrandLossData();
                 <div>Ngày/Date: ..............</div>
               </div>
                         </div>
+          </div>
           </div>
           </div>
         </div>
