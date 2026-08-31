@@ -7594,9 +7594,24 @@ function formatDateDisplay(val) {
         }
 
         let formattedUpdateDate = '';
-        if (item.updatedAt || item.createdAt) {
-          const ud = new Date(item.updatedAt || item.createdAt);
-          formattedUpdateDate = String(ud.getDate()).padStart(2, '0') + '/' + String(ud.getMonth() + 1).padStart(2, '0') + '/' + ud.getFullYear();
+        const st = item.trangThai || 'moi';
+        let rawDate = '';
+
+        if (st === 'da_duyet_pasc') {
+          rawDate = item.pascNgayDuyet || '';
+        } else if (st === 'da_duyet_hsbt') {
+          rawDate = item.toTrinhNgayDuyet || '';
+        } else if (st === 'cho_duyet_dntt') {
+          rawDate = item.ngayNhanDuHoSo || '';
+        } else if (st === 'kt_duyet') {
+          rawDate = item.ngayKtXacNhan || '';
+        } else if (st === 'da_thanh_toan') {
+          rawDate = item.ngayThanhToan || '';
+        }
+
+        if (rawDate && typeof rawDate === 'string') {
+          // Extracts just the DD/MM/YYYY part if there is a time attached
+          formattedUpdateDate = rawDate.split(' ')[0].trim();
         }
 
         return `
