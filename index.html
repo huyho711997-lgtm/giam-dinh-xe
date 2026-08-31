@@ -7721,12 +7721,12 @@ function formatDateDisplay(val) {
                 <div id="menuCustomPerPageDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; min-width: 110px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
                   ${[10, 25, 50, 100].map(num => {
                     const isSel = perPage === num;
-                    return \`
+                    return `
                       <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="setPendingClaimsPerPage(${num})" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
                         <span style="font-size: 11.5px;">${num} / trang</span>
-                        ${isSel ? \`<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>\` : ''}
+                        ${isSel ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
                       </div>
-                    \`;
+                    `;
                   }).join('')}
                 </div>
               </div>
