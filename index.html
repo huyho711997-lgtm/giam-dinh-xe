@@ -7682,7 +7682,7 @@ function formatDateDisplay(val) {
 
         // Smart pagination buttons with ellipsis
         let pageBtnsHtml = '';
-        const maxVisibleButtons = 5;
+        const maxVisibleButtons = 3;
         let startPage = Math.max(1, pendingClaimsCurrentPage - 2);
         let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
         if (endPage - startPage < maxVisibleButtons - 1) {
@@ -7690,7 +7690,7 @@ function formatDateDisplay(val) {
         }
 
         if (startPage > 1) {
-          pageBtnsHtml += `<button type="button" onclick="setPendingClaimsPage(1)" style="min-width: 42px; height: 42px; padding: 0 10px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">1</button>`;
+          pageBtnsHtml += `<button type="button" onclick="setPendingClaimsPage(1)" style="min-width: 34px; height: 42px; padding: 0 6px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">1</button>`;
           if (startPage > 2) {
             pageBtnsHtml += `<span style="font-size: 12px; color: var(--text-muted); padding: 0 2px;">...</span>`;
           }
@@ -7699,7 +7699,7 @@ function formatDateDisplay(val) {
         for (let p = startPage; p <= endPage; p++) {
           const isAct = p === pendingClaimsCurrentPage;
           pageBtnsHtml += `
-            <button type="button" onclick="setPendingClaimsPage(${p})" style="min-width: 42px; height: 42px; padding: 0 10px; border-radius: 12px; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${isAct ? 'background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 2px 8px rgba(216,180,109,0.35);' : 'background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main);'}">${p}</button>
+            <button type="button" onclick="setPendingClaimsPage(${p})" style="min-width: 34px; height: 42px; padding: 0 6px; border-radius: 12px; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${isAct ? 'background: var(--primary-gradient); color: #080b11; border: none; box-shadow: 0 2px 8px rgba(216,180,109,0.35);' : 'background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main);'}">${p}</button>
           `;
         }
 
@@ -7707,7 +7707,7 @@ function formatDateDisplay(val) {
           if (endPage < totalPages - 1) {
             pageBtnsHtml += `<span style="font-size: 12px; color: var(--text-muted); padding: 0 2px;">...</span>`;
           }
-          pageBtnsHtml += `<button type="button" onclick="setPendingClaimsPage(${totalPages})" style="min-width: 42px; height: 42px; padding: 0 10px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">${totalPages}</button>`;
+          pageBtnsHtml += `<button type="button" onclick="setPendingClaimsPage(${totalPages})" style="min-width: 34px; height: 42px; padding: 0 6px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">${totalPages}</button>`;
         }
 
         paginationContainer.innerHTML = `
@@ -7737,7 +7737,7 @@ function formatDateDisplay(val) {
             </div>
 
             <div style="display: flex; align-items: center; gap: 2px;">
-              <button type="button" onclick="setPendingClaimsPage(${pendingClaimsCurrentPage - 1})" ${pendingClaimsCurrentPage <= 1 ? 'disabled' : ''} style="width: 42px; height: 42px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingClaimsCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${pendingClaimsCurrentPage <= 1 ? 'none' : 'auto'};" title="Trang trước">
+              <button type="button" onclick="setPendingClaimsPage(${pendingClaimsCurrentPage - 1})" ${pendingClaimsCurrentPage <= 1 ? 'disabled' : ''} style="width: 34px; height: 42px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingClaimsCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${pendingClaimsCurrentPage <= 1 ? 'none' : 'auto'};" title="Trang trước">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
               </button>
 
@@ -7745,7 +7745,7 @@ function formatDateDisplay(val) {
                 ${pageBtnsHtml}
               </div>
 
-              <button type="button" onclick="setPendingClaimsPage(${pendingClaimsCurrentPage + 1})" ${pendingClaimsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 42px; height: 42px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingClaimsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${pendingClaimsCurrentPage >= totalPages ? 'none' : 'auto'};" title="Trang sau">
+              <button type="button" onclick="setPendingClaimsPage(${pendingClaimsCurrentPage + 1})" ${pendingClaimsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 34px; height: 42px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingClaimsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${pendingClaimsCurrentPage >= totalPages ? 'none' : 'auto'};" title="Trang sau">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
               </button>
             </div>
@@ -8360,9 +8360,9 @@ function formatDateDisplay(val) {
                 </div>
 
                 <!-- Right Side: Unified 3-Dropdown Filter Control Group + Reset Button -->
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-end; flex: 1;">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; justify-content: flex-end; flex: 1;">
                   <!-- Filter 1: Custom Luxury Floating Status Dropdown Menu -->
-                  <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 190px; max-width: 220px;">
+                  <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 160px; max-width: 220px;">
                     <button id="btnCustomStatusDropdown" type="button" onclick="toggleCustomStatusDropdown(event)" style="width: 100%; height: 42px; padding: 0 28px 0 34px; border-radius: 12px; font-size: 12.5px; font-weight: 750; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; transition: all 0.2s ease;">
                       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                       <span id="lblCustomStatusDropdownSelected" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 750;">Tất cả trạng thái (0)</span>
@@ -8376,7 +8376,7 @@ function formatDateDisplay(val) {
                   </div>
 
                   <!-- Filter 2: Custom Luxury Floating GDV Team Dropdown Menu -->
-                  <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 170px; max-width: 200px;">
+                  <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 140px; max-width: 200px;">
                     <button id="btnCustomGdvDropdown" type="button" onclick="toggleCustomGdvDropdown(event)" style="width: 100%; height: 42px; padding: 0 28px 0 34px; border-radius: 12px; font-size: 12.5px; font-weight: 750; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; transition: all 0.2s ease;">
                       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #3b82f6; pointer-events: none;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                       <span id="lblCustomGdvDropdownSelected" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 750;">Tất cả GĐV team</span>
@@ -8390,7 +8390,7 @@ function formatDateDisplay(val) {
                   </div>
 
                   <!-- Filter 3: Custom Luxury Floating Time Period Dropdown Menu -->
-                  <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 150px; max-width: 170px;">
+                  <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 130px; max-width: 170px;">
                     <button id="btnCustomPeriodDropdown" type="button" onclick="toggleCustomPeriodDropdown(event)" style="width: 100%; height: 42px; padding: 0 28px 0 34px; border-radius: 12px; font-size: 12.5px; font-weight: 750; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; transition: all 0.2s ease;">
                       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #10b981; pointer-events: none;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                       <span id="lblCustomPeriodDropdownSelected" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 750;">Tuần này</span>
@@ -15837,7 +15837,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       // Smart pagination buttons with ellipsis
       let pageBtnsHtml = '';
-      const maxVisibleButtons = 5;
+      const maxVisibleButtons = 3;
       let startPage = Math.max(1, accClaimsCurrentPage - 2);
       let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
       if (endPage - startPage < maxVisibleButtons - 1) {
@@ -16615,7 +16615,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
       // Smart pagination buttons with ellipsis
       let pageBtnsHtml = '';
-      const maxVisibleButtons = 5;
+      const maxVisibleButtons = 3;
       let startPage = Math.max(1, accTransfersCurrentPage - 2);
       let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
       if (endPage - startPage < maxVisibleButtons - 1) {
