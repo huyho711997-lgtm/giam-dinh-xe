@@ -7480,6 +7480,12 @@ function formatDateDisplay(val) {
           displayVinInfo = parts.slice(1).join('/');
         }
 
+        let formattedUpdateDate = '';
+        if (item.updatedAt || item.createdAt) {
+          const ud = new Date(item.updatedAt || item.createdAt);
+          formattedUpdateDate = String(ud.getDate()).padStart(2, '0') + '/' + String(ud.getMonth() + 1).padStart(2, '0') + '/' + ud.getFullYear();
+        }
+
         return `
           <tr onclick="openEditPendingClaimModal('${item.id}')" style="cursor: pointer;">
             <td style="text-align: center; font-weight: 750; color: var(--text-muted); width: 44px;">${String(itemNumber).padStart(2, '0')}</td>
@@ -7487,6 +7493,7 @@ function formatDateDisplay(val) {
               <span style="background: ${statusConfig.bg}; color: ${statusConfig.color}; border: 1px solid ${statusConfig.border}; font-size: 10.5px; font-weight: 750; padding: 4px 10px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap;">
                 ${statusConfig.label}
               </span>
+              ${formattedUpdateDate ? `<div style="font-size: 10px; font-weight: 700; color: var(--text-soft); margin-top: 6px;">${formattedUpdateDate}</div>` : ''}
             </td>
             <td style="width: 220px;">
               <strong style="color: var(--primary);  font-size: 13.5px; display: block; word-break: break-all;" title="${escapeAttributeData(displayVinInfo ? ('Số khung/máy: ' + displayVinInfo) : displayBsx)}">${escapeHtmlOutput(displayBsx)}</strong>
