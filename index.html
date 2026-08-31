@@ -7711,39 +7711,31 @@ function formatDateDisplay(val) {
         }
 
         paginationContainer.innerHTML = `
-          <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 18px; background: var(--surface); border-radius: 14px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); margin-top: 16px;">
-            <!-- Left Info: Counter & Items per page selector -->
-            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-              <span style="font-size: 12.5px; color: var(--text-soft); font-weight: 600;">
-                Hiển thị <strong style="color: var(--primary);  font-weight: 800;">${displayStart} - ${displayEnd}</strong> trên tổng số <strong style="color: var(--text-main);  font-weight: 800;">${totalFilteredCount}</strong> hồ sơ
-              </span>
-
-              <!-- Custom Luxury Items per page selector -->
-              <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-soft); font-weight: 600;">
-                <span>Hiển thị:</span>
-                <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
-                  <button id="btnCustomPerPageDropdown" type="button" onclick="toggleCustomPerPageDropdown(event)" style="background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); font-size: 12px; font-weight: 800; padding: 5px 28px 5px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: all 0.2s ease;">
-                    <span>${perPage} / trang</span>
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                  </button>
-
-                  <!-- Custom Floating Menu List (Opens Upwards) -->
-                  <div id="menuCustomPerPageDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; bottom: calc(100% + 5px); left: 0; min-width: 110px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
-                    ${[10, 25, 50, 100].map(num => {
-                      const isSel = perPage === num;
-                      return `
-                        <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="setPendingClaimsPerPage(${num})" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
-                          <span style="font-size: 11.5px; ">${num} / trang</span>
-                          ${isSel ? `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
-                        </div>
-                      `;
-                    }).join('')}
-                  </div>
+          <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-left: auto;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-soft); font-weight: 600;">
+              <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
+                <button id="btnCustomPerPageDropdown" type="button" onclick="toggleCustomPerPageDropdown(event)" style="background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); font-size: 12px; font-weight: 800; padding: 5px 28px 5px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: all 0.2s ease;">
+                  <span>${perPage} / trang</span>
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div id="menuCustomPerPageDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; min-width: 110px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
+                  ${[10, 25, 50, 100].map(num => {
+                    const isSel = perPage === num;
+                    return \`
+                      <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="setPendingClaimsPerPage(${num})" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
+                        <span style="font-size: 11.5px;">${num} / trang</span>
+                        ${isSel ? \`<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>\` : ''}
+                      </div>
+                    \`;
+                  }).join('')}
                 </div>
               </div>
             </div>
 
-            <!-- Right Controls: Prev / Page Buttons / Next -->
+            <div style="font-size: 11.5px; color: var(--text-soft); font-weight: 600;">
+              <strong style="color: var(--primary);">${displayStart}-${displayEnd}</strong> / <strong style="color: var(--text-main);">${totalFilteredCount}</strong>
+            </div>
+
             <div style="display: flex; align-items: center; gap: 6px;">
               <button type="button" onclick="setPendingClaimsPage(${pendingClaimsCurrentPage - 1})" ${pendingClaimsCurrentPage <= 1 ? 'disabled' : ''} style="width: 32px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingClaimsCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${pendingClaimsCurrentPage <= 1 ? 'none' : 'auto'};" title="Trang trước">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
@@ -8415,6 +8407,8 @@ function formatDateDisplay(val) {
                   <button type="button" class="btn-premium btn-secondary" onclick="resetAllPendingClaimFilters()" title="Đặt lại bộ lọc" style="width: 42px; height: 42px; min-width: 42px; min-height: 42px; padding: 0; border-radius: 12px; display: grid; place-items: center; cursor: pointer;" aria-label="Đặt lại bộ lọc">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
                   </button>
+
+                  <div id="pendingClaimsPaginationContainer" style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; flex: 1;"></div>
                 </div>
               </div>
 
@@ -8440,8 +8434,7 @@ function formatDateDisplay(val) {
                 </table>
               </div>
 
-              <!-- Ultra-Luxury Pagination Footer Toolbar Container -->
-              <div id="pendingClaimsPaginationContainer"></div>
+
             </section>
           </div>
         `;
