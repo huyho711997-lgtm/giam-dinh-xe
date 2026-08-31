@@ -3294,7 +3294,7 @@
     let garagePortalMounted = false; 
     let cachedPendingClaimsPayload = {};
     let rawPendingClaimsPayload = {};
-    let activePendingStatusFilter = 'all';
+    let activePendingStatusFilter = ['all'];
     let editingCaseId = null;
     let editingPendingClaimId = null;
     let activeSystemAdminSubTab = 'users';
@@ -7126,10 +7126,26 @@ function formatDateDisplay(val) {
       }
     }
 
-    function selectCustomStatusFilter(statusKey) {
-      activePendingStatusFilter = statusKey;
+    function selectCustomStatusFilter(event, statusKey) {
+      if (event) event.stopPropagation();
+      let arr = Array.isArray(activePendingStatusFilter) ? activePendingStatusFilter : [activePendingStatusFilter || 'all'];
+
+      if (statusKey === 'all') {
+        arr = ['all'];
+      } else {
+        if (arr.includes('all')) {
+          arr = [statusKey];
+        } else {
+          if (arr.includes(statusKey)) {
+            arr = arr.filter(k => k !== statusKey);
+            if (arr.length === 0) arr = ['all'];
+          } else {
+            arr.push(statusKey);
+          }
+        }
+      }
+      activePendingStatusFilter = arr;
       pendingClaimsCurrentPage = 1;
-      closeAllCustomDropdowns();
       executeUIRenderPendingClaims();
     }
 
@@ -7236,7 +7252,7 @@ function formatDateDisplay(val) {
     });
 
     function setPendingStatusFilter(statusKey) {
-      activePendingStatusFilter = statusKey;
+      activePendingStatusFilter = [statusKey];
       pendingClaimsCurrentPage = 1;
       closeAllCustomDropdowns();
       executeUIRenderPendingClaims();
@@ -7247,7 +7263,7 @@ function formatDateDisplay(val) {
 
       if (searchInput) searchInput.value = '';
 
-      activePendingStatusFilter = 'all';
+      activePendingStatusFilter = ['all'];
       activePendingGdvFilter = 'all';
       activePendingPeriodFilter = 'this_week';
       pendingClaimsCurrentPage = 1;
@@ -7297,7 +7313,10 @@ function formatDateDisplay(val) {
       // Filter list
       let filtered = claimsList.filter(c => {
         // Status filter
-        if (activePendingStatusFilter !== 'all' && c.trangThai !== activePendingStatusFilter) return false;
+        const activeArrFilter = Array.isArray(activePendingStatusFilter) ? activePendingStatusFilter : [activePendingStatusFilter || 'all'];
+        if (!activeArrFilter.includes('all') && activeArrFilter.length > 0) {
+          if (!activeArrFilter.includes(c.trangThai)) return false;
+        }
         
         // GĐV filter (Flexible match across gdvTiepNhan, canBoXuLy, gdvHo)
         if (gdvFilter !== 'all') {
@@ -7338,7 +7357,7 @@ function formatDateDisplay(val) {
       });
 
       // Render Custom Luxury Status Floating Menu Items
-      const curStatus = activePendingStatusFilter || 'all';
+      const activeArr = Array.isArray(activePendingStatusFilter) ? activePendingStatusFilter : [activePendingStatusFilter || 'all'];
       const statusLabelMap = {
         'all': { label: 'Tất cả trạng thái', color: 'var(--primary)' },
         ...Object.fromEntries(Object.entries(PENDING_STATUS_MAP).map(([k, v]) => [k, { label: v.label, color: v.color }]))
@@ -7346,20 +7365,28 @@ function formatDateDisplay(val) {
 
       const lblSelected = document.getElementById('lblCustomStatusDropdownSelected');
       if (lblSelected) {
-        const curInfo = statusLabelMap[curStatus] || statusLabelMap['all'];
-        const countVal = counts[curStatus] !== undefined ? counts[curStatus] : counts.all;
-        lblSelected.innerHTML = `${curInfo.label} <span style=" opacity: 0.85; margin-left: 4px; font-weight: 800;">(${countVal})</span>`;
+        if (activeArr.includes('all') || activeArr.length === 0) {
+          const curInfo = statusLabelMap['all'];
+          lblSelected.innerHTML = `${curInfo.label} <span style=" opacity: 0.85; margin-left: 4px; font-weight: 800;">(${counts.all})</span>`;
+        } else if (activeArr.length === 1) {
+          const curInfo = statusLabelMap[activeArr[0]] || statusLabelMap['all'];
+          const countVal = counts[activeArr[0]] || 0;
+          lblSelected.innerHTML = `${curInfo.label} <span style=" opacity: 0.85; margin-left: 4px; font-weight: 800;">(${countVal})</span>`;
+        } else {
+          lblSelected.innerHTML = `Đã chọn ${activeArr.length} trạng thái <span style=" opacity: 0.85; margin-left: 4px; font-weight: 800;">(${activeArr.reduce((acc, k) => acc + (counts[k] || 0), 0)})</span>`;
+        }
       }
 
       const customMenu = document.getElementById('menuCustomStatusDropdown');
       if (customMenu) {
         customMenu.innerHTML = Object.entries(statusLabelMap).map(([key, item]) => {
           const countVal = counts[key] !== undefined ? counts[key] : counts.all;
-          const isSel = curStatus === key;
+          const isSel = activeArr.includes(key);
           return `
-            <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="selectCustomStatusFilter('${key}')" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
+            <div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="selectCustomStatusFilter(event, '${key}')" style="display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}">
               <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
-                <span style="width: 7px; height: 7px; border-radius: 50%; background: ${item.color}; box-shadow: 0 0 5px ${item.color}; flex-shrink: 0;"></span>
+                ${isSel ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="color:var(--primary);"><path d="M20 6L9 17l-5-5"></path></svg>' : '<span style="width: 14px; height: 14px; border: 1.5px solid var(--border-strong); border-radius: 4px; display: inline-block;"></span>'}
+                <span style="width: 7px; height: 7px; border-radius: 50%; background: ${item.color}; box-shadow: 0 0 5px ${item.color}; flex-shrink: 0; margin-left: 4px;"></span>
                 <span>${item.label}</span>
               </div>
               <span style="font-size: 10.5px;  font-weight: 800; padding: 1px 6px; border-radius: 99px; background: ${isSel ? 'rgba(216,180,109,0.2)' : 'var(--bg-soft)'}; color: ${isSel ? 'var(--primary)' : 'var(--text-muted)'};">${countVal}</span>
