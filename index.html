@@ -2930,6 +2930,11 @@
             </div>
 
             <div class="form-group">
+              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">PASC - Ngày duyệt cuối</label>
+              <input id="modalPendingPascNgayDuyet" class="input-premium" type="text" placeholder="DD/MM/YYYY hoặc DD/MM/YYYY HH:mm:ss" style="font-weight: 750; color: #10b981;" />
+            </div>
+
+            <div class="form-group">
               <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)</label>
               <input id="modalPendingToTrinhNgayDuyet" class="input-premium" type="text" placeholder="DD/MM/YYYY hoặc DD/MM/YYYY HH:mm:ss" style="font-weight: 750; color: #10b981;" />
             </div>
@@ -5956,6 +5961,7 @@
       setVal('modalPendingPascSoTienDuyet', formatCurrencyInputNumber(item.pascSoTienDuyet || item.soTienDuyetBT));
       setVal('modalPendingPascNguoiDuyet', item.pascNguoiDuyet || '');
       setVal('modalPendingToTrinhNguoiDuyet', item.toTrinhNguoiDuyet || '');
+      setVal('modalPendingPascNgayDuyet', formatCleanDateField(item.pascNgayDuyet));
       setVal('modalPendingToTrinhNgayDuyet', formatCleanDateField(item.toTrinhNgayDuyet || item.pascNgayDuyet));
       const rawTtbtAmt = item.ttbtTongSoTienBoiThuong || item.tongBoiThuongSauThue || item.pascSoTienDuyet || item.soTienDuyetBT || item.ttbtSoTienBoiThuong || item.amount;
       setVal('modalPendingTtbtTongSoTienBoiThuong', formatCurrencyInputNumber(rawTtbtAmt));
@@ -6162,7 +6168,7 @@
         garaSuaChua: getVal('modalPendingGaraSuaChua') || existingItem.garaSuaChua || '',
         tenGaraVietTat: getVal('modalPendingTenGaraVietTat') || existingItem.tenGaraVietTat || '',
         toTrinhNgayDuyet: getVal('modalPendingToTrinhNgayDuyet') || existingItem.toTrinhNgayDuyet || '',
-        pascNgayDuyet: getVal('modalPendingToTrinhNgayDuyet') || existingItem.pascNgayDuyet || '',
+        pascNgayDuyet: getVal('modalPendingPascNgayDuyet') || existingItem.pascNgayDuyet || '',
         duPhongBoiThuong: getVal('modalPendingDuPhongBoiThuong') || existingItem.duPhongBoiThuong || '',
         ngayNhanDuHoSo: formatCleanDateField(getVal('modalPendingNgayNhanDuHoSo')) || getVal('modalPendingNgayNhanDuHoSo') || existingItem.ngayNhanDuHoSo || '',
           ngayKtXacNhan: formatCleanDateField(getVal('modalPendingNgayKtXacNhan')) || getVal('modalPendingNgayKtXacNhan') || existingItem.ngayKtXacNhan || '',
