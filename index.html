@@ -3764,6 +3764,7 @@
       const tbody = document.getElementById('tblAuditLogsBodyContainer');
       if (!tbody || !dbNodeInstance) return;
 
+      dbNodeInstance.ref('auditLogs').off();
       dbNodeInstance.ref('auditLogs').limitToLast(150).on('value', (snapshot) => {
         cachedAuditLogsPayload = snapshot.val() || {};
         renderAuditLogsTableList();
@@ -4365,6 +4366,7 @@
       const container = document.getElementById('tblUsersBodyContainer');
       if (!container) return;
       
+      dbNodeInstance.ref('users').off();
       dbNodeInstance.ref('users').on('value', (snapshot) => {
         cachedUsersPayload = snapshot.val() || {};
         updateUsersStats(cachedUsersPayload);
@@ -7913,6 +7915,7 @@ function formatDateDisplay(val) {
       // Update header tabs active states
       renderHeaderNavigationLinks();
 
+      dbNodeInstance.ref('cases').off();
       dbNodeInstance.ref('cases').on('value', (dataSnapshot) => {
         const val = dataSnapshot.val() || {};
         const currentUser = firebase.auth().currentUser;
@@ -7927,6 +7930,7 @@ function formatDateDisplay(val) {
         }
       });
 
+      dbNodeInstance.ref('pending_claims').off();
       dbNodeInstance.ref('pending_claims').on('value', (snapshot) => {
         const val = snapshot.val() || {};
         rawPendingClaimsPayload = val;
@@ -7937,6 +7941,7 @@ function formatDateDisplay(val) {
         }
       });
 
+      dbNodeInstance.ref('accounting_transfers').off();
       dbNodeInstance.ref('accounting_transfers').on('value', (snapshot) => {
         cachedAccountingTransfersPayload = snapshot.val() || {};
         if (activeDashboardTab === 'accounting_transfer') renderAccountingTransferPage();
@@ -7946,6 +7951,7 @@ function formatDateDisplay(val) {
         renderNotificationCenterItems();
       });
 
+      dbNodeInstance.ref('field_reimbursements').off();
       dbNodeInstance.ref('field_reimbursements').on('value', (snapshot) => {
         cachedFieldReimbursementsPayload = snapshot.val() || {};
         if (activeDashboardTab === 'field_reimbursements') {
