@@ -4172,7 +4172,7 @@
           </div>
         `;
 
-        document.getElementById('userSearchInput')?.addEventListener('input', () => renderUsersTableList());
+        document.getElementById('userSearchInput')?.addEventListener('input', debouncedRenderUsersTableList);
         document.querySelectorAll('[data-user-filter]').forEach(btn => {
           btn.addEventListener('click', () => setUserFilter(btn.dataset.userFilter));
         });
@@ -4320,7 +4320,7 @@
               <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;">
                 <div class="search-wrap" style="flex: 1; min-width: 240px; margin: 0;">
                   ${SVGS.SEARCH}
-                  <input id="auditLogSearchInput" class="input-premium" type="search" placeholder="Tìm theo tên người dùng, email, loại hành động, biển số xe..." autocomplete="off" oninput="renderAuditLogsTableList()" />
+                  <input id="auditLogSearchInput" class="input-premium" type="search" placeholder="Tìm theo tên người dùng, email, loại hành động, biển số xe..." autocomplete="off" oninput="debouncedRenderAuditLogsTableList()" />
                 </div>
 
                 <div class="filter-pills" id="auditLogActionPills" style="display: flex; gap: 4px; margin: 0; background: var(--surface-soft); padding: 4px; border-radius: 10px; border: 1px solid var(--border); overflow-x: auto;">
@@ -8191,7 +8191,7 @@ function formatDateDisplay(val) {
             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
               <!-- Search Input -->
               <div style="position: relative; width: 260px;">
-                <input id="caseSearchInput" class="input-premium" type="search" placeholder="Tìm biển số hoặc Garage..." style="width: 100%; height: 38px; border-radius: 10px; font-size: 12.5px; padding-left: 32px; padding-right: 32px;" oninput="activeCasePage=1; executeUIRenderCasesTable()" />
+                <input id="caseSearchInput" class="input-premium" type="search" placeholder="Tìm biển số hoặc Garage..." style="width: 100%; height: 38px; border-radius: 10px; font-size: 12.5px; padding-left: 32px; padding-right: 32px;" oninput="debouncedExecuteUIRenderCasesTable()" />
                 <div style="position: absolute; left: 10px; top: 10px; color: var(--text-soft); pointer-events: none;">${SVGS.SEARCH}</div>
               </div>
 
@@ -8440,10 +8440,7 @@ function formatDateDisplay(val) {
         `;
 
         const searchInput = document.getElementById('pendingSearchInput');
-        if (searchInput) searchInput.addEventListener('input', () => {
-          pendingClaimsCurrentPage = 1;
-          executeUIRenderPendingClaims();
-        });
+        if (searchInput) searchInput.addEventListener('input', debouncedExecuteUIRenderPendingClaims);
 
         executeUIRenderPendingClaims();
       } else {
@@ -17262,6 +17259,41 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
     // Debounce helper to prevent search lagging on keystrokes
     let searchDebounceTimeout = null;
+
+    let debouncePendingTimeout = null;
+    function debouncedExecuteUIRenderPendingClaims() {
+      clearTimeout(debouncePendingTimeout);
+      debouncePendingTimeout = setTimeout(() => {
+        pendingClaimsCurrentPage = 1;
+        executeUIRenderPendingClaims();
+      }, 300);
+    }
+
+    let debounceCaseTimeout = null;
+    function debouncedExecuteUIRenderCasesTable() {
+      clearTimeout(debounceCaseTimeout);
+      debounceCaseTimeout = setTimeout(() => {
+        activeCasePage = 1;
+        executeUIRenderCasesTable();
+      }, 300);
+    }
+
+    let debounceAuditTimeout = null;
+    function debouncedRenderAuditLogsTableList() {
+      clearTimeout(debounceAuditTimeout);
+      debounceAuditTimeout = setTimeout(() => {
+        renderAuditLogsTableList();
+      }, 300);
+    }
+
+    let debounceUserTimeout = null;
+    function debouncedRenderUsersTableList() {
+      clearTimeout(debounceUserTimeout);
+      debounceUserTimeout = setTimeout(() => {
+        renderUsersTableList();
+      }, 300);
+    }
+
     function debouncedRenderAccClaimSearchResults(val) {
       clearTimeout(searchDebounceTimeout);
       searchDebounceTimeout = setTimeout(() => {
