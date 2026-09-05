@@ -19490,7 +19490,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
 
       const canvasWrap = document.getElementById('gdvKpiCanvasWrap') || canvas.parentElement;
       if (activeGdvKpiChartType === 'pie') {
-        canvasWrap.style.height = '460px';
+        canvasWrap.style.height = '480px';
       } else {
         canvasWrap.style.height = '430px';
       }
@@ -19809,6 +19809,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           if (chart.config.type !== 'doughnut') return;
           const c = chart.ctx;
           const dataset = chart.data.datasets[0];
+          const meta = chart.getDatasetMeta(0);
           const total = dataset.data.reduce((a, b) => a + b, 0);
 
           c.save();
@@ -19818,6 +19819,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           c.textAlign = 'center';
           const isDarkTheme = !document.body.classList.contains('light-mode');
 
+          // Center Totals
           c.fillStyle = isDarkTheme ? '#94a3b8' : '#64748b';
           c.font = "700 12.5px 'Plus Jakarta Sans', sans-serif";
           c.fillText('TỔNG DUYỆT KPI', centerX, centerY - 14);
@@ -19826,6 +19828,86 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           c.font = "900 28px 'Plus Jakarta Sans', sans-serif";
           c.fillText((Math.round(total * 10) / 10) + ' ca', centerX, centerY + 16);
           c.restore();
+
+          if (total <= 0 || !meta || !meta.data) return;
+
+          let lastYRight = -9999;
+          let lastYLeft = 9999;
+
+          meta.data.forEach((element, index) => {
+            const val = dataset.data[index];
+            if (!val) return;
+            const pct = ((val / total) * 100).toFixed(1) + '%';
+            const name = chart.data.labels[index] || '';
+            const sliceColor = (dataset.backgroundColor && dataset.backgroundColor[index]) ? dataset.backgroundColor[index] : '#10b981';
+
+            const chartCenter = { x: element.x, y: element.y };
+            const angle = (element.startAngle + element.endAngle) / 2;
+            const outerRadius = element.outerRadius;
+            const innerRadius = element.innerRadius;
+
+            // 1. In-slice percentage text if arc is wide enough
+            if (element.endAngle - element.startAngle > 0.42) {
+              c.save();
+              const midRadius = (innerRadius + outerRadius) / 2;
+              const midX = chartCenter.x + Math.cos(angle) * midRadius;
+              const midY = chartCenter.y + Math.sin(angle) * midRadius;
+              c.font = "900 11.5px 'Plus Jakarta Sans', sans-serif";
+              c.fillStyle = '#ffffff';
+              c.textAlign = 'center';
+              c.textBaseline = 'middle';
+              c.shadowColor = 'rgba(0,0,0,0.5)';
+              c.shadowBlur = 4;
+              c.fillText(pct, midX, midY);
+              c.restore();
+            }
+
+            // 2. Callout Line & Label pointing to each slice
+            const startX = chartCenter.x + Math.cos(angle) * outerRadius;
+            const startY = chartCenter.y + Math.sin(angle) * outerRadius;
+
+            const isRight = Math.cos(angle) >= 0;
+            const breakX = chartCenter.x + Math.cos(angle) * (outerRadius + 18);
+            const breakY = chartCenter.y + Math.sin(angle) * (outerRadius + 18);
+
+            let targetY = breakY;
+            if (isRight) {
+              if (targetY < lastYRight + 26) targetY = lastYRight + 26;
+              lastYRight = targetY;
+            } else {
+              if (targetY > lastYLeft - 26) targetY = lastYLeft - 26;
+              lastYLeft = targetY;
+            }
+
+            const fixedX = chartCenter.x + (isRight ? outerRadius + 50 : -(outerRadius + 50));
+
+            c.save();
+            c.beginPath();
+            c.moveTo(startX, startY);
+            c.lineTo(breakX, targetY);
+            c.lineTo(fixedX, targetY);
+            c.strokeStyle = sliceColor;
+            c.lineWidth = 1.8;
+            c.stroke();
+
+            // Floating callout text
+            c.textAlign = isRight ? 'left' : 'right';
+            const textStartX = isRight ? fixedX + 8 : fixedX - 8;
+
+            // Line 1: GDV Name
+            c.font = "850 12px 'Plus Jakarta Sans', sans-serif";
+            c.fillStyle = isDarkTheme ? '#f1f5f9' : '#0f172a';
+            c.textBaseline = 'bottom';
+            c.fillText(name, textStartX, targetY - 2);
+
+            // Line 2: Count & Percentage
+            c.font = "750 11px 'Plus Jakarta Sans', sans-serif";
+            c.fillStyle = sliceColor;
+            c.textBaseline = 'top';
+            c.fillText(`${val} ca (${pct})`, textStartX, targetY + 2);
+
+            c.restore();
+          });
         }
       };
 
@@ -19848,7 +19930,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             easing: 'easeOutQuart'
           },
           layout: {
-            padding: actualType === 'doughnut' ? { top: 30, bottom: 30, left: 30, right: 30 } : { top: 25, right: 25, bottom: 12, left: 15 }
+            padding: actualType === 'doughnut' ? { top: 45, bottom: 45, left: 160, right: 160 } : { top: 25, right: 25, bottom: 12, left: 15 }
           },
           plugins: {
             legend: {
