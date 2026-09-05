@@ -14928,7 +14928,10 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                   <th style="display: ${activeWeeklyReportCols.includes('REV_CARPLA') ? 'table-cell' : 'none'}; padding: 8px; border: 1px solid var(--border-strong); font-size: 11.5px; font-weight: 850; color: #854d0e; background: #fef08a; position: relative;">
                   <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
                     <span>DOANH SỐ CARPLA LŨY KẾ THÁNG ${currentMonth}</span>
-                    <button type="button" onclick="openCarplaDataSourceModal()" class="hide-on-screenshot" style="padding:4px 10px; font-size:10.5px; font-weight:800; background:#ca8a04; color:#fff; border:none; border-radius:6px; cursor:pointer; box-shadow:0 2px 5px rgba(202,138,4,0.3); transition:all 0.2s;" onmouseover="this.style.background='#a16207'" onmouseout="this.style.background='#ca8a04'">⚙️ Nguồn dữ liệu</button>
+                    <button type="button" onclick="openCarplaDataSourceModal()" class="hide-on-screenshot" style="padding:4px 10px; font-size:10.5px; font-weight:800; background:linear-gradient(135deg, #d97706 0%, #b45309 100%); color:#fff; border:1px solid rgba(255,255,255,0.25); border-radius:6px; cursor:pointer; box-shadow:0 2px 6px rgba(180,83,9,0.3); transition:all 0.2s; display:inline-flex; align-items:center; gap:4px;" onmouseover="this.style.background='#a16207'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='linear-gradient(135deg, #d97706 0%, #b45309 100%)'; this.style.transform='none'">
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                      <span>Nguồn dữ liệu</span>
+                    </button>
                   </div>
                 </th>
                 </tr>
@@ -22311,71 +22314,255 @@ const fullList = getCarBrandLossData();
       if (m) m.remove();
       m = document.createElement('div');
       m.id = 'carplaSourceModal';
-      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); backdrop-filter:blur(10px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
+      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:16px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
       
       const claims = window._currentCarplaClaimsData || [];
       const excluded = (cachedReportRules && cachedReportRules.carplaExcludedClaims) ? cachedReportRules.carplaExcludedClaims : {};
       
-      let rowsHtml = '';
-      if (claims.length === 0) {
-        rowsHtml = '<tr><td colspan="6" style="padding:20px; text-align:center; color:var(--text-soft); font-weight:600;">Không có hồ sơ nào thuộc nhóm Carpla trong tháng này.</td></tr>';
-      } else {
+      const totalClaimsCount = claims.length;
+      let selectedCount = 0;
+      let totalSelectedAmt = 0;
+
+      claims.forEach(c => {
+        const isExcluded = excluded[c._id] === true;
+        const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
+        const amtVal = parseInt(amtStr, 10) || 0;
+        if (!isExcluded) {
+          selectedCount++;
+          totalSelectedAmt += amtVal;
+        }
+      });
+
+      function renderCarplaTableRows(filterText = '') {
+        const normFilter = filterText.trim().toLowerCase();
+        let rowsHtml = '';
+        let visibleCount = 0;
+
         claims.forEach((c, idx) => {
           const isExcluded = excluded[c._id] === true;
           const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
           const amtVal = parseInt(amtStr, 10) || 0;
           const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
-          
+          const garaName = (c.tenGaraVietTat || '—').trim();
+          const bienSo = (c.bienSo || '—').trim();
+
+          // Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)
+          const rawDuyetDate = c.toTrinhNgayDuyet || c['Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)'] || '';
+          let duyetDateDisplay = formatDateDisplay(rawDuyetDate);
+          if (duyetDateDisplay && duyetDateDisplay !== '—') {
+            duyetDateDisplay = duyetDateDisplay.split(' ')[0].trim();
+          }
+
+          if (normFilter) {
+            const matchBs = bienSo.toLowerCase().includes(normFilter);
+            const matchGdv = gdvName.toLowerCase().includes(normFilter);
+            const matchGara = garaName.toLowerCase().includes(normFilter);
+            const matchDate = duyetDateDisplay.toLowerCase().includes(normFilter);
+            if (!matchBs && !matchGdv && !matchGara && !matchDate) return;
+          }
+
+          visibleCount++;
+
+          const dateCellHtml = (duyetDateDisplay && duyetDateDisplay !== '—') 
+            ? `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:6px; background:rgba(16,185,129,0.09); border:1px solid rgba(16,185,129,0.22); color:#10b981; font-size:12px; font-weight:750; white-space:nowrap;">
+                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                 <span>${escapeHtmlOutput(duyetDateDisplay)}</span>
+               </span>`
+            : `<span style="color:var(--text-muted); font-size:12px; font-weight:600;">—</span>`;
+
           rowsHtml += `
-            <tr style="border-bottom: 1px solid var(--border); transition: background 0.2s;" onmouseover="this.style.background='var(--bg-soft)'" onmouseout="this.style.background='transparent'">
-              <td style="padding:12px; font-weight:700; color:var(--text-main); text-align:center;">${idx + 1}</td>
-              <td style="padding:12px; font-weight:800; color:var(--primary);">${c.bienSo || 'N/A'}</td>
-              <td style="padding:12px; font-weight:600; color:var(--text-main);">${gdvName}</td>
-              <td style="padding:12px; font-weight:600; color:var(--text-soft);">${c.tenGaraVietTat || 'N/A'}</td>
-              <td style="padding:12px; font-weight:800; color:#ca8a04; text-align:right;">${formatCurrencyInputNumber(amtVal)} đ</td>
-              <td style="padding:12px; text-align:center;">
-                <input type="checkbox" class="carpla-include-cb" data-id="${c._id}" ${!isExcluded ? 'checked' : ''} style="width:20px; height:20px; accent-color:var(--primary); cursor:pointer;">
+            <tr id="carplaRow_${c._id}" style="border-bottom:1px solid var(--border); transition:all 0.15s ease; cursor:pointer;" onmouseover="this.style.background='var(--surface-soft)'" onmouseout="this.style.background='transparent'" onclick="toggleCarplaCheckboxRow(event, '${c._id}')">
+              <td style="padding:12px 8px; font-weight:750; color:var(--text-muted); text-align:center; font-size:12px;">
+                <span style="display:inline-block; width:26px; height:26px; line-height:26px; border-radius:8px; background:var(--bg-soft); border:1px solid var(--border); font-size:11px;">${idx + 1}</span>
+              </td>
+              <td style="padding:12px 14px;">
+                <div style="font-size:13.5px; font-weight:800; color:var(--primary); letter-spacing:0.3px; display:inline-flex; align-items:center; gap:6px;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" style="opacity:0.75;"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+                  <span>${escapeHtmlOutput(bienSo)}</span>
+                </div>
+              </td>
+              <td style="padding:12px 14px;">
+                <div style="font-size:12.5px; font-weight:700; color:var(--text-main); display:inline-flex; align-items:center; gap:6px;">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" style="color:var(--text-muted);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                  <span>${escapeHtmlOutput(gdvName)}</span>
+                </div>
+              </td>
+              <td style="padding:12px 14px;">
+                <div style="font-size:12.5px; font-weight:650; color:var(--text-soft); line-height:1.35;" title="${escapeAttributeData(garaName)}">
+                  ${escapeHtmlOutput(garaName)}
+                </div>
+              </td>
+              <td style="padding:12px 14px; text-align:center;">
+                ${dateCellHtml}
+              </td>
+              <td style="padding:12px 14px; text-align:right;">
+                <div style="font-size:13.5px; font-weight:850; color:#ca8a04; letter-spacing:-0.01em;">
+                  ${formatCurrencyInputNumber(amtVal)} <span style="font-size:11px; font-weight:700; color:var(--text-muted);">đ</span>
+                </div>
+              </td>
+              <td style="padding:12px 14px; text-align:center;" onclick="event.stopPropagation()">
+                <label style="display:inline-flex; align-items:center; justify-content:center; cursor:pointer; width:28px; height:28px; border-radius:8px; transition:all 0.15s ease;" onmouseover="this.style.background='var(--surface-soft)'" onmouseout="this.style.background='transparent'">
+                  <input type="checkbox" class="carpla-include-cb" data-id="${c._id}" data-amount="${amtVal}" ${!isExcluded ? 'checked' : ''} onchange="onCarplaCheckboxChange()" style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;">
+                </label>
               </td>
             </tr>
           `;
         });
+
+        if (visibleCount === 0) {
+          rowsHtml = `<tr><td colspan="7" style="padding:36px 20px; text-align:center; color:var(--text-muted); font-weight:650; font-size:13px;">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" style="opacity:0.4;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <span>${claims.length === 0 ? 'Không có hồ sơ nào thuộc nhóm Carpla trong kỳ này.' : 'Không tìm thấy hồ sơ phù hợp với từ khóa.'}</span>
+            </div>
+          </td></tr>`;
+        }
+
+        return rowsHtml;
       }
 
+      window.onCarplaCheckboxChange = function() {
+        const cbs = document.querySelectorAll('.carpla-include-cb');
+        let selCount = 0;
+        let selAmt = 0;
+        let allChecked = cbs.length > 0;
+        cbs.forEach(cb => {
+          if (cb.checked) {
+            selCount++;
+            selAmt += parseInt(cb.dataset.amount || '0', 10) || 0;
+          } else {
+            allChecked = false;
+          }
+        });
+        const countTxt = document.getElementById('carplaSelectedCountTxt');
+        if (countTxt) countTxt.textContent = selCount;
+        const amtTxt = document.getElementById('carplaTotalAmountTxt');
+        if (amtTxt) amtTxt.textContent = formatCurrencyInputNumber(selAmt) + ' đ';
+        const allCb = document.getElementById('carplaSelectAllCb');
+        if (allCb) allCb.checked = allChecked;
+      };
+
+      window.toggleCarplaCheckboxRow = function(event, claimId) {
+        if (event && event.target && event.target.tagName === 'INPUT') return;
+        const cb = document.querySelector(`.carpla-include-cb[data-id="${claimId}"]`);
+        if (cb) {
+          cb.checked = !cb.checked;
+          window.onCarplaCheckboxChange();
+        }
+      };
+
+      window.setAllCarplaCheckboxes = function(checkedState) {
+        document.querySelectorAll('.carpla-include-cb').forEach(cb => {
+          cb.checked = !!checkedState;
+        });
+        window.onCarplaCheckboxChange();
+      };
+
+      window.filterCarplaModalList = function(text) {
+        const tbody = document.getElementById('carplaModalTableBody');
+        if (tbody) tbody.innerHTML = renderCarplaTableRows(text);
+        window.onCarplaCheckboxChange();
+      };
+
       m.innerHTML = `
-        <div style="background:var(--surface); border-radius:24px; width:90vw; max-width:900px; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 30px 100px rgba(0,0,0,0.4); border:1px solid var(--border-strong); overflow:hidden;">
-          <div style="padding:20px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background: linear-gradient(135deg, var(--surface) 0%, var(--surface-strong) 100%);">
-            <div>
-              <h3 style="margin:0 0 6px 0; font-size:20px; font-weight:900; color: var(--text-main); display:flex; align-items:center; gap:8px;">
-                ⚙️ Nguồn dữ liệu: DOANH SỐ CARPLA
-              </h3>
-              <p style="margin:0; font-size:13px; color:var(--text-soft); font-weight:600;">Danh sách các hồ sơ được hệ thống nhận diện thuộc Carpla trong kỳ. Tích chọn để đưa vào tổng doanh số (Mặc định chọn tất cả).</p>
+        <div style="background:var(--surface); border-radius:24px; width:95vw; max-width:1050px; max-height:88vh; display:flex; flex-direction:column; box-shadow:0 25px 70px -10px rgba(0,0,0,0.5), 0 0 0 1px var(--border-strong); border:1px solid rgba(216,180,109,0.3); overflow:hidden; animation:zoomIn 0.2s cubic-bezier(0.16,1,0.3,1);">
+          <!-- Header -->
+          <div style="padding:20px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:flex-start; gap:16px; background:linear-gradient(135deg, var(--surface) 0%, var(--surface-strong) 100%);">
+            <div style="display:flex; align-items:flex-start; gap:14px;">
+              <div style="width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg, rgba(216,180,109,0.2) 0%, rgba(202,138,4,0.1) 100%); border:1px solid rgba(216,180,109,0.4); display:flex; align-items:center; justify-content:center; color:var(--primary); flex-shrink:0; box-shadow:0 4px 14px rgba(216,180,109,0.15);">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                  <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                </svg>
+              </div>
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <h3 style="margin:0; font-size:18px; font-weight:850; color:var(--text-main); letter-spacing:-0.01em;">
+                    Nguồn Dữ Liệu: Doanh Số Carpla
+                  </h3>
+                  <span style="font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:6px; background:rgba(202,138,4,0.12); color:#ca8a04; border:1px solid rgba(202,138,4,0.25); text-transform:uppercase; letter-spacing:0.04em;">Cấu hình lũy kế</span>
+                </div>
+                <p style="margin:4px 0 0 0; font-size:12.5px; color:var(--text-soft); font-weight:550; line-height:1.4;">
+                  Danh sách các hồ sơ được hệ thống nhận diện thuộc Carpla trong kỳ. Tích chọn để đưa vào tổng doanh số Carpla.
+                </p>
+              </div>
             </div>
-            <button onclick="document.getElementById('carplaSourceModal').remove()" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#ef4444; cursor:pointer; width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff'">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            
+            <button type="button" onclick="document.getElementById('carplaSourceModal').remove()" style="background:var(--surface-soft); border:1px solid var(--border); color:var(--text-muted); cursor:pointer; width:36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.12)'; this.style.color='#ef4444'; this.style.borderColor='rgba(239,68,68,0.3)'" onmouseout="this.style.background='var(--surface-soft)'; this.style.color='var(--text-muted)'; this.style.borderColor='var(--border)'" title="Đóng modal">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
-          
-          <div style="flex-grow:1; overflow-y:auto; padding:20px; background:var(--bg-main);" class="custom-scroll">
-            <table style="width:100%; border-collapse: collapse; background:var(--surface); border-radius:12px; overflow:hidden; box-shadow:var(--shadow-xs);">
-              <thead style="background:var(--surface-strong); border-bottom:2px solid var(--border-strong);">
+
+          <!-- Stat Chips & Quick Filter Bar -->
+          <div style="padding:12px 24px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <div style="display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:750; padding:5px 12px; border-radius:8px; background:var(--surface-soft); border:1px solid var(--border); color:var(--text-main);">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                <span>Tổng số: <strong style="color:var(--text-main);">${totalClaimsCount}</strong> hồ sơ</span>
+              </div>
+              <div style="display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:750; padding:5px 12px; border-radius:8px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.22); color:#10b981;">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Đã chọn: <strong id="carplaSelectedCountTxt">${selectedCount}</strong>/${totalClaimsCount}</span>
+              </div>
+              <div style="display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:800; padding:5px 12px; border-radius:8px; background:linear-gradient(135deg, rgba(216,180,109,0.15) 0%, rgba(202,138,4,0.08) 100%); border:1px solid rgba(216,180,109,0.3); color:var(--primary);">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                <span>Doanh số chọn: <strong id="carplaTotalAmountTxt">${formatCurrencyInputNumber(totalSelectedAmt)} đ</strong></span>
+              </div>
+            </div>
+
+            <!-- Live Search Box -->
+            <div style="position:relative; min-width:240px; flex:1; max-width:320px;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="search" placeholder="Tìm biển số, GĐV, Gara, ngày..." oninput="filterCarplaModalList(this.value)" autocomplete="off" style="width:100%; height:34px; border-radius:10px; border:1px solid var(--border); background:var(--bg-soft); color:var(--text-main); font-size:12px; font-weight:600; padding:0 12px 0 34px; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
+          </div>
+
+          <!-- Table Body -->
+          <div style="flex-grow:1; overflow-y:auto; padding:16px 20px; background:var(--bg-main);" class="custom-scroll">
+            <table style="width:100%; border-collapse:separate; border-spacing:0; background:var(--surface); border-radius:14px; overflow:hidden; border:1px solid var(--border-strong); box-shadow:var(--shadow-xs);">
+              <thead style="background:var(--surface-strong); position:sticky; top:0; z-index:2; border-bottom:1px solid var(--border-strong);">
                 <tr>
-                  <th style="padding:14px 12px; font-size:12px; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; font-weight:800; text-align:center;">STT</th>
-                  <th style="padding:14px 12px; font-size:12px; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; font-weight:800; text-align:left;">Biển số</th>
-                  <th style="padding:14px 12px; font-size:12px; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; font-weight:800; text-align:left;">GĐV Xử lý</th>
-                  <th style="padding:14px 12px; font-size:12px; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; font-weight:800; text-align:left;">Gara</th>
-                  <th style="padding:14px 12px; font-size:12px; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; font-weight:800; text-align:right;">Số tiền Bồi thường</th>
-                  <th style="padding:14px 12px; font-size:12px; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; font-weight:800; text-align:center;">Đưa vào Báo cáo</th>
+                  <th style="padding:12px 8px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:50px; border-bottom:1px solid var(--border);">STT</th>
+                  <th style="padding:12px 14px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; width:130px; border-bottom:1px solid var(--border);">Biển số</th>
+                  <th style="padding:12px 14px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; width:155px; border-bottom:1px solid var(--border);">GĐV Xử lý</th>
+                  <th style="padding:12px 14px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; border-bottom:1px solid var(--border);">Gara</th>
+                  <th style="padding:12px 14px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:145px; border-bottom:1px solid var(--border);">Ngày duyệt HSBT</th>
+                  <th style="padding:12px 14px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:right; width:160px; border-bottom:1px solid var(--border);">Số tiền Bồi thường</th>
+                  <th style="padding:12px 14px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:130px; border-bottom:1px solid var(--border);">
+                    <div style="display:inline-flex; align-items:center; gap:5px; cursor:pointer;" onclick="const cb = document.getElementById('carplaSelectAllCb'); if (cb) { cb.checked = !cb.checked; setAllCarplaCheckboxes(cb.checked); }">
+                      <input type="checkbox" id="carplaSelectAllCb" ${selectedCount === totalClaimsCount && totalClaimsCount > 0 ? 'checked' : ''} onclick="event.stopPropagation()" onchange="setAllCarplaCheckboxes(this.checked)" style="width:16px; height:16px; accent-color:var(--primary); cursor:pointer;">
+                      <span>Đưa vào BC</span>
+                    </div>
+                  </th>
                 </tr>
               </thead>
-              <tbody>
-                ${rowsHtml}
+              <tbody id="carplaModalTableBody">
+                ${renderCarplaTableRows()}
               </tbody>
             </table>
           </div>
 
-          <div style="padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:12px; background:var(--surface-strong);">
-            <button onclick="document.getElementById('carplaSourceModal').remove()" style="padding:10px 24px; border-radius:12px; border:none; background:transparent; font-weight:800; font-size:14px; color:var(--text-main); cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='var(--border)'">Hủy bỏ</button>
-            <button onclick="saveCarplaSourceExclusions()" id="btnSaveCarplaExclusions" style="padding:10px 32px; border-radius:12px; border:none; background:linear-gradient(135deg, var(--primary) 0%, #d8b46d 100%); color:#000; font-weight:900; font-size:14px; cursor:pointer; box-shadow:0 8px 20px rgba(216,180,109,0.3); transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 24px rgba(216,180,109,0.4)'">Lưu Lựa Chọn</button>
+          <!-- Footer -->
+          <div style="padding:16px 24px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:16px; background:var(--surface-strong); flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button type="button" onclick="setAllCarplaCheckboxes(true)" style="padding:7px 14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); font-weight:750; font-size:12px; color:var(--text-main); cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.15s ease;" onmouseover="this.style.background='var(--surface-soft)'; this.style.borderColor='var(--border-strong)'" onmouseout="this.style.background='var(--surface)'; this.style.borderColor='var(--border)'">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Chọn tất cả</span>
+              </button>
+              <button type="button" onclick="setAllCarplaCheckboxes(false)" style="padding:7px 14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); font-weight:750; font-size:12px; color:var(--text-soft); cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.15s ease;" onmouseover="this.style.background='var(--surface-soft)'; this.style.borderColor='var(--border-strong)'" onmouseout="this.style.background='var(--surface)'; this.style.borderColor='var(--border)'">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                <span>Bỏ chọn tất cả</span>
+              </button>
+            </div>
+
+            <div style="display:flex; align-items:center; gap:10px;">
+              <button type="button" onclick="document.getElementById('carplaSourceModal').remove()" style="padding:9px 20px; border-radius:12px; border:1px solid var(--border); background:var(--surface); font-weight:750; font-size:13px; color:var(--text-main); cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='var(--surface-soft)'" onmouseout="this.style.background='var(--surface)'">Hủy bỏ</button>
+              <button type="button" onclick="saveCarplaSourceExclusions()" id="btnSaveCarplaExclusions" style="padding:9px 28px; border-radius:12px; border:none; background:linear-gradient(135deg, var(--primary) 0%, #d8b46d 100%); color:#080b11; font-weight:850; font-size:13.5px; cursor:pointer; box-shadow:0 6px 18px rgba(216,180,109,0.35); transition:all 0.2s cubic-bezier(0.16,1,0.3,1); display:inline-flex; align-items:center; gap:6px;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 8px 22px rgba(216,180,109,0.45)'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 18px rgba(216,180,109,0.35)'">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>Lưu Lựa Chọn</span>
+              </button>
+            </div>
           </div>
         </div>
       `;
@@ -22384,24 +22571,49 @@ const fullList = getCarBrandLossData();
     
     async function saveCarplaSourceExclusions() {
       const btn = document.getElementById('btnSaveCarplaExclusions');
-      if (btn) btn.innerHTML = 'Đang lưu...';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="animation: spin 0.8s linear infinite;"><line x1="12" y1="2" x2="12" y2="6"></line><line x1="12" y1="18" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="6" y2="12"></line><line x1="18" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line></svg>
+          <span>Đang lưu...</span>
+        `;
+      }
       
       const cbs = document.querySelectorAll('.carpla-include-cb');
-      const excluded = {};
+      const excluded = (cachedReportRules && cachedReportRules.carplaExcludedClaims) ? { ...cachedReportRules.carplaExcludedClaims } : {};
+      
       cbs.forEach(cb => {
         if (!cb.checked) {
           excluded[cb.dataset.id] = true;
+        } else {
+          delete excluded[cb.dataset.id];
         }
       });
       
       try {
+        if (!cachedReportRules) cachedReportRules = {};
+        cachedReportRules.carplaExcludedClaims = excluded;
+
         await dbNodeInstance.ref('settings/reportRules/carplaExcludedClaims').set(excluded);
         triggerToast('Đã lưu cấu hình Nguồn dữ liệu Carpla!', 'success');
-        document.getElementById('carplaSourceModal').remove();
+        
+        const modal = document.getElementById('carplaSourceModal');
+        if (modal) modal.remove();
+
+        const weeklyReportTab = document.getElementById('weekly-report');
+        if (weeklyReportTab && weeklyReportTab.classList.contains('active')) {
+          renderGdvMonthlyReportPage(weeklyReportTab);
+        }
       } catch (err) {
         console.error(err);
         triggerToast('Lỗi lưu dữ liệu: ' + err.message, 'error');
-        if (btn) btn.innerHTML = 'Lưu Lựa Chọn';
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Lưu Lựa Chọn</span>
+          `;
+        }
       }
     }
 </script>
