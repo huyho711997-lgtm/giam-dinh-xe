@@ -19878,6 +19878,8 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
               if (targetY > lastYLeft - 26) targetY = lastYLeft - 26;
               lastYLeft = targetY;
             }
+            if (targetY < chart.chartArea.top + 14) targetY = chart.chartArea.top + 14;
+            if (targetY > chart.chartArea.bottom - 14) targetY = chart.chartArea.bottom - 14;
 
             const fixedX = chartCenter.x + (isRight ? outerRadius + 50 : -(outerRadius + 50));
 
@@ -19934,7 +19936,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           },
           plugins: {
             legend: {
-              display: true,
+              display: actualType !== 'doughnut',
               position: 'top',
               align: 'end',
               labels: {
