@@ -7944,6 +7944,18 @@ function formatDateDisplay(val) {
         }
       });
 
+      
+      dbNodeInstance.ref('settings/reportRules').off();
+      dbNodeInstance.ref('settings/reportRules').on('value', snap => {
+        if (snap.exists()) {
+          const rules = snap.val();
+          cachedReportRules = { ...cachedReportRules, ...rules };
+          if (document.getElementById('weekly-report') && document.getElementById('weekly-report').classList.contains('active')) {
+            renderGdvMonthlyReportPage(document.getElementById('weekly-report'));
+          }
+        }
+      });
+
       dbNodeInstance.ref('pending_claims').off();
       dbNodeInstance.ref('pending_claims').on('value', (snapshot) => {
         const val = snapshot.val() || {};
