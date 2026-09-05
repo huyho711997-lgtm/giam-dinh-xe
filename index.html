@@ -13603,17 +13603,30 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         let mo = null;
         let t = 0;
 
-        const dateStr = (c.ngayMoHs || '').trim();
-        if (dateStr && dateStr !== '—') {
-          const dp = parseDateParts(dateStr);
+        const openDateStr = (c.ngayMoHs || c['Ngày mở hồ sơ'] || c['Ngày mở HS'] || c.ngayTonThat || c.date || '').trim();
+        if (openDateStr && openDateStr !== '—' && openDateStr !== '-') {
+          const dp = parseDateParts(openDateStr);
           if (dp && dp.year && dp.month) {
             yr = dp.year;
             mo = dp.month;
             t = new Date(dp.year, dp.month - 1, dp.day || 15, 12, 0, 0).getTime();
           }
         }
+        if (yr) yearSet.add(yr);
 
-        yearSet.add(yr);
+        // Parse approval date for KPI calculation: 'Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)'
+        const duyetDateStr = (c.toTrinhNgayDuyet || c['Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)'] || c.toTrinhBtNgayDuyet || c.ngayDuyetHsbt || c.pascNgayDuyet || '').trim();
+        let duyetYr = null;
+        let duyetMo = null;
+        if (duyetDateStr && duyetDateStr !== '—' && duyetDateStr !== '-') {
+          const dpDuyet = parseDateParts(duyetDateStr);
+          if (dpDuyet && dpDuyet.year && dpDuyet.month) {
+            duyetYr = dpDuyet.year;
+            duyetMo = dpDuyet.month;
+          }
+        }
+        if (duyetYr) yearSet.add(duyetYr);
+
         const branch = c.donViCapDon || c.chiNhanh || c.chiNhanhXuly;
         if (branch && branch !== '—') branchSet.add(branch);
 
@@ -13621,51 +13634,18 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           raw: c,
           year: yr,
           month: mo,
+          duyetYear: duyetYr,
+          duyetMonth: duyetMo,
           timestamp: t
         });
       }
 
-      const yearList = Array.from(yearSet).sort((a, b) => b - a);
+      const yearList = Array.from(yearSet).filter(Boolean).sort((a, b) => b - a);
       const branchList = Array.from(branchSet);
 
       const period = getWeeklyZoneReportPeriod();
       const startTime = period.startDate.getTime();
       const endTime = period.endDate.getTime();
-
-      // Filter claims based on selected Start Date & End Date range and Branch across ALL tabs
-      const filteredClaims = parsedClaims.filter(item => {
-        const c = item.raw;
-
-        if (activeReportClaimType !== 'all') {
-          const spText = String(c.tnds || c.vcx || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.loaiHs || c.nghiepVu || '').toUpperCase();
-          const loaiType = (c.tnds || spText.includes('TNDS')) ? 'TNDS' : 'VCX';
-          if (activeReportClaimType !== loaiType) return false;
-        }
-
-
-        if (activeGdvReportView === 'weekly_zone') {
-          const claimTime = item.timestamp;
-          if (claimTime < startTime || claimTime > endTime) return false;
-
-          if (activeGdvReportBranch !== 'all') {
-            const b = c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '';
-            if (b !== activeGdvReportBranch) return false;
-          }
-          return true;
-        } else {
-          // Monthly filter based on 'Ngày mở HS'
-          if (activeGdvReportYear !== 'all' && item.year !== parseInt(activeGdvReportYear, 10)) return false;
-          if (activeGdvReportMonth !== 'all' && item.month !== parseInt(activeGdvReportMonth, 10)) return false;
-
-          // Filter branch for monthly view as well
-          if (activeGdvReportBranch !== 'all') {
-            const b = c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '';
-            if (b !== activeGdvReportBranch) return false;
-          }
-
-          return true;
-        }
-      });
 
       const selectedGdvList = (activeSelectedGdvNames && activeSelectedGdvNames.length > 0)
         ? activeSelectedGdvNames
@@ -13691,39 +13671,65 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         return selectedGdvList.find(s => s.trim().toLowerCase() === clean || clean.includes(s.trim().toLowerCase())) || null;
       }
 
-      for (let i = 0; i < filteredClaims.length; i++) {
-        const item = filteredClaims[i];
+      for (let i = 0; i < parsedClaims.length; i++) {
+        const item = parsedClaims[i];
         const c = item.raw;
+
+        // 1. Filter by Claim Type
+        if (activeReportClaimType !== 'all') {
+          const spText = String(c.tnds || c.vcx || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.loaiHs || c.nghiepVu || '').toUpperCase();
+          const loaiType = (c.tnds || spText.includes('TNDS')) ? 'TNDS' : 'VCX';
+          if (activeReportClaimType !== loaiType) continue;
+        }
+
+        // 2. Filter by Branch
+        if (activeGdvReportBranch !== 'all') {
+          const b = c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '';
+          if (b !== activeGdvReportBranch) continue;
+        }
+
         const rawGdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '').trim();
         const targetName = resolveTargetGdv(rawGdvName);
 
-        // Exclude claims that do not belong to the 3 managed GĐVs
+        // Exclude claims that do not belong to the selected GĐVs
         if (!targetName || !gdvMap[targetName]) continue;
 
-        // if (gdvMap[targetName].branch === '—' && (c.donViCapDon || c.chiNhanh)) {
-        //   gdvMap[targetName].branch = c.donViCapDon || c.chiNhanh;
-        // }
+        // Condition 1: Hồ sơ mở trong tháng (Số HS làm / tiếp nhận)
+        const matchesOpenedYear = activeGdvReportYear === 'all' || item.year === parseInt(activeGdvReportYear, 10);
+        const matchesOpenedMonth = activeGdvReportMonth === 'all' || item.month === parseInt(activeGdvReportMonth, 10);
+        const isOpenedInPeriod = Boolean(item.year && matchesOpenedYear && matchesOpenedMonth);
 
-        gdvMap[targetName].totalOpenedCount++;
-        const stKey = PENDING_STATUS_MAP[c.trangThai] ? c.trangThai : 'moi';
-        gdvMap[targetName].statusMap[stKey] = (gdvMap[targetName].statusMap[stKey] || 0) + 1;
+        // Condition 2: Hồ sơ có Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT) trong tháng được chọn
+        const matchesDuyetYear = activeGdvReportYear === 'all' || item.duyetYear === parseInt(activeGdvReportYear, 10);
+        const matchesDuyetMonth = activeGdvReportMonth === 'all' || item.duyetMonth === parseInt(activeGdvReportMonth, 10);
+        const isApprovedInPeriod = Boolean(isDuyetHsbtApproved(c) && item.duyetYear && matchesDuyetYear && matchesDuyetMonth);
 
-        const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
-        const amtVal = parseInt(amtStr, 10) || 0;
-        gdvMap[targetName].totalApprovedAmount += amtVal;
+        // Bỏ qua nếu không mở trong kỳ và cũng không duyệt trong kỳ
+        if (!isOpenedInPeriod && !isApprovedInPeriod) continue;
 
-        // Calculate KPI Coefficient k based on Claim Type & Amount Bracket
-        const kpiRules = typeof getStoredKpiCoefConfig === 'function' ? getStoredKpiCoefConfig() : [];
-        const spText = String(c.tnds || c.vcx || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.loaiHs || c.nghiepVu || '').toUpperCase();
-        const loaiType = (c.tnds || spText.includes('TNDS')) ? 'TNDS' : 'VCX';
-        const matchRule = kpiRules.find(r => r.type === loaiType && amtVal >= r.fromAmt && amtVal <= r.toAmt);
-        const kCoef = matchRule ? matchRule.coef : 1.0;
+        if (isOpenedInPeriod) {
+          gdvMap[targetName].totalOpenedCount++;
+          const stKey = PENDING_STATUS_MAP[c.trangThai] ? c.trangThai : 'moi';
+          gdvMap[targetName].statusMap[stKey] = (gdvMap[targetName].statusMap[stKey] || 0) + 1;
+          if (!isDuyetHsbtApproved(c)) {
+            gdvMap[targetName].pendingHsbtCount++;
+          }
+        }
 
-        if (isDuyetHsbtApproved(c)) {
+        if (isApprovedInPeriod) {
+          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || '0').replace(/[^0-9]/g, '');
+          const amtVal = parseInt(amtStr, 10) || 0;
+          gdvMap[targetName].totalApprovedAmount += amtVal;
+
+          // Calculate KPI Coefficient k based on Claim Type & Amount Bracket
+          const kpiRules = typeof getStoredKpiCoefConfig === 'function' ? getStoredKpiCoefConfig() : [];
+          const spText = String(c.tnds || c.vcx || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.loaiHs || c.nghiepVu || '').toUpperCase();
+          const loaiType = (c.tnds || spText.includes('TNDS')) ? 'TNDS' : 'VCX';
+          const matchRule = kpiRules.find(r => r.type === loaiType && amtVal >= r.fromAmt && amtVal <= r.toAmt);
+          const kCoef = matchRule ? matchRule.coef : 1.0;
+
           gdvMap[targetName].duyetHsbtCount++;
           gdvMap[targetName].weightedKpiCount += kCoef;
-        } else {
-          gdvMap[targetName].pendingHsbtCount++;
         }
       }
 
@@ -15756,48 +15762,78 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
 
       for (let i = 0; i < claimsList.length; i++) {
         const c = claimsList[i];
-        const dateStr = c.ngayMoHs || c.ngayTonThat || c.ngayVTT;
+        const dateStr = (c.ngayMoHs || c['Ngày mở hồ sơ'] || c['Ngày mở HS'] || c.ngayTonThat || c.date || '').trim();
         let yr = null;
         let mo = null;
 
-        if (dateStr && dateStr !== '—') {
+        if (dateStr && dateStr !== '—' && dateStr !== '-') {
           const dp = parseDateParts(dateStr);
           if (dp && dp.year && dp.month) {
             yr = dp.year;
             mo = dp.month;
           }
         }
-        if (!yr) {
-          const d = new Date(c.createdAt || Date.now());
-          yr = d.getFullYear();
-          mo = d.getMonth() + 1;
+        if (!yr && c.createdAt) {
+          const d = new Date(c.createdAt);
+          if (!isNaN(d.getTime()) && d.getFullYear() > 1970) {
+            yr = d.getFullYear();
+            mo = d.getMonth() + 1;
+          }
         }
 
-        parsedClaims.push({ raw: c, year: yr, month: mo });
+        const duyetDateStr = (c.toTrinhNgayDuyet || c['Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)'] || c.toTrinhBtNgayDuyet || c.ngayDuyetHsbt || c.pascNgayDuyet || '').trim();
+        let duyetYr = null;
+        let duyetMo = null;
+        if (duyetDateStr && duyetDateStr !== '—' && duyetDateStr !== '-') {
+          const dpDuyet = parseDateParts(duyetDateStr);
+          if (dpDuyet && dpDuyet.year && dpDuyet.month) {
+            duyetYr = dpDuyet.year;
+            duyetMo = dpDuyet.month;
+          }
+        }
+
+        parsedClaims.push({ raw: c, year: yr, month: mo, duyetYear: duyetYr, duyetMonth: duyetMo });
       }
 
-      const filteredClaims = parsedClaims.filter(item => {
-        if (activeGdvReportYear !== 'all' && item.year !== parseInt(activeGdvReportYear, 10)) return false;
-        if (activeGdvReportMonth !== 'all' && item.month !== parseInt(activeGdvReportMonth, 10)) return false;
-        if (activeGdvReportBranch !== 'all') {
-          const b = item.raw.donViCapDon || item.raw.chiNhanh || item.raw.chiNhanhXuly || '';
-          if (b !== activeGdvReportBranch) return false;
-        }
-        return true;
-      });
-
       const gdvMap = {};
-      filteredClaims.forEach(item => {
+      parsedClaims.forEach(item => {
         const c = item.raw;
+        if (activeReportClaimType !== 'all') {
+          const spText = String(c.tnds || c.vcx || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.loaiHs || c.nghiepVu || '').toUpperCase();
+          const loaiType = (c.tnds || spText.includes('TNDS')) ? 'TNDS' : 'VCX';
+          if (activeReportClaimType !== loaiType) return;
+        }
+
+        if (activeGdvReportBranch !== 'all') {
+          const b = c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '';
+          if (b !== activeGdvReportBranch) return;
+        }
+
         const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
         if (!gdvMap[gdvName]) {
           gdvMap[gdvName] = { gdvName, branch: c.donViCapDon || c.chiNhanh || '—', totalOpenedCount: 0, duyetHsbtCount: 0, pendingHsbtCount: 0, totalApprovedAmount: 0 };
         }
-        gdvMap[gdvName].totalOpenedCount++;
-        if (isDuyetHsbtApproved(c)) gdvMap[gdvName].duyetHsbtCount++;
-        else gdvMap[gdvName].pendingHsbtCount++;
-        const amtStr = String(c.pascSoTienDuyet || c.soTienDuyetBT || c.ttbtSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
-        gdvMap[gdvName].totalApprovedAmount += (parseInt(amtStr, 10) || 0);
+
+        const matchesOpenedYear = activeGdvReportYear === 'all' || item.year === parseInt(activeGdvReportYear, 10);
+        const matchesOpenedMonth = activeGdvReportMonth === 'all' || item.month === parseInt(activeGdvReportMonth, 10);
+        const isOpenedInPeriod = Boolean(item.year && matchesOpenedYear && matchesOpenedMonth);
+
+        const matchesDuyetYear = activeGdvReportYear === 'all' || item.duyetYear === parseInt(activeGdvReportYear, 10);
+        const matchesDuyetMonth = activeGdvReportMonth === 'all' || item.duyetMonth === parseInt(activeGdvReportMonth, 10);
+        const isApprovedInPeriod = Boolean(isDuyetHsbtApproved(c) && item.duyetYear && matchesDuyetYear && matchesDuyetMonth);
+
+        if (isOpenedInPeriod) {
+          gdvMap[gdvName].totalOpenedCount++;
+          if (!isDuyetHsbtApproved(c)) {
+            gdvMap[gdvName].pendingHsbtCount++;
+          }
+        }
+
+        if (isApprovedInPeriod) {
+          gdvMap[gdvName].duyetHsbtCount++;
+          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || '0').replace(/[^0-9]/g, '');
+          gdvMap[gdvName].totalApprovedAmount += (parseInt(amtStr, 10) || 0);
+        }
       });
 
       const rows = Object.values(gdvMap).sort((a, b) => b.totalOpenedCount - a.totalOpenedCount);
