@@ -3281,9 +3281,12 @@
     let activeObjectUrls = [];
     
     let cachedReportRules = {
-      tndsKeywords: 'tnds',
-      unpaidStatuses: 'da_thanh_toan,đã thanh toán,da_hoan_thanh,đã hoàn thành',
+      phatSinhExcludes: 'tu_choi',
+      tndsKeywords: 'tnds,trách nhiệm dân sự',
+      unpaidStatuses: 'da_thanh_toan,đã thanh toán,da_hoan_thanh,đã hoàn thành,tu_choi',
       approvedStatuses: 'da_duyet_hsbt,cho_duyet_dntt,cho_kt_duyet,kt_duyet,da_thanh_toan',
+      chuyenDnttStatuses: '',
+      hsDpbtStatuses: 'moi,cho_giam_dinh_ht,da_giam_dinh_ht,cho_gdct,da_gdct,cho_duyet_pasc',
       onlyApprovedStatuses: 'da_duyet_hsbt,cho_kt_duyet',
       hsTonDays: 30,
       hsDpbtAmount: 50000000,
@@ -12925,6 +12928,22 @@ function formatDateDisplay(val) {
       return String(str || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
     }
 
+    function isPhatSinh(c) {
+      if (!c) return false;
+      const st = String(c.trangThai || '').toLowerCase();
+      const ex = getRuleArray(cachedReportRules.phatSinhExcludes);
+      if (ex.some(e => st.includes(e))) return false;
+      return true;
+    }
+
+    function isChuyenDntt(c) {
+      if (!c) return false;
+      const st = String(c.trangThai || '').toLowerCase();
+      const inc = getRuleArray(cachedReportRules.chuyenDnttStatuses);
+      if (inc.length === 0) return true; // empty means all allowed
+      return inc.some(e => st.includes(e));
+    }
+
     function isTndsClaim(c) {
       if (!c) return false;
       const text = String(c.loaiHoSo || c.nhomBoiThuong || c.tnds || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.nghiepVu || c.tenHoSo || '').toLowerCase();
@@ -12959,7 +12978,12 @@ function formatDateDisplay(val) {
       if (!c) return false;
       const reserveStr = String(c.duPhongBoiThuong || c.soTienDuPhong || c.duPhong || '0').replace(/[^0-9]/g, '');
       const reserveVal = parseInt(reserveStr, 10) || 0;
-      return reserveVal > cachedReportRules.hsDpbtAmount;
+      if (reserveVal <= cachedReportRules.hsDpbtAmount) return false;
+      
+      const st = String(c.trangThai || '').toLowerCase();
+      const inc = getRuleArray(cachedReportRules.hsDpbtStatuses);
+      if (inc.length === 0) return true;
+      return inc.some(e => st.includes(e));
     }
 
     function changeGdvReportSearch(txt) {
@@ -13060,87 +13084,153 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       if (m) m.remove();
       m = document.createElement('div');
       m.id = 'reportSettingsModal';
-      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); backdrop-filter:blur(8px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
+      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); backdrop-filter:blur(10px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
+      
+      const buildCheckboxList = (id, currentStr) => {
+        const currArr = getRuleArray(currentStr);
+        let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:180px; overflow-y:auto; padding-right:8px; margin-top:8px;" class="custom-scroll">';
+        Object.keys(PENDING_STATUS_MAP).forEach(k => {
+          const checked = currArr.includes(k) ? 'checked' : '';
+          html += `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12.5px; padding:6px; border-radius:6px; background:var(--surface); border:1px solid var(--border);"><input type="checkbox" value="${k}" class="${id}_chk" ${checked}> ${PENDING_STATUS_MAP[k].label}</label>`;
+        });
+        html += '</div>';
+        return html;
+      };
+
       m.innerHTML = `
-        <div style="background:var(--surface); border-radius:24px; width:650px; max-width:98vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden;">
-          <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background: var(--surface);">
+        <div style="background:var(--surface); border-radius:24px; width:750px; max-width:98vw; height:85vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.25); border:1px solid var(--border-strong); overflow:hidden;">
+          <div style="padding:20px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background: var(--surface);">
             <div>
               <h3 style="margin:0 0 4px 0; font-size:20px; font-weight:900; color: var(--text-main);">Cài đặt logic Báo cáo</h3>
-              <p style="margin:0; font-size:13px; color:var(--text-soft);">Tùy chỉnh các từ khóa và ngưỡng dữ liệu để báo cáo phân loại hồ sơ.</p>
+              <p style="margin:0; font-size:13px; color:var(--text-soft);">Tùy chỉnh điều kiện đếm hồ sơ cho TẤT CẢ các cột</p>
             </div>
             <button onclick="document.getElementById('reportSettingsModal').remove()" style="background:var(--surface-strong); border:1px solid var(--border); color:var(--text-soft); cursor:pointer; width:36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--surface-strong)'; this.style.color='var(--text-soft)'">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
-          <div style="padding:24px 32px; overflow-y:auto; flex-grow:1; display:flex; flex-direction:column; gap:20px;">
+          <div style="display:flex; flex-grow:1; overflow:hidden;">
+            <!-- Tabs Menu -->
+            <div style="width:200px; border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; background:var(--surface-strong); padding:16px 12px; gap:6px;">
+              <div class="rs-tab active" onclick="switchRsTab(0)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; background:var(--primary); color:#000;">1. Phát Sinh</div>
+              <div class="rs-tab" onclick="switchRsTab(1)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">2. Đã duyệt HSBT</div>
+              <div class="rs-tab" onclick="switchRsTab(2)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">3. Chuyển ĐNTT</div>
+              <div class="rs-tab" onclick="switchRsTab(3)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">4. Lượng xe Carpla</div>
+              <div class="rs-tab" onclick="switchRsTab(4)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">5. Tồn TNDS lũy kế</div>
+              <div class="rs-tab" onclick="switchRsTab(5)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">6. HS Tồn > X Ngày</div>
+              <div class="rs-tab" onclick="switchRsTab(6)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">7. HS DPBT > X TR</div>
+              <div class="rs-tab" onclick="switchRsTab(7)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">8. Tiền BQ Dưới X TR</div>
+            </div>
             
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
-              <div>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Nhận diện HS TNDS (Cột Tồn TNDS)</label>
-                <textarea id="rs_tndsKeywords" class="p-input" style="width:100%; height:60px; padding:10px; border-radius:10px; font-size:13px;" placeholder="Cách nhau bởi dấu phẩy, VD: tnds, trách nhiệm dân sự">${cachedReportRules.tndsKeywords}</textarea>
-                <div style="font-size:11px; color:var(--text-soft); margin-top:4px;">Từ khóa tìm trong Loại hồ sơ, Nghiệp vụ...</div>
+            <!-- Tab Contents -->
+            <div style="flex-grow:1; overflow-y:auto; padding:24px 32px;" class="custom-scroll">
+              
+              <!-- 0: Phat Sinh -->
+              <div class="rs-content" id="rs_tab_0">
+                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: PHÁT SINH</h4>
+                <p style="font-size:12.5px; color:var(--text-soft); margin-bottom:16px;">Mặc định, cột Phát Sinh sẽ đếm mọi hồ sơ có "Ngày mở HS" rơi vào khoảng thời gian lọc. Bạn có thể chọn loại trừ một số trạng thái (ví dụ không đếm hồ sơ đã Từ chối).</p>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main);">Loại trừ các trạng thái sau:</label>
+                ${buildCheckboxList('rs_phatSinhExcludes', cachedReportRules.phatSinhExcludes)}
               </div>
-              <div>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Trạng thái loại trừ (Cột Tồn TNDS)</label>
-                <textarea id="rs_unpaidStatuses" class="p-input" style="width:100%; height:60px; padding:10px; border-radius:10px; font-size:13px;" placeholder="Trạng thái đã hoàn thành...">${cachedReportRules.unpaidStatuses}</textarea>
-                <div style="font-size:11px; color:var(--text-soft); margin-top:4px;">Không tính Tồn nếu trạng thái thuộc DS này.</div>
+
+              <!-- 1: Da Duyet HSBT -->
+              <div class="rs-content" id="rs_tab_1" style="display:none;">
+                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: ĐÃ DUYỆT HSBT</h4>
+                <p style="font-size:12.5px; color:var(--text-soft); margin-bottom:16px;">Chọn các trạng thái được tính là ĐÃ DUYỆT. Các hồ sơ có trạng thái này sẽ được tính vào cột Đã duyệt HSBT.</p>
+                ${buildCheckboxList('rs_approvedStatuses', cachedReportRules.approvedStatuses)}
               </div>
+
+              <!-- 2: Chuyen DNTT -->
+              <div class="rs-content" id="rs_tab_2" style="display:none;">
+                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: CHUYỂN ĐNTT</h4>
+                <p style="font-size:12.5px; color:var(--text-soft); margin-bottom:16px;">Mặc định, cột này đếm mọi hồ sơ có "Ngày nhận đủ HS" trong khoảng thời gian lọc. Nếu muốn giới hạn trạng thái, hãy chọn bên dưới. (Bỏ trống = Đếm tất cả).</p>
+                ${buildCheckboxList('rs_chuyenDnttStatuses', cachedReportRules.chuyenDnttStatuses)}
+              </div>
+
+              <!-- 3: Carpla -->
+              <div class="rs-content" id="rs_tab_3" style="display:none;">
+                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: LƯỢNG XE / DOANH SỐ CARPLA</h4>
+                <p style="font-size:12.5px; color:var(--text-soft); margin-bottom:16px;">Nhập từ khóa nhận diện Gara Carpla (Tìm trong Tên Gara Viết Tắt và Ghi chú).</p>
+                <textarea id="rs_carplaKeywords" class="p-input" style="width:100%; height:80px; padding:10px; border-radius:10px; font-size:13px;" placeholder="Cách nhau bởi dấu phẩy, VD: carpla, car pla">${cachedReportRules.carplaKeywords}</textarea>
+              </div>
+
+              <!-- 4: Ton TNDS -->
+              <div class="rs-content" id="rs_tab_4" style="display:none;">
+                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: HỒ SƠ TNDS TỒN LŨY KẾ</h4>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Từ khóa nhận diện TNDS:</label>
+                <textarea id="rs_tndsKeywords" class="p-input" style="width:100%; height:60px; padding:10px; border-radius:10px; font-size:13px;" placeholder="VD: tnds, trách nhiệm dân sự">${cachedReportRules.tndsKeywords}</textarea>
+                <br><br>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main);">Các trạng thái KHÔNG ĐƯỢC tính là Tồn:</label>
+                ${buildCheckboxList('rs_unpaidStatuses', cachedReportRules.unpaidStatuses)}
+              </div>
+
+              <!-- 5: Ton > X Ngay -->
+              <div class="rs-content" id="rs_tab_5" style="display:none;">
+                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: HS TỒN > X NGÀY</h4>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Ngưỡng Tồn (ngày):</label>
+                <input type="number" id="rs_hsTonDays" class="p-input" value="${cachedReportRules.hsTonDays}" style="width:100px; padding:10px; border-radius:10px;">
+                <br><br>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main);">Chỉ đếm các trạng thái đang Chờ duyệt:</label>
+                ${buildCheckboxList('rs_onlyApprovedStatuses', cachedReportRules.onlyApprovedStatuses)}
+              </div>
+
+              <!-- 6: DPBT > X TR -->
+              <div class="rs-content" id="rs_tab_6" style="display:none;">
+                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: HS DPBT > X TR</h4>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Ngưỡng Tiền Dự Phòng (VNĐ):</label>
+                <input type="number" id="rs_hsDpbtAmount" class="p-input" value="${cachedReportRules.hsDpbtAmount}" style="width:200px; padding:10px; border-radius:10px;">
+                <br><br>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main);">Các trạng thái áp dụng xét DPBT (Chưa hoàn thành):</label>
+                ${buildCheckboxList('rs_hsDpbtStatuses', cachedReportRules.hsDpbtStatuses)}
+              </div>
+
+              <!-- 7: Tien BQ -->
+              <div class="rs-content" id="rs_tab_7" style="display:none;">
+                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: SỐ TIỀN BÌNH QUÂN DƯỚI X TR</h4>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Ngưỡng Số Tiền BQ (VNĐ):</label>
+                <input type="number" id="rs_avgAmount" class="p-input" value="${cachedReportRules.avgAmount}" style="width:200px; padding:10px; border-radius:10px;">
+              </div>
+
             </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
-              <div>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Trạng thái Đã duyệt (Đã duyệt HSBT)</label>
-                <textarea id="rs_approvedStatuses" class="p-input" style="width:100%; height:60px; padding:10px; border-radius:10px; font-size:13px;">${cachedReportRules.approvedStatuses}</textarea>
-              </div>
-              <div>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Nhận diện gara Carpla (Cột Carpla)</label>
-                <textarea id="rs_carplaKeywords" class="p-input" style="width:100%; height:60px; padding:10px; border-radius:10px; font-size:13px;">${cachedReportRules.carplaKeywords}</textarea>
-              </div>
-            </div>
-
-            <div>
-              <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Trạng thái chờ duyệt (Tính HS Tồn > X ngày)</label>
-              <textarea id="rs_onlyApprovedStatuses" class="p-input" style="width:100%; height:50px; padding:10px; border-radius:10px; font-size:13px;">${cachedReportRules.onlyApprovedStatuses}</textarea>
-              <div style="font-size:11px; color:var(--text-soft); margin-top:4px;">Hồ sơ có trạng thái này và quá X ngày sẽ tính là Tồn > X ngày.</div>
-            </div>
-
-            <hr style="border:0; border-top:1px dashed var(--border); margin:4px 0;">
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px;">
-              <div>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Ngưỡng Tồn (ngày)</label>
-                <input type="number" id="rs_hsTonDays" class="p-input" value="${cachedReportRules.hsTonDays}" style="width:100%; padding:10px; border-radius:10px;">
-              </div>
-              <div>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Ngưỡng DPBT (VNĐ)</label>
-                <input type="number" id="rs_hsDpbtAmount" class="p-input" value="${cachedReportRules.hsDpbtAmount}" style="width:100%; padding:10px; border-radius:10px;">
-              </div>
-              <div>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Tiền BQ dưới (VNĐ)</label>
-                <input type="number" id="rs_avgAmount" class="p-input" value="${cachedReportRules.avgAmount}" style="width:100%; padding:10px; border-radius:10px;">
-              </div>
-            </div>
-
           </div>
           <div style="padding:20px 32px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:12px; background:var(--surface-strong);">
             <button onclick="document.getElementById('reportSettingsModal').remove()" class="btn-secondary" style="padding:10px 24px; border-radius:12px; border:none; background:transparent; font-weight:700; color:var(--text-main); cursor:pointer;">Hủy</button>
-            <button onclick="saveReportSettings()" class="btn-primary" style="padding:10px 28px; border-radius:12px; border:none; background:var(--primary); color:#000; font-weight:800; cursor:pointer; box-shadow:0 8px 20px rgba(59,130,246,0.3);">Lưu cấu hình</button>
+            <button onclick="saveReportSettings()" class="btn-primary" style="padding:10px 28px; border-radius:12px; border:none; background:var(--primary); color:#000; font-weight:800; cursor:pointer; box-shadow:0 8px 20px rgba(59,130,246,0.3);">Lưu tất cả cài đặt</button>
           </div>
         </div>
       `;
       document.body.appendChild(m);
+
+      window.switchRsTab = function(idx) {
+        document.querySelectorAll('.rs-tab').forEach((el, i) => {
+          if (i === idx) {
+            el.style.background = 'var(--primary)';
+            el.style.color = '#000';
+          } else {
+            el.style.background = 'transparent';
+            el.style.color = 'var(--text-main)';
+          }
+        });
+        document.querySelectorAll('.rs-content').forEach((el, i) => {
+          el.style.display = i === idx ? 'block' : 'none';
+        });
+      };
     }
 
     async function saveReportSettings() {
+      const getChecked = (cls) => Array.from(document.querySelectorAll('.'+cls)).filter(el => el.checked).map(el => el.value).join(',');
+      
       const data = {
+        phatSinhExcludes: getChecked('rs_phatSinhExcludes_chk'),
+        approvedStatuses: getChecked('rs_approvedStatuses_chk'),
+        chuyenDnttStatuses: getChecked('rs_chuyenDnttStatuses_chk'),
+        carplaKeywords: document.getElementById('rs_carplaKeywords').value.trim(),
         tndsKeywords: document.getElementById('rs_tndsKeywords').value.trim(),
-        unpaidStatuses: document.getElementById('rs_unpaidStatuses').value.trim(),
-        approvedStatuses: document.getElementById('rs_approvedStatuses').value.trim(),
-        onlyApprovedStatuses: document.getElementById('rs_onlyApprovedStatuses').value.trim(),
+        unpaidStatuses: getChecked('rs_unpaidStatuses_chk'),
         hsTonDays: parseInt(document.getElementById('rs_hsTonDays').value, 10) || 30,
+        onlyApprovedStatuses: getChecked('rs_onlyApprovedStatuses_chk'),
         hsDpbtAmount: parseInt(document.getElementById('rs_hsDpbtAmount').value, 10) || 50000000,
-        avgAmount: parseInt(document.getElementById('rs_avgAmount').value, 10) || 10000000,
-        carplaKeywords: document.getElementById('rs_carplaKeywords').value.trim()
+        hsDpbtStatuses: getChecked('rs_hsDpbtStatuses_chk'),
+        avgAmount: parseInt(document.getElementById('rs_avgAmount').value, 10) || 10000000
       };
       
       const btn = document.querySelector('#reportSettingsModal .btn-primary');
@@ -14940,7 +15030,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           if (dpNhanDu && dpNhanDu.year > 1970 && dpNhanDu.month && dpNhanDu.day) {
             const nhanDuMs = new Date(dpNhanDu.year, dpNhanDu.month - 1, dpNhanDu.day, 12, 0, 0).getTime();
             if (nhanDuMs >= startTime && nhanDuMs <= endTime) {
-              item.chuyenDntt++;
+              if(isChuyenDntt(c)) item.chuyenDntt++;
             }
           }
         }
@@ -14970,7 +15060,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           return;
         }
 
-        item.phatSinh++;
+        if(isPhatSinh(c)) item.phatSinh++;
 
         if (isApproved) {
           item.daDuyetHsb++;
