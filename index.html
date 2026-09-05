@@ -13088,113 +13088,158 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       
       const buildCheckboxList = (id, currentStr) => {
         const currArr = getRuleArray(currentStr);
-        let html = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:180px; overflow-y:auto; padding-right:8px; margin-top:8px;" class="custom-scroll">';
+        let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; max-height:280px; overflow-y:auto; padding:10px; margin-top:8px; border:1px solid var(--border); border-radius:12px; background:var(--surface-strong);" class="custom-scroll">';
         Object.keys(PENDING_STATUS_MAP).forEach(k => {
           const checked = currArr.includes(k) ? 'checked' : '';
-          html += `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12.5px; padding:6px; border-radius:6px; background:var(--surface); border:1px solid var(--border);"><input type="checkbox" value="${k}" class="${id}_chk" ${checked}> ${PENDING_STATUS_MAP[k].label}</label>`;
+          html += `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; padding:8px 12px; border-radius:8px; background:var(--surface); border:1px solid var(--border); transition:all 0.2s; box-shadow:var(--shadow-xs);"><input type="checkbox" value="${k}" class="${id}_chk" ${checked} style="width:16px; height:16px; accent-color:var(--primary);"> ${PENDING_STATUS_MAP[k].label}</label>`;
         });
         html += '</div>';
         return html;
       };
 
       m.innerHTML = `
-        <div style="background:var(--surface); border-radius:24px; width:750px; max-width:98vw; height:85vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.25); border:1px solid var(--border-strong); overflow:hidden;">
-          <div style="padding:20px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background: var(--surface);">
+        <div style="background:var(--surface); border-radius:24px; width:92vw; max-width:1400px; height:92vh; display:flex; flex-direction:column; box-shadow:0 30px 100px rgba(0,0,0,0.4); border:1px solid var(--border-strong); overflow:hidden;">
+          <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background: linear-gradient(135deg, var(--surface) 0%, var(--surface-strong) 100%);">
             <div>
-              <h3 style="margin:0 0 4px 0; font-size:20px; font-weight:900; color: var(--text-main);">Cài đặt logic Báo cáo</h3>
-              <p style="margin:0; font-size:13px; color:var(--text-soft);">Tùy chỉnh điều kiện đếm hồ sơ cho TẤT CẢ các cột</p>
+              <h3 style="margin:0 0 6px 0; font-size:24px; font-weight:900; color: var(--text-main); display:flex; align-items:center; gap:10px;">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--primary)" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                Cài đặt logic Báo cáo chuyên sâu
+              </h3>
+              <p style="margin:0; font-size:14px; color:var(--text-soft); font-weight:600;">Tùy chỉnh toàn bộ điều kiện, trạng thái và ngưỡng đếm hồ sơ cho từng cột cụ thể.</p>
             </div>
-            <button onclick="document.getElementById('reportSettingsModal').remove()" style="background:var(--surface-strong); border:1px solid var(--border); color:var(--text-soft); cursor:pointer; width:36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--surface-strong)'; this.style.color='var(--text-soft)'">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <button onclick="document.getElementById('reportSettingsModal').remove()" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); color:#ef4444; cursor:pointer; width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff'">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
+          
           <div style="display:flex; flex-grow:1; overflow:hidden;">
             <!-- Tabs Menu -->
-            <div style="width:200px; border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; background:var(--surface-strong); padding:16px 12px; gap:6px;">
-              <div class="rs-tab active" onclick="switchRsTab(0)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; background:var(--primary); color:#000;">1. Phát Sinh</div>
-              <div class="rs-tab" onclick="switchRsTab(1)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">2. Đã duyệt HSBT</div>
-              <div class="rs-tab" onclick="switchRsTab(2)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">3. Chuyển ĐNTT</div>
-              <div class="rs-tab" onclick="switchRsTab(3)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">4. Lượng xe Carpla</div>
-              <div class="rs-tab" onclick="switchRsTab(4)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">5. Tồn TNDS lũy kế</div>
-              <div class="rs-tab" onclick="switchRsTab(5)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">6. HS Tồn > X Ngày</div>
-              <div class="rs-tab" onclick="switchRsTab(6)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">7. HS DPBT > X TR</div>
-              <div class="rs-tab" onclick="switchRsTab(7)" style="padding:10px 12px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; color:var(--text-main);">8. Tiền BQ Dưới X TR</div>
+            <div style="width:280px; min-width:280px; border-right:1px solid var(--border); display:flex; flex-direction:column; overflow-y:auto; background:var(--surface-strong); padding:20px 16px; gap:8px;" class="custom-scroll">
+              <div class="rs-tab active" onclick="switchRsTab(0)" style="padding:14px 16px; border-radius:14px; cursor:pointer; font-size:14px; font-weight:800; background:linear-gradient(135deg, var(--primary) 0%, #d8b46d 100%); color:#000; box-shadow:0 4px 12px rgba(216,180,109,0.3); transition:all 0.2s;">1. Cột Phát Sinh</div>
+              <div class="rs-tab" onclick="switchRsTab(1)" style="padding:14px 16px; border-radius:14px; cursor:pointer; font-size:14px; font-weight:700; color:var(--text-main); transition:all 0.2s;">2. Đã duyệt HSBT</div>
+              <div class="rs-tab" onclick="switchRsTab(2)" style="padding:14px 16px; border-radius:14px; cursor:pointer; font-size:14px; font-weight:700; color:var(--text-main); transition:all 0.2s;">3. Chuyển ĐNTT</div>
+              <div class="rs-tab" onclick="switchRsTab(3)" style="padding:14px 16px; border-radius:14px; cursor:pointer; font-size:14px; font-weight:700; color:var(--text-main); transition:all 0.2s;">4. Lượng xe Carpla</div>
+              <div class="rs-tab" onclick="switchRsTab(4)" style="padding:14px 16px; border-radius:14px; cursor:pointer; font-size:14px; font-weight:700; color:var(--text-main); transition:all 0.2s;">5. Tồn TNDS lũy kế</div>
+              <div class="rs-tab" onclick="switchRsTab(5)" style="padding:14px 16px; border-radius:14px; cursor:pointer; font-size:14px; font-weight:700; color:var(--text-main); transition:all 0.2s;">6. HS Tồn > X Ngày</div>
+              <div class="rs-tab" onclick="switchRsTab(6)" style="padding:14px 16px; border-radius:14px; cursor:pointer; font-size:14px; font-weight:700; color:var(--text-main); transition:all 0.2s;">7. HS DPBT > X TR</div>
+              <div class="rs-tab" onclick="switchRsTab(7)" style="padding:14px 16px; border-radius:14px; cursor:pointer; font-size:14px; font-weight:700; color:var(--text-main); transition:all 0.2s;">8. Tiền BQ Dưới X TR</div>
             </div>
             
             <!-- Tab Contents -->
-            <div style="flex-grow:1; overflow-y:auto; padding:24px 32px;" class="custom-scroll">
+            <div style="flex-grow:1; overflow-y:auto; padding:32px 40px; background:var(--surface);" class="custom-scroll">
               
               <!-- 0: Phat Sinh -->
               <div class="rs-content" id="rs_tab_0">
-                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: PHÁT SINH</h4>
-                <p style="font-size:12.5px; color:var(--text-soft); margin-bottom:16px;">Mặc định, cột Phát Sinh sẽ đếm mọi hồ sơ có "Ngày mở HS" rơi vào khoảng thời gian lọc. Bạn có thể chọn loại trừ một số trạng thái (ví dụ không đếm hồ sơ đã Từ chối).</p>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main);">Loại trừ các trạng thái sau:</label>
+                <h4 style="margin:0 0 16px 0; font-size:22px; color:var(--text-main); font-weight:900;">Cột: PHÁT SINH</h4>
+                <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
+                  <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm mọi hồ sơ có "Ngày mở HS" rơi vào khoảng thời gian lọc của báo cáo.</p>
+                </div>
+                <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">Loại trừ các trạng thái sau (Không tính vào Phát Sinh):</label>
+                <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Tích chọn các trạng thái mà bạn KHÔNG MUỐN đếm vào cột này (Ví dụ: Từ chối bồi thường).</p>
                 ${buildCheckboxList('rs_phatSinhExcludes', cachedReportRules.phatSinhExcludes)}
               </div>
 
               <!-- 1: Da Duyet HSBT -->
               <div class="rs-content" id="rs_tab_1" style="display:none;">
-                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: ĐÃ DUYỆT HSBT</h4>
-                <p style="font-size:12.5px; color:var(--text-soft); margin-bottom:16px;">Chọn các trạng thái được tính là ĐÃ DUYỆT. Các hồ sơ có trạng thái này sẽ được tính vào cột Đã duyệt HSBT.</p>
+                <h4 style="margin:0 0 16px 0; font-size:22px; color:var(--text-main); font-weight:900;">Cột: ĐÃ DUYỆT HSBT</h4>
+                <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
+                  <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm các hồ sơ nằm trong thời gian lọc VÀ đạt được trạng thái Đã duyệt.</p>
+                </div>
+                <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">Các trạng thái được tính là ĐÃ DUYỆT:</label>
+                <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chỉ những hồ sơ có trạng thái tích dưới đây mới được đếm vào cột này.</p>
                 ${buildCheckboxList('rs_approvedStatuses', cachedReportRules.approvedStatuses)}
               </div>
 
               <!-- 2: Chuyen DNTT -->
               <div class="rs-content" id="rs_tab_2" style="display:none;">
-                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: CHUYỂN ĐNTT</h4>
-                <p style="font-size:12.5px; color:var(--text-soft); margin-bottom:16px;">Mặc định, cột này đếm mọi hồ sơ có "Ngày nhận đủ HS" trong khoảng thời gian lọc. Nếu muốn giới hạn trạng thái, hãy chọn bên dưới. (Bỏ trống = Đếm tất cả).</p>
+                <h4 style="margin:0 0 16px 0; font-size:22px; color:var(--text-main); font-weight:900;">Cột: CHUYỂN ĐNTT</h4>
+                <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
+                  <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm mọi hồ sơ có "Ngày nhận đủ HS" nằm trong khoảng thời gian lọc.</p>
+                </div>
+                <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">Bộ lọc Trạng thái (Tùy chọn):</label>
+                <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Nếu muốn CHỈ đếm những hồ sơ đã chuyển ĐNTT, hãy tích chọn bên dưới. <strong>Để trống = Không lọc theo trạng thái.</strong></p>
                 ${buildCheckboxList('rs_chuyenDnttStatuses', cachedReportRules.chuyenDnttStatuses)}
               </div>
 
               <!-- 3: Carpla -->
               <div class="rs-content" id="rs_tab_3" style="display:none;">
-                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: LƯỢNG XE / DOANH SỐ CARPLA</h4>
-                <p style="font-size:12.5px; color:var(--text-soft); margin-bottom:16px;">Nhập từ khóa nhận diện Gara Carpla (Tìm trong Tên Gara Viết Tắt và Ghi chú).</p>
-                <textarea id="rs_carplaKeywords" class="p-input" style="width:100%; height:80px; padding:10px; border-radius:10px; font-size:13px;" placeholder="Cách nhau bởi dấu phẩy, VD: carpla, car pla">${cachedReportRules.carplaKeywords}</textarea>
+                <h4 style="margin:0 0 16px 0; font-size:22px; color:var(--text-main); font-weight:900;">Cột: LƯỢNG XE / DOANH SỐ CARPLA</h4>
+                <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
+                  <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm các hồ sơ có Tên Gara Viết Tắt hoặc Ghi Chú chứa từ khóa bên dưới.</p>
+                </div>
+                <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">Từ khóa nhận diện Gara Carpla:</label>
+                <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Các từ khóa cách nhau bởi dấu phẩy.</p>
+                <textarea id="rs_carplaKeywords" class="p-input" style="width:100%; height:100px; padding:16px; border-radius:12px; font-size:15px; font-weight:600; font-family:var(--font-family);" placeholder="VD: carpla, car pla">${cachedReportRules.carplaKeywords}</textarea>
               </div>
 
               <!-- 4: Ton TNDS -->
               <div class="rs-content" id="rs_tab_4" style="display:none;">
-                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: HỒ SƠ TNDS TỒN LŨY KẾ</h4>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Từ khóa nhận diện TNDS:</label>
-                <textarea id="rs_tndsKeywords" class="p-input" style="width:100%; height:60px; padding:10px; border-radius:10px; font-size:13px;" placeholder="VD: tnds, trách nhiệm dân sự">${cachedReportRules.tndsKeywords}</textarea>
-                <br><br>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main);">Các trạng thái KHÔNG ĐƯỢC tính là Tồn:</label>
-                ${buildCheckboxList('rs_unpaidStatuses', cachedReportRules.unpaidStatuses)}
+                <h4 style="margin:0 0 16px 0; font-size:22px; color:var(--text-main); font-weight:900;">Cột: HỒ SƠ TNDS TỒN LŨY KẾ</h4>
+                <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
+                  <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm TOÀN THỜI GIAN các hồ sơ chứa từ khóa TNDS và KHÔNG nằm trong nhóm trạng thái loại trừ (Đã kết thúc).</p>
+                </div>
+                
+                <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">1. Từ khóa nhận diện HS TNDS:</label>
+                <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Hệ thống sẽ tìm từ khóa này trong Loại hồ sơ, Nhóm Bồi thường, Nghiệp vụ, v.v...</p>
+                <textarea id="rs_tndsKeywords" class="p-input" style="width:100%; height:80px; padding:14px; border-radius:12px; font-size:15px; font-weight:600; font-family:var(--font-family);" placeholder="VD: tnds, trách nhiệm dân sự">${cachedReportRules.tndsKeywords}</textarea>
+                
+                <div style="margin-top: 24px;">
+                  <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">2. Các trạng thái KHÔNG ĐƯỢC tính là Tồn:</label>
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Các hồ sơ đạt trạng thái này sẽ bị loại khỏi danh sách đếm Tồn lũy kế.</p>
+                  ${buildCheckboxList('rs_unpaidStatuses', cachedReportRules.unpaidStatuses)}
+                </div>
               </div>
 
               <!-- 5: Ton > X Ngay -->
               <div class="rs-content" id="rs_tab_5" style="display:none;">
-                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: HS TỒN > X NGÀY</h4>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Ngưỡng Tồn (ngày):</label>
-                <input type="number" id="rs_hsTonDays" class="p-input" value="${cachedReportRules.hsTonDays}" style="width:100px; padding:10px; border-radius:10px;">
-                <br><br>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main);">Chỉ đếm các trạng thái đang Chờ duyệt:</label>
-                ${buildCheckboxList('rs_onlyApprovedStatuses', cachedReportRules.onlyApprovedStatuses)}
+                <h4 style="margin:0 0 16px 0; font-size:22px; color:var(--text-main); font-weight:900;">Cột: HS TỒN > X NGÀY</h4>
+                <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
+                  <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm các hồ sơ đang treo ở một trạng thái cụ thể quá số ngày quy định (tính từ Ngày mở HS).</p>
+                </div>
+                
+                <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">1. Ngưỡng số ngày Tồn:</label>
+                <input type="number" id="rs_hsTonDays" class="p-input" value="${cachedReportRules.hsTonDays}" style="width:150px; padding:12px 16px; border-radius:12px; font-size:16px; font-weight:800;">
+                
+                <div style="margin-top: 24px;">
+                  <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">2. Các trạng thái áp dụng xét Tồn:</label>
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chỉ các hồ sơ ĐANG nằm ở trạng thái này mới bị đếm là Tồn.</p>
+                  ${buildCheckboxList('rs_onlyApprovedStatuses', cachedReportRules.onlyApprovedStatuses)}
+                </div>
               </div>
 
               <!-- 6: DPBT > X TR -->
               <div class="rs-content" id="rs_tab_6" style="display:none;">
-                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: HS DPBT > X TR</h4>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Ngưỡng Tiền Dự Phòng (VNĐ):</label>
-                <input type="number" id="rs_hsDpbtAmount" class="p-input" value="${cachedReportRules.hsDpbtAmount}" style="width:200px; padding:10px; border-radius:10px;">
-                <br><br>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main);">Các trạng thái áp dụng xét DPBT (Chưa hoàn thành):</label>
-                ${buildCheckboxList('rs_hsDpbtStatuses', cachedReportRules.hsDpbtStatuses)}
+                <h4 style="margin:0 0 16px 0; font-size:22px; color:var(--text-main); font-weight:900;">Cột: HS DPBT > X TRIỆU</h4>
+                <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
+                  <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm các hồ sơ CHƯA HOÀN THÀNH có mức Dự phòng bồi thường vượt quá con số chỉ định.</p>
+                </div>
+                
+                <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">1. Ngưỡng Tiền Dự Phòng (VNĐ):</label>
+                <input type="text" id="rs_hsDpbtAmount" class="p-input" value="${formatCurrencyInputNumber(cachedReportRules.hsDpbtAmount)}" oninput="this.value = formatCurrencyInputNumber(this.value.replace(/[^0-9]/g, ''))" style="width:300px; padding:12px 16px; border-radius:12px; font-size:18px; font-weight:900; color:var(--primary);">
+                
+                <div style="margin-top: 24px;">
+                  <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">2. Trạng thái áp dụng (Các trạng thái chưa hoàn thành):</label>
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chỉ đếm Dự phòng cho các hồ sơ đang ở trạng thái này.</p>
+                  ${buildCheckboxList('rs_hsDpbtStatuses', cachedReportRules.hsDpbtStatuses)}
+                </div>
               </div>
 
               <!-- 7: Tien BQ -->
               <div class="rs-content" id="rs_tab_7" style="display:none;">
-                <h4 style="margin:0 0 12px 0; color:var(--text-main);">Cột: SỐ TIỀN BÌNH QUÂN DƯỚI X TR</h4>
-                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Ngưỡng Số Tiền BQ (VNĐ):</label>
-                <input type="number" id="rs_avgAmount" class="p-input" value="${cachedReportRules.avgAmount}" style="width:200px; padding:10px; border-radius:10px;">
+                <h4 style="margin:0 0 16px 0; font-size:22px; color:var(--text-main); font-weight:900;">Cột: SỐ TIỀN BÌNH QUÂN DƯỚI X TRIỆU</h4>
+                <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
+                  <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Tính trung bình Số Tiền Bồi Thường của các hồ sơ ĐÃ DUYỆT có mức duyệt thấp hơn ngưỡng này.</p>
+                </div>
+                
+                <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">Ngưỡng Số Tiền BQ tối đa (VNĐ):</label>
+                <input type="text" id="rs_avgAmount" class="p-input" value="${formatCurrencyInputNumber(cachedReportRules.avgAmount)}" oninput="this.value = formatCurrencyInputNumber(this.value.replace(/[^0-9]/g, ''))" style="width:300px; padding:12px 16px; border-radius:12px; font-size:18px; font-weight:900; color:var(--primary);">
               </div>
 
             </div>
           </div>
-          <div style="padding:20px 32px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:12px; background:var(--surface-strong);">
-            <button onclick="document.getElementById('reportSettingsModal').remove()" class="btn-secondary" style="padding:10px 24px; border-radius:12px; border:none; background:transparent; font-weight:700; color:var(--text-main); cursor:pointer;">Hủy</button>
-            <button onclick="saveReportSettings()" class="btn-primary" style="padding:10px 28px; border-radius:12px; border:none; background:var(--primary); color:#000; font-weight:800; cursor:pointer; box-shadow:0 8px 20px rgba(59,130,246,0.3);">Lưu tất cả cài đặt</button>
+          <div style="padding:24px 40px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:16px; background:var(--surface-strong);">
+            <button onclick="document.getElementById('reportSettingsModal').remove()" style="padding:12px 28px; border-radius:14px; border:none; background:transparent; font-weight:800; font-size:15px; color:var(--text-main); cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='transparent'">Đóng</button>
+            <button onclick="saveReportSettings()" class="btn-primary" style="padding:12px 36px; border-radius:14px; border:none; background:linear-gradient(135deg, var(--primary) 0%, #d8b46d 100%); color:#000; font-weight:900; font-size:15px; cursor:pointer; box-shadow:0 10px 24px rgba(216,180,109,0.4); transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 28px rgba(216,180,109,0.5)'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 10px 24px rgba(216,180,109,0.4)'">Lưu Tất Cả Cài Đặt</button>
           </div>
         </div>
       `;
@@ -13203,11 +13248,13 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       window.switchRsTab = function(idx) {
         document.querySelectorAll('.rs-tab').forEach((el, i) => {
           if (i === idx) {
-            el.style.background = 'var(--primary)';
+            el.style.background = 'linear-gradient(135deg, var(--primary) 0%, #d8b46d 100%)';
             el.style.color = '#000';
+            el.style.boxShadow = '0 4px 12px rgba(216,180,109,0.3)';
           } else {
             el.style.background = 'transparent';
             el.style.color = 'var(--text-main)';
+            el.style.boxShadow = 'none';
           }
         });
         document.querySelectorAll('.rs-content').forEach((el, i) => {
@@ -13226,11 +13273,11 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         carplaKeywords: document.getElementById('rs_carplaKeywords').value.trim(),
         tndsKeywords: document.getElementById('rs_tndsKeywords').value.trim(),
         unpaidStatuses: getChecked('rs_unpaidStatuses_chk'),
-        hsTonDays: parseInt(document.getElementById('rs_hsTonDays').value, 10) || 30,
+        hsTonDays: parseInt(document.getElementById('rs_hsTonDays').value.replace(/[^0-9]/g, ''), 10) || 30,
         onlyApprovedStatuses: getChecked('rs_onlyApprovedStatuses_chk'),
-        hsDpbtAmount: parseInt(document.getElementById('rs_hsDpbtAmount').value, 10) || 50000000,
+        hsDpbtAmount: parseInt(document.getElementById('rs_hsDpbtAmount').value.replace(/[^0-9]/g, ''), 10) || 50000000,
         hsDpbtStatuses: getChecked('rs_hsDpbtStatuses_chk'),
-        avgAmount: parseInt(document.getElementById('rs_avgAmount').value, 10) || 10000000
+        avgAmount: parseInt(document.getElementById('rs_avgAmount').value.replace(/[^0-9]/g, ''), 10) || 10000000
       };
       
       const btn = document.querySelector('#reportSettingsModal .btn-primary');
