@@ -12795,7 +12795,7 @@ function formatDateDisplay(val) {
     let activeGarageChartTopN = 20;
     let activeGarageChartType = 'bar';
     let garageLossChartInstance = null;
-    let activeGdvKpiChartType = 'bar';
+    let activeGdvKpiChartType = 'line';
     let gdvKpiChartInstance = null;
     let cachedCurrentGdvKpiRows = [];
     let carBrandChartInstance = null;
@@ -14722,9 +14722,9 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                     <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     Tải ảnh
                   </button>
-                  <button type="button" onclick="activeGdvKpiChartType='bar'; renderGdvMonthlyReportPage();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeGdvKpiChartType === 'bar' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Cột</button>
-                  <button type="button" onclick="activeGdvKpiChartType='line'; renderGdvMonthlyReportPage();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeGdvKpiChartType === 'line' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Đường</button>
-                  <button type="button" onclick="activeGdvKpiChartType='pie'; renderGdvMonthlyReportPage();" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeGdvKpiChartType === 'pie' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Tròn</button>
+                  <button type="button" onclick="activeGdvKpiChartType='line'; renderGdvMonthlyReportPage();" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 12px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; ${activeGdvKpiChartType === 'line' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Đường</button>
+                  <button type="button" onclick="activeGdvKpiChartType='bar'; renderGdvMonthlyReportPage();" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 12px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; ${activeGdvKpiChartType === 'bar' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Cột</button>
+                  <button type="button" onclick="activeGdvKpiChartType='pie'; renderGdvMonthlyReportPage();" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 12px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; ${activeGdvKpiChartType === 'pie' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Tròn</button>
                 </div>
               </div>
 
@@ -19546,20 +19546,37 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           }
         ];
       } else if (actualType === 'line') {
+        const openGradient = (function() {
+          const g = ctx.createLinearGradient(0, 20, 0, 380);
+          g.addColorStop(0, isDark ? 'rgba(216, 180, 109, 0.25)' : 'rgba(216, 180, 109, 0.2)');
+          g.addColorStop(1, isDark ? 'rgba(216, 180, 109, 0.01)' : 'rgba(216, 180, 109, 0.01)');
+          return g;
+        })();
+
+        const duyetGradient = (function() {
+          const g = ctx.createLinearGradient(0, 20, 0, 380);
+          g.addColorStop(0, isDark ? 'rgba(16, 185, 129, 0.28)' : 'rgba(16, 185, 129, 0.22)');
+          g.addColorStop(1, isDark ? 'rgba(16, 185, 129, 0.01)' : 'rgba(16, 185, 129, 0.01)');
+          return g;
+        })();
+
         datasets = [
           {
             type: 'line',
             label: 'Số HS tiếp nhận',
             data: openData,
             borderColor: '#d8b46d',
-            backgroundColor: isDark ? 'rgba(216, 180, 109, 0.12)' : 'rgba(216, 180, 109, 0.08)',
-            borderWidth: 3,
-            tension: 0.35,
-            pointBackgroundColor: '#d8b46d',
-            pointBorderColor: surfaceColor,
-            pointBorderWidth: 2.5,
-            pointRadius: 5,
-            pointHoverRadius: 7,
+            backgroundColor: openGradient,
+            borderWidth: 3.5,
+            tension: 0.36,
+            pointBackgroundColor: surfaceColor,
+            pointBorderColor: '#d8b46d',
+            pointBorderWidth: 3,
+            pointRadius: 6,
+            pointHoverRadius: 8.5,
+            pointHoverBackgroundColor: '#d8b46d',
+            pointHoverBorderColor: '#ffffff',
+            pointHoverBorderWidth: 3,
             fill: true
           },
           {
@@ -19567,14 +19584,17 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             label: 'Đã duyệt HSBT (KPI quy đổi)',
             data: duyetData,
             borderColor: '#10b981',
-            backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.08)',
-            borderWidth: 3,
-            tension: 0.35,
-            pointBackgroundColor: '#10b981',
-            pointBorderColor: surfaceColor,
-            pointBorderWidth: 2.5,
-            pointRadius: 5,
-            pointHoverRadius: 7,
+            backgroundColor: duyetGradient,
+            borderWidth: 3.5,
+            tension: 0.36,
+            pointBackgroundColor: surfaceColor,
+            pointBorderColor: '#10b981',
+            pointBorderWidth: 3,
+            pointRadius: 6,
+            pointHoverRadius: 8.5,
+            pointHoverBackgroundColor: '#10b981',
+            pointHoverBorderColor: '#ffffff',
+            pointHoverBorderWidth: 3,
             fill: true
           },
           {
@@ -19658,26 +19678,64 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             c.fillText('KPI: 70 CA/THÁNG', badgeX + badgeW / 2, y70);
           }
 
-          // 2. Draw values above bars/points
-          c.font = "800 11px 'Plus Jakarta Sans', sans-serif";
-          c.textBaseline = 'bottom';
+          // 2. Draw values with smart vertical anti-collision
+          c.font = "850 11px 'Plus Jakarta Sans', sans-serif";
           c.textAlign = 'center';
 
-          chart.data.datasets.forEach((ds, dsIdx) => {
-            if (ds.label && ds.label.includes('70 ca')) return;
-            const meta = chart.getDatasetMeta(dsIdx);
-            if (!meta || meta.hidden) return;
+          if (actualType === 'line') {
+            const openMeta = chart.getDatasetMeta(0);
+            const duyetMeta = chart.getDatasetMeta(1);
 
-            meta.data.forEach((el, idx) => {
-              const val = ds.data[idx];
-              if (val === undefined || val === null) return;
-              
-              const x = el.x;
-              const y = el.y - 4;
-              c.fillStyle = dsIdx === 0 ? (isDarkTheme ? '#d8b46d' : '#b89347') : '#10b981';
-              c.fillText(val + ' ca', x, y);
+            list.forEach((item, idx) => {
+              const openEl = openMeta && openMeta.data[idx];
+              const duyetEl = duyetMeta && duyetMeta.data[idx];
+              const openVal = openData[idx];
+              const duyetVal = duyetData[idx];
+
+              if (!openEl || !duyetEl) return;
+
+              let openY = openEl.y - 12;
+              let duyetY = duyetEl.y - 12;
+
+              // If points are close vertically (within 24px)
+              if (Math.abs(openEl.y - duyetEl.y) < 24) {
+                if (openEl.y <= duyetEl.y) {
+                  openY = openEl.y - 12;
+                  duyetY = duyetEl.y + 20;
+                } else {
+                  duyetY = duyetEl.y - 12;
+                  openY = openEl.y + 20;
+                }
+              }
+
+              // Draw Open Val Label
+              c.textBaseline = openY < openEl.y ? 'bottom' : 'top';
+              c.fillStyle = isDarkTheme ? '#d8b46d' : '#b89347';
+              c.fillText(openVal + ' ca', openEl.x, openY);
+
+              // Draw Duyet Val Label
+              c.textBaseline = duyetY < duyetEl.y ? 'bottom' : 'top';
+              c.fillStyle = '#10b981';
+              c.fillText(duyetVal + ' ca', duyetEl.x, duyetY);
             });
-          });
+          } else {
+            c.textBaseline = 'bottom';
+            chart.data.datasets.forEach((ds, dsIdx) => {
+              if (ds.label && ds.label.includes('70 ca')) return;
+              const meta = chart.getDatasetMeta(dsIdx);
+              if (!meta || meta.hidden) return;
+
+              meta.data.forEach((el, idx) => {
+                const val = ds.data[idx];
+                if (val === undefined || val === null) return;
+                
+                const x = el.x;
+                const y = el.y - 4;
+                c.fillStyle = dsIdx === 0 ? (isDarkTheme ? '#d8b46d' : '#b89347') : '#10b981';
+                c.fillText(val + ' ca', x, y);
+              });
+            });
+          }
 
           c.restore();
         }
