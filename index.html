@@ -13054,7 +13054,112 @@ function formatDateDisplay(val) {
     };
 
 const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyReportPage(targetContainer); };
-function renderGdvMonthlyReportPage(targetContainer) {
+
+    function openReportSettingsModal() {
+      let m = document.getElementById('reportSettingsModal');
+      if (m) m.remove();
+      m = document.createElement('div');
+      m.id = 'reportSettingsModal';
+      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); backdrop-filter:blur(8px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
+      m.innerHTML = `
+        <div style="background:var(--surface); border-radius:24px; width:650px; max-width:98vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden;">
+          <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background: var(--surface);">
+            <div>
+              <h3 style="margin:0 0 4px 0; font-size:20px; font-weight:900; color: var(--text-main);">Cài đặt logic Báo cáo</h3>
+              <p style="margin:0; font-size:13px; color:var(--text-soft);">Tùy chỉnh các từ khóa và ngưỡng dữ liệu để báo cáo phân loại hồ sơ.</p>
+            </div>
+            <button onclick="document.getElementById('reportSettingsModal').remove()" style="background:var(--surface-strong); border:1px solid var(--border); color:var(--text-soft); cursor:pointer; width:36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--surface-strong)'; this.style.color='var(--text-soft)'">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div style="padding:24px 32px; overflow-y:auto; flex-grow:1; display:flex; flex-direction:column; gap:20px;">
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+              <div>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Nhận diện HS TNDS (Cột Tồn TNDS)</label>
+                <textarea id="rs_tndsKeywords" class="p-input" style="width:100%; height:60px; padding:10px; border-radius:10px; font-size:13px;" placeholder="Cách nhau bởi dấu phẩy, VD: tnds, trách nhiệm dân sự">${cachedReportRules.tndsKeywords}</textarea>
+                <div style="font-size:11px; color:var(--text-soft); margin-top:4px;">Từ khóa tìm trong Loại hồ sơ, Nghiệp vụ...</div>
+              </div>
+              <div>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Trạng thái loại trừ (Cột Tồn TNDS)</label>
+                <textarea id="rs_unpaidStatuses" class="p-input" style="width:100%; height:60px; padding:10px; border-radius:10px; font-size:13px;" placeholder="Trạng thái đã hoàn thành...">${cachedReportRules.unpaidStatuses}</textarea>
+                <div style="font-size:11px; color:var(--text-soft); margin-top:4px;">Không tính Tồn nếu trạng thái thuộc DS này.</div>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+              <div>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Trạng thái Đã duyệt (Đã duyệt HSBT)</label>
+                <textarea id="rs_approvedStatuses" class="p-input" style="width:100%; height:60px; padding:10px; border-radius:10px; font-size:13px;">${cachedReportRules.approvedStatuses}</textarea>
+              </div>
+              <div>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Nhận diện gara Carpla (Cột Carpla)</label>
+                <textarea id="rs_carplaKeywords" class="p-input" style="width:100%; height:60px; padding:10px; border-radius:10px; font-size:13px;">${cachedReportRules.carplaKeywords}</textarea>
+              </div>
+            </div>
+
+            <div>
+              <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Trạng thái chờ duyệt (Tính HS Tồn > X ngày)</label>
+              <textarea id="rs_onlyApprovedStatuses" class="p-input" style="width:100%; height:50px; padding:10px; border-radius:10px; font-size:13px;">${cachedReportRules.onlyApprovedStatuses}</textarea>
+              <div style="font-size:11px; color:var(--text-soft); margin-top:4px;">Hồ sơ có trạng thái này và quá X ngày sẽ tính là Tồn > X ngày.</div>
+            </div>
+
+            <hr style="border:0; border-top:1px dashed var(--border); margin:4px 0;">
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px;">
+              <div>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Ngưỡng Tồn (ngày)</label>
+                <input type="number" id="rs_hsTonDays" class="p-input" value="${cachedReportRules.hsTonDays}" style="width:100%; padding:10px; border-radius:10px;">
+              </div>
+              <div>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Ngưỡng DPBT (VNĐ)</label>
+                <input type="number" id="rs_hsDpbtAmount" class="p-input" value="${cachedReportRules.hsDpbtAmount}" style="width:100%; padding:10px; border-radius:10px;">
+              </div>
+              <div>
+                <label style="display:block; font-size:13px; font-weight:700; color:var(--text-main); margin-bottom:6px;">Tiền BQ dưới (VNĐ)</label>
+                <input type="number" id="rs_avgAmount" class="p-input" value="${cachedReportRules.avgAmount}" style="width:100%; padding:10px; border-radius:10px;">
+              </div>
+            </div>
+
+          </div>
+          <div style="padding:20px 32px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:12px; background:var(--surface-strong);">
+            <button onclick="document.getElementById('reportSettingsModal').remove()" class="btn-secondary" style="padding:10px 24px; border-radius:12px; border:none; background:transparent; font-weight:700; color:var(--text-main); cursor:pointer;">Hủy</button>
+            <button onclick="saveReportSettings()" class="btn-primary" style="padding:10px 28px; border-radius:12px; border:none; background:var(--primary); color:#000; font-weight:800; cursor:pointer; box-shadow:0 8px 20px rgba(59,130,246,0.3);">Lưu cấu hình</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(m);
+    }
+
+    async function saveReportSettings() {
+      const data = {
+        tndsKeywords: document.getElementById('rs_tndsKeywords').value.trim(),
+        unpaidStatuses: document.getElementById('rs_unpaidStatuses').value.trim(),
+        approvedStatuses: document.getElementById('rs_approvedStatuses').value.trim(),
+        onlyApprovedStatuses: document.getElementById('rs_onlyApprovedStatuses').value.trim(),
+        hsTonDays: parseInt(document.getElementById('rs_hsTonDays').value, 10) || 30,
+        hsDpbtAmount: parseInt(document.getElementById('rs_hsDpbtAmount').value, 10) || 50000000,
+        avgAmount: parseInt(document.getElementById('rs_avgAmount').value, 10) || 10000000,
+        carplaKeywords: document.getElementById('rs_carplaKeywords').value.trim()
+      };
+      
+      const btn = document.querySelector('#reportSettingsModal .btn-primary');
+      if(btn) btn.innerHTML = 'Đang lưu...';
+      
+      try {
+        await dbNodeInstance.ref('settings/reportRules').set(data);
+        triggerToast('Lưu cấu hình báo cáo thành công', 'success');
+        document.getElementById('reportSettingsModal').remove();
+        if (document.getElementById('weekly-report') && document.getElementById('weekly-report').classList.contains('active')) {
+          renderGdvMonthlyReportPage(document.getElementById('weekly-report'));
+        }
+      } catch (err) {
+        triggerToast('Lỗi khi lưu cấu hình: ' + err.message, 'error');
+        if(btn) btn.innerHTML = 'Lưu cấu hình';
+      }
+    }
+
+    function renderGdvMonthlyReportPage(targetContainer) {
 
       const container = targetContainer || document.getElementById('tabContentContainer');
       if (!container) return;
