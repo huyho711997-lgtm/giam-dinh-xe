@@ -3283,7 +3283,7 @@
     let cachedReportRules = {
       phatSinhExcludes: 'tu_choi',
       tndsKeywords: 'tnds,trách nhiệm dân sự',
-      unpaidStatuses: 'da_thanh_toan,đã thanh toán,da_hoan_thanh,đã hoàn thành,tu_choi',
+      unpaidStatuses: 'da_thanh_toan,da thanh toán,da_hoan_thanh,da hoàn thành,tu_choi',
       approvedStatuses: 'da_duyet_hsbt,cho_duyet_dntt,cho_kt_duyet,kt_duyet,da_thanh_toan',
       chuyenDnttStatuses: '',
       hsDpbtStatuses: 'moi,cho_giam_dinh_ht,da_giam_dinh_ht,cho_gdct,da_gdct,cho_duyet_pasc',
@@ -3291,7 +3291,15 @@
       hsTonDays: 30,
       hsDpbtAmount: 50000000,
       avgAmount: 10000000,
-      carplaKeywords: 'carpla'
+      carplaKeywords: 'carpla',
+      phatSinhDateField: 'ngayMoHs',
+      daDuyetDateField: 'toTrinhNgayDuyet',
+      chuyenDnttDateField: 'ngayNhanDuHoSo',
+      carplaDateField: 'toTrinhNgayDuyet',
+      tndsTonDateField: 'none',
+      hsTonDateField: 'ngayMoHs',
+      hsDpbtDateField: 'none',
+      avgAmountDateField: 'toTrinhNgayDuyet'
     };
 let cachedCasesPayload = null;
     let cachedFieldReimbursementsPayload = null;
@@ -13109,6 +13117,23 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         return html;
       };
 
+      const buildDateFieldSelect = (id, currentVal) => {
+        const options = [
+          { val: 'ngayMoHs', label: 'Ngày mở HS / Phân công' },
+          { val: 'toTrinhNgayDuyet', label: 'Ngày duyệt Tờ trình / HSBT' },
+          { val: 'ngayNhanDuHoSo', label: 'Ngày nhận đủ hồ sơ (Chuyển ĐNTT)' },
+          { val: 'ngayThanhToan', label: 'Ngày Kế toán Thanh toán' },
+          { val: 'ngayVTT', label: 'Ngày xảy ra tổn thất' },
+          { val: 'none', label: 'Không lọc (Tính toàn thời gian)' }
+        ];
+        let html = '<select id="' + id + '" class="p-input" style="width:100%; max-width:400px; padding:12px 16px; border-radius:12px; font-size:14px; font-weight:700; background:var(--input-bg); color:var(--text-main); border:1px solid var(--border); outline:none; cursor:pointer;">';
+        options.forEach(opt => {
+          const selected = currentVal === opt.val ? 'selected' : '';
+          html += '<option value="' + opt.val + '" ' + selected + '>' + opt.label + '</option>';
+        });
+        html += '</select>';
+        return html;
+      };
       m.innerHTML = `
         <div style="background:var(--surface); border-radius:24px; width:92vw; max-width:1400px; height:92vh; display:flex; flex-direction:column; box-shadow:0 30px 100px rgba(0,0,0,0.4); border:1px solid var(--border-strong); overflow:hidden;">
           <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background: linear-gradient(135deg, var(--surface) 0%, var(--surface-strong) 100%);">
@@ -13146,6 +13171,11 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                 <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
                   <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm mọi hồ sơ có "Ngày mở HS" rơi vào khoảng thời gian lọc của báo cáo.</p>
                 </div>
+                <div style="margin-top:24px; margin-bottom:24px;">
+                  <label style="display:block; font-size:15px; font-weight:850; color:var(--primary); margin-bottom:8px;">Trường Ngày xét (Date Field):</label>
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chọn trường ngày sẽ được dùng để xét xem hồ sơ có nằm trong khoảng thời gian lọc hay không.</p>
+                  ${buildDateFieldSelect('rs_phatSinhDateField', cachedReportRules.phatSinhDateField)}
+                </div>
                 <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">Loại trừ các trạng thái sau (Không tính vào Phát Sinh):</label>
                 <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Tích chọn các trạng thái mà bạn KHÔNG MUỐN đếm vào cột này (Ví dụ: Từ chối bồi thường).</p>
                 ${buildCheckboxList('rs_phatSinhExcludes', cachedReportRules.phatSinhExcludes)}
@@ -13156,6 +13186,11 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                 <h4 style="margin:0 0 16px 0; font-size:22px; color:var(--text-main); font-weight:900;">Cột: ĐÃ DUYỆT HSBT</h4>
                 <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
                   <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm các hồ sơ nằm trong thời gian lọc VÀ đạt được trạng thái Đã duyệt.</p>
+                </div>
+                <div style="margin-top:24px; margin-bottom:24px;">
+                  <label style="display:block; font-size:15px; font-weight:850; color:var(--primary); margin-bottom:8px;">Trường Ngày xét (Date Field):</label>
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chọn trường ngày sẽ được dùng để xét xem hồ sơ có nằm trong khoảng thời gian lọc hay không.</p>
+                  ${buildDateFieldSelect('rs_daDuyetDateField', cachedReportRules.daDuyetDateField)}
                 </div>
                 <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">Các trạng thái được tính là ĐÃ DUYỆT:</label>
                 <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chỉ những hồ sơ có trạng thái tích dưới đây mới được đếm vào cột này.</p>
@@ -13168,6 +13203,11 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                 <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
                   <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm mọi hồ sơ có "Ngày nhận đủ HS" nằm trong khoảng thời gian lọc.</p>
                 </div>
+                <div style="margin-top:24px; margin-bottom:24px;">
+                  <label style="display:block; font-size:15px; font-weight:850; color:var(--primary); margin-bottom:8px;">Trường Ngày xét (Date Field):</label>
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chọn trường ngày sẽ được dùng để xét xem hồ sơ có nằm trong khoảng thời gian lọc hay không.</p>
+                  ${buildDateFieldSelect('rs_chuyenDnttDateField', cachedReportRules.chuyenDnttDateField)}
+                </div>
                 <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">Bộ lọc Trạng thái (Tùy chọn):</label>
                 <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Nếu muốn CHỈ đếm những hồ sơ đã chuyển ĐNTT, hãy tích chọn bên dưới. <strong>Để trống = Không lọc theo trạng thái.</strong></p>
                 ${buildCheckboxList('rs_chuyenDnttStatuses', cachedReportRules.chuyenDnttStatuses)}
@@ -13178,6 +13218,11 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                 <h4 style="margin:0 0 16px 0; font-size:22px; color:var(--text-main); font-weight:900;">Cột: LƯỢNG XE / DOANH SỐ CARPLA</h4>
                 <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
                   <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm các hồ sơ có Tên Gara Viết Tắt hoặc Ghi Chú chứa từ khóa bên dưới.</p>
+                </div>
+                <div style="margin-top:24px; margin-bottom:24px;">
+                  <label style="display:block; font-size:15px; font-weight:850; color:var(--primary); margin-bottom:8px;">Trường Ngày xét (Date Field):</label>
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chọn trường ngày sẽ được dùng để xét xem hồ sơ có nằm trong khoảng thời gian lọc hay không.</p>
+                  ${buildDateFieldSelect('rs_carplaDateField', cachedReportRules.carplaDateField)}
                 </div>
                 <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">Từ khóa nhận diện Gara Carpla:</label>
                 <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Các từ khóa cách nhau bởi dấu phẩy.</p>
@@ -13191,6 +13236,11 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                   <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm TOÀN THỜI GIAN các hồ sơ chứa từ khóa TNDS và KHÔNG nằm trong nhóm trạng thái loại trừ (Đã kết thúc).</p>
                 </div>
                 
+                <div style="margin-top:24px; margin-bottom:24px;">
+                  <label style="display:block; font-size:15px; font-weight:850; color:var(--primary); margin-bottom:8px;">Trường Ngày xét (Date Field):</label>
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chọn trường ngày sẽ được dùng để xét xem hồ sơ có nằm trong khoảng thời gian lọc hay không.</p>
+                  ${buildDateFieldSelect('rs_tndsTonDateField', cachedReportRules.tndsTonDateField)}
+                </div>
                 <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">1. Từ khóa nhận diện HS TNDS:</label>
                 <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Hệ thống sẽ tìm từ khóa này trong Loại hồ sơ, Nhóm Bồi thường, Nghiệp vụ, v.v...</p>
                 <textarea id="rs_tndsKeywords" class="p-input" style="width:100%; height:80px; padding:14px; border-radius:12px; font-size:15px; font-weight:600; font-family:var(--font-family);" placeholder="VD: tnds, trách nhiệm dân sự">${cachedReportRules.tndsKeywords}</textarea>
@@ -13209,6 +13259,11 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                   <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm các hồ sơ đang treo ở một trạng thái cụ thể quá số ngày quy định (tính từ Ngày mở HS).</p>
                 </div>
                 
+                <div style="margin-top:24px; margin-bottom:24px;">
+                  <label style="display:block; font-size:15px; font-weight:850; color:var(--primary); margin-bottom:8px;">Trường Ngày xét (Date Field):</label>
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chọn trường ngày sẽ được dùng để xét xem hồ sơ có nằm trong khoảng thời gian lọc hay không.</p>
+                  ${buildDateFieldSelect('rs_hsTonDateField', cachedReportRules.hsTonDateField)}
+                </div>
                 <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">1. Ngưỡng số ngày Tồn:</label>
                 <input type="number" id="rs_hsTonDays" class="p-input" value="${cachedReportRules.hsTonDays}" style="width:150px; padding:12px 16px; border-radius:12px; font-size:16px; font-weight:800;">
                 
@@ -13226,6 +13281,11 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                   <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm các hồ sơ CHƯA HOÀN THÀNH có mức Dự phòng bồi thường vượt quá con số chỉ định.</p>
                 </div>
                 
+                <div style="margin-top:24px; margin-bottom:24px;">
+                  <label style="display:block; font-size:15px; font-weight:850; color:var(--primary); margin-bottom:8px;">Trường Ngày xét (Date Field):</label>
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chọn trường ngày sẽ được dùng để xét xem hồ sơ có nằm trong khoảng thời gian lọc hay không.</p>
+                  ${buildDateFieldSelect('rs_hsDpbtDateField', cachedReportRules.hsDpbtDateField)}
+                </div>
                 <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">1. Ngưỡng Tiền Dự Phòng (VNĐ):</label>
                 <input type="text" id="rs_hsDpbtAmount" class="p-input" value="${formatCurrencyInputNumber(cachedReportRules.hsDpbtAmount)}" oninput="this.value = formatCurrencyInputNumber(this.value.replace(/[^0-9]/g, ''))" style="width:300px; padding:12px 16px; border-radius:12px; font-size:18px; font-weight:900; color:var(--primary);">
                 
@@ -13243,6 +13303,11 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                   <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Tính trung bình Số Tiền Bồi Thường của các hồ sơ ĐÃ DUYỆT có mức duyệt thấp hơn ngưỡng này.</p>
                 </div>
                 
+                <div style="margin-top:24px; margin-bottom:24px;">
+                  <label style="display:block; font-size:15px; font-weight:850; color:var(--primary); margin-bottom:8px;">Trường Ngày xét (Date Field):</label>
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chọn trường ngày sẽ được dùng để xét xem hồ sơ có nằm trong khoảng thời gian lọc hay không.</p>
+                  ${buildDateFieldSelect('rs_avgAmountDateField', cachedReportRules.avgAmountDateField)}
+                </div>
                 <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">Ngưỡng Số Tiền BQ tối đa (VNĐ):</label>
                 <input type="text" id="rs_avgAmount" class="p-input" value="${formatCurrencyInputNumber(cachedReportRules.avgAmount)}" oninput="this.value = formatCurrencyInputNumber(this.value.replace(/[^0-9]/g, ''))" style="width:300px; padding:12px 16px; border-radius:12px; font-size:18px; font-weight:900; color:var(--primary);">
               </div>
@@ -15028,6 +15093,23 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       };
     }
 
+        function getClaimDateMs(c, fieldName) {
+      if (fieldName === 'none') return -1;
+      let dateStr = c[fieldName];
+      if (fieldName === 'toTrinhNgayDuyet' && !dateStr) {
+        dateStr = c.ngayDuyetHsbt || c.pascNgayDuyet;
+      }
+      if (fieldName === 'ngayVTT' && !dateStr) {
+        dateStr = c.ngayTonThat || c.date;
+      }
+      if (dateStr && typeof dateStr === 'string' && dateStr !== '—' && dateStr !== '-') {
+        const dp = parseDateParts(dateStr);
+        if (dp && dp.year > 1970 && dp.month && dp.day) {
+          return new Date(dp.year, dp.month - 1, dp.day, 12, 0, 0).getTime();
+        }
+      }
+      return 0;
+    }
     function getClaimTimestamp(c) {
       const dateStr = c.ngayMoHs;
       if (dateStr && typeof dateStr === 'string' && dateStr !== '—') {
@@ -15066,98 +15148,102 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         }
 
         const item = gdvMap[gdvName];
-        const claimTime = getClaimTimestamp(c);
-        const isApproved = isDuyetHsbtApproved(c);
+        
+        const r = cachedReportRules;
+        const phatSinhMs = getClaimDateMs(c, r.phatSinhDateField || 'ngayMoHs');
+        const daDuyetMs = getClaimDateMs(c, r.daDuyetDateField || 'toTrinhNgayDuyet');
+        const chuyenDnttMs = getClaimDateMs(c, r.chuyenDnttDateField || 'ngayNhanDuHoSo');
+        const carplaMs = getClaimDateMs(c, r.carplaDateField || 'toTrinhNgayDuyet');
+        const tndsTonMs = getClaimDateMs(c, r.tndsTonDateField || 'none');
+        const hsTonMs = getClaimDateMs(c, r.hsTonDateField || 'ngayMoHs');
+        const hsDpbtMs = getClaimDateMs(c, r.hsDpbtDateField || 'none');
+        const avgAmountMs = getClaimDateMs(c, r.avgAmountDateField || 'toTrinhNgayDuyet');
 
-        // 1. TNDS TỒN LŨY KẾ: RUN ACROSS ALL TIME, UNPAID TNDS CLAIMS
-        if (isTndsClaim(c) && isUnpaidClaim(c)) {
+        const isPhatSinhPeriod = (phatSinhMs === -1) || (phatSinhMs >= startTime && phatSinhMs <= endTime);
+        const isDaDuyetPeriod = (daDuyetMs === -1) || (daDuyetMs >= startTime && daDuyetMs <= endTime);
+        const isChuyenDnttPeriod = (chuyenDnttMs === -1) || (chuyenDnttMs >= startTime && chuyenDnttMs <= endTime);
+        const isCarplaPeriod = (carplaMs === -1) || (carplaMs >= startTime && carplaMs <= endTime);
+        const isTndsTonPeriod = (tndsTonMs === -1) || (tndsTonMs >= startTime && tndsTonMs <= endTime);
+        const isHsTonPeriod = (hsTonMs === -1) || (hsTonMs >= startTime && hsTonMs <= endTime);
+        const isHsDpbtPeriod = (hsDpbtMs === -1) || (hsDpbtMs >= startTime && hsDpbtMs <= endTime);
+        const isAvgAmountPeriod = (avgAmountMs === -1) || (avgAmountMs >= startTime && avgAmountMs <= endTime);
+        const isCarplaMonthPeriod = (carplaMs === -1) || (carplaMs >= monthStartMs && carplaMs <= monthEndMs);
+
+        const isApproved = isDuyetHsbtApproved(c);
+        const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
+        const amtVal = parseInt(amtStr, 10) || 0;
+        const garaName = String(c.tenGaraVietTat || '').toLowerCase();
+
+        // 1. TNDS TỒN
+        if (isTndsTonPeriod && isTndsClaim(c) && isUnpaidClaim(c)) {
           item.tndsTonLuyKe++;
         }
 
-        // 2. HS TỒN > 30 NGÀY: CHỈ LẤY TRẠNG THÁI 'ĐÃ DUYỆT HSBT' VÀ TUỔI HỒ SƠ > 30 NGÀY
+        // 2. HS TỒN > X NGÀY
         const nowMs = Date.now();
-        if (isOnlyDaDuyetHsbt(c) && claimTime > 0 && (nowMs - claimTime > cachedReportRules.hsTonDays * 86400 * 1000)) {
+        if (isHsTonPeriod && isOnlyDaDuyetHsbt(c) && hsTonMs > 0 && (nowMs - hsTonMs > r.hsTonDays * 86400 * 1000)) {
           item.hsTonOver30Days++;
         }
 
-        // 2.5. HS DỰ PHÒNG > 50TR: DỰ PHÒNG BỒI THƯỜNG > 50TR Ở CÁC TRẠNG THÁI (MỚI, CHỜ GĐ HT, ĐÃ GĐ HT, CHỜ GĐCT, ĐÃ GĐCT, CHỜ DUYỆT PASC)
-        if (isHsDuPhongOver50M(c)) {
+        // 2.5 HS DPBT > X TR
+        if (isHsDpbtPeriod && isHsDuPhongOver50M(c)) {
           item.hsDuPhongOver50M++;
         }
 
-        // 3. CHUYỂN ĐNTT: COUNT CLAIMS OF GDV WHERE 'NGÀY NHẬN ĐỦ HỒ SƠ' (ngayNhanDuHoSo) FALLS WITHIN DATE RANGE [startTime ➔ endTime]
-        if (c.ngayNhanDuHoSo) {
-          const dpNhanDu = parseDateParts(c.ngayNhanDuHoSo);
-          if (dpNhanDu && dpNhanDu.year > 1970 && dpNhanDu.month && dpNhanDu.day) {
-            const nhanDuMs = new Date(dpNhanDu.year, dpNhanDu.month - 1, dpNhanDu.day, 12, 0, 0).getTime();
-            if (nhanDuMs >= startTime && nhanDuMs <= endTime) {
-              if(isChuyenDntt(c)) item.chuyenDntt++;
-            }
-          }
+        // 3. CHUYỂN ĐNTT
+        if (isChuyenDnttPeriod && isChuyenDntt(c)) {
+          item.chuyenDntt++;
         }
 
-        const garaName = String(c.tenGaraVietTat || '').toLowerCase();
-        const amtStr = String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, '');
-        const amtVal = parseInt(amtStr, 10) || 0;
-        
-        let hsbtTime = 0;
-        const duyetDateStr = c.toTrinhNgayDuyet || c.ngayDuyetHsbt;
-        if (duyetDateStr && typeof duyetDateStr === 'string' && duyetDateStr !== '-' && duyetDateStr.trim() !== '') {
-          const dp = parseDateParts(duyetDateStr);
-          if (dp && dp.year && dp.month && dp.day) {
-            hsbtTime = new Date(dp.year, dp.month - 1, dp.day, 12, 0, 0).getTime();
-          }
-        }
-
-        // DOANH SỐ CARPLA LŨY KẾ: CHỈ LẤY tenGaraVietTat, TRẠNG THÁI ĐÃ DUYỆT, NGÀY DUYỆT HSBT TRONG KHOẢNG THỜI GIAN USER CHỌN
-        if (garaName.includes('carpla') && isApproved) {
-          if (hsbtTime >= monthStartMs && hsbtTime <= monthEndMs) {
-            item.carplaCumulativeRevenue += amtVal;
-          }
-        }
-
-        // 4. PERIOD-SPECIFIC METRICS (FILTERED BY START & END DATE RANGE)
-        if (claimTime < startTime || claimTime > endTime) {
-          return;
-        }
-
-        if(isPhatSinh(c)) item.phatSinh++;
-
-        if (isApproved) {
-          item.daDuyetHsb++;
-
-          // SỐ TIỀN BÌNH QUÂN DƯỚI 10TR: FILTERED BY DATE RANGE, APPROVED STATUS ('Đã duyệt HSBT'), AND AMOUNT < 10TR
-          if (amtVal > 0 && amtVal < 10000000) {
-            item.sumAmtUnder10M += amtVal;
-            item.countUnder10M++;
-          }
-        }
-        
-        // CHƯA DUYỆT PASC: FILTER ONLY SPECIFIC 6 STATUSES
-        const stKeyCheck = String(c.trangThai || '').toLowerCase().trim();
-        const chuaDuyetPascKeys = ['moi', 'cho_giam_dinh_ht', 'da_giam_dinh_ht', 'cho_gdct', 'da_gdct', 'cho_duyet_pasc'];
-        const isChuaDuyetPascStatus = chuaDuyetPascKeys.includes(stKeyCheck) || 
-          stKeyCheck === 'mới' || 
-          stKeyCheck.includes('chờ giám định ht') || stKeyCheck.includes('cho giam dinh ht') ||
-          stKeyCheck.includes('đã giám định ht') || stKeyCheck.includes('da giam dinh ht') ||
-          stKeyCheck.includes('chờ gđct') || stKeyCheck.includes('cho gdct') ||
-          stKeyCheck.includes('đã gđct') || stKeyCheck.includes('da gdct') ||
-          stKeyCheck.includes('chờ duyệt pasc') || stKeyCheck.includes('cho duyet pasc');
-
-        if (isChuaDuyetPascStatus) {
-          item.chuaDuyetPasc++;
-        }
-
-        const st = String(c.trangThai || '').toLowerCase();
-        if (st.includes('hoa_don') || st.includes('hóa đơn') || st.includes('invoice')) {
-          item.tonHoaDon++;
-        }
-
-        if (garaName.includes('carpla')) {
+        // 4. CARPLA
+        if (isCarplaPeriod && garaName.includes('carpla')) {
           item.carplaCount++;
         }
-      });
+        
+        // 4.5 CARPLA REVENUE
+        if (isCarplaMonthPeriod && garaName.includes('carpla') && isApproved) {
+          item.carplaCumulativeRevenue += amtVal;
+        }
 
+        // 5. PHÁT SINH
+        if (isPhatSinhPeriod && isPhatSinh(c)) {
+          item.phatSinh++;
+        }
+
+        // 6. ĐÃ DUYỆT HSBT
+        if (isDaDuyetPeriod && isApproved) {
+          item.daDuyetHsb++;
+        }
+        
+        // 7. SỐ TIỀN BQ < X TR
+        if (isAvgAmountPeriod && isApproved && amtVal > 0 && amtVal < r.avgAmount) {
+          item.sumAmtUnder10M += amtVal;
+          item.countUnder10M++;
+        }
+        
+        // CHƯA DUYỆT PASC
+        const claimTimeForPasc = getClaimTimestamp(c);
+        if (claimTimeForPasc >= startTime && claimTimeForPasc <= endTime) {
+          const stKeyCheck = String(c.trangThai || '').toLowerCase().trim();
+          const chuaDuyetPascKeys = ['moi', 'cho_giam_dinh_ht', 'da_giam_dinh_ht', 'cho_gdct', 'da_gdct', 'cho_duyet_pasc'];
+          const isChuaDuyetPascStatus = chuaDuyetPascKeys.includes(stKeyCheck) || 
+            stKeyCheck === 'mới' || 
+            stKeyCheck.includes('chờ giám định ht') || stKeyCheck.includes('cho giam dinh ht') ||
+            stKeyCheck.includes('đã giám định ht') || stKeyCheck.includes('da giam dinh ht') ||
+            stKeyCheck.includes('chờ gđct') || stKeyCheck.includes('cho gdct') ||
+            stKeyCheck.includes('đã gđct') || stKeyCheck.includes('da gdct') ||
+            stKeyCheck.includes('chờ duyệt pasc') || stKeyCheck.includes('cho duyet pasc');
+
+          if (isChuaDuyetPascStatus) {
+            item.chuaDuyetPasc++;
+          }
+
+          const st = String(c.trangThai || '').toLowerCase();
+          if (st.includes('hoa_don') || st.includes('hóa đơn') || st.includes('invoice')) {
+            item.tonHoaDon++;
+          }
+        }
+      });
 
       let list = Object.values(gdvMap);
       if (activeSelectedGdvNames && activeSelectedGdvNames.length > 0) {
