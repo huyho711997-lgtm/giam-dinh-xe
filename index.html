@@ -15361,22 +15361,65 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       const imgFormat = format === 'jpg' || format === 'jpeg' ? 'jpeg' : 'png';
       const ext = imgFormat === 'jpeg' ? 'jpg' : 'png';
 
-      triggerToast(`Đang tạo ảnh Báo cáo Tuần (${ext.toUpperCase()})...`, 'info');
+      triggerToast(`Đang xuất ảnh Báo cáo chất lượng cao Ultra HD (4K)...`, 'info');
+
+      // Ẩn menu dropdown cột nếu đang mở trước khi chụp
+      const ddMenu = document.getElementById('ddWeeklyColsMenu');
+      if (ddMenu) ddMenu.style.display = 'none';
 
       html2canvas(cardEl, {
-        scale: 2,
+        scale: 3.5, // Ultra-HD 4K sharpness
         useCORS: true,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        imageTimeout: 0,
+        onclone: function(clonedDoc) {
+          const target = clonedDoc.getElementById('weeklyZoneReportCardContainer');
+          if (target) {
+            target.style.boxShadow = 'none';
+            target.style.transform = 'none';
+            target.style.webkitFontSmoothing = 'antialiased';
+            target.style.mozOsxFontSmoothing = 'grayscale';
+            target.style.textRendering = 'geometricPrecision';
+            target.style.backgroundColor = '#ffffff';
+          }
+        },
         ignoreElements: function(element) {
           return element.classList && element.classList.contains('hide-on-screenshot');
         }
       }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `Bao_Cao_Tuan_Truong_Zone_${Date.now()}.${ext}`;
-        link.href = canvas.toDataURL(`image/${imgFormat}`, 0.95);
-        link.click();
-        triggerToast(`Đã tải ảnh báo cáo thành công!`, 'success');
+        if (canvas.toBlob) {
+          canvas.toBlob(blob => {
+            if (!blob) {
+              const link = document.createElement('a');
+              link.download = `Bao_Cao_Tuan_Truong_Zone_${Date.now()}.${ext}`;
+              link.href = canvas.toDataURL(`image/${imgFormat}`, 1.0);
+              link.click();
+              triggerToast(`Đã tải ảnh báo cáo sắc nét thành công!`, 'success');
+              return;
+            }
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `Bao_Cao_Tuan_Truong_Zone_${Date.now()}.${ext}`;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => {
+              URL.revokeObjectURL(url);
+              link.remove();
+            }, 1000);
+            triggerToast(`Đã tải ảnh báo cáo sắc nét thành công!`, 'success');
+          }, `image/${imgFormat}`, 1.0);
+        } else {
+          const link = document.createElement('a');
+          link.download = `Bao_Cao_Tuan_Truong_Zone_${Date.now()}.${ext}`;
+          link.href = canvas.toDataURL(`image/${imgFormat}`, 1.0);
+          link.click();
+          triggerToast(`Đã tải ảnh báo cáo sắc nét thành công!`, 'success');
+        }
       }).catch(err => {
         console.error(err);
         triggerToast('Có lỗi xảy ra khi xuất ảnh báo cáo!', 'error');
@@ -15397,22 +15440,33 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       const imgFormat = format === 'jpg' || format === 'jpeg' ? 'jpeg' : 'png';
       const ext = imgFormat === 'jpeg' ? 'jpg' : 'png';
 
-      triggerToast(`Đang tạo ảnh Biểu đồ KPI (${ext.toUpperCase()})...`, 'info');
+      triggerToast(`Đang xuất ảnh Biểu đồ KPI Ultra HD (4K)...`, 'info');
 
       html2canvas(cardEl, {
-        scale: 2,
+        scale: 3.5,
         useCORS: true,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: function(clonedDoc) {
+          const target = clonedDoc.getElementById('kpiChartCardContainer');
+          if (target) {
+            target.style.boxShadow = 'none';
+            target.style.transform = 'none';
+            target.style.backgroundColor = '#ffffff';
+          }
+        },
         ignoreElements: function(element) {
           return element.classList && element.classList.contains('hide-on-screenshot');
         }
       }).then(canvas => {
         const link = document.createElement('a');
         link.download = `Bieu_Do_KPI_Luong_GDV_${Date.now()}.${ext}`;
-        link.href = canvas.toDataURL(`image/${imgFormat}`, 0.95);
+        link.href = canvas.toDataURL(`image/${imgFormat}`, 1.0);
         link.click();
-        triggerToast(`Đã tải ảnh biểu đồ thành công!`, 'success');
+        triggerToast(`Đã tải ảnh biểu đồ sắc nét thành công!`, 'success');
       }).catch(err => {
         console.error(err);
         triggerToast('Có lỗi xảy ra khi xuất ảnh biểu đồ!', 'error');
@@ -15433,22 +15487,33 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       const imgFormat = format === 'jpg' || format === 'jpeg' ? 'jpeg' : 'png';
       const ext = imgFormat === 'jpeg' ? 'jpg' : 'png';
 
-      triggerToast(`Đang tạo ảnh Biểu đồ Gara (${ext.toUpperCase()})...`, 'info');
+      triggerToast(`Đang xuất ảnh Biểu đồ Gara Ultra HD (4K)...`, 'info');
 
       html2canvas(cardEl, {
-        scale: 2,
+        scale: 3.5,
         useCORS: true,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: function(clonedDoc) {
+          const target = clonedDoc.getElementById('garageChartCardContainer');
+          if (target) {
+            target.style.boxShadow = 'none';
+            target.style.transform = 'none';
+            target.style.backgroundColor = '#ffffff';
+          }
+        },
         ignoreElements: function(element) {
           return element.classList && element.classList.contains('hide-on-screenshot');
         }
       }).then(canvas => {
         const link = document.createElement('a');
         link.download = `Bieu_Do_Boi_Thuong_Gara_${Date.now()}.${ext}`;
-        link.href = canvas.toDataURL(`image/${imgFormat}`, 0.95);
+        link.href = canvas.toDataURL(`image/${imgFormat}`, 1.0);
         link.click();
-        triggerToast(`Đã tải ảnh biểu đồ thành công!`, 'success');
+        triggerToast(`Đã tải ảnh biểu đồ sắc nét thành công!`, 'success');
       }).catch(err => {
         console.error(err);
         triggerToast('Có lỗi xảy ra khi xuất ảnh biểu đồ!', 'error');
@@ -20067,21 +20132,32 @@ const fullList = getCarBrandLossData();
         triggerToast('Thư viện tạo ảnh đang tải, vui lòng thử lại sau 2 giây...', 'warning');
         return;
       }
-      triggerToast(`Đang tạo ảnh Báo cáo...`, 'info');
+      triggerToast(`Đang xuất ảnh Báo cáo Đắk Lắk Ultra HD (4K)...`, 'info');
       html2canvas(cardEl, {
-        scale: 2,
+        scale: 3.5,
         useCORS: true,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: function(clonedDoc) {
+          const target = clonedDoc.getElementById('dakLakReserveReportCardContainer');
+          if (target) {
+            target.style.boxShadow = 'none';
+            target.style.transform = 'none';
+            target.style.backgroundColor = '#ffffff';
+          }
+        },
         ignoreElements: function(element) {
           return element.classList && element.classList.contains('hide-on-screenshot');
         }
       }).then(canvas => {
         const link = document.createElement('a');
         link.download = `Bao_Cao_Dak_Lak_Du_Phong_${Date.now()}.png`;
-        link.href = canvas.toDataURL('image/png');
+        link.href = canvas.toDataURL('image/png', 1.0);
         link.click();
-        triggerToast('Tải ảnh thành công!', 'success');
+        triggerToast('Tải ảnh báo cáo sắc nét thành công!', 'success');
       }).catch(err => {
         console.error(err);
         triggerToast('Lỗi khi tạo ảnh!', 'error');
@@ -20739,22 +20815,33 @@ const fullList = getCarBrandLossData();
       const imgFormat = format === 'jpg' || format === 'jpeg' ? 'jpeg' : 'png';
       const ext = imgFormat === 'jpeg' ? 'jpg' : 'png';
 
-      triggerToast(`Đang tạo ảnh Báo cáo Tồn (${ext.toUpperCase()})...`, 'info');
+      triggerToast(`Đang xuất ảnh Báo cáo Tồn Ultra HD (4K)...`, 'info');
 
       html2canvas(cardEl, {
-        scale: 2,
+        scale: 3.5,
         useCORS: true,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: function(clonedDoc) {
+          const target = clonedDoc.getElementById('tonChuaHoaDonReportCardContainer');
+          if (target) {
+            target.style.boxShadow = 'none';
+            target.style.transform = 'none';
+            target.style.backgroundColor = '#ffffff';
+          }
+        },
         ignoreElements: function(element) {
           return element.classList && element.classList.contains('hide-on-screenshot');
         }
       }).then(canvas => {
         const link = document.createElement('a');
         link.download = `Bao_Cao_Ho_So_Ton_Chua_Hoa_Don_${Date.now()}.${ext}`;
-        link.href = canvas.toDataURL(`image/${imgFormat}`, 0.95);
+        link.href = canvas.toDataURL(`image/${imgFormat}`, 1.0);
         link.click();
-        triggerToast('Đã tải ảnh báo cáo thành công!', 'success');
+        triggerToast('Đã tải ảnh báo cáo sắc nét thành công!', 'success');
       }).catch(err => {
         console.error(err);
         triggerToast('Có lỗi xảy ra khi xuất ảnh báo cáo!', 'error');
