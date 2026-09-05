@@ -12801,10 +12801,31 @@ function formatDateDisplay(val) {
     let activeReportClaimType = 'all';
     let activeDakLakMinReserve = 100000000;
     let activeOpenDropdownId = null;
-    let activeWeeklyReportCols = ['PHAT_SINH', 'DA_DUYET', 'CHUA_DUYET', 'CHUYEN_DNTT', 'LGN_CARPLA', 'TNDS_TON', 'HS_TON_30', 'HS_DPBT_50', 'AVG_10', 'REV_CARPLA'];
+    const DEFAULT_WEEKLY_REPORT_COLS = ['PHAT_SINH', 'DA_DUYET', 'CHUA_DUYET', 'CHUYEN_DNTT', 'LGN_CARPLA', 'TNDS_TON', 'HS_TON_30', 'HS_DPBT_50', 'AVG_10', 'REV_CARPLA'];
+    let activeWeeklyReportCols = (function() {
+      try {
+        const saved = localStorage.getItem('claimvision-weekly-report-cols');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {
+        console.error('Lỗi khi đọc cấu hình cột báo cáo tuần từ localStorage:', e);
+      }
+      return [...DEFAULT_WEEKLY_REPORT_COLS];
+    })();
 
-    
-    let activeTonChuaHdReportCols = ['SO_HSBT', 'BIEN_SO', 'CHU_XE', 'HANG_XE', 'CBXL', 'TIEN_DUYET', 'NGAY_NHAN_DU', 'NGAY_CHUYEN_KT', 'NGAY_DUYET', 'SO_NGAY_DUYET'];
+    const DEFAULT_TON_CHUA_HD_COLS = ['SO_HSBT', 'BIEN_SO', 'CHU_XE', 'HANG_XE', 'CBXL', 'TIEN_DUYET', 'NGAY_NHAN_DU', 'NGAY_CHUYEN_KT', 'NGAY_DUYET', 'SO_NGAY_DUYET'];
+    let activeTonChuaHdReportCols = (function() {
+      try {
+        const saved = localStorage.getItem('claimvision-ton-chua-hd-cols');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+      return [...DEFAULT_TON_CHUA_HD_COLS];
+    })();
 
     function toggleTonChuaHdReportCol(col, event) {
       if (event) event.stopPropagation();
@@ -12813,6 +12834,29 @@ function formatDateDisplay(val) {
       } else {
         activeTonChuaHdReportCols.push(col);
       }
+      try {
+        localStorage.setItem('claimvision-ton-chua-hd-cols', JSON.stringify(activeTonChuaHdReportCols));
+        const currentUser = firebase.auth().currentUser;
+        if (currentUser && dbNodeInstance) {
+          dbNodeInstance.ref(`users/${currentUser.uid}/settings/tonChuaHdCols`).set(activeTonChuaHdReportCols);
+        }
+      } catch (e) {}
+      renderGdvReportPage();
+    }
+
+    function setAllTonChuaHdReportCols(selectAll) {
+      if (selectAll) {
+        activeTonChuaHdReportCols = [...DEFAULT_TON_CHUA_HD_COLS];
+      } else {
+        activeTonChuaHdReportCols = [];
+      }
+      try {
+        localStorage.setItem('claimvision-ton-chua-hd-cols', JSON.stringify(activeTonChuaHdReportCols));
+        const currentUser = firebase.auth().currentUser;
+        if (currentUser && dbNodeInstance) {
+          dbNodeInstance.ref(`users/${currentUser.uid}/settings/tonChuaHdCols`).set(activeTonChuaHdReportCols);
+        }
+      } catch (e) {}
       renderGdvReportPage();
     }
 
@@ -12823,6 +12867,40 @@ function formatDateDisplay(val) {
       } else {
         activeWeeklyReportCols.push(col);
       }
+
+      // Lưu ngay vào localStorage
+      try {
+        localStorage.setItem('claimvision-weekly-report-cols', JSON.stringify(activeWeeklyReportCols));
+      } catch (e) {
+        console.error('Lỗi lưu cấu hình cột báo cáo tuần vào localStorage:', e);
+      }
+
+      // Đồng bộ vào tài khoản người dùng trên Firebase
+      try {
+        const currentUser = firebase.auth().currentUser;
+        if (currentUser && dbNodeInstance) {
+          dbNodeInstance.ref(`users/${currentUser.uid}/settings/weeklyReportCols`).set(activeWeeklyReportCols);
+        }
+      } catch (e) {
+        console.error('Lỗi đồng bộ cấu hình cột báo cáo tuần lên Firebase:', e);
+      }
+
+      renderGdvReportPage();
+    }
+
+    function setAllWeeklyReportCols(selectAll) {
+      if (selectAll) {
+        activeWeeklyReportCols = [...DEFAULT_WEEKLY_REPORT_COLS];
+      } else {
+        activeWeeklyReportCols = [];
+      }
+      try {
+        localStorage.setItem('claimvision-weekly-report-cols', JSON.stringify(activeWeeklyReportCols));
+        const currentUser = firebase.auth().currentUser;
+        if (currentUser && dbNodeInstance) {
+          dbNodeInstance.ref(`users/${currentUser.uid}/settings/weeklyReportCols`).set(activeWeeklyReportCols);
+        }
+      } catch (e) {}
       renderGdvReportPage();
     }
 
@@ -13468,6 +13546,22 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             
             // Sort by createdAt descending
             userFavoriteFilters.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            
+            // Đồng bộ cấu hình cột báo cáo đã lưu của tài khoản
+            dbNodeInstance.ref(`users/${uid}/settings/weeklyReportCols`).once('value', (cSnap) => {
+              if (cSnap.exists()) {
+                const savedCols = cSnap.val();
+                if (Array.isArray(savedCols) && savedCols.length > 0) {
+                  const currentStr = JSON.stringify(activeWeeklyReportCols);
+                  const newStr = JSON.stringify(savedCols);
+                  if (currentStr !== newStr) {
+                    activeWeeklyReportCols = savedCols;
+                    try { localStorage.setItem('claimvision-weekly-report-cols', newStr); } catch(e){}
+                    if (activeDashboardTab === 'gdv_report') renderGdvMonthlyReportPage(container);
+                  }
+                }
+              }
+            });
             
             if (!hasAppliedDefaultFilter) {
               const def = userFavoriteFilters.find(f => f.isDefault);
@@ -14899,7 +14993,13 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                 <span>Ẩn/Hiện cột</span>
               </button>
               <div id="ddWeeklyColsMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddWeeklyColsMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); left: 0; min-width: 240px; background: var(--surface); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; text-align: left;">
-                <div style="font-size: 11.5px; font-weight: 850; color: var(--text-soft); padding: 0 4px 8px 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px;">TÙY CHỌN HIỂN THỊ CỘT</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 4px 8px 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px;">
+                  <span style="font-size: 11.5px; font-weight: 850; color: var(--text-soft);">TÙY CHỌN HIỂN THỊ CỘT</span>
+                  <div style="display:flex; gap:6px;">
+                    <button type="button" onclick="setAllWeeklyReportCols(true)" style="border:none; background:rgba(16,185,129,0.12); color:#10b981; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; cursor:pointer;">Hiện tất cả</button>
+                    <button type="button" onclick="setAllWeeklyReportCols(false)" style="border:none; background:rgba(239,68,68,0.12); color:#ef4444; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; cursor:pointer;">Ẩn tất cả</button>
+                  </div>
+                </div>
                 ${[
                   { id: 'PHAT_SINH', label: 'Phát sinh' },
                   { id: 'DA_DUYET', label: 'Đã duyệt HSBT' },
@@ -20496,7 +20596,13 @@ const fullList = getCarBrandLossData();
                   <span>Ẩn/Hiện cột</span>
                 </button>
                 <div id="ddTonColsMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddTonColsMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); right: 0; min-width: 200px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; text-align: left; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);">
-                  <div style="font-size: 11.5px; font-weight: 850; color: var(--text-soft); padding: 0 4px 8px 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px;">TÙY CHỌN HIỂN THỊ CỘT</div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 4px 8px 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px;">
+                  <span style="font-size: 11.5px; font-weight: 850; color: var(--text-soft);">TÙY CHỌN HIỂN THỊ CỘT</span>
+                  <div style="display:flex; gap:6px;">
+                    <button type="button" onclick="setAllWeeklyReportCols(true)" style="border:none; background:rgba(16,185,129,0.12); color:#10b981; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; cursor:pointer;">Hiện tất cả</button>
+                    <button type="button" onclick="setAllWeeklyReportCols(false)" style="border:none; background:rgba(239,68,68,0.12); color:#ef4444; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; cursor:pointer;">Ẩn tất cả</button>
+                  </div>
+                </div>
                   ${[
                     { id: 'SO_HSBT', label: 'Số HSBT' },
                     { id: 'BIEN_SO', label: 'Biển số xe' },
