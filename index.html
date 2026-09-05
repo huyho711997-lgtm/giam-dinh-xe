@@ -22345,6 +22345,16 @@ const fullList = getCarBrandLossData();
           const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
           const garaName = (c.tenGaraVietTat || '—').trim();
           const bienSo = (c.bienSo || '—').trim();
+          const ownerName = typeof extractClaimOwnerName === 'function' ? extractClaimOwnerName(c) : (c.khachHang || c.tenChuXe || 'N/A');
+
+          // Ngày mở hồ sơ
+          const rawNgayMo = c.ngayMoHs || c['Ngày mở hồ sơ'] || c.ngayTonThat || '';
+          let ngayMoHsDisplay = formatDateDisplay(rawNgayMo);
+          if (ngayMoHsDisplay && ngayMoHsDisplay !== '—') {
+            ngayMoHsDisplay = ngayMoHsDisplay.split(' ')[0].trim();
+          } else if (rawNgayMo && rawNgayMo !== '—' && rawNgayMo !== 'null') {
+            ngayMoHsDisplay = String(rawNgayMo).split(' ')[0].trim();
+          }
 
           // Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)
           const rawDuyetDate = c.toTrinhNgayDuyet || c['Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)'] || '';
@@ -22355,10 +22365,12 @@ const fullList = getCarBrandLossData();
 
           if (normFilter) {
             const matchBs = bienSo.toLowerCase().includes(normFilter);
+            const matchOwner = ownerName.toLowerCase().includes(normFilter);
             const matchGdv = gdvName.toLowerCase().includes(normFilter);
             const matchGara = garaName.toLowerCase().includes(normFilter);
-            const matchDate = duyetDateDisplay.toLowerCase().includes(normFilter);
-            if (!matchBs && !matchGdv && !matchGara && !matchDate) return;
+            const matchNgayMo = (ngayMoHsDisplay || '').toLowerCase().includes(normFilter);
+            const matchDate = (duyetDateDisplay || '').toLowerCase().includes(normFilter);
+            if (!matchBs && !matchOwner && !matchGdv && !matchGara && !matchNgayMo && !matchDate) return;
           }
 
           visibleCount++;
@@ -22367,6 +22379,13 @@ const fullList = getCarBrandLossData();
             ? `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:6px; background:rgba(16,185,129,0.09); border:1px solid rgba(16,185,129,0.22); color:#10b981; font-size:12px; font-weight:750; white-space:nowrap;">
                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                  <span>${escapeHtmlOutput(duyetDateDisplay)}</span>
+               </span>`
+            : `<span style="color:var(--text-muted); font-size:12px; font-weight:600;">—</span>`;
+
+          const ngayMoCellHtml = (ngayMoHsDisplay && ngayMoHsDisplay !== '—')
+            ? `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; border-radius:6px; background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); color:#3b82f6; font-size:12px; font-weight:750; white-space:nowrap;">
+                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                 <span>${escapeHtmlOutput(ngayMoHsDisplay)}</span>
                </span>`
             : `<span style="color:var(--text-muted); font-size:12px; font-weight:600;">—</span>`;
 
@@ -22382,6 +22401,12 @@ const fullList = getCarBrandLossData();
                 </div>
               </td>
               <td style="padding:12px 16px;">
+                <div style="font-size:12.5px; font-weight:750; color:var(--text-main); display:inline-flex; align-items:center; gap:6px; white-space:nowrap;" title="${escapeAttributeData(ownerName)}">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" style="color:var(--primary); opacity:0.85; flex-shrink:0;"><circle cx="12" cy="7" r="4"></circle><path d="M5.5 21a8.38 8.38 0 0 1 13 0"></path></svg>
+                  <span>${escapeHtmlOutput(ownerName)}</span>
+                </div>
+              </td>
+              <td style="padding:12px 16px;">
                 <div style="font-size:12.5px; font-weight:700; color:var(--text-main); display:inline-flex; align-items:center; gap:6px; white-space:nowrap;">
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" style="color:var(--text-muted);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                   <span>${escapeHtmlOutput(gdvName)}</span>
@@ -22393,10 +22418,13 @@ const fullList = getCarBrandLossData();
                 </div>
               </td>
               <td style="padding:12px 16px; text-align:center;">
+                ${ngayMoCellHtml}
+              </td>
+              <td style="padding:12px 16px; text-align:center;">
                 ${dateCellHtml}
               </td>
               <td style="padding:12px 16px; text-align:right;">
-                <div style="font-size:13.5px; font-weight:850; color:#ca8a04; letter-spacing:-0.01em;">
+                <div style="font-size:13.5px; font-weight:850; color:#ca8a04; letter-spacing:-0.01em; white-space:nowrap;">
                   ${formatCurrencyInputNumber(amtVal)} <span style="font-size:11px; font-weight:700; color:var(--text-muted);">đ</span>
                 </div>
               </td>
@@ -22410,7 +22438,7 @@ const fullList = getCarBrandLossData();
         });
 
         if (visibleCount === 0) {
-          rowsHtml = `<tr><td colspan="7" style="padding:36px 20px; text-align:center; color:var(--text-muted); font-weight:650; font-size:13px;">
+          rowsHtml = `<tr><td colspan="9" style="padding:36px 20px; text-align:center; color:var(--text-muted); font-weight:650; font-size:13px;">
             <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
               <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.8" style="opacity:0.4;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <span>${claims.length === 0 ? 'Không có hồ sơ nào thuộc nhóm Carpla trong kỳ này.' : 'Không tìm thấy hồ sơ phù hợp với từ khóa.'}</span>
@@ -22465,7 +22493,7 @@ const fullList = getCarBrandLossData();
       };
 
       m.innerHTML = `
-        <div style="background:var(--surface); border-radius:24px; width:96vw; max-width:1500px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 25px 70px -10px rgba(0,0,0,0.5), 0 0 0 1px var(--border-strong); border:1px solid rgba(216,180,109,0.3); overflow:hidden; animation:zoomIn 0.2s cubic-bezier(0.16,1,0.3,1);">
+        <div style="background:var(--surface); border-radius:24px; width:96vw; max-width:1550px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 25px 70px -10px rgba(0,0,0,0.5), 0 0 0 1px var(--border-strong); border:1px solid rgba(216,180,109,0.3); overflow:hidden; animation:zoomIn 0.2s cubic-bezier(0.16,1,0.3,1);">
           <!-- Header -->
           <div style="padding:20px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:flex-start; gap:16px; background:linear-gradient(135deg, var(--surface) 0%, var(--surface-strong) 100%);">
             <div style="display:flex; align-items:flex-start; gap:14px;">
@@ -22514,7 +22542,7 @@ const fullList = getCarBrandLossData();
             <!-- Live Search Box -->
             <div style="position:relative; min-width:280px; flex:1; max-width:420px;">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input type="search" placeholder="Tìm biển số, GĐV, Gara, ngày..." oninput="filterCarplaModalList(this.value)" autocomplete="off" style="width:100%; height:34px; border-radius:10px; border:1px solid var(--border); background:var(--bg-soft); color:var(--text-main); font-size:12px; font-weight:600; padding:0 12px 0 34px; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'" />
+              <input type="search" placeholder="Tìm biển số, chủ xe, GĐV, Gara, ngày..." oninput="filterCarplaModalList(this.value)" autocomplete="off" style="width:100%; height:34px; border-radius:10px; border:1px solid var(--border); background:var(--bg-soft); color:var(--text-main); font-size:12px; font-weight:600; padding:0 12px 0 34px; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'" />
             </div>
           </div>
 
@@ -22523,13 +22551,15 @@ const fullList = getCarBrandLossData();
             <table style="width:100%; border-collapse:separate; border-spacing:0; background:var(--surface); border-radius:14px; overflow:hidden; border:1px solid var(--border-strong); box-shadow:var(--shadow-xs);">
               <thead style="background:var(--surface-strong); position:sticky; top:0; z-index:2; border-bottom:1px solid var(--border-strong);">
                 <tr>
-                  <th style="padding:14px 10px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:55px; border-bottom:1px solid var(--border);">STT</th>
-                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; width:140px; border-bottom:1px solid var(--border);">Biển số</th>
-                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; width:220px; border-bottom:1px solid var(--border);">GĐV Xử lý</th>
-                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; min-width:280px; border-bottom:1px solid var(--border);">Gara</th>
-                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:160px; border-bottom:1px solid var(--border);">Ngày duyệt HSBT</th>
-                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:right; width:180px; border-bottom:1px solid var(--border);">Số tiền Bồi thường</th>
-                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:140px; border-bottom:1px solid var(--border);">
+                  <th style="padding:14px 10px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:50px; border-bottom:1px solid var(--border);">STT</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; width:135px; border-bottom:1px solid var(--border);">Biển số</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; width:170px; border-bottom:1px solid var(--border);">Tên chủ xe</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; width:180px; border-bottom:1px solid var(--border);">GĐV Xử lý</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; min-width:220px; border-bottom:1px solid var(--border);">Gara</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:145px; border-bottom:1px solid var(--border);">Ngày mở hồ sơ</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:145px; border-bottom:1px solid var(--border);">Ngày duyệt HSBT</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:right; width:170px; border-bottom:1px solid var(--border);">Số tiền Bồi thường</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:130px; border-bottom:1px solid var(--border);">
                     <div style="display:inline-flex; align-items:center; gap:5px; cursor:pointer;" onclick="const cb = document.getElementById('carplaSelectAllCb'); if (cb) { cb.checked = !cb.checked; setAllCarplaCheckboxes(cb.checked); }">
                       <input type="checkbox" id="carplaSelectAllCb" ${selectedCount === totalClaimsCount && totalClaimsCount > 0 ? 'checked' : ''} onclick="event.stopPropagation()" onchange="setAllCarplaCheckboxes(this.checked)" style="width:16px; height:16px; accent-color:var(--primary); cursor:pointer;">
                       <span>Đưa vào BC</span>
@@ -22568,8 +22598,7 @@ const fullList = getCarBrandLossData();
       `;
       document.body.appendChild(m);
     }
-    
-    async function saveCarplaSourceExclusions() {
+async function saveCarplaSourceExclusions() {
       const btn = document.getElementById('btnSaveCarplaExclusions');
       if (btn) {
         btn.disabled = true;
