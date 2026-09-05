@@ -5889,8 +5889,7 @@ let cachedCasesPayload = null;
       const targetNorm = maVuTonThat.trim().toLowerCase();
       if (!targetNorm || targetNorm === '—' || targetNorm === '-') return null;
 
-      window._currentCarplaClaimsData = [];
-      const claimsList = Object.entries(cachedPendingClaimsPayload || {}).map(([k,v]) => { v._id = k; return v; });
+      const claimsList = Object.values(cachedPendingClaimsPayload || {});
       return claimsList.find(c => {
         if (!c.maVuTonThat) return false;
         const itemNorm = String(c.maVuTonThat).trim().toLowerCase();
@@ -15154,7 +15153,8 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
 
     function getWeeklyZoneReportData() {
       const period = getWeeklyZoneReportPeriod();
-      const claimsList = Object.values(cachedPendingClaimsPayload || {});
+      window._currentCarplaClaimsData = [];
+      const claimsList = Object.entries(cachedPendingClaimsPayload || {}).map(([k,v]) => { v._id = k; return v; });
       const transfersList = Object.values(cachedAccountingTransfersPayload || {});
 
       const startTime = period.startDate.getTime();
