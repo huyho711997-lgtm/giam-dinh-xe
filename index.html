@@ -7984,8 +7984,8 @@ function formatDateDisplay(val) {
           cachedReportRules = { ...defaultRules };
         }
         
-        if (document.getElementById('weekly-report') && document.getElementById('weekly-report').classList.contains('active')) {
-          renderGdvMonthlyReportPage(document.getElementById('weekly-report'));
+        if (activeDashboardTab === 'gdv_report' || (typeof renderGdvMonthlyReportPage === 'function')) {
+          renderGdvMonthlyReportPage();
         }
       });
 
@@ -13008,8 +13008,18 @@ function formatDateDisplay(val) {
     }
 
     function isDuyetHsbtApproved(c) {
+      if (!c) return false;
       const approvedHsbtStatuses = getRuleArray(cachedReportRules.approvedStatuses);
-      return approvedHsbtStatuses.includes(c.trangThai);
+      if (approvedHsbtStatuses.length === 0) return true;
+      const rawSt = String(c.trangThai || '').trim();
+      const lowerSt = rawSt.toLowerCase();
+      if (approvedHsbtStatuses.includes(lowerSt)) return true;
+      for (const [k, v] of Object.entries(PENDING_STATUS_MAP)) {
+        if (lowerSt === k || lowerSt === v.label.toLowerCase()) {
+          if (approvedHsbtStatuses.includes(k) || approvedHsbtStatuses.includes(v.label.toLowerCase())) return true;
+        }
+      }
+      return false;
     }
 
     function isOnlyDaDuyetHsbt(c) {
@@ -13366,35 +13376,66 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
     }
 
     async function saveReportSettings() {
-      const getChecked = (cls) => Array.from(document.querySelectorAll('.'+cls)).filter(el => el.checked).map(el => el.value).join(',');
-      
+      const getChecked = (cls) => Array.from(document.querySelectorAll('.' + cls)).filter(el => el.checked).map(el => el.value).join(',');
+      const getSelectVal = (id, defaultVal) => {
+        const el = document.getElementById(id);
+        return el ? el.value : defaultVal;
+      };
+
       const data = {
+        // Cấu hình các trường ngày theo từng cột
+        phatSinhDateField: getSelectVal('rs_phatSinhDateField', cachedReportRules.phatSinhDateField || 'ngayMoHs'),
+        daDuyetDateField: getSelectVal('rs_daDuyetDateField', cachedReportRules.daDuyetDateField || 'toTrinhNgayDuyet'),
+        chuyenDnttDateField: getSelectVal('rs_chuyenDnttDateField', cachedReportRules.chuyenDnttDateField || 'ngayNhanDuHoSo'),
+        carplaDateField: getSelectVal('rs_carplaDateField', cachedReportRules.carplaDateField || 'toTrinhNgayDuyet'),
+        tndsTonDateField: getSelectVal('rs_tndsTonDateField', cachedReportRules.tndsTonDateField || 'none'),
+        hsTonDateField: getSelectVal('rs_hsTonDateField', cachedReportRules.hsTonDateField || 'ngayMoHs'),
+        hsDpbtDateField: getSelectVal('rs_hsDpbtDateField', cachedReportRules.hsDpbtDateField || 'none'),
+        avgAmountDateField: getSelectVal('rs_avgAmountDateField', cachedReportRules.avgAmountDateField || 'toTrinhNgayDuyet'),
+
+        // Cấu hình trạng thái và ngưỡng đếm
         phatSinhExcludes: getChecked('rs_phatSinhExcludes_chk'),
         approvedStatuses: getChecked('rs_approvedStatuses_chk'),
         chuyenDnttStatuses: getChecked('rs_chuyenDnttStatuses_chk'),
-        carplaKeywords: document.getElementById('rs_carplaKeywords').value.trim(),
-        tndsKeywords: document.getElementById('rs_tndsKeywords').value.trim(),
+        carplaKeywords: (document.getElementById('rs_carplaKeywords')?.value || 'carpla').trim(),
+        tndsKeywords: (document.getElementById('rs_tndsKeywords')?.value || 'tnds,trách nhiệm dân sự').trim(),
         unpaidStatuses: getChecked('rs_unpaidStatuses_chk'),
-        hsTonDays: parseInt(document.getElementById('rs_hsTonDays').value.replace(/[^0-9]/g, ''), 10) || 30,
+        hsTonDays: parseInt(String(document.getElementById('rs_hsTonDays')?.value || '30').replace(/[^0-9]/g, ''), 10) || 30,
         onlyApprovedStatuses: getChecked('rs_onlyApprovedStatuses_chk'),
-        hsDpbtAmount: parseInt(document.getElementById('rs_hsDpbtAmount').value.replace(/[^0-9]/g, ''), 10) || 50000000,
+        hsDpbtAmount: parseInt(String(document.getElementById('rs_hsDpbtAmount')?.value || '50000000').replace(/[^0-9]/g, ''), 10) || 50000000,
         hsDpbtStatuses: getChecked('rs_hsDpbtStatuses_chk'),
-        avgAmount: parseInt(document.getElementById('rs_avgAmount').value.replace(/[^0-9]/g, ''), 10) || 10000000
+        avgAmount: parseInt(String(document.getElementById('rs_avgAmount')?.value || '10000000').replace(/[^0-9]/g, ''), 10) || 10000000
       };
       
       const btn = document.querySelector('#reportSettingsModal .btn-primary');
-      if(btn) btn.innerHTML = 'Đang lưu...';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = 'Đang lưu cấu hình...';
+      }
       
       try {
-        await dbNodeInstance.ref('settings/reportRules').set(data);
-        triggerToast('Lưu cấu hình báo cáo thành công', 'success');
-        document.getElementById('reportSettingsModal').remove();
-        if (document.getElementById('weekly-report') && document.getElementById('weekly-report').classList.contains('active')) {
-          renderGdvMonthlyReportPage(document.getElementById('weekly-report'));
+        // Cập nhật ngay bộ nhớ đệm tại client
+        if (!cachedReportRules) cachedReportRules = {};
+        cachedReportRules = { ...cachedReportRules, ...data };
+
+        // Lưu cấu hình vào Firebase bằng .update để giữ lại carplaExcludedClaims
+        await dbNodeInstance.ref('settings/reportRules').update(data);
+        triggerToast('Lưu cấu hình logic báo cáo thành công!', 'success');
+        
+        const modal = document.getElementById('reportSettingsModal');
+        if (modal) modal.remove();
+
+        // Render lại trang báo cáo ngay lập tức
+        if (activeDashboardTab === 'gdv_report' || (typeof renderGdvMonthlyReportPage === 'function')) {
+          renderGdvMonthlyReportPage();
         }
       } catch (err) {
+        console.error(err);
         triggerToast('Lỗi khi lưu cấu hình: ' + err.message, 'error');
-        if(btn) btn.innerHTML = 'Lưu cấu hình';
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = 'Lưu Tất Cả Cài Đặt';
+        }
       }
     }
 
@@ -15127,15 +15168,29 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
     }
 
         function getClaimDateMs(c, fieldName) {
-      if (fieldName === 'none') return -1;
+      if (!c || !fieldName || fieldName === 'none') return -1;
       let dateStr = c[fieldName];
+      
       if (fieldName === 'toTrinhNgayDuyet' && !dateStr) {
-        dateStr = c.ngayDuyetHsbt || c.pascNgayDuyet;
+        dateStr = c.toTrinhNgayDuyet || c['Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)'] || c.toTrinhBtNgayDuyet || c.ngayDuyetHsbt || c.pascNgayDuyet;
+      }
+      if (fieldName === 'ngayMoHs' && !dateStr) {
+        dateStr = c.ngayMoHs || c['Ngày mở hồ sơ'] || c['Ngày mở HS'] || c.ngayTonThat || c.date;
+      }
+      if (fieldName === 'ngayNhanDuHoSo' && !dateStr) {
+        dateStr = c.ngayNhanDuHoSo || c['Ngày nhận đủ hồ sơ'] || c['Ngày nhận đủ HS'];
+      }
+      if (fieldName === 'ngayThanhToan' && !dateStr) {
+        dateStr = c.ngayThanhToan || c['Ngày thanh toán'] || c['Ngày thanh toán bồi thường'] || c.ngayKtXacNhan;
       }
       if (fieldName === 'ngayVTT' && !dateStr) {
-        dateStr = c.ngayTonThat || c.date;
+        dateStr = c.ngayTonThat || c.date || c.ngayVTT;
       }
-      if (dateStr && typeof dateStr === 'string' && dateStr !== '—' && dateStr !== '-') {
+      
+      if (typeof dateStr === 'number' && dateStr > 0) return dateStr;
+      if (dateStr instanceof Date) return dateStr.getTime();
+      
+      if (dateStr && typeof dateStr === 'string' && dateStr !== '—' && dateStr !== '-' && dateStr !== 'null' && dateStr !== 'undefined') {
         const dp = parseDateParts(dateStr);
         if (dp && dp.year > 1970 && dp.month && dp.day) {
           return new Date(dp.year, dp.month - 1, dp.day, 12, 0, 0).getTime();
