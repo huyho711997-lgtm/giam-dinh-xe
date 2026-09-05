@@ -19485,14 +19485,14 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
 
       const isDark = !document.body.classList.contains('light-mode');
       const textColor = isDark ? '#cbd5e1' : '#475569';
-      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+      const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
       const surfaceColor = isDark ? '#0f172a' : '#ffffff';
 
       const canvasWrap = document.getElementById('gdvKpiCanvasWrap') || canvas.parentElement;
       if (activeGdvKpiChartType === 'pie') {
         canvasWrap.style.height = '460px';
       } else {
-        canvasWrap.style.height = '420px';
+        canvasWrap.style.height = '430px';
       }
 
       const labels = list.map(item => item.gdvName);
@@ -19547,15 +19547,15 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         ];
       } else if (actualType === 'line') {
         const openGradient = (function() {
-          const g = ctx.createLinearGradient(0, 20, 0, 380);
-          g.addColorStop(0, isDark ? 'rgba(216, 180, 109, 0.25)' : 'rgba(216, 180, 109, 0.2)');
+          const g = ctx.createLinearGradient(0, 30, 0, 360);
+          g.addColorStop(0, isDark ? 'rgba(216, 180, 109, 0.32)' : 'rgba(216, 180, 109, 0.25)');
           g.addColorStop(1, isDark ? 'rgba(216, 180, 109, 0.01)' : 'rgba(216, 180, 109, 0.01)');
           return g;
         })();
 
         const duyetGradient = (function() {
-          const g = ctx.createLinearGradient(0, 20, 0, 380);
-          g.addColorStop(0, isDark ? 'rgba(16, 185, 129, 0.28)' : 'rgba(16, 185, 129, 0.22)');
+          const g = ctx.createLinearGradient(0, 30, 0, 360);
+          g.addColorStop(0, isDark ? 'rgba(16, 185, 129, 0.32)' : 'rgba(16, 185, 129, 0.25)');
           g.addColorStop(1, isDark ? 'rgba(16, 185, 129, 0.01)' : 'rgba(16, 185, 129, 0.01)');
           return g;
         })();
@@ -19568,12 +19568,12 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             borderColor: '#d8b46d',
             backgroundColor: openGradient,
             borderWidth: 3.5,
-            tension: 0.36,
+            tension: 0.38,
             pointBackgroundColor: surfaceColor,
             pointBorderColor: '#d8b46d',
             pointBorderWidth: 3,
             pointRadius: 6,
-            pointHoverRadius: 8.5,
+            pointHoverRadius: 9,
             pointHoverBackgroundColor: '#d8b46d',
             pointHoverBorderColor: '#ffffff',
             pointHoverBorderWidth: 3,
@@ -19586,12 +19586,12 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             borderColor: '#10b981',
             backgroundColor: duyetGradient,
             borderWidth: 3.5,
-            tension: 0.36,
+            tension: 0.38,
             pointBackgroundColor: surfaceColor,
             pointBorderColor: '#10b981',
             pointBorderWidth: 3,
             pointRadius: 6,
-            pointHoverRadius: 8.5,
+            pointHoverRadius: 9,
             pointHoverBackgroundColor: '#10b981',
             pointHoverBorderColor: '#ffffff',
             pointHoverBorderWidth: 3,
@@ -19602,6 +19602,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             label: 'Mốc chuẩn KPI tính lương (70 ca)',
             data: list.map(() => 70),
             borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.04)',
             borderWidth: 2,
             borderDash: [6, 4],
             pointRadius: 0,
@@ -19631,6 +19632,53 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         ];
       }
 
+      // Helper function to render a sleek floating pill badge with anti-aliased border
+      function drawFloatingPillBadge(c, x, y, text, dotColor, isDarkTheme) {
+        c.save();
+        c.font = "850 11px 'Plus Jakarta Sans', sans-serif";
+        const padX = 8;
+        const textMetrics = c.measureText(text);
+        const textW = textMetrics.width;
+        const pillW = textW + padX * 2 + 10;
+        const pillH = 22;
+        const pillX = x - pillW / 2;
+        const pillY = y - pillH / 2;
+
+        // Shadow
+        c.shadowColor = isDarkTheme ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.12)';
+        c.shadowBlur = 6;
+        c.shadowOffsetY = 2;
+
+        // Pill background
+        c.fillStyle = isDarkTheme ? '#1e293b' : '#ffffff';
+        c.strokeStyle = dotColor;
+        c.lineWidth = 1.5;
+        c.beginPath();
+        if (c.roundRect) {
+          c.roundRect(pillX, pillY, pillW, pillH, 99);
+        } else {
+          c.rect(pillX, pillY, pillW, pillH);
+        }
+        c.fill();
+        c.stroke();
+        c.restore();
+
+        // Status Dot
+        c.save();
+        c.fillStyle = dotColor;
+        c.beginPath();
+        c.arc(pillX + padX + 3, y, 3, 0, Math.PI * 2);
+        c.fill();
+
+        // Text
+        c.fillStyle = isDarkTheme ? '#f8fafc' : '#0f172a';
+        c.font = "850 11px 'Plus Jakarta Sans', sans-serif";
+        c.textAlign = 'left';
+        c.textBaseline = 'middle';
+        c.fillText(text, pillX + padX + 9, y);
+        c.restore();
+      }
+
       // Plugins
       const customCanvasBgPlugin = {
         id: 'customCanvasBgKpi',
@@ -19657,31 +19705,35 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           // 1. Draw "KPI: 70 CA/THÁNG" badge on the 70 line
           const y70 = scales.y.getPixelForValue(70);
           if (y70 >= chartArea.top && y70 <= chartArea.bottom) {
-            const badgeW = 112;
-            const badgeH = 20;
-            const badgeX = chartArea.right - badgeW;
+            const badgeW = 122;
+            const badgeH = 22;
+            const badgeX = chartArea.right - badgeW - 4;
             const badgeY = y70 - badgeH / 2;
 
+            c.save();
+            c.shadowColor = 'rgba(239, 68, 68, 0.4)';
+            c.shadowBlur = 8;
+            c.shadowOffsetY = 2;
             c.fillStyle = '#ef4444';
             c.beginPath();
             if (c.roundRect) {
-              c.roundRect(badgeX, badgeY, badgeW, badgeH, 5);
+              c.roundRect(badgeX, badgeY, badgeW, badgeH, 6);
             } else {
               c.rect(badgeX, badgeY, badgeW, badgeH);
             }
             c.fill();
+            c.restore();
 
-            c.font = "850 10px 'Plus Jakarta Sans', sans-serif";
+            c.save();
+            c.font = "900 10.5px 'Plus Jakarta Sans', sans-serif";
             c.fillStyle = '#ffffff';
             c.textAlign = 'center';
             c.textBaseline = 'middle';
             c.fillText('KPI: 70 CA/THÁNG', badgeX + badgeW / 2, y70);
+            c.restore();
           }
 
-          // 2. Draw values with smart vertical anti-collision
-          c.font = "850 11px 'Plus Jakarta Sans', sans-serif";
-          c.textAlign = 'center';
-
+          // 2. Draw Floating Pill Badges with Smart Non-overlapping logic
           if (actualType === 'line') {
             const openMeta = chart.getDatasetMeta(0);
             const duyetMeta = chart.getDatasetMeta(1);
@@ -19694,32 +19746,44 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
 
               if (!openEl || !duyetEl) return;
 
-              let openY = openEl.y - 12;
-              let duyetY = duyetEl.y - 12;
+              // Default: place badge above point
+              let openBadgeY = openEl.y - 20;
+              let duyetBadgeY = duyetEl.y - 20;
 
-              // If points are close vertically (within 24px)
-              if (Math.abs(openEl.y - duyetEl.y) < 24) {
+              // Collision check: if the two points are close vertically (within 28px)
+              if (Math.abs(openEl.y - duyetEl.y) < 28) {
                 if (openEl.y <= duyetEl.y) {
-                  openY = openEl.y - 12;
-                  duyetY = duyetEl.y + 20;
+                  // openEl is higher on screen (smaller y)
+                  openBadgeY = openEl.y - 20;
+                  // If lower point is not too close to bottom, place below; otherwise stack above
+                  if (duyetEl.y + 24 < chartArea.bottom - 8) {
+                    duyetBadgeY = duyetEl.y + 22;
+                  } else {
+                    duyetBadgeY = openBadgeY - 26; // Stack both neatly above!
+                  }
                 } else {
-                  duyetY = duyetEl.y - 12;
-                  openY = openEl.y + 20;
+                  // duyetEl is higher on screen (smaller y)
+                  duyetBadgeY = duyetEl.y - 20;
+                  if (openEl.y + 24 < chartArea.bottom - 8) {
+                    openBadgeY = openEl.y + 22;
+                  } else {
+                    openBadgeY = duyetBadgeY - 26; // Stack both neatly above!
+                  }
                 }
               }
 
-              // Draw Open Val Label
-              c.textBaseline = openY < openEl.y ? 'bottom' : 'top';
-              c.fillStyle = isDarkTheme ? '#d8b46d' : '#b89347';
-              c.fillText(openVal + ' ca', openEl.x, openY);
+              // Ensure neither badge ever overlaps the X-axis label at the bottom!
+              const maxAllowedY = chartArea.bottom - 12;
+              if (openBadgeY > maxAllowedY) openBadgeY = openEl.y - 20;
+              if (duyetBadgeY > maxAllowedY) duyetBadgeY = duyetEl.y - 20;
 
-              // Draw Duyet Val Label
-              c.textBaseline = duyetY < duyetEl.y ? 'bottom' : 'top';
-              c.fillStyle = '#10b981';
-              c.fillText(duyetVal + ' ca', duyetEl.x, duyetY);
+              // Draw Open Badge (Gold)
+              drawFloatingPillBadge(c, openEl.x, openBadgeY, openVal + ' ca', '#d8b46d', isDarkTheme);
+
+              // Draw Duyet Badge (Green)
+              drawFloatingPillBadge(c, duyetEl.x, duyetBadgeY, duyetVal + ' ca', '#10b981', isDarkTheme);
             });
           } else {
-            c.textBaseline = 'bottom';
             chart.data.datasets.forEach((ds, dsIdx) => {
               if (ds.label && ds.label.includes('70 ca')) return;
               const meta = chart.getDatasetMeta(dsIdx);
@@ -19729,10 +19793,8 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                 const val = ds.data[idx];
                 if (val === undefined || val === null) return;
                 
-                const x = el.x;
-                const y = el.y - 4;
-                c.fillStyle = dsIdx === 0 ? (isDarkTheme ? '#d8b46d' : '#b89347') : '#10b981';
-                c.fillText(val + ' ca', x, y);
+                const dotColor = dsIdx === 0 ? '#d8b46d' : '#10b981';
+                drawFloatingPillBadge(c, el.x, el.y - 14, val + ' ca', dotColor, isDarkTheme);
               });
             });
           }
@@ -19767,6 +19829,10 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         }
       };
 
+      // Calculate dynamic max to give optimal vertical amplitude to the lines
+      const maxDataVal = Math.max(0, ...openData, ...duyetData);
+      const dynamicYMax = maxDataVal < 70 ? 76 : Math.ceil((maxDataVal + 10) / 10) * 10;
+
       const config = {
         type: actualType,
         data: {
@@ -19782,7 +19848,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             easing: 'easeOutQuart'
           },
           layout: {
-            padding: actualType === 'doughnut' ? { top: 30, bottom: 30, left: 30, right: 30 } : { top: 25, right: 15, bottom: 10, left: 10 }
+            padding: actualType === 'doughnut' ? { top: 30, bottom: 30, left: 30, right: 30 } : { top: 25, right: 25, bottom: 12, left: 15 }
           },
           plugins: {
             legend: {
@@ -19839,19 +19905,22 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           },
           scales: actualType === 'doughnut' ? {} : {
             x: {
+              offset: true,
               grid: { display: false },
               ticks: {
                 color: textColor,
-                font: { family: "'Plus Jakarta Sans', sans-serif", weight: '800', size: 12 }
+                font: { family: "'Plus Jakarta Sans', sans-serif", weight: '800', size: 12.5 },
+                padding: 10
               }
             },
             y: {
               beginAtZero: true,
-              suggestedMax: 100,
+              max: dynamicYMax,
               grid: { color: gridColor, drawBorder: false },
               ticks: {
                 color: textColor,
                 font: { family: "'Plus Jakarta Sans', sans-serif", weight: '700', size: 11 },
+                stepSize: dynamicYMax <= 80 ? 15 : 20,
                 callback: function(v) { return v + ' ca'; }
               }
             }
