@@ -3279,7 +3279,18 @@
     let localActiveRequestedItems = [];
     let portalSearchTerm = '';
     let activeObjectUrls = [];
-    let cachedCasesPayload = null;
+    
+    let cachedReportRules = {
+      tndsKeywords: 'tnds',
+      unpaidStatuses: 'da_thanh_toan,đã thanh toán,da_hoan_thanh,đã hoàn thành',
+      approvedStatuses: 'da_duyet_hsbt,cho_duyet_dntt,cho_kt_duyet,kt_duyet,da_thanh_toan',
+      onlyApprovedStatuses: 'da_duyet_hsbt,cho_kt_duyet',
+      hsTonDays: 30,
+      hsDpbtAmount: 50000000,
+      avgAmount: 10000000,
+      carplaKeywords: 'carpla'
+    };
+let cachedCasesPayload = null;
     let cachedFieldReimbursementsPayload = null;
     let activeCaseFilter = 'all';
     let activeCasePage = 1;
@@ -12910,18 +12921,22 @@ function formatDateDisplay(val) {
     }
 
     
+    function getRuleArray(str) {
+      return String(str || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    }
+
     function isTndsClaim(c) {
       if (!c) return false;
-      const text = String(
-        c.loaiHoSo || c.nhomBoiThuong || c.tnds || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.nghiepVu || c.tenHoSo || ''
-      ).toLowerCase();
-      return text.includes('tnds');
+      const text = String(c.loaiHoSo || c.nhomBoiThuong || c.tnds || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.nghiepVu || c.tenHoSo || '').toLowerCase();
+      const kws = getRuleArray(cachedReportRules.tndsKeywords);
+      return kws.some(kw => text.includes(kw));
     }
 
     function isUnpaidClaim(c) {
       if (!c) return false;
       const st = String(c.trangThai || '').toLowerCase();
-      if (st.includes('da_thanh_toan') || st.includes('đã thanh toán') || st.includes('da_hoan_thanh') || st.includes('đã hoàn thành')) {
+      const unpaidExcludes = getRuleArray(cachedReportRules.unpaidStatuses);
+      if (unpaidExcludes.some(ex => st.includes(ex))) {
         return false;
       }
       if (c.ngayThanhToan) return false;
@@ -12929,40 +12944,22 @@ function formatDateDisplay(val) {
     }
 
     function isDuyetHsbtApproved(c) {
-      const approvedHsbtStatuses = ['da_duyet_hsbt', 'cho_duyet_dntt', 'cho_kt_duyet', 'kt_duyet', 'da_thanh_toan'];
+      const approvedHsbtStatuses = getRuleArray(cachedReportRules.approvedStatuses);
       return approvedHsbtStatuses.includes(c.trangThai);
     }
 
     function isOnlyDaDuyetHsbt(c) {
       if (!c) return false;
       const st = String(c.trangThai || '').toLowerCase().trim();
-      return st === 'da_duyet_hsbt' || st.includes('da_duyet_hsbt') || st.includes('đã duyệt hsbt') || st.includes('da duyet hsbt');
+      const arr = getRuleArray(cachedReportRules.onlyApprovedStatuses);
+      return arr.includes(st);
     }
 
     function isHsDuPhongOver50M(c) {
       if (!c) return false;
       const reserveStr = String(c.duPhongBoiThuong || c.soTienDuPhong || c.duPhong || '0').replace(/[^0-9]/g, '');
       const reserveVal = parseInt(reserveStr, 10) || 0;
-      if (reserveVal <= 50000000) return false;
-
-      const st = String(c.trangThai || '').toLowerCase().trim();
-      const validKeys = ['moi', 'cho_giam_dinh_ht', 'da_giam_dinh_ht', 'cho_gdct', 'da_gdct', 'cho_duyet_pasc'];
-      if (validKeys.includes(st)) return true;
-
-      if (
-        st === 'mới' || st === 'moi' ||
-        st.includes('chờ giám định ht') || st.includes('cho giam dinh ht') ||
-        st.includes('đã giám định ht') || st.includes('da giam dinh ht') ||
-        st.includes('chờ gđct') || st.includes('cho gdct') ||
-        st.includes('đã gđct') || st.includes('da gdct') ||
-        st.includes('chờ duyệt pasc') || st.includes('cho duyet pasc')
-      ) {
-        if (st.includes('đã duyệt pasc') || st.includes('da_duyet_pasc') || st.includes('da duyet pasc')) {
-          return false;
-        }
-        return true;
-      }
-      return false;
+      return reserveVal > cachedReportRules.hsDpbtAmount;
     }
 
     function changeGdvReportSearch(txt) {
@@ -13531,7 +13528,12 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
               <!-- Export Buttons Area -->
               ${hasUserPermission('report', 'export') ? `
-              <div class="custom-select-wrapper" style="position: relative;" id="accExportMenuWrapper">
+              
+          <button type="button" class="btn-premium" onclick="openReportSettingsModal()" style="padding: 0 16px; height: 38px; font-size: 13px; border-radius: 10px; font-weight: 700; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s; margin-right: 12px;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Cài đặt BC</span>
+          </button>
+<div class="custom-select-wrapper" style="position: relative;" id="accExportMenuWrapper">
                 <button type="button" class="btn-premium" onclick="toggleCustomDropdownMenu('ddExportOptions', event)" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.3); transition: all 0.2s ease; padding: 0 18px; height: 42px; font-size: 12.5px; border-radius: 12px; font-weight: 850; min-width: 190px; justify-content: space-between;">
                   <span style="display: flex; align-items: center; gap: 8px;">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -14518,9 +14520,9 @@ function renderGdvMonthlyReportPage(targetContainer) {
                   { id: 'CHUYEN_DNTT', label: 'Chuyển ĐNTT' },
                   { id: 'LGN_CARPLA', label: 'Lượng xe Carpla' },
                   { id: 'TNDS_TON', label: 'Hồ sơ TNDS tồn lũy kế' },
-                  { id: 'HS_TON_30', label: 'HS Tồn > 30 ngày' },
-                  { id: 'HS_DPBT_50', label: 'HS DPBT > 50TR' },
-                  { id: 'AVG_10', label: 'Số tiền bình quân < 10TR' },
+                  { id: 'HS_TON_30', label: `HS Tồn > ${cachedReportRules.hsTonDays} ngày` },
+                  { id: 'HS_DPBT_50', label: `HS DPBT > ${cachedReportRules.hsDpbtAmount/1000000}TR` },
+                  { id: 'AVG_10', label: `Số tiền bình quân < ${cachedReportRules.avgAmount/1000000}TR` },
                   { id: 'REV_CARPLA', label: 'Doanh số Carpla lũy kế tháng' }
                 ].map(col => `
                   <label style="display: flex; align-items: center; gap: 8px; padding: 6px 4px; cursor: pointer;">
@@ -14818,7 +14820,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
 
         // 2. HS TỒN > 30 NGÀY: CHỈ LẤY TRẠNG THÁI 'ĐÃ DUYỆT HSBT' VÀ TUỔI HỒ SƠ > 30 NGÀY
         const nowMs = Date.now();
-        if (isOnlyDaDuyetHsbt(c) && claimTime > 0 && (nowMs - claimTime > 30 * 86400 * 1000)) {
+        if (isOnlyDaDuyetHsbt(c) && claimTime > 0 && (nowMs - claimTime > cachedReportRules.hsTonDays * 86400 * 1000)) {
           item.hsTonOver30Days++;
         }
 
@@ -15048,7 +15050,7 @@ function renderGdvMonthlyReportPage(targetContainer) {
           return 'BÁO CÁO TUẦN / THÁNG';
         })(), '', '', '', '', '', '', ''],
         ['', '', '', period.label, '', '', '', '', '', '', '', ''],
-        ['STT', 'GDV', 'PHÁT SINH', 'ĐÃ DUYỆT HSBT', 'CHƯA DUYỆT PASC', 'CHUYỂN ĐNTT', 'LƯỢNG XE CARPLA', 'HỒ SƠ TNDS TỒN LŨY KẾ', 'HS TỒN > 30 NGÀY', 'HS DPBT > 50TR', 'SỐ TIỀN BÌNH QUÂN DƯỚI 10TR', `DOANH SỐ CARPLA LŨY KẾ THÁNG ${currentMonth}`]
+        ['STT', 'GDV', 'PHÁT SINH', 'ĐÃ DUYỆT HSBT', 'CHƯA DUYỆT PASC', 'CHUYỂN ĐNTT', 'LƯỢNG XE CARPLA', 'HỒ SƠ TNDS TỒN LŨY KẾ', `HS TỒN > ${cachedReportRules.hsTonDays} NGÀY`, `HS DPBT > ${cachedReportRules.hsDpbtAmount/1000000}TR`, `SỐ TIỀN BÌNH QUÂN DƯỚI ${cachedReportRules.avgAmount/1000000}TR`, `DOANH SỐ CARPLA LŨY KẾ THÁNG ${currentMonth}`]
       ];
 
       let sumPhatSinh = 0, sumDaDuyet = 0, sumChuaDuyet = 0, sumTonHoaDon = 0, sumChuyenDntt = 0, sumCarpla = 0, sumTndsTon = 0;
