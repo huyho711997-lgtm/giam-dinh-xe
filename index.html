@@ -7956,12 +7956,37 @@ function formatDateDisplay(val) {
       
       dbNodeInstance.ref('settings/reportRules').off();
       dbNodeInstance.ref('settings/reportRules').on('value', snap => {
+        const defaultRules = {
+          phatSinhExcludes: 'tu_choi',
+          tndsKeywords: 'tnds,trách nhiệm dân sự',
+          unpaidStatuses: 'da_thanh_toan,da thanh toán,da_hoan_thanh,da hoàn thành,tu_choi',
+          approvedStatuses: 'da_duyet_hsbt,cho_duyet_dntt,cho_kt_duyet,kt_duyet,da_thanh_toan',
+          chuyenDnttStatuses: '',
+          hsDpbtStatuses: 'moi,cho_giam_dinh_ht,da_giam_dinh_ht,cho_gdct,da_gdct,cho_duyet_pasc',
+          onlyApprovedStatuses: 'da_duyet_hsbt,cho_kt_duyet',
+          hsTonDays: 30,
+          hsDpbtAmount: 50000000,
+          avgAmount: 10000000,
+          carplaKeywords: 'carpla',
+          phatSinhDateField: 'ngayMoHs',
+          daDuyetDateField: 'toTrinhNgayDuyet',
+          chuyenDnttDateField: 'ngayNhanDuHoSo',
+          carplaDateField: 'toTrinhNgayDuyet',
+          tndsTonDateField: 'none',
+          hsTonDateField: 'ngayMoHs',
+          hsDpbtDateField: 'none',
+          avgAmountDateField: 'toTrinhNgayDuyet'
+        };
+        
         if (snap.exists()) {
           const rules = snap.val();
-          cachedReportRules = { ...cachedReportRules, ...rules };
-          if (document.getElementById('weekly-report') && document.getElementById('weekly-report').classList.contains('active')) {
-            renderGdvMonthlyReportPage(document.getElementById('weekly-report'));
-          }
+          cachedReportRules = { ...defaultRules, ...rules };
+        } else {
+          cachedReportRules = { ...defaultRules };
+        }
+        
+        if (document.getElementById('weekly-report') && document.getElementById('weekly-report').classList.contains('active')) {
+          renderGdvMonthlyReportPage(document.getElementById('weekly-report'));
         }
       });
 
