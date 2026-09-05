@@ -22375,32 +22375,32 @@ const fullList = getCarBrandLossData();
               <td style="padding:12px 8px; font-weight:750; color:var(--text-muted); text-align:center; font-size:12px;">
                 <span style="display:inline-block; width:26px; height:26px; line-height:26px; border-radius:8px; background:var(--bg-soft); border:1px solid var(--border); font-size:11px;">${idx + 1}</span>
               </td>
-              <td style="padding:12px 14px;">
-                <div style="font-size:13.5px; font-weight:800; color:var(--primary); letter-spacing:0.3px; display:inline-flex; align-items:center; gap:6px;">
+              <td style="padding:12px 16px;">
+                <div style="font-size:13.5px; font-weight:800; color:var(--primary); letter-spacing:0.3px; display:inline-flex; align-items:center; gap:6px; white-space:nowrap;">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" style="opacity:0.75;"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
                   <span>${escapeHtmlOutput(bienSo)}</span>
                 </div>
               </td>
-              <td style="padding:12px 14px;">
-                <div style="font-size:12.5px; font-weight:700; color:var(--text-main); display:inline-flex; align-items:center; gap:6px;">
+              <td style="padding:12px 16px;">
+                <div style="font-size:12.5px; font-weight:700; color:var(--text-main); display:inline-flex; align-items:center; gap:6px; white-space:nowrap;">
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" style="color:var(--text-muted);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                   <span>${escapeHtmlOutput(gdvName)}</span>
                 </div>
               </td>
-              <td style="padding:12px 14px;">
+              <td style="padding:12px 16px;">
                 <div style="font-size:12.5px; font-weight:650; color:var(--text-soft); line-height:1.35;" title="${escapeAttributeData(garaName)}">
                   ${escapeHtmlOutput(garaName)}
                 </div>
               </td>
-              <td style="padding:12px 14px; text-align:center;">
+              <td style="padding:12px 16px; text-align:center;">
                 ${dateCellHtml}
               </td>
-              <td style="padding:12px 14px; text-align:right;">
+              <td style="padding:12px 16px; text-align:right;">
                 <div style="font-size:13.5px; font-weight:850; color:#ca8a04; letter-spacing:-0.01em;">
                   ${formatCurrencyInputNumber(amtVal)} <span style="font-size:11px; font-weight:700; color:var(--text-muted);">đ</span>
                 </div>
               </td>
-              <td style="padding:12px 14px; text-align:center;" onclick="event.stopPropagation()">
+              <td style="padding:12px 16px; text-align:center;" onclick="event.stopPropagation()">
                 <label style="display:inline-flex; align-items:center; justify-content:center; cursor:pointer; width:28px; height:28px; border-radius:8px; transition:all 0.15s ease;" onmouseover="this.style.background='var(--surface-soft)'" onmouseout="this.style.background='transparent'">
                   <input type="checkbox" class="carpla-include-cb" data-id="${c._id}" data-amount="${amtVal}" ${!isExcluded ? 'checked' : ''} onchange="onCarplaCheckboxChange()" style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;">
                 </label>
@@ -22465,7 +22465,7 @@ const fullList = getCarBrandLossData();
       };
 
       m.innerHTML = `
-        <div style="background:var(--surface); border-radius:24px; width:95vw; max-width:1050px; max-height:88vh; display:flex; flex-direction:column; box-shadow:0 25px 70px -10px rgba(0,0,0,0.5), 0 0 0 1px var(--border-strong); border:1px solid rgba(216,180,109,0.3); overflow:hidden; animation:zoomIn 0.2s cubic-bezier(0.16,1,0.3,1);">
+        <div style="background:var(--surface); border-radius:24px; width:96vw; max-width:1500px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 25px 70px -10px rgba(0,0,0,0.5), 0 0 0 1px var(--border-strong); border:1px solid rgba(216,180,109,0.3); overflow:hidden; animation:zoomIn 0.2s cubic-bezier(0.16,1,0.3,1);">
           <!-- Header -->
           <div style="padding:20px 24px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:flex-start; gap:16px; background:linear-gradient(135deg, var(--surface) 0%, var(--surface-strong) 100%);">
             <div style="display:flex; align-items:flex-start; gap:14px;">
@@ -22512,7 +22512,7 @@ const fullList = getCarBrandLossData();
             </div>
 
             <!-- Live Search Box -->
-            <div style="position:relative; min-width:240px; flex:1; max-width:320px;">
+            <div style="position:relative; min-width:280px; flex:1; max-width:420px;">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <input type="search" placeholder="Tìm biển số, GĐV, Gara, ngày..." oninput="filterCarplaModalList(this.value)" autocomplete="off" style="width:100%; height:34px; border-radius:10px; border:1px solid var(--border); background:var(--bg-soft); color:var(--text-main); font-size:12px; font-weight:600; padding:0 12px 0 34px; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'" />
             </div>
@@ -22523,13 +22523,13 @@ const fullList = getCarBrandLossData();
             <table style="width:100%; border-collapse:separate; border-spacing:0; background:var(--surface); border-radius:14px; overflow:hidden; border:1px solid var(--border-strong); box-shadow:var(--shadow-xs);">
               <thead style="background:var(--surface-strong); position:sticky; top:0; z-index:2; border-bottom:1px solid var(--border-strong);">
                 <tr>
-                  <th style="padding:12px 8px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:50px; border-bottom:1px solid var(--border);">STT</th>
-                  <th style="padding:12px 14px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; width:130px; border-bottom:1px solid var(--border);">Biển số</th>
-                  <th style="padding:12px 14px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; width:155px; border-bottom:1px solid var(--border);">GĐV Xử lý</th>
-                  <th style="padding:12px 14px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; border-bottom:1px solid var(--border);">Gara</th>
-                  <th style="padding:12px 14px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:145px; border-bottom:1px solid var(--border);">Ngày duyệt HSBT</th>
-                  <th style="padding:12px 14px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:right; width:160px; border-bottom:1px solid var(--border);">Số tiền Bồi thường</th>
-                  <th style="padding:12px 14px; font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:130px; border-bottom:1px solid var(--border);">
+                  <th style="padding:14px 10px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:55px; border-bottom:1px solid var(--border);">STT</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; width:140px; border-bottom:1px solid var(--border);">Biển số</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; width:220px; border-bottom:1px solid var(--border);">GĐV Xử lý</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:left; min-width:280px; border-bottom:1px solid var(--border);">Gara</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:160px; border-bottom:1px solid var(--border);">Ngày duyệt HSBT</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:right; width:180px; border-bottom:1px solid var(--border);">Số tiền Bồi thường</th>
+                  <th style="padding:14px 16px; font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; font-weight:800; text-align:center; width:140px; border-bottom:1px solid var(--border);">
                     <div style="display:inline-flex; align-items:center; gap:5px; cursor:pointer;" onclick="const cb = document.getElementById('carplaSelectAllCb'); if (cb) { cb.checked = !cb.checked; setAllCarplaCheckboxes(cb.checked); }">
                       <input type="checkbox" id="carplaSelectAllCb" ${selectedCount === totalClaimsCount && totalClaimsCount > 0 ? 'checked' : ''} onclick="event.stopPropagation()" onchange="setAllCarplaCheckboxes(this.checked)" style="width:16px; height:16px; accent-color:var(--primary); cursor:pointer;">
                       <span>Đưa vào BC</span>
