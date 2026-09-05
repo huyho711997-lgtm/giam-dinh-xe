@@ -13261,7 +13261,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                 
                 <div style="margin-top:24px; margin-bottom:24px;">
                   <label style="display:block; font-size:15px; font-weight:850; color:var(--primary); margin-bottom:8px;">Trường Ngày xét (Date Field):</label>
-                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chọn trường ngày sẽ được dùng để xét xem hồ sơ có nằm trong khoảng thời gian lọc hay không.</p>
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chọn mốc ngày bắt đầu để tính toán tuổi hồ sơ (VD: lấy Hiện tại trừ đi Ngày mở HS). Cột này ĐẾM LŨY KẾ TOÀN THỜI GIAN, không bị giới hạn bởi kỳ báo cáo.</p>
                   ${buildDateFieldSelect('rs_hsTonDateField', cachedReportRules.hsTonDateField)}
                 </div>
                 <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">1. Ngưỡng số ngày Tồn:</label>
@@ -15179,9 +15179,9 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           item.tndsTonLuyKe++;
         }
 
-        // 2. HS TỒN > X NGÀY
+        // 2. HS TỒN > X NGÀY (KHÔNG LỌC THEO KỲ BÁO CÁO, CHỈ TÍNH TUỔI HỒ SƠ)
         const nowMs = Date.now();
-        if (isHsTonPeriod && isOnlyDaDuyetHsbt(c) && hsTonMs > 0 && (nowMs - hsTonMs > r.hsTonDays * 86400 * 1000)) {
+        if (isOnlyDaDuyetHsbt(c) && hsTonMs > 0 && (nowMs - hsTonMs > r.hsTonDays * 86400 * 1000)) {
           item.hsTonOver30Days++;
         }
 
