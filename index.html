@@ -19611,9 +19611,9 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           }
         ];
       } else {
-        // Doughnut mode
+        // Doughnut mode: displays claims opened in month (Số lượng hồ sơ tiếp nhận trong tháng)
         const coreColors = [
-          '216, 180, 109', '16, 185, 129', '59, 130, 246', '245, 158, 11', '168, 85, 247',
+          '216, 180, 109', '59, 130, 246', '16, 185, 129', '245, 158, 11', '168, 85, 247',
           '236, 72, 153', '20, 184, 166', '99, 102, 241', '14, 165, 233', '239, 68, 68'
         ];
         const bgColors = list.map((_, i) => `rgba(${coreColors[i % coreColors.length]}, 0.85)`);
@@ -19622,8 +19622,8 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         datasets = [
           {
             type: 'doughnut',
-            label: 'Duyệt KPI quy đổi',
-            data: duyetData,
+            label: 'Số lượng hồ sơ trong tháng',
+            data: openData,
             backgroundColor: bgColors,
             borderColor: borderColors,
             borderWidth: 3,
@@ -19821,12 +19821,12 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
 
           // Center Totals
           c.fillStyle = isDarkTheme ? '#94a3b8' : '#64748b';
-          c.font = "700 12.5px 'Plus Jakarta Sans', sans-serif";
-          c.fillText('TỔNG DUYỆT KPI', centerX, centerY - 14);
+          c.font = "800 12px 'Plus Jakarta Sans', sans-serif";
+          c.fillText('TỔNG HỒ SƠ TRONG THÁNG', centerX, centerY - 14);
 
-          c.fillStyle = '#10b981';
+          c.fillStyle = isDarkTheme ? '#d8b46d' : '#b89347';
           c.font = "900 28px 'Plus Jakarta Sans', sans-serif";
-          c.fillText((Math.round(total * 10) / 10) + ' ca', centerX, centerY + 16);
+          c.fillText(Math.round(total) + ' ca', centerX, centerY + 16);
           c.restore();
 
           if (total <= 0 || !meta || !meta.data) return;
