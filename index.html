@@ -6034,7 +6034,7 @@ let cachedCasesPayload = null;
         if (hsbt || chuXe) {
           let subHtml = '<span style="color: var(--text-muted);">Quản lý chi tiết hồ sơ bồi thường</span>';
           if (hsbt) {
-            subHtml += ` • <span style="color: var(--primary); font-weight: 750;">Số HSBT: ${escapeHtmlOutput(hsbt)}</span>`;
+            subHtml += ` • <span style="color: var(--primary); font-weight: 750; display: inline-flex; align-items: center; gap: 4px;">Số HSBT: ${escapeHtmlOutput(hsbt)} <button type="button" onclick="copyHsbtToClipboard(this, '${escapeAttributeData(hsbt)}', event)" title="Sao chép nhanh số HSBT" style="border: none; background: rgba(59,130,246,0.12); color: #3b82f6; border-radius: 5px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: 18px; width: 18px; padding: 0; vertical-align: middle; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(59,130,246,0.22)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(59,130,246,0.12)'; this.style.transform='scale(1)'"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></span>`;
           }
           if (chuXe) {
             subHtml += ` • <span>Chủ xe: <strong style="color: var(--text-main);">${escapeHtmlOutput(chuXe)}</strong></span>`;
@@ -7738,7 +7738,7 @@ function formatDateDisplay(val) {
                   <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.soHoSoBoiThuong ? escapeHtmlOutput(item.soHoSoBoiThuong) : '+ Gán Số HSBT'}</span>
                 </button>
                 ${item.soHoSoBoiThuong ? `
-                  <button type="button" onclick="event.stopPropagation(); executeTextCopyToClipboardRawString('${escapeAttributeData(item.soHoSoBoiThuong)}')" title="Sao chép nhanh số hồ sơ" style="border: none; background: rgba(59,130,246,0.1); color: #3b82f6; padding: 2px 5px; border-radius: 6px; font-size: 10.5px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: 18.5px; width: 18.5px; flex-shrink: 0;">
+                  <button type="button" onclick="copyHsbtToClipboard(this, '${escapeAttributeData(item.soHoSoBoiThuong)}', event)" title="Sao chép nhanh số hồ sơ" style="border: none; background: rgba(59,130,246,0.1); color: #3b82f6; padding: 2px 5px; border-radius: 6px; font-size: 10.5px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: 18.5px; width: 18.5px; flex-shrink: 0; transition: all 0.15s ease;">
                     <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                   </button>
                 ` : ''}
@@ -12628,22 +12628,46 @@ function formatDateDisplay(val) {
       }
     }
 
-    function executeTextCopyToClipboardRawString(textStringPayload) {
+    function executeTextCopyToClipboardRawString(textStringPayload, customMessage) {
+      const msg = customMessage || 'Đã sao chép vào bộ nhớ tạm.';
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(textStringPayload)
-          .then(() => triggerToast('Đã sao chép vào bộ nhớ tạm.'))
-          .catch(() => fallbackExecutionTextCopyLegacy(textStringPayload));
+          .then(() => triggerToast(msg))
+          .catch(() => fallbackExecutionTextCopyLegacy(textStringPayload, msg));
       } else {
-        fallbackExecutionTextCopyLegacy(textStringPayload);
+        fallbackExecutionTextCopyLegacy(textStringPayload, msg);
       }
     }
 
-    function fallbackExecutionTextCopyLegacy(fallbackText) {
+    function fallbackExecutionTextCopyLegacy(fallbackText, customMessage) {
+      const msg = customMessage || 'Đã sao chép vào bộ nhớ tạm.';
       const transientTextarea = document.createElement('textarea');
       transientTextarea.value = fallbackText; transientTextarea.style.position = 'fixed'; transientTextarea.style.left = '-9999px';
       document.body.appendChild(transientTextarea); transientTextarea.focus(); transientTextarea.select();
-      try { document.execCommand('copy'); triggerToast('Đã sao chép liên kết.'); } catch (err) { triggerToast('Lỗi trích xuất bộ nhớ.', 'error'); }
+      try { document.execCommand('copy'); triggerToast(msg); } catch (err) { triggerToast('Lỗi trích xuất bộ nhớ.', 'error'); }
       document.body.removeChild(transientTextarea);
+    }
+
+    function copyHsbtToClipboard(btn, text, event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      if (!text || text === '—' || text === '-') return;
+      executeTextCopyToClipboardRawString(text, `Đã sao chép số HSBT: ${text}`);
+      if (btn) {
+        const originalHtml = btn.innerHTML;
+        const prevBg = btn.style.background;
+        const prevColor = btn.style.color;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#10b981" stroke-width="2.8"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+        btn.style.background = 'rgba(16, 185, 129, 0.15)';
+        btn.style.color = '#10b981';
+        setTimeout(() => {
+          btn.innerHTML = originalHtml;
+          btn.style.background = prevBg;
+          btn.style.color = prevColor;
+        }, 1500);
+      }
     }
 
     let lightboxUrls = [];
@@ -20883,8 +20907,17 @@ const fullList = getCarBrandLossData();
                 ${statusLabel}
               </span>
             </td>
-            <td style="display: ${activeTonChuaHdReportCols.includes('BIEN_SO') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 800;  color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
-            <td style="display: ${activeTonChuaHdReportCols.includes('SO_HSBT') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 700;  color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
+            <td style="display: ${activeTonChuaHdReportCols.includes('BIEN_SO') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 800; color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
+            <td style="display: ${activeTonChuaHdReportCols.includes('SO_HSBT') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 700; color: var(--text-main); font-size: 12.5px; white-space: nowrap;">
+              <div style="display: inline-flex; align-items: center; gap: 6px;">
+                <span>${escapeHtmlOutput(hsbt)}</span>
+                ${(c.soHoSoBoiThuong && c.soHoSoBoiThuong !== '—') ? `
+                  <button type="button" onclick="copyHsbtToClipboard(this, '${escapeAttributeData(c.soHoSoBoiThuong)}', event)" title="Sao chép nhanh số HSBT" style="border: none; background: rgba(59,130,246,0.1); color: #3b82f6; padding: 0; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: 20px; width: 20px; flex-shrink: 0; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(59,130,246,0.2)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(59,130,246,0.1)'; this.style.transform='scale(1)'">
+                    <svg viewBox="0 0 24 24" width="10.5" height="10.5" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </button>
+                ` : ''}
+              </div>
+            </td>
             <td style="padding: 12px 10px; text-align: left; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(gara)}">${escapeHtmlOutput(gara)}</td>
             <td style="display: ${activeTonChuaHdReportCols.includes('CBXL') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
             <td style="padding: 12px 10px; font-weight: 850;  color: #10b981; text-align: right; font-size: 13.5px;">${reserve} đ</td>
@@ -21308,7 +21341,16 @@ const fullList = getCarBrandLossData();
           rowsHtml += `
             <tr style="border-bottom: 1px solid var(--border); font-size: 13px;">
               <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 44px;">${globalIdx}</td>
-              <td style="display: ${activeTonChuaHdReportCols.includes('SO_HSBT') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 700;  color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(hsbt)}</td>
+              <td style="display: ${activeTonChuaHdReportCols.includes('SO_HSBT') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 700; color: var(--text-main); font-size: 12.5px; white-space: nowrap;">
+                <div style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span>${escapeHtmlOutput(hsbt)}</span>
+                  ${(c.soHoSoBoiThuong || c.soHsbt) ? `
+                    <button type="button" onclick="copyHsbtToClipboard(this, '${escapeAttributeData(c.soHoSoBoiThuong || c.soHsbt)}', event)" title="Sao chép nhanh số HSBT" style="border: none; background: rgba(59,130,246,0.1); color: #3b82f6; padding: 0; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: 20px; width: 20px; flex-shrink: 0; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(59,130,246,0.2)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(59,130,246,0.1)'; this.style.transform='scale(1)'">
+                      <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                  ` : ''}
+                </div>
+              </td>
               <td style="display: ${activeTonChuaHdReportCols.includes('BIEN_SO') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 800;  color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
               <td style="display: ${activeTonChuaHdReportCols.includes('CHU_XE') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left; font-weight: 750;">${escapeHtmlOutput(chuXe)}</td>
               <td style="display: ${activeTonChuaHdReportCols.includes('HANG_XE') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left;">${escapeHtmlOutput(carBrandModel)}</td>
@@ -21894,8 +21936,15 @@ const fullList = getCarBrandLossData();
               </div>
               <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px;" title="${escapeAttributeData(chuXe)}">${escapeHtmlOutput(chuXe)}</div>
             </td>
-            <td style="padding: 12px 10px; font-weight: 750; color: var(--text-main); font-size: 12.5px; min-width: 120px;">
-              ${escapeHtmlOutput(hsbt)}
+            <td style="padding: 12px 10px; font-weight: 750; color: var(--text-main); font-size: 12.5px; min-width: 140px; white-space: nowrap;">
+              <div style="display: inline-flex; align-items: center; gap: 6px;">
+                <span>${escapeHtmlOutput(hsbt)}</span>
+                ${(c.soHoSoBoiThuong || c.soHsbt) ? `
+                  <button type="button" onclick="copyHsbtToClipboard(this, '${escapeAttributeData(c.soHoSoBoiThuong || c.soHsbt)}', event)" title="Sao chép nhanh số HSBT" style="border: none; background: rgba(59,130,246,0.1); color: #3b82f6; padding: 0; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: 20px; width: 20px; flex-shrink: 0; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(59,130,246,0.2)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(59,130,246,0.1)'; this.style.transform='scale(1)'">
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </button>
+                ` : ''}
+              </div>
             </td>
             <td style="padding: 12px 10px; text-align: left; min-width: 130px;">
               <div style="font-weight: 800; color: var(--text-main);">${escapeHtmlOutput(gdv)}</div>
