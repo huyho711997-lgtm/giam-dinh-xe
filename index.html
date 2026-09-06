@@ -12816,6 +12816,9 @@ function formatDateDisplay(val) {
     let activeSelectedDakLakStatuses = ['da_duyet_pasc', 'cho_duyet_hsbt'];
     let activeReportClaimType = 'all';
     let activeDakLakMinReserve = 100000000;
+    let activeTndsReportSearch = '';
+    let activeTndsNoteFilter = 'all'; // 'all' | 'has_note' | 'no_note'
+    let activeTndsStatusFilter = 'all';
     let activeOpenDropdownId = null;
     const DEFAULT_WEEKLY_REPORT_COLS = ['PHAT_SINH', 'DA_DUYET', 'CHUA_DUYET', 'CHUYEN_DNTT', 'LGN_CARPLA', 'TNDS_TON', 'HS_TON_30', 'HS_DPBT_50', 'AVG_10', 'REV_CARPLA'];
     let activeWeeklyReportCols = (function() {
@@ -12944,7 +12947,10 @@ function formatDateDisplay(val) {
           month: activeGdvReportMonth,
           year: activeGdvReportYear,
           carBrandMonths: [...activeCarBrandReportMonths],
-          carBrandYears: [...activeCarBrandReportYears]
+          carBrandYears: [...activeCarBrandReportYears],
+          tndsSearch: activeTndsReportSearch,
+          tndsNoteFilter: activeTndsNoteFilter,
+          tndsStatusFilter: activeTndsStatusFilter
         };
       }
       
@@ -12962,6 +12968,9 @@ function formatDateDisplay(val) {
         activeGdvReportYear = state.year;
         activeCarBrandReportMonths = state.carBrandMonths ? [...state.carBrandMonths] : ['all'];
         activeCarBrandReportYears = state.carBrandYears ? [...state.carBrandYears] : [String(new Date().getFullYear())];
+        if (state.tndsSearch !== undefined) activeTndsReportSearch = state.tndsSearch;
+        if (state.tndsNoteFilter !== undefined) activeTndsNoteFilter = state.tndsNoteFilter;
+        if (state.tndsStatusFilter !== undefined) activeTndsStatusFilter = state.tndsStatusFilter;
       } else {
         activeSelectedGdvNames = ['Hồ Quang Huy', 'Huỳnh Văn Phúc', 'Nguyễn Quang Huy_DL'];
         activeSelectedDakLakStatuses = ['da_duyet_pasc', 'cho_duyet_hsbt'];
@@ -14030,6 +14039,11 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                     <span style="color: #ef4444; font-weight: 850;">Tồn chưa Hóa đơn (.xlsx)</span>
                   </div>
                   ` : ''}
+
+                  <div class="custom-select-item" onclick="triggerTndsTonReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px dashed var(--border); transition: background 0.15s ease;">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#eab308" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <span style="color: #eab308; font-weight: 850;">Báo cáo TNDS Tồn (.xlsx)</span>
+                  </div>
                 </div>
               </div>
 </div>
@@ -14043,6 +14057,10 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             <button type="button" onclick="switchGdvReportView('weekly_zone')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'weekly_zone' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
               <span>Báo cáo tuần/tháng</span>
+            </button>
+            <button type="button" onclick="switchGdvReportView('tnds_ton')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'tnds_ton' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <span>BC TNDS Tồn</span>
             </button>
             <button type="button" onclick="switchGdvReportView('table')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'table' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
@@ -14194,6 +14212,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
 
               
               <!-- Claim Type (Nghiệp vụ) Selection Dropdown -->
+              ${activeGdvReportView !== 'tnds_ton' ? `
               <div class="custom-select-wrapper" style="position: relative;" id="accReportClaimTypeFilterWrapper">
                 <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportClaimTypeMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 160px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
                   <span style="display: flex; align-items: center; gap: 6px;">
@@ -14218,6 +14237,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                   </div>
                 </div>
               </div>
+              ` : ''}
 <!-- Custom Reserve Threshold & Status Dropdowns for Dak Lak Report -->
               ${activeGdvReportView === 'daklak_reserve' ? `
               <!-- Reserve Threshold Selection Dropdown (>50M vs >100M) -->
@@ -14329,6 +14349,30 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     <span>Áp dụng</span>
                   </button>
+                </div>
+              ` : activeGdvReportView === 'tnds_ton' ? `
+                <!-- Custom Branch Dropdown for TNDS Tồn -->
+                <div class="custom-select-wrapper" style="position: relative;">
+                  <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportBranchMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 220px; justify-content: space-between; box-shadow: var(--shadow-xs);">
+                    <span style="display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px;">
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary); flex-shrink: 0;"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"></path><path d="M6 12H4a2 2 0 0 0-2 2v8h4"></path><path d="M18 9h2a2 2 0 0 1 2 2v11h-4"></path></svg>
+                      <span>${activeGdvReportBranch === 'all' ? 'Tất cả chi nhánh cấp đơn' : activeGdvReportBranch}</span>
+                    </span>
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </button>
+
+                  <div id="ddReportBranchMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; min-width: 250px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 280px; overflow-y: auto;">
+                    <div class="custom-select-item ${activeGdvReportBranch === 'all' ? 'active' : ''}" onclick="selectGdvReportBranch('all')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${activeGdvReportBranch === 'all' ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                      <span>Tất cả chi nhánh cấp đơn</span>
+                      ${activeGdvReportBranch === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                    </div>
+                    ${branchList.filter(b => b !== 'all').map(b => `
+                      <div class="custom-select-item ${b === activeGdvReportBranch ? 'active' : ''}" onclick="selectGdvReportBranch('${escapeAttributeData(b)}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${b === activeGdvReportBranch ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                        <span>${escapeHtmlOutput(b)}</span>
+                        ${b === activeGdvReportBranch ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
+                      </div>
+                    `).join('')}
+                  </div>
                 </div>
               ` : activeGdvReportView === 'car_brand_loss' ? `
                 <!-- Car Brand Multi-Select Month Dropdown -->
@@ -14442,7 +14486,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
 
           </div>
 
-          ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone' && activeGdvReportView !== 'daklak_reserve' && activeGdvReportView !== 'ton_chua_hoa_don' && activeGdvReportView !== 'car_brand_loss') ? `
+          ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone' && activeGdvReportView !== 'daklak_reserve' && activeGdvReportView !== 'ton_chua_hoa_don' && activeGdvReportView !== 'car_brand_loss' && activeGdvReportView !== 'tnds_ton') ? `
           <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
@@ -14476,7 +14520,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           ` : ''}
 
           <!-- CONDITIONAL RENDERING BASED ON activeGdvReportView -->
-          ${activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'car_brand_loss' ? renderCarBrandLossReportTableHtml() : activeGdvReportView === 'daklak_reserve' ? renderDakLakReserveReportTableHtml() : activeGdvReportView === 'ton_chua_hoa_don' ? renderTonChuaHoaDonReportTableHtml() : activeGdvReportView === 'garage' ? `
+          ${activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'tnds_ton' ? renderTndsTonReportTableHtml() : activeGdvReportView === 'car_brand_loss' ? renderCarBrandLossReportTableHtml() : activeGdvReportView === 'daklak_reserve' ? renderDakLakReserveReportTableHtml() : activeGdvReportView === 'ton_chua_hoa_don' ? renderTonChuaHoaDonReportTableHtml() : activeGdvReportView === 'garage' ? `
             
             <!-- EXECUTIVE GARAGE REPORT DASHBOARD -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
@@ -21475,6 +21519,514 @@ const fullList = getCarBrandLossData();
         triggerToast('Có lỗi xảy ra khi xuất ảnh báo cáo!', 'error');
       });
     }
+
+    /****************************************************
+     * BÁO CÁO HỒ SƠ TNDS TỒN & QUẢN LÝ GHI CHÚ
+     ****************************************************/
+    function formatTndsTimestampDisplay(val) {
+      if (!val) return '—';
+      if (typeof val === 'number') {
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return '—';
+        const day = String(d.getDate()).padStart(2, '0');
+        const mo = String(d.getMonth() + 1).padStart(2, '0');
+        const yr = d.getFullYear();
+        const hr = String(d.getHours()).padStart(2, '0');
+        const mn = String(d.getMinutes()).padStart(2, '0');
+        return `${day}/${mo}/${yr} ${hr}:${mn}`;
+      }
+      return formatDateDisplay(val);
+    }
+
+    async function updateTndsClaimNote(claimId, noteValue) {
+      if (!claimId) return;
+      const cleanVal = (noteValue || '').trim();
+      const now = Date.now();
+      const currentUser = firebase.auth().currentUser;
+      const userName = String(activeUserProfile?.fullName || activeUserProfile?.displayName || currentUser?.displayName || currentUser?.email || 'Người dùng');
+
+      try {
+        const updates = {};
+        updates['pending_claims/' + claimId + '/tndsGhiChu'] = cleanVal;
+        updates['pending_claims/' + claimId + '/tndsLastUpdated'] = now;
+        updates['pending_claims/' + claimId + '/tndsUpdatedBy'] = userName;
+
+        await dbNodeInstance.ref().update(updates);
+
+        if (cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId]) {
+          cachedPendingClaimsPayload[claimId].tndsGhiChu = cleanVal;
+          cachedPendingClaimsPayload[claimId].tndsLastUpdated = now;
+          cachedPendingClaimsPayload[claimId].tndsUpdatedBy = userName;
+        }
+
+        const updatedCell = document.getElementById(`tndsUpdatedCell_${claimId}`);
+        if (updatedCell) {
+          updatedCell.innerHTML = `
+            <div style="font-weight: 800; color: var(--text-main); font-size: 12px;">${formatTndsTimestampDisplay(now)}</div>
+            <div style="font-size: 11px; color: var(--text-soft); margin-top: 2px;">${escapeHtmlOutput(userName)}</div>
+          `;
+          updatedCell.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
+          setTimeout(() => {
+            if (updatedCell) updatedCell.style.backgroundColor = 'transparent';
+          }, 1500);
+        }
+        triggerToast('Đã lưu ghi chú TNDS thành công!', 'success');
+      } catch (err) {
+        console.error(err);
+        triggerToast('Lỗi khi lưu ghi chú: ' + err.message, 'error');
+      }
+    }
+
+    function changeTndsReportSearch(txt) {
+      activeTndsReportSearch = (txt || '').trim();
+      renderGdvReportPage();
+    }
+
+    function setTndsNoteFilter(filterVal) {
+      activeTndsNoteFilter = filterVal;
+      renderGdvReportPage();
+    }
+
+    function setTndsStatusFilter(statusVal) {
+      activeTndsStatusFilter = statusVal;
+      renderGdvReportPage();
+    }
+
+    function getFilteredTndsTonClaims() {
+      const claimsList = Object.entries(cachedPendingClaimsPayload || {}).map(([k, v]) => {
+        return { ...v, id: v.id || k };
+      });
+
+      return claimsList.filter(c => {
+        // Must be TNDS and unpaid
+        if (!isTndsClaim(c) || !isUnpaidClaim(c)) return false;
+
+        // Chi nhánh filter
+        if (activeGdvReportBranch !== 'all') {
+          const b = String(c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '').toLowerCase();
+          if (!b.includes(activeGdvReportBranch.toLowerCase())) return false;
+        }
+
+        // GĐV filter
+        if (activeSelectedGdvNames && activeSelectedGdvNames.length > 0) {
+          const gdv = String(c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim().toLowerCase();
+          const matchGdv = activeSelectedGdvNames.some(s => s.trim().toLowerCase() === gdv);
+          if (!matchGdv) return false;
+        }
+
+        // Ghi chú filter
+        const note = String(c.tndsGhiChu || '').trim();
+        if (activeTndsNoteFilter === 'has_note' && !note) return false;
+        if (activeTndsNoteFilter === 'no_note' && note) return false;
+
+        // Trạng thái filter
+        if (activeTndsStatusFilter !== 'all') {
+          const st = String(c.trangThai || 'moi').trim();
+          if (st !== activeTndsStatusFilter) return false;
+        }
+
+        // Search query
+        if (activeTndsReportSearch && activeTndsReportSearch.trim()) {
+          const q = activeTndsReportSearch.trim().toLowerCase();
+          const bsx = String(c.bienSo || '').toLowerCase();
+          const hsbt = String(c.soHoSoBoiThuong || c.soHsbt || '').toLowerCase();
+          const owner = String(c.chuXe || c.hoTen || c.khachHang || '').toLowerCase();
+          const gdv = String(c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '').toLowerCase();
+          const branch = String(c.donViCapDon || c.chiNhanh || '').toLowerCase();
+          const noteContent = String(c.tndsGhiChu || '').toLowerCase();
+
+          const match = bsx.includes(q) || hsbt.includes(q) || owner.includes(q) || gdv.includes(q) || branch.includes(q) || noteContent.includes(q);
+          if (!match) return false;
+        }
+
+        return true;
+      });
+    }
+
+    function renderTndsTonReportTableHtml() {
+      const filtered = getFilteredTndsTonClaims();
+
+      // Sort: latest updated or createdAt descending
+      filtered.sort((a, b) => {
+        const timeA = a.tndsLastUpdated || a.createdAt || getClaimTimestamp(a) || 0;
+        const timeB = b.tndsLastUpdated || b.createdAt || getClaimTimestamp(b) || 0;
+        return timeB - timeA;
+      });
+
+      const totalClaims = filtered.length;
+      let totalDuPhong = 0;
+      let totalDuyetBt = 0;
+      let hasNoteCount = 0;
+
+      filtered.forEach(c => {
+        const dp = parseInt(String(c.duPhongBoiThuong || '0').replace(/\D/g, ''), 10) || 0;
+        totalDuPhong += dp;
+
+        const bt = parseInt(String(c.ttbtTongSoTienBoiThuong || '0').replace(/\D/g, ''), 10) || 0;
+        totalDuyetBt += bt;
+
+        if ((c.tndsGhiChu || '').trim()) {
+          hasNoteCount++;
+        }
+      });
+
+      const notePercent = totalClaims > 0 ? Math.round((hasNoteCount / totalClaims) * 100) : 0;
+
+      const rowsHtml = filtered.map((c, idx) => {
+        const bsx = c.bienSo || '—';
+        const hsbt = c.soHoSoBoiThuong || c.soHsbt || '—';
+        const chuXe = c.chuXe || c.hoTen || c.khachHang || '—';
+        const gdv = c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công';
+        const donVi = c.donViCapDon || c.chiNhanh || '—';
+        const ngayMoHs = formatDateDisplay(c.ngayMoHs);
+        const duPhong = formatCurrencyInputNumber(c.duPhongBoiThuong) || '0';
+        const duyetBt = formatCurrencyInputNumber(c.ttbtTongSoTienBoiThuong) || '0';
+
+        const statusConfig = PENDING_STATUS_MAP[c.trangThai] || PENDING_STATUS_MAP['moi'];
+        const statusLabel = statusConfig ? statusConfig.label : (c.trangThai || 'Mới');
+        const statusBg = statusConfig ? statusConfig.bg : 'rgba(148, 163, 184, 0.14)';
+        const statusColor = statusConfig ? statusConfig.color : '#64748b';
+        const statusBorder = statusConfig ? statusConfig.border : 'rgba(148, 163, 184, 0.35)';
+
+        const ghiChu = c.tndsGhiChu || '';
+        const lastUpdated = c.tndsLastUpdated;
+        const updatedBy = c.tndsUpdatedBy || '';
+
+        return `
+          <tr style="border-bottom: 1px solid var(--border); font-size: 13px; transition: background 0.15s ease;" onmouseover="this.style.background='var(--bg-soft)'" onmouseout="this.style.background='transparent'">
+            <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 45px;">${idx + 1}</td>
+            <td style="padding: 12px 10px; text-align: center; width: 130px;">
+              <span style="display: inline-block; padding: 3px 8px; border-radius: 99px; font-size: 11px; font-weight: 850; background: ${statusBg}; color: ${statusColor}; border: 1px solid ${statusBorder}; white-space: nowrap;">
+                ${escapeHtmlOutput(statusLabel)}
+              </span>
+            </td>
+            <td style="padding: 12px 10px; min-width: 140px;">
+              <div style="font-weight: 850; color: var(--primary); font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                <span>${escapeHtmlOutput(bsx)}</span>
+              </div>
+              <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px;" title="${escapeAttributeData(chuXe)}">${escapeHtmlOutput(chuXe)}</div>
+            </td>
+            <td style="padding: 12px 10px; font-weight: 750; color: var(--text-main); font-size: 12.5px; min-width: 120px;">
+              ${escapeHtmlOutput(hsbt)}
+            </td>
+            <td style="padding: 12px 10px; text-align: left; min-width: 130px;">
+              <div style="font-weight: 800; color: var(--text-main);">${escapeHtmlOutput(gdv)}</div>
+            </td>
+            <td style="padding: 12px 10px; text-align: left; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(donVi)}">
+              <span style="font-size: 12px; color: var(--text-soft); font-weight: 650;">${escapeHtmlOutput(donVi)}</span>
+            </td>
+            <td style="padding: 12px 10px; text-align: center; white-space: nowrap; font-size: 12px; font-weight: 700; color: var(--text-main); width: 100px;">
+              ${ngayMoHs}
+            </td>
+            <td style="padding: 12px 10px; font-weight: 850; color: #10b981; text-align: right; font-size: 13px; width: 125px; white-space: nowrap;">
+              ${duPhong !== '0' ? duPhong + ' đ' : '—'}
+            </td>
+            <td style="padding: 12px 10px; font-weight: 850; color: #3b82f6; text-align: right; font-size: 13px; width: 125px; white-space: nowrap;">
+              ${duyetBt !== '0' ? duyetBt + ' đ' : '—'}
+            </td>
+            <!-- CỘT GHI CHÚ QUẢN LÝ (TỰ ĐỘNG LƯU) -->
+            <td style="padding: 8px 10px; min-width: 220px; width: 260px;">
+              <div style="position: relative;">
+                <textarea
+                  id="tndsNote_${c.id}"
+                  placeholder="Gõ ghi chú quản lý TNDS..."
+                  onblur="updateTndsClaimNote('${c.id}', this.value)"
+                  onkeydown="if((event.ctrlKey||event.metaKey) && event.key==='Enter') { this.blur(); }"
+                  style="width: 100%; min-height: 48px; max-height: 120px; padding: 6px 8px; border-radius: 8px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12px; font-family: inherit; resize: vertical; line-height: 1.4; transition: all 0.2s;"
+                  onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 2px rgba(216,180,109,0.2)';"
+                >${escapeHtmlOutput(ghiChu)}</textarea>
+              </div>
+            </td>
+            <!-- CỘT LẦN GẦN NHẤT ĐƯỢC CẬP NHẬT -->
+            <td id="tndsUpdatedCell_${c.id}" style="padding: 12px 10px; text-align: left; width: 155px; font-size: 12px; transition: background 0.3s ease; border-radius: 6px;">
+              ${lastUpdated ? `
+                <div style="font-weight: 800; color: var(--text-main); font-size: 12px;">${formatTndsTimestampDisplay(lastUpdated)}</div>
+                <div style="font-size: 11px; color: var(--text-soft); margin-top: 2px;">${escapeHtmlOutput(updatedBy || 'Hệ thống')}</div>
+              ` : `
+                <span style="color: var(--text-soft); font-style: italic; font-size: 11.5px;">Chưa cập nhật</span>
+              `}
+            </td>
+            <!-- THAO TÁC XEM / SỬA -->
+            <td style="padding: 12px 8px; text-align: center; width: 60px;">
+              <button type="button" onclick="openEditPendingClaimModal('${c.id}')" title="Xem & sửa chi tiết hồ sơ" style="width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--bg-soft); color: var(--text-main); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(216,180,109,0.2)'; this.style.color='var(--primary)';" onmouseout="this.style.background='var(--bg-soft)'; this.style.color='var(--text-main)';">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <!-- 4 KPI SUMMARY CARDS FOR TNDS TỒN -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
+          <!-- Card 1: Tổng hồ sơ TNDS tồn -->
+          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(234, 179, 8, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <span style="font-size: 13px; font-weight: 800; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Tổng HS TNDS Tồn</span>
+              <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(234, 179, 8, 0.12); display: flex; align-items: center; justify-content: center; color: #eab308;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              </div>
+            </div>
+            <div style="font-size: 32px; font-weight: 900; color: #eab308; line-height: 1.1;">${totalClaims.toLocaleString('vi-VN')}</div>
+            <div style="font-size: 12px; color: var(--text-soft); margin-top: 8px; font-weight: 700;">Hồ sơ TNDS chưa thanh toán</div>
+          </div>
+
+          <!-- Card 2: Tổng dự phòng bồi thường -->
+          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(16, 185, 129, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <span style="font-size: 13px; font-weight: 800; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Tổng Dự phòng BT</span>
+              <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(16, 185, 129, 0.12); display: flex; align-items: center; justify-content: center; color: #10b981;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="font-size: 28px; font-weight: 900; color: #10b981; line-height: 1.1;">${formatCurrencyInputNumber(totalDuPhong)} <span style="font-size: 16px; font-weight: 700;">đ</span></div>
+            <div style="font-size: 12px; color: var(--text-soft); margin-top: 8px; font-weight: 700;">Ước tính tổn thất dự phòng</div>
+          </div>
+
+          <!-- Card 3: Tổng tiền duyệt bồi thường -->
+          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <span style="font-size: 13px; font-weight: 800; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Tiền đã duyệt BT</span>
+              <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(59, 130, 246, 0.12); display: flex; align-items: center; justify-content: center; color: #3b82f6;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+            </div>
+            <div style="font-size: 28px; font-weight: 900; color: #3b82f6; line-height: 1.1;">${formatCurrencyInputNumber(totalDuyetBt)} <span style="font-size: 16px; font-weight: 700;">đ</span></div>
+            <div style="font-size: 12px; color: var(--text-soft); margin-top: 8px; font-weight: 700;">Đã phê duyệt chờ chi trả</div>
+          </div>
+
+          <!-- Card 4: Tiến độ cập nhật ghi chú -->
+          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216, 180, 109, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <span style="font-size: 13px; font-weight: 800; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Tiến độ Ghi chú</span>
+              <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(216, 180, 109, 0.15); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <div style="font-size: 32px; font-weight: 900; color: var(--primary); line-height: 1.1;">${hasNoteCount}<span style="font-size: 18px; color: var(--text-soft); font-weight: 700;">/${totalClaims}</span></div>
+              <span style="font-size: 12px; font-weight: 850; padding: 2px 8px; border-radius: 6px; background: rgba(216,180,109,0.2); color: var(--primary);">${notePercent}%</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-soft); margin-top: 8px; font-weight: 700;">Hồ sơ đã được quản lý ghi chú</div>
+          </div>
+        </div>
+
+        <!-- MAIN REPORT CARD CONTAINER -->
+        <div class="p-card" id="tndsTonReportCardContainer" style="padding: 26px 30px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface);">
+          
+          <!-- HEADER & ACTIONS -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border); flex-wrap: wrap; gap: 14px;">
+            <div>
+              <h2 style="font-size: 18px; font-weight: 850; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#eab308" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                Báo cáo Quản lý Hồ sơ TNDS Tồn
+              </h2>
+              <div style="font-size: 12.5px; color: var(--text-soft); margin-top: 4px; font-weight: 650;">
+                Toàn bộ hồ sơ Trách nhiệm Dân sự đang tồn đọng lũy kế • Theo dõi tiến độ ghi chú và lịch sử cập nhật
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;" class="hide-on-screenshot">
+              <!-- Excel Export -->
+              <button type="button" onclick="exportTndsTonReportExcel()" style="padding: 0 16px; height: 38px; border-radius: 11px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; font-size: 12.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(16,185,129,0.3); transition: all 0.2s ease;">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Xuất Excel (.xlsx)</span>
+              </button>
+
+              <!-- Ultra HD Image Export -->
+              <button type="button" onclick="downloadTndsTonReportImage()" style="padding: 0 16px; height: 38px; border-radius: 11px; background: rgba(216,180,109,0.15); color: var(--primary); border: 1px solid rgba(216,180,109,0.3); font-size: 12.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(216,180,109,0.25)'" onmouseout="this.style.background='rgba(216,180,109,0.15)'">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>Tải ảnh Ultra HD</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- IN-PAGE FILTER & SEARCH TOOLBAR -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; background: var(--bg-soft); padding: 12px 16px; border-radius: 14px; border: 1px solid var(--border);" class="hide-on-screenshot">
+            
+            <!-- Search Box -->
+            <div style="position: relative; flex: 1; min-width: 260px; max-width: 380px;">
+              <input
+                type="text"
+                placeholder="Tìm biển số, số HSBT, chủ xe, GĐV, ghi chú..."
+                value="${escapeAttributeData(activeTndsReportSearch)}"
+                oninput="changeTndsReportSearch(this.value)"
+                class="input-premium"
+                style="width: 100%; height: 38px; padding-left: 36px; padding-right: 12px; border-radius: 10px; font-size: 13px;"
+              />
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="position: absolute; left: 11px; top: 11px; color: var(--text-soft); pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              ${activeTndsReportSearch ? `
+                <button type="button" onclick="changeTndsReportSearch('')" style="position: absolute; right: 8px; top: 10px; background: none; border: none; color: var(--text-soft); cursor: pointer; padding: 2px;">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              ` : ''}
+            </div>
+
+            <!-- Filter Controls Right -->
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <!-- Filter by Note Status -->
+              <div style="display: flex; align-items: center; gap: 4px; background: var(--surface); padding: 3px; border-radius: 10px; border: 1px solid var(--border-strong);">
+                <button type="button" onclick="setTndsNoteFilter('all')" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.15s; ${activeTndsNoteFilter === 'all' ? 'background: var(--primary); color: #111;' : 'background: transparent; color: var(--text-soft);'}">
+                  Tất cả (${totalClaims})
+                </button>
+                <button type="button" onclick="setTndsNoteFilter('has_note')" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.15s; ${activeTndsNoteFilter === 'has_note' ? 'background: var(--primary); color: #111;' : 'background: transparent; color: var(--text-soft);'}">
+                  Có ghi chú (${hasNoteCount})
+                </button>
+                <button type="button" onclick="setTndsNoteFilter('no_note')" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.15s; ${activeTndsNoteFilter === 'no_note' ? 'background: var(--primary); color: #111;' : 'background: transparent; color: var(--text-soft);'}">
+                  Chưa có ghi chú (${totalClaims - hasNoteCount})
+                </button>
+              </div>
+
+              <!-- Status Dropdown Filter -->
+              <div style="position: relative;">
+                <select
+                  onchange="setTndsStatusFilter(this.value)"
+                  class="input-premium"
+                  style="height: 38px; padding: 0 14px; border-radius: 10px; font-size: 12.5px; font-weight: 800; color: var(--text-main); cursor: pointer;"
+                >
+                  <option value="all" ${activeTndsStatusFilter === 'all' ? 'selected' : ''}>Tất cả trạng thái</option>
+                  ${Object.entries(PENDING_STATUS_MAP).map(([sKey, sVal]) => `
+                    <option value="${sKey}" ${activeTndsStatusFilter === sKey ? 'selected' : ''}>${sVal.label}</option>
+                  `).join('')}
+                </select>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- MASTER DATA TABLE -->
+          <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--border);">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+              <thead>
+                <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong); color: var(--text-soft); font-weight: 850; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px;">
+                  <th style="padding: 12px 10px; text-align: center; width: 45px;">STT</th>
+                  <th style="padding: 12px 10px; text-align: center; width: 130px;">Trạng thái</th>
+                  <th style="padding: 12px 10px; min-width: 140px;">Biển số xe / Chủ xe</th>
+                  <th style="padding: 12px 10px; min-width: 120px;">Số HSBT</th>
+                  <th style="padding: 12px 10px; min-width: 130px;">Giám định viên</th>
+                  <th style="padding: 12px 10px; max-width: 160px;">Đơn vị cấp đơn</th>
+                  <th style="padding: 12px 10px; text-align: center; width: 100px;">Ngày mở HS</th>
+                  <th style="padding: 12px 10px; text-align: right; width: 125px;">Dự phòng BT</th>
+                  <th style="padding: 12px 10px; text-align: right; width: 125px;">Tiền duyệt BT</th>
+                  <th style="padding: 12px 10px; min-width: 220px; width: 260px; color: var(--primary);">Ghi chú quản lý (Lưu tự động)</th>
+                  <th style="padding: 12px 10px; width: 155px; color: var(--primary);">Lần cập nhật cuối</th>
+                  <th style="padding: 12px 8px; text-align: center; width: 60px;">Chi tiết</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filtered.length === 0 ? `
+                  <tr>
+                    <td colspan="12" style="text-align: center; padding: 48px 20px; color: var(--text-soft);">
+                      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.5;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <span style="font-weight: 750; font-size: 14px;">Không tìm thấy hồ sơ TNDS tồn thỏa mãn điều kiện lọc.</span>
+                      </div>
+                    </td>
+                  </tr>
+                ` : rowsHtml}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function exportTndsTonReportExcel() {
+      if (!hasUserPermission('report', 'export')) {
+        triggerToast('Bạn không có quyền xuất dữ liệu báo cáo.', 'warning');
+        return;
+      }
+
+      const filtered = getFilteredTndsTonClaims();
+      if (filtered.length === 0) {
+        triggerToast('Không có hồ sơ TNDS nào để xuất Excel.', 'warning');
+        return;
+      }
+
+      const excelData = filtered.map((c, idx) => {
+        const statusConfig = PENDING_STATUS_MAP[c.trangThai] || PENDING_STATUS_MAP['moi'];
+        return {
+          'STT': idx + 1,
+          'Trạng thái': statusConfig ? statusConfig.label : (c.trangThai || 'Mới'),
+          'Biển số xe': c.bienSo || '',
+          'Số HSBT': c.soHoSoBoiThuong || c.soHsbt || '',
+          'Chủ xe / Khách hàng': c.chuXe || c.hoTen || c.khachHang || '',
+          'Giám định viên': c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '',
+          'Đơn vị cấp đơn': c.donViCapDon || c.chiNhanh || '',
+          'Ngày mở HS': formatDateDisplay(c.ngayMoHs),
+          'Dự phòng bồi thường (VNĐ)': parseInt(String(c.duPhongBoiThuong || '0').replace(/\D/g, ''), 10) || 0,
+          'Tiền duyệt bồi thường (VNĐ)': parseInt(String(c.ttbtTongSoTienBoiThuong || '0').replace(/\D/g, ''), 10) || 0,
+          'Ghi chú quản lý': c.tndsGhiChu || '',
+          'Lần gần nhất cập nhật': c.tndsLastUpdated ? formatTndsTimestampDisplay(c.tndsLastUpdated) : '',
+          'Người cập nhật': c.tndsUpdatedBy || ''
+        };
+      });
+
+      if (window.XLSX) {
+        const ws = XLSX.utils.json_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'BC_TNDS_Ton');
+        const dateTag = new Date().toLocaleDateString('vi-VN').replace(/\//g, '-');
+        XLSX.writeFile(wb, `Bao_Cao_TNDS_Ton_${dateTag}.xlsx`);
+        triggerToast('Đã xuất file Excel Báo cáo TNDS Tồn thành công!', 'success');
+      } else {
+        triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
+      }
+    }
+
+    function triggerTndsTonReportExcelExport(event) {
+      if (event) event.stopPropagation();
+      document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      activeOpenDropdownId = null;
+      exportTndsTonReportExcel();
+    }
+
+    function downloadTndsTonReportImage() {
+      const cardEl = document.getElementById('tndsTonReportCardContainer');
+      if (!cardEl) {
+        triggerToast('Không tìm thấy khung báo cáo!', 'error');
+        return;
+      }
+      if (typeof html2canvas === 'undefined') {
+        triggerToast('Thư viện tạo ảnh đang tải, vui lòng thử lại sau 2 giây...', 'warning');
+        return;
+      }
+
+      triggerToast('Đang xuất ảnh Báo cáo TNDS Tồn Ultra HD (4K)...', 'info');
+
+      html2canvas(cardEl, {
+        scale: 3.5,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: function(clonedDoc) {
+          const target = clonedDoc.getElementById('tndsTonReportCardContainer');
+          if (target) {
+            target.style.boxShadow = 'none';
+            target.style.transform = 'none';
+            target.style.backgroundColor = '#ffffff';
+          }
+        },
+        ignoreElements: function(element) {
+          return element.classList && element.classList.contains('hide-on-screenshot');
+        }
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Bao_Cao_TNDS_Ton_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+        triggerToast('Đã tải ảnh báo cáo sắc nét thành công!', 'success');
+      }).catch(err => {
+        console.error(err);
+        triggerToast('Có lỗi xảy ra khi xuất ảnh báo cáo!', 'error');
+      });
+    }
+
 
     function renderFavFiltersDropdownContent() {
       const menu = document.getElementById('ddReportFavFiltersMenu');
