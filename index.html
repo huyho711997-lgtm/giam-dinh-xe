@@ -13977,6 +13977,93 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       });
 
       const gLinePathStr = gPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.cx.toFixed(1)} ${p.lY.toFixed(1)}`).join(' ');
+
+      const GDV_REPORT_VIEWS_LIST = [
+        {
+          id: 'weekly_zone',
+          title: 'Báo cáo tuần/tháng',
+          badge: 'Vùng & GĐV',
+          desc: 'Phân bổ theo Vùng & Giám định viên',
+          icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>`
+        },
+        {
+          id: 'tnds_ton',
+          title: 'BC TNDS Tồn',
+          badge: 'MỚI',
+          desc: 'Hồ sơ TNDS tồn lũy kế & ghi chú',
+          icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`
+        },
+        {
+          id: 'table',
+          title: 'Báo cáo HS bồi thường',
+          badge: 'Chi tiết',
+          desc: 'Bảng dữ liệu tổng hợp chi tiết hồ sơ',
+          icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>`
+        },
+        {
+          id: 'chart',
+          title: 'Báo cáo KPI',
+          badge: 'Biểu đồ',
+          desc: 'Biểu đồ chỉ số hiệu suất & năng suất',
+          icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>`
+        },
+        {
+          id: 'garage',
+          title: 'Báo cáo doanh thu DV gara',
+          badge: 'Gara',
+          desc: 'Doanh thu & xưởng dịch vụ đối tác',
+          icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 21h18"></path><path d="M19 21v-4a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v4"></path><path d="M5 15V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"></path></svg>`
+        },
+        {
+          id: 'daklak_reserve',
+          title: `BC Đắk Lắk ${activeDakLakMinReserve === 50000000 ? '> 50tr' : '> 100tr'}`,
+          badge: 'Dự phòng cao',
+          desc: 'Hồ sơ có mức dự phòng tổn thất lớn',
+          icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`
+        },
+        {
+          id: 'ton_chua_hoa_don',
+          title: 'BC Tồn chưa HĐ',
+          badge: 'Chưa HĐ',
+          desc: 'Đã duyệt bồi thường chưa có hóa đơn',
+          icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`
+        },
+        {
+          id: 'car_brand_loss',
+          title: 'Tổn thất theo hãng xe',
+          badge: 'Hãng xe',
+          desc: 'Chi phí tổn thất phân bổ theo dòng xe',
+          icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>`
+        }
+      ];
+
+      const currentActiveReportObj = GDV_REPORT_VIEWS_LIST.find(r => r.id === activeGdvReportView) || GDV_REPORT_VIEWS_LIST[0];
+
+      let heroReportTitle = "Báo cáo hồ sơ bồi thường";
+      let heroReportSubtitle = `Thống kê tổng hợp tình hình giải quyết hồ sơ bồi thường trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>), phân bổ lượng hồ sơ theo từng trạng thái và đối chiếu KPI.`;
+
+      if (activeGdvReportView === 'weekly_zone') {
+        heroReportTitle = "Báo cáo tiến độ tuần/tháng";
+        heroReportSubtitle = `Thống kê phân bổ hồ sơ bồi thường theo Vùng và Giám định viên trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>).`;
+      } else if (activeGdvReportView === 'tnds_ton') {
+        heroReportTitle = "Báo cáo Quản lý Hồ sơ TNDS Tồn";
+        heroReportSubtitle = "Toàn bộ hồ sơ Trách nhiệm Dân sự đang tồn đọng lũy kế • Theo dõi tiến độ ghi chú và lịch sử cập nhật.";
+      } else if (activeGdvReportView === 'chart') {
+        heroReportTitle = "Báo cáo KPI & Hiệu suất Giám định";
+        heroReportSubtitle = `Biểu đồ và chỉ số hiệu suất giải quyết hồ sơ trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>).`;
+      } else if (activeGdvReportView === 'garage') {
+        heroReportTitle = "Báo cáo Doanh thu Dịch vụ Gara";
+        heroReportSubtitle = `Thống kê chi phí sửa chữa và doanh thu các xưởng dịch vụ liên kết trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>).`;
+      } else if (activeGdvReportView === 'daklak_reserve') {
+        heroReportTitle = `Báo cáo Hồ sơ Đắk Lắk (Dự phòng ${activeDakLakMinReserve === 50000000 ? '> 50 triệu' : '> 100 triệu'})`;
+        heroReportSubtitle = "Danh sách hồ sơ bồi thường có mức dự phòng tổn thất lớn tại khu vực Đắk Lắk.";
+      } else if (activeGdvReportView === 'ton_chua_hoa_don') {
+        heroReportTitle = "Báo cáo Hồ sơ Tồn chưa có Hóa đơn";
+        heroReportSubtitle = "Danh sách hồ sơ đã được phê duyệt phương án bồi thường nhưng chưa có hóa đơn.";
+      } else if (activeGdvReportView === 'car_brand_loss') {
+        heroReportTitle = "Báo cáo Tổn thất theo Hãng xe";
+        heroReportSubtitle = "Phân tích số lượng và chi phí tổn thất phân bổ theo các hãng xe.";
+      }
       container.innerHTML = `
         <style>
           .gara-premium-grid {
@@ -14035,124 +14122,127 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                   <span>BÁO CÁO GIÁM ĐỊNH - BỒI THƯỜNG</span>
                 </div>
                 <h1 style="font-size: 24px; font-weight: 850; color: var(--text-main); margin: 0; letter-spacing: -0.02em; line-height: 1.25;">
-                  Báo cáo hồ sơ bồi thường
+                  ${heroReportTitle}
                 </h1>
                 <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft); max-width: 850px; margin-bottom: 0;">
-                  Thống kê tổng hợp tình hình giải quyết hồ sơ bồi thường trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>), phân bổ lượng hồ sơ theo từng trạng thái và đối chiếu KPI.
+                  ${heroReportSubtitle}
                 </p>
               </div>
 
-              <!-- Export Buttons Area -->
-              ${hasUserPermission('report', 'export') ? `
-              
-          <div style="display:flex; flex-wrap:wrap; align-items:center; gap:12px;">
-<button type="button" class="btn-premium" onclick="openReportSettingsModal()" style="width: auto; padding: 0 16px; height: 42px; font-size: 12.5px; border-radius: 12px; font-weight: 850; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            <span>Cài đặt BC</span>
-          </button>
-<div class="custom-select-wrapper" style="position: relative;" id="accExportMenuWrapper">
-                <button type="button" class="btn-premium" onclick="toggleCustomDropdownMenu('ddExportOptions', event)" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.3); transition: all 0.2s ease; padding: 0 18px; height: 42px; font-size: 12.5px; border-radius: 12px; font-weight: 850; min-width: 190px; justify-content: space-between;">
-                  <span style="display: flex; align-items: center; gap: 8px;">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span>Tải báo cáo (.xlsx)</span>
-                  </span>
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(255,255,255,0.7);"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </button>
+              <!-- Action Area: Settings, Export & Compact Report Selector -->
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;" class="hide-on-screenshot">
+                <!-- Top Row: Cài đặt BC + Tải báo cáo (.xlsx) -->
+                <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px;">
+                  <button type="button" class="btn-premium" onclick="openReportSettingsModal()" style="width: auto; padding: 0 16px; height: 42px; font-size: 12.5px; border-radius: 12px; font-weight: 850; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    <span>Cài đặt BC</span>
+                  </button>
 
-                <div id="ddExportOptions" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddExportOptions' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); right: 0; min-width: 240px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px);">
-                  <div class="custom-select-item" onclick="triggerGdvMonthlyReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s ease;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                    <span>Báo cáo Tháng (.xlsx)</span>
-                  </div>
+                  ${hasUserPermission('report', 'export') ? `
+                  <div class="custom-select-wrapper" style="position: relative;" id="accExportMenuWrapper">
+                    <button type="button" class="btn-premium" onclick="toggleCustomDropdownMenu('ddExportOptions', event)" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.3); transition: all 0.2s ease; padding: 0 18px; height: 42px; font-size: 12.5px; border-radius: 12px; font-weight: 850; min-width: 190px; justify-content: space-between;">
+                      <span style="display: flex; align-items: center; gap: 8px;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>Tải báo cáo (.xlsx)</span>
+                      </span>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(255,255,255,0.7);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
 
-                  <div class="custom-select-item" onclick="triggerWeeklyZoneReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s ease;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                    <span>Báo cáo Tuần (.xlsx)</span>
-                  </div>
-                  <div class="custom-select-item" onclick="exportCarBrandLossReportExcel(); closeAllCustomDropdowns();" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s ease;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#d8b46d" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span>Báo cáo Hãng xe (.xlsx)</span>
-                  </div>
+                    <div id="ddExportOptions" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddExportOptions' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); right: 0; min-width: 240px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px);">
+                      <div class="custom-select-item" onclick="triggerGdvMonthlyReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s ease;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        <span>Báo cáo Tháng (.xlsx)</span>
+                      </div>
 
+                      <div class="custom-select-item" onclick="triggerWeeklyZoneReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s ease;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                        <span>Báo cáo Tuần (.xlsx)</span>
+                      </div>
+                      <div class="custom-select-item" onclick="exportCarBrandLossReportExcel(); closeAllCustomDropdowns();" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s ease;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#d8b46d" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>Báo cáo Hãng xe (.xlsx)</span>
+                      </div>
 
-                  ${activeGdvReportView === 'daklak_reserve' ? `
-                  <div class="custom-select-item" onclick="triggerDakLakReserveReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px dashed var(--border); transition: background 0.15s ease;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                    <span style="color: var(--primary); font-weight: 850;">Báo cáo Đắk Lắk (.xlsx)</span>
+                      ${activeGdvReportView === 'daklak_reserve' ? `
+                      <div class="custom-select-item" onclick="triggerDakLakReserveReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px dashed var(--border); transition: background 0.15s ease;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        <span style="color: var(--primary); font-weight: 850;">Báo cáo Đắk Lắk (.xlsx)</span>
+                      </div>
+                      ` : ''}
+
+                      ${activeGdvReportView === 'ton_chua_hoa_don' ? `
+                      <div class="custom-select-item" onclick="triggerTonChuaHoaDonReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px dashed var(--border); transition: background 0.15s ease;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        <span style="color: #ef4444; font-weight: 850;">Tồn chưa Hóa đơn (.xlsx)</span>
+                      </div>
+                      ` : ''}
+
+                      <div class="custom-select-item" onclick="triggerTndsTonReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px dashed var(--border); transition: background 0.15s ease;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#eab308" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <span style="color: #eab308; font-weight: 850;">Báo cáo TNDS Tồn (.xlsx)</span>
+                      </div>
+                    </div>
                   </div>
                   ` : ''}
+                </div>
 
-                  ${activeGdvReportView === 'ton_chua_hoa_don' ? `
-                  <div class="custom-select-item" onclick="triggerTonChuaHoaDonReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px dashed var(--border); transition: background 0.15s ease;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#ef4444" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                    <span style="color: #ef4444; font-weight: 850;">Tồn chưa Hóa đơn (.xlsx)</span>
-                  </div>
-                  ` : ''}
+                <!-- Bottom Row: COMPACT REPORT VIEW SELECTOR (Directly below export button as sketched by user) -->
+                <div class="custom-select-wrapper" style="position: relative;" id="accReportViewSelectorWrapper">
+                  <button type="button" class="btn-premium" onclick="toggleCustomDropdownMenu('ddReportViewSelectorMenu', event)" style="padding: 0 16px; height: 42px; border-radius: 12px; background: var(--bg-soft); border: 1.5px solid var(--border-strong); font-size: 13px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 260px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" onmouseover="this.style.borderColor='var(--primary)';" onmouseout="this.style.borderColor='var(--border-strong)';">
+                    <span style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      <span style="color: var(--primary); display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: rgba(216,180,109,0.15); border-radius: 7px; flex-shrink: 0;">
+                        ${currentActiveReportObj.icon}
+                      </span>
+                      <span style="color: var(--text-soft); font-size: 12px; font-weight: 700;">Trang BC:</span>
+                      <span style="color: var(--text-main); font-weight: 850; font-size: 13px;">${currentActiveReportObj.title}</span>
+                      ${currentActiveReportObj.id === 'tnds_ton' ? '<span style="font-size: 10px; background: #eab308; color: #000; padding: 1px 6px; border-radius: 4px; font-weight: 900; margin-left: 2px;">MỚI</span>' : ''}
+                    </span>
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </button>
 
-                  <div class="custom-select-item" onclick="triggerTndsTonReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px dashed var(--border); transition: background 0.15s ease;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#eab308" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                    <span style="color: #eab308; font-weight: 850;">Báo cáo TNDS Tồn (.xlsx)</span>
+                  <div id="ddReportViewSelectorMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddReportViewSelectorMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 8px); right: 0; min-width: 320px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); z-index: 1000; padding: 8px; backdrop-filter: blur(16px);">
+                    <div style="padding: 6px 12px 8px; font-size: 11px; font-weight: 850; text-transform: uppercase; color: var(--text-soft); letter-spacing: 0.05em; border-bottom: 1px solid var(--border); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                      <span>CHỌN TRANG BÁO CÁO</span>
+                      <span style="font-size: 11px; color: var(--primary); font-weight: 800;">${GDV_REPORT_VIEWS_LIST.length} trang</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                      ${GDV_REPORT_VIEWS_LIST.map(item => {
+                        const isSelected = item.id === activeGdvReportView;
+                        return `
+                          <div onclick="switchGdvReportView('${item.id}')" style="padding: 9px 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: all 0.15s ease; ${isSelected ? 'background: rgba(216,180,109,0.18); border: 1px solid rgba(216,180,109,0.35);' : 'background: transparent; border: 1px solid transparent;'}" onmouseover="if (!${isSelected}) { this.style.background='var(--bg-soft)'; this.style.borderColor='var(--border)'; }" onmouseout="if (!${isSelected}) { this.style.background='transparent'; this.style.borderColor='transparent'; }">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                              <div style="width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ${isSelected ? 'background: var(--primary); color: #111;' : 'background: var(--bg-soft); color: var(--primary);'}">
+                                ${item.icon}
+                              </div>
+                              <div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                  <span style="font-size: 13px; font-weight: ${isSelected ? '850' : '750'}; color: ${isSelected ? 'var(--primary)' : 'var(--text-main)'};">${item.title}</span>
+                                  ${item.badge ? `
+                                    <span style="font-size: 10px; font-weight: 850; padding: 1px 6px; border-radius: 4px; ${item.badge === 'MỚI' ? 'background: #eab308; color: #000;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">
+                                      ${item.badge}
+                                    </span>
+                                  ` : ''}
+                                </div>
+                                <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 2px;">${item.desc}</div>
+                              </div>
+                            </div>
+                            ${isSelected ? `
+                              <div style="width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: #111; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                              </div>
+                            ` : `
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-soft); opacity: 0.4;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            `}
+                          </div>
+                        `;
+                      }).join('')}
+                    </div>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
 </div>
-              ` : ''}
-            </div>
-          </div>
-
-          <!-- UNIFIED REPORT TYPE SEGMENTED TOGGLE BAR & FAVORITE FILTERS WRAPPER -->
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; width: 100%;">
-            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 6px; display: inline-flex; gap: 6px; box-shadow: var(--shadow-xs); flex-wrap: wrap;">
-            <button type="button" onclick="switchGdvReportView('weekly_zone')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'weekly_zone' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-              <span>Báo cáo tuần/tháng</span>
-            </button>
-            <button type="button" onclick="switchGdvReportView('tnds_ton')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'tnds_ton' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-              <span>BC TNDS Tồn</span>
-            </button>
-            <button type="button" onclick="switchGdvReportView('table')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'table' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-              <span>Báo cáo HS bồi thường</span>
-            </button>
-            <button type="button" onclick="switchGdvReportView('chart')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'chart' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-              <span>Báo cáo KPI</span>
-            </button>
-            <button type="button" onclick="switchGdvReportView('garage')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'garage' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 21h18"></path><path d="M19 21v-4a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v4"></path><path d="M5 15V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"></path></svg>
-              <span>Báo cáo doanh thu DV gara</span>
-            </button>
-            <button type="button" onclick="switchGdvReportView('daklak_reserve')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'daklak_reserve' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-              <span>BC Đắk Lắk ${activeDakLakMinReserve === 50000000 ? '> 50tr' : '> 100tr'}</span>
-            </button>
-            <button type="button" onclick="switchGdvReportView('ton_chua_hoa_don')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'ton_chua_hoa_don' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              <span>BC Tồn chưa HĐ</span>
-            </button>
-            <button type="button" onclick="switchGdvReportView('car_brand_loss')" style="padding: 9px 20px; border-radius: 11px; font-size: 13px; font-weight: 850; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease; ${activeGdvReportView === 'car_brand_loss' ? 'background: var(--primary); color: #111111; box-shadow: 0 4px 12px rgba(216,180,109,0.3);' : 'background: transparent; color: var(--text-soft);'}">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
-              <span>Tổn thất theo hãng xe</span>
-            </button>
-            
-          </div>
-          
-          <!-- Custom Favorite Filters Dropdown Widget -->
-          <div class="custom-select-wrapper hide-on-screenshot" style="position: relative;" id="accReportFavFiltersWrapper">
-            <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportFavFiltersMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; min-width: 175px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
-              <span style="display: flex; align-items: center; gap: 6px;">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--primary)" stroke-width="2.5" style="color: var(--primary);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                <span>Bộ lọc ưa thích</span>
-              </span>
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
-            </button>
-
-            <div id="ddReportFavFiltersMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); right: 0; min-width: 320px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 12px; backdrop-filter: blur(16px);">
-              <!-- Dropdown content rendered dynamically -->
-            </div>
-          </div>
-        </div>
 
           <!-- CONTROL HUB FILTER BAR WITH CUSTOM GLASSMORPHI DROPDOWNS -->
           <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 16px 22px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: var(--shadow-sm);">
@@ -14532,6 +14622,20 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
               `}
             </div>
 
+            <!-- Right Controls: Custom Favorite Filters Dropdown Widget -->
+            <div class="custom-select-wrapper hide-on-screenshot" style="position: relative;" id="accReportFavFiltersWrapper">
+              <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportFavFiltersMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; min-width: 175px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
+                <span style="display: flex; align-items: center; gap: 6px;">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--primary)" stroke-width="2.5" style="color: var(--primary);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  <span>Bộ lọc ưa thích</span>
+                </span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+
+              <div id="ddReportFavFiltersMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); right: 0; min-width: 320px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 12px; backdrop-filter: blur(16px);">
+                <!-- Dropdown content rendered dynamically -->
+              </div>
+            </div>
 
           </div>
 
