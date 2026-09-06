@@ -2974,7 +2974,7 @@
 
             <div class="form-group" style="grid-column: span 3;">
               <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ghi chú / Lý do đề xuất hủy hồ sơ</label>
-              <input id="modalPendingGhiChu" class="input-premium" type="text" placeholder="1 vụ, giảm trừ 20%" oninput="syncPendingClaimNotes('general')" />
+              <input id="modalPendingGhiChu" class="input-premium" type="text" placeholder="1 vụ, giảm trừ 20%" />
             </div>
 
             <!-- Dedicated TNDS Note Field in Claim Details Modal -->
@@ -2986,7 +2986,7 @@
                 </label>
                 <div id="modalPendingTndsLastUpdatedInfo" style="font-size: 11.5px; color: var(--text-soft); font-weight: 700;"></div>
               </div>
-              <textarea id="modalPendingTndsGhiChu" class="textarea-premium" rows="3" placeholder="Nhập ghi chú chi tiết tiến độ giải quyết hồ sơ TNDS..." oninput="syncPendingClaimNotes('tnds')" style="width: 100%; min-height: 75px; padding: 10px 14px; resize: vertical; line-height: 1.5; font-family: inherit; font-size: 13px; font-weight: 600; border-radius: 10px;"></textarea>
+              <textarea id="modalPendingTndsGhiChu" class="textarea-premium" rows="3" placeholder="Nhập ghi chú chi tiết tiến độ giải quyết hồ sơ TNDS..." style="width: 100%; min-height: 75px; padding: 10px 14px; resize: vertical; line-height: 1.5; font-family: inherit; font-size: 13px; font-weight: 600; border-radius: 10px;"></textarea>
             </div>
           </div>
         </div>
@@ -5995,17 +5995,6 @@ let cachedCasesPayload = null;
       modal.setAttribute('aria-hidden', 'false');
     }
 
-    function syncPendingClaimNotes(source) {
-      const generalEl = document.getElementById('modalPendingGhiChu');
-      const tndsEl = document.getElementById('modalPendingTndsGhiChu');
-      if (!generalEl || !tndsEl) return;
-      if (source === 'general') {
-        tndsEl.value = generalEl.value;
-      } else if (source === 'tnds') {
-        generalEl.value = tndsEl.value;
-      }
-    }
-
     function openEditPendingClaimModal(claimId, initialTab) {
       if (!claimId || !cachedPendingClaimsPayload) return;
       
@@ -6127,9 +6116,8 @@ let cachedCasesPayload = null;
       setVal('modalPendingNgayThanhToan', formatCleanDateField(item.ngayThanhToan));
       setVal('modalPendingNgayNhanDuHoSo', formatCleanDateField(item.ngayNhanDuHoSo));
       setVal('modalPendingNgayKtXacNhan', formatCleanDateField(item.ngayKtXacNhan));
-      const syncedNote = (item.tndsGhiChu || item.ghiChu || '').trim();
-      setVal('modalPendingGhiChu', syncedNote);
-      setVal('modalPendingTndsGhiChu', syncedNote);
+      setVal('modalPendingGhiChu', item.ghiChu || '');
+      setVal('modalPendingTndsGhiChu', item.tndsGhiChu || '');
 
       const editTndsInfoEl = document.getElementById('modalPendingTndsLastUpdatedInfo');
       if (editTndsInfoEl) {
@@ -6287,18 +6275,17 @@ let cachedCasesPayload = null;
       const profile = activeUserProfile || {};
       const creatorName = existingItem.createdByName || profile.displayName || user?.email || 'Admin';
 
-      // Check if note was actually modified and sync across fields
+      // Separate notes: general ghiChu and tndsGhiChu are completely independent
       const tndsNoteVal = String(getVal('modalPendingTndsGhiChu') || '').trim();
       const generalNoteVal = String(getVal('modalPendingGhiChu') || '').trim();
-      const finalNoteVal = tndsNoteVal || generalNoteVal;
 
-      const oldNote = String(existingItem.tndsGhiChu || existingItem.ghiChu || '').trim();
+      const oldTndsNote = String(existingItem.tndsGhiChu || '').trim();
       const currentUserName = String(profile.fullName || profile.displayName || user?.displayName || user?.email || 'Người dùng');
 
       let tndsLastUpdated = existingItem.tndsLastUpdated || null;
       let tndsUpdatedBy = existingItem.tndsUpdatedBy || '';
 
-      if (finalNoteVal !== oldNote) {
+      if (tndsNoteVal !== oldTndsNote) {
         tndsLastUpdated = Date.now();
         tndsUpdatedBy = currentUserName;
       }
@@ -6357,8 +6344,8 @@ let cachedCasesPayload = null;
         ngayNhanDuHoSo: formatCleanDateField(getVal('modalPendingNgayNhanDuHoSo')) || getVal('modalPendingNgayNhanDuHoSo') || existingItem.ngayNhanDuHoSo || '',
         ngayKtXacNhan: formatCleanDateField(getVal('modalPendingNgayKtXacNhan')) || getVal('modalPendingNgayKtXacNhan') || existingItem.ngayKtXacNhan || '',
         ngayThanhToan: getVal('modalPendingNgayThanhToan') || existingItem.ngayThanhToan || '',
-        ghiChu: finalNoteVal,
-        tndsGhiChu: finalNoteVal,
+        ghiChu: generalNoteVal,
+        tndsGhiChu: tndsNoteVal,
         tndsLastUpdated: tndsLastUpdated,
         tndsUpdatedBy: tndsUpdatedBy,
         trangThai: existingItem.trangThai || 'moi',
@@ -21744,7 +21731,7 @@ const fullList = getCarBrandLossData();
       if (!claimId) return;
       const cleanVal = (noteValue || '').trim();
       const existing = cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId];
-      const oldVal = String(existing?.tndsGhiChu || existing?.ghiChu || '').trim();
+      const oldVal = String(existing?.tndsGhiChu || '').trim();
 
       // If no change, do not update timestamp or fire database write
       if (cleanVal === oldVal) {
@@ -21758,7 +21745,6 @@ const fullList = getCarBrandLossData();
       try {
         const updates = {};
         updates['pending_claims/' + claimId + '/tndsGhiChu'] = cleanVal;
-        updates['pending_claims/' + claimId + '/ghiChu'] = cleanVal;
         updates['pending_claims/' + claimId + '/tndsLastUpdated'] = now;
         updates['pending_claims/' + claimId + '/tndsUpdatedBy'] = userName;
 
@@ -21766,7 +21752,6 @@ const fullList = getCarBrandLossData();
 
         if (cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId]) {
           cachedPendingClaimsPayload[claimId].tndsGhiChu = cleanVal;
-          cachedPendingClaimsPayload[claimId].ghiChu = cleanVal;
           cachedPendingClaimsPayload[claimId].tndsLastUpdated = now;
           cachedPendingClaimsPayload[claimId].tndsUpdatedBy = userName;
         }
@@ -21816,8 +21801,8 @@ const fullList = getCarBrandLossData();
           if (!matchGdv) return false;
         }
 
-        // Ghi chú filter (hỗ trợ đồng bộ cả tndsGhiChu và ghiChu)
-        const note = String(c.tndsGhiChu || c.ghiChu || '').trim();
+        // Ghi chú filter (chỉ dùng tndsGhiChu của Báo cáo TNDS Tồn)
+        const note = String(c.tndsGhiChu || '').trim();
         if (activeTndsNoteFilter === 'has_note' && !note) return false;
         if (activeTndsNoteFilter === 'no_note' && note) return false;
 
@@ -21835,7 +21820,7 @@ const fullList = getCarBrandLossData();
           const owner = String(c.chuXe || c.hoTen || c.khachHang || '').toLowerCase();
           const gdv = String(c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '').toLowerCase();
           const branch = String(c.donViCapDon || c.chiNhanh || '').toLowerCase();
-          const noteContent = String(c.tndsGhiChu || c.ghiChu || '').toLowerCase();
+          const noteContent = String(c.tndsGhiChu || '').toLowerCase();
 
           const match = bsx.includes(q) || hsbt.includes(q) || owner.includes(q) || gdv.includes(q) || branch.includes(q) || noteContent.includes(q);
           if (!match) return false;
@@ -21867,7 +21852,7 @@ const fullList = getCarBrandLossData();
         const bt = parseInt(String(c.ttbtTongSoTienBoiThuong || '0').replace(/\D/g, ''), 10) || 0;
         totalDuyetBt += bt;
 
-        if ((c.tndsGhiChu || c.ghiChu || '').trim()) {
+        if ((c.tndsGhiChu || '').trim()) {
           hasNoteCount++;
         }
       });
@@ -21890,7 +21875,7 @@ const fullList = getCarBrandLossData();
         const statusColor = statusConfig ? statusConfig.color : '#64748b';
         const statusBorder = statusConfig ? statusConfig.border : 'rgba(148, 163, 184, 0.35)';
 
-        const ghiChu = c.tndsGhiChu || c.ghiChu || '';
+        const ghiChu = c.tndsGhiChu || '';
         const lastUpdated = c.tndsLastUpdated;
         const updatedBy = c.tndsUpdatedBy || '';
 
@@ -22157,7 +22142,7 @@ const fullList = getCarBrandLossData();
           'Ngày mở HS': formatDateDisplay(c.ngayMoHs),
           'Dự phòng bồi thường (VNĐ)': parseInt(String(c.duPhongBoiThuong || '0').replace(/\D/g, ''), 10) || 0,
           'Tiền duyệt bồi thường (VNĐ)': parseInt(String(c.ttbtTongSoTienBoiThuong || '0').replace(/\D/g, ''), 10) || 0,
-          'Ghi chú quản lý': c.tndsGhiChu || c.ghiChu || '',
+          'Ghi chú quản lý': c.tndsGhiChu || '',
           'Lần gần nhất cập nhật': c.tndsLastUpdated ? formatTndsTimestampDisplay(c.tndsLastUpdated) : '',
           'Người cập nhật': c.tndsUpdatedBy || ''
         };
