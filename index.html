@@ -2675,7 +2675,7 @@
             </div>
             <div>
               <h3 id="addPendingClaimModalTitle" style="font-size: 19px; font-weight: 850; color: var(--text-main); margin: 0;">Chỉnh sửa chi tiết hồ sơ bồi thường</h3>
-              <p style="font-size: 12px; color: var(--text-muted); margin: 3px 0 0 0;">Quản lý toàn bộ 44+ trường dữ liệu chi tiết hồ sơ từ tệp Excel Core.</p>
+              <p id="addPendingClaimModalSubtitle" style="font-size: 12px; color: var(--text-muted); margin: 3px 0 0 0;">Quản lý và cập nhật thông tin chi tiết hồ sơ bồi thường xe cơ giới.</p>
             </div>
           </div>
           <button type="button" class="btn-premium btn-secondary" onclick="closeAddPendingClaimModal()" aria-label="Đóng" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; padding: 0; border-radius: 10px; font-size: 18px; display: grid; place-items: center; cursor: pointer;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
@@ -5945,6 +5945,9 @@ let cachedCasesPayload = null;
       const titleEl = document.getElementById('addPendingClaimModalTitle');
       if (titleEl) titleEl.textContent = 'Tiếp nhận hồ sơ tổn thất mới';
 
+      const subtitleEl = document.getElementById('addPendingClaimModalSubtitle');
+      if (subtitleEl) subtitleEl.textContent = 'Tiếp nhận và nhập thông tin chi tiết hồ sơ tổn thất mới vào hệ thống.';
+
       const btnSubmitSpan = document.querySelector('#btnSubmitAddPendingClaim span');
       if (btnSubmitSpan) btnSubmitSpan.textContent = 'Lưu hồ sơ tiếp nhận';
 
@@ -6034,6 +6037,24 @@ let cachedCasesPayload = null;
 
       const titleEl = document.getElementById('addPendingClaimModalTitle');
       if (titleEl) titleEl.textContent = `Chỉnh sửa thông tin hồ sơ (${item.bienSo})`;
+
+      const subtitleEl = document.getElementById('addPendingClaimModalSubtitle');
+      if (subtitleEl) {
+        const hsbt = item.soHoSoBoiThuong || item.soHsbt || '';
+        const chuXe = item.khachHang || item.chuXe || '';
+        if (hsbt || chuXe) {
+          let subHtml = '<span style="color: var(--text-muted);">Quản lý chi tiết hồ sơ bồi thường</span>';
+          if (hsbt) {
+            subHtml += ` • <span style="color: var(--primary); font-weight: 750;">Số HSBT: ${escapeHtmlOutput(hsbt)}</span>`;
+          }
+          if (chuXe) {
+            subHtml += ` • <span>Chủ xe: <strong style="color: var(--text-main);">${escapeHtmlOutput(chuXe)}</strong></span>`;
+          }
+          subtitleEl.innerHTML = subHtml;
+        } else {
+          subtitleEl.textContent = 'Quản lý và cập nhật thông tin chi tiết hồ sơ bồi thường xe cơ giới.';
+        }
+      }
 
       const btnSubmitSpan = document.querySelector('#btnSubmitAddPendingClaim span');
       if (btnSubmitSpan) btnSubmitSpan.textContent = 'Lưu cập nhật hồ sơ';
