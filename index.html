@@ -14110,7 +14110,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         <div style="padding: 24px 28px; max-width: 98vw; margin: 0 auto;">
           
           <!-- ADAPTIVE HERO BANNER HEADER -->
-          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 20px; box-shadow: var(--shadow-sm); position: relative;">
+          <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 20px; box-shadow: var(--shadow-sm); position: relative; z-index: 1000;">
             <div style="position: absolute; inset: 0; border-radius: 20px; overflow: hidden; pointer-events: none; z-index: 1;">
               <div style="position: absolute; right: -40px; top: -40px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(216,180,109,0.12) 0%, rgba(0,0,0,0) 70%); border-radius: 50%;"></div>
             </div>
@@ -14129,7 +14129,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                 </p>
               </div>
 
-              <!-- Action Area: Settings, Export & Compact Report Selector -->
+              <!-- Action Area: Settings, Export, Favorite Filters & Report Selector -->
               <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;" class="hide-on-screenshot">
                 <!-- Top Row: Cài đặt BC + Tải báo cáo (.xlsx) -->
                 <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px;">
@@ -14148,7 +14148,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: rgba(255,255,255,0.7);"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </button>
 
-                    <div id="ddExportOptions" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddExportOptions' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); right: 0; min-width: 240px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 6px; backdrop-filter: blur(16px);">
+                    <div id="ddExportOptions" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddExportOptions' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); right: 0; min-width: 240px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 10000; padding: 6px; backdrop-filter: blur(16px);">
                       <div class="custom-select-item" onclick="triggerGdvMonthlyReportExcelExport(event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s ease;">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                         <span>Báo cáo Tháng (.xlsx)</span>
@@ -14186,65 +14186,81 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                   ` : ''}
                 </div>
 
-                <!-- Bottom Row: COMPACT REPORT VIEW SELECTOR (Directly below export button as sketched by user) -->
-                <div class="custom-select-wrapper" style="position: relative;" id="accReportViewSelectorWrapper">
-                  <button type="button" class="btn-premium" onclick="toggleCustomDropdownMenu('ddReportViewSelectorMenu', event)" style="padding: 0 16px; height: 42px; border-radius: 12px; background: var(--bg-soft); border: 1.5px solid var(--border-strong); font-size: 13px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 260px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" onmouseover="this.style.borderColor='var(--primary)';" onmouseout="this.style.borderColor='var(--border-strong)';">
-                    <span style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                      <span style="color: var(--primary); display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: rgba(216,180,109,0.15); border-radius: 7px; flex-shrink: 0;">
-                        ${currentActiveReportObj.icon}
+                <!-- Bottom Row: Favorite Filters + COMPACT REPORT SELECTOR -->
+                <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px;">
+                  <!-- Custom Favorite Filters Dropdown Widget -->
+                  <div class="custom-select-wrapper" style="position: relative;" id="accReportFavFiltersWrapper">
+                    <button type="button" class="btn-premium" onclick="toggleCustomDropdownMenu('ddReportFavFiltersMenu', event)" style="padding: 0 16px; height: 42px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border-strong); font-size: 12.5px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; min-width: 155px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" onmouseover="this.style.borderColor='var(--primary)';" onmouseout="this.style.borderColor='var(--border-strong)';">
+                      <span style="display: flex; align-items: center; gap: 6px;">
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--primary)" stroke-width="2.5" style="color: var(--primary);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        <span>Bộ lọc ưa thích</span>
                       </span>
-                      <span style="color: var(--text-soft); font-size: 12px; font-weight: 700;">Trang BC:</span>
-                      <span style="color: var(--text-main); font-weight: 850; font-size: 13px;">${currentActiveReportObj.title}</span>
-                      ${currentActiveReportObj.id === 'tnds_ton' ? '<span style="font-size: 10px; background: #eab308; color: #000; padding: 1px 6px; border-radius: 4px; font-weight: 900; margin-left: 2px;">MỚI</span>' : ''}
-                    </span>
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                  </button>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
 
-                  <div id="ddReportViewSelectorMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddReportViewSelectorMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 8px); right: 0; min-width: 320px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); z-index: 1000; padding: 8px; backdrop-filter: blur(16px);">
-                    <div style="padding: 6px 12px 8px; font-size: 11px; font-weight: 850; text-transform: uppercase; color: var(--text-soft); letter-spacing: 0.05em; border-bottom: 1px solid var(--border); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
-                      <span>CHỌN TRANG BÁO CÁO</span>
-                      <span style="font-size: 11px; color: var(--primary); font-weight: 800;">${GDV_REPORT_VIEWS_LIST.length} trang</span>
+                    <div id="ddReportFavFiltersMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); right: 0; min-width: 320px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 10000; padding: 12px; backdrop-filter: blur(16px);">
+                      <!-- Dropdown content rendered dynamically -->
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                      ${GDV_REPORT_VIEWS_LIST.map(item => {
-                        const isSelected = item.id === activeGdvReportView;
-                        return `
-                          <div onclick="switchGdvReportView('${item.id}')" style="padding: 9px 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: all 0.15s ease; ${isSelected ? 'background: rgba(216,180,109,0.18); border: 1px solid rgba(216,180,109,0.35);' : 'background: transparent; border: 1px solid transparent;'}" onmouseover="if (!${isSelected}) { this.style.background='var(--bg-soft)'; this.style.borderColor='var(--border)'; }" onmouseout="if (!${isSelected}) { this.style.background='transparent'; this.style.borderColor='transparent'; }">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                              <div style="width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ${isSelected ? 'background: var(--primary); color: #111;' : 'background: var(--bg-soft); color: var(--primary);'}">
-                                ${item.icon}
-                              </div>
-                              <div>
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                  <span style="font-size: 13px; font-weight: ${isSelected ? '850' : '750'}; color: ${isSelected ? 'var(--primary)' : 'var(--text-main)'};">${item.title}</span>
-                                  ${item.badge ? `
-                                    <span style="font-size: 10px; font-weight: 850; padding: 1px 6px; border-radius: 4px; ${item.badge === 'MỚI' ? 'background: #eab308; color: #000;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">
-                                      ${item.badge}
-                                    </span>
-                                  ` : ''}
+                  </div>
+
+                  <!-- Compact Report View Selector -->
+                  <div class="custom-select-wrapper" style="position: relative; z-index: 1001;" id="accReportViewSelectorWrapper">
+                    <button type="button" class="btn-premium" onclick="toggleCustomDropdownMenu('ddReportViewSelectorMenu', event)" style="padding: 0 16px; height: 42px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 190px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" onmouseover="this.style.borderColor='var(--primary)';" onmouseout="this.style.borderColor='var(--border-strong)';">
+                      <span style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        <span style="color: var(--primary); display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: rgba(216,180,109,0.15); border-radius: 6px; flex-shrink: 0;">
+                          ${currentActiveReportObj.icon}
+                        </span>
+                        <span style="color: var(--text-main); font-weight: 850; font-size: 13px;">${currentActiveReportObj.title}</span>
+                        ${currentActiveReportObj.id === 'tnds_ton' ? '<span style="font-size: 10px; background: #eab308; color: #000; padding: 1px 6px; border-radius: 4px; font-weight: 900; margin-left: 2px;">MỚI</span>' : ''}
+                      </span>
+                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+
+                    <div id="ddReportViewSelectorMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddReportViewSelectorMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 8px); right: 0; min-width: 320px; max-height: 380px; overflow-y: auto; background-color: var(--surface) !important; border: 1px solid var(--border-strong); border-radius: 16px; box-shadow: 0 20px 48px rgba(0,0,0,0.35); z-index: 999999; padding: 8px; scrollbar-width: thin;">
+                      <div style="padding: 6px 12px 8px; font-size: 11px; font-weight: 850; text-transform: uppercase; color: var(--text-soft); letter-spacing: 0.05em; border-bottom: 1px solid var(--border); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--surface); z-index: 2;">
+                        <span>CHỌN TRANG BÁO CÁO</span>
+                        <span style="font-size: 11px; color: var(--primary); font-weight: 800;">${GDV_REPORT_VIEWS_LIST.length} trang</span>
+                      </div>
+                      <div style="display: flex; flex-direction: column; gap: 4px;">
+                        ${GDV_REPORT_VIEWS_LIST.map(item => {
+                          const isSelected = item.id === activeGdvReportView;
+                          return `
+                            <div onclick="switchGdvReportView('${item.id}')" style="padding: 9px 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: all 0.15s ease; ${isSelected ? 'background: rgba(216,180,109,0.18); border: 1px solid rgba(216,180,109,0.35);' : 'background: transparent; border: 1px solid transparent;'}" onmouseover="if (!${isSelected}) { this.style.background='var(--bg-soft)'; this.style.borderColor='var(--border)'; }" onmouseout="if (!${isSelected}) { this.style.background='transparent'; this.style.borderColor='transparent'; }">
+                              <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ${isSelected ? 'background: var(--primary); color: #111;' : 'background: var(--bg-soft); color: var(--primary);'}">
+                                  ${item.icon}
                                 </div>
-                                <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 2px;">${item.desc}</div>
+                                <div>
+                                  <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-size: 13px; font-weight: ${isSelected ? '850' : '750'}; color: ${isSelected ? 'var(--primary)' : 'var(--text-main)'};">${item.title}</span>
+                                    ${item.badge ? `
+                                      <span style="font-size: 10px; font-weight: 850; padding: 1px 6px; border-radius: 4px; ${item.badge === 'MỚI' ? 'background: #eab308; color: #000;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">
+                                        ${item.badge}
+                                      </span>
+                                    ` : ''}
+                                  </div>
+                                  <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 2px;">${item.desc}</div>
+                                </div>
                               </div>
+                              ${isSelected ? `
+                                <div style="width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: #111; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                </div>
+                              ` : `
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-soft); opacity: 0.4;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                              `}
                             </div>
-                            ${isSelected ? `
-                              <div style="width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: #111; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                              </div>
-                            ` : `
-                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-soft); opacity: 0.4;"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            `}
-                          </div>
-                        `;
-                      }).join('')}
+                          `;
+                        }).join('')}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-</div>
 
-          <!-- CONTROL HUB FILTER BAR WITH CUSTOM GLASSMORPHI DROPDOWNS -->
+          <!-- CONTROL HUB FILTER BAR WITH CUSTOM GLASSMORPHIC DROPDOWNS -->
           <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 18px; padding: 16px 22px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: var(--shadow-sm);">
             
             <!-- Left Controls: Custom Dropdowns -->
@@ -14622,22 +14638,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
               `}
             </div>
 
-            <!-- Right Controls: Custom Favorite Filters Dropdown Widget -->
-            <div class="custom-select-wrapper hide-on-screenshot" style="position: relative;" id="accReportFavFiltersWrapper">
-              <button type="button" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddReportFavFiltersMenu', event)" style="padding: 9px 16px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; min-width: 175px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
-                <span style="display: flex; align-items: center; gap: 6px;">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="var(--primary)" stroke-width="2.5" style="color: var(--primary);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                  <span>Bộ lọc ưa thích</span>
-                </span>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft);"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </button>
-
-              <div id="ddReportFavFiltersMenu" class="custom-select-menu" style="display: none; position: absolute; top: calc(100% + 6px); right: 0; min-width: 320px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 12px; backdrop-filter: blur(16px);">
-                <!-- Dropdown content rendered dynamically -->
-              </div>
             </div>
-
-          </div>
 
           ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone' && activeGdvReportView !== 'daklak_reserve' && activeGdvReportView !== 'ton_chua_hoa_don' && activeGdvReportView !== 'car_brand_loss' && activeGdvReportView !== 'tnds_ton') ? `
           <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
