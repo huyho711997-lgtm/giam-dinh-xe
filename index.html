@@ -2976,6 +2976,18 @@
               <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ghi chú / Lý do đề xuất hủy hồ sơ</label>
               <input id="modalPendingGhiChu" class="input-premium" type="text" placeholder="1 vụ, giảm trừ 20%" />
             </div>
+
+            <!-- Dedicated TNDS Note Field in Claim Details Modal -->
+            <div class="form-group" style="grid-column: span 3; background: rgba(234, 179, 8, 0.05); padding: 16px 18px; border-radius: 14px; border: 1px solid rgba(234, 179, 8, 0.3); margin-top: 6px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                <label style="font-size: 13px; font-weight: 850; color: #eab308; display: inline-flex; align-items: center; gap: 8px;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#eab308" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span>Ghi chú quản lý hồ sơ TNDS (Hiển thị tại Báo cáo TNDS Tồn)</span>
+                </label>
+                <div id="modalPendingTndsLastUpdatedInfo" style="font-size: 11.5px; color: var(--text-soft); font-weight: 700;"></div>
+              </div>
+              <textarea id="modalPendingTndsGhiChu" class="input-premium" rows="3" placeholder="Nhập ghi chú chi tiết tiến độ giải quyết hồ sơ TNDS..." style="width: 100%; min-height: 70px; resize: vertical; line-height: 1.45; font-family: inherit; font-size: 13px; font-weight: 600;"></textarea>
+            </div>
           </div>
         </div>
 
@@ -5971,12 +5983,15 @@ let cachedCasesPayload = null;
       setVal('modalPendingTnds', '');
       setVal('modalPendingNguyenNhan', '');
       setVal('modalPendingMoTaTonThat', '');
+      setVal('modalPendingTndsGhiChu', '');
+      const addTndsInfoEl = document.getElementById('modalPendingTndsLastUpdatedInfo');
+      if (addTndsInfoEl) addTndsInfoEl.innerHTML = '';
 
       modal.style.display = 'grid';
       modal.setAttribute('aria-hidden', 'false');
     }
 
-    function openEditPendingClaimModal(claimId) {
+    function openEditPendingClaimModal(claimId, initialTab) {
       if (!claimId || !cachedPendingClaimsPayload) return;
       
       const btnSubmit = document.getElementById('btnSubmitAddPendingClaim');
@@ -6076,8 +6091,18 @@ let cachedCasesPayload = null;
       setVal('modalPendingNgayNhanDuHoSo', formatCleanDateField(item.ngayNhanDuHoSo));
       setVal('modalPendingNgayKtXacNhan', formatCleanDateField(item.ngayKtXacNhan));
       setVal('modalPendingGhiChu', item.ghiChu || '');
+      setVal('modalPendingTndsGhiChu', item.tndsGhiChu || '');
 
-      switchEditClaimTab('Policy');
+      const editTndsInfoEl = document.getElementById('modalPendingTndsLastUpdatedInfo');
+      if (editTndsInfoEl) {
+        if (item.tndsLastUpdated) {
+          editTndsInfoEl.innerHTML = `Lần cập nhật cuối: <b style="color: var(--text-main);">${formatTndsTimestampDisplay(item.tndsLastUpdated)}</b> bởi <b style="color: var(--primary);">${escapeHtmlOutput(item.tndsUpdatedBy || 'Hệ thống')}</b>`;
+        } else {
+          editTndsInfoEl.innerHTML = `<span style="color: var(--text-soft); font-style: italic;">Chưa có cập nhật</span>`;
+        }
+      }
+
+      switchEditClaimTab(initialTab || 'Policy');
 
       const modal = document.getElementById('addPendingClaimModalOverlay');
       if (modal) {
@@ -6224,6 +6249,21 @@ let cachedCasesPayload = null;
       const profile = activeUserProfile || {};
       const creatorName = existingItem.createdByName || profile.displayName || user?.email || 'Admin';
 
+      // Check if TNDS note was actually modified
+      const oldTndsNote = String(existingItem.tndsGhiChu || '').trim();
+      const newTndsNote = String(getVal('modalPendingTndsGhiChu') || '').trim();
+      const currentUserName = String(profile.fullName || profile.displayName || user?.displayName || user?.email || 'Người dùng');
+
+      let tndsGhiChu = existingItem.tndsGhiChu || '';
+      let tndsLastUpdated = existingItem.tndsLastUpdated || null;
+      let tndsUpdatedBy = existingItem.tndsUpdatedBy || '';
+
+      if (newTndsNote !== oldTndsNote) {
+        tndsGhiChu = newTndsNote;
+        tndsLastUpdated = Date.now();
+        tndsUpdatedBy = currentUserName;
+      }
+
       const payload = {
         id: targetClaimId,
         maVuTonThat: maVuTonThat || existingItem.maVuTonThat || `VTT/XCG/${new Date().getFullYear()}/${Math.floor(100000 + Math.random() * 900000)}`,
@@ -6279,6 +6319,9 @@ let cachedCasesPayload = null;
           ngayKtXacNhan: formatCleanDateField(getVal('modalPendingNgayKtXacNhan')) || getVal('modalPendingNgayKtXacNhan') || existingItem.ngayKtXacNhan || '',
         ngayThanhToan: getVal('modalPendingNgayThanhToan') || existingItem.ngayThanhToan || '',
         ghiChu: getVal('modalPendingGhiChu') || existingItem.ghiChu || '',
+        tndsGhiChu: tndsGhiChu,
+        tndsLastUpdated: tndsLastUpdated,
+        tndsUpdatedBy: tndsUpdatedBy,
         trangThai: existingItem.trangThai || 'moi',
         createdAt: existingItem.createdAt || Date.now(),
         updatedAt: Date.now(),
@@ -6290,7 +6333,13 @@ let cachedCasesPayload = null;
 
       try {
         await dbNodeInstance.ref(`pending_claims/${targetClaimId}`).set(payload);
+        if (cachedPendingClaimsPayload) {
+          cachedPendingClaimsPayload[targetClaimId] = payload;
+        }
         closeAddPendingClaimModal();
+        if (typeof activeGdvReportView !== 'undefined' && activeGdvReportView === 'tnds_ton') {
+          renderGdvReportPage();
+        }
         triggerToast(isEditing ? `Đã cập nhật thông tin hồ sơ ${payload.bienSo} thành công!` : `Đã tiếp nhận thành công hồ sơ ${payload.bienSo} (${payload.maVuTonThat})!`, 'success');
       } catch (e) {
         console.error(e);
@@ -21541,6 +21590,14 @@ const fullList = getCarBrandLossData();
     async function updateTndsClaimNote(claimId, noteValue) {
       if (!claimId) return;
       const cleanVal = (noteValue || '').trim();
+      const existing = cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId];
+      const oldVal = String(existing?.tndsGhiChu || '').trim();
+
+      // If no change, do not update timestamp or fire database write
+      if (cleanVal === oldVal) {
+        return;
+      }
+
       const now = Date.now();
       const currentUser = firebase.auth().currentUser;
       const userName = String(activeUserProfile?.fullName || activeUserProfile?.displayName || currentUser?.displayName || currentUser?.email || 'Người dùng');
@@ -21559,17 +21616,7 @@ const fullList = getCarBrandLossData();
           cachedPendingClaimsPayload[claimId].tndsUpdatedBy = userName;
         }
 
-        const updatedCell = document.getElementById(`tndsUpdatedCell_${claimId}`);
-        if (updatedCell) {
-          updatedCell.innerHTML = `
-            <div style="font-weight: 800; color: var(--text-main); font-size: 12px;">${formatTndsTimestampDisplay(now)}</div>
-            <div style="font-size: 11px; color: var(--text-soft); margin-top: 2px;">${escapeHtmlOutput(userName)}</div>
-          `;
-          updatedCell.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
-          setTimeout(() => {
-            if (updatedCell) updatedCell.style.backgroundColor = 'transparent';
-          }, 1500);
-        }
+        renderGdvReportPage();
         triggerToast('Đã lưu ghi chú TNDS thành công!', 'success');
       } catch (err) {
         console.error(err);
@@ -21725,21 +21772,25 @@ const fullList = getCarBrandLossData();
             <td style="padding: 12px 10px; font-weight: 850; color: #3b82f6; text-align: right; font-size: 13px; width: 125px; white-space: nowrap;">
               ${duyetBt !== '0' ? duyetBt + ' đ' : '—'}
             </td>
-            <!-- CỘT GHI CHÚ QUẢN LÝ (TỰ ĐỘNG LƯU) -->
-            <td style="padding: 8px 10px; min-width: 220px; width: 260px;">
-              <div style="position: relative;">
-                <textarea
-                  id="tndsNote_${c.id}"
-                  placeholder="Gõ ghi chú quản lý TNDS..."
-                  onblur="updateTndsClaimNote('${c.id}', this.value)"
-                  onkeydown="if((event.ctrlKey||event.metaKey) && event.key==='Enter') { this.blur(); }"
-                  style="width: 100%; min-height: 48px; max-height: 120px; padding: 6px 8px; border-radius: 8px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12px; font-family: inherit; resize: vertical; line-height: 1.4; transition: all 0.2s;"
-                  onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 2px rgba(216,180,109,0.2)';"
-                >${escapeHtmlOutput(ghiChu)}</textarea>
+            <!-- CỘT GHI CHÚ QUẢN LÝ (CHỈ HIỂN THỊ, CHỈNH SỬA TRONG CHI TIẾT HỒ SƠ) -->
+            <td style="padding: 10px 10px; min-width: 220px; width: 280px;">
+              <div onclick="openEditPendingClaimModal('${c.id}', 'Financial')" style="cursor: pointer; padding: 8px 12px; border-radius: 9px; background: var(--bg-soft); border: 1px solid ${ghiChu ? 'var(--border-strong)' : 'var(--border)'}; transition: all 0.2s ease;" title="Nhấp để xem & chỉnh sửa trong chi tiết hồ sơ" onmouseover="this.style.borderColor='var(--primary)'; this.style.background='var(--surface)';" onmouseout="this.style.borderColor='${ghiChu ? 'var(--border-strong)' : 'var(--border)'}'; this.style.background='var(--bg-soft)';">
+                ${ghiChu ? `
+                  <div style="font-size: 12.5px; color: var(--text-main); font-weight: 650; line-height: 1.45; word-break: break-word; white-space: pre-line; max-height: 75px; overflow-y: auto;">${escapeHtmlOutput(ghiChu)}</div>
+                  <div style="display: flex; align-items: center; gap: 4px; margin-top: 5px; font-size: 11px; color: var(--primary); font-weight: 750;">
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    <span>Xem & sửa trong chi tiết hồ sơ</span>
+                  </div>
+                ` : `
+                  <div style="display: flex; align-items: center; gap: 6px; color: var(--text-soft); font-size: 12px; padding: 2px 0;">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span style="font-style: italic;">Chưa có ghi chú (Nhấp để thêm)</span>
+                  </div>
+                `}
               </div>
             </td>
             <!-- CỘT LẦN GẦN NHẤT ĐƯỢC CẬP NHẬT -->
-            <td id="tndsUpdatedCell_${c.id}" style="padding: 12px 10px; text-align: left; width: 155px; font-size: 12px; transition: background 0.3s ease; border-radius: 6px;">
+            <td id="tndsUpdatedCell_${c.id}" style="padding: 12px 10px; text-align: left; width: 155px; font-size: 12px;">
               ${lastUpdated ? `
                 <div style="font-weight: 800; color: var(--text-main); font-size: 12px;">${formatTndsTimestampDisplay(lastUpdated)}</div>
                 <div style="font-size: 11px; color: var(--text-soft); margin-top: 2px;">${escapeHtmlOutput(updatedBy || 'Hệ thống')}</div>
@@ -21747,10 +21798,11 @@ const fullList = getCarBrandLossData();
                 <span style="color: var(--text-soft); font-style: italic; font-size: 11.5px;">Chưa cập nhật</span>
               `}
             </td>
-            <!-- THAO TÁC XEM / SỬA -->
-            <td style="padding: 12px 8px; text-align: center; width: 60px;">
-              <button type="button" onclick="openEditPendingClaimModal('${c.id}')" title="Xem & sửa chi tiết hồ sơ" style="width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--bg-soft); color: var(--text-main); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(216,180,109,0.2)'; this.style.color='var(--primary)';" onmouseout="this.style.background='var(--bg-soft)'; this.style.color='var(--text-main)';">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            <!-- THAO TÁC XEM / SỬA CHI TIẾT HỒ SƠ -->
+            <td style="padding: 12px 8px; text-align: center; width: 70px;">
+              <button type="button" onclick="openEditPendingClaimModal('${c.id}', 'Financial')" title="Xem & sửa chi tiết hồ sơ" style="padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--bg-soft); color: var(--text-main); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 800; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(216,180,109,0.2)'; this.style.color='var(--primary)';" onmouseout="this.style.background='var(--bg-soft)'; this.style.color='var(--text-main)';">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                <span>Sửa</span>
               </button>
             </td>
           </tr>
@@ -21909,9 +21961,9 @@ const fullList = getCarBrandLossData();
                   <th style="padding: 12px 10px; text-align: center; width: 100px;">Ngày mở HS</th>
                   <th style="padding: 12px 10px; text-align: right; width: 125px;">Dự phòng BT</th>
                   <th style="padding: 12px 10px; text-align: right; width: 125px;">Tiền duyệt BT</th>
-                  <th style="padding: 12px 10px; min-width: 220px; width: 260px; color: var(--primary);">Ghi chú quản lý (Lưu tự động)</th>
+                  <th style="padding: 12px 10px; min-width: 220px; width: 280px; color: var(--primary);">Ghi chú quản lý</th>
                   <th style="padding: 12px 10px; width: 155px; color: var(--primary);">Lần cập nhật cuối</th>
-                  <th style="padding: 12px 8px; text-align: center; width: 60px;">Chi tiết</th>
+                  <th style="padding: 12px 8px; text-align: center; width: 70px;">Chi tiết</th>
                 </tr>
               </thead>
               <tbody>
