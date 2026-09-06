@@ -5224,6 +5224,10 @@ let cachedCasesPayload = null;
       // Auto-close open dropdown submenus on item select
       document.querySelectorAll('.header-nav-submenu').forEach(s => s.style.display = 'none');
 
+      if (tabName === 'gdv_report') {
+        activeGdvReportView = 'weekly_zone';
+      }
+
       const URLQueryStrings = new URLSearchParams(window.location.search);
       const caseIdToken = URLQueryStrings.get('idCa');
       
@@ -8061,7 +8065,16 @@ function formatDateDisplay(val) {
         return;
       }
 
-      if (activeDashboardTab === tabName) return;
+      if (tabName === 'gdv_report') {
+        activeGdvReportView = 'weekly_zone';
+      }
+
+      if (activeDashboardTab === tabName) {
+        if (tabName === 'gdv_report') {
+          renderActiveTabContent();
+        }
+        return;
+      }
       activeDashboardTab = tabName;
       
       // Keep Firebase realtime listeners active for instant updates on lists and home counts
@@ -13567,20 +13580,15 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             });
             
             if (!hasAppliedDefaultFilter) {
-              const def = userFavoriteFilters.find(f => f.isDefault);
+              const def = userFavoriteFilters.find(f => f.isDefault && f.filters && f.filters.activeGdvReportView === 'weekly_zone');
               if (def) {
                 const f = def.filters;
-                if (f.activeGdvReportView) activeGdvReportView = f.activeGdvReportView;
+                activeGdvReportView = 'weekly_zone';
                 if (f.activeSelectedGdvNames) activeSelectedGdvNames = f.activeSelectedGdvNames;
-                if (f.activeGdvReportMonth) activeGdvReportMonth = f.activeGdvReportMonth;
-                if (f.activeGdvReportYear) activeGdvReportYear = f.activeGdvReportYear;
+                if (f.activeGdvReportStartDate) activeGdvReportStartDate = f.activeGdvReportStartDate;
+                if (f.activeGdvReportEndDate) activeGdvReportEndDate = f.activeGdvReportEndDate;
                 if (f.activeGdvReportBranch) activeGdvReportBranch = f.activeGdvReportBranch;
-                if (f.activeGdvReportGara) activeGdvReportGara = f.activeGdvReportGara;
-                if (f.activeGdvReportDaysRange) activeGdvReportDaysRange = f.activeGdvReportDaysRange;
-                if (f.activeSelectedDakLakStatuses) activeSelectedDakLakStatuses = f.activeSelectedDakLakStatuses;
-                
                 if (f.activeReportClaimType) activeReportClaimType = f.activeReportClaimType;
-                if (f.activeDakLakMinReserve) activeDakLakMinReserve = f.activeDakLakMinReserve;
                 hasAppliedDefaultFilter = true;
                 renderGdvMonthlyReportPage(container);
                 return;
