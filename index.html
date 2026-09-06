@@ -7988,7 +7988,7 @@ function formatDateDisplay(val) {
           cachedReportRules = { ...defaultRules };
         }
         
-        if (activeDashboardTab === 'gdv_report' || (typeof renderGdvMonthlyReportPage === 'function')) {
+        if (activeDashboardTab === 'gdv_report') {
           renderGdvMonthlyReportPage();
         }
       });
@@ -13520,7 +13520,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         if (modal) modal.remove();
 
         // Render lại trang báo cáo ngay lập tức
-        if (activeDashboardTab === 'gdv_report' || (typeof renderGdvMonthlyReportPage === 'function')) {
+        if (activeDashboardTab === 'gdv_report') {
           renderGdvMonthlyReportPage();
         }
       } catch (err) {
@@ -13590,7 +13590,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                 if (f.activeGdvReportBranch) activeGdvReportBranch = f.activeGdvReportBranch;
                 if (f.activeReportClaimType) activeReportClaimType = f.activeReportClaimType;
                 hasAppliedDefaultFilter = true;
-                renderGdvMonthlyReportPage(container);
+                if (activeDashboardTab === 'gdv_report') renderGdvMonthlyReportPage(container);
                 return;
               }
               hasAppliedDefaultFilter = true;
@@ -15974,7 +15974,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       const cfg = getStoredKpiCoefConfig();
       saveKpiCoefConfig(cfg);
       triggerToast('Đã lưu Cấu hình Hệ số KPI Hồ sơ thành công!', 'success');
-      if (typeof renderGdvMonthlyReportPage === 'function') {
+      if (activeDashboardTab === 'gdv_report' && typeof renderGdvMonthlyReportPage === 'function') {
         renderGdvMonthlyReportPage();
       }
     }
