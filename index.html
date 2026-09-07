@@ -23677,8 +23677,6 @@ const fullList = getCarBrandLossData();
           'Đơn vị cấp đơn': c.donViCapDon || c.chiNhanh || '',
           'Ngày tổn thất': formatDateDisplay(c.ngayVTT || c.ngayTonThat || c.ngayMoHs),
           'Dự phòng BT (VNĐ)': parseInt(String(c.duPhongBoiThuong || '0').replace(/\D/g, ''), 10) || 0,
-          'Mã lý do hủy': c.cancelReasonCode || c.lyDoChoViecHuy || '',
-          'Lý do hủy': c.lyDoHuy || c.lyDoChoViecHuy || '',
           'Ghi chú giải trình': c.cancelNotes || c.ghiChu || c.ghiChuHoSo || '',
           'Người đề xuất': c.cancelProposedBy || '',
           'Ngày đề xuất': c.cancelProposedAt ? new Date(c.cancelProposedAt).toLocaleDateString('vi-VN') : ''
