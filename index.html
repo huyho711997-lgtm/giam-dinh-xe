@@ -11639,17 +11639,28 @@ function formatDateDisplay(val) {
             // Draw original image
             ctx.drawImage(img, 0, 0);
             
-            // Proportional layout configuration
+            // Proportional layout configuration - watermark matching user's reference design
             const w = canvas.width;
             const h = canvas.height;
-            const fontSize = Math.max(16, Math.round(w / 45));
-            const padding = Math.max(16, Math.round(w / 48));
-            const lineHeight = Math.round(fontSize * 1.4);
+            // Font size slightly smaller as requested (w / 56)
+            const fontSize = Math.max(13, Math.round(w / 56));
+            const padding = Math.max(14, Math.round(w / 45));
+            const lineHeight = fontSize * 1.35;
+            
+            // Setup text style: pure white, bold sans-serif, right aligned, bottom aligned
+            ctx.font = `bold ${fontSize}px sans-serif`;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.textBaseline = 'bottom';
+            ctx.textAlign = 'right';
+            
+            // Text shadow for high contrast & legibility on all backgrounds
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+            ctx.shadowBlur = Math.max(3, Math.round(w / 350));
+            ctx.shadowOffsetX = Math.max(1, Math.round(w / 600));
+            ctx.shadowOffsetY = Math.max(1, Math.round(w / 600));
             
             // Prepare texts
             const caseNode = localActiveCaseNode || {};
-            const plateNo = caseNode.bienSo || caseNode.bienKiemSoat || '';
-            
             const now = new Date();
             const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
             
@@ -11657,95 +11668,47 @@ function formatDateDisplay(val) {
             if (gpsLocation.address) {
               gpsStr = gpsLocation.address;
             } else if (gpsLocation.coords) {
-              gpsStr = `Tọa độ: ${gpsLocation.coords.latitude}, ${gpsLocation.coords.longitude}`;
+              gpsStr = `${gpsLocation.coords.latitude}, ${gpsLocation.coords.longitude}`;
             } else {
               const gName = caseNode.tenGara || caseNode.garaSuaChua || caseNode.garage || '';
               gpsStr = gName ? `${gName} (GPS chưa cấp quyền)` : 'Chưa xác định (Chưa cấp quyền GPS)';
             }
             
-            const brandText = `TASCO DLK${plateNo ? ` · BKS: ${plateNo}` : ''}`;
-            const catText = categoryName ? `Hạng mục: ${categoryName}` : '';
-            const timeText = `Thời gian: ${timeStr}`;
-            const locText = `Địa điểm: ${gpsStr}`;
+            const line1 = 'TASCO DLK';
+            const line2 = timeStr;
+            const line3 = gpsStr;
             
-            ctx.font = `bold ${fontSize}px "Segoe UI", Roboto, -apple-system, sans-serif`;
-            
-            // Wrap location text if it exceeds maximum allowable width
-            const maxTextWidth = Math.round(w * 0.85);
-            const lines = [brandText, catText, timeText];
-            
-            if (ctx.measureText(locText).width > maxTextWidth) {
-              const words = locText.split(' ');
-              let curLine = '';
-              for (const word of words) {
-                const testLine = curLine ? `${curLine} ${word}` : word;
-                if (ctx.measureText(testLine).width > maxTextWidth && curLine) {
-                  lines.push(curLine);
-                  curLine = `   ${word}`;
+            // Handle address wrapping if too long for one line
+            const maxLineWidth = w - padding * 2;
+            const addressLines = [];
+            if (ctx.measureText(line3).width > maxLineWidth) {
+              const parts = line3.split(', ');
+              let currentPart = '';
+              for (const part of parts) {
+                const test = currentPart ? `${currentPart}, ${part}` : part;
+                if (ctx.measureText(test).width > maxLineWidth && currentPart) {
+                  addressLines.push(currentPart);
+                  currentPart = part;
                 } else {
-                  curLine = testLine;
+                  currentPart = test;
                 }
               }
-              if (curLine) lines.push(curLine);
+              if (currentPart) addressLines.push(currentPart);
             } else {
-              lines.push(locText);
+              addressLines.push(line3);
             }
-
-            const validLines = lines.filter(Boolean);
             
-            // Measure actual max width
-            let actualMaxWidth = 0;
-            validLines.forEach(l => {
-              const mw = ctx.measureText(l).width;
-              if (mw > actualMaxWidth) actualMaxWidth = mw;
-            });
-
-            const badgePadX = Math.round(padding * 0.8);
-            const badgePadY = Math.round(padding * 0.6);
-            const badgeWidth = Math.min(w - padding * 2, actualMaxWidth + badgePadX * 2);
-            const badgeHeight = validLines.length * lineHeight + badgePadY * 2;
-            const badgeX = w - padding - badgeWidth;
-            const badgeY = h - padding - badgeHeight;
-
-            // Draw dark glass badge background for 100% legibility on any image
-            ctx.save();
-            ctx.fillStyle = 'rgba(8, 11, 17, 0.78)';
-            ctx.strokeStyle = 'rgba(216, 180, 109, 0.35)';
-            ctx.lineWidth = Math.max(1, Math.round(fontSize / 15));
-            if (ctx.roundRect) {
-              ctx.beginPath();
-              ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, Math.round(fontSize * 0.4));
-              ctx.fill();
-              ctx.stroke();
-            } else {
-              ctx.fillRect(badgeX, badgeY, badgeWidth, badgeHeight);
-              ctx.strokeRect(badgeX, badgeY, badgeWidth, badgeHeight);
+            const rightX = w - padding;
+            let currentY = h - padding;
+            
+            // Draw lines from bottom to top: Address -> Time -> TASCO DLK
+            for (let i = addressLines.length - 1; i >= 0; i--) {
+              ctx.fillText(addressLines[i], rightX, currentY);
+              currentY -= lineHeight;
             }
-            ctx.restore();
-
-            // Draw texts
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            let textY = badgeY + badgePadY;
-            const textX = badgeX + badgePadX;
-
-            validLines.forEach((lineStr, lIdx) => {
-              if (lIdx === 0) {
-                ctx.font = `bold ${fontSize * 1.05}px "Segoe UI", Roboto, sans-serif`;
-                ctx.fillStyle = '#d8b46d'; // Gold Brand
-              } else if (lIdx === 1 && catText) {
-                ctx.font = `600 ${fontSize * 0.95}px "Segoe UI", Roboto, sans-serif`;
-                ctx.fillStyle = '#60a5fa'; // Light Blue Category
-              } else if (lineStr.startsWith('Thời gian:')) {
-                ctx.font = `bold ${fontSize}px "Segoe UI", Roboto, sans-serif`;
-                ctx.fillStyle = '#34d399'; // Emerald Time
-              } else {
-                ctx.font = `500 ${fontSize * 0.92}px "Segoe UI", Roboto, sans-serif`;
-                ctx.fillStyle = '#f3f4f6'; // Crisp White Location
-              }
-              ctx.fillText(lineStr, textX, textY);
-              textY += lineHeight;
-            });
+            ctx.fillText(line2, rightX, currentY);
+            currentY -= lineHeight;
+            ctx.fillText(line1, rightX, currentY);
             
             // Convert canvas back to Blob/File (using JPEG for universal compatibility)
             canvas.toBlob((blob) => {
