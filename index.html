@@ -12849,9 +12849,18 @@ function formatDateDisplay(val) {
         
         const originalConfirmText = confirmButton.textContent;
         const originalCancelText = cancelButton.textContent;
-        confirmButton.textContent = confirmText;
+        const originalConfirmBg = confirmButton.style.background;
+        const originalConfirmColor = confirmButton.style.color;
+        const originalConfirmBorder = confirmButton.style.border;
 
+        confirmButton.textContent = confirmText;
         cancelButton.textContent = cancelText;
+
+        if (String(confirmText).toLowerCase().includes('xóa') || String(title).toLowerCase().includes('xóa')) {
+          confirmButton.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+          confirmButton.style.color = '#ffffff';
+          confirmButton.style.border = 'none';
+        }
 
         overlay.style.zIndex = '999999';
         overlay.style.display = 'grid';
@@ -12862,6 +12871,9 @@ function formatDateDisplay(val) {
           document.body.style.overflow = '';
           confirmButton.textContent = originalConfirmText;
           cancelButton.textContent = originalCancelText;
+          confirmButton.style.background = originalConfirmBg;
+          confirmButton.style.color = originalConfirmColor;
+          confirmButton.style.border = originalConfirmBorder;
           cancelButton.removeEventListener('click', onCancel);
           confirmButton.removeEventListener('click', onConfirm);
           overlay.removeEventListener('click', onBackdrop);
@@ -23005,9 +23017,13 @@ const fullList = getCarBrandLossData();
       const claim = (cachedPendingClaimsPayload || {})[claimId] || {};
       const bsx = claim.bienSo || claim.soHoSoBoiThuong || 'hồ sơ';
 
-      if (!confirm(`Bạn có chắc chắn muốn XÓA đề xuất hủy của hồ sơ ${bsx}?\n(Hồ sơ sẽ được khôi phục trở lại danh sách hồ sơ tồn bình thường)`)) {
-        return;
-      }
+      const isConfirmed = await showConfirmModal(
+        'Xóa đề xuất hủy hồ sơ',
+        `Bạn có chắc chắn muốn XÓA đề xuất hủy của hồ sơ xe ${bsx} không?\n\n(Hồ sơ sẽ được khôi phục trở lại danh sách hồ sơ tồn bình thường)`,
+        'Xác nhận xóa',
+        'Hủy bỏ'
+      );
+      if (!isConfirmed) return;
 
       try {
         const updates = {
@@ -23319,9 +23335,13 @@ const fullList = getCarBrandLossData();
       const claim = (cachedPendingClaimsPayload || {})[claimId] || {};
       const bsx = claim.bienSo || claim.soHoSoBoiThuong || 'hồ sơ';
 
-      if (!confirm(`Bạn có chắc chắn muốn PHÊ DUYỆT HỦY cho hồ sơ ${bsx}?\n(Hồ sơ sẽ được chuyển trạng thái sang "Từ chối bồi thường")`)) {
-        return;
-      }
+      const isConfirmed = await showConfirmModal(
+        'Phê duyệt hủy hồ sơ',
+        `Bạn có chắc chắn muốn PHÊ DUYỆT HỦY cho hồ sơ xe ${bsx}?\n\n(Hồ sơ sẽ được chuyển trạng thái sang "Từ chối bồi thường")`,
+        'Phê duyệt hủy',
+        'Hủy bỏ'
+      );
+      if (!isConfirmed) return;
 
       try {
         const currentUser = (activeUserProfile?.displayName || activeUserProfile?.fullName || 'Hệ thống');
@@ -23357,9 +23377,13 @@ const fullList = getCarBrandLossData();
       const claim = (cachedPendingClaimsPayload || {})[claimId] || {};
       const bsx = claim.bienSo || claim.soHoSoBoiThuong || 'hồ sơ';
 
-      if (!confirm(`Bạn có chắc muốn HOÀN TÁC đề xuất hủy cho hồ sơ ${bsx}?\n(Hồ sơ sẽ được gỡ khỏi danh sách đề xuất hủy)`)) {
-        return;
-      }
+      const isConfirmed = await showConfirmModal(
+        'Hủy bỏ đề xuất hủy',
+        `Bạn có chắc muốn HỦY BỎ đề xuất hủy cho hồ sơ xe ${bsx}?\n\n(Hồ sơ sẽ được gỡ khỏi danh sách đề xuất hủy và quay về trạng thái bình thường)`,
+        'Xác nhận hủy bỏ',
+        'Đóng'
+      );
+      if (!isConfirmed) return;
 
       try {
         const updates = {
