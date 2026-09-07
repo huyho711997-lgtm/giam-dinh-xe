@@ -22582,18 +22582,11 @@ const fullList = getCarBrandLossData();
         _claimKey: k
       }));
 
-      // Candidate claims for cancellation
+      // Candidate claims for cancellation: Phù hợp điều chỉnh chỉ lấy hồ sơ được đánh dấu Đề xuất hủy
       const cancelClaims = allClaims.filter(c => {
-        if (c.deXuatHuy === true || c.deXuatHuy === 'co' || c.isCancelProposal === true) return true;
-        if (c.trangThai === 'tu_choi') return true;
-        if (c.cancelReasonCode) return true;
-        if (c.lyDoHuy && String(c.lyDoHuy).trim() !== '' && String(c.lyDoHuy).trim() !== '-') return true;
-        if (c.lyDoChoViecHuy && String(c.lyDoChoViecHuy).trim() !== '' && String(c.lyDoChoViecHuy).trim() !== '-') return true;
-        const deXuat = String(c.deXuat || '').toLowerCase();
-        if (deXuat.includes('hủy') || deXuat.includes('huy')) return true;
-        const note = String(c.ghiChu || '').toLowerCase();
-        if (note.includes('đề xuất hủy') || note.includes('đề xuất huỷ') || note.includes('de xuat huy')) return true;
-        return false;
+        if (!c) return false;
+        if (c.cancelStatus === 'da_hoan_tac') return false;
+        return (c.deXuatHuy === true || c.deXuatHuy === 'co' || c.isCancelProposal === true);
       });
 
       return cancelClaims.filter(c => {
@@ -22654,16 +22647,9 @@ const fullList = getCarBrandLossData();
       }));
 
       const allCancelClaims = allClaims.filter(c => {
-        if (c.deXuatHuy === true || c.deXuatHuy === 'co' || c.isCancelProposal === true) return true;
-        if (c.trangThai === 'tu_choi') return true;
-        if (c.cancelReasonCode) return true;
-        if (c.lyDoHuy && String(c.lyDoHuy).trim() !== '' && String(c.lyDoHuy).trim() !== '-') return true;
-        if (c.lyDoChoViecHuy && String(c.lyDoChoViecHuy).trim() !== '' && String(c.lyDoChoViecHuy).trim() !== '-') return true;
-        const deXuat = String(c.deXuat || '').toLowerCase();
-        if (deXuat.includes('hủy') || deXuat.includes('huy')) return true;
-        const note = String(c.ghiChu || '').toLowerCase();
-        if (note.includes('đề xuất hủy') || note.includes('đề xuất huỷ') || note.includes('de xuat huy')) return true;
-        return false;
+        if (!c) return false;
+        if (c.cancelStatus === 'da_hoan_tac') return false;
+        return (c.deXuatHuy === true || c.deXuatHuy === 'co' || c.isCancelProposal === true);
       });
 
       const filtered = getFilteredCancellationClaims();
@@ -22952,7 +22938,8 @@ const fullList = getCarBrandLossData();
                       <td colspan="10" style="text-align: center; padding: 48px 20px; color: var(--text-soft);">
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
                           <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.5; color: #ef4444;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                          <span style="font-weight: 750; font-size: 14px;">Không tìm thấy hồ sơ đề xuất hủy nào thỏa mãn điều kiện lọc.</span>
+                          <span style="font-weight: 750; font-size: 14px;">${allCancelClaims.length === 0 ? 'Chưa có hồ sơ nào được đề xuất hủy.' : 'Không tìm thấy hồ sơ đề xuất hủy nào thỏa mãn điều kiện lọc.'}</span>
+                          ${allCancelClaims.length === 0 ? '<span style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;">Để thêm hồ sơ vào bảng này, vào <b>Quản lý Hồ sơ tồn & Báo cáo tổn thất</b>, mở chi tiết hồ sơ cần hủy và bấm nút <b>[ ✕ Hủy hồ sơ ]</b> trên thanh tiêu đề.</span>' : ''}
                         </div>
                       </td>
                     </tr>
@@ -23001,7 +22988,7 @@ const fullList = getCarBrandLossData();
       }
       cancelBtn.style.display = 'inline-flex';
       const isProposed = (item.deXuatHuy === true || item.deXuatHuy === 'co' || item.isCancelProposal === true);
-      const isDeclined = (item.trangThai === 'tu_choi' || item.cancelStatus === 'da_duyet');
+      const isDeclined = isProposed && (item.cancelStatus === 'da_duyet' || item.trangThai === 'tu_choi');
 
       if (isDeclined) {
         cancelBtn.innerHTML = `
