@@ -22634,6 +22634,8 @@ const fullList = getCarBrandLossData();
       const container = targetContainer || document.getElementById('tabContentContainer');
       if (!container) return;
 
+      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+
       const allClaims = Object.entries(cachedPendingClaimsPayload || {}).map(([k, v]) => ({
         ...v,
         id: k
@@ -22749,6 +22751,14 @@ const fullList = getCarBrandLossData();
             <td style="padding: 12px 10px; min-width: 200px; max-width: 280px; font-size: 12px; color: var(--text-soft); line-height: 1.4;">
               <div style="max-height: 60px; overflow-y: auto;">${escapeHtmlOutput(notes)}</div>
             </td>
+            ${isAdmin ? `
+              <td style="padding: 12px 10px; text-align: center; width: 90px; white-space: nowrap;">
+                <button type="button" onclick="deleteClaimCancellationProposalByAdmin('${c.id}', event)" title="Xóa đề xuất hủy (chuyển hồ sơ trở lại hồ sơ tồn)" style="border: 1px solid rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.08); color: #ef4444; padding: 5px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(239, 68, 68, 0.18)'; this.style.transform='scale(1.04)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.08)'; this.style.transform='scale(1)'">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  <span>Xóa</span>
+                </button>
+              </td>
+            ` : ''}
           </tr>
         `;
       }).join('');
@@ -22867,19 +22877,16 @@ const fullList = getCarBrandLossData();
             <!-- Right Side: Filter Pills + Styled Dropdowns + Reset Button -->
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end;">
               
-              <!-- Filter Status Pills (using system .filter-pills and .filter-pill) -->
-              <div class="filter-pills" style="margin: 0; padding: 4px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border);">
-                <button type="button" class="filter-pill ${activeCancelStatusFilter === 'all' ? 'active' : ''}" onclick="setCancelStatusFilter('all')" style="height: 32px; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;">
-                  <span>Tất cả</span>
-                  <span class="badge-count">${allCancelClaims.length}</span>
+              <!-- Filter Status Pills (Tất cả (x), Chờ duyệt (x), Đã duyệt (x)) -->
+              <div style="display: inline-flex; align-items: center; gap: 4px; background: var(--bg-soft); padding: 4px; border-radius: 12px; border: 1px solid var(--border);">
+                <button type="button" onclick="setCancelStatusFilter('all')" style="height: 34px; padding: 0 13px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCancelStatusFilter === 'all' ? 'background: #ef4444; color: #ffffff; box-shadow: 0 2px 8px rgba(239,68,68,0.35);' : 'background: transparent; color: var(--text-soft);'}">
+                  Tất cả (${allCancelClaims.length})
                 </button>
-                <button type="button" class="filter-pill ${activeCancelStatusFilter === 'cho_duyet' ? 'active' : ''}" onclick="setCancelStatusFilter('cho_duyet')" style="height: 32px; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;">
-                  <span>Chờ duyệt</span>
-                  <span class="badge-count">${choDuyetCount}</span>
+                <button type="button" onclick="setCancelStatusFilter('cho_duyet')" style="height: 34px; padding: 0 13px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCancelStatusFilter === 'cho_duyet' ? 'background: #d97706; color: #ffffff; box-shadow: 0 2px 8px rgba(245,158,11,0.35);' : 'background: transparent; color: var(--text-soft);'}">
+                  Chờ duyệt (${choDuyetCount})
                 </button>
-                <button type="button" class="filter-pill ${activeCancelStatusFilter === 'da_duyet' ? 'active' : ''}" onclick="setCancelStatusFilter('da_duyet')" style="height: 32px; padding: 0 12px; border-radius: 8px; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 5px;">
-                  <span>Đã duyệt</span>
-                  <span class="badge-count">${daDuyetCount}</span>
+                <button type="button" onclick="setCancelStatusFilter('da_duyet')" style="height: 34px; padding: 0 13px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCancelStatusFilter === 'da_duyet' ? 'background: #3b82f6; color: #ffffff; box-shadow: 0 2px 8px rgba(59,130,246,0.35);' : 'background: transparent; color: var(--text-soft);'}">
+                  Đã duyệt (${daDuyetCount})
                 </button>
               </div>
 
@@ -22943,12 +22950,13 @@ const fullList = getCarBrandLossData();
                     <th style="padding: 12px 10px; text-align: right; width: 125px;">Dự phòng BT</th>
                     <th style="padding: 12px 10px; min-width: 180px; color: #ef4444;">Mã & Lý do hủy</th>
                     <th style="padding: 12px 10px; min-width: 220px; color: var(--primary);">Ghi chú giải trình</th>
+                    ${isAdmin ? `<th style="padding: 12px 10px; text-align: center; width: 90px; color: #ef4444;">Thao tác</th>` : ''}
                   </tr>
                 </thead>
                 <tbody>
                   ${filtered.length === 0 ? `
                     <tr>
-                      <td colspan="10" style="text-align: center; padding: 48px 20px; color: var(--text-soft);">
+                      <td colspan="${isAdmin ? 11 : 10}" style="text-align: center; padding: 48px 20px; color: var(--text-soft);">
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
                           <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.5; color: #ef4444;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
                           <span style="font-weight: 750; font-size: 14px;">${allCancelClaims.length === 0 ? 'Chưa có hồ sơ nào được đề xuất hủy.' : 'Không tìm thấy hồ sơ đề xuất hủy nào thỏa mãn điều kiện lọc.'}</span>
@@ -22984,6 +22992,60 @@ const fullList = getCarBrandLossData();
     function setCancelReasonFilter(val) {
       activeCancelReasonCodeFilter = val;
       renderClaimCancellationPage();
+    }
+
+    async function deleteClaimCancellationProposalByAdmin(claimId, event) {
+      if (event) event.stopPropagation();
+      const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+      if (!isAdmin) {
+        triggerToast('Chỉ tài khoản Quản trị viên (Admin) mới có quyền xóa đề xuất hủy!', 'warning');
+        return;
+      }
+      if (!claimId) return;
+      const claim = (cachedPendingClaimsPayload || {})[claimId] || {};
+      const bsx = claim.bienSo || claim.soHoSoBoiThuong || 'hồ sơ';
+
+      if (!confirm(`Bạn có chắc chắn muốn XÓA đề xuất hủy của hồ sơ ${bsx}?\n(Hồ sơ sẽ được khôi phục trở lại danh sách hồ sơ tồn bình thường)`)) {
+        return;
+      }
+
+      try {
+        const updates = {
+          deXuatHuy: false,
+          cancelStatus: 'da_xoa_de_xuat',
+          cancelReasonCode: null,
+          lyDoHuy: null,
+          cancelNotes: null,
+          cancelProposedBy: null,
+          cancelProposedAt: null,
+          updatedAt: Date.now()
+        };
+        if (claim.trangThai === 'tu_choi') {
+          updates.trangThai = 'moi';
+        }
+
+        if (dbNodeInstance) {
+          await dbNodeInstance.ref(`pending_claims/${claimId}`).update(updates);
+        }
+
+        if (cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId]) {
+          cachedPendingClaimsPayload[claimId] = {
+            ...cachedPendingClaimsPayload[claimId],
+            ...updates
+          };
+        }
+
+        triggerToast(`Đã xóa đề xuất hủy cho hồ sơ ${bsx} thành công!`, 'success');
+        if (typeof renderClaimCancellationPage === 'function') {
+          renderClaimCancellationPage();
+        }
+        if (typeof renderPendingClaimsTable === 'function') {
+          renderPendingClaimsTable();
+        }
+      } catch (err) {
+        console.error("Lỗi xóa đề xuất hủy:", err);
+        triggerToast('Lỗi khi xóa đề xuất: ' + err.message, 'error');
+      }
     }
 
     function resetAllCancellationFilters() {
