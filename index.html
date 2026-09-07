@@ -10858,17 +10858,26 @@ function formatDateDisplay(val) {
     }
 
     function triggerUploadFromGallery(index) {
+      prefetchGpsCoordinates();
       const inputEl = document.getElementById(`garageEvidenceInput_${index}`);
       if (inputEl) {
         inputEl.removeAttribute('capture');
+        inputEl.dataset.sourceType = 'gallery';
         inputEl.click();
       }
     }
 
     function openMobileCameraForEvidence(index) {
+      prefetchGpsCoordinates();
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (!isMobile) {
+        openCustomCameraModal(index);
+        return;
+      }
       const inputEl = document.getElementById(`garageEvidenceInput_${index}`);
       if (inputEl) {
         inputEl.setAttribute('capture', 'environment');
+        inputEl.dataset.sourceType = 'camera';
         inputEl.click();
       }
     }
@@ -11095,6 +11104,7 @@ function formatDateDisplay(val) {
     function renderPortalGarageInteractiveInputView() {
       if (!localActiveImageStack.length && !localActiveRequestedItems.length && !localActiveCaseNode) return renderErrorLayoutState('Hồ sơ hiện tại chưa có nội dung yêu cầu Garage xử lý.');
       garagePortalMounted = true;
+      try { prefetchGpsCoordinates(); } catch (_) {}
 
       let imageInputSection = '';
       if (localActiveImageStack.length > 0) {
@@ -11214,9 +11224,13 @@ function formatDateDisplay(val) {
         actionButtonsMarkup = `
           ${hiddenFileInputMarkup}
           <div class="evidence-upload-actions" style="margin-bottom: 8px; width: 100%; display: flex; gap: 6px; flex-wrap: wrap;">
-            <button type="button" class="btn-premium btn-secondary" onclick="triggerUploadFromGallery(${index})" style="width: 100%; min-height: 38px; font-size: 12px; border-radius: 8px; background: var(--surface); color: var(--text-main); font-weight: 800; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+            <button type="button" class="btn-premium" onclick="openMobileCameraForEvidence(${index})" style="flex: 1; min-width: 120px; min-height: 38px; font-size: 12px; border-radius: 8px; background: linear-gradient(135deg, #d8b46d 0%, #b38c43 100%); color: #080b11; font-weight: 850; border: none; box-shadow: 0 4px 12px rgba(216,180,109,0.25); display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: transform 0.15s ease;">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              <span>Chụp ảnh</span>
+            </button>
+            <button type="button" class="btn-premium btn-secondary" onclick="triggerUploadFromGallery(${index})" style="flex: 1; min-width: 120px; min-height: 38px; font-size: 12px; border-radius: 8px; background: var(--surface); color: var(--text-main); font-weight: 800; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: background 0.15s ease;">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#3b82f6" stroke-width="2.5" style="flex-shrink:0;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
-              <span>Tải ảnh từ máy</span>
+              <span>Tải từ máy</span>
             </button>
           </div>
         `;
@@ -11537,7 +11551,7 @@ function formatDateDisplay(val) {
           };
           reverseGeocodeAddress(lat, lon).then((address) => {
             if (address) lastFetchedAddress = address;
-          });
+          }).catch(() => {});
         },
         (error) => {
           console.warn('Real-time Geolocation error:', error);
@@ -11545,11 +11559,73 @@ function formatDateDisplay(val) {
             gpsPermissionDenied = true;
           }
         },
-        { enableHighAccuracy: false, timeout: 4000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
       );
     }
 
-    function addWatermarkToImageFile(file, categoryName) {
+    async function ensureRealtimeGpsCoordinates() {
+      if (lastFetchedAddress && lastFetchedGpsCoords) {
+        return { address: lastFetchedAddress, coords: lastFetchedGpsCoords };
+      }
+      if (lastFetchedGpsCoords) {
+        try {
+          const addr = await Promise.race([
+            reverseGeocodeAddress(lastFetchedGpsCoords.latitude, lastFetchedGpsCoords.longitude),
+            new Promise(r => setTimeout(() => r(null), 1500))
+          ]);
+          if (addr) lastFetchedAddress = addr;
+        } catch (_) {}
+        return { address: lastFetchedAddress, coords: lastFetchedGpsCoords };
+      }
+      if (!navigator.geolocation || gpsPermissionDenied) {
+        return { address: null, coords: null };
+      }
+      return new Promise((resolve) => {
+        let finished = false;
+        const finish = () => {
+          if (!finished) {
+            finished = true;
+            resolve({ address: lastFetchedAddress, coords: lastFetchedGpsCoords });
+          }
+        };
+        const timer = setTimeout(finish, 2200);
+
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            lastFetchedGpsCoords = {
+              latitude: lat.toFixed(6),
+              longitude: lon.toFixed(6)
+            };
+            try {
+              const addr = await Promise.race([
+                reverseGeocodeAddress(lat, lon),
+                new Promise(r => setTimeout(() => r(null), 1200))
+              ]);
+              if (addr) lastFetchedAddress = addr;
+            } catch (_) {}
+            clearTimeout(timer);
+            finish();
+          },
+          (err) => {
+            console.warn('Geolocation error:', err);
+            if (err && err.code === 1) gpsPermissionDenied = true;
+            clearTimeout(timer);
+            finish();
+          },
+          { enableHighAccuracy: true, timeout: 3000, maximumAge: 30000 }
+        );
+      });
+    }
+
+    async function addWatermarkToImageFile(file, categoryName) {
+      // 1. Fetch real-time GPS & address
+      let gpsLocation = { address: lastFetchedAddress, coords: lastFetchedGpsCoords };
+      try {
+        gpsLocation = await ensureRealtimeGpsCoordinates();
+      } catch (_) {}
+
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -11567,56 +11643,119 @@ function formatDateDisplay(val) {
             const w = canvas.width;
             const h = canvas.height;
             const fontSize = Math.max(16, Math.round(w / 45));
-            const padding = Math.max(16, Math.round(w / 50));
-            const lineHeight = fontSize * 1.35;
-            
-            // Setup text style
-            ctx.font = `bold ${fontSize}px sans-serif`;
-            ctx.fillStyle = '#FFFFFF';
-            ctx.textBaseline = 'bottom';
-            ctx.textAlign = 'right';
-            
-            // Text shadow for readability on light backgrounds
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-            ctx.shadowBlur = Math.max(3, Math.round(w / 300));
-            ctx.shadowOffsetX = Math.max(1, Math.round(w / 600));
-            ctx.shadowOffsetY = Math.max(1, Math.round(w / 600));
+            const padding = Math.max(16, Math.round(w / 48));
+            const lineHeight = Math.round(fontSize * 1.4);
             
             // Prepare texts
             const caseNode = localActiveCaseNode || {};
-            const adjusterName = activeUserProfile?.tenHienThi || activeUserProfile?.email || caseNode.nguoiTao?.tenHienThi || caseNode.nguoiTao?.email || 'N/A';
+            const plateNo = caseNode.bienSo || caseNode.bienKiemSoat || '';
             
             const now = new Date();
             const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
             
-            let gpsStr = 'Chưa xác định (Chưa cấp quyền GPS)';
-            if (lastFetchedAddress) {
-              gpsStr = lastFetchedAddress;
-            } else if (lastFetchedGpsCoords) {
-              gpsStr = `${lastFetchedGpsCoords.latitude}, ${lastFetchedGpsCoords.longitude}`;
+            let gpsStr = '';
+            if (gpsLocation.address) {
+              gpsStr = gpsLocation.address;
+            } else if (gpsLocation.coords) {
+              gpsStr = `Tọa độ: ${gpsLocation.coords.latitude}, ${gpsLocation.coords.longitude}`;
+            } else {
+              const gName = caseNode.tenGara || caseNode.garaSuaChua || caseNode.garage || '';
+              gpsStr = gName ? `${gName} (GPS chưa cấp quyền)` : 'Chưa xác định (Chưa cấp quyền GPS)';
             }
             
-            const line1 = `TASCO DLK`;
-            const line3 = `${timeStr}`;
-            const line4 = `${gpsStr}`;
+            const brandText = `TASCO DLK${plateNo ? ` · BKS: ${plateNo}` : ''}`;
+            const catText = categoryName ? `Hạng mục: ${categoryName}` : '';
+            const timeText = `Thời gian: ${timeStr}`;
+            const locText = `Địa điểm: ${gpsStr}`;
             
-            // Draw lines of text from bottom to top
-            let currentY = h - padding;
-            ctx.fillText(line4, w - padding, currentY);
-            currentY -= lineHeight;
-            ctx.fillText(line3, w - padding, currentY);
-            currentY -= lineHeight;
-            ctx.fillText(line1, w - padding, currentY);
+            ctx.font = `bold ${fontSize}px "Segoe UI", Roboto, -apple-system, sans-serif`;
             
-            // Convert canvas back to Blob/File
+            // Wrap location text if it exceeds maximum allowable width
+            const maxTextWidth = Math.round(w * 0.85);
+            const lines = [brandText, catText, timeText];
+            
+            if (ctx.measureText(locText).width > maxTextWidth) {
+              const words = locText.split(' ');
+              let curLine = '';
+              for (const word of words) {
+                const testLine = curLine ? `${curLine} ${word}` : word;
+                if (ctx.measureText(testLine).width > maxTextWidth && curLine) {
+                  lines.push(curLine);
+                  curLine = `   ${word}`;
+                } else {
+                  curLine = testLine;
+                }
+              }
+              if (curLine) lines.push(curLine);
+            } else {
+              lines.push(locText);
+            }
+
+            const validLines = lines.filter(Boolean);
+            
+            // Measure actual max width
+            let actualMaxWidth = 0;
+            validLines.forEach(l => {
+              const mw = ctx.measureText(l).width;
+              if (mw > actualMaxWidth) actualMaxWidth = mw;
+            });
+
+            const badgePadX = Math.round(padding * 0.8);
+            const badgePadY = Math.round(padding * 0.6);
+            const badgeWidth = Math.min(w - padding * 2, actualMaxWidth + badgePadX * 2);
+            const badgeHeight = validLines.length * lineHeight + badgePadY * 2;
+            const badgeX = w - padding - badgeWidth;
+            const badgeY = h - padding - badgeHeight;
+
+            // Draw dark glass badge background for 100% legibility on any image
+            ctx.save();
+            ctx.fillStyle = 'rgba(8, 11, 17, 0.78)';
+            ctx.strokeStyle = 'rgba(216, 180, 109, 0.35)';
+            ctx.lineWidth = Math.max(1, Math.round(fontSize / 15));
+            if (ctx.roundRect) {
+              ctx.beginPath();
+              ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, Math.round(fontSize * 0.4));
+              ctx.fill();
+              ctx.stroke();
+            } else {
+              ctx.fillRect(badgeX, badgeY, badgeWidth, badgeHeight);
+              ctx.strokeRect(badgeX, badgeY, badgeWidth, badgeHeight);
+            }
+            ctx.restore();
+
+            // Draw texts
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            let textY = badgeY + badgePadY;
+            const textX = badgeX + badgePadX;
+
+            validLines.forEach((lineStr, lIdx) => {
+              if (lIdx === 0) {
+                ctx.font = `bold ${fontSize * 1.05}px "Segoe UI", Roboto, sans-serif`;
+                ctx.fillStyle = '#d8b46d'; // Gold Brand
+              } else if (lIdx === 1 && catText) {
+                ctx.font = `600 ${fontSize * 0.95}px "Segoe UI", Roboto, sans-serif`;
+                ctx.fillStyle = '#60a5fa'; // Light Blue Category
+              } else if (lineStr.startsWith('Thời gian:')) {
+                ctx.font = `bold ${fontSize}px "Segoe UI", Roboto, sans-serif`;
+                ctx.fillStyle = '#34d399'; // Emerald Time
+              } else {
+                ctx.font = `500 ${fontSize * 0.92}px "Segoe UI", Roboto, sans-serif`;
+                ctx.fillStyle = '#f3f4f6'; // Crisp White Location
+              }
+              ctx.fillText(lineStr, textX, textY);
+              textY += lineHeight;
+            });
+            
+            // Convert canvas back to Blob/File (using JPEG for universal compatibility)
             canvas.toBlob((blob) => {
               if (blob) {
-                const stampedFile = new File([blob], file.name, { type: file.type });
+                const stampedFile = new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
                 resolve(stampedFile);
               } else {
                 resolve(file);
               }
-            }, file.type, 0.9);
+            }, 'image/jpeg', 0.92);
           };
           img.onerror = () => resolve(file);
           img.src = e.target.result;
@@ -11997,9 +12136,7 @@ function formatDateDisplay(val) {
       customCameraPhotos = [];
     }
 
-    function openMobileCameraForEvidence(index) {
-      openCustomCameraModal(index);
-    }
+    // Note: openMobileCameraForEvidence is declared above with automatic mobile/desktop routing
 
     function normalizeEvidenceImageUrls(item) {
       const rawValue = item?.hinhAnhGarage ?? item?.linkAnhGarage ?? [];
@@ -12106,13 +12243,10 @@ function formatDateDisplay(val) {
       const categoryName = localActiveRequestedItems[requestIndex].tenHangMuc || `H\u1ea1ng m\u1ee5c ${requestIndex + 1}`;
       setEvidenceUploadUI(requestIndex, true, `\u0110ang x\u1eed l\u00fd ${incomingFiles.length} \u1ea3nh`, 5);
 
-      let processedFiles = incomingFiles;
-      if (isCameraSource) {
-        setEvidenceUploadUI(requestIndex, true, `\u0110ang \u0111\u00f3ng d\u1ea5u \u1ea3nh...`, 10);
-        processedFiles = await Promise.all(
-          incomingFiles.map(file => addWatermarkToImageFile(file, categoryName))
-        );
-      }
+      setEvidenceUploadUI(requestIndex, true, 'Đang đóng dấu ngày giờ & toạ độ...', 10);
+      const processedFiles = await Promise.all(
+        incomingFiles.map(file => addWatermarkToImageFile(file, categoryName))
+      );
 
       const currentUrls = normalizeEvidenceImageUrls(localActiveRequestedItems[requestIndex]);
       const { valid, rejected } = validateGarageEvidenceFiles(processedFiles, currentUrls.length);
