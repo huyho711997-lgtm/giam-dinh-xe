@@ -3187,14 +3187,7 @@
           <textarea id="txtCancelNotes" class="textarea-premium" rows="4" placeholder="Nhập diễn biến, căn cứ hồ sơ và giải trình chi tiết lý do đề xuất hủy..." style="width: 100%; min-height: 90px; padding: 12px 14px; font-family: inherit; font-size: 13px; font-weight: 600; border-radius: 12px; line-height: 1.5;"></textarea>
         </div>
 
-        <!-- Approval Option for Admins/Managers -->
-        <div style="background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;">
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 12.5px; font-weight: 750; color: var(--text-main); margin: 0;">
-            <input type="checkbox" id="chkCancelDirectApproval" style="width: 17px; height: 17px; accent-color: #ef4444; cursor: pointer;" />
-            <span>Phê duyệt hủy chính thức ngay (Chuyển hồ sơ sang trạng thái "Từ chối")</span>
-          </label>
-          <p style="font-size: 11px; color: var(--text-muted); margin: 4px 0 0 27px;">Nếu bỏ chọn, hồ sơ sẽ lưu ở trạng thái "Chờ duyệt hủy" để cấp quản lý phê duyệt sau.</p>
-        </div>
+
       </div>
 
       <!-- Footer -->
@@ -23074,7 +23067,7 @@ const fullList = getCarBrandLossData();
       const searchResults = document.getElementById('cancelClaimSearchResults');
       const reasonSelect = document.getElementById('selCancelReasonCode');
       const notesTextarea = document.getElementById('txtCancelNotes');
-      const directApprChk = document.getElementById('chkCancelDirectApproval');
+
 
       if (searchResults) searchResults.style.display = 'none';
 
@@ -23100,9 +23093,7 @@ const fullList = getCarBrandLossData();
             notesTextarea.value = rObj ? rObj.label : 'Đề xuất hủy hồ sơ bồi thường';
           }
         }
-        if (directApprChk) {
-          directApprChk.checked = (claim.trangThai === 'tu_choi' || claim.cancelStatus === 'da_duyet');
-        }
+
         const revertBtn = document.getElementById('btnRevertCancelProposal');
         if (revertBtn) {
           revertBtn.style.display = (claim.deXuatHuy === true || claim.deXuatHuy === 'co' || claim.isCancelProposal === true) ? 'inline-flex' : 'none';
@@ -23116,7 +23107,7 @@ const fullList = getCarBrandLossData();
         if (searchInput) searchInput.value = '';
         if (reasonSelect) reasonSelect.value = 'HUY_10';
         if (notesTextarea) notesTextarea.value = '';
-        if (directApprChk) directApprChk.checked = false;
+
         document.getElementById('cancelModalTitle').textContent = 'Lập Đề xuất Hủy Hồ sơ';
       }
 
@@ -23207,7 +23198,6 @@ const fullList = getCarBrandLossData();
 
       const reasonCode = document.getElementById('selCancelReasonCode')?.value || 'HUY_10';
       const notes = (document.getElementById('txtCancelNotes')?.value || '').trim();
-      const isDirectApproved = document.getElementById('chkCancelDirectApproval')?.checked;
       const reasonObj = CANCELLATION_REASONS.find(r => r.code === reasonCode);
       const reasonLabel = reasonObj ? reasonObj.label : reasonCode;
 
@@ -23228,15 +23218,9 @@ const fullList = getCarBrandLossData();
           cancelNotes: notes,
           cancelProposedBy: currentUser,
           cancelProposedAt: Date.now(),
-          cancelStatus: isDirectApproved ? 'da_duyet' : 'cho_duyet',
+          cancelStatus: 'cho_duyet',
           updatedAt: Date.now()
         };
-
-        if (isDirectApproved) {
-          updates.trangThai = 'tu_choi';
-          updates.cancelApprovedBy = currentUser;
-          updates.cancelApprovedAt = Date.now();
-        }
 
         if (dbNodeInstance) {
           await dbNodeInstance.ref(`pending_claims/${activeCancelProposalClaimId}`).update(updates);
