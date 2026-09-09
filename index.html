@@ -6280,9 +6280,9 @@ let cachedCasesPayload = null;
       setVal('modalPendingUocThietHai', formatCurrencyInputNumber(item.uocThietHai));
       setVal('modalPendingPascSoTienDuyet', formatCurrencyInputNumber(item.pascSoTienDuyet || item.soTienDuyetBT));
       setVal('modalPendingPascNguoiDuyet', item.pascNguoiDuyet || '');
-      setVal('modalPendingToTrinhNguoiDuyet', item.toTrinhNguoiDuyet || '');
-      setVal('modalPendingPascNgayDuyet', formatCleanDateField(item.pascNgayDuyet));
-      setVal('modalPendingToTrinhNgayDuyet', formatCleanDateField(item.toTrinhNgayDuyet || item.pascNgayDuyet));
+      setVal('modalPendingToTrinhNguoiDuyet', item.toTrinhNguoiDuyet || item['Tờ trình BT - Người duyệt'] || item['Tờ trình BT – Người duyệt'] || '');
+      setVal('modalPendingPascNgayDuyet', formatCleanDateField(item.pascNgayDuyet || item['PASC - Ngày duyệt cuối'] || item['PASC – Ngày duyệt cuối']));
+      setVal('modalPendingToTrinhNgayDuyet', formatCleanDateField(getClaimToTrinhDuyetDate(item)));
       const rawTtbtAmt = item.ttbtTongSoTienBoiThuong || item.tongBoiThuongSauThue || item.pascSoTienDuyet || item.soTienDuyetBT || item.ttbtSoTienBoiThuong || item.amount;
       setVal('modalPendingTtbtTongSoTienBoiThuong', formatCurrencyInputNumber(rawTtbtAmt));
       setVal('modalPendingDuPhongBoiThuong', formatCurrencyInputNumber(item.duPhongBoiThuong));
@@ -6497,6 +6497,7 @@ let cachedCasesPayload = null;
         ttbtTongSoTienBoiThuong: getVal('modalPendingTtbtTongSoTienBoiThuong') || existingItem.ttbtTongSoTienBoiThuong || '',
         soTienDuyetBT: getVal('modalPendingTtbtTongSoTienBoiThuong') || existingItem.soTienDuyetBT || '',
         pascNguoiDuyet: getVal('modalPendingPascNguoiDuyet') || existingItem.pascNguoiDuyet || '',
+        toTrinhNguoiDuyet: getVal('modalPendingToTrinhNguoiDuyet') || existingItem.toTrinhNguoiDuyet || '',
         soKhungSoMay: getVal('modalPendingSoKhungSoMay') || existingItem.soKhungSoMay || '',
         nguoiCapDon: getVal('modalPendingNguoiCapDon') || existingItem.nguoiCapDon || '',
         kenhKhaiThac: getVal('modalPendingKenhKhaiThac') || existingItem.kenhKhaiThac || '',
@@ -6778,7 +6779,7 @@ let cachedCasesPayload = null;
       }
 
       // 3. String split by separators (YYYY-MM-DD or DD/MM/YYYY)
-      const parts = str.split(/[\/\-\.\sT]/).filter(Boolean);
+      const parts = str.split(/[\/\-\.\sT:]/).filter(Boolean);
       if (parts.length >= 3) {
         let p1 = parseInt(parts[0], 10);
         let p2 = parseInt(parts[1], 10);
@@ -6858,6 +6859,64 @@ function formatDateDisplay(val) {
       return str.includes('1970') ? '—' : str;
     }
 
+    function getClaimToTrinhDuyetDate(c) {
+      if (!c || typeof c !== 'object') return '';
+      if (c.toTrinhNgayDuyet && typeof c.toTrinhNgayDuyet === 'string' && c.toTrinhNgayDuyet.trim() && c.toTrinhNgayDuyet !== '—' && c.toTrinhNgayDuyet !== '-') {
+        return c.toTrinhNgayDuyet.trim();
+      }
+      if (c.modalPendingToTrinhNgayDuyet && typeof c.modalPendingToTrinhNgayDuyet === 'string' && c.modalPendingToTrinhNgayDuyet.trim()) {
+        return c.modalPendingToTrinhNgayDuyet.trim();
+      }
+      if (c.toTrinhBtNgayDuyet && typeof c.toTrinhBtNgayDuyet === 'string' && c.toTrinhBtNgayDuyet.trim()) {
+        return c.toTrinhBtNgayDuyet.trim();
+      }
+      if (c.ngayDuyetHsbt && typeof c.ngayDuyetHsbt === 'string' && c.ngayDuyetHsbt.trim()) {
+        return c.ngayDuyetHsbt.trim();
+      }
+      for (const key of Object.keys(c)) {
+        const val = c[key];
+        if (val === null || val === undefined || val === '' || val === '—' || val === '-') continue;
+        const nk = key.replace(/[\u2013\u2014]/g, '-').trim().toLowerCase();
+        if (
+          (nk.includes('tờ trình') && nk.includes('ngày duyệt')) ||
+          (nk.includes('to trinh') && nk.includes('ngay duyet')) ||
+          nk === 'ngày duyệt hsbt' ||
+          nk === 'ngay duyet hsbt' ||
+          nk === 'totrinhngayduyet'
+        ) {
+          return String(val).trim();
+        }
+      }
+      return '';
+    }
+
+    function getClaimGdvName(c) {
+      if (!c || typeof c !== 'object') return '';
+      const candidates = [
+        c.gdvTiepNhan,
+        c.canBoXuLy,
+        c.toTrinhNguoiDuyet,
+        c['Tờ trình BT - Người duyệt'],
+        c['Tờ trình BT – Người duyệt'],
+        c.pascNguoiDuyet,
+        c['PASC - Người duyệt'],
+        c['PASC – Người duyệt'],
+        c.gdvHo,
+        c.canBoBoiThuong,
+        c.gdvName,
+        c.createdByName
+      ];
+      for (const cand of candidates) {
+        if (cand && typeof cand === 'string') {
+          const clean = cand.trim();
+          if (clean && clean !== '—' && clean !== '-' && clean !== 'Chưa phân công' && clean !== 'Hệ thống Excel') {
+            return clean;
+          }
+        }
+      }
+      return (c.gdvTiepNhan || c.canBoXuLy || c.toTrinhNguoiDuyet || c.gdvHo || '').trim();
+    }
+
     function isSameDateString(d1, d2) {
       if (!d1 || !d2) return false;
       const dp1 = parseDateParts(d1);
@@ -6896,7 +6955,7 @@ function formatDateDisplay(val) {
         if (!Array.isArray(row)) continue;
 
         row.forEach((cell, colIdx) => {
-          const text = String(cell || '').trim().toLowerCase();
+          const text = String(cell || '').trim().toLowerCase().replace(/[\u2013\u2014]/g, '-');
           if (text.includes('chi nhánh xử lý')) colMap.chiNhanhXuly = colIdx;
           else if (text.includes('chi nhánh')) colMap.chiNhanh = colIdx;
           else if (text.includes('ttkd')) colMap.ttkd = colIdx;
@@ -6939,8 +6998,8 @@ function formatDateDisplay(val) {
           else if (text.includes('mã gara sửa chữa')) colMap.maGara = colIdx;
           else if (text.includes('gđv ho')) colMap.gdvHo = colIdx;
           else if (text.includes('ước thiệt hại')) colMap.uocThietHai = colIdx;
-          else if (text.includes('tờ trình bt - ngày duyệt cuối') || text.includes('tờ trình bt - ngày duyệt') || text.includes('tờ trình - ngày duyệt') || text.includes('tờ trình ngày duyệt')) colMap.toTrinhNgayDuyet = colIdx;
-          else if (text.includes('tờ trình bt - người duyệt')) colMap.toTrinhNguoiDuyet = colIdx;
+          else if (text.includes('tờ trình bt - ngày duyệt') || text.includes('tờ trình - ngày duyệt') || text.includes('tờ trình ngày duyệt') || (text.includes('tờ trình') && text.includes('ngày duyệt')) || text.includes('ngày duyệt hsbt')) colMap.toTrinhNgayDuyet = colIdx;
+          else if (text.includes('tờ trình bt - người duyệt') || text.includes('tờ trình - người duyệt') || (text.includes('tờ trình') && text.includes('người duyệt')) || text.includes('người duyệt tờ trình') || text.includes('người duyệt hsbt')) colMap.toTrinhNguoiDuyet = colIdx;
           else if (text.includes('pasc - ngày duyệt')) colMap.pascNgayDuyet = colIdx;
           else if (text.includes('pasc - người duyệt')) colMap.pascNguoiDuyet = colIdx;
           else if (text.includes('pasc - số tiền')) colMap.pascSoTienDuyet = colIdx;
@@ -7105,7 +7164,7 @@ function formatDateDisplay(val) {
           pascNgayDuyet: formatCleanDateField(getVal(r, colMap.pascNgayDuyet)),
           pascNguoiDuyet: getVal(r, colMap.pascNguoiDuyet),
           pascSoTienDuyet: getVal(r, colMap.pascSoTienDuyet),
-          toTrinhNgayDuyet: formatCleanDateField(getVal(r, colMap.toTrinhNgayDuyet)) || formatCleanDateField(getVal(r, colMap.pascNgayDuyet)),
+          toTrinhNgayDuyet: formatCleanDateField(getVal(r, colMap.toTrinhNgayDuyet)),
           toTrinhNguoiDuyet: getVal(r, colMap.toTrinhNguoiDuyet),
           ttbtSoTienBoiThuong: getVal(r, colMap.ttbtSoTienBoiThuong),
           ttbtTongSoTienBoiThuong: getVal(r, colMap.ttbtTongSoTienBoiThuong) || getVal(r, colMap.tongBoiThuongSauThue) || getVal(r, colMap.amount) || getVal(r, colMap.ttbtSoTienBoiThuong) || getVal(r, colMap.pascSoTienDuyet),
@@ -14041,7 +14100,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         if (yr) yearSet.add(yr);
 
         // Parse approval date for KPI calculation: 'Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)'
-        const duyetDateStr = (c.toTrinhNgayDuyet || c['Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)'] || c.toTrinhBtNgayDuyet || c.ngayDuyetHsbt || c.pascNgayDuyet || '').trim();
+        const duyetDateStr = getClaimToTrinhDuyetDate(c);
         let duyetYr = null;
         let duyetMo = null;
         if (duyetDateStr && duyetDateStr !== '—' && duyetDateStr !== '-') {
@@ -14114,40 +14173,81 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           if (b !== activeGdvReportBranch) continue;
         }
 
-        const rawGdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '').trim();
+        const rawGdvName = getClaimGdvName(c);
         const targetName = resolveTargetGdv(rawGdvName);
 
         // Exclude claims that do not belong to the selected GĐVs
         if (!targetName || !gdvMap[targetName]) continue;
 
-        // Chỉ tính toán theo số hồ sơ phát sinh trong tháng và số hồ sơ phát sinh đã được duyệt
-        const matchesOpenedYear = activeGdvReportYear === 'all' || item.year === parseInt(activeGdvReportYear, 10);
-        const matchesOpenedMonth = activeGdvReportMonth === 'all' || item.month === parseInt(activeGdvReportMonth, 10);
-        const isOpenedInPeriod = Boolean(item.year && matchesOpenedYear && matchesOpenedMonth);
+        if (activeGdvReportView === 'chart') {
+          // Báo cáo KPI & Hiệu suất Giám định:
+          // 1. Số HS làm / tiếp nhận: đếm hồ sơ có ngày mở trong kỳ được chọn
+          const matchesOpenedYear = activeGdvReportYear === 'all' || item.year === parseInt(activeGdvReportYear, 10);
+          const matchesOpenedMonth = activeGdvReportMonth === 'all' || item.month === parseInt(activeGdvReportMonth, 10);
+          const isOpenedInPeriod = Boolean(item.year && matchesOpenedYear && matchesOpenedMonth);
 
-        // Bỏ qua nếu không phát sinh trong kỳ được chọn
-        if (!isOpenedInPeriod) continue;
+          // 2. ĐÃ DUYỆT HSBT: Đếm hồ sơ của từng GĐV theo "Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)" có ngày nằm trong tháng được chọn
+          const matchesDuyetYear = activeGdvReportYear === 'all' || item.duyetYear === parseInt(activeGdvReportYear, 10);
+          const matchesDuyetMonth = activeGdvReportMonth === 'all' || item.duyetMonth === parseInt(activeGdvReportMonth, 10);
+          const isExcludedStatus = ['tu_choi', 'huy', 'da_huy'].includes(String(c.trangThai || '').toLowerCase().trim());
+          const isDuyetHsbtInPeriod = Boolean(item.duyetYear && matchesDuyetYear && matchesDuyetMonth && !isExcludedStatus);
 
-        gdvMap[targetName].totalOpenedCount++;
-        const stKey = PENDING_STATUS_MAP[c.trangThai] ? c.trangThai : 'moi';
-        gdvMap[targetName].statusMap[stKey] = (gdvMap[targetName].statusMap[stKey] || 0) + 1;
+          // Bỏ qua nếu hồ sơ không phát sinh trong kỳ VÀ cũng không được duyệt HSBT trong kỳ
+          if (!isOpenedInPeriod && !isDuyetHsbtInPeriod) continue;
 
-        if (isDuyetHsbtApproved(c)) {
-          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || '0').replace(/[^0-9]/g, '');
-          const amtVal = parseInt(amtStr, 10) || 0;
-          gdvMap[targetName].totalApprovedAmount += amtVal;
+          if (isOpenedInPeriod) {
+            gdvMap[targetName].totalOpenedCount++;
+            const stKey = PENDING_STATUS_MAP[c.trangThai] ? c.trangThai : 'moi';
+            gdvMap[targetName].statusMap[stKey] = (gdvMap[targetName].statusMap[stKey] || 0) + 1;
+          }
 
-          // Calculate KPI Coefficient k based on Claim Type & Amount Bracket
-          const kpiRules = typeof getStoredKpiCoefConfig === 'function' ? getStoredKpiCoefConfig() : [];
-          const spText = String(c.tnds || c.vcx || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.loaiHs || c.nghiepVu || '').toUpperCase();
-          const loaiType = (c.tnds || spText.includes('TNDS')) ? 'TNDS' : 'VCX';
-          const matchRule = kpiRules.find(r => r.type === loaiType && amtVal >= r.fromAmt && amtVal <= r.toAmt);
-          const kCoef = matchRule ? matchRule.coef : 1.0;
+          if (isDuyetHsbtInPeriod) {
+            const amtStr = String(c.ttbtTongSoTienBoiThuong || c.tongBoiThuongSauThue || c.soTienDuyetBT || c.pascSoTienDuyet || c.ttbtSoTienBoiThuong || c.amount || c.uocThietHai || '0').replace(/[^0-9]/g, '');
+            const amtVal = parseInt(amtStr, 10) || 0;
+            gdvMap[targetName].totalApprovedAmount += amtVal;
 
-          gdvMap[targetName].duyetHsbtCount++;
-          gdvMap[targetName].weightedKpiCount += kCoef;
+            // Calculate KPI Coefficient k based on Claim Type & Amount Bracket
+            const kpiRules = typeof getStoredKpiCoefConfig === 'function' ? getStoredKpiCoefConfig() : [];
+            const spText = String(c.tnds || c.vcx || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.loaiHs || c.nghiepVu || '').toUpperCase();
+            const loaiType = (c.tnds || spText.includes('TNDS')) ? 'TNDS' : 'VCX';
+            const matchRule = kpiRules.find(r => r.type === loaiType && amtVal >= r.fromAmt && amtVal <= r.toAmt);
+            const kCoef = matchRule ? matchRule.coef : 1.0;
+
+            gdvMap[targetName].duyetHsbtCount++;
+            gdvMap[targetName].weightedKpiCount += kCoef;
+          } else if (isOpenedInPeriod) {
+            gdvMap[targetName].pendingHsbtCount++;
+          }
         } else {
-          gdvMap[targetName].pendingHsbtCount++;
+          // Chỉ tính toán theo số hồ sơ phát sinh trong tháng và số hồ sơ phát sinh đã được duyệt cho các báo cáo khác
+          const matchesOpenedYear = activeGdvReportYear === 'all' || item.year === parseInt(activeGdvReportYear, 10);
+          const matchesOpenedMonth = activeGdvReportMonth === 'all' || item.month === parseInt(activeGdvReportMonth, 10);
+          const isOpenedInPeriod = Boolean(item.year && matchesOpenedYear && matchesOpenedMonth);
+
+          // Bỏ qua nếu không phát sinh trong kỳ được chọn
+          if (!isOpenedInPeriod) continue;
+
+          gdvMap[targetName].totalOpenedCount++;
+          const stKey = PENDING_STATUS_MAP[c.trangThai] ? c.trangThai : 'moi';
+          gdvMap[targetName].statusMap[stKey] = (gdvMap[targetName].statusMap[stKey] || 0) + 1;
+
+          if (isDuyetHsbtApproved(c)) {
+            const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || '0').replace(/[^0-9]/g, '');
+            const amtVal = parseInt(amtStr, 10) || 0;
+            gdvMap[targetName].totalApprovedAmount += amtVal;
+
+            // Calculate KPI Coefficient k based on Claim Type & Amount Bracket
+            const kpiRules = typeof getStoredKpiCoefConfig === 'function' ? getStoredKpiCoefConfig() : [];
+            const spText = String(c.tnds || c.vcx || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.loaiHs || c.nghiepVu || '').toUpperCase();
+            const loaiType = (c.tnds || spText.includes('TNDS')) ? 'TNDS' : 'VCX';
+            const matchRule = kpiRules.find(r => r.type === loaiType && amtVal >= r.fromAmt && amtVal <= r.toAmt);
+            const kCoef = matchRule ? matchRule.coef : 1.0;
+
+            gdvMap[targetName].duyetHsbtCount++;
+            gdvMap[targetName].weightedKpiCount += kCoef;
+          } else {
+            gdvMap[targetName].pendingHsbtCount++;
+          }
         }
       }
 
@@ -15626,8 +15726,8 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         if (name) setObj.add(name);
       });
       Object.values(cachedPendingClaimsPayload || {}).forEach(c => {
-        const name = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || c.canBoBoiThuong || c.gdvName || '').trim();
-        if (name && name !== 'Chưa phân công') setObj.add(name);
+        const name = getClaimGdvName(c);
+        if (name && name !== 'Chưa phân công' && name !== 'Hệ thống Excel') setObj.add(name);
       });
       return Array.from(setObj).sort();
     }
@@ -15769,7 +15869,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       let dateStr = c[fieldName];
       
       if (fieldName === 'toTrinhNgayDuyet' && !dateStr) {
-        dateStr = c.toTrinhNgayDuyet || c['Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)'] || c.toTrinhBtNgayDuyet || c.ngayDuyetHsbt || c.pascNgayDuyet;
+        dateStr = getClaimToTrinhDuyetDate(c);
       }
       if (fieldName === 'ngayMoHs' && !dateStr) {
         dateStr = c.ngayMoHs || c['Ngày mở hồ sơ'] || c['Ngày mở HS'] || c.ngayTonThat || c.date;
@@ -16272,7 +16372,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           }
         }
 
-        const duyetDateStr = (c.toTrinhNgayDuyet || c['Tờ trình BT - Ngày duyệt cuối (Ngày duyệt HSBT)'] || c.toTrinhBtNgayDuyet || c.ngayDuyetHsbt || c.pascNgayDuyet || '').trim();
+        const duyetDateStr = getClaimToTrinhDuyetDate(c);
         let duyetYr = null;
         let duyetMo = null;
         if (duyetDateStr && duyetDateStr !== '—' && duyetDateStr !== '-') {
@@ -16300,7 +16400,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           if (b !== activeGdvReportBranch) return;
         }
 
-        const gdvName = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
+        const gdvName = getClaimGdvName(c) || 'Chưa phân công';
         if (!gdvMap[gdvName]) {
           gdvMap[gdvName] = { gdvName, branch: c.donViCapDon || c.chiNhanh || '—', totalOpenedCount: 0, duyetHsbtCount: 0, pendingHsbtCount: 0, totalApprovedAmount: 0 };
         }
@@ -16309,14 +16409,22 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         const matchesOpenedMonth = activeGdvReportMonth === 'all' || item.month === parseInt(activeGdvReportMonth, 10);
         const isOpenedInPeriod = Boolean(item.year && matchesOpenedYear && matchesOpenedMonth);
 
-        if (!isOpenedInPeriod) return;
+        const matchesDuyetYear = activeGdvReportYear === 'all' || item.duyetYear === parseInt(activeGdvReportYear, 10);
+        const matchesDuyetMonth = activeGdvReportMonth === 'all' || item.duyetMonth === parseInt(activeGdvReportMonth, 10);
+        const isExcludedStatus = ['tu_choi', 'huy', 'da_huy'].includes(String(c.trangThai || '').toLowerCase().trim());
+        const isDuyetHsbtInPeriod = Boolean(item.duyetYear && matchesDuyetYear && matchesDuyetMonth && !isExcludedStatus);
 
-        gdvMap[gdvName].totalOpenedCount++;
-        if (isDuyetHsbtApproved(c)) {
+        if (!isOpenedInPeriod && !isDuyetHsbtInPeriod) return;
+
+        if (isOpenedInPeriod) {
+          gdvMap[gdvName].totalOpenedCount++;
+        }
+
+        if (isDuyetHsbtInPeriod) {
           gdvMap[gdvName].duyetHsbtCount++;
-          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.pascSoTienDuyet || c.soTienDuyetBT || '0').replace(/[^0-9]/g, '');
+          const amtStr = String(c.ttbtTongSoTienBoiThuong || c.tongBoiThuongSauThue || c.soTienDuyetBT || c.pascSoTienDuyet || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
           gdvMap[gdvName].totalApprovedAmount += (parseInt(amtStr, 10) || 0);
-        } else {
+        } else if (isOpenedInPeriod) {
           gdvMap[gdvName].pendingHsbtCount++;
         }
       });
