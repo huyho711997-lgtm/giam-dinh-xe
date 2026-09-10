@@ -3485,6 +3485,7 @@ let cachedCasesPayload = null;
     let garagePortalMounted = false; 
     let cachedPendingClaimsPayload = {};
     let rawPendingClaimsPayload = {};
+    let cachedClaimCancellationsPayload = {};
     let activePendingStatusFilter = ['all'];
     let editingCaseId = null;
     let editingPendingClaimId = null;
@@ -7960,7 +7961,7 @@ function formatDateDisplay(val) {
               <span style="background: ${statusConfig.bg}; color: ${statusConfig.color}; border: 1px solid ${statusConfig.border}; font-size: 10.5px; font-weight: 750; padding: 4px 10px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap;">
                 ${statusConfig.label}
               </span>
-              ${(item.deXuatHuy === true || item.deXuatHuy === 'co' || item.isCancelProposal === true) ? `
+              ${(item.deXuatHuy === true || item.deXuatHuy === 'co' || item.isCancelProposal === true || Boolean(cachedClaimCancellationsPayload && cachedClaimCancellationsPayload[item.id] && cachedClaimCancellationsPayload[item.id].cancelStatus !== 'da_hoan_tac' && cachedClaimCancellationsPayload[item.id].cancelStatus !== 'da_xoa_de_xuat')) ? `
                 <div style="margin-top: 4px;">
                   <span style="background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); font-size: 9.5px; font-weight: 800; padding: 2px 7px; border-radius: 99px; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;">
                     <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
@@ -8323,6 +8324,17 @@ function formatDateDisplay(val) {
         }
         if (activeDashboardTab === 'claim_cancellation') {
           renderClaimCancellationPage();
+        }
+      });
+
+      dbNodeInstance.ref('claim_cancellations').off();
+      dbNodeInstance.ref('claim_cancellations').on('value', (snapshot) => {
+        cachedClaimCancellationsPayload = snapshot.val() || {};
+        if (activeDashboardTab === 'claim_cancellation' && typeof renderClaimCancellationPage === 'function') {
+          renderClaimCancellationPage();
+        }
+        if (activeDashboardTab === 'pending' && typeof renderPendingClaimsTable === 'function') {
+          renderPendingClaimsTable();
         }
       });
 
@@ -22724,19 +22736,18 @@ const fullList = getCarBrandLossData();
       { code: 'HUY_KHAC', label: 'Lý do khác (nhập cụ thể)' }
     ];
 
-    function getFilteredCancellationClaims() {
-      const allClaims = Object.entries(cachedPendingClaimsPayload || {}).map(([k, v]) => ({
+    function getAllCancellationClaimsList() {
+      // Nguồn dữ liệu chuyên biệt: Bảng claim_cancellations độc lập trên Firebase
+      const cancelList = Object.entries(cachedClaimCancellationsPayload || {}).map(([k, v]) => ({
         ...v,
-        id: k,
+        id: v.id || v.claimId || k,
         _claimKey: k
       }));
+      return cancelList.filter(c => c && c.cancelStatus !== 'da_hoan_tac' && c.cancelStatus !== 'da_xoa_de_xuat');
+    }
 
-      // Candidate claims for cancellation: Phù hợp điều chỉnh chỉ lấy hồ sơ được đánh dấu Đề xuất hủy
-      const cancelClaims = allClaims.filter(c => {
-        if (!c) return false;
-        if (c.cancelStatus === 'da_hoan_tac') return false;
-        return (c.deXuatHuy === true || c.deXuatHuy === 'co' || c.isCancelProposal === true);
-      });
+    function getFilteredCancellationClaims() {
+      const cancelClaims = getAllCancellationClaimsList();
 
       return cancelClaims.filter(c => {
         // 1. Search filter
@@ -22792,17 +22803,7 @@ const fullList = getCarBrandLossData();
 
       const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
 
-      const allClaims = Object.entries(cachedPendingClaimsPayload || {}).map(([k, v]) => ({
-        ...v,
-        id: k
-      }));
-
-      const allCancelClaims = allClaims.filter(c => {
-        if (!c) return false;
-        if (c.cancelStatus === 'da_hoan_tac') return false;
-        return (c.deXuatHuy === true || c.deXuatHuy === 'co' || c.isCancelProposal === true);
-      });
-
+      const allCancelClaims = getAllCancellationClaimsList();
       const filtered = getFilteredCancellationClaims();
 
       // Stats
@@ -23240,29 +23241,28 @@ const fullList = getCarBrandLossData();
       if (!isConfirmed) return;
 
       try {
-        const updates = {
-          deXuatHuy: false,
-          cancelStatus: 'da_xoa_de_xuat',
-          cancelReasonCode: null,
-          lyDoHuy: null,
-          cancelNotes: null,
-          cancelProposedBy: null,
-          cancelProposedAt: null,
-          updatedAt: Date.now()
-        };
-        if (claim.trangThai === 'tu_choi') {
-          updates.trangThai = 'moi';
-        }
-
         if (dbNodeInstance) {
-          await dbNodeInstance.ref(`pending_claims/${claimId}`).update(updates);
+          // 1. Xóa hoàn toàn khỏi bảng claim_cancellations
+          await dbNodeInstance.ref(`claim_cancellations/${claimId}`).remove();
+          // 2. Gỡ cờ trong pending_claims (nếu có)
+          await dbNodeInstance.ref(`pending_claims/${claimId}`).update({
+            deXuatHuy: false,
+            cancelStatus: 'da_xoa_de_xuat',
+            cancelReasonCode: null,
+            lyDoHuy: null,
+            cancelNotes: null,
+            cancelProposedBy: null,
+            cancelProposedAt: null,
+            updatedAt: Date.now()
+          }).catch(() => {});
         }
 
+        if (cachedClaimCancellationsPayload) {
+          delete cachedClaimCancellationsPayload[claimId];
+        }
         if (cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId]) {
-          cachedPendingClaimsPayload[claimId] = {
-            ...cachedPendingClaimsPayload[claimId],
-            ...updates
-          };
+          cachedPendingClaimsPayload[claimId].deXuatHuy = false;
+          cachedPendingClaimsPayload[claimId].cancelStatus = 'da_xoa_de_xuat';
         }
 
         triggerToast(`Đã xóa đề xuất hủy cho hồ sơ ${bsx} thành công!`, 'success');
@@ -23304,8 +23304,9 @@ const fullList = getCarBrandLossData();
         return;
       }
       cancelBtn.style.display = 'inline-flex';
-      const isProposed = (item.deXuatHuy === true || item.deXuatHuy === 'co' || item.isCancelProposal === true);
-      const isDeclined = isProposed && (item.cancelStatus === 'da_duyet' || item.trangThai === 'tu_choi');
+      const cancelRecord = (cachedClaimCancellationsPayload || {})[item.id || item._id];
+      const isProposed = (item.deXuatHuy === true || item.deXuatHuy === 'co' || item.isCancelProposal === true || (cancelRecord && cancelRecord.cancelStatus !== 'da_hoan_tac' && cancelRecord.cancelStatus !== 'da_xoa_de_xuat'));
+      const isDeclined = isProposed && ((cancelRecord && cancelRecord.cancelStatus === 'da_duyet') || item.cancelStatus === 'da_duyet' || item.trangThai === 'tu_choi');
 
       if (isDeclined) {
         cancelBtn.innerHTML = `
@@ -23368,32 +23369,34 @@ const fullList = getCarBrandLossData();
 
       if (claimId) {
         const claim = (cachedPendingClaimsPayload || {})[claimId] || {};
+        const cancelRecord = (cachedClaimCancellationsPayload || {})[claimId] || {};
         if (pickerGroup) pickerGroup.style.display = 'none';
         if (selectedCard) {
           selectedCard.style.display = 'block';
-          document.getElementById('cancelCardBsx').textContent = claim.bienSo || '—';
-          document.getElementById('cancelCardHsbt').textContent = 'HSBT: ' + (claim.soHoSoBoiThuong || claim.soHsbt || 'Chưa gán');
-          document.getElementById('cancelCardOwner').textContent = claim.chuXe || claim.khachHang || '—';
-          document.getElementById('cancelCardGdv').textContent = claim.gdvTiepNhan || claim.canBoXuLy || '—';
-          document.getElementById('cancelCardDuPhong').textContent = (formatCurrencyInputNumber(claim.duPhongBoiThuong) || '0') + ' đ';
+          document.getElementById('cancelCardBsx').textContent = cancelRecord.bienSo || claim.bienSo || '—';
+          document.getElementById('cancelCardHsbt').textContent = 'HSBT: ' + (cancelRecord.soHoSoBoiThuong || claim.soHoSoBoiThuong || claim.soHsbt || 'Chưa gán');
+          document.getElementById('cancelCardOwner').textContent = cancelRecord.chuXe || claim.chuXe || claim.khachHang || '—';
+          document.getElementById('cancelCardGdv').textContent = cancelRecord.gdvTiepNhan || claim.gdvTiepNhan || claim.canBoXuLy || '—';
+          document.getElementById('cancelCardDuPhong').textContent = (formatCurrencyInputNumber(cancelRecord.duPhongBoiThuong || claim.duPhongBoiThuong) || '0') + ' đ';
         }
 
         if (reasonSelect) {
-          reasonSelect.value = claim.cancelReasonCode || 'HUY_10';
+          reasonSelect.value = cancelRecord.cancelReasonCode || claim.cancelReasonCode || 'HUY_10';
         }
         if (notesTextarea) {
-          notesTextarea.value = claim.cancelNotes || claim.ghiChu || claim.ghiChuHoSo || '';
+          notesTextarea.value = cancelRecord.cancelNotes || claim.cancelNotes || claim.ghiChu || claim.ghiChuHoSo || '';
           if (!notesTextarea.value.trim()) {
             const rObj = CANCELLATION_REASONS.find(r => r.code === (reasonSelect?.value || 'HUY_10'));
             notesTextarea.value = rObj ? rObj.label : 'Đề xuất hủy hồ sơ bồi thường';
           }
         }
 
+        const isCancelExisting = (cancelRecord && cancelRecord.cancelStatus !== 'da_hoan_tac' && cancelRecord.cancelStatus !== 'da_xoa_de_xuat') || (claim.deXuatHuy === true || claim.deXuatHuy === 'co' || claim.isCancelProposal === true);
         const revertBtn = document.getElementById('btnRevertCancelProposal');
         if (revertBtn) {
-          revertBtn.style.display = (claim.deXuatHuy === true || claim.deXuatHuy === 'co' || claim.isCancelProposal === true) ? 'inline-flex' : 'none';
+          revertBtn.style.display = isCancelExisting ? 'inline-flex' : 'none';
         }
-        document.getElementById('cancelModalTitle').textContent = (claim.deXuatHuy === true || claim.deXuatHuy === 'co' || claim.isCancelProposal === true) ? 'Đề xuất Hủy Hồ sơ' : 'Chuyển Đề xuất Hủy Hồ sơ';
+        document.getElementById('cancelModalTitle').textContent = isCancelExisting ? 'Đề xuất Hủy Hồ sơ' : 'Chuyển Đề xuất Hủy Hồ sơ';
       } else {
         const revertBtn = document.getElementById('btnRevertCancelProposal');
         if (revertBtn) revertBtn.style.display = 'none';
@@ -23507,25 +23510,62 @@ const fullList = getCarBrandLossData();
       try {
         const targetClaimId = activeCancelProposalClaimId;
         const currentUser = (activeUserProfile?.displayName || activeUserProfile?.fullName || 'Hệ thống');
-        const updates = {
-          deXuatHuy: true,
+        const claimObj = (cachedPendingClaimsPayload || {})[targetClaimId] || {};
+
+        const proposalRecord = {
+          id: targetClaimId,
+          claimId: targetClaimId,
+          bienSo: claimObj.bienSo || claimObj.bienSoXe || '',
+          soHoSoBoiThuong: claimObj.soHoSoBoiThuong || claimObj.soHsbt || '',
+          chuXe: claimObj.chuXe || claimObj.khachHang || claimObj.tenLaiXe || claimObj.hoTen || '',
+          khachHang: claimObj.khachHang || claimObj.chuXe || '',
+          gdvTiepNhan: claimObj.gdvTiepNhan || claimObj.canBoXuLy || claimObj.gdvHo || currentUser,
+          canBoXuLy: claimObj.canBoXuLy || claimObj.gdvTiepNhan || '',
+          gdvHienTruong: claimObj.gdvHienTruong || '',
+          gdvHo: claimObj.gdvHo || '',
+          donViCapDon: claimObj.donViCapDon || claimObj.chiNhanh || '',
+          chiNhanh: claimObj.chiNhanh || claimObj.donViCapDon || '',
+          ngayVTT: claimObj.ngayVTT || claimObj.ngayTonThat || '',
+          ngayTonThat: claimObj.ngayTonThat || claimObj.ngayVTT || '',
+          ngayMoHs: claimObj.ngayMoHs || '',
+          duPhongBoiThuong: claimObj.duPhongBoiThuong || '0',
           cancelReasonCode: reasonCode,
           lyDoHuy: reasonLabel,
           cancelNotes: notes,
           cancelProposedBy: currentUser,
           cancelProposedAt: Date.now(),
           cancelStatus: 'cho_duyet',
+          trangThai: 'cho_duyet',
+          hangXe: claimObj.hangXe || '',
+          hieuXe: claimObj.hieuXe || '',
+          createdAt: claimObj.createdAt || Date.now(),
           updatedAt: Date.now()
         };
 
         if (dbNodeInstance) {
-          await dbNodeInstance.ref(`pending_claims/${targetClaimId}`).update(updates);
+          // 1. Lưu bản ghi độc lập vào bảng claim_cancellations
+          await dbNodeInstance.ref(`claim_cancellations/${targetClaimId}`).set(proposalRecord);
+          // 2. Gán cờ phụ vào pending_claims (nếu có)
+          await dbNodeInstance.ref(`pending_claims/${targetClaimId}`).update({
+            deXuatHuy: true,
+            cancelReasonCode: reasonCode,
+            lyDoHuy: reasonLabel,
+            cancelNotes: notes,
+            cancelProposedBy: currentUser,
+            cancelProposedAt: Date.now(),
+            cancelStatus: 'cho_duyet',
+            updatedAt: Date.now()
+          }).catch(() => {});
         }
 
+        if (cachedClaimCancellationsPayload) {
+          cachedClaimCancellationsPayload[targetClaimId] = proposalRecord;
+        }
         if (cachedPendingClaimsPayload && cachedPendingClaimsPayload[targetClaimId]) {
           cachedPendingClaimsPayload[targetClaimId] = {
             ...cachedPendingClaimsPayload[targetClaimId],
-            ...updates
+            deXuatHuy: true,
+            cancelStatus: 'cho_duyet'
           };
         }
 
@@ -23566,8 +23606,7 @@ const fullList = getCarBrandLossData();
 
       try {
         const currentUser = (activeUserProfile?.displayName || activeUserProfile?.fullName || 'Hệ thống');
-        const updates = {
-          trangThai: 'tu_choi',
+        const cancelUpdates = {
           cancelStatus: 'da_duyet',
           cancelApprovedBy: currentUser,
           cancelApprovedAt: Date.now(),
@@ -23575,13 +23614,29 @@ const fullList = getCarBrandLossData();
         };
 
         if (dbNodeInstance) {
-          await dbNodeInstance.ref(`pending_claims/${claimId}`).update(updates);
+          // 1. Cập nhật bảng claim_cancellations
+          await dbNodeInstance.ref(`claim_cancellations/${claimId}`).update(cancelUpdates);
+          // 2. Cập nhật bảng pending_claims (nếu có)
+          await dbNodeInstance.ref(`pending_claims/${claimId}`).update({
+            trangThai: 'tu_choi',
+            cancelStatus: 'da_duyet',
+            cancelApprovedBy: currentUser,
+            cancelApprovedAt: Date.now(),
+            updatedAt: Date.now()
+          }).catch(() => {});
         }
 
+        if (cachedClaimCancellationsPayload && cachedClaimCancellationsPayload[claimId]) {
+          cachedClaimCancellationsPayload[claimId] = {
+            ...cachedClaimCancellationsPayload[claimId],
+            ...cancelUpdates
+          };
+        }
         if (cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId]) {
           cachedPendingClaimsPayload[claimId] = {
             ...cachedPendingClaimsPayload[claimId],
-            ...updates
+            trangThai: 'tu_choi',
+            cancelStatus: 'da_duyet'
           };
         }
 
@@ -23615,25 +23670,30 @@ const fullList = getCarBrandLossData();
       if (!isConfirmed) return;
 
       try {
-        const updates = {
-          deXuatHuy: false,
-          cancelStatus: 'da_hoan_tac',
-          updatedAt: Date.now()
-        };
-        // If it was tu_choi, revert back to moi or dang_xu_ly
-        if (claim.trangThai === 'tu_choi') {
-          updates.trangThai = 'moi';
-        }
-
         if (dbNodeInstance) {
-          await dbNodeInstance.ref(`pending_claims/${claimId}`).update(updates);
+          // 1. Xóa khỏi bảng claim_cancellations
+          await dbNodeInstance.ref(`claim_cancellations/${claimId}`).remove();
+          // 2. Khôi phục trạng thái trong pending_claims (nếu có)
+          const updates = {
+            deXuatHuy: false,
+            cancelStatus: 'da_hoan_tac',
+            updatedAt: Date.now()
+          };
+          if (claim.trangThai === 'tu_choi') {
+            updates.trangThai = 'moi';
+          }
+          await dbNodeInstance.ref(`pending_claims/${claimId}`).update(updates).catch(() => {});
         }
 
+        if (cachedClaimCancellationsPayload) {
+          delete cachedClaimCancellationsPayload[claimId];
+        }
         if (cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId]) {
-          cachedPendingClaimsPayload[claimId] = {
-            ...cachedPendingClaimsPayload[claimId],
-            ...updates
-          };
+          cachedPendingClaimsPayload[claimId].deXuatHuy = false;
+          cachedPendingClaimsPayload[claimId].cancelStatus = 'da_hoan_tac';
+          if (cachedPendingClaimsPayload[claimId].trangThai === 'tu_choi') {
+            cachedPendingClaimsPayload[claimId].trangThai = 'moi';
+          }
         }
 
         triggerToast(`Đã hoàn tác đề xuất hủy cho ${bsx}!`, 'info');
@@ -23826,56 +23886,59 @@ const fullList = getCarBrandLossData();
         let createdCount = 0;
 
         for (const r of parsedCancelExcelBatchRows) {
-          if (r.matchedClaim) {
-            const claimId = r.matchedClaim.id;
-            const updates = {
-              deXuatHuy: true,
-              lyDoHuy: r.rawLyDoHuy,
-              cancelReasonCode: r.rawLyDoHuy.includes('10') ? 'HUY_10' : r.rawLyDoHuy.includes('01') ? 'HUY_01' : r.rawLyDoHuy.includes('05') ? 'HUY_05' : 'HUY_KHAC',
-              cancelNotes: r.rawGhiChu,
-              cancelProposedBy: currentUser,
-              cancelProposedAt: Date.now(),
-              cancelStatus: 'cho_duyet',
-              updatedAt: Date.now()
-            };
+          const claimId = r.matchedClaim ? r.matchedClaim.id : ('claim_cancel_' + Date.now() + '_' + Math.floor(Math.random() * 10000));
+          const existingClaim = r.matchedClaim || {};
+          const rCode = r.rawLyDoHuy.includes('10') ? 'HUY_10' : r.rawLyDoHuy.includes('01') ? 'HUY_01' : r.rawLyDoHuy.includes('05') ? 'HUY_05' : 'HUY_KHAC';
+          const cancelRecord = {
+            id: claimId,
+            claimId: claimId,
+            bienSo: r.rawBsx || existingClaim.bienSo || '',
+            soHoSoBoiThuong: r.rawHsbt || existingClaim.soHoSoBoiThuong || '',
+            chuXe: existingClaim.chuXe || existingClaim.khachHang || '',
+            khachHang: existingClaim.khachHang || existingClaim.chuXe || '',
+            gdvTiepNhan: existingClaim.gdvTiepNhan || existingClaim.canBoXuLy || currentUser,
+            canBoXuLy: existingClaim.canBoXuLy || '',
+            donViCapDon: existingClaim.donViCapDon || existingClaim.chiNhanh || '',
+            chiNhanh: existingClaim.chiNhanh || existingClaim.donViCapDon || '',
+            ngayVTT: existingClaim.ngayVTT || existingClaim.ngayTonThat || '',
+            ngayTonThat: existingClaim.ngayTonThat || existingClaim.ngayVTT || '',
+            duPhongBoiThuong: existingClaim.duPhongBoiThuong || '0',
+            deXuatHuy: true,
+            lyDoHuy: r.rawLyDoHuy,
+            cancelReasonCode: rCode,
+            cancelNotes: r.rawGhiChu,
+            cancelProposedBy: currentUser,
+            cancelProposedAt: Date.now(),
+            cancelStatus: 'cho_duyet',
+            trangThai: 'cho_duyet',
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          };
 
-            if (dbNodeInstance) {
-              await dbNodeInstance.ref(`pending_claims/${claimId}`).update(updates);
+          if (dbNodeInstance) {
+            // Lưu vào bảng chuyên biệt claim_cancellations
+            await dbNodeInstance.ref(`claim_cancellations/${claimId}`).set(cancelRecord);
+            if (r.matchedClaim) {
+              await dbNodeInstance.ref(`pending_claims/${claimId}`).update({
+                deXuatHuy: true,
+                cancelStatus: 'cho_duyet',
+                cancelReasonCode: rCode,
+                lyDoHuy: r.rawLyDoHuy,
+                cancelNotes: r.rawGhiChu,
+                updatedAt: Date.now()
+              }).catch(() => {});
             }
-            if (cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId]) {
-              cachedPendingClaimsPayload[claimId] = {
-                ...cachedPendingClaimsPayload[claimId],
-                ...updates
-              };
-            }
-            updatedCount++;
-          } else {
-            // New claim record for cancellation if not exists
-            const newId = 'claim_cancel_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-            const newClaim = {
-              id: newId,
-              bienSo: r.rawBsx || '',
-              soHoSoBoiThuong: r.rawHsbt || '',
-              deXuatHuy: true,
-              lyDoHuy: r.rawLyDoHuy,
-              cancelReasonCode: r.rawLyDoHuy.includes('10') ? 'HUY_10' : r.rawLyDoHuy.includes('01') ? 'HUY_01' : r.rawLyDoHuy.includes('05') ? 'HUY_05' : 'HUY_KHAC',
-              cancelNotes: r.rawGhiChu,
-              cancelProposedBy: currentUser,
-              cancelProposedAt: Date.now(),
-              cancelStatus: 'cho_duyet',
-              trangThai: 'moi',
-              createdAt: Date.now(),
-              updatedAt: Date.now()
-            };
-
-            if (dbNodeInstance) {
-              await dbNodeInstance.ref(`pending_claims/${newId}`).set(newClaim);
-            }
-            if (cachedPendingClaimsPayload) {
-              cachedPendingClaimsPayload[newId] = newClaim;
-            }
-            createdCount++;
           }
+
+          if (cachedClaimCancellationsPayload) {
+            cachedClaimCancellationsPayload[claimId] = cancelRecord;
+          }
+          if (r.matchedClaim && cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId]) {
+            cachedPendingClaimsPayload[claimId].deXuatHuy = true;
+            cachedPendingClaimsPayload[claimId].cancelStatus = 'cho_duyet';
+          }
+          if (r.matchedClaim) updatedCount++;
+          else createdCount++;
         }
 
         triggerToast(`Đã nhập thành công ${updatedCount + createdCount} đề xuất hủy từ Excel!`, 'success');
