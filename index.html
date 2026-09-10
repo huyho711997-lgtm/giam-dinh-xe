@@ -3211,41 +3211,50 @@
     </section>
   </div>
 
-  <!-- Modal Nhập Excel Đề xuất Hủy Hồ sơ -->
-  <div id="importCancellationExcelModalOverlay" class="p-modal-overlay" aria-hidden="true" style="display: none;">
-    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="importCancelExcelModalTitle" style="max-width: 960px; width: 94%; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; padding: 0;">
+  <!-- Modal Nhập Excel Đã Duyệt Hủy Hồ sơ -->
+  <div id="importApprovedCancellationExcelModalOverlay" class="p-modal-overlay" aria-hidden="true" style="display: none;">
+    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="importApprovedCancelExcelModalTitle" style="max-width: 980px; width: 95%; max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; padding: 0;">
       <!-- Header -->
       <div style="padding: 20px 28px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface-strong);">
         <div style="display: flex; align-items: center; gap: 14px;">
-          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(239,68,68,0.12); color: #ef4444; display: grid; place-items: center; flex-shrink: 0; border: 1px solid rgba(239,68,68,0.25);">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.12); color: #10b981; display: grid; place-items: center; flex-shrink: 0; border: 1px solid rgba(16, 185, 129, 0.25);">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><polyline points="9 15 11 17 15 13"></polyline></svg>
           </div>
           <div>
-            <h3 id="importCancelExcelModalTitle" style="font-size: 18px; font-weight: 850; color: var(--text-main); margin: 0;">Nhập Danh sách Đề xuất Hủy từ file Excel</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin: 3px 0 0 0;">Tải file .xlsx, .xls (mẫu "GĐHT cần huỷ" hoặc "Đề xuất huỷ hồ sơ") để cập nhật hàng loạt đề xuất hủy</p>
+            <h3 id="importApprovedCancelExcelModalTitle" style="font-size: 18px; font-weight: 850; color: var(--text-main); margin: 0;">Nhập Danh sách Hồ sơ Đã Hủy từ file Excel</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin: 3px 0 0 0;">Lấy Số hồ sơ bồi thường (cột "Tên") để đối chiếu danh sách cần hủy và chuyển sang trạng thái Đã duyệt hủy</p>
           </div>
         </div>
-        <button type="button" class="btn-premium btn-secondary" onclick="closeImportCancellationExcelModal()" aria-label="Đóng" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; padding: 0; border-radius: 10px; font-size: 18px; display: grid; place-items: center; cursor: pointer;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        <button type="button" class="btn-premium btn-secondary" onclick="closeImportApprovedCancellationExcelModal()" aria-label="Đóng" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; padding: 0; border-radius: 10px; font-size: 18px; display: grid; place-items: center; cursor: pointer;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
 
       <!-- Body -->
       <div style="padding: 24px 28px; overflow-y: auto; flex: 1;">
-        <div id="cancelExcelDropzone" onclick="document.getElementById('fileCancelExcelInput').click()" style="border: 2px dashed rgba(239,68,68,0.4); background: rgba(239,68,68,0.04); border-radius: 14px; padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; margin-bottom: 20px;">
-          <input id="fileCancelExcelInput" type="file" accept=".xlsx, .xls, .csv" onchange="handleCancelExcelFileSelected(event)" hidden />
-          <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(239,68,68,0.12); color: #ef4444; display: grid; place-items: center; margin: 0 auto 12px auto;">
+        <div id="approvedCancelExcelDropzone" onclick="document.getElementById('fileApprovedCancelExcelInput').click()" ondragover="event.preventDefault(); this.style.borderColor='#10b981'; this.style.background='rgba(16,185,129,0.08)';" ondragleave="event.preventDefault(); this.style.borderColor='rgba(16,185,129,0.45)'; this.style.background='rgba(16,185,129,0.04)';" ondrop="event.preventDefault(); this.style.borderColor='rgba(16,185,129,0.45)'; this.style.background='rgba(16,185,129,0.04)'; if(event.dataTransfer?.files?.length){ const fi=document.getElementById('fileApprovedCancelExcelInput'); fi.files=event.dataTransfer.files; handleApprovedCancelExcelFileSelected({ target: fi }); }" style="border: 2px dashed rgba(16, 185, 129, 0.45); background: rgba(16, 185, 129, 0.04); border-radius: 14px; padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; margin-bottom: 20px;">
+          <input id="fileApprovedCancelExcelInput" type="file" accept=".xlsx, .xls, .csv" onchange="handleApprovedCancelExcelFileSelected(event)" hidden />
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(16, 185, 129, 0.12); color: #10b981; display: grid; place-items: center; margin: 0 auto 12px auto;">
             <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
           </div>
-          <strong id="lblCancelExcelFileName" style="font-size: 14px; color: var(--text-main); font-weight: 800; display: block;">Kéo thả tệp Excel vào đây hoặc bấm để chọn tệp</strong>
-          <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Hệ thống tự động nhận diện cột: Số HSBT (Tên), Biển kiểm soát, Lý do hủy, Ghi chú hồ sơ.</p>
+          <strong id="lblApprovedCancelExcelFileName" style="font-size: 14px; color: var(--text-main); font-weight: 800; display: block;">Kéo thả tệp Excel hồ sơ đã hủy vào đây hoặc bấm để chọn tệp</strong>
+          <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">Hệ thống nhận diện các cột: Status, Tên (Số HSBT), Biển kiểm soát, Ngày duyệt, Người trình, Trình duyệt đến...</p>
         </div>
 
         <!-- Preview Results -->
-        <div id="cancelExcelPreviewContainer" style="display: none;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-            <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 800; display: flex; align-items: center; gap: 8px;">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ef4444" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-              <span>Xem trước danh sách đề xuất hủy (<span id="lblMatchedCancelExcelCount">0</span> hồ sơ)</span>
-            </strong>
+        <div id="approvedCancelExcelPreviewContainer" style="display: none;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span style="font-size: 13.5px; font-weight: 800; color: var(--text-main);">Đối chiếu:</span>
+              <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 800; background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.25);">
+                ✓ Cần chuyển Đã duyệt: <span id="lblApprovedCancelMatchedCount">0</span>
+              </span>
+              <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 800; background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.25);">
+                Đã duyệt từ trước: <span id="lblApprovedCancelAlreadyCount">0</span>
+              </span>
+              <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 800; background: rgba(107,114,128,0.12); color: #6b7280; border: 1px solid rgba(107,114,128,0.25);">
+                Không thuộc DS cần hủy: <span id="lblApprovedCancelIgnoredCount">0</span>
+              </span>
+            </div>
+            <span style="font-size: 12px; color: var(--text-soft);">Tổng số dòng đọc được: <strong id="lblApprovedCancelTotalCount">0</strong></span>
           </div>
 
           <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; max-height: 380px;">
@@ -3253,14 +3262,14 @@
               <thead style="position: sticky; top: 0; background: var(--surface-strong); z-index: 2;">
                 <tr>
                   <th style="padding: 10px 12px; text-align: center; width: 44px;">STT</th>
+                  <th style="padding: 10px 12px; text-align: left;">Số HSBT (Cột Tên)</th>
                   <th style="padding: 10px 12px; text-align: left;">Biển số xe</th>
-                  <th style="padding: 10px 12px; text-align: left;">Số HSBT</th>
-                  <th style="padding: 10px 12px; text-align: left;">Mã lý do hủy</th>
-                  <th style="padding: 10px 12px; text-align: left;">Ghi chú / Giải trình</th>
-                  <th style="padding: 10px 12px; text-align: center;">Trạng thái khớp</th>
+                  <th style="padding: 10px 12px; text-align: left;">Ngày duyệt</th>
+                  <th style="padding: 10px 12px; text-align: left;">Trình duyệt đến / Người duyệt</th>
+                  <th style="padding: 10px 12px; text-align: center; width: 190px;">Kết quả đối chiếu</th>
                 </tr>
               </thead>
-              <tbody id="tblCancelExcelPreviewBody"></tbody>
+              <tbody id="tblApprovedCancelExcelPreviewBody"></tbody>
             </table>
           </div>
         </div>
@@ -3268,10 +3277,10 @@
 
       <!-- Footer -->
       <div style="padding: 16px 28px; border-top: 1px solid var(--border); background: var(--surface-strong); display: flex; justify-content: flex-end; gap: 12px;">
-        <button type="button" class="btn-premium btn-secondary" onclick="closeImportCancellationExcelModal()" style="width: auto !important; padding: 0 18px; height: 40px; font-size: 13px;">Đóng</button>
-        <button id="btnSubmitCancelExcel" type="button" class="btn-premium" onclick="applyCancellationExcelBatch()" disabled style="width: auto !important; padding: 0 24px; height: 40px; font-size: 13px; font-weight: 800; background: linear-gradient(135deg, #ef4444, #b91c1c); color: #ffffff; border: none; opacity: 0.5; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+        <button type="button" class="btn-premium btn-secondary" onclick="closeImportApprovedCancellationExcelModal()" style="width: auto !important; padding: 0 18px; height: 40px; font-size: 13px;">Đóng</button>
+        <button id="btnSubmitApprovedCancelExcel" type="button" class="btn-premium" onclick="applyApprovedCancellationExcelBatch()" disabled style="width: auto !important; padding: 0 24px; height: 40px; font-size: 13px; font-weight: 800; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; opacity: 0.5; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          <span>Xác nhận Cập nhật Đề xuất Hủy (<span id="lblSubmitCancelCount">0</span>)</span>
+          <span>Xác nhận chuyển Đã duyệt hủy (<span id="lblSubmitApprovedCancelCount">0</span>)</span>
         </button>
       </div>
     </section>
@@ -3540,7 +3549,7 @@ let cachedCasesPayload = null;
       if (event.key === 'Escape' && document.getElementById('assignSoHsbtModalOverlay')?.style.display === 'grid') closeAssignSoHsbtModal();
       if (event.key === 'Escape' && document.getElementById('importExcelModalOverlay')?.style.display === 'grid') closeImportExcelModal();
       if (event.key === 'Escape' && document.getElementById('createCancellationProposalModalOverlay')?.style.display === 'grid') closeCreateCancellationProposalModal();
-      if (event.key === 'Escape' && document.getElementById('importCancellationExcelModalOverlay')?.style.display === 'grid') closeImportCancellationExcelModal();
+      if (event.key === 'Escape' && document.getElementById('importApprovedCancellationExcelModalOverlay')?.style.display === 'grid') closeImportApprovedCancellationExcelModal();
     });
 
     window.addEventListener('beforeunload', (event) => {
@@ -22724,7 +22733,7 @@ const fullList = getCarBrandLossData();
     let activeCancelReasonCodeFilter = 'all';
     let activeCancelStatusFilter = 'all'; // 'all', 'cho_duyet', 'da_duyet'
     let activeCancelProposalClaimId = null;
-    let parsedCancelExcelBatchRows = [];
+    let parsedApprovedCancelExcelBatchRows = [];
 
     const CANCELLATION_REASONS = [
       { code: 'HUY_10', label: 'Huỷ 10 - Không thuộc phạm vi bảo hiểm (hao mòn, bảo hành, cố ý...)' },
@@ -22960,9 +22969,9 @@ const fullList = getCarBrandLossData();
 
               <!-- Action Buttons -->
               <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <button type="button" onclick="openImportCancellationExcelModal()" style="padding: 0 16px; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 850; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-                  <span>Nhập Excel cần hủy</span>
+                <button type="button" onclick="openImportApprovedCancellationExcelModal()" style="padding: 0 16px; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 850; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><polyline points="9 15 11 17 15 13"></polyline></svg>
+                  <span>Nhập Excel đã duyệt hủy</span>
                 </button>
                 <button type="button" onclick="exportCancellationClaimsToExcel()" style="padding: 0 16px; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.3); transition: all 0.2s ease;">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -23712,34 +23721,34 @@ const fullList = getCarBrandLossData();
       }
     }
 
-    function openImportCancellationExcelModal() {
-      const modal = document.getElementById('importCancellationExcelModalOverlay');
+    function openImportApprovedCancellationExcelModal() {
+      const modal = document.getElementById('importApprovedCancellationExcelModalOverlay');
       if (!modal) return;
-      parsedCancelExcelBatchRows = [];
-      const previewCont = document.getElementById('cancelExcelPreviewContainer');
-      const btnSubmit = document.getElementById('btnSubmitCancelExcel');
-      const fileInput = document.getElementById('fileCancelExcelInput');
-      const label = document.getElementById('lblCancelExcelFileName');
+      parsedApprovedCancelExcelBatchRows = [];
+      const previewCont = document.getElementById('approvedCancelExcelPreviewContainer');
+      const btnSubmit = document.getElementById('btnSubmitApprovedCancelExcel');
+      const fileInput = document.getElementById('fileApprovedCancelExcelInput');
+      const label = document.getElementById('lblApprovedCancelExcelFileName');
 
       if (previewCont) previewCont.style.display = 'none';
       if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.style.opacity = '0.5'; }
       if (fileInput) fileInput.value = '';
-      if (label) label.textContent = 'Kéo thả tệp Excel vào đây hoặc bấm để chọn tệp';
+      if (label) label.textContent = 'Kéo thả tệp Excel hồ sơ đã hủy vào đây hoặc bấm để chọn tệp';
 
       modal.style.display = 'grid';
       modal.setAttribute('aria-hidden', 'false');
     }
 
-    function closeImportCancellationExcelModal() {
-      const modal = document.getElementById('importCancellationExcelModalOverlay');
+    function closeImportApprovedCancellationExcelModal() {
+      const modal = document.getElementById('importApprovedCancellationExcelModalOverlay');
       if (modal) {
         modal.style.display = 'none';
         modal.setAttribute('aria-hidden', 'true');
       }
-      parsedCancelExcelBatchRows = [];
+      parsedApprovedCancelExcelBatchRows = [];
     }
 
-    function handleCancelExcelFileSelected(event) {
+    function handleApprovedCancelExcelFileSelected(event) {
       const file = event.target.files?.[0];
       if (!file) return;
 
@@ -23748,13 +23757,13 @@ const fullList = getCarBrandLossData();
         return;
       }
 
-      document.getElementById('lblCancelExcelFileName').textContent = 'Đang đọc: ' + file.name;
+      document.getElementById('lblApprovedCancelExcelFileName').textContent = 'Đang đọc tệp: ' + file.name;
 
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
           const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
@@ -23764,21 +23773,30 @@ const fullList = getCarBrandLossData();
             return;
           }
 
-          // Identify columns
-          let headerIdx = 0;
-          let colMap = { hsbt: -1, bsx: -1, lyDoHuy: -1, ghiChu: -1, gdv: -1, deXuat: -1 };
+          // Identify column headers
+          let headerIdx = -1;
+          let colMap = { status: -1, hsbt: -1, bsx: -1, ngayDuyet: -1, nguoiTrinh: -1, trinhDuyetDen: -1, duPhong: -1 };
 
-          for (let i = 0; i < Math.min(10, jsonRows.length); i++) {
+          for (let i = 0; i < Math.min(15, jsonRows.length); i++) {
             const row = jsonRows[i];
             if (!Array.isArray(row)) continue;
             row.forEach((cell, idx) => {
               const text = String(cell || '').trim().toLowerCase();
-              if (text === 'tên' || text.includes('số hsbt') || text.includes('số hồ sơ') || text === 'hsbt') colMap.hsbt = idx;
-              else if (text.includes('biển kiểm soát') || text.includes('biển số') || text.includes('biển xe') || text === 'bks' || text === 'bsx') colMap.bsx = idx;
-              else if (text.includes('lý do cho việc huỷ') || text.includes('lý do huỷ') || text.includes('lý do hủy') || text.includes('mã huỷ') || text.includes('mã hủy')) colMap.lyDoHuy = idx;
-              else if (text.includes('ghi chú hồ sơ') || text.includes('ghi chú') || text.includes('giải trình')) colMap.ghiChu = idx;
-              else if (text.includes('giám định viên') || text.includes('gđv') || text.includes('gđht')) colMap.gdv = idx;
-              else if (text.includes('đề xuất') || text.includes('de xuat')) colMap.deXuat = idx;
+              if (text === 'tên' || text === 'ten' || text.includes('số hsbt') || text.includes('so hsbt') || text.includes('số hồ sơ') || text.includes('so ho so') || text === 'hsbt') {
+                colMap.hsbt = idx;
+              } else if (text.includes('biển kiểm soát') || text.includes('bien kiem soat') || text.includes('biển số') || text.includes('bien so') || text.includes('biển xe') || text === 'bks' || text === 'bsx') {
+                colMap.bsx = idx;
+              } else if ((text.includes('ngày duyệt') || text.includes('ngay duyet')) && !text.includes('pasc')) {
+                colMap.ngayDuyet = idx;
+              } else if (text.includes('người trình') || text.includes('nguoi trinh')) {
+                colMap.nguoiTrinh = idx;
+              } else if (text.includes('trình duyệt đến') || text.includes('trinh duyet den') || text.includes('người duyệt') || text.includes('nguoi duyet')) {
+                colMap.trinhDuyetDen = idx;
+              } else if (text === 'status' || text.includes('trạng thái') || text.includes('trang thai')) {
+                colMap.status = idx;
+              } else if (text.includes('dự phòng') || text.includes('du phong')) {
+                colMap.duPhong = idx;
+              }
             });
             if (colMap.hsbt !== -1 || colMap.bsx !== -1) {
               headerIdx = i;
@@ -23786,12 +23804,16 @@ const fullList = getCarBrandLossData();
             }
           }
 
-          if (colMap.hsbt === -1 && colMap.bsx === -1) {
-            colMap = { hsbt: 0, lyDoHuy: 1, ghiChu: 1 };
+          if (headerIdx === -1 || (colMap.hsbt === -1 && colMap.bsx === -1)) {
+            triggerToast('Không tìm thấy cột Số HSBT ("Tên") hoặc Biển số xe trong file Excel.', 'error');
+            return;
           }
 
-          const allClaims = Object.values(cachedPendingClaimsPayload || {});
-          parsedCancelExcelBatchRows = [];
+          const cancellations = Object.values(cachedClaimCancellationsPayload || {});
+          parsedApprovedCancelExcelBatchRows = [];
+          let readyCount = 0;
+          let alreadyCount = 0;
+          let ignoredCount = 0;
 
           for (let i = headerIdx + 1; i < jsonRows.length; i++) {
             const r = jsonRows[i];
@@ -23799,161 +23821,238 @@ const fullList = getCarBrandLossData();
 
             const rawHsbt = (colMap.hsbt !== -1 ? String(r[colMap.hsbt] || '') : '').trim();
             const rawBsx = (colMap.bsx !== -1 ? String(r[colMap.bsx] || '') : '').trim();
-            const rawLyDoHuy = (colMap.lyDoHuy !== -1 ? String(r[colMap.lyDoHuy] || '') : '').trim();
-            const rawGhiChu = (colMap.ghiChu !== -1 ? String(r[colMap.ghiChu] || '') : '').trim();
+            const rawNgayDuyet = colMap.ngayDuyet !== -1 ? r[colMap.ngayDuyet] : '';
+            const rawNguoiTrinh = (colMap.nguoiTrinh !== -1 ? String(r[colMap.nguoiTrinh] || '') : '').trim();
+            const rawTrinhDuyetDen = (colMap.trinhDuyetDen !== -1 ? String(r[colMap.trinhDuyetDen] || '') : '').trim();
 
-            if (!rawHsbt && !rawBsx) continue;
+            // Skip summary rows like "cancel (386)" or empty HSBT
+            if (!rawHsbt) continue;
+            if (rawHsbt.toLowerCase().startsWith('cancel (') || rawHsbt.toLowerCase() === 'cancel') continue;
 
-            // Match claim
-            let matchedClaim = null;
-            if (rawHsbt) {
-              const cleanHsbt = rawHsbt.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-              matchedClaim = allClaims.find(c => {
-                const cHsbt = (c.soHoSoBoiThuong || c.soHsbt || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-                return cHsbt && cHsbt === cleanHsbt;
-              });
+            const cleanHsbt = rawHsbt.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            if (!cleanHsbt || cleanHsbt.length < 4) continue;
+
+            // Parse approval date
+            let duyetDateStr = '';
+            let duyetDateTs = 0;
+            if (rawNgayDuyet instanceof Date && !isNaN(rawNgayDuyet.getTime())) {
+              duyetDateTs = rawNgayDuyet.getTime();
+              const y = rawNgayDuyet.getFullYear();
+              const m = String(rawNgayDuyet.getMonth() + 1).padStart(2, '0');
+              const d = String(rawNgayDuyet.getDate()).padStart(2, '0');
+              const hh = String(rawNgayDuyet.getHours()).padStart(2, '0');
+              const mm = String(rawNgayDuyet.getMinutes()).padStart(2, '0');
+              const ss = String(rawNgayDuyet.getSeconds()).padStart(2, '0');
+              duyetDateStr = `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+            } else if (typeof rawNgayDuyet === 'number' && rawNgayDuyet > 30000) {
+              const dObj = new Date(Math.round((rawNgayDuyet - 25569) * 86400 * 1000));
+              if (!isNaN(dObj.getTime())) {
+                duyetDateTs = dObj.getTime();
+                const y = dObj.getFullYear();
+                const m = String(dObj.getMonth() + 1).padStart(2, '0');
+                const d = String(dObj.getDate()).padStart(2, '0');
+                const hh = String(dObj.getHours()).padStart(2, '0');
+                const mm = String(dObj.getMinutes()).padStart(2, '0');
+                const ss = String(dObj.getSeconds()).padStart(2, '0');
+                duyetDateStr = `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+              }
+            } else if (typeof rawNgayDuyet === 'string' && rawNgayDuyet.trim()) {
+              duyetDateStr = rawNgayDuyet.trim();
+              const dObj = new Date(duyetDateStr.replace(' ', 'T'));
+              if (!isNaN(dObj.getTime())) {
+                duyetDateTs = dObj.getTime();
+              }
             }
-            if (!matchedClaim && rawBsx) {
-              const cleanBsx = rawBsx.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-              matchedClaim = allClaims.find(c => {
-                const cBsx = (c.bienSo || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-                return cBsx && cBsx === cleanBsx;
-              });
+
+            const nguoiDuyet = rawTrinhDuyetDen || rawNguoiTrinh || (activeUserProfile?.displayName || activeUserProfile?.fullName || 'Lãnh đạo phê duyệt');
+
+            // Primary Match Key: Số HSBT
+            const matchedCancellation = cancellations.find(c => {
+              const cHsbt = (c.soHoSoBoiThuong || c.soHsbt || c.id || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+              return cHsbt && cHsbt === cleanHsbt;
+            });
+
+            let matchType = 'NOT_IN_CANCEL_LIST';
+            if (matchedCancellation) {
+              if (matchedCancellation.cancelStatus === 'da_duyet') {
+                matchType = 'ALREADY_APPROVED';
+                alreadyCount++;
+              } else {
+                matchType = 'READY';
+                readyCount++;
+              }
+            } else {
+              matchType = 'NOT_IN_CANCEL_LIST';
+              ignoredCount++;
             }
 
-            parsedCancelExcelBatchRows.push({
+            parsedApprovedCancelExcelBatchRows.push({
               rawHsbt,
-              rawBsx,
-              rawLyDoHuy: rawLyDoHuy || 'Huỷ hồ sơ',
-              rawGhiChu: rawGhiChu || rawLyDoHuy || 'GĐV đề xuất hủy',
-              matchedClaim
+              cleanHsbt,
+              rawBsx: rawBsx || matchedCancellation?.bienSo || '',
+              duyetDateStr,
+              duyetDateTs: duyetDateTs || Date.now(),
+              nguoiDuyet,
+              rawNguoiTrinh,
+              rawTrinhDuyetDen,
+              matchedCancellation,
+              matchType
             });
           }
 
-          const tbody = document.getElementById('tblCancelExcelPreviewBody');
-          const previewLimit = 100;
-          const displayRows = parsedCancelExcelBatchRows.slice(0, previewLimit);
+          if (parsedApprovedCancelExcelBatchRows.length === 0) {
+            triggerToast('Không tìm thấy dòng hồ sơ nào hợp lệ trong tệp Excel.', 'warning');
+            return;
+          }
+
+          // Render preview table
+          const tbody = document.getElementById('tblApprovedCancelExcelPreviewBody');
+          const previewLimit = 150;
+          const displayRows = parsedApprovedCancelExcelBatchRows.slice(0, previewLimit);
 
           tbody.innerHTML = displayRows.map((r, idx) => {
-            const isMatched = !!r.matchedClaim;
+            let statusBadge = '';
+            let rowBg = '';
+
+            if (r.matchType === 'READY') {
+              rowBg = 'background: rgba(16, 185, 129, 0.04);';
+              statusBadge = `
+                <span style="padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 850; background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.25); display: inline-flex; align-items: center; gap: 4px;">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  Khớp - Duyệt hủy
+                </span>
+              `;
+            } else if (r.matchType === 'ALREADY_APPROVED') {
+              rowBg = 'opacity: 0.8;';
+              statusBadge = `
+                <span style="padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 800; background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.25);">
+                  Đã duyệt trước đó
+                </span>
+              `;
+            } else {
+              rowBg = 'background: rgba(0,0,0,0.015);';
+              statusBadge = `
+                <span style="padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 700; background: rgba(107,114,128,0.1); color: #6b7280; border: 1px solid rgba(107,114,128,0.2);">
+                  Bỏ qua (Không ở DS cần hủy)
+                </span>
+              `;
+            }
+
             return `
-              <tr style="${isMatched ? '' : 'background: rgba(239,68,68,0.03);'}">
-                <td style="text-align: center; font-weight: 700;">${idx + 1}</td>
-                <td><strong style="color: var(--primary);">${escapeHtmlOutput(r.rawBsx || r.matchedClaim?.bienSo || '—')}</strong></td>
-                <td><span style="font-weight: 700; color: #10b981;">${escapeHtmlOutput(r.rawHsbt || r.matchedClaim?.soHoSoBoiThuong || '—')}</span></td>
-                <td><span style="padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 800; background: rgba(239,68,68,0.1); color: #ef4444;">${escapeHtmlOutput(r.rawLyDoHuy)}</span></td>
-                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtmlOutput(r.rawGhiChu)}</td>
-                <td style="text-align: center;">
-                  ${isMatched ? `
-                    <span style="color: #10b981; font-weight: 800; font-size: 11.5px; display: inline-flex; align-items: center; gap: 4px;">
-                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                      Khớp hồ sơ
-                    </span>
-                  ` : `
-                    <span style="color: #ef4444; font-weight: 700; font-size: 11.5px;">Chưa tìm thấy ca</span>
-                  `}
-                </td>
+              <tr style="${rowBg}">
+                <td style="text-align: center; font-weight: 700; color: var(--text-soft);">${idx + 1}</td>
+                <td><strong style="color: ${r.matchType === 'READY' ? '#10b981' : 'var(--text-main)'}; font-family: monospace;">${escapeHtmlOutput(r.rawHsbt)}</strong></td>
+                <td><strong style="color: var(--primary);">${escapeHtmlOutput(r.rawBsx || '—')}</strong></td>
+                <td><span style="color: var(--text-soft); font-size: 12px;">${escapeHtmlOutput(r.duyetDateStr || '—')}</span></td>
+                <td><span style="font-size: 12px; color: var(--text-main); font-weight: 600;">${escapeHtmlOutput(r.nguoiDuyet || '—')}</span></td>
+                <td style="text-align: center;">${statusBadge}</td>
               </tr>
             `;
           }).join('');
 
-          document.getElementById('lblMatchedCancelExcelCount').textContent = parsedCancelExcelBatchRows.length;
-          document.getElementById('lblSubmitCancelCount').textContent = parsedCancelExcelBatchRows.length;
-          document.getElementById('cancelExcelPreviewContainer').style.display = 'block';
+          document.getElementById('lblApprovedCancelMatchedCount').textContent = readyCount;
+          document.getElementById('lblApprovedCancelAlreadyCount').textContent = alreadyCount;
+          document.getElementById('lblApprovedCancelIgnoredCount').textContent = ignoredCount;
+          document.getElementById('lblApprovedCancelTotalCount').textContent = parsedApprovedCancelExcelBatchRows.length;
+          document.getElementById('lblSubmitApprovedCancelCount').textContent = readyCount;
+          document.getElementById('approvedCancelExcelPreviewContainer').style.display = 'block';
 
-          const btnSubmit = document.getElementById('btnSubmitCancelExcel');
+          const btnSubmit = document.getElementById('btnSubmitApprovedCancelExcel');
           if (btnSubmit) {
-            btnSubmit.disabled = false;
-            btnSubmit.style.opacity = '1';
+            btnSubmit.disabled = readyCount === 0;
+            btnSubmit.style.opacity = readyCount > 0 ? '1' : '0.5';
           }
         } catch (err) {
-          console.error("Lỗi đọc Excel đề xuất hủy:", err);
+          console.error("Lỗi đọc Excel danh sách đã hủy:", err);
           triggerToast('Lỗi đọc tệp Excel: ' + err.message, 'error');
         }
       };
       reader.readAsArrayBuffer(file);
     }
 
-    async function applyCancellationExcelBatch() {
-      if (!parsedCancelExcelBatchRows || parsedCancelExcelBatchRows.length === 0) return;
+    async function applyApprovedCancellationExcelBatch() {
+      const readyItems = (parsedApprovedCancelExcelBatchRows || []).filter(r => r.matchType === 'READY' && r.matchedCancellation);
+      if (readyItems.length === 0) {
+        triggerToast('Không có hồ sơ nào cần chuyển trạng thái.', 'warning');
+        return;
+      }
 
-      const btnSubmit = document.getElementById('btnSubmitCancelExcel');
-      if (btnSubmit) btnSubmit.disabled = true;
+      const btnSubmit = document.getElementById('btnSubmitApprovedCancelExcel');
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerHTML = '<span>Đang xử lý chuyển trạng thái...</span>';
+      }
 
       try {
-        const currentUser = (activeUserProfile?.displayName || activeUserProfile?.fullName || 'Hệ thống');
-        let updatedCount = 0;
-        let createdCount = 0;
+        let successCount = 0;
+        const now = Date.now();
 
-        for (const r of parsedCancelExcelBatchRows) {
-          const claimId = r.matchedClaim ? r.matchedClaim.id : ('claim_cancel_' + Date.now() + '_' + Math.floor(Math.random() * 10000));
-          const existingClaim = r.matchedClaim || {};
-          const rCode = r.rawLyDoHuy.includes('10') ? 'HUY_10' : r.rawLyDoHuy.includes('01') ? 'HUY_01' : r.rawLyDoHuy.includes('05') ? 'HUY_05' : 'HUY_KHAC';
-          const cancelRecord = {
-            id: claimId,
-            claimId: claimId,
-            bienSo: r.rawBsx || existingClaim.bienSo || '',
-            soHoSoBoiThuong: r.rawHsbt || existingClaim.soHoSoBoiThuong || '',
-            chuXe: existingClaim.chuXe || existingClaim.khachHang || '',
-            khachHang: existingClaim.khachHang || existingClaim.chuXe || '',
-            gdvTiepNhan: existingClaim.gdvTiepNhan || existingClaim.canBoXuLy || currentUser,
-            canBoXuLy: existingClaim.canBoXuLy || '',
-            donViCapDon: existingClaim.donViCapDon || existingClaim.chiNhanh || '',
-            chiNhanh: existingClaim.chiNhanh || existingClaim.donViCapDon || '',
-            ngayVTT: existingClaim.ngayVTT || existingClaim.ngayTonThat || '',
-            ngayTonThat: existingClaim.ngayTonThat || existingClaim.ngayVTT || '',
-            duPhongBoiThuong: existingClaim.duPhongBoiThuong || '0',
-            deXuatHuy: true,
-            lyDoHuy: r.rawLyDoHuy,
-            cancelReasonCode: rCode,
-            cancelNotes: r.rawGhiChu,
-            cancelProposedBy: currentUser,
-            cancelProposedAt: Date.now(),
-            cancelStatus: 'cho_duyet',
-            trangThai: 'cho_duyet',
-            createdAt: Date.now(),
-            updatedAt: Date.now()
+        for (const item of readyItems) {
+          const claimId = item.matchedCancellation.id || item.matchedCancellation.claimId || item.matchedCancellation._claimKey;
+          if (!claimId) continue;
+
+          const updates = {
+            cancelStatus: 'da_duyet',
+            cancelApprovedAt: item.duyetDateTs || now,
+            cancelApprovedBy: item.nguoiDuyet || 'Lãnh đạo phê duyệt',
+            cancelApprovedDateStr: item.duyetDateStr || new Date(item.duyetDateTs || now).toISOString(),
+            trangThai: 'tu_choi',
+            updatedAt: now
           };
 
+          // 1. Cập nhật bảng chuyên biệt claim_cancellations trên Firebase RTDB
           if (dbNodeInstance) {
-            // Lưu vào bảng chuyên biệt claim_cancellations
-            await dbNodeInstance.ref(`claim_cancellations/${claimId}`).set(cancelRecord);
-            if (r.matchedClaim) {
-              await dbNodeInstance.ref(`pending_claims/${claimId}`).update({
-                deXuatHuy: true,
-                cancelStatus: 'cho_duyet',
-                cancelReasonCode: rCode,
-                lyDoHuy: r.rawLyDoHuy,
-                cancelNotes: r.rawGhiChu,
-                updatedAt: Date.now()
-              }).catch(() => {});
-            }
+            await dbNodeInstance.ref(`claim_cancellations/${claimId}`).update(updates);
           }
 
-          if (cachedClaimCancellationsPayload) {
-            cachedClaimCancellationsPayload[claimId] = cancelRecord;
+          // 2. Cập nhật bộ nhớ đệm cachedClaimCancellationsPayload
+          if (cachedClaimCancellationsPayload && cachedClaimCancellationsPayload[claimId]) {
+            Object.assign(cachedClaimCancellationsPayload[claimId], updates);
           }
-          if (r.matchedClaim && cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId]) {
-            cachedPendingClaimsPayload[claimId].deXuatHuy = true;
-            cachedPendingClaimsPayload[claimId].cancelStatus = 'cho_duyet';
+
+          // 3. Nếu hồ sơ có trong pending_claims, đồng bộ sang tu_choi & da_duyet
+          if (dbNodeInstance) {
+            await dbNodeInstance.ref(`pending_claims/${claimId}`).update({
+              trangThai: 'tu_choi',
+              cancelStatus: 'da_duyet',
+              cancelApprovedAt: item.duyetDateTs || now,
+              cancelApprovedBy: item.nguoiDuyet || 'Lãnh đạo phê duyệt',
+              cancelApprovedDateStr: item.duyetDateStr || '',
+              updatedAt: now
+            }).catch(() => {});
           }
-          if (r.matchedClaim) updatedCount++;
-          else createdCount++;
+
+          if (cachedPendingClaimsPayload && cachedPendingClaimsPayload[claimId]) {
+            cachedPendingClaimsPayload[claimId].trangThai = 'tu_choi';
+            cachedPendingClaimsPayload[claimId].cancelStatus = 'da_duyet';
+          }
+
+          successCount++;
         }
 
-        triggerToast(`Đã nhập thành công ${updatedCount + createdCount} đề xuất hủy từ Excel!`, 'success');
-        closeImportCancellationExcelModal();
+        triggerToast(`Đã chuyển thành công ${successCount} hồ sơ sang trạng thái Đã duyệt hủy!`, 'success');
+        closeImportApprovedCancellationExcelModal();
+
         if (activeDashboardTab === 'claim_cancellation' && typeof renderClaimCancellationPage === 'function') {
           renderClaimCancellationPage();
         }
         if (typeof executeUIRenderPendingClaims === 'function') {
           executeUIRenderPendingClaims();
         }
+        if (typeof renderPendingClaimsTable === 'function') {
+          renderPendingClaimsTable();
+        }
       } catch (err) {
-        console.error("Lỗi cập nhật danh sách đề xuất hủy:", err);
+        console.error("Lỗi cập nhật hồ sơ đã hủy:", err);
         triggerToast('Lỗi khi cập nhật dữ liệu: ' + err.message, 'error');
       } finally {
-        if (btnSubmit) btnSubmit.disabled = false;
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = `
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>Xác nhận chuyển Đã duyệt hủy (<span id="lblSubmitApprovedCancelCount">0</span>)</span>
+          `;
+        }
       }
     }
 
