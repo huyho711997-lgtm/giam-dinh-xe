@@ -8021,7 +8021,7 @@ function formatDateDisplay(val) {
             </td>
             <td style="width: 70px; text-align: center; padding-right: 12px;">
               <div style="display: inline-flex; justify-content: center; align-items: center; width: 100%;">
-                ${hasUserPermission('pending', 'delete') ? `
+                ${(hasUserPermission('pending', 'delete') && item.cancelStatus !== 'da_duyet' && item.trangThai !== 'tu_choi' && (!cachedClaimCancellationsPayload?.[item.id] || cachedClaimCancellationsPayload[item.id].cancelStatus !== 'da_duyet')) ? `
                 <button type="button" class="btn-premium btn-danger-p" onclick="event.stopPropagation(); deletePendingClaim('${item.id}', '${escapeAttributeData(item.bienSo)}')" title="Xóa hồ sơ tồn" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; padding: 0; display: grid; place-items: center; border-radius: 8px; margin: 0; cursor: pointer; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444;">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 </button>
@@ -8133,6 +8133,12 @@ function formatDateDisplay(val) {
       const targetClaim = cachedPendingClaimsPayload ? cachedPendingClaimsPayload[claimId] : null;
       const isCreator = targetClaim && (targetClaim.createdByUid === currentUser?.uid || targetClaim.nguoiTao?.uid === currentUser?.uid);
       
+      const cancelRecord = (cachedClaimCancellationsPayload || {})[claimId] || {};
+      if (cancelRecord.cancelStatus === 'da_duyet' || (targetClaim && (targetClaim.cancelStatus === 'da_duyet' || targetClaim.trangThai === 'tu_choi'))) {
+        triggerToast('Hồ sơ này đã được duyệt hủy nên không thể xóa!', 'warning');
+        return;
+      }
+
       if (!isAdmin && !isCreator) {
         triggerToast('Bạn không có quyền xóa hồ sơ tồn này!', 'error');
         return;
@@ -22731,7 +22737,7 @@ const fullList = getCarBrandLossData();
     let activeCancelGdvFilter = 'all';
     let activeCancelBranchFilter = 'all';
     let activeCancelReasonCodeFilter = 'all';
-    let activeCancelStatusFilter = 'all'; // 'all', 'cho_duyet', 'da_duyet'
+    let activeCancelStatusFilter = 'cho_duyet'; // Mặc định hiển thị tab Chờ duyệt hủy: 'cho_duyet', 'da_duyet', 'all'
     let activeCancelProposalClaimId = null;
     let parsedApprovedCancelExcelBatchRows = [];
 
@@ -22936,10 +22942,17 @@ const fullList = getCarBrandLossData();
             </td>
             ${isAdmin ? `
               <td style="padding: 12px 10px; text-align: center; width: 90px; white-space: nowrap;">
-                <button type="button" onclick="deleteClaimCancellationProposalByAdmin('${c.id}', event)" title="Xóa đề xuất hủy (chuyển hồ sơ trở lại hồ sơ tồn)" style="border: 1px solid rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.08); color: #ef4444; padding: 5px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(239, 68, 68, 0.18)'; this.style.transform='scale(1.04)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.08)'; this.style.transform='scale(1)'">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                  <span>Xóa</span>
-                </button>
+                ${isApproved ? `
+                  <span title="Hồ sơ đã duyệt hủy không thể xóa" style="font-size: 11px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.04); cursor: not-allowed;">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <span>Đã duyệt</span>
+                  </span>
+                ` : `
+                  <button type="button" onclick="deleteClaimCancellationProposalByAdmin('${c.id}', event)" title="Xóa đề xuất hủy (chuyển hồ sơ trở lại hồ sơ tồn)" style="border: 1px solid rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.08); color: #ef4444; padding: 5px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(239, 68, 68, 0.18)'; this.style.transform='scale(1.04)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.08)'; this.style.transform='scale(1)'">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    <span>Xóa</span>
+                  </button>
+                `}
               </td>
             ` : ''}
           </tr>
@@ -23238,8 +23251,14 @@ const fullList = getCarBrandLossData();
         return;
       }
       if (!claimId) return;
+      const cancelRecord = (cachedClaimCancellationsPayload || {})[claimId] || {};
       const claim = (cachedPendingClaimsPayload || {})[claimId] || {};
-      const bsx = claim.bienSo || claim.soHoSoBoiThuong || 'hồ sơ';
+      const isApproved = (cancelRecord.cancelStatus === 'da_duyet' || claim.cancelStatus === 'da_duyet' || claim.trangThai === 'tu_choi');
+      if (isApproved) {
+        triggerToast('Hồ sơ này đã được duyệt hủy nên không thể xóa!', 'warning');
+        return;
+      }
+      const bsx = cancelRecord.bienSo || claim.bienSo || cancelRecord.soHoSoBoiThuong || claim.soHoSoBoiThuong || 'hồ sơ';
 
       const isConfirmed = await showConfirmModal(
         'Xóa đề xuất hủy hồ sơ',
@@ -23292,7 +23311,7 @@ const fullList = getCarBrandLossData();
 
     function resetAllCancellationFilters() {
       activeCancelSearch = '';
-      activeCancelStatusFilter = 'all';
+      activeCancelStatusFilter = 'cho_duyet';
       activeCancelGdvFilter = 'all';
       activeCancelBranchFilter = 'all';
       activeCancelReasonCodeFilter = 'all';
@@ -23400,12 +23419,13 @@ const fullList = getCarBrandLossData();
           }
         }
 
+        const isApproved = (cancelRecord && cancelRecord.cancelStatus === 'da_duyet') || claim.cancelStatus === 'da_duyet' || claim.trangThai === 'tu_choi';
         const isCancelExisting = (cancelRecord && cancelRecord.cancelStatus !== 'da_hoan_tac' && cancelRecord.cancelStatus !== 'da_xoa_de_xuat') || (claim.deXuatHuy === true || claim.deXuatHuy === 'co' || claim.isCancelProposal === true);
         const revertBtn = document.getElementById('btnRevertCancelProposal');
         if (revertBtn) {
-          revertBtn.style.display = isCancelExisting ? 'inline-flex' : 'none';
+          revertBtn.style.display = (isCancelExisting && !isApproved) ? 'inline-flex' : 'none';
         }
-        document.getElementById('cancelModalTitle').textContent = isCancelExisting ? 'Đề xuất Hủy Hồ sơ' : 'Chuyển Đề xuất Hủy Hồ sơ';
+        document.getElementById('cancelModalTitle').textContent = isApproved ? 'Hồ sơ đã Duyệt Hủy' : (isCancelExisting ? 'Đề xuất Hủy Hồ sơ' : 'Chuyển Đề xuất Hủy Hồ sơ');
       } else {
         const revertBtn = document.getElementById('btnRevertCancelProposal');
         if (revertBtn) revertBtn.style.display = 'none';
@@ -23667,8 +23687,14 @@ const fullList = getCarBrandLossData();
 
     async function revertClaimCancellationProposal(claimId) {
       if (!claimId) return;
+      const cancelRecord = (cachedClaimCancellationsPayload || {})[claimId] || {};
       const claim = (cachedPendingClaimsPayload || {})[claimId] || {};
-      const bsx = claim.bienSo || claim.soHoSoBoiThuong || 'hồ sơ';
+      const isApproved = (cancelRecord.cancelStatus === 'da_duyet' || claim.cancelStatus === 'da_duyet' || claim.trangThai === 'tu_choi');
+      if (isApproved) {
+        triggerToast('Hồ sơ này đã được duyệt hủy nên không thể xóa hoặc hoàn tác!', 'warning');
+        return;
+      }
+      const bsx = cancelRecord.bienSo || claim.bienSo || cancelRecord.soHoSoBoiThuong || claim.soHoSoBoiThuong || 'hồ sơ';
 
       const isConfirmed = await showConfirmModal(
         'Hủy bỏ đề xuất hủy',
