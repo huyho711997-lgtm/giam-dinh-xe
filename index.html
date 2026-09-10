@@ -14071,6 +14071,47 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       }
     }
 
+    function getGdvKpiProgressMetrics() {
+      const now = new Date();
+      const repMonth = activeGdvReportMonth !== 'all' ? parseInt(activeGdvReportMonth, 10) : (now.getMonth() + 1);
+      const repYear = parseInt(activeGdvReportYear, 10) || now.getFullYear();
+      const totalDaysInMonth = new Date(repYear, repMonth, 0).getDate();
+
+      const isCurrentMonth = (repYear === now.getFullYear() && repMonth === (now.getMonth() + 1));
+      const isPastMonth = (repYear < now.getFullYear() || (repYear === now.getFullYear() && repMonth < (now.getMonth() + 1)));
+
+      let daysPassed = totalDaysInMonth;
+      if (isPastMonth) {
+        daysPassed = totalDaysInMonth;
+      } else if (isCurrentMonth) {
+        daysPassed = Math.min(totalDaysInMonth, Math.max(1, now.getDate()));
+        if (activeGdvReportEndDate) {
+          const endD = parseYmdToLocalDate(activeGdvReportEndDate, true);
+          if (endD && endD.getFullYear() === repYear && (endD.getMonth() + 1) === repMonth) {
+            daysPassed = Math.min(totalDaysInMonth, Math.max(1, endD.getDate()));
+          }
+        }
+      } else {
+        daysPassed = 1;
+      }
+
+      const monthlyTarget = 70;
+      const progressTarget = Math.round(((monthlyTarget / totalDaysInMonth) * daysPassed) * 10) / 10;
+      const progressRatio = Math.round((daysPassed / totalDaysInMonth) * 100);
+
+      return {
+        monthlyTarget,
+        totalDaysInMonth,
+        daysPassed,
+        progressTarget,
+        progressRatio,
+        isCurrentMonth,
+        isPastMonth,
+        repMonth,
+        repYear
+      };
+    }
+
     function renderGdvMonthlyReportPage(targetContainer) {
 
       const container = targetContainer || document.getElementById('tabContentContainer');
@@ -14335,6 +14376,8 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       const totalDuyetHsbtCount = gdvRows.reduce((sum, r) => sum + r.duyetHsbtCount, 0);
       const overallHsbtRate = totalFilteredClaims > 0 ? Math.round((totalDuyetHsbtCount / totalFilteredClaims) * 100) : 0;
       const passKpiCount = gdvRows.filter(r => (r.weightedKpiCount || r.duyetHsbtCount) >= 70).length;
+      const kpiMetrics = getGdvKpiProgressMetrics();
+      const passProgressCount = gdvRows.filter(r => (r.weightedKpiCount || r.duyetHsbtCount) >= kpiMetrics.progressTarget).length;
       const topGdvObj = gdvRowsSorted[0];
       const topGdvName = topGdvObj ? topGdvObj.gdvName : 'Chưa có';
 
@@ -15192,10 +15235,16 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             </div>
 
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(168,85,247,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">GĐV ĐẠT KPI LƯƠNG (70 CA)</span>
-              <strong style="display: block; font-size: 30px; color: #a855f7;  margin-top: 10px; font-weight: 850;">
-                ${passKpiCount} <span style="font-size: 14px; color: var(--text-soft);">/ ${gdvRows.length} nhân sự</span>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">ĐẠT TIẾN ĐỘ / KPI THÁNG</span>
+                <span style="font-size: 10px; font-weight: 850; background: rgba(59,130,246,0.12); color: #3b82f6; padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(59,130,246,0.25);">Ngày ${kpiMetrics.daysPassed}/${kpiMetrics.totalDaysInMonth}</span>
+              </div>
+              <strong style="display: block; font-size: 26px; color: #a855f7; margin-top: 8px; font-weight: 850; line-height: 1.2;">
+                ${passProgressCount} <span style="font-size: 13px; color: var(--text-soft); font-weight: 750;">/ ${gdvRows.length} đạt tiến độ (${kpiMetrics.progressTarget} ca)</span>
               </strong>
+              <div style="font-size: 11.5px; color: var(--text-muted); margin-top: 6px; font-weight: 750;">
+                Đạt KPI tháng (70 ca): <strong style="color: #10b981;">${passKpiCount}/${gdvRows.length}</strong> GĐV
+              </div>
             </div>
           </div>
           ` : ''}
@@ -15371,21 +15420,29 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
               ${gdvRows.map(r => {
                 const kpiVal = Math.round((r.weightedKpiCount || r.duyetHsbtCount) * 10) / 10;
                 const kpiAchievementRate = Math.round((kpiVal / 70) * 100);
+                const progressRate = kpiMetrics.progressTarget > 0 ? Math.round((kpiVal / kpiMetrics.progressTarget) * 100) : 0;
+                const progressDiff = Math.round((kpiVal - kpiMetrics.progressTarget) * 10) / 10;
+
                 let kpiBadgeBg = 'rgba(239,68,68,0.12)';
                 let kpiBadgeBorder = 'rgba(239,68,68,0.3)';
                 let kpiBadgeColor = '#ef4444';
-                let kpiStatusLabel = 'CHƯA ĐẠT KPI';
+                let kpiStatusLabel = `CHẬM TIẾN ĐỘ (${progressRate}%)`;
 
                 if (kpiVal >= 70) {
                   kpiBadgeBg = 'rgba(16,185,129,0.15)';
                   kpiBadgeBorder = 'rgba(16,185,129,0.35)';
                   kpiBadgeColor = '#10b981';
                   kpiStatusLabel = 'ĐẠT KPI TÍNH LƯƠNG';
-                } else if (kpiVal >= 50) {
+                } else if (kpiVal >= kpiMetrics.progressTarget) {
+                  kpiBadgeBg = 'rgba(59,130,246,0.15)';
+                  kpiBadgeBorder = 'rgba(59,130,246,0.35)';
+                  kpiBadgeColor = '#3b82f6';
+                  kpiStatusLabel = `VƯỢT TIẾN ĐỘ (${progressRate}%)`;
+                } else if (progressRate >= 80) {
                   kpiBadgeBg = 'rgba(234,179,8,0.15)';
                   kpiBadgeBorder = 'rgba(234,179,8,0.35)';
                   kpiBadgeColor = '#eab308';
-                  kpiStatusLabel = 'GẦN ĐẠT KPI';
+                  kpiStatusLabel = `TIỆM CẬN TIẾN ĐỘ (${progressRate}%)`;
                 }
 
                 const initials = getGdvInitials(r.gdvName);
@@ -15417,9 +15474,14 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                         <strong style="display: block; font-size: 15px; color: #10b981;  font-weight: 850;">${kpiVal} ca <span style="font-size: 10px; color: var(--text-soft);">(${r.duyetHsbtCount} gốc)</span></strong>
                       </div>
                       <div>
-                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Tỷ lệ KPI</span>
-                        <strong style="display: block; font-size: 15px; color: ${kpiBadgeColor};  font-weight: 850;">${kpiAchievementRate}%</strong>
+                        <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">KPI tháng (70 ca)</span>
+                        <strong style="display: block; font-size: 15px; color: ${kpiVal >= 70 ? '#10b981' : 'var(--text-main)'};  font-weight: 850;">${kpiAchievementRate}%</strong>
                       </div>
+                    </div>
+
+                    <div style="margin-top: 10px; padding: 7px 10px; border-radius: 8px; font-size: 11px; font-weight: 750; display: flex; justify-content: space-between; align-items: center; ${kpiVal >= kpiMetrics.progressTarget ? 'background: rgba(59,130,246,0.08); color: #2563eb; border: 1px solid rgba(59,130,246,0.2);' : 'background: rgba(239,68,68,0.08); color: #dc2626; border: 1px solid rgba(239,68,68,0.2);'}">
+                      <span>Tiến độ ngày ${kpiMetrics.daysPassed}/${kpiMetrics.totalDaysInMonth} (${kpiMetrics.progressTarget} ca):</span>
+                      <strong style="font-weight: 850;">${progressDiff >= 0 ? `+${progressDiff} ca ✓` : `${progressDiff} ca`}</strong>
                     </div>
                   </div>
                 `;
@@ -15437,7 +15499,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                     <span>BIỂU ĐỒ XU HƯỚNG KPI & LƯƠNG GIÁM ĐỊNH VIÊN (TARGET: 70 CA/THÁNG)</span>
                   </div>
                   <p style="font-size: 12px; color: var(--text-soft); margin-top: 4px; margin-bottom: 0;">
-                    So sánh số hồ sơ tiếp nhận với hồ sơ có ngày duyệt HSBT và vạch chuẩn KPI tính lương <strong>70 ca/tháng</strong>.
+                    So sánh số hồ sơ tiếp nhận với hồ sơ duyệt HSBT, vạch tiến độ kỳ vọng <strong>${kpiMetrics.progressTarget} ca</strong> (ngày ${kpiMetrics.daysPassed}/${kpiMetrics.totalDaysInMonth}) và vạch chuẩn KPI tính lương <strong>70 ca/tháng</strong>.
                   </p>
                 </div>
 
@@ -20229,6 +20291,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       const ctx = canvas.getContext('2d');
 
       const list = (cachedCurrentGdvKpiRows && cachedCurrentGdvKpiRows.length > 0) ? cachedCurrentGdvKpiRows : [];
+      const kpiMetrics = getGdvKpiProgressMetrics();
       
       if (gdvKpiChartInstance) {
         gdvKpiChartInstance.destroy();
@@ -20282,6 +20345,19 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             barPercentage: 0.65,
             categoryPercentage: 0.65,
             order: 2
+          },
+          {
+            type: 'line',
+            label: `Ngưỡng tiến độ (${kpiMetrics.progressTarget} ca - Ngày ${kpiMetrics.daysPassed}/${kpiMetrics.totalDaysInMonth})`,
+            data: list.map(() => kpiMetrics.progressTarget),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+            borderWidth: 2,
+            borderDash: [5, 4],
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            fill: false,
+            order: 1
           },
           {
             type: 'line',
@@ -20348,6 +20424,18 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             pointHoverBorderColor: '#ffffff',
             pointHoverBorderWidth: 3,
             fill: true
+          },
+          {
+            type: 'line',
+            label: `Ngưỡng tiến độ (${kpiMetrics.progressTarget} ca - Ngày ${kpiMetrics.daysPassed}/${kpiMetrics.totalDaysInMonth})`,
+            data: list.map(() => kpiMetrics.progressTarget),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.04)',
+            borderWidth: 2,
+            borderDash: [5, 4],
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            fill: false
           },
           {
             type: 'line',
@@ -20485,6 +20573,45 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             c.restore();
           }
 
+          // 1b. Draw "TIẾN ĐỘ: X CA (NGÀY D/M)" badge on the progressTarget line
+          const yProg = scales.y.getPixelForValue(kpiMetrics.progressTarget);
+          if (yProg >= chartArea.top && yProg <= chartArea.bottom) {
+            const progText = `TIẾN ĐỘ: ${kpiMetrics.progressTarget} CA (NGÀY ${kpiMetrics.daysPassed}/${kpiMetrics.totalDaysInMonth})`;
+            c.save();
+            c.font = "900 10px 'Plus Jakarta Sans', sans-serif";
+            const textMetrics = c.measureText(progText);
+            const progBadgeW = Math.max(140, textMetrics.width + 16);
+            const progBadgeH = 22;
+            const progBadgeX = chartArea.right - progBadgeW - 4;
+            
+            // Non-overlapping with 70 line badge if lines are close
+            let progBadgeY = yProg - progBadgeH / 2;
+            if (Math.abs(yProg - y70) < 24) {
+              progBadgeY = y70 > yProg ? (yProg - progBadgeH - 2) : (yProg + 2);
+            }
+
+            c.shadowColor = 'rgba(59, 130, 246, 0.4)';
+            c.shadowBlur = 8;
+            c.shadowOffsetY = 2;
+            c.fillStyle = '#3b82f6';
+            c.beginPath();
+            if (c.roundRect) {
+              c.roundRect(progBadgeX, progBadgeY, progBadgeW, progBadgeH, 6);
+            } else {
+              c.rect(progBadgeX, progBadgeY, progBadgeW, progBadgeH);
+            }
+            c.fill();
+            c.restore();
+
+            c.save();
+            c.font = "900 10px 'Plus Jakarta Sans', sans-serif";
+            c.fillStyle = '#ffffff';
+            c.textAlign = 'center';
+            c.textBaseline = 'middle';
+            c.fillText(progText, progBadgeX + progBadgeW / 2, progBadgeY + progBadgeH / 2);
+            c.restore();
+          }
+
           // 2. Draw Floating Pill Badges with Smart Non-overlapping logic
           if (actualType === 'line') {
             const openMeta = chart.getDatasetMeta(0);
@@ -20537,7 +20664,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             });
           } else {
             chart.data.datasets.forEach((ds, dsIdx) => {
-              if (ds.label && ds.label.includes('70 ca')) return;
+              if (ds.type === 'line' || (ds.label && (ds.label.includes('70 ca') || ds.label.includes('tiến độ') || ds.label.includes('Tiến độ')))) return;
               const meta = chart.getDatasetMeta(dsIdx);
               if (!meta || meta.hidden) return;
 
@@ -20728,9 +20855,14 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                       const pct = Math.round((kpiVal / 70) * 100);
                       const gap = Math.round((kpiVal - 70) * 10) / 10;
                       const gapStr = gap >= 0 ? `+${gap} ca (Đạt/Vượt chỉ tiêu)` : `${gap} ca (Còn thiếu)`;
+
+                      const progPct = kpiMetrics.progressTarget > 0 ? Math.round((kpiVal / kpiMetrics.progressTarget) * 100) : 0;
+                      const progGap = Math.round((kpiVal - kpiMetrics.progressTarget) * 10) / 10;
+                      const progGapStr = progGap >= 0 ? `+${progGap} ca (Vượt tiến độ)` : `${progGap} ca (Chậm tiến độ)`;
+
                       return [
-                        `• Tỷ lệ đạt KPI lương: ${pct}%`,
-                        `• So với mốc 70 ca: ${gapStr}`
+                        `• Tiến độ ngày ${kpiMetrics.daysPassed}/${kpiMetrics.totalDaysInMonth} (${kpiMetrics.progressTarget} ca): ${progPct}% (${progGapStr})`,
+                        `• KPI chuẩn tháng (70 ca): ${pct}% (${gapStr})`
                       ];
                     }
                   }
