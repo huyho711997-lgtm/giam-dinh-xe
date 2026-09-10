@@ -8291,7 +8291,7 @@ function formatDateDisplay(val) {
           avgAmount: 10000000,
           carplaKeywords: 'carpla',
           phatSinhDateField: 'ngayMoHs',
-          daDuyetDateField: 'toTrinhNgayDuyet',
+          daDuyetDateField: 'ngayMoHs',
           chuyenDnttDateField: 'ngayNhanDuHoSo',
           carplaDateField: 'toTrinhNgayDuyet',
           tndsTonDateField: 'none',
@@ -13577,8 +13577,8 @@ function formatDateDisplay(val) {
 
     function isDuyetHsbtApproved(c) {
       if (!c) return false;
-      const approvedHsbtStatuses = getRuleArray(cachedReportRules.approvedStatuses);
-      if (approvedHsbtStatuses.length === 0) return true;
+      const approvedHsbtStatuses = getRuleArray(cachedReportRules.approvedStatuses || 'da_duyet_hsbt,cho_duyet_dntt,cho_kt_duyet,kt_duyet,da_thanh_toan');
+      if (approvedHsbtStatuses.length === 0) return false;
       const rawSt = String(c.trangThai || '').trim();
       const lowerSt = rawSt.toLowerCase();
       if (approvedHsbtStatuses.includes(lowerSt)) return true;
@@ -13709,12 +13709,27 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       m.id = 'reportSettingsModal';
       m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); backdrop-filter:blur(10px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
       
+      const claimStatusCounts = {};
+      Object.values(cachedPendingClaimsPayload || {}).forEach(c => {
+        const st = c.trangThai || 'moi';
+        claimStatusCounts[st] = (claimStatusCounts[st] || 0) + 1;
+      });
+
       const buildCheckboxList = (id, currentStr) => {
         const currArr = getRuleArray(currentStr);
-        let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; max-height:280px; overflow-y:auto; padding:10px; margin-top:8px; border:1px solid var(--border); border-radius:12px; background:var(--surface-strong);" class="custom-scroll">';
+        let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px; max-height:280px; overflow-y:auto; padding:10px; margin-top:8px; border:1px solid var(--border); border-radius:12px; background:var(--surface-strong);" class="custom-scroll">';
         Object.keys(PENDING_STATUS_MAP).forEach(k => {
           const checked = currArr.includes(k) ? 'checked' : '';
-          html += `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; padding:8px 12px; border-radius:8px; background:var(--surface); border:1px solid var(--border); transition:all 0.2s; box-shadow:var(--shadow-xs);"><input type="checkbox" value="${k}" class="${id}_chk" ${checked} style="width:16px; height:16px; accent-color:var(--primary);"> ${PENDING_STATUS_MAP[k].label}</label>`;
+          const item = PENDING_STATUS_MAP[k] || { label: k, color: 'var(--primary)' };
+          const countVal = claimStatusCounts[k] !== undefined ? claimStatusCounts[k] : 0;
+          html += `<label style="display:flex; align-items:center; justify-content:space-between; gap:8px; cursor:pointer; font-size:13px; font-weight:700; padding:8px 12px; border-radius:8px; background:var(--surface); border:1px solid var(--border); transition:all 0.2s; box-shadow:var(--shadow-xs);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" value="${k}" class="${id}_chk" ${checked} style="width:16px; height:16px; accent-color:var(--primary); cursor:pointer;">
+              <span style="width:7px; height:7px; border-radius:50%; background:${item.color}; box-shadow:0 0 5px ${item.color}; flex-shrink:0;"></span>
+              <span style="color:var(--text-main); font-size:12.5px;">${item.label}</span>
+            </div>
+            <span style="font-size:11px; font-weight:800; padding:1px 7px; border-radius:99px; background:var(--bg-soft); color:var(--text-muted);">${countVal}</span>
+          </label>`;
         });
         html += '</div>';
         return html;
@@ -13788,16 +13803,23 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
               <div class="rs-content" id="rs_tab_1" style="display:none;">
                 <h4 style="margin:0 0 16px 0; font-size:22px; color:var(--text-main); font-weight:900;">Cột: ĐÃ DUYỆT HSBT</h4>
                 <div style="background:rgba(216,180,109,0.1); border:1px solid rgba(216,180,109,0.3); padding:16px; border-radius:12px; margin-bottom:24px;">
-                  <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic mặc định:</strong> Đếm các hồ sơ nằm trong thời gian lọc VÀ đạt được trạng thái Đã duyệt.</p>
+                  <p style="font-size:14px; color:var(--text-main); margin:0; line-height:1.6;"><strong>Logic chuẩn:</strong> Các hồ sơ được tính toán phải có ngày <strong>"Ngày mở HS"</strong> trong khoảng thời gian được chọn và phải thỏa mãn điều kiện trạng thái thuộc nhóm Đã duyệt (Đã duyệt HSBT, Chờ duyệt ĐNTT, Chờ KT duyệt, KT duyệt, Đã Thanh toán).</p>
                 </div>
                 <div style="margin-top:24px; margin-bottom:24px;">
                   <label style="display:block; font-size:15px; font-weight:850; color:var(--primary); margin-bottom:8px;">Trường Ngày xét (Date Field):</label>
-                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chọn trường ngày sẽ được dùng để xét xem hồ sơ có nằm trong khoảng thời gian lọc hay không.</p>
-                  ${buildDateFieldSelect('rs_daDuyetDateField', cachedReportRules.daDuyetDateField)}
+                  <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Mặc định xét theo <strong>"Ngày mở HS / Phân công"</strong> trong khoảng thời gian lọc của báo cáo.</p>
+                  ${buildDateFieldSelect('rs_daDuyetDateField', cachedReportRules.daDuyetDateField || 'ngayMoHs')}
                 </div>
-                <label style="display:block; font-size:15px; font-weight:850; color:var(--text-main); margin-bottom:8px;">Các trạng thái được tính là ĐÃ DUYỆT:</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <label style="font-size:15px; font-weight:850; color:var(--text-main); margin:0;">Các trạng thái được tính là ĐÃ DUYỆT:</label>
+                  <div style="display:flex; gap:8px;">
+                    <button type="button" onclick="selectStandardApprovedStatuses()" style="border:none; background:rgba(16,185,129,0.14); color:#10b981; font-size:11px; font-weight:850; padding:5px 12px; border-radius:8px; cursor:pointer; transition:all 0.15s ease;" onmouseover="this.style.background='rgba(16,185,129,0.25)'" onmouseout="this.style.background='rgba(16,185,129,0.14)'">✓ Chọn 5 trạng thái chuẩn</button>
+                    <button type="button" onclick="toggleAllReportCheckboxes('rs_approvedStatuses_chk', true)" style="border:none; background:rgba(59,130,246,0.12); color:#3b82f6; font-size:11px; font-weight:850; padding:5px 10px; border-radius:8px; cursor:pointer; transition:all 0.15s ease;">Chọn tất cả</button>
+                    <button type="button" onclick="toggleAllReportCheckboxes('rs_approvedStatuses_chk', false)" style="border:none; background:rgba(239,68,68,0.12); color:#ef4444; font-size:11px; font-weight:850; padding:5px 10px; border-radius:8px; cursor:pointer; transition:all 0.15s ease;">Bỏ chọn tất cả</button>
+                  </div>
+                </div>
                 <p style="font-size:13px; color:var(--text-soft); margin-bottom:12px;">Chỉ những hồ sơ có trạng thái tích dưới đây mới được đếm vào cột này.</p>
-                ${buildCheckboxList('rs_approvedStatuses', cachedReportRules.approvedStatuses)}
+                ${buildCheckboxList('rs_approvedStatuses', cachedReportRules.approvedStatuses || 'da_duyet_hsbt,cho_duyet_dntt,cho_kt_duyet,kt_duyet,da_thanh_toan')}
               </div>
 
               <!-- 2: Chuyen DNTT -->
@@ -13925,6 +13947,21 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       `;
       document.body.appendChild(m);
 
+      window.selectStandardApprovedStatuses = function() {
+        const standardKeys = ['da_duyet_hsbt', 'cho_duyet_dntt', 'cho_kt_duyet', 'kt_duyet', 'da_thanh_toan'];
+        document.querySelectorAll('.rs_approvedStatuses_chk').forEach(chk => {
+          chk.checked = standardKeys.includes(chk.value);
+        });
+        const dateSelect = document.getElementById('rs_daDuyetDateField');
+        if (dateSelect) dateSelect.value = 'ngayMoHs';
+      };
+
+      window.toggleAllReportCheckboxes = function(chkClass, isChecked) {
+        document.querySelectorAll('.' + chkClass).forEach(chk => {
+          chk.checked = isChecked;
+        });
+      };
+
       window.switchRsTab = function(idx) {
         document.querySelectorAll('.rs-tab').forEach((el, i) => {
           if (i === idx) {
@@ -13953,7 +13990,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       const data = {
         // Cấu hình các trường ngày theo từng cột
         phatSinhDateField: getSelectVal('rs_phatSinhDateField', cachedReportRules.phatSinhDateField || 'ngayMoHs'),
-        daDuyetDateField: getSelectVal('rs_daDuyetDateField', cachedReportRules.daDuyetDateField || 'toTrinhNgayDuyet'),
+        daDuyetDateField: getSelectVal('rs_daDuyetDateField', cachedReportRules.daDuyetDateField || 'ngayMoHs'),
         chuyenDnttDateField: getSelectVal('rs_chuyenDnttDateField', cachedReportRules.chuyenDnttDateField || 'ngayNhanDuHoSo'),
         carplaDateField: getSelectVal('rs_carplaDateField', cachedReportRules.carplaDateField || 'toTrinhNgayDuyet'),
         tndsTonDateField: getSelectVal('rs_tndsTonDateField', cachedReportRules.tndsTonDateField || 'none'),
@@ -15937,7 +15974,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         
         const r = cachedReportRules;
         const phatSinhMs = getClaimDateMs(c, r.phatSinhDateField || 'ngayMoHs');
-        const daDuyetMs = getClaimDateMs(c, r.daDuyetDateField || 'toTrinhNgayDuyet');
+        const daDuyetMs = getClaimDateMs(c, r.daDuyetDateField || 'ngayMoHs');
         const chuyenDnttMs = getClaimDateMs(c, r.chuyenDnttDateField || 'ngayNhanDuHoSo');
         const carplaMs = getClaimDateMs(c, r.carplaDateField || 'toTrinhNgayDuyet');
         const tndsTonMs = getClaimDateMs(c, r.tndsTonDateField || 'none');
@@ -16409,22 +16446,15 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         const matchesOpenedMonth = activeGdvReportMonth === 'all' || item.month === parseInt(activeGdvReportMonth, 10);
         const isOpenedInPeriod = Boolean(item.year && matchesOpenedYear && matchesOpenedMonth);
 
-        const matchesDuyetYear = activeGdvReportYear === 'all' || item.duyetYear === parseInt(activeGdvReportYear, 10);
-        const matchesDuyetMonth = activeGdvReportMonth === 'all' || item.duyetMonth === parseInt(activeGdvReportMonth, 10);
-        const isExcludedStatus = ['tu_choi', 'huy', 'da_huy'].includes(String(c.trangThai || '').toLowerCase().trim());
-        const isDuyetHsbtInPeriod = Boolean(item.duyetYear && matchesDuyetYear && matchesDuyetMonth && !isExcludedStatus);
+        if (!isOpenedInPeriod) return;
 
-        if (!isOpenedInPeriod && !isDuyetHsbtInPeriod) return;
+        gdvMap[gdvName].totalOpenedCount++;
 
-        if (isOpenedInPeriod) {
-          gdvMap[gdvName].totalOpenedCount++;
-        }
-
-        if (isDuyetHsbtInPeriod) {
+        if (isDuyetHsbtApproved(c)) {
           gdvMap[gdvName].duyetHsbtCount++;
           const amtStr = String(c.ttbtTongSoTienBoiThuong || c.tongBoiThuongSauThue || c.soTienDuyetBT || c.pascSoTienDuyet || c.ttbtSoTienBoiThuong || c.amount || '0').replace(/[^0-9]/g, '');
           gdvMap[gdvName].totalApprovedAmount += (parseInt(amtStr, 10) || 0);
-        } else if (isOpenedInPeriod) {
+        } else {
           gdvMap[gdvName].pendingHsbtCount++;
         }
       });
