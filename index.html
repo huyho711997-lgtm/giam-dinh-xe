@@ -8289,6 +8289,9 @@ function formatDateDisplay(val) {
         if (activeDashboardTab === 'list') {
           executeUIRenderCasesTable(filteredVal);
         }
+        if (activeDashboardTab === 'home') {
+          renderHomePage();
+        }
       });
 
       
@@ -8340,6 +8343,9 @@ function formatDateDisplay(val) {
         if (activeDashboardTab === 'claim_cancellation') {
           renderClaimCancellationPage();
         }
+        if (activeDashboardTab === 'home') {
+          renderHomePage();
+        }
       });
 
       dbNodeInstance.ref('claim_cancellations').off();
@@ -8358,6 +8364,7 @@ function formatDateDisplay(val) {
         cachedAccountingTransfersPayload = snapshot.val() || {};
         if (activeDashboardTab === 'accounting_transfer') renderAccountingTransferPage();
         if (activeDashboardTab === 'accounting_claims') renderAccountingClaimsPage();
+        if (activeDashboardTab === 'home') renderHomePage();
         
         // Cập nhật số đếm chuông thông báo
         renderNotificationCenterItems();
@@ -8369,6 +8376,7 @@ function formatDateDisplay(val) {
         if (activeDashboardTab === 'field_reimbursements') {
           if (typeof renderFieldReimbursementsPage === 'function') renderFieldReimbursementsPage();
         }
+        if (activeDashboardTab === 'home') renderHomePage();
       });
     }
 
@@ -8447,6 +8455,517 @@ function formatDateDisplay(val) {
       renderActiveTabContent();
     }
 
+    function renderHomePage(targetContainer) {
+      if (activeDashboardTab !== 'home') return;
+      const container = targetContainer || document.getElementById('tabContentContainer');
+      if (!container) return;
+
+      const user = firebase.auth().currentUser;
+      const profile = user ? getAuthenticatedUserPresentation(user) : {
+        displayName: 'Cán bộ Giám định',
+        role: 'Giám định viên',
+        department: 'Tasco Insurtech',
+        initials: 'GD',
+        email: ''
+      };
+
+      const isAdmin = activeUserProfile && (
+        String(activeUserProfile.role || '').trim().toLowerCase() === 'admin' ||
+        String(activeUserProfile.role || '').trim().toLowerCase() === 'truong_nhom' ||
+        activeUserProfile.isAdmin === true
+      );
+
+      // 1. Calculate Realtime Metrics
+      // Online Cases
+      const allCasesObj = cachedCasesPayload || {};
+      const caseEntries = Object.entries(allCasesObj);
+      const totalCases = caseEntries.length;
+      const completedCases = caseEntries.filter(([, c]) => c.trangThai === STATUS_COMPLETED).length;
+      const pendingCases = totalCases - completedCases;
+
+      // Pending Claims
+      const allPendingObj = cachedPendingClaimsPayload || {};
+      const pendingEntries = Object.entries(allPendingObj);
+      const totalPendingClaims = pendingEntries.length;
+      const approvedClaims = pendingEntries.filter(([, c]) => {
+        return (c.toTrinhNgayDuyet && c.toTrinhNgayDuyet !== '-') || 
+               (c.ngayDuyetHsbt && c.ngayDuyetHsbt !== '-') ||
+               String(c.trangThai || '').includes('da_duyet');
+      }).length;
+      const waitingApprovalClaims = totalPendingClaims - approvedClaims;
+
+      // KPI Progress Metrics
+      let kpiMetrics = { daysPassed: 1, totalDaysInMonth: 30, progressTarget: 23.3, progressRatio: 33 };
+      try {
+        if (typeof getGdvKpiProgressMetrics === 'function') {
+          kpiMetrics = getGdvKpiProgressMetrics();
+        }
+      } catch (e) {}
+
+      // Accounting Transfers
+      const allTransfersObj = cachedAccountingTransfersPayload || {};
+      const transferEntries = Object.entries(allTransfersObj);
+      const totalTransfers = transferEntries.length;
+      const pendingTransfers = transferEntries.filter(([, b]) => b.trangThai !== 'da_trinh_dntt' && b.trangThai !== 'da_nhan_du_ho_so').length;
+      const completedTransfers = totalTransfers - pendingTransfers;
+
+      // Field Reimbursements
+      const allReimbsObj = cachedFieldReimbursementsPayload || {};
+      const reimbEntries = Object.entries(allReimbsObj);
+      const totalReimbs = reimbEntries.length;
+      const pendingReimbs = reimbEntries.filter(([, r]) => r.trangThai === 'pending' || r.trangThai === 'draft').length;
+
+      // Recent 5 Cases (Sorted by createdAt descending)
+      const sortedRecentCases = [...caseEntries].sort((a, b) => Number(b[1].createdAt || 0) - Number(a[1].createdAt || 0)).slice(0, 5);
+
+      // Current Date String in Vietnamese
+      const now = new Date();
+      const daysOfWeek = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+      const dayName = daysOfWeek[now.getDay()];
+      const dateFormatted = `${dayName}, ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+
+      container.innerHTML = `
+        <!-- 1. HERO EXECUTIVE COMMAND BANNER -->
+        <div class="home-hero-card" style="position: relative; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 24px; padding: 30px 34px; margin-bottom: 24px; box-shadow: var(--shadow-sm); overflow: hidden;">
+          <div style="position: absolute; top: -60px; right: -40px; width: 340px; height: 340px; background: radial-gradient(circle, rgba(216,180,109,0.18) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(30px);"></div>
+          <div style="position: absolute; bottom: -80px; left: 15%; width: 280px; height: 280px; background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(28px);"></div>
+
+          <div style="position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 24px;">
+            <div style="flex: 1; min-width: 320px; max-width: 820px;">
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 99px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); font-size: 11px; font-weight: 850; color: #10b981; text-transform: uppercase; letter-spacing: 0.05em;">
+                  <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+                  Hệ thống trực tuyến Realtime
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 99px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); font-size: 11px; font-weight: 850; color: var(--primary);">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  ${dateFormatted}
+                </span>
+                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 99px; background: var(--bg-soft); border: 1px solid var(--border-strong); font-size: 11px; font-weight: 800; color: var(--text-soft);">
+                  🏢 Chi nhánh: ${escapeHtmlOutput(activeUserProfile?.chiNhanh || activeUserProfile?.branch || 'Đắk Lắk')}
+                </span>
+              </div>
+
+              <h1 style="font-size: 28px; font-weight: 900; margin: 0 0 8px 0; color: var(--text-main); letter-spacing: -0.02em; line-height: 1.25;">
+                Xin chào, <span style="background: linear-gradient(135deg, var(--primary) 0%, #ffd700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${escapeHtmlOutput(profile.displayName || 'Cán bộ')}</span>! 👋
+              </h1>
+              <p style="font-size: 14px; color: var(--text-soft); margin: 0 0 22px 0; line-height: 1.6; max-width: 720px;">
+                Chào mừng bạn đến với <strong>Trung tâm Điều hành Giám định số & Bồi thường Xe cơ giới</strong> Tasco Insurtech. Nền tảng hỗ trợ tác nghiệp hiện trường, đối chiếu minh chứng minh bạch và kết nối kế toán tài chính thời gian thực.
+              </p>
+
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                ${hasUserPermission('list', 'add') ? `
+                  <button type="button" class="btn-premium" onclick="switchWorkspaceTab('create')" style="padding: 0 22px; height: 44px; border-radius: 12px; font-size: 13.5px; font-weight: 850; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 16px rgba(216,180,109,0.35); cursor: pointer;">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Khởi tạo hồ sơ mới</span>
+                  </button>
+                ` : ''}
+
+                ${hasUserPermission('list', 'view') ? `
+                  <button type="button" class="btn-premium btn-secondary" onclick="switchWorkspaceTab('list')" style="padding: 0 18px; height: 44px; border-radius: 12px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    <span>Quản lý hồ sơ</span>
+                  </button>
+                ` : ''}
+
+                ${hasUserPermission('pending', 'view') ? `
+                  <button type="button" class="btn-premium btn-secondary" onclick="switchWorkspaceTab('pending')" style="padding: 0 18px; height: 44px; border-radius: 12px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>Hồ sơ bồi thường tồn</span>
+                  </button>
+                ` : ''}
+
+                ${hasUserPermission('report', 'view') ? `
+                  <button type="button" class="btn-premium btn-secondary" onclick="navigateHeaderTab('gdv_report')" style="padding: 0 18px; height: 44px; border-radius: 12px; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    <span>Báo cáo & KPI</span>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <div style="background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 18px; padding: 20px 22px; min-width: 240px; box-shadow: var(--shadow-xs); display: flex; flex-direction: column; gap: 14px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 46px; height: 46px; border-radius: 14px; background: rgba(216,180,109,0.15); border: 1.5px solid var(--primary); color: var(--primary); font-weight: 900; font-size: 16px; display: grid; place-items: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(216,180,109,0.2);">
+                  ${profile.initials}
+                </div>
+                <div style="overflow: hidden;">
+                  <strong style="display: block; font-size: 14px; color: var(--text-main); font-weight: 850; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHtmlOutput(profile.displayName)}</strong>
+                  <span style="display: inline-block; font-size: 10.5px; font-weight: 850; color: var(--primary); background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); padding: 1px 7px; border-radius: 6px; margin-top: 3px;">
+                    ${escapeHtmlOutput(profile.role)}
+                  </span>
+                </div>
+              </div>
+              <div style="border-top: 1px dashed var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 6px; font-size: 11.5px; color: var(--text-soft);">
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Email:</span>
+                  <strong style="color: var(--text-main); font-weight: 750; max-width: 150px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${escapeHtmlOutput(profile.email)}">${escapeHtmlOutput(profile.email)}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Phòng ban:</span>
+                  <strong style="color: var(--text-main); font-weight: 750;">${escapeHtmlOutput(profile.department)}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. REALTIME OPERATIONAL METRIC CARDS (5 CARDS) -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <!-- Card 1: Hồ sơ Giám định -->
+          <div class="stat-widget" onclick="switchWorkspaceTab('list')" style="background: var(--surface); border: 1px solid rgba(216,180,109,0.35); border-radius: 18px; padding: 20px; box-shadow: var(--shadow-sm); cursor: pointer; transition: all 0.25s ease;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='var(--primary)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(216,180,109,0.35)';">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em;">HỒ SƠ GIÁM ĐỊNH</span>
+              <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(216,180,109,0.15); color: var(--primary); display: grid; place-items: center;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              </div>
+            </div>
+            <div style="font-size: 30px; font-weight: 900; color: var(--primary); line-height: 1.1;">
+              ${totalCases} <span style="font-size: 13px; font-weight: 750; color: var(--text-soft);">hồ sơ</span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 10px; font-size: 11px; font-weight: 750;">
+              <span style="color: #f59e0b; background: rgba(245,158,11,0.1); padding: 2px 6px; border-radius: 4px;">${pendingCases} chờ Gara</span>
+              <span style="color: #10b981; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">${completedCases} đã xong</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Hồ sơ Bồi thường Tồn -->
+          <div class="stat-widget" onclick="switchWorkspaceTab('pending')" style="background: var(--surface); border: 1px solid rgba(16,185,129,0.35); border-radius: 18px; padding: 20px; box-shadow: var(--shadow-sm); cursor: pointer; transition: all 0.25s ease;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#10b981';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(16,185,129,0.35)';">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em;">HỒ SƠ BỒI THƯỜNG TỒN</span>
+              <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(16,185,129,0.15); color: #10b981; display: grid; place-items: center;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+            </div>
+            <div style="font-size: 30px; font-weight: 900; color: #10b981; line-height: 1.1;">
+              ${totalPendingClaims} <span style="font-size: 13px; font-weight: 750; color: var(--text-soft);">hồ sơ</span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 10px; font-size: 11px; font-weight: 750;">
+              <span style="color: #10b981; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">${approvedClaims} đã duyệt</span>
+              <span style="color: #ef4444; background: rgba(239,68,68,0.1); padding: 2px 6px; border-radius: 4px;">${waitingApprovalClaims} chưa duyệt</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Tiến độ KPI GĐV -->
+          <div class="stat-widget" onclick="navigateHeaderTab('gdv_report')" style="background: var(--surface); border: 1px solid rgba(59,130,246,0.35); border-radius: 18px; padding: 20px; box-shadow: var(--shadow-sm); cursor: pointer; transition: all 0.25s ease;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#3b82f6';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(59,130,246,0.35)';">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em;">TIẾN ĐỘ KPI THÁNG</span>
+              <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(59,130,246,0.15); color: #3b82f6; display: grid; place-items: center;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              </div>
+            </div>
+            <div style="font-size: 30px; font-weight: 900; color: #3b82f6; line-height: 1.1;">
+              ${kpiMetrics.progressTarget} <span style="font-size: 13px; font-weight: 750; color: var(--text-soft);">ca / ngày ${kpiMetrics.daysPassed}</span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 10px; font-size: 11px; font-weight: 750;">
+              <span style="color: #3b82f6; background: rgba(59,130,246,0.1); padding: 2px 6px; border-radius: 4px;">Ngưỡng ngày ${kpiMetrics.daysPassed}/${kpiMetrics.totalDaysInMonth}</span>
+              <span style="color: var(--text-muted); background: var(--bg-soft); padding: 2px 6px; border-radius: 4px;">Chuẩn 70 ca</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Chuyển giao Kế toán -->
+          <div class="stat-widget" onclick="switchWorkspaceTab('accounting_transfer')" style="background: var(--surface); border: 1px solid rgba(168,85,247,0.35); border-radius: 18px; padding: 20px; box-shadow: var(--shadow-sm); cursor: pointer; transition: all 0.25s ease;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#a855f7';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(168,85,247,0.35)';">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em;">CHUYỂN GIAO KẾ TOÁN</span>
+              <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(168,85,247,0.15); color: #a855f7; display: grid; place-items: center;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+              </div>
+            </div>
+            <div style="font-size: 30px; font-weight: 900; color: #a855f7; line-height: 1.1;">
+              ${totalTransfers} <span style="font-size: 13px; font-weight: 750; color: var(--text-soft);">đợt phiếu</span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 10px; font-size: 11px; font-weight: 750;">
+              <span style="color: #a855f7; background: rgba(168,85,247,0.1); padding: 2px 6px; border-radius: 4px;">${pendingTransfers} đang bàn giao</span>
+              <span style="color: #10b981; background: rgba(16,185,129,0.1); padding: 2px 6px; border-radius: 4px;">${completedTransfers} hoàn tất</span>
+            </div>
+          </div>
+
+          <!-- Card 5: Thanh toán Hiện trường -->
+          <div class="stat-widget" onclick="switchWorkspaceTab('field_reimbursements')" style="background: var(--surface); border: 1px solid rgba(245,158,11,0.35); border-radius: 18px; padding: 20px; box-shadow: var(--shadow-sm); cursor: pointer; transition: all 0.25s ease;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#f59e0b';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='rgba(245,158,11,0.35)';">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em;">TT HIỆN TRƯỜNG</span>
+              <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245,158,11,0.15); color: #f59e0b; display: grid; place-items: center;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="font-size: 30px; font-weight: 900; color: #f59e0b; line-height: 1.1;">
+              ${totalReimbs} <span style="font-size: 13px; font-weight: 750; color: var(--text-soft);">đề nghị</span>
+            </div>
+            <div style="display: flex; gap: 8px; margin-top: 10px; font-size: 11px; font-weight: 750;">
+              <span style="color: #f59e0b; background: rgba(245,158,11,0.1); padding: 2px 6px; border-radius: 4px;">${pendingReimbs} chờ phê duyệt</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. QUICK ACCESS MODULES GRID (6 CORE MODULES) -->
+        <div style="margin-bottom: 28px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--primary)" stroke-width="2.5"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              <h2 style="font-size: 15px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">Cổng phân hệ tác nghiệp chính</h2>
+            </div>
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 700;">6 Phân hệ nghiệp vụ chuyên sâu</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
+            <!-- 1. Quản lý Giám định -->
+            <div class="p-card" onclick="switchWorkspaceTab('list')" style="padding: 22px; border-radius: 18px; cursor: pointer; transition: all 0.25s ease; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border-strong);" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='var(--primary)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border-strong)';">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+                  <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(216,180,109,0.12); color: var(--primary); display: grid; place-items: center;">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                  </div>
+                  <span style="font-size: 10.5px; font-weight: 850; color: var(--primary); background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); padding: 3px 8px; border-radius: 6px;">REALTIME</span>
+                </div>
+                <h3 style="font-size: 15px; font-weight: 850; color: var(--text-main); margin: 0 0 6px 0;">Quản lý Hồ sơ Giám định</h3>
+                <p style="font-size: 12.5px; color: var(--text-soft); line-height: 1.5; margin: 0 0 16px 0;">
+                  Tác nghiệp 2 chiều với Garage đối tác, cấp link chụp ảnh hiện trạng trực tuyến và đối chiếu danh mục phụ tùng thay thế.
+                </p>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 12px;">
+                <span style="font-size: 12px; font-weight: 800; color: var(--primary);">${totalCases} hồ sơ trực tuyến</span>
+                <span style="font-size: 12px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">Truy cập <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+              </div>
+            </div>
+
+            <!-- 2. Bồi thường Tồn -->
+            <div class="p-card" onclick="switchWorkspaceTab('pending')" style="padding: 22px; border-radius: 18px; cursor: pointer; transition: all 0.25s ease; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border-strong);" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#10b981';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border-strong)';">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+                  <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16,185,129,0.12); color: #10b981; display: grid; place-items: center;">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  </div>
+                  <span style="font-size: 10.5px; font-weight: 850; color: #10b981; background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); padding: 3px 8px; border-radius: 6px;">NGHIỆP VỤ</span>
+                </div>
+                <h3 style="font-size: 15px; font-weight: 850; color: var(--text-main); margin: 0 0 6px 0;">Hồ sơ Bồi thường Tồn</h3>
+                <p style="font-size: 12.5px; color: var(--text-soft); line-height: 1.5; margin: 0 0 16px 0;">
+                  Theo dõi tổng lượng hồ sơ bồi thường tồn, phân loại chi nhánh cấp đơn, phân chia VCX / TNDS và ngày duyệt HSBT.
+                </p>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 12px;">
+                <span style="font-size: 12px; font-weight: 800; color: #10b981;">${totalPendingClaims} hồ sơ tồn</span>
+                <span style="font-size: 12px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">Truy cập <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+              </div>
+            </div>
+
+            <!-- 3. Báo cáo & KPI GĐV -->
+            <div class="p-card" onclick="navigateHeaderTab('gdv_report')" style="padding: 22px; border-radius: 18px; cursor: pointer; transition: all 0.25s ease; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border-strong);" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#3b82f6';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border-strong)';">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+                  <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(59,130,246,0.12); color: #3b82f6; display: grid; place-items: center;">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                  </div>
+                  <span style="font-size: 10.5px; font-weight: 850; color: #3b82f6; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); padding: 3px 8px; border-radius: 6px;">KPI LƯƠNG</span>
+                </div>
+                <h3 style="font-size: 15px; font-weight: 850; color: var(--text-main); margin: 0 0 6px 0;">Báo cáo KPI & Biểu đồ Gara</h3>
+                <p style="font-size: 12.5px; color: var(--text-soft); line-height: 1.5; margin: 0 0 16px 0;">
+                  Đo lường sản lượng GĐV theo đường tiến độ ngày, xếp hạng bồi thường Garage, tổn thất hãng xe và báo cáo tuần chi nhánh.
+                </p>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 12px;">
+                <span style="font-size: 12px; font-weight: 800; color: #3b82f6;">Mốc ${kpiMetrics.progressTarget} ca / ngày ${kpiMetrics.daysPassed}</span>
+                <span style="font-size: 12px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">Truy cập <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+              </div>
+            </div>
+
+            <!-- 4. Chuyển giao Kế toán -->
+            <div class="p-card" onclick="switchWorkspaceTab('accounting_transfer')" style="padding: 22px; border-radius: 18px; cursor: pointer; transition: all 0.25s ease; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border-strong);" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#a855f7';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border-strong)';">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+                  <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(168,85,247,0.12); color: #a855f7; display: grid; place-items: center;">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                  </div>
+                  <span style="font-size: 10.5px; font-weight: 850; color: #a855f7; background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3); padding: 3px 8px; border-radius: 6px;">BÀN GIAO</span>
+                </div>
+                <h3 style="font-size: 15px; font-weight: 850; color: var(--text-main); margin: 0 0 6px 0;">Chuyển giao Kế toán & Hồ sơ gốc</h3>
+                <p style="font-size: 12.5px; color: var(--text-soft); line-height: 1.5; margin: 0 0 16px 0;">
+                  Lập phiếu bàn giao chứng từ gốc, kế toán kiểm tra đối chiếu danh mục, ký số biên bản và xuất file Word / PDF / Excel.
+                </p>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 12px;">
+                <span style="font-size: 12px; font-weight: 800; color: #a855f7;">${totalTransfers} đợt phiếu</span>
+                <span style="font-size: 12px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">Truy cập <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+              </div>
+            </div>
+
+            <!-- 5. TT Hiện trường -->
+            <div class="p-card" onclick="switchWorkspaceTab('field_reimbursements')" style="padding: 22px; border-radius: 18px; cursor: pointer; transition: all 0.25s ease; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border-strong);" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#f59e0b';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border-strong)';">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+                  <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245,158,11,0.12); color: #f59e0b; display: grid; place-items: center;">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                  </div>
+                  <span style="font-size: 10.5px; font-weight: 850; color: #f59e0b; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); padding: 3px 8px; border-radius: 6px;">CHI PHÍ</span>
+                </div>
+                <h3 style="font-size: 15px; font-weight: 850; color: var(--text-main); margin: 0 0 6px 0;">Thanh toán Chi phí Hiện trường</h3>
+                <p style="font-size: 12.5px; color: var(--text-soft); line-height: 1.5; margin: 0 0 16px 0;">
+                  Đề xuất thanh toán chi phí công tác giám định, xăng xe, vé cầu đường, lưu trú và hoàn ứng chi phí hiện trường trực tuyến.
+                </p>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 12px;">
+                <span style="font-size: 12px; font-weight: 800; color: #f59e0b;">${totalReimbs} phiếu phát sinh</span>
+                <span style="font-size: 12px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">Truy cập <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+              </div>
+            </div>
+
+            <!-- 6. Đề xuất Hủy hồ sơ -->
+            <div class="p-card" onclick="switchWorkspaceTab('claim_cancellation')" style="padding: 22px; border-radius: 18px; cursor: pointer; transition: all 0.25s ease; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--border-strong);" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='#ef4444';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border-strong)';">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+                  <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(239,68,68,0.12); color: #ef4444; display: grid; place-items: center;">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                  </div>
+                  <span style="font-size: 10.5px; font-weight: 850; color: #ef4444; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); padding: 3px 8px; border-radius: 6px;">KIỂM SOÁT</span>
+                </div>
+                <h3 style="font-size: 15px; font-weight: 850; color: var(--text-main); margin: 0 0 6px 0;">Đề xuất Hủy & Xử lý Ngoại lệ</h3>
+                <p style="font-size: 12.5px; color: var(--text-soft); line-height: 1.5; margin: 0 0 16px 0;">
+                  Quy trình đề xuất hủy hồ sơ bồi thường, quản lý lý do không bồi thường, đóng hồ sơ trùng lặp và phê duyệt lãnh đạo.
+                </p>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 12px;">
+                <span style="font-size: 12px; font-weight: 800; color: #ef4444;">Kiểm soát & phê duyệt</span>
+                <span style="font-size: 12px; font-weight: 800; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">Truy cập <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. RECENT CASES WORKLIST -->
+        <div class="p-card" style="padding: 24px 26px; border-radius: 20px; margin-bottom: 28px; box-shadow: var(--shadow-sm);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(216,180,109,0.15); color: var(--primary); display: grid; place-items: center;">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              </div>
+              <div>
+                <h3 style="font-size: 15px; font-weight: 850; color: var(--text-main); margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">Hồ sơ giám định tiếp nhận gần đây</h3>
+                <p style="font-size: 12px; color: var(--text-soft); margin: 2px 0 0 0;">Cập nhật tự động thời gian thực từ cơ sở dữ liệu</p>
+              </div>
+            </div>
+            ${hasUserPermission('list', 'view') ? `
+              <button type="button" onclick="switchWorkspaceTab('list')" style="background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 8px; padding: 6px 14px; font-size: 12.5px; font-weight: 800; color: var(--primary); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                Xem toàn bộ ${totalCases} hồ sơ
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+            ` : ''}
+          </div>
+
+          ${sortedRecentCases.length === 0 ? `
+            <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 10px; opacity: 0.5;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <div style="font-size: 14px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">Chưa có hồ sơ giám định nào</div>
+              <p style="font-size: 12.5px; margin-bottom: 14px;">Bắt đầu tạo hồ sơ giám định đầu tiên để gửi link cho Garage chụp ảnh.</p>
+              ${hasUserPermission('list', 'add') ? `
+                <button type="button" class="btn-premium" onclick="switchWorkspaceTab('create')" style="padding: 8px 18px; border-radius: 10px; font-size: 12.5px; font-weight: 850;">Khởi tạo hồ sơ ngay</button>
+              ` : ''}
+            </div>
+          ` : `
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              ${sortedRecentCases.map(([caseId, c]) => {
+                const isCompleted = c.trangThai === STATUS_COMPLETED;
+                const plate = escapeHtmlOutput(c.bienSo || 'Chưa có biển');
+                const gara = escapeHtmlOutput(c.tenGara || 'Chưa xác định Garage');
+                const gdv = escapeHtmlOutput(c.nguoiTao?.tenHienThi || c.gdvTiepNhan || 'Cán bộ GĐV');
+                const dateObj = formatCaseTimestamp(c.createdAt);
+                const partnerLink = `${getCleanOriginBaseUrl()}?idCa=${caseId}`;
+
+                const badgeBg = isCompleted ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)';
+                const badgeBorder = isCompleted ? 'rgba(16,185,129,0.3)' : 'rgba(245,158,11,0.3)';
+                const badgeColor = isCompleted ? '#10b981' : '#f59e0b';
+                const badgeLabel = isCompleted ? 'ĐÃ HOÀN TẤT' : 'CHỜ GARAGE';
+
+                return `
+                  <div style="background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 14px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; transition: all 0.2s ease;" onmouseover="this.style.borderColor='var(--primary)';" onmouseout="this.style.borderColor='var(--border-strong)';">
+                    <div style="display: flex; align-items: center; gap: 14px; min-width: 240px;">
+                      <div style="background: #ffffff; color: #111827; border: 2px solid #374151; border-radius: 8px; padding: 4px 10px; font-weight: 900; font-size: 13px; letter-spacing: 0.05em; box-shadow: 0 2px 6px rgba(0,0,0,0.12); flex-shrink: 0; min-width: 95px; text-align: center;">
+                        ${plate}
+                      </div>
+                      <div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <strong style="font-size: 13.5px; color: var(--text-main); font-weight: 850;">${gara}</strong>
+                          <span style="font-size: 10px; font-weight: 850; padding: 2px 7px; border-radius: 99px; background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeColor};">
+                            ${badgeLabel}
+                          </span>
+                        </div>
+                        <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 3px; display: flex; align-items: center; gap: 10px;">
+                          <span>👤 ${gdv}</span>
+                          <span>•</span>
+                          <span>🕒 ${dateObj.date} ${dateObj.time}</span>
+                          <span>•</span>
+                          <span>📷 ${c.soLuongAnh || 0} ảnh</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                      <button type="button" onclick="executeTextCopyToClipboardRawString('${partnerLink}', 'Đã sao chép link Garage!')" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-main); font-size: 11.5px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" title="Sao chép link gửi Garage">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                        <span>Copy link</span>
+                      </button>
+                      <button type="button" onclick="navigateToCase('${caseId}', 'result')" style="padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(216,180,109,0.4); background: rgba(216,180,109,0.15); color: var(--primary); font-size: 11.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        <span>Xem hồ sơ</span>
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                      </button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `}
+        </div>
+
+        <!-- 5. WORKFLOW STEPPER -->
+        <div class="p-card" style="padding: 28px 30px; border-radius: 20px; box-shadow: var(--shadow-sm); margin-bottom: 24px;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <h3 style="font-size: 15px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 6px 0;">Luồng quy trình nghiệp vụ chuẩn Tasco Insurtech</h3>
+            <p style="font-size: 12.5px; color: var(--text-soft); margin: 0;">Chu trình khép kín tự động từ khâu tiếp nhận hiện trường đến bàn giao kế toán và chi trả</p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; position: relative;">
+            <!-- Step 1 -->
+            <div style="background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 16px; padding: 20px; position: relative; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border-strong)'">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 22px; font-weight: 900; color: var(--primary);">01</span>
+                <span style="font-size: 10px; font-weight: 850; padding: 2px 7px; border-radius: 6px; background: rgba(216,180,109,0.15); color: var(--primary);">GĐV TIẾP NHẬN</span>
+              </div>
+              <h4 style="font-size: 14px; font-weight: 850; color: var(--text-main); margin: 0 0 6px 0;">Khởi tạo & Cấp link</h4>
+              <p style="font-size: 12px; color: var(--text-soft); line-height: 1.5; margin: 0;">GĐV nhập thông tin phương tiện, chỉ định Garage phụ trách và gửi link chụp ảnh hiện trạng trực tuyến.</p>
+            </div>
+
+            <!-- Step 2 -->
+            <div style="background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 16px; padding: 20px; position: relative; transition: all 0.2s;" onmouseover="this.style.borderColor='#10b981'" onmouseout="this.style.borderColor='var(--border-strong)'">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 22px; font-weight: 900; color: #10b981;">02</span>
+                <span style="font-size: 10px; font-weight: 850; padding: 2px 7px; border-radius: 6px; background: rgba(16px,185,129,0.15); color: #10b981;">GARAGE TÁC NGHIỆP</span>
+              </div>
+              <h4 style="font-size: 14px; font-weight: 850; color: var(--text-main); margin: 0 0 6px 0;">Chụp ảnh & Minh chứng</h4>
+              <p style="font-size: 12px; color: var(--text-soft); line-height: 1.5; margin: 0;">Garage mở link trên điện thoại, chụp ảnh minh chứng thực tế cho từng phụ tùng mà không cần đăng nhập tài khoản.</p>
+            </div>
+
+            <!-- Step 3 -->
+            <div style="background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 16px; padding: 20px; position: relative; transition: all 0.2s;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='var(--border-strong)'">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 22px; font-weight: 900; color: #3b82f6;">03</span>
+                <span style="font-size: 10px; font-weight: 850; padding: 2px 7px; border-radius: 6px; background: rgba(59,130,246,0.15); color: #3b82f6;">ĐỐI CHIẾU & DUYỆT</span>
+              </div>
+              <h4 style="font-size: 14px; font-weight: 850; color: var(--text-main); margin: 0 0 6px 0;">Chốt phương án bồi thường</h4>
+              <p style="font-size: 12px; color: var(--text-soft); line-height: 1.5; margin: 0;">Hệ thống đồng bộ ảnh Realtime, GĐV đối chiếu tổn thất, điều chỉnh phương án thay thế / sửa chữa và phê duyệt.</p>
+            </div>
+
+            <!-- Step 4 -->
+            <div style="background: var(--bg-soft); border: 1px solid var(--border-strong); border-radius: 16px; padding: 20px; position: relative; transition: all 0.2s;" onmouseover="this.style.borderColor='#a855f7'" onmouseout="this.style.borderColor='var(--border-strong)'">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="font-size: 22px; font-weight: 900; color: #a855f7;">04</span>
+                <span style="font-size: 10px; font-weight: 850; padding: 2px 7px; border-radius: 6px; background: rgba(168,85,247,0.15); color: #a855f7;">KẾ TOÁN & THANH TOÁN</span>
+              </div>
+              <h4 style="font-size: 14px; font-weight: 850; color: var(--text-main); margin: 0 0 6px 0;">Bàn giao & Quyết toán</h4>
+              <p style="font-size: 12px; color: var(--text-soft); line-height: 1.5; margin: 0;">Lập phiếu bàn giao hồ sơ gốc cho kế toán, ký số biên bản giao nhận và hoàn tất thủ tục chuyển tiền bồi thường.</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function renderActiveTabContent() {
       const container = document.getElementById('tabContentContainer');
       if (!container) return;
@@ -8484,73 +9003,11 @@ function formatDateDisplay(val) {
 
 
       if (activeDashboardTab === 'home') {
-        container.innerHTML = `
-          <section class="hero-panel" style="margin-bottom: 24px; padding: 48px 32px;">
-            <div>
-              <div class="eyebrow">${SVGS.SPARKLES} Nền tảng Giám định số Tasco Insurtech</div>
-              <h2 style="font-size: 32px; line-height: 1.2;">TASCO DLK<br><span>Nhìn rõ tổn thất · Chốt đúng phương án.</span></h2>
-              <p style="max-width: 600px; margin-top: 14px; font-size: 14px; color: var(--text-soft);">
-                Hệ thống hỗ trợ giám định viên và Gara đối chiếu hình ảnh hiện trạng, lập danh sách phụ tùng và đồng bộ phương án sửa chữa thời gian thực.
-              </p>
-              <div style="margin-top: 24px; display: flex; gap: 12px;">
-                ${hasUserPermission('list', 'view') ? `<button type="button" class="btn-premium" style="max-width: 200px;" onclick="switchWorkspaceTab('list')">${SVGS.FOLDER} Vào quản lý hồ sơ</button>` : ''}
-                ${hasUserPermission('list', 'add') ? `<button type="button" class="btn-premium btn-secondary" style="max-width: 200px;" onclick="switchWorkspaceTab('create')">${SVGS.SPARKLES} Khởi tạo hồ sơ mới</button>` : ''}
-              </div>
-            </div>
-            <div class="hero-signature">
-              <div class="seal">${SVGS.SPARKLES}</div>
-              <small>Realtime secured</small>
-            </div>
-          </section>
+        renderHomePage(container);
+        return;
+      }
 
-          <div style="margin-top: 32px; margin-bottom: 32px;">
-            <h3 style="font-size: 18px; font-weight: 800; color: var(--text-main); margin-bottom: 18px; text-align: center;">Chức năng nổi bật của phần mềm</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-              <div class="p-card" style="padding: 24px;">
-                <div style="width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: rgba(216,180,109,0.08); color: var(--primary); margin-bottom: 16px;">${SVGS.CAR}</div>
-                <h4 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--text-main);">Tác nghiệp song song 2 chiều</h4>
-                <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Giám định viên tạo yêu cầu trực tuyến. Garage nhận link truy cập ngay lập tức để tải lên hình ảnh chứng cứ mà không cần tài khoản đăng nhập rườm rà.</p>
-              </div>
-              <div class="p-card" style="padding: 24px;">
-                <div style="width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: rgba(40,167,69,0.08); color: var(--success); margin-bottom: 16px;">${SVGS.CHECK_CIRCLE}</div>
-                <h4 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--text-main);">Đồng bộ Realtime siêu tốc</h4>
-                <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Mọi hình ảnh tải lên và ghi chú của Gara được đẩy trực tiếp lên Cloudinary và lưu trữ đồng bộ tức thời qua cơ sở dữ liệu Firebase Realtime Database.</p>
-              </div>
-              <div class="p-card" style="padding: 24px;">
-                <div style="width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: rgba(23,162,184,0.08); color: #17a2b8; margin-bottom: 16px;">${SVGS.FOLDER}</div>
-                <h4 style="font-size: 15px; font-weight: 800; margin-bottom: 8px; color: var(--text-main);">Bảng phụ tùng Excel thông minh</h4>
-                <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.5;">Nhập nhanh danh sách bằng cách dán hàng loạt từ file Excel. Di chuyển mượt mà bằng bàn phím (Enter, Arrow Keys) giúp tối ưu hóa thời gian xử lý.</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-card" style="padding: 32px; margin-bottom: 24px;">
-            <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 24px; text-align: center;">Luồng quy trình nghiệp vụ chuẩn</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; position: relative;">
-              <div style="text-align: center; position: relative;">
-                <div style=" font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">01</div>
-                <h5 style="font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text-main);">Khởi tạo hồ sơ</h5>
-                <p style="font-size: 11.5px; color: var(--text-muted);">GĐV nhập biển số, Gara phụ trách và lập bảng phụ tùng.</p>
-              </div>
-              <div style="text-align: center;">
-                <div style=" font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">02</div>
-                <h5 style="font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text-main);">Garage tải ảnh</h5>
-                <p style="font-size: 11.5px; color: var(--text-muted);">Gara mở link, chụp ảnh hiện trạng và khớp minh chứng cho từng phụ tùng.</p>
-              </div>
-              <div style="text-align: center;">
-                <div style=" font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">03</div>
-                <h5 style="font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text-main);">Đối chiếu tổn thất</h5>
-                <p style="font-size: 11.5px; color: var(--text-muted);">Hệ thống tự động hiển thị so sánh ảnh và các phương án của hai bên.</p>
-              </div>
-              <div style="text-align: center;">
-                <div style=" font-size: 24px; font-weight: 800; color: var(--primary); margin-bottom: 8px;">04</div>
-                <h5 style="font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text-main);">Duyệt phương án</h5>
-                <p style="font-size: 11.5px; color: var(--text-muted);">Giám định viên chốt phương án bồi thường và hoàn tất hồ sơ.</p>
-              </div>
-            </div>
-          </div>
-        `;
-      } else if (activeDashboardTab === 'list') {
+      if (activeDashboardTab === 'list') {
         container.innerHTML = `
           <!-- ADAPTIVE HERO BANNER HEADER -->
           <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 22px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
