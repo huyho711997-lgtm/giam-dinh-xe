@@ -3526,8 +3526,8 @@
   }
 </style>
 <!-- Header App Bar Space -->
-<nav class="tasco-public-nav-wrapper" id="mainNavigationBar">
-  <div class="tasco-public-nav-inner">
+<div class="tasco-public-nav-wrapper">
+  <nav class="tasco-public-nav-inner" id="mainNavigationBar">
     <!-- NATIVE APP LOGO -->
     <div class="nav-brand" id="navBrandClick" onclick="navigateHeaderTab('home')">
       <div class="nav-logo">
@@ -3539,20 +3539,12 @@
       </div>
     </div>
 
-    <!-- CENTER NAVIGATION LINKS -->
-    <div class="nav-links-center">
-      <a href="#" class="active" onclick="navigateHeaderTab('home'); return false;">Trang chủ</a>
-      <a href="#" onclick="switchWorkspaceTab('list'); return false;">Giám định</a>
-      <a href="#" onclick="switchWorkspaceTab('pending'); return false;">Tồn đọng</a>
-      <a href="#" onclick="switchWorkspaceTab('accounting_claims'); return false;">Kế toán</a>
-      <a href="#" onclick="switchWorkspaceTab('gdv_report'); return false;">Báo cáo</a>
-      <a href="#" onclick="switchWorkspaceTab('users'); return false;">Hệ thống</a>
-    </div>
+    
 
     <!-- RIGHT ACTIONS (Keep original app user profile & bell) -->
     <div id="navUserActionSpace" style="display: flex; align-items: center; gap: 10px;"></div>
   </div>
-</nav>
+</div>
 
 <div class="app-container">
 
