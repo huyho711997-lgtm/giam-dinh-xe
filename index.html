@@ -2337,6 +2337,71 @@
         background: rgba(239, 68, 68, 0.25) !important;
         box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
       }
+
+      /* ==========================================================================
+         Menu Chức Năng Hệ Thống - Luxury Adaptive Cards (Matching Hero Banner)
+         ========================================================================== */
+      .menu-nav-card {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 204px;
+        padding: 24px;
+        border-radius: 22px;
+        border: 1px solid var(--border);
+        background: var(--hero-bg);
+        box-shadow: var(--shadow-sm);
+        cursor: pointer;
+        text-decoration: none;
+        box-sizing: border-box;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                    border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                    box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .menu-nav-card::before {
+        content: '';
+        position: absolute;
+        width: 220px;
+        height: 220px;
+        right: -60px;
+        top: -60px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(216, 180, 109, 0.16) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: -1;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      }
+      .menu-nav-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 22px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, transparent 100%);
+        pointer-events: none;
+        z-index: -2;
+      }
+      .menu-nav-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--primary);
+        box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(216, 180, 109, 0.35);
+      }
+      .menu-nav-card:hover::before {
+        transform: scale(1.3);
+        opacity: 1;
+      }
+      .menu-nav-card:active {
+        transform: translateY(-1px) scale(0.99);
+      }
+      .menu-nav-card .arrow-slot {
+        transition: transform 0.2s ease, color 0.2s ease;
+      }
+      .menu-nav-card:hover .arrow-slot {
+        transform: translateX(4px);
+        color: var(--primary);
+      }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -8619,14 +8684,16 @@ function formatDateDisplay(val) {
           </section>
 
           <!-- MENU CHỨC NĂNG HỆ THỐNG -->
-          <div style="margin-top: 32px; margin-bottom: 32px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <div style="margin-top: 36px; margin-bottom: 36px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; flex-wrap: wrap; gap: 14px;">
               <div>
-                <h3 style="font-size: 18px; font-weight: 850; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
-                  <span style="display: inline-block; width: 4px; height: 18px; background: var(--primary); border-radius: 2px;"></span>
+                <div class="eyebrow" style="margin-bottom: 6px;">${SVGS.SPARKLES} HỆ SINH THÁI TÁC NGHIỆP TẬP TRUNG</div>
+                <h3 style="font-size: 20px; font-weight: 850; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 10px; letter-spacing: -0.02em;">
                   Menu chức năng hệ thống
                 </h3>
-                <p style="font-size: 12.5px; color: var(--text-soft); margin: 4px 0 0 0;">Chọn phân hệ nghiệp vụ để truy cập nhanh và xử lý hồ sơ</p>
+                <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">
+                  Truy cập nhanh các phân hệ giám định, xử lý hồ sơ tồn, bàn giao chứng từ và báo cáo số liệu điều hành.
+                </p>
               </div>
             </div>
 
@@ -8634,22 +8701,22 @@ function formatDateDisplay(val) {
               
               <!-- 1. Hồ sơ Giám định -->
               ${showList ? `
-              <div class="p-card" onclick="switchWorkspaceTab('list')" style="padding: 24px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; justify-content: space-between; border-radius: 20px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='var(--primary)'; this.style.boxShadow='var(--shadow-md)'; this.querySelector('.arrow-slot').style.transform='translateX(4px)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border)'; this.style.boxShadow='none'; this.querySelector('.arrow-slot').style.transform='translateX(0)';">
+              <div class="menu-nav-card" onclick="switchWorkspaceTab('list')">
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                    <div style="width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: rgba(59,130,246,0.1); color: #3b82f6;">
+                    <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(59,130,246,0.12); color: #2563eb; border: 1px solid rgba(59,130,246,0.25);">
                       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                     </div>
-                    <span style="font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 6px; background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.25); letter-spacing: 0.04em;">GIÁM ĐỊNH</span>
+                    <span style="font-size: 10px; font-weight: 850; padding: 4px 10px; border-radius: 99px; background: rgba(59,130,246,0.1); color: #2563eb; border: 1px solid rgba(59,130,246,0.25); letter-spacing: 0.06em;">GIÁM ĐỊNH</span>
                   </div>
-                  <h4 style="font-size: 15px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main);">Quản lý Hồ sơ Giám định</h4>
-                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 16px 0;">
+                  <h4 style="font-size: 16px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main); letter-spacing: -0.01em;">Quản lý Hồ sơ Giám định</h4>
+                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 18px 0;">
                     Danh sách ca xe trực tuyến, cấp link chụp ảnh hiện trạng cho Garage và đối chiếu phụ tùng thay thế.
                   </p>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 14px;">
-                  <span style="font-size: 12px; font-weight: 800; color: #3b82f6;">${totalCases} hồ sơ trực tuyến</span>
-                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; transition: transform 0.2s ease;">
+                  <span style="font-size: 11.5px; font-weight: 800; color: #2563eb; display: inline-flex; align-items: center; gap: 6px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor;"></span>${totalCases} hồ sơ trực tuyến</span>
+                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">
                     Vào chức năng <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </span>
                 </div>
@@ -8657,22 +8724,22 @@ function formatDateDisplay(val) {
 
               <!-- 2. Khởi tạo Hồ sơ Mới -->
               ${showCreate ? `
-              <div class="p-card" onclick="switchWorkspaceTab('create')" style="padding: 24px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; justify-content: space-between; border-radius: 20px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='var(--primary)'; this.style.boxShadow='var(--shadow-md)'; this.querySelector('.arrow-slot').style.transform='translateX(4px)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border)'; this.style.boxShadow='none'; this.querySelector('.arrow-slot').style.transform='translateX(0)';">
+              <div class="menu-nav-card" onclick="switchWorkspaceTab('create')">
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                    <div style="width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: rgba(16,185,129,0.1); color: #10b981;">
+                    <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(16,185,129,0.12); color: #059669; border: 1px solid rgba(16,185,129,0.25);">
                       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     </div>
-                    <span style="font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 6px; background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.25); letter-spacing: 0.04em;">TẠO MỚI</span>
+                    <span style="font-size: 10px; font-weight: 850; padding: 4px 10px; border-radius: 99px; background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.25); letter-spacing: 0.06em;">TẠO MỚI</span>
                   </div>
-                  <h4 style="font-size: 15px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main);">Khởi tạo Ca Giám định Mới</h4>
-                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 16px 0;">
+                  <h4 style="font-size: 16px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main); letter-spacing: -0.01em;">Khởi tạo Ca Giám định Mới</h4>
+                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 18px 0;">
                     Nhập thông tin phương tiện, chỉ định Garage đối tác, lập danh mục phụ tùng cần chụp và cấp link nhanh.
                   </p>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 14px;">
-                  <span style="font-size: 12px; font-weight: 800; color: #10b981;">Cấp link trong 30s</span>
-                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; transition: transform 0.2s ease;">
+                  <span style="font-size: 11.5px; font-weight: 800; color: #059669; display: inline-flex; align-items: center; gap: 6px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor;"></span>Cấp link trong 30s</span>
+                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">
                     Khởi tạo ngay <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </span>
                 </div>
@@ -8680,22 +8747,22 @@ function formatDateDisplay(val) {
 
               <!-- 3. Hồ sơ Bồi thường Tồn -->
               ${showPending ? `
-              <div class="p-card" onclick="switchWorkspaceTab('pending')" style="padding: 24px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; justify-content: space-between; border-radius: 20px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='var(--primary)'; this.style.boxShadow='var(--shadow-md)'; this.querySelector('.arrow-slot').style.transform='translateX(4px)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border)'; this.style.boxShadow='none'; this.querySelector('.arrow-slot').style.transform='translateX(0)';">
+              <div class="menu-nav-card" onclick="switchWorkspaceTab('pending')">
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                    <div style="width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: rgba(216,180,109,0.1); color: var(--primary);">
+                    <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(216,180,109,0.16); color: var(--primary-dark, #8a6425); border: 1px solid rgba(216,180,109,0.32);">
                       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
                     </div>
-                    <span style="font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 6px; background: rgba(216,180,109,0.1); color: var(--primary); border: 1px solid rgba(216,180,109,0.25); letter-spacing: 0.04em;">TỒN ĐỌNG</span>
+                    <span style="font-size: 10px; font-weight: 850; padding: 4px 10px; border-radius: 99px; background: rgba(216,180,109,0.12); color: var(--primary-dark, #8a6425); border: 1px solid rgba(216,180,109,0.3); letter-spacing: 0.06em;">TỒN ĐỌNG</span>
                   </div>
-                  <h4 style="font-size: 15px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main);">Hồ sơ Bồi thường Tồn</h4>
-                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 16px 0;">
+                  <h4 style="font-size: 16px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main); letter-spacing: -0.01em;">Hồ sơ Bồi thường Tồn</h4>
+                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 18px 0;">
                     Quản lý tồn đọng hồ sơ bồi thường, phân loại chi nhánh cấp đơn, phân chia VCX / TNDS và ngày duyệt HSBT.
                   </p>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 14px;">
-                  <span style="font-size: 12px; font-weight: 800; color: var(--primary);">${totalPendingClaims} hồ sơ tồn</span>
-                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; transition: transform 0.2s ease;">
+                  <span style="font-size: 11.5px; font-weight: 800; color: var(--primary-dark, #8a6425); display: inline-flex; align-items: center; gap: 6px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor;"></span>${totalPendingClaims} hồ sơ tồn</span>
+                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">
                     Vào chức năng <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </span>
                 </div>
@@ -8703,22 +8770,22 @@ function formatDateDisplay(val) {
 
               <!-- 4. Báo cáo & Thống kê GĐV -->
               ${showReport ? `
-              <div class="p-card" onclick="switchWorkspaceTab('gdv_report')" style="padding: 24px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; justify-content: space-between; border-radius: 20px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='var(--primary)'; this.style.boxShadow='var(--shadow-md)'; this.querySelector('.arrow-slot').style.transform='translateX(4px)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border)'; this.style.boxShadow='none'; this.querySelector('.arrow-slot').style.transform='translateX(0)';">
+              <div class="menu-nav-card" onclick="switchWorkspaceTab('gdv_report')">
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                    <div style="width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: rgba(168,85,247,0.1); color: #a855f7;">
+                    <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(168,85,247,0.12); color: #7c3aed; border: 1px solid rgba(168,85,247,0.25);">
                       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
                     </div>
-                    <span style="font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 6px; background: rgba(168,85,247,0.1); color: #a855f7; border: 1px solid rgba(168,85,247,0.25); letter-spacing: 0.04em;">KPI & BÁO CÁO</span>
+                    <span style="font-size: 10px; font-weight: 850; padding: 4px 10px; border-radius: 99px; background: rgba(168,85,247,0.1); color: #7c3aed; border: 1px solid rgba(168,85,247,0.25); letter-spacing: 0.06em;">KPI & BÁO CÁO</span>
                   </div>
-                  <h4 style="font-size: 15px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main);">Báo cáo Hiệu suất & KPI GĐV</h4>
-                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 16px 0;">
+                  <h4 style="font-size: 16px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main); letter-spacing: -0.01em;">Báo cáo Hiệu suất & KPI GĐV</h4>
+                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 18px 0;">
                     Đo lường sản lượng GĐV theo đường tiến độ ngày, xếp hạng bồi thường Garage, tổn thất hãng xe và xuất file Excel.
                   </p>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 14px;">
-                  <span style="font-size: 12px; font-weight: 800; color: #a855f7;">Tiến độ & Biểu đồ</span>
-                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; transition: transform 0.2s ease;">
+                  <span style="font-size: 11.5px; font-weight: 800; color: #7c3aed; display: inline-flex; align-items: center; gap: 6px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor;"></span>Tiến độ & Biểu đồ 4K</span>
+                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">
                     Xem báo cáo <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </span>
                 </div>
@@ -8726,22 +8793,22 @@ function formatDateDisplay(val) {
 
               <!-- 5. Hồ sơ Kế toán -->
               ${showAccountingReview ? `
-              <div class="p-card" onclick="switchWorkspaceTab('accounting_claims')" style="padding: 24px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; justify-content: space-between; border-radius: 20px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='var(--primary)'; this.style.boxShadow='var(--shadow-md)'; this.querySelector('.arrow-slot').style.transform='translateX(4px)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border)'; this.style.boxShadow='none'; this.querySelector('.arrow-slot').style.transform='translateX(0)';">
+              <div class="menu-nav-card" onclick="switchWorkspaceTab('accounting_claims')">
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                    <div style="width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: rgba(16,185,129,0.1); color: #10b981;">
+                    <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(16,185,129,0.12); color: #059669; border: 1px solid rgba(16,185,129,0.25);">
                       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
                     </div>
-                    <span style="font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 6px; background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.25); letter-spacing: 0.04em;">KẾ TOÁN</span>
+                    <span style="font-size: 10px; font-weight: 850; padding: 4px 10px; border-radius: 99px; background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.25); letter-spacing: 0.06em;">KẾ TOÁN</span>
                   </div>
-                  <h4 style="font-size: 15px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main);">Hồ sơ Bồi thường Kế toán</h4>
-                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 16px 0;">
+                  <h4 style="font-size: 16px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main); letter-spacing: -0.01em;">Hồ sơ Bồi thường Kế toán</h4>
+                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 18px 0;">
                     Dành riêng cho Kế toán & Thẩm định viên tra cứu, đối soát danh sách hồ sơ bồi thường và phê duyệt tờ trình PASC.
                   </p>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 14px;">
-                  <span style="font-size: 12px; font-weight: 800; color: #10b981;">Xét duyệt & Đối soát</span>
-                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; transition: transform 0.2s ease;">
+                  <span style="font-size: 11.5px; font-weight: 800; color: #059669; display: inline-flex; align-items: center; gap: 6px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor;"></span>Xét duyệt & Đối soát</span>
+                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">
                     Vào chức năng <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </span>
                 </div>
@@ -8749,22 +8816,22 @@ function formatDateDisplay(val) {
 
               <!-- 6. Chuyển giao Kế toán -->
               ${showAccountingView ? `
-              <div class="p-card" onclick="switchWorkspaceTab('accounting_transfer')" style="padding: 24px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; justify-content: space-between; border-radius: 20px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='var(--primary)'; this.style.boxShadow='var(--shadow-md)'; this.querySelector('.arrow-slot').style.transform='translateX(4px)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border)'; this.style.boxShadow='none'; this.querySelector('.arrow-slot').style.transform='translateX(0)';">
+              <div class="menu-nav-card" onclick="switchWorkspaceTab('accounting_transfer')">
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                    <div style="width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: rgba(216,180,109,0.1); color: var(--primary);">
+                    <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(216,180,109,0.16); color: var(--primary-dark, #8a6425); border: 1px solid rgba(216,180,109,0.32);">
                       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="12" y2="16"></line></svg>
                     </div>
-                    <span style="font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 6px; background: rgba(216,180,109,0.1); color: var(--primary); border: 1px solid rgba(216,180,109,0.25); letter-spacing: 0.04em;">BÀN GIAO</span>
+                    <span style="font-size: 10px; font-weight: 850; padding: 4px 10px; border-radius: 99px; background: rgba(216,180,109,0.12); color: var(--primary-dark, #8a6425); border: 1px solid rgba(216,180,109,0.3); letter-spacing: 0.06em;">BÀN GIAO</span>
                   </div>
-                  <h4 style="font-size: 15px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main);">Chuyển giao Hồ sơ Kế toán</h4>
-                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 16px 0;">
+                  <h4 style="font-size: 16px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main); letter-spacing: -0.01em;">Chuyển giao Hồ sơ Kế toán</h4>
+                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 18px 0;">
                     Lập đợt bàn giao chứng từ gốc sang kế toán, đối chiếu danh mục hồ sơ, ký số biên bản giao nhận và xuất file Word.
                   </p>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 14px;">
-                  <span style="font-size: 12px; font-weight: 800; color: var(--primary);">${totalTransfers} đợt bàn giao</span>
-                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; transition: transform 0.2s ease;">
+                  <span style="font-size: 11.5px; font-weight: 800; color: var(--primary-dark, #8a6425); display: inline-flex; align-items: center; gap: 6px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor;"></span>${totalTransfers} đợt bàn giao</span>
+                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">
                     Vào chức năng <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </span>
                 </div>
@@ -8772,22 +8839,22 @@ function formatDateDisplay(val) {
 
               <!-- 7. TT Hiện trường -->
               ${showFieldReimb ? `
-              <div class="p-card" onclick="switchWorkspaceTab('field_reimbursements')" style="padding: 24px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; justify-content: space-between; border-radius: 20px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='var(--primary)'; this.style.boxShadow='var(--shadow-md)'; this.querySelector('.arrow-slot').style.transform='translateX(4px)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border)'; this.style.boxShadow='none'; this.querySelector('.arrow-slot').style.transform='translateX(0)';">
+              <div class="menu-nav-card" onclick="switchWorkspaceTab('field_reimbursements')">
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                    <div style="width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: rgba(245,158,11,0.1); color: #f59e0b;">
+                    <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(245,158,11,0.14); color: #d97706; border: 1px solid rgba(245,158,11,0.28);">
                       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                     </div>
-                    <span style="font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 6px; background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); letter-spacing: 0.04em;">CHI PHÍ</span>
+                    <span style="font-size: 10px; font-weight: 850; padding: 4px 10px; border-radius: 99px; background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.25); letter-spacing: 0.06em;">CHI PHÍ</span>
                   </div>
-                  <h4 style="font-size: 15px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main);">Thanh toán Chi phí Hiện trường</h4>
-                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 16px 0;">
+                  <h4 style="font-size: 16px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main); letter-spacing: -0.01em;">Thanh toán Chi phí Hiện trường</h4>
+                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 18px 0;">
                     Đề xuất hoàn ứng công tác phí giám định hiện trường, xăng xe, vé cầu đường, lưu trú và theo dõi xét duyệt chi.
                   </p>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 14px;">
-                  <span style="font-size: 12px; font-weight: 800; color: #f59e0b;">${totalReimbs} phiếu hoàn ứng</span>
-                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; transition: transform 0.2s ease;">
+                  <span style="font-size: 11.5px; font-weight: 800; color: #d97706; display: inline-flex; align-items: center; gap: 6px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor;"></span>${totalReimbs} phiếu hoàn ứng</span>
+                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">
                     Vào chức năng <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </span>
                 </div>
@@ -8795,22 +8862,22 @@ function formatDateDisplay(val) {
 
               <!-- 8. Đề xuất Hủy Hồ sơ -->
               ${showCancellation ? `
-              <div class="p-card" onclick="switchWorkspaceTab('claim_cancellation')" style="padding: 24px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; justify-content: space-between; border-radius: 20px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='var(--primary)'; this.style.boxShadow='var(--shadow-md)'; this.querySelector('.arrow-slot').style.transform='translateX(4px)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border)'; this.style.boxShadow='none'; this.querySelector('.arrow-slot').style.transform='translateX(0)';">
+              <div class="menu-nav-card" onclick="switchWorkspaceTab('claim_cancellation')">
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                    <div style="width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: rgba(239,68,68,0.1); color: #ef4444;">
+                    <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(239,68,68,0.12); color: #dc2626; border: 1px solid rgba(239,68,68,0.25);">
                       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
                     </div>
-                    <span style="font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 6px; background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); letter-spacing: 0.04em;">HỦY CA</span>
+                    <span style="font-size: 10px; font-weight: 850; padding: 4px 10px; border-radius: 99px; background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.25); letter-spacing: 0.06em;">HỦY CA</span>
                   </div>
-                  <h4 style="font-size: 15px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main);">Đề xuất Hủy & Ngoại lệ</h4>
-                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 16px 0;">
+                  <h4 style="font-size: 16px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main); letter-spacing: -0.01em;">Đề xuất Hủy & Ngoại lệ</h4>
+                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 18px 0;">
                     Quy trình lập phiếu đề xuất hủy hồ sơ bồi thường, quản lý lý do không bồi thường, đóng ca trùng và phê duyệt.
                   </p>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 14px;">
-                  <span style="font-size: 12px; font-weight: 800; color: #ef4444;">Kiểm soát & phê duyệt</span>
-                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; transition: transform 0.2s ease;">
+                  <span style="font-size: 11.5px; font-weight: 800; color: #dc2626; display: inline-flex; align-items: center; gap: 6px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor;"></span>Kiểm soát & phê duyệt</span>
+                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">
                     Vào chức năng <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </span>
                 </div>
@@ -8818,22 +8885,22 @@ function formatDateDisplay(val) {
 
               <!-- 9. Quản trị System -->
               ${showAdmin ? `
-              <div class="p-card" onclick="switchWorkspaceTab('users')" style="padding: 24px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; justify-content: space-between; border-radius: 20px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.borderColor='var(--primary)'; this.style.boxShadow='var(--shadow-md)'; this.querySelector('.arrow-slot').style.transform='translateX(4px)';" onmouseout="this.style.transform='translateY(0)'; this.style.borderColor='var(--border)'; this.style.boxShadow='none'; this.querySelector('.arrow-slot').style.transform='translateX(0)';">
+              <div class="menu-nav-card" onclick="switchWorkspaceTab('users')">
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                    <div style="width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: rgba(216,180,109,0.1); color: var(--primary);">
-                      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(216,180,109,0.16); color: var(--primary-dark, #8a6425); border: 1px solid rgba(216,180,109,0.32);">
+                      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-1 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
                     </div>
-                    <span style="font-size: 10.5px; font-weight: 850; padding: 3px 8px; border-radius: 6px; background: rgba(216,180,109,0.1); color: var(--primary); border: 1px solid rgba(216,180,109,0.25); letter-spacing: 0.04em;">HỆ THỐNG</span>
+                    <span style="font-size: 10px; font-weight: 850; padding: 4px 10px; border-radius: 99px; background: rgba(216,180,109,0.12); color: var(--primary-dark, #8a6425); border: 1px solid rgba(216,180,109,0.3); letter-spacing: 0.06em;">HỆ THỐNG</span>
                   </div>
-                  <h4 style="font-size: 15px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main);">Quản trị & Cấu hình Hệ thống</h4>
-                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 16px 0;">
+                  <h4 style="font-size: 16px; font-weight: 850; margin: 0 0 8px 0; color: var(--text-main); letter-spacing: -0.01em;">Quản trị & Cấu hình Hệ thống</h4>
+                  <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 0 0 18px 0;">
                     Quản lý tài khoản người dùng, phân quyền truy cập, cấu hình Gemini OCR Key, Cloudinary media và audit log.
                   </p>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 14px;">
-                  <span style="font-size: 12px; font-weight: 800; color: var(--primary);">Cấu hình & Phân quyền</span>
-                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; transition: transform 0.2s ease;">
+                  <span style="font-size: 11.5px; font-weight: 800; color: var(--primary-dark, #8a6425); display: inline-flex; align-items: center; gap: 6px;"><span style="width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor;"></span>Cấu hình & Phân quyền</span>
+                  <span class="arrow-slot" style="font-size: 12px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px;">
                     Cấu hình <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                   </span>
                 </div>
