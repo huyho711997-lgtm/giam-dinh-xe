@@ -2685,6 +2685,10 @@
             </div>
           </div>
           <div style="display: flex; align-items: center; gap: 10px;">
+            <button id="btnHeaderRevertCancelProposal" type="button" onclick="triggerHeaderRevertCancelAction()" style="display: none; height: 36px; padding: 0 14px; border-radius: 10px; font-size: 12px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; align-items: center; gap: 6px; background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1.5px solid rgba(245, 158, 11, 0.45);" onmouseover="this.style.background='rgba(245, 158, 11, 0.22)'; this.style.transform='scale(1.02)'" onmouseout="this.style.background='rgba(245, 158, 11, 0.12)'; this.style.transform='scale(1)'" title="Hủy bỏ đề xuất hủy và khôi phục hồ sơ về trạng thái bình thường">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+              <span>Hủy bỏ đề xuất hủy</span>
+            </button>
             <button id="btnHeaderCancelClaimProposal" type="button" onclick="triggerHeaderClaimCancelAction()" style="display: none; height: 36px; padding: 0 16px; border-radius: 10px; font-size: 12.5px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; align-items: center; gap: 6px;">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
               <span>Hủy hồ sơ</span>
@@ -3198,10 +3202,6 @@
 
       <!-- Footer -->
       <div style="padding: 14px 24px; border-top: 1px solid var(--border); background: var(--surface-strong); display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
-        <button id="btnRevertCancelProposal" type="button" class="btn-premium btn-secondary" onclick="revertCancellationFromModal()" style="display: none; margin-right: auto; background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.35); font-size: 12px; font-weight: 800; height: 38px; padding: 0 14px; border-radius: 8px; cursor: pointer;">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3" style="vertical-align: middle; margin-right: 4px;"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-          <span>Hủy bỏ đề xuất hủy</span>
-        </button>
         <button type="button" class="btn-premium btn-secondary" onclick="closeCreateCancellationProposalModal()" style="width: auto !important; padding: 0 16px; height: 38px; cursor: pointer; font-size: 12px;">Đóng</button>
         <button id="btnSaveCancelProposal" type="button" class="btn-premium" onclick="saveCancellationProposalFromModal()" style="width: auto !important; padding: 0 22px; height: 38px; font-weight: 800; background: linear-gradient(135deg, #ef4444, #dc2626); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12.5px; box-shadow: 0 4px 12px rgba(239,68,68,0.3);">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
@@ -23734,6 +23734,9 @@ const fullList = getCarBrandLossData();
         }
 
         triggerToast(`Đã xóa đề xuất hủy cho hồ sơ ${bsx} thành công!`, 'success');
+        if (typeof editingPendingClaimId !== 'undefined' && editingPendingClaimId === claimId) {
+          updateHeaderCancelClaimProposalButton(cachedPendingClaimsPayload?.[claimId]);
+        }
         if (activeDashboardTab === 'claim_cancellation' && typeof renderClaimCancellationPage === 'function') {
           renderClaimCancellationPage();
         }
@@ -23766,9 +23769,11 @@ const fullList = getCarBrandLossData();
 
     function updateHeaderCancelClaimProposalButton(item) {
       const cancelBtn = document.getElementById('btnHeaderCancelClaimProposal');
+      const revertBtn = document.getElementById('btnHeaderRevertCancelProposal');
       if (!cancelBtn) return;
       if (!item) {
         cancelBtn.style.display = 'none';
+        if (revertBtn) revertBtn.style.display = 'none';
         return;
       }
       cancelBtn.style.display = 'inline-flex';
@@ -23785,6 +23790,7 @@ const fullList = getCarBrandLossData();
         cancelBtn.style.color = '#ef4444';
         cancelBtn.style.border = '1.5px solid rgba(239, 68, 68, 0.35)';
         cancelBtn.title = 'Hồ sơ đã được phê duyệt Từ chối/Hủy. Nhấp để xem chi tiết lý do';
+        if (revertBtn) revertBtn.style.display = 'none';
       } else if (isProposed) {
         cancelBtn.innerHTML = `
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -23793,7 +23799,10 @@ const fullList = getCarBrandLossData();
         cancelBtn.style.background = 'rgba(245, 158, 11, 0.12)';
         cancelBtn.style.color = '#d97706';
         cancelBtn.style.border = '1.5px solid rgba(245, 158, 11, 0.45)';
-        cancelBtn.title = 'Hồ sơ đang ở trạng thái Chờ duyệt hủy. Nhấp để điều chỉnh hoặc hoàn tác';
+        cancelBtn.title = 'Hồ sơ đang ở trạng thái Chờ duyệt hủy. Nhấp để điều chỉnh lý do đề xuất';
+        if (revertBtn) {
+          revertBtn.style.display = 'inline-flex';
+        }
       } else {
         cancelBtn.innerHTML = `
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
@@ -23803,7 +23812,15 @@ const fullList = getCarBrandLossData();
         cancelBtn.style.color = '#ef4444';
         cancelBtn.style.border = '1.5px solid rgba(239, 68, 68, 0.5)';
         cancelBtn.title = 'Nhấp để chuyển hồ sơ sang trạng thái Đề xuất hủy';
+        if (revertBtn) revertBtn.style.display = 'none';
       }
+    }
+
+    async function triggerHeaderRevertCancelAction() {
+      if (!editingPendingClaimId) return;
+      await revertClaimCancellationProposal(editingPendingClaimId);
+      const updatedItem = (cachedPendingClaimsPayload || {})[editingPendingClaimId];
+      updateHeaderCancelClaimProposalButton(updatedItem);
     }
 
     function triggerHeaderClaimCancelAction() {
@@ -23861,14 +23878,8 @@ const fullList = getCarBrandLossData();
 
         const isApproved = (cancelRecord && cancelRecord.cancelStatus === 'da_duyet') || claim.cancelStatus === 'da_duyet' || claim.trangThai === 'tu_choi';
         const isCancelExisting = (cancelRecord && cancelRecord.cancelStatus !== 'da_hoan_tac' && cancelRecord.cancelStatus !== 'da_xoa_de_xuat') || (claim.deXuatHuy === true || claim.deXuatHuy === 'co' || claim.isCancelProposal === true);
-        const revertBtn = document.getElementById('btnRevertCancelProposal');
-        if (revertBtn) {
-          revertBtn.style.display = (isCancelExisting && !isApproved) ? 'inline-flex' : 'none';
-        }
         document.getElementById('cancelModalTitle').textContent = isApproved ? 'Hồ sơ đã Duyệt Hủy' : (isCancelExisting ? 'Đề xuất Hủy Hồ sơ' : 'Chuyển Đề xuất Hủy Hồ sơ');
       } else {
-        const revertBtn = document.getElementById('btnRevertCancelProposal');
-        if (revertBtn) revertBtn.style.display = 'none';
         if (pickerGroup) pickerGroup.style.display = 'block';
         if (selectedCard) selectedCard.style.display = 'none';
         if (searchInput) searchInput.value = '';
@@ -24172,6 +24183,9 @@ const fullList = getCarBrandLossData();
         }
 
         triggerToast(`Đã hoàn tác đề xuất hủy cho ${bsx}!`, 'info');
+        if (typeof editingPendingClaimId !== 'undefined' && editingPendingClaimId === claimId) {
+          updateHeaderCancelClaimProposalButton(cachedPendingClaimsPayload?.[claimId]);
+        }
         if (activeDashboardTab === 'claim_cancellation' && typeof renderClaimCancellationPage === 'function') {
           renderClaimCancellationPage();
         }
