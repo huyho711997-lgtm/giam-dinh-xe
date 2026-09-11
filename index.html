@@ -3472,7 +3472,12 @@
     width: 100%;
     display: flex;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(24px) saturate(135%);
+    background: linear-gradient(100deg, var(--surface) 0%, rgba(255,255,255,0.05) 100%);
+  }
+  [data-theme="dark"] .tasco-public-nav-wrapper {
+    background: rgba(23, 23, 23, 0.85);
   }
   .tasco-public-nav-inner {
     width: min(1660px, 96%);
@@ -3484,10 +3489,18 @@
   }
   .tasco-public-nav-wrapper .nav-brand {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    line-height: 1.1;
+    align-items: center;
+    gap: 13px;
     cursor: pointer;
+  }
+  .tasco-public-nav-wrapper .nav-logo {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(216,180,109,0.3);
+    border-radius: 12px;
+    background: rgba(216,180,109,0.12);
   }
   .tasco-public-nav-wrapper .nav-links-center {
     display: flex;
@@ -3496,16 +3509,15 @@
   }
   .tasco-public-nav-wrapper .nav-links-center a {
     text-decoration: none;
-    font-size: 14.5px;
-    font-weight: 750;
+    font-size: 14px;
+    font-weight: 700;
     color: var(--text-main);
-    display: flex;
-    align-items: center;
-    gap: 4px;
     transition: color 0.2s;
   }
-  .tasco-public-nav-wrapper .nav-links-center a:hover { color: #2dd4bf; }
-  .tasco-public-nav-wrapper .nav-links-center a.active { color: #2dd4bf; }
+  .tasco-public-nav-wrapper .nav-links-center a:hover,
+  .tasco-public-nav-wrapper .nav-links-center a.active { 
+    color: var(--primary); 
+  }
   @media (min-width: 768px) {
     .tasco-public-nav-inner { padding: 12px 24px; }
   }
@@ -3513,33 +3525,32 @@
     .tasco-public-nav-wrapper .nav-links-center { display: none; }
   }
 </style>
+<!-- Header App Bar Space -->
 <nav class="tasco-public-nav-wrapper" id="mainNavigationBar">
   <div class="tasco-public-nav-inner">
+    <!-- NATIVE APP LOGO -->
     <div class="nav-brand" id="navBrandClick" onclick="navigateHeaderTab('home')">
-      <span style="font-size: 24px; font-weight: 900; color: #1e3a8a; letter-spacing: -0.04em; font-family: sans-serif;">TASCO<sup style="font-size: 10px; font-weight: 700;">®</sup></span>
-      <span style="font-size: 14px; font-weight: 700; color: #2dd4bf; letter-spacing: 0.05em; font-family: sans-serif;">INSURANCE</span>
-    </div>
-
-    <div class="nav-links-center">
-      <a href="#">Trang chủ</a>
-      <a href="#">Sản phẩm <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg></a>
-      <a href="#">Thông báo <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg></a>
-      <a href="#" class="active">Tin tức <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg></a>
-      <a href="#">Về chúng tôi <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg></a>
-      <a href="#">Mạng lưới <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg></a>
-      <a href="#">Tra cứu</a>
-    </div>
-
-    <div style="display: flex; align-items: center; gap: 20px;">
-      <!-- Vietnam Flag -->
-      <div style="width: 26px; height: 18px; background: #da251d; border-radius: 2px; display: grid; place-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.15);">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="#ffff00"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" /></svg>
+      <div class="nav-logo">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" style="color: var(--primary);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
       </div>
-      <!-- Mua online btn -->
-      <button style="background: #2dd4bf; color: #ffffff; border: none; padding: 8px 20px; border-radius: 99px; font-size: 14px; font-weight: 750; cursor: pointer; box-shadow: 0 4px 12px rgba(45,212,191,0.3);">Mua online</button>
-      
-      <div id="navUserActionSpace" style="display: flex; align-items: center; gap: 10px;"></div>
+      <div style="display: flex; flex-direction: column; justify-content: center;">
+        <span style="font-size: 14.5px; font-weight: 850; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2;">TASCO DLK</span>
+        <span style="font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px;">Xe cơ giới</span>
+      </div>
     </div>
+
+    <!-- CENTER NAVIGATION LINKS -->
+    <div class="nav-links-center">
+      <a href="#" class="active" onclick="navigateHeaderTab('home'); return false;">Trang chủ</a>
+      <a href="#" onclick="switchWorkspaceTab('list'); return false;">Giám định</a>
+      <a href="#" onclick="switchWorkspaceTab('pending'); return false;">Tồn đọng</a>
+      <a href="#" onclick="switchWorkspaceTab('accounting_claims'); return false;">Kế toán</a>
+      <a href="#" onclick="switchWorkspaceTab('gdv_report'); return false;">Báo cáo</a>
+      <a href="#" onclick="switchWorkspaceTab('users'); return false;">Hệ thống</a>
+    </div>
+
+    <!-- RIGHT ACTIONS (Keep original app user profile & bell) -->
+    <div id="navUserActionSpace" style="display: flex; align-items: center; gap: 10px;"></div>
   </div>
 </nav>
 
