@@ -2402,6 +2402,17 @@
         transform: translateX(4px);
         color: var(--primary);
       }
+      .menu-nav-card .bg-watermark {
+        position: absolute;
+        right: -5%;
+        bottom: -15%;
+        width: 120px;
+        height: 120px;
+        opacity: 0.04;
+        transform: rotate(-15deg);
+        pointer-events: none;
+        z-index: 0;
+      }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -8698,6 +8709,7 @@ function formatDateDisplay(val) {
               <!-- 1. Hồ sơ Giám định -->
               ${showList ? `
               <div class="menu-nav-card" onclick="switchWorkspaceTab('list')">
+                <svg class="bg-watermark" style="color: #2563eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                     <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(59,130,246,0.12); color: #2563eb; border: 1px solid rgba(59,130,246,0.25);">
@@ -8721,6 +8733,7 @@ function formatDateDisplay(val) {
               <!-- 2. Khởi tạo Hồ sơ Mới -->
               ${showCreate ? `
               <div class="menu-nav-card" onclick="switchWorkspaceTab('create')">
+                <svg class="bg-watermark" style="color: #059669;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                     <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(16,185,129,0.12); color: #059669; border: 1px solid rgba(16,185,129,0.25);">
@@ -8744,6 +8757,7 @@ function formatDateDisplay(val) {
               <!-- 3. Hồ sơ Bồi thường Tồn -->
               ${showPending ? `
               <div class="menu-nav-card" onclick="switchWorkspaceTab('pending')">
+                <svg class="bg-watermark" style="color: var(--primary-dark, #8a6425);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                     <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(216,180,109,0.16); color: var(--primary-dark, #8a6425); border: 1px solid rgba(216,180,109,0.32);">
@@ -8767,6 +8781,7 @@ function formatDateDisplay(val) {
               <!-- 4. Báo cáo & Thống kê GĐV -->
               ${showReport ? `
               <div class="menu-nav-card" onclick="switchWorkspaceTab('gdv_report')">
+                <svg class="bg-watermark" style="color: #7c3aed;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                     <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(168,85,247,0.12); color: #7c3aed; border: 1px solid rgba(168,85,247,0.25);">
@@ -8790,6 +8805,7 @@ function formatDateDisplay(val) {
               <!-- 5. Hồ sơ Kế toán -->
               ${showAccountingReview ? `
               <div class="menu-nav-card" onclick="switchWorkspaceTab('accounting_claims')">
+                <svg class="bg-watermark" style="color: #059669;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                     <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(16,185,129,0.12); color: #059669; border: 1px solid rgba(16,185,129,0.25);">
@@ -8813,6 +8829,7 @@ function formatDateDisplay(val) {
               <!-- 6. Chuyển giao Kế toán -->
               ${showAccountingView ? `
               <div class="menu-nav-card" onclick="switchWorkspaceTab('accounting_transfer')">
+                <svg class="bg-watermark" style="color: var(--primary-dark, #8a6425);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                     <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(216,180,109,0.16); color: var(--primary-dark, #8a6425); border: 1px solid rgba(216,180,109,0.32);">
@@ -8836,6 +8853,7 @@ function formatDateDisplay(val) {
               <!-- 7. TT Hiện trường -->
               ${showFieldReimb ? `
               <div class="menu-nav-card" onclick="switchWorkspaceTab('field_reimbursements')">
+                <svg class="bg-watermark" style="color: #d97706;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                     <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(245,158,11,0.14); color: #d97706; border: 1px solid rgba(245,158,11,0.28);">
@@ -8859,6 +8877,7 @@ function formatDateDisplay(val) {
               <!-- 8. Đề xuất Hủy Hồ sơ -->
               ${showCancellation ? `
               <div class="menu-nav-card" onclick="switchWorkspaceTab('claim_cancellation')">
+                <svg class="bg-watermark" style="color: #dc2626;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                     <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(239,68,68,0.12); color: #dc2626; border: 1px solid rgba(239,68,68,0.25);">
@@ -8882,6 +8901,7 @@ function formatDateDisplay(val) {
               <!-- 9. Quản trị System -->
               ${showAdmin ? `
               <div class="menu-nav-card" onclick="switchWorkspaceTab('users')">
+                <svg class="bg-watermark" style="color: var(--primary-dark, #8a6425);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
                 <div>
                   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                     <div style="width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(216,180,109,0.16); color: var(--primary-dark, #8a6425); border: 1px solid rgba(216,180,109,0.32);">
