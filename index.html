@@ -9083,8 +9083,9 @@ function formatDateDisplay(val) {
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px;">
             <!-- CARD 1: Tổng số -->
             <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.04)'" onclick="setCaseFilter('all')">
-              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.03; transform: scale(3);">
-                </div>
+              <div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0; color: var(--text-main);">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" fill="currentColor" fill-opacity="0.12"/><path d="M2 10h20M9 4v6M12 14h5M12 17h3" stroke-width="2.2"/></svg>
+              </div>
               <div style="position: relative; z-index: 2;">
                 <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">Tổng hồ sơ</span>
                 <div style=" font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
@@ -9094,9 +9095,9 @@ function formatDateDisplay(val) {
             </div>
             
             <!-- CARD 2: Đang chờ Garage -->
-            <div style="background: rgba(245,158,11,0.03); border: 1px solid rgba(245,158,11,0.2); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(245,158,11,0.05); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(245,158,11,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(245,158,11,0.05)'" onclick="setCaseFilter('pending')">
-              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.03; transform: scale(3); color: #f59e0b;">
-                ${SVGS.CLOCK}
+            <div style="background: linear-gradient(180deg, rgba(245,158,11,0.03) 0%, rgba(245,158,11,0.06) 100%), var(--surface); border: 1px solid rgba(245,158,11,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(245,158,11,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(245,158,11,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(245,158,11,0.04)'" onclick="setCaseFilter('pending')">
+              <div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: #f59e0b; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
               <div style="position: relative; z-index: 2;">
                 <span style="font-size: 11px; font-weight: 850; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
@@ -9110,9 +9111,9 @@ function formatDateDisplay(val) {
             </div>
             
             <!-- CARD 3: Đã có kết quả -->
-            <div style="background: rgba(16,185,129,0.03); border: 1px solid rgba(16,185,129,0.2); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(16,185,129,0.05); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(16,185,129,0.1)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(16,185,129,0.05)'" onclick="setCaseFilter('completed')">
-              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.03; transform: scale(3); color: #10b981;">
-                ${SVGS.CHECK_CIRCLE}
+            <div style="background: linear-gradient(180deg, rgba(16,185,129,0.03) 0%, rgba(16,185,129,0.06) 100%), var(--surface); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(16,185,129,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(16,185,129,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(16,185,129,0.04)'" onclick="setCaseFilter('completed')">
+              <div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: #10b981; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
               </div>
               <div style="position: relative; z-index: 2;">
                 <span style="font-size: 11px; font-weight: 850; color: #10b981; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
