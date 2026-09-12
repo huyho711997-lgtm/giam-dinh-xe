@@ -8299,7 +8299,11 @@ function formatDateDisplay(val) {
               </div>
             </td>
             <td style="width: 130px; text-align: right; padding-right: 15px; vertical-align: middle;">
-              <strong style="color: #10b981; font-size: 13.5px;">${item.ttbtTongSoTienBoiThuong ? formatCurrencyInputNumber(item.ttbtTongSoTienBoiThuong) + ' đ' : '-'}</strong>
+              <strong style="color: #10b981; font-size: 13.5px; display: block;" title="Số tiền bồi thường">${item.ttbtTongSoTienBoiThuong ? formatCurrencyInputNumber(item.ttbtTongSoTienBoiThuong) + ' đ' : '-'}</strong>
+              <div style="font-size: 11px; color: var(--text-soft); display: flex; flex-direction: column; align-items: flex-end; margin-top: 3px;" title="Dự phòng bồi thường (VNĐ)">
+                <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8; line-height: 1;">Dự phòng</span>
+                <span style="font-weight: 750; line-height: 1.2;">${item.duPhongBoiThuong && item.duPhongBoiThuong !== '0' && item.duPhongBoiThuong !== 0 ? formatCurrencyInputNumber(item.duPhongBoiThuong) + ' đ' : '-'}</span>
+              </div>
             </td>
             <td style="width: 145px;">
               <span style="font-size: 12.5px; font-weight: 750; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(item.gdvTiepNhan || 'Chưa phân công')}">${escapeHtmlOutput(item.gdvTiepNhan || 'Chưa phân công')}</span>
@@ -9343,7 +9347,10 @@ function formatDateDisplay(val) {
                       <th style="width: 180px;">Tên chủ xe</th>
                       <th style="width: 190px;">Hãng xe & Đơn vị cấp</th>
                       <th style="width: 260px; min-width: 200px;">Nội dung tổn thất & Địa điểm</th>
-                      <th style="width: 130px; text-align: right; padding-right: 15px;">Số tiền BT</th>
+                      <th style="width: 130px; text-align: right; padding-right: 15px;">
+                        Số tiền BT<br>
+                        <span style="font-size: 9px; opacity: 0.7; text-transform: uppercase; font-weight: 750;">&amp; Dự phòng</span>
+                      </th>
                       <th style="width: 145px;">Giám định viên</th>
                       <th style="width: 70px; text-align: center;">Thao tác</th>
                     </tr>
