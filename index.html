@@ -461,20 +461,25 @@
     .header-nav-btn svg {
       transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .header-nav-btn:hover,
+    .header-nav-btn:hover { 
+      color: var(--primary); 
+      background: transparent;
+      z-index: 10;
+    }
     .header-nav-dropdown-wrapper:hover .header-nav-btn { 
-      color: var(--text-main); 
+      color: var(--primary); 
       background: transparent; 
-      transform: scale(1.15) translateY(-1px);
+      transform: scale(1.04);
       z-index: 10;
     }
     .header-nav-btn:hover .nav-btn-text,
     .header-nav-dropdown-wrapper:hover .header-nav-btn .nav-btn-text {
-      text-shadow: 0 0 15px rgba(255, 255, 255, 0.6), 0 0 5px rgba(255, 255, 255, 0.3);
+      text-shadow: 0 0 15px rgba(216, 180, 109, 0.6), 0 0 5px rgba(216, 180, 109, 0.3);
     }
     .header-nav-btn:hover svg,
     .header-nav-dropdown-wrapper:hover .header-nav-btn svg {
-      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6));
+      filter: drop-shadow(0 0 8px rgba(216, 180, 109, 0.6));
+      transform: rotate(180deg);
     }
     .header-nav-btn.active { 
       background: transparent; 
