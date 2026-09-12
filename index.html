@@ -465,13 +465,20 @@
       text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
     }
     .header-nav-btn.active { 
-      background: linear-gradient(90deg, #6fdcd0, #36b1a3);
+      background: transparent; 
+      border-color: transparent; 
+    }
+    .header-nav-btn.active .nav-btn-text {
+      background: linear-gradient(90deg, #51dfcf, #2ca195);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       color: transparent; 
-      border-color: transparent; 
-      font-weight: 800;
-      text-shadow: 0 0 16px rgba(111, 220, 208, 0.3);
+      font-weight: 850;
+      filter: drop-shadow(0 0 8px rgba(81, 223, 207, 0.4));
+    }
+    .header-nav-btn.active svg {
+      color: #3bbcb0;
+      filter: drop-shadow(0 0 8px rgba(81, 223, 207, 0.4));
     }
     .header-nav-submenu {
       visibility: hidden;
