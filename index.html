@@ -5666,17 +5666,17 @@ let cachedCasesPayload = null;
           <!-- 3. KẾ TOÁN (DIRECT TAB BUTTONS - ROLE BASED) -->
           ${hasUserPermission('accounting', 'review') ? `
             <button id="headerNavAccountingClaimsBtn" class="header-nav-btn ${activeDashboardTab === 'accounting_claims' ? 'active' : ''}" onclick="navigateHeaderTab('accounting_claims')">
-              <span class="nav-btn-text">Hồ sơ Kế toán</span>
+              <span class="nav-btn-text">Hồ sơ thanh toán</span>
             </button>
           ` : ''}
           ${hasUserPermission('accounting', 'view') ? `
           <button id="headerNavAccountingBtn" class="header-nav-btn ${activeDashboardTab === 'accounting_transfer' ? 'active' : ''}" onclick="navigateHeaderTab('accounting_transfer')">
-            <span class="nav-btn-text">Chuyển giao Kế toán</span>
+            <span class="nav-btn-text">Chuyển hồ sơ</span>
           </button>
           ` : ''}
           ${hasUserPermission('field_reimb', 'view') ? `
           <button id="headerNavFieldReimbursementBtn" class="header-nav-btn ${activeDashboardTab === 'field_reimbursements' ? 'active' : ''}" onclick="navigateHeaderTab('field_reimbursements')">
-            <span class="nav-btn-text">TT hiện trường</span>
+            <span class="nav-btn-text">Hiện trường</span>
           </button>
           ` : ''}
 
