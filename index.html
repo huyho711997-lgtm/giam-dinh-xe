@@ -3514,8 +3514,6 @@
     top: 0;
     z-index: 2000;
     width: 100%;
-    display: flex;
-    justify-content: center;
     box-shadow: var(--shadow-sm);
     backdrop-filter: blur(24px) saturate(135%);
     background: linear-gradient(100deg, var(--surface) 0%, rgba(255,255,255,0.05) 100%);
@@ -3525,6 +3523,7 @@
   }
   .tasco-public-nav-inner {
     width: min(1660px, 96%);
+    margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -3565,6 +3564,15 @@
   }
   @media (min-width: 768px) {
     .tasco-public-nav-inner { padding: 12px 24px; }
+  }
+    @media (max-width: 1050px) {
+    .tasco-public-nav-inner {
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      padding-left: 4px !important;
+      padding-right: 4px !important;
+    }
   }
   @media (max-width: 1024px) {
     .tasco-public-nav-wrapper .nav-links-center { display: none; }
