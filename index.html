@@ -462,23 +462,25 @@
     .header-nav-btn:hover { 
       color: var(--text-main); 
       background: transparent; 
-      text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+    }
+    .header-nav-btn:hover .nav-btn-text {
+      text-shadow: 0 0 12px rgba(255, 255, 255, 0.4), 0 0 4px rgba(255, 255, 255, 0.2);
+    }
+    .header-nav-btn:hover svg {
+      filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
     }
     .header-nav-btn.active { 
       background: transparent; 
       border-color: transparent; 
     }
     .header-nav-btn.active .nav-btn-text {
-      background: linear-gradient(90deg, #51dfcf, #2ca195);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      color: transparent; 
-      font-weight: 850;
-      filter: drop-shadow(0 0 8px rgba(81, 223, 207, 0.4));
+      color: var(--primary);
+      font-weight: 800;
+      text-shadow: 0 0 14px rgba(216, 180, 109, 0.6), 0 0 4px rgba(216, 180, 109, 0.4);
     }
     .header-nav-btn.active svg {
-      color: #3bbcb0;
-      filter: drop-shadow(0 0 8px rgba(81, 223, 207, 0.4));
+      color: var(--primary);
+      filter: drop-shadow(0 0 6px rgba(216, 180, 109, 0.6));
     }
     .header-nav-submenu {
       visibility: hidden;
