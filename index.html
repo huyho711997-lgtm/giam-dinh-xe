@@ -5506,6 +5506,7 @@ let cachedCasesPayload = null;
       const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
       targetNode.innerHTML = `
         <div class="nav-user-zone">
+          <div style="width: 2px; height: 32px; background: linear-gradient(to bottom, transparent, rgba(216, 180, 109, 0.35), transparent); margin-right: 4px; margin-left: 8px;"></div>
           
           <!-- TOP NOTIFICATION BELL COMPONENT -->
           <div style="position: relative;" id="navNotificationWrapper">
@@ -8300,10 +8301,16 @@ function formatDateDisplay(val) {
             </td>
             <td style="width: 130px; text-align: right; padding-right: 15px; vertical-align: middle;">
               <strong style="color: #10b981; font-size: 13.5px; display: block;" title="Số tiền bồi thường">${item.ttbtTongSoTienBoiThuong ? formatCurrencyInputNumber(item.ttbtTongSoTienBoiThuong) + ' đ' : '-'}</strong>
-              <div style="font-size: 11px; color: var(--text-soft); display: flex; flex-direction: column; align-items: flex-end; margin-top: 3px;" title="Dự phòng bồi thường (VNĐ)">
-                <span style="font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.8; line-height: 1;">Dự phòng</span>
-                <span style="font-weight: 750; line-height: 1.2;">${item.duPhongBoiThuong && item.duPhongBoiThuong !== '0' && item.duPhongBoiThuong !== 0 ? formatCurrencyInputNumber(item.duPhongBoiThuong) + ' đ' : '-'}</span>
+              ${(item.duPhongBoiThuong && item.duPhongBoiThuong !== '0' && item.duPhongBoiThuong !== 0) ? `
+              <div style="display: flex; justify-content: flex-end; align-items: center; gap: 5px; margin-top: 6px;" title="Dự phòng bồi thường (VNĐ)">
+                <span style="font-size: 8.5px; font-weight: 850; padding: 2px 5px; border-radius: 4px; background: rgba(216,180,109,0.15); color: var(--primary); border: 1px solid rgba(216,180,109,0.3); letter-spacing: 0.04em; text-transform: uppercase; line-height: 1;">D.PHÒNG</span>
+                <span style="font-size: 11.5px; font-weight: 800; color: var(--text-soft); line-height: 1;">${formatCurrencyInputNumber(item.duPhongBoiThuong)} đ</span>
               </div>
+              ` : `
+              <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 6px;" title="Dự phòng bồi thường (VNĐ)">
+                <span style="font-size: 11.5px; font-weight: 800; color: var(--text-muted); line-height: 1;">-</span>
+              </div>
+              `}
             </td>
             <td style="width: 145px;">
               <span style="font-size: 12.5px; font-weight: 750; color: var(--text-main); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(item.gdvTiepNhan || 'Chưa phân công')}">${escapeHtmlOutput(item.gdvTiepNhan || 'Chưa phân công')}</span>
