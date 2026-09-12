@@ -459,14 +459,19 @@
       white-space: nowrap;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .header-nav-btn:hover { 
+    .header-nav-btn:hover,
+    .header-nav-dropdown-wrapper:hover .header-nav-btn { 
       color: var(--text-main); 
       background: transparent; 
+      transform: scale(1.12);
+      z-index: 10;
     }
-    .header-nav-btn:hover .nav-btn-text {
+    .header-nav-btn:hover .nav-btn-text,
+    .header-nav-dropdown-wrapper:hover .header-nav-btn .nav-btn-text {
       text-shadow: 0 0 12px rgba(255, 255, 255, 0.4), 0 0 4px rgba(255, 255, 255, 0.2);
     }
-    .header-nav-btn:hover svg {
+    .header-nav-btn:hover svg,
+    .header-nav-dropdown-wrapper:hover .header-nav-btn svg {
       filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.4));
     }
     .header-nav-btn.active { 
