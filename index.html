@@ -4299,7 +4299,7 @@ let cachedCasesPayload = null;
 
       const ACTION_BADGES = {
         'LOGIN': `<span class="badge-status" style="background: rgba(59,130,246,0.12); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.KEY} Đăng nhập</span>`,
-        'CREATE_CASE': `<span class="badge-status" style="background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.FOLDER} Tạo hồ sơ</span>`,
+        'CREATE_CASE': `<span class="badge-status" style="background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); display:inline-flex; align-items:center; gap:4px;">Tạo hồ sơ</span>`,
         'EDIT_CASE': `<span class="badge-status" style="background: rgba(216,180,109,0.12); color: var(--primary); border: 1px solid rgba(216,180,109,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.EDIT} Sửa hồ sơ</span>`,
         'GARAGE_SAVE_DRAFT': `<span class="badge-status" style="background: rgba(255,189,89,0.12); color: var(--warning); border: 1px solid rgba(255,189,89,0.3); display:inline-flex; align-items:center; gap:4px;">${SVGS.SAVE} Gara nháp</span>`,
         'GARAGE_SUBMIT': `<span class="badge-status" style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.4); display:inline-flex; align-items:center; gap:4px;">${SVGS.ROCKET} Gara gửi kết quả</span>`,
@@ -4805,7 +4805,7 @@ let cachedCasesPayload = null;
                 <div class="filter-pills" id="auditLogActionPills" style="display: flex; gap: 4px; margin: 0; background: var(--surface-soft); padding: 4px; border-radius: 10px; border: 1px solid var(--border); overflow-x: auto;">
                   <button class="filter-pill active" data-audit-filter="all" onclick="setAuditLogsFilter('all')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px;">Tất cả</button>
                   <button class="filter-pill" data-audit-filter="LOGIN" onclick="setAuditLogsFilter('LOGIN')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.KEY} <span>Đăng nhập</span></button>
-                  <button class="filter-pill" data-audit-filter="CREATE_CASE" onclick="setAuditLogsFilter('CREATE_CASE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.FOLDER} <span>Khởi tạo ca</span></button>
+                  <button class="filter-pill" data-audit-filter="CREATE_CASE" onclick="setAuditLogsFilter('CREATE_CASE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;"><span>Khởi tạo ca</span></button>
                   <button class="filter-pill" data-audit-filter="GARAGE" onclick="setAuditLogsFilter('GARAGE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.ROCKET} <span>Gara khai báo</span></button>
                   <button class="filter-pill" data-audit-filter="USER_MANAGE" onclick="setAuditLogsFilter('USER_MANAGE')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.USER} <span>Tài khoản</span></button>
                   <button class="filter-pill" data-audit-filter="SYSTEM_SETTING" onclick="setAuditLogsFilter('SYSTEM_SETTING')" style="padding: 6px 12px; font-size: 11.5px; border-radius: 8px; font-weight: 700; height: 30px; display: inline-flex; align-items: center; gap: 4px;">${SVGS.LOCK} <span>Hệ thống</span></button>
@@ -5579,14 +5579,13 @@ let cachedCasesPayload = null;
           
           <!-- 1. TRANG CHỦ -->
           <button id="headerNavHomeBtn" class="header-nav-btn ${homeActive}" onclick="navigateHeaderTab('home')">
-            ${SVGS.HOME} <span class="nav-btn-text">Trang chủ</span>
+            <span class="nav-btn-text">Trang chủ</span>
           </button>
 
           <!-- 2. QUẢN LÝ HỒ SƠ DROPDOWN GROUP (NƠI CHỨA BÁO CÁO GĐV & CÁC CHỨC NĂNG HỒ SƠ) -->
           ${showGroup1 ? `
           <div class="header-nav-dropdown-wrapper">
             <button type="button" class="header-nav-btn ${isGroup1Active ? 'active' : ''}" onclick="toggleHeaderSubmenu(event, 'submenuClaimMgmt')">
-              ${SVGS.FOLDER}
               <span class="nav-btn-text">Quản lý Hồ sơ</span>
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left: 2px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
@@ -5641,19 +5640,16 @@ let cachedCasesPayload = null;
           <!-- 3. KẾ TOÁN (DIRECT TAB BUTTONS - ROLE BASED) -->
           ${hasUserPermission('accounting', 'review') ? `
             <button id="headerNavAccountingClaimsBtn" class="header-nav-btn ${activeDashboardTab === 'accounting_claims' ? 'active' : ''}" onclick="navigateHeaderTab('accounting_claims')">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
               <span class="nav-btn-text">Hồ sơ Kế toán</span>
             </button>
           ` : ''}
           ${hasUserPermission('accounting', 'view') ? `
           <button id="headerNavAccountingBtn" class="header-nav-btn ${activeDashboardTab === 'accounting_transfer' ? 'active' : ''}" onclick="navigateHeaderTab('accounting_transfer')">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="18" y2="8"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="6" y1="16" x2="12" y2="16"></line></svg>
             <span class="nav-btn-text">Chuyển giao Kế toán</span>
           </button>
           ` : ''}
           ${hasUserPermission('field_reimb', 'view') ? `
           <button id="headerNavFieldReimbursementBtn" class="header-nav-btn ${activeDashboardTab === 'field_reimbursements' ? 'active' : ''}" onclick="navigateHeaderTab('field_reimbursements')">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
             <span class="nav-btn-text">TT hiện trường</span>
           </button>
           ` : ''}
@@ -5662,7 +5658,6 @@ let cachedCasesPayload = null;
           ${hasUserPermission('users', 'view') ? `
           <div class="header-nav-dropdown-wrapper">
             <button type="button" class="header-nav-btn ${isGroup3Active ? 'active' : ''}" onclick="toggleHeaderSubmenu(event, 'submenuSystemAdmin')">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
               <span class="nav-btn-text">Quản trị System</span>
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left: 2px;"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
@@ -6934,7 +6929,7 @@ let cachedCasesPayload = null;
         return;
       }
 
-      document.getElementById('lblExcelFileName').innerHTML = `${SVGS.FOLDER} <span>Đang đọc tệp: ${escapeHtmlOutput(file.name)}...</span>`;
+      document.getElementById('lblExcelFileName').innerHTML = `<span>Đang đọc tệp: ${escapeHtmlOutput(file.name)}...</span>`;
 
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -9053,8 +9048,7 @@ function formatDateDisplay(val) {
             <!-- CARD 1: Tổng số -->
             <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.04)'" onclick="setCaseFilter('all')">
               <div style="position: absolute; right: -12px; top: -12px; opacity: 0.03; transform: scale(3);">
-                ${SVGS.FOLDER}
-              </div>
+                </div>
               <div style="position: relative; z-index: 2;">
                 <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">Tổng hồ sơ</span>
                 <div style=" font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
@@ -9380,8 +9374,7 @@ function formatDateDisplay(val) {
                   <div class="creation-option-card" onclick="switchCreateFlow('excel')">
                     <div class="creation-card-watermark">02</div>
                     <div class="creation-card-icon-wrap" style="background: rgba(216,180,109,0.08); color: var(--primary);">
-                      ${SVGS.FOLDER}
-                    </div>
+                      </div>
                     <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; line-height: 1.4;">2. Bổ sung hình ảnh theo hạng mục chỉ định</h3>
                     <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 28px; min-height: 60px; max-width: 280px;">
                       Phù hợp khi đã có báo giá hoặc danh sách hạng mục cần đối chiếu. Nhập tay hoặc dán cột hàng loạt từ Microsoft Excel.
@@ -9483,7 +9476,7 @@ function formatDateDisplay(val) {
                   </div>
                   <div class="form-group" style="margin:0;">
                     <label>Garage sửa chữa phụ trách</label>
-                    <div class="input-shell"><span class="field-prefix">${SVGS.FOLDER}</span><input id="txtGaragePartner" class="input-premium" type="text" placeholder="Tên đơn vị sửa chữa" autocomplete="off" /></div>
+                    <div class="input-shell"><span class="field-prefix"></span><input id="txtGaragePartner" class="input-premium" type="text" placeholder="Tên đơn vị sửa chữa" autocomplete="off" /></div>
                   </div>
                 </div>
 
@@ -9623,7 +9616,7 @@ function formatDateDisplay(val) {
                   </div>
                   <div class="form-group" style="margin:0;">
                     <label>Garage sửa chữa phụ trách</label>
-                    <div class="input-shell"><span class="field-prefix">${SVGS.FOLDER}</span><input id="txtGaragePartner" class="input-premium" type="text" placeholder="Tên đơn vị sửa chữa" autocomplete="off" /></div>
+                    <div class="input-shell"><span class="field-prefix"></span><input id="txtGaragePartner" class="input-premium" type="text" placeholder="Tên đơn vị sửa chữa" autocomplete="off" /></div>
                   </div>
                 </div>
 
