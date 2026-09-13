@@ -27123,7 +27123,33 @@ async function saveCarplaSourceExclusions() {
       // Gather context (current stats and summary of what is happening)
       const totalHs = document.getElementById('lblTotalCases')?.innerText || 0;
       const dnxnHs = document.getElementById('lblDaXacNhanCases')?.innerText || 0;
-      const contextPrompt = `Tôi đang thao tác trên phần mềm TASCO DLK. Thông tin vắn tắt: Tổng số hồ sơ: ${totalHs}, Đã xác nhận: ${dnxnHs}.`;
+      
+      let rawDataSummary = '';
+      try {
+          if (typeof cachedPendingClaimsPayload !== 'undefined' && cachedPendingClaimsPayload) {
+              const miniPending = Object.values(cachedPendingClaimsPayload).map(p => ({
+                  bienSo: p.hoSoBoiThuong?.bienSo || p.bienSo,
+                  gdv: p.gdvName || p.hoSoBoiThuong?.gdvName,
+                  ngayDuKien: p.ngayDuKien,
+                  trangThai: p.trangThaiThucTe || p.hoSoBoiThuong?.trangThaiHoSo
+              }));
+              rawDataSummary += 'Danh sách Hồ sơ Tồn: ' + JSON.stringify(miniPending) + '. ';
+          }
+          if (typeof cachedCasesPayload !== 'undefined' && cachedCasesPayload) {
+              const miniCases = Object.values(cachedCasesPayload).map(c => ({
+                  bienSo: c.bienSo,
+                  gdv: c.nguoiTao?.tenHienThi,
+                  gara: c.tenGara,
+                  trangThai: c.trangThai
+              }));
+              rawDataSummary += 'Danh sách Hồ sơ Giám định: ' + JSON.stringify(miniCases) + '. ';
+          }
+      } catch(err) { console.error('Error stringifying context data', err); }
+      
+      // Limit raw data size to avoid payload too large (approx 50,000 chars)
+      if (rawDataSummary.length > 50000) rawDataSummary = rawDataSummary.substring(0, 50000) + '...[bị cắt bớt do quá dài]';
+
+      const contextPrompt = `Tôi đang thao tác trên phần mềm TASCO DLK. Thông tin vắn tắt: Tổng số hồ sơ: ${totalHs}, Đã xác nhận: ${dnxnHs}. Dữ liệu hệ thống hiện tại (bạn hãy dùng dữ liệu này để thống kê, đếm số lượng hoặc trả lời nếu user hỏi về người nào, hồ sơ, biển số): \n\n${rawDataSummary}`;
       
       const payload = {
         system_instruction: {
