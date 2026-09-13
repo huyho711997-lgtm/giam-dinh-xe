@@ -8139,44 +8139,67 @@ function formatDateDisplay(val) {
         const statPending = statTotal - statCompleted;
         const statRate = statTotal > 0 ? Math.round((statCompleted / statTotal) * 100) : 100;
 
-        statsContainer.innerHTML = `
-          <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(216,180,109,0.3); background: linear-gradient(135deg, rgba(216,180,109,0.08) 0%, rgba(216,180,109,0.02) 100%); transition: all 0.25s ease; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">${titleTotal}</span>
-              <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(216,180,109,0.15); color: var(--primary); display: grid; place-items: center; flex-shrink: 0;">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-              </div>
-            </div>
-            <strong style="display: block; font-size: 26px; color: var(--primary);  margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(statTotal).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
-          </div>
-          <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(16,185,129,0.3); background: linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.02) 100%); transition: all 0.25s ease; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">${titleCompleted}</span>
-              <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(16,185,129,0.15); color: #10b981; display: grid; place-items: center; flex-shrink: 0;">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              </div>
-            </div>
-            <strong style="display: block; font-size: 26px; color: #10b981;  margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(statCompleted).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
-          </div>
-          <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(239,68,68,0.3); background: linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.02) 100%); transition: all 0.25s ease; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">${titlePending}</span>
-              <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(239,68,68,0.15); color: #ef4444; display: grid; place-items: center; flex-shrink: 0;">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              </div>
-            </div>
-            <strong style="display: block; font-size: 26px; color: #ef4444;  margin-top: 8px; font-weight: 800; line-height: 1.1;">${String(statPending).padStart(2,'0')} <span style="font-size: 14px; font-weight: 750; font-family: inherit;">ca</span></strong>
-          </div>
-          <div class="p-card stat-widget" style="padding: 18px 20px; border-radius: 16px; border: 1px solid rgba(59,130,246,0.3); background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(59,130,246,0.02) 100%); transition: all 0.25s ease; box-shadow: var(--shadow-sm);">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em;">${titleRate}</span>
-              <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(59,130,246,0.15); color: #3b82f6; display: grid; place-items: center; flex-shrink: 0;">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-              </div>
-            </div>
-            <strong style="display: block; font-size: 26px; color: #3b82f6;  margin-top: 8px; font-weight: 800; line-height: 1.1;">${statRate}%</strong>
-          </div>
-        `;
+statsContainer.innerHTML = `
+<div style="background: linear-gradient(180deg, rgba(216,180,109,0.03) 0%, rgba(216,180,109,0.06) 100%), var(--surface); border: 1px solid rgba(216,180,109,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(216,180,109,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(216,180,109,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(216,180,109,0.04)'">
+<div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: var(--primary); transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
+<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+</div>
+<div style="position: relative; z-index: 2;">
+<span style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
+<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+${titleTotal}
+</span>
+<div style=" font-size: 28px; font-weight: 900; color: var(--primary); display: flex; align-items: baseline; gap: 6px;">
+${String(statTotal).padStart(2,'0')} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">ca</span>
+</div>
+</div>
+</div>
+
+<div style="background: linear-gradient(180deg, rgba(16,185,129,0.03) 0%, rgba(16,185,129,0.06) 100%), var(--surface); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(16,185,129,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(16,185,129,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(16,185,129,0.04)'">
+<div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: #10b981; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
+<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+</div>
+<div style="position: relative; z-index: 2;">
+<span style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: #10b981; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
+<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+${titleCompleted}
+</span>
+<div style=" font-size: 28px; font-weight: 900; color: #10b981; display: flex; align-items: baseline; gap: 6px;">
+${String(statCompleted).padStart(2,'0')} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">ca</span>
+</div>
+</div>
+</div>
+
+<div style="background: linear-gradient(180deg, rgba(239,68,68,0.03) 0%, rgba(239,68,68,0.06) 100%), var(--surface); border: 1px solid rgba(239,68,68,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(239,68,68,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(239,68,68,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(239,68,68,0.04)'">
+<div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: #ef4444; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
+<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+</div>
+<div style="position: relative; z-index: 2;">
+<span style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: #ef4444; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
+<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+${titlePending}
+</span>
+<div style=" font-size: 28px; font-weight: 900; color: #ef4444; display: flex; align-items: baseline; gap: 6px;">
+${String(statPending).padStart(2,'0')} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">ca</span>
+</div>
+</div>
+</div>
+
+<div style="background: linear-gradient(180deg, rgba(59,130,246,0.03) 0%, rgba(59,130,246,0.06) 100%), var(--surface); border: 1px solid rgba(59,130,246,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(59,130,246,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(59,130,246,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(59,130,246,0.04)'">
+<div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: #3b82f6; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
+<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+</div>
+<div style="position: relative; z-index: 2;">
+<span style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
+<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+${titleRate}
+</span>
+<div style=" font-size: 28px; font-weight: 900; color: #3b82f6; display: flex; align-items: baseline; gap: 6px;">
+${statRate}%
+</div>
+</div>
+</div>
+`;
       }
 
       // Prepare full GDV Team list for quick row switching
