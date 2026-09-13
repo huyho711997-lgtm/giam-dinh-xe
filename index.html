@@ -19584,7 +19584,300 @@ ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--te
 
       const iframeDoc = iframe.contentWindow.document;
       iframeDoc.open();
-      iframeDoc.write('<html><head><title>In Phieu Ban Giao</title></head><body>' + printHtml + '</body></html>');
+      iframeDoc.write('<html><head><title>In Phieu Ban Giao</title></head><body>' + printHtml + '
+<!-- TASCO AI ASSISTANT -->
+<style>
+  #tasco-ai-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, #b89151 100%);
+    box-shadow: 0 8px 24px rgba(216,180,109,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9999;
+    color: white;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #tasco-ai-btn:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 12px 30px rgba(216,180,109,0.7);
+  }
+  #tasco-ai-panel {
+    position: fixed;
+    bottom: 105px;
+    right: 24px;
+    width: 380px;
+    height: 600px;
+    max-height: 80vh;
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    border: 1px solid var(--border-strong);
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;
+    overflow: hidden;
+    transform-origin: bottom right;
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #tasco-ai-panel.active {
+    transform: scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .tasco-ai-header {
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--primary) 0%, #b89151 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .tasco-ai-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--bg-main);
+  }
+  .tasco-ai-footer {
+    padding: 14px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tasco-ai-input {
+    flex: 1;
+    border: 1px solid var(--border-strong);
+    border-radius: 24px;
+    padding: 12px 18px;
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--text-main);
+    outline: none;
+    transition: all 0.2s;
+  }
+  .tasco-ai-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(216,180,109,0.2);
+  }
+  .tasco-ai-send {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tasco-ai-send:hover {
+    background: #b89151;
+    transform: scale(1.05);
+  }
+  .msg-bubble {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    box-shadow: var(--shadow-sm);
+  }
+  .msg-user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--primary) 0%, #b89151 100%);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-ai {
+    align-self: flex-start;
+    background: var(--surface);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+  }
+  .msg-ai p { margin: 0 0 8px 0; }
+  .msg-ai p:last-child { margin: 0; }
+  
+  /* Loading animation */
+  .typing-indicator {
+    display: flex;
+    gap: 5px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    border-bottom-left-radius: 4px;
+    align-self: flex-start;
+    width: max-content;
+  }
+  .typing-indicator span {
+    width: 6px;
+    height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out both;
+  }
+  .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+  .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes typing {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+  }
+  /* Scrollbar cho Chat */
+  .tasco-ai-body::-webkit-scrollbar { width: 6px; }
+  .tasco-ai-body::-webkit-scrollbar-track { background: transparent; }
+  .tasco-ai-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+</style>
+
+<div id="tasco-ai-btn" onclick="toggleTascoAI()">
+  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    <path d="M12 9v2"></path><path d="M9 12h6"></path>
+    <circle cx="12" cy="12" r="7"></circle>
+  </svg>
+</div>
+
+<div id="tasco-ai-panel">
+  <div class="tasco-ai-header">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 12 2.1 7.1"></path><path d="M12 12l9.9 4.9"></path></svg>
+      <span style="font-weight: 800; font-size: 16px;">TASCO AI</span>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <button onclick="setGeminiApiKey()" title="Cài đặt API Key" style="background: none; border: none; color: white; cursor: pointer; opacity: 0.8; padding: 0;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+      <button onclick="toggleTascoAI()" title="Đóng" style="background: none; border: none; color: white; cursor: pointer; opacity: 0.8; padding: 0;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+  </div>
+  <div class="tasco-ai-body" id="tasco-ai-body">
+    <div class="msg-bubble msg-ai">
+      Xin chào! Tôi là <b>TASCO AI</b> - Trợ lý ảo của hệ thống.<br><br>Hãy nhập yêu cầu hoặc câu hỏi của bạn. Để sử dụng, vui lòng thiết lập API Key của Gemini bản Free bằng cách nhấn vào nút ⚙️ góc trên!
+    </div>
+  </div>
+  <div class="tasco-ai-footer">
+    <input type="text" id="tasco-ai-input" class="tasco-ai-input" placeholder="Nhập câu hỏi của bạn..." onkeypress="if(event.key === 'Enter') sendTascoAIMessage()">
+    <button class="tasco-ai-send" onclick="sendTascoAIMessage()">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  let tascoAIChatHistory = [];
+  
+  function toggleTascoAI() {
+    document.getElementById('tasco-ai-panel').classList.toggle('active');
+  }
+
+  function setGeminiApiKey() {
+    const currentKey = localStorage.getItem('gemini_api_key') || '';
+    const key = prompt('Nhập API Key Gemini (Lấy từ Google AI Studio):', currentKey);
+    if (key !== null) {
+      localStorage.setItem('gemini_api_key', key.trim());
+      alert('Đã lưu API Key thành công!');
+    }
+  }
+
+  async function sendTascoAIMessage() {
+    const inputEl = document.getElementById('tasco-ai-input');
+    const msg = inputEl.value.trim();
+    if (!msg) return;
+
+    const apiKey = localStorage.getItem('gemini_api_key');
+    if (!apiKey) {
+      alert('Vui lòng cài đặt Gemini API Key (nút ⚙️) trước khi sử dụng!');
+      return;
+    }
+
+    // Add user message
+    appendTascoAIMessage('user', msg);
+    inputEl.value = '';
+
+    // Typing indicator
+    const typingId = 'typing-' + Date.now();
+    const body = document.getElementById('tasco-ai-body');
+    body.insertAdjacentHTML('beforeend', `<div id="${typingId}" class="typing-indicator"><span></span><span></span><span></span></div>`);
+    body.scrollTop = body.scrollHeight;
+
+    try {
+      // Gather context (current stats and summary of what is happening)
+      const totalHs = document.getElementById('lblTotalCases')?.innerText || 0;
+      const dnxnHs = document.getElementById('lblDaXacNhanCases')?.innerText || 0;
+      const contextPrompt = `Tôi đang thao tác trên phần mềm TASCO DLK. Thông tin vắn tắt: Tổng số hồ sơ: ${totalHs}, Đã xác nhận: ${dnxnHs}.`;
+      
+      const payload = {
+        system_instruction: {
+          parts: [{ text: "Bạn là TASCO AI - Trợ lý ảo thông minh của hệ thống quản lý hồ sơ bồi thường xe cơ giới TASCO DLK. Hãy trả lời ngắn gọn, lịch sự, chuyên nghiệp bằng tiếng Việt và hỗ trợ người dùng hết mình dựa trên ngữ cảnh được cung cấp." }]
+        },
+        contents: [
+          ...tascoAIChatHistory,
+          { role: "user", parts: [{ text: `[Ngữ cảnh hệ thống hiện tại: ${contextPrompt}]
+
+Câu hỏi của tôi: ${msg}` }] }
+        ]
+      };
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await response.json();
+      document.getElementById(typingId).remove();
+      
+      if (data.error) {
+        appendTascoAIMessage('ai', `Lỗi kết nối API: ${data.error.message}`);
+      } else {
+        const replyText = data.candidates[0].content.parts[0].text;
+        appendTascoAIMessage('ai', formatTascoAIText(replyText));
+        
+        tascoAIChatHistory.push({ role: "user", parts: [{ text: msg }] });
+        tascoAIChatHistory.push({ role: "model", parts: [{ text: replyText }] });
+      }
+    } catch (e) {
+      const typingEl = document.getElementById(typingId);
+      if (typingEl) typingEl.remove();
+      appendTascoAIMessage('ai', `Không thể kết nối đến máy chủ AI: ${e.message}`);
+    }
+  }
+
+  function appendTascoAIMessage(role, htmlContent) {
+    const body = document.getElementById('tasco-ai-body');
+    const div = document.createElement('div');
+    div.className = `msg-bubble msg-${role}`;
+    div.innerHTML = htmlContent;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function formatTascoAIText(text) {
+    let formatted = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                        .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                        .replace(/\n/g, '<br>');
+    return formatted;
+  }
+</script>
+<!-- /TASCO AI ASSISTANT -->
+
+</body></html>');
       iframeDoc.close();
 
       setTimeout(() => {
@@ -26883,6 +27176,299 @@ async function saveCarplaSourceExclusions() {
       }
     }
 </script>
+
+<!-- TASCO AI ASSISTANT -->
+<style>
+  #tasco-ai-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, #b89151 100%);
+    box-shadow: 0 8px 24px rgba(216,180,109,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9999;
+    color: white;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #tasco-ai-btn:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 12px 30px rgba(216,180,109,0.7);
+  }
+  #tasco-ai-panel {
+    position: fixed;
+    bottom: 105px;
+    right: 24px;
+    width: 380px;
+    height: 600px;
+    max-height: 80vh;
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    border: 1px solid var(--border-strong);
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;
+    overflow: hidden;
+    transform-origin: bottom right;
+    transform: scale(0);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #tasco-ai-panel.active {
+    transform: scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .tasco-ai-header {
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--primary) 0%, #b89151 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .tasco-ai-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--bg-main);
+  }
+  .tasco-ai-footer {
+    padding: 14px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tasco-ai-input {
+    flex: 1;
+    border: 1px solid var(--border-strong);
+    border-radius: 24px;
+    padding: 12px 18px;
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--text-main);
+    outline: none;
+    transition: all 0.2s;
+  }
+  .tasco-ai-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(216,180,109,0.2);
+  }
+  .tasco-ai-send {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tasco-ai-send:hover {
+    background: #b89151;
+    transform: scale(1.05);
+  }
+  .msg-bubble {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
+    box-shadow: var(--shadow-sm);
+  }
+  .msg-user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--primary) 0%, #b89151 100%);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-ai {
+    align-self: flex-start;
+    background: var(--surface);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+  }
+  .msg-ai p { margin: 0 0 8px 0; }
+  .msg-ai p:last-child { margin: 0; }
+  
+  /* Loading animation */
+  .typing-indicator {
+    display: flex;
+    gap: 5px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    border-bottom-left-radius: 4px;
+    align-self: flex-start;
+    width: max-content;
+  }
+  .typing-indicator span {
+    width: 6px;
+    height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: typing 1.4s infinite ease-in-out both;
+  }
+  .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+  .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes typing {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+  }
+  /* Scrollbar cho Chat */
+  .tasco-ai-body::-webkit-scrollbar { width: 6px; }
+  .tasco-ai-body::-webkit-scrollbar-track { background: transparent; }
+  .tasco-ai-body::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
+</style>
+
+<div id="tasco-ai-btn" onclick="toggleTascoAI()">
+  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    <path d="M12 9v2"></path><path d="M9 12h6"></path>
+    <circle cx="12" cy="12" r="7"></circle>
+  </svg>
+</div>
+
+<div id="tasco-ai-panel">
+  <div class="tasco-ai-header">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"></path><path d="M12 12 2.1 7.1"></path><path d="M12 12l9.9 4.9"></path></svg>
+      <span style="font-weight: 800; font-size: 16px;">TASCO AI</span>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <button onclick="setGeminiApiKey()" title="Cài đặt API Key" style="background: none; border: none; color: white; cursor: pointer; opacity: 0.8; padding: 0;"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+      <button onclick="toggleTascoAI()" title="Đóng" style="background: none; border: none; color: white; cursor: pointer; opacity: 0.8; padding: 0;"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+    </div>
+  </div>
+  <div class="tasco-ai-body" id="tasco-ai-body">
+    <div class="msg-bubble msg-ai">
+      Xin chào! Tôi là <b>TASCO AI</b> - Trợ lý ảo của hệ thống.<br><br>Hãy nhập yêu cầu hoặc câu hỏi của bạn. Để sử dụng, vui lòng thiết lập API Key của Gemini bản Free bằng cách nhấn vào nút ⚙️ góc trên!
+    </div>
+  </div>
+  <div class="tasco-ai-footer">
+    <input type="text" id="tasco-ai-input" class="tasco-ai-input" placeholder="Nhập câu hỏi của bạn..." onkeypress="if(event.key === 'Enter') sendTascoAIMessage()">
+    <button class="tasco-ai-send" onclick="sendTascoAIMessage()">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+  let tascoAIChatHistory = [];
+  
+  function toggleTascoAI() {
+    document.getElementById('tasco-ai-panel').classList.toggle('active');
+  }
+
+  function setGeminiApiKey() {
+    const currentKey = localStorage.getItem('gemini_api_key') || '';
+    const key = prompt('Nhập API Key Gemini (Lấy từ Google AI Studio):', currentKey);
+    if (key !== null) {
+      localStorage.setItem('gemini_api_key', key.trim());
+      alert('Đã lưu API Key thành công!');
+    }
+  }
+
+  async function sendTascoAIMessage() {
+    const inputEl = document.getElementById('tasco-ai-input');
+    const msg = inputEl.value.trim();
+    if (!msg) return;
+
+    const apiKey = localStorage.getItem('gemini_api_key');
+    if (!apiKey) {
+      alert('Vui lòng cài đặt Gemini API Key (nút ⚙️) trước khi sử dụng!');
+      return;
+    }
+
+    // Add user message
+    appendTascoAIMessage('user', msg);
+    inputEl.value = '';
+
+    // Typing indicator
+    const typingId = 'typing-' + Date.now();
+    const body = document.getElementById('tasco-ai-body');
+    body.insertAdjacentHTML('beforeend', `<div id="${typingId}" class="typing-indicator"><span></span><span></span><span></span></div>`);
+    body.scrollTop = body.scrollHeight;
+
+    try {
+      // Gather context (current stats and summary of what is happening)
+      const totalHs = document.getElementById('lblTotalCases')?.innerText || 0;
+      const dnxnHs = document.getElementById('lblDaXacNhanCases')?.innerText || 0;
+      const contextPrompt = `Tôi đang thao tác trên phần mềm TASCO DLK. Thông tin vắn tắt: Tổng số hồ sơ: ${totalHs}, Đã xác nhận: ${dnxnHs}.`;
+      
+      const payload = {
+        system_instruction: {
+          parts: [{ text: "Bạn là TASCO AI - Trợ lý ảo thông minh của hệ thống quản lý hồ sơ bồi thường xe cơ giới TASCO DLK. Hãy trả lời ngắn gọn, lịch sự, chuyên nghiệp bằng tiếng Việt và hỗ trợ người dùng hết mình dựa trên ngữ cảnh được cung cấp." }]
+        },
+        contents: [
+          ...tascoAIChatHistory,
+          { role: "user", parts: [{ text: `[Ngữ cảnh hệ thống hiện tại: ${contextPrompt}]
+
+Câu hỏi của tôi: ${msg}` }] }
+        ]
+      };
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await response.json();
+      document.getElementById(typingId).remove();
+      
+      if (data.error) {
+        appendTascoAIMessage('ai', `Lỗi kết nối API: ${data.error.message}`);
+      } else {
+        const replyText = data.candidates[0].content.parts[0].text;
+        appendTascoAIMessage('ai', formatTascoAIText(replyText));
+        
+        tascoAIChatHistory.push({ role: "user", parts: [{ text: msg }] });
+        tascoAIChatHistory.push({ role: "model", parts: [{ text: replyText }] });
+      }
+    } catch (e) {
+      const typingEl = document.getElementById(typingId);
+      if (typingEl) typingEl.remove();
+      appendTascoAIMessage('ai', `Không thể kết nối đến máy chủ AI: ${e.message}`);
+    }
+  }
+
+  function appendTascoAIMessage(role, htmlContent) {
+    const body = document.getElementById('tasco-ai-body');
+    const div = document.createElement('div');
+    div.className = `msg-bubble msg-${role}`;
+    div.innerHTML = htmlContent;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function formatTascoAIText(text) {
+    let formatted = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                        .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                        .replace(/\n/g, '<br>');
+    return formatted;
+  }
+</script>
+<!-- /TASCO AI ASSISTANT -->
+
 </body>
 </html>
 
