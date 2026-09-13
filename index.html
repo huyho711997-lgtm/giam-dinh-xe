@@ -27088,8 +27088,8 @@ async function saveCarplaSourceExclusions() {
   function setGeminiApiKey() {
     const currentKey = localStorage.getItem('gemini_api_key') || '';
     const key = prompt('Nhập API Key Gemini (Lấy từ Google AI Studio):', currentKey);
-    const currentModel = localStorage.getItem('gemini_model_name') || 'gemini-pro';
-    const model = prompt('Nhập tên Model (VD: gemini-2.0-flash, gemini-pro...):', currentModel);
+    const currentModel = localStorage.getItem('gemini_model_name') || 'gemini-2.5-pro';
+    const model = prompt('Nhập tên Model (VD: gemini-2.5-flash, gemini-2.5-pro...):', currentModel);
     if (key !== null) {
       localStorage.setItem('gemini_api_key', key.trim());
       if (model !== null) localStorage.setItem('gemini_model_name', model.trim());
@@ -27103,7 +27103,7 @@ async function saveCarplaSourceExclusions() {
     if (!msg) return;
 
     const apiKey = localStorage.getItem('gemini_api_key');
-    const modelName = localStorage.getItem('gemini_model_name') || 'gemini-pro';
+    const modelName = localStorage.getItem('gemini_model_name') || 'gemini-2.5-pro';
     if (!apiKey) {
       alert('Vui lòng cài đặt Gemini API Key (nút ⚙️) trước khi sử dụng!');
       return;
