@@ -17793,75 +17793,72 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
 
           <!-- SUMMARY METRIC STATS CARDS -->
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px;">
-            <!-- CARD 1: Tổng số -->
-            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.04)'">
-              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.03; transform: scale(3);">
-                ${ACC_SVGS.FOLDER}
-              </div>
-              <div style="position: relative; z-index: 2;">
-                <span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 8px;">Tổng số hồ sơ đã nhận</span>
-                <div style=" font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
-                  ${statTotal} <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); ">hồ sơ</span>
-                </div>
-              </div>
-            </div>
+<!-- CARD 1: Tổng số -->
+<div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.04)'">
+<div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0; color: var(--text-main);">
+${ACC_SVGS.FOLDER}
+</div>
+<div style="position: relative; z-index: 2;">
+<span style="font-size: 11px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+Tổng số hồ sơ đã nhận
+</span>
+<div style=" font-size: 28px; font-weight: 900; color: var(--text-main); display: flex; align-items: baseline; gap: 6px;">
+${statTotal} <span style="font-size: 13px; font-weight: 700; color: var(--text-muted); ">hồ sơ</span>
+</div>
+</div>
+</div>
 
-            <!-- CARD 2: Đã xác nhận -->
-            <div style="background: linear-gradient(180deg, rgba(16,185,129,0.03) 0%, rgba(16,185,129,0.06) 100%), var(--surface); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(16,185,129,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(16,185,129,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(16,185,129,0.04)'">
-              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.05; color: #10b981; transform: scale(3);">
-                ${ACC_SVGS.CHECK_CIRCLE}
-              </div>
-              <div style="position: relative; z-index: 2;">
-                <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: #10b981; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
-                  <div style="width: 22px; height: 22px; border-radius: 6px; background: rgba(16,185,129,0.15); display: grid; place-items: center;">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                  </div>
-                  <span>Đã xác nhận</span>
-                </div>
-                <div style=" font-size: 28px; font-weight: 900; color: #10b981; display: flex; align-items: baseline; gap: 6px;">
-                  ${statDaXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">hồ sơ</span>
-                </div>
-              </div>
-            </div>
+<!-- CARD 2: Đã xác nhận -->
+<div style="background: linear-gradient(180deg, rgba(16,185,129,0.03) 0%, rgba(16,185,129,0.06) 100%), var(--surface); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(16,185,129,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(16,185,129,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(16,185,129,0.04)'">
+<div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: #10b981; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
+${ACC_SVGS.CHECK_CIRCLE}
+</div>
+<div style="position: relative; z-index: 2;">
+<span style="font-size: 11px; font-weight: 850; color: #10b981; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+Đã xác nhận
+</span>
+<div style=" font-size: 28px; font-weight: 900; color: #10b981; display: flex; align-items: baseline; gap: 6px;">
+${statDaXacNhan} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">hồ sơ</span>
+</div>
+</div>
+</div>
 
-            <!-- CARD 3: Yêu cầu bổ sung -->
-            <div style="background: ${statCanBoSung > 0 ? 'linear-gradient(180deg, rgba(239,68,68,0.05) 0%, rgba(239,68,68,0.1) 100%)' : 'var(--surface)'}; border: 1px solid ${statCanBoSung > 0 ? 'rgba(239,68,68,0.4)' : 'var(--border-strong)'}; border-radius: 16px; padding: 16px 20px; box-shadow: ${statCanBoSung > 0 ? '0 2px 12px rgba(239,68,68,0.08)' : '0 2px 10px rgba(0,0,0,0.04)'}; position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" ${statCanBoSung > 0 ? `onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(239,68,68,0.18)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 12px rgba(239,68,68,0.08)'"` : `onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.04)'"`}>
-              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.05; color: #ef4444; transform: scale(3);">
-                ${ACC_SVGS.WARNING}
-              </div>
-              <div style="position: relative; z-index: 2;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                  <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: #ef4444; text-transform: uppercase; letter-spacing: 0.06em;">
-                    <div style="width: 22px; height: 22px; border-radius: 6px; background: rgba(239,68,68,0.15); display: grid; place-items: center;">
-                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    </div>
-                    <span>Yêu cầu bổ sung</span>
-                  </div>
-                  ${statCanBoSung > 0 ? `<div style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: pulseRed 2s infinite;"></div>` : ''}
-                </div>
-                <div style=" font-size: 28px; font-weight: 900; color: #ef4444; display: flex; align-items: baseline; gap: 6px;">
-                  ${statCanBoSung} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">hồ sơ</span>
-                </div>
-              </div>
-            </div>
+<!-- CARD 3: Yêu cầu bổ sung -->
+<div style="background: ${statCanBoSung > 0 ? 'linear-gradient(180deg, rgba(239,68,68,0.05) 0%, rgba(239,68,68,0.1) 100%)' : 'var(--surface)'}; border: 1px solid ${statCanBoSung > 0 ? 'rgba(239,68,68,0.4)' : 'var(--border-strong)'}; border-radius: 16px; padding: 16px 20px; box-shadow: ${statCanBoSung > 0 ? '0 2px 12px rgba(239,68,68,0.08)' : '0 2px 10px rgba(0,0,0,0.04)'}; position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" ${statCanBoSung > 0 ? `onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(239,68,68,0.18)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 12px rgba(239,68,68,0.08)'"` : `onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.04)'"`}>
+<div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: #ef4444; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
+${ACC_SVGS.WARNING}
+</div>
+<div style="position: relative; z-index: 2;">
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+<span style="font-size: 11px; font-weight: 850; color: #ef4444; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px;">
+<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+Yêu cầu bổ sung
+</span>
+${statCanBoSung > 0 ? `<div style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: pulseRed 2s infinite;"></div>` : ''}
+</div>
+<div style=" font-size: 28px; font-weight: 900; color: #ef4444; display: flex; align-items: baseline; gap: 6px;">
+${statCanBoSung} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">hồ sơ</span>
+</div>
+</div>
+</div>
 
-            <!-- CARD 4: Đã trình ĐNTT -->
-            <div style="background: linear-gradient(180deg, rgba(139,92,246,0.03) 0%, rgba(139,92,246,0.06) 100%), var(--surface); border: 1px solid rgba(139,92,246,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(139,92,246,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(139,92,246,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(139,92,246,0.04)'">
-              <div style="position: absolute; right: -12px; top: -12px; opacity: 0.05; color: #8b5cf6; transform: scale(3);">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
-              <div style="position: relative; z-index: 2;">
-                <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: #8b5cf6; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
-                  <div style="width: 22px; height: 22px; border-radius: 6px; background: rgba(139,92,246,0.15); display: grid; place-items: center;">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                  </div>
-                  <span>Đã trình Đề nghị Thanh toán</span>
-                </div>
-                <div style=" font-size: 28px; font-weight: 900; color: #8b5cf6; display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;">
-                  ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">hồ sơ</span>
-                </div>
-              </div>
-            </div>
+<!-- CARD 4: Đã trình ĐNTT -->
+<div style="background: linear-gradient(180deg, rgba(139,92,246,0.03) 0%, rgba(139,92,246,0.06) 100%), var(--surface); border: 1px solid rgba(139,92,246,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(139,92,246,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(139,92,246,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(139,92,246,0.04)'">
+<div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: #8b5cf6; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
+<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+</div>
+<div style="position: relative; z-index: 2;">
+<span style="font-size: 11px; font-weight: 850; color: #8b5cf6; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+Đã trình Đề nghị Thanh toán
+</span>
+<div style=" font-size: 28px; font-weight: 900; color: #8b5cf6; display: flex; align-items: baseline; gap: 6px; margin-bottom: 2px;">
+${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft); ">hồ sơ</span>
+</div>
+</div>
+</div>
           </div>
 
           <!-- CONTROL HUB FILTER BAR & ROLE BADGE -->
