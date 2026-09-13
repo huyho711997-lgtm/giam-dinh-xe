@@ -27128,19 +27128,18 @@ async function saveCarplaSourceExclusions() {
       try {
           if (typeof cachedPendingClaimsPayload !== 'undefined' && cachedPendingClaimsPayload) {
               const miniPending = Object.values(cachedPendingClaimsPayload).map(p => ({
-                  bienSo: p.hoSoBoiThuong?.bienSo || p.bienSo,
-                  gdv: p.gdvName || p.hoSoBoiThuong?.gdvName,
-                  ngayDuKien: p.ngayDuKien,
-                  trangThai: p.trangThaiThucTe || p.hoSoBoiThuong?.trangThaiHoSo
+                  bienSo: p.bienSo || 'Chưa rõ',
+                  gdv: p.gdvTiepNhan || 'Chưa phân công',
+                  trangThai: p.trangThai || 'moi'
               }));
               rawDataSummary += 'Danh sách Hồ sơ Tồn: ' + JSON.stringify(miniPending) + '. ';
           }
           if (typeof cachedCasesPayload !== 'undefined' && cachedCasesPayload) {
               const miniCases = Object.values(cachedCasesPayload).map(c => ({
-                  bienSo: c.bienSo,
-                  gdv: c.nguoiTao?.tenHienThi,
-                  gara: c.tenGara,
-                  trangThai: c.trangThai
+                  bienSo: c.bienSo || 'Chưa rõ',
+                  gdv: c.nguoiTao?.tenHienThi || 'Không rõ',
+                  gara: c.tenGara || '',
+                  trangThai: c.trangThai || ''
               }));
               rawDataSummary += 'Danh sách Hồ sơ Giám định: ' + JSON.stringify(miniCases) + '. ';
           }
@@ -27149,7 +27148,9 @@ async function saveCarplaSourceExclusions() {
       // Limit raw data size to avoid payload too large (approx 50,000 chars)
       if (rawDataSummary.length > 50000) rawDataSummary = rawDataSummary.substring(0, 50000) + '...[bị cắt bớt do quá dài]';
 
-      const contextPrompt = `Tôi đang thao tác trên phần mềm TASCO DLK. Thông tin vắn tắt: Tổng số hồ sơ: ${totalHs}, Đã xác nhận: ${dnxnHs}. Dữ liệu hệ thống hiện tại (bạn hãy dùng dữ liệu này để thống kê, đếm số lượng hoặc trả lời nếu user hỏi về người nào, hồ sơ, biển số): \n\n${rawDataSummary}`;
+      const contextPrompt = `Tôi đang thao tác trên phần mềm TASCO DLK. Thông tin vắn tắt: Tổng số hồ sơ: ${totalHs}, Đã xác nhận: ${dnxnHs}. Dữ liệu hệ thống hiện tại (bạn hãy đếm, lọc dữ liệu này để trả lời khi user hỏi có bao nhiêu hồ sơ, của ai, trạng thái nào): 
+
+${rawDataSummary}`;
       
       const payload = {
         system_instruction: {
