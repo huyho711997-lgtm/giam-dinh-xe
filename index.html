@@ -8324,12 +8324,12 @@ ${statRate}%
                 <span>${escapeHtmlOutput(item.diaDiemVTT || item.tinhTonThat || '—')}</span>
               </div>
             </td>
-            <td style="width: 130px; text-align: right; padding-right: 15px; vertical-align: middle;">
-              <strong style="color: #10b981; font-size: 13.5px; display: block;" title="Số tiền bồi thường">${item.ttbtTongSoTienBoiThuong ? formatCurrencyInputNumber(item.ttbtTongSoTienBoiThuong) + ' đ' : '-'}</strong>
+            <td style="width: 155px; text-align: right; padding-right: 15px; vertical-align: middle; white-space: nowrap;">
+              <strong style="color: #10b981; font-size: 13.5px; display: block; white-space: nowrap;" title="Số tiền bồi thường">${item.ttbtTongSoTienBoiThuong ? formatCurrencyInputNumber(item.ttbtTongSoTienBoiThuong) + ' đ' : '-'}</strong>
               ${(item.duPhongBoiThuong && item.duPhongBoiThuong !== '0' && item.duPhongBoiThuong !== 0) ? `
               <div style="display: flex; justify-content: flex-end; align-items: center; gap: 5px; margin-top: 6px;" title="Dự phòng bồi thường (VNĐ)">
                 <span style="font-size: 8.5px; font-weight: 850; padding: 2px 5px; border-radius: 4px; background: rgba(216,180,109,0.15); color: var(--primary); border: 1px solid rgba(216,180,109,0.3); letter-spacing: 0.04em; text-transform: uppercase; line-height: 1;">D.PHÒNG</span>
-                <span style="font-size: 11.5px; font-weight: 800; color: var(--text-soft); line-height: 1;">${formatCurrencyInputNumber(item.duPhongBoiThuong)} đ</span>
+                <span style="font-size: 11.5px; font-weight: 800; color: var(--text-soft); line-height: 1; white-space: nowrap;">${formatCurrencyInputNumber(item.duPhongBoiThuong)} đ</span>
               </div>
               ` : `
               <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 6px;" title="Dự phòng bồi thường (VNĐ)">
@@ -9388,7 +9388,7 @@ ${statRate}%
                       <th style="width: 180px;">Tên chủ xe</th>
                       <th style="width: 190px;">Hãng xe & Đơn vị cấp</th>
                       <th style="width: 260px; min-width: 200px;">Nội dung tổn thất & Địa điểm</th>
-                      <th style="width: 130px; text-align: right; padding-right: 15px;">
+                      <th style="width: 155px; text-align: right; padding-right: 15px;">
                         Số tiền BT<br>
                         <span style="font-size: 9px; opacity: 0.7; text-transform: uppercase; font-weight: 750;">&amp; Dự phòng</span>
                       </th>
