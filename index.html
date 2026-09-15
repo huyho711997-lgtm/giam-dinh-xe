@@ -11510,17 +11510,8 @@ ${statRate}%
 
     function openMobileCameraForEvidence(index) {
       prefetchGpsCoordinates();
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      if (!isMobile) {
-        openCustomCameraModal(index);
-        return;
-      }
-      const inputEl = document.getElementById(`garageEvidenceInput_${index}`);
-      if (inputEl) {
-        inputEl.setAttribute('capture', 'environment');
-        inputEl.dataset.sourceType = 'camera';
-        inputEl.click();
-      }
+      // Use the custom camera modal to allow continuous capturing on all devices
+      openCustomCameraModal(index);
     }
 
     function closeCameraViewfinderWithGuideModal() {
@@ -12582,8 +12573,11 @@ ${statRate}%
     function renderCustomCameraPreviewStrip() {
       const strip = document.getElementById('cameraPreviewStrip');
       if (!strip) return;
-      strip.innerHTML = '';
       
+      const oldImgs = strip.querySelectorAll('img');
+      oldImgs.forEach(img => URL.revokeObjectURL(img.src));
+      
+      strip.innerHTML = '';
       customCameraPhotos.forEach((file, idx) => {
         const wrapper = document.createElement('div');
         wrapper.className = 'camera-preview-wrapper';
@@ -12631,7 +12625,9 @@ ${statRate}%
       }
       
       try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (!window.globalAudioCtx) window.globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (window.globalAudioCtx.state === 'suspended') window.globalAudioCtx.resume();
+        const audioCtx = window.globalAudioCtx;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.connect(gain);
