@@ -24889,27 +24889,75 @@ const fullList = getCarBrandLossData();
         return;
       }
 
-      const excelData = filtered.map((c, idx) => {
+      const aoaData = [
+        ['STT', 'Trạng thái', 'Biển số xe', 'Số HSBT', 'Chủ xe / Lái xe', 'Giám định viên', 'Đơn vị cấp đơn', 'Ngày tổn thất', 'Dự phòng BT (VNĐ)', 'Ghi chú giải trình']
+      ];
+
+      filtered.forEach((c, idx) => {
         const isApproved = (c.trangThai === 'tu_choi' || c.cancelStatus === 'da_duyet');
-        return {
-          'STT': idx + 1,
-          'Trạng thái duyệt': isApproved ? 'Đã duyệt hủy' : 'Chờ duyệt hủy',
-          'Biển số xe': c.bienSo || '',
-          'Số HSBT': c.soHoSoBoiThuong || c.soHsbt || '',
-          'Chủ xe / Lái xe': c.chuXe || c.khachHang || c.tenLaiXe || '',
-          'Giám định viên': c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '',
-          'GĐV Hiện trường': c.gdvHienTruong || '',
-          'Đơn vị cấp đơn': c.donViCapDon || c.chiNhanh || '',
-          'Ngày tổn thất': formatDateDisplay(c.ngayVTT || c.ngayTonThat || c.ngayMoHs),
-          'Dự phòng BT (VNĐ)': parseInt(String(c.duPhongBoiThuong || '0').replace(/\D/g, ''), 10) || 0,
-          'Ghi chú giải trình': c.cancelNotes || c.ghiChu || c.ghiChuHoSo || '',
-          'Người đề xuất': c.cancelProposedBy || '',
-          'Ngày đề xuất': c.cancelProposedAt ? new Date(c.cancelProposedAt).toLocaleDateString('vi-VN') : ''
-        };
+        aoaData.push([
+          idx + 1,
+          isApproved ? 'Đã duyệt hủy' : 'Chờ duyệt hủy',
+          c.bienSo || '',
+          c.soHoSoBoiThuong || c.soHsbt || '',
+          c.chuXe || c.khachHang || c.tenLaiXe || '',
+          c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '',
+          c.donViCapDon || c.chiNhanh || '',
+          formatDateDisplay(c.ngayVTT || c.ngayTonThat || c.ngayMoHs),
+          parseInt(String(c.duPhongBoiThuong || '0').replace(/\D/g, ''), 10) || 0,
+          c.cancelNotes || c.ghiChu || c.ghiChuHoSo || ''
+        ]);
       });
 
       if (window.XLSX) {
-        const ws = XLSX.utils.json_to_sheet(excelData);
+        const ws = XLSX.utils.aoa_to_sheet(aoaData);
+        
+        // Auto-adjust column widths
+        ws['!cols'] = [
+          {wch: 6},  // STT
+          {wch: 18}, // Trang thai
+          {wch: 15}, // Bien so
+          {wch: 26}, // So HSBT
+          {wch: 28}, // Chu xe
+          {wch: 22}, // GDV
+          {wch: 25}, // Don vi
+          {wch: 18}, // Ngay TT
+          {wch: 20}, // Du phong
+          {wch: 45}  // Ghi chu
+        ];
+
+        // Format cells (Times New Roman, Borders)
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+          for (let C = range.s.c; C <= range.e.c; ++C) {
+            let cellRef = XLSX.utils.encode_cell({c: C, r: R});
+            if (!ws[cellRef]) continue;
+            
+            if (!ws[cellRef].s) ws[cellRef].s = {};
+            
+            ws[cellRef].s.font = { name: "Times New Roman", sz: 12 };
+            ws[cellRef].s.border = {
+               top: { style: "thin", color: { auto: 1 } },
+               bottom: { style: "thin", color: { auto: 1 } },
+               left: { style: "thin", color: { auto: 1 } },
+               right: { style: "thin", color: { auto: 1 } }
+            };
+            
+            if (R === 0) {
+              // Header styling
+              ws[cellRef].s.font.bold = true;
+              ws[cellRef].s.alignment = { vertical: "center", horizontal: "center", wrapText: true };
+            } else {
+              // Data styling
+              ws[cellRef].s.alignment = { vertical: "center", wrapText: true };
+              if (C === 8) {
+                // Du phong (VND) - format as currency/number
+                ws[cellRef].z = '#,##0';
+              }
+            }
+          }
+        }
+
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'De_Xuat_Huy_Ho_So');
         const dateTag = new Date().toLocaleDateString('vi-VN').replace(/\//g, '-');
