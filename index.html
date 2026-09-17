@@ -17665,10 +17665,24 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           items.push({ transfer: t, claim, claimIndex, note });
         });
       });
+      const getEffectivePriority = (item) => {
+        if (!item.claim.isUuTien) return false;
+        const liveClaim = Object.values(cachedPendingClaimsPayload || {}).find(c => c.id === item.claim.id || (item.claim.soHoSoBoiThuong && c.soHoSoBoiThuong === item.claim.soHoSoBoiThuong)) || item.claim;
+        if (liveClaim.trangThai === 'da_thanh_toan') return false;
+        
+        const suppList = item.transfer.hoSoYeuCauBoSung || [];
+        const isClaimBoSung = suppList.some(s => Number(s.chiSo) === Number(item.claimIndex) || (s.soHoSoBoiThuong && s.soHoSoBoiThuong === item.claim.soHoSoBoiThuong) || (s.bienSo && s.bienSo === item.claim.bienSo)) || item.claim.trangThaiBoSung === 'yeu_cau_bo_sung';
+        if (isClaimBoSung) return false;
+        
+        return true;
+      };
+
       return items.sort((a, b) => {
         // Priority claims first!
-        if (a.claim.isUuTien && !b.claim.isUuTien) return -1;
-        if (!a.claim.isUuTien && b.claim.isUuTien) return 1;
+        const aPriority = getEffectivePriority(a);
+        const bPriority = getEffectivePriority(b);
+        if (aPriority && !bPriority) return -1;
+        if (!aPriority && bPriority) return 1;
         return (b.transfer.ngayBanGiao || 0) - (a.transfer.ngayBanGiao || 0);
       });
     }
@@ -18001,9 +18015,10 @@ ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--te
                     status = { label: 'Đã bổ sung (Chờ duyệt)', bg: 'rgba(245,158,11,0.14)', border: 'rgba(245,158,11,0.35)', text: '#f59e0b', svg: ACC_SVGS.REFRESH };
                   }
 
-                  const isPriority = Boolean(item.claim.isUuTien);
-                  
                   const liveClaim = Object.values(cachedPendingClaimsPayload || {}).find(c => c.id === item.claim.id || (item.claim.soHoSoBoiThuong && c.soHoSoBoiThuong === item.claim.soHoSoBoiThuong)) || item.claim;
+                  
+                  const isPriority = Boolean(item.claim.isUuTien) && liveClaim.trangThai !== 'da_thanh_toan' && !isClaimBoSung;
+                  
                   const liveStatusKey = liveClaim.trangThai || 'moi';
                   const liveStatusConfig = PENDING_STATUS_MAP[liveStatusKey] || { label: liveStatusKey, bg: 'rgba(148, 163, 184, 0.14)', color: '#64748b', border: 'rgba(148, 163, 184, 0.35)' };
 
