@@ -7968,12 +7968,18 @@ function formatDateDisplay(val) {
 
         // Search text
         if (searchVal) {
-          const matchBS = (c.bienSo || '').toLowerCase().includes(searchVal);
-          const matchVTT = (c.maVuTonThat || '').toLowerCase().includes(searchVal);
-          const matchGDV = (c.gdvTiepNhan || '').toLowerCase().includes(searchVal) || (c.canBoXuLy || '').toLowerCase().includes(searchVal) || (c.gdvHo || '').toLowerCase().includes(searchVal);
-          const matchHang = (c.hangXe || '').toLowerCase().includes(searchVal);
-          const matchSoHsbt = (c.soHoSoBoiThuong || '').toLowerCase().includes(searchVal);
-          if (!matchBS && !matchVTT && !matchGDV && !matchHang && !matchSoHsbt) return false;
+          const searchTerms = searchVal.split(/[,\n\t;]+/).map(t => t.trim()).filter(Boolean);
+          if (searchTerms.length > 0) {
+            const isMatch = searchTerms.some(term => {
+              const matchBS = (c.bienSo || '').toLowerCase().includes(term);
+              const matchVTT = (c.maVuTonThat || '').toLowerCase().includes(term);
+              const matchGDV = (c.gdvTiepNhan || '').toLowerCase().includes(term) || (c.canBoXuLy || '').toLowerCase().includes(term) || (c.gdvHo || '').toLowerCase().includes(term);
+              const matchHang = (c.hangXe || '').toLowerCase().includes(term);
+              const matchSoHsbt = (c.soHoSoBoiThuong || '').toLowerCase().includes(term);
+              return matchBS || matchVTT || matchGDV || matchHang || matchSoHsbt;
+            });
+            if (!isMatch) return false;
+          }
         }
 
         // Period filter based on Business Date (Ngày mở HS / Ngày tổn thất)
@@ -10608,8 +10614,16 @@ ${statRate}%
       const allEntries = Object.entries(allCases).sort((a,b) => Number(b[1].createdAt || 0) - Number(a[1].createdAt || 0));
       
       const searchQuery = String(document.getElementById('caseSearchInput')?.value || '').trim().toLocaleLowerCase('vi');
+      let searchTerms = [];
+      if (searchQuery) {
+         searchTerms = searchQuery.split(/[,\n\t;]+/).map(t => t.trim()).filter(Boolean);
+      }
       const filteredEntries = allEntries.filter(([,item]) => {
-        const matchesText = !searchQuery || `${item.bienSo || ''} ${item.tenGara || ''} ${item.nguoiTao?.tenHienThi || ''} ${item.nguoiTao?.email || ''}`.toLocaleLowerCase('vi').includes(searchQuery);
+        let matchesText = true;
+        if (searchTerms.length > 0) {
+           const combinedText = `${item.bienSo || ''} ${item.tenGara || ''} ${item.nguoiTao?.tenHienThi || ''} ${item.nguoiTao?.email || ''}`.toLocaleLowerCase('vi');
+           matchesText = searchTerms.some(term => combinedText.includes(term));
+        }
         const isDone = item.trangThai === STATUS_COMPLETED;
         const matchesStatus = activeCaseFilter === 'all' || (activeCaseFilter === 'completed' && isDone) || (activeCaseFilter === 'pending' && !isDone);
         return matchesText && matchesStatus;
@@ -17726,11 +17740,17 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       });
 
       if (activeAccountingClaimSearch) {
-        const keyword = activeAccountingClaimSearch;
-        items = items.filter(item => [
-          item.transfer.transferId, item.transfer.gdvName, item.claim.bienSo, item.claim.soHoSoBoiThuong,
-          item.claim.tenGara, extractClaimOwnerName(item.claim), item.note.ghiChu
-        ].some(value => String(value || '').toLowerCase().includes(keyword)));
+        const searchTerms = activeAccountingClaimSearch.split(/[,\n\t;]+/).map(t => t.trim()).filter(Boolean);
+        if (searchTerms.length > 0) {
+          items = items.filter(item => {
+            return searchTerms.some(term => {
+              return [
+                item.transfer.transferId, item.transfer.gdvName, item.claim.bienSo, item.claim.soHoSoBoiThuong,
+                item.claim.tenGara, extractClaimOwnerName(item.claim), item.note.ghiChu
+              ].some(value => String(value || '').toLowerCase().includes(term));
+            });
+          });
+        }
       }
 
       const totalFilteredCount = items.length;
@@ -19638,11 +19658,17 @@ ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--te
       });
 
       if (activeAccountingClaimSearch) {
-        const keyword = activeAccountingClaimSearch;
-        items = items.filter(item => [
-          item.transfer.transferId, item.transfer.gdvName, item.claim.bienSo, item.claim.soHoSoBoiThuong,
-          item.claim.tenGara, extractClaimOwnerName(item.claim), item.note.ghiChu
-        ].some(value => String(value || '').toLowerCase().includes(keyword)));
+        const searchTerms = activeAccountingClaimSearch.split(/[,\n\t;]+/).map(t => t.trim()).filter(Boolean);
+        if (searchTerms.length > 0) {
+          items = items.filter(item => {
+            return searchTerms.some(term => {
+              return [
+                item.transfer.transferId, item.transfer.gdvName, item.claim.bienSo, item.claim.soHoSoBoiThuong,
+                item.claim.tenGara, extractClaimOwnerName(item.claim), item.note.ghiChu
+              ].some(value => String(value || '').toLowerCase().includes(term));
+            });
+          });
+        }
       }
 
       if (items.length === 0) {
