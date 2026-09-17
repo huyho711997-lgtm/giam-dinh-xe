@@ -3055,7 +3055,11 @@
                 <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 <span>Phạm vi Bảo hiểm VCX & TNDS</span>
               </label>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                <div>
+                  <label style="font-size: 11.5px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Loại tổn thất</label>
+                  <input id="modalPendingLoaiTonThat" class="input-premium" type="text" placeholder="VD: Con người, Tài sản" />
+                </div>
                 <div>
                   <label style="font-size: 11.5px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Bảo hiểm Vật chất xe (VCX)</label>
                   <input id="modalPendingVcx" class="input-premium" type="text" placeholder="Thông tin gói VCX" />
@@ -6452,7 +6456,8 @@ let cachedCasesPayload = null;
       setVal('modalPendingHienTruong', '');
       setVal('modalPendingLaiXe', '');
       setVal('modalPendingNguoiLienHe', '');
-      setVal('modalPendingVcx', '');
+      setVal('modalPendingLoaiTonThat', '');
+        setVal('modalPendingVcx', '');
       setVal('modalPendingTnds', '');
       setVal('modalPendingNguyenNhan', '');
       setVal('modalPendingMoTaTonThat', '');
@@ -6554,7 +6559,8 @@ let cachedCasesPayload = null;
       const spCodeVal = String(item.maSpNghiepVu || item.nghiepVu || item.loaiHinhBaoHiem || '').trim();
       const isVcxCode = spCodeVal.toUpperCase().includes('VCX');
       const isTndsCode = spCodeVal.toUpperCase().includes('TNDS');
-      setVal('modalPendingVcx', item.vcx || (isVcxCode ? (spCodeVal || 'VCX') : ''));
+      setVal('modalPendingLoaiTonThat', item.loaiTonThat || '');
+        setVal('modalPendingVcx', item.vcx || (isVcxCode ? (spCodeVal || 'VCX') : ''));
       setVal('modalPendingTnds', item.tnds || (isTndsCode ? (spCodeVal || 'TNDS') : ''));
 
       setVal('modalPendingNgayThongBao', formatCleanDateField(item.ngayThongBao) || (isEditing ? '' : new Date().toLocaleString('vi-VN')));
@@ -6659,7 +6665,8 @@ let cachedCasesPayload = null;
       if (parsed.hienTruong) setValIfPresent('modalPendingHienTruong', parsed.hienTruong);
       if (parsed.laiXe) setValIfPresent('modalPendingLaiXe', parsed.laiXe);
       if (parsed.nguoiLienHe) setValIfPresent('modalPendingNguoiLienHe', parsed.nguoiLienHe);
-      if (parsed.vcx) setValIfPresent('modalPendingVcx', parsed.vcx);
+      if (parsed.loaiTonThat) setValIfPresent('modalPendingLoaiTonThat', parsed.loaiTonThat);
+        if (parsed.vcx) setValIfPresent('modalPendingVcx', parsed.vcx);
       if (parsed.tnds) setValIfPresent('modalPendingTnds', parsed.tnds);
       if (parsed.nguyenNhan) setValIfPresent('modalPendingNguyenNhan', parsed.nguyenNhan);
       if (parsed.moTaTonThat) setValIfPresent('modalPendingMoTaTonThat', parsed.moTaTonThat);
@@ -6771,6 +6778,7 @@ let cachedCasesPayload = null;
         hangXe: getVal('modalPendingHangXe') || '—',
         hieuXe: getVal('modalPendingHieuXe') || '',
         namSanXuat: getVal('modalPendingNamSanXuat') || '',
+        loaiTonThat: getVal('modalPendingLoaiTonThat') || '',
         vcx: getVal('modalPendingVcx') || '',
         tnds: getVal('modalPendingTnds') || '',
         ngayThongBao: getVal('modalPendingNgayThongBao') || existingItem.ngayThongBao || new Date().toLocaleString('vi-VN'),
@@ -7423,6 +7431,7 @@ function formatDateDisplay(val) {
           hienTruong: getVal(r, colMap.diaDiemTonThat),
           nguyenNhan: getVal(r, colMap.nhomNguyenNhan) || getVal(r, colMap.dienBienTonThat),
           moTaTonThat: getVal(r, colMap.dienBienTonThat) || getVal(r, colMap.doiTuongTonThat),
+          loaiTonThat: getVal(r, colMap.doiTuongTonThat),
           garaSuaChua: getVal(r, colMap.gara) || getVal(r, colMap.tenGaraVietTat),
 
           chiNhanhXuly: getVal(r, colMap.chiNhanhXuly),
