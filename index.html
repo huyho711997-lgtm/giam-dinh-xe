@@ -3797,6 +3797,7 @@ let cachedCasesPayload = null;
     let garageAutosaveTimers = new Map();
     let garagePortalMounted = false; 
     let cachedPendingClaimsPayload = {};
+    let cachedPendingNotesPayload = {};
     let rawPendingClaimsPayload = {};
     let cachedClaimCancellationsPayload = {};
     let activePendingStatusFilter = ['all'];
@@ -5593,7 +5594,7 @@ let cachedCasesPayload = null;
         navContainer.insertBefore(tabsContainer, userSpace);
       }
 
-      const isGroup1Active = ['list', 'pending', 'claim_cancellation', 'gdv_report', 'create'].includes(activeDashboardTab);
+      const isGroup1Active = ['list', 'pending', 'pending_notes_tracker', 'claim_cancellation', 'gdv_report', 'create'].includes(activeDashboardTab);
       const isAccActive = ['accounting_transfer', 'accounting_claims'].includes(activeDashboardTab) ? 'active' : '';
       const isGroup3Active = ['users', 'system'].includes(activeDashboardTab);
 
@@ -5634,6 +5635,14 @@ let cachedCasesPayload = null;
                 <div>
                   <div style="line-height: 1.2;">Hồ sơ bồi thường</div>
                   <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Theo dõi tồn đọng & nhập Excel</span>
+                </div>
+              </div>` : ''}
+              ${showPending ? `
+              <div class="header-nav-submenu-item ${activeDashboardTab === 'pending_notes_tracker' ? 'active' : ''}" onclick="navigateHeaderTab('pending_notes_tracker')">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #10b981;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <div>
+                  <div style="line-height: 1.2;">Tiến độ Hồ sơ Tồn</div>
+                  <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Theo dõi & ghi chú độc lập</span>
                 </div>
               </div>` : ''}
               ${(showPending || showList) ? `
@@ -6903,7 +6912,232 @@ let cachedCasesPayload = null;
       }
     }
 
-    function openImportExcelModal() {
+    
+function renderPendingNotesTrackerPage(targetContainer) {
+  const container = targetContainer || document.getElementById('tabContentContainer');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div style="background: var(--surface); border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 20px; color: var(--text-main); font-weight: 800; display: flex; align-items: center; gap: 10px;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #10b981;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Quản lý tiến độ Hồ sơ tồn
+        </h2>
+        <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT..." style="max-width: 300px;" oninput="executeUIRenderPendingNotesTable()" />
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="table-premium" style="width: 100%; text-align: left; border-collapse: separate; border-spacing: 0;">
+          <thead>
+            <tr>
+              <th style="width: 40px; text-align: center;">STT</th>
+              <th style="width: 130px;">Trạng thái</th>
+              <th style="width: 140px;">Biển số / Mã VTT</th>
+              <th style="width: 150px;">GĐV Xử lý</th>
+              <th>Nội dung tổn thất</th>
+              <th style="width: 300px;">Ghi chú tiến độ (Độc lập)</th>
+            </tr>
+          </thead>
+          <tbody id="tblPendingNotesBody">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Note Modal -->
+    <div id="pendingNoteModalOverlay" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; place-items: center;">
+      <div class="modal-content" style="background: var(--surface); padding: 24px; border-radius: 16px; width: 90%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <h3 style="margin: 0 0 16px 0; color: var(--text-main); font-size: 18px; font-weight: 800;">Lịch sử Ghi chú Tiến độ</h3>
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+          Hồ sơ: <strong id="lblPendingNoteTitle" style="color: var(--text-main);"></strong>
+        </div>
+
+        <div id="pendingNoteHistoryContainer" style="max-height: 250px; overflow-y: auto; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px;">
+          <!-- History rendered here -->
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <textarea id="txtPendingNoteInput" class="input-premium" placeholder="Nhập ghi chú mới..." style="width: 100%; min-height: 80px; resize: vertical; padding: 12px;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button class="btn-premium btn-secondary" onclick="closePendingNoteModal()">Đóng</button>
+          <button id="btnSavePendingNote" class="btn-premium btn-primary" onclick="savePendingNote()">Lưu Ghi Chú</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  executeUIRenderPendingNotesTable();
+}
+
+let activeNoteClaimId = null;
+let activeNotePlateOrCode = null;
+
+function executeUIRenderPendingNotesTable() {
+  const tbody = document.getElementById('tblPendingNotesBody');
+  if (!tbody) return;
+
+  const searchVal = (document.getElementById('pendingNotesSearchInput')?.value || '').toLowerCase().trim();
+  const claimsList = Object.values(cachedPendingClaimsPayload || {});
+
+  // Exclude completed or cancelled claims
+  const excludedStatuses = ['DA_KET_THUC', 'HUY'];
+  let filtered = claimsList.filter(c => !excludedStatuses.includes(c.trangThai));
+
+  if (searchVal) {
+    filtered = filtered.filter(c => {
+      const bsx = (c.bienSo || '').toLowerCase();
+      const hsbt = (c.soHoSoBoiThuong || '').toLowerCase();
+      const gdv = (c.gdvHo || c.canBoXuLy || '').toLowerCase();
+      return bsx.includes(searchVal) || hsbt.includes(searchVal) || gdv.includes(searchVal);
+    });
+  }
+
+  // Sort by created date descending
+  filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">Không tìm thấy hồ sơ phù hợp.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((c, index) => {
+    // Identifier used for independent notes
+    const identifier = (c.bienSo || c.soHoSoBoiThuong || c.id || '').replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase();
+    const noteData = cachedPendingNotesPayload[identifier] || {};
+    const history = noteData.history || [];
+    const latestNote = history.length > 0 ? history[history.length - 1] : null;
+
+    let badgeColor = '#6b7280'; let badgeBg = 'rgba(107,114,128,0.1)';
+    const stt = c.trangThai || 'MỚI';
+    if (stt.includes('Đã')) { badgeColor = '#3b82f6'; badgeBg = 'rgba(59,130,246,0.1)'; }
+    if (stt.includes('Chờ')) { badgeColor = '#f59e0b'; badgeBg = 'rgba(245,158,11,0.1)'; }
+    if (stt.includes('DUYET')) { badgeColor = '#a855f7'; badgeBg = 'rgba(168,85,247,0.1)'; }
+
+    return `
+      <tr style="border-bottom: 1px solid var(--border-subtle);">
+        <td style="text-align: center; font-weight: 600; color: var(--text-soft);">${index + 1}</td>
+        <td>
+          <span style="font-size: 11px; padding: 4px 8px; border-radius: 6px; font-weight: 750; color: ${badgeColor}; background: ${badgeBg}; border: 1px solid ${badgeBg.replace('0.1', '0.2')};">
+            ${stt}
+          </span>
+        </td>
+        <td>
+          <div style="font-size: 13.5px; font-weight: 850; color: var(--text-main);">${escapeHtmlOutput(c.bienSo || '—')}</div>
+          <div style="font-size: 11px; color: var(--text-soft); font-family: monospace; margin-top: 2px;">${escapeHtmlOutput(c.soHoSoBoiThuong || '—')}</div>
+        </td>
+        <td style="font-size: 13px; font-weight: 600; color: var(--text-main);">
+          ${escapeHtmlOutput(c.gdvHo || c.canBoXuLy || '—')}
+        </td>
+        <td style="font-size: 12.5px; color: var(--text-soft);">
+          ${escapeHtmlOutput(c.moTaTonThat || c.nguyenNhan || '—')}
+        </td>
+        <td>
+          <div style="display: flex; gap: 8px; align-items: flex-start; justify-content: space-between;">
+            <div style="flex-grow: 1;">
+              ${latestNote ? `
+                <div style="font-size: 12px; color: var(--text-main); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px;">
+                  ${escapeHtmlOutput(latestNote.content)}
+                </div>
+                <div style="font-size: 10px; color: var(--text-muted); font-weight: 600;">
+                  ${latestNote.author} • ${new Date(latestNote.timestamp).toLocaleString('vi-VN')}
+                </div>
+              ` : `<span style="font-size: 12px; color: var(--text-muted); font-style: italic;">Chưa có ghi chú...</span>`}
+            </div>
+            <button class="btn-premium btn-secondary" onclick="openPendingNoteModal('${c.id}', '${identifier}')" style="padding: 4px 10px; font-size: 11px; min-height: auto; flex-shrink: 0;">
+              ${latestNote ? 'Cập nhật' : 'Thêm ghi chú'}
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function openPendingNoteModal(claimId, identifier) {
+  activeNoteClaimId = claimId;
+  activeNotePlateOrCode = identifier;
+  const c = cachedPendingClaimsPayload[claimId] || {};
+
+  document.getElementById('lblPendingNoteTitle').textContent = `${c.bienSo || '—'} (${c.soHoSoBoiThuong || '—'})`;
+  document.getElementById('txtPendingNoteInput').value = '';
+  document.getElementById('btnSavePendingNote').disabled = false;
+
+  const historyContainer = document.getElementById('pendingNoteHistoryContainer');
+  const noteData = cachedPendingNotesPayload[identifier] || {};
+  const history = noteData.history || [];
+
+  if (history.length === 0) {
+    historyContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-style: italic; padding: 10px 0; font-size: 12.5px;">Chưa có lịch sử ghi chú.</div>`;
+  } else {
+    historyContainer.innerHTML = history.slice().reverse().map(item => `
+      <div style="background: var(--bg-soft); border: 1px solid var(--border-subtle); padding: 10px 14px; border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 11px; color: var(--text-muted);">
+          <strong style="color: var(--text-main);">${escapeHtmlOutput(item.author)}</strong>
+          <span>${new Date(item.timestamp).toLocaleString('vi-VN')}</span>
+        </div>
+        <div style="font-size: 13px; color: var(--text-main); white-space: pre-wrap; line-height: 1.4;">${escapeHtmlOutput(item.content)}</div>
+      </div>
+    `).join('');
+  }
+
+  const modal = document.getElementById('pendingNoteModalOverlay');
+  if (modal) {
+    modal.style.display = 'grid';
+    modal.setAttribute('aria-hidden', 'false');
+  }
+}
+
+function closePendingNoteModal() {
+  activeNoteClaimId = null;
+  activeNotePlateOrCode = null;
+  const modal = document.getElementById('pendingNoteModalOverlay');
+  if (modal) {
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+  }
+}
+
+async function savePendingNote() {
+  if (!activeNotePlateOrCode) return;
+  const content = document.getElementById('txtPendingNoteInput').value.trim();
+  if (!content) {
+    triggerToast('Vui lòng nhập nội dung ghi chú', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btnSavePendingNote');
+  btn.disabled = true;
+
+  try {
+    const author = (activeUserProfile && activeUserProfile.displayName) ? activeUserProfile.displayName : (firebase.auth().currentUser?.email || 'Unknown');
+    const newNote = {
+      content: content,
+      author: author,
+      timestamp: Date.now()
+    };
+
+    const nodeRef = dbNodeInstance.ref(`pending_notes/${activeNotePlateOrCode}`);
+    const snapshot = await nodeRef.once('value');
+    let data = snapshot.val() || { history: [] };
+    if (!data.history) data.history = [];
+    data.history.push(newNote);
+
+    await nodeRef.set(data);
+    triggerToast('Đã lưu ghi chú thành công', 'success');
+    closePendingNoteModal();
+    // executeUIRenderPendingNotesTable will be called automatically by on('value') listener
+  } catch (err) {
+    console.error(err);
+    triggerToast('Lỗi lưu ghi chú: ' + err.message, 'error');
+    btn.disabled = false;
+  }
+}
+
+function openImportExcelModal() {
       const modal = document.getElementById('importExcelModalOverlay');
       if (modal) {
         modal.style.display = 'grid';
@@ -8697,6 +8931,13 @@ ${statRate}%
         }
       });
 
+      dbNodeInstance.ref('pending_notes').on('value', (snapshot) => {
+        cachedPendingNotesPayload = snapshot.val() || {};
+        if (activeDashboardTab === 'pending_notes_tracker') {
+          renderPendingNotesTrackerPage();
+        }
+      });
+
       dbNodeInstance.ref('claim_cancellations').off();
       dbNodeInstance.ref('claim_cancellations').on('value', (snapshot) => {
         cachedClaimCancellationsPayload = snapshot.val() || {};
@@ -8736,6 +8977,11 @@ ${statRate}%
       if (tabName === 'pending' && !hasUserPermission('pending', 'view')) {
         triggerToast('Bạn không có quyền truy cập hồ sơ bồi thường tồn.', 'warning');
         if (activeDashboardTab === 'pending') activeDashboardTab = 'home';
+        return;
+      }
+      if (tabName === 'pending_notes_tracker' && !hasUserPermission('pending', 'view')) {
+        triggerToast('Bạn không có quyền truy cập theo dõi tiến độ hồ sơ.', 'warning');
+        if (activeDashboardTab === 'pending_notes_tracker') activeDashboardTab = 'home';
         return;
       }
       if (tabName === 'claim_cancellation' && !hasUserPermission('pending', 'view') && !hasUserPermission('list', 'view')) {
@@ -8834,6 +9080,11 @@ ${statRate}%
 
       if (activeDashboardTab === 'accounting_claims') {
         renderAccountingClaimsPage(container);
+        return;
+      }
+
+      if (activeDashboardTab === 'pending_notes_tracker') {
+        renderPendingNotesTrackerPage(container);
         return;
       }
 
