@@ -17981,6 +17981,7 @@ ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--te
                   <tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
                     <th style="padding: 13px 14px; text-align: center; width: 80px;">STT</th>
                     <th style="padding: 13px 14px; text-align: center; width: 180px;">Trạng thái</th>
+                    <th style="padding: 13px 14px; text-align: center; width: 160px;">Trạng thái thực tế</th>
                     <th style="padding: 13px 14px; text-align: left;">Số HSBT</th>
                     <th style="padding: 13px 14px; text-align: left;">Tên khách hàng / BKS</th>
                     <th style="padding: 13px 14px; text-align: left;">Tên GĐV</th>
@@ -18001,6 +18002,10 @@ ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--te
                   }
 
                   const isPriority = Boolean(item.claim.isUuTien);
+                  
+                  const liveClaim = Object.values(cachedPendingClaimsPayload || {}).find(c => c.id === item.claim.id || (item.claim.soHoSoBoiThuong && c.soHoSoBoiThuong === item.claim.soHoSoBoiThuong)) || item.claim;
+                  const liveStatusKey = liveClaim.trangThai || 'moi';
+                  const liveStatusConfig = PENDING_STATUS_MAP[liveStatusKey] || { label: liveStatusKey, bg: 'rgba(148, 163, 184, 0.14)', color: '#64748b', border: 'rgba(148, 163, 184, 0.35)' };
 
                   return `<tr onclick="openAccountingClaimDetailModal('${item.transfer.transferId}', ${item.claimIndex})" style="cursor: pointer; ${isPriority ? 'background: rgba(245,158,11,0.035);' : (isClaimBoSung ? 'background: rgba(239,68,68,0.035);' : '')}" title="Nhấp vào dòng để xem chi tiết">
                     <td style="padding: 12px 14px; text-align: center; vertical-align: middle;">
@@ -18009,6 +18014,11 @@ ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--te
                     <td style="padding: 12px 14px; text-align: center; vertical-align: middle;">
                       <span class="acc-status-pill" style="color:${status.text}; background:${status.bg}; border:1px solid ${status.border};">
                         ${status.svg} <span style="margin-left: 2px;">${status.label}</span>
+                      </span>
+                    </td>
+                    <td style="padding: 12px 14px; text-align: center; vertical-align: middle;">
+                      <span style="background: ${liveStatusConfig.bg}; color: ${liveStatusConfig.color}; border: 1px solid ${liveStatusConfig.border}; font-size: 10.5px; font-weight: 750; padding: 4px 10px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap;">
+                        ${liveStatusConfig.label}
                       </span>
                     </td>
                     <td style="padding: 12px 14px; vertical-align: middle;">
