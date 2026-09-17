@@ -7968,18 +7968,26 @@ function formatDateDisplay(val) {
 
         // Search text
         if (searchVal) {
-          const searchTerms = searchVal.split(/[,\n\t;]+/).map(t => t.trim()).filter(Boolean);
-          if (searchTerms.length > 0) {
-            const isMatch = searchTerms.some(term => {
-              const matchBS = (c.bienSo || '').toLowerCase().includes(term);
-              const matchVTT = (c.maVuTonThat || '').toLowerCase().includes(term);
-              const matchGDV = (c.gdvTiepNhan || '').toLowerCase().includes(term) || (c.canBoXuLy || '').toLowerCase().includes(term) || (c.gdvHo || '').toLowerCase().includes(term);
-              const matchHang = (c.hangXe || '').toLowerCase().includes(term);
-              const matchSoHsbt = (c.soHoSoBoiThuong || '').toLowerCase().includes(term);
-              return matchBS || matchVTT || matchGDV || matchHang || matchSoHsbt;
-            });
-            if (!isMatch) return false;
+          const hasSeparator = /[,\n\t;]/.test(searchVal);
+          const spaceTerms = searchVal.split(/\s+/).filter(Boolean);
+          const isSpaceBatch = spaceTerms.length > 1 && spaceTerms.every(t => /\d/.test(t));
+          
+          let searchTerms = [searchVal];
+          if (hasSeparator) {
+            searchTerms = searchVal.split(/[,\n\t;]+/).map(t => t.trim()).filter(Boolean);
+          } else if (isSpaceBatch) {
+            searchTerms = spaceTerms.map(t => t.trim());
           }
+
+          const isMatch = searchTerms.some(term => {
+            const matchBS = (c.bienSo || '').toLowerCase().includes(term);
+            const matchVTT = (c.maVuTonThat || '').toLowerCase().includes(term);
+            const matchGDV = (c.gdvTiepNhan || '').toLowerCase().includes(term) || (c.canBoXuLy || '').toLowerCase().includes(term) || (c.gdvHo || '').toLowerCase().includes(term);
+            const matchHang = (c.hangXe || '').toLowerCase().includes(term);
+            const matchSoHsbt = (c.soHoSoBoiThuong || '').toLowerCase().includes(term);
+            return matchBS || matchVTT || matchGDV || matchHang || matchSoHsbt;
+          });
+          if (!isMatch) return false;
         }
 
         // Period filter based on Business Date (Ngày mở HS / Ngày tổn thất)
@@ -10616,7 +10624,17 @@ ${statRate}%
       const searchQuery = String(document.getElementById('caseSearchInput')?.value || '').trim().toLocaleLowerCase('vi');
       let searchTerms = [];
       if (searchQuery) {
-         searchTerms = searchQuery.split(/[,\n\t;]+/).map(t => t.trim()).filter(Boolean);
+        const hasSeparator = /[,\n\t;]/.test(searchQuery);
+        const spaceTerms = searchQuery.split(/\s+/).filter(Boolean);
+        const isSpaceBatch = spaceTerms.length > 1 && spaceTerms.every(t => /\d/.test(t));
+        
+        if (hasSeparator) {
+          searchTerms = searchQuery.split(/[,\n\t;]+/).map(t => t.trim()).filter(Boolean);
+        } else if (isSpaceBatch) {
+          searchTerms = spaceTerms.map(t => t.trim());
+        } else {
+          searchTerms = [searchQuery];
+        }
       }
       const filteredEntries = allEntries.filter(([,item]) => {
         let matchesText = true;
@@ -17740,7 +17758,17 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       });
 
       if (activeAccountingClaimSearch) {
-        const searchTerms = activeAccountingClaimSearch.split(/[,\n\t;]+/).map(t => t.trim()).filter(Boolean);
+        const hasSeparator = /[,\n\t;]/.test(activeAccountingClaimSearch);
+        const spaceTerms = activeAccountingClaimSearch.split(/\s+/).filter(Boolean);
+        const isSpaceBatch = spaceTerms.length > 1 && spaceTerms.every(t => /\d/.test(t));
+        
+        let searchTerms = [activeAccountingClaimSearch];
+        if (hasSeparator) {
+          searchTerms = activeAccountingClaimSearch.split(/[,\n\t;]+/).map(t => t.trim()).filter(Boolean);
+        } else if (isSpaceBatch) {
+          searchTerms = spaceTerms.map(t => t.trim());
+        }
+        
         if (searchTerms.length > 0) {
           items = items.filter(item => {
             return searchTerms.some(term => {
@@ -19658,7 +19686,17 @@ ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--te
       });
 
       if (activeAccountingClaimSearch) {
-        const searchTerms = activeAccountingClaimSearch.split(/[,\n\t;]+/).map(t => t.trim()).filter(Boolean);
+        const hasSeparator = /[,\n\t;]/.test(activeAccountingClaimSearch);
+        const spaceTerms = activeAccountingClaimSearch.split(/\s+/).filter(Boolean);
+        const isSpaceBatch = spaceTerms.length > 1 && spaceTerms.every(t => /\d/.test(t));
+        
+        let searchTerms = [activeAccountingClaimSearch];
+        if (hasSeparator) {
+          searchTerms = activeAccountingClaimSearch.split(/[,\n\t;]+/).map(t => t.trim()).filter(Boolean);
+        } else if (isSpaceBatch) {
+          searchTerms = spaceTerms.map(t => t.trim());
+        }
+        
         if (searchTerms.length > 0) {
           items = items.filter(item => {
             return searchTerms.some(term => {
