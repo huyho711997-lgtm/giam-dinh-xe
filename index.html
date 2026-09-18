@@ -6990,12 +6990,14 @@ function renderPendingNotesTrackerPage(targetContainer) {
 
         <!-- Table Container -->
         <div class="table-container" style="border: 1px solid var(--border); border-radius: 14px; background: var(--bg-soft); overflow: hidden;">
-          <table class="p-table" id="pendingNotesTable" style="width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed;">
+          <table class="p-table" id="pendingNotesTable" style="width: 100%; border-collapse: collapse; min-width: 1300px; table-layout: fixed;">
             <thead>
               <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong);">
                 <th style="width: 50px; text-align: center;">STT</th>
                 <th style="width: 120px;">Trạng thái</th>
                 <th style="width: 150px;">Biển số / Mã VTT</th>
+                <th style="width: 180px;">Tên chủ xe</th>
+                <th style="width: 190px;">Hãng xe & Đơn vị cấp</th>
                 <th style="width: 150px;">GĐV Xử lý</th>
                 <th style="width: 300px;">Nội dung tổn thất</th>
                 <th style="width: 350px;">Ghi chú tiến độ (Độc lập)</th>
@@ -7292,7 +7294,7 @@ function executeUIRenderPendingNotesTable() {
 
   const paginationContainer = document.getElementById('pendingNotesPaginationContainer');
   if (totalFilteredCount === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty-state-text">Không tìm thấy hồ sơ phù hợp.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state-text">Không tìm thấy hồ sơ phù hợp.</td></tr>`;
     if (paginationContainer) paginationContainer.innerHTML = '';
     return;
   }
@@ -7419,6 +7421,30 @@ function executeUIRenderPendingNotesTable() {
           <div style="font-size: 11px; color: var(--primary); font-family: monospace; font-weight: 600; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; background: rgba(59,130,246,0.06); padding: 2px 6px; border-radius: 4px;">
             <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
             ${escapeHtmlOutput(c.soHoSoBoiThuong || '—')}
+          </div>
+        </td>
+        
+        <td style="width: 180px; vertical-align: middle;">
+          <strong style="color: var(--text-main); font-size: 13px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(extractClaimOwnerName(c))}">${escapeHtmlOutput(extractClaimOwnerName(c))}</strong>
+        </td>
+        <td style="width: 190px;">
+          <strong style="color: var(--text-main); font-size: 13px; display: block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData((c.hangXe || '') + ' ' + (c.hieuXe || ''))}">${escapeHtmlOutput(c.hangXe || '—')} ${escapeHtmlOutput(c.hieuXe || '')}</strong>
+          <span style="font-size: 11.5px; color: var(--text-soft); display: block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(c.donViCapDon || '')}">${escapeHtmlOutput(c.donViCapDon || '—')}</span>
+          <div style="margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap;">
+            ${c.vcx ? `<span style="font-size: 10px; background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">VCX</span>` : ''}
+            ${c.tnds ? `<span style="font-size: 10px; background: rgba(168,85,247,0.1); color: #a855f7; border: 1px solid rgba(168,85,247,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">TNDS</span>` : ''}
+            ${(function(){
+              if (!c.tnds || !c.loaiTonThat) return '';
+              const text = c.loaiTonThat.toLowerCase();
+              let tags = [];
+              if (text.includes('con nguoi') || text.includes('con người') || text.includes('nguoi')) {
+                tags.push(`<span style="font-size: 10px; background: rgba(244,63,94,0.1); color: #f43f5e; border: 1px solid rgba(244,63,94,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">Con người</span>`);
+              }
+              if (text.includes('tai san') || text.includes('tài sản') || text.includes('xe') || text.includes('hang hoa')) {
+                tags.push(`<span style="font-size: 10px; background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">Tài sản</span>`);
+              }
+              return tags.join('');
+            })()}
           </div>
         </td>
         <td style="font-size: 12.5px; font-weight: 750; color: var(--text-main);">
