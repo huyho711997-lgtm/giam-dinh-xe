@@ -7027,6 +7027,15 @@ function renderPendingNotesTrackerPage(targetContainer) {
   executeUIRenderPendingNotesTable();
 }
 
+let pendingNotesCurrentPage = 1;
+let pendingNotesPerPage = 20;
+
+function setPendingNotesPerPage(val) {
+  pendingNotesPerPage = parseInt(val, 10) || 20;
+  pendingNotesCurrentPage = 1;
+  executeUIRenderPendingNotesTable();
+}
+
 function setPendingNotesPage(page) {
   pendingNotesCurrentPage = page;
   executeUIRenderPendingNotesTable();
@@ -7072,7 +7081,23 @@ function executeUIRenderPendingNotesTable() {
     }
 
     // Check if created > 3 days ago and no notes OR last note was > 3 days ago
-    const createdAtMs = c.createdAt || nowMs;
+    
+    const dateStr = c.ngayMoHs || c.ngayTonThat || c.ngayVTT;
+    let createdAtMs = c.createdAt || nowMs;
+    if (dateStr && dateStr !== '—') {
+      const parts = dateStr.split(/[\s/:-]/);
+      // Usually DD/MM/YYYY or similar, very basic fallback parsing
+      if (parts.length >= 3) {
+        let d = parseInt(parts[0], 10);
+        let m = parseInt(parts[1], 10);
+        let y = parseInt(parts[2], 10);
+        if (y < 100) y += 2000;
+        if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+          createdAtMs = new Date(y, m - 1, d).getTime();
+        }
+      }
+    }
+
     const lastNoteMs = history.length > 0 ? history[history.length - 1].timestamp : 0;
     
     if (history.length === 0) {
