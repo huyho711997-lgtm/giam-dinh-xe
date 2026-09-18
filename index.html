@@ -8512,9 +8512,8 @@ function formatDateDisplay(val) {
     }
 
     function closeAllCustomDropdowns() {
-      ['menuCustomStatusDropdown', 'menuCustomGdvDropdown', 'menuCustomPeriodDropdown', 'menuCustomPerPageDropdown'].forEach(id => {
-        const menu = document.getElementById(id);
-        if (menu) menu.style.display = 'none';
+      document.querySelectorAll('.custom-dropdown-menu').forEach(menu => {
+        menu.style.display = 'none';
       });
       document.querySelectorAll('.row-status-menu, .row-gdv-menu').forEach(menu => {
         menu.style.display = 'none';
