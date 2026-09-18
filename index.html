@@ -2506,23 +2506,7 @@
         </div>
         <div class="profile-modal-actions"><button type="button" class="btn-premium btn-secondary" onclick="closeUserProfileModal()">Đóng</button><button id="btnSaveUserProfile" type="button" class="btn-premium" onclick="saveUserProfile()">Lưu hồ sơ</button></div>
       
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 4px 0 4px; border-top: 1px solid var(--border); margin-top: 20px;">
-          <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="font-size: 13px; color: var(--text-soft); font-weight: 600;" id="pendingNotesPaginationLabel">
-              Đang hiển thị...
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; border-left: 1px solid var(--border); padding-left: 16px;">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Hiển thị:</span>
-              <select onchange="setPendingNotesPerPage(this.value)" style="height: 32px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-main); font-size: 12.5px; font-weight: 700; padding: 0 8px; cursor: pointer; outline: none; box-shadow: var(--shadow-sm);">
-                <option value="10">10 / trang</option>
-                <option value="20" selected>20 / trang</option>
-                <option value="50">50 / trang</option>
-                <option value="100">100 / trang</option>
-              </select>
-            </div>
-          </div>
-          <div id="pendingNotesPaginationContainer" style="display: flex; align-items: center; gap: 8px;"></div>
-        </div>
+        
       </section>
     </div>
 
@@ -4394,11 +4378,11 @@ let cachedCasesPayload = null;
             Hiển thị ${startIndex + 1}-${Math.min(startIndex + auditLogsPerPage, filteredEntries.length)} / Tổng ${filteredEntries.length}
           </div>
           <div style="display: flex; gap: 6px; align-items: center; background: var(--surface-soft); padding: 4px; border-radius: 12px; border: 1px solid var(--border);">
-            <button type="button" class="pagination-btn" onclick="setAuditLogsPage(${auditLogsCurrentPage - 1})" ${auditLogsCurrentPage <= 1 ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${auditLogsCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${auditLogsCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
+            <button type="button" class="pagination-btn" onclick="setAuditLogsPage(${auditLogsCurrentPage - 1})" ${auditLogsCurrentPage <= 1 ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${auditLogsCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${auditLogsCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
             ${pageBtns}
-            <button type="button" class="pagination-btn" onclick="setAuditLogsPage(${auditLogsCurrentPage + 1})" ${auditLogsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${auditLogsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${auditLogsCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
+            <button type="button" class="pagination-btn" onclick="setAuditLogsPage(${auditLogsCurrentPage + 1})" ${auditLogsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${auditLogsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${auditLogsCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
             </button>
           </div>
@@ -6955,8 +6939,27 @@ function renderPendingNotesTrackerPage(targetContainer) {
             <p style="font-size: 13.5px; color: var(--text-soft); line-height: 1.5; max-width: 650px; margin: 0;">Bảng theo dõi và ghi chú tình trạng xử lý độc lập cho các hồ sơ tồn đọng.</p>
           </div>
           
-          <div style="display: flex; gap: 10px; align-items: center;">
-            <div class="search-wrap" style="position: relative; margin: 0; width: 320px;">
+          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end;">
+            <!-- Pagination Controls (Moved to Top) -->
+            <div style="display: flex; align-items: center; gap: 12px; background: var(--surface); padding: 5px 14px; border-radius: 12px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
+              <div style="font-size: 12px; color: var(--text-soft); font-weight: 700; white-space: nowrap;" id="pendingNotesPaginationLabel">
+                Đang hiển thị...
+              </div>
+              <div style="width: 1px; height: 18px; background: var(--border-strong);"></div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Mỗi trang:</span>
+                <select onchange="setPendingNotesPerPage(this.value)" style="height: 28px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main); font-size: 12px; font-weight: 700; padding: 0 4px; cursor: pointer; outline: none;">
+                  <option value="10">10</option>
+                  <option value="20" selected>20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+              <div style="width: 1px; height: 18px; background: var(--border-strong);"></div>
+              <div id="pendingNotesPaginationContainer" style="display: flex; align-items: center; gap: 4px;"></div>
+            </div>
+
+            <div class="search-wrap" style="position: relative; margin: 0; width: 280px;">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #10b981; pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
               <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT..." autocomplete="off" style="width: 100%; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);" oninput="setPendingNotesPage(1)" />
             </div>
@@ -7077,7 +7080,7 @@ function executeUIRenderPendingNotesTable() {
     
     // Previous button
     pageBtnsHtml += `
-      <button type="button" class="pagination-btn" onclick="setPendingNotesPage(${pendingNotesCurrentPage - 1})" ${pendingNotesCurrentPage <= 1 ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingNotesCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${pendingNotesCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
+      <button type="button" class="pagination-btn" onclick="setPendingNotesPage(${pendingNotesCurrentPage - 1})" ${pendingNotesCurrentPage <= 1 ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingNotesCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${pendingNotesCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
       </button>
     `;
@@ -7092,25 +7095,25 @@ function executeUIRenderPendingNotesTable() {
     }
 
     if (startPage > 1) {
-      pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(1)" style="width: 30px; height: 30px; border-radius: 8px; font-size: 12.5px; font-weight: 700; background: var(--surface); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer;">1</button>`;
+      pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(1)" style="width: 28px; height: 28px; border-radius: 6px; font-size: 11.5px; font-weight: 700; background: var(--surface); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer;">1</button>`;
       if (startPage > 2) pageBtnsHtml += `<span style="color: var(--text-muted); font-size: 12px;">...</span>`;
     }
 
     for (let p = startPage; p <= endPage; p++) {
       const isAct = p === pendingNotesCurrentPage;
       pageBtnsHtml += `
-        <button type="button" onclick="setPendingNotesPage(${p})" style="width: 30px; height: 30px; border-radius: 8px; font-size: 12.5px; font-weight: 800; background: ${isAct ? 'var(--primary)' : 'var(--surface)'}; border: 1px solid ${isAct ? 'var(--primary)' : 'var(--border)'}; color: ${isAct ? '#ffffff' : 'var(--text-main)'}; display: grid; place-items: center; cursor: ${isAct ? 'default' : 'pointer'}; box-shadow: ${isAct ? '0 4px 10px rgba(216,180,109,0.35)' : 'none'};">${p}</button>
+        <button type="button" onclick="setPendingNotesPage(${p})" style="width: 28px; height: 28px; border-radius: 6px; font-size: 11.5px; font-weight: 800; background: ${isAct ? 'var(--primary)' : 'var(--surface)'}; border: 1px solid ${isAct ? 'var(--primary)' : 'var(--border)'}; color: ${isAct ? '#ffffff' : 'var(--text-main)'}; display: grid; place-items: center; cursor: ${isAct ? 'default' : 'pointer'}; box-shadow: ${isAct ? '0 4px 10px rgba(216,180,109,0.35)' : 'none'};">${p}</button>
       `;
     }
 
     if (endPage < totalPages) {
       if (endPage < totalPages - 1) pageBtnsHtml += `<span style="color: var(--text-muted); font-size: 12px;">...</span>`;
-      pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(${totalPages})" style="width: 30px; height: 30px; border-radius: 8px; font-size: 12.5px; font-weight: 700; background: var(--surface); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer;">${totalPages}</button>`;
+      pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(${totalPages})" style="width: 28px; height: 28px; border-radius: 6px; font-size: 11.5px; font-weight: 700; background: var(--surface); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer;">${totalPages}</button>`;
     }
 
     // Next button
     pageBtnsHtml += `
-      <button type="button" class="pagination-btn" onclick="setPendingNotesPage(${pendingNotesCurrentPage + 1})" ${pendingNotesCurrentPage >= totalPages ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingNotesCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${pendingNotesCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
+      <button type="button" class="pagination-btn" onclick="setPendingNotesPage(${pendingNotesCurrentPage + 1})" ${pendingNotesCurrentPage >= totalPages ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingNotesCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${pendingNotesCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
       </button>
     `;
@@ -11091,9 +11094,9 @@ ${statRate}%
         }
         
         pageControls.innerHTML = `
-          <button type="button" class="pagination-btn" onclick="setCasePage(${activeCasePage - 1})" ${activeCasePage <= 1 ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${activeCasePage <= 1 ? '0.4' : '1'}; pointer-events: ${activeCasePage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+          <button type="button" class="pagination-btn" onclick="setCasePage(${activeCasePage - 1})" ${activeCasePage <= 1 ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${activeCasePage <= 1 ? '0.4' : '1'}; pointer-events: ${activeCasePage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
           <div style="display: flex; gap: 4px; align-items: center;">${btnsHTML}</div>
-          <button type="button" class="pagination-btn" onclick="setCasePage(${activeCasePage + 1})" ${activeCasePage >= totalPages ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${activeCasePage >= totalPages ? '0.4' : '1'}; pointer-events: ${activeCasePage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+          <button type="button" class="pagination-btn" onclick="setCasePage(${activeCasePage + 1})" ${activeCasePage >= totalPages ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${activeCasePage >= totalPages ? '0.4' : '1'}; pointer-events: ${activeCasePage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
         `;
       }
 
@@ -18417,13 +18420,13 @@ ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--te
               </div>
               
               <div style="display: flex; align-items: center; gap: 4px;">
-                <button type="button" class="pagination-btn" onclick="setAccClaimsPage(${accClaimsCurrentPage - 1})" ${accClaimsCurrentPage <= 1 ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accClaimsCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${accClaimsCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
+                <button type="button" class="pagination-btn" onclick="setAccClaimsPage(${accClaimsCurrentPage - 1})" ${accClaimsCurrentPage <= 1 ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accClaimsCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${accClaimsCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
                 <div style="display: flex; gap: 4px; align-items: center;">
                   ${pageBtnsHtml}
                 </div>
-                <button type="button" class="pagination-btn" onclick="setAccClaimsPage(${accClaimsCurrentPage + 1})" ${accClaimsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accClaimsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${accClaimsCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
+                <button type="button" class="pagination-btn" onclick="setAccClaimsPage(${accClaimsCurrentPage + 1})" ${accClaimsCurrentPage >= totalPages ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accClaimsCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${accClaimsCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
               </div>
@@ -19225,13 +19228,13 @@ ${statTrinhDntt} <span style="font-size: 13px; font-weight: 700; color: var(--te
               </div>
               
               <div style="display: flex; align-items: center; gap: 4px;">
-                <button type="button" class="pagination-btn" onclick="setAccTransfersPage(${accTransfersCurrentPage - 1})" ${accTransfersCurrentPage <= 1 ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accTransfersCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${accTransfersCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
+                <button type="button" class="pagination-btn" onclick="setAccTransfersPage(${accTransfersCurrentPage - 1})" ${accTransfersCurrentPage <= 1 ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accTransfersCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${accTransfersCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
                 <div style="display: flex; gap: 4px; align-items: center;">
                   ${pageBtnsHtml}
                 </div>
-                <button type="button" class="pagination-btn" onclick="setAccTransfersPage(${accTransfersCurrentPage + 1})" ${accTransfersCurrentPage >= totalPages ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accTransfersCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${accTransfersCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
+                <button type="button" class="pagination-btn" onclick="setAccTransfersPage(${accTransfersCurrentPage + 1})" ${accTransfersCurrentPage >= totalPages ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${accTransfersCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${accTransfersCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </button>
               </div>
