@@ -7254,11 +7254,6 @@ function executeUIRenderPendingNotesTable() {
   }
 
 
-  if (labelEl) {
-    const endCount = Math.min(startIndex + pendingNotesPerPage, totalFilteredCount);
-    labelEl.innerHTML = `Đang hiển thị <strong style="color: var(--text-main); font-weight: 850;">${startIndex + 1} - ${endCount}</strong> trong tổng số <strong style="color: var(--primary); font-weight: 850;">${totalFilteredCount}</strong> hồ sơ`;
-  }
-
   tbody.innerHTML = paginatedItems.map((c, idx) => {
     const index = startIndex + idx;
     const identifier = (c.bienSo || c.soHoSoBoiThuong || c.id || '').replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase();
