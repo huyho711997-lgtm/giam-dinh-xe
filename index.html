@@ -6922,22 +6922,32 @@ function renderPendingNotesTrackerPage(targetContainer) {
       <section class="p-card cases-panel" style="padding: 28px;">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 18px;">
           <div>
-            <h2 style="font-size: 22px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; gap: 10px; margin: 0;">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #10b981;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <div class="eyebrow" style="display:inline-flex; align-items:center; gap:6px; margin-bottom:10px; font-size:11.5px; font-weight:750; letter-spacing:0.08em; text-transform:uppercase; color: #10b981; padding:6px 14px; border-radius:99px; background:rgba(16, 185, 129, 0.12); border:1px solid rgba(16, 185, 129, 0.25); box-shadow:0 2px 8px rgba(16, 185, 129, 0.1);">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+              QUẢN LÝ NGHIỆP VỤ HỒ SƠ TỒN
+            </div>
+            <h2 style="font-size: 28px; font-weight: 850; color: var(--text-main); margin: 0 0 8px 0; letter-spacing: -0.02em;">
               Quản lý tiến độ Hồ sơ tồn
             </h2>
-            <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft);">Bảng theo dõi và ghi chú tình trạng xử lý độc lập cho các hồ sơ tồn đọng.</p>
-          </div>
-          <div style="display: flex; gap: 10px; align-items: center;">
-            <div class="search-box">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input type="text" id="pendingNotesSearchInput" placeholder="Tìm kiếm BSX, Mã VTT..." style="width: 250px;" oninput="executeUIRenderPendingNotesTable()" />
-            </div>
+            <p style="font-size: 13.5px; color: var(--text-soft); line-height: 1.5; max-width: 650px; margin: 0;">Bảng theo dõi và ghi chú tình trạng xử lý độc lập cho các hồ sơ tồn đọng.</p>
           </div>
         </div>
 
-        <div class="table-container" style="overflow-x: auto; overflow-y: hidden;">
-          <table class="data-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; background: var(--surface); padding: 14px 20px; border-radius: 16px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
+          <div class="search-wrap" style="position: relative; margin: 0; min-width: 240px; max-width: 320px; flex: 1;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #10b981; pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT..." autocomplete="off" style="width: 100%; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main);" oninput="executeUIRenderPendingNotesTable()" />
+          </div>
+        </div>
+
+        <div style="overflow-x: auto; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm);">
+          <table class="data-table premium-table premium-border-table" id="pendingNotesTable" style="width: 100%; border-collapse: collapse; min-width: 1000px;">
             <thead>
               <tr>
                 <th style="width: 40px; text-align: center;">STT</th>
