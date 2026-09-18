@@ -7074,7 +7074,7 @@ function executeUIRenderPendingNotesTable() {
                 </div>
               ` : `<div style="font-size: 12px; color: var(--text-muted); font-style: italic;">Chưa có ghi chú...</div>`}
             </div>
-            <button class="btn-premium btn-secondary" onclick="openPendingNoteModal('${c.id}', '${identifier}')" style="padding: 0 14px; height: 32px; font-size: 11px; flex-shrink: 0; border-radius: 8px; font-weight: 750;">
+            <button class="btn-premium btn-secondary" onclick="openPendingNoteModal('${c.id}', '${identifier}')" style="padding: 0 14px; height: 32px; font-size: 11px; flex-shrink: 0; border-radius: 8px; font-weight: 750; width: auto !important;">
               ${latestNote ? 'Cập nhật' : 'Thêm ghi chú'}
             </button>
           </div>
