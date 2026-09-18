@@ -2505,9 +2505,15 @@
           <div class="form-group full"><label>Email đăng nhập</label><div id="profileEmailLocked" class="profile-email-lock"></div></div>
         </div>
         <div class="profile-modal-actions"><button type="button" class="btn-premium btn-secondary" onclick="closeUserProfileModal()">Đóng</button><button id="btnSaveUserProfile" type="button" class="btn-premium" onclick="saveUserProfile()">Lưu hồ sơ</button></div>
-      </div>
-    </section>
-  </div>
+      
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 4px 0 4px; border-top: 1px solid var(--border); margin-top: 20px;">
+          <div style="font-size: 13px; color: var(--text-soft); font-weight: 600;" id="pendingNotesPaginationLabel">
+            Đang hiển thị...
+          </div>
+          <div id="pendingNotesPaginationContainer" style="display: flex; align-items: center; gap: 8px;"></div>
+        </div>
+      </section>
+    </div>
 
   <!-- Thêm thành viên mới Modal -->
   <!-- Thêm thành viên mới Modal (Expanded Glassmorphic Executive 1080px) -->
@@ -6941,7 +6947,7 @@ function renderPendingNotesTrackerPage(targetContainer) {
           <div style="display: flex; gap: 10px; align-items: center;">
             <div class="search-wrap" style="position: relative; margin: 0; width: 320px;">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #10b981; pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT..." autocomplete="off" style="width: 100%; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);" oninput="executeUIRenderPendingNotesTable()" />
+              <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT..." autocomplete="off" style="width: 100%; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);" oninput="setPendingNotesPage(1)" />
             </div>
           </div>
         </div>
@@ -7000,6 +7006,15 @@ function renderPendingNotesTrackerPage(targetContainer) {
   executeUIRenderPendingNotesTable();
 }
 
+
+let pendingNotesCurrentPage = 1;
+const pendingNotesPerPage = 20;
+
+function setPendingNotesPage(page) {
+  pendingNotesCurrentPage = page;
+  executeUIRenderPendingNotesTable();
+}
+
 function executeUIRenderPendingNotesTable() {
   const tbody = document.getElementById('tblPendingNotesBody');
   if (!tbody) return;
@@ -7021,12 +7036,78 @@ function executeUIRenderPendingNotesTable() {
 
   filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
-  if (filtered.length === 0) {
+  const totalFilteredCount = filtered.length;
+  const totalPages = Math.ceil(totalFilteredCount / pendingNotesPerPage) || 1;
+  if (pendingNotesCurrentPage > totalPages) pendingNotesCurrentPage = totalPages;
+  if (pendingNotesCurrentPage < 1) pendingNotesCurrentPage = 1;
+
+  const startIndex = (pendingNotesCurrentPage - 1) * pendingNotesPerPage;
+  const paginatedItems = filtered.slice(startIndex, startIndex + pendingNotesPerPage);
+
+  const labelEl = document.getElementById('pendingNotesPaginationLabel');
+  const containerEl = document.getElementById('pendingNotesPaginationContainer');
+
+  if (paginatedItems.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="empty-state-text">Không tìm thấy hồ sơ phù hợp.</td></tr>`;
+    if (labelEl) labelEl.textContent = 'Đang hiển thị 0 hồ sơ';
+    if (containerEl) containerEl.innerHTML = '';
     return;
   }
 
-  tbody.innerHTML = filtered.map((c, index) => {
+  // Generate pagination buttons
+  if (containerEl) {
+    let pageBtnsHtml = '';
+    
+    // Previous button
+    pageBtnsHtml += `
+      <button type="button" class="pagination-btn" onclick="setPendingNotesPage(${pendingNotesCurrentPage - 1})" ${pendingNotesCurrentPage <= 1 ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingNotesCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${pendingNotesCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+    `;
+
+    // Pages
+    const maxVisibleButtons = 5;
+    let startPage = Math.max(1, pendingNotesCurrentPage - Math.floor(maxVisibleButtons / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
+    
+    if (endPage - startPage + 1 < maxVisibleButtons) {
+      startPage = Math.max(1, endPage - maxVisibleButtons + 1);
+    }
+
+    if (startPage > 1) {
+      pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(1)" style="width: 30px; height: 30px; border-radius: 8px; font-size: 12.5px; font-weight: 700; background: var(--surface); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer;">1</button>`;
+      if (startPage > 2) pageBtnsHtml += `<span style="color: var(--text-muted); font-size: 12px;">...</span>`;
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
+      const isAct = p === pendingNotesCurrentPage;
+      pageBtnsHtml += `
+        <button type="button" onclick="setPendingNotesPage(${p})" style="width: 30px; height: 30px; border-radius: 8px; font-size: 12.5px; font-weight: 800; background: ${isAct ? 'var(--primary)' : 'var(--surface)'}; border: 1px solid ${isAct ? 'var(--primary)' : 'var(--border)'}; color: ${isAct ? '#ffffff' : 'var(--text-main)'}; display: grid; place-items: center; cursor: ${isAct ? 'default' : 'pointer'}; box-shadow: ${isAct ? '0 4px 10px rgba(216,180,109,0.35)' : 'none'};">${p}</button>
+      `;
+    }
+
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) pageBtnsHtml += `<span style="color: var(--text-muted); font-size: 12px;">...</span>`;
+      pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(${totalPages})" style="width: 30px; height: 30px; border-radius: 8px; font-size: 12.5px; font-weight: 700; background: var(--surface); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer;">${totalPages}</button>`;
+    }
+
+    // Next button
+    pageBtnsHtml += `
+      <button type="button" class="pagination-btn" onclick="setPendingNotesPage(${pendingNotesCurrentPage + 1})" ${pendingNotesCurrentPage >= totalPages ? 'disabled' : ''} style="width: 30px; height: 30px; border-radius: 8px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingNotesCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${pendingNotesCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    `;
+
+    containerEl.innerHTML = pageBtnsHtml;
+  }
+
+  if (labelEl) {
+    const endCount = Math.min(startIndex + pendingNotesPerPage, totalFilteredCount);
+    labelEl.innerHTML = `Đang hiển thị <strong style="color: var(--text-main); font-weight: 850;">${startIndex + 1} - ${endCount}</strong> trong tổng số <strong style="color: var(--primary); font-weight: 850;">${totalFilteredCount}</strong> hồ sơ`;
+  }
+
+  tbody.innerHTML = paginatedItems.map((c, idx) => {
+    const index = startIndex + idx;
     const identifier = (c.bienSo || c.soHoSoBoiThuong || c.id || '').replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase();
     const noteData = cachedPendingNotesPayload[identifier] || {};
     const history = noteData.history || [];
