@@ -6947,28 +6947,12 @@ function renderPendingNotesTrackerPage(targetContainer) {
           <!-- Left Side: Search Input -->
           <div class="search-wrap" style="margin: 0; min-width: 240px; max-width: 320px; flex: 1; position: relative;">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT..." autocomplete="off" style="width: 100%; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);" oninput="setPendingNotesPage(1)" />
+            <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT, GĐV..." autocomplete="off" style="width: 100%; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);" oninput="setPendingNotesPage(1)" />
           </div>
 
-          <!-- Right Side: Pagination Controls -->
-          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; justify-content: flex-end; flex: 1;">
-            <div style="display: flex; align-items: center; gap: 12px; background: var(--surface); padding: 5px 14px; border-radius: 12px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="font-size: 11px; font-weight: 750; color: var(--text-main);">Mỗi trang:</span>
-                <select onchange="setPendingNotesPerPage(this.value)" style="height: 28px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main); font-size: 12px; font-weight: 700; padding: 0 4px; cursor: pointer; outline: none;">
-                  <option value="10">10</option>
-                  <option value="20" selected>20</option>
-                  <option value="50">50</option>
-                  <option value="100">100</option>
-                </select>
-              </div>
-              <div style="width: 1px; height: 18px; background: var(--border-strong);"></div>
-              <div style="font-size: 12px; color: var(--text-soft); font-weight: 700; white-space: nowrap;" id="pendingNotesPaginationLabel">
-                Đang hiển thị...
-              </div>
-              <div style="width: 1px; height: 18px; background: var(--border-strong);"></div>
-              <div id="pendingNotesPaginationContainer" style="display: flex; align-items: center; gap: 4px;"></div>
-            </div>
+          <!-- Right Side: Luxury Pagination -->
+          <div id="pendingNotesPaginationContainer" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; flex: 1;">
+            <!-- Rendered by JS -->
           </div>
         </div>
 
@@ -7198,62 +7182,77 @@ function executeUIRenderPendingNotesTable() {
   const startIndex = (pendingNotesCurrentPage - 1) * pendingNotesPerPage;
   const paginatedItems = filtered.slice(startIndex, startIndex + pendingNotesPerPage);
 
-  const labelEl = document.getElementById('pendingNotesPaginationLabel');
-  const containerEl = document.getElementById('pendingNotesPaginationContainer');
-
-  if (paginatedItems.length === 0) {
+  const paginationContainer = document.getElementById('pendingNotesPaginationContainer');
+  if (totalFilteredCount === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="empty-state-text">Không tìm thấy hồ sơ phù hợp.</td></tr>`;
-    if (labelEl) labelEl.textContent = 'Đang hiển thị 0 hồ sơ';
-    if (containerEl) containerEl.innerHTML = '';
+    if (paginationContainer) paginationContainer.innerHTML = '';
     return;
   }
 
-  // Generate pagination buttons
-  if (containerEl) {
+  if (paginationContainer) {
+    const displayStart = totalFilteredCount > 0 ? startIndex + 1 : 0;
+    const displayEnd = Math.min(startIndex + pendingNotesPerPage, totalFilteredCount);
+    
     let pageBtnsHtml = '';
-    
-    // Previous button
-    pageBtnsHtml += `
-      <button type="button" class="pagination-btn" onclick="setPendingNotesPage(${pendingNotesCurrentPage - 1})" ${pendingNotesCurrentPage <= 1 ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingNotesCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${pendingNotesCurrentPage <= 1 ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang trước">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      </button>
-    `;
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, pendingNotesCurrentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
-    // Pages
-    const maxVisibleButtons = 5;
-    let startPage = Math.max(1, pendingNotesCurrentPage - Math.floor(maxVisibleButtons / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisibleButtons - 1);
-    
-    if (endPage - startPage + 1 < maxVisibleButtons) {
-      startPage = Math.max(1, endPage - maxVisibleButtons + 1);
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
 
     if (startPage > 1) {
-      pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(1)" style="width: 28px; height: 28px; border-radius: 6px; font-size: 11.5px; font-weight: 700; background: var(--surface); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer;">1</button>`;
-      if (startPage > 2) pageBtnsHtml += `<span style="color: var(--text-muted); font-size: 12px;">...</span>`;
+      pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(1)" style="min-width: 34px; height: 42px; padding: 0 6px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">1</button>`;
+      if (startPage > 2) pageBtnsHtml += `<span style="color: var(--text-muted); font-size: 14px; font-weight: 700; padding: 0 4px;">...</span>`;
     }
 
-    for (let p = startPage; p <= endPage; p++) {
-      const isAct = p === pendingNotesCurrentPage;
-      pageBtnsHtml += `
-        <button type="button" onclick="setPendingNotesPage(${p})" style="width: 28px; height: 28px; border-radius: 6px; font-size: 11.5px; font-weight: 800; background: ${isAct ? 'var(--primary)' : 'var(--surface)'}; border: 1px solid ${isAct ? 'var(--primary)' : 'var(--border)'}; color: ${isAct ? '#ffffff' : 'var(--text-main)'}; display: grid; place-items: center; cursor: ${isAct ? 'default' : 'pointer'}; box-shadow: ${isAct ? '0 4px 10px rgba(216,180,109,0.35)' : 'none'};">${p}</button>
-      `;
+    for (let i = startPage; i <= endPage; i++) {
+      if (i === pendingNotesCurrentPage) {
+        pageBtnsHtml += `<button type="button" style="min-width: 34px; height: 42px; padding: 0 6px; border-radius: 12px; font-size: 12.5px; font-weight: 850; background: var(--primary); border: 1px solid var(--primary); color: #111; box-shadow: 0 4px 10px rgba(216,180,109,0.35); cursor: default;">${i}</button>`;
+      } else {
+        pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(${i})" style="min-width: 34px; height: 42px; padding: 0 6px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='var(--bg-soft)'">${i}</button>`;
+      }
     }
 
     if (endPage < totalPages) {
-      if (endPage < totalPages - 1) pageBtnsHtml += `<span style="color: var(--text-muted); font-size: 12px;">...</span>`;
-      pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(${totalPages})" style="width: 28px; height: 28px; border-radius: 6px; font-size: 11.5px; font-weight: 700; background: var(--surface); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer;">${totalPages}</button>`;
+      if (endPage < totalPages - 1) pageBtnsHtml += `<span style="color: var(--text-muted); font-size: 14px; font-weight: 700; padding: 0 4px;">...</span>`;
+      pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(${totalPages})" style="min-width: 34px; height: 42px; padding: 0 6px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">${totalPages}</button>`;
     }
 
-    // Next button
-    pageBtnsHtml += `
-      <button type="button" class="pagination-btn" onclick="setPendingNotesPage(${pendingNotesCurrentPage + 1})" ${pendingNotesCurrentPage >= totalPages ? 'disabled' : ''} style="width: 28px; height: 28px; border-radius: 6px; font-size: 12px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingNotesCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${pendingNotesCurrentPage >= totalPages ? 'none' : 'auto'}; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Trang sau">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </button>
-    `;
+    paginationContainer.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; margin-left: auto; white-space: nowrap;">
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-soft); font-weight: 600;">
+          <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
+            <select onchange="setPendingNotesPerPage(this.value)" style="height: 42px; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); font-size: 12.5px; font-weight: 750; padding: 0 28px 0 12px; border-radius: 12px; cursor: pointer; outline: none; -webkit-appearance: none; appearance: none;">
+              <option value="10" ${pendingNotesPerPage === 10 ? 'selected' : ''}>10 / trang</option>
+              <option value="20" ${pendingNotesPerPage === 20 ? 'selected' : ''}>20 / trang</option>
+              <option value="50" ${pendingNotesPerPage === 50 ? 'selected' : ''}>50 / trang</option>
+              <option value="100" ${pendingNotesPerPage === 100 ? 'selected' : ''}>100 / trang</option>
+            </select>
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); position: absolute; right: 12px; top: 15px; pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+        </div>
 
-    containerEl.innerHTML = pageBtnsHtml;
+        <div style="font-size: 12.5px; color: var(--text-soft); font-weight: 700;">
+          <strong style="color: var(--primary);">${displayStart}-${displayEnd}</strong> / <strong style="color: var(--text-main);">${totalFilteredCount}</strong>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 2px;">
+          <button type="button" onclick="setPendingNotesPage(${pendingNotesCurrentPage - 1})" ${pendingNotesCurrentPage <= 1 ? 'disabled' : ''} style="width: 34px; height: 42px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingNotesCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${pendingNotesCurrentPage <= 1 ? 'none' : 'auto'};" title="Trang trước">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          
+          ${pageBtnsHtml}
+
+          <button type="button" onclick="setPendingNotesPage(${pendingNotesCurrentPage + 1})" ${pendingNotesCurrentPage >= totalPages ? 'disabled' : ''} style="width: 34px; height: 42px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingNotesCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${pendingNotesCurrentPage >= totalPages ? 'none' : 'auto'};" title="Trang sau">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+      </div>
+    `;
   }
+
 
   if (labelEl) {
     const endCount = Math.min(startIndex + pendingNotesPerPage, totalFilteredCount);
