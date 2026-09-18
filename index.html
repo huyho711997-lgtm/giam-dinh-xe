@@ -6950,6 +6950,38 @@ function renderPendingNotesTrackerPage(targetContainer) {
             <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT, GĐV..." autocomplete="off" style="width: 100%; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);" oninput="setPendingNotesPage(1)" />
           </div>
 
+          <!-- Middle Side: Unified Dropdown Filter Control Group -->
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; flex: 2; min-width: 300px;">
+            <!-- Filter 1: Status -->
+            <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 160px; max-width: 220px;">
+              <button id="btnPendingNotesStatusDropdown" type="button" onclick="togglePendingNotesStatusDropdown(event)" style="width: 100%; height: 42px; padding: 0 28px 0 34px; border-radius: 12px; font-size: 12.5px; font-weight: 750; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; transition: all 0.2s ease;">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                <span id="lblPendingNotesStatusDropdownSelected" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 750;">Tất cả trạng thái (0)</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+              <div id="menuPendingNotesStatusDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; width: 100%; min-width: 210px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.06); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+            <!-- Filter 2: GDV Team -->
+            <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 140px; max-width: 200px;">
+              <button id="btnPendingNotesGdvDropdown" type="button" onclick="togglePendingNotesGdvDropdown(event)" style="width: 100%; height: 42px; padding: 0 28px 0 34px; border-radius: 12px; font-size: 12.5px; font-weight: 750; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; transition: all 0.2s ease;">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #3b82f6; pointer-events: none;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span id="lblPendingNotesGdvDropdownSelected" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 750;">Tất cả GĐV team</span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+              <div id="menuPendingNotesGdvDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; width: 100%; min-width: 190px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.06); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+            <!-- Quick Reset Filters Button -->
+            <button type="button" class="btn-premium btn-secondary" onclick="resetAllPendingNotesFilters()" title="Đặt lại bộ lọc" style="width: 42px; height: 42px; min-width: 42px; min-height: 42px; padding: 0; border-radius: 12px; display: grid; place-items: center; cursor: pointer;" aria-label="Đặt lại bộ lọc">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            </button>
+          </div>
+
           <!-- Right Side: Luxury Pagination -->
           <div id="pendingNotesPaginationContainer" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; flex: 1;">
             <!-- Rendered by JS -->
@@ -7011,6 +7043,63 @@ function renderPendingNotesTrackerPage(targetContainer) {
   executeUIRenderPendingNotesTable();
 }
 
+
+let activePendingNotesStatusFilter = ['all'];
+let activePendingNotesGdvFilter = 'all';
+
+function togglePendingNotesStatusDropdown(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('menuPendingNotesStatusDropdown');
+  if (!menu) return;
+  const isHidden = menu.style.display === 'none' || !menu.style.display;
+  closeAllCustomDropdowns();
+  if (isHidden) menu.style.display = 'block';
+}
+
+function selectPendingNotesStatusFilter(event, statusKey) {
+  if (event) event.stopPropagation();
+  let arr = Array.isArray(activePendingNotesStatusFilter) ? activePendingNotesStatusFilter : [activePendingNotesStatusFilter || 'all'];
+
+  if (statusKey === 'all') {
+    arr = ['all'];
+  } else {
+    if (arr.includes('all')) {
+      arr = [statusKey];
+    } else {
+      if (arr.includes(statusKey)) {
+        arr = arr.filter(k => k !== statusKey);
+        if (arr.length === 0) arr = ['all'];
+      } else {
+        arr.push(statusKey);
+      }
+    }
+  }
+  activePendingNotesStatusFilter = arr;
+  setPendingNotesPage(1);
+}
+
+function togglePendingNotesGdvDropdown(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('menuPendingNotesGdvDropdown');
+  if (!menu) return;
+  const isHidden = menu.style.display === 'none' || !menu.style.display;
+  closeAllCustomDropdowns();
+  if (isHidden) menu.style.display = 'block';
+}
+
+function selectPendingNotesGdvFilter(val) {
+  activePendingNotesGdvFilter = val;
+  setPendingNotesPage(1);
+}
+
+function resetAllPendingNotesFilters() {
+  activePendingNotesStatusFilter = ['all'];
+  activePendingNotesGdvFilter = 'all';
+  const searchInput = document.getElementById('pendingNotesSearchInput');
+  if (searchInput) searchInput.value = '';
+  setPendingNotesPage(1);
+}
+
 let pendingNotesCurrentPage = 1;
 let pendingNotesPerPage = 20;
 
@@ -7033,17 +7122,36 @@ function executeUIRenderPendingNotesTable() {
   const claimsList = Object.values(cachedPendingClaimsPayload || {});
 
   
+  
   const allowedStatuses = [
-    'moi',
-    'cho_giam_dinh_ht',
-    'da_giam_dinh_ht',
-    'cho_gdct',
-    'da_gdct',
-    'cho_duyet_pasc',
-    'da_duyet_pasc',
-    'cho_duyet_hsbt'
+    'moi', 'cho_giam_dinh_ht', 'da_giam_dinh_ht', 'cho_gdct',
+    'da_gdct', 'cho_duyet_pasc', 'da_duyet_pasc', 'cho_duyet_hsbt'
   ];
-  let filtered = claimsList.filter(c => allowedStatuses.includes(String(c.trangThai || 'moi').toLowerCase()));
+  let baseFiltered = claimsList.filter(c => allowedStatuses.includes(String(c.trangThai || 'moi').toLowerCase()));
+
+  // Determine available GDVs
+  const gdvMap = {};
+  baseFiltered.forEach(c => {
+    let gdv = (c.gdvHo || c.canBoXuLy || '').trim();
+    if (!gdv) gdv = 'Chưa rõ';
+    gdvMap[gdv] = (gdvMap[gdv] || 0) + 1;
+  });
+  const gdvOptions = Object.keys(gdvMap).sort();
+
+  // Apply Status filter
+  let filtered = baseFiltered;
+  if (!activePendingNotesStatusFilter.includes('all')) {
+    filtered = filtered.filter(c => activePendingNotesStatusFilter.includes(String(c.trangThai || 'moi').toLowerCase()));
+  }
+
+  // Apply GDV filter
+  if (activePendingNotesGdvFilter !== 'all') {
+    filtered = filtered.filter(c => {
+      let gdv = (c.gdvHo || c.canBoXuLy || '').trim() || 'Chưa rõ';
+      return gdv === activePendingNotesGdvFilter;
+    });
+  }
+
 
 
   if (searchVal) {
@@ -7190,6 +7298,38 @@ function executeUIRenderPendingNotesTable() {
   }
 
   if (paginationContainer) {
+    
+    // Render Dropdown States
+    const lblStatus = document.getElementById('lblPendingNotesStatusDropdownSelected');
+    const menuStatus = document.getElementById('menuPendingNotesStatusDropdown');
+    if (lblStatus && menuStatus) {
+      const isAll = activePendingNotesStatusFilter.includes('all');
+      lblStatus.innerHTML = isAll ? `Tất cả trạng thái (${baseFiltered.length})` : `${activePendingNotesStatusFilter.length} trạng thái (${filtered.length})`;
+      
+      let html = `<div class="custom-dropdown-item ${isAll ? 'selected' : ''}" onclick="selectPendingNotesStatusFilter(event, 'all')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isAll ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}"><span style="font-size: 12.5px;">Tất cả trạng thái</span>${isAll ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}</div>`;
+      
+      allowedStatuses.forEach(k => {
+        const isSel = activePendingNotesStatusFilter.includes(k);
+        const config = PENDING_STATUS_MAP[k] || { label: k };
+        html += `<div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="selectPendingNotesStatusFilter(event, '${k}')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}"><span style="font-size: 12.5px; display: flex; align-items: center; gap: 8px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: ${config.color || '#94a3b8'};"></span>${config.label}</span>${isSel ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}</div>`;
+      });
+      menuStatus.innerHTML = html;
+    }
+
+    const lblGdv = document.getElementById('lblPendingNotesGdvDropdownSelected');
+    const menuGdv = document.getElementById('menuPendingNotesGdvDropdown');
+    if (lblGdv && menuGdv) {
+      lblGdv.innerHTML = activePendingNotesGdvFilter === 'all' ? 'Tất cả GĐV team' : activePendingNotesGdvFilter;
+      
+      let html = `<div class="custom-dropdown-item ${activePendingNotesGdvFilter === 'all' ? 'selected' : ''}" onclick="selectPendingNotesGdvFilter('all')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${activePendingNotesGdvFilter === 'all' ? 'background: rgba(59,130,246,0.12); color: #3b82f6; font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}"><span style="font-size: 12.5px;">Tất cả GĐV team</span>${activePendingNotesGdvFilter === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}</div>`;
+      
+      gdvOptions.forEach(g => {
+        const isSel = activePendingNotesGdvFilter === g;
+        html += `<div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="selectPendingNotesGdvFilter('${g}')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(59,130,246,0.12); color: #3b82f6; font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}"><span style="font-size: 12.5px;">${g}</span>${isSel ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}</div>`;
+      });
+      menuGdv.innerHTML = html;
+    }
+
     const displayStart = totalFilteredCount > 0 ? startIndex + 1 : 0;
     const displayEnd = Math.min(startIndex + pendingNotesPerPage, totalFilteredCount);
     
