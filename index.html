@@ -6921,33 +6921,40 @@ function renderPendingNotesTrackerPage(targetContainer) {
   container.innerHTML = `
     <div class="workspace-grid single-col">
       <section class="p-card cases-panel" style="padding: 28px;">
+        
+        <!-- Header Title & Action Buttons -->
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 18px;">
           <div>
-            <div class="eyebrow" style="display:inline-flex; align-items:center; gap:6px; margin-bottom:10px; font-size:11.5px; font-weight:750; letter-spacing:0.08em; text-transform:uppercase; color: #10b981; padding:6px 14px; border-radius:99px; background:rgba(16, 185, 129, 0.12); border:1px solid rgba(16, 185, 129, 0.25); box-shadow:0 2px 8px rgba(16, 185, 129, 0.1);">
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
+            <h2 style="font-size: 22px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; gap: 10px; margin: 0;">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
               </svg>
-              QUẢN LÝ NGHIỆP VỤ HỒ SƠ TỒN
-            </div>
-            <h2 style="font-size: 28px; font-weight: 850; color: var(--text-main); margin: 0 0 8px 0; letter-spacing: -0.02em;">
-              Quản lý tiến độ Hồ sơ tồn
+              <span>Quản lý tiến độ Hồ sơ tồn</span>
             </h2>
-            <p style="font-size: 13.5px; color: var(--text-soft); line-height: 1.5; max-width: 650px; margin: 0;">Bảng theo dõi và ghi chú tình trạng xử lý độc lập cho các hồ sơ tồn đọng.</p>
+            <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft);">Bảng theo dõi và ghi chú tình trạng xử lý độc lập cho các hồ sơ tồn đọng.</p>
           </div>
+        </div>
+
+        <!-- Stats Container -->
+        <div id="pendingNotesStatsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Filter Toolbar Row Premium Luxury System -->
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; background: var(--surface); padding: 14px 20px; border-radius: 16px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
           
-          <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end;">
-            <!-- Pagination Controls (Moved to Top) -->
+          <!-- Left Side: Search Input -->
+          <div class="search-wrap" style="margin: 0; min-width: 240px; max-width: 320px; flex: 1; position: relative;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT..." autocomplete="off" style="width: 100%; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);" oninput="setPendingNotesPage(1)" />
+          </div>
+
+          <!-- Right Side: Pagination Controls -->
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; justify-content: flex-end; flex: 1;">
             <div style="display: flex; align-items: center; gap: 12px; background: var(--surface); padding: 5px 14px; border-radius: 12px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
-              <div style="font-size: 12px; color: var(--text-soft); font-weight: 700; white-space: nowrap;" id="pendingNotesPaginationLabel">
-                Đang hiển thị...
-              </div>
-              <div style="width: 1px; height: 18px; background: var(--border-strong);"></div>
               <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Mỗi trang:</span>
+                <span style="font-size: 11px; font-weight: 750; color: var(--text-main);">Mỗi trang:</span>
                 <select onchange="setPendingNotesPerPage(this.value)" style="height: 28px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main); font-size: 12px; font-weight: 700; padding: 0 4px; cursor: pointer; outline: none;">
                   <option value="10">10</option>
                   <option value="20" selected>20</option>
@@ -6956,17 +6963,17 @@ function renderPendingNotesTrackerPage(targetContainer) {
                 </select>
               </div>
               <div style="width: 1px; height: 18px; background: var(--border-strong);"></div>
+              <div style="font-size: 12px; color: var(--text-soft); font-weight: 700; white-space: nowrap;" id="pendingNotesPaginationLabel">
+                Đang hiển thị...
+              </div>
+              <div style="width: 1px; height: 18px; background: var(--border-strong);"></div>
               <div id="pendingNotesPaginationContainer" style="display: flex; align-items: center; gap: 4px;"></div>
-            </div>
-
-            <div class="search-wrap" style="position: relative; margin: 0; width: 280px;">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #10b981; pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT..." autocomplete="off" style="width: 100%; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);" oninput="setPendingNotesPage(1)" />
             </div>
           </div>
         </div>
 
-        <div style="overflow-x: auto; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm);">
+        <!-- Table Container -->
+        <div class="table-container" style="border: 1px solid var(--border); border-radius: 14px; background: var(--bg-soft); overflow: hidden;">
           <table class="p-table" id="pendingNotesTable" style="width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed;">
             <thead>
               <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong);">
@@ -7020,16 +7027,6 @@ function renderPendingNotesTrackerPage(targetContainer) {
   executeUIRenderPendingNotesTable();
 }
 
-
-let pendingNotesCurrentPage = 1;
-let pendingNotesPerPage = 20;
-
-function setPendingNotesPerPage(val) {
-  pendingNotesPerPage = parseInt(val, 10) || 20;
-  pendingNotesCurrentPage = 1;
-  executeUIRenderPendingNotesTable();
-}
-
 function setPendingNotesPage(page) {
   pendingNotesCurrentPage = page;
   executeUIRenderPendingNotesTable();
@@ -7055,8 +7052,60 @@ function executeUIRenderPendingNotesTable() {
   }
 
   filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
   const totalFilteredCount = filtered.length;
+
+  // Calculate Stats
+  let countWithNotes = 0;
+  let countWithoutNotes = 0;
+  let countOver3Days = 0;
+  const nowMs = Date.now();
+  const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+
+  filtered.forEach(c => {
+    const identifier = (c.bienSo || c.soHoSoBoiThuong || c.id || '').replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase();
+    const noteData = cachedPendingNotesPayload[identifier] || {};
+    const history = noteData.history || [];
+    if (history.length > 0) {
+      countWithNotes++;
+    } else {
+      countWithoutNotes++;
+    }
+
+    // Check if created > 3 days ago and no notes OR last note was > 3 days ago
+    const createdAtMs = c.createdAt || nowMs;
+    const lastNoteMs = history.length > 0 ? history[history.length - 1].timestamp : 0;
+    
+    if (history.length === 0) {
+      if (nowMs - createdAtMs > threeDaysMs) countOver3Days++;
+    } else {
+      if (nowMs - lastNoteMs > threeDaysMs) countOver3Days++;
+    }
+  });
+
+  const rateNotes = totalFilteredCount > 0 ? Math.round((countWithNotes / totalFilteredCount) * 100) : 0;
+
+  const statsEl = document.getElementById('pendingNotesStatsContainer');
+  if (statsEl) {
+    statsEl.innerHTML = `
+      <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
+        <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">TỔNG SỐ HỒ SƠ TỒN</span>
+        <strong style="display: block; font-size: 30px; color: var(--primary); margin-top: 10px; font-weight: 850;">${totalFilteredCount} <span style="font-size: 14px; color: var(--text-muted); font-weight: 600;">ca</span></strong>
+      </div>
+      <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(16,185,129,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
+        <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">ĐÃ CẬP NHẬT GHI CHÚ</span>
+        <strong style="display: block; font-size: 30px; color: #10b981; margin-top: 10px; font-weight: 850;">${countWithNotes} <span style="font-size: 14px; color: var(--text-muted); font-weight: 600;">ca</span></strong>
+      </div>
+      <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(239,68,68,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
+        <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">CẢNH BÁO > 3 NGÀY</span>
+        <strong style="display: block; font-size: 30px; color: #ef4444; margin-top: 10px; font-weight: 850;">${countOver3Days} <span style="font-size: 14px; color: var(--text-muted); font-weight: 600;">ca</span></strong>
+      </div>
+      <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(59,130,246,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
+        <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">TỶ LỆ TƯƠNG TÁC</span>
+        <strong style="display: block; font-size: 30px; color: #3b82f6; margin-top: 10px; font-weight: 850;">${rateNotes}%</strong>
+      </div>
+    `;
+  }
+
   const totalPages = Math.ceil(totalFilteredCount / pendingNotesPerPage) || 1;
   if (pendingNotesCurrentPage > totalPages) pendingNotesCurrentPage = totalPages;
   if (pendingNotesCurrentPage < 1) pendingNotesCurrentPage = 1;
