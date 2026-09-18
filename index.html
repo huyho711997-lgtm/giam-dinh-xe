@@ -2507,8 +2507,19 @@
         <div class="profile-modal-actions"><button type="button" class="btn-premium btn-secondary" onclick="closeUserProfileModal()">Đóng</button><button id="btnSaveUserProfile" type="button" class="btn-premium" onclick="saveUserProfile()">Lưu hồ sơ</button></div>
       
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 4px 0 4px; border-top: 1px solid var(--border); margin-top: 20px;">
-          <div style="font-size: 13px; color: var(--text-soft); font-weight: 600;" id="pendingNotesPaginationLabel">
-            Đang hiển thị...
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="font-size: 13px; color: var(--text-soft); font-weight: 600;" id="pendingNotesPaginationLabel">
+              Đang hiển thị...
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; border-left: 1px solid var(--border); padding-left: 16px;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Hiển thị:</span>
+              <select onchange="setPendingNotesPerPage(this.value)" style="height: 32px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-main); font-size: 12.5px; font-weight: 700; padding: 0 8px; cursor: pointer; outline: none; box-shadow: var(--shadow-sm);">
+                <option value="10">10 / trang</option>
+                <option value="20" selected>20 / trang</option>
+                <option value="50">50 / trang</option>
+                <option value="100">100 / trang</option>
+              </select>
+            </div>
           </div>
           <div id="pendingNotesPaginationContainer" style="display: flex; align-items: center; gap: 8px;"></div>
         </div>
@@ -7008,7 +7019,13 @@ function renderPendingNotesTrackerPage(targetContainer) {
 
 
 let pendingNotesCurrentPage = 1;
-const pendingNotesPerPage = 20;
+let pendingNotesPerPage = 20;
+
+function setPendingNotesPerPage(val) {
+  pendingNotesPerPage = parseInt(val, 10) || 20;
+  pendingNotesCurrentPage = 1;
+  executeUIRenderPendingNotesTable();
+}
 
 function setPendingNotesPage(page) {
   pendingNotesCurrentPage = page;
@@ -7153,11 +7170,11 @@ function executeUIRenderPendingNotesTable() {
                   <span style="display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: var(--text-muted);"></span>
                   <span>${new Date(latestNote.timestamp).toLocaleString('vi-VN')}</span>
                 </div>
-              ` : `<div style="font-size: 12px; color: var(--text-muted); font-style: italic;">Chưa có ghi chú...</div>`}
+              ` : `<div style="font-size: 12px; color: var(--text-muted); font-style: italic; white-space: nowrap;">Chưa có ghi chú...</div>`}
             </div>
-            <button class="btn-premium btn-secondary" onclick="openPendingNoteModal('${c.id}', '${identifier}')" style="padding: 0 14px; height: 32px; font-size: 11px; flex-shrink: 0; border-radius: 8px; font-weight: 750; width: auto !important;">
+            <div style="flex-shrink: 0;"><button class="btn-premium btn-secondary" onclick="openPendingNoteModal('${c.id}', '${identifier}')" style="padding: 0 14px; height: 32px; font-size: 11px; border-radius: 8px; font-weight: 750; width: auto !important;">
               ${latestNote ? 'Cập nhật' : 'Thêm ghi chú'}
-            </button>
+            </button></div>
           </div>
         </td>
       </tr>
