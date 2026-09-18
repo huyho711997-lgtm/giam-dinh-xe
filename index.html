@@ -6937,25 +6937,25 @@ function renderPendingNotesTrackerPage(targetContainer) {
             </h2>
             <p style="font-size: 13.5px; color: var(--text-soft); line-height: 1.5; max-width: 650px; margin: 0;">Bảng theo dõi và ghi chú tình trạng xử lý độc lập cho các hồ sơ tồn đọng.</p>
           </div>
-        </div>
-
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; background: var(--surface); padding: 14px 20px; border-radius: 16px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
-          <div class="search-wrap" style="position: relative; margin: 0; min-width: 240px; max-width: 320px; flex: 1;">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #10b981; pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT..." autocomplete="off" style="width: 100%; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main);" oninput="executeUIRenderPendingNotesTable()" />
+          
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <div class="search-wrap" style="position: relative; margin: 0; width: 320px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #10b981; pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT..." autocomplete="off" style="width: 100%; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; border: 1px solid var(--border); background: var(--bg-soft); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);" oninput="executeUIRenderPendingNotesTable()" />
+            </div>
           </div>
         </div>
 
         <div style="overflow-x: auto; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-xl); box-shadow: var(--shadow-sm);">
-          <table class="data-table premium-table premium-border-table" id="pendingNotesTable" style="width: 100%; border-collapse: collapse; min-width: 1000px;">
+          <table class="p-table" id="pendingNotesTable" style="width: 100%; border-collapse: collapse; min-width: 1000px; table-layout: fixed;">
             <thead>
-              <tr>
-                <th style="width: 40px; text-align: center;">STT</th>
-                <th style="width: 140px;">Trạng thái</th>
+              <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong);">
+                <th style="width: 50px; text-align: center;">STT</th>
+                <th style="width: 120px;">Trạng thái</th>
                 <th style="width: 150px;">Biển số / Mã VTT</th>
                 <th style="width: 150px;">GĐV Xử lý</th>
-                <th style="min-width: 200px;">Nội dung tổn thất</th>
-                <th style="min-width: 350px;">Ghi chú tiến độ (Độc lập)</th>
+                <th style="width: 300px;">Nội dung tổn thất</th>
+                <th style="width: 350px;">Ghi chú tiến độ (Độc lập)</th>
               </tr>
             </thead>
             <tbody id="tblPendingNotesBody">
