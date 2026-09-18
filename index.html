@@ -7048,8 +7048,19 @@ function executeUIRenderPendingNotesTable() {
   const searchVal = (document.getElementById('pendingNotesSearchInput')?.value || '').toLowerCase().trim();
   const claimsList = Object.values(cachedPendingClaimsPayload || {});
 
-  const excludedStatuses = ['da_ket_thuc', 'huy'];
-  let filtered = claimsList.filter(c => !excludedStatuses.includes(String(c.trangThai || '').toLowerCase()));
+  
+  const allowedStatuses = [
+    'moi',
+    'cho_giam_dinh_ht',
+    'da_giam_dinh_ht',
+    'cho_gdct',
+    'da_gdct',
+    'cho_duyet_pasc',
+    'da_duyet_pasc',
+    'cho_duyet_hsbt'
+  ];
+  let filtered = claimsList.filter(c => allowedStatuses.includes(String(c.trangThai || 'moi').toLowerCase()));
+
 
   if (searchVal) {
     filtered = filtered.filter(c => {
