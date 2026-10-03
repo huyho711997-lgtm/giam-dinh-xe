@@ -636,6 +636,72 @@
     .btn-danger-p:hover { border-color: var(--btn-danger-hover-border); background: var(--btn-danger-hover-bg); box-shadow: none; }
     .btn-inline { width: auto; min-height: 38px; padding: 0 14px; border-radius: 11px; font-size: 11px; }
 
+    .pending-action-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      background: var(--surface-soft);
+      box-shadow: 0 8px 24px rgba(15,23,42,.06), inset 0 1px 0 rgba(255,255,255,.55);
+    }
+    .pending-action-btn {
+      --action-rgb: 180, 132, 45;
+      min-height: 42px;
+      padding: 0 15px 0 9px;
+      border: 1px solid rgba(var(--action-rgb), .28);
+      border-radius: 10px;
+      background: linear-gradient(180deg, var(--surface) 0%, rgba(var(--action-rgb), .075) 100%);
+      color: var(--text-main);
+      box-shadow: 0 2px 6px rgba(15,23,42,.04), inset 0 1px 0 rgba(255,255,255,.68);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+    }
+    .pending-action-btn__icon {
+      width: 27px;
+      height: 27px;
+      flex: 0 0 27px;
+      border: 1px solid rgba(var(--action-rgb), .22);
+      border-radius: 8px;
+      background: rgba(var(--action-rgb), .11);
+      color: rgb(var(--action-rgb));
+      display: grid;
+      place-items: center;
+      transition: background .18s ease, color .18s ease, transform .18s ease;
+    }
+    .pending-action-btn--danger { --action-rgb: 220, 38, 38; }
+    .pending-action-btn--import { --action-rgb: 5, 150, 105; }
+    .pending-action-btn:hover {
+      transform: translateY(-1px);
+      border-color: rgba(var(--action-rgb), .48);
+      background: linear-gradient(180deg, var(--surface) 0%, rgba(var(--action-rgb), .13) 100%);
+      box-shadow: 0 8px 18px rgba(var(--action-rgb), .12), inset 0 1px 0 rgba(255,255,255,.78);
+    }
+    .pending-action-btn:hover .pending-action-btn__icon {
+      background: rgb(var(--action-rgb));
+      color: #fff;
+      transform: scale(1.03);
+    }
+    .pending-action-btn:active { transform: translateY(0) scale(.985); }
+    .pending-action-btn:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(var(--action-rgb), .16), 0 8px 18px rgba(var(--action-rgb), .1);
+    }
+    @media (max-width: 760px) {
+      .pending-action-group { width: 100%; }
+      .pending-action-btn { flex: 1 1 0; white-space: normal; text-align: center; }
+    }
+
     .cases-toolbar { display: grid; grid-template-columns: minmax(190px,1fr) auto; gap: 12px; margin-bottom: 18px; }
     .search-wrap { position: relative; }
     .search-wrap .svg-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted); pointer-events: none; }
@@ -2445,6 +2511,38 @@
         box-shadow: 0 0 0 3px rgba(216,180,109,.2), 0 5px 14px rgba(135,94,24,.16);
       }
 
+      .scene-header-print-btn {
+        height: 36px;
+        padding: 0 13px;
+        border: 1px solid rgba(180, 132, 45, 0.42);
+        border-radius: 10px;
+        background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(216,180,109,.10));
+        color: var(--text-main);
+        box-shadow: 0 2px 8px rgba(135, 94, 24, 0.08), inset 0 1px 0 rgba(255,255,255,.72);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+      }
+      .scene-header-print-btn svg { color: #9b6b16; }
+      .scene-header-print-btn:not(:disabled):hover {
+        transform: translateY(-1px);
+        border-color: rgba(180, 132, 45, 0.72);
+        background: linear-gradient(180deg, #fff, rgba(216,180,109,.20));
+        box-shadow: 0 5px 14px rgba(135, 94, 24, 0.15), inset 0 1px 0 rgba(255,255,255,.85);
+      }
+      .scene-header-print-btn:not(:disabled):active { transform: translateY(0) scale(.98); }
+      .scene-header-print-btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(216,180,109,.22), 0 5px 14px rgba(135,94,24,.14);
+      }
+      .scene-header-print-btn:disabled { cursor: wait; }
+
       /* 6. Cụm nút HOÀN TÁC & TIẾN TỚI TRÊN HEADER MODAL VẼ: Premium Luxury Glassmorphism */
       .scene-history-control-group {
         display: inline-flex;
@@ -3411,6 +3509,11 @@
 
         <!-- Right: Actions Group (Undo, Redo & Close button) -->
         <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="btnPrintSceneDrawing" type="button" class="scene-header-print-btn" onclick="printSceneDrawing()" title="In sơ đồ hiện trường khổ A4 ngang">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect><circle cx="18" cy="12" r="1" fill="currentColor" stroke="none"></circle></svg>
+            <span>In sơ đồ</span>
+          </button>
+
           <!-- Cụm nút Hoàn tác & Tiến tới Premium đồng bộ -->
           <div class="scene-history-control-group">
             <button id="btnHeaderUndo" type="button" onclick="undoSceneDrawing()" title="Hoàn tác thao tác trước (Ctrl+Z)" disabled class="btn-history-step btn-history-undo">
@@ -4081,10 +4184,6 @@
       
       <div style="padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: var(--surface);">
         <button type="button" class="btn-secondary" onclick="closeSceneDrawingModal()" style="padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 13px;">Hủy bỏ</button>
-        <button id="btnPrintSceneDrawing" type="button" class="btn-secondary" onclick="printSceneDrawing()" title="In sơ đồ hiện trường khổ A4 ngang" style="padding: 10px 20px; border-radius: 10px; font-weight: 800; font-size: 13px; min-height: unset; width: auto; display: inline-flex; align-items: center; border-color: rgba(216,180,109,.65); color: var(--text-main); background: rgba(216,180,109,.08);">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 7px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect><circle cx="18" cy="12" r="1" fill="currentColor" stroke="none"></circle></svg>
-          In sơ đồ
-        </button>
         <button id="btnSaveSceneDrawing" type="button" class="btn-premium" onclick="saveSceneDrawing()" style="padding: 10px 20px; border-radius: 10px; font-weight: 800; font-size: 13px; min-height: unset; width: auto;">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
           Lưu Sơ đồ
@@ -10982,17 +11081,17 @@ ${statRate}%
                   </h2>
                   <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft);">Quản lý danh sách hồ sơ tổn thất tồn đọng trong team, phân công Giám định viên và theo dõi báo cáo tuần.</p>
                 </div>
-                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <div class="pending-action-group">
                   ${hasUserPermission('pending', 'delete') ? `
-                    <button type="button" onclick="clearAllPendingClaimsDataByAdmin()" style="padding: 0 18px; height: 42px; font-size: 13px; border-radius: 10px; font-weight: 850; background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(239,68,68,0.35); transition: all 0.2s ease;" title="Chỉ Admin mới có quyền xóa toàn bộ hồ sơ tồn">
-                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                    <button type="button" class="pending-action-btn pending-action-btn--danger" onclick="clearAllPendingClaimsDataByAdmin()" title="Chỉ Admin mới có quyền xóa toàn bộ hồ sơ tồn">
+                      <span class="pending-action-btn__icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></span>
                       <span>Xóa toàn bộ hồ sơ tồn</span>
                     </button>
                   ` : ''}
 
                   ${(activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin') ? `
-                  <button type="button" class="btn-premium" onclick="openImportExcelModal()" style="width: auto !important; padding: 0 24px; height: 42px; font-size: 13px; border-radius: 10px; font-weight: 850; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 14px rgba(16,185,129,0.35);">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h8"></path><path d="M8 17h8"></path><path d="M10 9h4"></path></svg>
+                  <button type="button" class="pending-action-btn pending-action-btn--import" onclick="openImportExcelModal()" title="Nhập mới hoặc cập nhật hồ sơ từ tệp Excel">
+                    <span class="pending-action-btn__icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h8"></path><path d="M8 17h8"></path><path d="M10 9h4"></path></svg></span>
                     <span>Nhập & Cập nhật Hồ sơ từ Excel</span>
                   </button>
                   ` : ''}
@@ -34011,7 +34110,7 @@ function drawTemplate(ctx, w, h) {
   ctx.textBaseline = 'alphabetic';
 }
 
-function drawVehicleWheelPairs(ctx, axlePositions, top, bottom, vehicleLength, vehicleHeight, color) {
+function drawVehicleWheelPairs(ctx, axlePositions, top, bottom, vehicleLength, vehicleHeight, color, dashed=false) {
   if (!Array.isArray(axlePositions) || axlePositions.length === 0) return;
   const isLongVehicle = vehicleLength / Math.max(1, vehicleHeight) > 2.7;
   const wheelLength = Math.max(6, Math.min(20, vehicleHeight * (isLongVehicle ? 0.48 : 0.42)));
@@ -34023,14 +34122,18 @@ function drawVehicleWheelPairs(ctx, axlePositions, top, bottom, vehicleLength, v
   ctx.lineCap = 'round';
 
   function drawPremiumTire(wheelX, wheelY) {
-    // Soft grounding shadow makes the tire read as a separate physical part.
+    // Khi xe dùng nét đứt, lốp chuyển sang viền đứt và nền sáng để
+    // khoảng ngắt không bị che bởi khối cao su đen.
     ctx.save();
-    ctx.shadowColor = 'rgba(15, 23, 42, 0.3)';
-    ctx.shadowBlur = Math.max(1.5, wheelThickness * 0.45);
+    ctx.shadowColor = dashed ? 'transparent' : 'rgba(15, 23, 42, 0.3)';
+    ctx.shadowBlur = dashed ? 0 : Math.max(1.5, wheelThickness * 0.45);
     ctx.shadowOffsetY = wheelY < top ? -0.5 : 0.5;
-    ctx.fillStyle = '#151a22';
-    ctx.strokeStyle = '#020617';
-    ctx.lineWidth = Math.max(0.8, wheelThickness * 0.16);
+    ctx.fillStyle = dashed ? 'rgba(255,255,255,.96)' : '#151a22';
+    ctx.strokeStyle = dashed ? color : '#020617';
+    ctx.lineWidth = dashed ? Math.max(1.1, wheelThickness * 0.24) : Math.max(0.8, wheelThickness * 0.16);
+    ctx.setLineDash(dashed
+      ? [Math.max(3.2, wheelLength * 0.23), Math.max(2.2, wheelLength * 0.15)]
+      : []);
     ctx.beginPath();
     drawRoundRectCompat(ctx, wheelX, wheelY, wheelLength, wheelThickness, radius);
     ctx.fill();
@@ -34039,14 +34142,15 @@ function drawVehicleWheelPairs(ctx, axlePositions, top, bottom, vehicleLength, v
 
     // Sidewall inset and a restrained central tread highlight.
     ctx.save();
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.72)';
+    ctx.setLineDash([]);
+    ctx.strokeStyle = dashed ? 'rgba(71,85,105,.72)' : 'rgba(148, 163, 184, 0.72)';
     ctx.lineWidth = Math.max(0.65, wheelThickness * 0.11);
     ctx.beginPath();
     ctx.moveTo(wheelX + wheelLength * 0.2, wheelY + wheelThickness * 0.5);
     ctx.lineTo(wheelX + wheelLength * 0.8, wheelY + wheelThickness * 0.5);
     ctx.stroke();
 
-    ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+    ctx.strokeStyle = dashed ? 'rgba(100,116,139,.48)' : 'rgba(255,255,255,0.28)';
     ctx.lineWidth = Math.max(0.45, wheelThickness * 0.075);
     [0.32, 0.5, 0.68].forEach(ratio => {
       const treadX = wheelX + wheelLength * ratio;
@@ -34107,7 +34211,8 @@ function drawTemplateCar(ctx, x, y, color, width, w=30, h=16, dashed=false) {
     bottom,
     w,
     h,
-    color
+    color,
+    dashed
   );
   
   ctx.restore();
@@ -34163,7 +34268,8 @@ function drawTemplateContainer(ctx, x, y, color, width, w=90, h=27, dashed=false
     top + h,
     w,
     h,
-    color
+    color,
+    dashed
   );
 
   ctx.restore();
@@ -34186,20 +34292,26 @@ function drawTemplateBike(ctx, x, y, color, width, w, h, dashed=false) {
   const frontWheelX = right - w * 0.025 - wheelLength;
 
   function drawMotorcycleWheel(wheelX) {
+    ctx.save();
+    ctx.setLineDash(dashed
+      ? [Math.max(3, wheelLength * 0.24), Math.max(2, wheelLength * 0.15)]
+      : []);
     ctx.beginPath();
     drawRoundRectCompat(ctx, wheelX, y - wheelThickness / 2, wheelLength, wheelThickness, wheelThickness / 2);
-    ctx.fillStyle = '#151b24';
+    ctx.fillStyle = dashed ? 'rgba(255,255,255,.96)' : '#151b24';
     ctx.fill();
-    ctx.strokeStyle = '#020617';
+    ctx.strokeStyle = dashed ? color : '#020617';
     ctx.lineWidth = Math.max(0.8, lineW * 0.8);
     ctx.stroke();
 
+    ctx.setLineDash([]);
     ctx.beginPath();
-    ctx.strokeStyle = 'rgba(203,213,225,.72)';
+    ctx.strokeStyle = dashed ? 'rgba(71,85,105,.66)' : 'rgba(203,213,225,.72)';
     ctx.lineWidth = Math.max(0.55, lineW * 0.48);
     ctx.moveTo(wheelX + wheelLength * 0.23, y);
     ctx.lineTo(wheelX + wheelLength * 0.77, y);
     ctx.stroke();
+    ctx.restore();
   }
 
   // Hai bánh đặt đúng trục dọc thân xe; bánh trước/sau tách khỏi vỏ xe.
