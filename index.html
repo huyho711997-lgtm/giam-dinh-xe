@@ -3553,7 +3553,7 @@
           </button>
 
           <!-- 3. Group: Vạch kẻ đường (Đường thẳng) -->
-          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_road_line" data-group="road_line" data-tool="road_line" title="Vạch kẻ đường (Nét thẳng: Click để mở menu đổi nét liền / đứt)" onclick="toggleToolSubmenu(event, 'road_line')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_road_line" data-group="road_line" data-tool="road_line" title="Đường và lề đường (Nhấp để chọn vạch liền, vạch đứt hoặc lề đường)" onclick="toggleToolSubmenu(event, 'road_line')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
             <span class="group-tool-icon" id="groupIcon_road_line" style="display: grid; place-items: center; pointer-events: none;">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line></svg>
             </span>
@@ -3582,6 +3582,16 @@
             </svg>
           </button>
 
+          <!-- Group: Hình học & Biển báo -->
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_shape_symbols" data-group="shape_symbols" data-tool="geo_circle" title="Hình học & Biển báo (Hình tròn, tam giác và biển báo có trụ)" onclick="toggleToolSubmenu(event, 'shape_symbols')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+            <span class="group-tool-icon" id="groupIcon_shape_symbols" style="display: grid; place-items: center; pointer-events: none;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="4.5"></circle><path d="M15.5 18.5l4-7 4 7z" transform="translate(-2 0)"></path></svg>
+            </span>
+            <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
+              <polygon points="10,0 10,10 0,10"></polygon>
+            </svg>
+          </button>
+
           <!-- 6. Group: Phương tiện & Hiện trường -->
           <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_scene_object" data-group="scene_object" data-tool="car" title="Phương tiện & Hiện trường (Ô tô, Container, Xe máy, Người, Va chạm X, Khối hộp)" onclick="toggleToolSubmenu(event, 'scene_object')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
             <span class="group-tool-icon" id="groupIcon_scene_object" style="display: grid; place-items: center; pointer-events: none;">
@@ -3593,7 +3603,7 @@
           </button>
 
           <!-- 7. Group: Hạ tầng & cảnh quan -->
-          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_road_assets" data-group="road_assets" data-tool="crosswalk" title="Hạ tầng & cảnh quan (Vạch đường, đèn tín hiệu, trụ điện, cây xanh, ruộng lúa)" onclick="toggleToolSubmenu(event, 'road_assets')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_road_assets" data-group="road_assets" data-tool="crosswalk" title="Hạ tầng & cảnh quan (Vệt bánh xe, vạch đường, đèn tín hiệu, trụ điện, cột mốc lộ giới, cây xanh, ruộng lúa)" onclick="toggleToolSubmenu(event, 'road_assets')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
             <span class="group-tool-icon" id="groupIcon_road_assets" style="display: grid; place-items: center; pointer-events: none;">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="7" x2="7" y2="17"></line><line x1="12" y1="7" x2="12" y2="17"></line><line x1="17" y1="7" x2="17" y2="17"></line></svg>
             </span>
@@ -3618,7 +3628,7 @@
           </button>
 
           <!-- 11. Eraser -->
-          <button class="draw-tool-btn" data-tool="eraser" title="Tẩy" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); transition: all 0.2s;">
+          <button class="draw-tool-btn" data-tool="eraser" title="Tẩy đối tượng (Đưa khung vuông lên nét cần tẩy rồi nhấp chuột)" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); transition: all 0.2s;">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 14.5l10-10a2 2 0 0 1 2.8 0l4.2 4.2a2 2 0 0 1 0 2.8l-10 10A2 2 0 0 1 7.5 22H2v-5.5a2 2 0 0 1 .5-2z"></path><path d="M12 22v-5l-5-5"></path></svg>
           </button>
           <!-- Divider -->
@@ -4058,10 +4068,10 @@
 
             <!-- Overall size controls for road infrastructure objects -->
             <div id="selectedSizeToolsGroup" style="display: none; align-items: center; gap: 6px; background: rgba(216,180,109,0.08); padding: 6px; border-radius: 14px; border: 1px solid rgba(216,180,109,0.22);">
-              <span style="color: #a0aec0; font-size: 11px; font-weight: 700; padding: 0 3px;">Kích thước</span>
-              <button type="button" onclick="scaleSelectedInfrastructure(0.9)" title="Thu nhỏ 10%" style="width: 30px; padding: 0 !important; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #f8fafc; font-size: 16px; font-weight: 850; cursor: pointer; display: grid; place-items: center;">−</button>
+              <span id="selectedSizeLabel" style="color: #a0aec0; font-size: 11px; font-weight: 700; padding: 0 3px;">Kích thước</span>
+              <button type="button" id="btnDecreaseSelectedSize" onclick="scaleSelectedInfrastructure(0.9)" title="Thu nhỏ 10%" style="width: 30px; padding: 0 !important; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #f8fafc; font-size: 16px; font-weight: 850; cursor: pointer; display: grid; place-items: center;">−</button>
               <span id="selectedSizeText" style="min-width: 42px; color: #d8b46d; font-size: 11px; font-weight: 850; text-align: center;">100%</span>
-              <button type="button" onclick="scaleSelectedInfrastructure(1.1)" title="Phóng to 10%" style="width: 30px; padding: 0 !important; background: rgba(216,180,109,.16); border: 1px solid rgba(216,180,109,.34); color: #d8b46d; font-size: 16px; font-weight: 850; cursor: pointer; display: grid; place-items: center;">+</button>
+              <button type="button" id="btnIncreaseSelectedSize" onclick="scaleSelectedInfrastructure(1.1)" title="Phóng to 10%" style="width: 30px; padding: 0 !important; background: rgba(216,180,109,.16); border: 1px solid rgba(216,180,109,.34); color: #d8b46d; font-size: 16px; font-weight: 850; cursor: pointer; display: grid; place-items: center;">+</button>
             </div>
 
             <!-- Quick Rotate Buttons Group -->
@@ -4085,6 +4095,10 @@
 
             <!-- Group & Ungroup Controls -->
             <div id="selectedGroupToolsGroup" style="display: none; align-items: center; gap: 4px; background: rgba(59, 130, 246, 0.15); padding: 2px 6px; border-radius: 16px; border: 1px solid rgba(59, 130, 246, 0.35);">
+              <button type="button" id="btnAlignShapeCenters" onclick="alignSelectedShapeCenters()" title="Đưa tâm của các đối tượng đang chọn về cùng một vị trí" style="background: rgba(216, 180, 109, 0.22); border: 1px solid rgba(216, 180, 109, 0.5); color: #f4d28f; border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='rgba(216, 180, 109, 0.38)'" onmouseout="this.style.background='rgba(216, 180, 109, 0.22)'">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="9" height="9" rx="1"/><rect x="12" y="9" width="9" height="9" rx="1"/><path d="M12 3v18M8 12h8"/></svg>
+                Căn giữa
+              </button>
               <button type="button" id="btnGroupShapes" onclick="groupSelectedShapes()" title="Nhóm các đối tượng đang chọn lại với nhau (Ctrl + G)" style="background: rgba(59, 130, 246, 0.25); border: 1px solid rgba(59, 130, 246, 0.5); color: #93c5fd; border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 0.4)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.25)'">
                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                 Nhóm (Ctrl+G)
@@ -4165,12 +4179,18 @@
               <span style="color: #718096;">•</span>
               <kbd style="background: rgba(59,130,246,0.25); color: #93c5fd; padding: 1px 4px; border-radius: 3px; font-size: 10px;">Ctrl+G: Nhóm</kbd>
               <kbd style="background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px; font-size: 10px;">Ctrl+Click: Chọn nhiều</kbd>
+              <kbd style="background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px; font-size: 10px;">Esc: Bỏ chọn</kbd>
             </span>
 
             <!-- Edit Text Button (Visible when selected shape is text) -->
             <button id="btnEditTextShape" type="button" onclick="editSelectedTextShape()" title="Sửa nội dung hoặc định dạng chữ" style="display: none; background: rgba(216, 180, 109, 0.2); border: 1px solid rgba(216, 180, 109, 0.45); color: #d8b46d; border-radius: 12px; padding: 3px 10px; font-size: 11px; font-weight: 750; cursor: pointer; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='rgba(216, 180, 109, 0.35)'" onmouseout="this.style.background='rgba(216, 180, 109, 0.2)'">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
               <span id="btnEditShapeLabel">Sửa chữ</span>
+            </button>
+
+            <button id="btnEditTrafficSign" type="button" onclick="openSelectedTrafficSignEditor()" title="Chọn nội dung hiển thị trên mặt biển báo" style="display: none; background: rgba(59,130,246,.16); border: 1px solid rgba(59,130,246,.4); color: #93c5fd; border-radius: 12px; padding: 3px 10px; font-size: 11px; font-weight: 750; cursor: pointer; align-items: center; gap: 4px; transition: all .2s;">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"></circle><path d="M12 13v9"></path></svg>
+              Chọn loại biển
             </button>
 
             <!-- Delete Button -->
@@ -7915,6 +7935,7 @@ let cachedCasesPayload = null;
         ngayThanhToan: getVal('modalPendingNgayThanhToan') || existingItem.ngayThanhToan || '',
         soDoHienTruong: sceneDiagramDataUrl || '',
         soDoHienTruongData: JSON.stringify(sceneDiagramShapesSnapshot || []),
+        soDoHienTruongMeta: sceneDiagramDataUrl ? JSON.stringify(sceneDiagramTemplateMetaSnapshot || sceneTemplateMeta || {}) : '',
         soDoHienTruongUpdatedAt: sceneDiagramDataUrl ? (sceneDiagramUpdatedAt || Date.now()) : null,
         ghiChu: generalNoteVal,
         tndsGhiChu: tndsNoteVal,
@@ -29217,11 +29238,14 @@ let initialShapeAngle = 0;
 let sceneShapes = [];
 let sceneDiagramDataUrl = '';
 let sceneDiagramShapesSnapshot = [];
+let sceneTemplateMeta = null;
+let sceneDiagramTemplateMetaSnapshot = null;
 let sceneDiagramUpdatedAt = null;
 let lastSceneClickPos = { x: 0, y: 0 };
 let priorMouseDownSelectedId = null;
 let lastHitCandidates = [];
 let curvePendingStart = null;
+let tireTrackPendingStart = null;
 let isDraggingCurveControl = false;
 let isDraggingCurveStart = false;
 let isDraggingCurveEnd = false;
@@ -29252,6 +29276,8 @@ let initialGroupRotationAngle = 0;
 let sceneClipboardShapes = null;
 let selectedShapeId = null;
 let currentTempShape = null;
+let eraserHoverPos = null;
+let eraserTargetShapeId = null;
 
 // History Stack (stores vector shape snapshots)
 let drawingHistory = [];
@@ -29261,8 +29287,175 @@ function genShapeId() {
   return 'shape_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
 }
 
+function cloneSceneTemplateMeta(meta) {
+  const source = meta && typeof meta === 'object' ? meta : {};
+  return {
+    accidentDateTime: String(source.accidentDateTime || ''),
+    accidentLocation: String(source.accidentLocation || ''),
+    reportPlace: String(source.reportPlace || ''),
+    reportDate: String(source.reportDate || '')
+  };
+}
+
+function getTodaySceneDateString() {
+  const today = new Date();
+  return `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+}
+
+function getDefaultSceneTemplateMeta() {
+  const dateInput = document.getElementById('modalPendingNgayVTT');
+  const locInput = document.getElementById('modalPendingDiaDiemVTT');
+  const accidentDateTime = dateInput ? String(dateInput.value || '').trim() : '';
+  const accidentLocation = locInput ? String(locInput.value || '').trim() : '';
+  return {
+    accidentDateTime,
+    accidentLocation,
+    reportPlace: accidentLocation,
+    reportDate: getTodaySceneDateString()
+  };
+}
+
+function ensureSceneTemplateMeta(refreshEmptyFromForm = false) {
+  const defaults = getDefaultSceneTemplateMeta();
+  if (!sceneTemplateMeta || typeof sceneTemplateMeta !== 'object') {
+    sceneTemplateMeta = cloneSceneTemplateMeta(defaults);
+  } else {
+    sceneTemplateMeta = cloneSceneTemplateMeta(sceneTemplateMeta);
+    if (refreshEmptyFromForm) {
+      if (!sceneTemplateMeta.accidentDateTime && defaults.accidentDateTime) sceneTemplateMeta.accidentDateTime = defaults.accidentDateTime;
+      if (!sceneTemplateMeta.accidentLocation && defaults.accidentLocation) sceneTemplateMeta.accidentLocation = defaults.accidentLocation;
+      if (!sceneTemplateMeta.reportPlace && defaults.reportPlace) sceneTemplateMeta.reportPlace = defaults.reportPlace;
+    }
+    if (!sceneTemplateMeta.reportDate) sceneTemplateMeta.reportDate = defaults.reportDate;
+  }
+  return sceneTemplateMeta;
+}
+
+function parseSceneDateParts(value, includeTime = false) {
+  const raw = String(value || '').trim();
+  let dd = '', mo = '', yyyy = '', hh = '', mm = '';
+  let match = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})(?:[,\s]+(\d{1,2}):(\d{2}))?/);
+  if (match) {
+    dd = match[1]; mo = match[2]; yyyy = match[3]; hh = match[4] || ''; mm = match[5] || '';
+  } else {
+    match = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2}):(\d{2}))?/);
+    if (match) {
+      yyyy = match[1]; mo = match[2]; dd = match[3]; hh = match[4] || ''; mm = match[5] || '';
+    }
+  }
+  return {
+    dd: dd ? String(dd).padStart(2, '0') : '......',
+    mo: mo ? String(mo).padStart(2, '0') : '......',
+    yyyy: yyyy || '......',
+    hh: includeTime && hh ? String(hh).padStart(2, '0') : '......',
+    mm: includeTime && mm ? String(mm).padStart(2, '0') : '......'
+  };
+}
+
+function getSceneTemplateHotspot(x, y) {
+  if (x >= 245 && x <= 755 && y >= 40 && y <= 78) return 'accident';
+  if (x >= 660 && x <= 975 && y >= 558 && y <= 598) return 'report';
+  return null;
+}
+
+function ensureSceneTemplateMetaEditor() {
+  let overlay = document.getElementById('sceneTemplateMetaOverlay');
+  if (overlay) return overlay;
+
+  overlay = document.createElement('div');
+  overlay.id = 'sceneTemplateMetaOverlay';
+  overlay.setAttribute('aria-hidden', 'true');
+  overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:100500;background:rgba(7,10,15,.66);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div role="dialog" aria-modal="true" aria-labelledby="sceneTemplateMetaTitle" style="width:min(520px,96vw);border:1px solid rgba(216,180,109,.42);border-radius:20px;background:var(--modal-bg,#111722);box-shadow:0 30px 90px rgba(0,0,0,.5);color:var(--text-main,#f7f8fb);overflow:hidden;">
+      <div style="padding:20px 22px 15px;border-bottom:1px solid var(--border,rgba(255,255,255,.1));display:flex;align-items:flex-start;justify-content:space-between;gap:15px;">
+        <div><div id="sceneTemplateMetaTitle" style="font-size:17px;font-weight:850;">Chỉnh thông tin sơ đồ</div><div id="sceneTemplateMetaSubtitle" style="font-size:12px;color:var(--text-muted,#94a3b8);margin-top:5px;">Dữ liệu này sẽ xuất hiện trên bản in.</div></div>
+        <button type="button" id="btnCloseSceneTemplateMeta" aria-label="Đóng" style="width:34px;height:34px;border-radius:10px;border:1px solid var(--border,rgba(255,255,255,.12));background:var(--surface-soft,rgba(255,255,255,.06));color:inherit;cursor:pointer;font-size:20px;line-height:1;">×</button>
+      </div>
+      <div style="padding:20px 22px;display:grid;gap:15px;">
+        <div id="sceneMetaAccidentFields" style="display:grid;gap:14px;">
+          <label style="display:grid;gap:7px;font-size:12px;font-weight:750;">Ngày giờ xảy ra tai nạn
+            <input id="sceneMetaAccidentDateTime" type="text" placeholder="Ví dụ: 25/09/2026 14:00" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border-strong,rgba(255,255,255,.16));background:var(--input-bg,rgba(0,0,0,.25));color:inherit;font:inherit;outline:none;" />
+          </label>
+          <label style="display:grid;gap:7px;font-size:12px;font-weight:750;">Địa điểm xảy ra tai nạn
+            <input id="sceneMetaAccidentLocation" type="text" placeholder="Nhập địa điểm" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border-strong,rgba(255,255,255,.16));background:var(--input-bg,rgba(0,0,0,.25));color:inherit;font:inherit;outline:none;" />
+          </label>
+        </div>
+        <div id="sceneMetaReportFields" style="display:grid;gap:14px;">
+          <label style="display:grid;gap:7px;font-size:12px;font-weight:750;">Địa danh lập sơ đồ
+            <input id="sceneMetaReportPlace" type="text" placeholder="Ví dụ: Đắk Nông" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border-strong,rgba(255,255,255,.16));background:var(--input-bg,rgba(0,0,0,.25));color:inherit;font:inherit;outline:none;" />
+          </label>
+          <label style="display:grid;gap:7px;font-size:12px;font-weight:750;">Ngày lập sơ đồ
+            <input id="sceneMetaReportDate" type="text" placeholder="Ví dụ: 03/10/2026" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border-strong,rgba(255,255,255,.16));background:var(--input-bg,rgba(0,0,0,.25));color:inherit;font:inherit;outline:none;" />
+          </label>
+        </div>
+      </div>
+      <div style="padding:14px 22px 20px;display:flex;justify-content:flex-end;gap:12px;">
+        <button type="button" id="btnCancelSceneTemplateMeta" class="btn-premium btn-secondary" style="width:auto !important;padding:0 20px;height:42px;cursor:pointer;">Hủy</button>
+        <button type="button" id="btnApplySceneTemplateMeta" class="btn-premium" style="width:auto !important;padding:0 28px;height:42px;font-weight:800;background:var(--primary-gradient);color:#080b11;border:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;">Cập nhật</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('mousedown', function(event) {
+    if (event.target === overlay) closeSceneTemplateMetaEditor();
+  });
+  document.getElementById('btnCloseSceneTemplateMeta').onclick = closeSceneTemplateMetaEditor;
+  document.getElementById('btnCancelSceneTemplateMeta').onclick = closeSceneTemplateMetaEditor;
+  document.getElementById('btnApplySceneTemplateMeta').onclick = applySceneTemplateMetaEditor;
+  return overlay;
+}
+
+function openSceneTemplateMetaEditor(section) {
+  const meta = ensureSceneTemplateMeta(true);
+  const overlay = ensureSceneTemplateMetaEditor();
+  overlay.dataset.section = section === 'report' ? 'report' : 'accident';
+  document.getElementById('sceneTemplateMetaTitle').textContent = section === 'report' ? 'Chỉnh nơi và ngày lập sơ đồ' : 'Chỉnh thời gian và địa điểm tai nạn';
+  document.getElementById('sceneMetaAccidentFields').style.display = section === 'report' ? 'none' : 'grid';
+  document.getElementById('sceneMetaReportFields').style.display = section === 'report' ? 'grid' : 'none';
+  document.getElementById('sceneMetaAccidentDateTime').value = meta.accidentDateTime;
+  document.getElementById('sceneMetaAccidentLocation').value = meta.accidentLocation;
+  document.getElementById('sceneMetaReportPlace').value = meta.reportPlace;
+  document.getElementById('sceneMetaReportDate').value = meta.reportDate;
+  overlay.style.display = 'flex';
+  overlay.setAttribute('aria-hidden', 'false');
+  setTimeout(() => {
+    const focusId = section === 'report' ? 'sceneMetaReportPlace' : 'sceneMetaAccidentDateTime';
+    document.getElementById(focusId)?.focus();
+  }, 40);
+}
+
+function closeSceneTemplateMetaEditor() {
+  const overlay = document.getElementById('sceneTemplateMetaOverlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  overlay.setAttribute('aria-hidden', 'true');
+}
+
+function applySceneTemplateMetaEditor() {
+  const overlay = document.getElementById('sceneTemplateMetaOverlay');
+  const section = overlay && overlay.dataset.section === 'report' ? 'report' : 'accident';
+  const nextMeta = cloneSceneTemplateMeta(ensureSceneTemplateMeta());
+  if (section === 'report') {
+    nextMeta.reportPlace = String(document.getElementById('sceneMetaReportPlace')?.value || '').trim();
+    nextMeta.reportDate = String(document.getElementById('sceneMetaReportDate')?.value || '').trim() || getTodaySceneDateString();
+  } else {
+    nextMeta.accidentDateTime = String(document.getElementById('sceneMetaAccidentDateTime')?.value || '').trim();
+    nextMeta.accidentLocation = String(document.getElementById('sceneMetaAccidentLocation')?.value || '').trim();
+    const dateInput = document.getElementById('modalPendingNgayVTT');
+    const locInput = document.getElementById('modalPendingDiaDiemVTT');
+    if (dateInput) dateInput.value = nextMeta.accidentDateTime;
+    if (locInput) locInput.value = nextMeta.accidentLocation;
+  }
+  sceneTemplateMeta = nextMeta;
+  closeSceneTemplateMetaEditor();
+  redrawSceneCanvas(true);
+  saveDrawingState();
+  if (typeof showToast === 'function') showToast('Đã cập nhật thông tin trên sơ đồ', 'success');
+}
+
 function initSceneDrawing() {
   if (!sceneCanvas) return;
+  ensureSceneTemplateMeta(true);
   sceneShapes = [];
   selectedShapeId = null;
   drawingHistory = [];
@@ -29285,6 +29478,7 @@ let isDrawingListenersAttached = false;
 const TOOL_ICONS_MAP = {
   road_line: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line></svg>',
   road_dashed: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="4 3"><line x1="3" y1="12" x2="21" y2="12"></line></svg>',
+  road_edge: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="3" y1="8" x2="21" y2="8"></line><line x1="3" y1="16" x2="21" y2="16"></line><path d="M5 8l4 8M11 8l4 8M17 8l4 8" stroke-width="1.2"></path></svg>',
   curve: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 19C4 9 9 4 19 4"></path></svg>',
   curve_dashed: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 3"><path d="M4 19C4 9 9 4 19 4"></path></svg>',
   line: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>',
@@ -29299,20 +29493,29 @@ const TOOL_ICONS_MAP = {
   crosswalk: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="7" x2="7" y2="17"></line><line x1="12" y1="7" x2="12" y2="17"></line><line x1="17" y1="7" x2="17" y2="17"></line></svg>',
   traffic_light: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="18" rx="3"></rect><circle cx="12" cy="6" r="1.8" fill="#ef4444" stroke="none"></circle><circle cx="12" cy="11" r="1.8" fill="#f59e0b" stroke="none"></circle><circle cx="12" cy="16" r="1.8" fill="#22c55e" stroke="none"></circle><line x1="12" y1="20" x2="12" y2="23"></line></svg>',
   median: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="8" rx="4"></rect><line x1="7" y1="9" x2="4" y2="15"></line><line x1="13" y1="9" x2="10" y2="15"></line><line x1="19" y1="9" x2="16" y2="15"></line></svg>',
+  tire_track: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 21c0-5 3-6 3-10S7 6 8 3"></path><path d="M15 21c0-5 3-6 3-10s-2-5-1-8"></path><path d="M5.5 17h2M14.5 17h2M7 11h2M16 11h2M7 5h2M16 5h2" stroke-width="1.2"></path></svg>',
   utility_pole: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.7 6.5L9.5 20h5L13.3 6.5z" fill="rgba(148,163,184,.3)"></path><rect x="3" y="4" width="18" height="2.4" rx="1.2" fill="currentColor" opacity=".65"></rect><line x1="4" y1="2.7" x2="4" y2="8"></line><line x1="12" y1="2.7" x2="12" y2="8"></line><line x1="20" y1="2.7" x2="20" y2="8"></line><circle cx="4" cy="2.7" r="1.2" fill="white"></circle><circle cx="12" cy="2.7" r="1.2" fill="white"></circle><circle cx="20" cy="2.7" r="1.2" fill="white"></circle><rect x="8" y="20" width="8" height="2" rx="1"></rect></svg>',
+  road_boundary_marker: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5h8l1.5 2v16H6.5v-16z" fill="rgba(248,250,252,.92)"></path><path d="M8 2.5h8l1.5 2v3H6.5v-3z" fill="currentColor"></path><path d="M9 11h6M9 14h6M9 17h6" stroke="currentColor" stroke-width="1.2"></path><path d="M5 20.5h14" opacity=".5"></path></svg>',
+  geo_circle: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"></circle></svg>',
+  geo_triangle: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 17H3z"></path></svg>',
+  geo_round_triangle: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M10.2 4.2a2 2 0 0 1 3.6 0l7 13.2A2 2 0 0 1 19 20H5a2 2 0 0 1-1.8-2.6z"></path></svg>',
+  sign_circle_post: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="5"></circle><path d="M9 12v10M6 22h6"></path></svg>',
+  sign_triangle_post: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M9 2l6 10H3z"></path><path d="M9 12v10M6 22h6"></path></svg>',
   tree: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="8"></circle><circle cx="9" cy="9" r="4"></circle><circle cx="15" cy="9" r="4"></circle><path d="M12 12v9M9 21h6"></path></svg>',
   median_tree: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="5"></rect><circle cx="7" cy="10" r="3"></circle><circle cx="12" cy="9" r="3"></circle><circle cx="17" cy="10" r="3"></circle><path d="M7 12v3M12 11v4M17 12v3"></path></svg>',
-  rice_field: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"></rect><path d="M5 7c4-2 10-2 14 0M5 12c4-2 10-2 14 0M5 17c4-2 10-2 14 0"></path><path d="M8 6v12M16 6v12"></path></svg>'
+  rice_field: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"></rect><path d="M5 7c4-2 10-2 14 0M5 12c4-2 10-2 14 0M5 17c4-2 10-2 14 0"></path><path d="M8 6v12M16 6v12"></path></svg>',
+  pothole: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13c1-5 4-8 8-7 3-3 8 0 9 4 3 3 0 7-3 8-4 2-7-1-10 0-3-1-5-2-4-5z" fill="rgba(100,116,139,.22)"></path><path d="M7 12l-3-2M9 8L8 4M15 8l2-3M18 12l4-1M15 17l2 3M8 17l-2 3"></path></svg>'
 };
 
 const TOOL_GROUPS_CONFIG = {
   road_line: {
     id: 'road_line',
-    name: 'Vạch kẻ đường (Nét thẳng)',
+    name: 'Đường và lề đường',
     defaultTool: 'road_line',
     tools: [
-      { id: 'road_line', name: 'Vạch kẻ nét liền', desc: 'Vạch tim đường, vạch lề đường' },
-      { id: 'road_dashed', name: 'Vạch kẻ nét đứt', desc: 'Vạch phân chia làn đường đứt' }
+      { id: 'road_line', name: 'Vạch kẻ nét liền', desc: 'Vạch tim đường, vạch giới hạn phần xe chạy' },
+      { id: 'road_dashed', name: 'Vạch kẻ nét đứt', desc: 'Vạch phân chia làn đường đứt' },
+      { id: 'road_edge', name: 'Lề đường', desc: 'Hai mép song song có vạch nối, dùng thể hiện lề hoặc bó vỉa' }
     ]
   },
   curve: {
@@ -29331,6 +29534,18 @@ const TOOL_GROUPS_CONFIG = {
     tools: [
       { id: 'line', name: 'Mũi tên nét liền', desc: 'Hướng di chuyển chính của xe' },
       { id: 'dashed_line', name: 'Mũi tên nét đứt', desc: 'Đường đi dự kiến của xe' }
+    ]
+  },
+  shape_symbols: {
+    id: 'shape_symbols',
+    name: 'Hình học & Biển báo',
+    defaultTool: 'geo_circle',
+    tools: [
+      { id: 'geo_circle', name: 'Hình tròn', desc: 'Kéo để vẽ đường tròn rỗng' },
+      { id: 'geo_triangle', name: 'Hình tam giác', desc: 'Tam giác cạnh thẳng' },
+      { id: 'geo_round_triangle', name: 'Tam giác bo góc', desc: 'Tam giác được bo mềm tại ba đỉnh' },
+      { id: 'sign_circle_post', name: 'Biển báo tròn có trụ', desc: 'Mặt biển tròn và trụ đỡ đơn sắc' },
+      { id: 'sign_triangle_post', name: 'Biển báo tam giác có trụ', desc: 'Mặt biển tam giác và trụ đỡ đơn sắc' }
     ]
   },
   scene_object: {
@@ -29353,9 +29568,12 @@ const TOOL_GROUPS_CONFIG = {
     defaultTool: 'crosswalk',
     tools: [
       { id: 'crosswalk', name: 'Vạch người đi bộ', desc: 'Kéo để tạo cụm vạch sang đường' },
+      { id: 'tire_track', name: 'Vệt bánh xe cong', desc: 'Nhấp điểm đầu, xem trước đường cong rồi nhấp điểm cuối' },
       { id: 'traffic_light', name: 'Đèn tín hiệu', desc: 'Đèn đỏ, vàng, xanh có thể xoay' },
       { id: 'median', name: 'Dải phân cách', desc: 'Dải phân cách dài có gạch chéo' },
       { id: 'utility_pole', name: 'Trụ điện', desc: 'Trụ, xà ngang và sứ điện nhìn trên sơ đồ' },
+      { id: 'road_boundary_marker', name: 'Cột mốc lộ giới', desc: 'Mốc bê tông đơn sắc dùng trên sơ đồ' },
+      { id: 'pothole', name: 'Ổ gà', desc: 'Hố mặt đường bất quy tắc có các vết nứt xung quanh' },
       { id: 'tree', name: 'Cây xanh', desc: 'Tán cây nhìn từ trên xuống' },
       { id: 'median_tree', name: 'Cây trên dải phân cách', desc: 'Dải phân cách trồng nhiều cây xanh' },
       { id: 'rice_field', name: 'Đồng lúa', desc: 'Khoảnh ruộng có luống và biểu tượng cây lúa' }
@@ -29367,6 +29585,7 @@ const groupActiveTools = {
   road_line: 'road_line',
   curve: 'curve',
   arrow: 'line',
+  shape_symbols: 'geo_circle',
   scene_object: 'car',
   road_assets: 'crosswalk'
 };
@@ -29530,6 +29749,11 @@ function selectSubmenuTool(groupKey, toolId) {
 function setActiveDrawTool(toolName) {
   currentDrawTool = toolName;
   closeAllToolSubmenus();
+  if (toolName !== 'tire_track') tireTrackPendingStart = null;
+  if (toolName !== 'eraser') {
+    eraserHoverPos = null;
+    eraserTargetShapeId = null;
+  }
 
   // Find if toolName belongs to a group
   let foundGroupKey = null;
@@ -29571,7 +29795,7 @@ function setActiveDrawTool(toolName) {
   });
 
   if (sceneCanvas) {
-    sceneCanvas.style.cursor = toolName === 'select' ? 'default' : 'crosshair';
+    sceneCanvas.style.cursor = toolName === 'eraser' ? 'none' : (toolName === 'select' ? 'default' : 'crosshair');
   }
 
   // Update canvas rendering and selection badge
@@ -29605,11 +29829,25 @@ function setupDrawingToolListeners() {
   sceneCanvas.onmousedown = onCanvasMouseDown;
   sceneCanvas.onmousemove = onCanvasMouseMove;
   sceneCanvas.onmouseup = onCanvasMouseUp;
+  sceneCanvas.onmouseleave = function() {
+    if (currentDrawTool === 'eraser') {
+      eraserHoverPos = null;
+      eraserTargetShapeId = null;
+      redrawSceneCanvas(false);
+    }
+  };
   sceneCanvas.ondblclick = function(e) {
     const pos = getMousePos(sceneCanvas, e);
     for (let i = sceneShapes.length - 1; i >= 0; i--) {
+      if (isTrafficSignPostType(sceneShapes[i].type) && hitTestShape(sceneShapes[i], pos.x, pos.y)) {
+        setSelectedShapes([sceneShapes[i].id]);
+        updateSelectionBadge();
+        redrawSceneCanvas(true);
+        openTrafficSignEditor(sceneShapes[i]);
+        return;
+      }
       if ((sceneShapes[i].type === 'text' || sceneShapes[i].type === 'number_note') && hitTestShape(sceneShapes[i], pos.x, pos.y)) {
-        selectedShapeId = sceneShapes[i].id;
+        setSelectedShapes([sceneShapes[i].id]);
         updateSelectionBadge();
         redrawSceneCanvas(true);
         if (sceneShapes[i].type === 'number_note') openSceneNumberNoteModal(sceneShapes[i]);
@@ -29697,6 +29935,26 @@ function getMousePos(canvas, evt) {
     return { x: currentX || 0, y: currentY || 0 };
   }
 
+  // MouseEvent.offsetX/offsetY are already expressed in the canvas' own CSS
+  // coordinate system. Unlike client coordinates, they are not displaced by
+  // the wrapper's zoom/pan transform, so the drawn point stays under the cursor.
+  // Touch events do not reliably expose local offsets and use the rect fallback.
+  if (!touchPoint && evt && evt.target === canvas &&
+      Number.isFinite(evt.offsetX) && Number.isFinite(evt.offsetY)) {
+    const cssWidth = canvas.clientWidth || SCENE_LOGICAL_WIDTH;
+    const cssHeight = canvas.clientHeight || SCENE_LOGICAL_HEIGHT;
+    const offsetInsideCanvas = evt.offsetX >= -1 && evt.offsetY >= -1 &&
+      evt.offsetX <= cssWidth + 1 && evt.offsetY <= cssHeight + 1;
+    if (offsetInsideCanvas && cssWidth > 0 && cssHeight > 0) {
+      return {
+        x: evt.offsetX * (SCENE_LOGICAL_WIDTH / cssWidth),
+        y: evt.offsetY * (SCENE_LOGICAL_HEIGHT / cssHeight)
+      };
+    }
+  }
+
+  // Fallback for touch/synthetic events: the transformed bounding rectangle
+  // already includes both zoom and pan, so convert it back to logical units.
   return {
     x: (clientX - rect.left) * (SCENE_LOGICAL_WIDTH / rect.width),
     y: (clientY - rect.top) * (SCENE_LOGICAL_HEIGHT / rect.height)
@@ -29771,7 +30029,78 @@ function redrawSceneCanvas(includeSelectionUI = true) {
     }
   }
 
+  // Khung vuông của cục tẩy luôn nằm trên cùng để người dùng thấy chính xác
+  // đối tượng đang được nhắm tới trước khi nhấp xóa.
+  drawEraserPreview(sceneCtx);
+
   sceneCtx.restore();
+}
+
+function getTireTrackSpacing(shape) {
+  return Math.max(10, Math.min(34, Number(shape && shape.trackSpacing) || (shape && shape.width ? shape.width * 5 : 12)));
+}
+
+function getOffsetFreehandPoints(points, offset) {
+  if (!Array.isArray(points) || points.length === 0) return [];
+  return points.map((point, index) => {
+    const prev = points[Math.max(0, index - 1)];
+    const next = points[Math.min(points.length - 1, index + 1)];
+    const dx = next.x - prev.x;
+    const dy = next.y - prev.y;
+    const length = Math.max(0.001, Math.hypot(dx, dy));
+    return {
+      x: point.x - (dy / length) * offset,
+      y: point.y + (dx / length) * offset
+    };
+  });
+}
+
+function strokeSmoothScenePath(ctx, points) {
+  if (!Array.isArray(points) || points.length === 0) return;
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  if (points.length === 1) {
+    ctx.lineTo(points[0].x + 0.01, points[0].y + 0.01);
+  } else {
+    for (let i = 1; i < points.length - 1; i++) {
+      const midX = (points[i].x + points[i + 1].x) / 2;
+      const midY = (points[i].y + points[i + 1].y) / 2;
+      ctx.quadraticCurveTo(points[i].x, points[i].y, midX, midY);
+    }
+    const last = points[points.length - 1];
+    ctx.lineTo(last.x, last.y);
+  }
+  ctx.stroke();
+}
+
+function drawTireTrackShape(ctx, shape) {
+  if (!shape || !Array.isArray(shape.points) || shape.points.length === 0) return;
+  const spacing = getTireTrackSpacing(shape);
+  const leftTrack = getOffsetFreehandPoints(shape.points, -spacing / 2);
+  const rightTrack = getOffsetFreehandPoints(shape.points, spacing / 2);
+  const trackWidth = Math.max(1.8, Math.min(7, (shape.width || 1.5) * 1.35));
+
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = 'rgba(15,23,42,.16)';
+  ctx.shadowBlur = Math.max(1, trackWidth * 0.8);
+  ctx.strokeStyle = 'rgba(17,24,39,.78)';
+  ctx.lineWidth = trackWidth;
+  ctx.setLineDash([]);
+  strokeSmoothScenePath(ctx, leftTrack);
+  strokeSmoothScenePath(ctx, rightTrack);
+
+  // Lớp gai lốp ngắt quãng giúp phân biệt với hai nét vẽ thông thường.
+  ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = '#000000';
+  ctx.globalAlpha = 0.86;
+  ctx.lineWidth = Math.max(0.75, trackWidth * 0.42);
+  ctx.setLineDash([Math.max(4, trackWidth * 2.2), Math.max(3, trackWidth * 1.7)]);
+  strokeSmoothScenePath(ctx, leftTrack);
+  ctx.lineDashOffset = -Math.max(2, trackWidth);
+  strokeSmoothScenePath(ctx, rightTrack);
+  ctx.restore();
 }
 
 function renderShape(ctx, shape) {
@@ -29779,7 +30108,9 @@ function renderShape(ctx, shape) {
   const color = shape.color || '#000000';
   const width = shape.width || 1.5;
   
-  if (shape.type === 'pen') {
+  if (shape.type === 'tire_track') {
+    drawTireTrackShape(ctx, shape);
+  } else if (shape.type === 'pen') {
     if (!shape.points || shape.points.length === 0) return;
     ctx.save();
     ctx.strokeStyle = color;
@@ -29817,6 +30148,8 @@ function renderShape(ctx, shape) {
     drawRoadLine(ctx, shape.x1, shape.y1, shape.x2, shape.y2, color, width, false);
   } else if (shape.type === 'road_dashed') {
     drawRoadLine(ctx, shape.x1, shape.y1, shape.x2, shape.y2, color, width, true);
+  } else if (shape.type === 'road_edge') {
+    drawRoadEdge(ctx, shape.x1, shape.y1, shape.x2, shape.y2, color, width, shape.sizeScale || 1);
   } else if (shape.type === 'crosswalk') {
     drawCrosswalk(ctx, shape.x1, shape.y1, shape.x2, shape.y2, color, width, shape.sizeScale || 1);
   } else if (shape.type === 'traffic_light') {
@@ -29865,10 +30198,21 @@ function renderShape(ctx, shape) {
     ctx.restore();
   } else if (isSceneryAssetType(shape.type)) {
     const assetDimensions = getVehicleDimensions(shape);
+    if (isTrafficSignPostType(shape.type) && !shape.signOrientationVersion) {
+      // Chuyển các biển đã tạo bằng phiên bản cũ từ tư thế ngang sang đứng,
+      // đồng thời giữ nguyên tâm để chúng không nhảy sang vị trí khác.
+      const oldAngle = shape.angle || 0;
+      const centerX = shape.startX + (assetDimensions.w / 2) * Math.cos(oldAngle);
+      const centerY = shape.startY + (assetDimensions.w / 2) * Math.sin(oldAngle);
+      shape.startX = centerX - assetDimensions.w / 2;
+      shape.startY = centerY;
+      shape.angle = 0;
+      shape.signOrientationVersion = 1;
+    }
     ctx.save();
     ctx.translate(shape.startX, shape.startY);
     ctx.rotate(shape.angle || 0);
-    drawSceneryAsset(ctx, shape.type, assetDimensions.w / 2, 0, color, width, assetDimensions.w, assetDimensions.h);
+    drawSceneryAsset(ctx, shape.type, assetDimensions.w / 2, 0, color, width, assetDimensions.w, assetDimensions.h, shape);
     ctx.restore();
   } else if (shape.type === 'person') {
     drawTemplatePerson(ctx, shape.x1, shape.y1, shape.x2, shape.y2, color, width);
@@ -29966,6 +30310,203 @@ function completeCurveCreation(endX, endY, endShape) {
   }
 }
 
+function getTireTrackCurveControl(x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const distance = Math.max(1, Math.hypot(dx, dy));
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+  const nx = -dy / distance;
+  const ny = dx / distance;
+  const bend = Math.max(18, Math.min(105, distance * 0.24));
+  return { x: mx + nx * bend, y: my + ny * bend };
+}
+
+function sampleTireTrackCurvePoints(x1, y1, cx, cy, x2, y2) {
+  const approximateLength = Math.hypot(cx - x1, cy - y1) + Math.hypot(x2 - cx, y2 - cy);
+  const segments = Math.max(18, Math.min(90, Math.ceil(approximateLength / 7)));
+  const points = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const mt = 1 - t;
+    points.push({
+      x: mt * mt * x1 + 2 * mt * t * cx + t * t * x2,
+      y: mt * mt * y1 + 2 * mt * t * cy + t * t * y2
+    });
+  }
+  return points;
+}
+
+function isCurvedTireTrack(shape) {
+  const source = shape && shape.curveSource;
+  return !!(shape && shape.type === 'tire_track' && source &&
+    Number.isFinite(source.x1) && Number.isFinite(source.y1) &&
+    Number.isFinite(source.cx) && Number.isFinite(source.cy) &&
+    Number.isFinite(source.x2) && Number.isFinite(source.y2));
+}
+
+function syncCurvedTireTrackPoints(shape) {
+  if (!isCurvedTireTrack(shape)) return;
+  const source = shape.curveSource;
+  shape.points = sampleTireTrackCurvePoints(
+    source.x1,
+    source.y1,
+    source.cx,
+    source.cy,
+    source.x2,
+    source.y2
+  );
+}
+
+function makeCurvedTireTrackShape(x1, y1, x2, y2, color, width) {
+  const control = getTireTrackCurveControl(x1, y1, x2, y2);
+  return {
+    id: genShapeId(),
+    type: 'tire_track',
+    points: sampleTireTrackCurvePoints(x1, y1, control.x, control.y, x2, y2),
+    color: color,
+    width: width,
+    trackSpacing: Math.max(10, width * 5),
+    curveSource: {
+      x1: x1,
+      y1: y1,
+      cx: control.x,
+      cy: control.y,
+      x2: x2,
+      y2: y2
+    }
+  };
+}
+
+function completeTireTrackCurveCreation(endX, endY) {
+  if (!tireTrackPendingStart) return;
+  const color = document.getElementById('drawColorPicker').value;
+  const width = parseFloat(document.getElementById('drawStrokeWidth').value);
+  const newShape = makeCurvedTireTrackShape(
+    tireTrackPendingStart.x,
+    tireTrackPendingStart.y,
+    endX,
+    endY,
+    color,
+    width
+  );
+  sceneShapes.push(newShape);
+  setSelectedShapes([newShape.id]);
+  tireTrackPendingStart = null;
+  saveDrawingState();
+  setActiveDrawTool('select');
+  updateSelectionBadge();
+  redrawSceneCanvas(true);
+  if (typeof showToast === 'function') {
+    showToast('Đã tạo vệt bánh xe cong từ điểm đầu đến điểm cuối', 'success');
+  }
+}
+
+function getEraserBoxSize() {
+  const widthInput = document.getElementById('drawStrokeWidth');
+  const strokeWidth = widthInput ? parseFloat(widthInput.value) : 2;
+  return Math.max(20, Math.min(56, 18 + (Number.isFinite(strokeWidth) ? strokeWidth : 2) * 3.5));
+}
+
+function findEraserTargetAt(px, py) {
+  const half = getEraserBoxSize() / 2;
+  const reach = half * 0.72;
+  const samples = [
+    { x: px, y: py },
+    { x: px - reach, y: py }, { x: px + reach, y: py },
+    { x: px, y: py - reach }, { x: px, y: py + reach },
+    { x: px - reach, y: py - reach }, { x: px + reach, y: py - reach },
+    { x: px - reach, y: py + reach }, { x: px + reach, y: py + reach }
+  ];
+  const candidates = new Map();
+
+  for (let i = sceneShapes.length - 1; i >= 0; i--) {
+    const shape = sceneShapes[i];
+    for (let j = 0; j < samples.length; j++) {
+      const sample = samples[j];
+      const info = hitTestShapeDetails(shape, sample.x, sample.y);
+      if (!info) continue;
+      const distance = Math.hypot(sample.x - px, sample.y - py);
+      const previous = candidates.get(shape.id);
+      if (!previous || distance < previous.distance) {
+        candidates.set(shape.id, { shape, index: i, distance, priority: info.priority, area: info.area });
+      }
+    }
+  }
+
+  if (candidates.size === 0) return null;
+  return Array.from(candidates.values()).sort((a, b) => {
+    if (b.priority !== a.priority) return b.priority - a.priority;
+    if (a.distance !== b.distance) return a.distance - b.distance;
+    if (Math.abs(a.area - b.area) > 20) return a.area - b.area;
+    return b.index - a.index;
+  })[0].shape;
+}
+
+function drawEraserPreview(ctx) {
+  if (!ctx || currentDrawTool !== 'eraser' || !eraserHoverPos) return;
+  const size = getEraserBoxSize();
+  const half = size / 2;
+  const target = eraserTargetShapeId ? sceneShapes.find(shape => shape.id === eraserTargetShapeId) : null;
+
+  if (target) {
+    const targetBounds = getShapeBoundingBox(target);
+    ctx.save();
+    ctx.globalAlpha = 0.72;
+    const highlightShape = { ...target, color: '#ef4444', width: Math.max(2.5, (target.width || 2) + 1.8) };
+    renderShape(ctx, highlightShape);
+    if (targetBounds) {
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 4]);
+      ctx.strokeRect(
+        targetBounds.minX - 3,
+        targetBounds.minY - 3,
+        targetBounds.maxX - targetBounds.minX + 6,
+        targetBounds.maxY - targetBounds.minY + 6
+      );
+    }
+    ctx.restore();
+  }
+
+  ctx.save();
+  ctx.fillStyle = target ? 'rgba(239, 68, 68, 0.13)' : 'rgba(15, 23, 42, 0.07)';
+  ctx.strokeStyle = target ? '#ef4444' : '#64748b';
+  ctx.lineWidth = 1.8;
+  ctx.setLineDash([]);
+  ctx.fillRect(eraserHoverPos.x - half, eraserHoverPos.y - half, size, size);
+  ctx.strokeRect(eraserHoverPos.x - half, eraserHoverPos.y - half, size, size);
+  ctx.beginPath();
+  ctx.moveTo(eraserHoverPos.x - 4, eraserHoverPos.y);
+  ctx.lineTo(eraserHoverPos.x + 4, eraserHoverPos.y);
+  ctx.moveTo(eraserHoverPos.x, eraserHoverPos.y - 4);
+  ctx.lineTo(eraserHoverPos.x, eraserHoverPos.y + 4);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function eraseShapeAtPointer(px, py) {
+  const target = findEraserTargetAt(px, py);
+  if (!target) {
+    eraserTargetShapeId = null;
+    redrawSceneCanvas(false);
+    return false;
+  }
+
+  const erasedName = getShapeDisplayName(target);
+  sceneShapes = sceneShapes.filter(shape => shape.id !== target.id);
+  if (selectedShapeIds.includes(target.id)) clearSelection();
+  normalizeSceneNoteNumbers();
+  eraserTargetShapeId = null;
+  saveDrawingState();
+  redrawSceneCanvas(false);
+  if (typeof showToast === 'function') {
+    showToast(`Đã tẩy: ${erasedName}`, 'info');
+  }
+  return true;
+}
+
 function onCanvasMouseDown(e) {
   if (typeof closeAllToolSubmenus === 'function') closeAllToolSubmenus();
   if (typeof isStrokePopoverOpen !== 'undefined' && isStrokePopoverOpen) closeStrokeWidthPopover();
@@ -29993,7 +30534,23 @@ function onCanvasMouseDown(e) {
   lastSceneClickPos = { x: pos.x, y: pos.y };
   priorMouseDownSelectedId = selectedShapeId;
 
+  if (currentDrawTool === 'eraser') {
+    eraserHoverPos = { x: pos.x, y: pos.y };
+    eraserTargetShapeId = findEraserTargetAt(pos.x, pos.y)?.id || null;
+    eraseShapeAtPointer(pos.x, pos.y);
+    sceneCanvas.style.cursor = 'none';
+    e.preventDefault();
+    return;
+  }
+
   if (currentDrawTool === 'select') {
+    const templateHotspot = getSceneTemplateHotspot(pos.x, pos.y);
+    if (templateHotspot) {
+      openSceneTemplateMetaEditor(templateHotspot);
+      e.preventDefault();
+      return;
+    }
+
     // 1. Check if user clicked on rotation handle
     if (selectedShapeIds && selectedShapeIds.length > 0) {
       const selShapes = getSelectedShapes();
@@ -30046,7 +30603,7 @@ function onCanvasMouseDown(e) {
         vehicleResizeHandle = vehicleHandle;
         hasResizedDuringDrag = false;
         resizeOriginalShapeData = JSON.parse(JSON.stringify(activeShape));
-        sceneCanvas.style.cursor = getVehicleResizeCursor(vehicleHandle);
+        sceneCanvas.style.cursor = getVehicleResizeCursor(vehicleHandle, activeShape);
         e.preventDefault();
         return;
       }
@@ -30075,16 +30632,18 @@ function onCanvasMouseDown(e) {
     // Check Curve handles (Curvature control point and endpoints) for single selected curve
     if (selectedShapeIds && selectedShapeIds.length === 1) {
       const activeShape = sceneShapes.find(s => s.id === selectedShapeIds[0]);
-      if (activeShape && (activeShape.type === 'curve' || activeShape.type === 'curve_dashed')) {
-        if (Math.hypot(pos.x - activeShape.cx, pos.y - activeShape.cy) <= 15) {
+      const curveHandleSource = isCurvedTireTrack(activeShape) ? activeShape.curveSource : activeShape;
+      const hasCurveHandles = activeShape && (activeShape.type === 'curve' || activeShape.type === 'curve_dashed' || isCurvedTireTrack(activeShape));
+      if (hasCurveHandles && curveHandleSource) {
+        if (Math.hypot(pos.x - curveHandleSource.cx, pos.y - curveHandleSource.cy) <= 15) {
           isDraggingCurveControl = true;
           return;
         }
-        if (Math.hypot(pos.x - activeShape.x1, pos.y - activeShape.y1) <= 14) {
+        if (Math.hypot(pos.x - curveHandleSource.x1, pos.y - curveHandleSource.y1) <= 14) {
           isDraggingCurveStart = true;
           return;
         }
-        if (Math.hypot(pos.x - activeShape.x2, pos.y - activeShape.y2) <= 14) {
+        if (Math.hypot(pos.x - curveHandleSource.x2, pos.y - curveHandleSource.y2) <= 14) {
           isDraggingCurveEnd = true;
           return;
         }
@@ -30188,6 +30747,23 @@ function onCanvasMouseDown(e) {
     return;
   }
 
+  // Vệt bánh xe cong: nhấp lần 1 chọn điểm đầu, lần 2 chọn điểm cuối.
+  if (currentDrawTool === 'tire_track') {
+    const snap = findSnapPoint(pos);
+    const point = { x: snap ? snap.x : pos.x, y: snap ? snap.y : pos.y };
+    if (!tireTrackPendingStart) {
+      tireTrackPendingStart = point;
+      redrawSceneCanvas(false);
+      if (typeof showToast === 'function') {
+        showToast('Đã chọn điểm đầu vệt bánh xe. Hãy nhấp điểm cuối', 'info');
+      }
+    } else if (Math.hypot(point.x - tireTrackPendingStart.x, point.y - tireTrackPendingStart.y) > 8) {
+      completeTireTrackCurveCreation(point.x, point.y);
+    }
+    e.preventDefault();
+    return;
+  }
+
   // Curve tool: 2-click gesture (Click 1: Start Point, Click 2: End Point)
   if (currentDrawTool === 'curve' || currentDrawTool === 'curve_dashed') {
     const snap = findSnapPoint(pos);
@@ -30216,13 +30792,14 @@ function onCanvasMouseDown(e) {
   const width = parseFloat(document.getElementById('drawStrokeWidth').value);
 
   isDrawing = true;
-  if (currentDrawTool === 'pen' || currentDrawTool === 'eraser') {
+  if (currentDrawTool === 'pen' || currentDrawTool === 'eraser' || currentDrawTool === 'tire_track') {
     currentTempShape = {
       id: genShapeId(),
       type: currentDrawTool,
       points: [{ x: pos.x, y: pos.y }],
       color: color,
-      width: width
+      width: width,
+      trackSpacing: currentDrawTool === 'tire_track' ? Math.max(10, width * 5) : undefined
     };
   } else {
     currentTempShape = null;
@@ -30231,6 +30808,14 @@ function onCanvasMouseDown(e) {
 
 function onCanvasMouseMove(e) {
   const pos = getMousePos(sceneCanvas, e);
+
+  if (currentDrawTool === 'eraser') {
+    eraserHoverPos = { x: pos.x, y: pos.y };
+    eraserTargetShapeId = findEraserTargetAt(pos.x, pos.y)?.id || null;
+    sceneCanvas.style.cursor = 'none';
+    redrawSceneCanvas(false);
+    return;
+  }
 
   if (currentDrawTool === 'select') {
     // A. Handle Active Rotation Drag
@@ -30329,7 +30914,7 @@ function onCanvasMouseMove(e) {
       if (activeShape && resizeOriginalShapeData) {
         const changed = resizeVehicleFromPointer(activeShape, resizeOriginalShapeData, vehicleResizeHandle, pos.x, pos.y);
         hasResizedDuringDrag = hasResizedDuringDrag || changed;
-        sceneCanvas.style.cursor = getVehicleResizeCursor(vehicleResizeHandle);
+        sceneCanvas.style.cursor = getVehicleResizeCursor(vehicleResizeHandle, activeShape);
         updateSelectionBadge();
         redrawSceneCanvas(true);
       }
@@ -30372,24 +30957,29 @@ function onCanvasMouseMove(e) {
     // Handle curve handles dragging for single selected curve
     if (selectedShapeIds && selectedShapeIds.length === 1) {
       const activeShape = sceneShapes.find(s => s.id === selectedShapeIds[0]);
-      if (activeShape && (activeShape.type === 'curve' || activeShape.type === 'curve_dashed')) {
+      const isTrackCurve = isCurvedTireTrack(activeShape);
+      if (activeShape && (activeShape.type === 'curve' || activeShape.type === 'curve_dashed' || isTrackCurve)) {
+        const curveTarget = isTrackCurve ? activeShape.curveSource : activeShape;
         if (isDraggingCurveControl) {
-          activeShape.cx = pos.x;
-          activeShape.cy = pos.y;
+          curveTarget.cx = pos.x;
+          curveTarget.cy = pos.y;
+          if (isTrackCurve) syncCurvedTireTrackPoints(activeShape);
           redrawSceneCanvas(true);
           return;
         }
         if (isDraggingCurveStart) {
           const snap = findSnapPoint(pos, activeShape.id);
-          activeShape.x1 = snap ? snap.x : pos.x;
-          activeShape.y1 = snap ? snap.y : pos.y;
+          curveTarget.x1 = snap ? snap.x : pos.x;
+          curveTarget.y1 = snap ? snap.y : pos.y;
+          if (isTrackCurve) syncCurvedTireTrackPoints(activeShape);
           redrawSceneCanvas(true);
           return;
         }
         if (isDraggingCurveEnd) {
           const snap = findSnapPoint(pos, activeShape.id);
-          activeShape.x2 = snap ? snap.x : pos.x;
-          activeShape.y2 = snap ? snap.y : pos.y;
+          curveTarget.x2 = snap ? snap.x : pos.x;
+          curveTarget.y2 = snap ? snap.y : pos.y;
+          if (isTrackCurve) syncCurvedTireTrackPoints(activeShape);
           redrawSceneCanvas(true);
           return;
         }
@@ -30424,6 +31014,12 @@ function onCanvasMouseMove(e) {
     }
 
     // C. Hover check
+    const templateHotspot = getSceneTemplateHotspot(pos.x, pos.y);
+    if (templateHotspot) {
+      sceneCanvas.style.cursor = 'pointer';
+      return;
+    }
+
     if (selectedShapeIds && selectedShapeIds.length > 1) {
       const selShapes = getSelectedShapes();
       const cBox = getCollectiveBoundingBox(selShapes);
@@ -30446,7 +31042,7 @@ function onCanvasMouseMove(e) {
         }
         const vehicleHandle = hitTestVehicleResizeHandle(activeShape, pos.x, pos.y);
         if (vehicleHandle) {
-          sceneCanvas.style.cursor = getVehicleResizeCursor(vehicleHandle);
+          sceneCanvas.style.cursor = getVehicleResizeCursor(vehicleHandle, activeShape);
           return;
         }
         if (hitTestLinearResizeHandle(activeShape, pos.x, pos.y)) {
@@ -30461,12 +31057,13 @@ function onCanvasMouseMove(e) {
           sceneCanvas.style.cursor = ROTATE_CURSOR;
           return;
         }
-        if (activeShape.type === 'curve' || activeShape.type === 'curve_dashed') {
-          if (Math.hypot(pos.x - activeShape.cx, pos.y - activeShape.cy) <= 15) {
+        if (activeShape.type === 'curve' || activeShape.type === 'curve_dashed' || isCurvedTireTrack(activeShape)) {
+          const curveHoverSource = isCurvedTireTrack(activeShape) ? activeShape.curveSource : activeShape;
+          if (Math.hypot(pos.x - curveHoverSource.cx, pos.y - curveHoverSource.cy) <= 15) {
             sceneCanvas.style.cursor = 'pointer';
             return;
           }
-          if (Math.hypot(pos.x - activeShape.x1, pos.y - activeShape.y1) <= 14 || Math.hypot(pos.x - activeShape.x2, pos.y - activeShape.y2) <= 14) {
+          if (Math.hypot(pos.x - curveHoverSource.x1, pos.y - curveHoverSource.y1) <= 14 || Math.hypot(pos.x - curveHoverSource.x2, pos.y - curveHoverSource.y2) <= 14) {
             sceneCanvas.style.cursor = 'crosshair';
             return;
           }
@@ -30482,6 +31079,58 @@ function onCanvasMouseMove(e) {
       }
     }
     sceneCanvas.style.cursor = hovering ? 'move' : 'default';
+    return;
+  }
+
+  // Xem trước vệt bánh xe cong giữa điểm đầu và vị trí con trỏ.
+  if (currentDrawTool === 'tire_track') {
+    const snap = findSnapPoint(pos);
+    const hoverX = snap ? snap.x : pos.x;
+    const hoverY = snap ? snap.y : pos.y;
+    redrawSceneCanvas(false);
+
+    if (tireTrackPendingStart) {
+      const distance = Math.hypot(hoverX - tireTrackPendingStart.x, hoverY - tireTrackPendingStart.y);
+      if (distance > 2) {
+        const color = document.getElementById('drawColorPicker').value;
+        const width = parseFloat(document.getElementById('drawStrokeWidth').value);
+        const previewShape = makeCurvedTireTrackShape(
+          tireTrackPendingStart.x,
+          tireTrackPendingStart.y,
+          hoverX,
+          hoverY,
+          color,
+          width
+        );
+        drawTireTrackShape(sceneCtx, previewShape);
+      }
+
+      sceneCtx.save();
+      sceneCtx.setLineDash([]);
+      sceneCtx.lineWidth = 2;
+      sceneCtx.fillStyle = '#10b981';
+      sceneCtx.strokeStyle = '#ffffff';
+      sceneCtx.beginPath();
+      sceneCtx.arc(tireTrackPendingStart.x, tireTrackPendingStart.y, 6, 0, Math.PI * 2);
+      sceneCtx.fill();
+      sceneCtx.stroke();
+      sceneCtx.fillStyle = '#d8b46d';
+      sceneCtx.beginPath();
+      sceneCtx.arc(hoverX, hoverY, 5, 0, Math.PI * 2);
+      sceneCtx.fill();
+      sceneCtx.stroke();
+      sceneCtx.restore();
+    } else if (snap) {
+      sceneCtx.save();
+      sceneCtx.strokeStyle = '#06b6d4';
+      sceneCtx.lineWidth = 2;
+      sceneCtx.beginPath();
+      sceneCtx.arc(hoverX, hoverY, 7, 0, Math.PI * 2);
+      sceneCtx.stroke();
+      sceneCtx.restore();
+    }
+
+    sceneCanvas.style.cursor = 'crosshair';
     return;
   }
 
@@ -30548,8 +31197,8 @@ function onCanvasMouseMove(e) {
   const color = currentDrawTool === 'eraser' ? '#ffffff' : document.getElementById('drawColorPicker').value;
   const width = parseFloat(document.getElementById('drawStrokeWidth').value);
 
-  if (currentDrawTool === 'pen' || currentDrawTool === 'eraser') {
-    if (e.shiftKey && currentDrawTool === 'pen') {
+  if (currentDrawTool === 'pen' || currentDrawTool === 'eraser' || currentDrawTool === 'tire_track') {
+    if (e.shiftKey && currentDrawTool !== 'eraser') {
       let tx = pos.x;
       let ty = pos.y;
       if (Math.abs(tx - startX) >= Math.abs(ty - startY)) {
@@ -30581,6 +31230,8 @@ function onCanvasMouseMove(e) {
       drawRoadLine(sceneCtx, startX, startY, currentX, currentY, color, width, false);
     } else if (currentDrawTool === 'road_dashed') {
       drawRoadLine(sceneCtx, startX, startY, currentX, currentY, color, width, true);
+    } else if (currentDrawTool === 'road_edge') {
+      drawRoadEdge(sceneCtx, startX, startY, currentX, currentY, color, width, 1);
     } else if (currentDrawTool === 'crosswalk') {
       drawCrosswalk(sceneCtx, startX, startY, currentX, currentY, color, width);
     } else if (currentDrawTool === 'traffic_light') {
@@ -30640,8 +31291,13 @@ function onCanvasMouseMove(e) {
       const objectW = Math.max(getSceneryMinimumLength(currentDrawTool), dist);
       const objectH = objectW * getSceneryAspectRatio(currentDrawTool);
       sceneCtx.save();
-      sceneCtx.translate(startX, startY);
-      sceneCtx.rotate(angle);
+      if (isTrafficSignPostType(currentDrawTool)) {
+        // Điểm nhấn đầu tiên là chân trụ; biển luôn dựng đứng khi tạo mới.
+        sceneCtx.translate(startX - objectW / 2, startY - objectH * 0.43);
+      } else {
+        sceneCtx.translate(startX, startY);
+        sceneCtx.rotate(angle);
+      }
       drawSceneryAsset(sceneCtx, currentDrawTool, objectW / 2, 0, color, width, objectW, objectH);
       sceneCtx.restore();
     } else if (currentDrawTool === 'person') {
@@ -30740,7 +31396,7 @@ function onCanvasMouseUp(e) {
   if (!isDrawing) return;
 
   // Commit at the actual release point so the saved shape exactly matches the preview/cursor.
-  if (currentDrawTool !== 'pen' && currentDrawTool !== 'eraser') {
+  if (currentDrawTool !== 'pen' && currentDrawTool !== 'eraser' && currentDrawTool !== 'tire_track') {
     const constrainedPoint = constrainSceneDrawPoint(
       currentDrawTool,
       startX,
@@ -30754,7 +31410,7 @@ function onCanvasMouseUp(e) {
   } else if (currentTempShape && currentTempShape.points) {
     let releaseX = pos.x;
     let releaseY = pos.y;
-    if (e.shiftKey && currentDrawTool === 'pen') {
+    if (e.shiftKey && currentDrawTool !== 'eraser') {
       const constrainedPoint = constrainSceneDrawPoint('line', startX, startY, releaseX, releaseY, true);
       releaseX = constrainedPoint.x;
       releaseY = constrainedPoint.y;
@@ -30771,11 +31427,11 @@ function onCanvasMouseUp(e) {
   const width = parseFloat(document.getElementById('drawStrokeWidth').value);
   let newShape = null;
 
-  if (currentDrawTool === 'pen' || currentDrawTool === 'eraser') {
+  if (currentDrawTool === 'pen' || currentDrawTool === 'eraser' || currentDrawTool === 'tire_track') {
     if (currentTempShape && currentTempShape.points && currentTempShape.points.length > 0) {
       newShape = currentTempShape;
     }
-  } else if (currentDrawTool === 'line' || currentDrawTool === 'dashed_line' || currentDrawTool === 'road_line' || currentDrawTool === 'road_dashed') {
+  } else if (currentDrawTool === 'line' || currentDrawTool === 'dashed_line' || currentDrawTool === 'road_line' || currentDrawTool === 'road_dashed' || currentDrawTool === 'road_edge') {
     if (Math.hypot(currentX - startX, currentY - startY) > 3) {
       newShape = {
         id: genShapeId(),
@@ -30787,6 +31443,7 @@ function onCanvasMouseUp(e) {
         color: color,
         width: width
       };
+      if (currentDrawTool === 'road_edge') newShape.sizeScale = 1;
     }
   } else if (currentDrawTool === 'crosswalk' || currentDrawTool === 'traffic_light' || currentDrawTool === 'median') {
     const rawLength = Math.hypot(currentX - startX, currentY - startY);
@@ -30882,13 +31539,19 @@ function onCanvasMouseUp(e) {
     const angle = Math.atan2(currentY - startY, currentX - startX);
     const dist = Math.hypot(currentY - startY, currentX - startX);
     const objectW = Math.max(getSceneryMinimumLength(currentDrawTool), dist);
+    const isUprightSign = isTrafficSignPostType(currentDrawTool);
+    const objectH = objectW * getSceneryAspectRatio(currentDrawTool);
     newShape = {
       id: genShapeId(),
       type: currentDrawTool,
-      startX: startX,
-      startY: startY,
-      angle: angle,
+      startX: isUprightSign ? startX - objectW / 2 : startX,
+      startY: isUprightSign ? startY - objectH * 0.43 : startY,
+      angle: isUprightSign ? 0 : angle,
       objectW: objectW,
+      objectH: currentDrawTool === 'road_boundary_marker' ? objectW * getSceneryAspectRatio(currentDrawTool) : undefined,
+      signOrientationVersion: isUprightSign ? 1 : undefined,
+      signKind: currentDrawTool === 'sign_circle_post' ? 'speed_limit' : (currentDrawTool === 'sign_triangle_post' ? 'intersection_non_priority' : undefined),
+      speedLimit: currentDrawTool === 'sign_circle_post' ? 50 : undefined,
       color: color,
       width: width,
       sizeScale: 1
@@ -30940,6 +31603,9 @@ function onCanvasMouseUp(e) {
       setActiveDrawTool('select');
       updateSelectionBadge();
       redrawSceneCanvas(true);
+      if (isTrafficSignPostType(newShape.type)) {
+        setTimeout(function() { openTrafficSignEditor(newShape); }, 0);
+      }
       return;
     }
   }
@@ -31045,10 +31711,17 @@ function applyShapeGroupRotation(shape, origData, cx, cy, dTheta) {
   } else if (shape.type === 'xmark' || shape.type === 'number_note') {
     const p = rotPt(origData.x, origData.y);
     shape.x = p.x; shape.y = p.y;
-  } else if (shape.type === 'pen' || shape.type === 'eraser') {
+  } else if (shape.type === 'pen' || shape.type === 'eraser' || shape.type === 'tire_track') {
     if (origData.points) {
       shape.points = origData.points.map(pt => rotPt(pt.x, pt.y));
     }
+    if (shape.type === 'tire_track' && origData.curveSource) {
+      const p1 = rotPt(origData.curveSource.x1, origData.curveSource.y1);
+      const pc = rotPt(origData.curveSource.cx, origData.curveSource.cy);
+      const p2 = rotPt(origData.curveSource.x2, origData.curveSource.y2);
+      shape.curveSource = { x1: p1.x, y1: p1.y, cx: pc.x, cy: pc.y, x2: p2.x, y2: p2.y };
+    }
+    shape.angle = normalizeAngle((origData.angle || 0) + dTheta);
   }
 }
 function findSnapPoint(pos, excludeShapeId = null, threshold = 18) {
@@ -31145,6 +31818,47 @@ function drawRoadLine(ctx, x1, y1, x2, y2, color, width, isDashed) {
   ctx.moveTo(x1, y1);
   ctx.lineTo(x2, y2);
   ctx.stroke();
+  ctx.restore();
+}
+
+function drawRoadEdge(ctx, x1, y1, x2, y2, color, width, sizeScale = 1) {
+  const length = Math.hypot(x2 - x1, y2 - y1);
+  if (length < 1) return;
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const heightScale = Math.max(0.5, Math.min(3, sizeScale || 1));
+  const bandWidth = Math.max(10, Math.min(24, (width || 2) * 3.2 + 6)) * heightScale;
+  const halfBand = bandWidth / 2;
+  const jointSpacing = Math.max(18, Math.min(34, bandWidth * 2.15));
+
+  ctx.save();
+  ctx.translate(x1, y1);
+  ctx.rotate(angle);
+  ctx.strokeStyle = color || '#000000';
+  ctx.fillStyle = color || '#000000';
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.setLineDash([]);
+
+  // Hai mép song song giúp lề đường khác rõ với vạch kẻ đường thông thường.
+  ctx.lineWidth = Math.max(1.2, (width || 2) * 1.05);
+  ctx.beginPath();
+  ctx.moveTo(0, -halfBand);
+  ctx.lineTo(length, -halfBand);
+  ctx.moveTo(0, halfBand);
+  ctx.lineTo(length, halfBand);
+  ctx.stroke();
+
+  // Các mối nối xiên tạo ký hiệu bó vỉa/lề đường trên sơ đồ đen trắng.
+  ctx.lineWidth = Math.max(0.8, (width || 2) * 0.58);
+  ctx.globalAlpha = 0.82;
+  for (let x = jointSpacing * 0.45; x < length; x += jointSpacing) {
+    const endX = Math.min(length, x + bandWidth * 0.48);
+    ctx.beginPath();
+    ctx.moveTo(x, -halfBand);
+    ctx.lineTo(endX, halfBand);
+    ctx.stroke();
+  }
+
   ctx.restore();
 }
 
@@ -31616,7 +32330,7 @@ function computeSmartSnapping(shape, orig, rawDx, rawDy, isShiftPressed, disable
   const JUNCTION_DIST = 12;
   const guides = [];
 
-  const isLinear = (shape.type === 'line' || shape.type === 'dashed_line' || shape.type === 'road_line' || shape.type === 'road_dashed' || shape.type === 'measure');
+  const isLinear = (shape.type === 'line' || shape.type === 'dashed_line' || shape.type === 'road_line' || shape.type === 'road_dashed' || shape.type === 'road_edge' || shape.type === 'measure');
   let curP1 = null, curP2 = null;
   let angle1 = 0;
   if (isLinear && orig.x1 !== undefined) {
@@ -31636,7 +32350,7 @@ function computeSmartSnapping(shape, orig, rawDx, rawDy, isShiftPressed, disable
     for (let i = 0; i < sceneShapes.length; i++) {
       const other = sceneShapes[i];
       if (other.id === shape.id) continue;
-      const otherIsLinear = (other.type === 'line' || other.type === 'dashed_line' || other.type === 'road_line' || other.type === 'road_dashed' || other.type === 'measure');
+      const otherIsLinear = (other.type === 'line' || other.type === 'dashed_line' || other.type === 'road_line' || other.type === 'road_dashed' || other.type === 'road_edge' || other.type === 'measure');
       if (!otherIsLinear || other.x1 === undefined) continue;
 
       const pairs = [
@@ -31687,7 +32401,7 @@ function computeSmartSnapping(shape, orig, rawDx, rawDy, isShiftPressed, disable
 
     const otherCenter = getShapeCenter(other);
     const otherBox = getShapeBoundingBox(other);
-    const otherIsLinear = (other.type === 'line' || other.type === 'dashed_line' || other.type === 'road_line' || other.type === 'road_dashed' || other.type === 'measure');
+    const otherIsLinear = (other.type === 'line' || other.type === 'dashed_line' || other.type === 'road_line' || other.type === 'road_dashed' || other.type === 'road_edge' || other.type === 'measure');
 
     // A. Check Parallel Relationship between 2 lines
     if (isLinear && otherIsLinear && other.x1 !== undefined) {
@@ -32018,7 +32732,7 @@ function getShapeCenter(shape) {
   if (shape.type === 'xmark' || shape.type === 'number_note') {
     return { x: shape.x, y: shape.y };
   }
-  if (shape.type === 'pen' || shape.type === 'eraser') {
+  if (shape.type === 'pen' || shape.type === 'eraser' || shape.type === 'tire_track') {
     const box = getShapeBoundingBox(shape);
     return box ? { x: (box.minX + box.maxX) / 2, y: (box.minY + box.maxY) / 2 } : { x: 0, y: 0 };
   }
@@ -32112,6 +32826,7 @@ function isLinearResizableShape(shape) {
     shape.type === 'dashed_line' ||
     shape.type === 'road_line' ||
     shape.type === 'road_dashed' ||
+    shape.type === 'road_edge' ||
     shape.type === 'measure' ||
     shape.type === 'person' ||
     shape.type === 'crosswalk' ||
@@ -32120,11 +32835,124 @@ function isLinearResizableShape(shape) {
 }
 
 function isInfrastructureAssetShape(shape) {
-  return !!shape && (shape.type === 'crosswalk' || shape.type === 'traffic_light' || shape.type === 'median');
+  return !!shape && (shape.type === 'crosswalk' || shape.type === 'traffic_light' || shape.type === 'median' || shape.type === 'road_edge');
 }
 
 function isSceneryAssetType(type) {
-  return type === 'utility_pole' || type === 'tree' || type === 'median_tree' || type === 'rice_field';
+  return type === 'utility_pole' || type === 'road_boundary_marker' || type === 'pothole' ||
+    type === 'geo_circle' || type === 'geo_triangle' || type === 'geo_round_triangle' ||
+    type === 'sign_circle_post' || type === 'sign_triangle_post' ||
+    type === 'tree' || type === 'median_tree' || type === 'rice_field';
+}
+
+function isTrafficSignPostType(type) {
+  return type === 'sign_circle_post' || type === 'sign_triangle_post';
+}
+
+let editingTrafficSignId = null;
+
+function ensureTrafficSignEditor() {
+  let overlay = document.getElementById('sceneTrafficSignOverlay');
+  if (overlay) return overlay;
+  overlay = document.createElement('div');
+  overlay.id = 'sceneTrafficSignOverlay';
+  overlay.className = 'p-modal-overlay';
+  overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:100070;align-items:center;justify-content:center;background:rgba(15,23,42,.58);backdrop-filter:blur(9px);padding:16px;font-family:inherit;';
+  overlay.onclick = function(event) { if (event.target === overlay) closeTrafficSignEditor(); };
+  overlay.innerHTML = `
+    <div role="dialog" aria-modal="true" aria-labelledby="sceneTrafficSignTitle" style="width:min(520px,96vw);overflow:hidden;color:var(--text-main);border:1px solid rgba(216,180,109,.4);border-radius:20px;background:var(--surface-strong);box-shadow:0 28px 75px rgba(0,0,0,.4);font-family:inherit;">
+      <div style="padding:18px 20px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+        <div><div id="sceneTrafficSignTitle" style="font-size:16px;font-weight:850;">Chọn nội dung biển báo</div><div style="font-size:11.5px;color:var(--text-muted);margin-top:3px;">Ký hiệu sẽ được hiển thị trực tiếp trên mặt biển</div></div>
+        <button type="button" onclick="closeTrafficSignEditor()" aria-label="Đóng" style="width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--surface-soft);color:var(--text-muted);cursor:pointer;font-family:inherit;">✕</button>
+      </div>
+      <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <label for="sceneTrafficSignKind" style="font-size:12px;font-weight:800;">Biển báo đang báo hiệu</label>
+          <select id="sceneTrafficSignKind" onchange="updateTrafficSignEditorFields()" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-soft,#fff);color:var(--text-main);font:700 13px inherit;outline:none;cursor:pointer;">
+            <option value="speed_limit">Giới hạn tốc độ</option>
+            <option value="priority_road">Đường ưu tiên</option>
+            <option value="end_priority">Hết đường ưu tiên</option>
+            <option value="intersection_non_priority">Giao nhau với đường không ưu tiên</option>
+            <option value="yield">Nhường đường</option>
+            <option value="stop">Dừng lại (STOP)</option>
+            <option value="no_entry">Cấm đi ngược chiều</option>
+            <option value="no_parking">Cấm đỗ xe</option>
+            <option value="no_overtaking">Cấm vượt</option>
+            <option value="children">Trẻ em</option>
+            <option value="roadworks">Công trường đang thi công</option>
+            <option value="danger">Nguy hiểm khác</option>
+            <option value="custom">Ký hiệu tùy chỉnh</option>
+          </select>
+        </div>
+        <div id="sceneTrafficSignSpeedWrap" style="display:flex;flex-direction:column;gap:6px;">
+          <label for="sceneTrafficSignSpeed" style="font-size:12px;font-weight:800;">Tốc độ tối đa (km/h)</label>
+          <input id="sceneTrafficSignSpeed" type="number" min="5" max="200" step="5" value="50" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-soft,#fff);color:var(--text-main);font:800 13px inherit;outline:none;" />
+        </div>
+        <div id="sceneTrafficSignCustomWrap" style="display:none;flex-direction:column;gap:6px;">
+          <label for="sceneTrafficSignCustom" style="font-size:12px;font-weight:800;">Chữ hoặc ký hiệu ngắn</label>
+          <input id="sceneTrafficSignCustom" type="text" maxlength="6" placeholder="Ví dụ: 3.5T" style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg-soft,#fff);color:var(--text-main);font:800 13px inherit;outline:none;" />
+        </div>
+      </div>
+      <div style="padding:14px 20px 18px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
+        <button type="button" class="btn-secondary" onclick="closeTrafficSignEditor()" style="padding:9px 18px;border-radius:10px;font:700 13px inherit;">Hủy</button>
+        <button type="button" class="btn-premium" onclick="applyTrafficSignEditor()" style="padding:9px 20px;border-radius:10px;font:800 13px inherit;width:auto;min-height:unset;">Cập nhật biển</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function updateTrafficSignEditorFields() {
+  const kind = document.getElementById('sceneTrafficSignKind')?.value || 'speed_limit';
+  const speedWrap = document.getElementById('sceneTrafficSignSpeedWrap');
+  const customWrap = document.getElementById('sceneTrafficSignCustomWrap');
+  if (speedWrap) speedWrap.style.display = kind === 'speed_limit' ? 'flex' : 'none';
+  if (customWrap) customWrap.style.display = kind === 'custom' ? 'flex' : 'none';
+}
+
+function openTrafficSignEditor(shape) {
+  if (!shape || !isTrafficSignPostType(shape.type)) return;
+  const overlay = ensureTrafficSignEditor();
+  editingTrafficSignId = shape.id;
+  const kindSelect = document.getElementById('sceneTrafficSignKind');
+  const speedInput = document.getElementById('sceneTrafficSignSpeed');
+  const customInput = document.getElementById('sceneTrafficSignCustom');
+  if (kindSelect) kindSelect.value = shape.signKind || (shape.type === 'sign_triangle_post' ? 'intersection_non_priority' : 'speed_limit');
+  if (speedInput) speedInput.value = Math.max(5, Math.min(200, parseInt(shape.speedLimit, 10) || 50));
+  if (customInput) customInput.value = shape.customLabel || '';
+  updateTrafficSignEditorFields();
+  overlay.style.display = 'flex';
+  setTimeout(function() { if (kindSelect) kindSelect.focus(); }, 0);
+}
+
+function openSelectedTrafficSignEditor() {
+  const shape = sceneShapes.find(item => item.id === selectedShapeId);
+  openTrafficSignEditor(shape);
+}
+
+function closeTrafficSignEditor() {
+  const overlay = document.getElementById('sceneTrafficSignOverlay');
+  if (overlay) overlay.style.display = 'none';
+  editingTrafficSignId = null;
+}
+
+function applyTrafficSignEditor() {
+  const shape = sceneShapes.find(item => item.id === editingTrafficSignId);
+  if (!shape || !isTrafficSignPostType(shape.type)) {
+    closeTrafficSignEditor();
+    return;
+  }
+  const kind = document.getElementById('sceneTrafficSignKind')?.value || 'speed_limit';
+  const speed = parseInt(document.getElementById('sceneTrafficSignSpeed')?.value, 10);
+  const customLabel = String(document.getElementById('sceneTrafficSignCustom')?.value || '').trim();
+  shape.signKind = kind;
+  shape.speedLimit = Math.max(5, Math.min(200, Number.isFinite(speed) ? speed : 50));
+  shape.customLabel = customLabel.slice(0, 6);
+  saveDrawingState();
+  updateSelectionBadge();
+  redrawSceneCanvas(true);
+  closeTrafficSignEditor();
+  if (typeof showToast === 'function') showToast('Đã cập nhật nội dung biển báo', 'success');
 }
 
 function isSceneryAssetShape(shape) {
@@ -32133,6 +32961,12 @@ function isSceneryAssetShape(shape) {
 
 function getSceneryAspectRatio(type) {
   if (type === 'utility_pole') return 0.48;
+  if (type === 'road_boundary_marker') return 0.46;
+  if (type === 'pothole') return 0.62;
+  if (type === 'geo_circle') return 1;
+  if (type === 'geo_triangle' || type === 'geo_round_triangle') return 0.9;
+  if (type === 'sign_circle_post') return 0.62;
+  if (type === 'sign_triangle_post') return 0.68;
   if (type === 'tree') return 1;
   if (type === 'median_tree') return 0.38;
   if (type === 'rice_field') return 0.58;
@@ -32141,7 +32975,12 @@ function getSceneryAspectRatio(type) {
 
 function getSceneryMinimumLength(type) {
   if (type === 'tree') return 28;
+  if (type === 'geo_circle') return 24;
+  if (type === 'geo_triangle' || type === 'geo_round_triangle') return 28;
+  if (type === 'sign_circle_post' || type === 'sign_triangle_post') return 42;
   if (type === 'utility_pole') return 32;
+  if (type === 'road_boundary_marker') return 46;
+  if (type === 'pothole') return 30;
   if (type === 'median_tree') return 55;
   if (type === 'rice_field') return 60;
   return 24;
@@ -32171,7 +33010,11 @@ function getVehicleDimensions(shape) {
   }
   if (isSceneryAssetShape(shape)) {
     const w = shape.objectW || getSceneryMinimumLength(shape.type);
-    return { w, h: w * getSceneryAspectRatio(shape.type) };
+    const proportionalHeight = w * getSceneryAspectRatio(shape.type);
+    const h = shape.type === 'road_boundary_marker' && Number.isFinite(shape.objectH)
+      ? shape.objectH
+      : proportionalHeight;
+    return { w, h };
   }
   const w = shape.bikeW || 20;
   return { w, h: w * 0.42 };
@@ -32205,6 +33048,10 @@ function getLinearShapeHalfBand(shape) {
   if (shape.type === 'crosswalk') return 24 * sizeScale;
   if (shape.type === 'traffic_light') return 12 * sizeScale;
   if (shape.type === 'median') return 14 * sizeScale;
+  if (shape.type === 'road_edge') {
+    const baseBandWidth = Math.max(10, Math.min(24, (shape.width || 2) * 3.2 + 6));
+    return (baseBandWidth / 2) * sizeScale;
+  }
   if (shape.type === 'person') {
     const length = Math.hypot((shape.x2 || 0) - (shape.x1 || 0), (shape.y2 || 0) - (shape.y1 || 0));
     return Math.max(10, length * 0.24);
@@ -32302,11 +33149,42 @@ function hitTestVehicleResizeHandle(shape, px, py) {
   return null;
 }
 
-function getVehicleResizeCursor(handle) {
-  if (handle === 'n' || handle === 's') return 'ns-resize';
-  if (handle === 'e' || handle === 'w') return 'ew-resize';
-  if (handle === 'ne' || handle === 'sw') return 'nesw-resize';
-  return 'nwse-resize';
+function getResizeCursorFromScreenAngle(angle) {
+  const normalized = ((angle % Math.PI) + Math.PI) % Math.PI;
+  if (normalized < Math.PI / 8 || normalized >= 7 * Math.PI / 8) return 'ew-resize';
+  if (normalized < 3 * Math.PI / 8) return 'nwse-resize';
+  if (normalized < 5 * Math.PI / 8) return 'ns-resize';
+  return 'nesw-resize';
+}
+
+function getVehicleResizeCursor(handle, shape) {
+  if (!shape || !isVehicleShape(shape)) {
+    if (handle === 'n' || handle === 's') return 'ns-resize';
+    if (handle === 'e' || handle === 'w') return 'ew-resize';
+    if (handle === 'ne' || handle === 'sw') return 'nesw-resize';
+    return 'nwse-resize';
+  }
+
+  const objectAngle = shape.angle || 0;
+  if (handle === 'e' || handle === 'w') {
+    return getResizeCursorFromScreenAngle(objectAngle);
+  }
+  if (handle === 'n' || handle === 's') {
+    return getResizeCursorFromScreenAngle(objectAngle + Math.PI / 2);
+  }
+
+  // Tay nắm góc dùng đúng đường chéo của khung sau khi đối tượng đã xoay.
+  const dimensions = getVehicleDimensions(shape);
+  const halfW = dimensions.w / 2 + 6;
+  const halfH = dimensions.h / 2 + 6;
+  const localVectors = {
+    nw: { x: -halfW, y: -halfH },
+    ne: { x: halfW, y: -halfH },
+    se: { x: halfW, y: halfH },
+    sw: { x: -halfW, y: halfH }
+  };
+  const vector = localVectors[handle] || localVectors.se;
+  return getResizeCursorFromScreenAngle(objectAngle + Math.atan2(vector.y, vector.x));
 }
 
 function resizeVehicleFromPointer(shape, original, handle, px, py) {
@@ -32325,6 +33203,62 @@ function resizeVehicleFromPointer(shape, original, handle, px, py) {
   const pad = 6;
   const baseHalfW = originalWidth / 2 + pad;
   const baseHalfH = originalHeight / 2 + pad;
+
+  // Cột mốc lộ giới có cơ chế resize riêng:
+  // - cạnh trái/phải: chỉ đổi chiều dài;
+  // - cạnh trên/dưới: chỉ đổi độ cao;
+  // - bốn góc: phóng to/thu nhỏ đồng bộ theo tỷ lệ.
+  if (shape.type === 'road_boundary_marker') {
+    const pointerLocalX = localX + originalWidth / 2;
+    const pointerLocalY = localY;
+    const pullsEast = handle.includes('e');
+    const pullsWest = handle.includes('w');
+    const pullsNorth = handle.includes('n');
+    const pullsSouth = handle.includes('s');
+    let nextWidth = originalWidth;
+    let nextHeight = originalHeight;
+
+    if (handle === 'e' || handle === 'w') {
+      nextWidth = pullsEast
+        ? pointerLocalX - pad
+        : originalWidth - pointerLocalX - pad;
+    } else if (handle === 'n' || handle === 's') {
+      nextHeight = pullsSouth
+        ? pointerLocalY + originalHeight / 2 - pad
+        : originalHeight / 2 - pointerLocalY - pad;
+    } else {
+      const widthCandidate = pullsEast
+        ? pointerLocalX - pad
+        : originalWidth - pointerLocalX - pad;
+      const heightCandidate = pullsSouth
+        ? pointerLocalY + originalHeight / 2 - pad
+        : originalHeight / 2 - pointerLocalY - pad;
+      const widthScale = widthCandidate / originalWidth;
+      const heightScale = heightCandidate / originalHeight;
+      const uniformScale = widthScale >= 1 || heightScale >= 1
+        ? Math.max(widthScale, heightScale)
+        : Math.min(widthScale, heightScale);
+      nextWidth = originalWidth * uniformScale;
+      nextHeight = originalHeight * uniformScale;
+    }
+
+    nextWidth = Math.max(getMinimumVehicleLength(original), Math.min(900, nextWidth));
+    nextHeight = Math.max(12, Math.min(420, nextHeight));
+    const oldDimensions = getVehicleDimensions(shape);
+
+    // Giữ cố định cạnh đối diện thay vì phóng từ tâm, tránh cảm giác kéo ngược.
+    const alongShift = pullsWest ? originalWidth - nextWidth : 0;
+    let normalShift = 0;
+    if (pullsNorth) normalShift = -(nextHeight - originalHeight) / 2;
+    else if (pullsSouth) normalShift = (nextHeight - originalHeight) / 2;
+
+    shape.startX = original.startX + alongShift * cos - normalShift * sin;
+    shape.startY = original.startY + alongShift * sin + normalShift * cos;
+    shape.objectW = nextWidth;
+    shape.objectH = nextHeight;
+    shape.sizeScale = Math.max(0.5, Math.min(3, nextWidth / Math.max(0.001, getSceneryMinimumLength(shape.type))));
+    return Math.abs(nextWidth - oldDimensions.w) > 0.15 || Math.abs(nextHeight - oldDimensions.h) > 0.15;
+  }
 
   let scale;
   if (handle === 'e' || handle === 'w') {
@@ -32378,6 +33312,15 @@ function scaleSelectedInfrastructure(factor) {
   const shape = sceneShapes.find(s => s.id === selectedShapeId);
   if (!isSizeAdjustableShape(shape)) return;
 
+  // Với lề đường, nút +/- chỉ đổi độ cao dải lề; chiều dài hai đầu được giữ nguyên.
+  if (shape.type === 'road_edge') {
+    shape.sizeScale = Math.max(0.5, Math.min(3, (shape.sizeScale || 1) * factor));
+    updateSelectionBadge();
+    redrawSceneCanvas(true);
+    saveDrawingState();
+    return;
+  }
+
   const center = getShapeCenter(shape);
   let appliedFactor = factor;
   if (isInfrastructureAssetShape(shape)) {
@@ -32402,6 +33345,9 @@ function scaleSelectedInfrastructure(factor) {
     shape.startX = center.x - Math.cos(angle) * nextLength / 2;
     shape.startY = center.y - Math.sin(angle) * nextLength / 2;
     setVehicleLength(shape, nextLength);
+    if (shape.type === 'road_boundary_marker') {
+      shape.objectH = Math.max(12, Math.min(420, dimensions.h * appliedFactor));
+    }
   } else if (shape.type === 'number_note') {
     const currentRadius = shape.radius || 13;
     const nextRadius = Math.max(8, Math.min(38, currentRadius * factor));
@@ -32506,6 +33452,28 @@ function applyShapeAngle(shape, newAngle, center) {
     shape.x = center.x - (dim.w / 2) * cos + (dim.h / 2) * sin;
     shape.y = center.y - (dim.w / 2) * sin - (dim.h / 2) * cos;
     shape.angle = newAngle;
+  } else if (shape.type === 'pen' || shape.type === 'eraser' || shape.type === 'tire_track') {
+    const currentAngle = shape.angle || 0;
+    const delta = newAngle - currentAngle;
+    const cos = Math.cos(delta);
+    const sin = Math.sin(delta);
+    if (Array.isArray(shape.points)) {
+      shape.points = shape.points.map(point => ({
+        x: center.x + (point.x - center.x) * cos - (point.y - center.y) * sin,
+        y: center.y + (point.x - center.x) * sin + (point.y - center.y) * cos
+      }));
+    }
+    if (shape.type === 'tire_track' && shape.curveSource) {
+      const rotateCurvePoint = (px, py) => ({
+        x: center.x + (px - center.x) * cos - (py - center.y) * sin,
+        y: center.y + (px - center.x) * sin + (py - center.y) * cos
+      });
+      const p1 = rotateCurvePoint(shape.curveSource.x1, shape.curveSource.y1);
+      const pc = rotateCurvePoint(shape.curveSource.cx, shape.curveSource.cy);
+      const p2 = rotateCurvePoint(shape.curveSource.x2, shape.curveSource.y2);
+      shape.curveSource = { x1: p1.x, y1: p1.y, cx: pc.x, cy: pc.y, x2: p2.x, y2: p2.y };
+    }
+    shape.angle = newAngle;
   } else if (shape.type === 'rect') {
     shape.angle = newAngle;
   }
@@ -32524,7 +33492,7 @@ function rotateSelectedShape(deltaDeg) {
     curAngle = shape.angle || 0;
   } else if (isLinearResizableShape(shape) || shape.type === 'curve' || shape.type === 'curve_dashed') {
     curAngle = Math.atan2(shape.y2 - shape.y1, shape.x2 - shape.x1);
-  } else if (shape.type === 'rect' || shape.type === 'text') {
+  } else if (shape.type === 'rect' || shape.type === 'text' || shape.type === 'pen' || shape.type === 'eraser' || shape.type === 'tire_track') {
     curAngle = shape.angle || 0;
   }
 
@@ -32564,7 +33532,7 @@ function getShapeBoundingBox(shape) {
       maxY: Math.max(...ptsY) + pad
     };
   }
-  if (shape.type === 'pen' || shape.type === 'eraser') {
+  if (shape.type === 'pen' || shape.type === 'eraser' || shape.type === 'tire_track') {
     if (!shape.points || shape.points.length === 0) return null;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     shape.points.forEach(p => {
@@ -32573,7 +33541,9 @@ function getShapeBoundingBox(shape) {
       if (p.y < minY) minY = p.y;
       if (p.y > maxY) maxY = p.y;
     });
-    const pad = Math.max(8, (shape.width || 2));
+    const pad = shape.type === 'tire_track'
+      ? Math.max(12, getTireTrackSpacing(shape) / 2 + (shape.width || 2) * 1.5 + 5)
+      : Math.max(8, (shape.width || 2));
     return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad };
   }
   if (isLinearResizableShape(shape)) {
@@ -32685,7 +33655,7 @@ function hitTestShapeDetails(shape, px, py) {
   let priority = 6;
   if (isVehicleShape(shape) || shape.type === 'person' || shape.type === 'text' || shape.type === 'xmark' || shape.type === 'number_note' || shape.type === 'crosswalk' || shape.type === 'traffic_light' || shape.type === 'median') {
     priority = 10;
-  } else if (shape.type === 'line' || shape.type === 'dashed_line' || shape.type === 'road_line' || shape.type === 'road_dashed' || shape.type === 'curve' || shape.type === 'curve_dashed' || shape.type === 'measure') {
+  } else if (shape.type === 'line' || shape.type === 'dashed_line' || shape.type === 'road_line' || shape.type === 'road_dashed' || shape.type === 'road_edge' || shape.type === 'curve' || shape.type === 'curve_dashed' || shape.type === 'measure') {
     priority = 7;
   } else if (shape.type === 'rect') {
     priority = isEdgeHit ? 5 : 1;
@@ -32739,8 +33709,10 @@ function hitTestShape(shape, px, py) {
     return false;
   }
 
-  if (shape.type === 'pen' || shape.type === 'eraser') {
-    const threshold = Math.max(12, (shape.width || 2) + 6);
+  if (shape.type === 'pen' || shape.type === 'eraser' || shape.type === 'tire_track') {
+    const threshold = shape.type === 'tire_track'
+      ? Math.max(14, getTireTrackSpacing(shape) / 2 + (shape.width || 2) * 1.5 + 5)
+      : Math.max(12, (shape.width || 2) + 6);
     if (!shape.points || shape.points.length <= 1) {
       if (shape.points && shape.points[0]) {
         return Math.hypot(px - shape.points[0].x, py - shape.points[0].y) <= threshold;
@@ -32816,9 +33788,19 @@ function setShapePositionFromOriginal(shape, orig, dx, dy) {
   } else if (shape.type === 'xmark' || shape.type === 'number_note') {
     shape.x = orig.x + dx;
     shape.y = orig.y + dy;
-  } else if (shape.type === 'pen' || shape.type === 'eraser') {
+  } else if (shape.type === 'pen' || shape.type === 'eraser' || shape.type === 'tire_track') {
     if (orig.points) {
       shape.points = orig.points.map(p => ({ x: p.x + dx, y: p.y + dy }));
+    }
+    if (shape.type === 'tire_track' && orig.curveSource) {
+      shape.curveSource = {
+        x1: orig.curveSource.x1 + dx,
+        y1: orig.curveSource.y1 + dy,
+        cx: orig.curveSource.cx + dx,
+        cy: orig.curveSource.cy + dy,
+        x2: orig.curveSource.x2 + dx,
+        y2: orig.curveSource.y2 + dy
+      };
     }
   }
 }
@@ -32838,9 +33820,14 @@ function moveShapeBy(shape, dx, dy) {
     shape.startX += dx; shape.startY += dy;
   } else if (shape.type === 'xmark' || shape.type === 'number_note') {
     shape.x += dx; shape.y += dy;
-  } else if (shape.type === 'pen' || shape.type === 'eraser') {
+  } else if (shape.type === 'pen' || shape.type === 'eraser' || shape.type === 'tire_track') {
     if (shape.points) {
       shape.points.forEach(p => { p.x += dx; p.y += dy; });
+    }
+    if (shape.type === 'tire_track' && shape.curveSource) {
+      shape.curveSource.x1 += dx; shape.curveSource.y1 += dy;
+      shape.curveSource.cx += dx; shape.curveSource.cy += dy;
+      shape.curveSource.x2 += dx; shape.curveSource.y2 += dy;
     }
   }
 }
@@ -32968,6 +33955,60 @@ function drawShapeSelectionBox(ctx, shape) {
     // 5. Rotation Handle Icon
     drawRotationHandleIcon(ctx, 0, rotY);
 
+    ctx.restore();
+    return;
+  }
+
+  // Vệt bánh xe cong: hiển thị trực tiếp hai điểm đầu/cuối và điểm điều khiển độ cong.
+  if (isCurvedTireTrack(shape)) {
+    const source = shape.curveSource;
+    const rotPos = getShapeRotationHandlePos(shape);
+    const center = getShapeCenter(shape);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(216, 180, 109, 0.58)';
+    ctx.lineWidth = 1.4;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.moveTo(source.x1, source.y1);
+    ctx.lineTo(source.cx, source.cy);
+    ctx.lineTo(source.x2, source.y2);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+    [
+      { x: source.x1, y: source.y1 },
+      { x: source.x2, y: source.y2 }
+    ].forEach(point => {
+      ctx.beginPath();
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#3b82f6';
+      ctx.lineWidth = 2.2;
+      ctx.rect(point.x - 5.5, point.y - 5.5, 11, 11);
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    ctx.beginPath();
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#d8b46d';
+    ctx.lineWidth = 2.5;
+    ctx.arc(source.cx, source.cy, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.fillStyle = '#d8b46d';
+    ctx.arc(source.cx, source.cy, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (rotPos) {
+      ctx.beginPath();
+      ctx.strokeStyle = '#d8b46d';
+      ctx.lineWidth = 1.5;
+      ctx.moveTo(center.x, center.y);
+      ctx.lineTo(rotPos.x, rotPos.y);
+      ctx.stroke();
+      drawRotationHandleIcon(ctx, rotPos.x, rotPos.y);
+    }
     ctx.restore();
     return;
   }
@@ -33280,10 +34321,18 @@ function drawMultiSelectionBox(ctx, shapes) {
     case 'curve_dashed': return 'Đường cong nét đứt';
     case 'road_line': return 'Vạch kẻ đường nét liền';
     case 'road_dashed': return 'Vạch kẻ đường nét đứt';
+    case 'road_edge': return 'Lề đường / Bó vỉa';
     case 'crosswalk': return 'Vạch sang đường người đi bộ';
     case 'traffic_light': return 'Đèn tín hiệu giao thông';
     case 'median': return 'Dải phân cách';
     case 'utility_pole': return 'Trụ điện';
+    case 'road_boundary_marker': return 'Cột mốc lộ giới';
+    case 'pothole': return 'Ổ gà';
+    case 'geo_circle': return 'Hình tròn';
+    case 'geo_triangle': return 'Hình tam giác';
+    case 'geo_round_triangle': return 'Hình tam giác bo góc';
+    case 'sign_circle_post': return 'Biển báo tròn có trụ';
+    case 'sign_triangle_post': return 'Biển báo tam giác có trụ';
     case 'tree': return 'Cây xanh';
     case 'median_tree': return 'Cây trên dải phân cách';
     case 'rice_field': return 'Đồng lúa';
@@ -33295,6 +34344,7 @@ function drawMultiSelectionBox(ctx, shapes) {
     case 'xmark': return 'Điểm va chạm (X)';
     case 'number_note': return `Chú thích số ${shape.noteNumber || '?'}`;
     case 'text': return `Chữ: "${(shape.text || '').substring(0, 15)}"`;
+    case 'tire_track': return 'Vệt bánh xe';
     case 'pen': return 'Nét vẽ tự do';
     case 'eraser': return 'Vết xóa';
     default: return 'Đối tượng';
@@ -33326,6 +34376,8 @@ function updateSelectionBadge() {
     strokeTextEl.textContent = `${parseFloat(sw).toFixed(1)}px`;
   }
   const btnEdit = document.getElementById('btnEditTextShape');
+  const btnEditTrafficSign = document.getElementById('btnEditTrafficSign');
+  const btnAlignCenters = document.getElementById('btnAlignShapeCenters');
   const btnGroup = document.getElementById('btnGroupShapes');
   const btnUngroup = document.getElementById('btnUngroupShapes');
   const grpContainer = document.getElementById('selectedGroupToolsGroup');
@@ -33333,6 +34385,9 @@ function updateSelectionBadge() {
   const lineToolsGroup = document.getElementById('selectedLineToolsGroup');
   const sizeToolsGroup = document.getElementById('selectedSizeToolsGroup');
   const sizeTextEl = document.getElementById('selectedSizeText');
+  const sizeLabelEl = document.getElementById('selectedSizeLabel');
+  const btnDecreaseSize = document.getElementById('btnDecreaseSelectedSize');
+  const btnIncreaseSize = document.getElementById('btnIncreaseSelectedSize');
   const btnCycleOverlap = document.getElementById('btnCycleOverlap');
 
   const selShapes = getSelectedShapes();
@@ -33349,6 +34404,7 @@ function updateSelectionBadge() {
       strokeTextEl.textContent = `${parseFloat(sw).toFixed(1)}px`;
     }
     if (grpContainer) grpContainer.style.display = 'inline-flex';
+    if (btnAlignCenters) btnAlignCenters.style.display = 'inline-flex';
     if (btnGroup) btnGroup.style.display = isGroup ? 'none' : 'inline-flex';
     if (btnUngroup) btnUngroup.style.display = isGroup ? 'inline-flex' : 'none';
 
@@ -33356,6 +34412,7 @@ function updateSelectionBadge() {
     if (lineToolsGroup) lineToolsGroup.style.display = 'none';
     if (sizeToolsGroup) sizeToolsGroup.style.display = 'none';
     if (btnEdit) btnEdit.style.display = 'none';
+    if (btnEditTrafficSign) btnEditTrafficSign.style.display = 'none';
     if (btnCycleOverlap) btnCycleOverlap.style.display = 'none';
 
     const layerTextEl = document.getElementById('selectedShapeLayerText');
@@ -33375,6 +34432,7 @@ function updateSelectionBadge() {
         : `Đã chọn: ${getShapeDisplayName(shape)}`;
     }
     if (grpContainer) grpContainer.style.display = shape.groupId ? 'inline-flex' : 'none';
+    if (btnAlignCenters) btnAlignCenters.style.display = 'none';
     if (btnGroup) btnGroup.style.display = 'none';
     if (btnUngroup) btnUngroup.style.display = shape.groupId ? 'inline-flex' : 'none';
     if (btnCycleOverlap) btnCycleOverlap.style.display = 'inline-flex';
@@ -33387,11 +34445,23 @@ function updateSelectionBadge() {
     const editLabel = document.getElementById('btnEditShapeLabel');
     if (editLabel) editLabel.textContent = shape.type === 'number_note' ? 'Sửa giải thích' : 'Sửa chữ';
   }
+  if (btnEditTrafficSign) {
+    btnEditTrafficSign.style.display = isTrafficSignPostType(shape.type) ? 'inline-flex' : 'none';
+  }
   if (sizeToolsGroup) {
     sizeToolsGroup.style.display = isSizeAdjustableShape(shape) ? 'inline-flex' : 'none';
   }
   if (sizeTextEl && isSizeAdjustableShape(shape)) {
     sizeTextEl.textContent = `${Math.round((shape.sizeScale || 1) * 100)}%`;
+  }
+  if (sizeLabelEl) {
+    sizeLabelEl.textContent = shape.type === 'road_edge' ? 'Độ cao' : 'Kích thước';
+  }
+  if (btnDecreaseSize) {
+    btnDecreaseSize.title = shape.type === 'road_edge' ? 'Giảm độ cao lề đường 10%' : 'Thu nhỏ 10%';
+  }
+  if (btnIncreaseSize) {
+    btnIncreaseSize.title = shape.type === 'road_edge' ? 'Tăng độ cao lề đường 10%' : 'Phóng to 10%';
   }
   const layerTextEl = document.getElementById('selectedShapeLayerText');
   if (layerTextEl) {
@@ -33402,8 +34472,9 @@ function updateSelectionBadge() {
   }
 
   const isCurveType = shape.type === 'curve' || shape.type === 'curve_dashed';
+  const hasCurveAdjustment = isCurveType || isCurvedTireTrack(shape);
   if (curveToolsGroup) {
-    curveToolsGroup.style.display = isCurveType ? 'inline-flex' : 'none';
+    curveToolsGroup.style.display = hasCurveAdjustment ? 'inline-flex' : 'none';
   }
 
   const isLineType = isCurveType || shape.type === 'road_line' || shape.type === 'road_dashed' || shape.type === 'line' || shape.type === 'dashed_line';
@@ -33515,8 +34586,12 @@ function setStrokeWidthValue(val) {
     }
   });
 
+  // Ở chế độ tẩy, thanh độ lớn điều chỉnh kích thước khung vuông thay vì sửa nét cũ.
+  if (currentDrawTool === 'eraser') {
+    eraserTargetShapeId = eraserHoverPos ? (findEraserTargetAt(eraserHoverPos.x, eraserHoverPos.y)?.id || null) : null;
+    redrawSceneCanvas(false);
   // If a shape is currently selected, UPDATE ITS STROKE WIDTH LIVE!
-  if (selectedShapeId) {
+  } else if (selectedShapeId) {
     const shape = sceneShapes.find(s => s.id === selectedShapeId);
     if (shape) {
       shape.width = num;
@@ -33630,6 +34705,34 @@ document.addEventListener('click', function(e) {
     }
   }
 });
+
+function alignSelectedShapeCenters() {
+  const sel = getSelectedShapes();
+  if (sel.length < 2) {
+    if (typeof showToast === 'function') {
+      showToast('Giữ Ctrl và chọn ít nhất 2 đối tượng để căn giữa', 'info');
+    }
+    return;
+  }
+
+  const selectionBounds = getCollectiveBoundingBox(sel);
+  if (!selectionBounds) return;
+
+  for (let i = 0; i < sel.length; i++) {
+    const shapeBounds = getShapeBoundingBox(sel[i]);
+    if (!shapeBounds) continue;
+    const shapeCenterX = (shapeBounds.minX + shapeBounds.maxX) / 2;
+    const shapeCenterY = (shapeBounds.minY + shapeBounds.maxY) / 2;
+    moveShapeBy(sel[i], selectionBounds.cx - shapeCenterX, selectionBounds.cy - shapeCenterY);
+  }
+
+  updateSelectionBadge();
+  redrawSceneCanvas(true);
+  saveDrawingState();
+  if (typeof showToast === 'function') {
+    showToast(`Đã căn giữa ${sel.length} đối tượng theo cùng một tâm`, 'success');
+  }
+}
 
 function groupSelectedShapes() {
   const sel = getSelectedShapes();
@@ -33852,15 +34955,18 @@ function cycleOverlappingSelection() {
 function adjustSelectedCurveBend(factor) {
   if (!selectedShapeId) return;
   const shape = sceneShapes.find(s => s.id === selectedShapeId);
-  if (!shape || (shape.type !== 'curve' && shape.type !== 'curve_dashed')) return;
+  if (!shape || (shape.type !== 'curve' && shape.type !== 'curve_dashed' && !isCurvedTireTrack(shape))) return;
 
-  const mx = (shape.x1 + shape.x2) / 2;
-  const my = (shape.y1 + shape.y2) / 2;
-  const vx = shape.cx - mx;
-  const vy = shape.cy - my;
+  const curveTarget = isCurvedTireTrack(shape) ? shape.curveSource : shape;
 
-  shape.cx = mx + vx * factor;
-  shape.cy = my + vy * factor;
+  const mx = (curveTarget.x1 + curveTarget.x2) / 2;
+  const my = (curveTarget.y1 + curveTarget.y2) / 2;
+  const vx = curveTarget.cx - mx;
+  const vy = curveTarget.cy - my;
+
+  curveTarget.cx = mx + vx * factor;
+  curveTarget.cy = my + vy * factor;
+  if (isCurvedTireTrack(shape)) syncCurvedTireTrackPoints(shape);
 
   redrawSceneCanvas(true);
   saveDrawingState();
@@ -33869,12 +34975,15 @@ function adjustSelectedCurveBend(factor) {
 function flipSelectedCurveBend() {
   if (!selectedShapeId) return;
   const shape = sceneShapes.find(s => s.id === selectedShapeId);
-  if (!shape || (shape.type !== 'curve' && shape.type !== 'curve_dashed')) return;
+  if (!shape || (shape.type !== 'curve' && shape.type !== 'curve_dashed' && !isCurvedTireTrack(shape))) return;
 
-  const mx = (shape.x1 + shape.x2) / 2;
-  const my = (shape.y1 + shape.y2) / 2;
-  shape.cx = mx - (shape.cx - mx);
-  shape.cy = my - (shape.cy - my);
+  const curveTarget = isCurvedTireTrack(shape) ? shape.curveSource : shape;
+
+  const mx = (curveTarget.x1 + curveTarget.x2) / 2;
+  const my = (curveTarget.y1 + curveTarget.y2) / 2;
+  curveTarget.cx = mx - (curveTarget.cx - mx);
+  curveTarget.cy = my - (curveTarget.cy - my);
+  if (isCurvedTireTrack(shape)) syncCurvedTireTrackPoints(shape);
 
   redrawSceneCanvas(true);
   saveDrawingState();
@@ -34049,25 +35158,10 @@ function drawTemplate(ctx, w, h) {
   ctx.fillText('SƠ ĐỒ HIỆN TRƯỜNG VỤ TAI NẠN', w/2, 35);
   
   ctx.font = '12px Arial';
-  const dateInput = document.getElementById('modalPendingNgayVTT');
-  const locInput = document.getElementById('modalPendingDiaDiemVTT');
-  const dateStr = dateInput ? dateInput.value : '';
-  const locStr = locInput ? locInput.value : '';
-  
-  let hh='......', mm='......', dd='......', mo='......', yyyy='......';
-  if(dateStr.length >= 10) {
-    const parts = dateStr.split(' ');
-    if(parts[0]) {
-      const dparts = parts[0].split('/');
-      if(dparts.length===3) { dd = dparts[0]; mo = dparts[1]; yyyy = dparts[2]; }
-    }
-    if(parts[1]) {
-      const tparts = parts[1].split(':');
-      if(tparts.length>=2) { hh = tparts[0]; mm = tparts[1]; }
-    }
-  }
-  ctx.fillText(`Tai nạn xảy ra hồi: ${hh} giờ ${mm} ngày ${dd} tháng ${mo} năm ${yyyy}`, w/2, 55);
-  ctx.fillText(`Tại: ${locStr || '.........................................................................................................'}`, w/2, 70);
+  const templateMeta = ensureSceneTemplateMeta(false);
+  const accidentParts = parseSceneDateParts(templateMeta.accidentDateTime, true);
+  ctx.fillText(`Tai nạn xảy ra hồi: ${accidentParts.hh} giờ ${accidentParts.mm} ngày ${accidentParts.dd} tháng ${accidentParts.mo} năm ${accidentParts.yyyy}`, w/2, 55);
+  ctx.fillText(`Tại: ${templateMeta.accidentLocation || '.........................................................................................................'}`, w/2, 70);
   
   ctx.textAlign = 'center';
   ctx.font = 'bold 14px Arial';
@@ -34090,8 +35184,9 @@ function drawTemplate(ctx, w, h) {
   
   ctx.textAlign = 'center';
   ctx.font = 'italic 12px Arial';
-  const today = new Date();
-  ctx.fillText(`........., ngày ${String(today.getDate()).padStart(2, '0')} tháng ${String(today.getMonth()+1).padStart(2, '0')} năm ${today.getFullYear()}`, col3X, footerY - 22);
+  const reportParts = parseSceneDateParts(templateMeta.reportDate || getTodaySceneDateString(), false);
+  const reportPlace = templateMeta.reportPlace || '.........';
+  ctx.fillText(`${reportPlace}, ngày ${reportParts.dd} tháng ${reportParts.mo} năm ${reportParts.yyyy}`, col3X, footerY - 22);
   
   ctx.font = 'bold 12px Arial';
   ctx.fillText('Các bên liên quan', col1X, footerY);
@@ -34772,7 +35867,156 @@ function drawFallenBike(ctx, x, y, color, width, w, h, dashed=false) {
   ctx.restore();
 }
 
-function drawSceneryAsset(ctx, type, x, y, color, width, w, h) {
+function drawRoundedTriangleAssetPath(ctx, cx, cy, w, h, radius) {
+  const vertices = [
+    { x: cx, y: cy - h / 2 },
+    { x: cx + w / 2, y: cy + h / 2 },
+    { x: cx - w / 2, y: cy + h / 2 }
+  ];
+  const cornerPoints = vertices.map((vertex, index) => {
+    const prev = vertices[(index + vertices.length - 1) % vertices.length];
+    const next = vertices[(index + 1) % vertices.length];
+    const prevLength = Math.max(0.001, Math.hypot(prev.x - vertex.x, prev.y - vertex.y));
+    const nextLength = Math.max(0.001, Math.hypot(next.x - vertex.x, next.y - vertex.y));
+    const r = Math.min(radius, prevLength * 0.28, nextLength * 0.28);
+    return {
+      before: { x: vertex.x + (prev.x - vertex.x) * r / prevLength, y: vertex.y + (prev.y - vertex.y) * r / prevLength },
+      vertex,
+      after: { x: vertex.x + (next.x - vertex.x) * r / nextLength, y: vertex.y + (next.y - vertex.y) * r / nextLength }
+    };
+  });
+  ctx.moveTo(cornerPoints[0].before.x, cornerPoints[0].before.y);
+  cornerPoints.forEach(corner => {
+    ctx.quadraticCurveTo(corner.vertex.x, corner.vertex.y, corner.after.x, corner.after.y);
+    const nextCorner = cornerPoints[(cornerPoints.indexOf(corner) + 1) % cornerPoints.length];
+    ctx.lineTo(nextCorner.before.x, nextCorner.before.y);
+  });
+  ctx.closePath();
+}
+
+function drawTrafficSignMeaning(ctx, shape, cx, cy, size, color, lineWidth) {
+  const kind = shape && shape.signKind
+    ? shape.signKind
+    : (shape && shape.type === 'sign_triangle_post' ? 'intersection_non_priority' : 'speed_limit');
+  const r = Math.max(5, size / 2);
+  const ink = color || '#111827';
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.strokeStyle = ink;
+  ctx.fillStyle = ink;
+  ctx.lineWidth = Math.max(0.8, lineWidth * 0.85);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.setLineDash([]);
+
+  if (kind === 'speed_limit') {
+    const speed = Math.max(5, Math.min(200, parseInt(shape.speedLimit, 10) || 50));
+    ctx.font = `900 ${Math.max(7, r * 0.92)}px Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(speed), 0, r * 0.05);
+  } else if (kind === 'priority_road' || kind === 'end_priority') {
+    ctx.save();
+    ctx.rotate(Math.PI / 4);
+    const d = r * 0.72;
+    ctx.strokeRect(-d / 2, -d / 2, d, d);
+    ctx.strokeRect(-d * 0.32, -d * 0.32, d * 0.64, d * 0.64);
+    ctx.restore();
+    if (kind === 'end_priority') {
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.64, r * 0.64);
+      ctx.lineTo(r * 0.64, -r * 0.64);
+      ctx.stroke();
+    }
+  } else if (kind === 'intersection_non_priority') {
+    ctx.lineWidth = Math.max(1.1, r * 0.12);
+    ctx.beginPath();
+    ctx.moveTo(0, r * 0.72);
+    ctx.lineTo(0, -r * 0.72);
+    ctx.stroke();
+    ctx.lineWidth = Math.max(0.75, r * 0.07);
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.65, -r * 0.18);
+    ctx.lineTo(0, r * 0.1);
+    ctx.lineTo(r * 0.65, -r * 0.18);
+    ctx.stroke();
+  } else if (kind === 'yield') {
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.65, -r * 0.42);
+    ctx.lineTo(r * 0.65, -r * 0.42);
+    ctx.lineTo(0, r * 0.7);
+    ctx.closePath();
+    ctx.stroke();
+  } else if (kind === 'stop') {
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = Math.PI / 8 + i * Math.PI / 4;
+      const px = Math.cos(a) * r * 0.72;
+      const py = Math.sin(a) * r * 0.72;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    ctx.font = `900 ${Math.max(5, r * 0.46)}px Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('STOP', 0, 0);
+  } else if (kind === 'no_entry') {
+    ctx.beginPath();
+    drawRoundRectCompat(ctx, -r * 0.68, -r * 0.14, r * 1.36, r * 0.28, r * 0.12);
+    ctx.fill();
+  } else if (kind === 'no_parking') {
+    ctx.font = `900 ${Math.max(7, r * 1.05)}px Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('P', 0, 0);
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.62, r * 0.62);
+    ctx.lineTo(r * 0.62, -r * 0.62);
+    ctx.stroke();
+  } else if (kind === 'no_overtaking') {
+    ctx.strokeRect(-r * 0.65, -r * 0.12, r * 0.52, r * 0.55);
+    ctx.strokeRect(r * 0.13, -r * 0.43, r * 0.52, r * 0.55);
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.72, r * 0.68);
+    ctx.lineTo(r * 0.72, -r * 0.68);
+    ctx.stroke();
+  } else if (kind === 'children') {
+    [[-0.25, -0.18, 0.58], [0.28, 0.06, 0.45]].forEach(person => {
+      const px = r * person[0], py = r * person[1], scale = person[2];
+      ctx.beginPath(); ctx.arc(px, py - r * scale * 0.38, r * scale * 0.13, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(px, py - r * scale * 0.23); ctx.lineTo(px, py + r * scale * 0.25);
+      ctx.moveTo(px, py - r * scale * 0.05); ctx.lineTo(px - r * scale * 0.25, py + r * scale * 0.1);
+      ctx.moveTo(px, py + r * scale * 0.25); ctx.lineTo(px - r * scale * 0.2, py + r * scale * 0.58);
+      ctx.moveTo(px, py + r * scale * 0.25); ctx.lineTo(px + r * scale * 0.2, py + r * scale * 0.58);
+      ctx.stroke();
+    });
+  } else if (kind === 'roadworks') {
+    ctx.beginPath(); ctx.arc(-r * 0.18, -r * 0.42, r * 0.13, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.16, -r * 0.27); ctx.lineTo(r * 0.08, r * 0.2);
+    ctx.moveTo(-r * 0.06, -r * 0.08); ctx.lineTo(-r * 0.5, r * 0.12);
+    ctx.moveTo(r * 0.08, r * 0.2); ctx.lineTo(-r * 0.2, r * 0.62);
+    ctx.moveTo(r * 0.08, r * 0.2); ctx.lineTo(r * 0.36, r * 0.57);
+    ctx.moveTo(r * 0.26, -r * 0.42); ctx.lineTo(r * 0.45, r * 0.48);
+    ctx.stroke();
+  } else if (kind === 'custom') {
+    const label = String(shape.customLabel || '?').slice(0, 6);
+    ctx.font = `900 ${Math.max(6, r * 0.72)}px Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, 0, 0);
+  } else {
+    ctx.font = `900 ${Math.max(8, r * 1.15)}px Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('!', 0, 0);
+  }
+  ctx.restore();
+}
+
+function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null) {
   ctx.save();
   ctx.strokeStyle = color;
   ctx.lineWidth = Math.max(1, width);
@@ -34783,31 +36027,82 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h) {
   const right = x + w / 2;
   const top = y - h / 2;
 
-  if (type === 'utility_pole') {
+  if (type === 'geo_circle') {
+    const radius = Math.max(5, Math.min(w, h) * 0.43);
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,.72)';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1, width);
+    ctx.stroke();
+  } else if (type === 'geo_triangle' || type === 'geo_round_triangle') {
+    const triangleW = w * 0.88;
+    const triangleH = h * 0.88;
+    ctx.beginPath();
+    if (type === 'geo_round_triangle') {
+      drawRoundedTriangleAssetPath(ctx, x, y, triangleW, triangleH, Math.min(triangleW, triangleH) * 0.12);
+    } else {
+      ctx.moveTo(x, y - triangleH / 2);
+      ctx.lineTo(x + triangleW / 2, y + triangleH / 2);
+      ctx.lineTo(x - triangleW / 2, y + triangleH / 2);
+      ctx.closePath();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,.72)';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1, width);
+    ctx.stroke();
+  } else if (type === 'sign_circle_post' || type === 'sign_triangle_post') {
+    const lineW = Math.max(1, width);
+    const faceCenterY = top + h * 0.31;
+    const faceSize = Math.min(w * 0.55, h * 0.58);
+    const postTopY = faceCenterY + faceSize * 0.42;
+    const postBottomY = y + h * 0.43;
+    const postW = Math.max(2.5, w * 0.055);
+
+    // Trụ gọn với đầu chân bo tròn; không dùng đế ngang cồng kềnh.
+    ctx.beginPath();
+    drawRoundRectCompat(ctx, x - postW / 2, postTopY, postW, postBottomY - postTopY, postW / 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineW;
+    ctx.stroke();
+
+    // Mặt biển trắng, viền đen rõ khi in.
+    ctx.beginPath();
+    if (type === 'sign_circle_post') {
+      ctx.arc(x, faceCenterY, faceSize * 0.46, 0, Math.PI * 2);
+    } else {
+      drawRoundedTriangleAssetPath(ctx, x, faceCenterY, faceSize, faceSize * 0.88, faceSize * 0.08);
+    }
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1.4, lineW * 1.2);
+    ctx.stroke();
+
+    // Viền trong kỹ thuật giúp phân biệt rõ với hình học thông thường.
+    ctx.beginPath();
+    if (type === 'sign_circle_post') {
+      ctx.arc(x, faceCenterY, faceSize * 0.35, 0, Math.PI * 2);
+    } else {
+      drawRoundedTriangleAssetPath(ctx, x, faceCenterY + faceSize * 0.015, faceSize * 0.76, faceSize * 0.66, faceSize * 0.055);
+    }
+    ctx.strokeStyle = 'rgba(71,85,105,.72)';
+    ctx.lineWidth = Math.max(0.7, lineW * 0.58);
+    ctx.stroke();
+
+    drawTrafficSignMeaning(ctx, shapeData || { type }, x, faceCenterY, faceSize * 0.72, color, lineW);
+  } else if (type === 'utility_pole') {
     const bottom = y + h / 2;
     const crossX = left + w * 0.23;
     const poleEndX = right - w * 0.13;
     const lineW = Math.max(0.9, width);
 
-    // Ba dây dẫn đi vào cụm sứ, vẽ mảnh để không lấn át thân trụ.
+    // Ba vị trí sứ điện trên xà trụ.
     const wireRows = [top + h * 0.16, y, bottom - h * 0.16];
-    ctx.save();
-    ctx.strokeStyle = 'rgba(71,85,105,.82)';
-    ctx.lineWidth = Math.max(0.65, lineW * 0.72);
-    wireRows.forEach((wireY, index) => {
-      ctx.beginPath();
-      ctx.moveTo(left + w * 0.01, wireY);
-      ctx.bezierCurveTo(
-        left + w * 0.07,
-        wireY + (index - 1) * h * 0.025,
-        crossX - w * 0.12,
-        wireY - (index - 1) * h * 0.018,
-        crossX - w * 0.075,
-        wireY
-      );
-      ctx.stroke();
-    });
-    ctx.restore();
 
     // Thân trụ bê tông thuôn nhẹ, có lõi sáng và đường viền kỹ thuật.
     ctx.beginPath();
@@ -34893,18 +36188,154 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h) {
       ctx.fill();
     });
 
-    // Nhãn cảnh báo nhỏ tạo điểm nhận diện mà vẫn giữ bản vẽ sạch.
-    const plateX = left + w * 0.58;
-    const plateSize = Math.max(4, h * 0.17);
+  } else if (type === 'road_boundary_marker') {
+    const lineW = Math.max(0.9, width);
+    const tipX = left + w * 0.045;
+    const shoulderX = left + w * 0.115;
+    const baseX = right - w * 0.12;
+    const bodyTop = y - h * 0.27;
+    const bodyBottom = y + h * 0.27;
+    const capEndX = left + w * 0.285;
+
+    // Bóng tiếp xúc rất nhẹ giúp cọc nổi rõ mà vẫn giữ ngôn ngữ sơ đồ 2D.
     ctx.save();
-    ctx.translate(plateX, y);
-    ctx.rotate(Math.PI / 4);
-    ctx.fillStyle = '#f5c451';
-    ctx.strokeStyle = color;
-    ctx.lineWidth = Math.max(0.55, lineW * 0.6);
-    ctx.fillRect(-plateSize / 2, -plateSize / 2, plateSize, plateSize);
-    ctx.strokeRect(-plateSize / 2, -plateSize / 2, plateSize, plateSize);
+    ctx.beginPath();
+    ctx.ellipse(baseX + w * 0.025, y + h * 0.1, w * 0.115, h * 0.31, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(15,23,42,.11)';
+    ctx.fill();
     ctx.restore();
+
+    // Mặt chính bê tông trắng, thuôn nhẹ về phía chóp vát 10 độ.
+    ctx.save();
+    ctx.shadowColor = 'rgba(15,23,42,.16)';
+    ctx.shadowBlur = Math.max(2, h * 0.12);
+    ctx.shadowOffsetY = Math.max(1, h * 0.035);
+    ctx.beginPath();
+    ctx.moveTo(tipX, y);
+    ctx.lineTo(shoulderX, bodyTop);
+    ctx.lineTo(baseX, bodyTop + h * 0.025);
+    ctx.lineTo(baseX, bodyBottom - h * 0.025);
+    ctx.lineTo(shoulderX, bodyBottom);
+    ctx.closePath();
+    const concreteGradient = ctx.createLinearGradient(shoulderX, bodyTop, baseX, bodyBottom);
+    concreteGradient.addColorStop(0, '#ffffff');
+    concreteGradient.addColorStop(0.5, '#f4f6f8');
+    concreteGradient.addColorStop(1, '#d8dee5');
+    ctx.fillStyle = concreteGradient;
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#111827';
+    ctx.lineWidth = lineW;
+    ctx.stroke();
+    ctx.restore();
+
+    // Mặt cạnh xám mảnh tạo chiều sâu premium, không biến thành phối cảnh 3D nặng.
+    ctx.beginPath();
+    ctx.moveTo(shoulderX, bodyBottom);
+    ctx.lineTo(baseX, bodyBottom - h * 0.025);
+    ctx.lineTo(baseX + w * 0.045, bodyBottom - h * 0.095);
+    ctx.lineTo(shoulderX + w * 0.025, bodyBottom - h * 0.07);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(148,163,184,.34)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(71,85,105,.72)';
+    ctx.lineWidth = Math.max(0.55, lineW * 0.62);
+    ctx.stroke();
+
+    // Chóp đen chiếm khoảng 1/5 phần cọc nổi để giữ tỷ lệ 10/50 cm trên bản vẽ đơn sắc.
+    ctx.beginPath();
+    ctx.moveTo(tipX, y);
+    ctx.lineTo(shoulderX, bodyTop);
+    ctx.lineTo(capEndX, bodyTop + h * 0.006);
+    ctx.lineTo(capEndX, bodyBottom - h * 0.006);
+    ctx.lineTo(shoulderX, bodyBottom);
+    ctx.closePath();
+    const capGradient = ctx.createLinearGradient(tipX, bodyTop, capEndX, bodyBottom);
+    capGradient.addColorStop(0, '#4b5563');
+    capGradient.addColorStop(0.55, '#1f2937');
+    capGradient.addColorStop(1, '#05070b');
+    ctx.fillStyle = capGradient;
+    ctx.fill();
+    ctx.strokeStyle = '#05070b';
+    ctx.lineWidth = Math.max(0.65, lineW * 0.7);
+    ctx.stroke();
+
+    // Vạch lõm và chữ đen nhận diện công năng mốc lộ giới.
+    ctx.beginPath();
+    ctx.moveTo(capEndX + w * 0.025, bodyTop + h * 0.07);
+    ctx.lineTo(baseX - w * 0.035, bodyTop + h * 0.085);
+    ctx.strokeStyle = 'rgba(255,255,255,.96)';
+    ctx.lineWidth = Math.max(0.55, lineW * 0.55);
+    ctx.stroke();
+
+    const labelCenterX = capEndX + (baseX - capEndX) * 0.47;
+    const labelMaxW = Math.max(12, (baseX - capEndX) * 0.84);
+    let labelSize = Math.max(4.2, Math.min(8.2, h * 0.2));
+    ctx.save();
+    ctx.fillStyle = '#111827';
+    ctx.font = `900 ${labelSize}px Arial, sans-serif`;
+    while (ctx.measureText('MỐC LỘ GIỚI').width > labelMaxW && labelSize > 3.2) {
+      labelSize -= 0.3;
+      ctx.font = `900 ${labelSize}px Arial, sans-serif`;
+    }
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('MỐC LỘ GIỚI', labelCenterX, y - h * 0.01);
+    ctx.restore();
+
+    // Chân chôn/đế bê tông được giản lược để dễ nhận biết trên sơ đồ hiện trường.
+    ctx.beginPath();
+    drawRoundRectCompat(ctx, baseX - w * 0.005, y - h * 0.34, w * 0.115, h * 0.68, Math.max(1.5, h * 0.06));
+    ctx.fillStyle = 'rgba(203,213,225,.7)';
+    ctx.fill();
+    ctx.strokeStyle = '#111827';
+    ctx.lineWidth = lineW;
+    ctx.stroke();
+  } else if (type === 'pothole') {
+    const lineW = Math.max(0.9, width);
+
+    // Miệng ổ gà nhìn từ trên xuống: bất quy tắc nhưng cố định để không rung khi vẽ lại.
+    ctx.beginPath();
+    ctx.moveTo(left + w * 0.08, y - h * 0.06);
+    ctx.bezierCurveTo(left + w * 0.1, top + h * 0.2, left + w * 0.3, top + h * 0.05, left + w * 0.43, top + h * 0.16);
+    ctx.bezierCurveTo(left + w * 0.62, top - h * 0.02, right - w * 0.04, top + h * 0.22, right - w * 0.08, y + h * 0.02);
+    ctx.bezierCurveTo(right + w * 0.01, y + h * 0.23, right - w * 0.2, y + h * 0.46, right - w * 0.37, y + h * 0.35);
+    ctx.bezierCurveTo(left + w * 0.47, y + h * 0.52, left + w * 0.22, y + h * 0.4, left + w * 0.12, y + h * 0.23);
+    ctx.bezierCurveTo(left - w * 0.02, y + h * 0.13, left + w * 0.01, y, left + w * 0.08, y - h * 0.06);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(71,85,105,.22)';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineW;
+    ctx.stroke();
+
+    // Lòng hố tối vừa đủ để nhận biết tốt trên bản in trắng đen.
+    ctx.beginPath();
+    ctx.ellipse(x, y + h * 0.04, w * 0.26, h * 0.19, -0.08, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(15,23,42,.22)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(17,24,39,.82)';
+    ctx.lineWidth = Math.max(0.7, lineW * 0.72);
+    ctx.stroke();
+
+    // Các nhánh nứt tỏa ra từ mép hố.
+    const cracks = [
+      [left + w * 0.13, y - h * 0.07, left - w * 0.02, top + h * 0.22, left + w * 0.04, top + h * 0.05],
+      [left + w * 0.36, top + h * 0.13, left + w * 0.31, top - h * 0.12, left + w * 0.43, top - h * 0.02],
+      [right - w * 0.25, top + h * 0.13, right - w * 0.18, top - h * 0.1, right - w * 0.08, top + h * 0.02],
+      [right - w * 0.09, y + h * 0.02, right + w * 0.04, y - h * 0.03, right - w * 0.01, y + h * 0.15],
+      [right - w * 0.35, y + h * 0.34, right - w * 0.28, y + h * 0.58, right - w * 0.18, y + h * 0.49],
+      [left + w * 0.25, y + h * 0.34, left + w * 0.17, y + h * 0.57, left + w * 0.08, y + h * 0.48]
+    ];
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(0.65, lineW * 0.65);
+    cracks.forEach(crack => {
+      ctx.beginPath();
+      ctx.moveTo(crack[0], crack[1]);
+      ctx.lineTo(crack[2], crack[3]);
+      ctx.lineTo(crack[4], crack[5]);
+      ctx.stroke();
+    });
   } else if (type === 'tree') {
     const radius = Math.min(w, h) * 0.31;
     const canopy = [
@@ -35132,7 +36563,8 @@ function saveDrawingState() {
     historyIndex--;
   }
   drawingHistory.push({
-    shapes: JSON.parse(JSON.stringify(sceneShapes))
+    shapes: JSON.parse(JSON.stringify(sceneShapes)),
+    templateMeta: cloneSceneTemplateMeta(ensureSceneTemplateMeta())
   });
   historyIndex = drawingHistory.length - 1;
   updateUndoRedoButtonsState();
@@ -35144,6 +36576,7 @@ function undoSceneDrawing() {
     historyIndex--;
     const state = drawingHistory[historyIndex];
     sceneShapes = (state && state.shapes) ? JSON.parse(JSON.stringify(state.shapes)) : [];
+    if (state && state.templateMeta) sceneTemplateMeta = cloneSceneTemplateMeta(state.templateMeta);
     selectedShapeId = null;
     updateSelectionBadge();
     redrawSceneCanvas(currentDrawTool === 'select');
@@ -35157,6 +36590,7 @@ function redoSceneDrawing() {
     historyIndex++;
     const state = drawingHistory[historyIndex];
     sceneShapes = (state && state.shapes) ? JSON.parse(JSON.stringify(state.shapes)) : [];
+    if (state && state.templateMeta) sceneTemplateMeta = cloneSceneTemplateMeta(state.templateMeta);
     selectedShapeId = null;
     updateSelectionBadge();
     redrawSceneCanvas(currentDrawTool === 'select');
@@ -35207,10 +36641,77 @@ function clearDrawingCanvas() {
   }
 }
 
+function cancelSceneCanvasInteraction() {
+  const hadSelection = getSelectedShapes().length > 0;
+  const hadActiveAction = currentDrawTool !== 'select' || isDrawing || isDraggingShape || isRotatingShape ||
+    isDraggingCurveControl || isDraggingCurveStart || isDraggingCurveEnd ||
+    isResizingLinearStart || isResizingLinearEnd || isResizingInfraBand ||
+    isResizingNumberNote || isResizingVehicle || !!curvePendingStart || !!tireTrackPendingStart;
+
+  isDrawing = false;
+  currentTempShape = null;
+  curvePendingStart = null;
+  tireTrackPendingStart = null;
+  isDraggingShape = false;
+  hasMovedDuringDrag = false;
+  isRotatingShape = false;
+  hasRotatedDuringDrag = false;
+  isDraggingCurveControl = false;
+  isDraggingCurveStart = false;
+  isDraggingCurveEnd = false;
+  isResizingLinearStart = false;
+  isResizingLinearEnd = false;
+  isResizingInfraBand = false;
+  isResizingNumberNote = false;
+  isResizingVehicle = false;
+  hasResizedDuringDrag = false;
+  isPanning = false;
+  isSpacePressed = false;
+  dragOriginals = [];
+  rotationOriginals = [];
+  rotationGroupCenter = null;
+  resizeOriginalShapeData = null;
+  vehicleResizeHandle = null;
+  activeSnapGuides = [];
+  clearSelection();
+
+  isStrokePopoverOpen = false;
+  const strokePopover = document.getElementById('strokeWidthPopover');
+  if (strokePopover) strokePopover.style.display = 'none';
+  closeAllToolSubmenus();
+  setActiveDrawTool('select');
+  updateSelectionBadge();
+  redrawSceneCanvas(false);
+
+  if ((hadSelection || hadActiveAction) && typeof showToast === 'function') {
+    showToast('Đã thoát thao tác và bỏ chọn', 'info');
+  }
+}
+
 // Keyboard shortcuts: Ctrl+Z (Undo), Ctrl+Y (Redo), V (Select tool), P (Pen tool), R / Shift+R (Rotate), Delete/Backspace (Delete selected), Arrow keys (Nudge)
 document.addEventListener('keydown', function(e) {
   const modal = document.getElementById('sceneDrawingModalOverlay');
   if (!modal || modal.style.display === 'none') return;
+
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    const metaOverlay = document.getElementById('sceneTemplateMetaOverlay');
+    const numberOverlay = document.getElementById('sceneNumberNoteModalOverlay');
+    const textOverlay = document.getElementById('sceneTextModalOverlay');
+    const trafficSignOverlay = document.getElementById('sceneTrafficSignOverlay');
+    if (trafficSignOverlay && trafficSignOverlay.style.display !== 'none') {
+      closeTrafficSignEditor();
+    } else if (metaOverlay && metaOverlay.style.display !== 'none') {
+      closeSceneTemplateMetaEditor();
+    } else if (numberOverlay && numberOverlay.style.display !== 'none') {
+      closeSceneNumberNoteModal();
+    } else if (textOverlay && textOverlay.style.display !== 'none') {
+      closeSceneTextModal();
+    } else {
+      cancelSceneCanvasInteraction();
+    }
+    return;
+  }
   
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
   
@@ -35378,13 +36879,6 @@ document.addEventListener('keydown', function(e) {
       rotateSelectedShape(15);
       return;
     }
-    if (e.key === 'Escape' && curvePendingStart) {
-      curvePendingStart = null;
-      redrawSceneCanvas(false);
-      if (typeof showToast === 'function') showToast('Đã hủy vẽ đường cong', 'info');
-      return;
-    }
-
     // Zoom & Pan Keyboard Shortcuts
     const isTyping = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
     if (!isTyping) {
@@ -35419,7 +36913,7 @@ document.addEventListener('keydown', function(e) {
       }
     }
 
-    if (e.key === 'v' || e.key === 'V' || e.key === 'Escape') {
+    if (e.key === 'v' || e.key === 'V') {
 window.addEventListener('keyup', function(e) {
   if (e.code === 'Space') {
     isSpacePressed = false;
@@ -35439,6 +36933,7 @@ window.addEventListener('keyup', function(e) {
 });
 
 function openSceneDrawingModal() {
+  ensureSceneTemplateMeta(true);
   const modal = document.getElementById('sceneDrawingModalOverlay');
   if (modal) {
     modal.removeAttribute('aria-hidden');
@@ -35472,8 +36967,10 @@ function openSceneDrawingModal() {
 }
 
 function closeSceneDrawingModal() {
+  closeSceneTemplateMetaEditor();
   closeSceneNumberNoteModal();
   closeSceneTextModal();
+  closeTrafficSignEditor();
   const modal = document.getElementById('sceneDrawingModalOverlay');
   if (modal) {
     if (document.activeElement && modal.contains(document.activeElement)) {
@@ -35492,6 +36989,19 @@ function cloneSceneDiagramShapes(shapes) {
     console.error('Không thể sao chép dữ liệu sơ đồ:', error);
     return [];
   }
+}
+
+function parseStoredSceneTemplateMeta(rawMeta) {
+  if (!rawMeta) return null;
+  try {
+    const parsed = typeof rawMeta === 'string' ? JSON.parse(rawMeta) : rawMeta;
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return cloneSceneTemplateMeta(parsed);
+    }
+  } catch (error) {
+    console.error('Dữ liệu thông tin mẫu sơ đồ không hợp lệ:', error);
+  }
+  return null;
 }
 
 function parseStoredSceneDiagramShapes(rawShapes) {
@@ -35519,12 +37029,19 @@ function loadSceneDiagramForClaim(claim) {
   const item = claim || {};
   sceneDiagramDataUrl = typeof item.soDoHienTruong === 'string' ? item.soDoHienTruong : '';
   sceneDiagramShapesSnapshot = parseStoredSceneDiagramShapes(item.soDoHienTruongData || item.duLieuSoDoHienTruong);
+  sceneDiagramTemplateMetaSnapshot = parseStoredSceneTemplateMeta(item.soDoHienTruongMeta || item.thongTinSoDoHienTruong);
+  sceneTemplateMeta = sceneDiagramTemplateMetaSnapshot
+    ? cloneSceneTemplateMeta(sceneDiagramTemplateMetaSnapshot)
+    : cloneSceneTemplateMeta(getDefaultSceneTemplateMeta());
   sceneDiagramUpdatedAt = item.soDoHienTruongUpdatedAt || null;
   sceneShapes = cloneSceneDiagramShapes(sceneDiagramShapesSnapshot);
   selectedShapeId = null;
   selectedShapeIds = [];
-  drawingHistory = sceneShapes.length ? [{ shapes: cloneSceneDiagramShapes(sceneShapes) }] : [];
-  historyIndex = sceneShapes.length ? 0 : -1;
+  drawingHistory = sceneShapes.length || sceneDiagramDataUrl ? [{
+    shapes: cloneSceneDiagramShapes(sceneShapes),
+    templateMeta: cloneSceneTemplateMeta(sceneTemplateMeta)
+  }] : [];
+  historyIndex = drawingHistory.length ? 0 : -1;
   updateSceneDiagramPreview(sceneDiagramDataUrl);
   if (sceneCanvas && sceneCtx) redrawSceneCanvas(false);
   if (typeof updateUndoRedoButtonsState === 'function') updateUndoRedoButtonsState();
@@ -35639,6 +37156,7 @@ async function saveSceneDrawing() {
 
     sceneDiagramDataUrl = dataURL;
     sceneDiagramShapesSnapshot = cloneSceneDiagramShapes(sceneShapes);
+    sceneDiagramTemplateMetaSnapshot = cloneSceneTemplateMeta(ensureSceneTemplateMeta());
     sceneDiagramUpdatedAt = Date.now();
     updateSceneDiagramPreview(sceneDiagramDataUrl);
 
@@ -35651,6 +37169,7 @@ async function saveSceneDrawing() {
       const scenePayload = {
         soDoHienTruong: sceneDiagramDataUrl,
         soDoHienTruongData: JSON.stringify(sceneDiagramShapesSnapshot),
+        soDoHienTruongMeta: JSON.stringify(sceneDiagramTemplateMetaSnapshot),
         soDoHienTruongUpdatedAt: sceneDiagramUpdatedAt,
         updatedAt: Date.now()
       };
@@ -35687,10 +37206,13 @@ async function removeSceneDiagram() {
 
   const previousImage = sceneDiagramDataUrl;
   const previousShapes = cloneSceneDiagramShapes(sceneDiagramShapesSnapshot);
+  const previousTemplateMeta = cloneSceneTemplateMeta(sceneDiagramTemplateMetaSnapshot || sceneTemplateMeta);
   const previousUpdatedAt = sceneDiagramUpdatedAt;
 
   sceneDiagramDataUrl = '';
   sceneDiagramShapesSnapshot = [];
+  sceneDiagramTemplateMetaSnapshot = null;
+  sceneTemplateMeta = cloneSceneTemplateMeta(getDefaultSceneTemplateMeta());
   sceneDiagramUpdatedAt = null;
   sceneShapes = [];
   drawingHistory = [];
@@ -35702,6 +37224,7 @@ async function removeSceneDiagram() {
       const clearedPayload = {
         soDoHienTruong: '',
         soDoHienTruongData: '[]',
+        soDoHienTruongMeta: '',
         soDoHienTruongUpdatedAt: null,
         updatedAt: Date.now()
       };
@@ -35714,6 +37237,8 @@ async function removeSceneDiagram() {
   } catch (error) {
     sceneDiagramDataUrl = previousImage;
     sceneDiagramShapesSnapshot = previousShapes;
+    sceneDiagramTemplateMetaSnapshot = previousTemplateMeta;
+    sceneTemplateMeta = cloneSceneTemplateMeta(previousTemplateMeta);
     sceneDiagramUpdatedAt = previousUpdatedAt;
     sceneShapes = cloneSceneDiagramShapes(previousShapes);
     updateSceneDiagramPreview(previousImage);
