@@ -952,19 +952,19 @@
 
     /* Premium filter command bar */
     .pending-filter-toolbar {
-      --filter-h: 50px;
+      --filter-h: 44px;
       position: relative;
       z-index: 25;
       display: grid;
-      grid-template-columns: minmax(300px, 395px) minmax(0, 1fr);
+      grid-template-columns: minmax(230px, 1fr) auto 44px;
       align-items: center;
-      gap: 14px;
-      margin-bottom: 24px;
-      padding: 10px;
+      gap: 10px;
+      margin-bottom: 10px;
+      padding: 8px;
       border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
-      border-radius: 18px;
+      border-radius: 15px;
       background: linear-gradient(120deg, color-mix(in srgb, var(--surface-strong) 97%, var(--primary)), var(--surface-strong) 52%, color-mix(in srgb, var(--surface-strong) 98%, #fff));
-      box-shadow: 0 12px 30px rgba(15,23,42,.06), inset 0 1px 0 rgba(255,255,255,.72);
+      box-shadow: 0 8px 22px rgba(0,0,0,.12), inset 0 1px 0 rgba(255,255,255,.04);
     }
     .pending-filter-search { position: relative; min-width: 0; }
     .pending-filter-search__icon {
@@ -972,8 +972,8 @@
       z-index: 2;
       left: 9px;
       top: 50%;
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       display: grid;
       place-items: center;
       color: var(--primary);
@@ -987,13 +987,13 @@
     .pending-filter-search__input {
       width: 100%;
       height: var(--filter-h);
-      padding: 0 44px 0 50px;
+      padding: 0 36px 0 46px;
       color: var(--text-main);
       border: 1px solid var(--border);
       border-radius: 13px;
       outline: none;
       background: color-mix(in srgb, var(--surface) 92%, transparent);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
       font-family: inherit;
       font-size: 12.5px;
       font-weight: 700;
@@ -1001,24 +1001,28 @@
     }
     .pending-filter-search__input::placeholder { color: var(--text-muted); font-weight: 650; }
     .pending-filter-search__input:focus { border-color: rgba(179,140,67,.55); background: var(--surface-strong); box-shadow: 0 0 0 3px rgba(216,180,109,.11), inset 0 1px 0 rgba(255,255,255,.72); }
-    .pending-filter-controls { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 0; }
-    .pending-filter-select { position: relative; flex: 0 0 190px; width: 190px; min-width: 190px; max-width: 190px; }
-    .pending-filter-select--status { flex-basis: 220px; width: 220px; min-width: 220px; max-width: 220px; }
-    .pending-filter-select--period { flex-basis: 180px; width: 180px; min-width: 180px; max-width: 180px; }
+    .pending-filter-controls { display: flex; align-items: center; gap: 4px; min-width: 0; padding: 2px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); }
+    .pending-filter-select { position: relative; flex: 0 0 174px; width: 174px; min-width: 0; }
+    .pending-filter-select--status { flex-basis: 174px; width: 174px; }
+    .pending-filter-select--coverage { flex-basis: 168px; width: 168px; }
+    .pending-filter-select--period { flex-basis: 150px; width: 150px; }
+    .pending-filter-controls .pending-filter-trigger { height: 38px; border-color: transparent; border-radius: 8px; background: transparent; box-shadow: none; }
+    .pending-filter-controls .pending-filter-select + .pending-filter-select::before { content: ''; position: absolute; left: -3px; top: 9px; bottom: 9px; width: 1px; background: var(--border); }
+    .pending-filter-controls .pending-filter-select.is-filtered .pending-filter-trigger { background: rgba(216,180,109,.07); border-color: rgba(216,180,109,.22); }
     .pending-filter-trigger {
       --filter-accent: 179, 140, 67;
       width: 100%;
       height: var(--filter-h);
       display: grid;
-      grid-template-columns: 30px minmax(0,1fr) 18px;
+      grid-template-columns: 24px minmax(0,1fr) 14px;
       align-items: center;
-      gap: 8px;
-      padding: 0 9px;
+      gap: 7px;
+      padding: 0 7px;
       color: var(--text-main);
       border: 1px solid var(--border);
       border-radius: 13px;
       background: color-mix(in srgb, var(--surface) 92%, transparent);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.58);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
       cursor: pointer;
       text-align: left;
       transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease;
@@ -1027,10 +1031,11 @@
     .pending-filter-select.is-open .pending-filter-trigger { border-color: rgba(var(--filter-accent), .58); background: var(--surface-strong); box-shadow: 0 0 0 3px rgba(var(--filter-accent), .1), 0 7px 18px rgba(15,23,42,.07); }
     .pending-filter-trigger--blue { --filter-accent: 52, 120, 229; }
     .pending-filter-trigger--green { --filter-accent: 5, 150, 105; }
-    .pending-filter-trigger__icon { width: 30px; height: 30px; display: grid; place-items: center; color: rgb(var(--filter-accent)); border: 1px solid rgba(var(--filter-accent), .17); border-radius: 9px; background: rgba(var(--filter-accent), .08); }
+    .pending-filter-trigger--purple { --filter-accent: 155, 102, 218; }
+    .pending-filter-trigger__icon { width: 24px; height: 24px; display: grid; place-items: center; color: rgb(var(--filter-accent)); border: 1px solid rgba(var(--filter-accent), .17); border-radius: 7px; background: rgba(var(--filter-accent), .08); }
     .pending-filter-trigger__icon svg { width: 14px; height: 14px; }
     .pending-filter-trigger__copy { min-width: 0; display: grid; gap: 2px; }
-    .pending-filter-trigger__caption { overflow: hidden; color: var(--text-muted); font-size: 8px; font-weight: 850; letter-spacing: .09em; line-height: 1; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+    .pending-filter-trigger__caption { overflow: hidden; color: var(--text-soft); font-size: 9px; font-weight: 750; letter-spacing: .04em; line-height: 1.1; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
     .pending-filter-trigger__value { overflow: hidden; color: var(--text-main); font-size: 11.5px; font-weight: 800; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
     .pending-filter-trigger__chevron { width: 14px; height: 14px; color: var(--text-muted); transition: transform .2s ease, color .2s ease; }
     .pending-filter-select.is-open .pending-filter-trigger__chevron { color: rgb(var(--filter-accent)); transform: rotate(180deg); }
@@ -1056,6 +1061,11 @@
       scrollbar-color: rgba(179,140,67,.32) transparent;
     }
     .pending-filter-menu--right { left: auto; right: 0; }
+    .pending-filter-menu--coverage { width: 325px; max-width: min(325px,86vw); }
+    .pending-filter-option__scope { display: grid; gap: 4px; }
+    .pending-filter-option__scope small { color: var(--text-muted); font-size: 9.5px; font-weight: 500; line-height: 1.5; white-space: normal; }
+    .pending-filter-menu--coverage .pending-filter-option { min-height: 56px; gap: 8px; }
+    .pending-filter-menu--coverage .pending-filter-option__main { flex: 1; }
     @keyframes pendingFilterMenuIn { from { opacity: 0; transform: translateY(-5px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
     .pending-filter-menu__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 8px 9px; margin-bottom: 4px; border-bottom: 1px solid var(--border); }
     .pending-filter-menu__head span { color: var(--text-main); font-size: 10px; font-weight: 850; letter-spacing: .05em; text-transform: uppercase; }
@@ -1091,10 +1101,19 @@
     .pending-filter-option__check svg { width: 10px; height: 10px; }
     .pending-filter-option__count { min-width: 25px; padding: 2px 6px; color: var(--text-muted); border: 1px solid var(--border); border-radius: 999px; background: var(--surface-soft); font-size: 9.5px; font-weight: 850; text-align: center; font-variant-numeric: tabular-nums; }
     .pending-filter-option.selected .pending-filter-option__count { color: rgb(var(--option-rgb)); border-color: rgba(var(--option-rgb), .18); background: rgba(var(--option-rgb), .08); }
-    .pending-filter-reset { width: var(--filter-h); height: var(--filter-h); flex: 0 0 var(--filter-h); display: grid; place-items: center; color: var(--text-soft); border: 1px solid var(--border); border-radius: 13px; background: color-mix(in srgb, var(--surface) 92%, transparent); box-shadow: inset 0 1px 0 rgba(255,255,255,.58); cursor: pointer; transition: color .2s ease, border-color .2s ease, background .2s ease, transform .2s ease; }
-    .pending-filter-reset:hover { color: var(--primary); border-color: rgba(179,140,67,.4); background: rgba(216,180,109,.08); transform: rotate(-20deg); }
+    .pending-filter-reset { width: var(--filter-h); height: var(--filter-h); display: grid; place-items: center; color: var(--text-soft); border: 1px solid var(--border); border-radius: 11px; background: var(--surface-soft); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); cursor: pointer; transition: color .2s ease, border-color .2s ease, background .2s ease; }
+    .pending-filter-reset:hover:not(:disabled) { color: var(--primary); border-color: rgba(179,140,67,.4); background: rgba(216,180,109,.08); }
+    .pending-filter-reset:disabled { opacity: .4; cursor: default; }
     .pending-filter-reset svg { width: 16px; height: 16px; }
-    .pending-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex: 1 1 390px; min-width: 390px; }
+    .pending-results-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 16px; padding: 0 3px; }
+    .pending-filter-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; flex: 1 1 280px; }
+    .pending-filter-result-count { padding-right: 5px; color: var(--text-soft); font-size: 11.5px; white-space: nowrap; }
+    .pending-filter-result-count strong { color: var(--text-main); font-size: 13px; font-weight: 850; }
+    .pending-filter-chip { display: flex; align-items: center; gap: 8px; max-width: 220px; min-height: 30px; padding: 4px 8px; border: 1px solid rgba(216,180,109,.27); border-radius: 7px; background: rgba(216,180,109,.06); color: var(--text-soft); font: inherit; font-size: 10.5px; font-weight: 650; cursor: pointer; }
+    .pending-filter-chip > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pending-filter-chip > span:last-child { color: var(--primary); font-size: 16px; line-height: 1; }
+    .pending-filter-chip:hover { border-color: var(--primary); background: rgba(216,180,109,.13); }
+    .pending-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex: 0 1 auto; min-width: 0; }
     .pending-pagination__inner { display: flex; align-items: center; justify-content: flex-end; gap: 9px; margin-left: auto; white-space: nowrap; }
     .pending-pagination__summary { color: var(--text-muted); font-size: 10.5px; font-weight: 750; }
     .pending-pagination__summary strong { color: var(--primary); font-size: 11.5px; font-weight: 900; }
@@ -1106,17 +1125,38 @@
     .pending-page-btn svg { width: 13px; height: 13px; }
     .pending-page-ellipsis { padding: 0 2px; color: var(--text-muted); font-size: 11px; }
     .pending-per-page { position: relative; flex: 0 0 auto; }
-    .pending-per-page .pending-filter-trigger { width: 116px; height: 38px; grid-template-columns: 24px minmax(0,1fr) 14px; gap: 6px; padding: 0 7px; border-radius: 10px; }
-    .pending-per-page .pending-filter-trigger__icon { width: 24px; height: 24px; border-radius: 7px; }
+    .pending-per-page .pending-filter-trigger { width: 116px; height: 38px; grid-template-columns: minmax(0,1fr) 14px; gap: 6px; padding: 0 10px; border-radius: 10px; }
+    .pending-per-page .pending-filter-trigger__icon { display: none; }
     .pending-per-page .pending-filter-trigger__icon svg { width: 12px; height: 12px; }
     .pending-per-page .pending-filter-trigger__value { font-size: 10.5px; }
     .pending-per-page .pending-filter-menu { min-width: 145px; }
-    [data-theme="dark"] .pending-filter-toolbar { box-shadow: 0 14px 34px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.04); }
-    [data-theme="dark"] .pending-filter-trigger, [data-theme="dark"] .pending-filter-search__input, [data-theme="dark"] .pending-filter-reset { box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
-    [data-theme="dark"] .pending-filter-menu { box-shadow: 0 24px 54px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.05); }
-    @media (max-width: 1380px) { .pending-filter-toolbar { grid-template-columns: 1fr; } .pending-filter-controls { justify-content: flex-start; } .pending-pagination { margin-left: auto; } }
-    @media (max-width: 880px) { .pending-filter-controls { flex-wrap: wrap; } .pending-filter-select { flex: 1 1 180px; width: auto; min-width: 180px; max-width: none; } .pending-filter-select--status { flex-basis: 220px; } .pending-pagination { width: 100%; min-width: 0; flex-basis: 100%; } }
-    @media (max-width: 620px) { .pending-filter-toolbar { padding: 9px; } .pending-filter-select { min-width: calc(50% - 5px); } .pending-filter-select--status { min-width: 100%; } .pending-pagination__inner { width: 100%; flex-wrap: wrap; justify-content: space-between; } }
+    body:not(.light-mode) .pending-filter-menu { box-shadow: 0 20px 48px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.045); background: var(--surface-strong); }
+    body:not(.light-mode) .pending-filter-option.selected { color: var(--primary-2); }
+    body.light-mode .pending-filter-toolbar { box-shadow: 0 8px 22px rgba(15,23,42,.04), inset 0 1px 0 rgba(255,255,255,.75); }
+    .pending-filter-trigger:focus-visible, .pending-filter-option:focus-visible, .pending-filter-reset:focus-visible, .pending-filter-chip:focus-visible, .pending-page-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    @media (max-width: 1200px) {
+      .pending-filter-toolbar { grid-template-columns: minmax(0,1fr) 44px; }
+      .pending-filter-search { grid-column: 1; grid-row: 1; }
+      .pending-filter-reset { grid-column: 2; grid-row: 1; }
+      .pending-filter-controls { grid-column: 1/-1; grid-row: 2; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); }
+      .pending-filter-select, .pending-filter-select--status, .pending-filter-select--coverage, .pending-filter-select--period { width: auto; min-width: 0; }
+    }
+    @media (max-width: 760px) {
+      .pending-filter-controls { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .pending-filter-controls .pending-filter-select::before { display: none; }
+      .pending-filter-controls { gap: 4px; }
+      .pending-pagination { flex-basis: 100%; }
+      .pending-pagination__inner { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+      .pending-filter-menu--coverage { left: auto; right: 0; }
+    }
+    @media (max-width: 500px) {
+      .pending-filter-toolbar { padding: 7px; gap: 7px; }
+      .pending-filter-trigger__icon { display: none; }
+      .pending-filter-controls .pending-filter-trigger { grid-template-columns: minmax(0,1fr) 14px; padding: 0 8px; }
+      .pending-pagination__inner { display: grid; grid-template-columns: 1fr auto; gap: 9px; }
+      .pending-page-controls { grid-column: 1/-1; justify-content: center; }
+      .pending-per-page .pending-filter-trigger { grid-template-columns: minmax(0,1fr) 14px; }
+    }
 
     .cases-toolbar { display: grid; grid-template-columns: minmax(190px,1fr) auto; gap: 12px; margin-bottom: 18px; }
     .search-wrap { position: relative; }
@@ -11354,6 +11394,93 @@ function formatDateDisplay(val) {
 
     let activePendingGdvFilter = ['all'];
     let activePendingPeriodFilter = 'all';
+    let activePendingCoverageFilter = 'all';
+    const PENDING_COVERAGE_FILTERS = {
+      all: {label:'Tất cả phạm vi', detail:'Toàn bộ hồ sơ', color:'var(--primary)'},
+      vcx: {label:'VCX', detail:'Vật chất xe · bao gồm hồ sơ kết hợp', color:'#3b82f6'},
+      tnds: {label:'TNDS', detail:'Trách nhiệm dân sự · bao gồm hồ sơ kết hợp', color:'#a855f7'},
+      both: {label:'VCX & TNDS', detail:'Hồ sơ có cả hai phạm vi', color:'#0d9488'},
+      none: {label:'Chưa xác định', detail:'Chưa có thông tin VCX hoặc TNDS', color:'var(--text-muted)'}
+    };
+
+    function getPendingClaimCoverage(claim) {
+      claim=claim&&typeof claim==='object'?claim:{};
+      const legacy=[claim.maSpNghiepVu,claim.nghiepVu,claim.loaiHinhBaoHiem].filter(Boolean).join(' ').toUpperCase();
+      function resolve(value,code) {
+        if(typeof value==='boolean') return value;
+        if(typeof value==='number') return Number.isFinite(value) && value>0;
+        const text=String(value??'').trim().toLowerCase();
+        if(!text || /^[\s\-–—]+$/.test(text) || ['n/a','na'].includes(text)) return legacy.includes(code);
+        if(['false','0','no','không','khong','không có','khong co'].includes(text)) return false;
+        return true;
+      }
+      return {vcx:resolve(claim.vcx,'VCX'),tnds:resolve(claim.tnds,'TNDS')};
+    }
+
+    function matchesPendingClaimCoverage(claim,key) {
+      const scope=getPendingClaimCoverage(claim);
+      if(key==='vcx') return scope.vcx;
+      if(key==='tnds') return scope.tnds;
+      if(key==='both') return scope.vcx && scope.tnds;
+      if(key==='none') return !scope.vcx && !scope.tnds;
+      return true;
+    }
+
+    function toggleCustomCoverageDropdown(event) {
+      if(event) event.stopPropagation();
+      const menu=document.getElementById('menuCustomCoverageDropdown');if(!menu) return;
+      const isHidden=menu.style.display==='none'||!menu.style.display;
+      closeAllCustomDropdowns();
+      if(isHidden) {
+        menu.style.display='block';menu.closest('.custom-dropdown-container')?.classList.add('is-open');
+        document.getElementById('btnCustomCoverageDropdown')?.setAttribute('aria-expanded','true');
+        if(event?.detail===0) (menu.querySelector('.selected')||menu.querySelector('button'))?.focus({preventScroll:true});
+      }
+    }
+
+    function selectCustomCoverageFilter(key) {
+      if(!Object.prototype.hasOwnProperty.call(PENDING_COVERAGE_FILTERS,key)) return;
+      activePendingCoverageFilter=key;pendingClaimsCurrentPage=1;closeAllCustomDropdowns();executeUIRenderPendingClaims();
+      document.getElementById('btnCustomCoverageDropdown')?.focus({preventScroll:true});
+    }
+
+    function removePendingClaimFilter(kind) {
+      if(kind==='search') {const input=document.getElementById('pendingSearchInput');if(input) input.value='';}
+      if(kind==='status') activePendingStatusFilter=['all'];
+      if(kind==='coverage') activePendingCoverageFilter='all';
+      if(kind==='gdv') activePendingGdvFilter=['all'];
+      if(kind==='period') activePendingPeriodFilter='all';
+      pendingClaimsCurrentPage=1;closeAllCustomDropdowns();executeUIRenderPendingClaims();
+      document.querySelector('.pending-filter-reset')?.focus({preventScroll:true});
+    }
+
+    function renderPendingFilterSummary(total,filteredCount) {
+      const summary=document.getElementById('pendingFilterSummary');if(!summary) return;
+      summary.replaceChildren();
+      const result=document.createElement('span');result.className='pending-filter-result-count';
+      const count=document.createElement('strong');count.textContent=filteredCount.toLocaleString('vi-VN');
+      result.append(count,document.createTextNode(' / '+total.toLocaleString('vi-VN')+' hồ sơ'));summary.append(result);
+      const status=Array.isArray(activePendingStatusFilter)?activePendingStatusFilter:[activePendingStatusFilter||'all'];
+      const gdv=Array.isArray(activePendingGdvFilter)?activePendingGdvFilter:[activePendingGdvFilter||'all'];
+      const chips=[];
+      const search=document.getElementById('pendingSearchInput')?.value.trim();
+      if(search) chips.push(['search','Tìm: '+search]);
+      if(!status.includes('all')&&status.length) chips.push(['status',status.length===1?(PENDING_STATUS_MAP[status[0]]?.label||status[0]):status.length+' trạng thái']);
+      if(activePendingCoverageFilter!=='all') chips.push(['coverage',PENDING_COVERAGE_FILTERS[activePendingCoverageFilter].label]);
+      if(!gdv.includes('all')&&gdv.length) chips.push(['gdv',gdv.length===1?gdv[0]:gdv.length+' GĐV']);
+      if(activePendingPeriodFilter!=='all') chips.push(['period',({this_week:'Tuần này',last_week:'Tuần trước',this_month:'Tháng này'})[activePendingPeriodFilter]||'Thời gian']);
+      for(const [kind,label] of chips) {
+        const button=document.createElement('button');button.type='button';button.className='pending-filter-chip';button.dataset.filter=kind;
+        button.title='Bỏ lọc: '+label;button.setAttribute('aria-label',button.title);
+        const text=document.createElement('span');text.textContent=label;
+        const close=document.createElement('span');close.textContent='×';close.setAttribute('aria-hidden','true');
+        button.append(text,close);button.addEventListener('click',()=>removePendingClaimFilter(kind));summary.append(button);
+      }
+      for(const [id,isFiltered] of [['btnCustomStatusDropdown',!status.includes('all')&&status.length>0],['btnCustomCoverageDropdown',activePendingCoverageFilter!=='all'],['btnCustomGdvDropdown',!gdv.includes('all')&&gdv.length>0],['btnCustomPeriodDropdown',activePendingPeriodFilter!=='all']]) {
+        document.getElementById(id)?.closest('.pending-filter-select')?.classList.toggle('is-filtered',isFiltered);
+      }
+      const reset=document.querySelector('.pending-filter-reset');if(reset) reset.disabled=chips.length===0;
+    }
 
     function toggleCustomStatusDropdown(event) {
       if (event) event.stopPropagation();
@@ -11517,6 +11644,18 @@ function formatDateDisplay(val) {
       }
     });
 
+    document.addEventListener('keydown',event=>{
+      const open=document.querySelector('.pending-filter-select.is-open, .pending-per-page.is-open');
+      if(!open) return;
+      if(event.key==='Escape') {const trigger=open.querySelector('.pending-filter-trigger');closeAllCustomDropdowns();trigger?.focus({preventScroll:true});event.preventDefault();}
+      const menu=event.target.closest('.pending-filter-menu');
+      if(menu&&['ArrowDown','ArrowUp','Home','End'].includes(event.key)) {
+        const options=[...menu.querySelectorAll('button:not(:disabled)')],index=options.indexOf(document.activeElement);
+        const next=event.key==='Home'?0:event.key==='End'?options.length-1:event.key==='ArrowDown'?(index+1)%options.length:(index-1+options.length)%options.length;
+        options[next]?.focus({preventScroll:true});event.preventDefault();
+      }
+    });
+
     function setPendingStatusFilter(statusKey) {
       activePendingStatusFilter = [statusKey];
       pendingClaimsCurrentPage = 1;
@@ -11532,6 +11671,7 @@ function formatDateDisplay(val) {
       activePendingStatusFilter = ['all'];
       activePendingGdvFilter = ['all'];
       activePendingPeriodFilter = 'all';
+      activePendingCoverageFilter = 'all';
       pendingClaimsCurrentPage = 1;
 
       closeAllCustomDropdowns();
@@ -11554,6 +11694,7 @@ function formatDateDisplay(val) {
         ? activePendingGdvFilter
         : [activePendingGdvFilter || 'all'];
       const periodFilter = activePendingPeriodFilter || 'this_week';
+      const coverageFilter = activePendingCoverageFilter;
 
       // Time Period Helper (This Week vs Last Week vs Month)
       const now = new Date();
@@ -11580,6 +11721,7 @@ function formatDateDisplay(val) {
 
       // Filter list
       let filtered = claimsList.filter(c => {
+        if(!matchesPendingClaimCoverage(c,coverageFilter)) return false;
         // Status filter
         const activeArrFilter = Array.isArray(activePendingStatusFilter) ? activePendingStatusFilter : [activePendingStatusFilter || 'all'];
         if (!activeArrFilter.includes('all') && activeArrFilter.length > 0) {
@@ -11631,6 +11773,18 @@ function formatDateDisplay(val) {
         return true;
       });
 
+      renderPendingFilterSummary(claimsList.length,filtered.length);
+      const coverageLabel=document.getElementById('lblCustomCoverageDropdownSelected');
+      if(coverageLabel) coverageLabel.textContent=PENDING_COVERAGE_FILTERS[coverageFilter].label;
+      const coverageMenu=document.getElementById('menuCustomCoverageDropdown');
+      if(coverageMenu) coverageMenu.innerHTML='<div class="pending-filter-menu__head"><span>Phạm vi bảo hiểm</span><small>Toàn bộ hồ sơ</small></div>'+Object.entries(PENDING_COVERAGE_FILTERS).map(([key,scope])=>{
+        const count=claimsList.filter(claim=>matchesPendingClaimCoverage(claim,key)).length,isSelected=key===coverageFilter;
+        return `<button type="button" class="custom-dropdown-item pending-filter-option ${isSelected?'selected':''}" role="option" data-value="${key}" aria-selected="${isSelected}" onclick="selectCustomCoverageFilter('${key}')" style="--option-color:${scope.color};">
+          <span class="pending-filter-option__main"><span class="pending-filter-option__dot"></span><span class="pending-filter-option__scope"><span class="pending-filter-option__label">${scope.label}</span><small>${scope.detail}</small></span></span>
+          <span class="pending-filter-option__count">${count}</span><span class="pending-filter-option__check">${isSelected?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg>':''}</span>
+        </button>`;
+      }).join('');
+
       // Calculate Status Counters
       const counts = { all: claimsList.length };
       Object.keys(PENDING_STATUS_MAP).forEach(k => { counts[k] = 0; });
@@ -11650,14 +11804,15 @@ function formatDateDisplay(val) {
       if (lblSelected) {
         if (activeArr.includes('all') || activeArr.length === 0) {
           const curInfo = statusLabelMap['all'];
-          lblSelected.innerHTML = `${curInfo.label} <span style=" opacity: 0.85; margin-left: 4px; font-weight: 800;">(${counts.all})</span>`;
+          lblSelected.textContent = `Tất cả · ${counts.all.toLocaleString('vi-VN')}`;
         } else if (activeArr.length === 1) {
           const curInfo = statusLabelMap[activeArr[0]] || statusLabelMap['all'];
           const countVal = counts[activeArr[0]] || 0;
-          lblSelected.innerHTML = `${curInfo.label} <span style=" opacity: 0.85; margin-left: 4px; font-weight: 800;">(${countVal})</span>`;
+          lblSelected.textContent = `${curInfo.label} · ${countVal.toLocaleString('vi-VN')}`;
         } else {
-          lblSelected.innerHTML = `Đã chọn ${activeArr.length} trạng thái <span style=" opacity: 0.85; margin-left: 4px; font-weight: 800;">(${activeArr.reduce((acc, k) => acc + (counts[k] || 0), 0)})</span>`;
+          lblSelected.textContent = `${activeArr.length} trạng thái · ${activeArr.reduce((acc,k)=>acc+(counts[k]||0),0).toLocaleString('vi-VN')}`;
         }
+        document.getElementById('btnCustomStatusDropdown').title='Trạng thái: '+(activeArr.includes('all')?'Tất cả trạng thái':activeArr.map(key=>statusLabelMap[key]?.label||key).join(', '));
       }
 
       const customMenu = document.getElementById('menuCustomStatusDropdown');
@@ -11690,17 +11845,18 @@ function formatDateDisplay(val) {
       const lblGdvSelected = document.getElementById('lblCustomGdvDropdownSelected');
       if (lblGdvSelected) {
         lblGdvSelected.textContent = gdvFilter.includes('all')
-          ? 'Tất cả GĐV team'
+          ? 'Tất cả GĐV'
           : gdvFilter.length === 1
             ? gdvFilter[0]
             : `Đã chọn ${gdvFilter.length} GĐV`;
+        document.getElementById('btnCustomGdvDropdown').title='Giám định viên: '+(gdvFilter.includes('all')?'Tất cả':gdvFilter.join(', '));
       }
 
       const customGdvMenu = document.getElementById('menuCustomGdvDropdown');
       if (customGdvMenu) {
         customGdvMenu.innerHTML = `<div class="pending-filter-menu__head"><span>Giám định viên</span><small>Có thể chọn nhiều</small></div>` + gdvList.map(gName => {
           const isSel = gdvFilter.includes(gName);
-          const displayTxt = gName === 'all' ? 'Tất cả GĐV team' : escapeHtmlOutput(gName);
+          const displayTxt = gName === 'all' ? 'Tất cả GĐV' : escapeHtmlOutput(gName);
           return `
             <button type="button" class="custom-dropdown-item pending-filter-option ${isSel ? 'selected' : ''}" onclick="selectCustomGdvFilter(event, '${escapeAttributeData(gName)}')" aria-selected="${isSel}" style="--option-rgb:52,120,229;--option-color:${gName === 'all' ? '#3478e5' : '#059669'};">
               <span class="pending-filter-option__main"><span class="pending-filter-option__dot"></span><span class="pending-filter-option__label">${displayTxt}</span></span>
@@ -11720,7 +11876,8 @@ function formatDateDisplay(val) {
 
       const lblPeriodSelected = document.getElementById('lblCustomPeriodDropdownSelected');
       if (lblPeriodSelected) {
-        lblPeriodSelected.textContent = periodLabelMap[periodFilter] || 'Tuần này';
+        lblPeriodSelected.textContent = periodFilter==='all'?'Tất cả':periodLabelMap[periodFilter] || 'Tuần này';
+        document.getElementById('btnCustomPeriodDropdown').title='Thời gian: '+(periodLabelMap[periodFilter]||'Tuần này');
       }
 
       const customPeriodMenu = document.getElementById('menuCustomPeriodDropdown');
@@ -11862,13 +12019,12 @@ function formatDateDisplay(val) {
 
       if (totalFilteredCount === 0) {
         tbody.innerHTML = `<tr><td colspan="${activeTonChuaHdReportCols.length + 1}" class="empty-state-text">Không tìm thấy hồ sơ tồn đọng nào phù hợp.</td></tr>`;
-        if (paginationContainer) paginationContainer.innerHTML = '';
-        return;
       }
 
-      tbody.innerHTML = pageItems.map((item, idx) => {
+      if(totalFilteredCount>0) tbody.innerHTML = pageItems.map((item, idx) => {
         const itemNumber = startIndex + idx + 1;
         const statusConfig = PENDING_STATUS_MAP[item.trangThai] || PENDING_STATUS_MAP['moi'];
+        const coverage=getPendingClaimCoverage(item);
 
         let displayBsx = (item.bienSo || 'Chưa rõ').trim();
         let displayVinInfo = '';
@@ -11938,10 +12094,10 @@ function formatDateDisplay(val) {
               <strong style="color: var(--text-main); font-size: 13px; display: block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData((item.hangXe || '') + ' ' + (item.hieuXe || ''))}">${escapeHtmlOutput(item.hangXe || '—')} ${escapeHtmlOutput(item.hieuXe || '')}</strong>
               <span style="font-size: 11.5px; color: var(--text-soft); display: block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(item.donViCapDon || '')}">${escapeHtmlOutput(item.donViCapDon || '—')}</span>
               <div style="margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap;">
-                ${item.vcx ? `<span style="font-size: 10px; background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">VCX</span>` : ''}
-                ${item.tnds ? `<span style="font-size: 10px; background: rgba(168,85,247,0.1); color: #a855f7; border: 1px solid rgba(168,85,247,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">TNDS</span>` : ''}
+                ${coverage.vcx ? `<span style="font-size: 10px; background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">VCX</span>` : ''}
+                ${coverage.tnds ? `<span style="font-size: 10px; background: rgba(168,85,247,0.1); color: #a855f7; border: 1px solid rgba(168,85,247,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">TNDS</span>` : ''}
                 ${(function(){
-                  if (!item.tnds || !item.loaiTonThat) return '';
+                  if (!coverage.tnds || !item.loaiTonThat) return '';
                   const text = item.loaiTonThat.toLowerCase();
                   let tags = [];
                   const hasNguoi = text.includes('con người') || text.includes('nguoi');
@@ -11991,7 +12147,7 @@ function formatDateDisplay(val) {
 
       // Render Ultra-Luxury Pagination Control Bar
       if (paginationContainer) {
-        const displayStart = startIndex + 1;
+        const displayStart = totalFilteredCount ? startIndex + 1 : 0;
         const displayEnd = endIndex;
 
         // Smart pagination buttons with ellipsis
@@ -12976,43 +13132,55 @@ function formatDateDisplay(val) {
               <div class="pending-filter-toolbar">
                 <div class="pending-filter-search">
                   <span class="pending-filter-search__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></span>
-                  <input id="pendingSearchInput" class="pending-filter-search__input" type="search" placeholder="Tìm biển số, mã vụ tổn thất hoặc Giám định viên..." autocomplete="off" aria-label="Tìm kiếm hồ sơ" />
+                  <input id="pendingSearchInput" class="pending-filter-search__input" type="search" placeholder="Biển số, số HSBT, mã VTT hoặc GĐV…" autocomplete="off" aria-label="Tìm kiếm hồ sơ theo biển số, số HSBT, mã vụ tổn thất hoặc giám định viên" />
                 </div>
 
                 <div class="pending-filter-controls">
                   <div class="custom-dropdown-container pending-filter-select pending-filter-select--status">
                     <button id="btnCustomStatusDropdown" class="pending-filter-trigger" type="button" onclick="toggleCustomStatusDropdown(event)" aria-haspopup="listbox" aria-expanded="false">
                       <span class="pending-filter-trigger__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M7 12h10M10 19h4"></path></svg></span>
-                      <span class="pending-filter-trigger__copy"><span class="pending-filter-trigger__caption">Trạng thái</span><span id="lblCustomStatusDropdownSelected" class="pending-filter-trigger__value">Tất cả trạng thái (0)</span></span>
+                      <span class="pending-filter-trigger__copy"><span class="pending-filter-trigger__caption">Trạng thái</span><span id="lblCustomStatusDropdownSelected" class="pending-filter-trigger__value">Tất cả · 0</span></span>
                       <svg class="pending-filter-trigger__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7 10 5 5 5-5"></path></svg>
                     </button>
-                    <div id="menuCustomStatusDropdown" class="custom-dropdown-menu pending-filter-menu" role="listbox" style="display:none;"></div>
+                    <div id="menuCustomStatusDropdown" class="custom-dropdown-menu pending-filter-menu" role="listbox" aria-label="Trạng thái hồ sơ" aria-multiselectable="true" style="display:none;"></div>
+                  </div>
+
+                  <div class="custom-dropdown-container pending-filter-select pending-filter-select--coverage">
+                    <button id="btnCustomCoverageDropdown" class="pending-filter-trigger pending-filter-trigger--purple" type="button" onclick="toggleCustomCoverageDropdown(event)" aria-haspopup="listbox" aria-controls="menuCustomCoverageDropdown" aria-expanded="false" title="Phạm vi Bảo hiểm VCX & TNDS">
+                      <span class="pending-filter-trigger__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"></path><path d="m9 12 2 2 4-5"></path></svg></span>
+                      <span class="pending-filter-trigger__copy"><span class="pending-filter-trigger__caption">Phạm vi BH</span><span id="lblCustomCoverageDropdownSelected" class="pending-filter-trigger__value">Tất cả phạm vi</span></span>
+                      <svg class="pending-filter-trigger__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg>
+                    </button>
+                    <div id="menuCustomCoverageDropdown" class="custom-dropdown-menu pending-filter-menu pending-filter-menu--coverage" role="listbox" aria-label="Phạm vi Bảo hiểm VCX & TNDS" style="display:none;"></div>
                   </div>
 
                   <div class="custom-dropdown-container pending-filter-select">
                     <button id="btnCustomGdvDropdown" class="pending-filter-trigger pending-filter-trigger--blue" type="button" onclick="toggleCustomGdvDropdown(event)" aria-haspopup="listbox" aria-expanded="false">
                       <span class="pending-filter-trigger__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg></span>
-                      <span class="pending-filter-trigger__copy"><span class="pending-filter-trigger__caption">Giám định viên</span><span id="lblCustomGdvDropdownSelected" class="pending-filter-trigger__value">Tất cả GĐV team</span></span>
+                      <span class="pending-filter-trigger__copy"><span class="pending-filter-trigger__caption">Giám định viên</span><span id="lblCustomGdvDropdownSelected" class="pending-filter-trigger__value">Tất cả GĐV</span></span>
                       <svg class="pending-filter-trigger__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7 10 5 5 5-5"></path></svg>
                     </button>
-                    <div id="menuCustomGdvDropdown" class="custom-dropdown-menu pending-filter-menu" role="listbox" style="display:none;"></div>
+                    <div id="menuCustomGdvDropdown" class="custom-dropdown-menu pending-filter-menu" role="listbox" aria-label="Giám định viên" aria-multiselectable="true" style="display:none;"></div>
                   </div>
 
                   <div class="custom-dropdown-container pending-filter-select pending-filter-select--period">
                     <button id="btnCustomPeriodDropdown" class="pending-filter-trigger pending-filter-trigger--green" type="button" onclick="toggleCustomPeriodDropdown(event)" aria-haspopup="listbox" aria-expanded="false">
                       <span class="pending-filter-trigger__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"></rect><path d="M8 3v4M16 3v4M3 10h18"></path></svg></span>
-                      <span class="pending-filter-trigger__copy"><span class="pending-filter-trigger__caption">Thời gian</span><span id="lblCustomPeriodDropdownSelected" class="pending-filter-trigger__value">Tất cả thời gian</span></span>
+                      <span class="pending-filter-trigger__copy"><span class="pending-filter-trigger__caption">Thời gian</span><span id="lblCustomPeriodDropdownSelected" class="pending-filter-trigger__value">Tất cả</span></span>
                       <svg class="pending-filter-trigger__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7 10 5 5 5-5"></path></svg>
                     </button>
                     <div id="menuCustomPeriodDropdown" class="custom-dropdown-menu pending-filter-menu pending-filter-menu--right" role="listbox" style="display:none;"></div>
                   </div>
 
+                </div>
                   <button type="button" class="pending-filter-reset" onclick="resetAllPendingClaimFilters()" title="Đặt lại toàn bộ bộ lọc" aria-label="Đặt lại bộ lọc">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v5h-5"></path><path d="M19 12a7 7 0 1 0-2 4.9"></path></svg>
                   </button>
 
-                  <div id="pendingClaimsPaginationContainer" class="pending-pagination"></div>
-                </div>
+              </div>
+              <div class="pending-results-bar">
+                <div id="pendingFilterSummary" class="pending-filter-summary" aria-live="polite"></div>
+                <div id="pendingClaimsPaginationContainer" class="pending-pagination"></div>
               </div>
 
               <!-- Table Container -->
