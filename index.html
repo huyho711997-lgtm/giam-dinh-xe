@@ -5580,6 +5580,18 @@ body.light-mode [data-garage-portal="active"] { --border:rgba(28,31,38,.09); }
 }
 @media(prefers-reduced-motion:reduce) { [data-garage-portal="active"] * { transition:none !important; } }
 
+.camera-location-status { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 16px 10px; padding:10px 12px; border:1px solid rgba(255,255,255,.12); border-radius:12px; background:rgba(255,255,255,.04); color:#d9e0e9; }
+.camera-location-copy { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.camera-location-copy strong { display:flex; align-items:center; gap:6px; color:#e7c886; font-size:10px; font-weight:750; }
+.camera-location-copy strong::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; }
+.camera-location-status[data-state="ready"] .camera-location-copy strong { color:#7ddbb1; }
+.camera-location-status[data-state="error"] .camera-location-copy strong { color:#f6c47a; }
+.camera-location-copy span { font-size:10px; line-height:1.6; overflow-wrap:anywhere; }
+.camera-location-status button { min-height:36px; flex-shrink:0; padding:0 10px; border:1px solid rgba(231,200,134,.3); border-radius:9px; color:#e7c886; background:rgba(231,200,134,.06); font-family:inherit; font-size:10px; font-weight:650; cursor:pointer; }
+.camera-location-status button:focus-visible { outline:2px solid #e7c886; outline-offset:3px; }
+.camera-location-attribution { color:#8895a7; font-size:8px; font-weight:400; }
+.camera-location-attribution a { color:inherit; }
+
 </style>
 </head>
 <body>
@@ -7583,6 +7595,7 @@ body.light-mode [data-garage-portal="active"] { --border:rgba(28,31,38,.09); }
       <div id="cameraFocusRing" class="camera-focus-ring"></div>
     </div>
     <div class="camera-footer">
+      <div id="cameraLocationStatus" class="camera-location-status" data-state="pending"><div class="camera-location-copy"><strong>Vị trí chụp ảnh</strong><span id="cameraLocationDetail" role="status" aria-live="polite">Đang lấy vị trí và địa chỉ…</span><small class="camera-location-attribution">Địa chỉ: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© OpenStreetMap contributors</a></small></div><button type="button" onclick="retryCameraLocation()">Định vị lại</button></div>
       <div class="camera-preview-container">
         <div class="camera-preview-strip" id="cameraPreviewStrip"></div>
       </div>
@@ -16468,252 +16481,159 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
       }
     }
 
-    let lastFetchedGpsCoords = null;
-    let lastFetchedAddress = null;
+let lastFetchedGpsCoords=null,lastFetchedAddress=null,gpsPermissionDenied=false;
+const cameraLocationState={positionRequest:null,latest:null,addressCache:[],addressRequests:new Map(),addressQueue:Promise.resolve(),lastAddressRequestAt:0,uiRevision:0};
+const cameraPhotoMetadata=new WeakMap();
 
-    async function reverseGeocodeAddress(lat, lon) {
-      try {
-        const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=vi&addressdetails=1&email=huyho711997@gmail.com`;
-        const res = await fetch(url);
-        if (!res.ok) return null;
-        const data = await res.json();
-        if (!data || !data.address) return null;
-        
-        const addr = data.address;
-        const parts = [];
-        
-        // House number and road
-        const house = addr.house_number || addr.building;
-        const road = addr.road || addr.highway || addr.street;
-        if (house && road) {
-          parts.push(`${house} ${road}`);
-        } else {
-          if (house) parts.push(house);
-          if (road) parts.push(road);
-        }
-        
-        // Ward / Suburb / Commune
-        const ward = addr.suburb || addr.quarter || addr.neighbourhood || addr.village || addr.commune || addr.townland;
-        if (ward) parts.push(ward);
-        
-        // District / Town / City District
-        const district = addr.city_district || addr.district || addr.county || addr.town;
-        if (district) parts.push(district);
-        
-        // City / Province / State
-        const city = addr.city || addr.province || addr.state || addr.municipality;
-        if (city) parts.push(city);
-        
-        if (addr.postcode) {
-          parts.push(addr.postcode);
-        }
-        
-        return parts.join(', ');
-      } catch (err) {
-        console.error('Reverse geocoding error:', err);
-        return null;
-      }
-    }
-
-    let gpsPermissionDenied = false;
-
-    // Clear any previous stored location cache to ensure 100% real-time GPS positioning
+function cameraLocationError(status) {
+  return {address:null,coords:null,status,timestamp:Date.now()};
+}
+function cameraLocationMessage(location) {
+  const messages={denied:'Chưa cấp quyền vị trí. Bật quyền vị trí cho trang rồi thử lại.',timeout:'Lấy vị trí quá thời gian. Bật định vị trên thiết bị rồi thử lại.',unavailable:'Chưa lấy được vị trí. Kiểm tra định vị trên thiết bị.',unsupported:'Thiết bị không hỗ trợ định vị.',insecure:'Định vị cần mở trang qua HTTPS.',invalid:'Thiết bị trả về vị trí không hợp lệ.'};
+  if(!location?.coords)return messages[location?.status]||messages.unavailable;
+  const accuracy=location.coords.accuracy;
+  return `Đã định vị${Number.isFinite(accuracy)?' · sai số khoảng '+Math.ceil(accuracy)+' m':''}${location.address?' · '+location.address:' · Chưa tra được địa chỉ'}`;
+}
+function updateCameraLocationUI(location,pending=false) {
+  const status=document.getElementById('cameraLocationStatus'),detail=document.getElementById('cameraLocationDetail');
+  if(!status||!detail)return;
+  status.dataset.state=pending?'pending':location?.coords?'ready':'error';
+  detail.textContent=pending?'Đang lấy vị trí và địa chỉ…':cameraLocationMessage(location);
+}
+function cameraPositionDistance(a,b) {
+  const radians=Math.PI/180,dLat=(Number(b.latitude)-Number(a.latitude))*radians,dLon=(Number(b.longitude)-Number(a.longitude))*radians;
+  const value=Math.sin(dLat/2)**2+Math.cos(Number(a.latitude)*radians)*Math.cos(Number(b.latitude)*radians)*Math.sin(dLon/2)**2;
+  return 6371000*2*Math.atan2(Math.sqrt(Math.min(1,value)),Math.sqrt(Math.max(0,1-value)));
+}
+function cameraFormatAddress(data) {
+  if(!data||data.error)return null;
+  const addr=data.address||{},parts=[];
+  const road=addr.road||addr.pedestrian||addr.residential||addr.footway||addr.path;
+  const house=addr.house_number;
+  if(house&&road)parts.push(house+' '+road);else if(road||house)parts.push(road||house);
+  // Preserve every available administrative level, including huyện when tỉnh is present.
+  for(const value of [addr.ward||addr.suburb||addr.quarter||addr.village||addr.hamlet||addr.neighbourhood,addr.city_district||addr.district||addr.county||addr.borough,addr.city||addr.town||addr.municipality,addr.state||addr.province||addr.region]){
+    if(value&&!parts.some(part=>part.trim().toLocaleLowerCase('vi')===String(value).trim().toLocaleLowerCase('vi')))parts.push(String(value));
+  }
+  return parts.length?parts.join(', '):typeof data.display_name==='string'&&data.display_name.trim()?data.display_name.trim():null;
+}
+async function reverseGeocodeAddress(lat,lon) {
+  lat=Number(lat);lon=Number(lon);
+  if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return null;
+  const coords={latitude:lat,longitude:lon},now=Date.now();
+  const cached=cameraLocationState.addressCache.find(entry=>now-entry.at<180000&&cameraPositionDistance(coords,entry.coords)<=8);
+  if(cached)return cached.address;
+  const key=lat.toFixed(6)+','+lon.toFixed(6);
+  if(cameraLocationState.addressRequests.has(key))return cameraLocationState.addressRequests.get(key);
+  const task=cameraLocationState.addressQueue.catch(()=>{}).then(async()=>{
+    const cache=cameraLocationState.addressCache.find(entry=>Date.now()-entry.at<180000&&cameraPositionDistance(coords,entry.coords)<=8);
+    if(cache)return cache.address;
+    const delay=Math.max(0,1100-(Date.now()-cameraLocationState.lastAddressRequestAt));
+    if(delay)await new Promise(resolve=>setTimeout(resolve,delay));
+    cameraLocationState.lastAddressRequestAt=Date.now();
+    const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);
     try {
-      localStorage.removeItem('tasco_cached_gps');
-      localStorage.removeItem('tasco_cached_address');
-      localStorage.removeItem('tasco_cached_gps_time');
-    } catch (_) {}
-
-    function prefetchGpsCoordinates() {
-      if (gpsPermissionDenied) return;
-      if (!navigator.geolocation) return;
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          lastFetchedGpsCoords = {
-            latitude: lat.toFixed(6),
-            longitude: lon.toFixed(6)
-          };
-          reverseGeocodeAddress(lat, lon).then((address) => {
-            if (address) lastFetchedAddress = address;
-          }).catch(() => {});
-        },
-        (error) => {
-          console.warn('Real-time Geolocation error:', error);
-          if (error && error.code === 1) {
-            gpsPermissionDenied = true;
-          }
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
-      );
-    }
-
-    async function ensureRealtimeGpsCoordinates() {
-      if (lastFetchedAddress && lastFetchedGpsCoords) {
-        return { address: lastFetchedAddress, coords: lastFetchedGpsCoords };
-      }
-      if (lastFetchedGpsCoords) {
+      const query=new URLSearchParams({lat:String(lat),lon:String(lon),format:'jsonv2','accept-language':'vi',addressdetails:'1',zoom:'18',layer:'address'});
+      const response=await fetch('https://nominatim.openstreetmap.org/reverse?'+query,{signal:controller.signal,referrerPolicy:'strict-origin-when-cross-origin'});
+      if(!response.ok)return null;
+      const address=cameraFormatAddress(await response.json());
+      if(address){cameraLocationState.addressCache.unshift({coords,address,at:Date.now()});cameraLocationState.addressCache=cameraLocationState.addressCache.slice(0,30);}
+      return address;
+    } catch(_){return null;} finally{clearTimeout(timer);}
+  });
+  cameraLocationState.addressRequests.set(key,task);
+  cameraLocationState.addressQueue=task.then(()=>{},()=>{});
+  try{return await task;}finally{if(cameraLocationState.addressRequests.get(key)===task)cameraLocationState.addressRequests.delete(key);}
+}
+async function acquireCameraPosition() {
+  if(cameraLocationState.positionRequest)return cameraLocationState.positionRequest;
+  if(!window.isSecureContext)return cameraLocationError('insecure');
+  if(!navigator.geolocation)return cameraLocationError('unsupported');
+  const request=new Promise(resolve=>{
+    let settled=false;
+    const timer=setTimeout(()=>finish(cameraLocationError('timeout')),16000);
+    function finish(result){if(settled)return;settled=true;clearTimeout(timer);resolve(result);}
+    try {
+      navigator.geolocation.getCurrentPosition(position=>{
+        if(settled)return;
+        const lat=position?.coords?.latitude,lon=position?.coords?.longitude,accuracy=position?.coords?.accuracy,timestamp=Number(position?.timestamp);
+        if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180||!Number.isFinite(timestamp)||Date.now()-timestamp>15000||timestamp>Date.now()+5000){finish(cameraLocationError('invalid'));return;}
+        gpsPermissionDenied=false;
+        finish({coords:{latitude:lat.toFixed(6),longitude:lon.toFixed(6),accuracy:Number.isFinite(accuracy)&&accuracy>=0?accuracy:null},timestamp,address:null,status:'ready'});
+      },error=>{if(settled)return;gpsPermissionDenied=error?.code===1;finish(cameraLocationError(error?.code===1?'denied':error?.code===3?'timeout':'unavailable'));},{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+    }catch(_){finish(cameraLocationError('unavailable'));}
+  });
+  cameraLocationState.positionRequest=request;
+  try{return await request;}finally{if(cameraLocationState.positionRequest===request)cameraLocationState.positionRequest=null;}
+}
+async function ensureRealtimeGpsCoordinates(options={}) {
+  const revision=++cameraLocationState.uiRevision;
+  updateCameraLocationUI(null,true);
+  const position=options.background&&cameraLocationState.latest&&Date.now()-cameraLocationState.latest.timestamp<10000?cameraLocationState.latest:await acquireCameraPosition();
+  const snapshot={...position,coords:position.coords?{...position.coords}:null,address:null};
+  if(snapshot.coords){
+    snapshot.address=await reverseGeocodeAddress(snapshot.coords.latitude,snapshot.coords.longitude);
+    snapshot.addressStatus=snapshot.address?'ready':'unavailable';
+  }
+  // Keep one immutable coordinate/address pair. An older response cannot overwrite a newer fix.
+  if(!cameraLocationState.latest||snapshot.timestamp>=cameraLocationState.latest.timestamp){
+    cameraLocationState.latest=snapshot;
+    lastFetchedGpsCoords=snapshot.coords?{...snapshot.coords}:null;lastFetchedAddress=snapshot.address||null;
+  }
+  if(revision===cameraLocationState.uiRevision)updateCameraLocationUI(snapshot);
+  return snapshot;
+}
+function prefetchGpsCoordinates() {return ensureRealtimeGpsCoordinates({background:true}).catch(()=>cameraLocationError('unavailable'));}
+function retryCameraLocation() {return ensureRealtimeGpsCoordinates().catch(()=>{const result=cameraLocationError('unavailable');updateCameraLocationUI(result);return result;});}
+function createCameraPhotoMetadata(capturedAt=Date.now()) {
+  return {capturedAt,source:'camera',locationPromise:ensureRealtimeGpsCoordinates().catch(()=>cameraLocationError('unavailable'))};
+}
+function cameraWatermarkLines(location,time,source) {
+  const when=new Date(time),pad=value=>String(value).padStart(2,'0');
+  const lines=['TASCO DLK',pad(when.getDate())+'/'+pad(when.getMonth()+1)+'/'+when.getFullYear()+' '+pad(when.getHours())+':'+pad(when.getMinutes())+':'+pad(when.getSeconds())];
+  if(location?.address)lines.push(location.address);
+  if(location?.coords){
+    const accuracy=location.coords.accuracy;
+    lines.push((source==='gallery'?'Vị trí tải ảnh: ':'GPS: ')+location.coords.latitude+', '+location.coords.longitude+(Number.isFinite(accuracy)?' · ±'+Math.ceil(accuracy)+' m':''));
+  }else{
+    const labels={denied:'Chưa cấp quyền vị trí',timeout:'Định vị quá thời gian',insecure:'Trang chưa hỗ trợ quyền định vị',unsupported:'Thiết bị không hỗ trợ định vị',invalid:'Vị trí không hợp lệ',unavailable:'Chưa lấy được vị trí'};
+    lines.push('GPS: '+(labels[location?.status]||labels.unavailable));
+  }
+  return lines;
+}
+function wrapCameraWatermarkText(ctx,text,maxWidth) {
+  const lines=[];let line='';
+  for(const word of String(text).split(/\s+/)){
+    const next=line?line+' '+word:word;
+    if(ctx.measureText(next).width<=maxWidth){line=next;continue;}
+    if(line){lines.push(line);line='';}
+    for(const character of word){if(line&&ctx.measureText(line+character).width>maxWidth){lines.push(line);line='';}line+=character;}
+  }
+  if(line)lines.push(line);return lines;
+}
+async function addWatermarkToImageFile(file,categoryName,options={}) {
+  const metadata=cameraPhotoMetadata.get(file)||{capturedAt:Date.now(),source:options.isCameraSource?'camera':'gallery',locationPromise:ensureRealtimeGpsCoordinates().catch(()=>cameraLocationError('unavailable'))};
+  const location=await metadata.locationPromise;
+  return new Promise(resolve=>{
+    const reader=new FileReader();reader.onerror=()=>resolve(file);
+    reader.onload=event=>{
+      const img=new Image();img.onerror=()=>resolve(file);
+      img.onload=()=>{
         try {
-          const addr = await Promise.race([
-            reverseGeocodeAddress(lastFetchedGpsCoords.latitude, lastFetchedGpsCoords.longitude),
-            new Promise(r => setTimeout(() => r(null), 1500))
-          ]);
-          if (addr) lastFetchedAddress = addr;
-        } catch (_) {}
-        return { address: lastFetchedAddress, coords: lastFetchedGpsCoords };
-      }
-      if (!navigator.geolocation || gpsPermissionDenied) {
-        return { address: null, coords: null };
-      }
-      return new Promise((resolve) => {
-        let finished = false;
-        const finish = () => {
-          if (!finished) {
-            finished = true;
-            resolve({ address: lastFetchedAddress, coords: lastFetchedGpsCoords });
-          }
-        };
-        const timer = setTimeout(finish, 2200);
-
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
-            lastFetchedGpsCoords = {
-              latitude: lat.toFixed(6),
-              longitude: lon.toFixed(6)
-            };
-            try {
-              const addr = await Promise.race([
-                reverseGeocodeAddress(lat, lon),
-                new Promise(r => setTimeout(() => r(null), 1200))
-              ]);
-              if (addr) lastFetchedAddress = addr;
-            } catch (_) {}
-            clearTimeout(timer);
-            finish();
-          },
-          (err) => {
-            console.warn('Geolocation error:', err);
-            if (err && err.code === 1) gpsPermissionDenied = true;
-            clearTimeout(timer);
-            finish();
-          },
-          { enableHighAccuracy: true, timeout: 3000, maximumAge: 30000 }
-        );
-      });
-    }
-
-    async function addWatermarkToImageFile(file, categoryName) {
-      // 1. Fetch real-time GPS & address
-      let gpsLocation = { address: lastFetchedAddress, coords: lastFetchedGpsCoords };
-      try {
-        gpsLocation = await ensureRealtimeGpsCoordinates();
-      } catch (_) {}
-
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth;
-            canvas.height = img.naturalHeight;
-            const ctx = canvas.getContext('2d');
-            
-            // Draw original image
-            ctx.drawImage(img, 0, 0);
-            
-            // Proportional layout configuration - watermark matching user's reference design
-            const w = canvas.width;
-            const h = canvas.height;
-            // Font size slightly smaller as requested (w / 56)
-            const fontSize = Math.max(13, Math.round(w / 56));
-            const padding = Math.max(14, Math.round(w / 45));
-            const lineHeight = fontSize * 1.35;
-            
-            // Setup text style: pure white, bold sans-serif, right aligned, bottom aligned
-            ctx.font = `bold ${fontSize}px sans-serif`;
-            ctx.fillStyle = '#FFFFFF';
-            ctx.textBaseline = 'bottom';
-            ctx.textAlign = 'right';
-            
-            // Text shadow for high contrast & legibility on all backgrounds
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-            ctx.shadowBlur = Math.max(3, Math.round(w / 350));
-            ctx.shadowOffsetX = Math.max(1, Math.round(w / 600));
-            ctx.shadowOffsetY = Math.max(1, Math.round(w / 600));
-            
-            // Prepare texts
-            const caseNode = localActiveCaseNode || {};
-            const now = new Date();
-            const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
-            
-            let gpsStr = '';
-            if (gpsLocation.address) {
-              gpsStr = gpsLocation.address;
-            } else if (gpsLocation.coords) {
-              gpsStr = `${gpsLocation.coords.latitude}, ${gpsLocation.coords.longitude}`;
-            } else {
-              const gName = caseNode.tenGara || caseNode.garaSuaChua || caseNode.garage || '';
-              gpsStr = gName ? `${gName} (GPS chưa cấp quyền)` : 'Chưa xác định (Chưa cấp quyền GPS)';
-            }
-            
-            const line1 = 'TASCO DLK';
-            const line2 = timeStr;
-            const line3 = gpsStr;
-            
-            // Handle address wrapping if too long for one line
-            const maxLineWidth = w - padding * 2;
-            const addressLines = [];
-            if (ctx.measureText(line3).width > maxLineWidth) {
-              const parts = line3.split(', ');
-              let currentPart = '';
-              for (const part of parts) {
-                const test = currentPart ? `${currentPart}, ${part}` : part;
-                if (ctx.measureText(test).width > maxLineWidth && currentPart) {
-                  addressLines.push(currentPart);
-                  currentPart = part;
-                } else {
-                  currentPart = test;
-                }
-              }
-              if (currentPart) addressLines.push(currentPart);
-            } else {
-              addressLines.push(line3);
-            }
-            
-            const rightX = w - padding;
-            let currentY = h - padding;
-            
-            // Draw lines from bottom to top: Address -> Time -> TASCO DLK
-            for (let i = addressLines.length - 1; i >= 0; i--) {
-              ctx.fillText(addressLines[i], rightX, currentY);
-              currentY -= lineHeight;
-            }
-            ctx.fillText(line2, rightX, currentY);
-            currentY -= lineHeight;
-            ctx.fillText(line1, rightX, currentY);
-            
-            // Convert canvas back to Blob/File (using JPEG for universal compatibility)
-            canvas.toBlob((blob) => {
-              if (blob) {
-                const stampedFile = new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
-                resolve(stampedFile);
-              } else {
-                resolve(file);
-              }
-            }, 'image/jpeg', 0.92);
-          };
-          img.onerror = () => resolve(file);
-          img.src = e.target.result;
-        };
-        reader.onerror = () => resolve(file);
-        reader.readAsDataURL(file);
-      });
-    }
+          const canvas=document.createElement('canvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+          const ctx=canvas.getContext('2d');if(!ctx){resolve(file);return;}ctx.drawImage(img,0,0);
+          const w=canvas.width,h=canvas.height,padding=Math.max(8,Math.round(w/45)),fontSize=Math.max(10,Math.round(w/56)),lineHeight=fontSize*1.35;
+          ctx.font='bold '+fontSize+'px sans-serif';ctx.fillStyle='#fff';ctx.textBaseline='bottom';ctx.textAlign='right';
+          ctx.shadowColor='rgba(0,0,0,.9)';ctx.shadowBlur=Math.max(3,Math.round(w/350));ctx.shadowOffsetX=Math.max(1,Math.round(w/600));ctx.shadowOffsetY=ctx.shadowOffsetX;
+          const lines=cameraWatermarkLines(location,metadata.capturedAt,metadata.source).flatMap(line=>wrapCameraWatermarkText(ctx,line,Math.max(20,w-padding*2)));
+          let y=h-padding;
+          for(let index=lines.length-1;index>=0;index--){ctx.fillText(lines[index],w-padding,y);y-=lineHeight;}
+          canvas.toBlob(blob=>{if(!blob){resolve(file);return;}const stamped=new File([blob],file.name.replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg',lastModified:metadata.capturedAt});cameraPhotoMetadata.set(stamped,metadata);resolve(stamped);},'image/jpeg',.92);
+        }catch(_){resolve(file);}
+      };img.src=event.target.result;
+    };reader.readAsDataURL(file);
+  });
+}
 
     let customCameraStream = null;
     let customCameraFacingMode = 'environment';
@@ -16769,8 +16689,9 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
 
       if (!stream) {
         triggerToast('Không thể kết nối camera. Chuyển sang trình chọn tệp mặc định!', 'warning');
+        const fallbackRequestIndex=customCameraRequestIndex;
         closeCustomCameraModal(false);
-        const fileInput = document.getElementById(`garageEvidenceInput_${customCameraRequestIndex}`);
+        const fileInput = document.getElementById(`garageEvidenceInput_${fallbackRequestIndex}`);
         if (fileInput) {
           fileInput.setAttribute('capture', 'environment');
           fileInput.dataset.sourceType = 'camera';
@@ -16973,6 +16894,7 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
         return;
       }
       
+      const photoMetadata=createCameraPhotoMetadata();
       const flash = document.getElementById('cameraFlashEffect');
       if (flash) {
         flash.classList.add('flash-active');
@@ -17047,6 +16969,7 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
       canvas.toBlob((blob) => {
         if (blob) {
           const file = new File([blob], `capture_${Date.now()}.jpg`, { type: 'image/jpeg' });
+          cameraPhotoMetadata.set(file,photoMetadata);
           customCameraPhotos.push(file);
           renderCustomCameraPreviewStrip();
           updateCustomCameraDoneBtn();
@@ -17200,7 +17123,7 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
 
       setEvidenceUploadUI(requestIndex, true, 'Đang đóng dấu ngày giờ & toạ độ...', 10);
       const processedFiles = await Promise.all(
-        incomingFiles.map(file => addWatermarkToImageFile(file, categoryName))
+        incomingFiles.map(file => addWatermarkToImageFile(file, categoryName,{isCameraSource}))
       );
 
       const currentUrls = normalizeEvidenceImageUrls(localActiveRequestedItems[requestIndex]);
