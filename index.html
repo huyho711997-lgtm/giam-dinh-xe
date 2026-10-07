@@ -5586,7 +5586,7 @@ body.light-mode [data-garage-portal="active"] { --border:rgba(28,31,38,.09); }
 .custom-camera-modal { --cam-gold:#dfbd78; --cam-muted:#98a2b2; --cam-line:rgba(224,193,135,.16); width:var(--camera-viewport-width,100vw); height:var(--camera-viewport-height,100dvh); max-width:none; max-height:none; flex-direction:column; overflow:hidden; background:#090c11; color:#f5f6f8; font-family:inherit; touch-action:manipulation; }
 .custom-camera-modal,.custom-camera-modal .camera-stream-container,.custom-camera-modal .camera-footer { transition:none !important; }
 .custom-camera-modal .camera-stream-container { flex:1 1 0; min-width:0; min-height:0; background:#05070a; }
-.custom-camera-modal #customCameraVideo { display:block; width:100%; height:100%; object-fit:contain; }
+.custom-camera-modal #customCameraVideo { display:block; width:100%; height:100%; object-fit:contain; transition:none !important; }
 .custom-camera-modal .camera-overlay-header { position:absolute; inset:0 0 auto; display:flex; align-items:center; gap:10px; width:auto; padding:calc(12px + env(safe-area-inset-top,0px)) 14px 18px; background:linear-gradient(rgba(5,7,10,.78),rgba(5,7,10,.45) 65%,transparent); z-index:4; }
 .camera-heading { flex:1; min-width:0; }
 .camera-heading > span { display:block; margin-bottom:4px; color:var(--cam-gold); font-size:9px; line-height:1.4; letter-spacing:.1em; font-weight:750; }
@@ -7615,7 +7615,7 @@ body.light-mode [data-garage-portal="active"] { --border:rgba(28,31,38,.09); }
   </div>
 
   <!-- Custom In-App Camera Modal -->
-  <div id="customCameraModal" class="custom-camera-modal" role="dialog" aria-modal="true" aria-label="Chụp ảnh hồ sơ" style="display:none">
+  <div id="customCameraModal" class="custom-camera-modal" data-camera-version="2026-10-07-orientation-boundaries" role="dialog" aria-modal="true" aria-label="Chụp ảnh hồ sơ" style="display:none">
     <div class="camera-stream-container">
       <video id="customCameraVideo" autoplay playsinline muted onclick="triggerCustomCameraFocus(event)"></video>
       <div class="camera-grid-overlay" aria-hidden="true"><div class="grid-line vertical"></div><div class="grid-line vertical"></div><div class="grid-line horizontal"></div><div class="grid-line horizontal"></div></div>
@@ -16527,83 +16527,118 @@ function cameraLocationMessage(location) {
   const messages={denied:'Chưa cấp quyền vị trí. Bật quyền vị trí cho trang rồi thử lại.',timeout:'Lấy vị trí quá thời gian. Bật định vị trên thiết bị rồi thử lại.',unavailable:'Chưa lấy được vị trí. Kiểm tra định vị trên thiết bị.',unsupported:'Thiết bị không hỗ trợ định vị.',insecure:'Định vị cần mở trang qua HTTPS.',invalid:'Thiết bị trả về vị trí không hợp lệ.'};
   if(!location?.coords)return messages[location?.status]||messages.unavailable;
   const accuracy=location.coords.accuracy;
-  return location.address||`Đã có GPS${Number.isFinite(accuracy)?' · ±'+Math.ceil(accuracy)+' m':''} · Chưa tra được tên địa điểm`;
+  return location.address?(location.hasWard===false?location.address+' · Chưa xác định phường/xã':location.address):`Đã có GPS${Number.isFinite(accuracy)?' · ±'+Math.ceil(accuracy)+' m':''} · Chưa tra được tên địa điểm`;
 }
 function updateCameraLocationUI(location,pending=false) {
   const status=document.getElementById('cameraLocationStatus'),detail=document.getElementById('cameraLocationDetail');
   if(!status||!detail)return;
-  status.dataset.state=pending?'pending':location?.address?'ready':location?.coords?'partial':'error';
+  status.dataset.state=pending?'pending':location?.address&&location.hasWard!==false?'ready':location?.coords?'partial':'error';
   detail.textContent=pending?'Đang lấy vị trí và địa chỉ…':cameraLocationMessage(location);
   detail.title=detail.textContent;
-  const label=status.querySelector('strong');if(label)label.textContent=pending?'Đang định vị':location?.address?'Địa điểm chụp':location?.coords?'GPS đã sẵn sàng':'Cần kiểm tra vị trí';
-  const credit=document.getElementById('cameraLocationCredit');if(credit){credit.textContent=location?.provider==='bigdatacloud'?'BigDataCloud':location?.provider==='nominatim'?'© OpenStreetMap':'';credit.href=location?.provider==='bigdatacloud'?'https://www.bigdatacloud.com/':'https://www.openstreetmap.org/copyright';credit.hidden=!location?.address;}
+  const label=status.querySelector('strong');if(label)label.textContent=pending?'Đang định vị':location?.address?(location.hasWard===false?'Thiếu phường/xã':'Địa điểm chụp'):location?.coords?'GPS đã sẵn sàng':'Cần kiểm tra vị trí';
+  const credit=document.getElementById('cameraLocationCredit');if(credit){credit.textContent=location?.provider==='bigdatacloud'?'BigDataCloud':['nominatim','overpass'].includes(location?.provider)?'© OpenStreetMap':'';credit.href=location?.provider==='bigdatacloud'?'https://www.bigdatacloud.com/':'https://www.openstreetmap.org/copyright';credit.hidden=!location?.address;}
 }
 function cameraPositionDistance(a,b) {
   const radians=Math.PI/180,dLat=(Number(b.latitude)-Number(a.latitude))*radians,dLon=(Number(b.longitude)-Number(a.longitude))*radians;
   const value=Math.sin(dLat/2)**2+Math.cos(Number(a.latitude)*radians)*Math.cos(Number(b.latitude)*radians)*Math.sin(dLon/2)**2;
   return 6371000*2*Math.atan2(Math.sqrt(Math.min(1,value)),Math.sqrt(Math.max(0,1-value)));
 }
-function cameraFormatAddress(data) {
+function cameraAddressKey(value) {return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase().trim();}
+function cameraAddressResult(fields,provider,fallback='') {
+  const parts=[];
+  for(const value of [fields.street,fields.ward,fields.district,fields.city,fields.province]){
+    if(typeof value==='string'&&value.trim()&&!parts.some(part=>cameraAddressKey(part)===cameraAddressKey(value)))parts.push(value.trim());
+  }
+  const address=parts.join(', ')||String(fallback||'').trim();if(!address)return null;
+  const hasWard=Boolean(fields.ward)||/(?:^|,\s*)(?:phuong|xa|thi tran)\s/.test(cameraAddressKey(address));
+  return {address,provider,hasWard,complete:hasWard&&Boolean(fields.province),fields};
+}
+function cameraNominatimAddress(data) {
   if(!data||data.error)return null;
-  const addr=data.address||{},parts=[];
+  const addr=data.address||{};
   const road=addr.road||addr.pedestrian||addr.residential||addr.footway||addr.path;
   const house=addr.house_number;
-  if(house&&road)parts.push(house+' '+road);else if(road||house)parts.push(road||house);
-  // Preserve every available administrative level, including huyện when tỉnh is present.
-  for(const value of [addr.ward||addr.suburb||addr.quarter||addr.village||addr.hamlet||addr.neighbourhood,addr.city_district||addr.district||addr.county||addr.borough,addr.city||addr.town||addr.municipality,addr.state||addr.province||addr.region]){
-    if(value&&!parts.some(part=>part.trim().toLocaleLowerCase('vi')===String(value).trim().toLocaleLowerCase('vi')))parts.push(String(value));
-  }
-  return parts.length?parts.join(', '):typeof data.display_name==='string'&&data.display_name.trim()?data.display_name.trim():null;
+  return cameraAddressResult({street:house&&road?house+' '+road:road||house,ward:addr.ward||addr.suburb||addr.quarter||addr.village,district:addr.city_district||addr.district||addr.county||addr.borough,city:addr.city||addr.town||addr.municipality,province:addr.state||addr.province||addr.region},'nominatim',data.display_name);
 }
-function cameraFormatLocality(data,coords) {
+function cameraFormatAddress(data) {return cameraNominatimAddress(data)?.address||null;}
+function cameraLocalityAddress(data,coords) {
   if(!data||data.error||/ip/i.test(data.lookupSource||''))return null;
   if(!Number.isFinite(data.latitude)||!Number.isFinite(data.longitude)||cameraPositionDistance(coords,{latitude:data.latitude,longitude:data.longitude})>10)return null;
   const administrative=Array.isArray(data.localityInfo?.administrative)?data.localityInfo.administrative:[];
-  const selected={},parts=[];
-  const push=value=>{if(typeof value==='string'&&value.trim()&&!parts.some(part=>part.toLocaleLowerCase('vi')===value.trim().toLocaleLowerCase('vi')))parts.push(value.trim());};
+  const selected={};
   for(const row of [...administrative].sort((a,b)=>(b.order||0)-(a.order||0))){
     if(!row.name||Number(row.adminLevel)<4)continue;
-    const description=String(row.description||'').toLocaleLowerCase('vi'),name=String(row.name).trim();let kind='',prefix='';
-    if(/^(phường|ward)(\s|$)/i.test(name)||/^(phường|ward)(\s|$)/i.test(description)){kind='locality';prefix='Phường ';}
-    else if(/^(xã|commune)(\s|$)/i.test(name)||/^(xã|commune)(\s|$)/i.test(description)){kind='locality';prefix='Xã ';}
-    else if(/^(thị trấn|township)(\s|$)/i.test(name)||/^(thị trấn|township)(\s|$)/i.test(description)){kind='locality';prefix='Thị trấn ';}
-    else if(/^(quận|huyện|thị xã|district)(\s|$)/i.test(name)||/^(quận|huyện|thị xã|district)(\s|$)/i.test(description)){kind='district';}
+    const description=cameraAddressKey(row.description),name=String(row.name).trim(),key=cameraAddressKey(name);let kind='',prefix='';
+    if(/\b(?:former|historical)\b|\b(?:cu|truoc day)\b/.test(description))continue;
+    if(/\b(?:phuong|ward)\b/.test(key+' '+description)){kind='ward';prefix='Phường ';}
+    else if(/\b(?:xa|commune)\b/.test(key+' '+description)){kind='ward';prefix='Xã ';}
+    else if(/\b(?:thi tran|township)\b/.test(key+' '+description)){kind='ward';prefix='Thị trấn ';}
+    else if(/^(quan|huyen|thi xa|district)(\s|$)/.test(key)||/^(quan|huyen|thi xa|district)(\s|$)/.test(description)){kind='district';}
     else if(Number(row.adminLevel)===4){kind='province';}
-    else if(/^(thành phố|city)(\s|$)/i.test(name)||/^(thành phố|city)(\s|$)/i.test(description)){kind='city';}
-    else if(Number(row.adminLevel)>=8){kind='locality';}
+    else if(/^(thanh pho|city)(\s|$)/.test(key)||/^(thanh pho|city)(\s|$)/.test(description)){kind='city';}
+    else if(Number(row.adminLevel)>=8){kind='ward';}
     else if(Number(row.adminLevel)>=6){kind='district';}
-    if(kind&&!selected[kind])selected[kind]=prefix&&!new RegExp('^'+prefix.trim()+'(?:\\s|$)','i').test(name)?prefix+name:name;
+    if(kind&&!selected[kind])selected[kind]=prefix&&!/^(phuong|xa|thi tran)(\s|$)/.test(key)&&!/\b(?:ward|commune|township)\b/.test(key)?prefix+name:name;
   }
-  push(selected.locality||data.locality);push(selected.district);push(selected.city||data.city);push(selected.province||data.principalSubdivision);
-  return parts.length?parts.join(', '):null;
+  if(!selected.ward&&/^(phuong|xa|thi tran)(\s|$)/.test(cameraAddressKey(data.locality)))selected.ward=data.locality;
+  const result=cameraAddressResult({...selected,city:selected.city||data.city,province:selected.province||data.principalSubdivision},'bigdatacloud');
+  // A city name in `locality` is not evidence of a ward/commune boundary.
+  if(result&&!selected.ward&&data.locality&&cameraAddressKey(data.locality)!==cameraAddressKey(data.city))result.address=data.locality+', '+result.address;
+  return result;
 }
-async function requestCameraAddress(url,timeout=5000) {
+function cameraFormatLocality(data,coords) {return cameraLocalityAddress(data,coords)?.address||null;}
+function cameraBoundaryAddress(data) {
+  if(!Array.isArray(data?.elements)||data.remark)return null;
+  const fields={},wards=[];
+  for(const element of data.elements){
+    const tags=element.tags||{},name=tags['name:vi']||tags.name,level=Number(tags.admin_level);
+    if(!name||tags.boundary!=='administrative'||tags.end_date||tags['disused:boundary'])continue;
+    const key=cameraAddressKey(name);
+    if(/^(phuong|xa|thi tran)(\s|$)/.test(key))wards.push({name,level});
+    else if(level===4)fields.province=name;
+    else if(level===6){if(/^(thanh pho)(\s|$)/.test(key))fields.city=name;else fields.district=name;}
+    else if(level===8)wards.push({name,level});
+  }
+  // Prefer a current ward at level 6 over an old level-8 boundary; never combine two wards.
+  wards.sort((a,b)=>a.level-b.level);const chosen=wards.filter(row=>row.level===wards[0]?.level);
+  const unique=[...new Map(chosen.map(row=>[cameraAddressKey(row.name),row])).values()];
+  if(unique.length===1){fields.ward=unique[0].name;if(unique[0].level===6){delete fields.city;delete fields.district;}}
+  return cameraAddressResult(fields,'overpass');
+}
+function cameraAddressScore(result) {return result?(result.hasWard?100:0)+(result.fields?.province?20:0)+(result.fields?.district?5:0)+(result.fields?.city?3:0)+(result.fields?.street?1:0):0;}
+async function requestCameraAddress(url,timeout=5000,options={}) {
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
-  try {const response=await fetch(url,{signal:controller.signal,mode:'cors',credentials:'omit',referrerPolicy:'strict-origin-when-cross-origin'});if(!response.ok)throw new Error('HTTP '+response.status);return await response.json();}
+  try {const response=await fetch(url,{...options,signal:controller.signal,mode:'cors',credentials:'omit',referrerPolicy:'strict-origin-when-cross-origin'});if(!response.ok)throw new Error('HTTP '+response.status);return await response.json();}
   finally {clearTimeout(timer);}
 }
-async function reverseGeocodeAddress(lat,lon) {
+async function reverseGeocodeAddress(lat,lon,options={}) {
   lat=Number(lat);lon=Number(lon);
   if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return null;
   const coords={latitude:lat,longitude:lon},now=Date.now();
-  const cached=cameraLocationState.addressCache.find(entry=>now-entry.at<180000&&cameraPositionDistance(coords,entry.coords)<=8);
-  if(cached)return {address:cached.address,provider:cached.provider};
+  const findCache=()=>!options.force&&cameraLocationState.addressCache.find(entry=>Date.now()-entry.at<(entry.result.complete?180000:15000)&&cameraPositionDistance(coords,entry.coords)<=8);
+  const cached=findCache();if(cached)return cached.result;
   const key=lat.toFixed(6)+','+lon.toFixed(6);
   if(cameraLocationState.addressRequests.has(key))return cameraLocationState.addressRequests.get(key);
   const task=cameraLocationState.addressQueue.catch(()=>{}).then(async()=>{
-    const cache=cameraLocationState.addressCache.find(entry=>Date.now()-entry.at<180000&&cameraPositionDistance(coords,entry.coords)<=8);
-    if(cache)return {address:cache.address,provider:cache.provider};
+    const cache=findCache();if(cache)return cache.result;
     const delay=Math.max(0,1100-(Date.now()-cameraLocationState.lastAddressRequestAt));
     if(delay)await new Promise(resolve=>setTimeout(resolve,delay));
     cameraLocationState.lastAddressRequestAt=Date.now();
-    let address=null,provider=null;
+    let result=null;
+    const consider=candidate=>{if(cameraAddressScore(candidate)>cameraAddressScore(result))result=candidate;};
     // This client endpoint receives only fresh coordinates from the device's Geolocation API.
-    try {const query=new URLSearchParams({latitude:String(lat),longitude:String(lon),localityLanguage:'vi'});address=cameraFormatLocality(await requestCameraAddress('https://api.bigdatacloud.net/data/reverse-geocode-client?'+query),coords);if(address)provider='bigdatacloud';}catch(_){}
-    if(!address){
-      try {const query=new URLSearchParams({lat:String(lat),lon:String(lon),format:'jsonv2','accept-language':'vi',addressdetails:'1',zoom:'18',layer:'address'});address=cameraFormatAddress(await requestCameraAddress('https://nominatim.openstreetmap.org/reverse?'+query,6000));if(address)provider='nominatim';}catch(_){}
+    try {const query=new URLSearchParams({latitude:String(lat),longitude:String(lon),localityLanguage:'vi'});consider(cameraLocalityAddress(await requestCameraAddress('https://api.bigdatacloud.net/data/reverse-geocode-client?'+query),coords));}catch(_){}
+    if(!result?.complete){
+      try {
+        const query='[out:json][timeout:8];is_in('+lat.toFixed(6)+','+lon.toFixed(6)+')->.areas;area.areas[boundary=administrative][admin_level~"^(4|6|8)$"];out tags;';
+        consider(cameraBoundaryAddress(await requestCameraAddress('https://overpass-api.de/api/interpreter',10000,{method:'POST',body:new URLSearchParams({data:query})})));
+      }catch(_){}
     }
-    if(address){cameraLocationState.addressCache.unshift({coords,address,provider,at:Date.now()});cameraLocationState.addressCache=cameraLocationState.addressCache.slice(0,30);}
-    return address?{address,provider}:null;
+    if(!result?.complete){
+      try {const query=new URLSearchParams({lat:String(lat),lon:String(lon),format:'jsonv2','accept-language':'vi',addressdetails:'1',zoom:'18',layer:'address'});consider(cameraNominatimAddress(await requestCameraAddress('https://nominatim.openstreetmap.org/reverse?'+query,6000)));}catch(_){}
+    }
+    if(result){cameraLocationState.addressCache.unshift({coords,result,at:Date.now()});cameraLocationState.addressCache=cameraLocationState.addressCache.slice(0,30);}
+    return result;
   });
   cameraLocationState.addressRequests.set(key,task);
   cameraLocationState.addressQueue=task.then(()=>{},()=>{});
@@ -16636,9 +16671,10 @@ async function ensureRealtimeGpsCoordinates(options={}) {
   const position=options.background&&cameraLocationState.latest&&Date.now()-cameraLocationState.latest.timestamp<10000?cameraLocationState.latest:await acquireCameraPosition();
   const snapshot={...position,coords:position.coords?{...position.coords}:null,address:null};
   if(snapshot.coords){
-    const resolved=await reverseGeocodeAddress(snapshot.coords.latitude,snapshot.coords.longitude);
+    const resolved=await reverseGeocodeAddress(snapshot.coords.latitude,snapshot.coords.longitude,{force:options.forceAddress});
     snapshot.address=typeof resolved==='string'?resolved:resolved?.address||null;snapshot.provider=resolved?.provider||null;
-    snapshot.addressStatus=snapshot.address?'ready':'unavailable';
+    snapshot.hasWard=typeof resolved==='string'?true:Boolean(resolved?.hasWard);
+    snapshot.addressStatus=snapshot.address?(snapshot.hasWard?'ready':'partial'):'unavailable';
   }
   // Keep one immutable coordinate/address pair. An older response cannot overwrite a newer fix.
   if(!cameraLocationState.latest||snapshot.timestamp>=cameraLocationState.latest.timestamp){
@@ -16649,7 +16685,7 @@ async function ensureRealtimeGpsCoordinates(options={}) {
   return snapshot;
 }
 function prefetchGpsCoordinates() {return ensureRealtimeGpsCoordinates({background:true}).catch(()=>cameraLocationError('unavailable'));}
-function retryCameraLocation() {return ensureRealtimeGpsCoordinates().catch(()=>{const result=cameraLocationError('unavailable');updateCameraLocationUI(result);return result;});}
+function retryCameraLocation() {return ensureRealtimeGpsCoordinates({forceAddress:true}).catch(()=>{const result=cameraLocationError('unavailable');updateCameraLocationUI(result);return result;});}
 function createCameraPhotoMetadata(capturedAt=Date.now()) {
   return {capturedAt,source:'camera',locationPromise:ensureRealtimeGpsCoordinates().catch(()=>cameraLocationError('unavailable'))};
 }
@@ -16658,6 +16694,7 @@ function cameraWatermarkLines(location,time,source) {
   const lines=['TASCO DLK',pad(when.getDate())+'/'+pad(when.getMonth()+1)+'/'+when.getFullYear()+' '+pad(when.getHours())+':'+pad(when.getMinutes())+':'+pad(when.getSeconds())];
   if(location?.address)lines.push(location.address);
   else if(location?.coords)lines.push('Chưa tra được tên địa điểm');
+  if(location?.address&&location.hasWard===false)lines.push('Chưa xác định phường/xã');
   if(location?.coords){
     const accuracy=location.coords.accuracy;
     lines.push((source==='gallery'?'Vị trí tải ảnh: ':'GPS: ')+location.coords.latitude+', '+location.coords.longitude+(Number.isFinite(accuracy)?' · ±'+Math.ceil(accuracy)+' m':''));
@@ -16701,13 +16738,55 @@ async function addWatermarkToImageFile(file,categoryName,options={}) {
   });
 }
 
-const cameraUiState={session:0,captureBusy:false,previousOverflow:null,previousFocus:null,photoUrls:new Map()};
+const cameraUiState={session:0,captureBusy:false,previousOverflow:null,previousFocus:null,photoUrls:new Map(),sensorPermission:null,physicalOrientation:null};
+function cameraHandleDeviceOrientation(event) {
+  if(!Number.isFinite(event.beta)||!Number.isFinite(event.gamma))return;
+  const beta=event.beta*Math.PI/180,gamma=event.gamma*Math.PI/180;
+  const x=Math.sin(gamma)*Math.cos(beta),y=Math.sin(beta);
+  let physical=null;
+  if(Math.abs(x)>.45&&Math.abs(x)>Math.abs(y)*1.25)physical={orientation:'landscape',angle:x>0?270:90,at:Date.now()};
+  else if(Math.abs(y)>.45&&Math.abs(y)>Math.abs(x)*1.25)physical={orientation:'portrait',angle:y>0?0:180,at:Date.now()};
+  if(physical)cameraUiState.physicalOrientation=physical;
+}
+function startCameraOrientationSensor() {
+  const Sensor=window.DeviceOrientationEvent;if(!Sensor)return;
+  const session=cameraUiState.session;
+  const listen=()=>{if(session===cameraUiState.session&&document.getElementById('customCameraModal')?.style.display!=='none')window.addEventListener('deviceorientation',cameraHandleDeviceOrientation);};
+  if(typeof Sensor.requestPermission!=='function'){listen();return;}
+  // Called synchronously from the camera-opening tap, as Safari requires a user gesture.
+  if(!cameraUiState.sensorPermission){try{cameraUiState.sensorPermission=Sensor.requestPermission().catch(()=>'denied');}catch(_){return;}}
+  cameraUiState.sensorPermission.then(permission=>{if(permission==='granted')listen();});
+}
+function cameraFrameOrientation(video,usePhysical=true) {
+  const viewport=window.visualViewport,width=viewport?.width||innerWidth,height=viewport?.height||innerHeight;
+  const mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>0&&matchMedia('(pointer:coarse)').matches);
+  const legacyAngle=typeof window.orientation==='number'?window.orientation:null;
+  const physical=usePhysical&&mobile&&cameraUiState.physicalOrientation&&Date.now()-cameraUiState.physicalOrientation.at<2500?cameraUiState.physicalOrientation:null;
+  const angle=((physical?.angle??legacyAngle??screen.orientation?.angle??0)%360+360)%360;
+  const landscape=physical?physical.orientation==='landscape':width>height,nativeLandscape=video.videoWidth>video.videoHeight;
+  // Rotate pixels only when a mobile browser keeps the previous orientation's frame size.
+  // Matching frames already include the browser's rotation and must pass through unchanged.
+  const rotation=!mobile||landscape===nativeLandscape||video.videoWidth===video.videoHeight?0:landscape?(angle===270?90:-90):(angle===180?-90:90);
+  return {orientation:landscape?'landscape':'portrait',angle,rotation,width:rotation?video.videoHeight:video.videoWidth,height:rotation?video.videoWidth:video.videoHeight};
+}
+function syncCameraFramePreview(video) {
+  if(!video)return;
+  // A screen locked in portrait keeps its visual coordinates; the saved photo can still be landscape.
+  const frame=cameraFrameOrientation(video,false),container=video.parentElement;
+  video.dataset.rotation=String(frame.rotation);
+  if(frame.rotation&&container){
+    video.style.position='absolute';video.style.left='50%';video.style.top='50%';
+    video.style.width=container.clientHeight+'px';video.style.height=container.clientWidth+'px';
+    video.style.transform='translate(-50%,-50%) rotate('+frame.rotation+'deg)';
+  }else{for(const property of ['position','left','top','width','height','transform'])video.style.removeProperty(property);}
+}
 function syncCameraViewport() {
   const modal=document.getElementById('customCameraModal');if(!modal||modal.style.display==='none')return;
   const viewport=window.visualViewport,width=viewport?.width||innerWidth,height=viewport?.height||innerHeight;
   modal.style.setProperty('--camera-viewport-width',width+'px');modal.style.setProperty('--camera-viewport-height',height+'px');
   modal.dataset.orientation=width>height?'landscape':'portrait';
   const video=document.getElementById('customCameraVideo'),shutter=document.getElementById('cameraCaptureButton');
+  syncCameraFramePreview(video);
   if(shutter)shutter.disabled=cameraUiState.captureBusy||!customCameraStream||!video?.videoWidth||!video?.videoHeight;
 }
 function syncCameraPhotoTray() {
@@ -16719,12 +16798,14 @@ function syncCameraPhotoTray() {
 function onCustomCameraOpen() {
   cameraUiState.session++;cameraUiState.captureBusy=false;
   cameraUiState.previousOverflow=document.body.style.overflow;cameraUiState.previousFocus=document.activeElement;
+  cameraUiState.physicalOrientation=null;startCameraOrientationSensor();
   document.body.style.overflow='hidden';
   updateCameraLocationUI(null,true);syncCameraPhotoTray();syncCameraViewport();
   document.querySelector('#customCameraModal .btn-close-cam')?.focus({preventScroll:true});
 }
 function onCustomCameraClose() {
   cameraUiState.session++;cameraUiState.captureBusy=false;
+  window.removeEventListener('deviceorientation',cameraHandleDeviceOrientation);cameraUiState.physicalOrientation=null;
   if(cameraUiState.previousOverflow!==null)document.body.style.overflow=cameraUiState.previousOverflow;
   cameraUiState.previousOverflow=null;
   cameraUiState.previousFocus?.focus?.({preventScroll:true});cameraUiState.previousFocus=null;
@@ -16747,13 +16828,15 @@ function renderCustomCameraPreviewStrip() {
 function triggerCustomCameraCapture() {
   const video=document.getElementById('customCameraVideo');if(!video||!customCameraStream||cameraUiState.captureBusy)return;
   if(!video.videoWidth||!video.videoHeight){triggerToast('Camera đang khởi động, vui lòng thử lại sau giây lát!','warning');video.play().catch(()=>{});return;}
-  const session=cameraUiState.session,photoMetadata=createCameraPhotoMetadata(),canvas=document.createElement('canvas');
+  const session=cameraUiState.session,frame=cameraFrameOrientation(video),photoMetadata=createCameraPhotoMetadata(),canvas=document.createElement('canvas');
+  photoMetadata.frame={...frame,nativeWidth:video.videoWidth,nativeHeight:video.videoHeight};
   cameraUiState.captureBusy=true;syncCameraViewport();
   const flash=document.getElementById('cameraFlashEffect');if(flash){flash.classList.add('flash-active');setTimeout(()=>flash.classList.remove('flash-active'),90);}
-  // The decoded video frame already has the browser's orientation. Do not rotate every iPhone frame by a fixed angle.
-  canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+  canvas.width=frame.width;canvas.height=frame.height;
   try {
-    const context=canvas.getContext('2d');if(!context)throw new Error('Canvas unavailable');context.drawImage(video,0,0,canvas.width,canvas.height);
+    const context=canvas.getContext('2d');if(!context)throw new Error('Canvas unavailable');
+    context.translate(canvas.width/2,canvas.height/2);context.rotate(frame.rotation*Math.PI/180);
+    context.drawImage(video,-video.videoWidth/2,-video.videoHeight/2,video.videoWidth,video.videoHeight);
     canvas.toBlob(blob=>{
       if(session!==cameraUiState.session)return;
       cameraUiState.captureBusy=false;syncCameraViewport();
@@ -17071,7 +17154,10 @@ document.getElementById('customCameraVideo')?.addEventListener('loadedmetadata',
         
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
         if (!blob) return file;
-        return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+        const metadata=cameraPhotoMetadata.get(file);
+        const prepared=new File([blob],file.name.replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg',lastModified:metadata?.capturedAt||file.lastModified});
+        if(metadata)cameraPhotoMetadata.set(prepared,metadata);
+        return prepared;
       } catch (_) {
         return file;
       }
