@@ -16692,15 +16692,12 @@ function createCameraPhotoMetadata(capturedAt=Date.now()) {
 function cameraWatermarkLines(location,time,source) {
   const when=new Date(time),pad=value=>String(value).padStart(2,'0');
   const lines=['TASCO DLK',pad(when.getDate())+'/'+pad(when.getMonth()+1)+'/'+when.getFullYear()+' '+pad(when.getHours())+':'+pad(when.getMinutes())+':'+pad(when.getSeconds())];
-  if(location?.address)lines.push(location.address);
+  if(location?.address)lines.push((source==='gallery'?'Vị trí tải ảnh: ':'')+location.address);
   else if(location?.coords)lines.push('Chưa tra được tên địa điểm');
   if(location?.address&&location.hasWard===false)lines.push('Chưa xác định phường/xã');
-  if(location?.coords){
-    const accuracy=location.coords.accuracy;
-    lines.push((source==='gallery'?'Vị trí tải ảnh: ':'GPS: ')+location.coords.latitude+', '+location.coords.longitude+(Number.isFinite(accuracy)?' · ±'+Math.ceil(accuracy)+' m':''));
-  }else{
+  if(!location?.coords){
     const labels={denied:'Chưa cấp quyền vị trí',timeout:'Định vị quá thời gian',insecure:'Trang chưa hỗ trợ quyền định vị',unsupported:'Thiết bị không hỗ trợ định vị',invalid:'Vị trí không hợp lệ',unavailable:'Chưa lấy được vị trí'};
-    lines.push('GPS: '+(labels[location?.status]||labels.unavailable));
+    lines.push(labels[location?.status]||labels.unavailable);
   }
   return lines;
 }
