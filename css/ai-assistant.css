@@ -1,0 +1,164 @@
+
+  #tasco-ai-panel {
+    isolation: isolate;
+    position: fixed;
+    bottom: 94px;
+    right: 22px;
+    width: min(410px, calc(100vw - 32px));
+    height: 640px;
+    max-height: calc(100vh - 184px);
+    background: color-mix(in srgb, var(--surface-strong) 96%, transparent);
+    border-radius: 25px;
+    box-shadow: 0 30px 80px rgba(15,23,42,.24), 0 8px 24px rgba(15,23,42,.12), inset 0 1px 0 rgba(255,255,255,.75);
+    border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;
+    overflow: hidden;
+    transform-origin: bottom right;
+    transform: translateY(18px) scale(.955);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease, transform .3s cubic-bezier(.2,.8,.25,1), bottom .24s ease;
+  }
+  .tasco-scroll-action-visible #tasco-ai-panel { bottom: 149px; }
+  #tasco-ai-panel.active {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .tasco-ai-header {
+    position: relative;
+    overflow: hidden;
+    min-height: 78px;
+    padding: 15px 16px;
+    background: linear-gradient(125deg, #302515 0%, #765523 54%, #b48639 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    box-shadow: inset 0 -1px 0 rgba(255,255,255,.08);
+  }
+  .tasco-ai-header::after {
+    content: '';
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    right: 48px;
+    top: -108px;
+    border: 22px solid rgba(255,255,255,.055);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .tasco-ai-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 11px; min-width: 0; }
+  .tasco-ai-brand__mark { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; color: #2f2414; border: 1px solid rgba(255,255,255,.35); border-radius: 13px; background: linear-gradient(145deg, #f6d98b, #c8953d); box-shadow: 0 7px 18px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.65); }
+  .tasco-ai-brand__mark svg { width: 23px; height: 23px; }
+  .tasco-ai-brand__text { min-width: 0; }
+  .tasco-ai-brand__title { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 15px; font-weight: 900; letter-spacing: -.02em; }
+  .tasco-ai-brand__subtitle { margin-top: 3px; color: rgba(255,255,255,.7); font-size: 9px; font-weight: 700; letter-spacing: .075em; text-transform: uppercase; }
+  .tasco-ai-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px; border: 1px solid rgba(255,255,255,.17); border-radius: 999px; background: rgba(255,255,255,.09); color: rgba(255,255,255,.86); font-size: 8px; font-weight: 800; letter-spacing: .025em; }
+  .tasco-ai-status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #72e3ad; box-shadow: 0 0 8px rgba(114,227,173,.85); }
+  .tasco-ai-header__actions { position: relative; z-index: 1; display: flex; align-items: center; gap: 6px; }
+  .tasco-ai-header__btn { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; color: rgba(255,255,255,.82); border: 1px solid rgba(255,255,255,.12); border-radius: 10px; background: rgba(255,255,255,.07); cursor: pointer; transition: color .18s ease, background .18s ease, border-color .18s ease, transform .18s ease; }
+  .tasco-ai-header__btn:hover { color: #fff; border-color: rgba(255,255,255,.28); background: rgba(255,255,255,.14); transform: translateY(-1px); }
+  .tasco-ai-header__btn svg { width: 15px; height: 15px; }
+  .tasco-ai-header__btn--close:hover { background: rgba(239,68,68,.3); border-color: rgba(255,160,160,.36); }
+  .tasco-ai-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    background:
+      radial-gradient(circle at 88% 4%, rgba(216,180,109,.11), transparent 29%),
+      linear-gradient(rgba(148,163,184,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,.055) 1px, transparent 1px),
+      var(--bg-main);
+    background-size: auto, 28px 28px, 28px 28px, auto;
+  }
+  .tasco-ai-welcome { position: relative; overflow: hidden; padding: 17px; border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border)); border-radius: 18px; background: color-mix(in srgb, var(--surface-strong) 95%, transparent); box-shadow: 0 10px 28px rgba(15,23,42,.07), inset 0 1px 0 rgba(255,255,255,.68); }
+  .tasco-ai-welcome::after { content: ''; position: absolute; width: 96px; height: 96px; right: -43px; top: -48px; border-radius: 50%; background: rgba(216,180,109,.1); }
+  .tasco-ai-welcome__head { display: flex; align-items: center; gap: 10px; }
+  .tasco-ai-welcome__avatar { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; color: #966f2d; border: 1px solid rgba(179,140,67,.22); border-radius: 11px; background: rgba(216,180,109,.1); }
+  .tasco-ai-welcome__avatar svg { width: 19px; height: 19px; }
+  .tasco-ai-welcome__head strong { display: block; color: var(--text-main); font-size: 13px; font-weight: 900; }
+  .tasco-ai-welcome__head small { display: block; margin-top: 2px; color: var(--text-muted); font-size: 9.5px; font-weight: 700; }
+  .tasco-ai-welcome p { margin: 12px 0 0; color: var(--text-soft); font-size: 11.5px; line-height: 1.62; }
+  .tasco-ai-quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 13px; }
+  .tasco-ai-quick-action { min-height: 34px; padding: 7px 9px; color: var(--text-soft); border: 1px solid var(--border); border-radius: 10px; background: var(--surface-soft); font-family: inherit; font-size: 9.5px; font-weight: 750; text-align: left; cursor: pointer; transition: color .18s ease, border-color .18s ease, background .18s ease, transform .18s ease; }
+  .tasco-ai-quick-action:hover { color: var(--primary); border-color: rgba(179,140,67,.3); background: rgba(216,180,109,.07); transform: translateY(-1px); }
+  .tasco-ai-key-note { display: flex; align-items: center; gap: 6px; margin-top: 11px; padding-top: 10px; color: var(--text-muted); border-top: 1px solid var(--border); font-size: 9.5px; line-height: 1.45; }
+  .tasco-ai-key-note svg { width: 12px; height: 12px; flex: 0 0 12px; color: var(--primary); }
+  .tasco-ai-footer {
+    padding: 12px 13px 13px;
+    background: color-mix(in srgb, var(--surface-strong) 96%, transparent);
+    border-top: 1px solid var(--border);
+  }
+  .tasco-ai-composer { display: grid; grid-template-columns: minmax(0,1fr) 43px; align-items: center; gap: 8px; padding: 5px; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface-soft); box-shadow: inset 0 1px 0 rgba(255,255,255,.62); transition: border-color .2s ease, box-shadow .2s ease; }
+  .tasco-ai-composer:focus-within { border-color: rgba(179,140,67,.48); box-shadow: 0 0 0 3px rgba(216,180,109,.1), inset 0 1px 0 rgba(255,255,255,.7); }
+  .tasco-ai-input {
+    width: 100%;
+    height: 39px;
+    padding: 0 9px;
+    color: var(--text-main);
+    border: 0;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 650;
+  }
+  .tasco-ai-input::placeholder { color: var(--text-muted); }
+  .tasco-ai-input:focus { box-shadow: none; }
+  .tasco-ai-send {
+    width: 39px;
+    height: 39px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    color: #17120a;
+    border: 1px solid rgba(179,140,67,.36);
+    border-radius: 12px;
+    background: linear-gradient(145deg, #efca72, #b98530);
+    box-shadow: 0 6px 14px rgba(179,140,67,.24), inset 0 1px 0 rgba(255,255,255,.5);
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+  }
+  .tasco-ai-send:hover { transform: translateY(-1px) scale(1.025); box-shadow: 0 9px 19px rgba(179,140,67,.3), inset 0 1px 0 rgba(255,255,255,.55); filter: saturate(1.08); }
+  .tasco-ai-send svg { width: 16px; height: 16px; }
+  .tasco-ai-footer__note { margin-top: 7px; color: var(--text-muted); font-size: 8.5px; font-weight: 650; text-align: center; }
+  .msg-bubble {
+    max-width: 86%;
+    padding: 11px 13px;
+    border-radius: 15px;
+    font-size: 12px;
+    line-height: 1.58;
+    word-wrap: break-word;
+    box-shadow: 0 7px 20px rgba(15,23,42,.07);
+  }
+  .msg-user { align-self: flex-end; color: #17120a; border: 1px solid rgba(179,140,67,.25); border-bottom-right-radius: 5px; background: linear-gradient(145deg, #edc86f, #c28e35); }
+  .msg-ai { align-self: flex-start; color: var(--text-main); border: 1px solid var(--border); border-bottom-left-radius: 5px; background: var(--surface-strong); }
+  .msg-ai::before, .msg-user::before { display: block; margin-bottom: 5px; font-size: 8px; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; opacity: .68; }
+  .msg-ai::before { content: 'TASCO AI'; color: var(--primary); }
+  .msg-user::before { content: 'Bạn'; color: rgba(23,18,10,.7); }
+  .msg-ai p { margin: 0 0 8px 0; }
+  .msg-ai p:last-child { margin: 0; }
+  .typing-indicator { display: flex; gap: 5px; padding: 12px 15px; background: var(--surface-strong); border: 1px solid var(--border); border-radius: 15px; border-bottom-left-radius: 5px; align-self: flex-start; width: max-content; box-shadow: 0 7px 18px rgba(15,23,42,.06); }
+  .typing-indicator span { width: 6px; height: 6px; background: var(--primary); border-radius: 50%; animation: typing 1.4s infinite ease-in-out both; }
+  .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+  .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes typing { 0%, 80%, 100% { transform: scale(.45); opacity: .4; } 40% { transform: scale(1); opacity: 1; } }
+  .tasco-ai-body::-webkit-scrollbar { width: 5px; }
+  .tasco-ai-body::-webkit-scrollbar-track { background: transparent; }
+  .tasco-ai-body::-webkit-scrollbar-thumb { background: rgba(179,140,67,.28); border-radius: 99px; }
+  [data-theme="dark"] #tasco-ai-panel { box-shadow: 0 32px 85px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.055); }
+  [data-theme="dark"] .tasco-ai-welcome, [data-theme="dark"] .tasco-ai-composer { box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
+
+  /* Không để nút/trợ lý AI che các form chi tiết và hộp thoại nghiệp vụ. */
+  html.tasco-ai-detail-form-open #tasco-floating-dock,
+  html.tasco-ai-detail-form-open #tasco-ai-panel {
+    display: none !important;
+  }
+

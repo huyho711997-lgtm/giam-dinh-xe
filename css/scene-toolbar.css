@@ -1,0 +1,985 @@
+
+/* === LUXURY PREMIUM TOOLBAR RAIL & HEADER SYNC === */
+.scene-header-toggle-rail-btn {
+  height: 36px;
+  padding: 0 13px;
+  border: 1px solid rgba(180, 132, 45, 0.42);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(216,180,109,.10));
+  color: var(--text-main);
+  box-shadow: 0 2px 8px rgba(135, 94, 24, 0.08), inset 0 1px 0 rgba(255,255,255,.72);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.scene-header-toggle-rail-btn svg { color: #9b6b16; transition: transform .2s ease; }
+.scene-header-toggle-rail-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(180, 132, 45, 0.72);
+  background: linear-gradient(180deg, #fff, rgba(216,180,109,.20));
+  box-shadow: 0 5px 14px rgba(135, 94, 24, 0.15), inset 0 1px 0 rgba(255,255,255,.85);
+}
+.scene-header-toggle-rail-btn.active {
+  border-color: #d8b46d;
+  background: linear-gradient(180deg, rgba(216,180,109,.25), rgba(216,180,109,.12));
+  color: #875e18;
+}
+
+.scene-tool-rail {
+  overflow-x: hidden;
+  transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scene-tool-rail-header {
+  width: 44px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  margin-bottom: 2px;
+}
+.rail-header-title-box {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.8px;
+  color: #d8b46d;
+}
+.rail-header-toggle-btn {
+  height: 30px;
+  width: 42px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(216, 180, 109, 0.35);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(216,180,109,0.08));
+  color: #d8b46d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  transition: all 0.18s ease;
+}
+.rail-header-toggle-btn:hover {
+  background: linear-gradient(180deg, rgba(216,180,109,0.22), rgba(216,180,109,0.12));
+  border-color: #d8b46d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(216,180,109,0.22);
+}
+.rail-header-toggle-text {
+  display: none;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-soft);
+}
+
+.scene-tool-rail.expanded {
+  width: 230px !important;
+  align-items: stretch !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+.scene-tool-rail.expanded .scene-tool-rail-header {
+  width: 100%;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+.scene-tool-rail.expanded .rail-header-title-box {
+  display: flex;
+}
+.scene-tool-rail.expanded .rail-header-toggle-btn {
+  width: auto;
+  padding: 0 9px;
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+.scene-tool-rail.expanded .rail-header-toggle-btn:hover {
+  border-color: #d8b46d;
+  color: #d8b46d;
+}
+.scene-tool-rail.expanded .rail-header-toggle-text {
+  display: inline-block;
+}
+.scene-tool-rail.expanded #railHeaderChevron {
+  transform: rotate(180deg);
+}
+
+.scene-tool-rail.expanded .draw-tool-btn {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: flex-start !important;
+  padding-left: 10px !important;
+}
+.scene-tool-rail.expanded .draw-tool-btn svg {
+  margin-right: 10px;
+}
+.tool-rail-label {
+  display: none;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.scene-tool-rail.expanded .tool-rail-label {
+  display: block;
+}
+.scene-tool-rail.expanded .scene-tool-separator {
+  width: 100% !important;
+  margin: 2px 0 !important;
+}
+.scene-tool-rail.expanded .group-dropdown-caret {
+  right: 14px !important;
+  bottom: 50% !important;
+  transform: translateY(50%) !important;
+}
+.scene-tool-rail.expanded .color-swatch-wrap {
+  width: 100% !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  padding-left: 6px !important;
+  gap: 16px !important;
+}
+.scene-tool-rail.expanded .stroke-width-wrap {
+  width: 100% !important;
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+  padding-left: 0 !important;
+  gap: 6px !important;
+}
+
+/* === PREMIUM TOOL RAIL V2: unified collapsed / expanded experience === */
+body .scene-tool-rail {
+  width: 78px !important;
+  padding: 10px 8px !important;
+  gap: 6px !important;
+  box-sizing: border-box;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148,163,184,.28) transparent;
+  border-right: 1px solid rgba(148, 163, 184, .28) !important;
+  background:
+    radial-gradient(circle at 50% 0, rgba(216, 180, 109, .14), transparent 150px),
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.94)) !important;
+  box-shadow: inset -1px 0 rgba(255,255,255,.82), 8px 0 24px rgba(15,23,42,.035);
+  transition: width .28s cubic-bezier(.2,.8,.2,1), padding .28s cubic-bezier(.2,.8,.2,1), box-shadow .2s ease !important;
+}
+body .scene-tool-rail::-webkit-scrollbar { width: 5px; }
+body .scene-tool-rail::-webkit-scrollbar-track { background: transparent; }
+body .scene-tool-rail::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(148,163,184,.28);
+}
+body .scene-tool-rail::-webkit-scrollbar-thumb:hover { background: rgba(180,132,45,.48); }
+
+body .scene-tool-rail.expanded {
+  width: 248px !important;
+  padding: 10px 12px !important;
+  align-items: stretch !important;
+  box-shadow: inset -1px 0 rgba(255,255,255,.9), 16px 0 38px rgba(15,23,42,.07);
+}
+
+body .scene-tool-rail .scene-tool-rail-header {
+  position: sticky;
+  top: 0;
+  z-index: 7;
+  width: 42px;
+  min-height: 42px;
+  margin: 0 auto 4px;
+  padding: 4px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(180,132,45,.25);
+  border-radius: 12px;
+  background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(248,243,232,.95));
+  box-shadow: 0 6px 16px rgba(94,66,18,.1), inset 0 1px rgba(255,255,255,.95);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: width .24s cubic-bezier(.2,.8,.2,1), background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+body .scene-tool-rail .scene-tool-rail-header:hover {
+  border-color: rgba(180,132,45,.48);
+  background: linear-gradient(145deg, #fff, rgba(242,226,190,.62));
+  box-shadow: 0 8px 20px rgba(94,66,18,.14), inset 0 1px #fff;
+}
+body .scene-tool-rail.expanded .scene-tool-rail-header {
+  width: 100%;
+  min-height: 50px;
+  margin: 0 0 6px;
+  padding: 5px 4px 9px 8px;
+  justify-content: space-between;
+  border: 0;
+  border-bottom: 1px solid rgba(148,163,184,.2);
+  border-radius: 0;
+  background: rgba(255,255,255,.78);
+  box-shadow: none;
+}
+body .scene-tool-rail .rail-header-title-box {
+  display: none;
+  align-items: center;
+  gap: 9px;
+  color: #6f4b0d;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .115em;
+  white-space: nowrap;
+}
+body .scene-tool-rail.expanded .rail-header-title-box { display: flex; }
+body .scene-tool-rail .rail-header-brand-icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  border: 1px solid rgba(180,132,45,.24);
+  border-radius: 9px;
+  color: #986b18;
+  background: linear-gradient(145deg, #fff, rgba(216,180,109,.18));
+  box-shadow: inset 0 1px #fff;
+}
+body .scene-tool-rail .rail-header-title-box svg { flex: 0 0 auto; }
+body .scene-tool-rail .rail-header-toggle-btn {
+  width: 32px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  border-radius: 9px;
+  color: #9b6b16;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+body .scene-tool-rail .rail-header-toggle-btn:hover {
+  border: 0;
+  color: #6f4b0d;
+  background: rgba(216,180,109,.16);
+  box-shadow: none;
+  transform: none;
+}
+body .scene-tool-rail.expanded .rail-header-toggle-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(148,163,184,.26);
+  color: #475569;
+  background: rgba(255,255,255,.82);
+}
+body .scene-tool-rail #railToggleChevron { transition: all .28s cubic-bezier(.2,.8,.2,1); }
+body .scene-tool-rail .scene-tool-rail-header + .scene-tool-separator { display: none; }
+
+body .scene-tool-rail .scene-tool-section-label {
+  display: none;
+  flex: 0 0 auto;
+}
+body .scene-tool-rail.expanded .scene-tool-section-label {
+  display: flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 2px 10px 0;
+  color: #94a3b8;
+  font-size: 8.5px;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  user-select: none;
+}
+body .scene-tool-rail.expanded .scene-tool-section-label::after {
+  content: '';
+  height: 1px;
+  margin-left: 9px;
+  flex: 1;
+  background: linear-gradient(90deg, rgba(148,163,184,.3), transparent);
+}
+
+body .scene-tool-rail .draw-tool-btn {
+  position: relative !important;
+  width: 44px !important;
+  height: 42px !important;
+  min-height: 42px;
+  margin: 0 auto;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+  color: #334155 !important;
+  background: transparent !important;
+  box-shadow: none;
+  overflow: visible;
+  transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease, box-shadow .16s ease !important;
+}
+body .scene-tool-rail .draw-tool-btn:hover {
+  color: #8a6118 !important;
+  border-color: rgba(180,132,45,.28) !important;
+  background: rgba(255,255,255,.92) !important;
+  box-shadow: 0 6px 16px rgba(15,23,42,.075) !important;
+  transform: translateY(-1px);
+}
+body .scene-tool-rail .draw-tool-btn.active {
+  color: #67460d !important;
+  border-color: rgba(180,132,45,.5) !important;
+  background: linear-gradient(135deg, rgba(242,205,126,.32), rgba(216,180,109,.14)) !important;
+  box-shadow: 0 7px 18px rgba(155,107,22,.15), inset 0 1px rgba(255,255,255,.8) !important;
+}
+body .scene-tool-rail.expanded .draw-tool-btn {
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 48px 0 12px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start !important;
+}
+body .scene-tool-rail.expanded .draw-tool-btn:hover { transform: translateX(2px); }
+body .scene-tool-rail.expanded .draw-tool-btn > svg:not(.group-dropdown-caret),
+body .scene-tool-rail.expanded .draw-tool-btn > .group-tool-icon {
+  width: 24px;
+  min-width: 24px;
+  margin-right: 11px;
+  display: grid;
+  place-items: center;
+}
+body .scene-tool-rail.expanded .group-tool-icon svg { margin: 0 !important; }
+
+body .scene-tool-rail .tool-rail-label {
+  display: block;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(-5px);
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 720;
+  line-height: 1.2;
+  text-align: left;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: opacity .16s ease .05s, transform .2s ease .04s, max-width .24s ease;
+}
+body .scene-tool-rail.expanded .tool-rail-label {
+  max-width: 150px;
+  flex: 1;
+  opacity: 1;
+  transform: none;
+}
+body .scene-tool-rail .draw-tool-btn.active .tool-rail-label { color: #67460d; font-weight: 800; }
+
+body .scene-tool-rail .draw-tool-btn[data-shortcut]::before {
+  top: 2px !important;
+  left: 2px !important;
+  min-width: 15px !important;
+  height: 15px !important;
+  padding: 0 3px !important;
+  border-radius: 5px !important;
+  border: 1px solid rgba(148,163,184,.32) !important;
+  color: #64748b !important;
+  background: rgba(255,255,255,.96) !important;
+  box-shadow: 0 2px 6px rgba(15,23,42,.09) !important;
+  font-size: 8px !important;
+  font-weight: 850 !important;
+  transform: none;
+}
+body .scene-tool-rail .draw-tool-btn.active[data-shortcut]::before {
+  color: #fff !important;
+  border-color: #b4842d !important;
+  background: #b4842d !important;
+}
+body .scene-tool-rail.expanded .draw-tool-btn[data-shortcut]::before {
+  top: 50% !important;
+  right: 12px !important;
+  left: auto !important;
+  min-width: 24px !important;
+  height: 20px !important;
+  border-radius: 6px !important;
+  font-size: 9.5px !important;
+  transform: translateY(-50%);
+}
+body .scene-tool-rail.expanded .draw-tool-group-btn[data-shortcut]::before { right: 12px !important; }
+body .scene-tool-rail.expanded .group-dropdown-caret {
+  right: 43px !important;
+  bottom: 50% !important;
+  margin: 0 !important;
+  transform: translateY(50%) !important;
+  color: #94a3b8 !important;
+}
+
+body .scene-tool-rail .scene-tool-separator {
+  width: 34px !important;
+  height: 1px;
+  margin: 3px auto !important;
+  flex: 0 0 1px;
+  background: linear-gradient(90deg, transparent, rgba(148,163,184,.42), transparent) !important;
+}
+body .scene-tool-rail.expanded .scene-tool-separator {
+  width: calc(100% - 12px) !important;
+  margin: 4px auto !important;
+}
+
+body .scene-tool-rail .color-swatch-wrap,
+body .scene-tool-rail .stroke-width-wrap {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition: background .16s ease, border-color .16s ease;
+}
+body .scene-tool-rail.expanded .color-swatch-wrap,
+body .scene-tool-rail.expanded .stroke-width-wrap {
+  width: 100% !important;
+  min-height: 46px;
+  margin: 0 !important;
+  padding: 5px 48px 5px 10px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  background: rgba(255,255,255,.58);
+  border-color: rgba(148,163,184,.18);
+}
+body .scene-tool-rail.expanded .color-swatch-wrap:hover,
+body .scene-tool-rail.expanded .stroke-width-wrap:hover {
+  background: rgba(255,255,255,.94);
+  border-color: rgba(180,132,45,.28);
+}
+body .scene-tool-rail.expanded .color-swatch-wrap .tool-rail-label,
+body .scene-tool-rail.expanded .stroke-width-wrap .tool-rail-label {
+  max-width: 120px;
+  opacity: 1;
+  transform: none;
+}
+body .scene-tool-rail.expanded #btnStrokeWidthToggle {
+  width: 42px !important;
+  height: 34px !important;
+  min-width: 42px;
+  border-radius: 9px !important;
+}
+body .scene-tool-rail #drawColorSwatch { box-shadow: 0 4px 12px rgba(15,23,42,.18) !important; }
+body .scene-tool-rail > button:last-child {
+  color: #dc5967 !important;
+  border-color: rgba(220,89,103,.22) !important;
+  background: rgba(220,89,103,.055) !important;
+}
+body .scene-tool-rail > button:last-child:hover {
+  color: #fff !important;
+  border-color: #dc5967 !important;
+  background: #dc5967 !important;
+}
+body .scene-tool-rail > button:last-child:hover .tool-rail-label { color: #fff !important; }
+
+body .scene-header-toggle-rail-btn {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(148,163,184,.28);
+  border-radius: 12px;
+  color: #334155;
+  background: rgba(255,255,255,.84);
+  box-shadow: 0 4px 12px rgba(15,23,42,.06), inset 0 1px rgba(255,255,255,.85);
+  backdrop-filter: blur(10px);
+}
+body .scene-header-toggle-rail-btn svg { color: #9b6b16; }
+body .scene-header-toggle-rail-btn:hover {
+  border-color: rgba(180,132,45,.48);
+  background: #fff;
+  box-shadow: 0 7px 18px rgba(15,23,42,.09);
+}
+body .scene-header-toggle-rail-btn.active {
+  color: #fff;
+  border-color: #273244;
+  background: linear-gradient(135deg, #273244, #151c29);
+  box-shadow: 0 8px 20px rgba(15,23,42,.22);
+}
+body .scene-header-toggle-rail-btn.active svg { color: #e8c77f; }
+body .scene-header-toggle-rail-btn #headerToggleRailArrow { transition: transform .26s cubic-bezier(.2,.8,.2,1); }
+
+/* Keep the rail toggle outside the tool list so it is always easy to reach. */
+body .scene-tool-rail {
+  position: relative !important;
+  width: 72px !important;
+  margin: 8px 0 8px 8px !important;
+  padding: 10px 7px !important;
+  gap: 5px !important;
+  border: 1px solid rgba(180,132,45,.22) !important;
+  border-radius: 19px !important;
+  background:
+    radial-gradient(circle at 50% -20px, rgba(216,180,109,.2), transparent 105px),
+    linear-gradient(180deg, rgba(255,255,255,.985), rgba(249,247,242,.965)) !important;
+  box-shadow:
+    0 14px 32px rgba(15,23,42,.09),
+    0 2px 8px rgba(155,107,22,.055),
+    inset 0 1px rgba(255,255,255,.96) !important;
+  scrollbar-gutter: auto !important;
+  scrollbar-width: none;
+}
+body .scene-tool-rail:not(.expanded) .scene-tool-rail-header {
+  display: none;
+}
+body .scene-tool-rail.expanded .scene-tool-rail-header {
+  position: sticky !important;
+  top: -10px !important;
+  z-index: 30 !important;
+  width: calc(100% + 24px) !important;
+  min-height: 60px !important;
+  margin: -10px -12px 12px !important;
+  padding: 12px 16px 11px !important;
+  box-sizing: border-box;
+  justify-content: flex-start !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(180,132,45,.2) !important;
+  border-radius: 19px 19px 0 0 !important;
+  background: linear-gradient(180deg, #fff 0%, #fdfbf7 64%, #f8f2e7 100%) !important;
+  box-shadow: 0 10px 22px -18px rgba(94,66,18,.7) !important;
+  backdrop-filter: none !important;
+  cursor: default;
+  isolation: isolate;
+}
+body .scene-tool-rail.expanded .scene-tool-rail-header::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -13px;
+  left: 0;
+  height: 13px;
+  background: linear-gradient(180deg, rgba(248,242,231,.98) 0%, rgba(248,242,231,.82) 46%, rgba(248,242,231,0) 100%);
+  pointer-events: none;
+}
+body .scene-tool-rail.expanded {
+  width: 276px !important;
+  margin: 8px 0 8px 8px !important;
+  padding: 10px 12px !important;
+  border-color: rgba(180,132,45,.28) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 18px 42px rgba(15,23,42,.12),
+    0 3px 10px rgba(155,107,22,.07),
+    inset 0 1px rgba(255,255,255,.98) !important;
+}
+body .scene-tool-rail::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+body .scene-rail-scrollbar {
+  position: absolute;
+  top: 22px;
+  bottom: 22px;
+  left: 74px;
+  z-index: 38;
+  width: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148,163,184,.12);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.44);
+  opacity: .34;
+  pointer-events: none;
+  transition: left .28s cubic-bezier(.2,.8,.2,1), opacity .22s ease, width .22s ease, background .22s ease;
+}
+body .scene-rail-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 48px;
+  border-radius: inherit;
+  background: linear-gradient(180deg, #efd89f 0%, #d3a650 48%, #aa7722 100%);
+  box-shadow: 0 3px 9px rgba(122,82,17,.24), inset 0 1px rgba(255,255,255,.78);
+  will-change: transform, height;
+}
+body #sceneToolRail:hover ~ .scene-rail-scrollbar,
+body .scene-rail-scrollbar.is-active {
+  width: 6px;
+  opacity: .94;
+  background: rgba(180,132,45,.12);
+}
+body #sceneToolRail.expanded ~ .scene-rail-scrollbar {
+  left: 278px;
+}
+body .scene-tool-rail .draw-tool-btn {
+  border-radius: 13px !important;
+}
+body .scene-tool-rail .draw-tool-btn.active {
+  border-color: rgba(180,132,45,.62) !important;
+  background: linear-gradient(145deg, rgba(246,221,166,.48), rgba(216,180,109,.18)) !important;
+  box-shadow: 0 8px 18px rgba(155,107,22,.16), inset 0 1px rgba(255,255,255,.9) !important;
+}
+body .scene-tool-rail:not(.expanded) .draw-tool-btn[data-shortcut]::before {
+  top: 50% !important;
+  right: auto !important;
+  left: -9px !important;
+  min-width: 16px !important;
+  height: 16px !important;
+  padding: 0 3px !important;
+  border-radius: 6px !important;
+  transform: translateY(-50%) !important;
+  box-shadow: 0 3px 8px rgba(15,23,42,.12) !important;
+}
+body .scene-tool-rail:not(.expanded) .draw-tool-btn {
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+}
+body .scene-tool-rail:not(.expanded) .draw-tool-btn > svg:not(.group-dropdown-caret),
+body .scene-tool-rail:not(.expanded) .draw-tool-btn > .group-tool-icon {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  margin: 0 !important;
+  transform: translate(-50%, -50%) !important;
+}
+body .scene-tool-rail:not(.expanded) .group-tool-icon {
+  display: grid !important;
+  place-items: center !important;
+}
+body .scene-tool-rail:not(.expanded) .group-tool-icon > svg {
+  margin: 0 !important;
+}
+body .scene-tool-rail .color-swatch-wrap,
+body .scene-tool-rail .stroke-width-wrap {
+  cursor: pointer;
+  outline: none;
+}
+body .scene-tool-rail .color-swatch-wrap:focus-visible,
+body .scene-tool-rail .stroke-width-wrap:focus-visible {
+  border-color: rgba(180,132,45,.58) !important;
+  box-shadow: 0 0 0 3px rgba(216,180,109,.16), 0 7px 18px rgba(94,66,18,.1) !important;
+}
+body .scene-tool-rail.expanded .stroke-width-wrap[aria-expanded="true"] {
+  border-color: rgba(180,132,45,.46) !important;
+  background: linear-gradient(135deg, rgba(246,221,166,.38), rgba(216,180,109,.12)) !important;
+  box-shadow: 0 7px 18px rgba(155,107,22,.11) !important;
+}
+body .scene-tool-rail.expanded .tool-rail-label {
+  min-width: 0;
+  max-width: none;
+  font-size: 12.25px;
+  letter-spacing: -.01em;
+}
+body button.scene-rail-floating-toggle {
+  position: absolute;
+  top: 18px;
+  left: 84px;
+  z-index: 40;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(180,132,45,.34);
+  border-radius: 11px;
+  color: #8a6118;
+  background: linear-gradient(145deg, #fff 0%, #fbf6ea 54%, #f2e2bd 100%);
+  box-shadow: 0 8px 20px rgba(94,66,18,.13), inset 0 1px rgba(255,255,255,.98);
+  cursor: pointer;
+  transition: left .28s cubic-bezier(.2,.8,.2,1), color .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+body button.scene-rail-floating-toggle svg {
+  width: 17px;
+  height: 17px;
+  filter: drop-shadow(0 1px rgba(255,255,255,.7));
+}
+body button.scene-rail-floating-toggle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -6px;
+  width: 6px;
+  height: 1px;
+  border: 0;
+  background: linear-gradient(90deg, rgba(180,132,45,.08), rgba(180,132,45,.48));
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+body button.scene-rail-floating-toggle:hover {
+  color: #6f4b0d;
+  border-color: rgba(180,132,45,.58);
+  background: linear-gradient(145deg, #fff 0%, #f8edcf 50%, #eacb84 100%);
+  box-shadow: 0 10px 24px rgba(94,66,18,.16), inset 0 1px #fff;
+  transform: translateY(-1px);
+}
+body button.scene-rail-floating-toggle:focus-visible {
+  outline: 2px solid rgba(180,132,45,.65);
+  outline-offset: 2px;
+}
+body #sceneToolRail.expanded + .scene-rail-floating-toggle {
+  top: 20px;
+  left: 242px;
+  width: 34px;
+  height: 34px;
+  color: #8a6118;
+  border-color: rgba(180,132,45,.28);
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(244,230,198,.92));
+  box-shadow: 0 5px 14px rgba(94,66,18,.1), inset 0 1px #fff;
+}
+body #sceneToolRail.expanded + .scene-rail-floating-toggle::before {
+  display: none;
+}
+body #sceneToolRail.expanded + .scene-rail-floating-toggle:hover {
+  color: #6f4b0d;
+  border-color: rgba(180,132,45,.52);
+  background: linear-gradient(145deg, #fff 0%, #f7ebcb 54%, #e9c87e 100%);
+  box-shadow: 0 7px 18px rgba(94,66,18,.15), inset 0 1px #fff;
+  transform: translateY(-1px);
+}
+
+/* The drawing UI follows the app theme; the printable paper stays white.
+   Scope the dark palette here so the existing light theme is unchanged. */
+body:not(.light-mode) #sceneDrawingModalOverlay {
+  --scene-tool-text: #dce2ec;
+  --scene-tool-muted: #a3afc2;
+  --scene-tool-accent: #f5dc9c;
+  --scene-tool-border: #354052;
+  --scene-tool-hover: #242d3b;
+  --scene-tool-active: linear-gradient(145deg, #343026, #27251f);
+  --scene-tool-shadow: 0 8px 20px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.045);
+  color-scheme: dark;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-shortcut-summary > span,
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-shortcut-summary kbd {
+  color: var(--scene-tool-accent);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-shortcut-summary kbd {
+  border-color: rgba(216,180,109,.45);
+  background: #2a2b28;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail {
+  border-color: #354052 !important;
+  background:
+    radial-gradient(circle at 50% -20px, rgba(216,180,109,.065), transparent 110px),
+    linear-gradient(180deg, #18202b, #101620) !important;
+  box-shadow: 0 14px 32px rgba(0,0,0,.32), inset 0 1px rgba(255,255,255,.045) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail.expanded .scene-tool-rail-header {
+  border-bottom-color: var(--scene-tool-border) !important;
+  background: linear-gradient(180deg, #1b2330, #18202b 64%, #151c26) !important;
+  box-shadow: 0 10px 22px -18px rgba(0,0,0,.8) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail.expanded .scene-tool-rail-header::after {
+  background: linear-gradient(180deg, #151c26, rgba(21,28,38,.82) 46%, rgba(21,28,38,0));
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .rail-header-title-box {
+  color: var(--scene-tool-accent);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .rail-header-brand-icon {
+  color: var(--scene-tool-accent);
+  border-color: rgba(216,180,109,.3);
+  background: #292d31;
+  box-shadow: inset 0 1px rgba(255,255,255,.045);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .scene-tool-section-label {
+  color: var(--scene-tool-muted);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .scene-tool-section-label::after {
+  background: linear-gradient(90deg, #3d485b, transparent);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .scene-tool-separator {
+  background: linear-gradient(90deg, transparent, #3d485b, transparent) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .draw-tool-btn {
+  color: var(--scene-tool-text) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .draw-tool-btn:hover {
+  color: var(--scene-tool-accent) !important;
+  border-color: rgba(216,180,109,.38) !important;
+  background: var(--scene-tool-hover) !important;
+  box-shadow: var(--scene-tool-shadow) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .draw-tool-btn.active {
+  color: var(--scene-tool-accent) !important;
+  border-color: rgba(216,180,109,.65) !important;
+  background: var(--scene-tool-active) !important;
+  box-shadow: var(--scene-tool-shadow) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .tool-rail-label {
+  color: var(--scene-tool-text);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .draw-tool-btn:hover .tool-rail-label,
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .draw-tool-btn.active .tool-rail-label {
+  color: var(--scene-tool-accent);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .draw-tool-btn[data-shortcut]::before {
+  color: #c8d2e3 !important;
+  border-color: #445169 !important;
+  background: #222c3c !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,.28) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .draw-tool-btn.active[data-shortcut]::before {
+  color: #211a0c !important;
+  border-color: #d8b46d !important;
+  background: #d8b46d !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .group-dropdown-caret {
+  color: var(--scene-tool-muted) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .draw-tool-btn.active .group-dropdown-caret {
+  color: var(--scene-tool-accent) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail.expanded .color-swatch-wrap,
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail.expanded .stroke-width-wrap {
+  border-color: var(--scene-tool-border);
+  background: #1b2330;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail.expanded .color-swatch-wrap:hover,
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail.expanded .stroke-width-wrap:hover {
+  border-color: rgba(216,180,109,.38);
+  background: var(--scene-tool-hover);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail.expanded .stroke-width-wrap[aria-expanded="true"] {
+  border-color: rgba(216,180,109,.65) !important;
+  background: var(--scene-tool-active) !important;
+  box-shadow: var(--scene-tool-shadow) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay #btnStrokeWidthToggle {
+  border-color: #445169 !important;
+  background: #222c3c !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay #toolbarStrokeText {
+  color: var(--scene-tool-accent) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay #toolbarStrokePreviewDot {
+  box-shadow: 0 0 0 1px rgba(255,255,255,.45);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail > button:last-child {
+  color: #ff9ba5 !important;
+  border-color: rgba(255,107,122,.32) !important;
+  background: rgba(255,107,122,.075) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail > button:last-child .tool-rail-label {
+  color: #ff9ba5;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail > button:last-child:hover {
+  color: #fff !important;
+  border-color: #ae3444 !important;
+  background: #ae3444 !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail > button:last-child:hover .tool-rail-label {
+  color: #fff !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-rail-floating-toggle,
+body:not(.light-mode) #sceneDrawingModalOverlay #sceneToolRail.expanded + .scene-rail-floating-toggle {
+  color: var(--scene-tool-accent);
+  border-color: rgba(216,180,109,.42);
+  background: linear-gradient(145deg, #2b313c, #1a222e);
+  box-shadow: var(--scene-tool-shadow);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-rail-floating-toggle:hover,
+body:not(.light-mode) #sceneDrawingModalOverlay #sceneToolRail.expanded + .scene-rail-floating-toggle:hover {
+  color: #fff0c9;
+  border-color: #d8b46d;
+  background: linear-gradient(145deg, #38362d, #282a2c);
+  box-shadow: var(--scene-tool-shadow);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-rail-floating-toggle svg {
+  filter: none;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-rail-scrollbar {
+  background: rgba(163,175,194,.14);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-rail-scrollbar-thumb {
+  background: linear-gradient(180deg, #d8b46d, #977638);
+  box-shadow: 0 3px 9px rgba(0,0,0,.24), inset 0 1px rgba(255,255,255,.12);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-header-print-btn {
+  color: var(--scene-tool-accent);
+  border-color: rgba(216,180,109,.42);
+  background: linear-gradient(180deg, #292f39, #1a222e);
+  box-shadow: 0 2px 8px rgba(0,0,0,.24), inset 0 1px rgba(255,255,255,.045);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-header-print-btn svg {
+  color: inherit;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-header-print-btn:not(:disabled):hover {
+  color: #fff0c9;
+  border-color: #d8b46d;
+  background: linear-gradient(180deg, #38362d, #282a2c);
+  box-shadow: var(--scene-tool-shadow);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-header-print-btn:disabled {
+  opacity: .6;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .draw-tool-btn:focus-visible,
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-rail-floating-toggle:focus-visible {
+  outline: 2px solid #d8b46d;
+  outline-offset: 2px;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-header-print-btn:focus-visible,
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .color-swatch-wrap:focus-visible,
+body:not(.light-mode) #sceneDrawingModalOverlay .scene-tool-rail .stroke-width-wrap:focus-visible {
+  outline: 2px solid #d8b46d;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(216,180,109,.16), var(--scene-tool-shadow) !important;
+}
+
+/* Clear, elevated form fields in dark mode, without changing light mode,
+   field dimensions, semantic text colors, or inline validation borders. */
+body:not(.light-mode) {
+  --input-border: #71839b;
+  --input-hover-border: #a1b3cc;
+  --input-readonly-bg: #18212e;
+  --input-disabled-bg: #161e29;
+  --input-accent-blue: #7cb7ff;
+}
+body:not(.light-mode) :is(.input-premium, .textarea-premium, .p-input, .inputs-entry-pane textarea) {
+  color-scheme: dark;
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.065), 0 2px 5px rgba(0,0,0,.12);
+  caret-color: #f5dc9c;
+}
+body:not(.light-mode) :is(.input-premium, .textarea-premium, .p-input, .inputs-entry-pane textarea)::placeholder {
+  color: var(--placeholder-color);
+  opacity: 1;
+}
+body:not(.light-mode) :is(.input-premium, .textarea-premium, .p-input, .inputs-entry-pane textarea):hover:not(:disabled):not([readonly]) {
+  border-color: var(--input-hover-border);
+}
+body:not(.light-mode) :is(.input-premium, .textarea-premium, .p-input, .inputs-entry-pane textarea):focus:not(:disabled):not([readonly]) {
+  outline: none;
+  border-color: #e2bd78;
+  background-color: var(--input-focus-bg) !important;
+  box-shadow: 0 0 0 3px rgba(226,189,120,.22), inset 0 1px 0 rgba(255,255,255,.08);
+}
+body:not(.light-mode) :is(.input-premium, .textarea-premium, .p-input, .inputs-entry-pane textarea)[readonly] {
+  color: #bbc7d8 !important;
+  background-color: var(--input-readonly-bg) !important;
+  border-color: #617087;
+  border-style: dashed;
+  cursor: default;
+}
+body:not(.light-mode) :is(.input-premium, .textarea-premium, .p-input, .inputs-entry-pane textarea)[readonly]:focus {
+  outline: 2px solid #a1b3cc;
+  outline-offset: 2px;
+}
+body:not(.light-mode) :is(.input-premium, .textarea-premium, .p-input, .inputs-entry-pane textarea):disabled {
+  color: #a2afc2 !important;
+  -webkit-text-fill-color: #a2afc2;
+  background-color: var(--input-disabled-bg) !important;
+  border-color: #617087;
+  border-style: solid;
+  opacity: 1 !important;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+body:not(.light-mode) select:is(.input-premium, .p-input) option {
+  color: var(--text-main);
+  background-color: var(--input-bg);
+}

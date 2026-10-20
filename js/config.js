@@ -1,0 +1,16 @@
+
+    const CONFIG = {
+      FIREBASE: {
+        apiKey: "AIzaSyCZoQ3_YFxGLPb7eRJ6Ming0mghMUafSKI",
+        authDomain: "doi-chieu-gara.firebaseapp.com",
+        databaseURL: "https://doi-chieu-gara-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "doi-chieu-gara",
+        storageBucket: "doi-chieu-gara.firebasestorage.app",
+        messagingSenderId: "455769692413",
+        appId: "1:455769692413:web:241f9daff918ecc69b8694",
+        measurementId: "G-VBXHGY09XX"
+      },
+      CLOUDINARY_CLOUD_NAME: 'ug4spdjp',
+      CLOUDINARY_UPLOAD_PRESET: 'giam_dinh_xe_unsigned',
+      CLOUDINARY_FOLDER: 'giam_dinh_xe'
+    };
