@@ -1,0 +1,18 @@
+.authority-request-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:20px}
+.authority-request-header h3{margin:0 0 6px;font-size:20px}.authority-request-header p{margin:0;color:var(--text-soft);line-height:1.6}
+.authority-request-context{padding:13px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface-strong);color:var(--text-soft);font-size:13px;line-height:1.7;margin-bottom:22px}
+.authority-request-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 22px}
+.authority-request-grid>div:first-child,.authority-request-wide{grid-column:1/-1}
+#authorityRequestForm label:not(.authority-request-check){display:block;margin:0 0 7px;font-size:12px;font-weight:750;color:var(--text-soft)}
+#authorityRequestForm .input-premium{width:100%;box-sizing:border-box}#authorityRequestForm textarea{resize:vertical;line-height:1.6;padding:13px 15px;min-height:76px}
+.authority-request-section{position:relative;margin-top:26px;padding-top:22px;border-top:1px solid var(--border)}
+.authority-request-section h4{margin:0 0 16px;font-size:15px}.authority-request-count{position:absolute;right:0;top:22px;font-size:12px;color:var(--primary)}
+.authority-request-check{display:flex;gap:12px;align-items:flex-start;cursor:pointer;margin:14px 0;line-height:1.6;color:var(--text)}
+.authority-request-check input{flex:none;width:18px;height:18px;margin-top:3px;accent-color:var(--primary)}
+.authority-request-check strong{display:block;font-size:13px;font-weight:700}.authority-request-check small{display:block;font-size:12px;color:var(--text-soft);margin-top:2px}
+.authority-request-detail{margin:10px 0 20px 30px}.authority-request-detail[hidden]{display:none!important}
+.authority-request-review{padding:16px;border:1px solid var(--border);background:var(--surface-strong);border-radius:12px;font-size:13px;margin:24px 0}
+.authority-request-actions{display:flex;gap:10px;flex-wrap:wrap}.authority-request-actions button{width:auto!important}
+.authority-request-note{font-size:12px;color:var(--text-soft);line-height:1.6}
+@media(min-width:1200px){#authorityRequestForm{max-width:1100px;margin:auto}}
+@media(max-width:650px){.authority-request-grid{grid-template-columns:1fr}.authority-request-count{position:static;display:block;margin:-8px 0 10px}.authority-request-detail{margin-left:0}.authority-request-header h3{font-size:18px}}
