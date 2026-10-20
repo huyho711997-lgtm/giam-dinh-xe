@@ -17,6 +17,49 @@ const authorityRequestOptions = [
   ['examinationDocs','Khám nghiệm hiện trường, phương tiện','Hồ sơ, tài liệu, bản ảnh khám nghiệm khác (nếu có).']
 ];
 let authorityRequestBusy=false;
+let authorityRequestDownloadUrl='';
+function clearAuthorityRequestFeedback(){
+  const panel=document.getElementById('authorityRequestMessage');if(panel){panel.hidden=true;panel.replaceChildren();}
+  for(const input of document.querySelectorAll('[data-authority-invalid]')){
+    input.removeAttribute('aria-invalid');delete input.dataset.authorityInvalid;
+    const hintId=input.id+'_exportError',described=(input.getAttribute('aria-describedby') || '').split(/\s+/).filter(id=>id && id!==hintId).join(' ');
+    if(described)input.setAttribute('aria-describedby',described);else input.removeAttribute('aria-describedby');
+  }
+  document.querySelectorAll('.authority-request-field-error').forEach(hint=>hint.remove());
+  if(authorityRequestDownloadUrl){const previous=authorityRequestDownloadUrl;authorityRequestDownloadUrl='';setTimeout(()=>URL.revokeObjectURL(previous),60000);}
+}
+function authorityRequestFeedback(type,message,download){
+  const panel=document.getElementById('authorityRequestMessage');if(!panel)return;
+  panel.replaceChildren();panel.hidden=false;panel.dataset.type=type;panel.setAttribute('role',type==='error'?'alert':'status');
+  panel.append(collectionGuideElement('span','',message));
+  if(download){const link=collectionGuideElement('a','authority-request-download','Tải tệp Word');link.href=download.url;link.download=download.filename;panel.append(link);}
+}
+function authorityRequestValidationError(message,fieldId,tab='AuthorityRequest'){
+  const error=new Error(message);error.fieldId=fieldId;error.tab=tab;return error;
+}
+function authorityRequestShowError(error){
+  clearAuthorityRequestFeedback();
+  if(error.fieldId){closeCollectionGuidePreview();switchEditClaimTab(error.tab || 'AuthorityRequest');}
+  else if(!document.getElementById('collectionGuidePreview'))switchEditClaimTab('AuthorityRequest');
+  authorityRequestFeedback('error',error.message || String(error));
+  const input=error.fieldId && document.getElementById(error.fieldId);
+  if(input){
+    input.dataset.authorityInvalid='true';input.setAttribute('aria-invalid','true');
+    const hint=collectionGuideElement('div','authority-request-field-error',error.message);hint.id=input.id+'_exportError';
+    const wrapper=input.closest('.authority-request-field,.authority-request-detail,.authority-request-check') || input.parentElement;
+    wrapper.append(hint);input.setAttribute('aria-describedby',[input.getAttribute('aria-describedby'),hint.id].filter(Boolean).join(' '));
+    input.scrollIntoView({block:'center'});input.focus({preventScroll:true});
+  }
+  collectionGuideReport(error);
+}
+function authorityRequestSetBusy(busy){
+  for(const button of document.querySelectorAll('[data-authority-export]')){
+    button.disabled=busy;button.setAttribute('aria-busy',String(busy));
+    const label=button.querySelector('[data-export-label]');
+    if(label){if(!button.dataset.exportLabel)button.dataset.exportLabel=label.textContent;label.textContent=busy?'Đang tạo tệp…':button.dataset.exportLabel;}
+  }
+}
+document.addEventListener('input',event=>{if(event.target.hasAttribute('data-authority-invalid'))clearAuthorityRequestFeedback();});
 function authorityRequestMeta() {
   ensureCollectionGuide();
   const saved=collectionGuideDraft.authorityRequest || {},guide=collectionGuideDraft.meta;
@@ -56,26 +99,40 @@ function authorityRequestRefresh() {
   }
   const count=document.getElementById('authorityRequestSelectedCount');
   if(count)count.textContent=Object.values(meta.selected).filter(Boolean).length+'/4 nhóm tài liệu';
-  for(const [key,manual] of Object.entries(meta.manualFields))if(!manual){const input=pane.querySelector('#authorityRequest_'+key);if(input)input.value=meta[key];}
+  for(const [key,manual] of Object.entries(meta.manualFields))if(!manual){const input=pane.querySelector('#authorityRequest_'+key);if(input){input.value=meta[key];input.dataset.authorityRenderedValue=input.value;}}
   for(const [checkbox,field] of [['includeConsequence','consequence'],['includeBasis','basis']]){
     const wrapper=pane.querySelector('[data-authority-detail="'+field+'"]');if(wrapper)wrapper.hidden=!meta[checkbox];
   }
 }
-function readAuthorityRequestForm(changedKey) {
+function readAuthorityRequestForm(changedKey,silent=false) {
   const pane=document.getElementById('authorityRequestForm');if(!pane || !collectionGuideDraft)return;
+  if(!silent)clearAuthorityRequestFeedback();
   const meta=authorityRequestMeta();
+  const previous=authorityRequestReviewToken(meta,authorityRequestClaim());
   if(changedKey in meta.manualFields)meta.manualFields[changedKey]=true;
   for(const input of pane.querySelectorAll('[data-authority-field]')){
     const key=input.dataset.authorityField;
     if(input.type==='checkbox'){
       if(key in meta.selected)meta.selected[key]=input.checked;else meta[key]=input.checked;
-    }else meta[key]=input.value.slice(0,input.maxLength>0?input.maxLength:1000);
+    }else{
+      // Read autofill too; untouched automatic fields keep following the main claim.
+      if(key in meta.manualFields && !meta.manualFields[key]){
+        if(input.value===input.dataset.authorityRenderedValue)continue;
+        meta.manualFields[key]=true;
+      }
+      meta[key]=input.value.slice(0,input.maxLength>0?input.maxLength:1000);
+      input.dataset.authorityRenderedValue=input.value;
+    }
   }
-  meta.reviewed='';collectionGuideDraft.authorityRequest=meta;
-  authorityRequestRefresh();scheduleCollectionGuideAutoSave();
+  const changed=previous!==authorityRequestReviewToken(meta,authorityRequestClaim());
+  if(changed)meta.reviewed='';collectionGuideDraft.authorityRequest=meta;
+  if(!silent)authorityRequestRefresh();
+  if(changed || !silent)scheduleCollectionGuideAutoSave();
+  return meta;
 }
 function initializeAuthorityRequest() {
   const host=document.getElementById('authorityRequestForm');if(!host)return;
+  clearAuthorityRequestFeedback();
   const meta=authorityRequestMeta();host.replaceChildren();
   const icons={
     document:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5"/>',
@@ -104,7 +161,7 @@ function initializeAuthorityRequest() {
     if(label.endsWith(' *'))caption.append(collectionGuideElement('span','authority-request-required',' *'));
     const input=collectionGuideElement(type==='textarea'?'textarea':'input','input-premium');
     if(type!=='textarea')input.type=type;else input.rows=2;
-    input.id='authorityRequest_'+key;input.dataset.authorityField=key;input.maxLength=limit;input.value=meta[key];caption.htmlFor=input.id;
+    input.id='authorityRequest_'+key;input.dataset.authorityField=key;input.maxLength=limit;input.value=meta[key];input.dataset.authorityRenderedValue=input.value;caption.htmlFor=input.id;
     if(key==='recipient')input.placeholder='Ví dụ: Cơ quan Cảnh sát điều tra – Công an tỉnh…';
     if(key==='documentNumber')input.placeholder='Ví dụ: 123';
     if(key==='otherParty')input.placeholder='Ví dụ: xe mô tô do ông / bà… điều khiển';
@@ -136,7 +193,7 @@ function initializeAuthorityRequest() {
   const extraWrap=collectionGuideElement('div','authority-request-extra'),extraLabel=collectionGuideElement('label','','Tài liệu bổ sung khác'),extra=collectionGuideElement('textarea','input-premium');extraLabel.htmlFor=extra.id='authorityRequest_extraDocs';extra.rows=3;extra.maxLength=900;extra.dataset.authorityField='extraDocs';extra.value=meta.extraDocs;extra.placeholder='Mỗi dòng một tài liệu cần bổ sung…';extraWrap.append(extraLabel,extra);documents.append(extraWrap);
   const review=collectionGuideElement('label','authority-request-check authority-request-review'),check=collectionGuideElement('input');check.id='authorityRequest_review';check.type='checkbox';
   const reviewCopy=collectionGuideElement('span');reviewCopy.append(collectionGuideElement('strong','','Xác nhận nội dung công văn'),collectionGuideElement('small','','Tôi đã kiểm tra cơ quan nhận, thông tin vụ tai nạn, GCNBH và các nội dung được chọn trước khi xuất.'));review.append(check,reviewCopy);
-  check.addEventListener('change',()=>{const current=authorityRequestMeta();current.reviewed=check.checked?authorityRequestReviewToken(current,authorityRequestClaim()):'';scheduleCollectionGuideAutoSave();});
+  check.addEventListener('change',()=>{clearAuthorityRequestFeedback();const current=readAuthorityRequestForm(undefined,true) || authorityRequestMeta();current.reviewed=check.checked?authorityRequestReviewToken(current,authorityRequestClaim()):'';scheduleCollectionGuideAutoSave();});
   aside.append(documents,details);layout.append(primary,aside);host.append(layout,review);
   host.oninput=event=>{if(event.target.dataset.authorityField && event.target.type!=='checkbox')readAuthorityRequestForm(event.target.dataset.authorityField);};
   host.onchange=event=>{if(event.target.dataset.authorityField)readAuthorityRequestForm(event.target.dataset.authorityField);};
@@ -144,19 +201,21 @@ function initializeAuthorityRequest() {
 }
 function openAuthorityRequestTab(){closeCollectionWordMenu();switchEditClaimTab('AuthorityRequest');document.getElementById('authorityRequest_recipient')?.focus();}
 function authorityRequestSnapshot(requireReview=true) {
-  const meta=structuredClone(authorityRequestMeta()),claim=authorityRequestClaim();
+  const meta=structuredClone(readAuthorityRequestForm(undefined,true) || authorityRequestMeta()),claim=authorityRequestClaim();
   for(const key of Object.keys(meta))if(typeof meta[key]==='string' && key!=='reviewed')meta[key]=meta[key].trim();
-  if(!claim.number || !claim.plate)throw new Error('Vui lòng nhập số HSBT và biển số ở tab Hợp đồng & Khách hàng.');
-  if(!claim.lossDate || !claim.location)throw new Error('Vui lòng nhập ngày và địa điểm tổn thất ở tab Vụ tổn thất & Diễn biến.');
-  for(const [key,label] of authorityRequestFields)if(label.endsWith(' *') && !meta[key])throw new Error('Vui lòng nhập '+label.replace(' *','').toLocaleLowerCase('vi')+'.');
-  if(!collectionGuideDate(meta.date))throw new Error('Ngày ban hành không hợp lệ.');
-  if(meta.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(meta.email))throw new Error('Email liên hệ không hợp lệ.');
-  if(meta.includeConsequence && !meta.consequence)throw new Error('Vui lòng nhập thông tin hậu quả tai nạn đã xác minh.');
-  if(meta.includeBasis && !meta.basis)throw new Error('Vui lòng nhập nội dung căn cứ đã chọn.');
-  if(!Object.values(meta.selected).some(Boolean) && !meta.extraDocs)throw new Error('Vui lòng chọn ít nhất một nhóm tài liệu hoặc nhập tài liệu bổ sung.');
+  if(!claim.number)throw authorityRequestValidationError('Vui lòng nhập số HSBT của hồ sơ.','modalPendingSoHoSoBoiThuong','Policy');
+  if(!claim.plate)throw authorityRequestValidationError('Vui lòng nhập biển số xe của hồ sơ.','modalPendingBienSo','Policy');
+  if(!claim.lossDate)throw authorityRequestValidationError('Vui lòng nhập ngày tổn thất hợp lệ.','modalPendingNgayVTT','Event');
+  if(!claim.location)throw authorityRequestValidationError('Vui lòng nhập địa điểm chi tiết tổn thất.','modalPendingDiaDiemVTT','Event');
+  for(const [key,label] of authorityRequestFields)if(label.endsWith(' *') && !meta[key])throw authorityRequestValidationError('Vui lòng nhập '+label.replace(' *','').toLocaleLowerCase('vi')+'.','authorityRequest_'+key);
+  if(!collectionGuideDate(meta.date))throw authorityRequestValidationError('Ngày ban hành không hợp lệ.','authorityRequest_date');
+  if(meta.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(meta.email))throw authorityRequestValidationError('Email liên hệ không hợp lệ.','authorityRequest_email');
+  if(meta.includeConsequence && !meta.consequence)throw authorityRequestValidationError('Vui lòng nhập thông tin hậu quả tai nạn đã xác minh.','authorityRequest_consequence');
+  if(meta.includeBasis && !meta.basis)throw authorityRequestValidationError('Vui lòng nhập nội dung căn cứ đã chọn.','authorityRequest_basis');
+  if(!Object.values(meta.selected).some(Boolean) && !meta.extraDocs)throw authorityRequestValidationError('Vui lòng chọn ít nhất một nhóm tài liệu hoặc nhập tài liệu bổ sung.','authorityRequest_vehicleDocs');
   const snapshot={meta,claim};if(requireReview)authorityRequestAssertReviewed(snapshot);return snapshot;
 }
-function authorityRequestAssertReviewed(snapshot){if(snapshot.meta.reviewed!==authorityRequestReviewToken(snapshot.meta,snapshot.claim))throw new Error('Vui lòng tích xác nhận đã kiểm tra nội dung trong tab Trưng cầu hồ sơ.');}
+function authorityRequestAssertReviewed(snapshot){if(snapshot.meta.reviewed!==authorityRequestReviewToken(snapshot.meta,snapshot.claim))throw authorityRequestValidationError('Vui lòng tích xác nhận đã kiểm tra nội dung công văn trước khi xuất.','authorityRequest_review');}
 function buildAuthorityRequestWordXml(snapshot) {
   const {meta,claim}=snapshot,doc=collectionGuideParse(AUTHORITY_REQUEST_TEMPLATE.documentXml),texts=AUTHORITY_REQUEST_TEMPLATE.texts;
   const date=meta.date.split('-'),loss=claim.lossDate.split('/');
@@ -187,13 +246,22 @@ async function buildAuthorityRequestWord(snapshot){
   return collectionGuideZip({'word/document.xml':new TextEncoder().encode(xml)},AUTHORITY_REQUEST_TEMPLATE.zipUrl);
 }
 async function exportAuthorityRequestWord(savedSnapshot){
-  if(authorityRequestBusy)return;authorityRequestBusy=true;
+  if(authorityRequestBusy)return;
+  const draft=collectionGuideDraft;authorityRequestBusy=true;clearAuthorityRequestFeedback();authorityRequestSetBusy(true);
   try{
     const snapshot=savedSnapshot || authorityRequestSnapshot();authorityRequestAssertReviewed(snapshot);
+    authorityRequestFeedback('loading','Đang tạo tệp Word, vui lòng đợi…');
     const blob=await buildAuthorityRequestWord(snapshot),url=URL.createObjectURL(blob),link=document.createElement('a');
-    link.href=url;link.download=('Trung_cau_ho_so_'+snapshot.claim.number).replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').slice(0,180)+'.docx';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
-    triggerToast('Đã xuất công văn trưng cầu hồ sơ.','success');
-  }catch(error){if(!savedSnapshot)openAuthorityRequestTab();collectionGuideReport(error);}finally{authorityRequestBusy=false;}
+    const filename=('Trung_cau_ho_so_'+snapshot.claim.number).replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').slice(0,180)+'.docx';
+    if(collectionGuideDraft===draft){authorityRequestDownloadUrl=url;authorityRequestFeedback('success','Đã tạo công văn. Nếu trình duyệt chưa tự tải, bấm Tải tệp Word.',{url,filename});}
+    else setTimeout(()=>URL.revokeObjectURL(url),60000);
+    link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();
+    const preview=document.getElementById('collectionGuidePreview');
+    if(preview && collectionGuideDraft===draft)closeCollectionGuidePreview();
+    if(collectionGuideDraft===draft){switchEditClaimTab('AuthorityRequest');document.getElementById('authorityRequestMessage')?.scrollIntoView({block:'center'});}
+    triggerToast('Đã tạo công văn Word. Có thể bấm Tải tệp Word để tải lại.','success');
+  }catch(error){if(collectionGuideDraft===draft)authorityRequestShowError(error);else collectionGuideReport(error);}
+  finally{authorityRequestBusy=false;authorityRequestSetBusy(false);}
 }
 function buildAuthorityRequestPrintHtml(snapshot){
   const doc=buildAuthorityRequestWordXml(snapshot),body=doc.getElementsByTagNameNS(collectionGuideW,'body')[0],counters={};let tableIndex=0;
@@ -204,6 +272,8 @@ function buildAuthorityRequestPrintHtml(snapshot){
 function previewAuthorityRequest(){
   try{
     const snapshot=authorityRequestSnapshot(false),html=buildAuthorityRequestPrintHtml(snapshot),title='Trưng cầu hồ sơ từ cơ quan chức năng';
-    openCollectionDocumentPreview({title,html,claim:snapshot.claim,onExport:()=>exportAuthorityRequestWord(snapshot),onPrint:()=>{try{authorityRequestAssertReviewed(snapshot);printCollectionDocumentHtml(html,title);}catch(error){collectionGuideReport(error);}},onEdit:()=>{closeCollectionGuidePreview();openAuthorityRequestTab();}});
-  }catch(error){openAuthorityRequestTab();collectionGuideReport(error);}
+    openCollectionDocumentPreview({title,html,claim:snapshot.claim,onExport:()=>exportAuthorityRequestWord(snapshot),onPrint:()=>{try{authorityRequestAssertReviewed(snapshot);printCollectionDocumentHtml(html,title);}catch(error){authorityRequestShowError(error);}},onEdit:()=>{closeCollectionGuidePreview();openAuthorityRequestTab();}});
+    const exportButton=document.querySelector('#collectionGuidePreview .collection-guide-preview-export');
+    if(exportButton){exportButton.dataset.authorityExport='';exportButton.lastElementChild.dataset.exportLabel='';}
+  }catch(error){authorityRequestShowError(error);}
 }
