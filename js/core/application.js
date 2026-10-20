@@ -94,6 +94,8 @@
               dbNodeInstance.ref(`users/${userInstance.uid}/profile/email`).set(userInstance.email).catch(() => {});
             }
           } else {
+            resetClaimDocumentContext();
+            claimDocumentLibrary.sequence++;claimDocumentLibrary.rows=[];
             activeUserProfile = null;
           }
         } catch (e) {

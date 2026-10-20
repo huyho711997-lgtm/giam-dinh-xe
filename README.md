@@ -65,3 +65,17 @@ Thư viện Firebase, JSZip, XLSX, html2canvas, Chart.js và Google Fonts tiếp
 ## Hiệu quả của việc tách file
 
 `index.html` giảm từ 3.557.000 byte xuống khoảng 215 KB. Tổng dữ liệu dự án vẫn chủ yếu là mã nghiệp vụ và mẫu biểu; việc chia nhỏ giúp bảo trì, lưu bộ nhớ đệm từng tài nguyên và tránh tải mẫu Word trước khi cần. Đây là bước tổ chức lại mã, chưa phải chuyển toàn bộ giao diện sang cơ chế tải theo nhu cầu.
+
+## Kho sơ đồ & hướng dẫn
+
+Mở **Quản lý Hồ sơ → Kho sơ đồ & hướng dẫn** để tìm bằng biển số, số HSBT, mã vụ tổn thất hoặc tên khách hàng. Có bộ lọc sơ đồ, hướng dẫn và hồ sơ gốc đã xoá; mỗi trang hiển thị 20 bộ tài liệu.
+
+- Sơ đồ tiếp tục lưu tại `scene_diagrams/<claimId>` với ảnh, đối tượng vector và thông tin mẫu. Hướng dẫn được lưu riêng tại `collection_guides/<claimId>`, gồm trạng thái giấy tờ, thông tin xuất tài liệu, nội dung chỉnh sửa A4 và thông tin nhận diện hồ sơ.
+- Trong tab hướng dẫn, bấm **Lưu hướng dẫn vào kho** để lưu riêng ngay. **Lưu cập nhật hồ sơ** cũng lưu hướng dẫn vào kho cùng lần ghi dữ liệu. Với hồ sơ mới, lưu hồ sơ lần đầu để có mã tài liệu.
+- Chọn **Lưu giữ tài liệu hiện có** để sao chép dữ liệu nhúng cũ sang kho riêng. Bản độc lập đã tồn tại được giữ lại. Thao tác xoá một hồ sơ hoặc xoá toàn bộ cũng thực hiện bước lưu giữ trước; nếu bước này lỗi, việc xoá dừng lại.
+- Tài liệu vẫn mở, sửa, in và xuất bằng các công cụ hiện có sau khi xoá hồ sơ. Màn hình có nhãn “Tài liệu lưu riêng”; lưu ở đây không tạo lại hồ sơ đã xoá.
+- Quyền xem và sửa sử dụng quyền `pending` hiện có, kèm thông tin người tạo, người lưu và giám định viên được phân công. Quyền truy cập thực tế do Firebase Realtime Database Security Rules quyết định.
+
+Nhánh mới `collection_guides` cần quyền đọc/ghi phù hợp với chính sách hiện có của ứng dụng; tính năng không thay đổi Security Rules. Việc di chuyển dùng transaction nên cần cả quyền đọc và ghi trên tài liệu đích. Nếu Firebase báo `PERMISSION_DENIED`, kiểm tra chính sách cho `collection_guides` và `scene_diagrams` trước khi tiếp tục lưu/xoá. Nếu không đọc được kho mới, chỉnh sửa hồ sơ hiện có vẫn giữ hướng dẫn nhúng làm bản dự phòng và hiện thông báo chưa lưu riêng; thao tác xoá vẫn dừng nếu lưu giữ thất bại. Xem [tài liệu đọc/ghi Firebase](https://firebase.google.com/docs/database/web/read-and-write) và [Security Rules](https://firebase.google.com/docs/database/security).
+
+Chạy `npm test` để kiểm tra việc lưu giữ khi xoá một hoặc nhiều hồ sơ, lỗi quyền truy cập, giữ bản độc lập mới hơn, mở lại hướng dẫn, lưu tài liệu không tạo lại hồ sơ, giới hạn người xem và phản hồi tải đến muộn. Các kiểm tra dùng dữ liệu giả trong bộ nhớ, không tác động dữ liệu Firebase thật.

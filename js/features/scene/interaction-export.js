@@ -1719,13 +1719,7 @@ function applySceneDiagramStoredData(rawRecord) {
 
 function getSceneDiagramClaimReference(claimId, claimContext) {
   const item = claimContext || {};
-  const getFieldValue = (id) => String(document.getElementById(id)?.value || '').trim();
-  return {
-    claimId: String(claimId || item.id || ''),
-    maVuTonThat: String(item.maVuTonThat || getFieldValue('modalPendingMaVuTonThat') || ''),
-    soHoSoBoiThuong: String(item.soHoSoBoiThuong || getFieldValue('modalPendingSoHoSoBoiThuong') || ''),
-    bienSo: String(item.bienSo || getFieldValue('modalPendingBienSo') || '')
-  };
+  return claimDocumentFormReference(claimId, {...item,...(claimDocumentStore.context?.reference||{})});
 }
 
 
@@ -1750,7 +1744,7 @@ function buildSceneDiagramStorageRecord(claimId, claimContext) {
 
 
 async function clearEmbeddedSceneDiagramFields(claimId) {
-  if (!claimId || !dbNodeInstance) return;
+  if (!claimId || !dbNodeInstance || claimDocumentStore.context?.documentOnly) return;
   const cleanupPayload = {
     soDoHienTruong: null,
     soDoHienTruongData: null,
@@ -1780,14 +1774,14 @@ async function loadSceneDiagramForClaim(claim, claimId) {
     if (requestSequence !== sceneDiagramLoadSequence) return;
     if (snapshot.exists()) {
       applySceneDiagramStoredData(snapshot.val());
-      if (hasLegacyData) {
+      if (hasLegacyData && hasUserPermission('pending','edit')) {
         try { await clearEmbeddedSceneDiagramFields(resolvedClaimId); }
         catch (cleanupError) { console.warn('Chưa thể dọn dữ liệu sơ đồ cũ trong hồ sơ:', cleanupError); }
       }
       return;
     }
 
-    if (hasLegacyData) {
+    if (hasLegacyData && hasUserPermission('pending','edit')) {
       const migratedRecord = buildSceneDiagramStorageRecord(resolvedClaimId, item);
       await dbNodeInstance.ref(`scene_diagrams/${resolvedClaimId}`).set(migratedRecord);
       try { await clearEmbeddedSceneDiagramFields(resolvedClaimId); }
@@ -1934,6 +1928,7 @@ async function saveSceneDrawing() {
     }
 
     closeSceneDrawingModal();
+    if(activeDashboardTab==='document_library')void loadClaimDocumentLibrary();
     const message = editingPendingClaimId
       ? 'Đã lưu sơ đồ hiện trường vào kho dữ liệu độc lập.'
       : 'Đã đính kèm sơ đồ. Hãy bấm “Lưu hồ sơ tiếp nhận” để hoàn tất.';
@@ -1957,6 +1952,7 @@ async function saveSceneDrawing() {
 
 
 async function removeSceneDiagram() {
+  if(!hasUserPermission('pending','edit'))return triggerToast('Bạn không có quyền xoá sơ đồ.','error');
   if (!confirm('Xóa sơ đồ hiện trường này?')) return;
 
   const previousImage = sceneDiagramDataUrl;
@@ -1983,6 +1979,7 @@ async function removeSceneDiagram() {
       catch (cleanupError) { console.warn('Đã xóa sơ đồ riêng nhưng chưa thể dọn dữ liệu cũ:', cleanupError); }
     }
     if (typeof triggerToast === 'function') triggerToast('Đã xóa sơ đồ hiện trường.', 'success');
+    if(activeDashboardTab==='document_library')void loadClaimDocumentLibrary();
   } catch (error) {
     sceneDiagramDataUrl = previousImage;
     sceneDiagramShapesSnapshot = previousShapes;

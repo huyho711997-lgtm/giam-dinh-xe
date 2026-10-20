@@ -130,6 +130,7 @@
 
 
     function openAddPendingClaimModal() {
+      resetClaimDocumentContext();
       if (!hasUserPermission('pending', 'add')) {
         triggerToast('Bạn không có quyền tiếp nhận hồ sơ tổn thất mới.', 'warning');
         return;
@@ -193,6 +194,7 @@
       if (addTndsInfoEl) addTndsInfoEl.innerHTML = '';
 
       initializeCollectionGuide();
+      claimDocumentStore.ready = true;
       switchEditClaimTab('Policy');
 
       modal.style.display = 'grid';
@@ -200,7 +202,10 @@
     }
 
 
-    async function openEditPendingClaimModal(claimId, initialTab) {
+    async function openEditPendingClaimModal(claimId, initialTab, options = {}) {
+      resetClaimDocumentContext();
+      const openDocumentSequence=claimDocumentStore.formSequence;
+      if(options.documentOnly)claimDocumentStore.context={id:claimId,reference:options.claim,documentOnly:true};
       if (!claimId || !cachedPendingClaimsPayload) return;
       
       const btnSubmit = document.getElementById('btnSubmitAddPendingClaim');
@@ -217,7 +222,7 @@
           btnSubmit.title = '';
         }
       }
-      let item = cachedPendingClaimsPayload[claimId];
+      let item = options.claim || cachedPendingClaimsPayload[claimId];
       if (!item) {
         item = Object.values(cachedPendingClaimsPayload).find(c => c && (c.id === claimId || c.idCa === claimId || c.maVuTonThat === claimId));
       }
@@ -286,6 +291,7 @@
       setVal('modalPendingNguyenNhan', item.nguyenNhan || item.nhomNguyenNhan || '');
       setVal('modalPendingMoTaTonThat', item.moTaTonThat || item.dienBienTonThat || '');
       await loadSceneDiagramForClaim(item, claimId);
+      if(editingPendingClaimId!==claimId || openDocumentSequence!==claimDocumentStore.formSequence)return;
 
       setVal('modalPendingDonViCapDon', item.donViCapDon || item.chiNhanh || '');
       setVal('modalPendingChiNhanhXuly', item.chiNhanhXuly || '');
@@ -321,7 +327,9 @@
         }
       }
 
-      initializeCollectionGuide(item);
+      await loadCollectionGuideForClaim(item, claimId);
+      if(editingPendingClaimId!==claimId || openDocumentSequence!==claimDocumentStore.formSequence)return;
+      if(options.documentOnly)configureClaimDocumentOnlyForm(item);
       switchEditClaimTab(initialTab || 'Policy');
 
       const modal = document.getElementById('addPendingClaimModalOverlay');
@@ -333,6 +341,8 @@
 
 
     function closeAddPendingClaimModal() {
+      resetClaimDocumentContext();
+      sceneDiagramLoadSequence++;
       clearCollectionGuideDraft();
       const modal = document.getElementById('addPendingClaimModalOverlay');
       if (modal) {
@@ -422,6 +432,10 @@
 
 
     async function saveAddPendingClaimFromModal() {
+      if(claimDocumentStore.context?.documentOnly)return saveCollectionGuideToLibrary({close:true});
+      if(!claimDocumentStore.ready && !claimDocumentStore.guideError)return triggerToast('Đang tải hướng dẫn đã lưu. Vui lòng chờ rồi thử lại.','warning');
+      const independentGuideAvailable=!claimDocumentStore.guideError;
+      const documentSequence=claimDocumentStore.sequence;
       const isEditing = !!editingPendingClaimId;
       if (isEditing) {
         if (!hasUserPermission('pending', 'edit')) {
@@ -554,21 +568,29 @@
         trangThai: existingItem.trangThai || 'moi',
         createdAt: existingItem.createdAt || Date.now(),
         updatedAt: Date.now(),
-        createdByName: creatorName,
-        huongDanThuThapHoSo: (await collectionGuidePrepareContact(), getCollectionGuideState())
+        createdByName: creatorName
       };
 
       const btnSave = document.getElementById('btnSubmitAddPendingClaim');
       if (btnSave) btnSave.disabled = true;
 
       try {
+        await collectionGuidePrepareContact();
+        if(documentSequence!==claimDocumentStore.sequence)return;
+        document.getElementById('collectionGuidePreview')?._guideEditor?.flush();
+        // An existing claim may have been deleted while its modal was open.
+        const claimStillExists=!isEditing || (await dbNodeInstance.ref(`pending_claims/${targetClaimId}`).once('value')).exists();
+        if(documentSequence!==claimDocumentStore.sequence)return;
         const databaseUpdates = {};
-        databaseUpdates[`pending_claims/${targetClaimId}`] = payload;
+        if(claimStillExists)databaseUpdates[`pending_claims/${targetClaimId}`] = payload;
+        if(independentGuideAvailable)databaseUpdates[`collection_guides/${targetClaimId}`] = buildCollectionGuideStorageRecord(targetClaimId,payload,getCollectionGuideState(),claimDocumentStore.guideRecord);
+        else if(claimStillExists)payload.huongDanThuThapHoSo=getCollectionGuideState();
+        else throw new Error('Chưa có quyền lưu hướng dẫn vào kho riêng. Hồ sơ gốc đã xoá nên không thể lưu lại vào hồ sơ.');
         if (sceneDiagramDataUrl) {
           databaseUpdates[`scene_diagrams/${targetClaimId}`] = buildSceneDiagramStorageRecord(targetClaimId, payload);
         }
         await dbNodeInstance.ref().update(databaseUpdates);
-        if (cachedPendingClaimsPayload) {
+        if (cachedPendingClaimsPayload && claimStillExists) {
           cachedPendingClaimsPayload[targetClaimId] = payload;
         }
         closeAddPendingClaimModal();
@@ -578,7 +600,8 @@
         if (typeof activeDashboardTab !== 'undefined' && activeDashboardTab === 'pending') {
           executeUIRenderPendingClaims();
         }
-        triggerToast(isEditing ? `Đã cập nhật thông tin hồ sơ ${payload.bienSo} thành công!` : `Đã tiếp nhận thành công hồ sơ ${payload.bienSo} (${payload.maVuTonThat})!`, 'success');
+        if(!independentGuideAvailable)triggerToast('Đã lưu hồ sơ và hướng dẫn trong hồ sơ. Chưa lưu được vào kho riêng; hãy kiểm tra quyền Firebase trước khi xoá dữ liệu.','warning');
+        else triggerToast(!claimStillExists ? 'Hồ sơ gốc đã bị xoá; tài liệu được lưu riêng và hồ sơ không được tạo lại.' : isEditing ? `Đã cập nhật thông tin hồ sơ ${payload.bienSo} thành công!` : `Đã tiếp nhận thành công hồ sơ ${payload.bienSo} (${payload.maVuTonThat})!`, 'success');
       } catch (e) {
         console.error(e);
         triggerToast('Không thể lưu hồ sơ: ' + e.message, 'error');
@@ -608,7 +631,7 @@
 
       const confirmText = await showCustomPromptModalAsync({
         title: 'CẢNH BÁO NGHIÊM TRỌNG',
-        message: `Hành động này sẽ XÓA VĨNH VIỄN toàn bộ ${totalClaimsCount} hồ sơ tồn trong hệ thống. Sơ đồ hiện trường được lưu tại kho riêng và sẽ không bị xóa.\n\nĐể xác nhận, vui lòng nhập chính xác chữ: <strong style="color:var(--text-main);">XOA TAT CA</strong>`,
+        message: `Hành động này sẽ XÓA VĨNH VIỄN toàn bộ ${totalClaimsCount} hồ sơ tồn trong hệ thống. Sơ đồ hiện trường và hướng dẫn thu thập sẽ được lưu giữ ở kho riêng trước khi xoá.\n\nĐể xác nhận, vui lòng nhập chính xác chữ: <strong style="color:var(--text-main);">XOA TAT CA</strong>`,
         requireText: 'XOA TAT CA',
         confirmText: 'XÓA TOÀN BỘ'
       });
@@ -620,9 +643,9 @@
 
       try {
         triggerToast('Đang tiến hành xóa toàn bộ dữ liệu hồ sơ tồn...', 'info');
-        await dbNodeInstance.ref('pending_claims').remove();
+        await deleteAllPendingClaimsKeepingDocuments();
         cachedPendingClaimsPayload = {};
-        triggerToast('Đã xóa toàn bộ hồ sơ tồn; các sơ đồ hiện trường vẫn được giữ trong kho riêng.', 'success');
+        triggerToast('Đã xóa toàn bộ hồ sơ tồn; sơ đồ và hướng dẫn thu thập vẫn được giữ trong kho riêng.', 'success');
         executeUIRenderPendingClaims();
       } catch (err) {
         console.error(err);
