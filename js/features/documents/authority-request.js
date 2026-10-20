@@ -47,7 +47,13 @@ function authorityRequestRefresh() {
   const meta=authorityRequestMeta(),claim=authorityRequestClaim(),review=pane.querySelector('#authorityRequest_review');
   if(review)review.checked=meta.reviewed===authorityRequestReviewToken(meta,claim);
   const summary=document.getElementById('authorityRequestClaimSummary');
-  if(summary)summary.textContent=`HSBT: ${claim.number || 'Chưa nhập'} · Biển số: ${claim.plate || 'Chưa nhập'} · Ngày tai nạn: ${claim.lossDate || 'Chưa nhập'} · Địa điểm: ${claim.location || 'Chưa nhập'}`;
+  if(summary){
+    summary.replaceChildren();
+    for(const [label,value] of [['Số HSBT',claim.number],['Biển số xe',claim.plate],['Ngày tai nạn',claim.lossDate],['Địa điểm',claim.location]]){
+      const item=collectionGuideElement('div','authority-request-context-item');
+      item.append(collectionGuideElement('span','',label),collectionGuideElement('strong','',value || 'Chưa nhập'));summary.append(item);
+    }
+  }
   const count=document.getElementById('authorityRequestSelectedCount');
   if(count)count.textContent=Object.values(meta.selected).filter(Boolean).length+'/4 nhóm tài liệu';
   for(const [key,manual] of Object.entries(meta.manualFields))if(!manual){const input=pane.querySelector('#authorityRequest_'+key);if(input)input.value=meta[key];}
@@ -71,19 +77,44 @@ function readAuthorityRequestForm(changedKey) {
 function initializeAuthorityRequest() {
   const host=document.getElementById('authorityRequestForm');if(!host)return;
   const meta=authorityRequestMeta();host.replaceChildren();
-  const grid=collectionGuideElement('div','authority-request-grid');
+  const icons={
+    document:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5"/>',
+    vehicle:'<path d="m5 7 2-4h10l2 4M4 7h16v10H4zM7 17v3M17 17v3M4 11h16M7 14h1M16 14h1"/>',
+    contact:'<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 6h4M17 10h4M18 16h3"/>',
+    papers:'<path d="M9 5H5v16h14V5h-4M9 3h6v4H9zM8 12h8M8 16h5"/>',
+    confirm:'<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6zM8 12l3 3 5-6"/>'
+  };
+  function section(title,description,icon){
+    const card=collectionGuideElement('section','authority-request-card'),heading=collectionGuideElement('div','authority-request-card-heading');
+    const symbol=collectionGuideElement('span','authority-request-card-icon');symbol.setAttribute('aria-hidden','true');
+    symbol.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+icons[icon]+'</svg>';
+    const copy=collectionGuideElement('div');copy.append(collectionGuideElement('h4','',title),collectionGuideElement('p','',description));heading.append(symbol,copy);card.append(heading);return card;
+  }
+  const layout=collectionGuideElement('div','authority-request-layout'),primary=collectionGuideElement('div','authority-request-primary'),aside=collectionGuideElement('div','authority-request-aside');
+  const groups=[
+    ['Thông tin công văn','Đơn vị nhận và thông tin ban hành.','document',['recipient','documentNumber','city','date']],
+    ['Thông tin vụ tai nạn','Thông tin dùng để đề nghị cung cấp hồ sơ.','vehicle',['certificate','vehicleType','time','otherParty']],
+    ['Thông tin liên hệ','Cán bộ và địa chỉ tiếp nhận phản hồi.','contact',['contact','phone','email','address']]
+  ];
+  const grids=new Map();
+  for(const [title,description,icon,keys] of groups){const card=section(title,description,icon),grid=collectionGuideElement('div','authority-request-grid');card.append(grid);primary.append(card);for(const key of keys)grids.set(key,grid);}
   for(const [key,label,type,limit] of authorityRequestFields){
-    const wrap=collectionGuideElement('div',type==='textarea'?'authority-request-wide':''),caption=collectionGuideElement('label','',label);
+    const wrap=collectionGuideElement('div','authority-request-field'+(type==='textarea' || key==='recipient'?' authority-request-wide':'')),caption=collectionGuideElement('label');
+    const displayLabel=label.replace(/ \*$/,'').replace(/ \(.*\)$/,'');caption.append(collectionGuideElement('span','',displayLabel));
+    if(label.endsWith(' *'))caption.append(collectionGuideElement('span','authority-request-required',' *'));
     const input=collectionGuideElement(type==='textarea'?'textarea':'input','input-premium');
     if(type!=='textarea')input.type=type;else input.rows=2;
     input.id='authorityRequest_'+key;input.dataset.authorityField=key;input.maxLength=limit;input.value=meta[key];caption.htmlFor=input.id;
     if(key==='recipient')input.placeholder='Ví dụ: Cơ quan Cảnh sát điều tra – Công an tỉnh…';
-    if(key==='documentNumber')input.placeholder='Ví dụ: 123 (tự thêm /năm/CV-BHTASCO)';
+    if(key==='documentNumber')input.placeholder='Ví dụ: 123';
     if(key==='otherParty')input.placeholder='Ví dụ: xe mô tô do ông / bà… điều khiển';
     if(key==='certificate')input.placeholder='Kiểm tra đúng GCNBH của nghiệp vụ cần trưng cầu';
-    wrap.append(caption,input);grid.append(wrap);
+    wrap.append(caption,input);
+    const hints={documentNumber:'Để trống nếu chưa cấp số công văn.',time:'Có thể để trống nếu chưa xác định.',email:'Không bắt buộc.',otherParty:'Bổ sung phương tiện, người liên quan nếu có.'};
+    if(hints[key]){const hint=collectionGuideElement('small','authority-request-field-hint',hints[key]);hint.id=input.id+'_hint';input.setAttribute('aria-describedby',hint.id);wrap.append(hint);}
+    grids.get(key).append(wrap);
   }
-  const details=collectionGuideElement('section','authority-request-section');details.append(collectionGuideElement('h4','','Nội dung cần xác nhận'));
+  const details=section('Nội dung xác nhận','Chỉ chọn những nội dung đã xác minh.','confirm');
   function checkbox(key,label,description,parent=details){
     const line=collectionGuideElement('label','authority-request-check'),input=collectionGuideElement('input');input.type='checkbox';input.id='authorityRequest_'+key;input.dataset.authorityField=key;
     input.checked=key in meta.selected?meta.selected[key]:meta[key]===true;
@@ -98,15 +129,15 @@ function initializeAuthorityRequest() {
   detail('consequence','Thông tin hậu quả và nguồn xác nhận *','Ví dụ: Theo thông báo tai nạn của chủ xe, ông / bà… bị…');
   checkbox('includeBasis','Đưa căn cứ về bảo hiểm TNDS bắt buộc theo mẫu','Kiểm tra căn cứ phù hợp với hồ sơ trước khi chọn. Có thể sửa nội dung bên dưới.');
   detail('basis','Nội dung căn cứ *');
-  const documents=collectionGuideElement('section','authority-request-section');
-  const title=collectionGuideElement('h4','','Tài liệu đề nghị cung cấp'),count=collectionGuideElement('span','authority-request-count');count.id='authorityRequestSelectedCount';documents.append(title,count);
+  const documents=section('Tài liệu đề nghị cung cấp','Chọn các nhóm tài liệu cần thu thập.','papers');
+  const count=collectionGuideElement('span','authority-request-count');count.id='authorityRequestSelectedCount';documents.append(count);
   for(const [key,label,description] of authorityRequestOptions)checkbox(key,label,description,documents);
   checkbox('requestTransfer','Đề nghị thông tin cơ quan đang tiếp tục thụ lý','Dùng khi vụ việc có thể đã chuyển cơ quan khác hoặc Tòa án.',documents);
-  const extraLabel=collectionGuideElement('label','','Tài liệu bổ sung khác (mỗi dòng một mục)'),extra=collectionGuideElement('textarea','input-premium');extraLabel.htmlFor=extra.id='authorityRequest_extraDocs';extra.rows=3;extra.maxLength=900;extra.dataset.authorityField='extraDocs';extra.value=meta.extraDocs;documents.append(extraLabel,extra);
+  const extraWrap=collectionGuideElement('div','authority-request-extra'),extraLabel=collectionGuideElement('label','','Tài liệu bổ sung khác'),extra=collectionGuideElement('textarea','input-premium');extraLabel.htmlFor=extra.id='authorityRequest_extraDocs';extra.rows=3;extra.maxLength=900;extra.dataset.authorityField='extraDocs';extra.value=meta.extraDocs;extra.placeholder='Mỗi dòng một tài liệu cần bổ sung…';extraWrap.append(extraLabel,extra);documents.append(extraWrap);
   const review=collectionGuideElement('label','authority-request-check authority-request-review'),check=collectionGuideElement('input');check.id='authorityRequest_review';check.type='checkbox';
-  review.append(check,collectionGuideElement('span','','Tôi đã kiểm tra cơ quan nhận, thông tin vụ tai nạn, GCNBH và các nội dung được chọn trước khi xuất công văn.'));
+  const reviewCopy=collectionGuideElement('span');reviewCopy.append(collectionGuideElement('strong','','Xác nhận nội dung công văn'),collectionGuideElement('small','','Tôi đã kiểm tra cơ quan nhận, thông tin vụ tai nạn, GCNBH và các nội dung được chọn trước khi xuất.'));review.append(check,reviewCopy);
   check.addEventListener('change',()=>{const current=authorityRequestMeta();current.reviewed=check.checked?authorityRequestReviewToken(current,authorityRequestClaim()):'';scheduleCollectionGuideAutoSave();});
-  host.append(grid,details,documents,review);
+  aside.append(documents,details);layout.append(primary,aside);host.append(layout,review);
   host.oninput=event=>{if(event.target.dataset.authorityField && event.target.type!=='checkbox')readAuthorityRequestForm(event.target.dataset.authorityField);};
   host.onchange=event=>{if(event.target.dataset.authorityField)readAuthorityRequestForm(event.target.dataset.authorityField);};
   authorityRequestRefresh();

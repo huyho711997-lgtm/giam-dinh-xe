@@ -254,16 +254,21 @@
 
         <div id="tabPane_AuthorityRequest" class="edit-tab-pane" style="display:none">
           <div class="authority-request-header">
-            <div><h3>Trưng cầu hồ sơ từ cơ quan chức năng</h3><p>Lập công văn theo mẫu, chọn tài liệu cần thu thập và xác nhận thông tin trước khi xuất.</p></div>
+            <div class="authority-request-heading">
+              <span class="authority-request-heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5"/></svg></span>
+              <div><h3>Trưng cầu hồ sơ từ cơ quan chức năng</h3><p>Lập công văn, chọn tài liệu và xác nhận nội dung trước khi xuất.</p></div>
+            </div>
             <span id="authorityRequestAutoStatus" class="claim-document-autosave" role="status">Tự lưu theo số HSBT</span>
           </div>
           <div id="authorityRequestClaimSummary" class="authority-request-context"></div>
           <div id="authorityRequestForm"></div>
-          <div class="authority-request-actions">
-            <button type="button" class="btn-premium btn-secondary" onclick="previewAuthorityRequest()">Xem trước công văn</button>
-            <button type="button" class="btn-premium" onclick="exportAuthorityRequestWord()">Xuất Word (.docx)</button>
+          <div class="authority-request-footer">
+            <p class="authority-request-note">Thông tin xe và tai nạn lấy từ hồ sơ đang mở. Khi thay đổi nội dung, cần xác nhận lại trước khi xuất. Số công văn chưa cấp sẽ để dấu “…”.</p>
+            <div class="authority-request-actions">
+              <button type="button" class="btn-premium btn-secondary" onclick="previewAuthorityRequest()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Xem trước</button>
+              <button type="button" class="btn-premium" onclick="exportAuthorityRequestWord()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 17v3h14v-3"/></svg>Xuất Word (.docx)</button>
+            </div>
           </div>
-          <p class="authority-request-note">Biển số, số HSBT, ngày và địa điểm tai nạn được lấy từ hồ sơ đang mở. Khi thay đổi nội dung, cần xác nhận lại trước khi xuất. Số công văn chưa cấp sẽ để dấu “…”.</p>
         </div>
 
         <!-- TAB 1: POLICY & CUSTOMER -->
