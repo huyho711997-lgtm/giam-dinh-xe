@@ -1,0 +1,72 @@
+
+  .tasco-public-nav-wrapper {
+    background: var(--surface-strong);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+    width: 100%;
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(24px) saturate(135%);
+    isolation: isolate;
+  }
+  [data-theme="dark"] .tasco-public-nav-wrapper {
+    background: rgba(15, 18, 24, 0.98);
+  }
+  .tasco-public-nav-inner {
+    width: min(1660px, 96%);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 12px 20px;
+    box-sizing: border-box;
+  }
+  .tasco-public-nav-wrapper .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    cursor: pointer;
+  }
+  .tasco-public-nav-wrapper .nav-logo {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(216,180,109,0.3);
+    border-radius: 12px;
+    background: rgba(216,180,109,0.12);
+  }
+  .tasco-public-nav-wrapper .nav-links-center {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+  .tasco-public-nav-wrapper .nav-links-center a {
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+    transition: color 0.2s;
+  }
+  .tasco-public-nav-wrapper .nav-links-center a:hover,
+  .tasco-public-nav-wrapper .nav-links-center a.active { 
+    color: var(--primary); 
+  }
+  @media (min-width: 768px) {
+    .tasco-public-nav-inner { padding: 12px 24px; }
+  }
+    @media (max-width: 1050px) {
+    .tasco-public-nav-inner {
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      padding-left: 4px !important;
+      padding-right: 4px !important;
+    }
+  }
+  @media (max-width: 1024px) {
+    .tasco-public-nav-wrapper .nav-links-center { display: none; }
+  }
+

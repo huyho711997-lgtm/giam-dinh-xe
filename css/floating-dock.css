@@ -1,0 +1,82 @@
+
+  #tasco-floating-dock {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 9999;
+    display: grid;
+    gap: 7px;
+    padding: 7px;
+    border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border));
+    border-radius: 21px;
+    background: color-mix(in srgb, var(--surface-strong) 88%, transparent);
+    box-shadow: 0 18px 42px rgba(15,23,42,.16), 0 4px 12px rgba(15,23,42,.08), inset 0 1px 0 rgba(255,255,255,.72);
+    backdrop-filter: blur(22px) saturate(145%);
+  }
+  .tasco-floating-action {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    color: #98702c;
+    border: 1px solid rgba(179,140,67,.24);
+    border-radius: 15px;
+    background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(216,180,109,.12));
+    box-shadow: 0 5px 13px rgba(15,23,42,.07), inset 0 1px 0 rgba(255,255,255,.92);
+    cursor: pointer;
+    transition: color .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s cubic-bezier(.2,.75,.25,1);
+  }
+  .tasco-floating-action::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(179,140,67,.09);
+    border-radius: 11px;
+    pointer-events: none;
+  }
+  .tasco-floating-action::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: calc(100% + 12px);
+    top: 50%;
+    padding: 7px 10px;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 9px;
+    background: rgba(17,24,39,.92);
+    box-shadow: 0 9px 24px rgba(15,23,42,.2);
+    font-family: inherit;
+    font-size: 10.5px;
+    font-weight: 750;
+    letter-spacing: .01em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(5px,-50%);
+    transition: opacity .16s ease, transform .16s ease;
+  }
+  .tasco-floating-action:hover {
+    color: #fff;
+    border-color: rgba(179,140,67,.58);
+    background: linear-gradient(145deg, #e7be64, #b5812d);
+    box-shadow: 0 10px 22px rgba(179,140,67,.28), inset 0 1px 0 rgba(255,255,255,.42);
+    transform: translateX(-2px);
+  }
+  .tasco-floating-action:hover::after, .tasco-floating-action:focus-visible::after { opacity: 1; transform: translate(0,-50%); }
+  .tasco-floating-action:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(216,180,109,.18), 0 10px 22px rgba(179,140,67,.2); }
+  .tasco-floating-action svg { position: relative; z-index: 1; width: 19px; height: 19px; }
+  .tasco-floating-action .tasco-ai-icon { width: 22px; height: 22px; }
+  #tasco-ai-btn.is-active { color: #17120a; border-color: transparent; background: linear-gradient(145deg, #f0cd79, #bd8730); box-shadow: 0 10px 24px rgba(179,140,67,.3), inset 0 1px 0 rgba(255,255,255,.55); }
+  [data-theme="dark"] #tasco-floating-dock { box-shadow: 0 20px 46px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.055); }
+  [data-theme="dark"] .tasco-floating-action { color: #e5c27a; background: linear-gradient(145deg, rgba(216,180,109,.14), rgba(255,255,255,.025)); box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+  #scrollToTopBtn {
+    display: none;
+  }
+  #scrollToTopBtn.visible {
+    display: grid;
+    animation: tascoDockActionIn .22s cubic-bezier(.2,.8,.25,1);
+  }
+  @keyframes tascoDockActionIn { from { opacity: 0; transform: translateY(9px) scale(.88); } to { opacity: 1; transform: translateY(0) scale(1); } }
+

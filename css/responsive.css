@@ -1,0 +1,23 @@
+
+  @media (max-width: 768px) {
+    #tasco-ai-btn, #tasco-ai-panel {
+      display: none !important;
+    }
+  }
+
+  @keyframes fadeInPopover {
+    from {
+      opacity: 0;
+      transform: translateX(-8px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  .stroke-preset-btn:hover {
+    border-color: rgba(216, 180, 109, 0.45) !important;
+    background: rgba(216, 180, 109, 0.12) !important;
+  }
+

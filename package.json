@@ -1,0 +1,11 @@
+{
+  "name": "giam-dinh-xe",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ứng dụng giám định và bồi thường xe cơ giới Tasco DLK",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "engines": { "node": ">=20" }
+}

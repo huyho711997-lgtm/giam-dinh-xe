@@ -1,0 +1,165 @@
+
+          .scene-shortcut-summary {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 3px 9px;
+          }
+          .scene-shortcut-summary > span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #92691d;
+            font-weight: 750;
+            white-space: nowrap;
+          }
+          .scene-shortcut-summary kbd {
+            min-width: 18px;
+            height: 17px;
+            padding: 0 4px;
+            display: inline-grid;
+            place-items: center;
+            border: 1px solid rgba(216, 180, 109, 0.42);
+            border-bottom-width: 2px;
+            border-radius: 5px;
+            background: rgba(216, 180, 109, 0.14);
+            color: #8b6117;
+            font-family: inherit;
+            font-size: 9px;
+            font-weight: 800;
+            line-height: 1;
+            box-sizing: border-box;
+          }
+          .scene-tool-rail {
+            width: 72px !important;
+            padding: 10px 0 !important;
+            gap: 6px !important;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(216, 180, 109, 0.45) transparent;
+          }
+          .scene-tool-separator {
+            width: 32px;
+            height: 1px;
+            flex: 0 0 1px;
+            margin: 3px 0;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+          }
+          .scene-tool-rail .draw-tool-btn {
+            position: relative !important;
+          }
+          .scene-tool-rail .draw-tool-btn[data-shortcut]::before {
+            content: attr(data-shortcut);
+            position: absolute;
+            top: -3px;
+            left: -4px;
+            z-index: 2;
+            min-width: 15px;
+            height: 15px;
+            padding: 0 3px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(139, 97, 23, 0.28);
+            border-radius: 5px;
+            background: var(--surface, #fff);
+            box-shadow: 0 2px 5px rgba(20, 24, 33, 0.12);
+            color: #8b6117;
+            font-family: inherit;
+            font-size: 8px;
+            font-weight: 850;
+            line-height: 1;
+            box-sizing: border-box;
+            pointer-events: none;
+          }
+          .scene-tool-rail .draw-tool-btn.active[data-shortcut]::before {
+            background: var(--primary, #d8b46d);
+            border-color: var(--primary, #d8b46d);
+            color: #241b0c;
+          }
+          /* Base Toolbar Button States */
+          .draw-tool-btn:hover {
+            background: rgba(216, 180, 109, 0.12) !important;
+            border-color: rgba(216, 180, 109, 0.35) !important;
+          }
+          .draw-tool-btn.active {
+            border: 1px solid var(--primary) !important;
+            background: rgba(216, 180, 109, 0.18) !important;
+            color: var(--primary) !important;
+          }
+          .draw-tool-btn.active .group-dropdown-caret {
+            color: var(--primary) !important;
+            opacity: 1 !important;
+          }
+
+          /* Flyout Popover Base (Dark Theme Default) */
+          #toolSubmenuPopover {
+            position: fixed;
+            z-index: 10001;
+            background: rgba(18, 22, 31, 0.98);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(216, 180, 109, 0.45);
+            border-radius: 12px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06);
+            padding: 8px;
+            min-width: 250px;
+            color: #f7f8fb;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            animation: toolSubmenuFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+          }
+          @keyframes toolSubmenuFadeIn {
+            from { opacity: 0; transform: translateX(-6px); }
+            to { opacity: 1; transform: translateX(0); }
+          }
+          .tool-submenu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: 1px solid transparent;
+            background: transparent;
+            text-align: left;
+            width: 100%;
+            box-sizing: border-box;
+            outline: none;
+          }
+
+          /* Light Mode Overrides for Popovers */
+          body.light-mode #toolSubmenuPopover {
+            background: #ffffff !important;
+            border: 1px solid rgba(0, 0, 0, 0.14) !important;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+            color: #1c1f26 !important;
+          }
+          body.light-mode #toolSubmenuHeader {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+          }
+          body.light-mode #strokeWidthPopover {
+            background: #ffffff !important;
+            border: 1px solid rgba(0, 0, 0, 0.14) !important;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+            color: #1c1f26 !important;
+          }
+          body.light-mode #strokeWidthPopover span {
+            color: #1c1f26;
+          }
+          body.light-mode #popoverWidthValue {
+            color: #9e7123 !important;
+            background: rgba(216, 180, 109, 0.15) !important;
+            border-color: rgba(216, 180, 109, 0.35) !important;
+          }
+          body.light-mode .stroke-preset-btn {
+            background: rgba(0, 0, 0, 0.04) !important;
+            border-color: rgba(0, 0, 0, 0.1) !important;
+            color: #1c1f26 !important;
+          }
+          body.light-mode .stroke-preset-btn.active {
+            background: rgba(216, 180, 109, 0.18) !important;
+            border-color: #b38c43 !important;
+            color: #9e7123 !important;
+          }
+        
