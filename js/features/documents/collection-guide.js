@@ -186,6 +186,7 @@ function updateCollectionGuideCount() {
   }
   for(const [id,text] of [['collectionGuideSelectionTotal',String(selected.length)],['collectionGuideFilterCount',String(selected.length)],['collectionGuideMissingCount',`Thiếu ${selected.length-have}`],['collectionGuideHaveCount',`Đã có ${have}`]]) {const node=document.getElementById(id);if(node) node.textContent=text;}
   renderCollectionGuideSelectedList();applyCollectionGuideFilters();
+  scheduleCollectionGuideAutoSave();
 }
 function renderCollectionGuideSelectedList() {
   const list=document.getElementById('collectionGuideSelectedList');if(!list) return;list.replaceChildren();

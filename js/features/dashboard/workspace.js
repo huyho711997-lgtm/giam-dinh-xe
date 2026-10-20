@@ -182,9 +182,6 @@
 
 
     function switchWorkspaceTab(tabName) {
-      if (tabName === 'document_library' && !hasUserPermission('pending','view')) {
-        triggerToast('Bạn không có quyền truy cập kho tài liệu.', 'warning');return;
-      }
       if (tabName === 'list' && !hasUserPermission('list', 'view')) {
         triggerToast('Bạn không có quyền truy cập danh sách hồ sơ giám định.', 'warning');
         if (activeDashboardTab === 'list') activeDashboardTab = 'home';
@@ -275,9 +272,6 @@
         activeUserProfile.isAdmin === true
       );
 
-      if (activeDashboardTab === 'document_library') {
-        renderClaimDocumentLibraryPage(container);return;
-      }
       if (activeDashboardTab === 'claim_cancellation') {
         renderClaimCancellationPage(container);
         return;

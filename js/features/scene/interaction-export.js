@@ -1342,6 +1342,7 @@ function saveDrawingState() {
   });
   historyIndex = drawingHistory.length - 1;
   updateUndoRedoButtonsState();
+  scheduleSceneDocumentAutoSave();
 }
 
 
@@ -1356,6 +1357,7 @@ function undoSceneDrawing() {
     updateSelectionBadge();
     redrawSceneCanvas(currentDrawTool === 'select');
     updateUndoRedoButtonsState();
+    scheduleSceneDocumentAutoSave();
   }
 }
 
@@ -1371,6 +1373,7 @@ function redoSceneDrawing() {
     updateSelectionBadge();
     redrawSceneCanvas(currentDrawTool === 'select');
     updateUndoRedoButtonsState();
+    scheduleSceneDocumentAutoSave();
   }
 }
 
@@ -1611,6 +1614,7 @@ function toggleToolRail(forceExpanded) {
 
 
 function closeSceneDrawingModal() {
+  flushClaimDocumentAutoSave({guide:false}).catch(()=>{});
   closeSceneTemplateMetaEditor();
   closeSceneNumberNoteModal();
   closeSceneTextModal();
@@ -1719,7 +1723,7 @@ function applySceneDiagramStoredData(rawRecord) {
 
 function getSceneDiagramClaimReference(claimId, claimContext) {
   const item = claimContext || {};
-  return claimDocumentFormReference(claimId, {...item,...(claimDocumentStore.context?.reference||{})});
+  return claimDocumentReference(claimId,item);
 }
 
 
@@ -1729,8 +1733,10 @@ function buildSceneDiagramStorageRecord(claimId, claimContext) {
   const profile = activeUserProfile || {};
   if (!sceneDiagramCreatedAt) sceneDiagramCreatedAt = now;
   return {
-    id: String(claimId || ''),
+    id: claimDocumentStorageKey(claimId,claimContext),
     claimId: String(claimId || ''),
+    storageKey: claimDocumentStorageKey(claimId,claimContext),
+    hsbtNormalized: normalizeClaimHsbt(claimContext?.soHoSoBoiThuong),
     imageDataUrl: sceneDiagramDataUrl || '',
     shapes: JSON.stringify(sceneDiagramShapesSnapshot || []),
     templateMeta: JSON.stringify(sceneDiagramTemplateMetaSnapshot || sceneTemplateMeta || {}),
@@ -1744,7 +1750,7 @@ function buildSceneDiagramStorageRecord(claimId, claimContext) {
 
 
 async function clearEmbeddedSceneDiagramFields(claimId) {
-  if (!claimId || !dbNodeInstance || claimDocumentStore.context?.documentOnly) return;
+  if (!claimId || !dbNodeInstance) return;
   const cleanupPayload = {
     soDoHienTruong: null,
     soDoHienTruongData: null,
@@ -1759,39 +1765,18 @@ async function clearEmbeddedSceneDiagramFields(claimId) {
 }
 
 
-async function loadSceneDiagramForClaim(claim, claimId) {
-  const requestSequence = ++sceneDiagramLoadSequence;
-  const item = claim || {};
-  const resolvedClaimId = claimId || item.id || null;
-  const hasLegacyData = hasEmbeddedSceneDiagramData(item);
-
-  // Show legacy data immediately as a safe fallback while the independent node loads.
-  applySceneDiagramStoredData(hasLegacyData ? item : null);
-  if (!resolvedClaimId || !dbNodeInstance) return;
-
+async function loadSceneDiagramForClaim(claim,claimId) {
+  const requestSequence=++sceneDiagramLoadSequence,item=claim||{},id=claimId||item.id||null;
+  claimDocumentStore.sceneError=null;
+  applySceneDiagramStoredData(hasEmbeddedSceneDiagramData(item)?item:null);
+  if(!id || !dbNodeInstance)return;
   try {
-    const snapshot = await dbNodeInstance.ref(`scene_diagrams/${resolvedClaimId}`).once('value');
-    if (requestSequence !== sceneDiagramLoadSequence) return;
-    if (snapshot.exists()) {
-      applySceneDiagramStoredData(snapshot.val());
-      if (hasLegacyData && hasUserPermission('pending','edit')) {
-        try { await clearEmbeddedSceneDiagramFields(resolvedClaimId); }
-        catch (cleanupError) { console.warn('Chưa thể dọn dữ liệu sơ đồ cũ trong hồ sơ:', cleanupError); }
-      }
-      return;
-    }
-
-    if (hasLegacyData && hasUserPermission('pending','edit')) {
-      const migratedRecord = buildSceneDiagramStorageRecord(resolvedClaimId, item);
-      await dbNodeInstance.ref(`scene_diagrams/${resolvedClaimId}`).set(migratedRecord);
-      try { await clearEmbeddedSceneDiagramFields(resolvedClaimId); }
-      catch (cleanupError) { console.warn('Đã tách sơ đồ nhưng chưa thể dọn dữ liệu cũ:', cleanupError); }
-    }
-  } catch (error) {
-    console.error('Không thể tải kho sơ đồ hiện trường độc lập:', error);
-    if (!hasLegacyData && typeof triggerToast === 'function') {
-      triggerToast('Không thể tải sơ đồ hiện trường đã lưu.', 'warning');
-    }
+    const embedded=hasEmbeddedSceneDiagramData(item)?buildEmbeddedSceneStorageRecord(id,item):null;
+    const record=await resolveClaimDocument('scene_diagrams',id,item,embedded);
+    if(requestSequence!==sceneDiagramLoadSequence || !claimDocumentFormNumberMatches(item))return;
+    applySceneDiagramStoredData(record?.deleted?null:record);
+  }catch(error){
+    if(requestSequence===sceneDiagramLoadSequence){claimDocumentStore.sceneError=error;updateClaimDocumentAutoStatus();}
   }
 }
 
@@ -1890,108 +1875,41 @@ function printSceneDrawing() {
 
 
 async function saveSceneDrawing() {
-  const btnSave = document.getElementById('btnSaveSceneDrawing');
-  const originalButtonHtml = btnSave ? btnSave.innerHTML : '';
-  if (btnSave) {
-    btnSave.disabled = true;
-    btnSave.style.opacity = '0.72';
-    btnSave.innerHTML = '<span style="display:inline-flex;align-items:center;gap:7px;"><span style="width:13px;height:13px;border:2px solid rgba(17,17,17,.28);border-top-color:#111;border-radius:50%;display:inline-block;animation:spin .75s linear infinite;"></span>Đang lưu...</span>';
-  }
-
+  if(!hasUserPermission('pending',editingPendingClaimId?'edit':'add'))return triggerToast('Bạn không có quyền lưu sơ đồ.','error');
+  const button=document.getElementById('btnSaveSceneDrawing');if(button)button.disabled=true;
   try {
-    // Deselect so selection UI is not baked into the output image.
-    selectedShapeId = null;
-    selectedShapeIds = [];
-    updateSelectionBadge();
-    redrawSceneCanvas(false);
-
-    // Render pristine 2x high-resolution image (2000x1400 - Retina clarity).
-    const dataURL = createSceneDrawingExportDataUrl();
-
-    sceneDiagramDataUrl = dataURL;
-    sceneDiagramShapesSnapshot = cloneSceneDiagramShapes(sceneShapes);
-    sceneDiagramTemplateMetaSnapshot = cloneSceneTemplateMeta(ensureSceneTemplateMeta());
-    sceneDiagramUpdatedAt = Date.now();
-    updateSceneDiagramPreview(sceneDiagramDataUrl);
-
-    // Existing records are saved in the independent scene_diagrams branch.
-    // New records keep the drawing in modal state until the main claim receives its ID.
-    if (editingPendingClaimId) {
-      if (!hasUserPermission('pending', 'edit')) {
-        throw new Error('Bạn không có quyền cập nhật sơ đồ của hồ sơ này.');
-      }
-      const claimContext = cachedPendingClaimsPayload?.[editingPendingClaimId] || {};
-      const sceneRecord = buildSceneDiagramStorageRecord(editingPendingClaimId, claimContext);
-      await dbNodeInstance.ref(`scene_diagrams/${editingPendingClaimId}`).set(sceneRecord);
-      try { await clearEmbeddedSceneDiagramFields(editingPendingClaimId); }
-      catch (cleanupError) { console.warn('Đã lưu sơ đồ riêng nhưng chưa thể dọn dữ liệu cũ:', cleanupError); }
+    await (claimDocumentStore.bindingPromise||Promise.resolve());
+    await rebindClaimDocumentsByHsbt();
+    if(claimDocumentStore.sceneError)throw claimDocumentStore.sceneError;
+    claimDocumentStore.sceneDirty=true;
+    if(canAutoSaveClaimDocuments())await flushClaimDocumentAutoSave({guide:false});
+    else {
+      sceneDiagramDataUrl=createSceneDrawingExportDataUrl();
+      sceneDiagramShapesSnapshot=cloneSceneDiagramShapes(sceneShapes);
+      sceneDiagramTemplateMetaSnapshot=cloneSceneTemplateMeta(ensureSceneTemplateMeta());
+      sceneDiagramUpdatedAt=Date.now();updateSceneDiagramPreview(sceneDiagramDataUrl);
     }
-
     closeSceneDrawingModal();
-    if(activeDashboardTab==='document_library')void loadClaimDocumentLibrary();
-    const message = editingPendingClaimId
-      ? 'Đã lưu sơ đồ hiện trường vào kho dữ liệu độc lập.'
-      : 'Đã đính kèm sơ đồ. Hãy bấm “Lưu hồ sơ tiếp nhận” để hoàn tất.';
-    if (typeof triggerToast === 'function') triggerToast(message, 'success');
-    else if (typeof showToast === 'function') showToast(message, 'success');
-    else alert(message);
-  } catch (error) {
-    console.error('Lỗi lưu sơ đồ hiện trường:', error);
-    const message = 'Không thể lưu sơ đồ: ' + (error && error.message ? error.message : 'Lỗi không xác định');
-    if (typeof triggerToast === 'function') triggerToast(message, 'error');
-    else if (typeof showToast === 'function') showToast(message, 'error');
-    else alert(message);
-  } finally {
-    if (btnSave) {
-      btnSave.disabled = false;
-      btnSave.style.opacity = '';
-      btnSave.innerHTML = originalButtonHtml;
-    }
-  }
+    triggerToast(canAutoSaveClaimDocuments()?'Đã lưu sơ đồ theo số HSBT.':'Sơ đồ sẽ được lưu khi lưu hồ sơ hoặc nhập số HSBT.','success');
+  }catch(error){triggerToast('Chưa lưu được sơ đồ: '+error.message,'error');}
+  finally{if(button)button.disabled=false;}
 }
 
 
 async function removeSceneDiagram() {
   if(!hasUserPermission('pending','edit'))return triggerToast('Bạn không có quyền xoá sơ đồ.','error');
-  if (!confirm('Xóa sơ đồ hiện trường này?')) return;
-
-  const previousImage = sceneDiagramDataUrl;
-  const previousShapes = cloneSceneDiagramShapes(sceneDiagramShapesSnapshot);
-  const previousTemplateMeta = cloneSceneTemplateMeta(sceneDiagramTemplateMetaSnapshot || sceneTemplateMeta);
-  const previousCreatedAt = sceneDiagramCreatedAt;
-  const previousUpdatedAt = sceneDiagramUpdatedAt;
-
-  sceneDiagramDataUrl = '';
-  sceneDiagramShapesSnapshot = [];
-  sceneDiagramTemplateMetaSnapshot = null;
-  sceneTemplateMeta = cloneSceneTemplateMeta(getDefaultSceneTemplateMeta());
-  sceneDiagramCreatedAt = null;
-  sceneDiagramUpdatedAt = null;
-  sceneShapes = [];
-  drawingHistory = [];
-  historyIndex = -1;
-  updateSceneDiagramPreview('');
-
+  if(!confirm('Xoá sơ đồ hiện trường đã lưu của số HSBT này?'))return;
   try {
-    if (editingPendingClaimId) {
-      await dbNodeInstance.ref(`scene_diagrams/${editingPendingClaimId}`).remove();
-      try { await clearEmbeddedSceneDiagramFields(editingPendingClaimId); }
-      catch (cleanupError) { console.warn('Đã xóa sơ đồ riêng nhưng chưa thể dọn dữ liệu cũ:', cleanupError); }
+    await flushClaimDocumentAutoSave({guide:false});
+    const binding=claimDocumentStore.binding;
+    if(binding && canAutoSaveClaimDocuments()) {
+      const reference=currentClaimDocumentReference();
+      await enqueueClaimDocumentWrite('scene',{deleted:true,storageKey:binding.key,hsbtNormalized:normalizeClaimHsbt(reference.soHoSoBoiThuong),claimReference:reference,updatedAt:Date.now()},binding);
     }
-    if (typeof triggerToast === 'function') triggerToast('Đã xóa sơ đồ hiện trường.', 'success');
-    if(activeDashboardTab==='document_library')void loadClaimDocumentLibrary();
-  } catch (error) {
-    sceneDiagramDataUrl = previousImage;
-    sceneDiagramShapesSnapshot = previousShapes;
-    sceneDiagramTemplateMetaSnapshot = previousTemplateMeta;
-    sceneTemplateMeta = cloneSceneTemplateMeta(previousTemplateMeta);
-    sceneDiagramCreatedAt = previousCreatedAt;
-    sceneDiagramUpdatedAt = previousUpdatedAt;
-    sceneShapes = cloneSceneDiagramShapes(previousShapes);
-    updateSceneDiagramPreview(previousImage);
-    console.error('Lỗi xóa sơ đồ hiện trường:', error);
-    if (typeof triggerToast === 'function') triggerToast('Không thể xóa sơ đồ: ' + error.message, 'error');
-  }
+    claimDocumentStore.sceneDirty=false;
+    applySceneDiagramStoredData(null);sceneShapes=[];drawingHistory=[];historyIndex=-1;
+    triggerToast('Đã xoá sơ đồ hiện trường.','success');
+  }catch(error){triggerToast('Chưa xoá được sơ đồ: '+error.message,'error');}
 }
 
 

@@ -252,7 +252,6 @@
       <div style="padding: 24px 28px; overflow-y: auto; flex: 1; background: var(--bg-soft);">
 
         <!-- TAB 1: POLICY & CUSTOMER -->
-        <div id="claimDocumentArchiveNotice" class="claim-document-archive-notice" hidden></div>
         <div id="tabPane_Policy" class="edit-tab-pane" style="display: block;">
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 16px;">
             <div class="form-group">
@@ -550,7 +549,7 @@
             <h3>Chọn giấy tờ cần thu thập</h3>
             <div id="collectionGuideSummary" class="collection-guide-summary"></div>
           </div>
-          <div class="collection-guide-save-independent"><p>Lưu hướng dẫn riêng để mở lại trong Kho sơ đồ &amp; hướng dẫn, kể cả khi xoá hồ sơ.</p><button id="btnSaveCollectionGuideIndependent" type="button" class="btn-premium" onclick="saveCollectionGuideToLibrary()">Lưu hướng dẫn vào kho</button></div>
+          <span id="claimDocumentAutoStatus" class="claim-document-autosave" role="status">Tự lưu theo số HSBT</span>
           <details id="collectionGuideSettings" class="collection-guide-settings">
             <summary aria-controls="collectionGuideMeta" title="Mở hoặc thu gọn thông tin in / xuất hướng dẫn">
               <span class="collection-guide-settings-title">Thông tin in / xuất hướng dẫn</span>
@@ -1088,6 +1087,7 @@
       
       <div style="padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: var(--surface);">
         <button type="button" class="btn-secondary" onclick="closeSceneDrawingModal()" style="padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 13px;">Hủy bỏ</button>
+        <span id="sceneDocumentAutoStatus" class="claim-document-autosave" role="status">Tự lưu theo số HSBT</span>
         <button id="btnSaveSceneDrawing" type="button" class="btn-premium" onclick="saveSceneDrawing()" style="padding: 10px 20px; border-radius: 10px; font-weight: 800; font-size: 13px; min-height: unset; width: auto;">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
           Lưu Sơ đồ
@@ -1708,7 +1708,7 @@
 
 
 <link rel="stylesheet" href="css/responsive.css">
-<link rel="stylesheet" href="css/document-library.css">
+<link rel="stylesheet" href="css/document-autosave.css">
 <script src="js/features/scene/geometry.js"></script>
   <script src="js/features/scene/objects.js"></script>
   <script src="js/features/scene/traffic-signs.js"></script>
@@ -1722,7 +1722,8 @@
   <script src="js/features/claims/inspection-register.js"></script>
   <script src="js/features/workshop/presentation.js"></script>
   <script src="js/features/scene/runtime.js"></script>
+  <script src="js/features/documents/hsbt.js"></script>
   <script src="js/features/documents/storage.js"></script>
-  <script src="js/features/documents/library.js"></script>
+  <script src="js/features/documents/autosave.js"></script>
 </body>
 </html>
