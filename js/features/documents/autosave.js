@@ -32,7 +32,7 @@ function claimDocumentGuideSignature() {
 function updateClaimDocumentAutoStatus(message='') {
   const binding=claimDocumentStore.binding;
   let text=message || (claimDocumentStore.guideError||claimDocumentStore.sceneError?'Chưa tải được tài liệu. Vui lòng mở lại hồ sơ.':claimDocumentStore.saveError?'Chưa tự lưu được. Đang giữ bản chỉnh sửa để thử lại.':claimDocumentStore.guideDirty||claimDocumentStore.sceneDirty||claimDocumentStore.saving?'Đang tự lưu…':binding&&normalizeClaimHsbt(binding.reference.soHoSoBoiThuong)?'Tự lưu theo số HSBT '+binding.reference.soHoSoBoiThuong:'Nhập số HSBT để tự khôi phục tài liệu khi nạp lại hồ sơ.');
-  for(const id of ['claimDocumentAutoStatus','sceneDocumentAutoStatus']) {
+  for(const id of ['claimDocumentAutoStatus','sceneDocumentAutoStatus','authorityRequestAutoStatus']) {
     const node=document.getElementById(id);if(node){node.textContent=text;node.dataset.error=String(!!claimDocumentStore.saveError);}
   }
 }
@@ -144,7 +144,7 @@ document.addEventListener('input',event=>{
 document.addEventListener('change',event=>{
   if(event.target.id==='modalPendingSoHoSoBoiThuong') {
     claimDocumentStore.bindingPromise=rebindClaimDocumentsByHsbt().catch(error=>{claimDocumentStore.saveError=error;updateClaimDocumentAutoStatus();});
-  }else if(event.target.closest('#tabPane_CollectionGuide,#tndsAdvanceDialog'))queueMicrotask(scheduleCollectionGuideAutoSave);
+  }else if(event.target.closest('#tabPane_CollectionGuide,#tabPane_AuthorityRequest,#tndsAdvanceDialog'))queueMicrotask(scheduleCollectionGuideAutoSave);
 });
 window.addEventListener('online',()=>retryClaimDocumentAutoSave().catch(()=>{}));
 window.addEventListener('pagehide',()=>flushClaimDocumentAutoSave().catch(()=>{}));

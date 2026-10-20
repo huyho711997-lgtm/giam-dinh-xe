@@ -242,6 +242,7 @@
           <button id="tabBtn_Financial" type="button" onclick="switchEditClaimTab('Financial')" class="edit-tab-btn">
             <span>Bồi thường, PASC & Thanh toán</span>
           </button>
+          <button id="tabBtn_AuthorityRequest" type="button" onclick="switchEditClaimTab('AuthorityRequest')" class="edit-tab-btn"><span>Trưng cầu hồ sơ</span></button>
           <button id="tabBtn_CollectionGuide" type="button" onclick="switchEditClaimTab('CollectionGuide')" class="edit-tab-btn">
             <span>Hướng dẫn thu thập hồ sơ</span>
           </button>
@@ -250,6 +251,20 @@
 
       <!-- Body Scrollable Area -->
       <div style="padding: 24px 28px; overflow-y: auto; flex: 1; background: var(--bg-soft);">
+
+        <div id="tabPane_AuthorityRequest" class="edit-tab-pane" style="display:none">
+          <div class="authority-request-header">
+            <div><h3>Trưng cầu hồ sơ từ cơ quan chức năng</h3><p>Lập công văn theo mẫu, chọn tài liệu cần thu thập và xác nhận thông tin trước khi xuất.</p></div>
+            <span id="authorityRequestAutoStatus" class="claim-document-autosave" role="status">Tự lưu theo số HSBT</span>
+          </div>
+          <div id="authorityRequestClaimSummary" class="authority-request-context"></div>
+          <div id="authorityRequestForm"></div>
+          <div class="authority-request-actions">
+            <button type="button" class="btn-premium btn-secondary" onclick="previewAuthorityRequest()">Xem trước công văn</button>
+            <button type="button" class="btn-premium" onclick="exportAuthorityRequestWord()">Xuất Word (.docx)</button>
+          </div>
+          <p class="authority-request-note">Biển số, số HSBT, ngày và địa điểm tai nạn được lấy từ hồ sơ đang mở. Khi thay đổi nội dung, cần xác nhận lại trước khi xuất. Số công văn chưa cấp sẽ để dấu “…”.</p>
+        </div>
 
         <!-- TAB 1: POLICY & CUSTOMER -->
         <div id="tabPane_Policy" class="edit-tab-pane" style="display: block;">
@@ -1637,6 +1652,8 @@
 <link rel="stylesheet" href="css/floating-dock.css">
   <script src="js/data/tnds-advance.js"></script>
   <script src="js/features/documents/tnds-advance.js"></script>
+  <script src="js/data/authority-request.js"></script>
+  <script src="js/features/documents/authority-request.js"></script>
   <script src="js/data/collection-guide.js"></script>
   <script src="js/features/documents/collection-guide.js" id="collectionGuideModule"></script>
   <script src="js/core/floating-dock.js"></script>
@@ -1709,6 +1726,7 @@
 
 <link rel="stylesheet" href="css/responsive.css">
 <link rel="stylesheet" href="css/document-autosave.css">
+<link rel="stylesheet" href="css/authority-request.css">
 <script src="js/features/scene/geometry.js"></script>
   <script src="js/features/scene/objects.js"></script>
   <script src="js/features/scene/traffic-signs.js"></script>

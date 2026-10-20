@@ -30,7 +30,8 @@ function toggleCollectionWordMenu(anchor) {
   const downloadIcon='<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-4-4 4 4 4-4M5 17v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3"/></svg>';
   const documents=[
     ['Hướng dẫn thu thập hồ sơ','Danh sách giấy tờ và tình trạng bổ sung',guideIcon,previewCollectionGuide,exportCollectionGuideWord],
-    ['Thông báo tạm ứng TNDS','Thông tin và phương án tạm ứng bồi thường',advanceIcon,previewTndsAdvance,openTndsAdvanceDialog]
+    ['Thông báo tạm ứng TNDS','Thông tin và phương án tạm ứng bồi thường',advanceIcon,previewTndsAdvance,openTndsAdvanceDialog],
+    ['Trưng cầu hồ sơ từ cơ quan chức năng','Công văn đề nghị cung cấp tài liệu vụ tai nạn',guideIcon,previewAuthorityRequest,exportAuthorityRequestWord]
   ];
   for(const [name,description,documentIcon,preview,download] of documents) {
     const row=collectionGuideElement('section','collection-word-menu-document');
@@ -322,13 +323,13 @@ async function exportTndsAdvanceWord(savedSnapshot) {
 }
 
 // The preview reads the populated XML used by the Word export.
-function tndsAdvanceParagraphHtml(p,counters) {
+function tndsAdvanceParagraphHtml(p,counters,assets=tndsAdvanceAssets()) {
   const props=collectionGuideChildren(p,'pPr')[0];
   const property=name=>props && collectionGuideChildren(props,name)[0];
   const align=collectionGuideAttr(property('jc'),'val'),spacing=property('spacing'),indent=property('ind');
   const num=property('numPr'),numId=collectionGuideAttr(num && collectionGuideChildren(num,'numId')[0],'val');
   const level=collectionGuideAttr(num && collectionGuideChildren(num,'ilvl')[0],'val') || '0';
-  const numbering=tndsAdvanceAssets().numbering[numId+':'+level];
+  const numbering=assets.numbering[numId+':'+level];
   let left=numbering?.left || 0,hanging=numbering?.hanging || 0,firstLine=0;
   if(indent) {
     if(collectionGuideAttr(indent,'left')!=='') left=Number(collectionGuideAttr(indent,'left'));
@@ -361,7 +362,7 @@ function tndsAdvanceParagraphHtml(p,counters) {
       if(node.localName==='t') return collectionGuideEscape(node.textContent);
       if(node.localName==='br') return '<br>';
       if(node.localName==='tab') return '<span class="tnds-tab"></span>';
-      if(node.localName==='drawing') return `<img class="tnds-logo" alt="Tasco Insurance" src="${TascoAssets.url(tndsAdvanceAssets().logoUrl)}">`;
+      if(node.localName==='drawing') return `<img class="tnds-logo" alt="Tasco Insurance" src="${TascoAssets.url(assets.logoUrl)}">`;
       return '';
     }).join('');
     if(text) html+=`<span style="${rs.join(';')}">${text}</span>`;
@@ -371,7 +372,7 @@ function tndsAdvanceParagraphHtml(p,counters) {
   const keepNext=property('keepNext') || /^\d+\.\s/.test(text);
   return `<p${keepNext?' class="tnds-keep-next"':''} style="${styles.join(';')}">${html || '&nbsp;'}</p>`;
 }
-function tndsAdvanceTableHtml(table,index,counters) {
+function tndsAdvanceTableHtml(table,index,counters,assets=tndsAdvanceAssets()) {
   const props=collectionGuideChildren(table,'tblPr')[0],width=collectionGuideChildren(props,'tblW')[0],indent=collectionGuideChildren(props,'tblInd')[0];
   const grid=collectionGuideChildren(collectionGuideChildren(table,'tblGrid')[0],'gridCol').map(node=>Number(collectionGuideAttr(node,'w')));
   const total=grid.reduce((sum,value)=>sum+value,0);
@@ -381,7 +382,7 @@ function tndsAdvanceTableHtml(table,index,counters) {
     html+='<tr>';
     for(const cell of collectionGuideChildren(row,'tc')) {
       const cellProps=collectionGuideChildren(cell,'tcPr')[0],span=collectionGuideAttr(cellProps && collectionGuideChildren(cellProps,'gridSpan')[0],'val');
-      html+=`<td${span?' colspan="'+Number(span)+'"':''}>${collectionGuideChildren(cell,'p').map(p=>tndsAdvanceParagraphHtml(p,counters)).join('')}</td>`;
+      html+=`<td${span?' colspan="'+Number(span)+'"':''}>${collectionGuideChildren(cell,'p').map(p=>tndsAdvanceParagraphHtml(p,counters,assets)).join('')}</td>`;
     }
     html+='</tr>';
   }

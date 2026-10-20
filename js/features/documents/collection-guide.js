@@ -56,7 +56,7 @@ function initializeCollectionGuide(item = {}) {
     hotline: collectionGuideFindAssessorPhone(collectionGuideValue('modalPendingCanBoXuLy') || collectionGuideValue('modalPendingGdvTiepNhan')).phone, signerTitle: '', signerName: ''
   };
   document.getElementById('tndsAdvanceDialog')?.remove();
-  collectionGuideDraft = {version:1, meta:{}, items:{}, extras:[],tndsAdvance:valid && saved.tndsAdvance && typeof saved.tndsAdvance==='object'?JSON.parse(JSON.stringify(saved.tndsAdvance)):null};
+  collectionGuideDraft = {version:1, meta:{}, items:{}, extras:[],authorityRequest:valid && saved.authorityRequest && typeof saved.authorityRequest==='object'?JSON.parse(JSON.stringify(saved.authorityRequest)):null,tndsAdvance:valid && saved.tndsAdvance && typeof saved.tndsAdvance==='object'?JSON.parse(JSON.stringify(saved.tndsAdvance)):null};
   collectionGuideDraft.contactPhoneManual=valid && saved.contactPhoneManual===true;
   for (const [key] of collectionGuideMetaFields) {
     const raw = valid && typeof saved.meta?.[key] === 'string' ? saved.meta[key] : defaults[key];
@@ -78,6 +78,7 @@ function initializeCollectionGuide(item = {}) {
   const settings=document.getElementById('collectionGuideSettings');if(settings) settings.open=false;
   document.querySelectorAll('.collection-guide-mobile-bulk').forEach(menu=>menu.open=false);
   renderCollectionGuide();
+  if(typeof initializeAuthorityRequest==='function')initializeAuthorityRequest();
 }
 function ensureCollectionGuide() { if (!collectionGuideDraft) initializeCollectionGuide(); }
 function collectionGuideElement(tag, className, text) {
@@ -248,6 +249,7 @@ function getCollectionGuideState() {
     if(el) collectionGuideDraft.meta[key]=key==='date'?collectionGuideDate(el.value):el.value.trim();
   }
   collectionGuideSyncContactPhone();
+  if(collectionGuideDraft.authorityRequest && typeof authorityRequestMeta==='function')authorityRequestMeta();
   return JSON.parse(JSON.stringify(collectionGuideDraft));
 }
 function refreshCollectionGuideSummary() {

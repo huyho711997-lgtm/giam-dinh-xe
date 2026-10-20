@@ -1,6 +1,8 @@
 
 function collectionDocumentDraftIdentity(snapshot) {
   const normalized=structuredClone(snapshot);
+  // A separate document's settings must not invalidate saved A4 guide edits.
+  delete normalized.state.authorityRequest;
   normalized.state.meta.signerTitle=collectionGuideSignerTitle(normalized.state.meta.signerTitle);
   if(normalized.state.meta.address===collectionGuidePreviousAddress)normalized.state.meta.address=collectionGuideBranchAddress;
   if(normalized.state.meta.hotline==='19001562')normalized.state.meta.hotline=collectionGuideFindAssessorPhone(normalized.state.meta.assessor).phone;

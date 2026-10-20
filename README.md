@@ -81,3 +81,15 @@ Sơ đồ hiện trường và hướng dẫn thu thập tự lưu ngay trong m�
 Nhánh collection_guides và scene_diagrams cần quyền đọc/ghi phù hợp với chính sách Firebase hiện có. Tính năng không thay đổi Security Rules. Nếu lưu giữ tài liệu gặp lỗi, thao tác xoá hồ sơ dừng lại. Xem [đọc/ghi Firebase](https://firebase.google.com/docs/database/web/read-and-write) và [Security Rules](https://firebase.google.com/docs/database/security).
 
 Chạy npm test để kiểm tra xoá rồi nhập lại với ID khác, chuẩn hoá số HSBT, tìm bản cũ, tự lưu, đổi số, tránh ghép nhầm biển số, bản chưa có số, xử lý lỗi và phản hồi đến muộn. Các kiểm tra dùng dữ liệu giả, không tác động Firebase thật.
+
+## Công văn trưng cầu hồ sơ từ cơ quan chức năng
+
+Trong màn hình chỉnh sửa hồ sơ, mở tab **Trưng cầu hồ sơ**. Nhập cơ quan nhận, số thứ tự công văn (nếu đã cấp), chọn nhóm giấy tờ cần cung cấp và bổ sung thông tin liên hệ. Biển số, ngày/địa điểm tai nạn lấy trực tiếp từ hồ sơ. GCNBH và giờ tai nạn tự lấy từ hồ sơ khi chưa sửa riêng trong tab này; cần đối chiếu đúng GCNBH của nghiệp vụ liên quan.
+
+- Bốn nhóm tài liệu: giấy tờ phương tiện/người lái; kết quả điều tra; thỏa thuận dân sự; khám nghiệm. Có thể thêm tài liệu khác theo từng dòng và đề nghị thông tin cơ quan tiếp tục thụ lý.
+- Các đoạn về đã cử cán bộ, hậu quả tai nạn và căn cứ TNDS đều chưa được chọn sẵn. Chỉ đưa vào công văn khi người lập chọn, nhập và kiểm tra thông tin phù hợp. Không tự suy ra tử vong từ mẫu gốc.
+- Xem trước được khi đã đủ dữ liệu. Xuất Word hoặc in yêu cầu tích xác nhận đã kiểm tra nội dung; thay đổi nội dung liên quan sẽ làm xác nhận cũ hết hiệu lực.
+- Xuất tại tab này hoặc qua **Xuất Word → Trưng cầu hồ sơ từ cơ quan chức năng**. Mẫu chưa được cấp số công văn để dấu “…”.
+- Trạng thái tab nằm trong `collection_guides/<hsbtKey>/state/authorityRequest`, dùng cơ chế tự lưu/khôi phục theo số HSBT hiện có. Xoá rồi nạp lại hồ sơ cùng số sẽ nạp lại phần đã lưu.
+
+Mã tại `js/features/documents/authority-request.js`, CSS tại `css/authority-request.css`, metadata tại `js/data/authority-request.js`, mẫu tại `assets/templates/authority-request.docx`. Mẫu đã bỏ toàn bộ thông tin vụ việc và liên hệ cá nhân của tài liệu tham chiếu. Khi xuất, chỉ thay `word/document.xml`; logo, styles, numbering, section, header/footer và các phần khác của ZIP được giữ nguyên. Bản xem trước HTML dùng cùng XML đã điền, có thể khác phân trang của Microsoft Word. Môi trường triển khai tính năng chưa có trình kết xuất Word/LibreOffice hoạt động để đối chiếu phân trang DOCX.

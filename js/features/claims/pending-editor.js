@@ -355,13 +355,14 @@
 
 
     function switchEditClaimTab(tabName) {
-      const tabs = ['Policy', 'Vehicle', 'Event', 'Unit', 'Financial', 'CollectionGuide'];
+      const tabs = ['Policy', 'Vehicle', 'Event', 'Unit', 'Financial', 'CollectionGuide', 'AuthorityRequest'];
       tabs.forEach(t => {
         const tabBtn = document.getElementById('tabBtn_' + t);
         const tabPane = document.getElementById('tabPane_' + t);
         if (tabBtn) tabBtn.classList.toggle('active', t === tabName);
         if (tabPane) tabPane.style.display = (t === tabName) ? 'block' : 'none';
       });
+      if (tabName === 'AuthorityRequest') { ensureCollectionGuide(); authorityRequestRefresh(); }
       if (tabName === 'CollectionGuide') { ensureCollectionGuide(); refreshCollectionGuideSummary(); }
     }
 
