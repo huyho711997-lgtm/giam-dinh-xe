@@ -74,7 +74,7 @@
         navContainer.insertBefore(tabsContainer, userSpace);
       }
 
-      const isGroup1Active = ['list', 'pending', 'pending_notes_tracker', 'claim_cancellation', 'gdv_report', 'create'].includes(activeDashboardTab);
+      const isGroup1Active = ['list', 'pending', 'pending_notes_tracker', 'claim_cancellation', 'document_library', 'gdv_report', 'create'].includes(activeDashboardTab);
       const isAccActive = ['accounting_transfer', 'accounting_claims'].includes(activeDashboardTab) ? 'active' : '';
       const isGroup3Active = ['users', 'system'].includes(activeDashboardTab);
 
@@ -136,6 +136,7 @@
                   <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Tổng hợp hồ sơ GĐV cần hủy</span>
                 </div>
               </div>` : ''}
+              ${showPending ? `<button type="button" class="header-nav-submenu-item ${activeDashboardTab === 'document_library' ? 'active' : ''}" onclick="navigateHeaderTab('document_library')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18v14H3zM1 3h22v4H1zM9 12h6"/></svg><div><div>Kho sơ đồ & hướng dẫn</div><span style="font-size:10.5px;color:var(--text-soft);font-weight:500;">Lưu riêng · Giữ lại khi xoá hồ sơ</span></div></button>` : ''}
               ${showReport ? `
               <div class="header-nav-submenu-item ${activeDashboardTab === 'gdv_report' ? 'active' : ''}" onclick="navigateHeaderTab('gdv_report')">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #a855f7;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>

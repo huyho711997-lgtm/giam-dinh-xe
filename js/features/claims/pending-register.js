@@ -852,11 +852,11 @@
         triggerToast('Bạn không có quyền xóa hồ sơ tồn này!', 'error');
         return;
       }
-      const confirmAction = await showConfirmModal('Xóa hồ sơ tồn', `Bạn có chắc chắn muốn xóa vụ tổn thất xe ${bienSo} khỏi danh sách hồ sơ tồn không? Sơ đồ hiện trường (nếu có) sẽ được giữ lại trong kho dữ liệu riêng.`);
+      const confirmAction = await showConfirmModal('Xóa hồ sơ tồn', `Bạn có chắc chắn muốn xóa vụ tổn thất xe ${bienSo} khỏi danh sách hồ sơ tồn không? Sơ đồ hiện trường và hướng dẫn thu thập (nếu có) sẽ được giữ lại trong kho riêng.`);
       if (confirmAction) {
         try {
-          await dbNodeInstance.ref(`pending_claims/${claimId}`).remove();
-          triggerToast(`Đã xóa hồ sơ xe ${bienSo}; sơ đồ hiện trường vẫn được lưu riêng.`, 'warning');
+          await deletePendingClaimKeepingDocuments(claimId);
+          triggerToast(`Đã xóa hồ sơ xe ${bienSo}; sơ đồ và hướng dẫn thu thập vẫn được lưu riêng.`, 'warning');
         } catch (e) {
           console.error(e);
           triggerToast('Lỗi xóa hồ sơ: ' + e.message, 'error');
