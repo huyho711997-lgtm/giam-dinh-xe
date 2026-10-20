@@ -194,6 +194,7 @@
       if (addTndsInfoEl) addTndsInfoEl.innerHTML = '';
 
       initializeCollectionGuide();
+      bindCurrentClaimDocuments(claimDocumentStore.draftId,claimDocumentFormReference(claimDocumentStore.draftId));
       claimDocumentStore.ready = true;
       switchEditClaimTab('Policy');
 
@@ -202,10 +203,9 @@
     }
 
 
-    async function openEditPendingClaimModal(claimId, initialTab, options = {}) {
+    async function openEditPendingClaimModal(claimId, initialTab) {
       resetClaimDocumentContext();
       const openDocumentSequence=claimDocumentStore.formSequence;
-      if(options.documentOnly)claimDocumentStore.context={id:claimId,reference:options.claim,documentOnly:true};
       if (!claimId || !cachedPendingClaimsPayload) return;
       
       const btnSubmit = document.getElementById('btnSubmitAddPendingClaim');
@@ -222,7 +222,7 @@
           btnSubmit.title = '';
         }
       }
-      let item = options.claim || cachedPendingClaimsPayload[claimId];
+      let item = cachedPendingClaimsPayload[claimId];
       if (!item) {
         item = Object.values(cachedPendingClaimsPayload).find(c => c && (c.id === claimId || c.idCa === claimId || c.maVuTonThat === claimId));
       }
@@ -329,7 +329,6 @@
 
       await loadCollectionGuideForClaim(item, claimId);
       if(editingPendingClaimId!==claimId || openDocumentSequence!==claimDocumentStore.formSequence)return;
-      if(options.documentOnly)configureClaimDocumentOnlyForm(item);
       switchEditClaimTab(initialTab || 'Policy');
 
       const modal = document.getElementById('addPendingClaimModalOverlay');
@@ -341,6 +340,8 @@
 
 
     function closeAddPendingClaimModal() {
+      document.getElementById('collectionGuidePreview')?._guideEditor?.flush();
+      scheduleCollectionGuideAutoSave();
       resetClaimDocumentContext();
       sceneDiagramLoadSequence++;
       clearCollectionGuideDraft();
@@ -432,7 +433,8 @@
 
 
     async function saveAddPendingClaimFromModal() {
-      if(claimDocumentStore.context?.documentOnly)return saveCollectionGuideToLibrary({close:true});
+      try {await (claimDocumentStore.bindingPromise||Promise.resolve());await rebindClaimDocumentsByHsbt();}
+      catch(error){triggerToast('Chưa lưu được tài liệu: '+error.message,'error');return;}
       if(!claimDocumentStore.ready && !claimDocumentStore.guideError)return triggerToast('Đang tải hướng dẫn đã lưu. Vui lòng chờ rồi thử lại.','warning');
       const independentGuideAvailable=!claimDocumentStore.guideError;
       const documentSequence=claimDocumentStore.sequence;
@@ -460,7 +462,7 @@
       }
 
       // const isEditing = !!editingPendingClaimId;
-      const targetClaimId = isEditing ? editingPendingClaimId : ('claim_' + Date.now());
+      const targetClaimId = isEditing ? editingPendingClaimId : claimDocumentStore.draftId;
       const existingItem = isEditing ? (cachedPendingClaimsPayload[editingPendingClaimId] || {}) : {};
 
       // If adding NEW claim, check duplicate MaVuTonThat
@@ -575,6 +577,7 @@
       if (btnSave) btnSave.disabled = true;
 
       try {
+        await flushClaimDocumentAutoSave();
         await collectionGuidePrepareContact();
         if(documentSequence!==claimDocumentStore.sequence)return;
         document.getElementById('collectionGuidePreview')?._guideEditor?.flush();
@@ -583,11 +586,11 @@
         if(documentSequence!==claimDocumentStore.sequence)return;
         const databaseUpdates = {};
         if(claimStillExists)databaseUpdates[`pending_claims/${targetClaimId}`] = payload;
-        if(independentGuideAvailable)databaseUpdates[`collection_guides/${targetClaimId}`] = buildCollectionGuideStorageRecord(targetClaimId,payload,getCollectionGuideState(),claimDocumentStore.guideRecord);
+        if(independentGuideAvailable)databaseUpdates[`collection_guides/${claimDocumentStorageKey(targetClaimId,payload)}`] = buildCollectionGuideStorageRecord(targetClaimId,payload,getCollectionGuideState(),claimDocumentStore.guideRecord);
         else if(claimStillExists)payload.huongDanThuThapHoSo=getCollectionGuideState();
         else throw new Error('Chưa có quyền lưu hướng dẫn vào kho riêng. Hồ sơ gốc đã xoá nên không thể lưu lại vào hồ sơ.');
         if (sceneDiagramDataUrl) {
-          databaseUpdates[`scene_diagrams/${targetClaimId}`] = buildSceneDiagramStorageRecord(targetClaimId, payload);
+          databaseUpdates[`scene_diagrams/${claimDocumentStorageKey(targetClaimId,payload)}`] = buildSceneDiagramStorageRecord(targetClaimId, payload);
         }
         await dbNodeInstance.ref().update(databaseUpdates);
         if (cachedPendingClaimsPayload && claimStillExists) {
@@ -631,7 +634,7 @@
 
       const confirmText = await showCustomPromptModalAsync({
         title: 'CẢNH BÁO NGHIÊM TRỌNG',
-        message: `Hành động này sẽ XÓA VĨNH VIỄN toàn bộ ${totalClaimsCount} hồ sơ tồn trong hệ thống. Sơ đồ hiện trường và hướng dẫn thu thập sẽ được lưu giữ ở kho riêng trước khi xoá.\n\nĐể xác nhận, vui lòng nhập chính xác chữ: <strong style="color:var(--text-main);">XOA TAT CA</strong>`,
+        message: `Hành động này sẽ XÓA VĨNH VIỄN toàn bộ ${totalClaimsCount} hồ sơ tồn trong hệ thống. Sơ đồ hiện trường và hướng dẫn thu thập được giữ theo số HSBT, tự nạp lại khi nhập lại hồ sơ cùng số HSBT.\n\nĐể xác nhận, vui lòng nhập chính xác chữ: <strong style="color:var(--text-main);">XOA TAT CA</strong>`,
         requireText: 'XOA TAT CA',
         confirmText: 'XÓA TOÀN BỘ'
       });
@@ -645,7 +648,7 @@
         triggerToast('Đang tiến hành xóa toàn bộ dữ liệu hồ sơ tồn...', 'info');
         await deleteAllPendingClaimsKeepingDocuments();
         cachedPendingClaimsPayload = {};
-        triggerToast('Đã xóa toàn bộ hồ sơ tồn; sơ đồ và hướng dẫn thu thập vẫn được giữ trong kho riêng.', 'success');
+        triggerToast('Đã xóa toàn bộ hồ sơ tồn; sơ đồ và hướng dẫn vẫn được giữ theo số HSBT để tự nạp lại.', 'success');
         executeUIRenderPendingClaims();
       } catch (err) {
         console.error(err);

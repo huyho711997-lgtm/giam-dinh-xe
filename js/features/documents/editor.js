@@ -29,6 +29,7 @@ function collectionDocumentWriteEdits(snapshot,edits) {
   const {source,key}=collectionDocumentDraftIdentity(snapshot),record={source,edits:structuredClone(edits),savedAt:Date.now()};
   collectionDocumentDraftCache.set(key,record);
   if(collectionDocumentDraftCache.size>64) collectionDocumentDraftCache.delete(collectionDocumentDraftCache.keys().next().value);
+  queueMicrotask(scheduleCollectionGuideAutoSave);
   try {if(Object.keys(edits).length) localStorage.setItem(key,JSON.stringify(record));else localStorage.removeItem(key);return true;} catch {return false;}
 }
 

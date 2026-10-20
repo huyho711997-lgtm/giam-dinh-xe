@@ -95,7 +95,7 @@
             }
           } else {
             resetClaimDocumentContext();
-            claimDocumentLibrary.sequence++;claimDocumentLibrary.rows=[];
+            claimDocumentLegacyCache.clear();
             activeUserProfile = null;
           }
         } catch (e) {
