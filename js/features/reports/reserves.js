@@ -892,7 +892,7 @@ const fullList = getCarBrandLossData();
 
         // Add Gara header row with SVG icon instead of emoji, and displaying total Gara amount
         rowsHtml += `
-          <tr style="background: var(--bg-soft); font-weight: 850; border-bottom: 1px solid var(--border-strong);">
+          <tr data-ton-gara-group="1" data-ton-gara="${escapeAttributeData(garaName)}" style="background: var(--bg-soft); font-weight: 850; border-bottom: 1px solid var(--border-strong);">
             <td colspan="${activeTonChuaHdReportCols.length + 1}" style="padding: 12px 14px; color: var(--primary); font-size: 13px; text-align: left; background: var(--bg-soft);">
               <span style="display: inline-flex; align-items: center; gap: 8px;">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5" style="flex-shrink: 0;"><path d="M3 21h18"></path><path d="M19 21v-4a2 2 0 0 0-2 2v4"></path><path d="M5 15V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"></path></svg>
@@ -935,7 +935,7 @@ const fullList = getCarBrandLossData();
           }
 
           rowsHtml += `
-            <tr style="border-bottom: 1px solid var(--border); font-size: 13px;">
+            <tr data-ton-gara="${escapeAttributeData(garaName)}" style="border-bottom: 1px solid var(--border); font-size: 13px;">
               <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 44px;">${globalIdx}</td>
               <td style="display: ${activeTonChuaHdReportCols.includes('SO_HSBT') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 700; color: var(--text-main); font-size: 12.5px; white-space: nowrap;">
                 <div style="display: inline-flex; align-items: center; gap: 6px;">
@@ -1015,9 +1015,9 @@ const fullList = getCarBrandLossData();
                   `).join('')}
                 </div>
               </div>
-              <button type="button" class="btn-premium hide-on-screenshot" onclick="downloadTonChuaHoaDonReportImage('png')" style="padding: 0 14px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(245,158,11,0.12) 100%); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-xs); transition: all 0.2s ease; white-space: nowrap;" title="Tải ảnh báo cáo (PNG/JPG)">
+              <button type="button" class="btn-premium hide-on-screenshot" onclick="downloadTonChuaHoaDonReportImage('png')" style="padding: 0 14px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(245,158,11,0.12) 100%); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-xs); transition: all 0.2s ease; white-space: nowrap;" title="${activeGdvReportGara === 'all' ? 'Xuất ảnh báo cáo cho từng gara, đóng gói ZIP' : 'Tải ảnh báo cáo (PNG/JPG)'}">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                <span>Tải Ảnh Báo Cáo</span>
+                <span>${activeGdvReportGara === 'all' ? 'Tải Ảnh Theo Gara' : 'Tải Ảnh Báo Cáo'}</span>
               </button>
             </div>
           </div>
@@ -1303,6 +1303,130 @@ const fullList = getCarBrandLossData();
     }
 
 
+    function getTonChuaHoaDonGaraNames(cardEl) {
+      if (!cardEl) return [];
+      return Array.from(cardEl.querySelectorAll('tr[data-ton-gara-group="1"]'))
+        .map(row => row.getAttribute('data-ton-gara') || '')
+        .filter(Boolean);
+    }
+
+
+    function buildTonChuaHoaDonGaraImageOptions(garaName) {
+      return {
+        scale: 2.6,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: function(clonedDoc) {
+          const target = clonedDoc.getElementById('tonChuaHoaDonReportCardContainer');
+          if (!target) return;
+          target.style.boxShadow = 'none';
+          target.style.transform = 'none';
+          target.style.backgroundColor = '#ffffff';
+          target.querySelectorAll('[data-ton-gara]').forEach(row => {
+            if (row.getAttribute('data-ton-gara') !== garaName) row.style.display = 'none';
+          });
+        },
+        ignoreElements: function(element) {
+          return element.classList && element.classList.contains('hide-on-screenshot');
+        }
+      };
+    }
+
+
+    function sanitizeTonChuaHoaDonFileName(value) {
+      return String(value || 'Gara')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+        .replace(/[\\/:*?"<>|]/g, '_')
+        .replace(/\s+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 80) || 'Gara';
+    }
+
+
+    function canvasToBlob(canvas, imgFormat) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Không tạo được ảnh.')), `image/${imgFormat}`, 1.0);
+      });
+    }
+
+
+    async function downloadTonChuaHoaDonReportImagesByGara(cardEl, imgFormat, ext) {
+      if (typeof JSZip === 'undefined') {
+        triggerToast('Thư viện ZIP chưa tải xong, vui lòng thử lại sau 2 giây...', 'warning');
+        return;
+      }
+
+      const garaNames = getTonChuaHoaDonGaraNames(cardEl);
+      if (!garaNames.length) {
+        triggerToast('Không có gara nào để xuất ảnh.', 'warning');
+        return;
+      }
+
+      const dateTag = new Date().toLocaleDateString('vi-VN').replace(/\//g, '-');
+      const zip = new JSZip();
+      const folder = zip.folder(`Anh_Bao_Cao_Ton_Chua_HD_${dateTag}`) || zip;
+      const failed = [];
+      let exported = 0;
+
+      if (typeof toggleUploadOverlay === 'function') {
+        toggleUploadOverlay(true, 'Đang xuất ảnh theo gara', `Chuẩn bị ${garaNames.length} gara...`, 0);
+      }
+
+      for (let i = 0; i < garaNames.length; i++) {
+        const garaName = garaNames[i];
+        try {
+          if (typeof toggleUploadOverlay === 'function') {
+            toggleUploadOverlay(true, 'Đang xuất ảnh theo gara', `${garaName} (${i + 1}/${garaNames.length})`, Math.round((i / garaNames.length) * 100));
+          }
+          const canvas = await html2canvas(cardEl, buildTonChuaHoaDonGaraImageOptions(garaName));
+          const blob = await canvasToBlob(canvas, imgFormat);
+          folder.file(`${String(i + 1).padStart(2, '0')}_${sanitizeTonChuaHoaDonFileName(garaName)}.${ext}`, blob);
+          exported++;
+          canvas.width = 0;
+          canvas.height = 0;
+          await new Promise(resolve => setTimeout(resolve, 30));
+        } catch (err) {
+          console.error('Lỗi xuất ảnh gara:', garaName, err);
+          failed.push(garaName);
+        }
+      }
+
+      if (!exported) {
+        if (typeof toggleUploadOverlay === 'function') toggleUploadOverlay(false);
+        triggerToast('Không xuất được ảnh gara nào. Vui lòng thử lại.', 'error');
+        return;
+      }
+
+      if (typeof toggleUploadOverlay === 'function') {
+        toggleUploadOverlay(true, 'Đang đóng gói ZIP', `Đã xuất ${exported}/${garaNames.length} ảnh...`, 100);
+      }
+
+      try {
+        const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 3 } });
+        const url = URL.createObjectURL(zipBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Anh_Bao_Cao_Ton_Chua_HD_Theo_Gara_${dateTag}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 15000);
+        triggerToast(failed.length ? `Đã xuất ${exported} ảnh, ${failed.length} gara lỗi.` : `Đã xuất ${exported} ảnh báo cáo theo gara!`, failed.length ? 'warning' : 'success');
+      } catch (err) {
+        console.error(err);
+        triggerToast('Lỗi khi đóng gói ZIP: ' + err.message, 'error');
+      } finally {
+        if (typeof toggleUploadOverlay === 'function') toggleUploadOverlay(false);
+      }
+    }
+
+
     function downloadTonChuaHoaDonReportImage(format) {
       const cardEl = document.getElementById('tonChuaHoaDonReportCardContainer');
       if (!cardEl) {
@@ -1316,6 +1440,11 @@ const fullList = getCarBrandLossData();
 
       const imgFormat = format === 'jpg' || format === 'jpeg' ? 'jpeg' : 'png';
       const ext = imgFormat === 'jpeg' ? 'jpg' : 'png';
+
+      if (activeGdvReportGara === 'all') {
+        downloadTonChuaHoaDonReportImagesByGara(cardEl, imgFormat, ext);
+        return;
+      }
 
       triggerToast(`Đang xuất ảnh Báo cáo Tồn Ultra HD (4K)...`, 'info');
 
