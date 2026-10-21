@@ -239,9 +239,20 @@ let pendingNotesPerPage = 20;
 
 
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('.custom-dropdown-container')) {
+      if (!e.target.closest('.custom-dropdown-container, .custom-select-wrapper')) {
         closeAllCustomDropdowns();
       }
+    });
+
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      const openMenu = Array.from(document.querySelectorAll('.custom-select-menu')).find(menu => menu.style.display === 'block');
+      if (!openMenu) return;
+      const trigger = openMenu.parentElement ? openMenu.parentElement.querySelector(':scope > button') : null;
+      closeAllCustomDropdowns();
+      trigger?.focus({ preventScroll: true });
+      event.preventDefault();
     });
 
 

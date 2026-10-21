@@ -137,10 +137,36 @@
       const menu = document.getElementById(menuId);
       if (!menu) return;
       const isVisible = menu.style.display === 'block';
-      document.querySelectorAll('.custom-select-menu').forEach(m => m.style.display = 'none');
+      document.querySelectorAll('.custom-select-menu').forEach(m => {
+        m.style.display = 'none';
+        const openTrigger = m.parentElement ? m.parentElement.querySelector(':scope > button') : null;
+        if (openTrigger) {
+          openTrigger.classList.remove('is-open');
+          openTrigger.setAttribute('aria-expanded', 'false');
+        }
+      });
       if (!isVisible) {
         menu.style.display = 'block';
+        const trigger = menu.parentElement ? menu.parentElement.querySelector(':scope > button') : null;
+        if (trigger) {
+          trigger.classList.add('is-open');
+          trigger.setAttribute('aria-expanded', 'true');
+        }
         activeOpenDropdownId = menuId;
+        if (trigger && menu.classList.contains('report-picker__menu') && window.matchMedia('(max-width: 600px)').matches) {
+          const triggerRect = trigger.getBoundingClientRect();
+          const top = Math.max(12, Math.min(triggerRect.bottom + 8, window.innerHeight - 220));
+          menu.style.setProperty('--report-picker-top', top + 'px');
+        }
+        const activeItem = menu.querySelector('.report-picker__item.is-active');
+        const scrollBody = menu.querySelector('.report-picker__body');
+        if (activeItem && scrollBody) {
+          const bodyRect = scrollBody.getBoundingClientRect();
+          const itemRect = activeItem.getBoundingClientRect();
+          if (itemRect.top < bodyRect.top || itemRect.bottom > bodyRect.bottom) {
+            scrollBody.scrollTop += itemRect.top - bodyRect.top - 8;
+          }
+        }
       } else {
         activeOpenDropdownId = null;
       }

@@ -575,176 +575,271 @@
             -webkit-backdrop-filter: none !important;
           }
 
-          /* Report page selector: compact, theme-aware menu */
-          #accReportViewSelectorWrapper > button {
+          /* Report page selector - premium, consistent with the report filter menus */
+          #accReportViewSelectorWrapper { flex: 0 0 auto; }
+
+          .report-picker__trigger {
             height: 42px !important;
-            min-width: 190px !important;
-            max-width: 250px;
-            padding: 0 12px !important;
+            min-width: 214px !important;
+            max-width: 276px;
+            padding: 0 11px 0 9px !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 9px;
+            appearance: none;
             border: 1px solid var(--border-strong) !important;
             border-radius: 12px !important;
-            background: var(--bg-soft) !important;
+            background: var(--surface-strong) !important;
             color: var(--text-main) !important;
-            box-shadow: var(--shadow-sm) !important;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, .045), inset 0 1px 0 rgba(255, 255, 255, .72) !important;
+            cursor: pointer;
+            font-family: inherit;
+            transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
           }
-          #accReportViewSelectorWrapper > button:hover,
-          #accReportViewSelectorWrapper > button:focus-visible {
-            border-color: var(--primary) !important;
-            box-shadow: var(--shadow-sm), 0 0 0 3px rgba(216,180,109,.12) !important;
+          .report-picker__trigger:hover,
+          .report-picker__trigger:focus-visible,
+          .report-picker__trigger.is-open {
+            border-color: rgba(201, 154, 67, .58) !important;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, .08), 0 0 0 3px rgba(201, 154, 67, .08) !important;
+            transform: translateY(-1px);
             outline: none;
           }
-          #accReportViewSelectorWrapper > button > span {
-            min-width: 0;
+          .report-picker__trigger.is-open { transform: none; }
+          body:not(.light-mode) .report-picker__trigger:not(:hover):not(:focus-visible):not(.is-open) {
+            border-color: rgba(216, 180, 109, .22) !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .06) !important;
           }
-          #accReportViewSelectorWrapper > button > span > span:first-child {
-            width: 24px !important;
-            height: 24px !important;
-            border-radius: 8px !important;
-            background: rgba(216,180,109,.14) !important;
-            color: var(--primary) !important;
+          body:not(.light-mode) .report-picker__trigger-icon,
+          body:not(.light-mode) .report-picker__item-icon { color: var(--primary); }
+          body:not(.light-mode) .report-picker__item-badge {
+            color: #e7c684;
+            border-color: rgba(216, 180, 109, .22);
+            background: rgba(216, 180, 109, .12);
           }
-          #accReportViewSelectorWrapper > button > span > span:nth-child(2) {
+          body:not(.light-mode) .report-picker__item-badge.is-new { color: #4a3409; }
+          .report-picker__trigger-main { display: flex; align-items: center; gap: 9px; min-width: 0; }
+          .report-picker__trigger-icon {
+            width: 30px;
+            height: 30px;
+            flex: 0 0 30px;
+            display: grid;
+            place-items: center;
+            color: #a97928;
+            border: 1px solid rgba(201, 154, 67, .22);
+            border-radius: 9px;
+            background: rgba(201, 154, 67, .10);
+          }
+          .report-picker__trigger-label {
             min-width: 0;
             overflow: hidden;
+            color: var(--text-main);
+            font-size: 12.5px;
+            font-weight: 850;
             text-overflow: ellipsis;
-            color: var(--text-main) !important;
-          }
-          #ddReportViewSelectorMenu {
-            width: min(360px, calc(100vw - 32px)) !important;
-            min-width: 0 !important;
-            max-height: none !important;
-            overflow: hidden !important;
-            padding: 8px !important;
-            border: 1px solid var(--border-strong) !important;
-            border-radius: 14px !important;
-            background: var(--bg-soft) !important;
-            box-shadow: 0 14px 36px rgba(0,0,0,.16), 0 4px 12px rgba(0,0,0,.06) !important;
-          }
-          #ddReportViewSelectorMenu::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 20px;
-            right: 20px;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
-            pointer-events: none;
-          }
-          #ddReportViewSelectorMenu > div:first-child {
-            position: relative !important;
-            top: auto !important;
-            margin: 0 2px 5px !important;
-            padding: 6px 8px 9px !important;
-            border-bottom: 1px solid var(--border) !important;
-            background: var(--bg-soft) !important;
-          }
-          #ddReportViewSelectorMenu > div:first-child > span:first-child {
-            color: var(--text-main) !important;
-            font-size: 11px !important;
-            letter-spacing: .07em !important;
-          }
-          #ddReportViewSelectorMenu > div:first-child > span:last-child {
-            padding: 3px 7px;
-            border-radius: 999px;
-            background: rgba(216,180,109,.13);
-            color: var(--primary) !important;
             white-space: nowrap;
           }
-          #ddReportViewSelectorMenu > div:nth-child(2) {
-            max-height: min(320px, 48vh);
-            overflow-x: hidden;
+          .report-picker__trigger-badge {
+            flex: 0 0 auto;
+            padding: 2px 6px;
+            color: #6f4a0c;
+            border: 1px solid rgba(179, 140, 67, .28);
+            border-radius: 999px;
+            background: linear-gradient(135deg, #f7dfa8, #e8bf72);
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: .04em;
+          }
+          .report-picker__chevron {
+            width: 15px;
+            height: 15px;
+            flex: 0 0 15px;
+            color: var(--text-soft);
+            transition: transform .18s ease;
+          }
+          .report-picker__trigger.is-open .report-picker__chevron { transform: rotate(180deg); }
+
+          .report-picker__menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            z-index: 10000;
+            width: min(392px, calc(100vw - 24px));
+            overflow: hidden;
+            padding: 0;
+            border: 1px solid rgba(201, 154, 67, .30);
+            border-radius: 18px;
+            background: var(--surface-strong) !important;
+            box-shadow: 0 18px 44px rgba(15, 23, 42, .16), 0 2px 8px rgba(15, 23, 42, .05), inset 0 1px 0 rgba(255, 255, 255, .74);
+            transform-origin: top right;
+            animation: reportPickerIn .17s cubic-bezier(.2, .8, .2, 1);
+          }
+          body:not(.light-mode) .report-picker__menu {
+            border-color: rgba(216, 180, 109, .28);
+            box-shadow: 0 28px 70px rgba(0, 0, 0, .55), 0 3px 10px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .05);
+          }
+          @keyframes reportPickerIn {
+            from { opacity: 0; transform: translateY(-6px) scale(.985); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes reportPickerInMobile {
+            from { opacity: 0; transform: translate(-50%, -6px) scale(.985); }
+            to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .report-picker__menu { animation: none; }
+          }
+
+          .report-picker__head { padding: 13px 14px !important; }
+          body:not(.light-mode) .report-picker__head {
+            background: linear-gradient(135deg, rgba(216, 180, 109, .14), rgba(216, 180, 109, .02));
+          }
+          .report-picker__head .report-filter-menu-head__title { font-size: 10.5px; letter-spacing: .075em; }
+          .report-picker__head .report-filter-menu-head__meta { font-size: 10px; }
+          .report-picker__head-copy { min-width: 0; }
+          .report-picker__count {
+            flex: 0 0 auto;
+            margin-left: auto;
+            padding: 4px 8px;
+            color: #92651d;
+            border: 1px solid rgba(201, 154, 67, .18);
+            border-radius: 999px;
+            background: rgba(201, 154, 67, .12);
+            font-size: 9.5px;
+            font-weight: 900;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            white-space: nowrap;
+          }
+          body:not(.light-mode) .report-picker__count { color: #e7c684; }
+
+          .report-picker__body {
+            max-height: 378px;
+            max-height: min(378px, calc(100dvh - 250px));
             overflow-y: auto;
             overscroll-behavior: contain;
-            padding: 1px 3px 1px 1px;
-            gap: 3px !important;
-            scrollbar-color: var(--border-strong) transparent;
+            padding: 7px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(201, 154, 67, .42) transparent;
           }
-          #ddReportViewSelectorMenu > div:nth-child(2) > div {
-            min-height: 56px;
-            display: grid !important;
-            grid-template-columns: minmax(0, 1fr) 18px;
+          .report-picker__body::-webkit-scrollbar { width: 6px; }
+          .report-picker__body::-webkit-scrollbar-track { background: transparent; }
+          .report-picker__body::-webkit-scrollbar-thumb { background: rgba(201, 154, 67, .38); border-radius: 99px; }
+          .report-picker__body::-webkit-scrollbar-thumb:hover { background: rgba(201, 154, 67, .60); }
+
+          .report-picker__item {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 22px;
             align-items: center;
-            gap: 8px !important;
-            padding: 8px 9px !important;
-            border: 1px solid transparent !important;
-            border-radius: 12px !important;
-            background: transparent !important;
+            gap: 10px;
+            min-height: 58px;
+            padding: 8px 9px;
+            border: 1px solid transparent;
+            border-radius: 11px;
+            cursor: pointer;
             text-align: left;
-            transition: background .18s ease, border-color .18s ease, transform .18s ease !important;
+            transition: background .16s ease, border-color .16s ease, transform .16s ease, box-shadow .16s ease;
           }
-          #ddReportViewSelectorMenu > div:nth-child(2) > div:hover {
-            background: var(--surface-hover) !important;
-            border-color: var(--border) !important;
-            transform: translateX(1px);
+          .report-picker__item + .report-picker__item { margin-top: 3px; }
+          .report-picker__item:hover,
+          .report-picker__item:focus-visible {
+            border-color: var(--border);
+            background: var(--surface-hover);
+            transform: translateX(2px);
+            outline: none;
           }
-          #ddReportViewSelectorMenu > div:nth-child(2) > div:has(> div:nth-child(2)) {
-            background: linear-gradient(105deg, rgba(216,180,109,.18), rgba(216,180,109,.06)) !important;
-            border-color: rgba(216,180,109,.38) !important;
-            box-shadow: inset 2px 0 0 var(--primary);
+          .report-picker__item.is-active {
+            border-color: rgba(201, 154, 67, .38);
+            background: linear-gradient(105deg, rgba(201, 154, 67, .18), rgba(201, 154, 67, .05));
+            box-shadow: inset 3px 0 0 var(--primary);
           }
-          #ddReportViewSelectorMenu > div:nth-child(2) > div > div:first-child {
-            min-width: 0;
-            align-items: flex-start !important;
-            gap: 9px !important;
+          .report-picker__item.is-active:hover { transform: none; }
+
+          .report-picker__item-main { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+          .report-picker__item-icon {
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            display: grid;
+            place-items: center;
+            color: #a97928;
+            border: 1px solid rgba(201, 154, 67, .18);
+            border-radius: 9px;
+            background: rgba(201, 154, 67, .08);
           }
-          #ddReportViewSelectorMenu > div:nth-child(2) > div > div:first-child > div:first-child {
-            width: 30px !important;
-            height: 30px !important;
-            border: 1px solid rgba(216,180,109,.18);
-            border-radius: 9px !important;
-            background: rgba(216,180,109,.10) !important;
-            color: var(--primary) !important;
-          }
-          #ddReportViewSelectorMenu > div:nth-child(2) > div:has(> div:nth-child(2)) > div:first-child > div:first-child {
+          .report-picker__item.is-active .report-picker__item-icon {
+            color: #171209;
             border-color: transparent;
-            background: var(--primary-gradient) !important;
-            color: #171209 !important;
-            box-shadow: 0 5px 12px rgba(201,154,67,.20);
+            background: var(--primary-gradient);
+            box-shadow: 0 5px 12px rgba(201, 154, 67, .22);
           }
-          #ddReportViewSelectorMenu > div:nth-child(2) > div > div:first-child > div:nth-child(2) {
-            min-width: 0;
-            flex: 1;
-          }
-          #ddReportViewSelectorMenu > div:nth-child(2) > div > div:first-child > div:nth-child(2) > div:first-child {
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 4px 6px !important;
-          }
-          #ddReportViewSelectorMenu > div:nth-child(2) > div > div:first-child > div:nth-child(2) > div:first-child > span:first-child {
-            color: var(--text-main) !important;
-            font-size: 12.5px !important;
-            font-weight: 800 !important;
-            line-height: 1.35;
-            white-space: normal;
-          }
-          #ddReportViewSelectorMenu > div:nth-child(2) > div > div:first-child > div:nth-child(2) > div:first-child > span:nth-child(2) {
+          .report-picker__item-copy { min-width: 0; padding-top: 1px; }
+          .report-picker__item-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; }
+          .report-picker__item-title { color: var(--text-main); font-size: 12.5px; font-weight: 800; line-height: 1.35; }
+          .report-picker__item.is-active .report-picker__item-title { color: #8a5f18; }
+          body:not(.light-mode) .report-picker__item.is-active .report-picker__item-title { color: #e7c684; }
+          .report-picker__item-badge {
             flex: 0 0 auto;
-            padding: 2px 6px !important;
-            border: 1px solid rgba(216,180,109,.15);
-            border-radius: 999px !important;
-            background: rgba(216,180,109,.12) !important;
-            color: var(--primary) !important;
-            font-size: 10px !important;
-            line-height: 1.2;
+            padding: 1px 6px;
+            color: #92651d;
+            border: 1px solid rgba(201, 154, 67, .16);
+            border-radius: 999px;
+            background: rgba(201, 154, 67, .12);
+            font-size: 9px;
+            font-weight: 900;
+            line-height: 1.5;
           }
-          #ddReportViewSelectorMenu > div:nth-child(2) > div > div:first-child > div:nth-child(2) > div:nth-child(2) {
-            margin-top: 3px !important;
-            color: var(--text-soft) !important;
-            font-size: 11px !important;
+          .report-picker__item-badge.is-new {
+            color: #4a3409;
+            border-color: rgba(179, 140, 67, .38);
+            background: linear-gradient(135deg, #f6d98d, #e8b955);
+          }
+          .report-picker__item-desc {
+            margin-top: 2px;
+            overflow: hidden;
+            color: var(--text-soft);
+            font-size: 11px;
             line-height: 1.4;
-            white-space: normal;
+            text-overflow: ellipsis;
+            white-space: nowrap;
           }
-          #ddReportViewSelectorMenu > div:nth-child(2) > div > div:nth-child(2) {
-            width: 18px !important; height: 18px !important; box-shadow: 0 3px 9px rgba(201,154,67,.20);
+          .report-picker__item-chevron { width: 14px; height: 14px; color: var(--text-soft); opacity: .45; justify-self: center; }
+          .report-picker__item.is-active .report-picker__item-chevron { opacity: 0; }
+          .report-picker__item-check {
+            width: 22px;
+            height: 22px;
+            display: grid;
+            place-items: center;
+            justify-self: center;
+            color: #171209;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 3px 9px rgba(201, 154, 67, .25);
           }
           @media (max-width: 600px) {
-            #ddReportViewSelectorMenu {
-              width: min(360px, calc(100vw - 24px)) !important;
+            #accReportViewSelectorWrapper { flex: 1 1 100%; width: 100%; }
+            .report-picker__trigger { width: 100%; max-width: none; min-width: 0 !important; }
+            .report-picker__menu {
+              position: fixed;
+              left: 50%;
+              right: auto;
+              top: var(--report-picker-top, 96px);
+              width: min(392px, calc(100vw - 24px));
+              max-height: calc(100vh - var(--report-picker-top, 96px) - 12px);
+              max-height: calc(100dvh - var(--report-picker-top, 96px) - 12px);
+              transform: translateX(-50%);
+              transform-origin: top center;
+              animation-name: reportPickerInMobile;
             }
-            #ddReportViewSelectorMenu > div:nth-child(2) > div {
-              min-height: 56px;
-              padding: 8px !important;
+            .report-picker__body {
+              max-height: min(378px, calc(100vh - var(--report-picker-top, 96px) - 70px));
+              max-height: min(378px, calc(100dvh - var(--report-picker-top, 96px) - 70px));
             }
+            .report-picker__item { min-height: 56px; }
+          }
+          @media (max-width: 720px) {
+            .gdv-report-hero-actions .btn-premium { min-width: 0 !important; }
+            .report-picker__trigger { width: 100%; max-width: none; min-width: 0 !important; }
           }
 
           /* Premium executive report system */
@@ -1657,50 +1752,48 @@
                   </div>
 
                   <!-- Compact Report View Selector -->
-                  <div class="custom-select-wrapper" style="position: relative; z-index: 110;" id="accReportViewSelectorWrapper">
-                    <button type="button" class="btn-premium" onclick="toggleCustomDropdownMenu('ddReportViewSelectorMenu', event)" style="padding: 0 16px; height: 42px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border-strong); font-size: 13px; font-weight: 850; color: var(--text-main); display: inline-flex; align-items: center; gap: 10px; cursor: pointer; min-width: 190px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" onmouseover="this.style.borderColor='var(--primary)';" onmouseout="this.style.borderColor='var(--border-strong)';">
-                      <span style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <span style="color: var(--primary); display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; background: rgba(216,180,109,0.15); border-radius: 6px; flex-shrink: 0;">
-                          ${currentActiveReportObj.icon}
-                        </span>
-                        <span style="color: var(--text-main); font-weight: 850; font-size: 13px;">${currentActiveReportObj.title}</span>
-                        ${currentActiveReportObj.id === 'tnds_ton' ? '<span style="font-size: 10px; background: #eab308; color: #000; padding: 1px 6px; border-radius: 4px; font-weight: 900; margin-left: 2px;">MỚI</span>' : ''}
+                  <div class="custom-select-wrapper report-picker" style="position: relative; z-index: 110;" id="accReportViewSelectorWrapper">
+                    <button type="button" class="report-picker__trigger ${activeOpenDropdownId === 'ddReportViewSelectorMenu' ? 'is-open' : ''}" onclick="toggleCustomDropdownMenu('ddReportViewSelectorMenu', event)" aria-haspopup="listbox" aria-expanded="${activeOpenDropdownId === 'ddReportViewSelectorMenu' ? 'true' : 'false'}" aria-controls="ddReportViewSelectorMenu">
+                      <span class="report-picker__trigger-main">
+                        <span class="report-picker__trigger-icon">${currentActiveReportObj.icon}</span>
+                        <span class="report-picker__trigger-label">${currentActiveReportObj.title}</span>
+                        ${currentActiveReportObj.id === 'tnds_ton' ? '<span class="report-picker__trigger-badge">MỚI</span>' : ''}
                       </span>
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-soft); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      <svg class="report-picker__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                     </button>
 
-                    <div id="ddReportViewSelectorMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddReportViewSelectorMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 8px); right: 0; min-width: 320px; max-height: 380px; overflow-y: auto; background: var(--bg-soft) !important; border: 1px solid var(--border-strong); border-radius: 16px; box-shadow: 0 20px 48px rgba(0,0,0,0.35); z-index: 9999; padding: 8px; scrollbar-width: thin;">
-                      <div style="padding: 6px 12px 8px; font-size: 11px; font-weight: 850; text-transform: uppercase; color: var(--text-soft); letter-spacing: 0.05em; border-bottom: 1px solid var(--border); margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg-soft); z-index: 2;">
-                        <span>CHỌN TRANG BÁO CÁO</span>
-                        <span style="font-size: 11px; color: var(--primary); font-weight: 800;">${GDV_REPORT_VIEWS_LIST.length} trang</span>
+                    <div id="ddReportViewSelectorMenu" class="custom-select-menu report-picker__menu" role="listbox" aria-label="Chọn trang báo cáo" style="display: ${activeOpenDropdownId === 'ddReportViewSelectorMenu' ? 'block' : 'none'};">
+                      <div class="report-filter-menu-head report-picker__head">
+                        <span class="report-filter-menu-head__icon">
+                          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                        </span>
+                        <div class="report-picker__head-copy">
+                          <div class="report-filter-menu-head__title">Chọn trang báo cáo</div>
+                          <div class="report-filter-menu-head__meta">Chuyển nhanh giữa các góc nhìn báo cáo</div>
+                        </div>
+                        <span class="report-picker__count">${GDV_REPORT_VIEWS_LIST.length} trang</span>
                       </div>
-                      <div style="display: flex; flex-direction: column; gap: 4px;">
+                      <div class="report-picker__body">
                         ${GDV_REPORT_VIEWS_LIST.map(item => {
                           const isSelected = item.id === activeGdvReportView;
                           return `
-                            <div onclick="switchGdvReportView('${item.id}')" style="padding: 9px 12px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: all 0.15s ease; ${isSelected ? 'background: rgba(216,180,109,0.18); border: 1px solid rgba(216,180,109,0.35);' : 'background: transparent; border: 1px solid transparent;'}" onmouseover="if (!${isSelected}) { this.style.background='var(--bg-soft)'; this.style.borderColor='var(--border)'; }" onmouseout="if (!${isSelected}) { this.style.background='transparent'; this.style.borderColor='transparent'; }">
-                              <div style="display: flex; align-items: center; gap: 10px;">
-                                <div style="width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; ${isSelected ? 'background: var(--primary); color: #111;' : 'background: var(--bg-soft); color: var(--primary);'}">
-                                  ${item.icon}
-                                </div>
-                                <div>
-                                  <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span style="font-size: 13px; font-weight: ${isSelected ? '850' : '750'}; color: ${isSelected ? 'var(--primary)' : 'var(--text-main)'};">${item.title}</span>
-                                    ${item.badge ? `
-                                      <span style="font-size: 10px; font-weight: 850; padding: 1px 6px; border-radius: 4px; ${item.badge === 'MỚI' ? 'background: #eab308; color: #000;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">
-                                        ${item.badge}
-                                      </span>
-                                    ` : ''}
+                            <div class="report-picker__item ${isSelected ? 'is-active' : ''}" role="option" aria-selected="${isSelected ? 'true' : 'false'}" tabindex="0" title="${item.desc}" onclick="switchGdvReportView('${item.id}')" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); switchGdvReportView('${item.id}'); }">
+                              <div class="report-picker__item-main">
+                                <div class="report-picker__item-icon">${item.icon}</div>
+                                <div class="report-picker__item-copy">
+                                  <div class="report-picker__item-title-row">
+                                    <span class="report-picker__item-title">${item.title}</span>
+                                    ${item.badge ? `<span class="report-picker__item-badge ${item.badge === 'MỚI' ? 'is-new' : ''}">${item.badge}</span>` : ''}
                                   </div>
-                                  <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 2px;">${item.desc}</div>
+                                  <div class="report-picker__item-desc">${item.desc}</div>
                                 </div>
                               </div>
                               ${isSelected ? `
-                                <div style="width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: #111; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <div class="report-picker__item-check">
                                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                 </div>
                               ` : `
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--text-soft); opacity: 0.4;"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                <svg class="report-picker__item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                               `}
                             </div>
                           `;

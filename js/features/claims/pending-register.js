@@ -239,16 +239,21 @@
 
 
     function closeAllCustomDropdowns() {
-      document.querySelectorAll('.custom-dropdown-menu').forEach(menu => {
+      document.querySelectorAll('.custom-dropdown-menu, .custom-select-menu').forEach(menu => {
         menu.style.display = 'none';
       });
       document.querySelectorAll('.custom-dropdown-container.is-open').forEach(container => {
         container.classList.remove('is-open');
         container.querySelector('button')?.setAttribute('aria-expanded', 'false');
       });
+      document.querySelectorAll('.custom-select-wrapper > button.is-open').forEach(trigger => {
+        trigger.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+      });
       document.querySelectorAll('.row-status-menu, .row-gdv-menu').forEach(menu => {
         menu.style.display = 'none';
       });
+      activeOpenDropdownId = null;
     }
 
 
