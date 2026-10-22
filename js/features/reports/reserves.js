@@ -969,23 +969,24 @@ const fullList = getCarBrandLossData();
       return `
         <div class="p-card" id="tonChuaHoaDonReportCardContainer" style="padding: 28px 32px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface); position: relative; min-height: 420px; display: flex; flex-direction: column;">
           
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
-            <div style="flex: 1; margin-right: 20px;">
-              <h2 style="font-size: 18px; font-weight: 850; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                Danh sách Hồ sơ tồn chưa có hóa đơn (Đã duyệt HSBT)
-              </h2>
-              
-            </div>
-            <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
-              
-              
-              <div class="hide-on-screenshot" style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #ef4444; padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 850; white-space: nowrap;">
-                Tổng số tồn: ${filtered.length} hồ sơ (Được lọc theo bộ lọc)
+          <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+              <div style="flex: 1 1 520px; min-width: 260px;">
+                <h2 style="font-size: 18px; font-weight: 850; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                  Danh sách Hồ sơ tồn chưa có hóa đơn (Đã duyệt HSBT)
+                </h2>
               </div>
+              <div class="hide-on-screenshot" style="display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-soft); color: var(--text-soft); font-size: 12px; font-weight: 750; white-space: nowrap;">
+                <strong style="color: var(--text-main); font-size: 14px;">${filtered.length}</strong>
+                <span>hồ sơ theo bộ lọc</span>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
 
               <div class="custom-select-wrapper hide-on-screenshot" style="position: relative;">
-                <button type="button" class="btn-premium btn-secondary" onclick="toggleCustomDropdownMenu('ddTonColsMenu', event)" style="padding: 0 14px; height: 32px; border-radius: 9px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-xs); white-space: nowrap;">
+                <button type="button" class="btn-premium btn-secondary" onclick="toggleCustomDropdownMenu('ddTonColsMenu', event)" style="padding: 0 14px; height: 38px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; box-shadow: var(--shadow-xs); white-space: nowrap;">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                   <span>Ẩn/Hiện cột</span>
                 </button>
@@ -1016,14 +1017,30 @@ const fullList = getCarBrandLossData();
                   `).join('')}
                 </div>
               </div>
-              <button type="button" class="btn-premium hide-on-screenshot" onclick="downloadAllTonChuaHoaDonReportImages()" style="padding: 0 14px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: 1px solid #059669; color: #ffffff; font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16,185,129,0.22); transition: all 0.2s ease; white-space: nowrap;" title="Tải ảnh danh sách tất cả hồ sơ tồn đã duyệt HSBT của mọi gara, bỏ qua bộ lọc hiện tại.">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                <span>Tải ảnh toàn bộ gara (.zip)</span>
-              </button>
-              <button type="button" class="btn-premium hide-on-screenshot" onclick="downloadTonChuaHoaDonReportImage('png')" style="padding: 0 14px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(245,158,11,0.12) 100%); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-xs); transition: all 0.2s ease; white-space: nowrap;" title="${activeGdvReportGara === 'all' ? 'Xuất ảnh báo cáo cho từng gara, đóng gói ZIP' : 'Tải ảnh báo cáo (PNG/JPG)'}">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                <span>${activeGdvReportGara === 'all' ? 'Tải Ảnh Theo Gara' : 'Tải Ảnh Báo Cáo'}</span>
-              </button>
+              <div class="custom-select-wrapper hide-on-screenshot" style="position: relative; margin-left: auto;">
+                <button type="button" class="btn-premium" onclick="toggleCustomDropdownMenu('ddTonImageExportMenu', event)" aria-haspopup="menu" aria-expanded="${activeOpenDropdownId === 'ddTonImageExportMenu' ? 'true' : 'false'}" aria-controls="ddTonImageExportMenu" style="padding: 0 15px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: 1px solid #059669; color: #ffffff; font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(16,185,129,0.2); white-space: nowrap;">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Xuất ảnh</span>
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div id="ddTonImageExportMenu" class="custom-select-menu" role="menu" style="display: ${activeOpenDropdownId === 'ddTonImageExportMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 7px); right: 0; min-width: 290px; padding: 7px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 13px; box-shadow: 0 14px 32px rgba(15,23,42,0.18); z-index: 1000;">
+                  <div class="custom-select-item" role="menuitem" onclick="closeAllCustomDropdowns(); downloadTonChuaHoaDonReportImage('png')" style="padding: 10px 11px; border-radius: 9px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px;">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#ef4444" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <span style="display: flex; flex-direction: column; gap: 2px;">
+                      <strong style="font-size: 12.5px; color: var(--text-main);">Ảnh theo bộ lọc hiện tại</strong>
+                      <small style="font-size: 11px; color: var(--text-soft);">Xuất kết quả đang hiển thị</small>
+                    </span>
+                  </div>
+                  <div style="height: 1px; margin: 4px 2px; background: var(--border);"></div>
+                  <div class="custom-select-item" role="menuitem" onclick="closeAllCustomDropdowns(); downloadAllTonChuaHoaDonReportImages()" style="padding: 10px 11px; border-radius: 9px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px;">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#059669" stroke-width="2.2" style="flex-shrink: 0; margin-top: 2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span style="display: flex; flex-direction: column; gap: 2px;">
+                      <strong style="font-size: 12.5px; color: var(--text-main);">Ảnh toàn bộ gara</strong>
+                      <small style="font-size: 11px; color: var(--text-soft);">Bỏ qua bộ lọc · Tải ZIP ảnh PNG</small>
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
