@@ -1059,16 +1059,16 @@ const fullList = getCarBrandLossData();
                 </button>
                 <div id="ddTonImageExportMenu" class="custom-select-menu" role="menu" style="display: ${activeOpenDropdownId === 'ddTonImageExportMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 7px); right: 0; min-width: 290px; padding: 7px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 13px; box-shadow: 0 14px 32px rgba(15,23,42,0.18); z-index: 1000;">
                   <button type="button" class="custom-select-item ton-export-option" role="menuitem" onclick="closeAllCustomDropdowns(); downloadTonChuaHoaDonReportImage('png')" style="padding: 10px 11px; border-radius: 9px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px;">
-                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#ef4444" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                    <span style="display: flex; flex-direction: column; gap: 2px;">
+                    <svg class="ton-export-icon" aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#ef4444" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <span class="ton-export-copy">
                       <strong style="font-size: 12.5px; color: var(--text-main);">Ảnh theo bộ lọc hiện tại</strong>
                       <small style="font-size: 11px; color: var(--text-soft);">Xuất kết quả đang hiển thị</small>
                     </span>
                   </button>
                   <div style="height: 1px; margin: 4px 2px; background: var(--border);"></div>
                   <button type="button" class="custom-select-item ton-export-option" role="menuitem" onclick="closeAllCustomDropdowns(); downloadAllTonChuaHoaDonReportImages()" style="padding: 10px 11px; border-radius: 9px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px;">
-                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#059669" stroke-width="2.2" style="flex-shrink: 0; margin-top: 2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span style="display: flex; flex-direction: column; gap: 2px;">
+                    <svg class="ton-export-icon" aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#059669" stroke-width="2.2" style="flex-shrink: 0; margin-top: 2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span class="ton-export-copy">
                       <strong style="font-size: 12.5px; color: var(--text-main);">Ảnh toàn bộ gara</strong>
                       <small style="font-size: 11px; color: var(--text-soft);">Bỏ qua bộ lọc · Tải ZIP ảnh PNG</small>
                     </span>
@@ -1367,8 +1367,7 @@ const fullList = getCarBrandLossData();
     }
 
 
-    function prepareTonChuaHoaDonImageCard(clonedDoc) {
-      const target = clonedDoc.getElementById('tonChuaHoaDonReportCardContainer');
+    function prepareTonChuaHoaDonImageCard(clonedDoc, target = clonedDoc.getElementById('tonChuaHoaDonReportCardContainer')) {
       if (!target) return null;
       target.classList.add('ton-report-export');
       target.style.boxShadow = 'none';
@@ -1380,29 +1379,6 @@ const fullList = getCarBrandLossData();
         tableContainer.style.setProperty('overflow', 'visible', 'important');
       }
       return target;
-    }
-
-
-    function buildTonChuaHoaDonGaraImageOptions(garaName) {
-      return {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        scrollX: 0,
-        scrollY: 0,
-        onclone: function(clonedDoc) {
-          const target = prepareTonChuaHoaDonImageCard(clonedDoc);
-          if (!target) return;
-          target.querySelectorAll('[data-ton-gara]').forEach(row => {
-            if (row.getAttribute('data-ton-gara') !== garaName) row.style.display = 'none';
-          });
-        },
-        ignoreElements: function(element) {
-          return element.classList && element.classList.contains('hide-on-screenshot');
-        }
-      };
     }
 
 
@@ -1425,76 +1401,156 @@ const fullList = getCarBrandLossData();
     }
 
 
-    async function downloadTonChuaHoaDonReportImagesByGara(cardEl, imgFormat, ext, pruneRowsForCapture = false) {
-      if (typeof JSZip === 'undefined') {
-        triggerToast('Thư viện ZIP chưa tải xong, vui lòng thử lại sau 2 giây...', 'warning');
+    let tonChuaHoaDonImageExportInProgress = false;
+
+    // Measure one export-only table, then capture bounded batches. Each PNG reuses
+    // the report/table header and crops just its own garage, without re-rendering
+    // the whole application for every file. Large garages continue on another PNG.
+    async function createTonChuaHoaDonImageCapture(cardEl) {
+      const host = document.createElement('div');
+      const card = cardEl.cloneNode(true);
+      const width = Math.ceil(Math.max(1400, cardEl.getBoundingClientRect().width || 1600, cardEl.querySelector('table')?.scrollWidth || 0));
+      host.style.cssText = `position:fixed;left:0;top:0;width:${width}px;z-index:-1;pointer-events:none;background:#fff;`;
+      host.setAttribute('aria-hidden', 'true');
+      card.id = 'tonChuaHoaDonExportCapture';
+      card.querySelectorAll('.hide-on-screenshot').forEach(element => element.remove());
+      host.appendChild(card);
+      document.body.appendChild(host);
+      try {
+        prepareTonChuaHoaDonImageCard(document, card);
+        card.style.setProperty('width', width + 'px', 'important');
+        if (document.fonts) await document.fonts.ready;
+        const table = card.querySelector('.ton-report-table');
+        const body = table.tBodies[0];
+        // Keep column widths stable when a batch contains shorter names/values.
+        const widths = Array.from(table.tHead.rows[0].cells, cell => cell.getBoundingClientRect().width);
+        table.style.tableLayout = 'fixed';
+        Array.from(table.tHead.rows[0].cells).forEach((cell, i) => {
+          if (widths[i]) cell.style.setProperty('width', widths[i] + 'px', 'important');
+        });
+        const top = card.getBoundingClientRect().top;
+        const headerHeight = table.tHead.getBoundingClientRect().bottom - top;
+        const footerHeight = card.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom;
+        // At 2x, keep each working canvas below 16 MP and 16,384 px per edge.
+        const maxHeight = Math.floor(Math.min(8192, 16000000 / (width * 4)));
+        const rowBudget = Math.max(100, maxHeight - headerHeight - footerHeight - 8);
+        const groups = [];
+        let group;
+        Array.from(body.rows).forEach(row => {
+          if (row.getAttribute('data-ton-gara-group') === '1') {
+            group = { name: row.getAttribute('data-ton-gara'), heading: row, rows: [] };
+            groups.push(group);
+          } else if (group) group.rows.push(row);
+        });
+        const pages = [];
+        groups.forEach((gara, index) => {
+          const headingHeight = gara.heading.getBoundingClientRect().height;
+          const segments = [];
+          let rows = [], height = headingHeight;
+          gara.rows.forEach(row => {
+            const rowHeight = row.getBoundingClientRect().height;
+            if (rows.length && height + rowHeight > rowBudget) {
+              segments.push({ rows, height });
+              rows = []; height = headingHeight;
+            }
+            rows.push(row); height += rowHeight;
+          });
+          if (rows.length) segments.push({ rows, height });
+          segments.forEach((segment, page) => pages.push({ ...segment, name: gara.name, index, page, pageCount: segments.length, heading: gara.heading.cloneNode(true) }));
+        });
+        body.replaceChildren();
+        return { host, card, body, pages, rowBudget };
+      } catch (err) {
+        host.remove();
+        throw err;
+      }
+    }
+
+    async function downloadTonChuaHoaDonReportImagesByGara(cardEl, imgFormat, ext) {
+      if (tonChuaHoaDonImageExportInProgress) return;
+      if (typeof JSZip === 'undefined' || typeof html2canvas === 'undefined') {
+        triggerToast('Thư viện tạo ảnh/ZIP chưa tải xong, vui lòng thử lại.', 'warning');
         return;
       }
-
       const garaNames = getTonChuaHoaDonGaraNames(cardEl);
       if (!garaNames.length) {
         triggerToast('Không có gara nào để xuất ảnh.', 'warning');
         return;
       }
-      const rowsToFilter = pruneRowsForCapture ? Array.from(cardEl.querySelectorAll('[data-ton-gara]')) : [];
-
+      tonChuaHoaDonImageExportInProgress = true;
       const dateTag = new Date().toLocaleDateString('vi-VN').replace(/\//g, '-');
       const zip = new JSZip();
       const folder = zip.folder(`Anh_Bao_Cao_Ton_Chua_HD_${dateTag}`) || zip;
       const failed = [];
-      let exported = 0;
-
-      if (typeof toggleUploadOverlay === 'function') {
-        toggleUploadOverlay(true, 'Đang xuất ảnh theo gara', `Chuẩn bị ${garaNames.length} gara...`, 0);
-      }
-
-      for (let i = 0; i < garaNames.length; i++) {
-        const garaName = garaNames[i];
-        const detachedRows = [];
-        let canvas = null;
-        try {
-          if (typeof toggleUploadOverlay === 'function') {
-            toggleUploadOverlay(true, 'Đang xuất ảnh theo gara', `${garaName} (${i + 1}/${garaNames.length})`, Math.round((i / garaNames.length) * 100));
-          }
-          if (pruneRowsForCapture) {
-            rowsToFilter.forEach(row => {
-              if (row.getAttribute('data-ton-gara') === garaName) return;
-              const placeholder = document.createComment('gara-image-row');
-              row.parentNode.insertBefore(placeholder, row);
-              row.remove();
-              detachedRows.push({ row, placeholder });
-            });
-          }
-          canvas = await html2canvas(cardEl, buildTonChuaHoaDonGaraImageOptions(garaName));
-          const blob = await canvasToBlob(canvas, imgFormat);
-          folder.file(`${String(i + 1).padStart(2, '0')}_${sanitizeTonChuaHoaDonFileName(garaName)}.${ext}`, blob);
-          exported++;
-        } catch (err) {
-          console.error('Lỗi xuất ảnh gara:', garaName, err);
-          failed.push(garaName);
-        } finally {
-          if (canvas) {
-            canvas.width = 0;
-            canvas.height = 0;
-          }
-          detachedRows.reverse().forEach(({ row, placeholder }) => {
-            if (placeholder.parentNode) placeholder.parentNode.replaceChild(row, placeholder);
-          });
-        }
-        await new Promise(resolve => setTimeout(resolve, 0));
-      }
-
-      if (!exported) {
-        if (typeof toggleUploadOverlay === 'function') toggleUploadOverlay(false);
-        triggerToast('Không xuất được ảnh gara nào. Vui lòng thử lại.', 'error');
-        return;
-      }
-
-      if (typeof toggleUploadOverlay === 'function') {
-        toggleUploadOverlay(true, 'Đang đóng gói ZIP', `Đã xuất ${exported}/${garaNames.length} ảnh...`, 100);
-      }
-
+      let exported = 0, capture;
+      const progress = (title, detail, percent) => {
+        if (typeof toggleUploadOverlay === 'function') toggleUploadOverlay(true, title, detail, percent);
+      };
       try {
+        progress('Đang chuẩn bị ảnh báo cáo', `${garaNames.length} gara...`, 0);
+        capture = await createTonChuaHoaDonImageCapture(cardEl);
+        const { host, card, body, pages, rowBudget } = capture;
+        for (let offset = 0; offset < pages.length;) {
+          const batch = [];
+          let height = 0;
+          while (offset < pages.length && (!batch.length || height + pages[offset].height <= rowBudget)) {
+            const page = pages[offset++];
+            batch.push(page); height += page.height;
+          }
+          const fragment = document.createDocumentFragment();
+          batch.forEach(page => fragment.append(page.heading, ...page.rows));
+          body.replaceChildren(fragment);
+          const rect = card.getBoundingClientRect();
+          const headerEnd = card.querySelector('thead').getBoundingClientRect().bottom - rect.top;
+          const footerStart = body.getBoundingClientRect().bottom - rect.top;
+          const slices = batch.map(page => ({ page, top: page.heading.getBoundingClientRect().top - rect.top, bottom: page.rows[page.rows.length - 1].getBoundingClientRect().bottom - rect.top }));
+          progress('Đang dựng ảnh báo cáo', `Đang xử lý ${batch.length} phần ảnh · ${exported}/${pages.length} đã xong`, Math.round(exported / pages.length * 90));
+          let canvas;
+          try {
+            const scale = Math.min(2, 16384 / Math.max(rect.width, rect.height), Math.sqrt(16000000 / (rect.width * rect.height)));
+            canvas = await html2canvas(card, {
+              scale, backgroundColor: '#ffffff', logging: false, useCORS: true, scrollX: 0, scrollY: 0,
+              // Exclude the rest of the app from the cloned document, but keep its styles.
+              ignoreElements: element => !document.head.contains(element) && !element.contains(host) && !host.contains(element)
+            });
+            const ratio = canvas.height / rect.height;
+            const headerPixels = Math.round(headerEnd * ratio);
+            const footerPixels = canvas.height - Math.round(footerStart * ratio);
+            for (const slice of slices) {
+              const image = document.createElement('canvas');
+              try {
+                const y = Math.round(slice.top * ratio), bottom = Math.round(slice.bottom * ratio);
+                image.width = canvas.width;
+                image.height = headerPixels + bottom - y + footerPixels;
+                const ctx = image.getContext('2d');
+                if (!ctx) throw new Error('Không tạo được khung ảnh.');
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, image.width, image.height);
+                ctx.drawImage(canvas, 0, 0, canvas.width, headerPixels, 0, 0, image.width, headerPixels);
+                ctx.drawImage(canvas, 0, y, canvas.width, bottom - y, 0, headerPixels, image.width, bottom - y);
+                if (footerPixels > 0) ctx.drawImage(canvas, 0, canvas.height - footerPixels, canvas.width, footerPixels, 0, image.height - footerPixels, image.width, footerPixels);
+                const page = slice.page;
+                const suffix = page.pageCount > 1 ? `_Trang_${String(page.page + 1).padStart(2, '0')}` : '';
+                folder.file(`${String(page.index + 1).padStart(2, '0')}_${sanitizeTonChuaHoaDonFileName(page.name)}${suffix}.${ext}`, await canvasToBlob(image, imgFormat));
+                exported++;
+                progress('Đang xuất ảnh theo gara', `${page.name} · ${exported}/${pages.length} ảnh`, Math.round(exported / pages.length * 90));
+              } catch (err) {
+                console.error('Lỗi tách ảnh gara:', slice.page.name, err);
+                failed.push(slice.page.name);
+              } finally {
+                image.width = image.height = 0;
+              }
+            }
+          } catch (err) {
+            console.error('Lỗi dựng nhóm ảnh gara:', err);
+            failed.push(...batch.map(page => page.name));
+          } finally {
+            if (canvas) canvas.width = canvas.height = 0;
+            body.replaceChildren();
+          }
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
+        if (!exported) throw new Error('Không xuất được ảnh gara nào. Vui lòng thử lại.');
+        progress('Đang đóng gói ZIP', `Đã xuất ${exported} ảnh...`, 95);
         const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
         const url = URL.createObjectURL(zipBlob);
         const link = document.createElement('a');
@@ -1504,49 +1560,34 @@ const fullList = getCarBrandLossData();
         link.click();
         link.remove();
         window.setTimeout(() => URL.revokeObjectURL(url), 15000);
-        triggerToast(failed.length ? `Đã xuất ${exported} ảnh, ${failed.length} gara lỗi.` : `Đã xuất ${exported} ảnh báo cáo theo gara!`, failed.length ? 'warning' : 'success');
+        triggerToast(failed.length ? `Đã xuất ${exported} ảnh, ${new Set(failed).size} gara có phần ảnh lỗi.` : `Đã xuất ${exported} ảnh báo cáo theo gara!`, failed.length ? 'warning' : 'success');
       } catch (err) {
-        console.error(err);
-        triggerToast('Lỗi khi đóng gói ZIP: ' + err.message, 'error');
+        console.error('Lỗi xuất ảnh theo gara:', err);
+        triggerToast(err.message || 'Có lỗi khi xuất ảnh toàn bộ gara.', 'error');
       } finally {
+        capture?.host.remove();
+        tonChuaHoaDonImageExportInProgress = false;
         if (typeof toggleUploadOverlay === 'function') toggleUploadOverlay(false);
       }
     }
 
-
     async function downloadAllTonChuaHoaDonReportImages() {
-      const visibleCard = document.getElementById('tonChuaHoaDonReportCardContainer');
-      if (!visibleCard) {
+      if (tonChuaHoaDonImageExportInProgress) return;
+      if (!document.getElementById('tonChuaHoaDonReportCardContainer')) {
         triggerToast('Không tìm thấy khung báo cáo!', 'error');
         return;
       }
-      if (typeof html2canvas === 'undefined') {
-        triggerToast('Thư viện tạo ảnh đang tải, vui lòng thử lại sau 2 giây...', 'warning');
-        return;
-      }
-      if (typeof JSZip === 'undefined') {
-        triggerToast('Thư viện ZIP chưa tải xong, vui lòng thử lại sau 2 giây...', 'warning');
-        return;
-      }
-
-      const renderHost = document.createElement('div');
-      renderHost.style.cssText = 'position:fixed;left:0;top:0;width:1600px;max-width:none;z-index:-1;pointer-events:none;background:#fff;';
+      // Build the complete data set off-screen without changing the live card ID,
+      // selected filters, or table rows while the export is running.
       try {
-        visibleCard.id = 'tonChuaHoaDonVisibleReportCardContainer';
-        renderHost.innerHTML = renderTonChuaHoaDonReportTableHtml(true);
-        document.body.appendChild(renderHost);
-        const fullListCard = renderHost.querySelector('#tonChuaHoaDonReportCardContainer');
-        if (!fullListCard) {
-          triggerToast('Không dựng được danh sách đầy đủ để xuất ảnh.', 'error');
-          return;
-        }
-        await downloadTonChuaHoaDonReportImagesByGara(fullListCard, 'png', 'png', true);
+        const template = document.createElement('div');
+        template.innerHTML = renderTonChuaHoaDonReportTableHtml(true);
+        const fullListCard = template.querySelector('#tonChuaHoaDonReportCardContainer');
+        if (fullListCard) await downloadTonChuaHoaDonReportImagesByGara(fullListCard, 'png', 'png');
+        else triggerToast('Không dựng được danh sách đầy đủ để xuất ảnh.', 'error');
       } catch (err) {
-        console.error('Lỗi chuẩn bị ảnh danh sách tồn theo gara:', err);
+        console.error('Lỗi chuẩn bị ảnh toàn bộ gara:', err);
         triggerToast('Có lỗi khi chuẩn bị danh sách ảnh toàn bộ gara.', 'error');
-      } finally {
-        renderHost.remove();
-        visibleCard.id = 'tonChuaHoaDonReportCardContainer';
       }
     }
 

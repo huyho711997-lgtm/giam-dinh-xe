@@ -135,7 +135,46 @@
 .ton-dropdown .report-picker__item-desc { color: var(--ton-muted) !important; font-size: 10px !important; line-height: 1.5; }
 .ton-dropdown .report-picker__item-badge { padding: 1px 5px !important; background: var(--ton-gold-bg) !important; color: var(--ton-gold) !important; border: 1px solid rgba(174,143,84,.15) !important; font-size: 8px !important; }
 .ton-dropdown .report-picker__item-check, .ton-dropdown .report-picker__item-chevron { display: none !important; }
-.ton-dropdown .ton-export-option { justify-content: flex-start !important; }
+/* Action rows have a fixed icon column and a full-width, left-aligned copy column. */
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #ddTonImageExportMenu .ton-export-option {
+  display: grid !important;
+  grid-template-columns: 30px minmax(0, 1fr);
+  align-items: center !important;
+  justify-content: start !important;
+  gap: 12px !important;
+  min-height: 68px;
+  padding: 12px !important;
+  text-align: left !important;
+}
+#ddTonImageExportMenu .ton-export-icon {
+  box-sizing: border-box;
+  width: 30px !important;
+  height: 30px !important;
+  margin: 0 !important;
+  padding: 6px;
+  border: 1px solid var(--ton-line);
+  border-radius: 8px;
+  background: var(--ton-gold-bg);
+  color: var(--ton-gold);
+}
+#ddTonImageExportMenu .ton-export-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 3px;
+  text-align: left;
+}
+#ddTonImageExportMenu .ton-export-copy :is(strong, small) {
+  display: block;
+  width: 100%;
+  text-align: left;
+  line-height: 1.5;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #ddTonImageExportMenu .ton-export-option:focus-visible {
+  border-color: var(--ton-gold) !important;
+  background: var(--ton-gold-bg) !important;
+}
 .ton-dropdown .ton-export-option strong { font-size: 11.5px !important; }
 .ton-dropdown .ton-export-option small { font-size: 10.5px !important; font-weight: 450; }
 .ton-dropdown .ton-dropdown-option > span[style*="font-weight"] { color: var(--ton-ink) !important; font-weight: 650 !important; }
