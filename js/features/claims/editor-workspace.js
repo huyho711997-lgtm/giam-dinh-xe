@@ -1,6 +1,58 @@
 const ClaimEditorWorkspace = (() => {
   let opened = false, returnFocus = null, historySignature = '';
   const overlay = () => document.getElementById('addPendingClaimModalOverlay');
+  function prepareForms() {
+    const root = overlay();
+    if (!root || root.dataset.premiumReady) return;
+    const definitions = {
+      Policy:[
+        ['Thông tin hồ sơ','Định danh vụ tổn thất, phương tiện và khách hàng.',['MaVuTonThat','SoHoSoBoiThuong','BienSo','SoKhungSoMay','KhachHang']],
+        ['Hợp đồng bảo hiểm','Thông tin cấp đơn và thời hạn bảo hiểm.',['SoHd','SoGcn','NguoiCapDon','NgayHieuLuc','NgayHetHan','KenhKhaiThac']],
+        ['Giá trị & phí bảo hiểm','Đơn vị tiền tệ: Việt Nam đồng (VNĐ).',['GiaTriXe','SoTienBh','PhiBh']]
+      ],
+      Vehicle:[['Phương tiện & người liên hệ','Đặc điểm xe, người điều khiển và phạm vi bảo hiểm.']],
+      Event:[['Vụ tổn thất & diễn biến','Thời gian, địa điểm và nội dung tổn thất.']],
+      Unit:[['Đơn vị & người phụ trách','Thông tin cấp đơn, giám định và gara sửa chữa.']],
+      Financial:[['Bồi thường & thanh toán','Theo dõi phê duyệt, dự phòng và các mốc thanh toán.']]
+    };
+    for (const [tab,groups] of Object.entries(definitions)) {
+      const pane = document.getElementById('tabPane_' + tab);
+      const originalGrid = pane?.firstElementChild;
+      if (!originalGrid) continue;
+      const sections = document.createElement('div');
+      sections.className = 'claim-editor-sections';
+      groups.forEach(([title,description,fields],index) => {
+        const card = document.createElement('section');
+        card.className = 'claim-editor-form-section';
+        const heading = document.createElement('header');
+        const badge = document.createElement('span');
+        badge.className = 'claim-editor-section-number';
+        badge.setAttribute('aria-hidden','true');
+        badge.textContent = String(index + 1).padStart(2,'0');
+        const copy = document.createElement('div');
+        const caption = document.createElement('h4');
+        caption.textContent = title;
+        const note = document.createElement('p');
+        note.textContent = description;
+        copy.append(caption,note);
+        heading.append(badge,copy);
+        const grid = document.createElement('div');
+        grid.className = 'claim-editor-form-grid';
+        const items = fields ? fields.map(name => document.getElementById('modalPending' + name)?.closest('.form-group')).filter(Boolean) : [...originalGrid.children];
+        items.forEach(item => grid.appendChild(item));
+        card.append(heading,grid);
+        sections.appendChild(card);
+      });
+      if (originalGrid.children.length) sections.lastElementChild.querySelector('.claim-editor-form-grid').append(...originalGrid.children);
+      originalGrid.replaceWith(sections);
+    }
+    root.querySelectorAll('.form-group').forEach(group => {
+      const caption = group.querySelector(':scope > label');
+      const input = group.querySelector('input[id],textarea[id],select[id]');
+      if (caption && input && !caption.htmlFor) caption.htmlFor = input.id;
+    });
+    root.dataset.premiumReady = 'true';
+  }
   function currentClaim() {
     if (typeof editingPendingClaimId === 'undefined' || !editingPendingClaimId || typeof cachedPendingClaimsPayload === 'undefined') return null;
     return cachedPendingClaimsPayload[editingPendingClaimId] || Object.values(cachedPendingClaimsPayload).find(item => item && [item.id,item.idCa,item.maVuTonThat].includes(editingPendingClaimId)) || null;
@@ -66,6 +118,7 @@ const ClaimEditorWorkspace = (() => {
     opened = true;
     historySignature = '';
     document.body.classList.add('claim-editor-open');
+    prepareForms();
     showMain();
     refreshSummary();
     refreshNotes();

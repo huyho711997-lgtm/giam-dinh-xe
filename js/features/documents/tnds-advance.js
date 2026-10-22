@@ -13,7 +13,7 @@ function toggleCollectionWordMenu(anchor) {
   if(document.getElementById('collectionWordMenu')) {closeCollectionWordMenu(true);return;}
   collectionWordMenuAnchor=anchor;collectionWordMenuAbort=new AbortController();
   const signal=collectionWordMenuAbort.signal;
-  const menu=collectionGuideElement('div','collection-word-menu');menu.id='collectionWordMenu';menu.style.visibility='hidden';
+  const menu=collectionGuideElement('div','collection-word-menu ce-document-menu');menu.id='collectionWordMenu';menu.style.visibility='hidden';
   menu.setAttribute('role','dialog');menu.setAttribute('aria-modal','false');menu.setAttribute('aria-labelledby','collectionWordMenuTitle');
   menu.setAttribute('aria-describedby','collectionWordMenuContext');
   const heading=collectionGuideElement('div','collection-word-menu-heading');
@@ -24,6 +24,10 @@ function toggleCollectionWordMenu(anchor) {
   const context=collectionGuideElement('span','collection-word-menu-context',claimNumber?'Số HSBT: '+claimNumber:plate?'Hồ sơ xe: '+plate:'Chọn mẫu tài liệu cần xuất');context.id='collectionWordMenuContext';
   headingCopy.append(title,context);
   heading.append(headingIcon,headingCopy,collectionGuideElement('span','collection-word-menu-format','DOCX'));menu.append(heading);
+  const searchWrap=collectionGuideElement('label','ce-document-search');
+  searchWrap.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>';
+  const search=collectionGuideElement('input');search.type='search';search.placeholder='Tìm mẫu tài liệu…';search.autocomplete='off';search.setAttribute('aria-label','Tìm mẫu tài liệu');
+  const counter=collectionGuideElement('span');counter.setAttribute('aria-live','polite');searchWrap.append(search,counter);menu.append(searchWrap);
   const list=collectionGuideElement('div','collection-word-menu-list');
   const guideIcon='<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6m-12 5 1.5 1.5L12 12m2 1h3m-9 5h9"/></svg>';
   const advanceIcon='<svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6m-5 4-6 6"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg>';
@@ -33,6 +37,7 @@ function toggleCollectionWordMenu(anchor) {
     ['Thông báo tạm ứng TNDS','Thông tin và phương án tạm ứng bồi thường',advanceIcon,previewTndsAdvance,openTndsAdvanceDialog],
     ['Trưng cầu hồ sơ từ cơ quan chức năng','Công văn đề nghị cung cấp tài liệu vụ tai nạn',guideIcon,previewAuthorityRequest,exportAuthorityRequestWord]
   ];
+  counter.textContent=documents.length+'/'+documents.length;
   for(const [name,description,documentIcon,preview,download] of documents) {
     const row=collectionGuideElement('section','collection-word-menu-document');
     const summary=collectionGuideElement('div','collection-word-menu-document-heading');
@@ -47,6 +52,13 @@ function toggleCollectionWordMenu(anchor) {
     }
     row.append(summary,actions);list.append(row);
   }
+  const empty=collectionGuideElement('p','ce-document-empty','Không tìm thấy mẫu tài liệu.');empty.hidden=true;list.append(empty);
+  search.addEventListener('input',()=>{
+    const normalize=value=>String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase().trim();
+    const query=normalize(search.value);let count=0;
+    list.querySelectorAll('.collection-word-menu-document').forEach(row=>{row.hidden=!normalize(row.querySelector('.collection-word-menu-document-heading').textContent).includes(query);if(!row.hidden)count++;});
+    counter.textContent=count+'/'+documents.length;empty.hidden=count>0;
+  });
   menu.append(list);document.body.append(menu);anchor.setAttribute('aria-expanded','true');
   // Measure the untransformed panel before the opening animation starts.
   menu.style.animation='none';
@@ -66,12 +78,23 @@ function toggleCollectionWordMenu(anchor) {
   window.addEventListener('resize',()=>closeCollectionWordMenu(),{signal});
   menu.addEventListener('focusout',event=>{if(event.relatedTarget && !menu.contains(event.relatedTarget) && event.relatedTarget!==anchor) closeCollectionWordMenu();});
   menu.addEventListener('keydown',event=>{
+    if(event.defaultPrevented)return;
+    if(event.key==='Tab') {
+      const buttons=[...menu.querySelectorAll('button')].filter(button=>button.getClientRects().length&&!button.disabled);
+      const last=buttons.at(-1)||search;
+      if(event.shiftKey && document.activeElement===search){event.preventDefault();last.focus();}
+      else if(!event.shiftKey && document.activeElement===last){event.preventDefault();search.focus();}
+      return;
+    }
     if(!['ArrowDown','ArrowUp','Home','End'].includes(event.key)) return;
-    const buttons=[...menu.querySelectorAll('button')],index=buttons.indexOf(document.activeElement);
+    if(event.target===search && ['Home','End'].includes(event.key))return;
+    const buttons=[...menu.querySelectorAll('button')].filter(button=>button.getClientRects().length&&!button.disabled),index=buttons.indexOf(document.activeElement);
+    if(!buttons.length)return;
     const next=event.key==='Home'?0:event.key==='End'?buttons.length-1:(index+(event.key==='ArrowDown'?1:-1)+buttons.length)%buttons.length;
     event.preventDefault();buttons[next]?.focus();
   });
-  menu.querySelector('button')?.focus();
+  if(window.matchMedia('(hover: hover) and (pointer: fine)').matches)search.focus({preventScroll:true});
+  else menu.querySelector('button')?.focus({preventScroll:true});
 }
 
 function openCollectionDocumentPreview({title,html,claim,onExport,onPrint,onEdit,guideEditor}) {
@@ -237,6 +260,7 @@ function openTndsAdvanceDialog() {
     const choice=collectionGuideElement('div','tnds-advance-choice');
     const caption=collectionGuideElement('label','','Phương án tạm ứng cần đánh dấu trong mẫu');caption.htmlFor='tndsAdvance_option';
     const select=collectionGuideElement('select','input-premium');select.id='tndsAdvance_option';
+    select.dataset.sfSelect='';select.dataset.sfLabel='Phương án tạm ứng';select.dataset.sfDescription='Tìm và chọn phương án cần đánh dấu trong mẫu';select.dataset.sfIcon='file';
     for(const [value,label] of tndsAdvanceOptions) {const option=collectionGuideElement('option','',label);option.value=value;select.append(option);}
     select.value=meta.option;
     const note=collectionGuideElement('p','tnds-advance-choice-note');
@@ -253,8 +277,10 @@ function openTndsAdvanceDialog() {
     preview.append(previewIcon,collectionGuideElement('span','','Xem trước'));preview.addEventListener('click',()=>previewTndsAdvance());
     download.append(saveIcon,collectionGuideElement('span','','Xuất Word (.docx)'));footer.append(cancel,preview,download);
     form.append(body,footer);panel.append(header,form);overlay.append(panel);document.body.append(overlay);
+    if(typeof SharedFormsControls!=='undefined')SharedFormsControls.enhance(panel);
     overlay.addEventListener('click',event=>{if(event.target===overlay) closeTndsAdvanceDialog();});
     overlay.addEventListener('keydown',event=>{
+      if(event.defaultPrevented)return;
       if(event.key==='Escape') {event.preventDefault();closeTndsAdvanceDialog();return;}
       if(event.key!=='Tab') return;
       const focusable=[...panel.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled)')].filter(el=>el.getClientRects().length);
@@ -268,6 +294,7 @@ function openTndsAdvanceDialog() {
 function closeTndsAdvanceDialog() {
   const overlay=document.getElementById('tndsAdvanceDialog');
   if(overlay) {
+    if(typeof SharedFormsControls!=='undefined')SharedFormsControls.close();
     readTndsAdvanceDialog();const returnFocus=overlay._returnFocus;overlay.remove();
     if(returnFocus?.isConnected && returnFocus.getClientRects().length) returnFocus.focus();
   }
@@ -448,5 +475,3 @@ async function previewTndsAdvance() {
     collectionGuideReport(error);
   }
 }
-
-  
