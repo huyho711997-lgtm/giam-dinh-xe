@@ -1,5 +1,5 @@
 /* Outstanding invoice report: shared tokens also apply to exported image cards. */
-:is(.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header), .ton-report-card, .ton-summary-strip) {
+:is(.gdv-report-premium-shell:has(#gdvReportHeroBanner), .ton-report-card, .ton-summary-strip) {
   --ton-paper: #121e27;
   --ton-ink: #f0f2eb;
   --ton-muted: #a2afaf;
@@ -13,7 +13,7 @@
   --ton-action-text: #1e2d29;
   --ton-shadow: 0 10px 32px rgba(0, 0, 0, .12);
 }
-body.light-mode :is(.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header), .ton-report-card, .ton-summary-strip) {
+body.light-mode :is(.gdv-report-premium-shell:has(#gdvReportHeroBanner), .ton-report-card, .ton-summary-strip) {
   --ton-paper: #fffefb;
   --ton-ink: #283b36;
   --ton-muted: #76817e;
@@ -29,35 +29,35 @@ body.light-mode :is(.gdv-report-premium-shell:has(.ton-report-card, .weekly-repo
 }
 
 /* The shell selector keeps the redesign on this report only. */
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) {
   padding-top: 18px !important;
   color: var(--ton-ink);
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-command-center {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-command-center {
   margin-bottom: 20px;
   border: 1px solid var(--ton-line) !important;
   border-radius: 18px;
   background: var(--ton-paper);
   box-shadow: var(--ton-shadow) !important;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-command-center::after,
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-premium::after,
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-filter-hub::before {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-command-center::after,
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-premium::after,
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-filter-hub::before {
   content: none;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-premium {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-premium {
   padding: 28px 30px 26px !important;
   background: var(--ton-paper) !important;
   border-radius: 18px 18px 0 0 !important;
   box-shadow: none !important;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-premium > div:first-child {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-premium > div:first-child {
   display: none;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-premium > div:last-child {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-premium > div:last-child {
   gap: 20px !important;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-premium > div:last-child > div:first-child > div:first-child {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-premium > div:last-child > div:first-child > div:first-child {
   padding: 0 !important;
   margin-bottom: 12px !important;
   border: 0 !important;
@@ -68,7 +68,7 @@ body.light-mode :is(.gdv-report-premium-shell:has(.ton-report-card, .weekly-repo
   letter-spacing: .12em !important;
   box-shadow: none !important;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-premium h1 {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-premium h1 {
   max-width: 760px;
   font-size: clamp(24px, 2vw, 31px) !important;
   line-height: 1.3 !important;
@@ -76,21 +76,21 @@ body.light-mode :is(.gdv-report-premium-shell:has(.ton-report-card, .weekly-repo
   letter-spacing: -.045em !important;
   color: var(--ton-ink) !important;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-premium p {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-premium p {
   margin-top: 9px !important;
   color: var(--ton-muted) !important;
   font-size: 12px !important;
   line-height: 1.7;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-actions {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-actions {
   gap: 8px !important;
   max-width: 610px;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-actions > div {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-actions > div {
   gap: 8px !important;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-actions .btn-premium,
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .report-picker__trigger {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-actions .btn-premium,
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .report-picker__trigger {
   height: 40px !important;
   min-height: 40px !important;
   border-radius: 9px !important;
@@ -101,23 +101,23 @@ body.light-mode :is(.gdv-report-premium-shell:has(.ton-report-card, .weekly-repo
   box-shadow: none !important;
   transform: none !important;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .report-picker__trigger {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .report-picker__trigger {
   width: 190px;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .report-picker__trigger-icon {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .report-picker__trigger-icon {
   width: 25px;
   height: 25px;
   border: 0;
   background: var(--ton-gold-bg);
   color: var(--ton-gold);
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) #accExportMenuWrapper > button {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #accExportMenuWrapper > button {
   min-width: 178px !important;
   background: var(--ton-action) !important;
   border-color: var(--ton-action) !important;
   color: var(--ton-action-text) !important;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-filter-hub {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-filter-hub {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px !important;
@@ -127,14 +127,14 @@ body.light-mode :is(.gdv-report-premium-shell:has(.ton-report-card, .weekly-repo
   background: var(--ton-soft) !important;
   box-shadow: none !important;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-filter-controls {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-filter-controls {
   gap: 8px !important;
   flex-wrap: wrap !important;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-filter-hub .custom-select-trigger,
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) #accGdvReportFilterWrapper .custom-select-trigger,
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) #accReportClaimTypeFilterWrapper .custom-select-trigger,
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .report-filter-utility-slot #accReportFavFiltersWrapper > button {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-filter-hub .custom-select-trigger,
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #accGdvReportFilterWrapper .custom-select-trigger,
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #accReportClaimTypeFilterWrapper .custom-select-trigger,
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .report-filter-utility-slot #accReportFavFiltersWrapper > button {
   min-width: 0 !important;
   min-height: 40px !important;
   height: 40px !important;
@@ -148,8 +148,8 @@ body.light-mode :is(.gdv-report-premium-shell:has(.ton-report-card, .weekly-repo
   font-weight: 700 !important;
   box-shadow: none !important;
 }
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-filter-hub .custom-select-trigger:hover,
-.gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-actions .btn-premium:hover {
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-filter-hub .custom-select-trigger:hover,
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-actions .btn-premium:hover {
   border-color: var(--ton-gold) !important;
 }
 
@@ -264,20 +264,20 @@ body.light-mode :is(.gdv-report-premium-shell:has(.ton-report-card, .weekly-repo
 }
 
 @media (max-width: 1300px) {
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-actions { justify-content: flex-start; }
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-filter-hub { grid-template-columns: 1fr; }
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .report-filter-utility-slot { justify-content: flex-start; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-actions { justify-content: flex-start; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-filter-hub { grid-template-columns: 1fr; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .report-filter-utility-slot { justify-content: flex-start; }
   .ton-summary-stat { padding: 0 20px; }
 }
 @media (max-width: 760px) {
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-premium { padding: 22px 20px !important; }
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-filter-hub { padding: 14px !important; }
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-actions { width: 100%; max-width: none; }
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-actions > div:first-child { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); width: 100% !important; }
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-hero-actions > div:last-child { width: 100% !important; }
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .report-picker__trigger,
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) #accReportViewSelectorWrapper { width: 100% !important; }
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) #accExportMenuWrapper > button { min-width: 0 !important; width: 100%; padding: 0 10px !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-premium { padding: 22px 20px !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-filter-hub { padding: 14px !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-actions { width: 100%; max-width: none; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-actions > div:first-child { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); width: 100% !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-actions > div:last-child { width: 100% !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .report-picker__trigger,
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #accReportViewSelectorWrapper { width: 100% !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #accExportMenuWrapper > button { min-width: 0 !important; width: 100%; padding: 0 10px !important; }
   .ton-summary-strip { grid-template-columns: 1fr 1.6fr; padding: 0; }
   .ton-summary-stat { padding: 20px; }
   .ton-summary-stat:nth-child(3) { border-left: 0; }
@@ -293,8 +293,8 @@ body.light-mode :is(.gdv-report-premium-shell:has(.ton-report-card, .weekly-repo
   .ton-summary-stat { padding: 17px 14px; }
   .ton-summary-stat--amount .ton-summary-value { font-size: 21px; }
   .ton-summary-label { font-size: 9px; letter-spacing: .03em; }
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-filter-controls > .custom-select-wrapper { flex: 1 1 calc(50% - 8px); min-width: 0; }
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-filter-hub .custom-select-trigger { width: 100% !important; }
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-filter-hub .custom-select-trigger > span:first-child > svg { display: none; }
-  .gdv-report-premium-shell:has(.ton-report-card, .weekly-report-header) .gdv-report-filter-hub .custom-select-trigger > span:first-child > span { white-space: nowrap; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-filter-controls > .custom-select-wrapper { flex: 1 1 calc(50% - 8px); min-width: 0; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-filter-hub .custom-select-trigger { width: 100% !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-filter-hub .custom-select-trigger > span:first-child > svg { display: none; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-filter-hub .custom-select-trigger > span:first-child > span { white-space: nowrap; }
 }

@@ -1,0 +1,229 @@
+/* Shared finishing layer for every GDV report view. Metric text colors remain data driven. */
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) {
+  --report-card-radius: 18px;
+  --report-control-radius: 10px;
+}
+
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-premium {
+  border-color: var(--ton-line) !important;
+  background: var(--ton-paper) !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .gdv-report-hero-actions .btn-premium:is(:hover, :focus-visible),
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .report-picker__trigger:is(:hover, :focus-visible) {
+  border-color: var(--ton-gold) !important;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(161,124,59,.12) !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #accExportMenuWrapper > button:is(:hover, :focus-visible) {
+  background: #1d342b !important;
+  border-color: var(--ton-gold) !important;
+  color: #fffaf0 !important;
+  box-shadow: 0 7px 18px rgba(29,52,43,.2), 0 0 0 3px rgba(161,124,59,.14) !important;
+  transform: translateY(-1px);
+}
+
+/* Compact, consistent KPI surfaces; keep each report's vivid value color. */
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .stat-widget {
+  border-color: var(--ton-line) !important;
+  border-radius: 15px !important;
+  background: var(--ton-paper) !important;
+  box-shadow: 0 5px 18px rgba(27,42,34,.045) !important;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .stat-widget:hover {
+  border-color: rgba(161,124,59,.38) !important;
+  box-shadow: 0 9px 24px rgba(27,42,34,.085) !important;
+  transform: translateY(-1px);
+}
+
+/* Shared report cards. */
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer,
+  #tndsTonReportCardContainer,
+  #carBrandChartCardContainer,
+  #garageChartCardContainer,
+  .annual-claims-report-card,
+  .annual-claims-average
+) {
+  border: 1px solid var(--ton-line) !important;
+  border-radius: var(--report-card-radius) !important;
+  background: var(--ton-paper) !important;
+  box-shadow: var(--ton-shadow) !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer,
+  #tndsTonReportCardContainer,
+  .annual-claims-report-card
+) { padding: 0 !important; overflow: hidden; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer,
+  #tndsTonReportCardContainer
+) > div:first-child {
+  padding: 22px 24px 18px !important;
+  border-bottom: 1px solid var(--ton-line) !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-report-heading {
+  align-items: center;
+  padding: 22px 24px !important;
+  margin: 0 0 18px !important;
+  border-bottom-color: var(--ton-line) !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-report-heading h2 { color: var(--ton-ink); font-size: 19px; font-weight: 800; letter-spacing: -.03em; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-report-heading p { color: var(--ton-muted); font-size: 12px; }
+
+/* Report tables share paper rows, soft headers and a clear warm hover state. */
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer table,
+  #tndsTonReportCardContainer table,
+  #carBrandChartCardContainer ~ div table,
+  table.p-table:not(.ton-report-table)
+) {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border-color: var(--ton-line) !important;
+  font-variant-numeric: tabular-nums;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer table,
+  #tndsTonReportCardContainer table,
+  #carBrandChartCardContainer ~ div table,
+  table.p-table:not(.ton-report-table)
+) thead th {
+  padding-top: 14px !important;
+  padding-bottom: 14px !important;
+  border-color: var(--ton-line) !important;
+  background: var(--ton-soft) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: .045em;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer table,
+  #tndsTonReportCardContainer table,
+  #carBrandChartCardContainer ~ div table,
+  table.p-table:not(.ton-report-table)
+) tbody tr { transition: background-color .16s ease; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer table,
+  #tndsTonReportCardContainer table,
+  #carBrandChartCardContainer ~ div table,
+  table.p-table:not(.ton-report-table)
+) tbody tr:nth-child(odd) { background: var(--ton-paper) !important; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer table,
+  #tndsTonReportCardContainer table,
+  #carBrandChartCardContainer ~ div table,
+  table.p-table:not(.ton-report-table)
+) tbody tr:nth-child(even) { background: var(--ton-soft) !important; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer table,
+  #tndsTonReportCardContainer table,
+  #carBrandChartCardContainer ~ div table,
+  table.p-table:not(.ton-report-table)
+) tbody tr:hover,
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer table,
+  #tndsTonReportCardContainer table,
+  #carBrandChartCardContainer ~ div table,
+  table.p-table:not(.ton-report-table)
+) tbody tr:hover > td {
+  background: #f1e6cf !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer table,
+  #tndsTonReportCardContainer table,
+  #carBrandChartCardContainer ~ div table,
+  table.p-table:not(.ton-report-table)
+) tfoot td {
+  border-top: 1px solid var(--ton-line) !important;
+  background: var(--ton-gold-bg) !important;
+  font-weight: 850 !important;
+}
+body:not(.light-mode) .gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer table,
+  #tndsTonReportCardContainer table,
+  #carBrandChartCardContainer ~ div table,
+  table.p-table:not(.ton-report-table)
+) tbody tr:hover,
+body:not(.light-mode) .gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
+  #dakLakReserveReportCardContainer table,
+  #tndsTonReportCardContainer table,
+  #carBrandChartCardContainer ~ div table,
+  table.p-table:not(.ton-report-table)
+) tbody tr:hover > td { background: #29352f !important; }
+
+/* Chart cards, selectors and toggles use the same understated control language. */
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(#carBrandChartCardContainer, #garageChartCardContainer) select,
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-report-card select {
+  min-height: 38px;
+  border: 1px solid var(--ton-line) !important;
+  border-radius: var(--report-control-radius) !important;
+  background: var(--ton-paper) !important;
+  color: var(--ton-ink) !important;
+  box-shadow: none !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(#carBrandChartCardContainer, #garageChartCardContainer) button[onclick*="download"],
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(#carBrandChartCardContainer, #garageChartCardContainer) button[onclick*="ChartType"],
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-report-actions button,
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-chart-toggle button {
+  min-height: 38px;
+  border: 1px solid var(--ton-line) !important;
+  border-radius: var(--report-control-radius) !important;
+  background: var(--ton-paper) !important;
+  color: var(--ton-ink) !important;
+  box-shadow: none !important;
+  transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(#carBrandChartCardContainer, #garageChartCardContainer) button[onclick*="download"]:is(:hover, :focus-visible),
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(#carBrandChartCardContainer, #garageChartCardContainer) button[onclick*="ChartType"]:not([style*="background: var(--primary)"]):is(:hover, :focus-visible),
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-report-actions button:is(:hover, :focus-visible),
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-chart-toggle button:not(.is-active):is(:hover, :focus-visible) {
+  border-color: var(--ton-gold) !important;
+  background: var(--ton-gold-bg) !important;
+  box-shadow: 0 0 0 3px rgba(161,124,59,.1) !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(#carBrandChartCardContainer, #garageChartCardContainer) button[onclick*="ChartType"][style*="background: var(--primary)"] {
+  border-color: var(--ton-action) !important;
+  background: var(--ton-action) !important;
+  color: var(--ton-action-text) !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(#carBrandChartCardContainer, #garageChartCardContainer) button[onclick*="ChartType"]:not([style*="background: var(--primary)"]) {
+  background: var(--ton-soft) !important;
+  color: var(--ton-ink) !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-chart-toggle button.is-active {
+  border-color: var(--ton-action) !important;
+  background: var(--ton-action) !important;
+  color: var(--ton-action-text) !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-average__head {
+  border-bottom-color: var(--ton-line) !important;
+  background: var(--ton-soft) !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-average__head :is(h3, p) { color: var(--ton-ink); }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-average__formula {
+  border-color: var(--ton-line);
+  background: var(--ton-gold-bg);
+  color: var(--ton-gold);
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-download-btn {
+  border-color: var(--ton-action) !important;
+  background: var(--ton-action) !important;
+  color: var(--ton-action-text) !important;
+  box-shadow: none !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-download-btn:is(:hover, :focus-visible) {
+  border-color: var(--ton-gold) !important;
+  background: #1d342b !important;
+  color: #fffaf0 !important;
+  box-shadow: 0 7px 18px rgba(29,52,43,.2), 0 0 0 3px rgba(161,124,59,.14) !important;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 760px) {
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-report-heading { align-items: flex-start; padding: 18px 18px !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(#dakLakReserveReportCardContainer, #tndsTonReportCardContainer) > div:first-child { padding: 18px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(.stat-widget, table tbody tr, button) { transition-duration: .01ms !important; }
+}

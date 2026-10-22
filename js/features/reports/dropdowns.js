@@ -12,6 +12,11 @@ const TON_REPORT_DROPDOWNS = {
   ddTonColsMenu: { title: 'Cột hiển thị', subtitle: 'Tùy chỉnh thông tin trong danh sách', multi: true, mode: 'columns' },
   ddWeeklyColsMenu: { title: 'Cột hiển thị', subtitle: 'Tùy chỉnh chỉ tiêu trong báo cáo', multi: true, mode: 'columns' },
   ddReportBranchMenu: { title: 'Chi nhánh cấp đơn', subtitle: 'Chọn phạm vi dữ liệu báo cáo', search: 'Tìm chi nhánh...' },
+  ddAnnualClaimsYearMenu: { title: 'Năm báo cáo', subtitle: 'Chọn năm cần thống kê' },
+  ddReportDakLakReserveThresholdMenu: { title: 'Ngưỡng dự phòng', subtitle: 'Chọn mức tổn thất cần theo dõi' },
+  ddReportDakLakStatusMenu: { title: 'Trạng thái hồ sơ', subtitle: 'Chọn trạng thái cần xem', multi: true },
+  ddReportCarBrandMonthMenu: { title: 'Tháng báo cáo', subtitle: 'Chọn các tháng cần thống kê', multi: true },
+  ddReportCarBrandYearMenu: { title: 'Năm báo cáo', subtitle: 'Chọn các năm cần thống kê', multi: true },
   ddTonImageExportMenu: { title: 'Xuất ảnh báo cáo', subtitle: 'Chọn phạm vi hồ sơ cần tải', mode: 'actions', action: true }
 };
 
@@ -85,8 +90,8 @@ function openTonReportDropdown(menu, trigger, event) {
 }
 
 function enhanceTonReportDropdowns(root = document) {
-  const shell = root.matches?.('.gdv-report-premium-shell') ? root : root.querySelector('.gdv-report-premium-shell:has(.ton-report-card, #weeklyZoneReportCardContainer)');
-  if (!shell || !shell.querySelector('.ton-report-card, #weeklyZoneReportCardContainer')) return;
+  const shell = root.matches?.('.gdv-report-premium-shell') ? root : root.querySelector('.gdv-report-premium-shell:has(#gdvReportHeroBanner)');
+  if (!shell || !shell.querySelector('#gdvReportHeroBanner')) return;
   shell.querySelectorAll('.custom-select-menu').forEach(menu => {
     const config = TON_REPORT_DROPDOWNS[menu.id];
     if (!config || (menu.dataset.tonReady === '1' && menu.querySelector(':scope > .ton-dropdown-head'))) return;
