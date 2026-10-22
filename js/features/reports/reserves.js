@@ -1318,7 +1318,7 @@ const fullList = getCarBrandLossData();
 
     function buildTonChuaHoaDonGaraImageOptions(garaName) {
       return {
-        scale: 2.6,
+        scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -1361,7 +1361,7 @@ const fullList = getCarBrandLossData();
     }
 
 
-    async function downloadTonChuaHoaDonReportImagesByGara(cardEl, imgFormat, ext) {
+    async function downloadTonChuaHoaDonReportImagesByGara(cardEl, imgFormat, ext, pruneRowsForCapture = false) {
       if (typeof JSZip === 'undefined') {
         triggerToast('Thư viện ZIP chưa tải xong, vui lòng thử lại sau 2 giây...', 'warning');
         return;
@@ -1372,6 +1372,7 @@ const fullList = getCarBrandLossData();
         triggerToast('Không có gara nào để xuất ảnh.', 'warning');
         return;
       }
+      const rowsToFilter = pruneRowsForCapture ? Array.from(cardEl.querySelectorAll('[data-ton-gara]')) : [];
 
       const dateTag = new Date().toLocaleDateString('vi-VN').replace(/\//g, '-');
       const zip = new JSZip();
@@ -1385,21 +1386,38 @@ const fullList = getCarBrandLossData();
 
       for (let i = 0; i < garaNames.length; i++) {
         const garaName = garaNames[i];
+        const detachedRows = [];
+        let canvas = null;
         try {
           if (typeof toggleUploadOverlay === 'function') {
             toggleUploadOverlay(true, 'Đang xuất ảnh theo gara', `${garaName} (${i + 1}/${garaNames.length})`, Math.round((i / garaNames.length) * 100));
           }
-          const canvas = await html2canvas(cardEl, buildTonChuaHoaDonGaraImageOptions(garaName));
+          if (pruneRowsForCapture) {
+            rowsToFilter.forEach(row => {
+              if (row.getAttribute('data-ton-gara') === garaName) return;
+              const placeholder = document.createComment('gara-image-row');
+              row.parentNode.insertBefore(placeholder, row);
+              row.remove();
+              detachedRows.push({ row, placeholder });
+            });
+          }
+          canvas = await html2canvas(cardEl, buildTonChuaHoaDonGaraImageOptions(garaName));
           const blob = await canvasToBlob(canvas, imgFormat);
           folder.file(`${String(i + 1).padStart(2, '0')}_${sanitizeTonChuaHoaDonFileName(garaName)}.${ext}`, blob);
           exported++;
-          canvas.width = 0;
-          canvas.height = 0;
-          await new Promise(resolve => setTimeout(resolve, 30));
         } catch (err) {
           console.error('Lỗi xuất ảnh gara:', garaName, err);
           failed.push(garaName);
+        } finally {
+          if (canvas) {
+            canvas.width = 0;
+            canvas.height = 0;
+          }
+          detachedRows.reverse().forEach(({ row, placeholder }) => {
+            if (placeholder.parentNode) placeholder.parentNode.replaceChild(row, placeholder);
+          });
         }
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
 
       if (!exported) {
@@ -1413,7 +1431,7 @@ const fullList = getCarBrandLossData();
       }
 
       try {
-        const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 3 } });
+        const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
         const url = URL.createObjectURL(zipBlob);
         const link = document.createElement('a');
         link.href = url;
@@ -1458,7 +1476,7 @@ const fullList = getCarBrandLossData();
           triggerToast('Không dựng được danh sách đầy đủ để xuất ảnh.', 'error');
           return;
         }
-        await downloadTonChuaHoaDonReportImagesByGara(fullListCard, 'png', 'png');
+        await downloadTonChuaHoaDonReportImagesByGara(fullListCard, 'png', 'png', true);
       } catch (err) {
         console.error('Lỗi chuẩn bị ảnh danh sách tồn theo gara:', err);
         triggerToast('Có lỗi khi chuẩn bị danh sách ảnh toàn bộ gara.', 'error');
