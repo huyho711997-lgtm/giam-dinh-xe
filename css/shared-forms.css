@@ -85,13 +85,9 @@ body:not(.light-mode) :is(.sf-workspace,.sf-dialog,.sf-viewer,.sf-select-menu,.s
 .sf-note>svg { width:13px; height:13px; margin-right:5px; vertical-align:middle; color:var(--sf-gold); } .sf-catalog-note { margin-top:5px; font-size:10px; }
 .sf-notice { margin:12px 16px; padding:12px 14px; color:var(--sf-rose); background:var(--sf-soft); border:1px solid var(--sf-line); border-radius:10px; font-size:12px; line-height:1.7; }
 .sf-empty { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; padding:60px 24px; text-align:center; color:var(--sf-ink); } .sf-empty h3,.sf-empty p { margin:0; } .sf-empty p { max-width:500px; color:var(--sf-muted); font-size:12px; line-height:1.8; }
-.sf-preview-open .sf-library-body { grid-template-columns:minmax(300px,.72fr) minmax(450px,1.28fr); }
-.sf-preview-open :is(th,td):is(.sf-col-number,.sf-col-format,.sf-col-category,.sf-col-date) { display:none; }
-.sf-preview-open .sf-table { min-width:0; } .sf-preview-open .sf-table .sf-col-name { width:auto; padding-left:17px; } .sf-preview-open .sf-table .sf-col-actions { width:68px; padding-left:0; padding-right:10px; }
-.sf-preview-open .sf-open { gap:8px; } .sf-preview-open .sf-card-copy strong { font-size:11px; } .sf-preview-open .sf-file-icon { flex-basis:29px; width:29px; height:34px; font-size:9px; }
-.sf-preview-open .sf-pagination { gap:8px; padding:12px; } .sf-preview-open .sf-pagination>span { font-size:9px; }
-.sf-preview-panel { min-width:0; height:max(650px,calc(100dvh - 120px)); max-height:1050px; position:sticky; top:88px; border-left:1px solid var(--sf-line); background:var(--sf-soft); }
-.sf-viewer { position:relative; display:flex; flex-direction:column; height:100%; width:100%; min-width:0; background:var(--sf-paper); overflow:hidden; }
+.sf-viewer { position:fixed; flex-direction:column; width:min(1480px,calc(100vw - 64px)); height:calc(100dvh - 48px); max-width:none; max-height:none; min-width:0; margin:auto; padding:0; border:1px solid var(--sf-line); border-radius:18px; background:var(--sf-paper); overflow:hidden; box-shadow:0 30px 90px #071a1640; }
+.sf-viewer[open] { display:flex; }
+.sf-viewer::backdrop { background:#10251f99; backdrop-filter:blur(4px); }
 .sf-viewer-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:18px 18px 14px; border-bottom:1px solid var(--sf-line); }
 .sf-viewer-heading>div { min-width:0; } .sf-viewer-heading strong { display:block; color:var(--sf-ink); font-size:13px; line-height:1.7; margin-top:5px; overflow-wrap:anywhere; }
 .sf-viewer-bar { display:flex; align-items:center; flex-wrap:wrap; gap:7px; padding:12px 15px; border-bottom:1px solid var(--sf-line); background:var(--sf-soft); }
@@ -100,8 +96,7 @@ body:not(.light-mode) :is(.sf-workspace,.sf-dialog,.sf-viewer,.sf-select-menu,.s
 .sf-viewer-frame { flex:1; width:100%; min-height:0; border:0; background:#e9edf2; }
 .sf-document-surface { display:flex; position:relative; flex:1; min-height:0; }
 .sf-provider-expand { position:absolute; top:10px; right:10px; z-index:2; width:44px; height:44px; border:1px solid var(--sf-line); background:var(--sf-paper); color:var(--sf-gold); box-shadow:var(--sf-shadow); }
-.sf-viewer.is-expanded { position:fixed; inset:18px; width:calc(100vw - 36px); height:calc(100dvh - 36px); max-height:none; z-index:200000; border:1px solid var(--sf-line); border-radius:18px; box-shadow:0 0 0 100vmax #071a1680,0 30px 80px #0003; }
-.sf-preview-panel:has(.is-expanded) { z-index:200001; }
+.sf-viewer.is-expanded { width:calc(100vw - 12px); height:calc(100dvh - 12px); border-radius:12px; }
 .sf-dialog { width:min(580px,94vw); max-height:90dvh; margin:auto; padding:0; border:1px solid var(--sf-line); border-radius:18px; background:var(--sf-paper); color:var(--sf-ink); box-shadow:var(--sf-menu-shadow); }
 .sf-dialog::backdrop { background:#14251e70; backdrop-filter:blur(3px); }
 .sf-dialog-form { display:flex; flex-direction:column; gap:18px; padding:25px; } .sf-dialog header,.sf-dialog footer { display:flex; align-items:center; justify-content:space-between; gap:14px; }
@@ -133,14 +128,15 @@ body:not(.light-mode) :is(.sf-workspace,.sf-dialog,.sf-viewer,.sf-select-menu,.s
 :is(.sf-workspace,.sf-dialog,.sf-viewer,.sf-select-menu) [hidden] { display:none !important; }
 @keyframes sfMenuAppear { from { opacity:0; translate:0 4px; } to { opacity:1; translate:0 0; } }
 @media (max-width:1100px) { .sf-hero { flex-wrap:wrap; } .sf-toolbar { width:100%; } .sf-filter-field { flex:1 1 160px; } }
-@media (max-width:1000px) { .sf-preview-open .sf-library-body { grid-template-columns:minmax(0,1fr); } .sf-preview-panel { order:-1; position:static; height:75dvh; min-height:550px; border-left:0; border-bottom:1px solid var(--sf-line); } }
 @media (max-width:760px) {
   .sf-hero { padding:23px 20px; gap:20px; } .sf-toolbar .sf-button { flex:1; padding:0 10px; font-size:11px; } .sf-filter-hub { padding:14px; }
   .sf-search { flex-basis:100%; } .sf-filter-field { flex-basis:calc(50% - 5px); min-width:0; } .sf-filter-field:last-child { flex-grow:0; }
   .sf-sources { gap:3px; } .sf-source-tab { padding:8px; font-size:10.5px; } .sf-drive-link { width:100%; padding:5px 8px; font-size:10px; }
   .sf-summary { grid-template-columns:repeat(2,minmax(0,1fr)); padding:0; } .sf-summary>div { padding:18px; border-bottom:1px solid var(--sf-line); } .sf-summary>div:nth-child(2) { border-right:0; } .sf-summary>div:nth-child(n+3) { border-bottom:0; } .sf-summary strong { font-size:26px; } .sf-summary small { font-size:9px; }
   .sf-library-heading { flex-wrap:wrap; padding:20px; } .sf-library-heading h2 { font-size:17px; } .sf-dialog-form { padding:20px; }
-  .sf-viewer.is-expanded { inset:5px; width:calc(100vw - 10px); height:calc(100dvh - 10px); border-radius:12px; }
+  .sf-viewer { width:calc(100vw - 16px); height:calc(100dvh - 16px); border-radius:12px; }
+  .sf-viewer-heading { padding:13px; } .sf-viewer-heading strong { font-size:12px; } .sf-viewer-bar { padding:9px; gap:5px; }
+  .sf-viewer.is-expanded { width:100vw; height:100dvh; border-radius:0; }
   .sf-pagination { padding:12px; gap:8px; } .sf-pagination>label { width:145px; } .sf-pagination>span { font-size:9px; }
 }
 @media (prefers-reduced-motion:reduce) { .sf-select-menu { animation:none; } .sf-select-trigger>svg { transition:none; } }

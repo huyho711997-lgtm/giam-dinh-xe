@@ -32,7 +32,7 @@ const SharedFormsViewer = (() => {
     state.urls.forEach(url => URL.revokeObjectURL(url));
     state.overlay.remove();
     document.body.style.overflow = state.overflow;
-    if (state.previousFocus?.isConnected) state.previousFocus.focus();
+    if (state.previousFocus?.isConnected) state.previousFocus.focus({preventScroll:true});
     state.onClose?.();
   }
   async function bytes(file, config, signal) {
@@ -181,9 +181,8 @@ const SharedFormsViewer = (() => {
   }
   function open(file, config, options = {}) {
     close();
-    const overlay = document.createElement('section');
+    const overlay = document.createElement('dialog');
     overlay.className = 'sf-viewer';
-    overlay.setAttribute('role','region');
     overlay.setAttribute('aria-label','Xem biểu mẫu: ' + file.name);
     const icon = name => SharedFormsControls.icon(name);
     overlay.innerHTML = `
@@ -202,15 +201,16 @@ const SharedFormsViewer = (() => {
     overlay.querySelector('[data-sf-download]').onclick = () => download(file);
     const state = {overlay,file,frame:overlay.querySelector('iframe'),status:overlay.querySelector('[role="status"]'),print:overlay.querySelector('[data-sf-print]'),controller:new AbortController(),urls:[],overflow:document.body.style.overflow,previousFocus:document.activeElement,onClose:options.onClose,expanded:false};
     current = state;
-    (options.container || document.body).appendChild(overlay);
-    if (!options.container) { overlay.classList.add('is-expanded'); state.expanded = true; document.body.style.overflow = 'hidden'; }
+    document.body.appendChild(overlay);
+    overlay.showModal();
+    document.body.style.overflow = 'hidden';
     overlay.querySelector('[data-sf-expand]').onclick = () => {
       SharedFormsControls.close();
       state.expanded = !state.expanded;
       overlay.classList.toggle('is-expanded',state.expanded);
-      document.body.style.overflow = state.expanded ? 'hidden' : state.overflow;
       overlay.querySelector('[data-sf-expand]').setAttribute('aria-pressed',String(state.expanded));
       overlay.querySelector('[data-sf-expand]').setAttribute('aria-label',state.expanded ? 'Thu gọn vùng xem' : 'Mở rộng vùng xem');
+      overlay.querySelector('[data-sf-expand]').title = state.expanded ? 'Thu gọn vùng xem' : 'Mở rộng vùng xem';
     };
     overlay.querySelector('[data-sf-inner-expand]').onclick = () => overlay.querySelector('[data-sf-expand]').click();
     state.status.textContent = 'Đang tải tài liệu…';
@@ -227,14 +227,8 @@ const SharedFormsViewer = (() => {
     };
     const fallback = overlay.querySelector('[data-sf-drive-preview]');
     if (file.source === 'drive' && config?.apiKey) { fallback.hidden = false; fallback.onclick = () => { state.controller.abort(); state.print.disabled = true; basicViewer(state); }; }
-    overlay.addEventListener('keydown',event => {
-      if (event.key === 'Escape') close();
-      if (event.key === 'Tab' && state.expanded) {
-        const controls = [...overlay.querySelectorAll('button:not([disabled]):not([hidden]),a[href],select:not([hidden]):not([disabled]),iframe')];
-        if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1).focus(); }
-        else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0].focus(); }
-      }
-    });
+    overlay.addEventListener('cancel',event => { event.preventDefault(); close(); });
+    overlay.addEventListener('close',() => { if (current === state) close(); });
     SharedFormsControls.enhance(overlay);
     render(state,config).catch(error => { if (current === state && !state.basic && error.name !== 'AbortError') { state.print.disabled = true; state.status.textContent = error.message + ' Bạn có thể tải về để xem và in.'; } });
   }

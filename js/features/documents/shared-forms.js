@@ -244,13 +244,10 @@ const SharedForms = (() => {
   function openFile(file) {
     SharedFormsViewer.close();
     selectedFileId = file.id;
-    const container = host.querySelector('[data-sf-preview]');
-    host.classList.add('sf-preview-open');
-    container.hidden = false;
     paint();
-    SharedFormsViewer.open(file,config,{container,onClose:() => {
+    SharedFormsViewer.open(file,config,{onClose:() => {
       if (!host) return;
-      selectedFileId = ''; host.classList.remove('sf-preview-open'); container.hidden = true; paint();
+      selectedFileId = ''; paint();
       host.querySelector('[data-sf-open="' + CSS.escape(file.id) + '"]')?.focus({preventScroll:true});
     }});
   }
@@ -296,7 +293,7 @@ const SharedForms = (() => {
         <div><span>Thư mục con</span><strong data-sf-folder-count>0</strong><small>Được sắp xếp theo nghiệp vụ</small></div>
       </section>
       <section class="sf-library">
-        <header class="sf-library-heading"><div><span class="sf-eyebrow">DANH MỤC TÀI LIỆU</span><h2>Danh sách biểu mẫu</h2><p>Chọn một biểu mẫu để xem và in ngay bên cạnh.</p></div><span class="sf-count" data-sf-count role="status" aria-live="polite"></span></header>
+        <header class="sf-library-heading"><div><span class="sf-eyebrow">DANH MỤC TÀI LIỆU</span><h2>Danh sách biểu mẫu</h2><p>Nhấn vào biểu mẫu để mở cửa sổ xem và in tài liệu.</p></div><span class="sf-count" data-sf-count role="status" aria-live="polite"></span></header>
         <div class="sf-library-body">
           <div class="sf-list-panel">
             <nav class="sf-crumbs" data-sf-crumbs aria-label="Đường dẫn thư mục" hidden></nav>
@@ -307,7 +304,6 @@ const SharedForms = (() => {
               <span data-sf-page-status></span><div><button class="sf-icon-button" type="button" data-sf-prev aria-label="Trang trước">←</button><button class="sf-icon-button" type="button" data-sf-next aria-label="Trang sau">→</button></div>
             </nav>
           </div>
-          <aside class="sf-preview-panel" data-sf-preview aria-label="Vùng xem tài liệu trong trang" hidden></aside>
         </div>
         <footer class="sf-library-footer"><p class="sf-note">${icon('shield')} Bạn có thể sửa hoặc xóa file do mình tải lên. Quản trị viên quản lý toàn bộ thư viện.</p><p class="sf-catalog-note" data-sf-catalog-note hidden></p></footer>
       </section>`;
