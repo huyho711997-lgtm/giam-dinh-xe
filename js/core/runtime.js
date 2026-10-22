@@ -866,7 +866,8 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       
 
       const isDark = !document.body.classList.contains('light-mode');
-      const textColor = isDark ? '#cbd5e1' : '#475569';
+      const reportStyle = getComputedStyle(canvas.closest('.report-pending-premium') || canvas);
+      const textColor = reportStyle.getPropertyValue('--ton-ink').trim() || (isDark ? '#f0f2eb' : '#283b36');
       
       const canvasWrap = document.getElementById("carBrandLossCanvasWrap") || canvas.parentElement;
       if (activeCarBrandChartType === 'pie') {
@@ -875,8 +876,9 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         canvasWrap.style.height = '400px';
       }
 
-      const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-      const surfaceColor = isDark ? '#0f172a' : '#ffffff';
+      const gridColor = reportStyle.getPropertyValue('--ton-line').trim() || (isDark ? '#2a3840' : '#e5e8e0');
+      const surfaceColor = reportStyle.getPropertyValue('--ton-paper').trim() || (isDark ? '#121e27' : '#fffefb');
+      const compactChart = canvasWrap.clientWidth < 640;
       
       const labels = list.map(item => item.brand);
       const data = list.map(item => item.totalAmount);
@@ -916,15 +918,15 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           const isDarkTheme = !document.body.classList.contains('light-mode');
           
           ctx.shadowColor = isDarkTheme ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.15)';
-          ctx.shadowBlur = 8;
-          ctx.shadowOffsetY = 4;
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetY = 0;
           
           ctx.fillStyle = isDarkTheme ? '#94a3b8' : '#64748b';
           ctx.font = "700 13px 'Plus Jakarta Sans', sans-serif";
           // Add letter spacing trick by manually spacing characters? No, just keep it clean.
           ctx.fillText('TỔNG CỘNG', centerX, centerY - 16);
           
-          ctx.fillStyle = isDarkTheme ? '#ffffff' : '#111827';
+          ctx.fillStyle = textColor;
           ctx.font = "900 28px 'Plus Jakarta Sans', sans-serif";
           let totalStr = '';
           if (total >= 1000000000) totalStr = (total / 1000000000).toFixed(2) + ' Tỷ';
@@ -936,6 +938,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           ctx.shadowBlur = 0;
           ctx.shadowOffsetY = 0;
 
+          if (compactChart) { ctx.restore(); return; }
           let lastYRight = -9999;
           let lastYLeft = 9999;
           
@@ -981,7 +984,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             ctx.moveTo(startX, startY);
             ctx.lineTo(breakX, targetY);
             ctx.lineTo(fixedX, targetY);
-            const surfaceColor = !document.body.classList.contains('light-mode') ? '#0f172a' : '#ffffff';
+            const surfaceColor = reportStyle.getPropertyValue('--ton-paper').trim() || (isDark ? '#121e27' : '#fffefb');
             ctx.strokeStyle = dataset.borderColor[index] === surfaceColor ? dataset.backgroundColor[index] : dataset.borderColor[index];
             ctx.lineWidth = 1.5;
             ctx.stroke();
@@ -1040,16 +1043,16 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           devicePixelRatio: Math.max(window.devicePixelRatio || 1, 3),
           cutout: activeCarBrandChartType === 'pie' ? '65%' : undefined,
           layout: {
-            padding: activeCarBrandChartType === 'pie' ? { top: 80, bottom: 60, left: 160, right: 160 } : 0
+            padding: activeCarBrandChartType === 'pie' ? (compactChart ? { top: 16, bottom: 10, left: 8, right: 8 } : { top: 60, bottom: 50, left: 160, right: 160 }) : 0
           },
           animation: {
-            duration: 1200,
+            duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450,
             easing: 'easeOutQuart'
           },
           plugins: {
             legend: {
-              display: activeCarBrandChartType === 'bar',
-              position: 'top',
+              display: activeCarBrandChartType === 'bar' || compactChart,
+              position: compactChart ? 'bottom' : 'top',
               align: 'end',
               labels: { 
                 color: textColor, 
@@ -1150,7 +1153,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           const {ctx} = chart;
           ctx.save();
           ctx.globalCompositeOperation = 'destination-over';
-          ctx.fillStyle = !document.body.classList.contains('light-mode') ? '#1e293b' : '#ffffff'; // or use the background color variable
+          ctx.fillStyle = surfaceColor; // or use the background color variable
           ctx.fillRect(0, 0, chart.width, chart.height);
           ctx.restore();
         }
@@ -1888,7 +1891,8 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       
 
       const isDark = !document.body.classList.contains('light-mode');
-      const textColor = isDark ? '#cbd5e1' : '#475569';
+      const reportStyle = getComputedStyle(canvas.closest('.report-pending-premium') || canvas);
+      const textColor = reportStyle.getPropertyValue('--ton-ink').trim() || (isDark ? '#f0f2eb' : '#283b36');
       
       const canvasWrap = document.getElementById("garageLossCanvasWrap") || canvas.parentElement;
       if (activeGarageChartType === 'pie') {
@@ -1897,8 +1901,9 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         canvasWrap.style.height = '400px';
       }
 
-      const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-      const surfaceColor = isDark ? '#0f172a' : '#ffffff';
+      const gridColor = reportStyle.getPropertyValue('--ton-line').trim() || (isDark ? '#2a3840' : '#e5e8e0');
+      const surfaceColor = reportStyle.getPropertyValue('--ton-paper').trim() || (isDark ? '#121e27' : '#fffefb');
+      const compactChart = canvasWrap.clientWidth < 640;
       
       const labels = list.map(item => item.name);
       const data = list.map(item => item.totalApprovedAmount);
@@ -1938,15 +1943,15 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           const isDarkTheme = !document.body.classList.contains('light-mode');
           
           ctx.shadowColor = isDarkTheme ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.15)';
-          ctx.shadowBlur = 8;
-          ctx.shadowOffsetY = 4;
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetY = 0;
           
           ctx.fillStyle = isDarkTheme ? '#94a3b8' : '#64748b';
           ctx.font = "700 13px 'Plus Jakarta Sans', sans-serif";
           // Add letter spacing trick by manually spacing characters? No, just keep it clean.
           ctx.fillText('TỔNG CỘNG', centerX, centerY - 16);
           
-          ctx.fillStyle = isDarkTheme ? '#ffffff' : '#111827';
+          ctx.fillStyle = textColor;
           ctx.font = "900 28px 'Plus Jakarta Sans', sans-serif";
           let totalStr = '';
           if (total >= 1000000000) totalStr = (total / 1000000000).toFixed(2) + ' Tỷ';
@@ -1958,6 +1963,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           ctx.shadowBlur = 0;
           ctx.shadowOffsetY = 0;
 
+          if (compactChart) { ctx.restore(); return; }
           let lastYRight = -9999;
           let lastYLeft = 9999;
           
@@ -2003,7 +2009,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             ctx.moveTo(startX, startY);
             ctx.lineTo(breakX, targetY);
             ctx.lineTo(fixedX, targetY);
-            const surfaceColor = !document.body.classList.contains('light-mode') ? '#0f172a' : '#ffffff';
+            const surfaceColor = reportStyle.getPropertyValue('--ton-paper').trim() || (isDark ? '#121e27' : '#fffefb');
             ctx.strokeStyle = dataset.borderColor[index] === surfaceColor ? dataset.backgroundColor[index] : dataset.borderColor[index];
             ctx.lineWidth = 1.5;
             ctx.stroke();
@@ -2061,16 +2067,16 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           maintainAspectRatio: false,
           cutout: activeGarageChartType === 'pie' ? '65%' : undefined,
           layout: {
-            padding: activeGarageChartType === 'pie' ? { top: 80, bottom: 60, left: 160, right: 160 } : 0
+            padding: activeGarageChartType === 'pie' ? (compactChart ? { top: 16, bottom: 10, left: 8, right: 8 } : { top: 60, bottom: 50, left: 160, right: 160 }) : 0
           },
           animation: {
-            duration: 1200,
+            duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450,
             easing: 'easeOutQuart'
           },
           plugins: {
             legend: {
-              display: activeGarageChartType === 'bar',
-              position: 'top',
+              display: activeGarageChartType === 'bar' || compactChart,
+              position: compactChart ? 'bottom' : 'top',
               align: 'end',
               labels: { 
                 color: textColor, 
@@ -2171,7 +2177,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           const {ctx} = chart;
           ctx.save();
           ctx.globalCompositeOperation = 'destination-over';
-          ctx.fillStyle = !document.body.classList.contains('light-mode') ? '#1e293b' : '#ffffff'; // or use the background color variable
+          ctx.fillStyle = surfaceColor; // or use the background color variable
           ctx.fillRect(0, 0, chart.width, chart.height);
           ctx.restore();
         }

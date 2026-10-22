@@ -1654,7 +1654,7 @@
           .report-filter-utility-slot #accReportFavFiltersWrapper > button:hover { border-color: rgba(201,154,67,.36) !important; background: rgba(201,154,67,.075) !important; }
         
 </style>
-        <div class="gdv-report-premium-shell" style="padding: 16px 0 32px 0; width: 100%; max-width: 100%; margin: 0 auto;">
+        <div class="${['table', 'garage', 'daklak_reserve', 'tnds_ton', 'car_brand_loss'].includes(activeGdvReportView) ? 'gdv-report-premium-shell report-pending-premium' : 'gdv-report-premium-shell'}" style="padding: 16px 0 32px 0; width: 100%; max-width: 100%; margin: 0 auto;">
 
           <section class="gdv-report-command-center" aria-label="Trung tâm điều khiển báo cáo">
           
@@ -2219,7 +2219,7 @@
 
           ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone' && activeGdvReportView !== 'annual_claims_gdv' && activeGdvReportView !== 'daklak_reserve' && activeGdvReportView !== 'ton_chua_hoa_don' && activeGdvReportView !== 'car_brand_loss' && activeGdvReportView !== 'tnds_ton') ? `
           <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
-          <div class="${activeGdvReportView === 'chart' ? 'kpi-summary-strip' : ''}" aria-label="Tổng quan hiệu suất" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
+          <div class="${activeGdvReportView === 'chart' ? 'kpi-summary-strip' : activeGdvReportView === 'table' ? 'rp-summary-strip' : ''}" aria-label="Tổng quan hiệu suất" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
               <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">HỒ SƠ MỞ TRONG THÁNG</span>
               <strong style="display: block; font-size: 30px; color: var(--primary);  margin-top: 10px; font-weight: 850;">
@@ -2260,7 +2260,7 @@
           ${activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'annual_claims_gdv' ? renderAnnualGdvClaimsReportHtml() : activeGdvReportView === 'tnds_ton' ? renderTndsTonReportTableHtml() : activeGdvReportView === 'car_brand_loss' ? renderCarBrandLossReportTableHtml() : activeGdvReportView === 'daklak_reserve' ? renderDakLakReserveReportTableHtml() : activeGdvReportView === 'ton_chua_hoa_don' ? renderTonChuaHoaDonReportTableHtml() : activeGdvReportView === 'garage' ? `
             
             <!-- EXECUTIVE GARAGE REPORT DASHBOARD -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div class="rp-summary-strip rp-summary-strip--garage" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
               <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
                 <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">TỔNG TIỀN BỒI THƯỜNG GARA</span>
                 <strong style="display: block; font-size: 26px; color: var(--primary);  margin-top: 10px; font-weight: 850;">
@@ -2288,8 +2288,8 @@
 
             
             <!-- COMBO BAR + LINE VECTOR CHART SECTION FOR GARAGES -->
-            <div id="garageChartCardContainer" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <div id="garageChartCardContainer" class="rp-chart-card" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+              <div class="rp-chart-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
                 <div style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
                   BIỂU ĐỒ & BẢNG KÊ GARA
                   <select onchange="activeGarageChartTopN=Number(this.value); renderGdvMonthlyReportPage();" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); padding: 5px 10px; border-radius: 8px; font-weight: 750; font-size: 12px; outline: none; cursor: pointer; box-shadow: var(--shadow-xs);">
@@ -2300,7 +2300,7 @@
                     <option value="999" ${activeGarageChartTopN === 999 ? 'selected' : ''}>Tất cả</option>
                   </select>
                 </div>
-                <div class="hide-on-screenshot" style="display: flex; gap: 8px;">
+                <div class="hide-on-screenshot rp-chart-actions" style="display: flex; gap: 8px;">
                   <button type="button" onclick="downloadGarageLossChartImage()" title="Tải ảnh Biểu đồ Ultra HD (4K / 300 DPI)" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-strong); font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; background: var(--surface); color: var(--text-main); display: flex; align-items: center; gap: 6px;">
                     <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     Tải ảnh
@@ -2310,14 +2310,14 @@
                 </div>
               </div>
               <div id="garageLossCanvasWrap" style="position: relative; height: 400px; width: 100%; transition: height 0.3s ease;">
-                <canvas id="garageLossCanvas"></canvas>
+                <canvas id="garageLossCanvas" role="img" aria-label="Biểu đồ doanh thu dịch vụ gara"></canvas>
                 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onload="if(window.initGarageLossChart) setTimeout(window.initGarageLossChart, 50); this.remove();" style="display:none;" />
               </div>
             </div>
 
             <!-- DETAILED BREAKDOWN LIST BELOW (RETAINED AS CURRENTLY ARE) -->
             <!-- DETAILED BREAKDOWN LIST BELOW (RETAINED AS CURRENTLY ARE) -->
-            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+            <div class="rp-garage-details" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
               <div style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
@@ -2535,12 +2535,12 @@
             
             <!-- TOP 3 PODIUM SHOWCASE (LEADERBOARD) -->
             ${top3Performers.length > 0 ? `
-              <div style="margin-bottom: 24px;">
+              <div class="rp-leaderboard" style="margin-bottom: 24px;">
                 <div style="font-size: 12.5px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path></svg>
                   <span>Vinh danh Top 3 GĐV Phụ trách Khối lượng lớn nhất</span>
                 </div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                <div class="rp-leaderboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
                   ${top3Performers.map((p, pIdx) => {
                     const medals = ['🥇 Top 1', '🥈 Top 2', '🥉 Top 3'];
                     const borders = ['rgba(216,180,109,0.5)', 'rgba(148,163,184,0.5)', 'rgba(217,119,6,0.5)'];
@@ -2549,12 +2549,12 @@
                     const rateHsbt = p.totalOpenedCount > 0 ? Math.round((p.duyetHsbtCount / p.totalOpenedCount) * 100) : 0;
 
                     return `
-                      <div style="background: var(--surface); border: 1px solid ${borders[pIdx]}; border-radius: 16px; padding: 18px; box-shadow: var(--shadow-sm); position: relative;">
-                        <div style="position: absolute; right: 14px; top: 14px; font-size: 11px; font-weight: 850; padding: 3px 10px; border-radius: 99px; background: ${badgeBgs[pIdx]}; border: 1px solid ${borders[pIdx]}; color: var(--text-main);">
+                      <div class="rp-leaderboard-card" style="background: var(--surface); border: 1px solid ${borders[pIdx]}; border-radius: 16px; padding: 18px; box-shadow: var(--shadow-sm); position: relative;">
+                        <div class="rp-rank" style="position: absolute; right: 14px; top: 14px; font-size: 11px; font-weight: 850; padding: 3px 10px; border-radius: 99px; background: ${badgeBgs[pIdx]}; border: 1px solid ${borders[pIdx]}; color: var(--text-main);">
                           ${medals[pIdx]}
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                          <div style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, rgba(216,180,109,0.2) 0%, rgba(216,180,109,0.05) 100%); border: 1.5px solid rgba(216,180,109,0.4); color: var(--primary); font-weight: 900; font-size: 15px; display: grid; place-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                          <div class="rp-avatar" style="width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, rgba(216,180,109,0.2) 0%, rgba(216,180,109,0.05) 100%); border: 1.5px solid rgba(216,180,109,0.4); color: var(--primary); font-weight: 900; font-size: 15px; display: grid; place-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                             ${initials}
                           </div>
                           <div>
@@ -2562,7 +2562,7 @@
                             <span style="font-size: 11.5px; color: var(--text-soft);">${escapeHtmlOutput(p.branch)}</span>
                           </div>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;">
+                        <div class="rp-metrics" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;">
                           <div>
                             <span style="font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Số HS tiếp nhận</span>
                             <strong style="display: block; font-size: 16px; color: var(--primary);  font-weight: 850;">${p.totalOpenedCount} ca</strong>
@@ -2580,7 +2580,7 @@
             ` : ''}
 
             <!-- ULTRA-PREMIUM MASTER DATA TABLE CONTAINER -->
-            <div class="table-container" style="border: 1px solid var(--border-strong); border-radius: 20px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow-md);">
+            <div class="table-container rp-data-card" style="border: 1px solid var(--border-strong); border-radius: 20px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow-md);">
               <div style="padding: 18px 24px; background: linear-gradient(180deg, var(--bg-soft) 0%, rgba(0,0,0,0.02) 100%); border-bottom: 1px solid var(--border-strong); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                 <span style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 10px;">
                   <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); display: grid; place-items: center;">
@@ -2594,7 +2594,7 @@
                 </span>
               </div>
 
-              <table class="p-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
+              <div class="rp-table-scroll"><table class="p-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
                 <thead>
                   <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong);">
                     <th style="width: 55px; text-align: center; padding: 14px 12px; font-size: 11.5px; font-weight: 850; color: var(--text-soft); letter-spacing: 0.05em; text-transform: uppercase;">STT</th>
@@ -2676,7 +2676,7 @@
                     `;
                   }).join('')}
                 </tbody>
-              </table>
+              </table></div>
             </div>
           `}
         </div>
@@ -2687,4 +2687,5 @@
         favoriteFilterSlot.appendChild(favoriteFilterWrapper);
       }
       renderFavFiltersDropdownContent();
+      if (typeof enhanceRemainingReportControls === 'function') enhanceRemainingReportControls(container);
     }

@@ -290,8 +290,8 @@ const fullList = getCarBrandLossData();
       }).join('');
 
       return `
-        <div style="background: var(--surface); border-radius: 18px; border: 1px solid var(--border-strong); padding: 24px; margin-top: 24px; box-shadow: var(--shadow-sm);">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
+        <div class="rp-brand-report" style="background: var(--surface); border-radius: 18px; border: 1px solid var(--border-strong); padding: 24px; margin-top: 24px; box-shadow: var(--shadow-sm);">
+          <div class="rp-brand-intro" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 16px;">
             <div>
               <h2 style="font-size: 18px; font-weight: 850; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 0.5px;">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
@@ -306,8 +306,8 @@ const fullList = getCarBrandLossData();
 
 
           <!-- Chart controls and Canvas -->
-          <div id="carBrandChartCardContainer" style="margin-bottom: 24px; background: var(--surface); padding: 22px 26px; border-radius: 20px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div id="carBrandChartCardContainer" class="rp-chart-card" style="margin-bottom: 24px; background: var(--surface); padding: 22px 26px; border-radius: 20px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
+            <div class="rp-chart-heading" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
               <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                 <div style="font-size: 14px; font-weight: 800; color: var(--text-main); text-transform: uppercase;">Biểu đồ & Bảng kê Hãng xe</div>
                 <select onchange="activeCarBrandChartTopN=Number(this.value); renderGdvMonthlyReportPage();" style="background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); padding: 5px 10px; border-radius: 8px; font-weight: 750; font-size: 12px; outline: none; cursor: pointer; box-shadow: var(--shadow-xs);">
@@ -318,7 +318,7 @@ const fullList = getCarBrandLossData();
                   <option value="999" ${activeCarBrandChartTopN === 999 ? 'selected' : ''}>Tất cả</option>
                 </select>
               </div>
-              <div class="hide-on-screenshot" style="display: flex; gap: 8px;">
+              <div class="hide-on-screenshot rp-chart-actions" style="display: flex; gap: 8px;">
                 <button type="button" onclick="downloadCarBrandChartImage()" title="Tải ảnh Biểu đồ Ultra HD (4K / 300 DPI)" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-strong); font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; background: var(--surface); color: var(--text-main); display: flex; align-items: center; gap: 6px;">
                   <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                   Tải ảnh
@@ -328,11 +328,11 @@ const fullList = getCarBrandLossData();
               </div>
             </div>
             <div id="carBrandLossCanvasWrap" style="position: relative; height: 400px; width: 100%; transition: height 0.3s ease;">
-              <canvas id="carBrandLossCanvas"></canvas>
+              <canvas id="carBrandLossCanvas" role="img" aria-label="Biểu đồ tổn thất theo hãng xe"></canvas>
               <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onload="if(window.initCarBrandChart) setTimeout(window.initCarBrandChart, 50); this.remove();" style="display:none;" />
             </div>
           </div>
-          <div style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border-strong);">
+          <div class="rp-table-scroll" style="overflow-x: auto; border-radius: 12px; border: 1px solid var(--border-strong);">
             <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
               <thead>
                 <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong);">
@@ -530,7 +530,7 @@ const fullList = getCarBrandLossData();
       const thresholdLabel = activeDakLakMinReserve === 50000000 ? '50 triệu' : activeDakLakMinReserve === 100000000 ? '100 triệu' : formatCurrencyInputNumber(activeDakLakMinReserve);
 
       return `
-        <div class="p-card" id="dakLakReserveReportCardContainer" style="padding: 28px 32px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface); min-height: 420px; display: flex; flex-direction: column;">
+        <div class="p-card rp-data-card" id="dakLakReserveReportCardContainer" style="padding: 28px 32px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface); min-height: 420px; display: flex; flex-direction: column;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
             <div>
               <h2 style="font-size: 18px; font-weight: 850; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
@@ -609,8 +609,11 @@ const fullList = getCarBrandLossData();
         return;
       }
       triggerToast(`Đang xuất ảnh Báo cáo Đắk Lắk Ultra HD (4K)...`, 'info');
+      const exportWidth = Math.ceil(Math.max(cardEl.offsetWidth, cardEl.querySelector('table')?.scrollWidth || 0));
       html2canvas(cardEl, {
-        scale: 3.5,
+        scale: Math.max(1, Math.min(3.5, 4096 / exportWidth)),
+        width: exportWidth,
+        windowWidth: Math.max(document.documentElement.clientWidth, exportWidth + 64),
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -623,6 +626,7 @@ const fullList = getCarBrandLossData();
             target.style.boxShadow = 'none';
             target.style.transform = 'none';
             target.style.backgroundColor = '#ffffff';
+            if (typeof prepareRemainingReportImageClone === 'function') prepareRemainingReportImageClone(target, exportWidth);
           }
         },
         ignoreElements: function(element) {
@@ -1843,7 +1847,7 @@ const fullList = getCarBrandLossData();
 
       return `
         <!-- 4 KPI SUMMARY CARDS FOR TNDS TỒN -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
+        <div class="rp-summary-strip rp-summary-strip--tnds" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
           <!-- Card 1: Tổng hồ sơ TNDS tồn -->
           <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(234, 179, 8, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
@@ -1897,7 +1901,7 @@ const fullList = getCarBrandLossData();
         </div>
 
         <!-- MAIN REPORT CARD CONTAINER -->
-        <div class="p-card" id="tndsTonReportCardContainer" style="padding: 28px 32px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface); min-height: 420px; display: flex; flex-direction: column;">
+        <div class="p-card rp-data-card" id="tndsTonReportCardContainer" style="padding: 28px 32px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface); min-height: 420px; display: flex; flex-direction: column;">
           
           <!-- HEADER & ACTIONS -->
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border); flex-wrap: wrap; gap: 14px;">
@@ -1927,7 +1931,7 @@ const fullList = getCarBrandLossData();
           </div>
 
           <!-- IN-PAGE FILTER & SEARCH TOOLBAR -->
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; background: var(--bg-soft); padding: 12px 16px; border-radius: 14px; border: 1px solid var(--border);" class="hide-on-screenshot">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; background: var(--bg-soft); padding: 12px 16px; border-radius: 14px; border: 1px solid var(--border);" class="hide-on-screenshot rp-inline-filters">
             
             <!-- Search Box -->
             <div style="position: relative; flex: 1; min-width: 260px; max-width: 380px;">
@@ -1950,7 +1954,7 @@ const fullList = getCarBrandLossData();
             <!-- Filter Controls Right -->
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
               <!-- Filter by Note Status -->
-              <div style="display: flex; align-items: center; gap: 4px; background: var(--surface); padding: 3px; border-radius: 10px; border: 1px solid var(--border-strong);">
+              <div class="rp-segmented" role="group" aria-label="Lọc trạng thái ghi chú" style="display: flex; align-items: center; gap: 4px; background: var(--surface); padding: 3px; border-radius: 10px; border: 1px solid var(--border-strong);">
                 <button type="button" onclick="setTndsNoteFilter('all')" style="padding: 6px 12px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.15s; ${activeTndsNoteFilter === 'all' ? 'background: var(--primary); color: #111;' : 'background: transparent; color: var(--text-soft);'}">
                   Tất cả (${totalClaims})
                 </button>
@@ -1980,7 +1984,7 @@ const fullList = getCarBrandLossData();
           </div>
 
           <!-- MASTER DATA TABLE -->
-          <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--border);">
+          <div class="rp-table-scroll" style="overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; border: 1px solid var(--border);">
             <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
               <thead>
                 <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong); color: var(--text-soft); font-weight: 850; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px;">
@@ -2082,8 +2086,11 @@ const fullList = getCarBrandLossData();
 
       triggerToast('Đang xuất ảnh Báo cáo TNDS Tồn Ultra HD (4K)...', 'info');
 
+      const exportWidth = Math.ceil(Math.max(cardEl.offsetWidth, cardEl.querySelector('table')?.scrollWidth || 0));
       html2canvas(cardEl, {
-        scale: 3.5,
+        scale: Math.max(1, Math.min(3.5, 4096 / exportWidth)),
+        width: exportWidth,
+        windowWidth: Math.max(document.documentElement.clientWidth, exportWidth + 64),
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -2096,6 +2103,7 @@ const fullList = getCarBrandLossData();
             target.style.boxShadow = 'none';
             target.style.transform = 'none';
             target.style.backgroundColor = '#ffffff';
+            if (typeof prepareRemainingReportImageClone === 'function') prepareRemainingReportImageClone(target, exportWidth);
           }
         },
         ignoreElements: function(element) {
