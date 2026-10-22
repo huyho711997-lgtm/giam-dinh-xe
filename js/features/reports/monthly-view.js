@@ -2219,7 +2219,7 @@
 
           ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone' && activeGdvReportView !== 'annual_claims_gdv' && activeGdvReportView !== 'daklak_reserve' && activeGdvReportView !== 'ton_chua_hoa_don' && activeGdvReportView !== 'car_brand_loss' && activeGdvReportView !== 'tnds_ton') ? `
           <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
+          <div class="${activeGdvReportView === 'chart' ? 'kpi-summary-strip' : ''}" aria-label="Tổng quan hiệu suất" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
               <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 850; text-transform: uppercase;">HỒ SƠ MỞ TRONG THÁNG</span>
               <strong style="display: block; font-size: 30px; color: var(--primary);  margin-top: 10px; font-weight: 850;">
@@ -2423,7 +2423,7 @@
           ` : activeGdvReportView === 'chart' ? `
             
             <!-- GĐV KPI CARDS GRID -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <div class="kpi-team-grid" aria-label="Hiệu suất từng giám định viên" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
               ${gdvRows.map(r => {
                 const kpiVal = Math.round((r.weightedKpiCount || r.duyetHsbtCount) * 10) / 10;
                 const kpiAchievementRate = Math.round((kpiVal / 70) * 100);
@@ -2455,10 +2455,10 @@
                 const initials = getGdvInitials(r.gdvName);
 
                 return `
-                  <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 18px; box-shadow: var(--shadow-sm);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                      <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); font-weight: 850; font-size: 12px; display: grid; place-items: center;">
+                  <article class="kpi-person-card" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 18px; box-shadow: var(--shadow-sm);">
+                    <div class="kpi-person-head" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                      <div class="kpi-person-identity" style="display: flex; align-items: center; gap: 10px;">
+                        <div class="kpi-person-avatar" style="width: 36px; height: 36px; border-radius: 10px; background: rgba(216,180,109,0.15); border: 1px solid rgba(216,180,109,0.3); color: var(--primary); font-weight: 850; font-size: 12px; display: grid; place-items: center;">
                           ${initials}
                         </div>
                         <div>
@@ -2466,12 +2466,12 @@
                           <span style="font-size: 11px; color: var(--text-soft);">${escapeHtmlOutput(r.branch)}</span>
                         </div>
                       </div>
-                      <span style="font-size: 10px; font-weight: 850; padding: 3px 8px; border-radius: 99px; background: ${kpiBadgeBg}; border: 1px solid ${kpiBadgeBorder}; color: ${kpiBadgeColor}; ">
+                      <span class="kpi-person-status" data-state="${kpiVal >= 70 ? 'complete' : kpiVal >= kpiMetrics.progressTarget ? 'ahead' : progressRate >= 80 ? 'near' : 'behind'}" style="font-size: 10px; font-weight: 850; padding: 3px 8px; border-radius: 99px; background: ${kpiBadgeBg}; border: 1px solid ${kpiBadgeBorder}; color: ${kpiBadgeColor}; ">
                         ${kpiStatusLabel}
                       </span>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;">
+                    <div class="kpi-person-metrics" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 4px;">
                       <div>
                         <span style="font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; font-weight: 750;">Số HS làm</span>
                         <strong style="display: block; font-size: 15px; color: var(--primary);  font-weight: 850;">${r.totalOpenedCount} ca</strong>
@@ -2486,24 +2486,24 @@
                       </div>
                     </div>
 
-                    <div style="margin-top: 10px; padding: 7px 10px; border-radius: 8px; font-size: 11px; font-weight: 750; display: flex; justify-content: space-between; align-items: center; ${kpiVal >= kpiMetrics.progressTarget ? 'background: rgba(59,130,246,0.08); color: #2563eb; border: 1px solid rgba(59,130,246,0.2);' : 'background: rgba(239,68,68,0.08); color: #dc2626; border: 1px solid rgba(239,68,68,0.2);'}">
+                    <div class="kpi-person-progress" data-state="${kpiVal >= kpiMetrics.progressTarget ? 'ahead' : 'behind'}" style="margin-top: 10px; padding: 7px 10px; border-radius: 8px; font-size: 11px; font-weight: 750; display: flex; justify-content: space-between; align-items: center; ${kpiVal >= kpiMetrics.progressTarget ? 'background: rgba(59,130,246,0.08); color: #2563eb; border: 1px solid rgba(59,130,246,0.2);' : 'background: rgba(239,68,68,0.08); color: #dc2626; border: 1px solid rgba(239,68,68,0.2);'}">
                       <span>Tiến độ ngày ${kpiMetrics.daysPassed}/${kpiMetrics.totalDaysInMonth} (${kpiMetrics.progressTarget} ca):</span>
                       <strong style="font-weight: 850;">${progressDiff >= 0 ? `+${progressDiff} ca ✓` : `${progressDiff} ca`}</strong>
                     </div>
-                  </div>
+                  </article>
                 `;
               }).join('')}
             </div>
 
             <!-- EXECUTIVE GDV KPI CHART SECTION (HARMONIZED WITH GARAGE CHART STYLE) -->
-            <div id="kpiChartCardContainer" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
+            <div id="kpiChartCardContainer" class="kpi-chart-card" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 22px 26px; margin-bottom: 24px; box-shadow: var(--shadow-sm);">
               
               <!-- Chart Title Bar -->
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+              <div class="kpi-chart-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
                 <div>
-                  <div style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
+                  <span class="kpi-eyebrow">HIỆU SUẤT GIÁM ĐỊNH</span><div class="kpi-chart-title" style="font-size: 13px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                    <span>BIỂU ĐỒ XU HƯỚNG KPI & LƯƠNG GIÁM ĐỊNH VIÊN (TARGET: 70 CA/THÁNG)</span>
+                    <span>Xu hướng KPI & lương giám định viên</span>
                   </div>
                   <p style="font-size: 12px; color: var(--text-soft); margin-top: 4px; margin-bottom: 0;">
                     So sánh số hồ sơ tiếp nhận với hồ sơ duyệt HSBT, vạch tiến độ kỳ vọng <strong>${kpiMetrics.progressTarget} ca</strong> (ngày ${kpiMetrics.daysPassed}/${kpiMetrics.totalDaysInMonth}) và vạch chuẩn KPI tính lương <strong>70 ca/tháng</strong>.
@@ -2511,20 +2511,22 @@
                 </div>
 
                 <!-- Export & Type Toggle Actions -->
-                <div class="hide-on-screenshot" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                  <button type="button" onclick="downloadGdvKpiChartImage()" title="Tải ảnh Biểu đồ Ultra HD (4K / 300 DPI)" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-strong); font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; background: var(--surface); color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                <div class="hide-on-screenshot kpi-chart-actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                  <button type="button" class="kpi-chart-download" onclick="downloadGdvKpiChartImage()" title="Tải ảnh Biểu đồ Ultra HD (4K / 300 DPI)" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-strong); font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; background: var(--surface); color: var(--text-main); display: flex; align-items: center; gap: 6px;">
                     <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     Tải ảnh
                   </button>
-                  <button type="button" onclick="activeGdvKpiChartType='line'; renderGdvMonthlyReportPage();" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 12px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; ${activeGdvKpiChartType === 'line' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Đường</button>
-                  <button type="button" onclick="activeGdvKpiChartType='bar'; renderGdvMonthlyReportPage();" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 12px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; ${activeGdvKpiChartType === 'bar' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Cột</button>
-                  <button type="button" onclick="activeGdvKpiChartType='pie'; renderGdvMonthlyReportPage();" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 12px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; ${activeGdvKpiChartType === 'pie' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Tròn</button>
+                  <div class="kpi-chart-toggle" role="group" aria-label="Kiểu biểu đồ KPI">
+                  <button type="button" class="kpi-chart-type" aria-pressed="${activeGdvKpiChartType === 'line'}" onclick="activeGdvKpiChartType='line'; renderGdvMonthlyReportPage();" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 12px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; ${activeGdvKpiChartType === 'line' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Đường</button>
+                  <button type="button" class="kpi-chart-type" aria-pressed="${activeGdvKpiChartType === 'bar'}" onclick="activeGdvKpiChartType='bar'; renderGdvMonthlyReportPage();" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 12px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; ${activeGdvKpiChartType === 'bar' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Cột</button>
+                  <button type="button" class="kpi-chart-type" aria-pressed="${activeGdvKpiChartType === 'pie'}" onclick="activeGdvKpiChartType='pie'; renderGdvMonthlyReportPage();" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 12px; font-weight: 850; cursor: pointer; transition: all 0.2s ease; ${activeGdvKpiChartType === 'pie' ? 'background: var(--primary); color: #111;' : 'background: rgba(216,180,109,0.15); color: var(--primary);'}">Biểu đồ Tròn</button>
+                  </div>
                 </div>
               </div>
 
               <!-- CHART.JS CANVAS WRAPPER -->
               <div id="gdvKpiCanvasWrap" style="position: relative; height: 420px; width: 100%; transition: height 0.3s ease;">
-                <canvas id="gdvKpiCanvas"></canvas>
+                <canvas id="gdvKpiCanvas" role="img" aria-label="Biểu đồ hiệu suất và tiến độ KPI theo giám định viên"></canvas>
                 <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onload="if(window.initGdvKpiChart) setTimeout(window.initGdvKpiChart, 50); this.remove();" style="display:none;" />
               </div>
             </div>

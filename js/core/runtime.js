@@ -1247,11 +1247,13 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       }
 
       const isDark = !document.body.classList.contains('light-mode');
-      const textColor = isDark ? '#cbd5e1' : '#475569';
-      const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
-      const surfaceColor = isDark ? '#0f172a' : '#ffffff';
+      const reportStyle = getComputedStyle(canvas.closest('.gdv-report-premium-shell') || canvas);
+      const textColor = reportStyle.getPropertyValue('--ton-ink').trim() || (isDark ? '#f0f2eb' : '#283b36');
+      const gridColor = reportStyle.getPropertyValue('--ton-line').trim() || (isDark ? '#2a3840' : '#e5e8e0');
+      const surfaceColor = reportStyle.getPropertyValue('--ton-paper').trim() || (isDark ? '#121e27' : '#fffefb');
 
       const canvasWrap = document.getElementById('gdvKpiCanvasWrap') || canvas.parentElement;
+      const compactChart = canvasWrap.clientWidth < 640;
       if (activeGdvKpiChartType === 'pie') {
         canvasWrap.style.height = '480px';
       } else {
@@ -1274,7 +1276,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             data: openData,
             backgroundColor: 'rgba(216, 180, 109, 0.85)',
             hoverBackgroundColor: 'rgba(216, 180, 109, 1)',
-            borderColor: '#d8b46d',
+            borderColor: '#b88935',
             borderWidth: 1.5,
             borderRadius: { topLeft: 7, topRight: 7, bottomLeft: 0, bottomRight: 0 },
             barPercentage: 0.65,
@@ -1324,14 +1326,14 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
       } else if (actualType === 'line') {
         const openGradient = (function() {
           const g = ctx.createLinearGradient(0, 30, 0, 360);
-          g.addColorStop(0, isDark ? 'rgba(216, 180, 109, 0.32)' : 'rgba(216, 180, 109, 0.25)');
+          g.addColorStop(0, 'rgba(184, 137, 53, 0.13)');
           g.addColorStop(1, isDark ? 'rgba(216, 180, 109, 0.01)' : 'rgba(216, 180, 109, 0.01)');
           return g;
         })();
 
         const duyetGradient = (function() {
           const g = ctx.createLinearGradient(0, 30, 0, 360);
-          g.addColorStop(0, isDark ? 'rgba(16, 185, 129, 0.32)' : 'rgba(16, 185, 129, 0.25)');
+          g.addColorStop(0, 'rgba(16, 185, 129, 0.13)');
           g.addColorStop(1, isDark ? 'rgba(16, 185, 129, 0.01)' : 'rgba(16, 185, 129, 0.01)');
           return g;
         })();
@@ -1341,16 +1343,16 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             type: 'line',
             label: 'Số HS tiếp nhận',
             data: openData,
-            borderColor: '#d8b46d',
+            borderColor: '#b88935',
             backgroundColor: openGradient,
-            borderWidth: 3.5,
+            borderWidth: 2.5,
             tension: 0.38,
             pointBackgroundColor: surfaceColor,
-            pointBorderColor: '#d8b46d',
+            pointBorderColor: '#b88935',
             pointBorderWidth: 3,
-            pointRadius: 6,
-            pointHoverRadius: 9,
-            pointHoverBackgroundColor: '#d8b46d',
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#b88935',
             pointHoverBorderColor: '#ffffff',
             pointHoverBorderWidth: 3,
             fill: true
@@ -1361,13 +1363,13 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             data: duyetData,
             borderColor: '#10b981',
             backgroundColor: duyetGradient,
-            borderWidth: 3.5,
+            borderWidth: 2.5,
             tension: 0.38,
             pointBackgroundColor: surfaceColor,
             pointBorderColor: '#10b981',
             pointBorderWidth: 3,
-            pointRadius: 6,
-            pointHoverRadius: 9,
+            pointRadius: 4,
+            pointHoverRadius: 6,
             pointHoverBackgroundColor: '#10b981',
             pointHoverBorderColor: '#ffffff',
             pointHoverBorderWidth: 3,
@@ -1434,11 +1436,11 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
 
         // Shadow
         c.shadowColor = isDarkTheme ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.12)';
-        c.shadowBlur = 6;
+        c.shadowBlur = 2;
         c.shadowOffsetY = 2;
 
         // Pill background
-        c.fillStyle = isDarkTheme ? '#1e293b' : '#ffffff';
+        c.fillStyle = surfaceColor;
         c.strokeStyle = dotColor;
         c.lineWidth = 1.5;
         c.beginPath();
@@ -1459,7 +1461,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
         c.fill();
 
         // Text
-        c.fillStyle = isDarkTheme ? '#f8fafc' : '#0f172a';
+        c.fillStyle = textColor;
         c.font = "850 11px 'Plus Jakarta Sans', sans-serif";
         c.textAlign = 'left';
         c.textBaseline = 'middle';
@@ -1474,7 +1476,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           const c = chart.ctx;
           c.save();
           c.globalCompositeOperation = 'destination-over';
-          c.fillStyle = !document.body.classList.contains('light-mode') ? '#1e293b' : '#ffffff';
+          c.fillStyle = surfaceColor;
           c.fillRect(0, 0, chart.width, chart.height);
           c.restore();
         }
@@ -1500,9 +1502,9 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
 
             c.save();
             c.shadowColor = 'rgba(239, 68, 68, 0.4)';
-            c.shadowBlur = 8;
+            c.shadowBlur = 0;
             c.shadowOffsetY = 2;
-            c.fillStyle = '#ef4444';
+            c.fillStyle = isDarkTheme ? '#38252a' : '#fff1ef';
             c.beginPath();
             if (c.roundRect) {
               c.roundRect(badgeX, badgeY, badgeW, badgeH, 6);
@@ -1517,6 +1519,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             c.fillStyle = '#ffffff';
             c.textAlign = 'center';
             c.textBaseline = 'middle';
+            c.fillStyle = isDarkTheme ? '#ff9494' : '#dc2626';
             c.fillText('KPI: 70 CA/THÁNG', badgeX + badgeW / 2, y70);
             c.restore();
           }
@@ -1539,9 +1542,9 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             }
 
             c.shadowColor = 'rgba(59, 130, 246, 0.4)';
-            c.shadowBlur = 8;
+            c.shadowBlur = 0;
             c.shadowOffsetY = 2;
-            c.fillStyle = '#3b82f6';
+            c.fillStyle = isDarkTheme ? '#20344b' : '#edf4ff';
             c.beginPath();
             if (c.roundRect) {
               c.roundRect(progBadgeX, progBadgeY, progBadgeW, progBadgeH, 6);
@@ -1556,6 +1559,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
             c.fillStyle = '#ffffff';
             c.textAlign = 'center';
             c.textBaseline = 'middle';
+            c.fillStyle = isDarkTheme ? '#8dbaff' : '#2563eb';
             c.fillText(progText, progBadgeX + progBadgeW / 2, progBadgeY + progBadgeH / 2);
             c.restore();
           }
@@ -1605,7 +1609,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
               if (duyetBadgeY > maxAllowedY) duyetBadgeY = duyetEl.y - 20;
 
               // Draw Open Badge (Gold)
-              drawFloatingPillBadge(c, openEl.x, openBadgeY, openVal + ' ca', '#d8b46d', isDarkTheme);
+              drawFloatingPillBadge(c, openEl.x, openBadgeY, openVal + ' ca', '#b88935', isDarkTheme);
 
               // Draw Duyet Badge (Green)
               drawFloatingPillBadge(c, duyetEl.x, duyetBadgeY, duyetVal + ' ca', '#10b981', isDarkTheme);
@@ -1620,7 +1624,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
                 const val = ds.data[idx];
                 if (val === undefined || val === null) return;
                 
-                const dotColor = dsIdx === 0 ? '#d8b46d' : '#10b981';
+                const dotColor = dsIdx === 0 ? '#b88935' : '#10b981';
                 drawFloatingPillBadge(c, el.x, el.y - 14, val + ' ca', dotColor, isDarkTheme);
               });
             });
@@ -1647,16 +1651,17 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           const isDarkTheme = !document.body.classList.contains('light-mode');
 
           // Center Totals
-          c.fillStyle = isDarkTheme ? '#94a3b8' : '#64748b';
+          c.fillStyle = textColor;
           c.font = "800 12px 'Plus Jakarta Sans', sans-serif";
-          c.fillText('TỔNG HỒ SƠ TRONG THÁNG', centerX, centerY - 14);
+          if (compactChart) c.font = "750 10px 'Plus Jakarta Sans', sans-serif";
+          c.fillText(compactChart ? 'TỔNG HỒ SƠ' : 'TỔNG HỒ SƠ TRONG THÁNG', centerX, centerY - 14);
 
-          c.fillStyle = isDarkTheme ? '#d8b46d' : '#b89347';
+          c.fillStyle = isDarkTheme ? '#b88935' : '#b89347';
           c.font = "900 28px 'Plus Jakarta Sans', sans-serif";
           c.fillText(Math.round(total) + ' ca', centerX, centerY + 16);
           c.restore();
 
-          if (total <= 0 || !meta || !meta.data) return;
+          if (total <= 0 || !meta || !meta.data || compactChart) return;
 
           let lastYRight = -9999;
           let lastYLeft = 9999;
@@ -1755,30 +1760,30 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
           maintainAspectRatio: false,
           cutout: actualType === 'doughnut' ? '65%' : undefined,
           animation: {
-            duration: 1000,
+            duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450,
             easing: 'easeOutQuart'
           },
           layout: {
-            padding: actualType === 'doughnut' ? { top: 45, bottom: 45, left: 160, right: 160 } : { top: 25, right: 25, bottom: 12, left: 15 }
+            padding: actualType === 'doughnut' ? (compactChart ? { top: 16, bottom: 10, left: 8, right: 8 } : { top: 45, bottom: 45, left: 160, right: 160 }) : { top: 25, right: 16, bottom: 12, left: 4 }
           },
           plugins: {
             legend: {
-              display: actualType !== 'doughnut',
-              position: 'top',
+              display: actualType !== 'doughnut' || compactChart,
+              position: compactChart ? 'bottom' : 'top',
               align: 'end',
               labels: {
                 color: textColor,
-                font: { family: "'Plus Jakarta Sans', sans-serif", weight: '800', size: 12 },
+                font: { family: "'Plus Jakarta Sans', sans-serif", weight: '700', size: 11 },
                 padding: 16,
                 usePointStyle: true,
                 pointStyle: 'circle'
               }
             },
             tooltip: {
-              backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-              titleColor: isDark ? '#ffffff' : '#0f172a',
-              bodyColor: isDark ? '#cbd5e1' : '#475569',
-              borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+              backgroundColor: surfaceColor,
+              titleColor: textColor,
+              bodyColor: textColor,
+              borderColor: gridColor,
               borderWidth: 1,
               padding: 14,
               cornerRadius: 12,
@@ -1825,7 +1830,7 @@ const renderGdvReportPage = function(targetContainer) { return renderGdvMonthlyR
               grid: { display: false },
               ticks: {
                 color: textColor,
-                font: { family: "'Plus Jakarta Sans', sans-serif", weight: '800', size: 12.5 },
+                font: { family: "'Plus Jakarta Sans', sans-serif", weight: '700', size: compactChart ? 10 : 11.5 },
                 padding: 10
               }
             },
