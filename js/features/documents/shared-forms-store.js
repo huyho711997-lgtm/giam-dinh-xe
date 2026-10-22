@@ -118,6 +118,13 @@ const SharedFormsStore = (() => {
   }
   async function listDrive(folderId, config, signal) {
     if (!parseFolder(folderId)) throw new Error('ID thư mục không hợp lệ.');
+    if (!config.apiKey) {
+      const response = await fetch('js/data/shared-forms-drive.json',{signal,cache:'no-cache'});
+      if (!response.ok) throw new Error('Chưa tải được danh mục biểu mẫu. Vui lòng thử lại.');
+      const catalog = await response.json();
+      if (catalog.rootFolderId !== config.folderId || !catalog.folders?.[folderId]) throw new Error('Thêm Google Drive API key trong Kết nối Drive để đọc thư mục này.');
+      return catalog.folders[folderId].files.map(file => ({...file,source:'drive',originalName:file.name,category:'Google Drive',updatedAt:file.modifiedTime || '',catalogAt:catalog.syncedAt}));
+    }
     const files = [];
     let pageToken = '';
     do {

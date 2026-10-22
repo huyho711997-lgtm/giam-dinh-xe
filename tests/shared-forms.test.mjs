@@ -172,3 +172,29 @@ test('uses the configured Drive folder without an API key and respects explicit 
   await fixture.store.saveDriveConfig(null);
   assert.equal(await fixture.store.loadDriveConfig(),null);
 });
+test('reads bundled Drive catalog and nested folders without exposing a different configured repository',async () => {
+  const fixture = setup();
+  const requests = [];
+  fixture.context.fetch = async (url,options) => {
+    requests.push({url,options});
+    return {ok:true,json:async () => ({rootFolderId:'root_folder_123',syncedAt:'2026-10-22T00:00:00Z',folders:{nested_folder_123:{files:[{id:'drive_file_123',name:'Biểu mẫu.doc',mimeType:'application/msword'}]}}})};
+  };
+  const files = await fixture.store.listDrive('nested_folder_123',{folderId:'root_folder_123',apiKey:''});
+  assert.equal(files[0].name,'Biểu mẫu.doc');
+  assert.equal(files[0].source,'drive');
+  assert.equal(requests[0].url,'js/data/shared-forms-drive.json');
+  assert.equal(requests[0].options.cache,'no-cache');
+  await assert.rejects(fixture.store.listDrive('nested_folder_123',{folderId:'other_root_123',apiKey:''}),/API key/);
+});
+test('bundled catalog has every indexed subfolder and valid public Drive IDs',() => {
+  const catalog = JSON.parse(fs.readFileSync(new URL('../js/data/shared-forms-drive.json',import.meta.url),'utf8'));
+  assert.equal(catalog.rootFolderId,'1uPf8jI8nOnl8KW9j4JRpnXSkfTswIxD5');
+  assert.ok(catalog.folders[catalog.rootFolderId].files.length > 0);
+  for (const folder of Object.values(catalog.folders)) {
+    for (const file of folder.files) {
+      assert.match(file.id,/^[A-Za-z0-9_-]{8,}$/);
+      assert.ok(file.name);
+      if (file.mimeType === 'application/vnd.google-apps.folder') assert.ok(catalog.folders[file.id]);
+    }
+  }
+});

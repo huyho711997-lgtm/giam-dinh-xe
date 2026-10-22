@@ -28,10 +28,12 @@ const SharedFormsViewer = (() => {
     current = null;
     state.controller.abort();
     state.pdf?.destroy();
+    SharedFormsControls.close();
     state.urls.forEach(url => URL.revokeObjectURL(url));
     state.overlay.remove();
     document.body.style.overflow = state.overflow;
-    state.previousFocus?.focus();
+    if (state.previousFocus?.isConnected) state.previousFocus.focus();
+    state.onClose?.();
   }
   async function bytes(file, config, signal) {
     if (Number(file.size) > SharedFormsStore.maxBytes) throw new Error('File vượt 20 MB. Hãy tải về hoặc dùng trình xem Google Drive.');
@@ -73,7 +75,7 @@ const SharedFormsViewer = (() => {
   async function render(state, config) {
     const file = state.file;
     const suffix = SharedFormsStore.extension(file.originalName || file.name);
-    if (suffix === 'doc' || (file.source === 'drive' && !['pdf','word','sheet','image','text'].includes(SharedFormsStore.kind(file)))) { basicViewer(state); return; }
+    if ((file.source === 'drive' && !config?.apiKey) || suffix === 'doc' || (file.source === 'drive' && !['pdf','word','sheet','image','text'].includes(SharedFormsStore.kind(file)))) { basicViewer(state); return; }
     const data = await bytes(file,config,state.controller.signal);
     if (current !== state || state.basic) return;
     state.status.textContent = 'Đang dựng trang…';
@@ -127,6 +129,7 @@ const SharedFormsViewer = (() => {
       };
       select.onchange = showSheet;
       showSheet();
+      SharedFormsControls.enhance(state.overlay);
     } else if (SharedFormsStore.kind(file) === 'image') {
       const url = URL.createObjectURL(new Blob([data],{type:file.mimeType || SharedFormsStore.types[suffix]}));
       state.urls.push(url);
@@ -149,27 +152,67 @@ const SharedFormsViewer = (() => {
     state.print.disabled = true;
     state.pdf?.destroy();
     state.frame.removeAttribute('srcdoc');
-    state.frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-popups allow-modals');
+    state.frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-modals allow-downloads');
     state.frame.src = previewUrl(state.file);
-    state.status.textContent = 'Dùng nút In trong trình xem tài liệu. Với file .doc, nên chuyển sang .docx để in ngay bằng nút bên trên.';
+    state.status.textContent = 'Tài liệu đang được xem ngay trong trang. Nếu trình xem không có nút In, tải bản gốc để in bằng Word hoặc Excel.';
     state.overlay.querySelector('[data-sf-zoom]').disabled = true;
+    state.print.hidden = true;
+    state.overlay.querySelector('[data-sf-inner-expand]').hidden = false;
+    SharedFormsControls.enhance(state.overlay);
   }
-  function open(file, config) {
+  async function download(file) {
+    const url = downloadUrl(file);
+    if (!url) { triggerToast('Liên kết tải file không hợp lệ.','error'); return; }
+    if (file.source === 'drive') {
+      let frame = document.getElementById('sfFileDownload');
+      if (!frame) { frame = document.createElement('iframe'); frame.id = 'sfFileDownload'; frame.title = 'Tải biểu mẫu'; frame.hidden = true; frame.setAttribute('sandbox','allow-scripts allow-same-origin allow-forms allow-downloads'); document.body.appendChild(frame); }
+      frame.src = url;
+      return;
+    }
+    try {
+      const response = await fetch(url,{signal:AbortSignal.timeout(30000)});
+      if (!response.ok) throw new Error('Không tải được file.');
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a'); link.href = objectUrl; link.download = file.originalName || file.name;
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl),60000);
+    } catch { triggerToast('Chưa tải được biểu mẫu. Vui lòng kiểm tra kết nối và thử lại.','error'); }
+  }
+  function open(file, config, options = {}) {
     close();
     const overlay = document.createElement('section');
     overlay.className = 'sf-viewer';
-    overlay.setAttribute('role','dialog');
-    overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('role','region');
     overlay.setAttribute('aria-label','Xem biểu mẫu: ' + file.name);
-    overlay.innerHTML = '<header class="sf-viewer-bar"><button class="sf-button" data-sf-close type="button" aria-label="Đóng trình xem">← Quay lại</button><strong data-sf-title></strong><select data-sf-sheet aria-label="Chọn trang tính" hidden></select><select data-sf-zoom aria-label="Thu phóng"><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option></select><button class="sf-button sf-primary" data-sf-print type="button" disabled>In tài liệu</button><a class="sf-button" data-sf-download target="_blank" rel="noopener noreferrer">Tải về</a><button class="sf-button" data-sf-drive-preview type="button" hidden>Xem bằng Drive</button></header><p class="sf-viewer-status" role="status" aria-live="polite"></p><iframe class="sf-viewer-frame" title="Nội dung biểu mẫu" sandbox="allow-same-origin allow-modals"></iframe>';
+    const icon = name => SharedFormsControls.icon(name);
+    overlay.innerHTML = `
+      <header class="sf-viewer-heading"><div><span class="sf-eyebrow">ĐANG XEM TÀI LIỆU</span><strong data-sf-title></strong></div><button class="sf-icon-button" data-sf-close type="button" aria-label="Đóng trình xem" title="Đóng trình xem">${icon('close')}</button></header>
+      <div class="sf-viewer-bar">
+        <select data-sf-sheet data-sf-select data-sf-label="Chọn trang tính" data-sf-description="Xem và in trang tính đang chọn" data-sf-icon="grid" aria-label="Chọn trang tính" hidden></select>
+        <select data-sf-zoom data-sf-select data-sf-label="Thu phóng" data-sf-description="Điều chỉnh kích thước trang tài liệu" data-sf-icon="zoom" aria-label="Thu phóng"><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option></select>
+        <button class="sf-button sf-primary" data-sf-print type="button" disabled>${icon('print')} In tài liệu</button>
+        <button class="sf-button" data-sf-download type="button">${icon('download')} Tải về</button>
+        <button class="sf-icon-button" data-sf-expand type="button" aria-label="Mở rộng vùng xem" aria-pressed="false" title="Mở rộng vùng xem">${icon('expand')}</button>
+        <button class="sf-button" data-sf-drive-preview type="button" hidden>Xem bằng Drive</button>
+      </div>
+      <p class="sf-viewer-status" role="status" aria-live="polite"></p>
+      <div class="sf-document-surface"><iframe class="sf-viewer-frame" title="Nội dung biểu mẫu" sandbox="allow-same-origin allow-modals"></iframe><button class="sf-icon-button sf-provider-expand" type="button" data-sf-inner-expand aria-label="Mở rộng tài liệu trong trang" title="Mở rộng trong trang" hidden>${icon('expand')}</button></div>`;
     overlay.querySelector('[data-sf-title]').textContent = file.name;
-    const download = overlay.querySelector('[data-sf-download]');
-    download.href = downloadUrl(file);
-    download.download = file.originalName || file.name;
-    const state = {overlay,file,frame:overlay.querySelector('iframe'),status:overlay.querySelector('[role="status"]'),print:overlay.querySelector('[data-sf-print]'),controller:new AbortController(),urls:[],overflow:document.body.style.overflow,previousFocus:document.activeElement};
+    overlay.querySelector('[data-sf-download]').onclick = () => download(file);
+    const state = {overlay,file,frame:overlay.querySelector('iframe'),status:overlay.querySelector('[role="status"]'),print:overlay.querySelector('[data-sf-print]'),controller:new AbortController(),urls:[],overflow:document.body.style.overflow,previousFocus:document.activeElement,onClose:options.onClose,expanded:false};
     current = state;
-    document.body.style.overflow = 'hidden';
-    document.body.appendChild(overlay);
+    (options.container || document.body).appendChild(overlay);
+    if (!options.container) { overlay.classList.add('is-expanded'); state.expanded = true; document.body.style.overflow = 'hidden'; }
+    overlay.querySelector('[data-sf-expand]').onclick = () => {
+      SharedFormsControls.close();
+      state.expanded = !state.expanded;
+      overlay.classList.toggle('is-expanded',state.expanded);
+      document.body.style.overflow = state.expanded ? 'hidden' : state.overflow;
+      overlay.querySelector('[data-sf-expand]').setAttribute('aria-pressed',String(state.expanded));
+      overlay.querySelector('[data-sf-expand]').setAttribute('aria-label',state.expanded ? 'Thu gọn vùng xem' : 'Mở rộng vùng xem');
+    };
+    overlay.querySelector('[data-sf-inner-expand]').onclick = () => overlay.querySelector('[data-sf-expand]').click();
     state.status.textContent = 'Đang tải tài liệu…';
     overlay.querySelector('[data-sf-close]').onclick = close;
     overlay.querySelector('[data-sf-close]').focus();
@@ -183,16 +226,17 @@ const SharedFormsViewer = (() => {
       } catch { state.status.textContent = 'Trình duyệt chưa mở được hộp thoại in. Hãy tải file về để in.'; }
     };
     const fallback = overlay.querySelector('[data-sf-drive-preview]');
-    if (file.source === 'drive') { fallback.hidden = false; fallback.onclick = () => { state.controller.abort(); state.print.disabled = true; basicViewer(state); }; }
+    if (file.source === 'drive' && config?.apiKey) { fallback.hidden = false; fallback.onclick = () => { state.controller.abort(); state.print.disabled = true; basicViewer(state); }; }
     overlay.addEventListener('keydown',event => {
       if (event.key === 'Escape') close();
-      if (event.key === 'Tab') {
+      if (event.key === 'Tab' && state.expanded) {
         const controls = [...overlay.querySelectorAll('button:not([disabled]):not([hidden]),a[href],select:not([hidden]):not([disabled]),iframe')];
         if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1).focus(); }
         else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0].focus(); }
       }
     });
+    SharedFormsControls.enhance(overlay);
     render(state,config).catch(error => { if (current === state && !state.basic && error.name !== 'AbortError') { state.print.disabled = true; state.status.textContent = error.message + ' Bạn có thể tải về để xem và in.'; } });
   }
-  return {open,close,downloadUrl};
+  return {open,close,download,downloadUrl};
 })();
