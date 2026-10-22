@@ -1,0 +1,300 @@
+/* Outstanding invoice report: shared tokens also apply to exported image cards. */
+:is(.gdv-report-premium-shell:has(.ton-report-card), .ton-report-card, .ton-summary-strip) {
+  --ton-paper: #121e27;
+  --ton-ink: #f0f2eb;
+  --ton-muted: #a2afaf;
+  --ton-line: #2a3840;
+  --ton-soft: #172730;
+  --ton-gold: #d0ae76;
+  --ton-gold-bg: #28291f;
+  --ton-green: #80c4a6;
+  --ton-rose: #e3a095;
+  --ton-action: #d0b47e;
+  --ton-action-text: #1e2d29;
+  --ton-shadow: 0 10px 32px rgba(0, 0, 0, .12);
+}
+body.light-mode :is(.gdv-report-premium-shell:has(.ton-report-card), .ton-report-card, .ton-summary-strip) {
+  --ton-paper: #fffefb;
+  --ton-ink: #283b36;
+  --ton-muted: #76817e;
+  --ton-line: #e5e8e0;
+  --ton-soft: #f6f7f2;
+  --ton-gold: #a17c3b;
+  --ton-gold-bg: #f8f3e8;
+  --ton-green: #28765e;
+  --ton-rose: #b45b4f;
+  --ton-action: #293f36;
+  --ton-action-text: #fffaf0;
+  --ton-shadow: 0 8px 30px rgba(45, 56, 40, .035);
+}
+
+/* The shell selector keeps the redesign on this report only. */
+.gdv-report-premium-shell:has(.ton-report-card) {
+  padding-top: 18px !important;
+  color: var(--ton-ink);
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-command-center {
+  margin-bottom: 20px;
+  border: 1px solid var(--ton-line) !important;
+  border-radius: 18px;
+  background: var(--ton-paper);
+  box-shadow: var(--ton-shadow) !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-command-center::after,
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-premium::after,
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-hub::before {
+  content: none;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-premium {
+  padding: 28px 30px 26px !important;
+  background: var(--ton-paper) !important;
+  border-radius: 18px 18px 0 0 !important;
+  box-shadow: none !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-premium > div:first-child {
+  display: none;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-premium > div:last-child {
+  gap: 20px !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-premium > div:last-child > div:first-child > div:first-child {
+  padding: 0 !important;
+  margin-bottom: 12px !important;
+  border: 0 !important;
+  background: none !important;
+  color: var(--ton-gold) !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: .12em !important;
+  box-shadow: none !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-premium h1 {
+  max-width: 760px;
+  font-size: clamp(24px, 2vw, 31px) !important;
+  line-height: 1.3 !important;
+  font-weight: 800 !important;
+  letter-spacing: -.045em !important;
+  color: var(--ton-ink) !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-premium p {
+  margin-top: 9px !important;
+  color: var(--ton-muted) !important;
+  font-size: 12px !important;
+  line-height: 1.7;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-actions {
+  gap: 8px !important;
+  max-width: 610px;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-actions > div {
+  gap: 8px !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-actions .btn-premium,
+.gdv-report-premium-shell:has(.ton-report-card) .report-picker__trigger {
+  height: 40px !important;
+  min-height: 40px !important;
+  border-radius: 9px !important;
+  border: 1px solid var(--ton-line) !important;
+  background: var(--ton-paper) !important;
+  color: var(--ton-ink) !important;
+  font-size: 11.5px !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .report-picker__trigger {
+  width: 190px;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .report-picker__trigger-icon {
+  width: 25px;
+  height: 25px;
+  border: 0;
+  background: var(--ton-gold-bg);
+  color: var(--ton-gold);
+}
+.gdv-report-premium-shell:has(.ton-report-card) #accExportMenuWrapper > button {
+  min-width: 178px !important;
+  background: var(--ton-action) !important;
+  border-color: var(--ton-action) !important;
+  color: var(--ton-action-text) !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-hub {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px !important;
+  padding: 17px 24px !important;
+  border-top: 1px solid var(--ton-line) !important;
+  border-radius: 0 0 18px 18px !important;
+  background: var(--ton-soft) !important;
+  box-shadow: none !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-controls {
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-hub .custom-select-trigger,
+.gdv-report-premium-shell:has(.ton-report-card) #accGdvReportFilterWrapper .custom-select-trigger,
+.gdv-report-premium-shell:has(.ton-report-card) #accReportClaimTypeFilterWrapper .custom-select-trigger,
+.gdv-report-premium-shell:has(.ton-report-card) .report-filter-utility-slot #accReportFavFiltersWrapper > button {
+  min-width: 0 !important;
+  min-height: 40px !important;
+  height: 40px !important;
+  padding: 0 12px !important;
+  gap: 9px !important;
+  border-radius: 9px !important;
+  border: 1px solid var(--ton-line) !important;
+  background: var(--ton-paper) !important;
+  color: var(--ton-ink) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-hub .custom-select-trigger:hover,
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-actions .btn-premium:hover {
+  border-color: var(--ton-gold) !important;
+}
+
+.ton-summary-strip {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1fr 1fr;
+  margin-bottom: 22px;
+  padding: 23px 0;
+  border: 1px solid var(--ton-line);
+  border-radius: 16px;
+  background: var(--ton-paper);
+  box-shadow: var(--ton-shadow);
+}
+.ton-summary-stat { min-width: 0; padding: 0 28px; }
+.ton-summary-stat + .ton-summary-stat { border-left: 1px solid var(--ton-line); }
+.ton-summary-label { display: block; margin-bottom: 10px; color: var(--ton-muted); font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.ton-summary-value { display: block; color: var(--ton-ink); font-size: 31px; font-weight: 750; line-height: 1.2; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+.ton-summary-value small { margin-left: 4px; color: var(--ton-gold); font-size: 17px; font-weight: 600; }
+.ton-summary-stat--amount .ton-summary-value { font-size: clamp(23px, 1.8vw, 29px); }
+.ton-summary-stat--overdue .ton-summary-value { color: var(--ton-rose); }
+.ton-summary-note { display: block; margin-top: 8px; color: var(--ton-muted); font-size: 10.5px; line-height: 1.5; }
+
+.ton-report-card {
+  padding: 0 !important;
+  border: 1px solid var(--ton-line) !important;
+  border-radius: 18px !important;
+  background: var(--ton-paper) !important;
+  box-shadow: var(--ton-shadow) !important;
+}
+.ton-report-header {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px !important;
+  margin: 0 !important;
+  padding: 23px 26px !important;
+  border-bottom: 1px solid var(--ton-line) !important;
+}
+.ton-report-heading-row { display: contents !important; }
+.ton-report-title { flex: 1 1 360px !important; min-width: 0 !important; }
+.ton-eyebrow { display: block; margin-bottom: 7px; font-size: 9px; font-weight: 800; letter-spacing: .16em; color: var(--ton-gold); }
+.ton-report-title h2 { color: var(--ton-ink) !important; font-size: 18px !important; font-weight: 800 !important; letter-spacing: -.025em; line-height: 1.4; }
+.ton-report-title h2 > svg { display: none; }
+.ton-report-title p { margin: 6px 0 0; color: var(--ton-muted); font-size: 11px; line-height: 1.5; }
+.ton-report-actions { justify-content: flex-end !important; flex: 0 0 auto; gap: 8px !important; }
+.ton-report-actions > .custom-select-wrapper { margin-left: 0 !important; }
+.ton-report-actions > .custom-select-wrapper > button {
+  height: 39px !important;
+  border-radius: 9px !important;
+  border: 1px solid var(--ton-line) !important;
+  color: var(--ton-ink) !important;
+  background: var(--ton-paper) !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+.ton-report-actions > .custom-select-wrapper:last-child > button {
+  min-width: 125px;
+  border-color: var(--ton-action) !important;
+  background: var(--ton-action) !important;
+  color: var(--ton-action-text) !important;
+}
+.ton-report-actions > .custom-select-wrapper > button:hover { filter: brightness(.97); }
+.ton-report-card .custom-select-menu { background: var(--ton-paper) !important; border-color: var(--ton-line) !important; box-shadow: 0 12px 36px rgba(25, 36, 30, .13) !important; }
+.ton-report-card #ddTonColsMenu { min-width: 300px !important; }
+.ton-export-option { width: 100%; border: 0; background: transparent; font: inherit; text-align: left; }
+.ton-export-option:hover, .ton-export-option:focus-visible { background: var(--ton-soft) !important; outline: 1px solid var(--ton-line); }
+.ton-export-option strong { color: var(--ton-ink) !important; }
+.ton-export-option small { color: var(--ton-muted) !important; }
+.ton-report-card .table-container { margin-top: 0 !important; border: 0 !important; border-radius: 0 0 18px 18px !important; overflow-x: auto; }
+.ton-report-table { min-width: 1320px; border-collapse: separate !important; border-spacing: 0; }
+.ton-report-table thead tr { background: var(--ton-soft) !important; }
+.ton-report-table th { padding: 15px 16px !important; border-bottom: 1px solid var(--ton-line) !important; background: var(--ton-soft) !important; color: var(--ton-muted) !important; font-size: 9.5px !important; font-weight: 800 !important; line-height: 1.7; letter-spacing: .08em; white-space: normal; }
+.ton-report-table .ton-claim-row { background: var(--ton-paper) !important; }
+.ton-report-table .ton-claim-row:hover { background: var(--ton-soft) !important; }
+.ton-claim-row td { padding: 16px !important; border-bottom: 1px solid var(--ton-line) !important; background: transparent !important; color: var(--ton-muted); font-size: 11.5px; line-height: 1.65; font-variant-numeric: tabular-nums; }
+.ton-claim-row:last-child td { border-bottom: 0 !important; }
+.ton-claim-row td:first-child { color: var(--ton-muted) !important; font-size: 11px !important; font-weight: 500 !important; }
+.ton-claim-row .ton-plate { color: var(--ton-gold) !important; font-size: 12px !important; font-weight: 800 !important; white-space: nowrap; }
+.ton-claim-row .ton-owner { color: var(--ton-ink) !important; font-weight: 750 !important; }
+.ton-claim-row .ton-money { color: var(--ton-green) !important; font-size: 12px !important; font-weight: 800 !important; white-space: nowrap; }
+.ton-claim-row .ton-accounting-date { color: var(--ton-muted) !important; font-weight: 600 !important; }
+.ton-claim-row .ton-approval-date { color: var(--ton-ink) !important; font-weight: 650 !important; font-size: 11px !important; }
+.ton-report-table .ton-gara-row > td { padding: 10px 18px !important; border-bottom: 1px solid var(--ton-line); background: var(--ton-gold-bg) !important; }
+.ton-gara-heading { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ton-gara-icon { display: grid; place-items: center; width: 28px; height: 28px; flex-shrink: 0; border: 1px solid rgba(174, 143, 84, .2); border-radius: 7px; color: var(--ton-gold); }
+.ton-gara-name { color: var(--ton-ink); font-size: 11.5px; font-weight: 800; letter-spacing: .005em; }
+.ton-gara-count { padding: 2px 7px; border: 1px solid rgba(174, 143, 84, .22); border-radius: 5px; color: var(--ton-gold); font-size: 10px; font-weight: 650; white-space: nowrap; }
+.ton-gara-total { margin-left: auto; color: var(--ton-muted); font-size: 10.5px; font-weight: 500; white-space: nowrap; }
+.ton-gara-total strong { margin-left: 6px; color: var(--ton-ink); font-size: 11.5px; font-weight: 750; }
+.ton-age-pill { display: inline-flex; align-items: center; justify-content: center; min-width: 54px; padding: 3px 8px !important; border-radius: 6px !important; border: 1px solid rgba(63, 134, 100, .18) !important; background: rgba(63, 134, 100, .07) !important; color: var(--ton-green) !important; font-size: 10px !important; font-weight: 650 !important; animation: none !important; }
+.ton-age-pill.is-warning { background: rgba(182, 132, 48, .08) !important; border-color: rgba(182, 132, 48, .2) !important; color: var(--ton-gold) !important; }
+.ton-age-pill.is-overdue { background: rgba(180, 91, 79, .07) !important; border-color: rgba(180, 91, 79, .18) !important; color: var(--ton-rose) !important; }
+.ton-report-empty { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 26px 12px; color: var(--ton-muted); }
+.ton-report-empty strong { color: var(--ton-ink); font-size: 14px; }
+.ton-report-empty span { font-size: 12px; }
+.ton-report-actions button:focus-visible { outline: 2px solid var(--ton-gold); outline-offset: 3px; }
+.ton-report-card.ton-report-export {
+  --ton-paper: #ffffff;
+  --ton-ink: #283b36;
+  --ton-muted: #76817e;
+  --ton-line: #e5e8e0;
+  --ton-soft: #f6f7f2;
+  --ton-gold: #a17c3b;
+  --ton-gold-bg: #f8f3e8;
+  --ton-green: #28765e;
+  --ton-rose: #b45b4f;
+  min-height: 0 !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 1300px) {
+  .gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-actions { justify-content: flex-start; }
+  .gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-hub { grid-template-columns: 1fr; }
+  .gdv-report-premium-shell:has(.ton-report-card) .report-filter-utility-slot { justify-content: flex-start; }
+  .ton-summary-stat { padding: 0 20px; }
+}
+@media (max-width: 760px) {
+  .gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-premium { padding: 22px 20px !important; }
+  .gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-hub { padding: 14px !important; }
+  .gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-actions { width: 100%; max-width: none; }
+  .gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-actions > div:first-child { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); width: 100% !important; }
+  .gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-actions > div:last-child { width: 100% !important; }
+  .gdv-report-premium-shell:has(.ton-report-card) .report-picker__trigger,
+  .gdv-report-premium-shell:has(.ton-report-card) #accReportViewSelectorWrapper { width: 100% !important; }
+  .gdv-report-premium-shell:has(.ton-report-card) #accExportMenuWrapper > button { min-width: 0 !important; width: 100%; padding: 0 10px !important; }
+  .ton-summary-strip { grid-template-columns: 1fr 1.6fr; padding: 0; }
+  .ton-summary-stat { padding: 20px; }
+  .ton-summary-stat:nth-child(3) { border-left: 0; }
+  .ton-summary-stat:nth-child(n+3) { border-top: 1px solid var(--ton-line); }
+  .ton-summary-value { font-size: 27px; }
+  .ton-report-header { padding: 20px !important; }
+  .ton-report-title { flex-basis: 100% !important; }
+  .ton-report-actions { width: 100%; justify-content: space-between !important; }
+  .ton-report-card #ddTonColsMenu { left: 0; right: auto !important; min-width: 270px !important; }
+  .ton-report-card #ddTonImageExportMenu { min-width: 270px !important; }
+}
+@media (max-width: 480px) {
+  .ton-summary-stat { padding: 17px 14px; }
+  .ton-summary-stat--amount .ton-summary-value { font-size: 21px; }
+  .ton-summary-label { font-size: 9px; letter-spacing: .03em; }
+  .gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-controls > .custom-select-wrapper { flex: 1 1 calc(50% - 8px); min-width: 0; }
+  .gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-hub .custom-select-trigger { width: 100% !important; }
+  .gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-hub .custom-select-trigger > span:first-child > svg { display: none; }
+  .gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-hub .custom-select-trigger > span:first-child > span { white-space: nowrap; }
+}

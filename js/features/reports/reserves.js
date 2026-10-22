@@ -866,6 +866,14 @@ const fullList = getCarBrandLossData();
         groups[garaName].push(c);
       });
 
+      const totalApprovedAmount = filtered.reduce((total, claim) => {
+        return total + (parseInt(String(claim.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, ''), 10) || 0);
+      }, 0);
+      const overdueCount = filtered.filter(claim => {
+        const days = calculateDaysSinceApproved(claim.toTrinhNgayDuyet || claim.pascNgayDuyet || claim.ngayDuyetHsbt || '');
+        return typeof days === 'number' && days > 30;
+      }).length;
+
       let globalIdx = 0;
       let rowsHtml = '';
 
@@ -893,12 +901,14 @@ const fullList = getCarBrandLossData();
 
         // Add Gara header row with SVG icon instead of emoji, and displaying total Gara amount
         rowsHtml += `
-          <tr data-ton-gara-group="1" data-ton-gara="${escapeAttributeData(garaName)}" style="background: var(--bg-soft); font-weight: 850; border-bottom: 1px solid var(--border-strong);">
+          <tr class="ton-gara-row" data-ton-gara-group="1" data-ton-gara="${escapeAttributeData(garaName)}" style="background: var(--bg-soft); font-weight: 850; border-bottom: 1px solid var(--border-strong);">
             <td colspan="${activeTonChuaHdReportCols.length + 1}" style="padding: 12px 14px; color: var(--primary); font-size: 13px; text-align: left; background: var(--bg-soft);">
-              <span style="display: inline-flex; align-items: center; gap: 8px;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--primary)" stroke-width="2.5" style="flex-shrink: 0;"><path d="M3 21h18"></path><path d="M19 21v-4a2 2 0 0 0-2 2v4"></path><path d="M5 15V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8"></path></svg>
-                <span>Gara: <strong style="font-size: 13.5px; color: var(--text-main);">${escapeHtmlOutput(garaName)}</strong> (${claims.length} hồ sơ tồn - Tổng tiền duyệt: <strong style="color: #10b981;">${formatCurrencyInputNumber(totalGaraAmt)} đ</strong>)</span>
-              </span>
+              <div class="ton-gara-heading">
+                <span class="ton-gara-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 10 9-7 9 7v10H3z"/><path d="M7 20v-7h10v7M7 16h10"/></svg></span>
+                <strong class="ton-gara-name">${escapeHtmlOutput(garaName)}</strong>
+                <span class="ton-gara-count">${claims.length} hồ sơ</span>
+                <span class="ton-gara-total">Tổng duyệt<strong>${formatCurrencyInputNumber(totalGaraAmt)} đ</strong></span>
+              </div>
             </td>
           </tr>
         `;
@@ -936,7 +946,7 @@ const fullList = getCarBrandLossData();
           }
 
           rowsHtml += `
-            <tr data-ton-gara="${escapeAttributeData(garaName)}" style="border-bottom: 1px solid var(--border); font-size: 13px;">
+            <tr class="ton-claim-row" data-ton-gara="${escapeAttributeData(garaName)}" style="border-bottom: 1px solid var(--border); font-size: 13px;">
               <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 44px;">${globalIdx}</td>
               <td style="display: ${activeTonChuaHdReportCols.includes('SO_HSBT') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 700; color: var(--text-main); font-size: 12.5px; white-space: nowrap;">
                 <div style="display: inline-flex; align-items: center; gap: 6px;">
@@ -948,16 +958,16 @@ const fullList = getCarBrandLossData();
                   ` : ''}
                 </div>
               </td>
-              <td style="display: ${activeTonChuaHdReportCols.includes('BIEN_SO') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 800;  color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
-              <td style="display: ${activeTonChuaHdReportCols.includes('CHU_XE') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left; font-weight: 750;">${escapeHtmlOutput(chuXe)}</td>
+              <td class="ton-plate" style="display: ${activeTonChuaHdReportCols.includes('BIEN_SO') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 800;  color: var(--primary); font-size: 13px;">${escapeHtmlOutput(bsx)}</td>
+              <td class="ton-owner" style="display: ${activeTonChuaHdReportCols.includes('CHU_XE') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left; font-weight: 750;">${escapeHtmlOutput(chuXe)}</td>
               <td style="display: ${activeTonChuaHdReportCols.includes('HANG_XE') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left;">${escapeHtmlOutput(carBrandModel)}</td>
               <td style="display: ${activeTonChuaHdReportCols.includes('CBXL') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left;">${escapeHtmlOutput(gdv)}</td>
-              <td style="display: ${activeTonChuaHdReportCols.includes('TIEN_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 850;  color: #10b981; text-align: right; font-size: 13.5px;">${amtDisplay}</td>
+              <td class="ton-money" style="display: ${activeTonChuaHdReportCols.includes('TIEN_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; font-weight: 850;  color: #10b981; text-align: right; font-size: 13.5px;">${amtDisplay}</td>
               <td style="display: ${activeTonChuaHdReportCols.includes('NGAY_NHAN_DU') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center;  font-weight: 750;">${escapeHtmlOutput(ngayNhanDuHoSoStr)}</td>
-              <td style="display: ${activeTonChuaHdReportCols.includes('NGAY_CHUYEN_KT') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center;  font-weight: 750; color: #8b5cf6;">${escapeHtmlOutput(ngayChuyenKtStr)}</td>
-              <td style="display: ${activeTonChuaHdReportCols.includes('NGAY_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center;  font-weight: 750;">${escapeHtmlOutput(duyetDateStr)}</td>
+              <td class="ton-accounting-date" style="display: ${activeTonChuaHdReportCols.includes('NGAY_CHUYEN_KT') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center;  font-weight: 750; color: #8b5cf6;">${escapeHtmlOutput(ngayChuyenKtStr)}</td>
+              <td class="ton-approval-date" style="display: ${activeTonChuaHdReportCols.includes('NGAY_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center;  font-weight: 750;">${escapeHtmlOutput(duyetDateStr)}</td>
               <td style="display: ${activeTonChuaHdReportCols.includes('SO_NGAY_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center;">
-                <span class="acc-status-pill" style="padding: 3px 10px; border-radius: 8px; font-size: 11px; ${badgeStyle}">
+                <span class="acc-status-pill ton-age-pill ${typeof daysCount === 'number' && daysCount > 30 ? 'is-overdue' : typeof daysCount === 'number' && daysCount > 15 ? 'is-warning' : ''}" style="padding: 3px 10px; border-radius: 8px; font-size: 11px; ${badgeStyle}">
                   ${typeof daysCount === 'number' ? daysCount + ' ngày' : daysCount}
                 </span>
               </td>
@@ -967,35 +977,55 @@ const fullList = getCarBrandLossData();
       });
 
       return `
-        <div class="p-card" id="tonChuaHoaDonReportCardContainer" style="padding: 28px 32px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface); position: relative; min-height: 420px; display: flex; flex-direction: column;">
+        <section class="ton-summary-strip hide-on-screenshot" aria-label="Tổng quan hồ sơ theo bộ lọc">
+          <div class="ton-summary-stat">
+            <span class="ton-summary-label">Hồ sơ chờ hóa đơn</span>
+            <strong class="ton-summary-value">${filtered.length}<small>hồ sơ</small></strong>
+            <span class="ton-summary-note">Đã phê duyệt phương án bồi thường</span>
+          </div>
+          <div class="ton-summary-stat ton-summary-stat--amount">
+            <span class="ton-summary-label">Tổng giá trị đã duyệt</span>
+            <strong class="ton-summary-value">${formatCurrencyInputNumber(totalApprovedAmount)}<small>₫</small></strong>
+            <span class="ton-summary-note">Theo danh sách đang lọc</span>
+          </div>
+          <div class="ton-summary-stat">
+            <span class="ton-summary-label">Gara liên quan</span>
+            <strong class="ton-summary-value">${sortedGaraNames.length}<small>gara</small></strong>
+            <span class="ton-summary-note">Có hồ sơ chờ bổ sung hóa đơn</span>
+          </div>
+          <div class="ton-summary-stat ton-summary-stat--overdue">
+            <span class="ton-summary-label">Đã duyệt trên 30 ngày</span>
+            <strong class="ton-summary-value">${overdueCount}<small>hồ sơ</small></strong>
+            <span class="ton-summary-note">Cần ưu tiên theo dõi</span>
+          </div>
+        </section>
+        <div class="p-card ton-report-card" id="tonChuaHoaDonReportCardContainer" style="padding: 28px 32px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface); position: relative; min-height: 420px; display: flex; flex-direction: column;">
           
-          <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
-              <div style="flex: 1 1 520px; min-width: 260px;">
+          <div class="ton-report-header" style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
+            <div class="ton-report-heading-row" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+              <div class="ton-report-title" style="flex: 1 1 520px; min-width: 260px;">
+                <span class="ton-eyebrow">HỒ SƠ CHI TIẾT</span>
                 <h2 style="font-size: 18px; font-weight: 850; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
                   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                  Danh sách Hồ sơ tồn chưa có hóa đơn (Đã duyệt HSBT)
+                  Hồ sơ chờ hóa đơn
                 </h2>
-              </div>
-              <div class="hide-on-screenshot" style="display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg-soft); color: var(--text-soft); font-size: 12px; font-weight: 750; white-space: nowrap;">
-                <strong style="color: var(--text-main); font-size: 14px;">${filtered.length}</strong>
-                <span>hồ sơ theo bộ lọc</span>
+                <p>Đã duyệt HSBT · Phân nhóm theo gara</p>
               </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div class="ton-report-actions hide-on-screenshot" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
 
               <div class="custom-select-wrapper hide-on-screenshot" style="position: relative;">
                 <button type="button" class="btn-premium btn-secondary" onclick="toggleCustomDropdownMenu('ddTonColsMenu', event)" style="padding: 0 14px; height: 38px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; box-shadow: var(--shadow-xs); white-space: nowrap;">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                  <span>Ẩn/Hiện cột</span>
+                  <span>Cột hiển thị</span>
                 </button>
                 <div id="ddTonColsMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddTonColsMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); right: 0; min-width: 200px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.3); z-index: 999; padding: 10px; text-align: left; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px);">
                   <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 4px 8px 4px; border-bottom: 1px solid var(--border); margin-bottom: 8px;">
                   <span style="font-size: 11.5px; font-weight: 850; color: var(--text-soft);">TÙY CHỌN HIỂN THỊ CỘT</span>
                   <div style="display:flex; gap:6px;">
-                    <button type="button" onclick="setAllWeeklyReportCols(true)" style="border:none; background:rgba(16,185,129,0.12); color:#10b981; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; cursor:pointer;">Hiện tất cả</button>
-                    <button type="button" onclick="setAllWeeklyReportCols(false)" style="border:none; background:rgba(239,68,68,0.12); color:#ef4444; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; cursor:pointer;">Ẩn tất cả</button>
+                    <button type="button" onclick="setAllTonChuaHdReportCols(true)" style="border:none; background:rgba(16,185,129,0.12); color:#10b981; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; cursor:pointer;">Hiện tất cả</button>
+                    <button type="button" onclick="setAllTonChuaHdReportCols(false)" style="border:none; background:rgba(239,68,68,0.12); color:#ef4444; font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; cursor:pointer;">Ẩn tất cả</button>
                   </div>
                 </div>
                   ${[
@@ -1024,47 +1054,47 @@ const fullList = getCarBrandLossData();
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
                 </button>
                 <div id="ddTonImageExportMenu" class="custom-select-menu" role="menu" style="display: ${activeOpenDropdownId === 'ddTonImageExportMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 7px); right: 0; min-width: 290px; padding: 7px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 13px; box-shadow: 0 14px 32px rgba(15,23,42,0.18); z-index: 1000;">
-                  <div class="custom-select-item" role="menuitem" onclick="closeAllCustomDropdowns(); downloadTonChuaHoaDonReportImage('png')" style="padding: 10px 11px; border-radius: 9px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px;">
+                  <button type="button" class="custom-select-item ton-export-option" role="menuitem" onclick="closeAllCustomDropdowns(); downloadTonChuaHoaDonReportImage('png')" style="padding: 10px 11px; border-radius: 9px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px;">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#ef4444" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                     <span style="display: flex; flex-direction: column; gap: 2px;">
                       <strong style="font-size: 12.5px; color: var(--text-main);">Ảnh theo bộ lọc hiện tại</strong>
                       <small style="font-size: 11px; color: var(--text-soft);">Xuất kết quả đang hiển thị</small>
                     </span>
-                  </div>
+                  </button>
                   <div style="height: 1px; margin: 4px 2px; background: var(--border);"></div>
-                  <div class="custom-select-item" role="menuitem" onclick="closeAllCustomDropdowns(); downloadAllTonChuaHoaDonReportImages()" style="padding: 10px 11px; border-radius: 9px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px;">
+                  <button type="button" class="custom-select-item ton-export-option" role="menuitem" onclick="closeAllCustomDropdowns(); downloadAllTonChuaHoaDonReportImages()" style="padding: 10px 11px; border-radius: 9px; cursor: pointer; display: flex; align-items: flex-start; gap: 10px;">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#059669" stroke-width="2.2" style="flex-shrink: 0; margin-top: 2px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     <span style="display: flex; flex-direction: column; gap: 2px;">
                       <strong style="font-size: 12.5px; color: var(--text-main);">Ảnh toàn bộ gara</strong>
                       <small style="font-size: 11px; color: var(--text-soft);">Bỏ qua bộ lọc · Tải ZIP ảnh PNG</small>
                     </span>
-                  </div>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="table-container" style="margin-top: 10px;">
-            <table class="p-table" style="width: 100%; border-collapse: collapse;">
+            <table class="p-table ton-report-table" style="width: 100%; border-collapse: collapse;">
               <thead>
                 <tr style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
-                  <th style="padding: 12px 10px; text-align: center; width: 50px;">STT</th>
-                  <th style="display: ${activeTonChuaHdReportCols.includes('SO_HSBT') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left; width: 220px;">Số HSBT</th>
-                  <th style="display: ${activeTonChuaHdReportCols.includes('BIEN_SO') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left; width: 130px;">Biển số xe</th>
-                  <th style="display: ${activeTonChuaHdReportCols.includes('CHU_XE') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left;">Chủ xe / Khách hàng</th>
-                  <th style="display: ${activeTonChuaHdReportCols.includes('HANG_XE') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left; width: 180px;">Hãng / Hiệu xe</th>
-                  <th style="display: ${activeTonChuaHdReportCols.includes('CBXL') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left; width: 180px;">Cán bộ xử lý (CBXL)</th>
-                  <th style="display: ${activeTonChuaHdReportCols.includes('TIEN_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: right; width: 160px;">Tiền duyệt HSBT</th>
-                  <th style="display: ${activeTonChuaHdReportCols.includes('NGAY_NHAN_DU') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center; width: 140px;">Ngày nhận đủ hồ sơ</th>
-                  <th style="display: ${activeTonChuaHdReportCols.includes('NGAY_CHUYEN_KT') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center; width: 140px;">Ngày chuyển HSKT</th>
+                  <th scope="col" style="padding: 12px 10px; text-align: center; width: 50px;">STT</th>
+                  <th scope="col" style="display: ${activeTonChuaHdReportCols.includes('SO_HSBT') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left; width: 220px;">Số HSBT</th>
+                  <th scope="col" style="display: ${activeTonChuaHdReportCols.includes('BIEN_SO') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left; width: 130px;">Biển số xe</th>
+                  <th scope="col" style="display: ${activeTonChuaHdReportCols.includes('CHU_XE') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left;">Chủ xe / Khách hàng</th>
+                  <th scope="col" style="display: ${activeTonChuaHdReportCols.includes('HANG_XE') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left; width: 180px;">Hãng / Hiệu xe</th>
+                  <th scope="col" style="display: ${activeTonChuaHdReportCols.includes('CBXL') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: left; width: 180px;">Cán bộ xử lý (CBXL)</th>
+                  <th scope="col" style="display: ${activeTonChuaHdReportCols.includes('TIEN_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: right; width: 160px;">Tiền duyệt HSBT</th>
+                  <th scope="col" style="display: ${activeTonChuaHdReportCols.includes('NGAY_NHAN_DU') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center; width: 140px;">Ngày nhận đủ hồ sơ</th>
+                  <th scope="col" style="display: ${activeTonChuaHdReportCols.includes('NGAY_CHUYEN_KT') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center; width: 140px;">Ngày chuyển HSKT</th>
                   
                   
-                  <th style="display: ${activeTonChuaHdReportCols.includes('NGAY_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center; width: 140px;">Ngày duyệt HSBT</th>
-                  <th style="display: ${activeTonChuaHdReportCols.includes('SO_NGAY_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center; width: 140px;">Số ngày đã duyệt</th>
+                  <th scope="col" style="display: ${activeTonChuaHdReportCols.includes('NGAY_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center; width: 140px;">Ngày duyệt HSBT</th>
+                  <th scope="col" style="display: ${activeTonChuaHdReportCols.includes('SO_NGAY_DUYET') ? 'table-cell' : 'none'}; padding: 12px 10px; text-align: center; width: 140px;">Số ngày đã duyệt</th>
                 </tr>
               </thead>
               <tbody>
-                ${rowsHtml || `<tr><td colspan="${activeTonChuaHdReportCols.length + 1}" style="padding: 42px; text-align: center; color: var(--text-soft);">Không có hồ sơ tồn chưa có hóa đơn nào phù hợp bộ lọc.</td></tr>`}
+                ${rowsHtml || `<tr><td colspan="${activeTonChuaHdReportCols.length + 1}" style="padding: 42px; text-align: center; color: var(--text-soft);"><div class="ton-report-empty"><strong>Chưa có hồ sơ phù hợp</strong><span>Điều chỉnh bộ lọc để xem các hồ sơ chờ hóa đơn.</span></div></td></tr>`}
               </tbody>
             </table>
           </div>
@@ -1333,6 +1363,22 @@ const fullList = getCarBrandLossData();
     }
 
 
+    function prepareTonChuaHoaDonImageCard(clonedDoc) {
+      const target = clonedDoc.getElementById('tonChuaHoaDonReportCardContainer');
+      if (!target) return null;
+      target.classList.add('ton-report-export');
+      target.style.boxShadow = 'none';
+      target.style.transform = 'none';
+      const table = target.querySelector('.ton-report-table');
+      const tableContainer = target.querySelector('.table-container');
+      if (table && tableContainer) {
+        target.style.setProperty('width', Math.max(1400, table.scrollWidth) + 'px', 'important');
+        tableContainer.style.setProperty('overflow', 'visible', 'important');
+      }
+      return target;
+    }
+
+
     function buildTonChuaHoaDonGaraImageOptions(garaName) {
       return {
         scale: 2,
@@ -1343,11 +1389,8 @@ const fullList = getCarBrandLossData();
         scrollX: 0,
         scrollY: 0,
         onclone: function(clonedDoc) {
-          const target = clonedDoc.getElementById('tonChuaHoaDonReportCardContainer');
+          const target = prepareTonChuaHoaDonImageCard(clonedDoc);
           if (!target) return;
-          target.style.boxShadow = 'none';
-          target.style.transform = 'none';
-          target.style.backgroundColor = '#ffffff';
           target.querySelectorAll('[data-ton-gara]').forEach(row => {
             if (row.getAttribute('data-ton-gara') !== garaName) row.style.display = 'none';
           });
@@ -1534,12 +1577,7 @@ const fullList = getCarBrandLossData();
         scrollX: 0,
         scrollY: 0,
         onclone: function(clonedDoc) {
-          const target = clonedDoc.getElementById('tonChuaHoaDonReportCardContainer');
-          if (target) {
-            target.style.boxShadow = 'none';
-            target.style.transform = 'none';
-            target.style.backgroundColor = '#ffffff';
-          }
+          prepareTonChuaHoaDonImageCard(clonedDoc);
         },
         ignoreElements: function(element) {
           return element.classList && element.classList.contains('hide-on-screenshot');
