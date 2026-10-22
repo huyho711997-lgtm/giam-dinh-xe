@@ -790,11 +790,12 @@ const fullList = getCarBrandLossData();
     }
 
 
-    function renderTonChuaHoaDonReportTableHtml() {
+    function renderTonChuaHoaDonReportTableHtml(ignoreFilters = false) {
       const claimsList = Object.values(cachedPendingClaimsPayload || {});
       
       const filtered = claimsList.filter(c => {
         if (c.trangThai !== 'da_duyet_hsbt') return false;
+        if (ignoreFilters) return true;
 
         let yr = null;
         let mo = null;
@@ -1015,6 +1016,10 @@ const fullList = getCarBrandLossData();
                   `).join('')}
                 </div>
               </div>
+              <button type="button" class="btn-premium hide-on-screenshot" onclick="downloadAllTonChuaHoaDonReportImages()" style="padding: 0 14px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: 1px solid #059669; color: #ffffff; font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(16,185,129,0.22); transition: all 0.2s ease; white-space: nowrap;" title="Tải ảnh danh sách tất cả hồ sơ tồn đã duyệt HSBT của mọi gara, bỏ qua bộ lọc hiện tại.">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Tải ảnh toàn bộ gara (.zip)</span>
+              </button>
               <button type="button" class="btn-premium hide-on-screenshot" onclick="downloadTonChuaHoaDonReportImage('png')" style="padding: 0 14px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(245,158,11,0.12) 100%); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; font-size: 12px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: var(--shadow-xs); transition: all 0.2s ease; white-space: nowrap;" title="${activeGdvReportGara === 'all' ? 'Xuất ảnh báo cáo cho từng gara, đóng gói ZIP' : 'Tải ảnh báo cáo (PNG/JPG)'}">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                 <span>${activeGdvReportGara === 'all' ? 'Tải Ảnh Theo Gara' : 'Tải Ảnh Báo Cáo'}</span>
@@ -1423,6 +1428,43 @@ const fullList = getCarBrandLossData();
         triggerToast('Lỗi khi đóng gói ZIP: ' + err.message, 'error');
       } finally {
         if (typeof toggleUploadOverlay === 'function') toggleUploadOverlay(false);
+      }
+    }
+
+
+    async function downloadAllTonChuaHoaDonReportImages() {
+      const visibleCard = document.getElementById('tonChuaHoaDonReportCardContainer');
+      if (!visibleCard) {
+        triggerToast('Không tìm thấy khung báo cáo!', 'error');
+        return;
+      }
+      if (typeof html2canvas === 'undefined') {
+        triggerToast('Thư viện tạo ảnh đang tải, vui lòng thử lại sau 2 giây...', 'warning');
+        return;
+      }
+      if (typeof JSZip === 'undefined') {
+        triggerToast('Thư viện ZIP chưa tải xong, vui lòng thử lại sau 2 giây...', 'warning');
+        return;
+      }
+
+      const renderHost = document.createElement('div');
+      renderHost.style.cssText = 'position:fixed;left:0;top:0;width:1600px;max-width:none;z-index:-1;pointer-events:none;background:#fff;';
+      try {
+        visibleCard.id = 'tonChuaHoaDonVisibleReportCardContainer';
+        renderHost.innerHTML = renderTonChuaHoaDonReportTableHtml(true);
+        document.body.appendChild(renderHost);
+        const fullListCard = renderHost.querySelector('#tonChuaHoaDonReportCardContainer');
+        if (!fullListCard) {
+          triggerToast('Không dựng được danh sách đầy đủ để xuất ảnh.', 'error');
+          return;
+        }
+        await downloadTonChuaHoaDonReportImagesByGara(fullListCard, 'png', 'png');
+      } catch (err) {
+        console.error('Lỗi chuẩn bị ảnh danh sách tồn theo gara:', err);
+        triggerToast('Có lỗi khi chuẩn bị danh sách ảnh toàn bộ gara.', 'error');
+      } finally {
+        renderHost.remove();
+        visibleCard.id = 'tonChuaHoaDonReportCardContainer';
       }
     }
 
