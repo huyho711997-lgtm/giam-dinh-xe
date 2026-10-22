@@ -17,8 +17,8 @@
           const starColor = isDef ? '#f59e0b' : 'var(--text-soft)';
           
           return `
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 10px; background: var(--bg-soft); margin-bottom: 6px; transition: all 0.2s ease;">
-              <div onclick="applyFavoriteFilterSettings(userFavoriteFilters.find(x => x.id === '${f.id}'))" style="flex: 1; cursor: pointer; text-align: left; padding-right: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Nhấp để áp dụng bộ lọc">
+            <div class="ton-favorite-row" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 10px; background: var(--bg-soft); margin-bottom: 6px; transition: all 0.2s ease;">
+              <div class="ton-favorite-apply" onclick="applyFavoriteFilterSettings(userFavoriteFilters.find(x => x.id === '${f.id}'))" style="flex: 1; cursor: pointer; text-align: left; padding-right: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="Nhấp để áp dụng bộ lọc">
                 <span style="font-size: 12.5px; font-weight: 750; color: var(--text-main);">${escapeHtmlOutput(f.name)}</span>
               </div>
               <div style="display: flex; align-items: center; gap: 8px;">
@@ -50,6 +50,8 @@
           ${listHtml}
         </div>
       `;
+      // This is the final controls-rendering step in the monthly report page.
+      if (typeof enhanceTonReportDropdowns === 'function') enhanceTonReportDropdowns(document);
     }
 
 

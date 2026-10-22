@@ -136,9 +136,12 @@
       if (event) event.stopPropagation();
       const menu = document.getElementById(menuId);
       if (!menu) return;
+      const reportShell = menu.closest('.gdv-report-premium-shell');
+      if (reportShell && typeof enhanceTonReportDropdowns === 'function') enhanceTonReportDropdowns(reportShell);
       const isVisible = menu.style.display === 'block';
       document.querySelectorAll('.custom-select-menu').forEach(m => {
         m.style.display = 'none';
+        m.parentElement?.classList.remove('ton-dropdown-host--open');
         const openTrigger = m.parentElement ? m.parentElement.querySelector(':scope > button') : null;
         if (openTrigger) {
           openTrigger.classList.remove('is-open');
@@ -153,6 +156,10 @@
           trigger.setAttribute('aria-expanded', 'true');
         }
         activeOpenDropdownId = menuId;
+        if (menu.classList.contains('ton-dropdown')) {
+          openTonReportDropdown(menu, trigger, event);
+          return;
+        }
         if (trigger && menu.classList.contains('report-picker__menu') && window.matchMedia('(max-width: 600px)').matches) {
           const triggerRect = trigger.getBoundingClientRect();
           const top = Math.max(12, Math.min(triggerRect.bottom + 8, window.innerHeight - 220));
@@ -169,6 +176,7 @@
         }
       } else {
         activeOpenDropdownId = null;
+        if (typeof syncTonReportDropdownState === 'function') syncTonReportDropdownState();
       }
     }
 

@@ -1,0 +1,155 @@
+/* Shared popover language for every control on the outstanding invoice report. */
+.gdv-report-premium-shell:has(.ton-report-card) :is(#accGdvReportFilterWrapper, #accReportClaimTypeFilterWrapper, #accExportMenuWrapper, #accReportViewSelectorWrapper, #accReportFavFiltersWrapper, .custom-select-wrapper) > button.ton-dropdown-trigger {
+  height: 40px !important;
+  min-height: 40px !important;
+  border-radius: 10px !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  gap: 9px !important;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.gdv-report-premium-shell:has(.ton-report-card) :is(#accGdvReportFilterWrapper, #accReportClaimTypeFilterWrapper, #accExportMenuWrapper, #accReportViewSelectorWrapper, #accReportFavFiltersWrapper, .custom-select-wrapper) > button.ton-dropdown-trigger:is(.is-open, :focus-visible) {
+  border-color: var(--ton-gold) !important;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(174, 143, 84, .1) !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) button.ton-dropdown-trigger .ton-dropdown-chevron { width: 12px; height: 12px; transition: transform .18s ease; flex-shrink: 0; }
+.gdv-report-premium-shell:has(.ton-report-card) button.ton-dropdown-trigger.is-open .ton-dropdown-chevron { transform: rotate(180deg); }
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-controls .ton-dropdown-trigger > span:first-child > svg:first-child {
+  box-sizing: border-box;
+  flex: 0 0 26px;
+  width: 26px !important;
+  height: 26px !important;
+  padding: 5px !important;
+  border: 1px solid rgba(174,143,84,.18) !important;
+  border-radius: 7px !important;
+  background: var(--ton-gold-bg) !important;
+  color: var(--ton-gold) !important;
+}
+.gdv-report-premium-shell:has(.ton-report-card) #accReportGaraFilterWrapper > button { max-width: 240px; }
+.gdv-report-premium-shell:has(.ton-report-card) #accReportGaraFilterWrapper > button > span:first-child { min-width: 0; max-width: 184px !important; }
+.gdv-report-premium-shell:has(.ton-report-card) #accReportGaraFilterWrapper > button > span:first-child > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gdv-report-premium-shell:has(.ton-report-card) .ton-dropdown-host--open,
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-filter-hub:has(.ton-dropdown-host--open),
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-hero-premium:has(.ton-dropdown-host--open),
+.gdv-report-premium-shell:has(.ton-report-card) .ton-report-card:has(.ton-dropdown-host--open) { z-index: 1200 !important; }
+.gdv-report-premium-shell:has(.ton-report-card) .gdv-report-command-center:has(.ton-dropdown-host--open) { z-index: 1201; }
+
+.gdv-report-premium-shell:has(.ton-report-card) .ton-dropdown {
+  position: absolute !important;
+  min-width: 0 !important;
+  max-width: calc(100vw - 24px) !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--ton-line) !important;
+  border-radius: 15px !important;
+  background: var(--ton-paper) !important;
+  color: var(--ton-ink) !important;
+  box-shadow: 0 18px 48px rgba(23, 39, 31, .14), 0 3px 10px rgba(23, 39, 31, .04) !important;
+  overflow: hidden !important;
+  backdrop-filter: none !important;
+  text-align: left;
+  z-index: 1202 !important;
+  animation: tonDropdownAppear .14s ease-out !important;
+}
+@keyframes tonDropdownAppear { from { opacity: 0; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }
+.ton-dropdown .ton-dropdown-head { display: flex; align-items: center; gap: 11px; min-height: 69px; padding: 15px 17px; border-bottom: 1px solid var(--ton-line); }
+.ton-dropdown .ton-dropdown-icon { display: grid; place-items: center; flex: 0 0 32px; height: 32px; border: 1px solid rgba(174,143,84,.15); border-radius: 10px; background: var(--ton-gold-bg); color: var(--ton-gold); }
+.ton-dropdown-icon svg { width: 16px; height: 16px; stroke: currentColor !important; }
+.ton-dropdown-head-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ton-dropdown-head-copy strong { color: var(--ton-ink); font-size: 12.5px; line-height: 1.3; font-weight: 800; letter-spacing: -.015em; }
+.ton-dropdown-head-copy > span { color: var(--ton-muted); font-size: 10.5px; line-height: 1.4; }
+.ton-dropdown-selection-count { margin-left: auto; padding: 3px 7px; border: 1px solid rgba(174,143,84,.18); border-radius: 6px; color: var(--ton-gold); font-size: 10px; font-weight: 650; white-space: nowrap; }
+.ton-dropdown .ton-dropdown-search { display: flex; align-items: center; gap: 8px; height: 38px; margin: 12px 12px 6px; padding: 0 10px; border: 1px solid var(--ton-line); border-radius: 9px; background: var(--ton-soft); color: var(--ton-muted); }
+.ton-dropdown-search:focus-within { border-color: var(--ton-gold); box-shadow: 0 0 0 2px rgba(174,143,84,.08); }
+.ton-dropdown-search > svg { flex-shrink: 0; }
+.ton-dropdown .ton-dropdown-search input { min-width: 0; width: 100%; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: transparent !important; color: var(--ton-ink); font-family: inherit; font-size: 11.5px; font-weight: 500; box-shadow: none !important; outline: none !important; }
+.ton-dropdown-search input::placeholder { color: var(--ton-muted); opacity: .9; }
+.ton-dropdown-search input::-webkit-search-cancel-button { cursor: pointer; }
+.ton-dropdown-search-count { flex-shrink: 0; min-width: 30px; padding-left: 5px; color: var(--ton-muted); font-size: 9.5px; font-variant-numeric: tabular-nums; text-align: right; }
+.gdv-report-premium-shell:has(.ton-report-card) .ton-dropdown .ton-dropdown-body {
+  display: block !important;
+  max-height: 300px;
+  margin: 0 !important;
+  padding: 7px !important;
+  border: 0 !important;
+  background: transparent !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(161,124,59,.35) transparent;
+}
+.ton-dropdown-body::-webkit-scrollbar { width: 5px; }
+.ton-dropdown-body::-webkit-scrollbar-thumb { border-radius: 10px; background: rgba(161,124,59,.32); }
+.ton-dropdown-body::-webkit-scrollbar-track { background: transparent; }
+.gdv-report-premium-shell:has(.ton-report-card) .ton-dropdown .ton-dropdown-option {
+  box-sizing: border-box;
+  position: relative;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  width: 100%;
+  min-height: 41px;
+  padding: 10px 12px !important;
+  margin: 0 0 2px !important;
+  border: 1px solid transparent !important;
+  border-radius: 9px !important;
+  background: transparent !important;
+  color: var(--ton-ink) !important;
+  font-family: inherit;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  line-height: 1.55 !important;
+  white-space: normal !important;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: background .12s ease, border-color .12s ease;
+}
+.ton-dropdown .ton-dropdown-option > span:first-child { min-width: 0; overflow-wrap: break-word; }
+.ton-dropdown .ton-dropdown-option > svg { width: 16px; height: 16px; flex-shrink: 0; stroke: var(--ton-gold) !important; }
+.gdv-report-premium-shell:has(.ton-report-card) .ton-dropdown .ton-dropdown-option:is(:hover, :focus-visible) { background: var(--ton-soft) !important; border-color: var(--ton-line) !important; outline: none; }
+.gdv-report-premium-shell:has(.ton-report-card) .ton-dropdown .ton-dropdown-option.is-selected { background: var(--ton-gold-bg) !important; border-color: rgba(174,143,84,.13) !important; color: var(--ton-ink) !important; font-weight: 750 !important; }
+.ton-option-mark { display: grid; place-items: center; width: 20px; height: 20px; margin-left: auto; flex: 0 0 20px; color: var(--ton-gold); opacity: 0; }
+.is-selected > .ton-option-mark { opacity: 1; }
+.ton-dropdown .ton-dropdown-option input[type="checkbox"] { appearance: auto; width: 15px !important; height: 15px !important; margin: 0; flex-shrink: 0; accent-color: var(--ton-action) !important; cursor: pointer; }
+.gdv-report-premium-shell:has(.ton-report-card) .ton-dropdown[data-ton-mode="columns"] .ton-dropdown-option { justify-content: flex-start !important; }
+.ton-dropdown .report-filter-check-item > div { min-width: 0; }
+.ton-dropdown .report-filter-check-item span { font-size: 11.5px !important; line-height: 1.5; }
+.ton-dropdown .report-filter-default-badge { padding: 1px 5px !important; border: 1px solid rgba(174,143,84,.18) !important; background: transparent !important; color: var(--ton-gold) !important; font-size: 9px !important; font-weight: 600 !important; }
+.ton-dropdown .ton-dropdown-tools { display: flex !important; justify-content: space-between !important; align-items: center; flex-wrap: wrap; gap: 6px !important; margin: 0 !important; padding: 7px 12px !important; border: 0 !important; border-bottom: 1px solid var(--ton-line) !important; background: var(--ton-paper); }
+.ton-dropdown .ton-dropdown-tools button { min-height: 27px; padding: 4px 8px !important; border: 1px solid var(--ton-line) !important; border-radius: 6px !important; background: var(--ton-soft) !important; color: var(--ton-ink) !important; font-family: inherit; font-size: 9.5px !important; font-weight: 650 !important; cursor: pointer; }
+.ton-dropdown .ton-dropdown-tools button:hover { border-color: var(--ton-gold) !important; }
+.ton-dropdown .ton-dropdown-empty { padding: 28px 12px; color: var(--ton-muted); font-size: 11px; line-height: 1.6; text-align: center; }
+.gdv-report-premium-shell:has(.ton-report-card) .ton-dropdown [hidden] { display: none !important; }
+.ton-dropdown .report-picker__item-icon { width: 29px !important; height: 29px !important; border: 0 !important; border-radius: 8px !important; background: var(--ton-soft) !important; color: var(--ton-gold) !important; box-shadow: none !important; }
+.ton-dropdown .report-picker__item-main { min-width: 0; flex: 1; gap: 10px !important; }
+.ton-dropdown .report-picker__item-copy { min-width: 0; }
+.ton-dropdown .report-picker__item-title { color: var(--ton-ink) !important; font-size: 11.5px !important; }
+.ton-dropdown .report-picker__item-desc { color: var(--ton-muted) !important; font-size: 10px !important; line-height: 1.5; }
+.ton-dropdown .report-picker__item-badge { padding: 1px 5px !important; background: var(--ton-gold-bg) !important; color: var(--ton-gold) !important; border: 1px solid rgba(174,143,84,.15) !important; font-size: 8px !important; }
+.ton-dropdown .report-picker__item-check, .ton-dropdown .report-picker__item-chevron { display: none !important; }
+.ton-dropdown .ton-export-option { justify-content: flex-start !important; }
+.ton-dropdown .ton-export-option strong { font-size: 11.5px !important; }
+.ton-dropdown .ton-export-option small { font-size: 10.5px !important; font-weight: 450; }
+.ton-dropdown .ton-dropdown-option > span[style*="font-weight"] { color: var(--ton-ink) !important; font-weight: 650 !important; }
+.ton-dropdown .ton-dropdown-favorites { padding: 12px !important; }
+.ton-dropdown .ton-favorite-heading { margin: 0 0 8px !important; padding: 0 !important; border: 0 !important; color: var(--ton-muted) !important; font-size: 9px !important; font-weight: 750 !important; letter-spacing: .06em !important; text-transform: uppercase; }
+.ton-dropdown .ton-favorite-form { gap: 6px !important; margin-bottom: 18px !important; }
+.ton-dropdown .ton-favorite-form input { min-width: 0; min-height: 36px; background: var(--ton-soft) !important; border-color: var(--ton-line) !important; color: var(--ton-ink) !important; font-family: inherit; font-size: 11px !important; font-weight: 500 !important; }
+.ton-dropdown .ton-favorite-form button { border-radius: 8px !important; background: var(--ton-action) !important; color: var(--ton-action-text) !important; box-shadow: none !important; }
+.ton-dropdown .ton-favorite-list { max-height: none !important; overflow: visible !important; padding: 0 !important; }
+.ton-dropdown .ton-favorite-row { gap: 4px; padding: 0 6px 0 0 !important; border: 1px solid var(--ton-line); border-radius: 9px !important; background: transparent !important; }
+.ton-dropdown .ton-favorite-row:hover { background: var(--ton-soft) !important; }
+.gdv-report-premium-shell:has(.ton-report-card) .ton-dropdown .ton-favorite-apply { min-width: 0; width: auto; margin: 0 !important; }
+.ton-dropdown .ton-favorite-row button { min-width: 27px; min-height: 27px; justify-content: center; border-radius: 6px; }
+.ton-dropdown .ton-favorite-row button:hover { background: var(--ton-gold-bg) !important; }
+@media (prefers-reduced-motion: reduce) { .gdv-report-premium-shell:has(.ton-report-card) .ton-dropdown { animation: none !important; } }
+@media (max-width: 480px) {
+  .gdv-report-premium-shell:has(.ton-report-card) #accReportGaraFilterWrapper > button { max-width: none; }
+  .ton-dropdown .ton-dropdown-head { padding: 13px 15px; min-height: 65px; }
+}
