@@ -49,6 +49,8 @@
   box-shadow: 0 18px 48px rgba(23, 39, 31, .14), 0 3px 10px rgba(23, 39, 31, .04) !important;
   overflow: hidden !important;
   backdrop-filter: none !important;
+  /* Position is calculated by the shared helper, including on mobile. */
+  transform: none !important;
   text-align: left;
   z-index: 1202 !important;
   animation: tonDropdownAppear .14s ease-out !important;

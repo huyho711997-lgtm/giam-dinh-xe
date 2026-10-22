@@ -292,19 +292,20 @@
 
       return `
         <section id="annualClaimsReportCard" class="annual-claims-report-card" aria-label="Báo cáo hồ sơ phát sinh năm ${year}">
+          <div class="weekly-report-kpi-grid" aria-label="Tổng quan phát sinh năm ${year}">
+            <div class="weekly-report-kpi" style="--kpi-color:#c99a43;"><div class="weekly-report-kpi__head"><span class="weekly-report-kpi__label">Tổng hồ sơ phát sinh</span></div><div class="weekly-report-kpi__value">${total.toLocaleString('vi-VN')}</div><div class="weekly-report-kpi__meta">Trong năm ${year}</div></div>
+            <div class="weekly-report-kpi" style="--kpi-color:#10b981;"><div class="weekly-report-kpi__head"><span class="weekly-report-kpi__label">Giám định viên có hồ sơ</span></div><div class="weekly-report-kpi__value">${activeGdvCount}</div><div class="weekly-report-kpi__meta">Trên ${rows.length} giám định viên đang hiển thị</div></div>
+            <div class="weekly-report-kpi" style="--kpi-color:#3b82f6;"><div class="weekly-report-kpi__head"><span class="weekly-report-kpi__label">Tháng phát sinh cao nhất</span></div><div class="weekly-report-kpi__value">${total ? monthNames[activeMonth] : '—'}</div><div class="weekly-report-kpi__meta">${totals[activeMonth].toLocaleString('vi-VN')} hồ sơ</div></div>
+            <div class="weekly-report-kpi" style="--kpi-color:#8b5cf6;"><div class="weekly-report-kpi__head"><span class="weekly-report-kpi__label">Bình quân / 12 tháng</span></div><div class="weekly-report-kpi__value">${(total / 12).toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</div><div class="weekly-report-kpi__meta">Tính đủ 12 tháng</div></div>
+          </div>
+          <section class="annual-claims-chart-card" aria-label="Diễn biến hồ sơ phát sinh">
           <header class="annual-claims-report-heading">
-            <div><h2>Hồ sơ phát sinh theo giám định viên</h2><p>Số lượng hồ sơ mở mới theo tháng, tính theo trường ngày phát sinh đã cấu hình.</p></div>
+            <div><span class="annual-claims-eyebrow">DIỄN BIẾN HỒ SƠ</span><h2>Hồ sơ phát sinh theo giám định viên</h2><p>Số lượng hồ sơ mở mới theo tháng, tính theo trường ngày phát sinh đã cấu hình.</p></div>
             <div class="annual-claims-report-actions">
               <button type="button" class="annual-claims-download-btn" onclick="downloadAnnualGdvClaimsReportImage()" title="Tải ảnh PNG toàn bộ báo cáo phát sinh và bình quân VCX/TNDS"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m3 17 5-5 4 4 3-3 6 6"></path></svg><span>Tải ảnh báo cáo</span></button>
               <span class="annual-claims-year-badge"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>Năm ${year}</span>
             </div>
           </header>
-          <div class="weekly-report-kpi-grid" aria-label="Tổng quan phát sinh năm ${year}" style="margin-bottom: 20px;">
-            <div class="weekly-report-kpi" style="--kpi-color:#c99a43;"><div class="weekly-report-kpi__head"><span class="weekly-report-kpi__label">Tổng hồ sơ phát sinh</span></div><div class="weekly-report-kpi__value">${total}</div><div class="weekly-report-kpi__meta">Trong năm ${year}</div></div>
-            <div class="weekly-report-kpi" style="--kpi-color:#10b981;"><div class="weekly-report-kpi__head"><span class="weekly-report-kpi__label">Giám định viên có hồ sơ</span></div><div class="weekly-report-kpi__value">${activeGdvCount}</div><div class="weekly-report-kpi__meta">Trên ${rows.length} giám định viên đang hiển thị</div></div>
-            <div class="weekly-report-kpi" style="--kpi-color:#3b82f6;"><div class="weekly-report-kpi__head"><span class="weekly-report-kpi__label">Tháng phát sinh cao nhất</span></div><div class="weekly-report-kpi__value" style="font-size:22px;">${total ? monthNames[activeMonth] : '—'}</div><div class="weekly-report-kpi__meta">${totals[activeMonth]} hồ sơ</div></div>
-            <div class="weekly-report-kpi" style="--kpi-color:#8b5cf6;"><div class="weekly-report-kpi__head"><span class="weekly-report-kpi__label">Bình quân / 12 tháng</span></div><div class="weekly-report-kpi__value">${(total / 12).toFixed(1)}</div><div class="weekly-report-kpi__meta">Tính đủ 12 tháng</div></div>
-          </div>
           <div class="annual-claims-chart-panel">
             <div class="annual-claims-chart-toolbar">
               <span class="annual-claims-chart-toolbar__title">Diễn biến hồ sơ phát sinh theo tháng · ${year}</span>
@@ -315,9 +316,10 @@
             </div>
             ${rows.length ? `<div class="annual-claims-chart-canvas-wrap"><canvas id="annualClaimsMonthlyChart" aria-label="Biểu đồ số hồ sơ phát sinh theo giám định viên từng tháng"></canvas></div><img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onload="if(window.initAnnualClaimsChart) setTimeout(window.initAnnualClaimsChart, 40); this.remove();" style="display:none;" />` : `<div class="annual-claims-empty">Không có hồ sơ phát sinh trong năm ${year} theo bộ lọc hiện tại.</div>`}
           </div>
+          </section>
           <section class="annual-claims-average" aria-label="Bình quân hồ sơ theo loại hình">
             <header class="annual-claims-average__head">
-              <div><h3>Bình quân hồ sơ theo giám định viên</h3><p>Tính riêng VCX và TNDS. Chỉ chia cho số tháng từng người có phát sinh loại hồ sơ tương ứng; tháng không phát sinh được loại khỏi mẫu số.</p></div>
+              <div><span class="annual-claims-eyebrow">CHI TIẾT THEO NGHIỆP VỤ</span><h3>Bình quân hồ sơ theo giám định viên</h3><p>Tính riêng VCX và TNDS. Chỉ chia cho số tháng từng người có phát sinh loại hồ sơ tương ứng; tháng không phát sinh được loại khỏi mẫu số.</p></div>
               <span class="annual-claims-average__formula">Tổng hồ sơ ÷ tháng có phát sinh</span>
             </header>
             <div class="annual-claims-average__scroll">
@@ -349,6 +351,11 @@
       }
       const monthLabels = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
       const palette = ['#b88935', '#10b981', '#3b82f6', '#a855f7', '#ef4444', '#06b6d4', '#f97316', '#64748b', '#ec4899', '#84cc16'];
+      const chartStyle = getComputedStyle(canvas.closest('.gdv-report-premium-shell') || canvas);
+      const chartMuted = chartStyle.getPropertyValue('--ton-muted').trim() || '#76817e';
+      const chartLine = chartStyle.getPropertyValue('--ton-line').trim() || '#e5e8e0';
+      const chartInk = chartStyle.getPropertyValue('--ton-ink').trim() || '#283b36';
+      const chartPaper = chartStyle.getPropertyValue('--ton-paper').trim() || '#fffefb';
       const isLine = activeAnnualClaimsChartType === 'line';
       annualClaimsChartInstance = new Chart(canvas.getContext('2d'), {
         type: isLine ? 'line' : 'bar',
@@ -373,12 +380,12 @@
           maintainAspectRatio: false,
           interaction: { mode: 'index', intersect: false },
           plugins: {
-            legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: isLine ? 'circle' : 'rectRounded', boxWidth: 8, boxHeight: 8, padding: 18, color: getComputedStyle(document.documentElement).getPropertyValue('--text-soft').trim() || '#667085', font: { family: 'inherit', size: 11, weight: '600' } } },
-            tooltip: { backgroundColor: '#172033', titleColor: '#fff', bodyColor: '#e8edf5', padding: 12, cornerRadius: 10, displayColors: true }
+            legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: isLine ? 'circle' : 'rectRounded', boxWidth: 8, boxHeight: 8, padding: 20, color: chartInk, font: { family: chartStyle.fontFamily, size: 11, weight: '600' } } },
+            tooltip: { backgroundColor: chartInk, titleColor: chartPaper, bodyColor: chartPaper, padding: 12, cornerRadius: 10, displayColors: true }
           },
           scales: {
-            x: { grid: { display: false }, ticks: { color: '#758198', font: { size: 10, weight: '600' } }, border: { display: false } },
-            y: { beginAtZero: true, ticks: { precision: 0, color: '#758198', font: { size: 10 } }, grid: { color: 'rgba(120,130,150,.12)', drawBorder: false }, border: { display: false }, title: { display: true, text: 'Số hồ sơ', color: '#758198', font: { size: 11, weight: '600' } } }
+            x: { grid: { display: false }, ticks: { color: chartMuted, font: { family: chartStyle.fontFamily, size: 10, weight: '600' } }, border: { display: false } },
+            y: { beginAtZero: true, ticks: { precision: 0, color: chartMuted, font: { family: chartStyle.fontFamily, size: 10 } }, grid: { color: chartLine, drawBorder: false }, border: { display: false }, title: { display: true, text: 'Số hồ sơ', color: chartMuted, font: { family: chartStyle.fontFamily, size: 11, weight: '600' } } }
           }
         }
       });
@@ -418,6 +425,7 @@
           onclone: function(clonedDoc) {
             const target = clonedDoc.getElementById('annualClaimsReportCard');
             if (!target) return;
+            target.classList.add('annual-claims-report--export');
             target.style.width = `${exportWidth}px`;
             target.style.maxWidth = 'none';
             target.style.boxShadow = 'none';
@@ -429,7 +437,10 @@
               tableScroll.style.width = '100%';
             }
             const chartWrap = target.querySelector('.annual-claims-chart-canvas-wrap');
-            if (chartWrap) chartWrap.style.maxWidth = `${Math.max(cardEl.offsetWidth - 94, 600)}px`;
+            if (chartWrap) {
+              chartWrap.style.maxWidth = `${Math.max(cardEl.offsetWidth - 94, 600)}px`;
+              chartWrap.style.marginInline = 'auto';
+            }
             const downloadButton = target.querySelector('.annual-claims-download-btn');
             if (downloadButton) downloadButton.style.display = 'none';
           }

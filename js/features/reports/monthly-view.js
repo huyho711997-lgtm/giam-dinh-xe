@@ -1670,7 +1670,7 @@
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                   <span>BÁO CÁO GIÁM ĐỊNH - BỒI THƯỜNG</span>
                 </div>
-                ${activeGdvReportView !== 'annual_claims_gdv' ? `<h1 style="font-size: 27px; font-weight: 900; color: var(--text-main); margin: 0; letter-spacing: -0.02em; line-height: 1.25;">${heroReportTitle}</h1>` : ''}
+                <h1 style="font-size: 27px; font-weight: 900; color: var(--text-main); margin: 0; letter-spacing: -0.02em; line-height: 1.25;">${heroReportTitle}</h1>
                 <p style="margin-top: 6px; font-size: 13.5px; color: var(--text-soft); max-width: 950px; margin-bottom: 0;">
                   ${heroReportSubtitle}
                 </p>
@@ -2075,7 +2075,7 @@
                   </button>
                   <div id="ddAnnualClaimsYearMenu" class="custom-select-menu report-filter-select-menu" style="display: ${activeOpenDropdownId === 'ddAnnualClaimsYearMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 8px); left: 0; z-index: 999; min-width: 170px; max-height: 300px; overflow-y: auto;">
                     <div class="report-filter-menu-head"><span class="report-filter-menu-head__icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></span><div><div class="report-filter-menu-head__title">Năm báo cáo</div><div class="report-filter-menu-head__meta">Chọn năm cần thống kê</div></div></div>
-                    ${getAnnualClaimsAvailableYears().map(year => `<div class="custom-select-item ${String(year) === String(activeAnnualClaimsYear) ? 'active' : ''}" onclick="selectAnnualClaimsYear('${year}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 800; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(year) === String(activeAnnualClaimsYear) ? 'background: rgba(216,180,109,0.15); color: var(--primary);' : ''}"><span>${year}</span>${String(year) === String(activeAnnualClaimsYear) ? '<span style="color: var(--primary);">✓</span>' : ''}</div>`).join('')}
+                    ${getAnnualClaimsAvailableYears().map(year => `<div class="custom-select-item ${String(year) === String(activeAnnualClaimsYear) ? 'active' : ''}" onclick="selectAnnualClaimsYear('${year}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 800; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(year) === String(activeAnnualClaimsYear) ? 'background: rgba(216,180,109,0.15); color: var(--primary);' : ''}"><span>${year}</span></div>`).join('')}
                   </div>
                 </div>
               ` : activeGdvReportView === 'tnds_ton' ? `
