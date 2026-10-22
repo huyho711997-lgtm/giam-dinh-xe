@@ -71,6 +71,42 @@
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-report-heading h2 { color: var(--ton-ink); font-size: 19px; font-weight: 800; letter-spacing: -.03em; }
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-report-heading p { color: var(--ton-muted); font-size: 12px; }
 
+/* Annual claims summary matches the shared report KPI strip. */
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  margin: 0 0 22px !important;
+  padding: 22px 0 !important;
+  border: 1px solid var(--ton-line) !important;
+  border-radius: 16px !important;
+  background: var(--ton-paper) !important;
+  box-shadow: var(--ton-shadow) !important;
+  overflow: hidden !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi {
+  min-height: 0 !important;
+  padding: 0 26px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi + .weekly-report-kpi {
+  border-left: 1px solid var(--ton-line) !important;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi::after { content: none !important; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi__head { min-height: 0; padding-right: 0 !important; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi__label { color: var(--ton-muted) !important; font-size: 10px; font-weight: 750; letter-spacing: .05em; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi__value {
+  margin-top: 7px !important;
+  color: var(--kpi-color) !important;
+  font-size: 31px !important;
+  font-weight: 800 !important;
+  font-variant-numeric: tabular-nums;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi__meta { margin-top: 9px !important; color: var(--ton-muted) !important; font-size: 10.5px; font-weight: 500; line-height: 1.5; }
+
 /* Report tables share paper rows, soft headers and a clear warm hover state. */
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
   #dakLakReserveReportCardContainer table,
@@ -223,6 +259,15 @@ body:not(.light-mode) .gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(
 @media (max-width: 760px) {
   .gdv-report-premium-shell:has(#gdvReportHeroBanner) .annual-claims-report-heading { align-items: flex-start; padding: 18px 18px !important; }
   .gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(#dakLakReserveReportCardContainer, #tndsTonReportCardContainer) > div:first-child { padding: 18px !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; padding: 0 !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi { padding: 18px !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi:nth-child(3) { border-left: 0 !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi:nth-child(n+3) { border-top: 1px solid var(--ton-line) !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi__value { font-size: 27px !important; }
+}
+@media (max-width: 480px) {
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi { padding: 16px 14px !important; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .weekly-report-kpi__label { font-size: 9px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .gdv-report-premium-shell:has(#gdvReportHeroBanner) :is(.stat-widget, table tbody tr, button) { transition-duration: .01ms !important; }
