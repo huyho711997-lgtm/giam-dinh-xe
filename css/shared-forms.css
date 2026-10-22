@@ -27,7 +27,7 @@ body:not(.light-mode) :is(.sf-workspace,.sf-dialog,.sf-viewer,.sf-select-menu,.s
 .sf-icon-button { min-width:34px; min-height:34px; padding:7px; border-color:transparent; background:transparent; color:var(--sf-muted); }
 .sf-button:disabled,.sf-icon-button:disabled,.sf-select-trigger:disabled { opacity:.45; cursor:default; }
 .sf-danger { color:var(--sf-rose); }
-:is(.sf-workspace,.sf-dialog,.sf-viewer,.sf-select-menu) :is(button,a,input,textarea):focus-visible { outline:2px solid var(--sf-gold); outline-offset:3px; }
+:is(.sf-workspace,.sf-dialog,.sf-viewer,.sf-select-menu) :is(button,a,input,textarea):not(:where(.sf-search input,.sf-select-search input)):focus-visible { outline:2px solid var(--sf-gold); outline-offset:3px; }
 .sf-filter-hub { padding:16px 24px 20px; border-top:1px solid var(--sf-line); background:var(--sf-soft); border-radius:0 0 18px 18px; }
 .sf-sources { display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-bottom:15px; }
 .sf-source-tab { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:36px; padding:8px 13px; border:1px solid transparent; border-radius:9px; background:transparent; color:var(--sf-muted); font-family:inherit; font-size:11.5px; font-weight:700; line-height:1.4; cursor:pointer; }
@@ -39,7 +39,7 @@ body:not(.light-mode) :is(.sf-workspace,.sf-dialog,.sf-viewer,.sf-select-menu,.s
 .sf-search { display:flex; flex:1 1 250px; min-height:40px; align-items:center; gap:9px; padding:0 12px; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-paper); transition:border-color .16s ease,box-shadow .16s ease; }
 .sf-search>svg { width:17px; height:17px; flex-shrink:0; color:var(--sf-gold); }
 .sf-search input { width:100%; min-width:0; height:38px; padding:0; border:0; background:transparent; color:var(--sf-ink); font-family:inherit; font-size:12px; outline:none; }
-.sf-search input:focus-visible { outline:0; box-shadow:none; }
+.sf-search input:is(:focus,:focus-visible) { outline:0; outline-offset:0; box-shadow:none; }
 .sf-search:hover { border-color:var(--sf-gold); }
 .sf-search:focus-within { border-color:var(--sf-gold); box-shadow:0 0 0 3px rgba(174,143,84,.1); }
 .sf-filter-field { flex:0 1 185px; min-width:145px; }
