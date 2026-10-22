@@ -337,8 +337,11 @@ const SharedForms = (() => {
       else if (control.dataset.sfDownload) { const file = findFile(control.dataset.sfDownload); if (file) SharedFormsViewer.download(file); }
       else if (control.dataset.sfEdit) editDialog(findFile(control.dataset.sfEdit));
       else if (control.dataset.sfDelete) removeFile(findFile(control.dataset.sfDelete));
-      else if (control.hasAttribute('data-sf-prev')) { page--; paint(); }
-      else if (control.hasAttribute('data-sf-next')) { page++; paint(); }
+      else if (control.matches('[data-sf-prev],[data-sf-next]')) {
+        page += control.hasAttribute('data-sf-next') ? 1 : -1;
+        paint();
+        window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+      }
     });
     connect();
     paint();
