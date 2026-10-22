@@ -265,6 +265,12 @@
     function renderActiveTabContent() {
       const container = document.getElementById('tabContentContainer');
       if (!container) return;
+      SharedForms.leave();
+
+      if (activeDashboardTab === 'shared_forms') {
+        SharedForms.mount(container);
+        return;
+      }
 
       const isAdmin = activeUserProfile && (
         String(activeUserProfile.role || '').trim().toLowerCase() === 'admin' ||
@@ -334,6 +340,9 @@
             </div>
           </section>
 
+          <div class="sf-toolbar" style="margin: 0 0 24px;">
+            <button type="button" class="sf-button sf-primary" onclick="switchWorkspaceTab('shared_forms')">▤ Biểu mẫu dùng chung · Xem, tải lên và in tài liệu</button>
+          </div>
           <!-- MENU CHỨC NĂNG HỆ THỐNG -->
           <div style="margin-top: 36px; margin-bottom: 36px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; flex-wrap: wrap; gap: 14px;">

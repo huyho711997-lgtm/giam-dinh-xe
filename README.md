@@ -66,6 +66,22 @@ Thư viện Firebase, JSZip, XLSX, html2canvas, Chart.js và Google Fonts tiếp
 
 `index.html` giảm từ 3.557.000 byte xuống khoảng 215 KB. Tổng dữ liệu dự án vẫn chủ yếu là mã nghiệp vụ và mẫu biểu; việc chia nhỏ giúp bảo trì, lưu bộ nhớ đệm từng tài nguyên và tránh tải mẫu Word trước khi cần. Đây là bước tổ chức lại mã, chưa phải chuyển toàn bộ giao diện sang cơ chế tải theo nhu cầu.
 
+## Biểu mẫu dùng chung
+
+Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở trang chủ. Trang hỗ trợ tìm kiếm không dấu, lọc loại file, phân loại, sắp xếp, phân trang, tải nhiều file, sửa tên/phân loại/ghi chú và xóa khỏi thư viện. Hai mẫu Word có sẵn của dự án luôn hiển thị. Người đã đăng nhập được xem và tải lên; người tải quản lý file của mình, người có quyền `users.admin` quản lý toàn bộ.
+
+- File mới lưu bằng cấu hình Cloudinary hiện có tại thư mục `<folder>/shared_forms`, dùng endpoint `raw/upload`. Upload preset cần cho phép tài liệu `raw` và các định dạng sử dụng, không chỉ ảnh; giới hạn giao diện là 20 MB/file, giới hạn của tài khoản Cloudinary vẫn áp dụng. PDF cần được cho phép phân phối trong thiết lập bảo mật Cloudinary nếu tài khoản đang chặn định dạng này. Danh sách/metadata nằm ở Firebase Realtime Database `shared_forms/files`, không lưu file dạng base64 vào database.
+- DOCX dùng `docx-preview`, PDF dùng PDF.js, Excel/CSV dùng XLSX hiện có; thư viện xem Word/PDF chỉ nạp khi mở tài liệu. Có thu phóng và nút **In tài liệu**. Excel in trang tính đang chọn, tối đa 5.000 dòng và 100 cột để tránh treo trình duyệt; đây là bản xem dữ liệu, không bảo toàn hoàn toàn bố cục in gốc của Excel. PDF giới hạn 100 trang và dung lượng dựng ảnh. Ảnh/TXT cũng xem và in trong trang. File `.doc` cũ dùng trình xem Office/Drive và nút in của dịch vụ đó; nên chuyển sang DOCX để dùng trình in tích hợp.
+- Xóa biểu mẫu gỡ metadata khỏi thư viện dùng chung. File vật lý vẫn nằm trong Cloudinary; quản trị viên xóa tài nguyên đó trong Cloudinary Console khi cần. Trình duyệt không giữ API secret để ký lệnh xóa tài nguyên.
+- Kho Drive `1uPf8jI8nOnl8KW9j4JRpnXSkfTswIxD5` đã được gắn sẵn trong `js/config.js` theo liên kết chủ dự án cung cấp. Khi chưa có API key, trang dùng trình duyệt thư mục nhúng của Google Drive và nút mở thư mục. **Kết nối Drive** dành cho quản trị viên: bổ sung Google Drive API key đã dùng ở dự án `tra-cuu-phu-tung/mobile` để duyệt thư mục, lọc và xem/in bằng trình xem tích hợp. Cấu hình mới lưu tại `shared_forms/drive` của dự án giám định xe. Thư mục phải được chia sẻ cho người có liên kết, Google Drive API phải bật và key phải cho phép tên miền triển khai. Không thể tự lấy API key cấu hình cũ qua mã HTML công khai. Gỡ kết nối lưu trạng thái tắt để kho mặc định không tự xuất hiện trở lại.
+- Kho Drive hỗ trợ thư mục con và dùng lại các file gốc, không sao chép dữ liệu. File tải bằng nút **Tải file lên** nằm trong **Thư viện ứng dụng**. Dùng **Mở thư mục Drive** để thêm/sửa file trong kho Drive. Cấu hình Drive chỉ là API key đọc thư mục công khai; không nhập OAuth token, service-account key hoặc API secret.
+
+### Quyền Firebase khi triển khai
+
+`firebase/shared-forms.rules.json` là phần rules tham khảo cho nhánh mới `shared_forms`. Ghép riêng nhánh này vào rules hiện có trong Firebase Console; không ghi đè toàn bộ rules đang vận hành. Kiểm tra và bỏ các quyền đọc/ghi quá rộng ở nhánh cha vì Firebase Rules cho phép kế thừa không thể bị thu hẹp bằng rules con. Rules kiểm tra quyền trên server, giữ nguyên chủ sở hữu và liên kết file khi sửa metadata. Chưa tự triển khai rules hoặc thay đổi dữ liệu thật.
+
+Kiểm tra phần lưu trữ bằng `node --test tests/shared-forms.test.mjs`. Chạy `node scripts/check.mjs` để kiểm tra cú pháp và các tài nguyên giao diện.
+
 ## Tự lưu sơ đồ và hướng dẫn theo số HSBT
 
 Sơ đồ hiện trường và hướng dẫn thu thập tự lưu ngay trong màn hình hồ sơ. Không cần mở trang lưu trữ hoặc bấm nút lưu giữ riêng.

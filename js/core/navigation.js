@@ -165,6 +165,10 @@
           </button>
           ` : ''}
 
+          <button id="headerNavSharedFormsBtn" type="button" class="header-nav-btn ${activeDashboardTab === 'shared_forms' ? 'active' : ''}" onclick="navigateHeaderTab('shared_forms')" ${activeDashboardTab === 'shared_forms' ? 'aria-current="page"' : ''}>
+            <span class="nav-btn-text">Biểu mẫu dùng chung</span>
+          </button>
+
           <!-- 4. QUẢN TRỊ SYSTEM -->
           ${hasUserPermission('users', 'view') ? `
           <button id="headerNavSystemAdminBtn" type="button" class="header-nav-btn ${isGroup3Active ? 'active' : ''}" onclick="navigateHeaderTab('users')" ${isGroup3Active ? 'aria-current="page"' : ''}>

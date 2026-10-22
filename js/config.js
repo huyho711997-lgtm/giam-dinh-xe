@@ -12,5 +12,7 @@
       },
       CLOUDINARY_CLOUD_NAME: 'ug4spdjp',
       CLOUDINARY_UPLOAD_PRESET: 'giam_dinh_xe_unsigned',
-      CLOUDINARY_FOLDER: 'giam_dinh_xe'
+      CLOUDINARY_FOLDER: 'giam_dinh_xe',
+      SHARED_FORMS_DRIVE_FOLDER_ID: '1uPf8jI8nOnl8KW9j4JRpnXSkfTswIxD5',
+      SHARED_FORMS_DRIVE_FOLDER_NAME: 'Biểu mẫu bồi thường Tasco'
     };
