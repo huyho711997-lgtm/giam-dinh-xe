@@ -72,7 +72,8 @@ body:not(.light-mode) :is(.sf-workspace,.sf-dialog,.sf-viewer,.sf-select-menu,.s
 .sf-table .sf-col-number { width:48px; text-align:center; font-variant-numeric:tabular-nums; }
 .sf-table .sf-col-name { width:48%; }
 .sf-table .sf-col-date { white-space:nowrap; font-variant-numeric:tabular-nums; }
-.sf-table .sf-col-actions { width:100px; text-align:right; }
+.sf-table .sf-col-actions { width:160px; min-width:160px; text-align:center; }
+.sf-table td.sf-col-actions { padding:10px 8px; }
 .sf-open { display:flex; align-items:center; gap:12px; width:100%; padding:0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; font-family:inherit; }
 .sf-file-icon { display:inline-flex; align-items:center; justify-content:center; flex:0 0 34px; width:34px; height:39px; border:1px solid var(--sf-line); border-radius:9px; color:var(--sf-gold); background:var(--sf-soft); font-size:11px; font-weight:800; }
 .sf-file-icon svg { width:18px; height:18px; }
@@ -85,7 +86,8 @@ body:not(.light-mode) :is(.sf-workspace,.sf-dialog,.sf-viewer,.sf-select-menu,.s
 .sf-card-copy strong { overflow-wrap:anywhere; color:var(--sf-ink); font-size:12px; font-weight:750; line-height:1.65; }
 .sf-card-copy small { color:var(--sf-muted); font-size:10px; line-height:1.6; overflow-wrap:anywhere; white-space:pre-wrap; }
 .sf-format { display:inline-flex; align-items:center; padding:3px 7px; border:1px solid var(--sf-line); border-radius:6px; background:var(--sf-soft); font-size:9px; font-weight:750; white-space:nowrap; }
-.sf-card-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:center; gap:3px; }
+.sf-card-actions { display:flex; flex-wrap:nowrap; justify-content:center; align-items:center; gap:2px; }
+.sf-card-actions .sf-icon-button { flex:0 0 30px; width:30px; height:30px; min-width:30px; min-height:30px; padding:6px; }
 .sf-pagination { display:flex; align-items:center; flex-wrap:wrap; gap:14px; padding:14px 20px; border-top:1px solid var(--sf-line); }
 .sf-pagination>label { width:160px; } .sf-pagination>span { margin-left:auto; color:var(--sf-muted); font-size:10.5px; font-variant-numeric:tabular-nums; } .sf-pagination>div { display:flex; gap:6px; }
 .sf-pagination .sf-icon-button { border-color:var(--sf-line); } .sf-pagination .sf-select-trigger { font-size:10.5px; min-height:35px; height:35px; } .sf-pagination .sf-control-icon { width:22px; height:22px; padding:4px; }
