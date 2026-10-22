@@ -293,7 +293,7 @@ const SharedForms = (() => {
         <div><span>Thư mục con</span><strong data-sf-folder-count>0</strong><small>Được sắp xếp theo nghiệp vụ</small></div>
       </section>
       <section class="sf-library">
-        <header class="sf-library-heading"><div><span class="sf-eyebrow">DANH MỤC TÀI LIỆU</span><h2>Danh sách biểu mẫu</h2><p>Nhấn vào biểu mẫu để mở cửa sổ xem và in tài liệu.</p></div><span class="sf-count" data-sf-count role="status" aria-live="polite"></span></header>
+        <header class="sf-library-heading"><div><span class="sf-eyebrow">DANH MỤC TÀI LIỆU</span><h2>Danh sách biểu mẫu</h2><p>Nhấn vào biểu mẫu để xem toàn màn hình và in tài liệu.</p></div><span class="sf-count" data-sf-count role="status" aria-live="polite"></span></header>
         <div class="sf-library-body">
           <div class="sf-list-panel">
             <nav class="sf-crumbs" data-sf-crumbs aria-label="Đường dẫn thư mục" hidden></nav>
