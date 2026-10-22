@@ -1,5 +1,5 @@
 /* Outstanding invoice report: shared tokens also apply to exported image cards. */
-:is(.gdv-report-premium-shell:has(#gdvReportHeroBanner), .ton-report-card, .ton-summary-strip) {
+:is(.gdv-report-premium-shell:has(#gdvReportHeroBanner), .ton-report-card, .ton-summary-strip, .pending-workspace) {
   --ton-paper: #121e27;
   --ton-ink: #f0f2eb;
   --ton-muted: #a2afaf;
@@ -13,7 +13,7 @@
   --ton-action-text: #1e2d29;
   --ton-shadow: 0 10px 32px rgba(0, 0, 0, .12);
 }
-body.light-mode :is(.gdv-report-premium-shell:has(#gdvReportHeroBanner), .ton-report-card, .ton-summary-strip) {
+body.light-mode :is(.gdv-report-premium-shell:has(#gdvReportHeroBanner), .ton-report-card, .ton-summary-strip, .pending-workspace) {
   --ton-paper: #fffefb;
   --ton-ink: #283b36;
   --ton-muted: #76817e;

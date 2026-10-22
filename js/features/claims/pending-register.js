@@ -26,15 +26,7 @@
 
 
     function toggleCustomCoverageDropdown(event) {
-      if(event) event.stopPropagation();
-      const menu=document.getElementById('menuCustomCoverageDropdown');if(!menu) return;
-      const isHidden=menu.style.display==='none'||!menu.style.display;
-      closeAllCustomDropdowns();
-      if(isHidden) {
-        menu.style.display='block';menu.closest('.custom-dropdown-container')?.classList.add('is-open');
-        document.getElementById('btnCustomCoverageDropdown')?.setAttribute('aria-expanded','true');
-        if(event?.detail===0) (menu.querySelector('.selected')||menu.querySelector('button'))?.focus({preventScroll:true});
-      }
+      togglePendingRegisterDropdown('menuCustomCoverageDropdown', event);
     }
 
 
@@ -86,16 +78,7 @@
 
 
     function toggleCustomStatusDropdown(event) {
-      if (event) event.stopPropagation();
-      const menu = document.getElementById('menuCustomStatusDropdown');
-      if (!menu) return;
-      const isHidden = menu.style.display === 'none' || !menu.style.display;
-      closeAllCustomDropdowns();
-      if (isHidden) {
-        menu.style.display = 'block';
-        menu.closest('.custom-dropdown-container')?.classList.add('is-open');
-        menu.closest('.custom-dropdown-container')?.querySelector('button')?.setAttribute('aria-expanded', 'true');
-      }
+      togglePendingRegisterDropdown('menuCustomStatusDropdown', event);
     }
 
 
@@ -124,16 +107,7 @@
 
 
     function toggleCustomGdvDropdown(event) {
-      if (event) event.stopPropagation();
-      const menu = document.getElementById('menuCustomGdvDropdown');
-      if (!menu) return;
-      const isHidden = menu.style.display === 'none' || !menu.style.display;
-      closeAllCustomDropdowns();
-      if (isHidden) {
-        menu.style.display = 'block';
-        menu.closest('.custom-dropdown-container')?.classList.add('is-open');
-        menu.closest('.custom-dropdown-container')?.querySelector('button')?.setAttribute('aria-expanded', 'true');
-      }
+      togglePendingRegisterDropdown('menuCustomGdvDropdown', event);
     }
 
 
@@ -161,16 +135,7 @@
 
 
     function toggleCustomPeriodDropdown(event) {
-      if (event) event.stopPropagation();
-      const menu = document.getElementById('menuCustomPeriodDropdown');
-      if (!menu) return;
-      const isHidden = menu.style.display === 'none' || !menu.style.display;
-      closeAllCustomDropdowns();
-      if (isHidden) {
-        menu.style.display = 'block';
-        menu.closest('.custom-dropdown-container')?.classList.add('is-open');
-        menu.closest('.custom-dropdown-container')?.querySelector('button')?.setAttribute('aria-expanded', 'true');
-      }
+      togglePendingRegisterDropdown('menuCustomPeriodDropdown', event);
     }
 
 
@@ -225,16 +190,7 @@
 
 
     function toggleCustomPerPageDropdown(event) {
-      if (event) event.stopPropagation();
-      const menu = document.getElementById('menuCustomPerPageDropdown');
-      if (!menu) return;
-      const isHidden = menu.style.display === 'none' || !menu.style.display;
-      closeAllCustomDropdowns();
-      if (isHidden) {
-        menu.style.display = 'block';
-        menu.closest('.custom-dropdown-container')?.classList.add('is-open');
-        menu.closest('.custom-dropdown-container')?.querySelector('button')?.setAttribute('aria-expanded', 'true');
-      }
+      togglePendingRegisterDropdown('menuCustomPerPageDropdown', event);
     }
 
 
@@ -283,6 +239,7 @@
 
 
     function executeUIRenderPendingClaims() {
+      const dropdownFocus = capturePendingDropdownFocus();
       const tbody = document.getElementById('tblPendingClaimsBodyContainer');
       const currentUser = firebase.auth().currentUser;
       const isAdmin = activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
@@ -821,6 +778,7 @@
           </div>
         `;
       }
+      enhancePendingRegisterDropdowns(dropdownFocus);
     }
 
 

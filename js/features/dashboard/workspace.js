@@ -599,7 +599,8 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
       } else if (activeDashboardTab === 'pending') {
         container.innerHTML = `
           <div class="workspace-grid single-col">
-            <section class="p-card cases-panel" style="padding: 28px;">
+            <section class="pending-workspace" aria-label="Quản lý hồ sơ tồn">
+              <div class="pending-command-center">
               <!-- Header Title & Action Buttons -->
               <div class="pending-page-hero">
                 <div class="pending-page-hero__content">
@@ -636,11 +637,6 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
                   </button>
                   ` : ''}
                 </div>
-              </div>
-
-              <!-- Weekly Metrics Summary Stats Cards -->
-              <div id="pendingWeeklyStatsContainer" class="claims-metrics-grid">
-                <!-- Stat Cards will be rendered dynamically -->
               </div>
 
               <!-- Premium Filter Command Bar -->
@@ -693,13 +689,27 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
                   </button>
 
               </div>
-              <div class="pending-results-bar">
-                <div id="pendingFilterSummary" class="pending-filter-summary" aria-live="polite"></div>
-                <div id="pendingClaimsPaginationContainer" class="pending-pagination"></div>
+              </div>
+              <!-- Weekly Metrics Summary Stats Cards -->
+              <div id="pendingWeeklyStatsContainer" class="claims-metrics-grid" aria-label="Tổng quan hồ sơ">
+                <!-- Stat Cards will be rendered dynamically -->
               </div>
 
+
+              <div class="pending-register-panel">
+                <div class="pending-register-topbar">
+                  <div class="pending-register-header">
+                    <span class="pending-register-eyebrow">Hồ sơ chi tiết</span>
+                    <h3>Danh sách hồ sơ</h3>
+                  </div>
+                  <div class="pending-results-bar">
+                    <div id="pendingFilterSummary" class="pending-filter-summary" aria-live="polite"></div>
+                    <div id="pendingClaimsPaginationContainer" class="pending-pagination"></div>
+                  </div>
+                </div>
+
               <!-- Table Container -->
-              <div class="table-container" style="border: 1px solid var(--border); border-radius: 14px; background: var(--bg-soft); overflow: hidden;">
+              <div class="table-container pending-register-table" style="border: 1px solid var(--border); border-radius: 14px; background: var(--bg-soft); overflow: hidden;">
                 <table class="p-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
                   <thead>
                     <tr>
@@ -724,6 +734,7 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
               </div>
 
 
+              </div>
             </section>
           </div>
         `;
