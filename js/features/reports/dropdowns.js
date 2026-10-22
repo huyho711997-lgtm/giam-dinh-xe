@@ -10,6 +10,8 @@ const TON_REPORT_DROPDOWNS = {
   ddReportFavFiltersMenu: { title: 'Bộ lọc ưa thích', subtitle: 'Lưu và mở nhanh bộ lọc của bạn', width: 360, mode: 'favorites' },
   ddExportOptions: { title: 'Tải báo cáo Excel', subtitle: 'Chọn nội dung cần xuất', mode: 'actions', action: true },
   ddTonColsMenu: { title: 'Cột hiển thị', subtitle: 'Tùy chỉnh thông tin trong danh sách', multi: true, mode: 'columns' },
+  ddWeeklyColsMenu: { title: 'Cột hiển thị', subtitle: 'Tùy chỉnh chỉ tiêu trong báo cáo', multi: true, mode: 'columns' },
+  ddReportBranchMenu: { title: 'Chi nhánh cấp đơn', subtitle: 'Chọn phạm vi dữ liệu báo cáo', search: 'Tìm chi nhánh...' },
   ddTonImageExportMenu: { title: 'Xuất ảnh báo cáo', subtitle: 'Chọn phạm vi hồ sơ cần tải', mode: 'actions', action: true }
 };
 
@@ -31,6 +33,7 @@ function syncTonReportDropdownState() {
       trigger.setAttribute('aria-expanded', String(open));
     }
   });
+  if (typeof syncWeeklyReportDatePickerState === 'function') syncWeeklyReportDatePickerState();
 }
 
 function closeTonReportDropdown(menu, restoreFocus = false) {
@@ -82,8 +85,8 @@ function openTonReportDropdown(menu, trigger, event) {
 }
 
 function enhanceTonReportDropdowns(root = document) {
-  const shell = root.matches?.('.gdv-report-premium-shell') ? root : root.querySelector('.gdv-report-premium-shell:has(.ton-report-card)');
-  if (!shell || !shell.querySelector('.ton-report-card')) return;
+  const shell = root.matches?.('.gdv-report-premium-shell') ? root : root.querySelector('.gdv-report-premium-shell:has(.ton-report-card, #weeklyZoneReportCardContainer)');
+  if (!shell || !shell.querySelector('.ton-report-card, #weeklyZoneReportCardContainer')) return;
   shell.querySelectorAll('.custom-select-menu').forEach(menu => {
     const config = TON_REPORT_DROPDOWNS[menu.id];
     if (!config || (menu.dataset.tonReady === '1' && menu.querySelector(':scope > .ton-dropdown-head'))) return;
@@ -107,11 +110,17 @@ function enhanceTonReportDropdowns(root = document) {
 
     let tools = menu.querySelector(':scope > .report-filter-gdv-toolbar');
     if (config.mode === 'columns') {
-      tools = menu.firstElementChild;
-      tools.querySelector(':scope > span')?.remove();
+      if (menu.id === 'ddWeeklyColsMenu') {
+        tools = menu.querySelector('.weekly-cols-menu__actions');
+        if (tools) menu.appendChild(tools);
+        menu.querySelector(':scope > .weekly-cols-menu__header')?.remove();
+      } else {
+        tools = menu.firstElementChild;
+        tools.querySelector(':scope > span')?.remove();
+      }
     }
     menu.querySelector(':scope > .report-filter-menu-head')?.remove();
-    let body = menu.querySelector(':scope > .report-filter-menu-body, :scope > .report-filter-check-list, :scope > .report-picker__body');
+    let body = menu.querySelector(':scope > .report-filter-menu-body, :scope > .report-filter-check-list, :scope > .report-picker__body, :scope > .weekly-cols-list');
     if (!body) {
       body = document.createElement('div');
       Array.from(menu.childNodes).forEach(node => { if (node !== tools) body.appendChild(node); });
@@ -254,16 +263,27 @@ function enhanceTonReportDropdowns(root = document) {
       tonReportDropdownState.frame = requestAnimationFrame(() => {
         tonReportDropdownState.frame = null;
         document.querySelectorAll('.ton-dropdown').forEach(menu => positionTonReportDropdown(menu, menu.parentElement.querySelector(':scope > button')));
+        if (typeof positionWeeklyReportDatePicker === 'function') positionWeeklyReportDatePicker();
       });
     };
     window.addEventListener('resize', reposition);
     window.visualViewport?.addEventListener('resize', reposition);
     document.addEventListener('scroll', reposition, true);
     document.addEventListener('click', event => {
-      if (!event.target.closest('.custom-select-wrapper')) document.querySelectorAll('.ton-dropdown').forEach(menu => { if (menu.style.display === 'block') closeTonReportDropdown(menu); });
+      if (!event.target.closest('.custom-select-wrapper')) {
+        document.querySelectorAll('.ton-dropdown').forEach(menu => { if (menu.style.display === 'block') closeTonReportDropdown(menu); });
+        if (document.querySelector('#weeklyZoneReportCardContainer') && document.getElementById('customReportDatePickerPanel')?.style.display === 'block') closeReportDatePicker(event);
+      }
     });
     document.addEventListener('keydown', event => {
-      if (event.key === 'Escape') document.querySelectorAll('.ton-dropdown').forEach(menu => { if (menu.style.display === 'block') closeTonReportDropdown(menu, true); });
+      if (event.key === 'Escape') {
+        document.querySelectorAll('.ton-dropdown').forEach(menu => { if (menu.style.display === 'block') closeTonReportDropdown(menu, true); });
+        if (document.querySelector('#weeklyZoneReportCardContainer') && document.getElementById('customReportDatePickerPanel')?.style.display === 'block') {
+          const trigger = document.querySelector('.report-date-trigger.is-open');
+          closeReportDatePicker(event);
+          trigger?.focus({ preventScroll: true });
+        }
+      }
     });
   }
 }

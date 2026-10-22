@@ -70,11 +70,12 @@
 
         <div id="weeklyZoneReportCardContainer" style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 28px 32px; margin-bottom: 24px; box-shadow: var(--shadow-sm); position: relative; z-index: 1; min-height: 420px; display: flex; flex-direction: column;">
           
-          <div class="hide-on-screenshot" style="position: absolute; left: 26px; top: 22px; z-index: 10;">
+          <div class="weekly-report-header">
+          <div class="hide-on-screenshot weekly-report-columns-action" style="position: absolute; left: 26px; top: 22px; z-index: 10;">
             <div class="custom-select-wrapper" style="position: relative;">
               <button type="button" class="btn-premium btn-secondary weekly-cols-trigger" onclick="toggleCustomDropdownMenu('ddWeeklyColsMenu', event)" style="color: var(--text-main); font-size: 12.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
                 <span class="weekly-cols-trigger__icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M9 4v16M15 4v16"></path></svg></span>
-                <span>Ẩn/hiện cột</span>
+                <span>Cột hiển thị</span>
                 <span class="weekly-cols-trigger__count">${activeWeeklyReportCols.length}</span>
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" style="color: var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </button>
@@ -128,14 +129,15 @@
             </div>
           </div>
 
-          <div class="hide-on-screenshot" style="position: absolute; right: 26px; top: 22px; z-index: 10;">
+          <div class="hide-on-screenshot weekly-report-export-action" style="position: absolute; right: 26px; top: 22px; z-index: 10;">
             <button type="button" class="weekly-report-image-export" onclick="downloadWeeklyZoneReportImage('png')" style="padding: 8px 16px; border-radius: 11px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Tải ảnh báo cáo tuần (PNG/JPG)">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-              <span>Tải ảnh báo cáo</span>
+              <span>Xuất ảnh</span>
             </button>
           </div>
           
           <div class="weekly-report-title-block" style="text-align: center; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
+            <span class="weekly-report-eyebrow">TIẾN ĐỘ NGHIỆP VỤ</span>
             <h2 style="color: #ef4444; font-size: 22px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.3;">
               ${(function() {
                 if (period && period.startDate && period.endDate) {
@@ -157,9 +159,10 @@
               ${period.label}
             </div>
           </div>
+          </div>
 
           <div style="overflow-x: auto; flex: 1;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 13.5px; text-align: center;">
+            <table style="--weekly-column-count: ${activeWeeklyReportCols.length}; width: 100%; border-collapse: collapse; font-size: 13.5px; text-align: center;">
               <thead>
                 <tr style="background: var(--bg-soft); border: 1px solid var(--border-strong);">
                   <th style="padding: 14px 12px; border: 1px solid var(--border-strong); font-size: 13px; font-weight: 850; color: var(--text-main); width: 50px;">STT</th>
@@ -635,7 +638,49 @@
 
     function renderReportDatePickerPanel() {
       const panel = document.getElementById('customReportDatePickerPanel');
-      if (panel) panel.innerHTML = buildReportDatePickerPanelHtml();
+      if (panel) {
+        panel.innerHTML = buildReportDatePickerPanelHtml();
+        syncWeeklyReportDatePickerState();
+        positionWeeklyReportDatePicker();
+      }
+    }
+
+    function syncWeeklyReportDatePickerState() {
+      if (!document.getElementById('weeklyZoneReportCardContainer')) return;
+      const panel = document.getElementById('customReportDatePickerPanel');
+      const open = panel?.style.display === 'block';
+      const triggerId = reportDatePickerFocus === 'end' ? 'reportEndDateTrigger' : 'reportStartDateTrigger';
+      document.querySelectorAll('.report-date-trigger').forEach(trigger => {
+        const active = open && trigger.id === triggerId;
+        trigger.classList.toggle('is-open', active);
+        trigger.setAttribute('aria-expanded', String(active));
+      });
+      panel?.parentElement.classList.toggle('ton-dropdown-host--open', open);
+    }
+
+    function positionWeeklyReportDatePicker() {
+      if (!document.getElementById('weeklyZoneReportCardContainer')) return;
+      const panel = document.getElementById('customReportDatePickerPanel');
+      if (!panel || panel.style.display !== 'block') return;
+      const trigger = document.getElementById(reportDatePickerFocus === 'end' ? 'reportEndDateTrigger' : 'reportStartDateTrigger');
+      if (!trigger) return;
+      const viewportWidth = document.documentElement.clientWidth;
+      const viewportHeight = window.visualViewport ? Math.min(window.innerHeight, window.visualViewport.height) : window.innerHeight;
+      const width = Math.min(380, viewportWidth - 24);
+      const parentRect = panel.parentElement.getBoundingClientRect();
+      const rect = trigger.getBoundingClientRect();
+      const left = Math.max(12, Math.min(rect.right - width, viewportWidth - width - 12));
+      const below = Math.max(0, viewportHeight - rect.bottom - 20);
+      const above = Math.max(0, rect.top - 20);
+      const showAbove = above > below;
+      panel.style.width = width + 'px';
+      panel.style.left = left - parentRect.left + 'px';
+      panel.style.right = 'auto';
+      panel.style.maxHeight = Math.max(80, Math.min(620, viewportHeight - 24)) + 'px';
+      const preferredTop = showAbove ? rect.top - panel.offsetHeight - 8 : rect.bottom + 8;
+      const top = Math.max(12, Math.min(preferredTop, viewportHeight - panel.offsetHeight - 12));
+      panel.style.top = top - parentRect.top + 'px';
+      panel.style.bottom = 'auto';
     }
 
 
@@ -648,6 +693,7 @@
       document.querySelectorAll('.custom-select-menu').forEach(menu => menu.style.display = 'none');
       if (wasOpen && previousFocus === focusField) {
         activeOpenDropdownId = null;
+        if (typeof syncTonReportDropdownState === 'function') syncTonReportDropdownState();
         return;
       }
 
@@ -663,6 +709,8 @@
       renderReportDatePickerPanel();
       panel.style.display = 'block';
       activeOpenDropdownId = 'customReportDatePickerPanel';
+      if (typeof syncTonReportDropdownState === 'function') syncTonReportDropdownState();
+      positionWeeklyReportDatePicker();
     }
 
 
@@ -724,6 +772,7 @@
       const panel = document.getElementById('customReportDatePickerPanel');
       if (panel) panel.style.display = 'none';
       activeOpenDropdownId = null;
+      if (typeof syncTonReportDropdownState === 'function') syncTonReportDropdownState();
     }
 
 
@@ -1089,6 +1138,11 @@
               border-bottom: 1px solid #ddcfb5 !important;
               text-align: center !important;
             }
+            #weeklyZoneReportCardContainer .weekly-report-header {
+              display: block !important;
+              padding: 0 !important;
+              border: 0 !important;
+            }
             #weeklyZoneReportCardContainer .weekly-report-title-block h2 {
               margin: 0 !important;
               padding: 0 !important;
@@ -1211,6 +1265,8 @@
             #weeklyZoneReportCardContainer tfoot td:nth-child(2) { color: #29313b !important; }
             #weeklyZoneReportCardContainer tfoot td:last-child { background: #eee2ca !important; }
           `;
+          // Match the page-level stylesheet specificity so image layout stays independent.
+          exportStyle.textContent = exportStyle.textContent.replaceAll('#weeklyZoneReportCardContainer', '.gdv-report-premium-shell #weeklyZoneReportCardContainer');
           clonedDoc.head.appendChild(exportStyle);
         },
         ignoreElements: function(element) {
