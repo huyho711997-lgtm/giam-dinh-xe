@@ -65,6 +65,23 @@
 .gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-cols-trigger__count { min-width: 18px; height: 18px; padding: 0 4px; color: var(--ton-gold); background: var(--ton-gold-bg); border: 0; font-size: 9px; }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-image-export { padding: 0 16px !important; border-color: var(--ton-action) !important; background: var(--ton-action) !important; color: var(--ton-action-text) !important; }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-image-export svg { color: inherit; }
+.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-image-export:is(:hover, :focus-visible) {
+  border-color: var(--ton-gold) !important;
+  background: #1d342b !important;
+  color: #fffaf0 !important;
+  box-shadow: 0 7px 18px rgba(29,52,43,.22), 0 0 0 3px rgba(161,124,59,.16) !important;
+  transform: translateY(-1px);
+}
+.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-image-export:focus-visible { outline: 2px solid var(--ton-gold); outline-offset: 2px; }
+.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-image-export:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(29,52,43,.16) !important; }
+.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-image-export:disabled { cursor: not-allowed; opacity: .58; transform: none; box-shadow: none !important; }
+.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-cols-trigger:is(:hover, :focus-visible) {
+  border-color: var(--ton-gold) !important;
+  background: var(--ton-gold-bg) !important;
+  color: var(--ton-ink) !important;
+  box-shadow: 0 0 0 3px rgba(161,124,59,.12) !important;
+}
+.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-cols-trigger:focus-visible { outline: 2px solid var(--ton-gold); outline-offset: 2px; }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer > div[style*="overflow-x"] { border: 0; border-radius: 0 0 18px 18px; background: var(--ton-paper); box-shadow: none; }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer table { min-width: calc(250px + var(--weekly-column-count, 9) * 110px); font-variant-numeric: tabular-nums; }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer thead tr { border: 0 !important; }
@@ -74,8 +91,10 @@
 .gdv-report-premium-shell #weeklyZoneReportCardContainer td:first-child { color: var(--ton-gold); font-size: 12px; }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer td:nth-child(2) { color: var(--ton-ink); font-size: 13px; font-weight: 750; }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer tbody tr,
-.gdv-report-premium-shell #weeklyZoneReportCardContainer tbody tr:nth-child(even) { background: var(--ton-paper) !important; }
-.gdv-report-premium-shell #weeklyZoneReportCardContainer tbody tr:hover { background: var(--ton-soft) !important; }
+.gdv-report-premium-shell #weeklyZoneReportCardContainer tbody tr:nth-child(even) { background: var(--ton-paper) !important; transition: background-color .16s ease; }
+.gdv-report-premium-shell #weeklyZoneReportCardContainer tbody tr:hover { background: #f4ead5 !important; }
+.gdv-report-premium-shell #weeklyZoneReportCardContainer tbody tr:hover td { background: #f4ead5 !important; }
+.gdv-report-premium-shell #weeklyZoneReportCardContainer tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--ton-gold); }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer tfoot tr { background: var(--ton-soft) !important; }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer tfoot td { border-top: 1px solid var(--ton-line) !important; font-weight: 850; }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer :is(th, td):nth-child(3) { color: var(--weekly-blue) !important; }
@@ -91,6 +110,9 @@
 .gdv-report-premium-shell #weeklyZoneReportCardContainer tfoot td:nth-child(2) { color: var(--weekly-blue); }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer th:last-child button { padding: 4px 8px !important; background: var(--ton-paper) !important; color: var(--ton-gold) !important; border-color: var(--ton-line) !important; }
 body:not(.light-mode) .gdv-report-premium-shell #weeklyZoneReportCardContainer { --weekly-red: #ff5656; --weekly-rose: #fb7185; --weekly-purple: #9290ff; --weekly-revenue: #e4b35f; --weekly-blue: #559bff; --weekly-amount: #559bff; }
+body:not(.light-mode) .gdv-report-premium-shell #weeklyZoneReportCardContainer tbody tr:hover,
+body:not(.light-mode) .gdv-report-premium-shell #weeklyZoneReportCardContainer tbody tr:hover td { background: #29352f !important; }
+body:not(.light-mode) .gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-image-export:is(:hover, :focus-visible) { background: #3b604e !important; color: #fffaf0 !important; }
 
 .gdv-report-premium-shell:has(.weekly-report-header) .gdv-report-time-label { padding: 0 4px 0 0 !important; border: 0 !important; background: none !important; color: var(--ton-gold) !important; font-size: 11px !important; }
 .gdv-report-premium-shell:has(.weekly-report-header) .report-date-trigger { width: 155px; min-width: 0; height: 40px; gap: 8px; padding: 0 10px; border: 1px solid var(--ton-line) !important; border-radius: 10px; background: var(--ton-paper); box-shadow: none !important; }
