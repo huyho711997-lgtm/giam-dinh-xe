@@ -140,6 +140,8 @@
 
       editingPendingClaimId = null;
 
+      modal.querySelectorAll('input[id^="modalPending"],textarea[id^="modalPending"]').forEach(field => { field.value = ''; });
+
       updateHeaderCancelClaimProposalButton(null);
 
       const titleEl = document.getElementById('addPendingClaimModalTitle');
@@ -200,6 +202,7 @@
 
       modal.style.display = 'grid';
       modal.setAttribute('aria-hidden', 'false');
+      if (typeof ClaimEditorWorkspace !== 'undefined') ClaimEditorWorkspace.open();
     }
 
 
@@ -335,6 +338,7 @@
       if (modal) {
         modal.style.display = 'grid';
         modal.setAttribute('aria-hidden', 'false');
+        if (typeof ClaimEditorWorkspace !== 'undefined') ClaimEditorWorkspace.open();
       }
     }
 
@@ -351,6 +355,7 @@
         modal.setAttribute('aria-hidden', 'true');
       }
       editingPendingClaimId = null;
+      if (typeof ClaimEditorWorkspace !== 'undefined') ClaimEditorWorkspace.close();
     }
 
 
@@ -364,6 +369,7 @@
       });
       if (tabName === 'AuthorityRequest') { ensureCollectionGuide(); authorityRequestRefresh(); }
       if (tabName === 'CollectionGuide') { ensureCollectionGuide(); refreshCollectionGuideSummary(); }
+      if (typeof ClaimEditorWorkspace !== 'undefined') ClaimEditorWorkspace.tabChanged(tabName);
     }
 
 
@@ -430,6 +436,7 @@
       } else {
         triggerToast('Không thể tự nhận diện BSX hoặc Mã VTT. Bạn hãy kiểm tra và nhập vào biểu mẫu.', 'info');
       }
+      if (typeof ClaimEditorWorkspace !== 'undefined') ClaimEditorWorkspace.refreshSummary();
     }
 
 

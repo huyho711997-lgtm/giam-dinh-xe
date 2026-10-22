@@ -145,6 +145,7 @@
 
       dbNodeInstance.ref('pending_notes').on('value', (snapshot) => {
         cachedPendingNotesPayload = snapshot.val() || {};
+        if (typeof ClaimEditorWorkspace !== 'undefined') ClaimEditorWorkspace.refreshNotes();
         if (activeDashboardTab === 'pending_notes_tracker') {
           renderPendingNotesTrackerPage();
         }

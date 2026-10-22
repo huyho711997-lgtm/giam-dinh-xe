@@ -33,6 +33,7 @@
 <link rel="stylesheet" href="css/remaining-report-views.css">
 <link rel="stylesheet" href="css/pending-workspace.css">
 <link rel="stylesheet" href="css/shared-forms.css?v=20261022-actions-inline">
+<link rel="stylesheet" href="css/claim-editor.css?v=20261022-workspace">
 </head>
 <body>
 
@@ -197,16 +198,17 @@
   </div>
 
 <div id="addPendingClaimModalOverlay" class="p-modal-overlay" aria-hidden="true" style="display: none;">
-    <section class="profile-modal-panel" role="dialog" aria-modal="true" aria-labelledby="addPendingClaimModalTitle" style="width: 90vw; height: 92vh; max-width: 98vw; min-width: 900px; max-height: 92vh; min-height: 600px; display: flex; flex-direction: column; overflow: hidden; padding: 0; border-radius: 16px; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5);">
+    <section class="profile-modal-panel claim-editor-panel" role="dialog" aria-modal="true" aria-labelledby="addPendingClaimModalTitle">
       <!-- Header -->
-      <div style="padding: 20px 28px 14px; border-bottom: 1px solid var(--border); background: var(--surface-strong); flex-shrink: 0;">
+      <div class="claim-editor-topbar">
         <div class="claim-editor-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div class="claim-editor-header-identity" style="display: flex; align-items: center; gap: 14px;">
             <div class="claim-editor-header-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6M19 8v3"/><path d="M13.5 3v5H19l-5.5-5ZM8 12h4M8 16h2.5"/><path d="m13 17 6.6-6.6a1.4 1.4 0 0 1 2 2L15 19l-3 1 1-3Zm5.5-5.5 2 2"/></svg>
             </div>
             <div>
-              <h3 id="addPendingClaimModalTitle" style="font-size: 17px; font-weight: 850; color: var(--text-main); margin: 0;">Chỉnh sửa chi tiết hồ sơ bồi thường</h3>
+              <span class="claim-editor-eyebrow">Hồ sơ bồi thường · Xe cơ giới</span>
+              <h3 id="addPendingClaimModalTitle" tabindex="-1" style="font-size: 17px; font-weight: 850; color: var(--text-main); margin: 0;">Chỉnh sửa chi tiết hồ sơ bồi thường</h3>
             </div>
           </div>
           <div class="claim-editor-header-actions" style="display: flex; align-items: center; gap: 10px;">
@@ -234,8 +236,50 @@
           </div>
         </div>
 
-        <!-- Tabbed Navigation Menu Bar -->
-        <div style="display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 0; overflow-x: auto;">
+      </div>
+
+      <section class="claim-editor-layout" aria-label="Không gian xử lý hồ sơ">
+        <button type="button" class="claim-editor-sidebar-toggle" aria-controls="claimEditorSidebar" aria-expanded="false" onclick="ClaimEditorWorkspace.toggleSidebar(this)">Thông tin hợp đồng & ghi chú <span aria-hidden="true">⌄</span></button>
+        <aside id="claimEditorSidebar" class="claim-editor-sidebar" aria-label="Hợp đồng bảo hiểm và ghi chú">
+          <div class="claim-editor-record">
+            <div class="claim-editor-record-heading"><span class="claim-editor-eyebrow">Hồ sơ đang mở</span><span id="claimEditorStatus" class="claim-editor-status">Mới</span></div>
+            <strong class="claim-editor-plate" data-claim-summary="modalPendingBienSo" data-empty="Chưa có biển số">Chưa có biển số</strong>
+            <span data-claim-summary="modalPendingKhachHang" data-empty="Chưa có tên khách hàng">Chưa có tên khách hàng</span>
+          </div>
+          <section class="claim-editor-sidebar-card">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="m8 12 3 3 5-6"/></svg>Hợp đồng bảo hiểm</h4>
+            <dl class="claim-editor-facts">
+              <div><dt>Số hồ sơ BT</dt><dd data-claim-summary="modalPendingSoHoSoBoiThuong">—</dd></div>
+              <div><dt>Số hợp đồng</dt><dd data-claim-summary="modalPendingSoHd">—</dd></div>
+              <div><dt>Số GCNBH</dt><dd data-claim-summary="modalPendingSoGcn">—</dd></div>
+              <div><dt>Đơn vị cấp đơn</dt><dd data-claim-summary="modalPendingDonViCapDon">—</dd></div>
+              <div><dt>Người cấp đơn</dt><dd data-claim-summary="modalPendingNguoiCapDon">—</dd></div>
+              <div><dt>Kênh khai thác</dt><dd data-claim-summary="modalPendingKenhKhaiThac">—</dd></div>
+              <div><dt>Hiệu lực từ</dt><dd data-claim-summary="modalPendingNgayHieuLuc">—</dd></div>
+              <div><dt>Đến ngày</dt><dd data-claim-summary="modalPendingNgayHetHan">—</dd></div>
+              <div><dt>Giá trị xe</dt><dd class="claim-editor-money" data-claim-summary="modalPendingGiaTriXe" data-claim-money>—</dd></div>
+              <div><dt>Số tiền bảo hiểm</dt><dd class="claim-editor-money" data-claim-summary="modalPendingSoTienBh" data-claim-money>—</dd></div>
+              <div><dt>Phí bảo hiểm</dt><dd class="claim-editor-money" data-claim-summary="modalPendingPhiBh" data-claim-money>—</dd></div>
+            </dl>
+          </section>
+          <section class="claim-editor-sidebar-card claim-editor-notes">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H5v18h14V8zM14 3v5h5M8 12h8M8 16h6"/></svg><label for="modalPendingGhiChu">Ghi chú hồ sơ / Lý do đề xuất hủy</label></h4>
+            <textarea id="modalPendingGhiChu" class="textarea-premium" rows="3" placeholder="Nhập ghi chú cần lưu cùng hồ sơ…" aria-describedby="claimEditorNoteHint"></textarea>
+            <p id="claimEditorNoteHint" class="claim-editor-hint">Ghi chú được lưu khi bạn lưu cập nhật hồ sơ.</p>
+            <details class="claim-editor-tnds-note">
+              <summary>Ghi chú quản lý TNDS</summary>
+              <p data-claim-summary="modalPendingTndsGhiChu" data-empty="Chưa có ghi chú TNDS.">Chưa có ghi chú TNDS.</p>
+              <button type="button" onclick="switchEditClaimTab('Financial'); ClaimEditorWorkspace.showMain(); document.getElementById('modalPendingTndsGhiChu').focus()">Sửa ghi chú TNDS →</button>
+            </details>
+          </section>
+          <section class="claim-editor-sidebar-card claim-editor-progress">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Ghi chú tiến độ<span id="claimEditorNoteCount" class="claim-editor-note-count">0</span></h4>
+            <div id="claimEditorNoteHistory" class="claim-editor-note-history"><p class="claim-editor-hint">Chưa có ghi chú tiến độ.</p></div>
+          </section>
+        </aside>
+
+        <div class="claim-editor-main">
+        <div class="claim-editor-tabs" role="tablist" aria-label="Các nhóm thông tin hồ sơ">
           <button id="tabBtn_Policy" type="button" onclick="switchEditClaimTab('Policy')" class="edit-tab-btn active">
             <span>Hợp đồng & Khách hàng</span>
           </button>
@@ -256,10 +300,9 @@
             <span>Hướng dẫn thu thập hồ sơ</span>
           </button>
         </div>
-      </div>
 
       <!-- Body Scrollable Area -->
-      <div style="padding: 24px 28px; overflow-y: auto; flex: 1; background: var(--bg-soft);">
+      <div class="claim-editor-content">
 
         <div id="tabPane_AuthorityRequest" class="edit-tab-pane" style="display:none">
           <div class="authority-request-header">
@@ -554,11 +597,6 @@
               <input id="modalPendingNgayKtXacNhan" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
             </div>
 
-            <div class="form-group" style="grid-column: span 3;">
-              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Ghi chú / Lý do đề xuất hủy hồ sơ</label>
-              <input id="modalPendingGhiChu" class="input-premium" type="text" placeholder="1 vụ, giảm trừ 20%" />
-            </div>
-
             <!-- Dedicated TNDS Note Field in Claim Details Modal -->
             <div class="form-group" style="grid-column: span 3; background: rgba(234, 179, 8, 0.05); padding: 16px 18px; border-radius: 14px; border: 1px solid rgba(234, 179, 8, 0.3); margin-top: 6px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
@@ -635,8 +673,11 @@
 
       </div>
 
+        </div>
+      </section>
+
       <!-- Footer Buttons -->
-      <div style="padding: 16px 28px; border-top: 1px solid var(--border); background: var(--surface-strong); display: flex; justify-content: flex-end; align-items: center;">
+      <div class="claim-editor-footer">
         <div style="display: flex; gap: 12px;">
           <button type="button" class="btn-premium btn-secondary" onclick="closeAddPendingClaimModal()" style="width: auto !important; padding: 0 20px; height: 42px; cursor: pointer;">Hủy bỏ</button>
           <button id="btnSubmitAddPendingClaim" type="button" class="btn-premium" onclick="saveAddPendingClaimFromModal()" style="width: auto !important; padding: 0 28px; height: 42px; font-weight: 800; background: var(--primary-gradient); color: #080b11; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
@@ -1632,12 +1673,13 @@
   <script src="js/features/claims/creation-form.js"></script>
   <script src="js/features/admin/users.js"></script>
   <script src="js/features/auth/login.js"></script>
-  <script src="js/features/claims/pending-editor.js"></script>
+  <script src="js/features/claims/editor-workspace.js?v=20261022-workspace"></script>
+  <script src="js/features/claims/pending-editor.js?v=20261022-workspace"></script>
   <script src="js/features/claims/notes.js"></script>
   <script src="js/features/claims/excel-import.js"></script>
   <script src="js/features/claims/pending-register.js"></script>
   <script src="js/features/claims/pending-controls.js"></script>
-  <script src="js/features/dashboard/workspace.js"></script>
+  <script src="js/features/dashboard/workspace.js?v=20261022-claim-editor"></script>
   <script src="js/features/claims/requested-items.js"></script>
   <script src="js/features/claims/ocr.js"></script>
   <script src="js/features/claims/case-management.js"></script>
