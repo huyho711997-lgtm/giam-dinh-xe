@@ -10,6 +10,7 @@
   --ton-green: #80c4a6;
   --ton-rose: #e3a095;
   --ton-action: #d0b47e;
+  --ton-action-hover: #b99b65;
   --ton-action-text: #1e2d29;
   --ton-shadow: 0 10px 32px rgba(0, 0, 0, .12);
 }
@@ -23,9 +24,14 @@ body.light-mode :is(.gdv-report-premium-shell:has(#gdvReportHeroBanner), .ton-re
   --ton-gold-bg: #f8f3e8;
   --ton-green: #28765e;
   --ton-rose: #b45b4f;
-  --ton-action: #293f36;
+  --ton-action: #8a6a32;
+  --ton-action-hover: #725526;
   --ton-action-text: #fffaf0;
-  --ton-shadow: 0 8px 30px rgba(45, 56, 40, .035);
+  --ton-ink: #30332f;
+  --ton-muted: #77776d;
+  --ton-line: #e7e3d9;
+  --ton-soft: #f7f4ed;
+  --ton-shadow: 0 8px 30px rgba(62, 51, 31, .04);
 }
 
 /* The shell selector keeps the redesign on this report only. */

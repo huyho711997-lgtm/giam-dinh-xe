@@ -1,7 +1,7 @@
 :is(#addPendingClaimModalOverlay,#tndsAdvanceDialog,.ce-document-menu) {
-  --ce-paper:#fffefb; --ce-background:#f2f5ef; --ce-soft:#f7f8f3; --ce-ink:#283b36; --ce-muted:#65766f;
-  --ce-line:#d9e1d7; --ce-gold:#ad761d; --ce-gold-soft:#fff3d9; --ce-green:#168052;
-  --ce-action:#293f36; --ce-action-text:#fffaf0; --ce-shadow:0 8px 30px rgba(45,56,40,.035);
+  --ce-paper:#fffefb; --ce-background:#f7f4ed; --ce-soft:#f7f4ed; --ce-ink:#30332f; --ce-muted:#77776d;
+  --ce-line:#e7e3d9; --ce-gold:#ad761d; --ce-gold-soft:#fff3d9; --ce-green:#168052;
+  --ce-action:#8a6a32; --ce-action-hover:#725526; --ce-action-text:#fffaf0; --ce-shadow:0 8px 30px rgba(62,51,31,.04);
   --ce-menu-shadow:0 18px 48px rgba(23,39,31,.14),0 3px 10px rgba(23,39,31,.04);
   --text-main:var(--ce-ink); --text-soft:var(--ce-muted); --border:var(--ce-line); --input-bg:var(--ce-paper);
   --input-focus-bg:var(--ce-paper); --bg-soft:var(--ce-paper);
@@ -10,7 +10,7 @@
 body:not(.light-mode) :is(#addPendingClaimModalOverlay,#tndsAdvanceDialog,.ce-document-menu) {
   --ce-paper:#121e27; --ce-background:#0d171e; --ce-soft:#172730; --ce-ink:#f0f2eb; --ce-muted:#a2afaf;
   --ce-line:#2a3d46; --ce-gold:#e0bb78; --ce-gold-soft:#2c2b21; --ce-green:#80c4a6;
-  --ce-action:#d0b47e; --ce-action-text:#1e2d29; --ce-shadow:0 10px 32px rgba(0,0,0,.12);
+  --ce-action:#d0b47e; --ce-action-hover:#e1c78e; --ce-action-text:#1e2d29; --ce-shadow:0 10px 32px rgba(0,0,0,.12);
   --ce-menu-shadow:0 18px 48px rgba(0,0,0,.32),0 3px 10px rgba(0,0,0,.12);
 }
 body.claim-editor-open { overflow:hidden; }

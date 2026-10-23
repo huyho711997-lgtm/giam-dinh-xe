@@ -32,7 +32,7 @@
 .pending-workspace .pending-action-btn--import { border-color: var(--ton-action); background: var(--ton-action); color: var(--ton-action-text); }
 .pending-workspace .pending-action-btn--danger { color: var(--ton-rose); }
 .pending-workspace .pending-action-btn:hover { border-color: var(--ton-gold); background: var(--ton-soft); box-shadow: none; transform: none; }
-.pending-workspace .pending-action-btn--import:hover { background: var(--ton-action); border-color: var(--ton-action); filter: brightness(1.12); }
+.pending-workspace .pending-action-btn--import:hover { background: var(--ton-action-hover, var(--ton-action)); border-color: var(--ton-action-hover, var(--ton-action)); }
 .pending-workspace .pending-action-btn:hover .pending-action-btn__icon { color: inherit; background: none; transform: none; }
 .pending-workspace .pending-filter-toolbar {
   --filter-h: 40px; display: grid; grid-template-columns: minmax(240px, 1fr) auto 40px; gap: 8px;
