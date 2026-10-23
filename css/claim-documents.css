@@ -8,6 +8,7 @@
 .claim-document-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 0; border-top:1px solid var(--ce-line); }
 .claim-document-row > div,.claim-document-row > span { min-width:0; overflow-wrap:anywhere; }
 .claim-document-row strong { font-size:13px; }
+.claim-document-actions { display:flex; align-items:center; flex-shrink:0; flex-wrap:wrap; gap:8px; }
 .claim-document-row p { margin:6px 0 0; color:var(--ce-muted); font-size:11px; }
 @media(max-width:600px) { .claim-documents-body { padding:16px; } .claim-document-row { flex-wrap:wrap; } }
 .claim-documents { --sf-paper:var(--ce-paper); --sf-ink:var(--ce-ink); --sf-line:var(--ce-line); --sf-soft:var(--ce-soft); --sf-gold:var(--ce-gold); --sf-action:var(--ce-action); --sf-action-hover:var(--ce-action-hover); --sf-action-text:var(--ce-action-text); }

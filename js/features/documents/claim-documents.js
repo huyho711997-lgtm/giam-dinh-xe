@@ -8,11 +8,12 @@ const ClaimDocuments = (() => {
   const currentUser = () => firebase.auth().currentUser;
   const element = (tag, text, className) => { const node=document.createElement(tag); if(text) node.textContent=text; if(className) node.className=className; return node; };
   function message(text) { const node=document.getElementById('claimDocumentsMessage'); if(node) node.textContent=text; }
-  async function request(action, id, payload = {}, owner = currentUser()?.uid) {
+  async function request(action, id, payload = {}, owner = currentUser()?.uid, signal) {
     if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(endpoint())) throw new Error('Kho Drive hồ sơ chưa được kích hoạt. Quản trị viên cần kết nối dịch vụ lưu tài liệu.');
     const user=currentUser(); if (!user || user.uid !== owner) throw new Error('Phiên đăng nhập đã thay đổi.');
     const token=await user.getIdToken();
-    const response=await fetch(endpoint(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,action,claimId:id,token}),credentials:'omit',redirect:'follow',signal:AbortSignal.timeout(180000)});
+    const timeout=AbortSignal.timeout(180000);
+    const response=await fetch(endpoint(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,action,claimId:id,token}),credentials:'omit',redirect:'follow',signal:signal ? AbortSignal.any([signal,timeout]) : timeout});
     if(!response.ok) throw new Error('Không kết nối được kho Drive. Vui lòng thử lại.');
     let result; try { result=await response.json(); } catch (_) { throw new Error('Dịch vụ Drive chưa được triển khai đúng. Liên hệ quản trị viên.'); }
     if(currentUser()?.uid !== owner) throw new Error('Phiên đăng nhập đã thay đổi.');
@@ -48,6 +49,19 @@ const ClaimDocuments = (() => {
       const url=URL.createObjectURL(new Blob([bytes],{type:result.mimeType}));
       const link=element('a');link.href=url;link.download=result.name;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
     } catch(error) {message(error.message);} finally {button.disabled=false;}
+  }
+  function preview(id,file) {
+    const owner=currentUser()?.uid;
+    let unsubscribe;
+    SharedFormsViewer.open({...file,source:'drive',originalName:file.name},null,{
+      onClose:()=>unsubscribe?.(),
+      loadBytes:async signal => {
+        const result=await request('download',id,{fileId:file.id},owner,signal);
+        const bytes=Uint8Array.from(atob(result.data),character=>character.charCodeAt(0));
+        return bytes.buffer;
+      }
+    });
+    unsubscribe=firebase.auth().onAuthStateChanged?.(user=>{if(user?.uid !== owner)SharedFormsViewer.close();});
   }
   async function upload(files,id) {
     if(busy)return; busy=true;
@@ -87,7 +101,9 @@ const ClaimDocuments = (() => {
       for(const file of result.files.sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)))) {
         const row=element('div',null,'claim-document-row'),copy=element('div');
         copy.append(element('strong',file.name),element('p',(file.source === 'word' ? 'Word đã xuất' : 'Tài liệu tải lên')+' · '+Math.ceil(file.size/1024)+' KB · '+new Date(file.createdAt).toLocaleString('vi-VN')));
-        const button=element('button','Tải xuống','sf-button');button.type='button';button.onclick=()=>download(id,file,button);row.append(copy,button);list.append(row);
+        const actions=element('div',null,'claim-document-actions');
+        const view=element('button','Xem','sf-button');view.type='button';view.title='Xem '+file.name;view.onclick=()=>preview(id,file);
+        const button=element('button','Tải xuống','sf-button');button.type='button';button.onclick=()=>download(id,file,button);actions.append(view,button);row.append(copy,actions);list.append(row);
       }
       message(result.files.length ? result.files.length+' tệp đã lưu trên Drive.' : 'Chưa có tài liệu trên Drive.');
     } catch(error){if(version === generation)message(error.message);}

@@ -22,6 +22,7 @@ Trạng thái: mã nguồn đã tích hợp; chưa có dịch vụ được tri�
 - Ba luồng Word (hướng dẫn thu thập hồ sơ, trưng cầu, tạm ứng TNDS) tiếp tục tải về máy và lưu thêm vào Drive khi đã cấu hình endpoint.
 - Nếu lưu Drive lỗi, tab tài liệu có **Thử lưu lại** trong phiên hiện tại. Thử lại sử dụng cùng mã thao tác để tránh bản trùng do mất phản hồi. Đóng hoặc tải lại trang sẽ mất tệp chờ trong bộ nhớ; có thể tải lại tệp Word đã tải về máy.
 - Không tạo liên kết Drive công khai. Người dùng tải qua dịch vụ đã xác thực; họ không cần quyền trực tiếp trong Drive của chủ tài khoản.
+- Nút **Xem** mở trình xem chung của ứng dụng: ảnh, PDF, Word DOCX, Excel XLS/XLSX và TXT. Có thu phóng, chọn trang tính, in và tải bản gốc. Word DOC cũ dùng trình xem Drive, cần đăng nhập tài khoản Google có quyền trực tiếp với tệp. Không gửi tài liệu riêng tới trình xem Office công khai.
 - Danh sách UID cho phép là lớp giới hạn bổ sung. Quyền truy cập từng hồ sơ dựa trên Firebase Database Rules hiện có: cần kiểm tra các rules đó thực sự giới hạn hồ sơ theo mô hình phân quyền của đơn vị. Không cấp quyền sửa Script Properties cho người dùng thông thường.
 
 ## Xác nhận trước khi sử dụng thật

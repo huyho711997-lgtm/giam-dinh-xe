@@ -81,13 +81,12 @@ const SharedFormsViewer = (() => {
   }
   async function render(state, config) {
     const file = state.file;
-    let original;
-    const originalBytes = () => original ||= bytes(file,config,state.controller.signal);
-    const printFile = await SharedFormsPrint.resolve(file,config,state.controller.signal,originalBytes);
+    const originalBytes = state.readOriginal;
+    const printFile = state.loadBytes ? null : await SharedFormsPrint.resolve(file,config,state.controller.signal,originalBytes);
     if (current !== state) return;
     state.wordPdf = !!printFile;
     const suffix = printFile ? 'pdf' : SharedFormsStore.extension(file.originalName || file.name);
-    if (!printFile && ((file.source === 'drive' && !config?.apiKey) || suffix === 'doc' || (file.source === 'drive' && !['pdf','word','sheet','image','text'].includes(SharedFormsStore.kind(file))))) { basicViewer(state); return; }
+    if (!printFile && ((file.source === 'drive' && !config?.apiKey && !state.loadBytes) || suffix === 'doc' || (file.source === 'drive' && !['pdf','word','sheet','image','text'].includes(SharedFormsStore.kind(file))))) { basicViewer(state); return; }
     const data = printFile ? await bytes(printFile,config,state.controller.signal) : await originalBytes();
     if (current !== state || state.basic) return;
     state.status.textContent = 'Đang dựng trang…';
@@ -97,7 +96,8 @@ const SharedFormsViewer = (() => {
       await loadScript('https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js',() => !!window.pdfjsLib);
       if (current !== state || state.basic) return;
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-      state.pdf = await pdfjsLib.getDocument({data,isEvalSupported:false,ownerDocument:doc}).promise;
+      // The PDF worker transfers its input buffer; preserve the original for downloading.
+      state.pdf = await pdfjsLib.getDocument({data:data.slice(0),isEvalSupported:false,ownerDocument:doc}).promise;
       if (current !== state || state.basic) { state.pdf.destroy(); return; }
       if (state.pdf.numPages > 100) throw new Error('Tài liệu trên 100 trang. Vui lòng tải về để xem và in.');
       let pixels = 0;
@@ -197,7 +197,17 @@ const SharedFormsViewer = (() => {
     state.overlay.querySelector('[data-sf-provider-mask]').hidden = false;
     SharedFormsControls.enhance(state.overlay);
   }
-  async function download(file) {
+  async function download(file, options = {}) {
+    if (options.loadBytes) {
+      try {
+        const data = await options.loadBytes();
+        const objectUrl = URL.createObjectURL(new Blob([data],{type:file.mimeType}));
+        const link = document.createElement('a'); link.href = objectUrl; link.download = file.originalName || file.name;
+        document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl),60000);
+      } catch (error) { if (error.name !== 'AbortError') triggerToast(error.message || 'Không tải được tài liệu.','error'); }
+      return;
+    }
     const url = downloadUrl(file);
     if (!url) { triggerToast('Liên kết tải file không hợp lệ.','error'); return; }
     if (file.source === 'drive') {
@@ -220,7 +230,7 @@ const SharedFormsViewer = (() => {
     close();
     const overlay = document.createElement('dialog');
     overlay.className = 'sf-viewer';
-    overlay.setAttribute('aria-label','Xem biểu mẫu: ' + file.name);
+    overlay.setAttribute('aria-label','Xem tài liệu: ' + file.name);
     const icon = name => SharedFormsControls.icon(name);
     overlay.innerHTML = `
       <header class="sf-viewer-heading"><div><span class="sf-eyebrow">ĐANG XEM TÀI LIỆU</span><strong data-sf-title></strong></div><button class="sf-icon-button" data-sf-close type="button" aria-label="Đóng trình xem" title="Đóng trình xem">${icon('close')}</button></header>
@@ -234,8 +244,15 @@ const SharedFormsViewer = (() => {
       <p class="sf-viewer-status" role="status" aria-live="polite"></p>
       <div class="sf-document-surface"><iframe class="sf-viewer-frame" title="Nội dung biểu mẫu" sandbox="allow-same-origin allow-modals"></iframe><span class="sf-provider-mask" data-sf-provider-mask aria-hidden="true" hidden></span></div>`;
     overlay.querySelector('[data-sf-title]').textContent = file.name;
-    overlay.querySelector('[data-sf-download]').onclick = () => download(file);
-    const state = {overlay,file,frame:overlay.querySelector('iframe'),status:overlay.querySelector('[role="status"]'),print:overlay.querySelector('[data-sf-print]'),controller:new AbortController(),urls:[],overflow:document.body.style.overflow,previousFocus:document.activeElement,onClose:options.onClose};
+    const state = {overlay,file,frame:overlay.querySelector('iframe'),status:overlay.querySelector('[role="status"]'),print:overlay.querySelector('[data-sf-print]'),controller:new AbortController(),urls:[],overflow:document.body.style.overflow,previousFocus:document.activeElement,onClose:options.onClose,loadBytes:options.loadBytes};
+    state.readOriginal = () => {
+      if (!state.original) state.original = Promise.resolve().then(() => state.loadBytes ? state.loadBytes(state.controller.signal) : bytes(file,config,state.controller.signal)).then(data => {
+        if (data.byteLength > SharedFormsStore.maxBytes) throw new Error('File vượt giới hạn xem 20 MB.');
+        return data;
+      }).catch(error => { state.original = null; throw error; });
+      return state.original;
+    };
+    overlay.querySelector('[data-sf-download]').onclick = () => download(file,state.loadBytes ? {loadBytes:state.readOriginal} : {});
     current = state;
     document.body.appendChild(overlay);
     overlay.showModal();
@@ -253,7 +270,11 @@ const SharedFormsViewer = (() => {
     if (file.source === 'drive' && config?.apiKey) { fallback.hidden = false; fallback.onclick = () => { state.controller.abort(); state.print.disabled = true; basicViewer(state); }; }
     overlay.addEventListener('cancel',event => { event.preventDefault(); close(); });
     overlay.addEventListener('close',() => { if (current === state) close(); });
-    overlay.addEventListener('keydown',event => printShortcut(state,event));
+    overlay.addEventListener('keydown',event => {
+      event.stopPropagation();
+      if (event.key === 'Escape') { event.preventDefault(); close(); }
+      else printShortcut(state,event);
+    });
     SharedFormsControls.enhance(overlay);
     render(state,config).catch(error => { if (current === state && !state.basic && error.name !== 'AbortError') { state.print.disabled = true; state.status.textContent = error.message + ' Bạn có thể tải về để xem và in.'; } });
   }
