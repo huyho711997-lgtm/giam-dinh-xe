@@ -471,11 +471,13 @@ function collectionGuideReport(error) { if(typeof triggerToast==='function') tri
 function collectionGuideFilename(snapshot) { return ('Huong-dan-thu-thap-ho-so_'+(snapshot.claim.number||snapshot.claim.plate)).replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').slice(0,180)+'.docx'; }
 async function exportCollectionGuideWord(savedSnapshot) {
   if(collectionGuideBusy) return;
+  const driveContext=typeof ClaimDocuments !== 'undefined' ? ClaimDocuments.capture() : null;
   collectionGuideBusy=true;
   try {
     if(!savedSnapshot){const draft=collectionGuideDraft;await collectionGuidePrepareContact();if(draft && collectionGuideDraft!==draft)return;}
     const snapshot=savedSnapshot || collectionGuideSnapshot(),blob=await buildCollectionGuideWord(snapshot),url=URL.createObjectURL(blob),link=document.createElement('a');
     link.href=url;link.download=collectionGuideFilename(snapshot);document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    if(driveContext) await ClaimDocuments.saveWord(blob,collectionGuideFilename(snapshot),driveContext);
   } catch(error) {collectionGuideReport(error);} finally {collectionGuideBusy=false;}
 }
 async function previewCollectionGuide() {

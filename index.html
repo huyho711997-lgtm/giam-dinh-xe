@@ -34,6 +34,7 @@
 <link rel="stylesheet" href="css/pending-workspace.css">
 <link rel="stylesheet" href="css/shared-forms.css?v=20261022-actions-inline">
 <link rel="stylesheet" href="css/claim-editor.css?v=20261022-premium">
+<link rel="stylesheet" href="css/claim-documents.css">
 </head>
 <body>
 
@@ -295,6 +296,7 @@
           <button id="tabBtn_Financial" type="button" onclick="switchEditClaimTab('Financial')" class="edit-tab-btn">
             <span>Bồi thường, PASC & Thanh toán</span>
           </button>
+          <button id="tabBtn_Documents" type="button" onclick="switchEditClaimTab('Documents')" class="edit-tab-btn"><span>Tài liệu hồ sơ</span></button>
           <button id="tabBtn_AuthorityRequest" type="button" onclick="switchEditClaimTab('AuthorityRequest')" class="edit-tab-btn"><span>Trưng cầu hồ sơ</span></button>
           <button id="tabBtn_CollectionGuide" type="button" onclick="switchEditClaimTab('CollectionGuide')" class="edit-tab-btn">
             <span>Hướng dẫn thu thập hồ sơ</span>
@@ -304,6 +306,7 @@
       <!-- Body Scrollable Area -->
       <div class="claim-editor-content">
 
+        <div id="tabPane_Documents" class="edit-tab-pane" style="display:none"></div>
         <div id="tabPane_AuthorityRequest" class="edit-tab-pane" style="display:none">
           <div class="authority-request-header">
             <div class="authority-request-heading">
@@ -1707,6 +1710,7 @@
   <script src="js/features/admin/carpla-source.js"></script>
   <script src="js/features/documents/shared-forms-controls.js"></script>
   <script src="js/features/documents/shared-forms-store.js"></script>
+  <script src="js/features/documents/claim-documents.js"></script>
   <script src="js/features/documents/shared-forms-print.js"></script>
   <script src="js/features/documents/shared-forms-viewer.js"></script>
   <script src="js/features/documents/shared-forms.js?v=20261022-pagination-scroll"></script>

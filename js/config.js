@@ -1,5 +1,6 @@
 
     const CONFIG = {
+      CLAIM_DOCUMENTS_ENDPOINT: '', // Google Apps Script deployment /exec URL after owner authorization.
       FIREBASE: {
         apiKey: "AIzaSyCZoQ3_YFxGLPb7eRJ6Ming0mghMUafSKI",
         authDomain: "doi-chieu-gara.firebaseapp.com",

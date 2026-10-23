@@ -338,6 +338,7 @@ function tndsAdvanceFilename(claim) {
 }
 async function exportTndsAdvanceWord(savedSnapshot) {
   if(tndsAdvanceBusy) return;
+  const driveContext=typeof ClaimDocuments !== 'undefined' ? ClaimDocuments.capture() : null;
   tndsAdvanceBusy=true;const button=document.getElementById('tndsAdvanceExportButton');if(button) button.disabled=true;
   try {
     if(!savedSnapshot){const draft=collectionGuideDraft;await collectionGuidePrepareContact();if(draft && collectionGuideDraft!==draft)return;}
@@ -345,6 +346,7 @@ async function exportTndsAdvanceWord(savedSnapshot) {
     link.href=url;link.download=tndsAdvanceFilename(snapshot.claim);document.body.append(link);link.click();link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),60000);closeTndsAdvanceDialog();
     if(typeof triggerToast==='function') triggerToast('Đã xuất thông báo tạm ứng TNDS.','success');
+    if(driveContext) await ClaimDocuments.saveWord(blob,tndsAdvanceFilename(snapshot.claim),driveContext);
   } catch(error) {collectionGuideReport(error);}
   finally {tndsAdvanceBusy=false;if(button?.isConnected) button.disabled=false;}
 }

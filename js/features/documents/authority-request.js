@@ -247,6 +247,7 @@ async function buildAuthorityRequestWord(snapshot){
 }
 async function exportAuthorityRequestWord(savedSnapshot){
   if(authorityRequestBusy)return;
+  const driveContext=typeof ClaimDocuments !== 'undefined' ? ClaimDocuments.capture() : null;
   const draft=collectionGuideDraft;authorityRequestBusy=true;clearAuthorityRequestFeedback();authorityRequestSetBusy(true);
   try{
     const snapshot=savedSnapshot || authorityRequestSnapshot();authorityRequestAssertReviewed(snapshot);
@@ -260,6 +261,7 @@ async function exportAuthorityRequestWord(savedSnapshot){
     if(preview && collectionGuideDraft===draft)closeCollectionGuidePreview();
     if(collectionGuideDraft===draft){switchEditClaimTab('AuthorityRequest');document.getElementById('authorityRequestMessage')?.scrollIntoView({block:'center'});}
     triggerToast('Đã tạo công văn Word. Có thể bấm Tải tệp Word để tải lại.','success');
+    if(driveContext) await ClaimDocuments.saveWord(blob,filename,driveContext);
   }catch(error){if(collectionGuideDraft===draft)authorityRequestShowError(error);else collectionGuideReport(error);}
   finally{authorityRequestBusy=false;authorityRequestSetBusy(false);}
 }
