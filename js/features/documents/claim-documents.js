@@ -80,29 +80,14 @@ const ClaimDocuments = (() => {
     const owner=currentUser()?.uid;
     SharedFormsViewer.open({...file,source:'drive',originalName:file.name},null,{loadBytes:async signal=>{if(currentUser()?.uid!==owner)throw new Error('Phiên đăng nhập đã thay đổi.');return (await readFile(id,file,false,signal)).arrayBuffer();}});
   }
-  function confirmRemoval(files){
-    return new Promise(resolve=>{
-      const dialog=element('dialog',null,'sf-dialog claim-document-confirm');
-      dialog.setAttribute('aria-labelledby','claimDocumentConfirmTitle');
-      dialog.setAttribute('aria-describedby','claimDocumentConfirmMessage');
-      const form=element('form',null,'sf-dialog-form'),header=element('header'),titles=element('div');
-      titles.append(element('small','TÀI LIỆU HỒ SƠ'));
-      const title=element('h2','Xóa '+files.length+' tệp?');title.id='claimDocumentConfirmTitle';titles.append(title);
-      const close=button('×',()=>dialog.close('cancel'));close.setAttribute('aria-label','Đóng xác nhận');header.append(titles,close);
-      const description=element('p','Các tệp sau sẽ được chuyển vào Thùng rác Google Drive. Bạn có thể khôi phục từ Drive.','claim-document-confirm-note');description.id='claimDocumentConfirmMessage';
-      const names=element('ul',null,'claim-document-confirm-files');
-      files.slice(0,5).forEach(file=>names.append(element('li',file.name)));
-      if(files.length>5)names.append(element('li','Và '+(files.length-5)+' tệp khác…'));
-      const footer=element('footer'),cancel=button('Hủy bỏ',()=>dialog.close('cancel'));
-      const confirm=button('Chuyển vào Thùng rác',()=>dialog.close('confirm'),'sf-button claim-document-confirm-submit');footer.append(cancel,confirm);
-      form.onsubmit=event=>event.preventDefault();form.append(header,description,names,footer);dialog.append(form);
-      const returnFocus=document.activeElement;
-      dialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();dialog.close('cancel');}});
-      dialog.addEventListener('cancel',event=>{event.preventDefault();dialog.close('cancel');});
-      dialog.addEventListener('click',event=>{if(event.target===dialog){const bounds=dialog.getBoundingClientRect();if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom)dialog.close('cancel');}});
-      dialog.addEventListener('close',()=>{if(confirmDialog===dialog)confirmDialog=null;dialog.remove();if(returnFocus?.isConnected)returnFocus.focus({preventScroll:true});resolve(dialog.returnValue==='confirm');},{once:true});
-      document.body.append(dialog);confirmDialog=dialog;dialog.showModal();cancel.focus();
-    });
+  async function confirmRemoval(files){
+    let dialog;
+    try{return await showPremiumConfirmModal({
+      eyebrow:'TÀI LIỆU HỒ SƠ',title:'Xóa '+files.length+' tệp?',
+      message:'Các tệp sau sẽ được chuyển vào Thùng rác Google Drive. Bạn có thể khôi phục từ Drive.',
+      items:files.map(file=>file.name),confirmText:'Chuyển vào Thùng rác',
+      onOpen:node=>{dialog=node;confirmDialog=node;}
+    });}finally{if(confirmDialog===dialog)confirmDialog=null;}
   }
   async function processFiles(id,files,owner,action){
     const state=entry(id),failures=[];let cursor=0;state.total=files.length;state.done=0;

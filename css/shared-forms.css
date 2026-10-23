@@ -114,6 +114,16 @@ body:not(.light-mode) :is(.sf-workspace,.sf-dialog,.sf-viewer,.sf-select-menu,.s
 .sf-dialog label { display:flex; flex-direction:column; gap:9px; font-size:12px; font-weight:700; }
 .sf-dialog input,.sf-dialog textarea { width:100%; min-height:42px; padding:11px 13px; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-soft); color:var(--sf-ink); font-family:inherit; font-size:12px; }
 .sf-dialog textarea { resize:vertical; } .sf-dialog footer { justify-content:flex-end; padding-top:14px; border-top:1px solid var(--sf-line); }
+.sf-confirm { width:min(510px,calc(100vw - 28px)); }
+.sf-confirm::backdrop { background:#25231d75; backdrop-filter:blur(4px); }
+.sf-confirm header { align-items:flex-start; }
+.sf-confirm header > .sf-button { min-width:34px; min-height:34px; padding:0 9px; font-size:20px; }
+.sf-confirm-note { margin:0; color:var(--sf-muted); font-size:12px; line-height:1.8; }
+.sf-confirm-items { margin:0; padding:12px 16px 12px 32px; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-soft); max-height:190px; overflow:auto; font-size:12px; line-height:1.8; overflow-wrap:anywhere; }
+.sf-confirm-items li + li { margin-top:5px; }
+.sf-confirm-submit { background:#b83b36; border-color:#b83b36; color:#fff; }
+.sf-confirm-submit:hover { background:#982d29; border-color:#982d29; color:#fff; }
+@media(max-width:700px) { .sf-confirm footer { flex-wrap:wrap; } }
 .sf-file-pick { padding:20px; border:1px dashed var(--sf-gold); border-radius:12px; background:var(--sf-gold-bg); } .sf-file-pick span { color:var(--sf-muted); font-size:10.5px; font-weight:500; } .sf-dialog input[type="file"] { padding:8px; background:var(--sf-paper); }
 .sf-dialog progress { width:100%; height:9px; accent-color:var(--sf-green); } .sf-feedback { margin:0; color:var(--sf-rose); white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; line-height:1.8; } .sf-feedback:empty { display:none; }
 .sf-select-wrap { display:inline-flex; position:relative; width:100%; min-width:0; }

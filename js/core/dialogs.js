@@ -1,3 +1,62 @@
+    let premiumConfirmationSequence = 0;
+    function showPremiumConfirmModal({title, message, confirmText = 'Xác nhận', eyebrow = 'XÁC NHẬN THAO TÁC', items = [], onOpen}) {
+      document.querySelectorAll('dialog.sf-confirm[open]').forEach(dialog => dialog.close('cancel'));
+      return new Promise(resolve => {
+        const make = (tag, text, className) => {
+          const node = document.createElement(tag);
+          if (text) node.textContent = text;
+          if (className) node.className = className;
+          return node;
+        };
+        const dialog = make('dialog', null, 'sf-dialog sf-confirm');
+        const id = 'premiumConfirmation' + (++premiumConfirmationSequence);
+        dialog.setAttribute('aria-labelledby', id + 'Title');
+        dialog.setAttribute('aria-describedby', id + 'Message');
+        const form = make('form', null, 'sf-dialog-form');
+        const header = make('header'), titles = make('div');
+        const heading = make('h2', title || 'Xác nhận thao tác');
+        heading.id = id + 'Title';
+        titles.append(make('small', eyebrow), heading);
+        const action = (text, callback, className = 'sf-button') => {
+          const button = make('button', text, className);
+          button.type = 'button'; button.onclick = callback;
+          return button;
+        };
+        const close = action('×', () => dialog.close('cancel'));
+        close.setAttribute('aria-label', 'Đóng xác nhận');
+        header.append(titles, close);
+        const description = make('p', message, 'sf-confirm-note');
+        description.id = id + 'Message';
+        form.append(header, description);
+        if (items.length) {
+          const list = make('ul', null, 'sf-confirm-items');
+          items.slice(0, 5).forEach(item => list.append(make('li', String(item))));
+          if (items.length > 5) list.append(make('li', 'Và ' + (items.length - 5) + ' mục khác…'));
+          form.append(list);
+        }
+        const footer = make('footer');
+        const cancel = action('Hủy bỏ', () => dialog.close('cancel'));
+        footer.append(cancel, action(confirmText, () => dialog.close('confirm'), 'sf-button sf-confirm-submit'));
+        form.append(footer); form.onsubmit = event => event.preventDefault(); dialog.append(form);
+        const returnFocus = document.activeElement;
+        dialog.addEventListener('keydown', event => {
+          event.stopPropagation();
+          if (event.key === 'Escape') { event.preventDefault(); dialog.close('cancel'); }
+        });
+        dialog.addEventListener('cancel', event => { event.preventDefault(); dialog.close('cancel'); });
+        dialog.addEventListener('click', event => {
+          if (event.target !== dialog) return;
+          const bounds = dialog.getBoundingClientRect();
+          if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close('cancel');
+        });
+        dialog.addEventListener('close', () => {
+          dialog.remove();
+          if (returnFocus?.isConnected) returnFocus.focus({preventScroll:true});
+          resolve(dialog.returnValue === 'confirm');
+        }, {once:true});
+        document.body.append(dialog); dialog.showModal(); onOpen?.(dialog); cancel.focus();
+      });
+    }
 
 
     

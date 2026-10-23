@@ -1412,8 +1412,12 @@ function updateUndoRedoButtonsState() {
 }
 
 
-function clearDrawingCanvas() {
-  if (confirm('Bạn có chắc chắn muốn xóa toàn bộ nét vẽ và thiết lập lại sơ đồ?')) {
+async function clearDrawingCanvas() {
+  if (await showPremiumConfirmModal({
+    eyebrow:'SƠ ĐỒ HIỆN TRƯỜNG', title:'Xóa toàn bộ nét vẽ?',
+    message:'Toàn bộ nét vẽ trên sơ đồ đang mở sẽ được xóa. Chọn Hủy bỏ để tiếp tục chỉnh sửa.',
+    confirmText:'Xóa nét vẽ'
+  })) {
     sceneShapes = [];
     selectedShapeId = null;
     updateSelectionBadge();
@@ -1898,9 +1902,17 @@ async function saveSceneDrawing() {
 
 async function removeSceneDiagram() {
   if(!hasUserPermission('pending','edit'))return triggerToast('Bạn không có quyền xoá sơ đồ.','error');
-  if(!confirm('Xoá sơ đồ hiện trường đã lưu của số HSBT này?'))return;
+  const claimContext=editingPendingClaimId,bindingKey=claimDocumentStore.binding?.key,owner=firebase.auth().currentUser?.uid;
+  if(!await showPremiumConfirmModal({
+    eyebrow:'SƠ ĐỒ HIỆN TRƯỜNG', title:'Xóa sơ đồ đã lưu?',
+    message:'Sơ đồ hiện trường đã lưu của hồ sơ này sẽ được xóa. Bạn cần vẽ và lưu lại nếu muốn sử dụng sơ đồ mới.',
+    confirmText:'Xóa sơ đồ'
+  }))return;
+  const sameContext=()=>editingPendingClaimId===claimContext&&claimDocumentStore.binding?.key===bindingKey&&firebase.auth().currentUser?.uid===owner;
+  if(!sameContext()||!hasUserPermission('pending','edit'))return;
   try {
     await flushClaimDocumentAutoSave({guide:false});
+    if(!sameContext())return;
     const binding=claimDocumentStore.binding;
     if(binding && canAutoSaveClaimDocuments()) {
       const reference=currentClaimDocumentReference();
