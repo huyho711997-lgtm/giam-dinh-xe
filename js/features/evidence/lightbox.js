@@ -1,4 +1,6 @@
-
+    let lightboxDocumentOptions = null;
+    let lightboxLoadSequence = 0;
+    let lightboxReturnFocus = null;
 
     function applyLightboxTransform() {
       const img = document.getElementById('lightboxImg');
@@ -33,9 +35,26 @@
     }
 
 
-    function openLightbox(imageSource, indexOrUrl = 0, requestIndex = null) {
+    function openLightbox(imageSource, indexOrUrl = 0, requestIndex = null, options = null) {
       const lightboxContainer = document.getElementById('lightbox');
       if (!lightboxContainer) return;
+      lightboxContainer.setAttribute('role','dialog');
+      lightboxContainer.setAttribute('aria-modal','true');
+      lightboxContainer.setAttribute('aria-label','Xem hình ảnh');
+      if (!lightboxContainer.dataset.focusReady) {
+        lightboxContainer.dataset.focusReady='true';
+        lightboxContainer.addEventListener('keydown',event=>{
+          if(event.key!=='Tab')return;
+          event.stopPropagation();
+          const buttons=[...lightboxContainer.querySelectorAll('button')].filter(button=>!button.disabled&&button.getClientRects().length);
+          if(!buttons.length)return;
+          if(event.shiftKey&&document.activeElement===buttons[0]){event.preventDefault();buttons.at(-1).focus();}
+          else if(!event.shiftKey&&document.activeElement===buttons.at(-1)){event.preventDefault();buttons[0].focus();}
+        });
+      }
+      lightboxDocumentOptions?.onClose?.();
+      lightboxDocumentOptions = options;
+      lightboxReturnFocus = document.activeElement;
 
       if (Array.isArray(imageSource)) {
         lightboxUrls = imageSource;
@@ -50,19 +69,26 @@
       lightboxRotation = 0;
       updateLightboxContent();
       lightboxContainer.classList.add('show');
+      lightboxContainer.querySelector('button')?.focus({preventScroll:true});
     }
 
 
     function closeLightbox() {
+      lightboxLoadSequence++;
+      const options = lightboxDocumentOptions;
+      lightboxDocumentOptions = null;
       const lightboxContainer = document.getElementById('lightbox');
       if (lightboxContainer) lightboxContainer.classList.remove('show');
       const img = document.getElementById('lightboxImg');
-      if (img) { img.src = ''; img.style.transform = ''; }
+      if (img) { img.removeAttribute('src'); img.removeAttribute('aria-busy'); img.style.transform = ''; }
       lightboxUrls = [];
       lightboxCurrentIndex = 0;
       lightboxRequestIndex = null;
       lightboxZoomLevel = 1;
       lightboxRotation = 0;
+      options?.onClose?.();
+      if (lightboxReturnFocus?.isConnected) lightboxReturnFocus.focus({preventScroll:true});
+      lightboxReturnFocus = null;
     }
 
 
@@ -73,7 +99,21 @@
       lightboxRotation = 0;
       applyLightboxTransform();
       
-      img.src = lightboxUrls[lightboxCurrentIndex] || '';
+      if(lightboxUrls[lightboxCurrentIndex])img.src=lightboxUrls[lightboxCurrentIndex];else img.removeAttribute('src');
+      img.alt = lightboxDocumentOptions?.labels?.[lightboxCurrentIndex] || 'Ảnh phóng to';
+      const sequence = ++lightboxLoadSequence, position = lightboxCurrentIndex, options = lightboxDocumentOptions;
+      if (options?.loadImage) {
+        img.setAttribute('aria-busy','true');
+        Promise.resolve().then(() => options.loadImage(position)).then(url => {
+          if (sequence !== lightboxLoadSequence || options !== lightboxDocumentOptions) return;
+          lightboxUrls[position] = url; img.src = url; img.removeAttribute('aria-busy');
+          const label=document.getElementById('lightboxCounterLabel');if(label)label.textContent='ẢNH '+(position+1)+' / '+lightboxUrls.length+' · '+(options.labels?.[position]||'');
+        }).catch(error => {
+          if(sequence !== lightboxLoadSequence)return;
+          img.removeAttribute('aria-busy');
+          const label=document.getElementById('lightboxCounterLabel');if(label)label.textContent=error.message || 'Không tải được ảnh.';
+        });
+      }
       
       const counterLabel = document.getElementById('lightboxCounterLabel');
       if (counterLabel) {
@@ -93,6 +133,7 @@
             const thumb = document.createElement('img');
             thumb.className = `lightbox-thumb-dot ${idx === lightboxCurrentIndex ? 'active' : ''}`;
             thumb.src = url;
+            if (!url) thumb.removeAttribute('src');
             thumb.onclick = (e) => {
               e.stopPropagation();
               lightboxCurrentIndex = idx;

@@ -5,22 +5,22 @@ import vm from 'node:vm';
 import crypto from 'node:crypto';
 const source=fs.readFileSync(new URL('../google-apps-script/claim-documents/Code.gs',import.meta.url),'utf8');
 const iterator=items=>({hasNext:()=>items.length>0,next:()=>items.shift()});
-function service({uid='allowed',claim={bienSo:'TEST'},networkError=false}={}) {
-  let driveCalls=0,created=0;
+function service({uid='allowed',claim={bienSo:'TEST'},networkError=false,belongs=false,uploadedBy='allowed',profileRole='user'}={}) {
+  let driveCalls=0,created=0,trashed=false,locks=0;
   const props={FIREBASE_API_KEY:'test',FIREBASE_DATABASE_URL:'https://test.firebaseio.com',ALLOWED_UIDS:'allowed',ROOT_FOLDER_ID:'root'};
   const saved={getId:()=> 'saved',getName:()=> 'test.pdf',getSize:()=>1,getMimeType:()=> 'application/pdf',getDateCreated:()=> new Date(0),getDescription:()=>JSON.stringify({uploadedBy:'allowed',requestId:'same-request-123456'}),isTrashed:()=>false};
-  const group={getId:()=> 'correct-group',getFiles:()=>iterator([saved]),createFile:()=>{created++;throw Error('Unexpected duplicate');}};
+  const group={getId:()=> 'correct-group',getFiles:()=>iterator([saved]),getFilesByName:()=>iterator([saved]),createFile:()=>{created++;throw Error('Unexpected duplicate');}};
   const claimFolder={setDescription:()=>{},getFoldersByName:()=>iterator([group])};
   const context=vm.createContext({
     PropertiesService:{getScriptProperties:()=>({getProperty:key=>props[key]})},
-    UrlFetchApp:{fetch:url=>{if(networkError)throw Error('secret-token-in-url');return {getResponseCode:()=>200,getContentText:()=>JSON.stringify(url.includes('accounts:lookup')?{users:[{localId:uid}]}:claim)};}},
-    DriveApp:{Access:{PRIVATE:'private'},getFolderById:()=>{driveCalls++;return {getSharingAccess:()=> 'private',searchFolders:()=>iterator([claimFolder])};},getFileById:()=>({getParents:()=>iterator([{getId:()=> 'foreign-group'}]),getBlob:()=>{throw Error('Must not read foreign bytes');}})},
-    LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},
-    Utilities:{DigestAlgorithm:{SHA_256:'sha256'},computeDigest:(_,value)=>[...crypto.createHash('sha256').update(value).digest()],base64Decode:value=>[...Buffer.from(value,'base64')]},
+    UrlFetchApp:{fetch:url=>{if(networkError)throw Error('secret-token-in-url');return {getResponseCode:()=>200,getContentText:()=>JSON.stringify(url.includes('accounts:lookup')?{users:[{localId:uid}]}:url.includes('/profile.json')?{role:profileRole}:claim)};}},
+    DriveApp:{Access:{PRIVATE:'private'},getFolderById:()=>{driveCalls++;return {getSharingAccess:()=> 'private',searchFolders:()=>iterator([claimFolder])};},getFileById:()=>({getParents:()=>iterator([{getId:()=> belongs?'correct-group':'foreign-group'}]),isTrashed:()=>false,getSize:()=>1,getDescription:()=>JSON.stringify({uploadedBy}),setTrashed:value=>{trashed=value;},getMimeType:()=> 'image/jpeg',getThumbnail:()=>({getContentType:()=> 'image/jpeg',getBytes:()=>[1,2]}),getBlob:()=>{throw Error('Must not read original bytes for a thumbnail');}})},
+    LockService:{getScriptLock:()=>({tryLock:()=>{locks++;return true;},releaseLock:()=>{}})},
+    Utilities:{DigestAlgorithm:{SHA_256:'sha256'},computeDigest:(_,value)=>[...crypto.createHash('sha256').update(value).digest()],base64Decode:value=>[...Buffer.from(value,'base64')],base64Encode:value=>Buffer.from(value).toString('base64')},
     ContentService:{MimeType:{JSON:'json'},createTextOutput:body=>({setMimeType:()=>body})}
   });
   vm.runInContext(source,context);
-  return {call:request=>JSON.parse(context.doPost({postData:{contents:JSON.stringify({token:'test',claimId:'claim-one',...request})}})),driveCalls:()=>driveCalls,created:()=>created};
+  return {call:request=>JSON.parse(context.doPost({postData:{contents:JSON.stringify({token:'test',claimId:'claim-one',...request})}})),driveCalls:()=>driveCalls,created:()=>created,trashed:()=>trashed,locks:()=>locks};
 }
 test('unknown user cannot reach Drive',()=>{const s=service({uid:'other'});assert.equal(s.call({action:'list'}).ok,false);assert.equal(s.driveCalls(),0);});
 test('missing claim is denied before Drive access',()=>{const s=service({claim:null});assert.equal(s.call({action:'list'}).ok,false);assert.equal(s.driveCalls(),0);});
@@ -28,6 +28,12 @@ test('claim path injection is denied',()=>{const s=service();assert.equal(s.call
 test('download cannot read a file from a different claim folder',()=>{const s=service();const result=s.call({action:'download',fileId:'foreign'});assert.equal(result.ok,false);assert.match(result.error,/Không có quyền/);});
 test('retry with the same request ID returns saved file without creating a duplicate',()=>{const s=service();const result=s.call({action:'upload',source:'upload',name:'test.pdf',data:'YQ==',requestId:'same-request-123456'});assert.equal(result.ok,true);assert.equal(result.file.id,'saved');assert.equal(s.created(),0);});
 test('authentication network errors do not expose token-bearing URLs',()=>{const s=service({networkError:true});const result=s.call({action:'list'});assert.equal(result.ok,false);assert.doesNotMatch(result.error,/secret-token/);});
+test('delete cannot reach a file outside the current claim',()=>{const s=service();assert.equal(s.call({action:'remove',fileId:'foreign'}).ok,false);assert.equal(s.trashed(),false);});
+test('uploader can move their file to recoverable Drive trash',()=>{const s=service({belongs:true});assert.equal(s.call({action:'remove',fileId:'mine'}).ok,true);assert.equal(s.trashed(),true);});
+test('ordinary users cannot delete files uploaded by someone else',()=>{const s=service({belongs:true,uploadedBy:'other'});assert.equal(s.call({action:'remove',fileId:'other-file'}).ok,false);assert.equal(s.trashed(),false);});
+test('administrator can remove a file from this claim',()=>{const s=service({belongs:true,uploadedBy:'other',profileRole:'admin'});assert.equal(s.call({action:'remove',fileId:'other-file'}).ok,true);assert.equal(s.trashed(),true);});
+test('thumbnail reads use the small image and do not take the global upload lock',()=>{const s=service({belongs:true});const result=s.call({action:'thumbnail',fileId:'image'});assert.equal(result.ok,true);assert.equal(result.data,'AQI=');assert.equal(s.locks(),0);});
+test('listing does not hold the upload lock',()=>{const s=service();assert.equal(s.call({action:'list'}).ok,true);assert.equal(s.locks(),0);});
 
 function client() {
   const requests=[];
@@ -36,7 +42,7 @@ function client() {
     firebase:{auth:()=>({currentUser:{uid:context.uid,getIdToken:async()=> 'token'}})},
     uid:'first-user',crypto,AbortSignal,triggerToast:()=>{},
     FileReader:class {readAsDataURL(){this.result='data:application/octet-stream;base64,YQ==';this.onload();}},
-    fetch:async(_,options)=>{requests.push(JSON.parse(options.body));return {ok:true,json:async()=>({ok:true})};}
+    fetch:async(_,options)=>{requests.push(JSON.parse(options.body));return {ok:true,json:async()=>({ok:true,file:{id:'saved-word',name:'test.docx'}})};}
   });
   vm.runInContext(fs.readFileSync(new URL('../js/features/documents/claim-documents.js',import.meta.url),'utf8')+'\nthis.documents=ClaimDocuments;',context);
   return {context,requests};

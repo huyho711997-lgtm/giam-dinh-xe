@@ -110,7 +110,7 @@ let cachedCasesPayload = null;
       const lightboxEl = document.getElementById('lightbox');
       const isLightboxOpen = lightboxEl && lightboxEl.classList.contains('show');
       if (isLightboxOpen) {
-        if (event.key === 'Escape') { closeLightbox(); return; }
+        if (event.key === 'Escape') { event.preventDefault(); closeLightbox(); return; }
         if (event.key === 'ArrowLeft') { event.preventDefault(); navigateLightbox(-1); return; }
         if (event.key === 'ArrowRight') { event.preventDefault(); navigateLightbox(1); return; }
         if (event.key === '+' || event.key === '=') { event.preventDefault(); lightboxZoom(1); return; }

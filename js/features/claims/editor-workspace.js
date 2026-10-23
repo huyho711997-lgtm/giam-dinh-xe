@@ -159,6 +159,7 @@ const ClaimEditorWorkspace = (() => {
   document.addEventListener('keydown',event => {
     const root = overlay();
     if (!opened || event.defaultPrevented || !root?.contains(event.target)) return;
+    if (document.getElementById('lightbox')?.classList.contains('show')) return;
     const tab = event.target.closest('.edit-tab-btn');
     if (tab && ['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) {
       const buttons = [...root.querySelectorAll('.edit-tab-btn')];

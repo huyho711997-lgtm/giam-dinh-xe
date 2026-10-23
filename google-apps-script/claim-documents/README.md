@@ -1,6 +1,6 @@
 # Kích hoạt tài liệu hồ sơ trên Google Drive
 
-Trạng thái: mã nguồn đã tích hợp; chưa có dịch vụ được triển khai hay thư mục thực tế được tạo. Cần chủ tài khoản Drive thực hiện cấp quyền Google một lần. Không dùng thư mục biểu mẫu công khai cho hồ sơ.
+Trạng thái của ứng dụng hiện tại: đã cấp quyền và triển khai dịch vụ, URL trong `CONFIG.CLAIM_DOCUMENTS_ENDPOINT`. Các bước bên dưới dành cho cài đặt mới; khi cập nhật mã, dùng Manage deployments để tạo phiên bản mới trên cùng URL. Không dùng thư mục biểu mẫu công khai cho hồ sơ.
 
 ## Thiết lập bằng tài khoản sở hữu Drive
 
@@ -18,6 +18,9 @@ Trạng thái: mã nguồn đã tích hợp; chưa có dịch vụ được tri�
 
 - Mở hồ sơ đã lưu → **Tài liệu hồ sơ** → chọn nhiều file, tối đa 10 MB/file.
 - Mỗi hồ sơ có thư mục theo biển số + số hồ sơ + khóa nhận diện ổn định. Sửa biển số không chuyển tài liệu sang hồ sơ khác. Khóa Firebase khác nhau luôn được phân thư mục khác nhau.
+- Giao diện chia Hình ảnh / Tài liệu, có bộ lọc và kiểu xem Thẻ / Danh sách. Ảnh dùng lightbox chung với phóng to, xoay, chuyển ảnh; Office/PDF tiếp tục dùng trình xem tài liệu.
+- Nút Xóa yêu cầu xác nhận và chuyển tệp vào Thùng rác Drive. Dịch vụ kiểm tra tệp thuộc hồ sơ, người tải lên hoặc vai trò quản trị từ Firebase trước khi xóa.
+- Tải tối đa hai file đồng thời; danh sách cập nhật trực tiếp từ kết quả tải lên, không gọi lại toàn bộ danh sách sau mỗi đợt. Cache metadata 60 giây trong phiên theo UID + mã hồ sơ; nút Làm mới chủ động đọc lại Drive. Ảnh thu nhỏ tải khi xuất hiện, tối đa hai yêu cầu cùng lúc. Bộ nhớ đệm file tối đa 40 MB, xóa khi đổi tài khoản; không lưu nội dung hồ sơ vào localStorage.
 - Các thư mục con: **Tai lieu tai len**, **Word da xuat**.
 - Ba luồng Word (hướng dẫn thu thập hồ sơ, trưng cầu, tạm ứng TNDS) tiếp tục tải về máy và lưu thêm vào Drive khi đã cấu hình endpoint.
 - Nếu lưu Drive lỗi, tab tài liệu có **Thử lưu lại** trong phiên hiện tại. Thử lại sử dụng cùng mã thao tác để tránh bản trùng do mất phản hồi. Đóng hoặc tải lại trang sẽ mất tệp chờ trong bộ nhớ; có thể tải lại tệp Word đã tải về máy.
@@ -29,6 +32,6 @@ Trạng thái: mã nguồn đã tích hợp; chưa có dịch vụ được tri�
 
 Đăng nhập tài khoản được cấp UID, mở một hồ sơ mẫu, tải file nhỏ, làm mới, tải lại file và so nội dung. Xuất từng loại Word rồi kiểm tra thư mục Word đã xuất. Dùng hồ sơ thứ hai để xác nhận tách thư mục; tài khoản không được cấp UID phải bị từ chối. Kiểm tra tab Network cho POST từ GitHub Pages tới `/exec`; Google Workspace có thể chặn triển khai Anyone và cần quản trị viên cho phép hoặc thay bằng backend được tổ chức phê duyệt.
 
-Giới hạn: Apps Script có hạn mức thực thi của tài khoản Google; hiện giới hạn 10 MB/file, gửi tuần tự, không tải tiếp phần dở dang. Chưa bổ sung xóa tài liệu, chia sẻ công khai hay đồng bộ các file Word đã xuất trước khi kích hoạt.
+Giới hạn: Apps Script có hạn mức thực thi của tài khoản Google; giới hạn 10 MB/file, không tải tiếp phần dở dang. Thời gian thực tế phụ thuộc mạng và Drive. Không chia sẻ công khai hay đồng bộ các file Word đã xuất trước khi kích hoạt. Thumbnails Drive chưa sẵn sàng sẽ dùng bản gốc, vẫn qua dịch vụ xác thực.
 
 Tài liệu gốc: https://developers.google.com/apps-script/guides/web · https://developers.google.com/apps-script/guides/content · https://firebase.google.com/docs/reference/rest/auth#section-get-account-info
