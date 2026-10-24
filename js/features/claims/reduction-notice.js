@@ -144,11 +144,14 @@ const ClaimReductionNotice = (() => {
         const to = addresses(inputs.to.value), cc = addresses(inputs.cc.value);
         if (!to.length) throw new Error('Nhập email đơn vị cấp đơn trước khi mở Outlook.');
         if (!inputs.subject.value.trim() || !inputs.body.value.trim()) throw new Error('Nhập tiêu đề và nội dung thông báo.');
-        const url = new URL('https://outlook.cloud.microsoft/mail/deeplink/compose');
-        url.searchParams.set('to',to.join(';')); if (cc.length) url.searchParams.set('cc',cc.join(';'));
-        url.searchParams.set('subject',inputs.subject.value.replace(/[\r\n]/g,' ')); url.searchParams.set('body',inputs.body.value);
-        if (url.href.length > 12000) throw new Error('Nội dung dài. Dùng Sao chép nội dung rồi dán vào Outlook.');
-        remember(); window.open(url.href,'_blank','noopener,noreferrer');
+        const params = {to:to.join(';'),subject:inputs.subject.value.replace(/[\r\n]/g,' '),body:inputs.body.value};
+        if (cc.length) params.cc = cc.join(';');
+        // Outlook's compose route keeps form-encoded '+' characters as literal text.
+        // Encode spaces as %20 and actual plus signs as %2B in every parameter.
+        const query = Object.entries(params).map(([key,text]) => encodeURIComponent(key) + '=' + encodeURIComponent(text)).join('&');
+        const url = 'https://outlook.cloud.microsoft/mail/deeplink/compose?' + query;
+        if (url.length > 12000) throw new Error('Nội dung dài. Dùng Sao chép nội dung rồi dán vào Outlook.');
+        remember(); window.open(url,'_blank','noopener,noreferrer');
         feedback.textContent = 'Đã yêu cầu mở cửa sổ soạn thư. Kiểm tra tài khoản gửi, người nhận và bấm Gửi trong Outlook. Nếu chưa thấy thư, cho phép mở cửa sổ mới hoặc sao chép nội dung.';
       } catch (error) { feedback.textContent = error.message; }
     },true);
