@@ -30,12 +30,13 @@ const SharedForms = (() => {
     closeDialog();
     host = null;
   }
-  function makeDialog(title, markup) {
+  // Khung hộp thoại chung: đầu (chip icon + tiêu đề + mô tả + nút đóng) · thân cuộn · chân cố định.
+  function makeDialog(title, markup, options = {}) {
     closeDialog();
     const node = document.createElement('dialog');
-    node.className = 'sf-dialog';
+    node.className = 'sf-dialog sf-dialog-v2';
     node.setAttribute('aria-labelledby','sfDialogTitle');
-    node.innerHTML = '<form class="sf-dialog-form"><header><div><small>THƯ VIỆN BIỂU MẪU</small><h2 id="sfDialogTitle">' + escape(title) + '</h2></div><button type="button" class="sf-button" data-sf-cancel aria-label="Đóng">✕</button></header>' + markup + '<p class="sf-feedback" role="status" aria-live="polite"></p><footer><button type="button" class="sf-button" data-sf-cancel>Hủy</button><button type="submit" class="sf-button sf-primary">Lưu</button></footer></form>';
+    node.innerHTML = '<form class="sf-dialog-form"><header class="sf-dialog-head"><span class="sf-dialog-emblem" aria-hidden="true">' + icon(options.icon || 'file') + '</span><div><small>THƯ VIỆN BIỂU MẪU</small><h2 id="sfDialogTitle">' + escape(title) + '</h2>' + (options.description ? '<p>' + escape(options.description) + '</p>' : '') + '</div><button type="button" class="sf-icon-button sf-dialog-close" data-sf-cancel aria-label="Đóng" title="Đóng (Esc)">' + icon('close') + '</button></header><div class="sf-dialog-body">' + markup + '<p class="sf-feedback" role="status" aria-live="polite"></p></div><footer class="sf-dialog-foot"><button type="button" class="sf-button" data-sf-cancel>Hủy</button><button type="submit" class="sf-button sf-primary">' + icon(options.submitIcon || 'check') + '<span data-sf-submit-label>' + escape(options.submit || 'Lưu') + '</span></button></footer></form>';
     document.body.appendChild(node);
     dialog = node;
     node.querySelectorAll('[data-sf-cancel]').forEach(button => button.onclick = closeDialog);
@@ -51,21 +52,44 @@ const SharedForms = (() => {
   }
   function detailsMarkup() {
     const categories = [...new Set(['Chưa phân loại','Nghiệp vụ bồi thường','Giám định hiện trường','Kế toán','Khác',...files.map(file => file.category).filter(Boolean)])];
-    return '<label>Tên hiển thị<input name="name" maxlength="200" placeholder="Dùng tên file nếu để trống"></label><label>Phân loại<select name="category" data-sf-select data-allow-custom="true" data-sf-label="Phân loại biểu mẫu" data-sf-description="Chọn hoặc tìm để thêm phân loại mới" data-sf-icon="tag">' + categories.map(value => '<option>' + escape(value) + '</option>').join('') + '</select></label><label>Ghi chú<textarea name="notes" maxlength="2000" rows="3" placeholder="Hướng dẫn sử dụng, phiên bản biểu mẫu…"></textarea></label>';
+    return '<label class="sf-field" data-sf-name-field><span class="sf-field-label">Tên hiển thị</span><input name="name" maxlength="200" placeholder="Dùng tên file nếu để trống"></label><label class="sf-field"><span class="sf-field-label">Phân loại</span><select name="category" data-sf-select data-allow-custom="true" data-sf-label="Phân loại biểu mẫu" data-sf-description="Chọn hoặc tìm để thêm phân loại mới" data-sf-icon="tag">' + categories.map(value => '<option>' + escape(value) + '</option>').join('') + '</select></label><label class="sf-field"><span class="sf-field-label">Ghi chú <em>Không bắt buộc</em></span><textarea name="notes" maxlength="2000" rows="3" placeholder="Hướng dẫn sử dụng, phiên bản biểu mẫu…"></textarea></label>';
   }
   function uploadDialog() {
     if (!SharedFormsStore.user()) { triggerToast('Vui lòng đăng nhập để tải file lên.','warning'); return; }
-    const node = makeDialog('Tải biểu mẫu lên','<label class="sf-file-pick">Chọn file hoặc kéo file vào đây<input name="files" type="file" multiple required accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp"><span>PDF, Word, Excel, CSV, TXT và ảnh · Tối đa 20 MB/file</span></label><p class="sf-note">Có thể chọn nhiều file. Tên hiển thị chỉ áp dụng khi tải một file; phân loại và ghi chú áp dụng cho tất cả.</p>' + detailsMarkup() + '<progress max="100" value="0" hidden aria-label="Tiến trình tải lên"></progress>');
+    const node = makeDialog('Tải biểu mẫu lên','<label class="sf-drop"><input name="files" type="file" multiple required accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp"><span class="sf-drop-icon" aria-hidden="true">' + icon('upload') + '</span><span class="sf-drop-copy"><strong>Kéo thả file vào đây hoặc <u>chọn từ máy</u></strong><small>PDF, Word, Excel, CSV, TXT và ảnh · tối đa 20 MB/file · chọn được nhiều file</small></span></label><ul class="sf-picked" data-sf-picked hidden></ul><p class="sf-field-hint" data-sf-multi-hint hidden>Tải nhiều file: dùng tên file gốc; phân loại và ghi chú áp dụng cho tất cả.</p>' + detailsMarkup() + '<div class="sf-upload-progress" hidden><progress max="100" value="0" aria-label="Tiến trình tải lên"></progress><span data-sf-progress-text></span></div>',{icon:'upload',description:'Thêm biểu mẫu vào thư viện dùng chung của ứng dụng.',submit:'Tải lên',submitIcon:'upload'});
     const form = node.querySelector('form');
     const status = node.querySelector('[role="status"]');
-    const submit = node.querySelector('[type="submit"]');
-    submit.textContent = 'Tải lên';
+    const submit = node.querySelector('[type="submit"]'), submitLabel = node.querySelector('[data-sf-submit-label]');
+    const picked = node.querySelector('[data-sf-picked]'), nameField = node.querySelector('[data-sf-name-field]'), multiHint = node.querySelector('[data-sf-multi-hint]');
     let pending = [];
-    form.elements.files.onchange = () => { pending = [...form.elements.files.files]; submit.textContent = 'Tải lên'; status.textContent = pending.length + ' file đã chọn'; };
-    const dropArea = node.querySelector('.sf-file-pick');
-    dropArea.ondragover = event => event.preventDefault();
+    // Danh sách file đã chọn: icon theo loại + tên + dung lượng + lỗi kiểm tra ngay khi chọn.
+    const showPicked = () => {
+      picked.hidden = !pending.length;
+      picked.innerHTML = pending.map((file,index) => {
+        let error = ''; try { SharedFormsStore.validateFile(file); } catch (problem) { error = problem.message; }
+        const kind = error ? 'invalid' : SharedFormsStore.kind({name:file.name,mimeType:file.type});
+        const badge = error ? (SharedFormsStore.extension(file.name).toUpperCase().slice(0,4) || 'FILE') : (icons[kind] || 'FILE');
+        return '<li class="' + (error ? 'is-invalid' : '') + '"><span class="sf-file-icon sf-kind-' + kind + '">' + escape(badge) + '</span><span class="sf-picked-copy"><strong>' + escape(file.name) + '</strong><small>' + escape(error || sizeText(file.size)) + '</small></span><button type="button" class="sf-icon-button sf-picked-remove" data-sf-unpick="' + index + '" aria-label="Bỏ chọn ' + escape(file.name) + '" title="Bỏ chọn">' + icon('close') + '</button></li>';
+      }).join('');
+      nameField.hidden = pending.length > 1; multiHint.hidden = pending.length <= 1;
+      status.textContent = '';
+      const invalid = picked.querySelectorAll('.is-invalid').length;
+      submitLabel.textContent = pending.length > 1 ? 'Tải lên ' + pending.length + ' file' : 'Tải lên';
+      if (invalid) status.textContent = invalid + ' file không đúng định dạng hoặc quá 20 MB – bấm × để bỏ chọn.';
+      submit.disabled = !pending.length || invalid > 0;
+    };
+    form.elements.files.onchange = () => { pending = [...form.elements.files.files]; showPicked(); };
+    // "pending" là nguồn dữ liệu khi tải lên, nên bỏ chọn chỉ cần xóa khỏi mảng.
+    picked.addEventListener('click',event => {
+      const remove = event.target.closest('[data-sf-unpick]'); if (!remove || node.dataset.busy) return;
+      pending.splice(Number(remove.dataset.sfUnpick),1); if (!pending.length) form.elements.files.value = '';
+      showPicked(); (picked.querySelector('[data-sf-unpick]') || dropArea.querySelector('input'))?.focus();
+    });
+    const dropArea = node.querySelector('.sf-drop');
+    dropArea.ondragover = event => { event.preventDefault(); dropArea.classList.add('is-dragging'); };
+    dropArea.ondragleave = () => dropArea.classList.remove('is-dragging');
     dropArea.ondrop = event => {
-      event.preventDefault();
+      event.preventDefault(); dropArea.classList.remove('is-dragging');
       if (node.dataset.busy || !event.dataTransfer?.files.length) return;
       form.elements.files.files = event.dataTransfer.files;
       form.elements.files.onchange();
@@ -75,15 +99,15 @@ const SharedForms = (() => {
       if (!pending.length) { status.textContent = 'Vui lòng chọn file cần tải lên.'; return; }
       try { pending.forEach(SharedFormsStore.validateFile); } catch (error) { status.textContent = error.message; return; }
       const details = {name:pending.length === 1 ? form.elements.name.value : '',category:form.elements.category.value,notes:form.elements.notes.value};
-      const progress = node.querySelector('progress');
+      const progress = node.querySelector('.sf-upload-progress progress'), progressBox = node.querySelector('.sf-upload-progress'), progressText = node.querySelector('[data-sf-progress-text]');
       const failed = [];
       const total = pending.length;
       let completed = 0;
       busy(node,true);
-      progress.hidden = false;
+      progressBox.hidden = false;
       for (const file of pending) {
         try {
-          status.textContent = 'Đang tải ' + file.name + '…';
+          progressText.textContent = 'Đang tải ' + (completed + failed.length + 1) + '/' + total + ': ' + file.name;
           await SharedFormsStore.upload(file,details,percent => { progress.value = percent; });
           completed++;
         } catch (error) { failed.push({file,message:error.message}); }
@@ -95,7 +119,7 @@ const SharedForms = (() => {
         triggerToast('Đã thêm ' + completed + ' biểu mẫu vào thư viện.');
       } else {
         pending = failed.map(item => item.file);
-        submit.textContent = 'Thử lại file lỗi';
+        submitLabel.textContent = 'Thử lại file lỗi'; showPicked(); progressBox.hidden = true;
         status.textContent = 'Đã tải ' + completed + '/' + total + ' file. ' + failed.map(item => item.file.name + ': ' + item.message).join('\n');
         if (dialog !== node) triggerToast('Có ' + failed.length + ' file chưa thêm được vào thư viện. Vui lòng mở lại trang biểu mẫu để thử lại.','error');
       }
@@ -103,7 +127,7 @@ const SharedForms = (() => {
   }
   function editDialog(file) {
     if (!SharedFormsStore.canManage(file)) return;
-    const node = makeDialog('Thông tin biểu mẫu',detailsMarkup());
+    const node = makeDialog('Thông tin biểu mẫu',detailsMarkup(),{icon:'tag',description:'Sửa tên hiển thị, phân loại và ghi chú của biểu mẫu.',submit:'Lưu thay đổi'});
     const form = node.querySelector('form');
     form.elements.name.value = file.name;
     form.elements.name.required = true;
@@ -127,7 +151,7 @@ const SharedForms = (() => {
   }
   async function settingsDialog() {
     if (!SharedFormsStore.admin()) return;
-    const node = makeDialog('Kết nối kho Google Drive','<p class="sf-note">Dán cùng thư mục và API key đã dùng ở mục “Biểu mẫu dùng chung” của dự án tra cứu phụ tùng để xem lại kho hiện có. Thư mục cần chia sẻ cho người có liên kết; Google Drive API cần được bật.</p><label>Tên kho<input name="folderName" maxlength="100" value="Biểu mẫu dùng chung"></label><label>Liên kết thư mục Google Drive<input name="folderId" required placeholder="https://drive.google.com/drive/folders/…"></label><label>Google Drive API key<input name="apiKey" type="password" required autocomplete="off"></label><p class="sf-note">File tải từ trang này được lưu vào thư viện của ứng dụng. Để thêm hoặc sửa file trong Google Drive, dùng nút “Mở thư mục Drive”.</p><button class="sf-button sf-danger" data-sf-unlink type="button" hidden>Gỡ kết nối kho Drive</button>');
+    const node = makeDialog('Kết nối kho Google Drive','<p class="sf-field-hint sf-callout">Dán cùng thư mục và API key đã dùng ở mục “Biểu mẫu dùng chung” của dự án tra cứu phụ tùng để xem lại kho hiện có. Thư mục cần chia sẻ cho người có liên kết; Google Drive API cần được bật.</p><label class="sf-field"><span class="sf-field-label">Tên kho</span><input name="folderName" maxlength="100" value="Biểu mẫu dùng chung"></label><label class="sf-field"><span class="sf-field-label">Liên kết thư mục Google Drive</span><input name="folderId" required placeholder="https://drive.google.com/drive/folders/…"></label><label class="sf-field"><span class="sf-field-label">Google Drive API key</span><input name="apiKey" type="password" required autocomplete="off"></label><p class="sf-note">File tải từ trang này được lưu vào thư viện của ứng dụng. Để thêm hoặc sửa file trong Google Drive, dùng nút “Mở thư mục Drive”.</p><button class="sf-button sf-danger" data-sf-unlink type="button" hidden>Gỡ kết nối kho Drive</button>',{icon:'folder',description:'Đồng bộ danh mục biểu mẫu từ thư mục Google Drive dùng chung.',submit:'Lưu kết nối'});
     const form = node.querySelector('form');
     const feedback = node.querySelector('[role="status"]');
     const preset = config || SharedFormsStore.defaultDriveConfig();
