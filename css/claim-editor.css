@@ -77,7 +77,11 @@ body.claim-editor-open { overflow:hidden; }
 .claim-editor-record { background:var(--ce-action); color:var(--ce-action-text); border-color:var(--ce-action); border-radius:15px; box-shadow:var(--ce-shadow); }
 .claim-editor-record .claim-editor-eyebrow { color:var(--ce-action-text); opacity:.7; }
 .claim-editor-record .claim-editor-plate { color:var(--ce-action-text); font-size:25px; }
-.claim-editor-record .claim-editor-status { color:var(--ce-action-text); background:color-mix(in srgb,var(--ce-action-text) 9%,transparent); border-color:color-mix(in srgb,var(--ce-action-text) 24%,transparent); }
+/* Badge trạng thái: màu lấy từ PENDING_STATUS_MAP (--status-color, đặt trong editor-workspace.js).
+   Nền sáng đặc để màu trạng thái đọc rõ trên thẻ nền vàng đậm, giống chip trạng thái ở danh sách hồ sơ. */
+.claim-editor-record .claim-editor-status { --status-color:#64748b; display:inline-flex; align-items:center; gap:6px; max-width:65%; padding:5px 9px 5px 8px; border:1px solid color-mix(in srgb,var(--status-color) 35%,transparent); border-radius:999px; background:color-mix(in srgb,var(--status-color) 12%,var(--ce-paper)); color:color-mix(in srgb,var(--status-color) 82%,var(--ce-ink)); font-size:9.5px; font-weight:800; letter-spacing:.01em; line-height:1.3; text-align:left; box-shadow:0 1px 2px rgba(0,0,0,.12); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.claim-editor-record .claim-editor-status::before { content:''; flex:0 0 6px; width:6px; height:6px; border-radius:50%; background:var(--status-color); box-shadow:0 0 0 2px color-mix(in srgb,var(--status-color) 22%,transparent); }
+body:not(.light-mode) .claim-editor-record .claim-editor-status { color:color-mix(in srgb,var(--status-color) 70%,#ffffff); }
 .claim-editor-sidebar-card { border-radius:15px; box-shadow:var(--ce-shadow); }
 .claim-editor-sidebar-card h4>svg { box-sizing:content-box; padding:6px; border:1px solid color-mix(in srgb,var(--ce-gold) 20%,transparent); border-radius:8px; background:var(--ce-gold-soft); }
 .claim-editor-main { border-radius:16px; box-shadow:var(--ce-shadow); }

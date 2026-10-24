@@ -66,7 +66,16 @@ const ClaimEditorWorkspace = (() => {
     });
     const status = document.getElementById('claimEditorStatus');
     const claim = currentClaim();
-    if (status) status.textContent = !claim ? 'Hồ sơ mới' : typeof PENDING_STATUS_MAP !== 'undefined' ? PENDING_STATUS_MAP[claim.trangThai]?.label || claim.trangThai || 'Mới' : claim.trangThai || 'Mới';
+    if (status) {
+      // Dùng chung bảng màu trạng thái với danh sách hồ sơ (PENDING_STATUS_MAP) để màu khớp nhau ở mọi nơi.
+      const map = typeof PENDING_STATUS_MAP !== 'undefined' ? PENDING_STATUS_MAP : {};
+      const key = claim && map[claim.trangThai] ? claim.trangThai : 'moi';
+      const config = map[key] || {};
+      status.textContent = !claim ? 'Hồ sơ mới' : config.label || claim.trangThai || 'Mới';
+      status.dataset.status = key;
+      status.style.setProperty('--status-color', config.color || '#64748b');
+      status.title = 'Trạng thái hồ sơ: ' + status.textContent;
+    }
   }
   function refreshNotes() {
     if (!opened) return;
