@@ -14,6 +14,12 @@ const ClaimReductionNotice = (() => {
   };
   const value = id => { const text = String(document.getElementById('modalPending' + id)?.value || '').trim(); return text === '—' ? '' : text; };
   const owner = () => firebase.auth().currentUser?.uid;
+  const envelope = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg>';
+  function refreshStage() {
+    const badge = document.getElementById('claimReductionStage');
+    const stage = document.getElementById('modalPendingReduction_stage')?.value || stages[0];
+    if (badge) { badge.textContent = stage; badge.dataset.stage = String(stages.indexOf(stage)); }
+  }
   function close() { if (dialog?.open) dialog.close(); }
   function load(data) {
     if (dialog) dialog.dataset.discard = 'true';
@@ -28,6 +34,7 @@ const ClaimReductionNotice = (() => {
     }
     const section = document.getElementById('claimReductionSection');
     if (section) SharedFormsControls.enhance(section);
+    refreshStage();
   }
   function getState() {
     for (const key of Object.keys(fields)) {
@@ -40,10 +47,21 @@ const ClaimReductionNotice = (() => {
     const pane = document.getElementById('tabPane_Financial');
     if (!pane || document.getElementById('claimReductionSection')) return;
     const section = node('section',null,'claim-editor-form-section claim-reduction-section'); section.id = 'claimReductionSection';
-    const header = node('header'), title = node('div');
-    title.append(node('h4','Thông báo giảm trừ / chế tài'),node('p','Soạn nhanh thông tin gửi đơn vị cấp đơn để phối hợp với khách hàng.'));
-    header.append(title);
+    const header = node('header'), title = node('div',null,'claim-reduction-heading');
+    const emblem = node('span',null,'claim-reduction-emblem'); emblem.innerHTML = envelope;
+    title.append(node('small','PHỐI HỢP ĐƠN VỊ CẤP ĐƠN'),node('h4','Thông báo giảm trừ / chế tài'),node('p','Ghi nhận nội dung xử lý và soạn thông báo cho đơn vị cấp đơn.'));
+    const badge = node('span',null,'claim-reduction-stage'); badge.id = 'claimReductionStage';
+    header.append(emblem,title,badge);
+    const context = node('div',null,'claim-reduction-context');
+    for (const [label,id,empty] of [['Phương tiện','modalPendingBienSo','Chưa có biển số'],['Đơn vị nhận thông tin','modalPendingDonViCapDon','Chưa có đơn vị cấp đơn']]) {
+      const item = node('div'), text = node('strong'); text.dataset.claimSummary = id; text.dataset.empty = empty;
+      text.textContent = document.getElementById(id)?.value || empty; item.append(node('span',label),text); context.append(item);
+    }
     const grid = node('div',null,'claim-editor-form-grid claim-reduction-fields');
+    const details = node('section',null,'claim-reduction-panel'), application = node('section',null,'claim-reduction-panel');
+    for (const [panel,number,label] of [[details,'01','Nội dung xử lý'],[application,'02','Mức áp dụng & trạng thái']]) {
+      const caption = node('h5'); caption.append(node('span',number),document.createTextNode(label)); panel.append(caption);
+    }
     for (const [key,label] of Object.entries(fields)) {
       const group = node('div',null,'form-group'), caption = node('label',label);
       const input = node(key === 'stage' ? 'select' : ['reason','basis'].includes(key) ? 'textarea' : 'input');
@@ -51,23 +69,23 @@ const ClaimReductionNotice = (() => {
       input.className = key === 'stage' ? '' : 'input-premium';
       if (key === 'stage') {
         stages.forEach(stage => { const option = node('option',stage); option.value = stage; input.append(option); });
-        input.dataset.sfSelect = ''; input.dataset.sfLabel = label; input.dataset.sfIcon = 'file';
+        input.dataset.sfSelect = ''; input.dataset.sfLabel = label; input.dataset.sfIcon = 'shield';
+        input.dataset.sfDescription = 'Trạng thái này được đưa vào nội dung thông báo.';
+        input.addEventListener('change',refreshStage);
       } else {
         input.maxLength = key === 'impact' ? 200 : 1500;
         if (input.tagName === 'TEXTAREA') input.rows = 3;
-        input.placeholder = ({reason:'Nhập lý do được ghi nhận trong hồ sơ',impact:'Ví dụ: 10% hoặc 2.000.000 đồng; để trống nếu chưa xác định',basis:'Điều khoản / tài liệu liên quan (nếu có)'})[key];
+        input.placeholder = ({reason:'Nhập lý do được ghi nhận trong hồ sơ',impact:'Nhập tỷ lệ (%) hoặc số tiền (VNĐ)',basis:'Điều khoản / tài liệu liên quan (nếu có)'})[key];
       }
       input.value = draft[key] || (key === 'stage' ? stages[0] : '');
-      group.append(caption,input); grid.append(group);
+      group.append(caption,input); (['reason','basis'].includes(key) ? details : application).append(group);
     }
+    const note = node('p','Nhập tỷ lệ hoặc số tiền theo hồ sơ. Trạng thái đã chọn sẽ xuất hiện trong thư để đơn vị cấp đơn nắm đúng tiến độ.','claim-reduction-panel-note'); application.append(note); grid.append(details,application);
     const footer = node('div',null,'claim-reduction-footer');
-    footer.append(node('p','Thông tin được lưu khi bấm Lưu cập nhật hồ sơ.','claim-editor-hint'),button('Soạn thông báo cấp đơn',compose,true));
-    section.append(header,grid,footer); pane.append(section); SharedFormsControls.enhance(section);
-    const summary = document.querySelector('#claimEditorSidebar .claim-editor-sidebar-card');
-    if (summary) {
-      const shortcut = button('Thông báo giảm trừ / chế tài',show);
-      shortcut.classList.add('claim-reduction-shortcut'); summary.append(shortcut);
-    }
+    const help = node('div'); help.append(node('strong','Xem lại nội dung trước khi gửi'),node('p','Thông tin được lưu khi bấm Lưu cập nhật hồ sơ.','claim-editor-hint'));
+    const create = button('',compose,true); create.innerHTML = envelope; create.append(node('span','Soạn thông báo cấp đơn'));
+    footer.append(help,create);
+    section.append(header,context,grid,footer); pane.append(section); SharedFormsControls.enhance(section); refreshStage();
   }
   function show() {
     switchEditClaimTab('Financial'); ClaimEditorWorkspace.showMain();
