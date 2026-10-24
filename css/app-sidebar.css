@@ -84,6 +84,16 @@ body.has-app-sidebar:not(.light-mode) .tasco-public-nav-wrapper { background: rg
 body.has-app-sidebar .tasco-public-nav-inner { height: 100%; min-height: 0; padding-top: 0 !important; padding-bottom: 0 !important; gap: 16px; }
 body.has-app-sidebar .tasco-public-nav-wrapper .nav-brand { display: none; }
 
+/* ==========================================================================
+   TOÀN MÀN HÌNH: bỏ giới hạn min(1660px, 96%) + căn giữa của .app-container / thanh trên.
+   Nội dung trải hết phần còn lại bên phải sidebar, chỉ chừa lề cố định --app-gutter.
+   ========================================================================== */
+body.has-app-sidebar { --app-gutter: 24px; }
+body.has-app-sidebar .app-container { width: 100%; max-width: none; margin: 0; padding: 20px var(--app-gutter) 64px; box-sizing: border-box; }
+body.has-app-sidebar .tasco-public-nav-inner { width: 100%; max-width: none; margin: 0; padding-left: var(--app-gutter) !important; padding-right: var(--app-gutter) !important; box-sizing: border-box; }
+body.has-app-sidebar :is(.workspace-grid, .sf-workspace, .pending-workspace) { max-width: none; }
+@media (min-width: 1800px) { body.has-app-sidebar { --app-gutter: 28px; } }
+
 /* Bên trái: đường dẫn "Nhóm › Trang" trên một dòng */
 .app-topbar-context { display: flex; align-items: center; gap: 12px; min-width: 0; margin-right: auto; }
 .app-topbar-menu {
@@ -147,7 +157,7 @@ body.has-app-sidebar .nav-user-copy em { margin-top: 1px; font-size: 9.5px; lett
   .app-sidebar-foot { display: none; }
   .app-topbar-menu { display: grid; }
   body.has-app-sidebar { --app-topbar-h: 60px; }
-  body.has-app-sidebar .tasco-public-nav-inner { padding-left: 12px !important; padding-right: 12px !important; }
+  body.has-app-sidebar { --app-gutter: 12px; }
 }
 @media (max-width: 560px) {
   .app-topbar-title :is(span, .app-topbar-sep) { display: none; }
