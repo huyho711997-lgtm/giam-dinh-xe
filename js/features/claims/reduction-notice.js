@@ -14,6 +14,7 @@ const ClaimReductionNotice = (() => {
   };
   const value = id => { const text = String(document.getElementById('modalPending' + id)?.value || '').trim(); return text === '—' ? '' : text; };
   const owner = () => firebase.auth().currentUser?.uid;
+  const rules = () => typeof ClaimReductionRules === 'undefined' ? null : ClaimReductionRules;
   const envelope = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg>';
   function refreshStage() {
     const badge = document.getElementById('claimReductionStage');
@@ -28,6 +29,7 @@ const ClaimReductionNotice = (() => {
       draft[key] = typeof data?.[key] === 'string' ? data[key].slice(0,key === 'signature' ? 16000 : 6000) : '';
     }
     if (!stages.includes(draft.stage)) draft.stage = stages[0];
+    rules()?.load(data?.rule || {});
     for (const key of Object.keys(fields)) {
       const input = document.getElementById('modalPendingReduction_' + key);
       if (input) input.value = draft[key] || '';
@@ -41,7 +43,25 @@ const ClaimReductionNotice = (() => {
       const input = document.getElementById('modalPendingReduction_' + key);
       if (input) draft[key] = input.value.trim();
     }
-    return {...draft};
+    const rule = rules()?.getState();
+    return rule && rule.items.length ? {...draft, rule} : {...draft};
+  }
+  // Điền Lý do / Căn cứ / Mức giảm trừ từ phần đối chiếu quy tắc; hỏi trước khi ghi đè nội dung tự nhập.
+  async function applyRuleTexts(generated) {
+    const targets = {reason:generated.reason, basis:generated.basis, impact:generated.impact};
+    const inputs = Object.fromEntries(Object.keys(targets).map(key => [key, document.getElementById('modalPendingReduction_' + key)]));
+    const overwritten = Object.keys(targets).filter(key => inputs[key]?.value.trim() && inputs[key].value.trim() !== targets[key] && inputs[key].dataset.autoFilled !== inputs[key].value);
+    if (overwritten.length && typeof showPremiumConfirmModal === 'function') {
+      const ok = await showPremiumConfirmModal({eyebrow:'THÔNG BÁO GIẢM TRỪ',title:'Thay nội dung đã nhập?',message:'Các ô sau đang có nội dung bạn tự nhập và sẽ được thay bằng nội dung theo quy tắc:',items:overwritten.map(key => fields[key]),confirmText:'Thay nội dung'});
+      if (!ok) return;
+    }
+    for (const [key,text] of Object.entries(targets)) {
+      const input = inputs[key]; if (!input) continue;
+      input.value = text; input.dataset.autoFilled = text;
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+    inputs.reason?.focus({preventScroll:true});
+    triggerToast('Đã điền nội dung theo Quy tắc bảo hiểm. Bạn có thể chỉnh sửa trước khi gửi.','success');
   }
   function mount() {
     const pane = document.getElementById('tabPane_Financial');
@@ -85,7 +105,9 @@ const ClaimReductionNotice = (() => {
     const help = node('div'); help.append(node('strong','Xem lại nội dung trước khi gửi'),node('p','Thông tin được lưu khi bấm Lưu cập nhật hồ sơ.','claim-editor-hint'));
     const create = button('',compose,true); create.innerHTML = envelope; create.append(node('span','Soạn thông báo cấp đơn'));
     footer.append(help,create);
-    section.append(header,context,grid,footer); pane.append(section); SharedFormsControls.enhance(section); refreshStage();
+    const ruleHost = node('div',null,'claim-reduction-rules');
+    section.append(header,context,ruleHost,grid,footer); pane.append(section);
+    rules()?.mount(ruleHost,{onApply:applyRuleTexts}); SharedFormsControls.enhance(section); refreshStage();
   }
   function show() {
     switchEditClaimTab('Financial'); ClaimEditorWorkspace.showMain();
@@ -100,6 +122,15 @@ const ClaimReductionNotice = (() => {
       date:value('NgayVTT'),assessor:value('GdvTiepNhan'),reason:state.reason,impact:state.impact,basis:state.basis,stage:state.stage,
       sender:String(activeUserProfile?.displayName || firebase.auth().currentUser?.displayName || value('GdvTiepNhan') || '')
     };
+    // Số liệu tính theo quy tắc (chỉ khi đã có tỷ lệ áp dụng và số tiền trước giảm trừ).
+    const evaluated = rules() && state.rule ? rules().evaluate(state.rule) : null;
+    const vnd = number => number.toLocaleString('vi-VN') + ' đ';
+    const money = evaluated?.applied && evaluated.base ? [
+      '- Số tiền bồi thường trước giảm trừ: ' + vnd(evaluated.base),
+      '- Số tiền giảm trừ (' + evaluated.applied.rate + '%): ' + vnd(evaluated.deduction),
+      '- Số tiền bồi thường sau giảm trừ: ' + vnd(evaluated.remain)
+    ] : [];
+    info.money = money;
     const facts = [
       ['Biển số xe',info.plate],['Khách hàng',info.customer],['Số HSBT',info.hsbt],['Mã vụ tổn thất',info.vtt],
       ['Hợp đồng bảo hiểm',info.policy],['Số GCNBH',info.certificate],['Ngày xảy ra tổn thất',info.date],
@@ -109,9 +140,12 @@ const ClaimReductionNotice = (() => {
       'Kính gửi ' + (info.unit || 'Anh/Chị phụ trách cấp đơn') + ',', '',
       'Bộ phận giám định gửi thông tin giảm trừ / chế tài của hồ sơ sau để đơn vị cấp đơn nắm thông tin:',
       '',...facts,'','NỘI DUNG GIẢM TRỪ / CHẾ TÀI',
-      '- Trạng thái: ' + info.stage,'- Lý do: ' + info.reason,
+      '- Trạng thái: ' + info.stage,
+      // Lý do nhiều dòng (điền từ quy tắc) được thụt lề thành các ý con cho dễ đọc trong email.
+      ...(info.reason.includes('\n') ? ['- Lý do:',...info.reason.split('\n').map(line => '   + ' + line.replace(/^\s*[-+•]\s*/,''))] : ['- Lý do: ' + info.reason]),
       '- Mức giảm trừ / chế tài: ' + (info.impact || 'Chưa xác định'),
-      ...(info.basis ? ['- Căn cứ / ghi nhận: ' + info.basis] : []),'',
+      ...(info.basis ? ['- Căn cứ / ghi nhận: ' + info.basis] : []),
+      ...money,'',
       'Kính đề nghị đơn vị cấp đơn nắm thông tin, phối hợp trao đổi với khách hàng và phản hồi nếu có thông tin cần bổ sung.',
       '', 'Trân trọng,', info.sender
     ].join('\n').trim();
