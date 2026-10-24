@@ -47,18 +47,53 @@
     }
 
 
+    // Mục menu: nút thật (bàn phím + trình đọc màn hình), icon cùng một kiểu; active theo tab hiện tại.
+    function renderHeaderSubmenuItems(items) {
+      return items.filter(item => item.show).map(item => {
+        const active = activeDashboardTab === item.tab;
+        return `<button type="button" role="menuitem" class="header-nav-submenu-item ${active ? 'active' : ''}" ${active ? 'aria-current="page"' : ''} onclick="navigateHeaderTab('${item.tab}')">
+                <span class="header-nav-submenu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${item.icon}</svg></span>
+                <span class="header-nav-submenu-copy">
+                  <span class="header-nav-submenu-title">${item.title}${item.badge ? `<span class="header-nav-new-badge">${item.badge}</span>` : ''}</span>
+                  <span class="header-nav-submenu-desc">${item.desc}</span>
+                </span>
+              </button>`;
+      }).join('');
+    }
+
+    function setHeaderSubmenuOpen(sub, open) {
+      sub.classList.toggle('open', open);
+      document.querySelector('[aria-controls="' + sub.id + '"]')?.setAttribute('aria-expanded', String(open));
+    }
+
     function toggleHeaderSubmenu(evt, submenuId) {
       if (evt) evt.stopPropagation();
       const sub = document.getElementById(submenuId);
-      const allSub = document.querySelectorAll('.header-nav-submenu');
-      allSub.forEach(s => {
-        if (s.id !== submenuId) s.classList.remove('open');
-      });
-
-      if (sub) {
-        sub.classList.toggle('open');
-      }
+      document.querySelectorAll('.header-nav-submenu').forEach(s => { if (s.id !== submenuId) setHeaderSubmenuOpen(s, false); });
+      if (!sub) return;
+      const open = !sub.classList.contains('open');
+      setHeaderSubmenuOpen(sub, open);
+      // Mở bằng bàn phím (Enter/Space) thì đưa tiêu điểm vào mục đầu tiên.
+      if (open && evt && evt.detail === 0) sub.querySelector('[role="menuitem"]')?.focus();
     }
+
+    // Phím tắt trong menu: ↑/↓/Home/End di chuyển, Esc đóng và trả tiêu điểm về nút mở.
+    document.addEventListener('keydown', event => {
+      const sub = event.target.closest?.('.header-nav-submenu') || (event.target.matches?.('.header-nav-trigger') ? document.getElementById(event.target.getAttribute('aria-controls')) : null);
+      if (!sub) return;
+      const items = [...sub.querySelectorAll('[role="menuitem"]')], index = items.indexOf(document.activeElement);
+      if (event.key === 'Escape' && sub.classList.contains('open')) {
+        event.preventDefault(); setHeaderSubmenuOpen(sub, false);
+        document.querySelector('[aria-controls="' + sub.id + '"]')?.focus();
+      } else if (['ArrowDown','ArrowUp','Home','End'].includes(event.key) && items.length) {
+        event.preventDefault();
+        if (!sub.classList.contains('open')) setHeaderSubmenuOpen(sub, true);
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : event.key === 'ArrowDown' ? (index + 1) % items.length : (index - 1 + items.length) % items.length;
+        items[next].focus();
+      } else if (event.key === 'Tab' && sub.classList.contains('open') && index !== -1) {
+        setHeaderSubmenuOpen(sub, false);
+      }
+    });
 
 
     function renderHeaderNavigationLinks() {
@@ -93,57 +128,21 @@
             <span class="nav-btn-text">Trang chủ</span>
           </button>
 
-          <!-- 2. QUẢN LÝ HỒ SƠ DROPDOWN GROUP (NƠI CHỨA BÁO CÁO GĐV & CÁC CHỨC NĂNG HỒ SƠ) -->
+          <!-- 2. QUẢN LÝ HỒ SƠ – menu thả xuống (css/header-navigation.css) -->
           ${showGroup1 ? `
           <div class="header-nav-dropdown-wrapper">
-            <button type="button" class="header-nav-btn ${isGroup1Active ? 'active' : ''}" onclick="toggleHeaderSubmenu(event, 'submenuClaimMgmt')">
+            <button type="button" id="headerNavClaimMgmtBtn" class="header-nav-btn header-nav-trigger ${isGroup1Active ? 'active' : ''}" aria-haspopup="menu" aria-expanded="false" aria-controls="submenuClaimMgmt" onclick="toggleHeaderSubmenu(event, 'submenuClaimMgmt')">
               <span class="nav-btn-text">Quản lý Hồ sơ</span>
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none" style="margin-left: -4px; margin-top: 2px;"><polygon points="5 9 19 9 12 16"></polygon></svg>
+              <svg class="header-nav-caret" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>
             </button>
-            <div id="submenuClaimMgmt" class="header-nav-submenu">
-              ${showList ? `
-              <div class="header-nav-submenu-item ${activeDashboardTab === 'list' ? 'active' : ''}" onclick="navigateHeaderTab('list')">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #3b82f6;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                <div>
-                  <div style="line-height: 1.2;">Hồ sơ giám định</div>
-                  <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Danh sách ca xe, PASC & duyệt HSBT</span>
-                </div>
-              </div>` : ''}
-              ${showPending ? `
-              <div class="header-nav-submenu-item ${activeDashboardTab === 'pending' ? 'active' : ''}" onclick="navigateHeaderTab('pending')">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--primary);"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-                <div>
-                  <div style="line-height: 1.2;">Hồ sơ bồi thường</div>
-                  <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Theo dõi tồn đọng & nhập Excel</span>
-                </div>
-              </div>` : ''}
-              ${showPending ? `
-              <div class="header-nav-submenu-item ${activeDashboardTab === 'pending_notes_tracker' ? 'active' : ''}" onclick="navigateHeaderTab('pending_notes_tracker')">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #10b981;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                <div>
-                  <div style="line-height: 1.2;">Tiến độ Hồ sơ Tồn</div>
-                  <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Theo dõi & ghi chú độc lập</span>
-                </div>
-              </div>` : ''}
-              ${(showPending || showList) ? `
-              <div class="header-nav-submenu-item ${activeDashboardTab === 'claim_cancellation' ? 'active' : ''}" onclick="navigateHeaderTab('claim_cancellation')">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #ef4444;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                <div>
-                  <div style="line-height: 1.2; display: flex; align-items: center; gap: 6px;">
-                    <span>Đề xuất hủy hồ sơ</span>
-                    <span class="header-nav-new-badge">MỚI</span>
-                  </div>
-                  <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Tổng hợp hồ sơ GĐV cần hủy</span>
-                </div>
-              </div>` : ''}
-              ${showReport ? `
-              <div class="header-nav-submenu-item ${activeDashboardTab === 'gdv_report' ? 'active' : ''}" onclick="navigateHeaderTab('gdv_report')">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="color: #a855f7;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                <div>
-                  <div style="line-height: 1.2;">Báo cáo & Thống kê GĐV</div>
-                  <span style="font-size: 10.5px; color: var(--text-soft); font-weight: 500;">Xem biểu đồ KPI & trích xuất báo cáo</span>
-                </div>
-              </div>` : ''}
+            <div id="submenuClaimMgmt" class="header-nav-submenu" role="menu" aria-labelledby="headerNavClaimMgmtBtn">
+              ${renderHeaderSubmenuItems([
+                {tab:'list', show:showList, title:'Hồ sơ giám định', desc:'Danh sách ca xe, PASC & duyệt HSBT', icon:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>'},
+                {tab:'pending', show:showPending, title:'Hồ sơ bồi thường', desc:'Theo dõi tồn đọng & nhập Excel', icon:'<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>'},
+                {tab:'pending_notes_tracker', show:showPending, title:'Tiến độ hồ sơ tồn', desc:'Theo dõi & ghi chú độc lập', icon:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'},
+                {tab:'claim_cancellation', show:showPending || showList, title:'Đề xuất hủy hồ sơ', desc:'Tổng hợp hồ sơ GĐV cần hủy', badge:'Mới', icon:'<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6m0-6 6 6"/>'},
+                {tab:'gdv_report', show:showReport, title:'Báo cáo & thống kê GĐV', desc:'Biểu đồ KPI & trích xuất báo cáo', icon:'<path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/>'}
+              ])}
             </div>
           </div>
           ` : ''}
@@ -189,7 +188,7 @@
 
     function navigateHeaderTab(tabName) {
       // Auto-close open dropdown submenus on item select
-      document.querySelectorAll('.header-nav-submenu').forEach(s => s.classList.remove('open'));
+      document.querySelectorAll('.header-nav-submenu').forEach(s => setHeaderSubmenuOpen(s, false));
 
       if (tabName === 'gdv_report') {
         activeGdvReportView = 'weekly_zone';

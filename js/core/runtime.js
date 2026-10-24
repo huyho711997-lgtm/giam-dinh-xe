@@ -173,7 +173,7 @@ let cachedCasesPayload = null;
     // Global listener to close open submenus when clicking outside
     document.addEventListener('click', function(e) {
       if (!e.target.closest('.header-nav-dropdown-wrapper')) {
-        document.querySelectorAll('.header-nav-submenu').forEach(s => s.classList.remove('open'));
+        document.querySelectorAll('.header-nav-submenu').forEach(s => typeof setHeaderSubmenuOpen === 'function' ? setHeaderSubmenuOpen(s, false) : s.classList.remove('open'));
       }
     });
 
