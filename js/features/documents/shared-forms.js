@@ -207,7 +207,7 @@ const SharedForms = (() => {
     categorySelect.value = category;
     const crumbs = host.querySelector('[data-sf-crumbs]');
     crumbs.hidden = source !== 'drive' || !config;
-    crumbs.innerHTML = stack.map((folder,index) => '<button class="sf-button" type="button" data-sf-crumb="' + index + '"' + (index === stack.length - 1 ? ' aria-current="page"' : '') + '>' + escape(folder.name) + '</button>').join('<span aria-hidden="true">/</span>');
+    crumbs.innerHTML = '<span class="sf-crumb-icon" aria-hidden="true">' + icon('folder') + '</span>' + stack.map((folder,index) => '<button class="sf-crumb" type="button" data-sf-crumb="' + index + '"' + (index === stack.length - 1 ? ' aria-current="page"' : '') + '>' + escape(folder.name) + '</button>').join('<span class="sf-crumb-sep" aria-hidden="true">›</span>');
     const driveLink = host.querySelector('[data-sf-drive-link]');
     driveLink.hidden = source !== 'drive' || !config;
     if (config) driveLink.href = 'https://drive.google.com/drive/folders/' + encodeURIComponent(stack.at(-1)?.id || config.folderId);
@@ -217,12 +217,8 @@ const SharedForms = (() => {
     const rows = visible();
     const pages = Math.max(1,Math.ceil(rows.length / pageSize));
     page = Math.min(page,pages);
-    host.querySelector('[data-sf-count]').textContent = rows.length + ' mục' + (source === 'app' ? ' · Đồng bộ dùng chung' : config ? ' · ' + config.folderName : '');
-    const documents = available().filter(file => SharedFormsStore.kind(file) !== 'folder');
-    host.querySelector('[data-sf-total]').textContent = documents.length;
-    host.querySelector('[data-sf-word-count]').textContent = documents.filter(file => SharedFormsStore.kind(file) === 'word').length;
-    host.querySelector('[data-sf-pdf-count]').textContent = documents.filter(file => ['pdf','image'].includes(SharedFormsStore.kind(file))).length;
-    host.querySelector('[data-sf-folder-count]').textContent = available().length - documents.length;
+    const folderCount = rows.filter(file => SharedFormsStore.kind(file) === 'folder').length;
+    host.querySelector('[data-sf-count]').textContent = (source === 'drive' && loading) ? 'Đang tải…' : (rows.length - folderCount) + ' biểu mẫu' + (folderCount ? ' · ' + folderCount + ' thư mục' : '');
     const catalogNote = host.querySelector('[data-sf-catalog-note]');
     const catalogAt = driveFiles.find(file => file.catalogAt)?.catalogAt;
     catalogNote.hidden = source !== 'drive' || !!config?.apiKey || !catalogAt;
@@ -270,14 +266,18 @@ const SharedForms = (() => {
     host = document.createElement('section');
     host.className = 'sf-workspace';
     host.setAttribute('aria-label','Biểu mẫu dùng chung');
+    // Bố cục: đầu trang (tiêu đề + thao tác) → một thẻ thư viện duy nhất (nguồn, lọc, đường dẫn, bảng, phân trang).
+    // Bỏ khối thống kê 4 thẻ; số lượng hiển thị gọn trong thanh nguồn (data-sf-count).
     host.innerHTML = `
-      <div class="sf-command-center">
-        <header class="sf-hero">
-          <div><div class="sf-eyebrow">${icon('shield')} THƯ VIỆN NGHIỆP VỤ · TASCO DLK</div><h1>Biểu mẫu dùng chung</h1><p>Tra cứu, quản lý và xem in tài liệu trong cùng một không gian.</p></div>
-          <div class="sf-toolbar"><button type="button" class="sf-button" data-sf-refresh>${icon('refresh')} Làm mới</button>${SharedFormsStore.admin() ? '<button type="button" class="sf-button" data-sf-settings>' + icon('folder') + ' Kết nối Drive</button>' : ''}<button type="button" class="sf-button sf-primary" data-sf-upload>${icon('upload')} Tải biểu mẫu lên</button></div>
-        </header>
-        <div class="sf-filter-hub">
-          <div class="sf-sources" role="group" aria-label="Nguồn biểu mẫu"><button class="sf-source-tab" type="button" data-sf-source="drive">${icon('folder')} Kho Google Drive</button><button class="sf-source-tab" type="button" data-sf-source="app">${icon('grid')} Thư viện ứng dụng</button><a class="sf-drive-link" data-sf-drive-link target="_blank" rel="noopener noreferrer" hidden>Quản lý kho gốc ↗</a></div>
+      <header class="sf-page-head">
+        <div class="sf-page-title"><span class="sf-page-emblem" aria-hidden="true">${icon('file')}</span><div><div class="sf-eyebrow">THƯ VIỆN NGHIỆP VỤ · TASCO DLK</div><h1>Biểu mẫu dùng chung</h1><p>Tra cứu, xem và in biểu mẫu nghiệp vụ trong cùng một nơi.</p></div></div>
+        <div class="sf-toolbar"><button type="button" class="sf-icon-button sf-bordered" data-sf-refresh aria-label="Làm mới" title="Làm mới danh sách">${icon('refresh')}</button>${SharedFormsStore.admin() ? '<button type="button" class="sf-button" data-sf-settings>' + icon('folder') + ' Kết nối Drive</button>' : ''}<button type="button" class="sf-button sf-primary" data-sf-upload>${icon('upload')} Tải biểu mẫu lên</button></div>
+      </header>
+      <section class="sf-library">
+        <div class="sf-library-bar">
+          <div class="sf-sources" role="group" aria-label="Nguồn biểu mẫu"><button class="sf-source-tab" type="button" data-sf-source="drive">${icon('folder')} Kho Google Drive</button><button class="sf-source-tab" type="button" data-sf-source="app">${icon('grid')} Thư viện ứng dụng</button><span class="sf-count" data-sf-count role="status" aria-live="polite"></span><a class="sf-drive-link" data-sf-drive-link target="_blank" rel="noopener noreferrer" hidden>Quản lý kho gốc ↗</a></div>
+        </div>
+        <div class="sf-library-filters">
           <div class="sf-controls">
             <label class="sf-search">${icon('search')}<span class="sf-sr-only">Tìm biểu mẫu</span><input type="search" data-sf-search placeholder="Tìm tên biểu mẫu, ghi chú…" autocomplete="off"></label>
             <label class="sf-filter-field"><span class="sf-sr-only">Loại tài liệu</span><select data-sf-type data-sf-select data-sf-label="Loại tài liệu" data-sf-description="Lọc theo định dạng biểu mẫu" data-sf-icon="file">${Object.entries(labels).map(([kind,label]) => '<option value="' + kind + '">' + label + '</option>').join('')}</select></label>
@@ -285,25 +285,14 @@ const SharedForms = (() => {
             <label class="sf-filter-field"><span class="sf-sr-only">Sắp xếp</span><select data-sf-sort data-sf-select data-sf-label="Sắp xếp" data-sf-description="Chọn thứ tự hiển thị tài liệu" data-sf-icon="sort"><option value="newest">Mới cập nhật</option><option value="name">Tên A → Z</option></select></label>
           </div>
         </div>
-      </div>
-      <section class="sf-summary" aria-label="Tổng quan thư viện">
-        <div><span>Biểu mẫu trong thư mục</span><strong data-sf-total>0</strong><small>Sẵn sàng để xem và sử dụng</small></div>
-        <div><span>Tài liệu Word</span><strong data-sf-word-count>0</strong><small>Biểu mẫu DOC và DOCX</small></div>
-        <div><span>PDF & hình ảnh</span><strong data-sf-pdf-count>0</strong><small>Tài liệu và ảnh tham khảo</small></div>
-        <div><span>Thư mục con</span><strong data-sf-folder-count>0</strong><small>Được sắp xếp theo nghiệp vụ</small></div>
-      </section>
-      <section class="sf-library">
-        <header class="sf-library-heading"><div><span class="sf-eyebrow">DANH MỤC TÀI LIỆU</span><h2>Danh sách biểu mẫu</h2><p>Nhấn vào biểu mẫu để xem toàn màn hình và in tài liệu.</p></div><span class="sf-count" data-sf-count role="status" aria-live="polite"></span></header>
-        <div class="sf-library-body">
-          <div class="sf-list-panel">
-            <nav class="sf-crumbs" data-sf-crumbs aria-label="Đường dẫn thư mục" hidden></nav>
-            <p class="sf-notice" data-sf-notice role="alert" hidden></p>
-            <div class="sf-list" data-sf-list></div>
-            <nav class="sf-pagination" data-sf-pagination aria-label="Phân trang biểu mẫu" hidden>
+        <div class="sf-list-panel">
+          <nav class="sf-crumbs" data-sf-crumbs aria-label="Đường dẫn thư mục" hidden></nav>
+          <p class="sf-notice" data-sf-notice role="alert" hidden></p>
+          <div class="sf-list" data-sf-list></div>
+          <nav class="sf-pagination" data-sf-pagination aria-label="Phân trang biểu mẫu" hidden>
               <label><span class="sf-sr-only">Số dòng mỗi trang</span><select data-sf-size data-sf-select data-sf-label="Số dòng mỗi trang" data-sf-description="Điều chỉnh số biểu mẫu trong danh sách" data-sf-icon="grid"><option value="10">10 dòng / trang</option><option value="20">20 dòng / trang</option><option value="50">50 dòng / trang</option></select></label>
               <span data-sf-page-status></span><div><button class="sf-icon-button" type="button" data-sf-prev aria-label="Trang trước">←</button><button class="sf-icon-button" type="button" data-sf-next aria-label="Trang sau">→</button></div>
             </nav>
-          </div>
         </div>
         <footer class="sf-library-footer"><p class="sf-note">${icon('shield')} Bạn có thể sửa hoặc xóa file do mình tải lên. Quản trị viên quản lý toàn bộ thư viện.</p><p class="sf-catalog-note" data-sf-catalog-note hidden></p></footer>
       </section>`;
