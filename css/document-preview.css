@@ -1,0 +1,135 @@
+/* ==========================================================================
+   Cửa sổ xem trước tài liệu (Hướng dẫn thu thập hồ sơ, Trưng cầu, Tạm ứng TNDS)
+   Dùng token --ce-* của màn hình hồ sơ (khai báo trong claim-editor.css) và cùng
+   kiểu nút với nhóm tác vụ ở header hồ sơ (claim-header-actions.css).
+   Selector #collectionGuidePreview đủ mạnh để thay các quy tắc cũ trong base.css /
+   administration.css mà không cần !important.
+   ========================================================================== */
+#collectionGuidePreview {
+  --cgp-danger:#b42318;
+  padding:20px;
+  background:rgba(28,24,16,.46);
+  backdrop-filter:blur(6px) saturate(1.1);
+  -webkit-backdrop-filter:blur(6px) saturate(1.1);
+}
+body:not(.light-mode) #collectionGuidePreview { background:rgba(4,10,14,.62); }
+
+#collectionGuidePreview > .profile-modal-panel {
+  width:min(1240px,100%); height:min(980px,calc(100dvh - 40px)); max-height:calc(100dvh - 40px);
+  padding:0; display:flex; flex-direction:column; overflow:hidden;
+  border:1px solid var(--ce-line); border-radius:18px; background:var(--ce-paper);
+  box-shadow:0 32px 80px rgba(28,22,10,.28),0 6px 18px rgba(28,22,10,.10);
+  animation:cgp-enter .22s cubic-bezier(.16,1,.3,1);
+}
+body:not(.light-mode) #collectionGuidePreview > .profile-modal-panel { box-shadow:0 32px 80px rgba(0,0,0,.55),0 6px 18px rgba(0,0,0,.3); }
+#collectionGuidePreview > .profile-modal-panel::before { display:none; }
+
+/* ---- Đầu cửa sổ ---- */
+#collectionGuidePreview .collection-guide-preview-header {
+  display:flex; align-items:center; justify-content:space-between; gap:20px;
+  padding:16px 20px; border-bottom:1px solid var(--ce-line); background:var(--ce-paper);
+}
+#collectionGuidePreview .collection-guide-preview-heading { display:flex; align-items:center; gap:13px; min-width:0; }
+#collectionGuidePreview .collection-guide-preview-icon {
+  width:42px; height:42px; flex:0 0 42px; display:grid; place-items:center;
+  border:1px solid color-mix(in srgb,var(--ce-gold) 24%,var(--ce-line)); border-radius:12px;
+  background:var(--ce-gold-soft); color:var(--ce-gold); box-shadow:none;
+}
+#collectionGuidePreview .collection-guide-preview-icon .svg-icon { width:20px; height:20px; }
+#collectionGuidePreview .collection-guide-preview-eyebrow { margin-bottom:4px; color:var(--ce-gold); font-size:9.5px; font-weight:800; letter-spacing:.08em; }
+#collectionGuidePreview .collection-guide-preview-header h3 { margin:0; color:var(--ce-ink); font-size:16px; font-weight:800; letter-spacing:-.015em; line-height:1.35; }
+#collectionGuidePreview .collection-guide-preview-subtitle { margin:3px 0 0; color:var(--ce-muted); font-size:11px; line-height:1.5; }
+
+/* ---- Nhóm nút: cùng giải phẫu với header hồ sơ (chip icon 28px + nhãn, cao 40px) ---- */
+#collectionGuidePreview .collection-guide-actions { display:flex; flex:0 0 auto; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px; }
+#collectionGuidePreview :is(.collection-guide-actions,.collection-document-editor-tools) .btn-premium {
+  --cgp-fg:var(--ce-ink); --cgp-line:var(--ce-line); --cgp-chip-fg:var(--ce-gold); --cgp-chip-bg:var(--ce-gold-soft);
+  width:auto; height:40px; min-height:40px; margin:0; padding:0 14px 0 6px; gap:9px;
+  display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid var(--cgp-line); border-radius:10px; background:var(--ce-paper); color:var(--cgp-fg);
+  box-shadow:0 1px 2px rgba(48,40,24,.05); filter:none; transform:none;
+  font:700 12px/1 'Plus Jakarta Sans',system-ui,sans-serif; letter-spacing:-.005em; white-space:nowrap;
+  transition:border-color .16s ease,background-color .16s ease,box-shadow .16s ease,color .16s ease;
+}
+#collectionGuidePreview :is(.collection-guide-actions,.collection-document-editor-tools) .btn-premium > span:first-child {
+  display:inline-grid; place-items:center; flex:0 0 28px; width:28px; height:28px;
+  border:1px solid color-mix(in srgb,var(--cgp-chip-fg) 18%,transparent); border-radius:7px;
+  background:var(--cgp-chip-bg); color:var(--cgp-chip-fg);
+}
+#collectionGuidePreview :is(.collection-guide-actions,.collection-document-editor-tools) .btn-premium .svg-icon { width:15px; height:15px; }
+#collectionGuidePreview :is(.collection-guide-actions,.collection-document-editor-tools) .btn-premium:hover:not(:disabled) {
+  border-color:color-mix(in srgb,var(--ce-gold) 55%,var(--ce-line));
+  background:color-mix(in srgb,var(--ce-gold-soft) 35%,var(--ce-paper));
+  box-shadow:0 6px 16px rgba(120,86,28,.10),0 1px 2px rgba(48,40,24,.06); transform:none; filter:none;
+}
+#collectionGuidePreview :is(.collection-guide-actions,.collection-document-editor-tools) .btn-premium:active:not(:disabled) { box-shadow:inset 0 1px 2px rgba(0,0,0,.08); }
+#collectionGuidePreview :is(.collection-guide-actions,.collection-document-editor-tools) .btn-premium:focus-visible { outline:none; box-shadow:0 0 0 3px color-mix(in srgb,var(--ce-gold) 28%,transparent); }
+#collectionGuidePreview .btn-premium:disabled { opacity:.45; cursor:not-allowed; }
+
+/* Xuất Word: hành động chính → nền đặc, chip trong suốt */
+#collectionGuidePreview .collection-guide-actions .collection-guide-preview-export {
+  --cgp-fg:var(--ce-action-text); --cgp-line:var(--ce-action); --cgp-chip-fg:var(--ce-action-text); --cgp-chip-bg:color-mix(in srgb,var(--ce-action-text) 16%,transparent);
+  background:var(--ce-action); box-shadow:0 1px 2px rgba(0,0,0,.10),inset 0 1px 0 rgba(255,255,255,.14);
+}
+#collectionGuidePreview .collection-guide-actions .collection-guide-preview-export:hover:not(:disabled) { border-color:var(--ce-action-hover); background:var(--ce-action-hover); }
+/* Đang ở chế độ sửa: nút "Hoàn tất chỉnh sửa" nổi bật bằng nền vàng nhạt */
+#collectionGuidePreview.collection-document-editing .collection-guide-direct-edit {
+  --cgp-line:var(--ce-gold); --cgp-chip-fg:var(--ce-paper); --cgp-chip-bg:var(--ce-gold);
+  background:var(--ce-gold-soft); color:var(--ce-ink);
+}
+/* Đóng: nút chỉ có icon, tách nhóm bằng vạch ngăn */
+#collectionGuidePreview .cgp-divider { width:1px; height:24px; margin:0 4px; background:var(--ce-line); }
+#collectionGuidePreview .collection-guide-actions .collection-guide-preview-close { width:40px; padding:0; --cgp-chip-bg:transparent; --cgp-chip-fg:var(--ce-muted); }
+#collectionGuidePreview .collection-guide-actions .collection-guide-preview-close > span:first-child { border-color:transparent; }
+#collectionGuidePreview .collection-guide-actions .collection-guide-preview-close > .cgp-label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+#collectionGuidePreview .collection-guide-actions .collection-guide-preview-close:hover { --cgp-chip-fg:var(--ce-ink); background:var(--ce-soft); border-color:var(--ce-muted); }
+
+/* ---- Dải thông tin ---- */
+#collectionGuidePreview .collection-guide-preview-context {
+  min-height:42px; padding:8px 20px; gap:12px; display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--ce-line); background:var(--ce-soft); color:var(--ce-muted); font-size:11px; font-weight:650;
+}
+#collectionGuidePreview .collection-guide-preview-format { gap:8px; color:var(--ce-ink); }
+#collectionGuidePreview .collection-guide-preview-format::before { width:7px; height:7px; background:var(--ce-gold); box-shadow:0 0 0 3px color-mix(in srgb,var(--ce-gold) 18%,transparent); }
+#collectionGuidePreview .collection-guide-preview-case {
+  padding:4px 10px; border:1px solid var(--ce-line); border-radius:999px; background:var(--ce-paper);
+  color:var(--ce-ink); font-size:10.5px; font-weight:750; font-variant-numeric:tabular-nums;
+}
+
+/* ---- Thanh công cụ khi chỉnh sửa ---- */
+#collectionGuidePreview .collection-document-editor-toolbar { gap:12px; padding:10px 20px; border-bottom:1px solid var(--ce-line); background:color-mix(in srgb,var(--ce-gold-soft) 45%,var(--ce-paper)); }
+#collectionGuidePreview .collection-document-editor-tools { gap:6px; }
+#collectionGuidePreview .collection-document-editor-tools .btn-premium { height:34px; min-height:34px; padding:0 11px 0 4px; gap:7px; font-size:11px; border-radius:9px; }
+#collectionGuidePreview .collection-document-editor-tools .btn-premium > span:first-child { flex-basis:24px; width:24px; height:24px; border-radius:6px; }
+#collectionGuidePreview .collection-document-editor-tools .btn-premium .svg-icon { width:13px; height:13px; }
+#collectionGuidePreview .collection-document-editor-toolbar p { color:var(--ce-muted); font-size:10.5px; }
+
+/* ---- Vùng trang A4 ---- */
+#collectionGuidePreview iframe { background:#ebe7de; color-scheme:light; }
+body:not(.light-mode) #collectionGuidePreview iframe { background:#0f1a21; color-scheme:dark; }
+
+@keyframes cgp-enter { from { opacity:0; transform:translateY(8px) scale(.99); } to { opacity:1; transform:none; } }
+
+/* ---- Responsive ---- */
+@media (max-width:1000px) {
+  #collectionGuidePreview .collection-guide-preview-header { flex-direction:column; align-items:stretch; gap:14px; }
+  #collectionGuidePreview .collection-guide-actions { justify-content:flex-start; }
+  #collectionGuidePreview .cgp-divider { display:none; }
+  #collectionGuidePreview .collection-guide-actions .collection-guide-preview-close { position:absolute; top:16px; right:16px; }
+  #collectionGuidePreview .collection-guide-preview-header { position:relative; padding-right:68px; }
+}
+@media (max-width:560px) {
+  #collectionGuidePreview { padding:8px; }
+  #collectionGuidePreview > .profile-modal-panel { height:calc(100dvh - 16px); max-height:calc(100dvh - 16px); border-radius:16px; }
+  #collectionGuidePreview .collection-guide-preview-header { padding:14px 64px 14px 14px; }
+  #collectionGuidePreview .collection-guide-preview-icon { width:38px; height:38px; flex-basis:38px; }
+  #collectionGuidePreview .collection-guide-preview-header h3 { font-size:14px; }
+  #collectionGuidePreview .collection-guide-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+  #collectionGuidePreview .collection-guide-actions .btn-premium:not(.collection-guide-preview-close) { width:100%; padding:0 10px 0 5px; justify-content:flex-start; font-size:11.5px; }
+  #collectionGuidePreview .collection-guide-actions .collection-guide-preview-close { top:12px; right:12px; }
+  #collectionGuidePreview .collection-guide-preview-context { padding:8px 14px; flex-wrap:wrap; }
+}
+@media (prefers-reduced-motion:reduce) {
+  #collectionGuidePreview > .profile-modal-panel { animation:none; }
+  #collectionGuidePreview .btn-premium { transition:none; }
+}

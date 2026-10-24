@@ -120,8 +120,11 @@ function openCollectionDocumentPreview({title,html,claim,onExport,onPrint,onEdit
   buttons.push(['Đóng','btn-premium btn-secondary collection-guide-preview-close',SVGS.CLOSE,closeCollectionGuidePreview]);
   for(const [label,className,buttonIcon,action] of buttons) {
     const button=collectionGuideElement('button',className);button.type='button';button.title=label==='Xuất Word'?'Tải tệp Word (.docx)':label;button.setAttribute('aria-label',label);
-    const image=collectionGuideElement('span');image.setAttribute('aria-hidden','true');image.innerHTML=buttonIcon;
-    button.append(image,collectionGuideElement('span','',label));button.addEventListener('click',()=>action());actions.append(button);
+    // Cấu trúc chung với nhóm nút ở header hồ sơ: chip icon + nhãn (css/document-preview.css).
+    const image=collectionGuideElement('span','cgp-icon');image.setAttribute('aria-hidden','true');image.innerHTML=buttonIcon;
+    button.append(image,collectionGuideElement('span','cgp-label',label));button.addEventListener('click',()=>action());
+    if(label==='Đóng') actions.append(collectionGuideElement('span','cgp-divider'));
+    actions.append(button);
   }
   header.append(heading,actions);
   const context=collectionGuideElement('div','collection-guide-preview-context');

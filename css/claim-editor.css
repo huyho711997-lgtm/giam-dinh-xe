@@ -1,4 +1,4 @@
-:is(#addPendingClaimModalOverlay,#tndsAdvanceDialog,.ce-document-menu) {
+:is(#addPendingClaimModalOverlay,#tndsAdvanceDialog,.ce-document-menu,#collectionGuidePreview) {
   --ce-paper:#fffefb; --ce-background:#f7f4ed; --ce-soft:#f7f4ed; --ce-ink:#30332f; --ce-muted:#77776d;
   --ce-line:#e7e3d9; --ce-gold:#ad761d; --ce-gold-soft:#fff3d9; --ce-green:#168052;
   --ce-action:#8a6a32; --ce-action-hover:#725526; --ce-action-text:#fffaf0; --ce-shadow:0 8px 30px rgba(62,51,31,.04);
@@ -7,7 +7,7 @@
   --input-focus-bg:var(--ce-paper); --bg-soft:var(--ce-paper);
 }
 #addPendingClaimModalOverlay { padding:0; background:var(--ce-background); backdrop-filter:none; }
-body:not(.light-mode) :is(#addPendingClaimModalOverlay,#tndsAdvanceDialog,.ce-document-menu) {
+body:not(.light-mode) :is(#addPendingClaimModalOverlay,#tndsAdvanceDialog,.ce-document-menu,#collectionGuidePreview) {
   --ce-paper:#121e27; --ce-background:#0d171e; --ce-soft:#172730; --ce-ink:#f0f2eb; --ce-muted:#a2afaf;
   --ce-line:#2a3d46; --ce-gold:#e0bb78; --ce-gold-soft:#2c2b21; --ce-green:#80c4a6;
   --ce-action:#d0b47e; --ce-action-hover:#e1c78e; --ce-action-text:#1e2d29; --ce-shadow:0 10px 32px rgba(0,0,0,.12);
