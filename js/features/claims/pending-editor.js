@@ -324,14 +324,7 @@
       ClaimReductionNotice.load(item.thongBaoGiamTru || {});
       setVal('modalPendingTndsGhiChu', item.tndsGhiChu || '');
 
-      const editTndsInfoEl = document.getElementById('modalPendingTndsLastUpdatedInfo');
-      if (editTndsInfoEl) {
-        if (item.tndsLastUpdated) {
-          editTndsInfoEl.innerHTML = `Lần cập nhật cuối: <b style="color: var(--text-main);">${formatTndsTimestampDisplay(item.tndsLastUpdated)}</b> bởi <b style="color: var(--primary);">${escapeHtmlOutput(item.tndsUpdatedBy || 'Hệ thống')}</b>`;
-        } else {
-          editTndsInfoEl.innerHTML = `<span style="color: var(--text-soft); font-style: italic;">Chưa có cập nhật</span>`;
-        }
-      }
+      renderTndsLastUpdatedInfo(item);
 
       await loadCollectionGuideForClaim(item, claimId);
       if(editingPendingClaimId!==claimId || openDocumentSequence!==claimDocumentStore.formSequence)return;
@@ -345,6 +338,33 @@
       }
     }
 
+
+    function renderTndsLastUpdatedInfo(item) {
+      const infoEl = document.getElementById('modalPendingTndsLastUpdatedInfo');
+      if (!infoEl) return;
+      if (item.tndsLastUpdated) {
+        infoEl.innerHTML = `Lần cập nhật cuối: <b style="color: var(--text-main);">${formatTndsTimestampDisplay(item.tndsLastUpdated)}</b> bởi <b style="color: var(--primary);">${escapeHtmlOutput(item.tndsUpdatedBy || 'Hệ thống')}</b>`;
+      } else {
+        infoEl.innerHTML = `<span style="color: var(--text-soft); font-style: italic;">Chưa có cập nhật</span>`;
+      }
+    }
+
+    // Sau khi lưu thành công: ở lại form để làm tiếp thay vì đóng.
+    async function stayOnClaimAfterSave(claimId, payload, wasEditing) {
+      const activeTab = (document.querySelector('#addPendingClaimModalOverlay .edit-tab-btn.active')?.id || '').replace('tabBtn_', '') || 'Policy';
+      if (!wasEditing) {
+        // Hồ sơ mới vừa tạo: chuyển sang chế độ chỉnh sửa đúng hồ sơ đó, giữ nguyên tab đang mở.
+        await openEditPendingClaimModal(claimId, activeTab);
+        return;
+      }
+      // Hồ sơ đang sửa: cập nhật tại chỗ các phần phụ thuộc dữ liệu vừa lưu, không dựng lại form.
+      renderTndsLastUpdatedInfo(payload);
+      if (typeof updateHeaderCancelClaimProposalButton === 'function') updateHeaderCancelClaimProposalButton(payload);
+      // Dữ liệu tài liệu vừa được ghi cùng hồ sơ → đặt lại mốc "chưa thay đổi" cho tự lưu.
+      bindCurrentClaimDocuments(claimId, payload);
+      claimDocumentStore.ready = true;
+      if (typeof ClaimEditorWorkspace !== 'undefined') { ClaimEditorWorkspace.refreshSummary(); ClaimEditorWorkspace.refreshNotes(); }
+    }
 
     function closeAddPendingClaimModal() {
       document.getElementById('collectionGuidePreview')?._guideEditor?.flush();
@@ -609,7 +629,9 @@
         if (cachedPendingClaimsPayload && claimStillExists) {
           cachedPendingClaimsPayload[targetClaimId] = payload;
         }
-        closeAddPendingClaimModal();
+        // Lưu xong vẫn ở lại form; chỉ đóng khi hồ sơ gốc đã bị xoá (không còn gì để sửa tiếp).
+        if (claimStillExists) await stayOnClaimAfterSave(targetClaimId, payload, isEditing);
+        else closeAddPendingClaimModal();
         if (typeof activeDashboardTab !== 'undefined' && activeDashboardTab === 'gdv_report') {
           renderGdvReportPage();
         }

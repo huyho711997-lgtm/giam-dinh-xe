@@ -203,6 +203,8 @@ test('Normal claim save uses HSBT paths and stores no embedded guide',async()=>{
   const f=setup({pending_claims:{old_id:claim}});f.bind();await f.context.saveAddPendingClaimFromModal();
   assert.equal(f.data.pending_claims.old_id.huongDanThuThapHoSo,undefined);
   assert.deepEqual(f.data.collection_guides[f.key()].state,guide);
+  assert.equal(f.context.editingPendingClaimId,'old_id','saving keeps the claim open for further edits');
+  assert.equal(f.toasts.at(-1)?.type,'success');
 });
 
 test('Delayed old form responses cannot replace another claim',async()=>{
