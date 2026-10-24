@@ -130,3 +130,133 @@ body:not(.light-mode) #sceneDrawingModalOverlay #sceneDrawingCanvas { box-shadow
 
 /* ---- Thanh công cụ thu gọn: bỏ chữ phím tắt đè mép icon ---- */
 body #sceneDrawingModalOverlay .scene-tool-rail:not(.expanded) .draw-tool-btn[data-shortcut]::before { display: none !important; }
+
+/* ==========================================================================
+   PANEL "THUỘC TÍNH ĐỐI TƯỢNG" (#sceneSelectedBadge) – gọn, theo theme, thu gọn được.
+   Markup gốc nhiều style inline (màu tối cố định) → ghi đè bằng !important có chủ đích.
+   ========================================================================== */
+#sceneDrawingModalOverlay #sceneSelectedBadge.scene-selection-panel {
+  top: 16px; right: 16px; bottom: auto; left: auto; transform: none;
+  width: 288px; max-height: calc(100% - 96px); gap: 8px; padding: 12px;
+  border: 1px solid var(--se-line); border-radius: 16px;
+  background: color-mix(in srgb,var(--se-paper) 96%,transparent);
+  color: var(--se-ink); font-size: 12px;
+  box-shadow: 0 24px 50px -24px rgba(30,24,12,.45), 0 2px 6px rgba(0,0,0,.06);
+  backdrop-filter: blur(14px);
+  scrollbar-color: color-mix(in srgb,var(--se-gold) 35%,transparent) transparent;
+  animation: sceneInspectorSlide .18s ease-out;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay #sceneSelectedBadge.scene-selection-panel { box-shadow: 0 24px 60px -20px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.03); }
+#sceneDrawingModalOverlay #sceneSelectedBadge.scene-selection-panel::before,
+#sceneDrawingModalOverlay #sceneSelectedBadge.scene-selection-panel::after { display: none; }
+@keyframes sceneInspectorSlide { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+
+/* Đầu panel + nút thu gọn */
+#sceneDrawingModalOverlay .scene-inspector-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px 2px; }
+#sceneDrawingModalOverlay .scene-inspector-label { color: var(--se-muted); font-size: 10.5px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+#sceneDrawingModalOverlay .scene-inspector-toggle {
+  display: grid; place-items: center; width: 28px !important; height: 28px; min-height: 28px; padding: 0 !important;
+  border: 1px solid var(--se-line) !important; border-radius: 8px !important; background: var(--se-soft) !important; color: var(--se-muted) !important; cursor: pointer;
+}
+#sceneDrawingModalOverlay .scene-inspector-toggle:hover { color: var(--se-gold) !important; border-color: color-mix(in srgb,var(--se-gold) 45%,var(--se-line)) !important; filter: none !important; transform: none !important; }
+
+/* Tên đối tượng */
+#sceneDrawingModalOverlay #sceneSelectedBadge .scene-selection-title {
+  min-height: 36px; padding: 8px 10px; border: 1px solid color-mix(in srgb,var(--se-gold) 30%,var(--se-line));
+  border-radius: 10px; background: color-mix(in srgb,var(--se-gold) 10%,transparent); box-shadow: none;
+  color: var(--se-ink) !important; font-size: 12.5px; font-weight: 750 !important;
+}
+#sceneDrawingModalOverlay #sceneSelectedBadge .scene-selection-title svg { color: var(--se-gold); }
+
+/* Góc & nét: hàng thông tin gọn */
+#sceneDrawingModalOverlay #sceneSelectedBadge > #selectedShapeAngleBadge,
+#sceneDrawingModalOverlay #sceneSelectedBadge > #selectedStrokeBadge {
+  min-height: 32px; padding: 6px 10px !important; border: 1px solid var(--se-line) !important; border-radius: 10px !important;
+  background: var(--se-soft) !important; color: var(--se-muted) !important; font-size: 12px !important; font-weight: 650 !important;
+}
+#sceneDrawingModalOverlay #sceneSelectedBadge > #selectedShapeAngleBadge span,
+#sceneDrawingModalOverlay #sceneSelectedBadge > #selectedStrokeBadge span { color: var(--se-ink) !important; font-weight: 800; }
+#sceneDrawingModalOverlay #sceneSelectedBadge > #selectedStrokeBadge:hover,
+#sceneDrawingModalOverlay #sceneSelectedBadge > #selectedStrokeBadge[aria-expanded="true"] { border-color: color-mix(in srgb,var(--se-gold) 50%,var(--se-line)) !important; background: color-mix(in srgb,var(--se-gold) 8%,var(--se-soft)) !important; box-shadow: none; }
+
+/* Các nhóm nút: một hàng gọn, cùng chiều cao */
+#sceneDrawingModalOverlay #sceneSelectedBadge > div:not(.scene-inspector-head) {
+  justify-content: flex-start !important; gap: 4px !important; padding: 4px !important;
+  border: 1px solid var(--se-line) !important; border-radius: 10px !important; background: var(--se-soft) !important;
+}
+#sceneDrawingModalOverlay #sceneSelectedBadge > div:not(.scene-inspector-head) > span { color: var(--se-muted) !important; font-size: 11.5px !important; font-weight: 650 !important; padding: 0 4px !important; }
+#sceneDrawingModalOverlay #sceneSelectedBadge > div:not(.scene-inspector-head) > span span,
+#sceneDrawingModalOverlay #sceneSelectedBadge #selectedSizeText { color: var(--se-ink) !important; font-weight: 800 !important; }
+#sceneDrawingModalOverlay #sceneSelectedBadge > div button {
+  flex: 1 1 auto; justify-content: center; min-height: 30px; padding: 4px 8px !important;
+  border: 1px solid transparent !important; border-radius: 8px !important; background: transparent !important;
+  color: var(--se-ink) !important; font-size: 11.5px !important; font-weight: 650 !important; box-shadow: none !important;
+  transition: background .14s ease, color .14s ease, border-color .14s ease;
+}
+#sceneDrawingModalOverlay #sceneSelectedBadge > div button:hover { background: var(--se-paper) !important; color: var(--se-gold) !important; border-color: var(--se-line) !important; filter: none; transform: none; }
+/* Nút nhấn mạnh (vốn tô vàng inline: Xoay 90°, Đổi hình, Nhân bản, Lật cong, Căn giữa…) */
+#sceneDrawingModalOverlay #sceneSelectedBadge > div button[style*="216, 180, 109"] {
+  background: color-mix(in srgb,var(--se-gold) 14%,transparent) !important; border-color: color-mix(in srgb,var(--se-gold) 35%,transparent) !important; color: var(--se-gold) !important;
+}
+#sceneDrawingModalOverlay #sceneSelectedBadge #btnUngroupShapes { color: var(--danger,#e5484d) !important; }
+/* Hàng sao chép: giữ trên một dòng */
+#sceneDrawingModalOverlay #sceneSelectedBadge > div:has(> button[onclick^="duplicateSelectedShape"]) { flex-wrap: nowrap !important; }
+#sceneDrawingModalOverlay #sceneSelectedBadge > div > button[onclick^="duplicateSelectedShape"] { flex: 1.6 1 auto; }
+#sceneDrawingModalOverlay #sceneSelectedBadge #btnDecreaseSelectedSize,
+#sceneDrawingModalOverlay #sceneSelectedBadge #btnIncreaseSelectedSize { flex: 0 0 30px; width: 30px !important; }
+
+/* Khối mẹo: chỉ giữ hướng dẫn kéo cạnh; phím tắt đã chuyển vào bảng "Phím tắt" trên header */
+#sceneDrawingModalOverlay #sceneSelectedBadge .scene-selection-helper {
+  justify-content: flex-start; padding: 8px 10px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--se-muted) !important; font-size: 11.5px !important; line-height: 1.5;
+}
+#sceneDrawingModalOverlay #sceneSelectedBadge .scene-selection-helper > :not(#sceneSelectionResizeHint) { display: none !important; }
+
+/* Nút hành động riêng */
+#sceneDrawingModalOverlay #sceneSelectedBadge #btnEditTextShape,
+#sceneDrawingModalOverlay #sceneSelectedBadge #btnEditTrafficSign {
+  min-height: 34px; border: 1px solid color-mix(in srgb,var(--se-gold) 35%,transparent) !important;
+  background: color-mix(in srgb,var(--se-gold) 12%,transparent) !important; color: var(--se-gold) !important; font-size: 12px !important; font-weight: 700 !important;
+}
+#sceneDrawingModalOverlay #sceneSelectedBadge .scene-selection-delete {
+  min-height: 34px; border: 1px solid color-mix(in srgb,var(--danger,#e5484d) 30%,transparent) !important;
+  background: color-mix(in srgb,var(--danger,#e5484d) 8%,transparent) !important; color: var(--danger,#e5484d) !important;
+  font-size: 12px !important; font-weight: 700 !important;
+}
+#sceneDrawingModalOverlay #sceneSelectedBadge .scene-selection-delete:hover { background: color-mix(in srgb,var(--danger,#e5484d) 14%,transparent) !important; filter: none; transform: none; }
+
+/* ---- Trạng thái THU GỌN: chỉ còn một viên nhỏ ở góc phải (tên đối tượng + nút mở) ---- */
+#sceneDrawingModalOverlay #sceneSelectedBadge.scene-selection-panel.is-collapsed {
+  flex-direction: row-reverse !important; align-items: center; gap: 6px; width: auto; max-width: 320px; padding: 5px;
+  border-radius: 12px; overflow: hidden;
+}
+#sceneDrawingModalOverlay #sceneSelectedBadge.is-collapsed > :not(.scene-inspector-head):not(.scene-selection-title) { display: none !important; }
+#sceneDrawingModalOverlay #sceneSelectedBadge.is-collapsed .scene-inspector-label { display: none; }
+#sceneDrawingModalOverlay #sceneSelectedBadge.is-collapsed .scene-inspector-head { padding: 0; }
+#sceneDrawingModalOverlay #sceneSelectedBadge.is-collapsed .scene-inspector-toggle svg { transform: rotate(180deg); }
+#sceneDrawingModalOverlay #sceneSelectedBadge.is-collapsed .scene-selection-title { width: auto; height: 30px; min-height: 0 !important; padding: 0 10px; cursor: pointer; white-space: nowrap; }
+#sceneDrawingModalOverlay #sceneSelectedBadge.scene-selection-panel.is-collapsed { min-height: 0; height: auto; }
+
+/* Bảng phím tắt: tiêu đề phụ */
+#sceneDrawingModalOverlay .scene-head-help-card .scene-head-help-sub { margin: 12px 0 8px; padding-top: 10px; border-top: 1px solid var(--se-line); font-size: 12px; }
+#sceneDrawingModalOverlay .scene-head-help-card { max-height: calc(100vh - 90px); overflow-y: auto; }
+
+/* Màn hình hẹp (<1450px): scene-selection.css biến panel thành thanh dưới; giữ dạng cột gọn bên phải */
+@media (max-width: 1450px) {
+  #sceneDrawingModalOverlay #sceneSelectedBadge.scene-selection-panel:not(.is-collapsed) {
+    top: 16px; bottom: auto; left: auto; right: 16px; width: 288px; max-height: calc(100% - 96px);
+    flex-direction: column; align-items: stretch; flex-wrap: nowrap; margin: 0; border-radius: 16px;
+  }
+  #sceneDrawingModalOverlay #sceneSelectedBadge:not(.is-collapsed) :is(.scene-selection-title, #selectedShapeAngleBadge, #selectedStrokeBadge, .scene-selection-helper, .scene-selection-delete, #btnEditTextShape) { width: 100%; }
+  #sceneDrawingModalOverlay #sceneSelectedBadge:not(.is-collapsed) > div { width: 100%; }
+  #sceneDrawingModalOverlay #sceneSelectedBadge.is-collapsed { top: 16px; bottom: auto; left: auto; right: 16px; margin: 0; }
+}
+
+/* Đầu panel không bị quy tắc cũ "#sceneSelectedBadge > div" (scene-selection.css, !important) đóng khung */
+#sceneDrawingModalOverlay #sceneSelectedBadge > .scene-inspector-head {
+  justify-content: space-between !important; flex-wrap: nowrap !important; gap: 8px !important;
+  padding: 0 2px !important; border: 0 !important; border-radius: 0 !important; background: none !important;
+}
+#sceneDrawingModalOverlay #sceneSelectedBadge.is-collapsed > .scene-inspector-head { width: auto; padding: 0 !important; }
+/* Chữ trên nút không gãy dòng */
+#sceneDrawingModalOverlay #sceneSelectedBadge > div button { white-space: nowrap; }

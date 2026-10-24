@@ -20,3 +20,46 @@
     window.openSceneDrawingModal = wrapped;
   }
 })();
+
+// ---- Panel "Thuộc tính đối tượng": thu gọn / mở rộng (nhớ trong localStorage) ----
+// rendering.js chỉ bật/tắt style.display của #sceneSelectedBadge; việc thu gọn dùng class riêng
+// nên không ảnh hưởng logic hiển thị theo lựa chọn.
+(function () {
+  const KEY = 'scene-inspector-collapsed';
+  const read = () => { try { return localStorage.getItem(KEY) === '1'; } catch (_) { return false; } };
+  const write = value => { try { localStorage.setItem(KEY, value ? '1' : '0'); } catch (_) {} };
+  const chevron = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+
+  function apply(panel, collapsed) {
+    panel.classList.toggle('is-collapsed', collapsed);
+    const button = panel.querySelector('.scene-inspector-toggle');
+    if (button) {
+      button.setAttribute('aria-expanded', String(!collapsed));
+      button.title = collapsed ? 'Mở rộng thuộc tính đối tượng' : 'Thu gọn thuộc tính đối tượng';
+      button.setAttribute('aria-label', button.title);
+    }
+  }
+
+  function setup() {
+    const panel = document.getElementById('sceneSelectedBadge');
+    if (!panel || panel.querySelector('.scene-inspector-head')) return;
+    const head = document.createElement('div');
+    head.className = 'scene-inspector-head';
+    head.innerHTML = `<span class="scene-inspector-label">Thuộc tính đối tượng</span>
+      <button type="button" class="scene-inspector-toggle" aria-controls="sceneSelectedBadge">${chevron}</button>`;
+    panel.prepend(head);
+    head.querySelector('.scene-inspector-toggle').addEventListener('click', event => {
+      event.stopPropagation();
+      const collapsed = !panel.classList.contains('is-collapsed');
+      apply(panel, collapsed); write(collapsed);
+    });
+    // Khi đang thu gọn, bấm vào tên đối tượng cũng mở lại panel.
+    panel.querySelector('.scene-selection-title')?.addEventListener('click', () => {
+      if (!panel.classList.contains('is-collapsed')) return;
+      apply(panel, false); write(false);
+    });
+    apply(panel, read());
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup); else setup();
+})();
