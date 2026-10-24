@@ -759,6 +759,14 @@
                 <div><dt><kbd>Ctrl</kbd><kbd>Z</kbd></dt><dd>Hoàn tác</dd></div>
                 <div><dt><kbd>Ctrl</kbd><kbd>Y</kbd></dt><dd>Tiến tới</dd></div>
                 <div><dt><kbd>+</kbd><kbd>−</kbd><kbd>0</kbd></dt><dd>Phóng to / thu nhỏ / 100%</dd></div>
+                <div><dt><kbd>Ctrl</kbd>+cuộn</dt><dd>Phóng to / thu nhỏ tại con trỏ</dd></div>
+              </dl>
+              <strong class="scene-head-help-sub">Di chuyển vùng nhìn</strong>
+              <dl>
+                <div><dt>Nút ✋</dt><dd>Bàn tay: nắm chuột kéo ở bất kỳ đâu</dd></div>
+                <div><dt><kbd>Space</kbd>+kéo</dt><dd>Kéo tạm thời khi đang vẽ</dd></div>
+                <div><dt>Kéo nền</dt><dd>Kéo vùng ngoài tờ giấy</dd></div>
+                <div><dt>Cuộn</dt><dd>Lên/xuống · <kbd>Shift</kbd>+cuộn: sang ngang</dd></div>
               </dl>
               <strong class="scene-head-help-sub">Khi đang chọn đối tượng</strong>
               <dl>
@@ -1043,6 +1051,11 @@
 
             <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.2); margin: 0 2px;"></span>
 
+            <!-- Bàn tay: bật để nắm chuột kéo vùng nhìn (scene-editor-ui.js) -->
+            <button type="button" id="sceneHandToggle" onclick="toggleSceneHandMode()" aria-pressed="false" title="Bàn tay – nắm chuột kéo để di chuyển vùng nhìn (hoặc giữ Space + kéo, kéo vùng nền, cuộn chuột)" aria-label="Bàn tay: kéo để di chuyển vùng nhìn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-4 0v5"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+            </button>
+
             <!-- Fit / Reset View -->
             <button type="button" onclick="resetSceneZoom()" title="Căn vừa màn hình (100%)" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid transparent; background: transparent; color: #d8b46d; display: grid; place-items: center; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.background='rgba(216, 180, 109, 0.15)'" onmouseout="this.style.background='transparent'">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
@@ -1050,7 +1063,7 @@
           </div>
 
           <link rel="stylesheet" href="css/scene-selection.css">
-          <link rel="stylesheet" href="css/scene-editor.css?v=20261024-5">
+          <link rel="stylesheet" href="css/scene-editor.css?v=20261024-7">
 
           <!-- Floating Selection Inspector with Rotation Controls -->
           <div id="sceneSelectedBadge" class="scene-selection-panel" style="display: none;">
@@ -1821,8 +1834,8 @@
 <link rel="stylesheet" href="css/document-autosave.css">
 <link rel="stylesheet" href="css/authority-request.css">
 <script src="js/features/scene/geometry.js?v=20261024-resize-1"></script>
-  <script src="js/features/scene/objects.js"></script>
-  <script src="js/features/scene/traffic-signs.js?v=20261024-truck-1"></script>
+  <script src="js/features/scene/objects.js?v=20261024-pan-1"></script>
+  <script src="js/features/scene/traffic-signs.js?v=20261024-pan-2"></script>
   <script src="js/features/scene/rendering.js?v=20261024-truck-1"></script>
   <script src="js/features/scene/interaction-export.js?v=20261024-toll-2"></script>
   <script src="js/features/scene/text-editor.js"></script>
@@ -1832,11 +1845,11 @@
   <script src="js/features/documents/editor.js"></script>
   <script src="js/features/claims/inspection-register.js"></script>
   <script src="js/features/workshop/presentation.js"></script>
-  <script src="js/features/scene/runtime.js?v=20261024-truck-1"></script>
+  <script src="js/features/scene/runtime.js?v=20261024-pan-1"></script>
   <script src="js/features/documents/hsbt.js"></script>
   <script src="js/features/documents/storage.js?v=20261024-1"></script>
   <script src="js/features/documents/autosave.js"></script>
   <script src="js/core/chart-ready.js?v=20261024-1"></script>
-  <script src="js/features/scene/scene-editor-ui.js?v=20261024-3"></script>
+  <script src="js/features/scene/scene-editor-ui.js?v=20261024-4"></script>
 </body>
 </html>

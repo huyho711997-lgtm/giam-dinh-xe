@@ -112,6 +112,9 @@ let panStartY = 0;
 
 let isSpacePressed = false;
 
+// Chế độ Bàn tay (nút trên thanh zoom): kéo chuột trái ở bất kỳ đâu để di chuyển vùng nhìn.
+let sceneHandMode = false;
+
 let sceneClipboard = null;
 
 let selectedShapeIds = [];

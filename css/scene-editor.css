@@ -270,3 +270,16 @@ body:not(.light-mode) #sceneDrawingModalOverlay #sceneSelectedBadge.scene-select
 #sceneDrawingModalOverlay #selectedTollLanesGroup > #btnTollLanesAuto { flex: 0 0 auto; margin-left: 4px; }
 #sceneDrawingModalOverlay #selectedTollLanesGroup > #btnTollLanesAuto[aria-pressed="true"] { background: color-mix(in srgb,var(--se-gold) 14%,transparent) !important; border-color: color-mix(in srgb,var(--se-gold) 35%,transparent) !important; color: var(--se-gold) !important; }
 #sceneDrawingModalOverlay #selectedTollLanesGroup > button:disabled { opacity: .35; cursor: not-allowed; }
+
+/* ---- Di chuyển vùng nhìn ---- */
+#sceneDrawingModalOverlay #sceneCanvasViewport { cursor: grab; }                 /* vùng nền ngoài tờ giấy kéo được */
+#sceneDrawingModalOverlay #sceneCanvasViewport.is-hand-mode #sceneDrawingCanvas { cursor: grab !important; }
+#sceneDrawingModalOverlay #sceneCanvasViewport.is-panning,
+#sceneDrawingModalOverlay #sceneCanvasViewport.is-panning #sceneDrawingCanvas { cursor: grabbing !important; }
+#sceneDrawingModalOverlay #sceneCanvasViewport.is-panning { user-select: none; }
+#sceneDrawingModalOverlay #sceneZoomControls > #sceneHandToggle[aria-pressed="true"] {
+  background: color-mix(in srgb,var(--se-gold) 16%,transparent) !important; color: var(--se-gold) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--se-gold) 40%,transparent) !important;
+}
+#sceneDrawingModalOverlay #sceneCanvasViewport :is(button, #sceneSelectedBadge, #sceneZoomControls) { cursor: pointer; }
+#sceneDrawingModalOverlay #sceneCanvasViewport #sceneSelectedBadge { cursor: default; }

@@ -111,3 +111,22 @@ function changeSelectedTollLanes(delta) {
   wrapped.__tollLanes = true;
   window.updateSelectionBadge = wrapped;
 })();
+
+// ---- Bàn tay: nắm chuột kéo để di chuyển vùng nhìn ----
+function toggleSceneHandMode(force) {
+  sceneHandMode = typeof force === 'boolean' ? force : !sceneHandMode;
+  const button = document.getElementById('sceneHandToggle');
+  if (button) button.setAttribute('aria-pressed', String(sceneHandMode));
+  document.getElementById('sceneCanvasViewport')?.classList.toggle('is-hand-mode', sceneHandMode);
+}
+// Esc thoát chế độ Bàn tay; đóng trình vẽ cũng tắt.
+window.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && typeof sceneHandMode !== 'undefined' && sceneHandMode) toggleSceneHandMode(false);
+});
+(function () {
+  const original = window.closeSceneDrawingModal;
+  if (typeof original !== 'function' || original.__hand) return;
+  const wrapped = function (...args) { if (typeof sceneHandMode !== 'undefined' && sceneHandMode) toggleSceneHandMode(false); return original.apply(this, args); };
+  wrapped.__hand = true;
+  window.closeSceneDrawingModal = wrapped;
+})();

@@ -265,12 +265,12 @@ function onCanvasMouseDown(e) {
   if (typeof closeAllToolSubmenus === 'function') closeAllToolSubmenus();
   if (typeof isStrokePopoverOpen !== 'undefined' && isStrokePopoverOpen) closeStrokeWidthPopover();
 
-  if (isSpacePressed || e.button === 1) {
+  if (isSpacePressed || e.button === 1 || sceneHandMode) {
     isPanning = true;
     panStartX = e.clientX - scenePanX;
     panStartY = e.clientY - scenePanY;
     const vp = document.getElementById('sceneCanvasViewport');
-    if (vp) vp.style.cursor = 'grabbing';
+    if (vp) { vp.style.cursor = 'grabbing'; vp.classList.add('is-panning'); }
     e.preventDefault();
     return;
   }

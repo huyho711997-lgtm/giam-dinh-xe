@@ -74,6 +74,7 @@ function drawSnapBadge(ctx, x, y, text) {
 function applySceneTransform(forceRedraw = false) {
   const wrapper = document.getElementById('sceneCanvasWrapper');
   const label = document.getElementById('sceneZoomLabel');
+  clampScenePan();
   if (wrapper) {
     wrapper.style.transform = `translate(${scenePanX}px, ${scenePanY}px) scale(${currentSceneZoom})`;
   }
@@ -86,6 +87,21 @@ function applySceneTransform(forceRedraw = false) {
       redrawSceneCanvas(false);
     }
   }
+}
+
+
+// Giữ ít nhất ~120px tờ giấy trong khung nhìn để không bao giờ kéo "mất" bản vẽ.
+function clampScenePan() {
+  const viewport = document.getElementById('sceneCanvasViewport');
+  const canvas = document.getElementById('sceneDrawingCanvas');
+  if (!viewport || !canvas) return;
+  const vw = viewport.clientWidth, vh = viewport.clientHeight;
+  const cw = canvas.offsetWidth * currentSceneZoom, ch = canvas.offsetHeight * currentSceneZoom;
+  const keep = 120;
+  const maxX = Math.max(0, (cw + vw) / 2 - keep);
+  const maxY = Math.max(0, (ch + vh) / 2 - keep);
+  scenePanX = Math.max(-maxX, Math.min(maxX, scenePanX));
+  scenePanY = Math.max(-maxY, Math.min(maxY, scenePanY));
 }
 
 
@@ -142,14 +158,26 @@ function initSceneZoomAndPan() {
       const delta = e.deltaY < 0 ? 0.12 : -0.12;
       zoomAtPoint(delta, e.clientX, e.clientY);
     } else {
-      // Do nothing to the canvas (no panning/moving); prevent default page scroll
+      // Panel/bảng nổi tự cuộn nội dung của chúng.
+      if (e.target.closest && e.target.closest('#sceneSelectedBadge, #toolSubmenu, .scene-head-help-card')) return;
+      // Cuộn chuột / touchpad = di chuyển vùng nhìn (Shift + cuộn = sang ngang).
       e.preventDefault();
+      const dx = e.shiftKey && !e.deltaX ? e.deltaY : e.deltaX;
+      const dy = e.shiftKey && !e.deltaX ? 0 : e.deltaY;
+      scenePanX -= dx;
+      scenePanY -= dy;
+      applySceneTransform();
     }
   }, { passive: false });
 
   // Middle click (1) or Space+Left click (0) to pan
   viewport.addEventListener('mousedown', function(e) {
-    if (e.button === 1 || (e.button === 0 && isSpacePressed)) {
+    // Chuột giữa, Space + kéo, chế độ Bàn tay, hoặc nắm vùng nền ngoài tờ giấy → di chuyển vùng nhìn.
+    const onBackground = e.target === viewport || e.target.id === 'sceneCanvasWrapper';
+    const onPaper = e.target.id === 'sceneDrawingCanvas';
+    if (!onBackground && !onPaper) return; // nút zoom, panel thuộc tính… không kích hoạt kéo
+    if (e.button === 1 || (e.button === 0 && (isSpacePressed || sceneHandMode || onBackground))) {
+      viewport.classList.add('is-panning');
       isPanning = true;
       panStartX = e.clientX - scenePanX;
       panStartY = e.clientY - scenePanY;
@@ -172,6 +200,7 @@ function initSceneZoomAndPan() {
       isPanning = false;
       const vp = document.getElementById('sceneCanvasViewport');
       if (vp) {
+        vp.classList.remove('is-panning');
         vp.style.cursor = isSpacePressed ? 'grab' : '';
       }
     }
