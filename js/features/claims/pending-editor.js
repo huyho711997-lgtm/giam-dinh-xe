@@ -241,9 +241,8 @@
       updateHeaderCancelClaimProposalButton(item);
 
       const titleEl = document.getElementById('addPendingClaimModalTitle');
-      const claimPlate = String(item.bienSo || '').trim();
-      const claimOwnerName = String(item.khachHang || item.chuXe || '').trim();
-      if (titleEl) titleEl.textContent = 'Chỉnh sửa thông tin hồ sơ' + (claimPlate ? ' (' + claimPlate + ')' : '') + (claimOwnerName ? ' — ' + claimOwnerName : '');
+      // Biển số & khách hàng đã hiển thị ở thẻ "Hồ sơ đang mở" bên trái nên tiêu đề không lặp lại.
+      if (titleEl) titleEl.textContent = 'Chỉnh sửa thông tin hồ sơ';
 
       const btnSubmitSpan = document.querySelector('#btnSubmitAddPendingClaim span');
       if (btnSubmitSpan) btnSubmitSpan.textContent = 'Lưu cập nhật hồ sơ';
