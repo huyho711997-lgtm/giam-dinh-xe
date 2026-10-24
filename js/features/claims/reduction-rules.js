@@ -26,8 +26,12 @@ const ClaimReductionRules = (() => {
       const rate = toNumber(entry.rate), actual = toNumber(entry.actual), limit = toNumber(entry.limit);
       items.push({id:item.id, rate:rate === null ? null : clamp(rate,item.min,item.max), actual:actual === null ? '' : String(actual), limit:limit === null ? '' : String(limit)});
     }
-    return {scope, items, base:digits(raw?.base)};
+    // Trường hợp khác ngoài danh mục Điều 14/24 (mô tả + mức % tùy chọn).
+    const customRate = toNumber(raw?.custom?.rate);
+    const custom = {on:raw?.custom?.on === true, title:String(raw?.custom?.title || '').slice(0,600), rate:customRate === null ? null : clamp(customRate,0,100)};
+    return {scope, items, base:digits(raw?.base), custom};
   }
+  const CUSTOM = {id:'custom', title:'Trường hợp khác ngoài danh mục quy tắc', tier:'custom', point:'', clause:'', min:0, max:100};
 
   // Tỷ lệ vượt (%) khi đã nhập đủ số đo thực tế và mức cho phép.
   function overPercent(entry) {
@@ -54,8 +58,13 @@ const ClaimReductionRules = (() => {
       }
       rows.push(row);
     }
+    if (state.custom.on && state.custom.title.trim()) {
+      rows.push({item:{...CUSTOM, title:state.custom.title.trim()}, entry:{}, over:null, custom:true,
+        status:state.custom.rate === null ? 'norate' : 'ok', rate:state.custom.rate, message:state.custom.rate === null ? 'Chưa nhập mức áp dụng – chỉ ghi nhận trong thông báo.' : ''});
+    }
     // Luôn theo thứ tự điều khoản trong quy tắc (không theo thứ tự người dùng bấm chọn).
-    rows.sort((a,b) => RULES.items.indexOf(a.item) - RULES.items.indexOf(b.item));
+    const order = row => row.custom ? RULES.items.length : RULES.items.indexOf(row.item);
+    rows.sort((a,b) => order(a) - order(b));
     const eligible = rows.filter(row => row.status === 'ok');
     const applied = eligible.reduce((best,row) => !best || row.rate > best.rate ? row : best, null);
     const base = Number(state.base) || 0, excluded = rows.filter(row => row.status === 'excluded');
@@ -85,16 +94,19 @@ const ClaimReductionRules = (() => {
         : '';
       const outcome = row.status === 'excluded' ? ' → thuộc điểm loại trừ mục ' + row.item.exclusion.item + ' Điều ' + row.item.exclusion.article
         : row.status === 'below' ? ' → dưới ngưỡng giảm trừ' : ' → ' + rateLabel(row.rate);
+      if (row.custom) return '- ' + row.item.title + ' (ngoài danh mục quy tắc)' + (row.rate === null ? '' : ' → ' + rateLabel(row.rate)) + '.';
       return '- ' + row.item.title + measure + outcome + '.';
     }).join('\n');
-    const okRows = result.rows.filter(row => row.status === 'ok'), source = ' ' + RULES.source.title + ' (ban hành kèm ' + RULES.source.decision + ').';
+    const okRows = result.rows.filter(row => row.status === 'ok' && !row.custom), source = ' ' + RULES.source.title + ' (ban hành kèm ' + RULES.source.decision + ').';
     let basis = '';
     if (result.refused) {
       const items = [...new Set(result.excluded.map(row => row.item.exclusion.item))].sort((a,b) => a - b);
       basis = 'Căn cứ mục ' + items.join(', mục ') + ' Điều 10 (các điểm loại trừ chung)' + source;
     } else if (okRows.length) {
-      basis = 'Căn cứ ' + citeGroup(okRows.map(row => row.item), scope) + (okRows.length > 1 ? ' và khoản 2.1 mục 2 Điều ' + article + ' (áp dụng tỷ lệ cao nhất)' : '') + source;
+      const multiple = result.rows.filter(row => row.status === 'ok').length > 1;
+      basis = 'Căn cứ ' + citeGroup(okRows.map(row => row.item), scope) + (multiple ? ' và khoản 2.1 mục 2 Điều ' + article + ' (áp dụng tỷ lệ cao nhất)' : '') + source;
     }
+    if (result.rows.some(row => row.custom)) basis += (basis ? ' ' : '') + 'Trường hợp ngoài danh mục: theo hợp đồng bảo hiểm/ GCNBH và tài liệu ghi nhận trong hồ sơ.';
     let impact = '';
     if (result.refused) impact = 'Thuộc điểm loại trừ – đề xuất từ chối bồi thường (không áp dụng giảm trừ)';
     else if (result.applied) {
@@ -105,14 +117,13 @@ const ClaimReductionRules = (() => {
   }
 
   // ---- Giao diện -----------------------------------------------------------------------------
-  let state = normalize({}), host = null, onApply = null, live = null;
+  let state = normalize({}), host = null, live = null, slots = {}, onChange = null;
   const node = (tag, text, className) => { const element = document.createElement(tag); if (text) element.textContent = text; if (className) element.className = className; return element; };
   const svg = path => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>';
   const ICON = {
     scale:svg('<path d="M12 3v18M7 21h10M5 7h14M5 7l-3 6a3 3 0 0 0 6 0Zm14 0-3 6a3 3 0 0 0 6 0Z"/>'),
     alert:svg('<circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/>'),
-    check:svg('<path d="m5 12 5 5 9-10"/>'),
-    fill:svg('<path d="M4 20h4L19 9l-4-4L4 16Z"/><path d="m13.5 6.5 4 4"/>')
+    check:svg('<path d="m5 12 5 5 9-10"/>')
   };
   const sources = [['PASC duyệt','modalPendingPascSoTienDuyet'],['Tổng tiền BT','modalPendingTtbtTongSoTienBoiThuong'],['Ước thiệt hại','modalPendingUocThietHai'],['Dự phòng','modalPendingDuPhongBoiThuong']];
 
@@ -168,15 +179,53 @@ const ClaimReductionRules = (() => {
     return row;
   }
 
+  function renderCustom() {
+    const custom = state.custom, row = node('article', null, 'crr-item is-custom' + (custom.on ? ' is-on' : ''));
+    const head = node('label', null, 'crr-item-head');
+    const box = node('input'); box.type = 'checkbox'; box.checked = custom.on; box.dataset.crrFocus = 'pick-custom';
+    box.onchange = () => { custom.on = box.checked; render(); if (custom.on) host.querySelector('[data-crr-focus="custom-title"]')?.focus(); };
+    const copy = node('span', null, 'crr-item-copy'); copy.append(node('small', 'Ngoài Điều ' + RULES.scopes[state.scope].article), node('strong', CUSTOM.title));
+    head.append(box, node('span', null, 'crr-check-box'), copy, node('span', 'tự nhập', 'crr-rate-badge'));
+    row.append(head);
+    const detail = node('div', null, 'crr-item-detail');
+    if (custom.on) {
+      const titleField = node('label', null, 'crr-field is-wide'), title = node('textarea');
+      title.rows = 2; title.maxLength = 600; title.value = custom.title; title.placeholder = 'Mô tả vi phạm / chế tài theo HĐ, GCNBH hoặc thỏa thuận riêng'; title.dataset.crrFocus = 'custom-title';
+      title.oninput = () => { custom.title = title.value; update(); };
+      titleField.append(node('span', 'Nội dung vi phạm / chế tài'), title);
+      const rateField = node('label', null, 'crr-field is-rate'), rate = node('input');
+      rate.type = 'number'; rate.min = 0; rate.max = 100; rate.step = 5; rate.value = custom.rate ?? ''; rate.placeholder = '%'; rate.dataset.crrFocus = 'custom-rate';
+      rate.oninput = () => { const value = toNumber(rate.value); custom.rate = value === null ? null : clamp(value, 0, 100); update(); };
+      rateField.append(node('span', 'Mức áp dụng (%)'), rate);
+      const controls = node('div', null, 'crr-controls'); controls.append(titleField, rateField);
+      const verdict = node('p', null, 'crr-verdict'); verdict.dataset.crrVerdict = 'custom';
+      detail.append(controls, verdict);
+    }
+    row.append(detail);
+    return row;
+  }
+
+  function fillPreview(target, result) {
+    const text = texts(state);
+    target.replaceChildren();
+    if (!result.rows.length) { target.append(node('p', 'Chọn vi phạm để xem nội dung sẽ đưa vào thông báo.', 'crr-preview-empty')); return; }
+    for (const [label, value] of [['Kết luận', text.impact || 'Chưa xác định mức áp dụng'], ['Vi phạm ghi nhận', text.reason], ['Căn cứ', text.basis || '—']]) {
+      const item = node('div'); item.append(node('dt', label), node('dd', value)); target.append(item);
+    }
+  }
+
   function render() {
     if (!host || !RULES) return;
     const focused = document.activeElement?.dataset?.crrFocus, caret = document.activeElement?.selectionStart;
     host.replaceChildren();
     const scope = RULES.scopes[state.scope];
+
+    // Cột trái: 01 vi phạm theo quy tắc (+ trường hợp khác), 02 ghi nhận thực tế (slot của thông báo)
+    const main = node('div', null, 'crr-main');
     const header = node('header', null, 'crr-header'), title = node('div', null, 'crr-title');
-    const emblem = node('span', null, 'crr-emblem'); emblem.innerHTML = ICON.scale;
-    const heading = node('div'); heading.append(node('h5', 'Đối chiếu Quy tắc bảo hiểm'), node('p', scope.heading + ' · ' + RULES.source.short));
-    title.append(emblem, heading);
+    const step = node('span', '01', 'crr-step');
+    const heading = node('div'); heading.append(node('h5', 'Vi phạm ghi nhận theo Quy tắc bảo hiểm'), node('p', scope.heading + ' · ' + RULES.source.short));
+    title.append(step, heading);
     const segments = node('div', null, 'crr-segments'); segments.setAttribute('role','group'); segments.setAttribute('aria-label','Phạm vi áp dụng');
     for (const [key, value] of Object.entries(RULES.scopes)) {
       const option = node('button', value.label + ' · Điều ' + value.article, 'crr-segment'); option.type = 'button'; option.dataset.crrFocus = 'scope-' + key;
@@ -185,22 +234,24 @@ const ClaimReductionRules = (() => {
       segments.append(option);
     }
     header.append(title, segments);
-
-    const body = node('div', null, 'crr-body'), list = node('div', null, 'crr-list');
+    const list = node('div', null, 'crr-list');
     for (const tier of RULES.tiers) {
       const group = node('section', null, 'crr-tier'); group.append(node('h6', 'Khoản ' + tier.clause + ' · ' + tier.label));
       for (const item of RULES.items.filter(item => item.tier === tier.id)) group.append(renderItem(item));
       list.append(group);
     }
+    const other = node('section', null, 'crr-tier'); other.append(node('h6', 'Khác · ngoài danh mục quy tắc'), renderCustom()); list.append(other);
+    main.append(header, list);
+    if (slots.left) main.append(slots.left);
 
-    // Tóm tắt + tính tiền
+    // Cột phải: kết quả + số tiền + trạng thái/gửi (slot) + xem trước nội dung
     const summary = node('aside', null, 'crr-summary');
-    const big = node('div', null, 'crr-applied'); big.dataset.crrApplied = '';
-    const why = node('p', null, 'crr-applied-note'); why.dataset.crrWhy = '';
-    const warn = node('div', null, 'crr-warning'); warn.dataset.crrWarn = '';
+    const big = node('div', null, 'crr-applied');
+    const why = node('p', null, 'crr-applied-note');
+    const warn = node('div', null, 'crr-warning');
     const calc = node('div', null, 'crr-calc');
     const baseField = node('label', null, 'crr-field is-money'), baseInput = node('input');
-    baseInput.type = 'text'; baseInput.inputMode = 'numeric'; baseInput.placeholder = 'Số tiền trước giảm trừ (VNĐ)'; baseInput.dataset.crrFocus = 'base';
+    baseInput.type = 'text'; baseInput.inputMode = 'numeric'; baseInput.placeholder = 'VNĐ'; baseInput.dataset.crrFocus = 'base';
     baseInput.value = state.base ? Number(state.base).toLocaleString('vi-VN') : '';
     baseInput.oninput = () => { state.base = digits(baseInput.value); const text = state.base ? Number(state.base).toLocaleString('vi-VN') : ''; if (baseInput.value !== text) baseInput.value = text; update(); };
     baseField.append(node('span', 'Số tiền bồi thường trước giảm trừ'), baseInput);
@@ -212,19 +263,22 @@ const ClaimReductionRules = (() => {
       chip.onclick = () => { state.base = value; baseInput.value = Number(value).toLocaleString('vi-VN'); update(); };
       quick.append(chip);
     }
-    const figures = node('dl', null, 'crr-figures'); figures.dataset.crrFigures = '';
+    const figures = node('dl', null, 'crr-figures');
     calc.append(baseField); if (quick.childElementCount) calc.append(quick); calc.append(figures);
-    const apply = node('button', null, 'sf-button sf-primary crr-apply'); apply.type = 'button'; apply.innerHTML = ICON.fill; apply.append(node('span', 'Điền vào nội dung xử lý'));
-    apply.dataset.crrFocus = 'apply'; apply.onclick = () => onApply?.(texts(state));
+    const previewBox = node('details', null, 'crr-preview'); previewBox.append(node('summary', 'Nội dung sẽ đưa vào thông báo'));
+    const preview = node('dl'); previewBox.append(preview);
     const principle = node('p', null, 'crr-principle');
     principle.textContent = RULES.principles.filter(item => !item.scopes || item.scopes.includes(state.scope)).map(item => 'Khoản ' + item.clause + ' mục 2: ' + item.text).join(' ') + ' ' + RULES.deductibleNote;
-    summary.append(node('span', 'KẾT QUẢ ĐỐI CHIẾU', 'crr-eyebrow'), big, why, warn, calc, apply, principle);
+    summary.append(node('span', 'KẾT QUẢ ĐỐI CHIẾU', 'crr-eyebrow'), big, why, warn, calc);
+    if (slots.summary) summary.append(slots.summary);
+    previewBox.append(principle);  // nguyên tắc 2.1/2.2 + ghi chú khấu trừ nằm trong phần mở rộng để thẻ gọn
+    summary.append(previewBox);
 
-    body.append(list, summary);
-    host.append(header, body);
-    live = {big, why, warn, figures, apply};
+    const body = node('div', null, 'crr-body'); body.append(main, summary);
+    host.append(body);
+    live = {big, why, warn, figures, preview};
     update();
-    if (focused) { const target = host.querySelector('[data-crr-focus="' + focused + '"]'); if (target) { target.focus({preventScroll:true}); if (typeof caret === 'number' && target.type === 'text') try { target.setSelectionRange(caret, caret); } catch (_) {} } }
+    if (focused) { const target = host.querySelector('[data-crr-focus="' + focused + '"]'); if (target) { target.focus({preventScroll:true}); if (typeof caret === 'number' && ['text','textarea'].includes(target.type)) try { target.setSelectionRange(caret, caret); } catch (_) {} } }
   }
 
   // Cập nhật các con số tại chỗ (không dựng lại ô nhập → không mất con trỏ khi gõ).
@@ -232,21 +286,25 @@ const ClaimReductionRules = (() => {
     if (!live) return;
     const result = evaluate(state);
     for (const row of result.rows) {
-      const verdict = host.querySelector('[data-crr-verdict="' + row.item.id + '"]');
+      const verdict = host.querySelector('[data-crr-verdict="' + (row.custom ? 'custom' : row.item.id) + '"]');
       if (!verdict) continue;
       verdict.className = 'crr-verdict is-' + row.status + (result.applied === row ? ' is-applied' : '') + (result.refused && row.status === 'ok' ? ' is-superseded' : '');
       verdict.textContent = row.status === 'ok'
         ? (row.over !== null ? 'Vượt ' + String(row.over).replace('.',',') + '% · ' : row.item.measure ? 'Nhập số đo để kiểm tra ngưỡng · ' : '') + 'Giảm trừ ' + rateLabel(row.rate) + (result.applied === row ? ' · đang áp dụng' : result.refused ? ' · không áp dụng do hồ sơ thuộc loại trừ' : '')
         : row.message;
     }
+    const customVerdict = host.querySelector('[data-crr-verdict="custom"]');
+    if (customVerdict && !result.rows.some(row => row.custom)) { customVerdict.className = 'crr-verdict is-below'; customVerdict.textContent = 'Nhập nội dung vi phạm để đưa vào thông báo.'; }
+    onChange?.(result);
     live.big.textContent = result.refused ? 'Từ chối' : result.applied ? rateLabel(result.applied.rate) : '—';
     live.big.classList.toggle('is-empty', !result.applied && !result.refused);
     live.big.classList.toggle('is-refused', result.refused);
+    live.preview && fillPreview(live.preview, result);
     live.why.textContent = result.refused
       ? 'Có vi phạm thuộc điểm loại trừ chung (Điều 10): đề xuất từ chối bồi thường, không tính giảm trừ' + (result.candidate ? ' (nếu không thuộc loại trừ, mức giảm trừ sẽ là ' + rateLabel(result.candidate.rate) + ').' : '.')
       : result.applied
       ? 'Theo ' + citation(result.applied.item, result.state.scope) + (result.rows.filter(row => row.status === 'ok').length > 1 ? ' – tỷ lệ cao nhất trong các vi phạm (khoản 2.1).' : '.')
-      : result.rows.length ? 'Chưa có vi phạm đủ điều kiện giảm trừ.' : 'Chọn vi phạm ở danh sách bên cạnh.';
+      : result.rows.length ? 'Chưa có mức áp dụng cụ thể.' : 'Chọn vi phạm ở danh sách bên cạnh.';
     live.warn.hidden = !result.excluded.length;
     live.warn.innerHTML = result.excluded.length ? ICON.alert : '';
     if (result.excluded.length) live.warn.append(node('span', result.excluded.map(row => row.message).join(' ')));
@@ -256,11 +314,12 @@ const ClaimReductionRules = (() => {
         const item = node('div', null, className); item.append(node('dt', label), node('dd', value)); live.figures.append(item);
       }
     }
-    live.apply.disabled = !result.rows.length;
   }
 
-  function mount(container, options = {}) { host = container; onApply = options.onApply || null; render(); }
+  // slots.left: nội dung thêm dưới danh sách vi phạm; slots.summary: thêm vào thẻ kết quả. onChange(result) khi số liệu đổi.
+  function mount(container, options = {}) { host = container; slots = {left:options.left || null, summary:options.summary || null}; onChange = options.onChange || null; render(); }
   function load(raw) { state = normalize(raw); render(); }
   function getState() { return normalize(state); }
-  return {mount, load, getState, evaluate, texts, citation, normalize};
+  const current = () => texts(state);
+  return {mount, load, getState, evaluate, texts, current, citation, normalize};
 })();

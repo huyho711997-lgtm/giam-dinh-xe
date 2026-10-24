@@ -83,3 +83,45 @@ test('saved state is sanitized: unknown or duplicate items and junk numbers are 
   assert.deepEqual(JSON.parse(JSON.stringify(state.items)), [{id:'moved',rate:null,actual:'',limit:''}]);
   assert.equal(state.base, '123');
 });
+
+test('custom case outside the rule list: counted with its own rate, cited as outside the list', () => {
+  const result = evaluate({items:[{id:'rescue'}],custom:{on:true,title:'Không cung cấp bản gốc hóa đơn sửa chữa theo thỏa thuận HĐ',rate:15}});
+  assert.equal(result.applied.rate, 15); assert.equal(result.applied.custom, true);
+  const text = rules.texts({items:[{id:'rescue'}],custom:{on:true,title:'Vi phạm thỏa thuận riêng',rate:15}});
+  assert.match(text.reason, /Vi phạm thỏa thuận riêng \(ngoài danh mục quy tắc\) → 15%/);
+  assert.match(text.basis, /điểm a khoản 1\.1 mục 1 Điều 14 và khoản 2\.1/);
+  assert.match(text.basis, /Trường hợp ngoài danh mục/);
+  const noRate = evaluate({custom:{on:true,title:'Chỉ ghi nhận'}});
+  assert.equal(noRate.rows[0].status, 'norate'); assert.equal(noRate.applied, null);
+  assert.equal(evaluate({custom:{on:true,title:'   '}}).rows.length, 0, 'empty description is ignored');
+});
+
+// ---- Thông báo: chuyển hồ sơ mẫu cũ (tự gõ Lý do / Mức / Căn cứ) sang mẫu mới ----
+const notice = (() => {
+  const ctx = vm.createContext({document:{getElementById:()=>null,querySelector:()=>null},firebase:{auth:()=>({currentUser:null})},SharedFormsControls:{enhance(){}}});
+  vm.runInContext(read('js/data/insurance-reduction-rules.js') + '\n' + read('js/features/claims/reduction-rules.js') + '\n' + read('js/features/claims/reduction-notice.js') + '\nthis.notice=ClaimReductionNotice;this.rules=ClaimReductionRules;', ctx);
+  return ctx;
+})();
+
+test('legacy notice with a % becomes a custom case and keeps its basis as evidence', () => {
+  notice.notice.load({reason:'Tự ý sửa xe',impact:'30%',basis:'Biên bản ngày 10/10',stage:'Dự kiến áp dụng'});
+  const state = notice.notice.getState();
+  assert.equal(state.stage, 'Dự kiến áp dụng');
+  assert.equal(state.rule.custom.on, true); assert.equal(state.rule.custom.title, 'Tự ý sửa xe'); assert.equal(state.rule.custom.rate, 30);
+  assert.equal(state.evidence, 'Biên bản ngày 10/10');
+  assert.match(state.impact, /^Giảm trừ 30%/);
+});
+
+test('legacy notice with a money amount keeps it in the facts note instead of guessing a rate', () => {
+  notice.notice.load({reason:'Không thông báo kịp thời',impact:'5.000.000 đ'});
+  const state = notice.notice.getState();
+  assert.equal(state.rule.custom.rate, null);
+  assert.match(state.notes, /5\.000\.000 đ/);
+});
+
+test('new-format notices are not migrated again', () => {
+  notice.notice.load({notes:'Ghi nhận',evidence:'Ảnh',rule:{items:[{id:'moved',rate:40}]},reason:'cũ',impact:'cũ',basis:'cũ'});
+  const state = notice.notice.getState();
+  assert.equal(state.notes, 'Ghi nhận'); assert.equal(state.rule.custom.on, false);
+  assert.match(state.impact, /^Giảm trừ 40%/, 'derived fields are regenerated from the rule, not copied from the old text');
+});

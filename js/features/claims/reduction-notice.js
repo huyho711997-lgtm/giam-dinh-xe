@@ -1,6 +1,8 @@
 const ClaimReductionNotice = (() => {
+  // Một luồng nhập duy nhất: chọn vi phạm theo quy tắc (ClaimReductionRules) → lý do, mức áp dụng, căn cứ
+  // được TỰ SINH khi soạn thư. Người dùng chỉ nhập thêm điều máy không biết: ghi nhận thực tế & tài liệu.
   const stages = ['Đang xem xét','Dự kiến áp dụng','Đã phê duyệt','Đã áp dụng'];
-  const fields = {reason:'Lý do giảm trừ / chế tài',impact:'Mức giảm trừ / chế tài',basis:'Căn cứ / ghi nhận hồ sơ',stage:'Trạng thái xử lý'};
+  const MAIL_KEYS = ['to','cc','subject','body','signature'];
   let draft = {}, dialog = null;
   const node = (tag, text, className) => {
     const element = document.createElement(tag);
@@ -15,6 +17,7 @@ const ClaimReductionNotice = (() => {
   const value = id => { const text = String(document.getElementById('modalPending' + id)?.value || '').trim(); return text === '—' ? '' : text; };
   const owner = () => firebase.auth().currentUser?.uid;
   const rules = () => typeof ClaimReductionRules === 'undefined' ? null : ClaimReductionRules;
+  const clip = (text, max) => typeof text === 'string' ? text.slice(0,max) : '';
   const envelope = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg>';
   function refreshStage() {
     const badge = document.getElementById('claimReductionStage');
@@ -22,46 +25,50 @@ const ClaimReductionNotice = (() => {
     if (badge) { badge.textContent = stage; badge.dataset.stage = String(stages.indexOf(stage)); }
   }
   function close() { if (dialog?.open) dialog.close(); }
+
+  // Hồ sơ lưu theo mẫu cũ (tự gõ Lý do / Mức / Căn cứ) được chuyển sang mẫu mới, không mất nội dung:
+  // Lý do + mức % → "Trường hợp khác"; mức không phải % → ghi nhận thực tế; Căn cứ → tài liệu căn cứ.
+  function migrate(data) {
+    const rule = data?.rule && typeof data.rule === 'object' ? {...data.rule} : {};
+    let notes = clip(data?.notes,3000), evidence = clip(data?.evidence,1500);
+    const hasRule = Array.isArray(rule.items) && rule.items.length || rule.custom?.on;
+    if (!hasRule && data?.notes === undefined && (data?.reason || data?.impact || data?.basis)) {
+      const percent = String(data.impact || '').match(/(\d+(?:[.,]\d+)?)\s*%/);
+      if (data.reason) rule.custom = {on:true, title:clip(data.reason,600), rate:percent ? Number(percent[1].replace(',','.')) : null};
+      if (data.impact && !percent) notes = 'Mức đã ghi nhận trước đây: ' + clip(data.impact,300);
+      evidence = clip(data.basis,1500);
+    }
+    return {rule, notes, evidence};
+  }
   function load(data) {
     if (dialog) dialog.dataset.discard = 'true';
-    close(); draft = {};
-    for (const key of ['reason','impact','basis','stage','to','cc','subject','body','signature']) {
-      draft[key] = typeof data?.[key] === 'string' ? data[key].slice(0,key === 'signature' ? 16000 : 6000) : '';
-    }
-    if (!stages.includes(draft.stage)) draft.stage = stages[0];
-    rules()?.load(data?.rule || {});
-    for (const key of Object.keys(fields)) {
-      const input = document.getElementById('modalPendingReduction_' + key);
-      if (input) input.value = draft[key] || '';
-    }
+    close();
+    const migrated = migrate(data);
+    draft = {stage:stages.includes(data?.stage) ? data.stage : stages[0], notes:migrated.notes, evidence:migrated.evidence};
+    for (const key of MAIL_KEYS) draft[key] = clip(data?.[key], key === 'signature' ? 16000 : 6000);
+    rules()?.load(migrated.rule);
+    for (const key of ['stage','notes','evidence']) { const input = document.getElementById('modalPendingReduction_' + key); if (input) input.value = draft[key] || ''; }
     const section = document.getElementById('claimReductionSection');
     if (section) SharedFormsControls.enhance(section);
     refreshStage();
   }
   function getState() {
-    for (const key of Object.keys(fields)) {
+    for (const key of ['stage','notes','evidence']) {
       const input = document.getElementById('modalPendingReduction_' + key);
       if (input) draft[key] = input.value.trim();
     }
-    const rule = rules()?.getState();
-    return rule && rule.items.length ? {...draft, rule} : {...draft};
+    const rule = rules()?.getState(), text = rules()?.current();
+    // reason / impact / basis là bản tự sinh, lưu kèm để đọc nhanh ở nơi khác; nguồn gốc là "rule".
+    return {...draft, ...(rule ? {rule} : {}), reason:text?.reason || '', impact:text?.impact || '', basis:text?.basis || ''};
   }
-  // Điền Lý do / Căn cứ / Mức giảm trừ từ phần đối chiếu quy tắc; hỏi trước khi ghi đè nội dung tự nhập.
-  async function applyRuleTexts(generated) {
-    const targets = {reason:generated.reason, basis:generated.basis, impact:generated.impact};
-    const inputs = Object.fromEntries(Object.keys(targets).map(key => [key, document.getElementById('modalPendingReduction_' + key)]));
-    const overwritten = Object.keys(targets).filter(key => inputs[key]?.value.trim() && inputs[key].value.trim() !== targets[key] && inputs[key].dataset.autoFilled !== inputs[key].value);
-    if (overwritten.length && typeof showPremiumConfirmModal === 'function') {
-      const ok = await showPremiumConfirmModal({eyebrow:'THÔNG BÁO GIẢM TRỪ',title:'Thay nội dung đã nhập?',message:'Các ô sau đang có nội dung bạn tự nhập và sẽ được thay bằng nội dung theo quy tắc:',items:overwritten.map(key => fields[key]),confirmText:'Thay nội dung'});
-      if (!ok) return;
-    }
-    for (const [key,text] of Object.entries(targets)) {
-      const input = inputs[key]; if (!input) continue;
-      input.value = text; input.dataset.autoFilled = text;
-      input.dispatchEvent(new Event('input',{bubbles:true}));
-    }
-    inputs.reason?.focus({preventScroll:true});
-    triggerToast('Đã điền nội dung theo Quy tắc bảo hiểm. Bạn có thể chỉnh sửa trước khi gửi.','success');
+  function field(key, label, tag, options = {}) {
+    const group = node('div',null,'form-group crr-note-field'), caption = node('label',label), input = node(tag);
+    input.id = 'modalPendingReduction_' + key; caption.htmlFor = input.id;
+    if (tag !== 'select') { input.className = 'input-premium'; input.maxLength = options.max || 1500; input.placeholder = options.placeholder || ''; if (tag === 'textarea') input.rows = options.rows || 3; }
+    input.value = draft[key] || '';
+    group.append(caption,input);
+    if (options.hint) group.append(node('p',options.hint,'crr-field-hint'));
+    return {group,input};
   }
   function mount() {
     const pane = document.getElementById('tabPane_Financial');
@@ -69,7 +76,7 @@ const ClaimReductionNotice = (() => {
     const section = node('section',null,'claim-editor-form-section claim-reduction-section'); section.id = 'claimReductionSection';
     const header = node('header'), title = node('div',null,'claim-reduction-heading');
     const emblem = node('span',null,'claim-reduction-emblem'); emblem.innerHTML = envelope;
-    title.append(node('small','PHỐI HỢP ĐƠN VỊ CẤP ĐƠN'),node('h4','Thông báo giảm trừ / chế tài'),node('p','Ghi nhận nội dung xử lý và soạn thông báo cho đơn vị cấp đơn.'));
+    title.append(node('small','PHỐI HỢP ĐƠN VỊ CẤP ĐƠN'),node('h4','Thông báo giảm trừ / chế tài'),node('p','Chọn vi phạm theo quy tắc – lý do, mức áp dụng và căn cứ được tự soạn vào thông báo cho đơn vị cấp đơn.'));
     const badge = node('span',null,'claim-reduction-stage'); badge.id = 'claimReductionStage';
     header.append(emblem,title,badge);
     const context = node('div',null,'claim-reduction-context');
@@ -77,42 +84,33 @@ const ClaimReductionNotice = (() => {
       const item = node('div'), text = node('strong'); text.dataset.claimSummary = id; text.dataset.empty = empty;
       text.textContent = document.getElementById(id)?.value || empty; item.append(node('span',label),text); context.append(item);
     }
-    const grid = node('div',null,'claim-editor-form-grid claim-reduction-fields');
-    const details = node('section',null,'claim-reduction-panel'), application = node('section',null,'claim-reduction-panel');
-    for (const [panel,number,label] of [[details,'01','Nội dung xử lý'],[application,'02','Mức áp dụng & trạng thái']]) {
-      const caption = node('h5'); caption.append(node('span',number),document.createTextNode(label)); panel.append(caption);
-    }
-    for (const [key,label] of Object.entries(fields)) {
-      const group = node('div',null,'form-group'), caption = node('label',label);
-      const input = node(key === 'stage' ? 'select' : ['reason','basis'].includes(key) ? 'textarea' : 'input');
-      input.id = 'modalPendingReduction_' + key; caption.htmlFor = input.id;
-      input.className = key === 'stage' ? '' : 'input-premium';
-      if (key === 'stage') {
-        stages.forEach(stage => { const option = node('option',stage); option.value = stage; input.append(option); });
-        input.dataset.sfSelect = ''; input.dataset.sfLabel = label; input.dataset.sfIcon = 'shield';
-        input.dataset.sfDescription = 'Trạng thái này được đưa vào nội dung thông báo.';
-        input.addEventListener('change',refreshStage);
-      } else {
-        input.maxLength = key === 'impact' ? 200 : 1500;
-        if (input.tagName === 'TEXTAREA') input.rows = 3;
-        input.placeholder = ({reason:'Nhập lý do được ghi nhận trong hồ sơ',impact:'Nhập tỷ lệ (%) hoặc số tiền (VNĐ)',basis:'Điều khoản / tài liệu liên quan (nếu có)'})[key];
-      }
-      input.value = draft[key] || (key === 'stage' ? stages[0] : '');
-      group.append(caption,input); (['reason','basis'].includes(key) ? details : application).append(group);
-    }
-    const note = node('p','Nhập tỷ lệ hoặc số tiền theo hồ sơ. Trạng thái đã chọn sẽ xuất hiện trong thư để đơn vị cấp đơn nắm đúng tiến độ.','claim-reduction-panel-note'); application.append(note); grid.append(details,application);
-    const footer = node('div',null,'claim-reduction-footer');
-    const help = node('div'); help.append(node('strong','Xem lại nội dung trước khi gửi'),node('p','Thông tin được lưu khi bấm Lưu cập nhật hồ sơ.','claim-editor-hint'));
-    const create = button('',compose,true); create.innerHTML = envelope; create.append(node('span','Soạn thông báo cấp đơn'));
-    footer.append(help,create);
+    // 02 – Ghi nhận thực tế (cột trái, dưới danh sách vi phạm)
+    const facts = node('section',null,'crr-facts');
+    const factsHead = node('header',null,'crr-header'), factsTitle = node('div',null,'crr-title'), factsHeading = node('div');
+    factsHeading.append(node('h5','Ghi nhận thực tế'),node('p','Thông tin xác minh được trong hồ sơ – đưa nguyên văn vào thông báo.'));
+    factsTitle.append(node('span','02','crr-step'),factsHeading); factsHead.append(factsTitle);
+    const notes = field('notes','Diễn biến / chứng cứ xác minh','textarea',{max:3000,rows:3,placeholder:'Ví dụ: Lái xe di chuyển xe về gara trước khi GĐV có mặt; camera hành trình ghi nhận tốc độ 66 km/h…'});
+    const evidence = field('evidence','Tài liệu căn cứ trong hồ sơ','input',{max:1500,placeholder:'Biên bản hiện trường, ảnh, trích xuất camera hành trình, giấy đăng kiểm…'});
+    facts.append(factsHead,notes.group,evidence.group);
+    // Trạng thái + gửi (gắn vào thẻ kết quả bên phải)
+    const actions = node('div',null,'crr-actions');
+    const stage = field('stage','Trạng thái xử lý','select');
+    stages.forEach(item => { const option = node('option',item); option.value = item; stage.input.append(option); });
+    stage.input.value = draft.stage || stages[0];
+    Object.assign(stage.input.dataset,{sfSelect:'',sfLabel:'Trạng thái xử lý',sfIcon:'shield',sfDescription:'Trạng thái này được đưa vào nội dung thông báo.'});
+    stage.input.addEventListener('change',refreshStage);
+    const create = button('',compose,true); create.classList.add('crr-compose'); create.innerHTML = envelope; create.append(node('span','Soạn thông báo cấp đơn'));
+    actions.append(stage.group,create,node('p','Nội dung được lưu khi bấm Lưu cập nhật hồ sơ.','crr-field-hint'));
     const ruleHost = node('div',null,'claim-reduction-rules');
-    section.append(header,context,ruleHost,grid,footer); pane.append(section);
-    rules()?.mount(ruleHost,{onApply:applyRuleTexts}); SharedFormsControls.enhance(section); refreshStage();
+    section.append(header,context,ruleHost); pane.append(section);
+    if (rules()) rules().mount(ruleHost,{left:facts,summary:actions});
+    else ruleHost.append(facts,actions);
+    SharedFormsControls.enhance(section); refreshStage();
   }
   function show() {
     switchEditClaimTab('Financial'); ClaimEditorWorkspace.showMain();
     document.getElementById('claimReductionSection')?.scrollIntoView({block:'start'});
-    document.getElementById('modalPendingReduction_reason')?.focus({preventScroll:true});
+    document.querySelector('#claimReductionSection .crr-item-head input')?.focus({preventScroll:true});
   }
   function template() {
     const state = getState();
@@ -120,6 +118,7 @@ const ClaimReductionNotice = (() => {
       plate:value('BienSo'),customer:value('KhachHang'),hsbt:value('SoHoSoBoiThuong'),vtt:value('MaVuTonThat'),
       policy:value('SoHd'),certificate:value('SoGcn'),unit:value('DonViCapDon'),issuer:value('NguoiCapDon'),
       date:value('NgayVTT'),assessor:value('GdvTiepNhan'),reason:state.reason,impact:state.impact,basis:state.basis,stage:state.stage,
+      notes:state.notes,evidence:state.evidence,
       sender:String(activeUserProfile?.displayName || firebase.auth().currentUser?.displayName || value('GdvTiepNhan') || '')
     };
     // Số liệu tính theo quy tắc (chỉ khi đã có tỷ lệ áp dụng và số tiền trước giảm trừ).
@@ -136,15 +135,18 @@ const ClaimReductionNotice = (() => {
       ['Hợp đồng bảo hiểm',info.policy],['Số GCNBH',info.certificate],['Ngày xảy ra tổn thất',info.date],
       ['Đơn vị cấp đơn',info.unit],['Người cấp đơn',info.issuer],['Giám định viên',info.assessor]
     ].filter(([,text]) => text && text !== '—').map(([label,text]) => '- ' + label + ': ' + text);
+    const list = text => text.split('\n').filter(Boolean).map(line => '   + ' + line.replace(/^\s*[-+•]\s*/,''));
     const body = [
       'Kính gửi ' + (info.unit || 'Anh/Chị phụ trách cấp đơn') + ',', '',
       'Bộ phận giám định gửi thông tin giảm trừ / chế tài của hồ sơ sau để đơn vị cấp đơn nắm thông tin:',
       '',...facts,'','NỘI DUNG GIẢM TRỪ / CHẾ TÀI',
       '- Trạng thái: ' + info.stage,
-      // Lý do nhiều dòng (điền từ quy tắc) được thụt lề thành các ý con cho dễ đọc trong email.
-      ...(info.reason.includes('\n') ? ['- Lý do:',...info.reason.split('\n').map(line => '   + ' + line.replace(/^\s*[-+•]\s*/,''))] : ['- Lý do: ' + info.reason]),
-      '- Mức giảm trừ / chế tài: ' + (info.impact || 'Chưa xác định'),
-      ...(info.basis ? ['- Căn cứ / ghi nhận: ' + info.basis] : []),
+      // Khi có bảng số tiền bên dưới, kết luận chỉ nêu tỷ lệ để không lặp số liệu.
+      '- Kết luận: ' + ((money.length ? info.impact.split(':')[0] : info.impact) || 'Chưa xác định mức áp dụng'),
+      ...(info.reason ? ['- Vi phạm ghi nhận:',...list(info.reason)] : []),
+      ...(info.notes ? ['- Ghi nhận thực tế: ' + info.notes] : []),
+      ...(info.basis ? ['- Căn cứ: ' + info.basis.replace(/^Căn cứ\s+/,'')] : []),
+      ...(info.evidence ? ['- Tài liệu trong hồ sơ: ' + info.evidence] : []),
       ...money,'',
       'Kính đề nghị đơn vị cấp đơn nắm thông tin, phối hợp trao đổi với khách hàng và phản hồi nếu có thông tin cần bổ sung.',
       '', 'Trân trọng,', info.sender
@@ -160,7 +162,7 @@ const ClaimReductionNotice = (() => {
     if (!owner()) return triggerToast('Vui lòng đăng nhập để soạn thông báo.','warning');
     if (!value('BienSo')) return triggerToast('Nhập biển số xe trước khi soạn thông báo.','warning');
     const state = getState();
-    if (!state.reason) { document.getElementById('modalPendingReduction_reason')?.focus(); return triggerToast('Nhập lý do giảm trừ / chế tài.','warning'); }
+    if (!state.reason && !state.notes) { document.querySelector('#claimReductionSection .crr-item-head input')?.focus(); return triggerToast('Chọn ít nhất một vi phạm hoặc nhập ghi nhận thực tế.','warning'); }
     close();
     const generated = template(), claim = editingPendingClaimId, uid = owner();
     const sheet = node('dialog',null,'sf-dialog claim-reduction-compose'); dialog = sheet;
