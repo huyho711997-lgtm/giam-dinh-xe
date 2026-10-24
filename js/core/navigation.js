@@ -227,8 +227,8 @@
       for (const group of groups) for (const item of group.items) if (!current && isAppSidebarItemActive(item)) { current = item; currentGroup = group; }
       context.innerHTML = `
         <button type="button" id="appSidebarMenuBtn" class="app-topbar-menu" onclick="setAppSidebarOpen(true)" aria-controls="appSidebar" aria-expanded="${document.body.classList.contains('app-sidebar-open')}" aria-label="Mở menu điều hướng">${appSidebarIcon('menu')}</button>
-        <div class="app-topbar-title">
-          ${currentGroup && current && current.tab !== 'home' ? `<span>${currentGroup.label}</span>` : ''}
+        <div class="app-topbar-title" aria-label="Trang hiện tại">
+          ${currentGroup && current && current.tab !== 'home' ? `<span>${currentGroup.label}</span><svg class="app-topbar-sep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>` : ''}
           <strong>${current ? current.title : 'Trang chủ'}</strong>
         </div>`;
     }
