@@ -1,7 +1,8 @@
 // ==========================================================================
-// TRANG CHỦ (activeDashboardTab === 'home') – css/home-page.css
-// Bố cục: lời chào + tác vụ nhanh → dải số liệu (bấm để mở trang) → thẻ phân hệ chia nhóm
-// giống hệt sidebar. Một tông màu (vàng) cho mọi phân hệ, không còn mỗi thẻ một màu.
+// TRANG CHỦ (activeDashboardTab === 'home') – css/home-page.css – tối ưu cho desktop.
+// 1) Băng hero tối: lời chào + tác vụ nhanh + số liệu chính (bấm để mở trang).
+// 2) Hai cột: trái = lối vào phân hệ (nhóm như sidebar); phải = dữ liệu thật:
+//    phân bổ hồ sơ tồn theo trạng thái (bấm để lọc) + hồ sơ mới mở gần đây (bấm để mở).
 // Quyền hiển thị nhận từ workspace.js (giữ nguyên logic phân quyền cũ).
 // ==========================================================================
 (function () {
@@ -17,106 +18,187 @@
     field:'<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
     forms:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
     system:'<path d="M12 3 4 6v6c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/>',
-    arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>'
+    arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+    chevron:'<path d="m9 6 6 6-6 6"/>'
   };
   const svg = (name, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name] || ''}</svg>`;
   const esc = value => (typeof escapeHtmlOutput === 'function' ? escapeHtmlOutput(value) : String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
   const fmt = n => Number(n || 0).toLocaleString('vi-VN');
+  const jsArg = value => JSON.stringify(String(value)).replace(/"/g, '&quot;');
 
   function greeting(now) {
     const h = now.getHours();
     return h < 11 ? 'Chào buổi sáng' : h < 14 ? 'Chào buổi trưa' : h < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
   }
-
   function todayLabel(now) {
     const days = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
-    return `${days[now.getDay()]}, ${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+    return `${days[now.getDay()]} · ${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
   }
 
-  function moduleCard(m) {
-    return `<button type="button" class="hp-module" onclick="switchWorkspaceTab('${m.tab}')">
-      <span class="hp-module-top">
-        <span class="hp-module-icon">${svg(m.icon)}</span>
-        ${m.badge ? `<span class="hp-module-badge">${m.badge}</span>` : ''}
-      </span>
-      <span class="hp-module-title">${m.title}</span>
-      <span class="hp-module-desc">${m.desc}</span>
-      <span class="hp-module-foot">
-        <span class="hp-module-meta">${m.meta}</span>
-        <span class="hp-module-go">${m.cta || 'Mở'} ${svg('arrow')}</span>
-      </span>
-    </button>`;
+  // 'dd/mm/yyyy[ hh:mm]' → timestamp; trả 0 nếu không đọc được.
+  function claimOpenTime(c) {
+    const raw = String(c.ngayMoHs || c.ngayTonThat || c.ngayVTT || '').trim();
+    const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if (m) return new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)).getTime();
+    return Number(c.createdAt) || 0;
   }
 
-  function groupMarkup(g) {
-    return `<section class="hp-group" aria-label="${g.label}" style="--hp-group-cols:${g.items.length}">
-      <h2 class="hp-group-title">${g.label}<span>${g.items.length} phân hệ</span></h2>
-      <div class="hp-grid">${g.items.map(moduleCard).join('')}</div>
+  // ---- Dữ liệu cho cột phải ----
+  function pendingStats() {
+    const claims = Object.entries((typeof cachedPendingClaimsPayload !== 'undefined' && cachedPendingClaimsPayload) || {});
+    const map = (typeof PENDING_STATUS_MAP !== 'undefined' && PENDING_STATUS_MAP) || {};
+    const counts = {};
+    for (const [, c] of claims) { const k = map[c.trangThai] ? c.trangThai : 'moi'; counts[k] = (counts[k] || 0) + 1; }
+    const total = claims.length;
+    const rows = Object.keys(map).filter(k => counts[k]).map(k => ({ key: k, label: map[k].label, color: map[k].color, count: counts[k] }))
+      .sort((a, b) => b.count - a.count);
+    const recent = claims.map(([id, c]) => ({ id, c, t: claimOpenTime(c) })).sort((a, b) => b.t - a.t).slice(0, 8);
+    return { total, rows, recent, map };
+  }
+
+  function statusPanel(st) {
+    if (!st.total) return `<section class="hp-panel"><header class="hp-panel-head"><div><span class="hp-kicker">Hồ sơ bồi thường</span><h3>Phân bổ theo trạng thái</h3></div></header><p class="hp-empty">Chưa có dữ liệu hồ sơ tồn.</p></section>`;
+    const top = st.rows.slice(0, 7), rest = st.rows.slice(7).reduce((s, r) => s + r.count, 0);
+    const bar = st.rows.map(r => `<i style="flex:${r.count};background:${r.color}" title="${esc(r.label)}: ${fmt(r.count)}"></i>`).join('');
+    return `<section class="hp-panel">
+      <header class="hp-panel-head">
+        <div><span class="hp-kicker">Hồ sơ bồi thường</span><h3>Phân bổ theo trạng thái</h3></div>
+        <button type="button" class="hp-link" onclick="switchWorkspaceTab('pending')">Xem tất cả ${svg('chevron')}</button>
+      </header>
+      <div class="hp-total"><strong>${fmt(st.total)}</strong><span>hồ sơ đang theo dõi</span></div>
+      <div class="hp-stack" role="img" aria-label="Tỷ lệ hồ sơ theo trạng thái">${bar}</div>
+      <ul class="hp-status-list">
+        ${top.map(r => {
+          const pct = Math.round(r.count * 1000 / st.total) / 10;
+          return `<li><button type="button" onclick="openHomeStatusFilter(${jsArg(r.key)})" title="Lọc hồ sơ: ${esc(r.label)}">
+            <span class="hp-dot" style="background:${r.color}"></span>
+            <span class="hp-status-name">${esc(r.label)}</span>
+            <span class="hp-status-meter"><i style="width:${Math.max(pct, 2)}%;background:${r.color}"></i></span>
+            <span class="hp-status-count">${fmt(r.count)}</span>
+            <span class="hp-status-pct">${pct.toLocaleString('vi-VN')}%</span>
+          </button></li>`;
+        }).join('')}
+        ${rest ? `<li class="hp-status-rest"><span>Trạng thái khác</span><span>${fmt(rest)}</span></li>` : ''}
+      </ul>
     </section>`;
+  }
+
+  function recentPanel(st) {
+    return `<section class="hp-panel hp-panel--recent">
+      <header class="hp-panel-head">
+        <div><span class="hp-kicker">Cập nhật mới</span><h3>Hồ sơ mở gần đây</h3></div>
+        <button type="button" class="hp-link" onclick="switchWorkspaceTab('pending')">Danh sách ${svg('chevron')}</button>
+      </header>
+      ${st.recent.length ? `<ul class="hp-recent">
+        ${st.recent.map(({ id, c }) => {
+          const s = st.map[c.trangThai] || st.map.moi || { label: 'Mới', color: '#64748b' };
+          return `<li><button type="button" onclick="openHomeRecentClaim(${jsArg(id)})">
+            <span class="hp-recent-main">
+              <strong>${esc(c.bienSo || '—')}</strong>
+              <span>${esc((typeof extractClaimOwnerName === 'function' ? extractClaimOwnerName(c) : (c.chuXe || c.khachHang)) || '—')}</span>
+            </span>
+            <span class="hp-recent-side">
+              <span class="hp-pill" style="--pill:${s.color}">${esc(s.label)}</span>
+              <time title="Ngày mở hồ sơ">${esc(c.ngayMoHs || "—")}</time>
+            </span>
+          </button></li>`;
+        }).join('')}
+      </ul>` : '<p class="hp-empty">Chưa có hồ sơ.</p>'}
+    </section>`;
+  }
+
+  // Bấm một trạng thái → mở trang Hồ sơ bồi thường đã lọc sẵn trạng thái đó.
+  window.openHomeStatusFilter = function (key) {
+    try { activePendingStatusFilter = [key]; pendingClaimsCurrentPage = 1; } catch (_) {}
+    switchWorkspaceTab('pending');
+  };
+  window.openHomeRecentClaim = function (id) {
+    switchWorkspaceTab('pending');
+    if (typeof openEditPendingClaimModal === 'function') openEditPendingClaimModal(id);
+  };
+
+  function moduleTile(m) {
+    return `<button type="button" class="hp-tile" onclick="switchWorkspaceTab('${m.tab}')">
+      <span class="hp-tile-icon">${svg(m.icon)}</span>
+      <span class="hp-tile-copy">
+        <span class="hp-tile-title">${m.title}${m.badge ? `<em>${m.badge}</em>` : ''}</span>
+        <span class="hp-tile-desc">${m.desc}</span>
+      </span>
+      <span class="hp-tile-go">${svg('arrow')}</span>
+    </button>`;
   }
 
   window.renderHomeDashboardPage = function (o) {
     const now = new Date();
     const name = (typeof activeUserProfile !== 'undefined' && activeUserProfile && (activeUserProfile.displayName || activeUserProfile.email)) || 'bạn';
+    const st = o.showPending ? pendingStats() : null;
 
     const kpis = [
-      o.showList && { tab:'list', icon:'list', label:'Hồ sơ giám định', value:o.totalCases, hint:'Ca xe trực tuyến' },
-      o.showPending && { tab:'pending', icon:'pending', label:'Hồ sơ bồi thường tồn', value:o.totalPendingClaims, hint:'Đang theo dõi' },
-      o.showAccountingView && { tab:'accounting_transfer', icon:'transfer', label:'Đợt bàn giao', value:o.totalTransfers, hint:'Chuyển kế toán' },
-      o.showFieldReimb && { tab:'field_reimbursements', icon:'field', label:'Phiếu hoàn ứng', value:o.totalReimbs, hint:'Chi phí hiện trường' }
+      o.showPending && { tab:'pending', label:'Hồ sơ bồi thường tồn', value:o.totalPendingClaims },
+      o.showList && { tab:'list', label:'Ca giám định trực tuyến', value:o.totalCases },
+      o.showAccountingView && { tab:'accounting_transfer', label:'Đợt bàn giao kế toán', value:o.totalTransfers },
+      o.showFieldReimb && { tab:'field_reimbursements', label:'Phiếu hoàn ứng hiện trường', value:o.totalReimbs }
     ].filter(Boolean);
 
     const groups = [
       { label:'Quản lý hồ sơ', items:[
-        o.showList && { tab:'list', icon:'list', title:'Hồ sơ giám định', desc:'Danh sách ca xe trực tuyến, cấp link chụp ảnh hiện trạng cho Garage và đối chiếu phụ tùng.', meta:`${fmt(o.totalCases)} hồ sơ`, cta:'Mở danh sách' },
-        o.showCreate && { tab:'create', icon:'create', title:'Khởi tạo ca giám định', desc:'Nhập thông tin xe, chỉ định Garage, lập danh mục cần chụp và cấp link nhanh.', meta:'Cấp link trong 30 giây', cta:'Tạo mới' },
-        o.showPending && { tab:'pending', icon:'pending', title:'Hồ sơ bồi thường', desc:'Quản lý hồ sơ tồn, phân công GĐV, phạm vi VCX / TNDS và cập nhật dữ liệu từ Excel.', meta:`${fmt(o.totalPendingClaims)} hồ sơ tồn`, cta:'Mở danh sách' },
-        o.showPending && { tab:'pending_notes_tracker', icon:'tracker', title:'Tiến độ hồ sơ tồn', desc:'Theo dõi tiến độ xử lý và ghi chú độc lập cho từng hồ sơ tồn.', meta:'Ghi chú & nhắc việc', cta:'Theo dõi' },
-        o.showCancellation && { tab:'claim_cancellation', icon:'cancel', title:'Đề xuất hủy hồ sơ', desc:'Lập phiếu đề xuất hủy, quản lý lý do không bồi thường và phê duyệt.', meta:'Kiểm soát & phê duyệt', cta:'Mở', badge:'Mới' },
-        o.showReport && { tab:'gdv_report', icon:'report', title:'Báo cáo & thống kê GĐV', desc:'Sản lượng GĐV theo tuần/tháng, tồn quá hạn, doanh số và xuất báo cáo Excel.', meta:'Tuần · Tháng · KPI', cta:'Xem báo cáo' }
+        o.showList && { tab:'list', icon:'list', title:'Hồ sơ giám định', desc:`${fmt(o.totalCases)} ca · link chụp ảnh cho Garage` },
+        o.showPending && { tab:'pending', icon:'pending', title:'Hồ sơ bồi thường', desc:`${fmt(o.totalPendingClaims)} hồ sơ tồn · nhập Excel` },
+        o.showPending && { tab:'pending_notes_tracker', icon:'tracker', title:'Tiến độ hồ sơ tồn', desc:'Ghi chú & nhắc việc theo hồ sơ' },
+        o.showCancellation && { tab:'claim_cancellation', icon:'cancel', title:'Đề xuất hủy hồ sơ', desc:'Lập phiếu & phê duyệt hủy', badge:'Mới' },
+        o.showReport && { tab:'gdv_report', icon:'report', title:'Báo cáo & thống kê GĐV', desc:'Tuần · tháng · KPI · Excel' },
+        o.showCreate && { tab:'create', icon:'create', title:'Khởi tạo ca giám định', desc:'Cấp link cho Garage trong 30 giây' }
       ]},
-      { label:'Kế toán', items:[
-        o.showAccountingReview && { tab:'accounting_claims', icon:'payment', title:'Hồ sơ thanh toán', desc:'Tra cứu, đối soát hồ sơ bồi thường đã nhận và phê duyệt tờ trình PASC.', meta:'Xét duyệt & đối soát', cta:'Mở' },
-        o.showAccountingView && { tab:'accounting_transfer', icon:'transfer', title:'Chuyển hồ sơ kế toán', desc:'Lập đợt bàn giao chứng từ gốc, đối chiếu danh mục và xuất biên bản giao nhận.', meta:`${fmt(o.totalTransfers)} đợt bàn giao`, cta:'Mở' }
-      ]},
-      { label:'Nghiệp vụ', items:[
-        o.showFieldReimb && { tab:'field_reimbursements', icon:'field', title:'Chi phí hiện trường', desc:'Đề xuất hoàn ứng công tác phí, xăng xe, vé cầu đường, lưu trú và theo dõi xét duyệt.', meta:`${fmt(o.totalReimbs)} phiếu hoàn ứng`, cta:'Mở' },
-        { tab:'shared_forms', icon:'forms', title:'Biểu mẫu dùng chung', desc:'Xem, tải lên và in các biểu mẫu, tài liệu dùng chung từ Google Drive.', meta:'Thư viện tài liệu', cta:'Mở thư viện' }
-      ]},
-      { label:'Hệ thống', items:[
-        o.showAdmin && { tab:'users', icon:'system', title:'Quản trị hệ thống', desc:'Tài khoản, phân quyền, cấu hình Gemini, Cloudinary, hệ số KPI và nhật ký hoạt động.', meta:'Cấu hình & bảo mật', cta:'Cấu hình' }
+      { label:'Kế toán & nghiệp vụ', items:[
+        o.showAccountingReview && { tab:'accounting_claims', icon:'payment', title:'Hồ sơ thanh toán', desc:'Đối soát & duyệt tờ trình PASC' },
+        o.showAccountingView && { tab:'accounting_transfer', icon:'transfer', title:'Chuyển hồ sơ kế toán', desc:`${fmt(o.totalTransfers)} đợt bàn giao chứng từ` },
+        o.showFieldReimb && { tab:'field_reimbursements', icon:'field', title:'Chi phí hiện trường', desc:`${fmt(o.totalReimbs)} phiếu hoàn ứng` },
+        { tab:'shared_forms', icon:'forms', title:'Biểu mẫu dùng chung', desc:'Thư viện tài liệu Google Drive' },
+        o.showAdmin && { tab:'users', icon:'system', title:'Quản trị hệ thống', desc:'Tài khoản, phân quyền, cấu hình' }
       ]}
     ].map(g => ({ ...g, items: g.items.filter(Boolean) })).filter(g => g.items.length);
 
     return `
-      <section class="hp-page" aria-label="Trang chủ">
-        <header class="hp-head">
-          <div class="hp-hello">
-            <span class="hp-eyebrow">${todayLabel(now)} · Tasco DLK – Xe cơ giới</span>
-            <h1>${greeting(now)}, <span>${esc(name)}</span></h1>
-            <p>Hệ sinh thái giám định – bồi thường số: kết nối thời gian thực giữa Giám định viên, Garage và Kế toán.</p>
+      <section class="hp-page${st ? '' : ' hp-page--single'}" aria-label="Trang chủ">
+        <header class="hp-hero">
+          <div class="hp-hero-copy">
+            <span class="hp-hero-date">${todayLabel(now)}</span>
+            <h1>${greeting(now)},<br><span>${esc(name)}</span></h1>
+            <p>Trung tâm điều hành giám định – bồi thường xe cơ giới Tasco DLK.</p>
+            <div class="hp-hero-actions">
+              ${o.showCreate ? `<button type="button" class="hp-btn hp-btn--gold" onclick="switchWorkspaceTab('create')">${svg('create')}<span>Tạo ca giám định</span></button>` : ''}
+              ${o.showPending ? `<button type="button" class="hp-btn hp-btn--glass" onclick="switchWorkspaceTab('pending')">${svg('pending')}<span>Hồ sơ bồi thường</span></button>` : ''}
+              <button type="button" class="hp-btn hp-btn--glass" onclick="switchWorkspaceTab('shared_forms')">${svg('forms')}<span>Biểu mẫu</span></button>
+            </div>
           </div>
-          <div class="hp-actions">
-            <button type="button" class="hp-btn" onclick="switchWorkspaceTab('shared_forms')">${svg('forms')}<span>Biểu mẫu dùng chung</span></button>
-            ${o.showCreate ? `<button type="button" class="hp-btn hp-btn--primary" onclick="switchWorkspaceTab('create')">${svg('create')}<span>Tạo ca giám định</span></button>` : ''}
-          </div>
+          ${kpis.length ? `<div class="hp-hero-kpis" style="--hp-kpis:${kpis.length}">
+            ${kpis.map((k, i) => `<button type="button" class="hp-hero-kpi${i === 0 ? ' is-lead' : ''}" onclick="switchWorkspaceTab('${k.tab}')">
+              <span>${k.label}</span>
+              <strong>${fmt(k.value)}</strong>
+              <em>Mở trang ${svg('arrow')}</em>
+            </button>`).join('')}
+          </div>` : ''}
         </header>
 
-        ${kpis.length ? `
-        <div class="hp-kpis" style="--hp-kpi-cols:${kpis.length}">
-          ${kpis.map(k => `<button type="button" class="hp-kpi" onclick="switchWorkspaceTab('${k.tab}')">
-            <span class="hp-kpi-label">${svg(k.icon)}${k.label}</span>
-            <strong>${fmt(k.value)}</strong>
-            <span class="hp-kpi-hint">${k.hint} ${svg('arrow')}</span>
-          </button>`).join('')}
-        </div>` : ''}
-
-        ${groups.slice(0, 1).map(groupMarkup).join('')}
-        ${groups.length > 1 ? `
-        <!-- Các nhóm ít phân hệ (Kế toán / Nghiệp vụ / Hệ thống) nằm chung một hàng, độ rộng theo số thẻ -->
-        <div class="hp-groups-row" style="--hp-row-cols:${groups.slice(1).map(g => g.items.length + 'fr').join(' ')}">
-          ${groups.slice(1).map(groupMarkup).join('')}
-        </div>` : ''}
+        <div class="hp-main">
+          <section class="hp-panel hp-panel--modules" aria-label="Phân hệ">
+            <header class="hp-panel-head"><div><span class="hp-kicker">Không gian làm việc</span><h3>Phân hệ chức năng</h3></div><span class="hp-count">${groups.reduce((n, g) => n + g.items.length, 0)}</span></header>
+            ${groups.map(g => `<div class="hp-subgroup">
+              <div class="hp-subgroup-label">${g.label}</div>
+              <div class="hp-tiles">${g.items.map(moduleTile).join('')}</div>
+            </div>`).join('')}
+          </section>
+          ${st ? statusPanel(st) : ''}
+        </div>
+        ${st ? recentPanel(st) : ''}
       </section>`;
+  };
+
+  // Vẽ lại trang chủ khi dữ liệu Firebase về sau (gom nhịp 200ms để tránh vẽ liên tục).
+  let refreshTimer = 0;
+  window.refreshHomeDashboard = function () {
+    if (typeof activeDashboardTab === 'undefined' || activeDashboardTab !== 'home') return;
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => { if (activeDashboardTab === 'home' && typeof renderActiveTabContent === 'function') renderActiveTabContent(); }, 200);
   };
 })();

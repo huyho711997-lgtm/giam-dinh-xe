@@ -86,6 +86,7 @@
         cachedCasesPayload = filteredVal;
         
         updateStatsCounters(filteredVal);
+        if (typeof refreshHomeDashboard === 'function') refreshHomeDashboard();
 
         if (activeDashboardTab === 'list') {
           executeUIRenderCasesTable(filteredVal);
@@ -135,6 +136,7 @@
         rawPendingClaimsPayload = val;
         const currentUser = firebase.auth().currentUser;
         cachedPendingClaimsPayload = filterPendingClaimsByUserPrivileges(val, currentUser);
+        if (typeof refreshHomeDashboard === 'function') refreshHomeDashboard(); // số liệu trang chủ
         if (activeDashboardTab === 'pending') {
           executeUIRenderPendingClaims();
         }
@@ -165,6 +167,7 @@
       dbNodeInstance.ref('accounting_transfers').off();
       dbNodeInstance.ref('accounting_transfers').on('value', (snapshot) => {
         cachedAccountingTransfersPayload = snapshot.val() || {};
+        if (typeof refreshHomeDashboard === 'function') refreshHomeDashboard();
         if (activeDashboardTab === 'accounting_transfer') renderAccountingTransferPage();
         if (activeDashboardTab === 'accounting_claims') renderAccountingClaimsPage();
         
