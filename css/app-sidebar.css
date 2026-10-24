@@ -56,14 +56,19 @@ body.has-app-sidebar.app-sidebar-collapsed { --app-sidebar-w: 76px; }
 /* ---- Chân: nút thu gọn ---- */
 .app-sidebar-foot { flex: 0 0 auto; padding: 10px 12px 14px; border-top: 1px solid var(--border); }
 .app-sidebar-collapse { margin: 0; }
-.app-sidebar-collapsed .app-sidebar-collapse svg { transform: scaleX(-1); }
+.app-sidebar-collapse[aria-pressed="true"] { color: var(--primary); }
 
-/* ---- Trạng thái thu gọn (desktop) ---- */
-body.app-sidebar-collapsed .app-sidebar-brand { justify-content: center; padding: 0; }
-body.app-sidebar-collapsed :is(.app-sidebar-brand-copy, .app-sidebar-link-text, .app-sidebar-badge) { display: none; }
-body.app-sidebar-collapsed .app-sidebar-group-label { height: 1px; margin: 0 10px 10px; padding: 0; overflow: hidden; color: transparent; background: var(--border); }
-body.app-sidebar-collapsed .app-sidebar-group:first-child .app-sidebar-group-label { display: none; }
-body.app-sidebar-collapsed :is(.app-sidebar-link, .app-sidebar-collapse) { justify-content: center; padding: 0; }
+/* ---- Chế độ tự mở khi rê chuột (mặc định trên desktop) ----
+   Khi chưa ghim: chỉ hiện thanh icon 76px; rê chuột / focus bằng bàn phím → .is-peek mở rộng 256px
+   ĐÈ lên nội dung (body vẫn chừa 76px nên trang không bị xô lệch), rê ra thì thu lại. */
+body.app-sidebar-collapsed .app-sidebar { overflow: hidden; }
+body.app-sidebar-collapsed .app-sidebar.is-peek { width: 256px; box-shadow: 18px 0 48px rgba(0,0,0,.16); }
+body.light-mode.app-sidebar-collapsed .app-sidebar.is-peek { box-shadow: 18px 0 44px rgba(28,31,38,.1); }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-brand { justify-content: center; padding: 0; }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-brand-copy, .app-sidebar-link-text, .app-sidebar-badge) { display: none; }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label { height: 1px; margin: 0 10px 10px; padding: 0; overflow: hidden; color: transparent; background: var(--border); }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group:first-child .app-sidebar-group-label { display: none; }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-link, .app-sidebar-collapse) { justify-content: center; padding: 0; }
 
 /* ---- Thanh trên: ẩn logo cũ, hiện tên trang ---- */
 body.has-app-sidebar .tasco-public-nav-wrapper .nav-brand { display: none; }
@@ -88,13 +93,16 @@ body.has-app-sidebar .tasco-public-nav-inner { min-height: 72px; }
   .app-sidebar-backdrop { position: fixed; inset: 0; z-index: 2090; display: block; background: rgba(8,10,14,.45); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
   body.app-sidebar-open .app-sidebar-backdrop { opacity: 1; pointer-events: auto; }
   body.app-sidebar-open { overflow: hidden; }
-  /* Trên mobile luôn hiện đầy đủ chữ dù desktop đang thu gọn */
-  body.app-sidebar-collapsed .app-sidebar-brand { justify-content: flex-start; padding: 0 16px; }
-  body.app-sidebar-collapsed :is(.app-sidebar-brand-copy, .app-sidebar-link-text, .app-sidebar-badge) { display: revert; }
-  body.app-sidebar-collapsed .app-sidebar-badge { display: inline-block; }
-  body.app-sidebar-collapsed .app-sidebar-group-label { height: auto; margin: 0; padding: 0 10px 6px; color: var(--text-muted); background: none; }
-  body.app-sidebar-collapsed .app-sidebar-group:first-child .app-sidebar-group-label { display: block; }
-  body.app-sidebar-collapsed :is(.app-sidebar-link, .app-sidebar-collapse) { justify-content: flex-start; padding: 0 10px; }
+  /* Trên mobile luôn hiện đầy đủ chữ dù desktop đang ở chế độ thu gọn */
+  body.app-sidebar-collapsed .app-sidebar { width: var(--app-sidebar-w); }
+  body.app-sidebar-collapsed .app-sidebar.is-peek { width: var(--app-sidebar-w); box-shadow: none; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-brand { justify-content: flex-start; padding: 0 16px; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-brand-copy, .app-sidebar-link-text) { display: revert; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-badge { display: inline-block; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label { height: auto; margin: 0; padding: 0 10px 6px; color: var(--text-muted); background: none; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group:first-child .app-sidebar-group-label { display: block; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-link, .app-sidebar-collapse) { justify-content: flex-start; padding: 0 10px; }
+  body.app-sidebar-open.app-sidebar-collapsed .app-sidebar { box-shadow: 0 24px 60px rgba(0,0,0,.3); }
   .app-sidebar-close {
     display: grid; place-items: center; width: 36px; height: 36px; margin-left: auto; padding: 0;
     border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--text-muted); cursor: pointer;

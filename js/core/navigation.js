@@ -65,7 +65,7 @@
       field:'<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
       forms:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
       system:'<path d="M12 3 4 6v6c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/>',
-      collapse:'<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16M15 10l-2 2 2 2"/>',
+      pin:'<path d="M9 4h6l-1 6 3 3v2H7v-2l3-3Z"/><path d="M12 15v6"/>',
       menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
       close:'<path d="m6 6 12 12M18 6 6 18"/>'
     };
@@ -105,20 +105,42 @@
       return activeDashboardTab === item.tab || (item.also || []).includes(activeDashboardTab);
     }
 
+    // Mặc định: thu gọn + tự mở khi rê chuột. Chỉ khi người dùng bấm "Ghim" mới lưu '0' (luôn mở).
     function readAppSidebarCollapsed() {
-      try { return localStorage.getItem(APP_SIDEBAR_COLLAPSE_KEY) === '1'; } catch (_) { return false; }
+      try { return localStorage.getItem(APP_SIDEBAR_COLLAPSE_KEY) !== '0'; } catch (_) { return true; }
     }
+
+    const appSidebarPinLabel = pinned => pinned ? 'Bỏ ghim thanh bên (tự thu gọn)' : 'Ghim thanh bên luôn mở';
 
     function toggleAppSidebarCollapsed() {
       const collapsed = !document.body.classList.contains('app-sidebar-collapsed');
       document.body.classList.toggle('app-sidebar-collapsed', collapsed);
+      document.getElementById('appSidebar')?.classList.toggle('is-peek', collapsed); // con trỏ đang ở trên sidebar
       try { localStorage.setItem(APP_SIDEBAR_COLLAPSE_KEY, collapsed ? '1' : '0'); } catch (_) {}
       const btn = document.getElementById('appSidebarCollapseBtn');
       if (btn) {
-        btn.setAttribute('aria-pressed', String(collapsed));
-        btn.title = collapsed ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên';
+        btn.setAttribute('aria-pressed', String(!collapsed));
+        btn.title = appSidebarPinLabel(!collapsed);
         btn.setAttribute('aria-label', btn.title);
+        btn.querySelector('.app-sidebar-link-text').textContent = collapsed ? 'Ghim thanh bên' : 'Bỏ ghim';
       }
+    }
+
+    // Rê chuột vào → mở (trễ 120ms để lướt ngang qua không bật mở); rê ra → thu lại (trễ 180ms).
+    // Bàn phím: Tab vào sidebar cũng mở, Tab ra thì thu. Chỉ áp dụng desktop, chưa ghim.
+    const APP_SIDEBAR_DESKTOP_MQ = window.matchMedia ? window.matchMedia('(min-width: 1025px)') : { matches: true };
+    function bindAppSidebarPeek(sidebar) {
+      let timer = 0;
+      const canPeek = () => document.body.classList.contains('app-sidebar-collapsed') && APP_SIDEBAR_DESKTOP_MQ.matches;
+      const setPeek = (open, delay) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => sidebar.classList.toggle('is-peek', open && canPeek()), delay);
+      };
+      sidebar.addEventListener('mouseenter', () => { if (canPeek()) setPeek(true, 120); });
+      // Chỉ giữ mở khi đang điều hướng bằng bàn phím (focus-visible); bấm chuột xong rê ra vẫn thu lại.
+      sidebar.addEventListener('mouseleave', () => { if (!sidebar.querySelector(':focus-visible')) setPeek(false, 180); });
+      sidebar.addEventListener('focusin', () => { if (canPeek() && sidebar.querySelector(':focus-visible')) setPeek(true, 0); });
+      sidebar.addEventListener('focusout', event => { if (!sidebar.contains(event.relatedTarget) && !sidebar.matches(':hover')) setPeek(false, 0); });
     }
 
     // Mobile: sidebar trượt ra trên lớp phủ.
@@ -160,8 +182,8 @@
             </div>`).join('')}
         </nav>
         <div class="app-sidebar-foot">
-          <button type="button" id="appSidebarCollapseBtn" class="app-sidebar-collapse" onclick="toggleAppSidebarCollapsed()" aria-pressed="${collapsed}" title="${collapsed ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên'}" aria-label="${collapsed ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên'}">
-            ${appSidebarIcon('collapse')}<span class="app-sidebar-link-text">Thu gọn</span>
+          <button type="button" id="appSidebarCollapseBtn" class="app-sidebar-collapse" onclick="toggleAppSidebarCollapsed()" aria-pressed="${!collapsed}" title="${appSidebarPinLabel(!collapsed)}" aria-label="${appSidebarPinLabel(!collapsed)}">
+            ${appSidebarIcon('pin')}<span class="app-sidebar-link-text">${collapsed ? 'Ghim thanh bên' : 'Bỏ ghim'}</span>
           </button>
         </div>`;
     }
@@ -182,6 +204,7 @@
         sidebar.className = 'app-sidebar';
         sidebar.setAttribute('aria-label', 'Thanh điều hướng');
         document.body.prepend(sidebar);
+        bindAppSidebarPeek(sidebar);
         const backdrop = document.createElement('div');
         backdrop.id = 'appSidebarBackdrop';
         backdrop.className = 'app-sidebar-backdrop';
