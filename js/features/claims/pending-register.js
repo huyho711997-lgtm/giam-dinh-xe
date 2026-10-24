@@ -238,6 +238,51 @@
     }
 
 
+    // ==== HIỆU NĂNG (đo với 2.800 hồ sơ: đọc ngày chiếm 48% thời gian vẽ, dựng menu 17%) ====
+    // Ngày dạng chuỗi lặp lại rất nhiều (vài trăm giá trị cho hàng nghìn hồ sơ) → nhớ kết quả theo chuỗi.
+    const pendingClaimDateCache = new Map();
+    function pendingClaimDateValue(c) {
+      const dateStr = c && (c.ngayMoHs || c.ngayTonThat || c.ngayVTT);
+      if (!dateStr || dateStr === '—') return null;
+      const key = String(dateStr);
+      let value = pendingClaimDateCache.get(key);
+      if (value === undefined) {
+        const dp = parseDateParts(dateStr);
+        // Giữ đúng công thức cũ (dp.hour/minute/second) để thứ tự & bộ lọc không đổi.
+        value = (dp && dp.year && dp.month && dp.day) ? new Date(dp.year, dp.month - 1, dp.day, dp.hour || 0, dp.minute || 0, dp.second || 0).getTime() : null;
+        if (pendingClaimDateCache.size > 20000) pendingClaimDateCache.clear(); // chặn phình bộ nhớ
+        pendingClaimDateCache.set(key, value);
+      }
+      return value;
+    }
+
+    // Chỉ thay nội dung menu bộ lọc khi HTML thật sự đổi; nếu không, giữ nguyên menu đã được
+    // pending-controls.js nâng cấp (không phải dựng lại + gắn sự kiện mỗi lần vẽ).
+    const pendingMenuHtmlCache = new WeakMap();
+    function setPendingMenuHtml(menu, html) {
+      if (!menu) return;
+      if (pendingMenuHtmlCache.get(menu) === html) return;
+      pendingMenuHtmlCache.set(menu, html);
+      menu.innerHTML = html;
+    }
+
+    // Gom các lần vẽ khi Firebase bắn nhiều sự kiện liên tiếp (vd. đổi trạng thái = 2 lệnh set,
+    // thao tác hàng loạt = hàng trăm lệnh). Nhịp tối thiểu tự giãn theo thời gian vẽ thực tế.
+    let pendingRenderTimer = 0, pendingRenderNextAt = 0;
+    function schedulePendingClaimsRender() {
+      if (pendingRenderTimer) return;
+      const delay = Math.max(16, pendingRenderNextAt - performance.now());
+      pendingRenderTimer = setTimeout(() => {
+        pendingRenderTimer = 0;
+        if (activeDashboardTab !== 'pending') return;
+        const started = performance.now();
+        executeUIRenderPendingClaims();
+        const cost = performance.now() - started;
+        pendingRenderNextAt = performance.now() + Math.min(1000, Math.max(100, cost * 3));
+      }, delay);
+    }
+
+
     function executeUIRenderPendingClaims() {
       const dropdownFocus = capturePendingDropdownFocus();
       const tbody = document.getElementById('tblPendingClaimsBodyContainer');
@@ -269,14 +314,8 @@
       const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
       function getClaimDateForFilter(c) {
-        const dateStr = c.ngayMoHs || c.ngayTonThat || c.ngayVTT;
-        if (dateStr && dateStr !== '—') {
-          const dp = parseDateParts(dateStr);
-          if (dp && dp.year && dp.month && dp.day) {
-            return new Date(dp.year, dp.month - 1, dp.day, dp.hour || 0, dp.minute || 0, dp.second || 0);
-          }
-        }
-        return new Date(c.createdAt || Date.now());
+        const value = pendingClaimDateValue(c);
+        return new Date(value !== null ? value : (c.createdAt || Date.now()));
       }
 
       // Filter list
@@ -337,13 +376,13 @@
       const coverageLabel=document.getElementById('lblCustomCoverageDropdownSelected');
       if(coverageLabel) coverageLabel.textContent=PENDING_COVERAGE_FILTERS[coverageFilter].label;
       const coverageMenu=document.getElementById('menuCustomCoverageDropdown');
-      if(coverageMenu) coverageMenu.innerHTML='<div class="pending-filter-menu__head"><span>Phạm vi bảo hiểm</span><small>Toàn bộ hồ sơ</small></div>'+Object.entries(PENDING_COVERAGE_FILTERS).map(([key,scope])=>{
+      if(coverageMenu) setPendingMenuHtml(coverageMenu, '<div class="pending-filter-menu__head"><span>Phạm vi bảo hiểm</span><small>Toàn bộ hồ sơ</small></div>'+Object.entries(PENDING_COVERAGE_FILTERS).map(([key,scope])=>{
         const count=claimsList.filter(claim=>matchesPendingClaimCoverage(claim,key)).length,isSelected=key===coverageFilter;
         return `<button type="button" class="custom-dropdown-item pending-filter-option ${isSelected?'selected':''}" role="option" data-value="${key}" aria-selected="${isSelected}" onclick="selectCustomCoverageFilter('${key}')" style="--option-color:${scope.color};">
           <span class="pending-filter-option__main"><span class="pending-filter-option__dot"></span><span class="pending-filter-option__scope"><span class="pending-filter-option__label">${scope.label}</span><small>${scope.detail}</small></span></span>
           <span class="pending-filter-option__count">${count}</span><span class="pending-filter-option__check">${isSelected?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg>':''}</span>
         </button>`;
-      }).join('');
+      }).join(''));
 
       // Calculate Status Counters
       const counts = { all: claimsList.length };
@@ -377,7 +416,7 @@
 
       const customMenu = document.getElementById('menuCustomStatusDropdown');
       if (customMenu) {
-        customMenu.innerHTML = `<div class="pending-filter-menu__head"><span>Chọn trạng thái</span><small>Có thể chọn nhiều</small></div>` + Object.entries(statusLabelMap).map(([key, item]) => {
+        setPendingMenuHtml(customMenu, `<div class="pending-filter-menu__head"><span>Chọn trạng thái</span><small>Có thể chọn nhiều</small></div>` + Object.entries(statusLabelMap).map(([key, item]) => {
           const countVal = counts[key] !== undefined ? counts[key] : counts.all;
           const isSel = activeArr.includes(key);
           return `
@@ -390,7 +429,7 @@
               <span class="pending-filter-option__count">${countVal}</span>
             </button>
           `;
-        }).join('');
+        }).join(''));
       }
 
       // Render Custom Luxury GĐV Floating Menu Items
@@ -414,7 +453,7 @@
 
       const customGdvMenu = document.getElementById('menuCustomGdvDropdown');
       if (customGdvMenu) {
-        customGdvMenu.innerHTML = `<div class="pending-filter-menu__head"><span>Giám định viên</span><small>Có thể chọn nhiều</small></div>` + gdvList.map(gName => {
+        setPendingMenuHtml(customGdvMenu, `<div class="pending-filter-menu__head"><span>Giám định viên</span><small>Có thể chọn nhiều</small></div>` + gdvList.map(gName => {
           const isSel = gdvFilter.includes(gName);
           const displayTxt = gName === 'all' ? 'Tất cả GĐV' : escapeHtmlOutput(gName);
           return `
@@ -423,7 +462,7 @@
               <span class="pending-filter-option__check">${isSel ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg>' : ''}</span>
             </button>
           `;
-        }).join('');
+        }).join(''));
       }
 
       // Render Custom Luxury Period Floating Menu Items
@@ -442,7 +481,7 @@
 
       const customPeriodMenu = document.getElementById('menuCustomPeriodDropdown');
       if (customPeriodMenu) {
-        customPeriodMenu.innerHTML = `<div class="pending-filter-menu__head"><span>Khoảng thời gian</span><small>Kỳ báo cáo</small></div>` + Object.entries(periodLabelMap).map(([pKey, pLabel]) => {
+        setPendingMenuHtml(customPeriodMenu, `<div class="pending-filter-menu__head"><span>Khoảng thời gian</span><small>Kỳ báo cáo</small></div>` + Object.entries(periodLabelMap).map(([pKey, pLabel]) => {
           const isSel = periodFilter === pKey;
           return `
             <button type="button" class="custom-dropdown-item pending-filter-option ${isSel ? 'selected' : ''}" onclick="selectCustomPeriodFilter('${pKey}')" aria-selected="${isSel}" style="--option-rgb:5,150,105;--option-color:#059669;">
@@ -450,7 +489,7 @@
               <span class="pending-filter-option__check">${isSel ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg>' : ''}</span>
             </button>
           `;
-        }).join('');
+        }).join(''));
       }
 
       // Render Dynamic Metric Stats Cards based on selected Time Period
@@ -552,17 +591,13 @@
             // Sort strictly by Ngày mở HS (from date closest to present / newest down to past)
       function getClaimTimeVal(c) {
         if (!c) return 0;
-        const dateStr = c.ngayMoHs || c.ngayTonThat || c.ngayVTT;
-        if (dateStr && dateStr !== '—') {
-          const dp = parseDateParts(dateStr);
-          if (dp && dp.year && dp.month && dp.day) {
-            return new Date(dp.year, dp.month - 1, dp.day, dp.hour || 0, dp.minute || 0, dp.second || 0).getTime();
-          }
-        }
-        return c.createdAt || 0;
+        const value = pendingClaimDateValue(c);
+        return value !== null ? value : (c.createdAt || 0);
       }
 
-      filtered.sort((a, b) => getClaimTimeVal(b) - getClaimTimeVal(a));
+      // Tính khóa sắp xếp MỘT lần cho mỗi hồ sơ (trước đây đọc ngày trong mỗi lần so sánh: ~2·n·log n lần).
+      // Array.prototype.sort ổn định nên thứ tự kết quả giống hệt cách cũ.
+      filtered = filtered.map(c => [getClaimTimeVal(c), c]).sort((a, b) => b[0] - a[0]).map(pair => pair[1]);
 
       const totalFilteredCount = filtered.length;
       const perPage = pendingClaimsPerPage === 'all' ? (totalFilteredCount || 1) : (parseInt(pendingClaimsPerPage, 10) || 10);

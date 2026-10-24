@@ -44,12 +44,17 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Thư viện chỉ dùng khi người dùng thao tác (nhập/xuất Excel, xuất ảnh, biểu đồ báo cáo): tải song song bằng
+       defer, KHÔNG chặn hiển thị trang. Đã kiểm tra: không file nào của app dùng chúng lúc tải trang. -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Ghim phiên bản: '/npm/chart.js' (không số phiên bản) tự nhảy lên bản lớn mới và có thể làm hỏng biểu đồ. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <link rel="stylesheet" href="css/base.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="css/scene-toolbar.css">
 <link rel="stylesheet" href="css/administration.css" id="systemAdminPremiumStyles">
 <link rel="stylesheet" href="css/outstanding-report.css">
@@ -1682,10 +1687,10 @@
   <script src="js/features/claims/import-versions.js?v=20261024-imports-2"></script>
   <script src="js/features/claims/import-history.js?v=20261024-imports-3"></script>
   <script src="js/features/claims/excel-import.js?v=20261024-imports-1"></script>
-  <script src="js/features/claims/pending-register.js?v=20261024-status-left"></script>
+  <script src="js/features/claims/pending-register.js?v=20261024-perf-1"></script>
   <script src="js/features/claims/pending-controls.js"></script>
   <script src="js/features/dashboard/home.js?v=20261024-6"></script>
-  <script src="js/features/dashboard/workspace.js?v=20261024-home-2"></script>
+  <script src="js/features/dashboard/workspace.js?v=20261024-perf-1"></script>
   <script src="js/features/claims/requested-items.js"></script>
   <script src="js/features/claims/ocr.js"></script>
   <script src="js/features/claims/case-management.js"></script>
@@ -1815,5 +1820,6 @@
   <script src="js/features/documents/hsbt.js"></script>
   <script src="js/features/documents/storage.js?v=20261024-1"></script>
   <script src="js/features/documents/autosave.js"></script>
+  <script src="js/core/chart-ready.js?v=20261024-1"></script>
 </body>
 </html>

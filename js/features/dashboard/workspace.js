@@ -138,7 +138,8 @@
         cachedPendingClaimsPayload = filterPendingClaimsByUserPrivileges(val, currentUser);
         if (typeof refreshHomeDashboard === 'function') refreshHomeDashboard(); // số liệu trang chủ
         if (activeDashboardTab === 'pending') {
-          executeUIRenderPendingClaims();
+          // Dữ liệu (cachedPendingClaimsPayload) đã cập nhật đồng bộ ở trên; chỉ việc VẼ được gom nhịp.
+          if (typeof schedulePendingClaimsRender === 'function') schedulePendingClaimsRender(); else executeUIRenderPendingClaims();
         }
         if (activeDashboardTab === 'claim_cancellation') {
           renderClaimCancellationPage();
