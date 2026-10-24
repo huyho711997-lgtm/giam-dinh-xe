@@ -67,6 +67,7 @@ body:not(.light-mode) .claim-reduction-rules { border-bottom:0; --crr-danger:#f4
 .crr-item-detail { display:none; padding:0 14px 13px 46px; }
 .crr-item.is-on .crr-item-detail { display:block; }
 .crr-text { margin:0; color:var(--ce-muted); font-size:11px; line-height:1.7; }
+.crr-duty { margin:6px 0 0; color:var(--ce-gold); font-size:10.5px; font-weight:700; line-height:1.6; }
 .crr-exception { margin:6px 0 0; padding-left:10px; border-left:2px solid var(--ce-line); color:var(--ce-muted); font-size:10.5px; font-style:italic; line-height:1.6; }
 .crr-controls { display:flex; flex-wrap:wrap; align-items:flex-end; gap:10px; margin-top:11px; }
 .crr-field { display:flex; flex-direction:column; gap:5px; min-width:0; }

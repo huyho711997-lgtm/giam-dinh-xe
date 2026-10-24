@@ -83,6 +83,8 @@ const ClaimReductionRules = (() => {
     const parts = [...new Set(items.map(item => (item.point ? 'điểm ' + item.point + ' ' : '') + 'khoản ' + item.clause))];
     return parts.join(', ') + ' mục 1 Điều ' + RULES.scopes[scope].article;
   }
+  // "điểm b khoản 2.7" → "2.07|b" để sắp đúng thứ tự số (2.3 < 2.7 < 2.10).
+  const dutyKey = text => { const match = text.match(/khoản (\d+)\.(\d+)/), point = text.match(/điểm (\w)/); return match ? match[1].padStart(2,'0') + '.' + match[2].padStart(2,'0') + '|' + (point ? point[1] : '') : text; };
   const rateLabel = rate => rate >= 100 ? 'toàn bộ (100%)' : String(rate).replace('.',',') + '%';
 
   // Nội dung điền sẵn vào Lý do / Căn cứ / Mức giảm trừ (người dùng vẫn sửa được).
@@ -106,6 +108,9 @@ const ClaimReductionRules = (() => {
       const multiple = result.rows.filter(row => row.status === 'ok').length > 1;
       basis = 'Căn cứ ' + citeGroup(okRows.map(row => row.item), scope) + (multiple ? ' và khoản 2.1 mục 2 Điều ' + article + ' (áp dụng tỷ lệ cao nhất)' : '') + source;
     }
+    // Nghĩa vụ bị vi phạm (Điều 5) – sắp theo thứ tự khoản/điểm, không lặp.
+    const duties = [...new Set(okRows.flatMap(row => row.item.duty || []))].sort((a,b) => dutyKey(a).localeCompare(dutyKey(b)));
+    if (!result.refused && duties.length) basis += ' Nghĩa vụ bị vi phạm: ' + duties.join(', ') + ' ' + RULES.dutyArticle + '.';
     if (result.rows.some(row => row.custom)) basis += (basis ? ' ' : '') + 'Trường hợp ngoài danh mục: theo hợp đồng bảo hiểm/ GCNBH và tài liệu ghi nhận trong hồ sơ.';
     let impact = '';
     if (result.refused) impact = 'Thuộc điểm loại trừ – đề xuất từ chối bồi thường (không áp dụng giảm trừ)';
@@ -147,6 +152,7 @@ const ClaimReductionRules = (() => {
     row.append(head);
     const detail = node('div', null, 'crr-item-detail');
     detail.append(node('p', (item.scopeText?.[state.scope]) || item.text, 'crr-text'));
+    if (item.duty?.length) detail.append(node('p', 'Nghĩa vụ liên quan: ' + item.duty.join(', ') + ' ' + RULES.dutyArticle, 'crr-duty'));
     if (item.exception) detail.append(node('p', 'Ngoại lệ: ' + item.exception, 'crr-exception'));
     if (entry) {
       const controls = node('div', null, 'crr-controls');

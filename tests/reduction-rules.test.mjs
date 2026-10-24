@@ -125,3 +125,13 @@ test('new-format notices are not migrated again', () => {
   assert.equal(state.notes, 'Ghi nhận'); assert.equal(state.rule.custom.on, false);
   assert.match(state.impact, /^Giảm trừ 40%/, 'derived fields are regenerated from the rule, not copied from the old text');
 });
+
+test('scene violations: "tự ý di dời" and "không có hiện trường" share điểm a khoản 1.2 and cite the Điều 5 duty once', () => {
+  const both = rules.texts({items:[{id:'no-scene',rate:40},{id:'moved',rate:30}]});
+  assert.equal((both.basis.match(/điểm a khoản 1\.2/g) || []).length, 1, 'same clause is cited once');
+  assert.match(both.basis, /Nghĩa vụ bị vi phạm: điểm b khoản 2\.7 mục 2 Điều 5\./);
+  assert.equal(rules.evaluate({items:[{id:'no-scene',rate:40},{id:'moved',rate:30}]}).applied.rate, 40);
+  const mixed = rules.texts({items:[{id:'dishonest',rate:60},{id:'rescue'},{id:'disclosure'}]});
+  assert.match(mixed.basis, /Nghĩa vụ bị vi phạm: khoản 2\.3, khoản 2\.5, điểm a khoản 2\.7, điểm b khoản 2\.7, khoản 2\.8 mục 2 Điều 5\./, 'duties sorted numerically');
+  assert.doesNotMatch(rules.texts({items:[{id:'speed',actual:'90',limit:'50'}]}).basis, /Nghĩa vụ/, 'refusals cite Điều 10 only');
+});
