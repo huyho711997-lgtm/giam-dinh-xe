@@ -28,13 +28,37 @@ function authorize_(request, props) {
   const allowed = (props.getProperty('ALLOWED_UIDS') || '').split(',').map(x => x.trim()).filter(Boolean);
   if (!key || !/^https:\/\/[\w.-]+\.(firebaseio\.com|firebasedatabase\.app)\/?$/.test(database || '') || !allowed.length) throw new Error('Quản trị viên chưa cấu hình kho tài liệu.');
   if (typeof request.token !== 'string' || request.token.length > 10000 || !/^[\w-]{1,200}$/.test(request.claimId || '')) throw new Error('Yêu cầu không hợp lệ.');
+  // Cache theo băm(token + mã hồ sơ): chỉ chính token đó, với chính hồ sơ đó, mới dùng lại kết quả đã kiểm tra.
+  const authKey = 'auth:' + digest_(request.token + '|' + request.claimId);
+  const cached = cacheGet_(authKey);
+  if (cached) { try { const hit = JSON.parse(cached); if (hit && hit.user && allowed.includes(hit.user.localId)) return hit; } catch (_) {} }
   const result = fetchJson_('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + encodeURIComponent(key), {method:'post',contentType:'application/json',payload:JSON.stringify({idToken:request.token})});
   const user = result.users && result.users[0];
   if (!user || user.disabled || !allowed.includes(user.localId)) throw new Error('Tài khoản chưa được cấp quyền sử dụng kho tài liệu.');
   // Read using the caller's token so Realtime Database rules still apply.
   const claim = fetchJson_(database.replace(/\/$/,'') + '/pending_claims/' + encodeURIComponent(request.claimId) + '.json?auth=' + encodeURIComponent(request.token));
   if (!claim || typeof claim !== 'object') throw new Error('Hồ sơ chưa được lưu hoặc bạn không có quyền xem hồ sơ.');
-  return {user,claim};
+  // Chỉ giữ các trường cần dùng sau này, không lưu toàn bộ hồ sơ vào cache.
+  const slim = {user:{localId:user.localId}, claim:{bienSo:claim.bienSo || '', soHoSoBoiThuong:claim.soHoSoBoiThuong || '', maVuTonThat:claim.maVuTonThat || ''}};
+  cachePut_(authKey, JSON.stringify(slim), AUTH_CACHE_SECONDS);
+  return slim;
+}
+
+// ---- Bộ nhớ đệm phía máy chủ (CacheService) ---------------------------------------------
+// Mỗi request trước đây luôn: gọi Identity Toolkit + đọc hồ sơ Firebase + tìm thư mục Drive (searchFolders
+// ~1s). Với N ảnh thu nhỏ là N lần lặp lại. Cache dưới đây cắt các bước đó cho request lặp lại trong vài phút.
+const AUTH_CACHE_SECONDS = 300;      // Token Firebase sống ~1h; thu hồi quyền có hiệu lực tối đa sau 5 phút.
+const FOLDER_CACHE_SECONDS = 21600;  // ID thư mục không đổi; luôn kiểm tra lại khi đọc (getFolderById + isTrashed).
+const THUMBNAIL_BATCH_LIMIT = 12;
+function cache_() { try { return typeof CacheService === 'undefined' ? null : CacheService.getScriptCache(); } catch (_) { return null; } }
+function cacheGet_(key) { const c = cache_(); try { return c ? c.get(key) : null; } catch (_) { return null; } }
+function cachePut_(key, value, seconds) { const c = cache_(); try { if (c) c.put(key, value, seconds); } catch (_) {} }
+function cacheRemove_(key) { const c = cache_(); try { if (c) c.remove(key); } catch (_) {} }
+// Thư mục theo ID trong cache; trả null nếu đã xóa/không còn hợp lệ để gọi lại đường tìm kiếm chậm.
+function cachedFolder_(key) {
+  const id = cacheGet_(key); if (!id) return null;
+  try { const folder = DriveApp.getFolderById(id); if (!folder.isTrashed()) return folder; } catch (_) {}
+  cacheRemove_(key); return null;
 }
 
 function digest_(text) {
@@ -53,35 +77,70 @@ function doPost(e) {
   try {
     if (!e.postData || e.postData.contents.length > MAX_FILE_BYTES * 1.4 + 20000) throw new Error('Mỗi file tối đa 10 MB.');
     const request = JSON.parse(e.postData.contents);
-    if (!['list','upload','download','thumbnail','remove'].includes(request.action)) throw new Error('Thao tác không hợp lệ.');
+    if (!['list','upload','download','thumbnail','thumbnails','remove'].includes(request.action)) throw new Error('Thao tác không hợp lệ.');
     const props = PropertiesService.getScriptProperties(), auth = authorize_(request, props);
     const rootId = props.getProperty('ROOT_FOLDER_ID');
     if (!rootId) throw new Error('Chưa tạo thư mục gốc.');
-    const root = DriveApp.getFolderById(rootId);
-    if (root.getSharingAccess() !== DriveApp.Access.PRIVATE) throw new Error('Thư mục hồ sơ phải ở chế độ Riêng tư.');
+    // Kiểm tra chế độ Riêng tư của thư mục gốc tối đa 10 phút/lần thay vì mỗi request.
+    let root = null;
+    const rootFolder = () => root || (root = DriveApp.getFolderById(rootId));
+    if (!cacheGet_('root-private:' + rootId)) {
+      if (rootFolder().getSharingAccess() !== DriveApp.Access.PRIVATE) throw new Error('Thư mục hồ sơ phải ở chế độ Riêng tư.');
+      cachePut_('root-private:' + rootId, '1', 600);
+    }
     const name = 'HS_' + digest_(request.claimId);
     const lock = LockService.getScriptLock();
     let locked = false;
     try {
       if (request.action === 'upload') { if (!lock.tryLock(30000)) throw new Error('Kho đang bận. Vui lòng thử lại.'); locked=true; }
-      const matches = root.searchFolders("title contains '" + name + "' and trashed = false");
-      const claimFolder = matches.hasNext() ? matches.next() : request.action === 'upload' ? root.createFolder(safeName_(auth.claim.bienSo) + ' - ' + safeName_(auth.claim.soHoSoBoiThuong || auth.claim.maVuTonThat) + ' [' + name + ']') : null;
-      if (!claimFolder) { if (request.action === 'list') return jsonResponse_({ok:true,files:[]}); throw new Error('Chưa có tài liệu.'); }
+      // searchFolders là bước chậm nhất (~1s); ưu tiên ID thư mục đã lưu trong cache.
+      const folderKey = 'folder:' + name;
+      let claimFolder = cachedFolder_(folderKey);
+      if (!claimFolder) {
+        const matches = rootFolder().searchFolders("title contains '" + name + "' and trashed = false");
+        claimFolder = matches.hasNext() ? matches.next() : request.action === 'upload' ? rootFolder().createFolder(safeName_(auth.claim.bienSo) + ' - ' + safeName_(auth.claim.soHoSoBoiThuong || auth.claim.maVuTonThat) + ' [' + name + ']') : null;
+        if (claimFolder && cache_()) cachePut_(folderKey, claimFolder.getId(), FOLDER_CACHE_SECONDS);
+      }
+      if (!claimFolder) { if (request.action === 'list' || request.action === 'thumbnails') return jsonResponse_({ok:true,files:[],items:[]}); throw new Error('Chưa có tài liệu.'); }
       // Stable folder identity is based on the database key, not the editable plate/claim number.
       const groups = {upload:'Tai lieu tai len',word:'Word da xuat'};
+      const groupFolder = (source, create) => {
+        const key = 'group:' + name + ':' + source, hit = cachedFolder_(key);
+        if (hit) return hit;
+        const folder = folder_(claimFolder, groups[source], create);
+        if (folder && cache_()) cachePut_(key, folder.getId(), FOLDER_CACHE_SECONDS);
+        return folder;
+      };
       if (request.action === 'list') {
         const files = [];
         for (const source of Object.keys(groups)) {
-          const group = folder_(claimFolder,groups[source],false); if (!group) continue;
+          const group = groupFolder(source,false); if (!group) continue;
           const iterator = group.getFiles();
           while (iterator.hasNext()) { const file=iterator.next(); if (!file.isTrashed()) files.push(record_(file,source)); }
         }
         return jsonResponse_({ok:true,files});
       }
+      // Lấy nhiều ảnh thu nhỏ trong MỘT request: xác thực + tìm thư mục một lần cho cả lô.
+      if (request.action === 'thumbnails') {
+        const fileIds = Array.isArray(request.fileIds) ? request.fileIds.slice(0, THUMBNAIL_BATCH_LIMIT) : [];
+        if (!fileIds.length || !fileIds.every(id => typeof id === 'string' && /^[\w-]+$/.test(id))) throw new Error('Tệp không hợp lệ.');
+        const ids = Object.keys(groups).map(source => groupFolder(source,false)).filter(Boolean).map(f => f.getId());
+        const items = fileIds.map(fileId => {
+          try {
+            const file = DriveApp.getFileById(fileId), parents = file.getParents(); let belongs = false;
+            while (parents.hasNext()) if (ids.includes(parents.next().getId())) belongs = true;
+            if (!belongs || file.isTrashed() || !/^image\//.test(file.getMimeType())) return {id:fileId,ok:false};
+            const thumbnail = file.getThumbnail();
+            if (!thumbnail) return {id:fileId,ok:false};
+            return {id:fileId,ok:true,mimeType:thumbnail.getContentType(),data:Utilities.base64Encode(thumbnail.getBytes())};
+          } catch (_) { return {id:fileId,ok:false}; }
+        });
+        return jsonResponse_({ok:true,items});
+      }
       if (['download','thumbnail','remove'].includes(request.action)) {
         if (!/^[\w-]+$/.test(request.fileId || '')) throw new Error('Tệp không hợp lệ.');
         const file = DriveApp.getFileById(request.fileId), parents = file.getParents(); let belongs = false;
-        const ids = Object.values(groups).map(n => folder_(claimFolder,n,false)).filter(Boolean).map(f => f.getId());
+        const ids = Object.keys(groups).map(source => groupFolder(source,false)).filter(Boolean).map(f => f.getId());
         while (parents.hasNext()) if (ids.includes(parents.next().getId())) belongs=true;
         if (!belongs || file.isTrashed() || file.getSize()>MAX_FILE_BYTES) throw new Error('Không có quyền tải tệp này.');
         if (request.action === 'remove') {
@@ -106,7 +165,7 @@ function doPost(e) {
       if (typeof request.data !== 'string' || !/^[A-Za-z0-9+/]*={0,2}$/.test(request.data)) throw new Error('Dữ liệu tệp không hợp lệ.');
       const bytes = Utilities.base64Decode(request.data);
       if (!bytes.length || bytes.length > MAX_FILE_BYTES) throw new Error('Tệp phải có nội dung và không vượt quá 10 MB.');
-      const group = folder_(claimFolder,groups[source],true), existing = group.getFilesByName(fileName);
+      const group = groupFolder(source,true), existing = group.getFilesByName(fileName);
       while (existing.hasNext()) {
         const file = existing.next(); let meta={}; try {meta=JSON.parse(file.getDescription());} catch (_) {}
         if (meta.requestId === request.requestId && meta.uploadedBy === auth.user.localId) return jsonResponse_({ok:true,file:record_(file,source)});

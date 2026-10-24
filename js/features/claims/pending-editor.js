@@ -236,6 +236,8 @@
       }
 
       editingPendingClaimId = claimId;
+      // Tải trước danh sách tài liệu Drive song song với việc điền form: mở tab Tài liệu hồ sơ là có ngay.
+      if (typeof ClaimDocuments !== 'undefined') ClaimDocuments.prefetch();
       const isEditing = true;
 
       updateHeaderCancelClaimProposalButton(item);

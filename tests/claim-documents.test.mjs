@@ -5,22 +5,25 @@ import vm from 'node:vm';
 import crypto from 'node:crypto';
 const source=fs.readFileSync(new URL('../google-apps-script/claim-documents/Code.gs',import.meta.url),'utf8');
 const iterator=items=>({hasNext:()=>items.length>0,next:()=>items.shift()});
-function service({uid='allowed',claim={bienSo:'TEST'},networkError=false,belongs=false,uploadedBy='allowed',profileRole='user'}={}) {
-  let driveCalls=0,created=0,trashed=false,locks=0;
+function service({uid='allowed',claim={bienSo:'TEST'},networkError=false,belongs=false,uploadedBy='allowed',profileRole='user',withCache=false,mime='image/jpeg'}={}) {
+  let driveCalls=0,created=0,trashed=false,locks=0,authCalls=0,searches=0;const store=new Map();
   const props={FIREBASE_API_KEY:'test',FIREBASE_DATABASE_URL:'https://test.firebaseio.com',ALLOWED_UIDS:'allowed',ROOT_FOLDER_ID:'root'};
   const saved={getId:()=> 'saved',getName:()=> 'test.pdf',getSize:()=>1,getMimeType:()=> 'application/pdf',getDateCreated:()=> new Date(0),getDescription:()=>JSON.stringify({uploadedBy:'allowed',requestId:'same-request-123456'}),isTrashed:()=>false};
-  const group={getId:()=> 'correct-group',getFiles:()=>iterator([saved]),getFilesByName:()=>iterator([saved]),createFile:()=>{created++;throw Error('Unexpected duplicate');}};
-  const claimFolder={setDescription:()=>{},getFoldersByName:()=>iterator([group])};
+  const group={getId:()=> 'correct-group',isTrashed:()=>false,getFiles:()=>iterator([saved]),getFilesByName:()=>iterator([saved]),createFile:()=>{created++;throw Error('Unexpected duplicate');}};
+  const claimFolder={getId:()=> 'claim-folder',isTrashed:()=>false,setDescription:()=>{},getFoldersByName:()=>iterator([group])};
+  const root={getSharingAccess:()=> 'private',searchFolders:()=>{searches++;return iterator([claimFolder]);}};
+  const folders={root,'claim-folder':claimFolder,'correct-group':group};
   const context=vm.createContext({
     PropertiesService:{getScriptProperties:()=>({getProperty:key=>props[key]})},
-    UrlFetchApp:{fetch:url=>{if(networkError)throw Error('secret-token-in-url');return {getResponseCode:()=>200,getContentText:()=>JSON.stringify(url.includes('accounts:lookup')?{users:[{localId:uid}]}:url.includes('/profile.json')?{role:profileRole}:claim)};}},
-    DriveApp:{Access:{PRIVATE:'private'},getFolderById:()=>{driveCalls++;return {getSharingAccess:()=> 'private',searchFolders:()=>iterator([claimFolder])};},getFileById:()=>({getParents:()=>iterator([{getId:()=> belongs?'correct-group':'foreign-group'}]),isTrashed:()=>false,getSize:()=>1,getDescription:()=>JSON.stringify({uploadedBy}),setTrashed:value=>{trashed=value;},getMimeType:()=> 'image/jpeg',getThumbnail:()=>({getContentType:()=> 'image/jpeg',getBytes:()=>[1,2]}),getBlob:()=>{throw Error('Must not read original bytes for a thumbnail');}})},
+    ...(withCache?{CacheService:{getScriptCache:()=>({get:key=>store.get(key)??null,put:(key,value)=>store.set(key,value),remove:key=>store.delete(key)})}}:{}),
+    UrlFetchApp:{fetch:url=>{if(networkError)throw Error('secret-token-in-url');authCalls++;return {getResponseCode:()=>200,getContentText:()=>JSON.stringify(url.includes('accounts:lookup')?{users:[{localId:uid}]}:url.includes('/profile.json')?{role:profileRole}:claim)};}},
+    DriveApp:{Access:{PRIVATE:'private'},getFolderById:id=>{driveCalls++;return folders[id];},getFileById:fileId=>({getParents:()=>iterator([{getId:()=> belongs&&!String(fileId).startsWith('foreign')?'correct-group':'foreign-group'}]),isTrashed:()=>false,getSize:()=>1,getDescription:()=>JSON.stringify({uploadedBy}),setTrashed:value=>{trashed=value;},getMimeType:()=> mime,getThumbnail:()=>({getContentType:()=> 'image/jpeg',getBytes:()=>[1,2]}),getBlob:()=>{throw Error('Must not read original bytes for a thumbnail');}})},
     LockService:{getScriptLock:()=>({tryLock:()=>{locks++;return true;},releaseLock:()=>{}})},
     Utilities:{DigestAlgorithm:{SHA_256:'sha256'},computeDigest:(_,value)=>[...crypto.createHash('sha256').update(value).digest()],base64Decode:value=>[...Buffer.from(value,'base64')],base64Encode:value=>Buffer.from(value).toString('base64')},
     ContentService:{MimeType:{JSON:'json'},createTextOutput:body=>({setMimeType:()=>body})}
   });
   vm.runInContext(source,context);
-  return {call:request=>JSON.parse(context.doPost({postData:{contents:JSON.stringify({token:'test',claimId:'claim-one',...request})}})),driveCalls:()=>driveCalls,created:()=>created,trashed:()=>trashed,locks:()=>locks};
+  return {call:request=>JSON.parse(context.doPost({postData:{contents:JSON.stringify({token:'test',claimId:'claim-one',...request})}})),driveCalls:()=>driveCalls,created:()=>created,trashed:()=>trashed,locks:()=>locks,authCalls:()=>authCalls,searches:()=>searches,store};
 }
 test('unknown user cannot reach Drive',()=>{const s=service({uid:'other'});assert.equal(s.call({action:'list'}).ok,false);assert.equal(s.driveCalls(),0);});
 test('missing claim is denied before Drive access',()=>{const s=service({claim:null});assert.equal(s.call({action:'list'}).ok,false);assert.equal(s.driveCalls(),0);});
@@ -34,6 +37,31 @@ test('ordinary users cannot delete files uploaded by someone else',()=>{const s=
 test('administrator can remove a file from this claim',()=>{const s=service({belongs:true,uploadedBy:'other',profileRole:'admin'});assert.equal(s.call({action:'remove',fileId:'other-file'}).ok,true);assert.equal(s.trashed(),true);});
 test('thumbnail reads use the small image and do not take the global upload lock',()=>{const s=service({belongs:true});const result=s.call({action:'thumbnail',fileId:'image'});assert.equal(result.ok,true);assert.equal(result.data,'AQI=');assert.equal(s.locks(),0);});
 test('listing does not hold the upload lock',()=>{const s=service();assert.equal(s.call({action:'list'}).ok,true);assert.equal(s.locks(),0);});
+test('batch thumbnails return only images that belong to this claim, in one request and without the lock',()=>{
+  const s=service({belongs:true});const result=s.call({action:'thumbnails',fileIds:['image-a','foreign-b','image-c']});
+  assert.equal(result.ok,true);assert.deepEqual(result.items.map(item=>[item.id,item.ok]),[['image-a',true],['foreign-b',false],['image-c',true]]);
+  assert.equal(result.items[0].data,'AQI=');assert.equal(s.locks(),0);
+});
+test('batch thumbnails reject malformed IDs and cap the batch size',()=>{
+  const s=service({belongs:true});assert.equal(s.call({action:'thumbnails',fileIds:['../x']}).ok,false);
+  assert.equal(s.call({action:'thumbnails',fileIds:[]}).ok,false);
+  assert.equal(s.call({action:'thumbnails',fileIds:Array.from({length:30},(_,i)=>'img'+i)}).items.length,12);
+});
+test('batch thumbnails skip non-image files',()=>{const s=service({belongs:true,mime:'application/pdf'});assert.equal(s.call({action:'thumbnails',fileIds:['doc']}).items[0].ok,false);});
+test('repeat requests reuse cached authorization and folder lookup',()=>{
+  const s=service({withCache:true});assert.equal(s.call({action:'list'}).ok,true);
+  const auth=s.authCalls(),search=s.searches();assert.equal(auth,2);assert.equal(search,1);
+  assert.equal(s.call({action:'list'}).ok,true);assert.equal(s.authCalls(),auth);assert.equal(s.searches(),search);
+  assert(![...s.store.values()].some(value=>String(value).includes('"token"')),'token must never be cached');
+});
+test('cached authorization is bound to the claim it was checked for',()=>{
+  const s=service({withCache:true});s.call({action:'list'});const auth=s.authCalls();
+  s.call({action:'list',claimId:'claim-two'});assert.equal(s.authCalls(),auth+2);
+});
+test('a stale cached folder ID falls back to searching Drive',()=>{
+  const s=service({withCache:true});s.call({action:'list'});s.store.set([...s.store.keys()].find(key=>key.startsWith('folder:')),'missing-folder');
+  assert.equal(s.call({action:'list'}).ok,true);assert.equal(s.searches(),2);
+});
 
 function client() {
   const requests=[];
