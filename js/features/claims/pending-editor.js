@@ -129,7 +129,21 @@
     }
 
 
+    // storage.js (tài liệu hồ sơ) có thể chưa tải xong nếu GitHub Pages trả lỗi tạm thời (503).
+    // Không để ReferenceError làm hỏng thao tác: mở form thì báo nhẹ + tự thử tải lại; đóng form thì bỏ qua.
+    function isClaimDocumentStorageReady() {
+      return typeof resetClaimDocumentContext === 'function' && typeof claimDocumentStore !== 'undefined';
+    }
+    function ensureClaimDocumentStorageReady() {
+      if (isClaimDocumentStorageReady()) return true;
+      if (typeof window.reloadFailedAppScripts === 'function') window.reloadFailedAppScripts();
+      triggerToast('Đang tải lại thành phần tài liệu do mạng chập chờn. Vui lòng thử lại sau vài giây.', 'error');
+      return false;
+    }
+
+
     function openAddPendingClaimModal() {
+      if (!ensureClaimDocumentStorageReady()) return;
       resetClaimDocumentContext();
       if (!hasUserPermission('pending', 'add')) {
         triggerToast('Bạn không có quyền tiếp nhận hồ sơ tổn thất mới.', 'warning');
@@ -208,6 +222,7 @@
 
 
     async function openEditPendingClaimModal(claimId, initialTab) {
+      if (!ensureClaimDocumentStorageReady()) return;
       resetClaimDocumentContext();
       const openDocumentSequence=claimDocumentStore.formSequence;
       if (!claimId || !cachedPendingClaimsPayload) return;
@@ -369,7 +384,7 @@
     function closeAddPendingClaimModal() {
       document.getElementById('collectionGuidePreview')?._guideEditor?.flush();
       scheduleCollectionGuideAutoSave();
-      resetClaimDocumentContext();
+      if (isClaimDocumentStorageReady()) resetClaimDocumentContext();
       sceneDiagramLoadSequence++;
       clearCollectionGuideDraft();
       const modal = document.getElementById('addPendingClaimModalOverlay');

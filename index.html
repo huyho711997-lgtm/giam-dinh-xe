@@ -6,6 +6,34 @@
   <meta name="theme-color" content="#ffffff" />
   <meta name="description" content="Nền tảng Giám định - Bồi thường Xe cơ giới Tasco theo thời gian thực." />
   <title>TASCO DLK</title>
+  <!-- Tự tải lại script bị lỗi mạng (GitHub Pages đôi khi trả 503 tạm thời). Trước đây một lần lỗi làm thiếu
+       hàm cho tới khi tải lại cả trang (vd. storage.js → "resetClaimDocumentContext is not defined").
+       Mỗi file thử lại tối đa 3 lần, giãn cách 0.6s/1.2s/1.8s, thêm tham số _r để bỏ qua bộ nhớ đệm lỗi. -->
+  <script>
+  (function () {
+    var tries = {}, failed = {};
+    function baseOf(src) { return String(src).split('#')[0].replace(/([?&])_r=[^&]*(&|$)/, function (m, p1, p2) { return p2 ? p1 : ''; }); }
+    function retry(base, anchor) {
+      var n = (tries[base] || 0) + 1;
+      if (n > 3) return;
+      tries[base] = n;
+      setTimeout(function () {
+        var s = document.createElement('script');
+        s.src = base + (base.indexOf('?') < 0 ? '?' : '&') + '_r=' + n + '-' + Date.now().toString(36);
+        s.async = false;
+        s.onload = function () { delete failed[base]; };
+        (anchor && anchor.parentNode ? anchor.parentNode : document.body).appendChild(s);
+      }, 600 * n);
+    }
+    window.addEventListener('error', function (e) {
+      var el = e.target;
+      if (!el || el.tagName !== 'SCRIPT' || !el.src || el.src.indexOf(location.origin) !== 0) return;
+      var base = baseOf(el.src); failed[base] = true; retry(base, el);
+    }, true);
+    // Cho phép mã ứng dụng yêu cầu thử lại ngay (vd. khi người dùng bấm mở hồ sơ).
+    window.reloadFailedAppScripts = function () { Object.keys(failed).forEach(function (b) { if ((tries[b] || 0) >= 3) tries[b] = 2; retry(b, null); }); };
+  })();
+  </script>
   <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
 
   <!-- Google Fonts & Firebase SDK -->
@@ -1648,7 +1676,7 @@
   <script src="js/features/claims/reduction-rules.js?v=20261024-scene-1"></script>
   <script src="js/features/claims/reduction-notice.js?v=20261024-scene-1"></script>
   <script src="js/features/claims/editor-workspace.js?v=20261024-status-1"></script>
-  <script src="js/features/claims/pending-editor.js?v=20261024-stay-1"></script>
+  <script src="js/features/claims/pending-editor.js?v=20261024-guard-1"></script>
   <script src="js/features/claims/notes.js"></script>
   <script src="js/features/claims/import-versions.js?v=20261024-imports-2"></script>
   <script src="js/features/claims/import-history.js?v=20261024-imports-3"></script>
@@ -1783,7 +1811,7 @@
   <script src="js/features/workshop/presentation.js"></script>
   <script src="js/features/scene/runtime.js"></script>
   <script src="js/features/documents/hsbt.js"></script>
-  <script src="js/features/documents/storage.js"></script>
+  <script src="js/features/documents/storage.js?v=20261024-1"></script>
   <script src="js/features/documents/autosave.js"></script>
 </body>
 </html>
