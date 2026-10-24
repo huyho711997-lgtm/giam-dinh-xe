@@ -1,0 +1,65 @@
+/* ==========================================================================
+   Tab "Hướng dẫn thu thập hồ sơ" – THANG CỠ CHỮ THỐNG NHẤT
+   Trước: 7 cỡ chữ (18/12.5/12/11.5/11/10.5/10px) phân bổ không theo vai trò, vd. tên giấy tờ
+   12.5px đậm ở cột giữa nhưng 11.5px nhạt ở "Danh sách đã chọn"; nút lọc 11.5px, ô tìm 12px.
+   Nay 5 bậc theo vai trò (đặt sau base.css / document-preview.css, bộ chọn có #id để thắng):
+     18px   tiêu đề trang
+     13.5px tiêu đề panel
+     13px   nội dung chính (tên giấy tờ, tiêu đề mục)
+     12px   điều khiển & thông tin phụ (ô nhập, nút, bộ lọc, cột nhóm, mô tả, nhãn)
+     11px   nhãn nhỏ viết hoa & số đếm
+   ========================================================================== */
+#tabPane_CollectionGuide { --cg-fs-title: 18px; --cg-fs-panel: 13.5px; --cg-fs-body: 13px; --cg-fs-ui: 12px; --cg-fs-caption: 11px; }
+
+/* 18 – tiêu đề trang */
+#tabPane_CollectionGuide .collection-guide-heading h3 { font-size: var(--cg-fs-title); font-weight: 750; letter-spacing: -.02em; }
+
+/* 13.5 – tiêu đề panel */
+#tabPane_CollectionGuide .collection-guide-selection-header h4,
+#tabPane_CollectionGuide .collection-guide-settings-title { font-size: var(--cg-fs-panel); font-weight: 750; letter-spacing: -.01em; }
+
+/* 13 – nội dung chính */
+#tabPane_CollectionGuide .collection-guide-check-title { font-size: var(--cg-fs-body); font-weight: 600; line-height: 1.45; }
+#tabPane_CollectionGuide .collection-guide-group-heading h4 { font-size: var(--cg-fs-body); font-weight: 700; line-height: 1.45; }
+#tabPane_CollectionGuide .collection-guide-selected-title,
+#tabPane_CollectionGuide .collection-guide-selected-title span { font-size: var(--cg-fs-body); font-weight: 550; line-height: 1.45; color: var(--ce-ink, var(--text-main)); }
+
+/* 12 – điều khiển & thông tin phụ */
+#tabPane_CollectionGuide :is(input, select, textarea),
+#tabPane_CollectionGuide .collection-guide-search input,
+#tabPane_CollectionGuide .collection-guide-custom-text { font-size: var(--cg-fs-ui); }
+#tabPane_CollectionGuide .collection-guide-filters button,
+#tabPane_CollectionGuide .collection-guide-filters button span,
+#tabPane_CollectionGuide .collection-guide-text-button,
+#tabPane_CollectionGuide .collection-guide-bulk-actions button,
+#tabPane_CollectionGuide .collection-guide-group-heading button,
+#tabPane_CollectionGuide .collection-guide-check button,
+#tabPane_CollectionGuide .collection-guide-check button span,
+#tabPane_CollectionGuide .collection-guide-settings-label-closed,
+#tabPane_CollectionGuide .collection-guide-settings-label-open { font-size: var(--cg-fs-ui); }
+#tabPane_CollectionGuide label { font-size: var(--cg-fs-ui); }
+#tabPane_CollectionGuide .collection-guide-summary,
+#tabPane_CollectionGuide .collection-guide-settings-summary,
+#tabPane_CollectionGuide .claim-document-autosave { font-size: var(--cg-fs-ui); }
+#tabPane_CollectionGuide .collection-guide-check-description { font-size: var(--cg-fs-ui); font-weight: 450; line-height: 1.5; }
+#tabPane_CollectionGuide .collection-guide-selection-stats span,
+#tabPane_CollectionGuide .collection-guide-selected-status,
+#tabPane_CollectionGuide .collection-guide-selected-status span { font-size: var(--cg-fs-ui); }
+
+/* 11 – nhãn nhỏ viết hoa & số đếm */
+#tabPane_CollectionGuide .collection-guide-navigation h4 { font-size: var(--cg-fs-caption); letter-spacing: .1em; }
+#tabPane_CollectionGuide .collection-guide-group-badge,
+#tabPane_CollectionGuide .collection-guide-group-number,
+#tabPane_CollectionGuide .collection-guide-selection-header span,
+#tabPane_CollectionGuide .collection-guide-filters button span:not(:only-child),
+#tabPane_CollectionGuide small.collection-guide-phone-hint { font-size: var(--cg-fs-caption); }
+#tabPane_CollectionGuide small.collection-guide-phone-hint { line-height: 1.5; }
+
+/* Nút × xoá trong danh sách đã chọn: là biểu tượng, cỡ vừa với dòng 13px */
+#tabPane_CollectionGuide .collection-guide-selected-remove { font-size: 16px; line-height: 1; }
+
+/* Độ đậm đồng nhất cho mọi nút chữ cùng bậc 12px */
+#tabPane_CollectionGuide .collection-guide-group-heading button { font-weight: 650; }
+
+/* Cột nhóm bên trái là bộ lọc điều hướng → bậc 12px (điều khiển), đủ chỗ hiện trọn "Tài sản / bên thứ ba" */
+#tabPane_CollectionGuide .collection-guide-group-title { font-size: var(--cg-fs-ui); font-weight: 600; }

@@ -63,7 +63,7 @@ function collectionGuideBindContactFields() {
   if(input){
     input.type='tel';input.autocomplete='tel';
     const hint=collectionGuideElement('small','collection-guide-phone-hint');hint.id='collectionGuidePhoneHint';
-    hint.style.cssText='display:block;margin-top:5px;color:var(--text-muted);font-size:10px;line-height:1.5';
+    hint.style.cssText='display:block;margin-top:5px;color:var(--text-muted)'; // cỡ chữ do css/collection-guide-type.css quyết định
     input.setAttribute('aria-describedby',hint.id);input.after(hint);
     input.addEventListener('input',()=>{
       if(!collectionGuideDraft)return;
