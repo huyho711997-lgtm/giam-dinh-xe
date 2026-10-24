@@ -609,30 +609,21 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
       } else if (activeDashboardTab === 'pending') {
         container.innerHTML = `
           <div class="workspace-grid single-col">
-            <section class="pending-workspace" aria-label="Quản lý hồ sơ tồn">
-              <div class="pending-command-center">
-              <!-- Header Title & Action Buttons -->
-              <div class="pending-page-hero">
-                <div class="pending-page-hero__content">
-                  <div class="pending-page-hero__emblem" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path>
-                      <path d="M14 3v5h5M9 13h6M9 17h4"></path>
-                      <path d="m8.5 8.7 1.2 1.2 2.4-2.5"></path>
-                    </svg>
+            <section class="pending-workspace pending-workspace--v2" aria-label="Quản lý hồ sơ tồn">
+              <!-- Đầu trang không khung (cùng bố cục trang Biểu mẫu dùng chung). Bỏ dashboard 4 thẻ số liệu:
+                   tổng/kết quả lọc đã hiển thị ngay trên thanh danh sách. -->
+              <header class="pw-page-head">
+                <div class="pw-page-title">
+                  <div class="pw-page-emblem" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h4"></path></svg>
                   </div>
-                  <div class="pending-page-hero__copy">
-                    <div class="pending-page-hero__eyebrow">Trung tâm điều hành tổn thất</div>
-                    <h2 class="pending-page-hero__title">Quản lý hồ sơ tồn <span>&amp; Báo cáo tổn thất</span></h2>
-                    <p class="pending-page-hero__desc">Kiểm soát tập trung hồ sơ tồn đọng, phân công Giám định viên và theo dõi tiến độ xử lý theo từng kỳ báo cáo.</p>
-                    <div class="pending-page-hero__tags" aria-label="Các chức năng chính">
-                      <span class="pending-page-hero__tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="m17 11 2 2 4-4"></path></svg>Phân công GDV</span>
-                      <span class="pending-page-hero__tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"></path><path d="m7 15 4-4 3 3 5-7"></path></svg>Theo dõi tiến độ</span>
-                      <span class="pending-page-hero__tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>Báo cáo theo kỳ</span>
-                    </div>
+                  <div>
+                    <span class="pw-eyebrow">Trung tâm điều hành tổn thất</span>
+                    <h1>Hồ sơ bồi thường</h1>
+                    <p>Quản lý hồ sơ tồn, phân công giám định viên và theo dõi tiến độ xử lý theo từng kỳ.</p>
                   </div>
                 </div>
-                <div class="pending-action-group">
+                <div class="pending-action-group" role="group" aria-label="Thao tác dữ liệu hồ sơ">
                   ${hasUserPermission('pending', 'delete') ? `
                     <button type="button" class="pending-action-btn pending-action-btn--danger" onclick="clearAllPendingClaimsDataByAdmin()" title="Chỉ Admin mới có quyền xóa toàn bộ hồ sơ tồn">
                       <span class="pending-action-btn__icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></span>
@@ -653,9 +644,18 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
                   </button>
                   ` : ''}
                 </div>
-              </div>
+              </header>
 
-              <!-- Premium Filter Command Bar -->
+              <div class="pending-register-panel">
+                <div class="pending-register-topbar">
+                  <div class="pending-register-header">
+                    <h3>Danh sách hồ sơ</h3>
+                    <div id="pendingFilterSummary" class="pending-filter-summary" aria-live="polite"></div>
+                  </div>
+                  <div id="pendingClaimsPaginationContainer" class="pending-pagination"></div>
+                </div>
+
+              <!-- Bộ lọc nằm trong thẻ danh sách -->
               <div class="pending-filter-toolbar">
                 <div class="pending-filter-search">
                   <span class="pending-filter-search__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg></span>
@@ -705,24 +705,6 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
                   </button>
 
               </div>
-              </div>
-              <!-- Weekly Metrics Summary Stats Cards -->
-              <div id="pendingWeeklyStatsContainer" class="claims-metrics-grid" aria-label="Tổng quan hồ sơ">
-                <!-- Stat Cards will be rendered dynamically -->
-              </div>
-
-
-              <div class="pending-register-panel">
-                <div class="pending-register-topbar">
-                  <div class="pending-register-header">
-                    <span class="pending-register-eyebrow">Hồ sơ chi tiết</span>
-                    <h3>Danh sách hồ sơ</h3>
-                  </div>
-                  <div class="pending-results-bar">
-                    <div id="pendingFilterSummary" class="pending-filter-summary" aria-live="polite"></div>
-                    <div id="pendingClaimsPaginationContainer" class="pending-pagination"></div>
-                  </div>
-                </div>
 
               <!-- Table Container -->
               <div class="table-container pending-register-table" style="border: 1px solid var(--border); border-radius: 14px; background: var(--bg-soft); overflow: hidden;">

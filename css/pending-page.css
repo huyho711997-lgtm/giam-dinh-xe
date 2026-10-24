@@ -1,0 +1,79 @@
+/* ==========================================================================
+   Trang "Hồ sơ bồi thường" – bố cục mới (js/features/dashboard/workspace.js, tab 'pending')
+   Đầu trang không khung + MỘT thẻ danh sách (tiêu đề · đếm kết quả · phân trang · bộ lọc · bảng),
+   cùng bố cục trang "Biểu mẫu dùng chung". Bỏ dashboard 4 thẻ số liệu.
+   Dùng token --ton-* (outstanding-report.css) đã có cho .pending-workspace, sáng/tối.
+   Phạm vi: .pending-workspace--v2 để thắng các rule cũ trong base.css / pending-workspace.css.
+   ========================================================================== */
+.pending-workspace--v2 { gap:0; padding:6px 0 32px; }
+
+/* ---- Đầu trang ---- */
+.pending-workspace--v2 .pw-page-head { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px 24px; margin:8px 0 20px; }
+.pending-workspace--v2 .pw-page-title { display:flex; align-items:center; gap:16px; min-width:0; }
+.pending-workspace--v2 .pw-page-emblem {
+  display:grid; place-items:center; flex:0 0 48px; width:48px; height:48px;
+  border:1px solid color-mix(in srgb,var(--ton-gold) 24%,var(--ton-line)); border-radius:14px;
+  background:var(--ton-gold-bg); color:var(--ton-gold);
+}
+.pending-workspace--v2 .pw-page-emblem svg { width:22px; height:22px; }
+.pending-workspace--v2 .pw-eyebrow { display:block; color:var(--ton-gold); font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.pending-workspace--v2 .pw-page-head h1 { margin:4px 0 2px; color:var(--ton-ink); font-size:clamp(22px,2.2vw,27px); font-weight:800; line-height:1.25; letter-spacing:-.03em; }
+.pending-workspace--v2 .pw-page-head p { margin:0; color:var(--ton-muted); font-size:12px; line-height:1.6; }
+
+/* Nút thao tác: cùng kích thước 40px, bo 10px như các trang khác */
+.pending-workspace--v2 .pending-action-group { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:0; border:0; background:none; box-shadow:none; }
+.pending-workspace--v2 .pending-action-btn {
+  display:inline-flex; align-items:center; justify-content:center; height:40px; min-height:40px; padding:0 14px; gap:8px;
+  border:1px solid var(--ton-line); border-radius:10px; background:var(--ton-paper); color:var(--ton-ink);
+  font-size:12px; font-weight:700; white-space:nowrap; box-shadow:0 1px 2px rgba(48,40,24,.05);
+}
+.pending-workspace--v2 .pending-action-btn:hover { border-color:color-mix(in srgb,var(--ton-gold) 55%,var(--ton-line)); background:var(--ton-soft); }
+.pending-workspace--v2 .pending-action-btn--danger { color:var(--ton-rose); }
+.pending-workspace--v2 .pending-action-btn--danger:hover { border-color:color-mix(in srgb,var(--ton-rose) 45%,var(--ton-line)); background:color-mix(in srgb,var(--ton-rose) 8%,var(--ton-paper)); }
+.pending-workspace--v2 .pending-action-btn--import { border-color:var(--ton-action); background:var(--ton-action); color:var(--ton-action-text); box-shadow:0 1px 2px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.14); }
+.pending-workspace--v2 .pending-action-btn--import:hover { border-color:var(--ton-action-hover); background:var(--ton-action-hover); color:var(--ton-action-text); }
+
+/* ---- Thẻ danh sách ---- */
+.pending-workspace--v2 .pending-register-panel { border-radius:16px; }
+.pending-workspace--v2 .pending-register-topbar {
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px 18px; padding:14px 18px;
+}
+.pending-workspace--v2 .pending-register-header { flex:1 1 360px; display:flex; align-items:center; flex-wrap:wrap; gap:8px 14px; min-width:0; padding:0; }
+.pending-workspace--v2 .pending-register-header h3 { margin:0; color:var(--ton-ink); font-size:15px; font-weight:800; letter-spacing:-.02em; }
+.pending-workspace--v2 .pending-filter-summary { display:flex; align-items:center; flex-wrap:wrap; flex:1 1 auto; gap:6px; margin:0; }
+.pending-workspace--v2 .pending-filter-result-count { padding:5px 10px; border-radius:999px; background:var(--ton-soft); color:var(--ton-muted); font-size:11px; font-weight:600; font-variant-numeric:tabular-nums; }
+.pending-workspace--v2 .pending-filter-result-count strong { color:var(--ton-ink); font-size:11px; font-weight:800; }
+.pending-workspace--v2 .pending-filter-chip { min-height:26px; border-radius:999px; font-size:10.5px; }
+.pending-workspace--v2 .pending-pagination { margin-left:auto; }
+
+/* Bộ lọc: dải nền nhạt ngay dưới tiêu đề thẻ */
+.pending-workspace--v2 .pending-filter-toolbar {
+  display:grid; grid-template-columns:minmax(220px,1fr) auto 40px; gap:8px; align-items:center;
+  margin:0; padding:12px 18px; border:0; border-top:1px solid var(--ton-line); border-radius:0;
+  background:var(--ton-soft); box-shadow:none;
+}
+body.light-mode .pending-workspace--v2 .pending-filter-toolbar { box-shadow:none; }
+.pending-workspace--v2 .pending-filter-search__icon { width:auto; height:auto; border:0; background:none; color:var(--ton-muted); }
+.pending-workspace--v2 .pending-filter-search__icon svg { width:16px; height:16px; }
+/* Bỏ màu nhấn riêng của từng bộ lọc: icon đồng nhất, trung tính */
+.pending-workspace--v2 .pending-filter-trigger__icon { width:22px; height:22px; border:0; border-radius:6px; background:none; color:var(--ton-muted); }
+.pending-workspace--v2 .pending-filter-select.is-filtered .pending-filter-trigger__icon { color:var(--ton-gold); }
+.pending-workspace--v2 .pending-filter-trigger { grid-template-columns:22px minmax(0,1fr) 12px; }
+
+/* Bảng liền mạch với thẻ */
+.pending-workspace--v2 .pending-register-table { border-radius:0 0 16px 16px !important; }
+.pending-workspace--v2 .pending-register-table thead th { padding:12px; font-size:9.5px; letter-spacing:.06em; }
+.pending-workspace--v2 .pending-register-table tbody td { padding:14px 12px; }
+
+@media (max-width:1150px) {
+  .pending-workspace--v2 .pending-filter-toolbar { grid-template-columns:minmax(0,1fr) 40px; }
+}
+@media (max-width:760px) {
+  .pending-workspace--v2 .pw-page-head { align-items:flex-start; margin:4px 0 16px; }
+  .pending-workspace--v2 .pw-page-emblem { flex-basis:42px; width:42px; height:42px; border-radius:12px; }
+  .pending-workspace--v2 .pending-action-group { width:100%; }
+  .pending-workspace--v2 .pending-action-btn { flex:1 1 180px; }
+  .pending-workspace--v2 .pending-register-topbar { padding:14px; }
+  .pending-workspace--v2 .pending-pagination { width:100%; margin-left:0; }
+  .pending-workspace--v2 .pending-filter-toolbar { padding:12px 14px; }
+}
