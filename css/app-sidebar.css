@@ -7,68 +7,117 @@
 body.has-app-sidebar { --app-topbar-h: 64px; --app-sidebar-w: 256px; padding-left: var(--app-sidebar-w); transition: padding-left .2s ease; }
 body.has-app-sidebar.app-sidebar-collapsed { --app-sidebar-w: 76px; }
 
+/* ---- Bảng màu riêng của sidebar (ấm, cùng tông vàng của ứng dụng) ---- */
+body.has-app-sidebar {
+  --sb-bg: linear-gradient(180deg,#151c25 0%,#10161d 100%);
+  --sb-ink: #eef0ea; --sb-muted: #8e999b; --sb-line: rgba(255,255,255,.07);
+  --sb-hover: rgba(255,255,255,.045); --sb-chip: rgba(255,255,255,.05);
+  --sb-gold: #d8b46d; --sb-gold-soft: rgba(216,180,109,.12);
+  --sb-gold-grad: linear-gradient(145deg,#e9cd8f 0%,#c99b4c 100%); --sb-gold-ink: #241a08;
+  --sb-active-bg: linear-gradient(90deg,rgba(216,180,109,.16) 0%,rgba(216,180,109,.04) 100%);
+  --sb-shadow: 0 1px 0 rgba(255,255,255,.04) inset;
+}
+body.has-app-sidebar.light-mode {
+  --sb-bg: linear-gradient(180deg,#fffdf8 0%,#f8f4eb 100%);
+  --sb-ink: #2b2e2a; --sb-muted: #857f72; --sb-line: rgba(70,56,24,.09);
+  --sb-hover: rgba(70,56,24,.045); --sb-chip: rgba(70,56,24,.05);
+  --sb-gold: #9b7535; --sb-gold-soft: rgba(161,124,59,.1);
+  --sb-gold-grad: linear-gradient(145deg,#d3ad66 0%,#a07733 100%); --sb-gold-ink: #fffaf0;
+  --sb-active-bg: linear-gradient(90deg,rgba(161,124,59,.13) 0%,rgba(161,124,59,.03) 100%);
+  --sb-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
+}
+
 .app-sidebar {
   position: fixed; inset: 0 auto 0 0; z-index: 2100;
   display: flex; flex-direction: column; width: var(--app-sidebar-w, 256px);
-  border-right: 1px solid var(--border); background: var(--surface-strong);
-  transition: width .2s ease, transform .22s ease;
+  border-right: 1px solid var(--sb-line); background: var(--sb-bg); color: var(--sb-ink);
+  transition: width .22s cubic-bezier(.2,.7,.2,1), transform .22s ease, box-shadow .22s ease;
 }
-[data-theme="dark"] .app-sidebar, body:not(.light-mode) .app-sidebar { background: rgba(15,18,24,.98); }
 
 /* ---- Thương hiệu ---- */
-.app-sidebar-brand { display: flex; align-items: center; gap: 12px; height: var(--app-topbar-h); box-sizing: border-box; padding: 0 16px; border-bottom: 1px solid var(--border); flex: 0 0 auto; }
+.app-sidebar-brand { display: flex; align-items: center; gap: 12px; height: var(--app-topbar-h); box-sizing: border-box; padding: 0 18px; border-bottom: 1px solid var(--sb-line); flex: 0 0 auto; }
 .app-sidebar-logo {
-  display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; padding: 0;
-  border: 1px solid color-mix(in srgb,var(--primary) 30%,transparent); border-radius: 12px;
-  background: color-mix(in srgb,var(--primary) 12%,transparent); color: var(--primary); cursor: pointer;
+  position: relative; display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; padding: 0;
+  border: 0; border-radius: 11px; background: var(--sb-gold-grad); color: var(--sb-gold-ink); cursor: pointer;
+  box-shadow: 0 6px 16px -6px rgba(161,124,59,.6), inset 0 1px 0 rgba(255,255,255,.35);
 }
-.app-sidebar-logo svg { width: 21px; height: 21px; }
+.app-sidebar-logo svg { width: 19px; height: 19px; }
 .app-sidebar-brand-copy { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; white-space: nowrap; }
-.app-sidebar-brand-copy strong { color: var(--text-main); font-size: 14.5px; font-weight: 850; letter-spacing: -.02em; }
-.app-sidebar-brand-copy span { margin-top: 2px; color: var(--primary); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.app-sidebar-brand-copy strong { color: var(--sb-ink); font-size: 14px; font-weight: 850; letter-spacing: -.015em; }
+.app-sidebar-brand-copy span { margin-top: 3px; color: var(--sb-gold); font-size: 9.5px; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
 .app-sidebar-close { display: none; }
 
 /* ---- Danh sách mục ---- */
-.app-sidebar-nav { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 12px 12px 16px; scrollbar-width: thin; scrollbar-color: color-mix(in srgb,var(--primary) 30%,transparent) transparent; }
-.app-sidebar-group + .app-sidebar-group { margin-top: 14px; }
-.app-sidebar-group-label { padding: 0 10px 6px; color: var(--text-muted); font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; opacity: .85; }
+.app-sidebar-nav { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 14px 12px 16px; scrollbar-width: thin; scrollbar-color: color-mix(in srgb,var(--sb-gold) 28%,transparent) transparent; }
+.app-sidebar-nav::-webkit-scrollbar { width: 4px; }
+.app-sidebar-nav::-webkit-scrollbar-thumb { border-radius: 4px; background: color-mix(in srgb,var(--sb-gold) 28%,transparent); }
+.app-sidebar-group + .app-sidebar-group { margin-top: 16px; }
+.app-sidebar-group-label {
+  display: flex; align-items: center; gap: 10px; padding: 0 8px 8px;
+  color: var(--sb-muted); font-size: 9.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
+}
+.app-sidebar-group-label::after { content: ''; flex: 1; height: 1px; background: var(--sb-line); }
+
 .app-sidebar-link, .app-sidebar-collapse {
-  position: relative; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 40px; margin: 0 0 2px; padding: 0 10px;
-  border: 1px solid transparent; border-radius: 10px; background: transparent;
-  color: var(--text-muted); font: inherit; font-size: 13px; font-weight: 650; letter-spacing: -.005em; text-align: left; white-space: nowrap; cursor: pointer;
-  transition: background-color .14s ease, color .14s ease, border-color .14s ease;
+  position: relative; display: flex; align-items: center; gap: 11px; width: 100%; min-height: 42px; margin: 0 0 2px; padding: 0 6px;
+  border: 0; border-radius: 11px; background: transparent;
+  color: var(--sb-muted); font: inherit; font-size: 13px; font-weight: 650; letter-spacing: -.005em; text-align: left; white-space: nowrap; cursor: pointer;
+  transition: background-color .16s ease, color .16s ease;
 }
-.app-sidebar-link-icon, .app-sidebar-collapse svg { flex: 0 0 18px; width: 18px; height: 18px; }
+/* Ô icon */
+.app-sidebar-ico {
+  display: grid; place-items: center; flex: 0 0 32px; width: 32px; height: 32px; border-radius: 9px;
+  color: inherit; transition: background .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.app-sidebar-ico svg { width: 17px; height: 17px; }
 .app-sidebar-link-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.app-sidebar-link:hover, .app-sidebar-collapse:hover { background: var(--surface-hover); color: var(--text-main); }
-.app-sidebar-link:focus-visible, .app-sidebar-collapse:focus-visible, .app-sidebar-logo:focus-visible, .app-topbar-menu:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.app-sidebar-link.is-active {
-  border-color: color-mix(in srgb,var(--primary) 26%,transparent);
-  background: color-mix(in srgb,var(--primary) 10%,transparent); color: var(--primary); font-weight: 750;
+.app-sidebar-link:hover, .app-sidebar-collapse:hover { background: var(--sb-hover); color: var(--sb-ink); }
+.app-sidebar-link:hover .app-sidebar-ico, .app-sidebar-collapse:hover .app-sidebar-ico { background: var(--sb-chip); }
+.app-sidebar-link:focus-visible, .app-sidebar-collapse:focus-visible, .app-sidebar-logo:focus-visible, .app-topbar-menu:focus-visible { outline: 2px solid var(--sb-gold, var(--primary)); outline-offset: 2px; }
+
+/* Mục đang chọn: nền ngả vàng + ô icon vàng đặc + vạch sáng mép trái */
+.app-sidebar-link.is-active { background: var(--sb-active-bg); color: var(--sb-ink); font-weight: 750; }
+.app-sidebar-link.is-active .app-sidebar-ico { background: var(--sb-gold-grad); color: var(--sb-gold-ink); box-shadow: 0 6px 14px -6px rgba(161,124,59,.7), inset 0 1px 0 rgba(255,255,255,.3); }
+.app-sidebar-link.is-active::before {
+  content: ''; position: absolute; left: -12px; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0;
+  background: var(--sb-gold); box-shadow: 0 0 10px color-mix(in srgb,var(--sb-gold) 70%,transparent);
 }
-.app-sidebar-link.is-active::before { content: ''; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: var(--primary); }
 .app-sidebar-badge {
-  margin-left: auto; padding: 2px 6px; border-radius: 5px;
-  background: color-mix(in srgb,var(--primary) 16%,transparent); color: var(--primary);
-  font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; line-height: 1.3;
+  margin-left: auto; padding: 2px 7px; border: 1px solid color-mix(in srgb,var(--sb-gold) 30%,transparent); border-radius: 999px;
+  background: var(--sb-gold-soft); color: var(--sb-gold);
+  font-size: 8.5px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; line-height: 1.35;
 }
 
-/* ---- Chân: nút thu gọn ---- */
-.app-sidebar-foot { flex: 0 0 auto; padding: 10px 12px 14px; border-top: 1px solid var(--border); }
+/* ---- Chân: hàng "Ghim thanh bên" có công tắc ---- */
+.app-sidebar-foot { flex: 0 0 auto; padding: 10px 12px 14px; border-top: 1px solid var(--sb-line); }
 .app-sidebar-collapse { margin: 0; }
-.app-sidebar-collapse[aria-pressed="true"] { color: var(--primary); }
+.app-sidebar-switch {
+  position: relative; flex: 0 0 30px; width: 30px; height: 18px; margin-left: auto; border-radius: 999px;
+  background: color-mix(in srgb,var(--sb-muted) 35%,transparent); transition: background .18s ease;
+}
+.app-sidebar-switch::after {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: transform .18s ease;
+}
+.app-sidebar-collapse[aria-pressed="true"] { color: var(--sb-ink); }
+.app-sidebar-collapse[aria-pressed="true"] .app-sidebar-ico { color: var(--sb-gold); }
+.app-sidebar-collapse[aria-pressed="true"] .app-sidebar-switch { background: var(--sb-gold-grad); }
+.app-sidebar-collapse[aria-pressed="true"] .app-sidebar-switch::after { transform: translateX(12px); }
 
 /* ---- Chế độ tự mở khi rê chuột (mặc định trên desktop) ----
    Khi chưa ghim: chỉ hiện thanh icon 76px; rê chuột / focus bằng bàn phím → .is-peek mở rộng 256px
    ĐÈ lên nội dung (body vẫn chừa 76px nên trang không bị xô lệch), rê ra thì thu lại. */
 body.app-sidebar-collapsed .app-sidebar { overflow: hidden; }
-body.app-sidebar-collapsed .app-sidebar.is-peek { width: 256px; box-shadow: 18px 0 48px rgba(0,0,0,.16); }
-body.light-mode.app-sidebar-collapsed .app-sidebar.is-peek { box-shadow: 18px 0 44px rgba(28,31,38,.1); }
+body.app-sidebar-collapsed .app-sidebar.is-peek { width: 256px; box-shadow: 24px 0 60px -12px rgba(0,0,0,.35); }
+body.light-mode.app-sidebar-collapsed .app-sidebar.is-peek { box-shadow: 24px 0 56px -14px rgba(60,45,15,.18); }
 body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-brand { justify-content: center; padding: 0; }
-body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-brand-copy, .app-sidebar-link-text, .app-sidebar-badge) { display: none; }
-body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label { height: 1px; margin: 0 10px 10px; padding: 0; overflow: hidden; color: transparent; background: var(--border); }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-brand-copy, .app-sidebar-link-text, .app-sidebar-badge, .app-sidebar-switch) { display: none; }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label { height: 1px; margin: 0 12px 12px; padding: 0; overflow: hidden; color: transparent; background: var(--sb-line); }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label::after { display: none; }
 body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group:first-child .app-sidebar-group-label { display: none; }
 body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-link, .app-sidebar-collapse) { justify-content: center; padding: 0; }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-link.is-active { background: transparent; }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group + .app-sidebar-group { margin-top: 12px; }
 
 /* ---- Thanh trên: ẩn logo cũ, hiện tên trang ---- */
 /* ==========================================================================
@@ -142,16 +191,18 @@ body.has-app-sidebar .nav-user-copy em { margin-top: 1px; font-size: 9.5px; lett
   /* Trên mobile luôn hiện đầy đủ chữ dù desktop đang ở chế độ thu gọn */
   body.app-sidebar-collapsed .app-sidebar { width: var(--app-sidebar-w); }
   body.app-sidebar-collapsed .app-sidebar.is-peek { width: var(--app-sidebar-w); box-shadow: none; }
-  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-brand { justify-content: flex-start; padding: 0 16px; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-brand { justify-content: flex-start; padding: 0 18px; }
   body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-brand-copy, .app-sidebar-link-text) { display: revert; }
   body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-badge { display: inline-block; }
-  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label { height: auto; margin: 0; padding: 0 10px 6px; color: var(--text-muted); background: none; }
-  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group:first-child .app-sidebar-group-label { display: block; }
-  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-link, .app-sidebar-collapse) { justify-content: flex-start; padding: 0 10px; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label { display: flex; height: auto; margin: 0; padding: 0 8px 8px; color: var(--sb-muted); background: none; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label::after { display: block; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-link.is-active { background: var(--sb-active-bg); }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group:first-child .app-sidebar-group-label { display: flex; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-link, .app-sidebar-collapse) { justify-content: flex-start; padding: 0 6px; }
   body.app-sidebar-open.app-sidebar-collapsed .app-sidebar { box-shadow: 0 24px 60px rgba(0,0,0,.3); }
   .app-sidebar-close {
     display: grid; place-items: center; width: 36px; height: 36px; margin-left: auto; padding: 0;
-    border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--text-muted); cursor: pointer;
+    border: 1px solid var(--sb-line); border-radius: 10px; background: transparent; color: var(--sb-muted); cursor: pointer;
   }
   .app-sidebar-close svg { width: 16px; height: 16px; }
   .app-sidebar-foot { display: none; }

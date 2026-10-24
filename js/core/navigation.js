@@ -122,7 +122,6 @@
         btn.setAttribute('aria-pressed', String(!collapsed));
         btn.title = appSidebarPinLabel(!collapsed);
         btn.setAttribute('aria-label', btn.title);
-        btn.querySelector('.app-sidebar-link-text').textContent = collapsed ? 'Ghim thanh bên' : 'Bỏ ghim';
       }
     }
 
@@ -174,7 +173,7 @@
               ${group.items.map(item => {
                 const active = isAppSidebarItemActive(item);
                 return `<button type="button" class="app-sidebar-link${active ? ' is-active' : ''}" data-tab="${item.tab}" onclick="navigateHeaderTab('${item.tab}')" title="${item.title}" ${active ? 'aria-current="page"' : ''}>
-                  ${appSidebarIcon(item.icon, 'app-sidebar-link-icon')}
+                  <span class="app-sidebar-ico">${appSidebarIcon(item.icon)}</span>
                   <span class="app-sidebar-link-text">${item.title}</span>
                   ${item.badge ? `<span class="app-sidebar-badge">${item.badge}</span>` : ''}
                 </button>`;
@@ -183,7 +182,7 @@
         </nav>
         <div class="app-sidebar-foot">
           <button type="button" id="appSidebarCollapseBtn" class="app-sidebar-collapse" onclick="toggleAppSidebarCollapsed()" aria-pressed="${!collapsed}" title="${appSidebarPinLabel(!collapsed)}" aria-label="${appSidebarPinLabel(!collapsed)}">
-            ${appSidebarIcon('pin')}<span class="app-sidebar-link-text">${collapsed ? 'Ghim thanh bên' : 'Bỏ ghim'}</span>
+            <span class="app-sidebar-ico">${appSidebarIcon('pin')}</span><span class="app-sidebar-link-text">Ghim thanh bên</span><span class="app-sidebar-switch" aria-hidden="true"></span>
           </button>
         </div>`;
     }
