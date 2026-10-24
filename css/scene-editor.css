@@ -283,3 +283,161 @@ body:not(.light-mode) #sceneDrawingModalOverlay #sceneSelectedBadge.scene-select
 }
 #sceneDrawingModalOverlay #sceneCanvasViewport :is(button, #sceneSelectedBadge, #sceneZoomControls) { cursor: pointer; }
 #sceneDrawingModalOverlay #sceneCanvasViewport #sceneSelectedBadge { cursor: default; }
+
+/* ==========================================================================
+   BỘ CÔNG CỤ (thanh công cụ trái, submenu, bảng độ dày & màu nét)
+   Cùng ngôn ngữ với sidebar ứng dụng + header/panel trình vẽ:
+   ô đang chọn = vàng gradient, hover nền nhạt, chữ/icon theo theme sáng–tối.
+   Dùng #sceneToolRail (id) để thắng các quy tắc cũ "body:not(.light-mode) #sceneDrawingModalOverlay …".
+   ========================================================================== */
+#sceneDrawingModalOverlay {
+  --st-bg: linear-gradient(180deg,#fffdf8 0%,#f8f4eb 100%);
+  --st-hover: rgba(70,56,24,.055);
+  --st-active-row: linear-gradient(90deg,rgba(161,124,59,.14) 0%,rgba(161,124,59,.03) 100%);
+}
+body:not(.light-mode) #sceneDrawingModalOverlay {
+  --st-bg: linear-gradient(180deg,#151c25 0%,#10161d 100%);
+  --st-hover: rgba(255,255,255,.05);
+  --st-active-row: linear-gradient(90deg,rgba(216,180,109,.17) 0%,rgba(216,180,109,.04) 100%);
+}
+
+/* ---- Khung thanh công cụ ---- */
+#sceneDrawingModalOverlay #sceneToolRail {
+  border: 1px solid var(--se-line) !important; border-radius: 18px !important;
+  background: var(--st-bg) !important;
+  box-shadow: 0 14px 34px -18px rgba(30,24,12,.35), 0 1px 2px rgba(0,0,0,.04) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay #sceneToolRail { box-shadow: 0 18px 40px -16px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.03) !important; }
+#sceneDrawingModalOverlay #sceneToolRail.expanded .scene-tool-rail-header {
+  border-bottom: 1px solid var(--se-line) !important; background: var(--se-paper) !important; box-shadow: none !important;
+}
+#sceneDrawingModalOverlay #sceneToolRail.expanded .scene-tool-rail-header::after { display: none; }
+#sceneDrawingModalOverlay #sceneToolRail .rail-header-title-box { color: var(--se-ink) !important; font-size: 10.5px !important; font-weight: 800 !important; letter-spacing: .12em !important; }
+#sceneDrawingModalOverlay #sceneToolRail .rail-header-brand-icon {
+  display: grid !important; place-items: center; width: 28px !important; height: 28px !important; border: 0 !important; border-radius: 8px !important;
+  background: var(--se-gold-grad) !important; color: var(--se-gold-ink) !important; box-shadow: 0 6px 14px -6px rgba(161,124,59,.7) !important;
+}
+
+/* Nhãn nhóm & vạch ngăn */
+#sceneDrawingModalOverlay #sceneToolRail .scene-tool-section-label { color: var(--se-muted) !important; font-size: 9.5px !important; font-weight: 800 !important; letter-spacing: .14em !important; }
+#sceneDrawingModalOverlay #sceneToolRail.expanded .scene-tool-section-label::after { background: var(--se-line) !important; }
+#sceneDrawingModalOverlay #sceneToolRail .scene-tool-separator { background: var(--se-line) !important; }
+
+/* ---- Nút công cụ ---- */
+#sceneDrawingModalOverlay #sceneToolRail .draw-tool-btn {
+  border: 1px solid transparent !important; border-radius: 11px !important; background: transparent !important;
+  color: var(--se-ink) !important; box-shadow: none !important; transform: none !important;
+}
+#sceneDrawingModalOverlay #sceneToolRail .draw-tool-btn svg { opacity: .82; }
+#sceneDrawingModalOverlay #sceneToolRail .draw-tool-btn:hover { background: var(--st-hover) !important; border-color: transparent !important; color: var(--se-ink) !important; }
+#sceneDrawingModalOverlay #sceneToolRail .draw-tool-btn:hover svg { opacity: 1; }
+#sceneDrawingModalOverlay #sceneToolRail .draw-tool-btn:focus-visible { outline: 2px solid var(--se-gold); outline-offset: 2px; }
+/* Đang chọn – thu gọn: cả ô là "chip" vàng gradient như sidebar ứng dụng */
+#sceneDrawingModalOverlay #sceneToolRail:not(.expanded) .draw-tool-btn.active {
+  border-color: transparent !important; background: var(--se-gold-grad) !important; color: var(--se-gold-ink) !important;
+  box-shadow: 0 8px 18px -8px rgba(161,124,59,.75), inset 0 1px 0 rgba(255,255,255,.3) !important;
+}
+#sceneDrawingModalOverlay #sceneToolRail:not(.expanded) .draw-tool-btn.active svg { opacity: 1; }
+#sceneDrawingModalOverlay #sceneToolRail:not(.expanded) .draw-tool-btn.active .group-dropdown-caret { color: var(--se-gold-ink) !important; opacity: .7; }
+/* Đang chọn – mở rộng: hàng ngả vàng + vạch sáng mép trái + icon vàng */
+#sceneDrawingModalOverlay #sceneToolRail.expanded .draw-tool-btn.active {
+  border-color: transparent !important; background: var(--st-active-row) !important; color: var(--se-gold) !important;
+}
+#sceneDrawingModalOverlay #sceneToolRail.expanded .draw-tool-btn.active svg { opacity: 1; }
+#sceneDrawingModalOverlay #sceneToolRail.expanded .draw-tool-btn.active::after {
+  content: ''; position: absolute; left: -12px; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0;
+  background: var(--se-gold); box-shadow: 0 0 10px color-mix(in srgb,var(--se-gold) 70%,transparent);
+}
+#sceneDrawingModalOverlay #sceneToolRail .tool-rail-label { color: var(--se-ink) !important; font-size: 12.5px !important; font-weight: 650 !important; letter-spacing: -.01em; max-width: 158px !important; }
+#sceneDrawingModalOverlay #sceneToolRail .draw-tool-btn.active .tool-rail-label { color: var(--se-ink) !important; font-weight: 750 !important; }
+#sceneDrawingModalOverlay #sceneToolRail .group-dropdown-caret { color: var(--se-muted) !important; }
+/* Nhãn phím tắt (khi mở rộng) */
+#sceneDrawingModalOverlay #sceneToolRail.expanded .draw-tool-btn[data-shortcut]::before {
+  border: 1px solid var(--se-line) !important; border-bottom-width: 2px !important; background: var(--se-paper) !important;
+  color: var(--se-muted) !important; box-shadow: none !important; font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important;
+}
+#sceneDrawingModalOverlay #sceneToolRail.expanded .draw-tool-btn.active[data-shortcut]::before {
+  border-color: transparent !important; background: var(--se-gold-grad) !important; color: var(--se-gold-ink) !important;
+}
+
+/* ---- Màu & độ dày nét ---- */
+#sceneDrawingModalOverlay #sceneToolRail .color-swatch-wrap,
+#sceneDrawingModalOverlay #sceneToolRail .stroke-width-wrap { border-radius: 11px !important; }
+#sceneDrawingModalOverlay #sceneToolRail.expanded .color-swatch-wrap,
+#sceneDrawingModalOverlay #sceneToolRail.expanded .stroke-width-wrap { border-color: var(--se-line) !important; background: var(--se-paper) !important; }
+#sceneDrawingModalOverlay #sceneToolRail.expanded .color-swatch-wrap:hover,
+#sceneDrawingModalOverlay #sceneToolRail.expanded .stroke-width-wrap:hover,
+#sceneDrawingModalOverlay #sceneToolRail .stroke-width-wrap[aria-expanded="true"] { border-color: color-mix(in srgb,var(--se-gold) 45%,var(--se-line)) !important; }
+#sceneDrawingModalOverlay #sceneToolRail #drawColorSwatch {
+  width: 26px !important; height: 26px !important; border: 2px solid var(--se-paper) !important;
+  box-shadow: 0 0 0 1.5px color-mix(in srgb,var(--se-gold) 70%,transparent), 0 4px 10px -4px rgba(0,0,0,.4) !important;
+}
+#sceneDrawingModalOverlay #sceneToolRail #btnStrokeWidthToggle {
+  border: 1px solid var(--se-line) !important; border-radius: 10px !important; background: var(--se-paper) !important; box-shadow: none !important;
+}
+#sceneDrawingModalOverlay #sceneToolRail #toolbarStrokeText { color: var(--se-ink) !important; font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important; }
+#sceneDrawingModalOverlay #sceneToolRail #toolbarStrokePreviewDot { background: var(--se-ink) !important; }
+/* Xoá toàn bộ */
+#sceneDrawingModalOverlay #sceneToolRail > button:last-child {
+  color: var(--danger,#e5484d) !important; border-color: color-mix(in srgb,var(--danger,#e5484d) 26%,transparent) !important;
+  background: color-mix(in srgb,var(--danger,#e5484d) 7%,transparent) !important;
+}
+#sceneDrawingModalOverlay #sceneToolRail > button:last-child:hover { color: #fff !important; background: var(--danger,#e5484d) !important; border-color: transparent !important; }
+#sceneDrawingModalOverlay #sceneToolRail > button:last-child .tool-rail-label { color: inherit !important; }
+
+/* Nút mở/thu thanh công cụ & thanh cuộn */
+#sceneDrawingModalOverlay #btnRailToggle {
+  border: 1px solid var(--se-line) !important; border-radius: 10px !important; background: var(--se-paper) !important;
+  color: var(--se-muted) !important; box-shadow: 0 6px 16px -10px rgba(30,24,12,.45) !important;
+}
+#sceneDrawingModalOverlay #btnRailToggle:hover { color: var(--se-gold) !important; border-color: color-mix(in srgb,var(--se-gold) 45%,var(--se-line)) !important; }
+#sceneDrawingModalOverlay .scene-rail-scrollbar { width: 4px !important; background: transparent !important; box-shadow: none !important; }
+#sceneDrawingModalOverlay .scene-rail-scrollbar-thumb { background: color-mix(in srgb,var(--se-gold) 55%,transparent) !important; box-shadow: none !important; }
+
+/* ---- Submenu chọn công cụ ---- */
+#sceneDrawingModalOverlay #toolSubmenuPopover {
+  border: 1px solid var(--se-line) !important; border-radius: 16px !important; background: var(--se-paper) !important;
+  box-shadow: 0 24px 50px -22px rgba(30,24,12,.45), 0 2px 6px rgba(0,0,0,.05) !important; backdrop-filter: none !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay #toolSubmenuPopover { box-shadow: 0 24px 60px -18px rgba(0,0,0,.85) !important; }
+#sceneDrawingModalOverlay #toolSubmenuHeader { border-bottom: 1px solid var(--se-line) !important; }
+#sceneDrawingModalOverlay #toolSubmenuTitle { color: var(--se-gold) !important; font-size: 10px !important; letter-spacing: .12em !important; }
+#sceneDrawingModalOverlay #toolSubmenuHint { color: var(--se-muted) !important; font-size: 10.5px !important; }
+#sceneDrawingModalOverlay .tool-submenu-item {
+  border: 1px solid transparent !important; border-radius: 11px !important; background: transparent !important; box-shadow: none !important; transform: none !important;
+}
+#sceneDrawingModalOverlay .tool-submenu-item:hover { background: var(--st-hover) !important; }
+#sceneDrawingModalOverlay .tool-submenu-item .submenu-item-icon-box { border-radius: 9px !important; background: var(--se-soft) !important; color: var(--se-ink) !important; border: 1px solid var(--se-line); }
+#sceneDrawingModalOverlay .tool-submenu-item .submenu-item-title { color: var(--se-ink) !important; font-size: 13px !important; font-weight: 650 !important; }
+#sceneDrawingModalOverlay .tool-submenu-item .submenu-item-desc { color: var(--se-muted) !important; font-size: 11.5px !important; }
+#sceneDrawingModalOverlay .tool-submenu-item.active-item { background: var(--st-active-row) !important; border-color: transparent !important; }
+#sceneDrawingModalOverlay .tool-submenu-item.active-item .submenu-item-icon-box {
+  border-color: transparent; background: var(--se-gold-grad) !important; color: var(--se-gold-ink) !important; box-shadow: 0 6px 14px -6px rgba(161,124,59,.7);
+}
+#sceneDrawingModalOverlay .tool-submenu-item.active-item .submenu-item-title { font-weight: 750 !important; }
+#sceneDrawingModalOverlay .tool-submenu-item.active-item > span:last-child { color: var(--se-gold) !important; }
+
+/* ---- Bảng độ dày nét & màu ---- */
+#sceneDrawingModalOverlay #strokeWidthPopover {
+  border: 1px solid var(--se-line) !important; border-radius: 16px !important; background: var(--se-paper) !important; color: var(--se-ink) !important;
+  box-shadow: 0 24px 50px -22px rgba(30,24,12,.45), 0 2px 6px rgba(0,0,0,.05) !important; backdrop-filter: none !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay #strokeWidthPopover { box-shadow: 0 24px 60px -18px rgba(0,0,0,.85) !important; }
+#sceneDrawingModalOverlay #strokeWidthPopover > div:first-child > span:first-child { color: var(--se-ink) !important; font-size: 13px !important; }
+#sceneDrawingModalOverlay #strokeWidthPopover > div:first-child > span:first-child svg { color: var(--se-gold); }
+#sceneDrawingModalOverlay #popoverWidthValue { border: 1px solid var(--se-line) !important; background: var(--se-soft) !important; color: var(--se-ink) !important; }
+#sceneDrawingModalOverlay #strokeWidthPopover > div:nth-child(2) { border: 1px solid var(--se-line) !important; box-shadow: inset 0 1px 3px rgba(0,0,0,.06) !important; }
+#sceneDrawingModalOverlay .stroke-preset-btn {
+  border: 1px solid var(--se-line) !important; border-radius: 9px !important; background: var(--se-soft) !important;
+  color: var(--se-ink) !important; font-weight: 700 !important;
+}
+#sceneDrawingModalOverlay .stroke-preset-btn:hover { border-color: color-mix(in srgb,var(--se-gold) 45%,var(--se-line)) !important; }
+#sceneDrawingModalOverlay .stroke-preset-btn.active { border-color: transparent !important; background: var(--se-gold-grad) !important; color: var(--se-gold-ink) !important; box-shadow: 0 6px 14px -8px rgba(161,124,59,.8) !important; }
+#sceneDrawingModalOverlay #popoverSlider { accent-color: var(--se-gold) !important; }
+#sceneDrawingModalOverlay #popoverSlider + div { color: var(--se-muted) !important; }
+#sceneDrawingModalOverlay #strokeWidthPopover > div:last-child { border-top: 1px solid var(--se-line) !important; }
+#sceneDrawingModalOverlay #strokeWidthPopover > div:last-child > span { color: var(--se-muted) !important; }
+#sceneDrawingModalOverlay #strokeWidthPopover > div:last-child [onclick] {
+  width: 20px !important; height: 20px !important; border: 2px solid var(--se-paper) !important; box-shadow: 0 0 0 1px var(--se-line) !important;
+}
+#sceneDrawingModalOverlay #strokeWidthPopover > div:last-child [onclick]:hover { box-shadow: 0 0 0 2px var(--se-gold) !important; }

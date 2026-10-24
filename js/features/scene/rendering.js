@@ -940,7 +940,10 @@ function setStrokeWidthValue(val) {
   // Highlight active preset chip
   document.querySelectorAll('.stroke-preset-btn').forEach(btn => {
     const text = btn.querySelector('span:last-child')?.textContent;
-    if (text && Math.abs(parseFloat(text) - num) < 0.2) {
+    const isActivePreset = !!text && Math.abs(parseFloat(text) - num) < 0.2;
+    btn.classList.toggle('active', isActivePreset); // css/scene-editor.css tô theo theme
+    btn.setAttribute('aria-pressed', String(isActivePreset));
+    if (isActivePreset) {
       btn.style.borderColor = 'var(--primary)';
       btn.style.background = 'rgba(216, 180, 109, 0.2)';
       btn.style.color = '#d8b46d';
