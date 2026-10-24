@@ -712,7 +712,7 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
                   <thead>
                     <tr>
                       <th style="width: 44px; text-align: center;">#</th>
-                      <th style="width: 110px; text-align: center;">Trạng thái hồ sơ</th>
+                      <th class="pending-col-status" style="width: 130px; text-align: left;">Trạng thái hồ sơ</th>
                       <th style="width: 220px;">Biển số xe</th>
                       <th style="width: 180px;">Tên chủ xe</th>
                       <th style="width: 190px;">Hãng xe & Đơn vị cấp</th>

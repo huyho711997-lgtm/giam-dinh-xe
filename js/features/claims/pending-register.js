@@ -618,7 +618,7 @@
         return `
           <tr onclick="openEditPendingClaimModal('${item.id}')" style="cursor: pointer;">
             <td style="text-align: center; font-weight: 750; color: var(--text-muted); width: 44px;">${String(itemNumber).padStart(2, '0')}</td>
-            <td style="width: 110px; text-align: center; padding: 12px 4px;">
+            <td class="pending-col-status" style="width: 130px; text-align: left; padding: 12px 12px;">
               <span style="background: ${statusConfig.bg}; color: ${statusConfig.color}; border: 1px solid ${statusConfig.border}; font-size: 10.5px; font-weight: 750; padding: 4px 10px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap;">
                 ${statusConfig.label}
               </span>
