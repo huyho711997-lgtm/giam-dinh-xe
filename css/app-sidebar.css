@@ -209,6 +209,8 @@ body.has-app-sidebar .nav-user-copy em { margin-top: 1px; font-size: 9.5px; lett
   .app-topbar-menu { display: grid; }
   body.has-app-sidebar { --app-topbar-h: 60px; }
   body.has-app-sidebar { --app-gutter: 12px; }
+  /* base.css (≤ ~768px) ép .app-container padding 8px 4px !important → nội dung sát mép; giữ lề 12px thống nhất */
+  body.has-app-sidebar .app-container { padding: 14px var(--app-gutter) 72px !important; }
 }
 @media (max-width: 560px) {
   .app-topbar-title :is(span, .app-topbar-sep) { display: none; }
