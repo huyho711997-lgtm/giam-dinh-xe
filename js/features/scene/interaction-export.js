@@ -533,6 +533,16 @@ function drawTrafficSignMeaning(ctx, shape, cx, cy, size, color, lineWidth) {
 }
 
 
+// Số làn trạm thu phí: người dùng chọn (shape.tollLanes, 1–12) hoặc tự tính ~50px/làn (2–8) theo bề rộng.
+const TOLL_LANES_MIN = 1;
+const TOLL_LANES_MAX = 12;
+function getTollStationLaneCount(shape, width) {
+  const chosen = shape && Number(shape.tollLanes);
+  if (Number.isInteger(chosen) && chosen >= TOLL_LANES_MIN) return Math.min(TOLL_LANES_MAX, chosen);
+  return Math.max(2, Math.min(8, Math.round((width || 0) / 50)));
+}
+
+
 function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null) {
   ctx.save();
   ctx.strokeStyle = color;
@@ -604,7 +614,7 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
   // đảo phân làn có buồng thu phí, barie chắn ở cửa ra và mũi tên hướng đi mỗi làn.
   if (type === 'toll_station') {
     const bottom = y + h / 2;
-    const lanes = Math.max(2, Math.min(8, Math.round(w / 50))); // ~50px/làn: rõ ràng khi in A4
+    const lanes = getTollStationLaneCount(shapeData, w);
     const islandW = Math.max(5, Math.min(14, (w / lanes) * 0.24));
     const laneW = (w - islandW) / lanes;
     const canopyH = h * 0.44;

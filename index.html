@@ -1050,7 +1050,7 @@
           </div>
 
           <link rel="stylesheet" href="css/scene-selection.css">
-          <link rel="stylesheet" href="css/scene-editor.css?v=20261024-4">
+          <link rel="stylesheet" href="css/scene-editor.css?v=20261024-5">
 
           <!-- Floating Selection Inspector with Rotation Controls -->
           <div id="sceneSelectedBadge" class="scene-selection-panel" style="display: none;">
@@ -1079,6 +1079,15 @@
               <button type="button" id="btnDecreaseSelectedSize" onclick="scaleSelectedInfrastructure(0.9)" title="Thu nhỏ 10%" style="width: 30px; padding: 0 !important; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #f8fafc; font-size: 16px; font-weight: 850; cursor: pointer; display: grid; place-items: center;">−</button>
               <span id="selectedSizeText" style="min-width: 42px; color: #d8b46d; font-size: 11px; font-weight: 850; text-align: center;">100%</span>
               <button type="button" id="btnIncreaseSelectedSize" onclick="scaleSelectedInfrastructure(1.1)" title="Phóng to 10%" style="width: 30px; padding: 0 !important; background: rgba(216,180,109,.16); border: 1px solid rgba(216,180,109,.34); color: #d8b46d; font-size: 16px; font-weight: 850; cursor: pointer; display: grid; place-items: center;">+</button>
+            </div>
+
+            <!-- Số làn xe của trạm thu phí (scene-editor-ui.js hiện khi chọn trạm thu phí) -->
+            <div id="selectedTollLanesGroup" class="scene-toll-lanes" style="display: none;" role="group" aria-label="Số làn xe trạm thu phí">
+              <span>Số làn xe</span>
+              <button type="button" id="btnTollLanesMinus" onclick="changeSelectedTollLanes(-1)" title="Bớt một làn" aria-label="Bớt một làn">−</button>
+              <output id="selectedTollLanesText" aria-live="polite">4</output>
+              <button type="button" id="btnTollLanesPlus" onclick="changeSelectedTollLanes(1)" title="Thêm một làn" aria-label="Thêm một làn">+</button>
+              <button type="button" id="btnTollLanesAuto" onclick="changeSelectedTollLanes(0)" title="Tự tính số làn theo bề rộng trạm">Tự động</button>
             </div>
 
             <!-- Quick Rotate Buttons Group -->
@@ -1815,7 +1824,7 @@
   <script src="js/features/scene/objects.js"></script>
   <script src="js/features/scene/traffic-signs.js?v=20261024-truck-1"></script>
   <script src="js/features/scene/rendering.js?v=20261024-truck-1"></script>
-  <script src="js/features/scene/interaction-export.js?v=20261024-truck-1"></script>
+  <script src="js/features/scene/interaction-export.js?v=20261024-toll-2"></script>
   <script src="js/features/scene/text-editor.js"></script>
   <script src="js/features/admin/select-controls.js"></script>
   <script src="js/features/accounting/registers.js"></script>
@@ -1828,6 +1837,6 @@
   <script src="js/features/documents/storage.js?v=20261024-1"></script>
   <script src="js/features/documents/autosave.js"></script>
   <script src="js/core/chart-ready.js?v=20261024-1"></script>
-  <script src="js/features/scene/scene-editor-ui.js?v=20261024-2"></script>
+  <script src="js/features/scene/scene-editor-ui.js?v=20261024-3"></script>
 </body>
 </html>

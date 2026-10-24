@@ -260,3 +260,13 @@ body:not(.light-mode) #sceneDrawingModalOverlay #sceneSelectedBadge.scene-select
 #sceneDrawingModalOverlay #sceneSelectedBadge.is-collapsed > .scene-inspector-head { width: auto; padding: 0 !important; }
 /* Chữ trên nút không gãy dòng */
 #sceneDrawingModalOverlay #sceneSelectedBadge > div button { white-space: nowrap; }
+
+/* Số làn xe trạm thu phí */
+#sceneDrawingModalOverlay #sceneSelectedBadge > #selectedTollLanesGroup { align-items: center; flex-wrap: nowrap !important; }
+#sceneDrawingModalOverlay #selectedTollLanesGroup > span { flex: 1 1 auto; }
+#sceneDrawingModalOverlay #selectedTollLanesGroup > #btnTollLanesMinus,
+#sceneDrawingModalOverlay #selectedTollLanesGroup > #btnTollLanesPlus { flex: 0 0 30px; width: 30px !important; padding: 0 !important; font-size: 15px !important; font-weight: 700 !important; }
+#sceneDrawingModalOverlay #selectedTollLanesGroup > output { min-width: 26px; color: var(--se-ink); font-size: 14px; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums; }
+#sceneDrawingModalOverlay #selectedTollLanesGroup > #btnTollLanesAuto { flex: 0 0 auto; margin-left: 4px; }
+#sceneDrawingModalOverlay #selectedTollLanesGroup > #btnTollLanesAuto[aria-pressed="true"] { background: color-mix(in srgb,var(--se-gold) 14%,transparent) !important; border-color: color-mix(in srgb,var(--se-gold) 35%,transparent) !important; color: var(--se-gold) !important; }
+#sceneDrawingModalOverlay #selectedTollLanesGroup > button:disabled { opacity: .35; cursor: not-allowed; }

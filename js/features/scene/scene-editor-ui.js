@@ -63,3 +63,51 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setup); else setup();
 })();
+
+// ---- Trạm thu phí: chọn số làn xe trong panel thuộc tính ----
+// delta = ±1: thêm/bớt làn (cố định số làn); delta = 0: quay về tự tính theo bề rộng.
+function changeSelectedTollLanes(delta) {
+  if (typeof sceneShapes === 'undefined' || !selectedShapeId) return;
+  const shape = sceneShapes.find(s => s.id === selectedShapeId);
+  if (!shape || shape.type !== 'toll_station') return;
+  const width = getVehicleDimensions(shape).w;
+  if (delta === 0) {
+    if (shape.tollLanes === undefined) return;
+    delete shape.tollLanes;
+  } else {
+    const current = getTollStationLaneCount(shape, width);
+    const next = Math.max(TOLL_LANES_MIN, Math.min(TOLL_LANES_MAX, current + delta));
+    if (next === current && Number.isInteger(shape.tollLanes)) return;
+    shape.tollLanes = next;
+  }
+  redrawSceneCanvas(true);
+  updateSelectionBadge();
+  if (typeof saveDrawingState === 'function') saveDrawingState(); // ghi vào lịch sử → Hoàn tác được
+}
+
+(function () {
+  const original = window.updateSelectionBadge;
+  if (typeof original !== 'function' || original.__tollLanes) return;
+  const wrapped = function (...args) {
+    const result = original.apply(this, args);
+    const group = document.getElementById('sceneTollLanesGroup') || document.getElementById('selectedTollLanesGroup');
+    if (!group) return result;
+    const ids = (typeof selectedShapeIds !== 'undefined' && Array.isArray(selectedShapeIds)) ? selectedShapeIds : [];
+    const shape = (typeof sceneShapes !== 'undefined' && selectedShapeId && ids.length <= 1) ? sceneShapes.find(s => s.id === selectedShapeId) : null;
+    const isToll = !!shape && shape.type === 'toll_station' && currentDrawTool === 'select';
+    group.style.display = isToll ? 'flex' : 'none';
+    if (isToll) {
+      const lanes = getTollStationLaneCount(shape, getVehicleDimensions(shape).w);
+      const manual = Number.isInteger(shape.tollLanes);
+      document.getElementById('selectedTollLanesText').textContent = lanes;
+      document.getElementById('btnTollLanesMinus').disabled = lanes <= TOLL_LANES_MIN;
+      document.getElementById('btnTollLanesPlus').disabled = lanes >= TOLL_LANES_MAX;
+      const auto = document.getElementById('btnTollLanesAuto');
+      auto.setAttribute('aria-pressed', String(!manual));
+      auto.title = manual ? 'Quay về tự tính số làn theo bề rộng trạm' : 'Đang tự tính số làn theo bề rộng trạm';
+    }
+    return result;
+  };
+  wrapped.__tollLanes = true;
+  window.updateSelectionBadge = wrapped;
+})();
