@@ -736,49 +736,53 @@
   <!-- Modal Vẽ sơ đồ hiện trường -->
   <div id="sceneDrawingModalOverlay" class="p-modal-overlay" style="display: none; z-index: 99999; padding: 0;">
     <section class="profile-modal-panel" role="dialog" aria-modal="true" style="max-width: 100%; width: 100%; height: 100%; max-height: 100%; border-radius: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column; margin: 0; box-sizing: border-box;">
-      <div style="padding: 14px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--surface-strong); gap: 16px; flex-wrap: wrap;">
-        <!-- Left: Title & Subtitle with Gold Icon Badge -->
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <div style="width: 40px; height: 40px; border-radius: 11px; background: var(--primary-gradient); color: #080b11; display: grid; place-items: center; flex-shrink: 0; box-shadow: var(--shadow-sm);">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><circle cx="11" cy="11" r="2"></circle></svg>
+      <!-- Header trình vẽ: gọn 64px; Lưu chuyển lên đây (bỏ chân trang để vùng vẽ rộng hơn). css/scene-editor.css -->
+      <header class="scene-head">
+        <div class="scene-head-title">
+          <span class="scene-head-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg></span>
+          <div class="scene-head-copy">
+            <h2>Sơ đồ hiện trường</h2>
+            <p id="sceneHeaderMeta">Vẽ và in sơ đồ hiện trường vụ tai nạn</p>
           </div>
-          <div>
-            <h2 style="font-size: 16px; font-weight: 850; color: var(--text-main); margin: 0;">Vẽ Sơ đồ Hiện trường</h2>
-            <p class="scene-shortcut-summary" style="font-size: 11.5px; color: var(--text-muted); margin: 2px 0 0 0;">
-              Phím chọn nhanh hiển thị trên từng công cụ <span><kbd>Esc</kbd> Thoát thao tác</span><span><kbd>R</kbd> Xoay</span><span><kbd>Del</kbd> Xóa</span>
-            </p>
+          <div class="scene-head-help">
+            <button type="button" class="scene-head-help-btn" aria-describedby="sceneShortcutCard">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
+              <span>Phím tắt</span>
+            </button>
+            <div id="sceneShortcutCard" class="scene-head-help-card" role="tooltip">
+              <strong>Phím tắt</strong>
+              <dl>
+                <div><dt><kbd>V</kbd></dt><dd>Chọn &amp; di chuyển</dd></div>
+                <div><dt><kbd>Esc</kbd></dt><dd>Thoát thao tác / bỏ chọn</dd></div>
+                <div><dt><kbd>R</kbd></dt><dd>Xoay đối tượng</dd></div>
+                <div><dt><kbd>Del</kbd></dt><dd>Xóa đối tượng</dd></div>
+                <div><dt><kbd>Ctrl</kbd><kbd>Z</kbd></dt><dd>Hoàn tác</dd></div>
+                <div><dt><kbd>Ctrl</kbd><kbd>Y</kbd></dt><dd>Tiến tới</dd></div>
+                <div><dt><kbd>+</kbd><kbd>−</kbd><kbd>0</kbd></dt><dd>Phóng to / thu nhỏ / 100%</dd></div>
+              </dl>
+              <small>Mỗi công cụ hiển thị phím chọn nhanh riêng khi mở rộng thanh công cụ.</small>
+            </div>
           </div>
         </div>
 
-        <!-- Right: Actions Group (Undo, Redo & Close button) -->
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <button id="btnPrintSceneDrawing" type="button" class="scene-header-print-btn" onclick="printSceneDrawing()" title="In sơ đồ hiện trường khổ A4 ngang">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect><circle cx="18" cy="12" r="1" fill="currentColor" stroke="none"></circle></svg>
-            <span>In sơ đồ</span>
-          </button>
-
-          <!-- Cụm nút Hoàn tác & Tiến tới Premium đồng bộ -->
-          <div class="scene-history-control-group">
-            <button id="btnHeaderUndo" type="button" onclick="undoSceneDrawing()" title="Hoàn tác thao tác trước (Ctrl+Z)" disabled class="btn-history-step btn-history-undo">
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
-              <span>Hoàn tác</span>
-              <span class="history-key-hint">Ctrl+Z</span>
-            </button>
-            <div class="history-separator"></div>
-            <button id="btnHeaderRedo" type="button" onclick="redoSceneDrawing()" title="Tiến tới thao tác vừa hủy (Ctrl+Y)" disabled class="btn-history-step btn-history-redo">
-              <span class="history-key-hint">Ctrl+Y</span>
-              <span>Tiến tới</span>
-              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-            </button>
+        <div class="scene-head-actions">
+          <div class="scene-head-history" role="group" aria-label="Lịch sử thao tác">
+            <button id="btnHeaderUndo" type="button" onclick="undoSceneDrawing()" title="Hoàn tác thao tác trước (Ctrl+Z)" aria-label="Hoàn tác" disabled class="scene-head-icon-btn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg></button>
+            <button id="btnHeaderRedo" type="button" onclick="redoSceneDrawing()" title="Tiến tới thao tác vừa hủy (Ctrl+Y)" aria-label="Tiến tới" disabled class="scene-head-icon-btn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
           </div>
-
-          <!-- Nút Đóng đồng bộ chuẩn 36px -->
-          <button type="button" class="btn-premium btn-secondary" onclick="closeSceneDrawingModal()" aria-label="Đóng" style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; padding: 0; border-radius: 10px; font-size: 16px; display: grid; place-items: center; cursor: pointer; transition: all 0.2s;" title="Đóng cửa sổ vẽ">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <span class="scene-head-divider" aria-hidden="true"></span>
+          <span id="sceneDocumentAutoStatus" class="claim-document-autosave scene-head-status" role="status"></span>
+          <button id="btnPrintSceneDrawing" type="button" class="scene-head-btn" onclick="printSceneDrawing()" title="In sơ đồ hiện trường khổ A4 ngang"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect><circle cx="18" cy="12" r="1" fill="currentColor" stroke="none"></circle></svg><span>In sơ đồ</span></button>
+          <button id="btnSaveSceneDrawing" type="button" class="scene-head-btn scene-head-btn--primary" onclick="saveSceneDrawing()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            <span>Lưu sơ đồ</span>
+          </button>
+          <button type="button" class="scene-head-icon-btn scene-head-close" onclick="closeSceneDrawingModal()" aria-label="Đóng trình vẽ" title="Đóng (không lưu thay đổi chưa lưu)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
-      </div>
-      
+      </header>
+
       <div style="display: flex; flex: 1; min-height: 500px; position: relative;">
         <!-- Toolbar -->
         <div id="sceneToolRail" class="scene-tool-rail" data-state="collapsed" role="toolbar" aria-orientation="vertical" aria-label="Thanh công cụ vẽ hiện trường — đang thu gọn" style="width: 70px; border-right: 1px solid var(--border); background: var(--surface-soft); display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 10px; overflow-y: auto;">
@@ -1037,6 +1041,7 @@
           </div>
 
           <link rel="stylesheet" href="css/scene-selection.css">
+          <link rel="stylesheet" href="css/scene-editor.css?v=20261024-1">
 
           <!-- Floating Selection Inspector with Rotation Controls -->
           <div id="sceneSelectedBadge" class="scene-selection-panel" style="display: none;">
@@ -1200,14 +1205,6 @@
         </div>
       </div>
       
-      <div style="padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: var(--surface);">
-        <button type="button" class="btn-secondary" onclick="closeSceneDrawingModal()" style="padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 13px;">Hủy bỏ</button>
-        <span id="sceneDocumentAutoStatus" class="claim-document-autosave" role="status">Tự lưu theo số HSBT</span>
-        <button id="btnSaveSceneDrawing" type="button" class="btn-premium" onclick="saveSceneDrawing()" style="padding: 10px 20px; border-radius: 10px; font-weight: 800; font-size: 13px; min-height: unset; width: auto;">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-          Lưu Sơ đồ
-        </button>
-      </div>
     </section>
 
     <!-- Modal Chèn / Chỉnh sửa Văn bản Hiện trường Cao cấp (Nằm ngay trong Drawing Modal, z-index 100050 tuyệt đối, đồng bộ màu nền Theme) -->
@@ -1809,7 +1806,7 @@
   <script src="js/features/scene/objects.js"></script>
   <script src="js/features/scene/traffic-signs.js"></script>
   <script src="js/features/scene/rendering.js"></script>
-  <script src="js/features/scene/interaction-export.js?v=20261023-confirm-5"></script>
+  <script src="js/features/scene/interaction-export.js"></script>
   <script src="js/features/scene/text-editor.js"></script>
   <script src="js/features/admin/select-controls.js"></script>
   <script src="js/features/accounting/registers.js"></script>
@@ -1822,5 +1819,6 @@
   <script src="js/features/documents/storage.js?v=20261024-1"></script>
   <script src="js/features/documents/autosave.js"></script>
   <script src="js/core/chart-ready.js?v=20261024-1"></script>
+  <script src="js/features/scene/scene-editor-ui.js?v=20261024-1"></script>
 </body>
 </html>

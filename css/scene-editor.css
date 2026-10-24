@@ -1,0 +1,132 @@
+/* ==========================================================================
+   TRÌNH VẼ SƠ ĐỒ HIỆN TRƯỜNG – lớp giao diện premium (nạp SAU scene-toolbar/-shortcuts/-selection.css).
+   - Header 64px: tiêu đề + hồ sơ đang vẽ, nút "Phím tắt" (bảng gợi ý), Hoàn tác/Tiến tới dạng icon,
+     In sơ đồ, Lưu sơ đồ (chính), Đóng. Bỏ chân trang → vùng vẽ cao thêm ~80px.
+   - Vùng vẽ: nền lưới chấm mảnh, tờ giấy bóng đổ mềm.
+   - Thanh zoom: viên thuốc sáng (tối theo theme) thay cho khối đen đặc.
+   - Thanh công cụ thu gọn: bỏ chữ phím tắt đè mép icon (vẫn có trong tooltip & khi mở rộng).
+   Style inline trong index.html buộc dùng !important ở vài chỗ (ghi chú tại chỗ).
+   ========================================================================== */
+#sceneDrawingModalOverlay {
+  --se-paper: var(--surface-strong); --se-soft: var(--surface-soft, var(--surface)); --se-line: var(--border);
+  --se-ink: var(--text-main); --se-muted: var(--text-muted); --se-gold: var(--primary);
+  --se-gold-grad: linear-gradient(145deg,#d3ad66 0%,#a07733 100%); --se-gold-ink: #fffaf0;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay { --se-gold-grad: linear-gradient(145deg,#e9cd8f 0%,#c99b4c 100%); --se-gold-ink: #22180a; }
+
+/* ---- Header ---- */
+#sceneDrawingModalOverlay .scene-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  height: 64px; flex: 0 0 64px; box-sizing: border-box; padding: 0 20px;
+  border-bottom: 1px solid var(--se-line); background: var(--se-paper);
+}
+#sceneDrawingModalOverlay .scene-head-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+#sceneDrawingModalOverlay .scene-head-icon {
+  display: grid; place-items: center; flex: 0 0 38px; width: 38px; height: 38px; border-radius: 11px;
+  background: var(--se-gold-grad); color: var(--se-gold-ink);
+  box-shadow: 0 6px 16px -6px rgba(161,124,59,.6), inset 0 1px 0 rgba(255,255,255,.3);
+}
+#sceneDrawingModalOverlay .scene-head-copy { min-width: 0; }
+#sceneDrawingModalOverlay .scene-head-copy h2 { margin: 0; color: var(--se-ink); font-size: 15px; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; }
+#sceneDrawingModalOverlay .scene-head-copy p { margin: 2px 0 0; max-width: 520px; overflow: hidden; color: var(--se-muted); font-size: 12px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Nút "Phím tắt" + bảng gợi ý (hiện khi rê chuột / focus bằng bàn phím) */
+#sceneDrawingModalOverlay .scene-head-help { position: relative; margin-left: 6px; }
+#sceneDrawingModalOverlay .scene-head-help-btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px;
+  border: 1px solid var(--se-line); border-radius: 999px; background: transparent; color: var(--se-muted);
+  font: inherit; font-size: 12px; font-weight: 650; cursor: help;
+}
+#sceneDrawingModalOverlay .scene-head-help-btn:hover,
+#sceneDrawingModalOverlay .scene-head-help-btn:focus-visible { border-color: color-mix(in srgb,var(--se-gold) 45%,var(--se-line)); color: var(--se-gold); outline: none; }
+#sceneDrawingModalOverlay .scene-head-help-card {
+  position: absolute; left: 0; top: calc(100% + 10px); z-index: 30; width: 300px; padding: 14px 16px;
+  border: 1px solid var(--se-line); border-radius: 14px; background: var(--se-paper); color: var(--se-ink);
+  box-shadow: 0 24px 48px rgba(0,0,0,.18), 0 4px 12px rgba(0,0,0,.06);
+  opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .14s ease, transform .14s ease, visibility .14s;
+}
+#sceneDrawingModalOverlay .scene-head-help:hover .scene-head-help-card,
+#sceneDrawingModalOverlay .scene-head-help:focus-within .scene-head-help-card { opacity: 1; visibility: visible; transform: none; }
+#sceneDrawingModalOverlay .scene-head-help-card strong { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 800; }
+#sceneDrawingModalOverlay .scene-head-help-card dl { display: grid; gap: 6px; margin: 0; }
+#sceneDrawingModalOverlay .scene-head-help-card dl > div { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 10px; }
+#sceneDrawingModalOverlay .scene-head-help-card dt { display: flex; gap: 3px; margin: 0; }
+#sceneDrawingModalOverlay .scene-head-help-card dd { margin: 0; color: var(--se-muted); font-size: 12px; }
+#sceneDrawingModalOverlay .scene-head-help-card kbd {
+  min-width: 20px; padding: 2px 6px; border: 1px solid var(--se-line); border-bottom-width: 2px; border-radius: 6px;
+  background: var(--se-soft); color: var(--se-ink); font: 700 10.5px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center;
+}
+#sceneDrawingModalOverlay .scene-head-help-card small { display: block; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--se-line); color: var(--se-muted); font-size: 11px; line-height: 1.5; }
+
+/* Nhóm nút bên phải */
+#sceneDrawingModalOverlay .scene-head-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+#sceneDrawingModalOverlay .scene-head-history { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--se-line); border-radius: 11px; background: var(--se-soft); }
+#sceneDrawingModalOverlay .scene-head-icon-btn {
+  display: grid; place-items: center; width: 34px; height: 34px; padding: 0;
+  border: 0; border-radius: 8px; background: transparent; color: var(--se-ink); cursor: pointer;
+  transition: background .14s ease, color .14s ease;
+}
+#sceneDrawingModalOverlay .scene-head-history .scene-head-icon-btn { width: 32px; height: 32px; }
+#sceneDrawingModalOverlay .scene-head-icon-btn svg { width: 16px; height: 16px; }
+#sceneDrawingModalOverlay .scene-head-icon-btn:not(:disabled):hover { background: var(--se-paper); color: var(--se-gold); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+/* JS đặt opacity .35 khi không có thao tác; giữ nguyên cơ chế đó */
+#sceneDrawingModalOverlay .scene-head-close { width: 38px; height: 38px; border: 1px solid var(--se-line); border-radius: 10px; }
+#sceneDrawingModalOverlay .scene-head-close:hover { background: color-mix(in srgb,var(--danger,#e5484d) 9%,transparent) !important; color: var(--danger,#e5484d) !important; box-shadow: none !important; }
+#sceneDrawingModalOverlay .scene-head-divider { width: 1px; height: 24px; margin: 0 4px; background: var(--se-line); }
+#sceneDrawingModalOverlay .scene-head-btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px;
+  border: 1px solid var(--se-line); border-radius: 10px; background: var(--se-paper); color: var(--se-ink);
+  font: inherit; font-size: 12.5px; font-weight: 700; white-space: nowrap; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(48,40,24,.05); transition: border-color .14s ease, background .14s ease, filter .14s ease, transform .14s ease;
+}
+#sceneDrawingModalOverlay .scene-head-btn svg { width: 16px; height: 16px; flex: 0 0 auto; }
+#sceneDrawingModalOverlay .scene-head-btn:hover { border-color: color-mix(in srgb,var(--se-gold) 50%,var(--se-line)); background: var(--se-soft); }
+#sceneDrawingModalOverlay .scene-head-btn--primary {
+  border-color: transparent; background: var(--se-gold-grad); color: var(--se-gold-ink);
+  box-shadow: 0 8px 18px -10px rgba(161,124,59,.85), inset 0 1px 0 rgba(255,255,255,.25);
+}
+#sceneDrawingModalOverlay .scene-head-btn--primary:hover { border-color: transparent; background: var(--se-gold-grad); filter: brightness(1.05); transform: translateY(-1px); }
+#sceneDrawingModalOverlay .scene-head-btn:disabled { opacity: .6; cursor: progress; transform: none; }
+#sceneDrawingModalOverlay :is(.scene-head-btn, .scene-head-icon-btn):focus-visible { outline: 2px solid var(--se-gold); outline-offset: 2px; }
+
+/* Trạng thái tự lưu: ẨN khi bình thường, chỉ hiện khi lưu lỗi (autosave.js gắn data-error) */
+#sceneDrawingModalOverlay #sceneDocumentAutoStatus { display: none; margin: 0; max-width: 260px; }
+#sceneDrawingModalOverlay #sceneDocumentAutoStatus[data-error="true"] {
+  display: inline-flex; align-items: center; height: 30px; padding: 0 10px; border-radius: 999px;
+  background: color-mix(in srgb,var(--danger,#e5484d) 10%,transparent); color: var(--danger,#e5484d);
+  font-size: 11.5px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ---- Vùng vẽ: lưới chấm mảnh + tờ giấy bóng đổ mềm (ghi đè style inline) ---- */
+#sceneDrawingModalOverlay #sceneCanvasViewport {
+  background-color: color-mix(in srgb,var(--bg, #f4f1ea) 92%,#000 0%) !important;
+  background-image: radial-gradient(circle, color-mix(in srgb,var(--se-muted) 28%,transparent) 1px, transparent 1.2px) !important;
+  background-size: 22px 22px !important;
+}
+#sceneDrawingModalOverlay #sceneDrawingCanvas {
+  border-radius: 3px !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 18px 48px -18px rgba(30,24,12,.35), 0 0 0 1px rgba(0,0,0,.04) !important;
+}
+body:not(.light-mode) #sceneDrawingModalOverlay #sceneDrawingCanvas { box-shadow: 0 0 0 1px rgba(255,255,255,.06), 0 24px 60px -20px rgba(0,0,0,.8) !important; }
+
+/* ---- Thanh zoom: viên thuốc sáng ---- */
+#sceneDrawingModalOverlay #sceneZoomControls {
+  right: 20px !important; bottom: 20px !important; gap: 2px !important; padding: 4px !important;
+  border: 1px solid var(--se-line) !important; border-radius: 12px !important;
+  background: color-mix(in srgb,var(--se-paper) 92%,transparent) !important; backdrop-filter: blur(10px) !important;
+  box-shadow: 0 12px 30px -12px rgba(30,24,12,.35), 0 1px 2px rgba(0,0,0,.06) !important;
+}
+#sceneDrawingModalOverlay #sceneZoomControls > button {
+  width: 32px !important; height: 32px !important; border-radius: 8px !important; border: 0 !important;
+  background: transparent !important; color: var(--se-ink) !important; transition: background .14s ease, color .14s ease;
+}
+#sceneDrawingModalOverlay #sceneZoomControls > button:hover { background: var(--se-soft) !important; color: var(--se-gold) !important; }
+#sceneDrawingModalOverlay #sceneZoomControls > #sceneZoomLabel {
+  width: auto !important; min-width: 58px !important; padding: 0 8px !important;
+  background: var(--se-soft) !important; color: var(--se-ink) !important;
+  font: 700 12px/1 inherit !important; font-variant-numeric: tabular-nums !important;
+}
+#sceneDrawingModalOverlay #sceneZoomControls > span { background: var(--se-line) !important; height: 18px !important; }
+
+/* ---- Thanh công cụ thu gọn: bỏ chữ phím tắt đè mép icon ---- */
+body #sceneDrawingModalOverlay .scene-tool-rail:not(.expanded) .draw-tool-btn[data-shortcut]::before { display: none !important; }
