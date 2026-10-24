@@ -150,10 +150,20 @@ body.has-app-sidebar :is(.workspace-grid, .sf-workspace, .pending-workspace) { m
   border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--text-main); cursor: pointer;
 }
 .app-topbar-menu svg { width: 18px; height: 18px; }
-.app-topbar-title { display: flex; align-items: center; gap: 8px; min-width: 0; line-height: 1.3; white-space: nowrap; }
-.app-topbar-title span { color: var(--text-muted); font-size: 13px; font-weight: 600; }
-.app-topbar-title .app-topbar-sep { flex: 0 0 14px; width: 14px; height: 14px; color: color-mix(in srgb,var(--text-muted) 70%,transparent); }
-.app-topbar-title strong { overflow: hidden; color: var(--text-main); font-size: 14.5px; font-weight: 750; letter-spacing: -.01em; text-overflow: ellipsis; }
+.app-topbar-title { display: flex; align-items: center; gap: 6px; min-width: 0; line-height: 1.3; white-space: nowrap; }
+.app-topbar-title .app-topbar-sep { flex: 0 0 14px; width: 14px; height: 14px; color: color-mix(in srgb,var(--text-muted) 60%,transparent); }
+.app-crumb-link {
+  display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 8px; margin: 0 -2px;
+  border: 0; border-radius: 8px; background: transparent; color: var(--text-muted);
+  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .14s ease, color .14s ease;
+}
+.app-crumb-link:hover { background: var(--surface-hover); color: var(--primary); }
+.app-crumb-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.app-crumb-home { padding-left: 6px; }
+.app-crumb-home-icon { flex: 0 0 16px; width: 16px; height: 16px; }
+.app-crumb-group { padding: 0 2px; color: color-mix(in srgb,var(--text-muted) 85%,transparent); font-size: 13px; font-weight: 600; }
+.app-crumb-current { display: inline-flex; align-items: center; gap: 7px; overflow: hidden; padding-left: 2px; color: var(--text-main); font-size: 14.5px; font-weight: 750; letter-spacing: -.01em; text-overflow: ellipsis; }
+.app-crumb-current .app-crumb-home-icon { color: var(--primary); }
 
 /* Bên phải: nút icon dạng "ghost", vạch ngăn mảnh, thẻ tài khoản gọn */
 body.has-app-sidebar .nav-user-zone { gap: 4px; }
@@ -213,8 +223,9 @@ body.has-app-sidebar .nav-user-copy em { margin-top: 1px; font-size: 9.5px; lett
   body.has-app-sidebar .app-container { padding: 14px var(--app-gutter) 72px !important; }
 }
 @media (max-width: 560px) {
-  .app-topbar-title :is(span, .app-topbar-sep) { display: none; }
-  .app-topbar-title strong { font-size: 14px; }
+  .app-topbar-title :is(.app-crumb-group, .app-topbar-sep, .app-crumb-link:not(.app-crumb-home)) { display: none; }
+  .app-crumb-home span { display: none; }
+  .app-crumb-current { font-size: 14px; }
   body.has-app-sidebar .nav-user-card { margin-left: 5px; padding: 0 4px; }
   body.has-app-sidebar .nav-user-card::before { left: -5px; }
   body.has-app-sidebar .nav-user-copy { display: none; }

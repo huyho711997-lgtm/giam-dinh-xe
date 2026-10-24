@@ -226,10 +226,34 @@
       for (const group of groups) for (const item of group.items) if (!current && isAppSidebarItemActive(item)) { current = item; currentGroup = group; }
       context.innerHTML = `
         <button type="button" id="appSidebarMenuBtn" class="app-topbar-menu" onclick="setAppSidebarOpen(true)" aria-controls="appSidebar" aria-expanded="${document.body.classList.contains('app-sidebar-open')}" aria-label="Mở menu điều hướng">${appSidebarIcon('menu')}</button>
-        <div class="app-topbar-title" aria-label="Trang hiện tại">
-          ${currentGroup && current && current.tab !== 'home' ? `<span>${currentGroup.label}</span><svg class="app-topbar-sep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>` : ''}
-          <strong>${current ? current.title : 'Trang chủ'}</strong>
-        </div>`;
+        ${renderAppBreadcrumb(current, currentGroup)}`;
+    }
+
+    // ---- Đường dẫn trên thanh trên: Trang chủ › Nhóm › Trang [› Mục con] ----
+    // "Trang chủ" và cấp trang (khi đang ở mục con) bấm được; cấp cuối là trang hiện tại.
+    const APP_ADMIN_SUBTAB_LABELS = { users: 'Tài khoản', 'api-keys': 'Gemini API', cloudinary: 'Cloudinary', 'audit-logs': 'Nhật ký hoạt động', 'kpi-config': 'Hệ số KPI & lương' };
+    function getAppBreadcrumbSubLevel() {
+      if (activeDashboardTab === 'create') return 'Khởi tạo ca giám định';
+      if (['users', 'system'].includes(activeDashboardTab) && typeof activeSystemAdminSubTab !== 'undefined') return APP_ADMIN_SUBTAB_LABELS[activeSystemAdminSubTab || 'users'] || '';
+      return '';
+    }
+    function renderAppBreadcrumb(current, currentGroup) {
+      const sep = '<svg class="app-topbar-sep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+      const homeIcon = '<svg class="app-crumb-home-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/></svg>';
+      const isHome = !current || current.tab === 'home';
+      if (isHome) {
+        return `<nav class="app-topbar-title" aria-label="Đường dẫn"><strong class="app-crumb-current" aria-current="page">${homeIcon}Trang chủ</strong></nav>`;
+      }
+      const sub = getAppBreadcrumbSubLevel();
+      const crumbs = [`<button type="button" class="app-crumb-link app-crumb-home" onclick="navigateHeaderTab('home')" title="Về trang chủ">${homeIcon}<span>Trang chủ</span></button>`];
+      if (currentGroup) crumbs.push(`<span class="app-crumb-group">${currentGroup.label}</span>`);
+      if (sub) {
+        crumbs.push(`<button type="button" class="app-crumb-link" onclick="${current.tab === 'users' ? "switchSystemAdminSubTab('users')" : `navigateHeaderTab('${current.tab}')`}">${current.title}</button>`);
+        crumbs.push(`<strong class="app-crumb-current" aria-current="page">${sub}</strong>`);
+      } else {
+        crumbs.push(`<strong class="app-crumb-current" aria-current="page">${current.title}</strong>`);
+      }
+      return `<nav class="app-topbar-title" aria-label="Đường dẫn">${crumbs.join(sep)}</nav>`;
     }
 
 

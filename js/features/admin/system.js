@@ -221,6 +221,7 @@
         subTabName = 'users';
       }
       activeSystemAdminSubTab = subTabName;
+      if (typeof renderHeaderNavigationLinks === 'function') renderHeaderNavigationLinks(); // cập nhật đường dẫn trên thanh trên
       
       // Update visual active state of subtab pills dynamically
       document.querySelectorAll('button[onclick^="switchSystemAdminSubTab"]').forEach(btn => {
