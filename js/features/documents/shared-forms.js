@@ -2,7 +2,10 @@ const SharedForms = (() => {
   const labels = {all:'Tất cả',word:'Word',pdf:'PDF',sheet:'Excel',image:'Hình ảnh',text:'Tài liệu'};
   const icons = {word:'W',pdf:'PDF',sheet:'X',image:'ẢNH',text:'TXT',folder:'▤'};
   let host = null, files = [], driveFiles = [], config = null, stack = [], unsubscribe = null, controller = null, generation = 0;
-  let source = 'drive', query = '', filter = 'all', category = '', sort = 'newest', page = 1, pageSize = 10, selectedFileId = '', loading = false, errorText = '', driveError = '', dialog = null;
+  let source = 'drive', query = '', filter = 'all', category = '', sort = 'newest', page = 1, pageSize = 12, selectedFileId = '', loading = false, errorText = '', driveError = '', dialog = null;
+  // Kiểu xem do người dùng chọn (Danh sách / Thẻ), nhớ trên máy này.
+  let layout = 'list';
+  const readLayout = () => { try { return localStorage.getItem('shared-forms-layout') === 'cards' ? 'cards' : 'list'; } catch (_) { return 'list'; } };
   const icon = name => SharedFormsControls.icon(name);
   const escape = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
   const sizeText = size => !Number(size) ? '' : Number(size) < 1048576 ? Math.max(1,Math.round(Number(size)/1024)) + ' KB' : (Number(size)/1048576).toLocaleString('vi-VN',{maximumFractionDigits:1}) + ' MB';
@@ -189,12 +192,26 @@ const SharedForms = (() => {
       return (new Date(second.updatedAt || 0).getTime() - new Date(first.updatedAt || 0).getTime()) || first.name.localeCompare(second.name,'vi');
     });
   }
+  function actions(file,folder) {
+    return '<div class="sf-card-actions"><button class="sf-icon-button" type="button" data-sf-open="' + escape(file.id) + '" aria-label="' + (folder ? 'Mở thư mục ' : 'Xem ') + escape(file.name) + '" title="' + (folder ? 'Mở thư mục' : 'Xem trong trang') + '">' + icon(folder ? 'arrow' : 'eye') + '</button>' + (!folder ? '<button class="sf-icon-button" type="button" data-sf-download="' + escape(file.id) + '" aria-label="Tải về ' + escape(file.name) + '" title="Tải về">' + icon('download') + '</button>' : '') + (SharedFormsStore.canManage(file) ? '<button class="sf-icon-button" type="button" data-sf-edit="' + escape(file.id) + '" aria-label="Sửa thông tin ' + escape(file.name) + '" title="Sửa thông tin">' + icon('tag') + '</button><button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa">' + icon('close') + '</button>' : '') + '</div>';
+  }
+  // Dạng thẻ: khối màu theo loại tệp + tên + định dạng/ngày + thao tác.
+  function tile(file) {
+    const kind = SharedFormsStore.kind(file), folder = kind === 'folder';
+    const suffix = folder ? 'Thư mục' : SharedFormsStore.extension(file.originalName || file.name).toUpperCase();
+    const date = file.updatedAt ? new Date(file.updatedAt).toLocaleDateString('vi-VN') : '';
+    const meta = folder ? 'Mở để xem biểu mẫu bên trong' : [date, sizeText(file.size)].filter(Boolean).join(' · ');
+    return '<article class="sf-tile sf-kind-' + kind + (selectedFileId === file.id ? ' is-selected' : '') + '"><button class="sf-tile-open" type="button" data-sf-open="' + escape(file.id) + '"' + (selectedFileId === file.id ? ' aria-current="true"' : '') + ' title="' + escape(file.name) + '">'
+      + '<span class="sf-tile-visual"><span class="sf-tile-glyph">' + (folder ? icon('folder') : icon('file')) + (folder ? '' : '<b>' + escape(icons[kind] || suffix) + '</b>') + '</span><span class="sf-format sf-kind-' + kind + '">' + escape(suffix) + '</span></span>'
+      + '<span class="sf-tile-copy"><strong>' + escape(file.name) + '</strong><small>' + escape(file.notes || meta) + '</small></span></button>'
+      + '<footer class="sf-tile-footer"><span>' + escape(file.category || 'Chưa phân loại') + '</span>' + actions(file,folder) + '</footer></article>';
+  }
   function card(file,index) {
     const kind = SharedFormsStore.kind(file);
     const folder = kind === 'folder';
     const suffix = folder ? 'Thư mục' : SharedFormsStore.extension(file.originalName || file.name).toUpperCase();
     const meta = [sizeText(file.size),file.createdByName].filter(Boolean).join(' · ');
-    return '<tr class="sf-row' + (selectedFileId === file.id ? ' is-selected' : '') + '"><td class="sf-col-number">' + index + '</td><td class="sf-col-name"><button class="sf-open" type="button" data-sf-open="' + escape(file.id) + '"' + (selectedFileId === file.id ? ' aria-current="true"' : '') + '><span class="sf-file-icon sf-kind-' + kind + '">' + (folder ? icon('folder') : icons[kind]) + '</span><span class="sf-card-copy"><strong>' + escape(file.name) + '</strong><small>' + escape(file.notes || meta || (folder ? 'Mở để xem biểu mẫu bên trong' : 'Nhấn để xem và in tài liệu')) + '</small></span></button></td><td class="sf-col-format"><span class="sf-format sf-kind-' + kind + '">' + escape(suffix) + '</span></td><td class="sf-col-category">' + escape(file.category || 'Chưa phân loại') + '</td><td class="sf-col-date">' + (file.updatedAt ? new Date(file.updatedAt).toLocaleDateString('vi-VN') : '—') + '</td><td class="sf-col-actions"><div class="sf-card-actions"><button class="sf-icon-button" type="button" data-sf-open="' + escape(file.id) + '" aria-label="' + (folder ? 'Mở thư mục ' : 'Xem ') + escape(file.name) + '" title="' + (folder ? 'Mở thư mục' : 'Xem trong trang') + '">' + icon(folder ? 'arrow' : 'eye') + '</button>' + (!folder ? '<button class="sf-icon-button" type="button" data-sf-download="' + escape(file.id) + '" aria-label="Tải về ' + escape(file.name) + '" title="Tải về">' + icon('download') + '</button>' : '') + (SharedFormsStore.canManage(file) ? '<button class="sf-icon-button" type="button" data-sf-edit="' + escape(file.id) + '" aria-label="Sửa thông tin ' + escape(file.name) + '" title="Sửa thông tin">' + icon('tag') + '</button><button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa">' + icon('close') + '</button>' : '') + '</div></td></tr>';
+    return '<tr class="sf-row' + (selectedFileId === file.id ? ' is-selected' : '') + '"><td class="sf-col-number">' + index + '</td><td class="sf-col-name"><button class="sf-open" type="button" data-sf-open="' + escape(file.id) + '"' + (selectedFileId === file.id ? ' aria-current="true"' : '') + '><span class="sf-file-icon sf-kind-' + kind + '">' + (folder ? icon('folder') : icons[kind]) + '</span><span class="sf-card-copy"><strong>' + escape(file.name) + '</strong><small>' + escape(file.notes || meta || (folder ? 'Mở để xem biểu mẫu bên trong' : 'Nhấn để xem và in tài liệu')) + '</small></span></button></td><td class="sf-col-format"><span class="sf-format sf-kind-' + kind + '">' + escape(suffix) + '</span></td><td class="sf-col-category">' + escape(file.category || 'Chưa phân loại') + '</td><td class="sf-col-date">' + (file.updatedAt ? new Date(file.updatedAt).toLocaleDateString('vi-VN') : '—') + '</td><td class="sf-col-actions">' + actions(file,folder) + '</td></tr>';
   }
   function paint() {
     if (!host?.isConnected) return;
@@ -228,11 +245,13 @@ const SharedForms = (() => {
     if (source === 'drive' && !config) list.innerHTML = '<div class="sf-empty"><span class="sf-file-icon">' + icon('folder') + '</span><h3>Kết nối kho biểu mẫu hiện có</h3><p>Thiết lập cùng thư mục Google Drive của dự án tra cứu phụ tùng để xem các biểu mẫu tại đây.</p>' + (SharedFormsStore.admin() ? '<button class="sf-button sf-primary" type="button" data-sf-settings>Kết nối Google Drive</button>' : '<p>Vui lòng liên hệ quản trị viên để kết nối thư mục.</p>') + '</div>';
     else if (source === 'drive' && loading) list.innerHTML = '<div class="sf-empty" role="status">Đang tải biểu mẫu từ Google Drive…</div>';
     else if (!rows.length) list.innerHTML = '<div class="sf-empty"><h3>' + (query || filter !== 'all' || category ? 'Không tìm thấy biểu mẫu' : 'Thư mục đang trống') + '</h3><p>' + (driveError ? 'Nhấn Làm mới để thử lại.' : 'Thử đổi từ khóa, bộ lọc hoặc tải file mới lên thư viện.') + '</p></div>';
+    else if (layout === 'cards') list.innerHTML = '<div class="sf-tiles">' + rows.slice((page - 1) * pageSize,page * pageSize).map(tile).join('') + '</div>';
     else list.innerHTML = '<div class="sf-table-scroll"><table class="sf-table"><caption class="sf-sr-only">Danh sách biểu mẫu dùng chung</caption><thead><tr><th class="sf-col-number">STT</th><th class="sf-col-name">Tên biểu mẫu</th><th class="sf-col-format">Định dạng</th><th class="sf-col-category">Phân loại</th><th class="sf-col-date">Cập nhật</th><th class="sf-col-actions">Thao tác</th></tr></thead><tbody>' + rows.slice((page - 1) * pageSize,page * pageSize).map((file,index) => card(file,(page - 1) * pageSize + index + 1)).join('') + '</tbody></table></div>';
     host.querySelector('[data-sf-pagination]').hidden = !rows.length;
     host.querySelector('[data-sf-page-status]').textContent = 'Trang ' + page + ' / ' + pages + ' · ' + rows.length + ' mục';
     host.querySelector('[data-sf-prev]').disabled = page === 1;
     host.querySelector('[data-sf-next]').disabled = page === pages;
+    host.querySelectorAll('[data-sf-layout]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.sfLayout === layout)));
     host.querySelector('[data-sf-type]').value = filter;
     host.querySelector('[data-sf-size]').value = String(pageSize);
     SharedFormsControls.enhance(host);
@@ -263,6 +282,7 @@ const SharedForms = (() => {
     leave();
     if (!SharedFormsStore.user()) { container.textContent = 'Vui lòng đăng nhập để xem biểu mẫu dùng chung.'; return; }
     files = []; driveFiles = []; config = null; stack = []; loading = false; errorText = ''; driveError = '';
+    layout = readLayout();
     host = document.createElement('section');
     host.className = 'sf-workspace';
     host.setAttribute('aria-label','Biểu mẫu dùng chung');
@@ -278,6 +298,7 @@ const SharedForms = (() => {
           <div class="sf-sources" role="group" aria-label="Nguồn biểu mẫu"><button class="sf-source-tab" type="button" data-sf-source="drive">${icon('folder')} Kho Google Drive</button><button class="sf-source-tab" type="button" data-sf-source="app">${icon('grid')} Thư viện ứng dụng</button><span class="sf-count" data-sf-count role="status" aria-live="polite"></span><a class="sf-drive-link" data-sf-drive-link target="_blank" rel="noopener noreferrer" hidden>Quản lý kho gốc ↗</a></div>
         </div>
         <div class="sf-library-filters">
+          <div class="sf-view-toggle" role="group" aria-label="Kiểu hiển thị"><button type="button" class="sf-view-option" data-sf-layout="list" aria-label="Xem dạng danh sách" title="Danh sách">${icon('sort')}</button><button type="button" class="sf-view-option" data-sf-layout="cards" aria-label="Xem dạng thẻ" title="Thẻ">${icon('grid')}</button></div>
           <div class="sf-controls">
             <label class="sf-search">${icon('search')}<span class="sf-sr-only">Tìm biểu mẫu</span><input type="search" data-sf-search placeholder="Tìm tên biểu mẫu, ghi chú…" autocomplete="off"></label>
             <label class="sf-filter-field"><span class="sf-sr-only">Loại tài liệu</span><select data-sf-type data-sf-select data-sf-label="Loại tài liệu" data-sf-description="Lọc theo định dạng biểu mẫu" data-sf-icon="file">${Object.entries(labels).map(([kind,label]) => '<option value="' + kind + '">' + label + '</option>').join('')}</select></label>
@@ -290,7 +311,7 @@ const SharedForms = (() => {
           <p class="sf-notice" data-sf-notice role="alert" hidden></p>
           <div class="sf-list" data-sf-list></div>
           <nav class="sf-pagination" data-sf-pagination aria-label="Phân trang biểu mẫu" hidden>
-              <label><span class="sf-sr-only">Số dòng mỗi trang</span><select data-sf-size data-sf-select data-sf-label="Số dòng mỗi trang" data-sf-description="Điều chỉnh số biểu mẫu trong danh sách" data-sf-icon="grid"><option value="10">10 dòng / trang</option><option value="20">20 dòng / trang</option><option value="50">50 dòng / trang</option></select></label>
+              <label><span class="sf-sr-only">Số dòng mỗi trang</span><select data-sf-size data-sf-select data-sf-label="Số dòng mỗi trang" data-sf-description="Điều chỉnh số biểu mẫu trong danh sách" data-sf-icon="grid"><option value="12">12 mục / trang</option><option value="24">24 mục / trang</option><option value="48">48 mục / trang</option></select></label>
               <span data-sf-page-status></span><div><button class="sf-icon-button" type="button" data-sf-prev aria-label="Trang trước">←</button><button class="sf-icon-button" type="button" data-sf-next aria-label="Trang sau">→</button></div>
             </nav>
         </div>
@@ -315,6 +336,7 @@ const SharedForms = (() => {
       else if (control.hasAttribute('data-sf-settings')) settingsDialog();
       else if (control.hasAttribute('data-sf-refresh')) { unsubscribe?.(); connect(); reload(); }
       else if (control.dataset.sfSource) selectSource(control.dataset.sfSource);
+      else if (control.dataset.sfLayout) { layout = control.dataset.sfLayout; try { localStorage.setItem('shared-forms-layout',layout); } catch (_) {} paint(); }
       else if (control.dataset.sfFilter) { filter = control.dataset.sfFilter; page = 1; paint(); }
       else if (control.hasAttribute('data-sf-crumb')) { SharedFormsViewer.close(); stack = stack.slice(0,Number(control.dataset.sfCrumb) + 1); query = ''; host.querySelector('[data-sf-search]').value = ''; loadFolder(); }
       else if (control.dataset.sfOpen) {
