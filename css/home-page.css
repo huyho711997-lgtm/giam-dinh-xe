@@ -140,23 +140,6 @@ body.light-mode .hp-page {
 .hp-status-pct { color: var(--hp-muted); font-size: 11px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
 .hp-status-rest { display: flex; justify-content: space-between; padding: 8px 10px 0 30px; color: var(--hp-muted); font-size: 11.5px; font-weight: 600; }
 
-/* Hồ sơ gần đây: một hàng thẻ trải ngang */
-.hp-recent { display: grid; grid-template-columns: repeat(auto-fill,minmax(210px,1fr)); gap: 10px; margin: 0; padding: 0 14px 14px; list-style: none; }
-.hp-recent button {
-  display: flex; flex-direction: column; align-items: stretch; gap: 12px; width: 100%; height: 100%; padding: 14px 16px;
-  border: 1px solid var(--hp-line); border-radius: 13px; background: var(--hp-soft); color: inherit; text-align: left; cursor: pointer;
-  transition: border-color .16s ease, background .16s ease, transform .16s ease, box-shadow .16s ease;
-}
-.hp-recent button:hover { border-color: color-mix(in srgb,var(--hp-gold) 45%,var(--hp-line)); background: var(--hp-paper); transform: translateY(-2px); box-shadow: 0 16px 30px -22px rgba(60,45,15,.55); }
-.hp-recent-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.hp-recent-main strong { color: var(--hp-gold); font-size: 14px; font-weight: 800; letter-spacing: .01em; }
-.hp-recent-main span { overflow: hidden; color: var(--hp-ink); font-size: 12px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.hp-recent-side { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px dashed var(--hp-line); }
-.hp-recent-side time { color: var(--hp-muted); font-size: 10.5px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.hp-pill {
-  padding: 3px 9px; border: 1px solid color-mix(in srgb,var(--pill) 35%,transparent); border-radius: 999px;
-  background: color-mix(in srgb,var(--pill) 13%,transparent); color: var(--pill); font-size: 10.5px; font-weight: 750; white-space: nowrap;
-}
 
 .hp-page :is(button):focus-visible { outline: 2px solid var(--hp-gold); outline-offset: 2px; }
 

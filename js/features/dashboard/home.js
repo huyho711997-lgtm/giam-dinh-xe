@@ -2,7 +2,7 @@
 // TRANG CHỦ (activeDashboardTab === 'home') – css/home-page.css – tối ưu cho desktop.
 // 1) Băng hero tối: lời chào + tác vụ nhanh + số liệu chính (bấm để mở trang).
 // 2) Hai cột: trái = lối vào phân hệ (nhóm như sidebar); phải = dữ liệu thật:
-//    phân bổ hồ sơ tồn theo trạng thái (bấm để lọc) + hồ sơ mới mở gần đây (bấm để mở).
+//    phân bổ hồ sơ tồn theo trạng thái (bấm để lọc).
 // Quyền hiển thị nhận từ workspace.js (giữ nguyên logic phân quyền cũ).
 // ==========================================================================
 (function () {
@@ -35,14 +35,6 @@
     return `${days[now.getDay()]} · ${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
   }
 
-  // 'dd/mm/yyyy[ hh:mm]' → timestamp; trả 0 nếu không đọc được.
-  function claimOpenTime(c) {
-    const raw = String(c.ngayMoHs || c.ngayTonThat || c.ngayVTT || '').trim();
-    const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
-    if (m) return new Date(+m[3], +m[2] - 1, +m[1], +(m[4] || 0), +(m[5] || 0)).getTime();
-    return Number(c.createdAt) || 0;
-  }
-
   // ---- Dữ liệu cho cột phải ----
   function pendingStats() {
     const claims = Object.entries((typeof cachedPendingClaimsPayload !== 'undefined' && cachedPendingClaimsPayload) || {});
@@ -52,8 +44,7 @@
     const total = claims.length;
     const rows = Object.keys(map).filter(k => counts[k]).map(k => ({ key: k, label: map[k].label, color: map[k].color, count: counts[k] }))
       .sort((a, b) => b.count - a.count);
-    const recent = claims.map(([id, c]) => ({ id, c, t: claimOpenTime(c) })).sort((a, b) => b.t - a.t).slice(0, 8);
-    return { total, rows, recent, map };
+    return { total, rows, map };
   }
 
   function statusPanel(st) {
@@ -83,39 +74,12 @@
     </section>`;
   }
 
-  function recentPanel(st) {
-    return `<section class="hp-panel hp-panel--recent">
-      <header class="hp-panel-head">
-        <div><span class="hp-kicker">Cập nhật mới</span><h3>Hồ sơ mở gần đây</h3></div>
-        <button type="button" class="hp-link" onclick="switchWorkspaceTab('pending')">Danh sách ${svg('chevron')}</button>
-      </header>
-      ${st.recent.length ? `<ul class="hp-recent">
-        ${st.recent.map(({ id, c }) => {
-          const s = st.map[c.trangThai] || st.map.moi || { label: 'Mới', color: '#64748b' };
-          return `<li><button type="button" onclick="openHomeRecentClaim(${jsArg(id)})">
-            <span class="hp-recent-main">
-              <strong>${esc(c.bienSo || '—')}</strong>
-              <span>${esc((typeof extractClaimOwnerName === 'function' ? extractClaimOwnerName(c) : (c.chuXe || c.khachHang)) || '—')}</span>
-            </span>
-            <span class="hp-recent-side">
-              <span class="hp-pill" style="--pill:${s.color}">${esc(s.label)}</span>
-              <time title="Ngày mở hồ sơ">${esc(c.ngayMoHs || "—")}</time>
-            </span>
-          </button></li>`;
-        }).join('')}
-      </ul>` : '<p class="hp-empty">Chưa có hồ sơ.</p>'}
-    </section>`;
-  }
-
   // Bấm một trạng thái → mở trang Hồ sơ bồi thường đã lọc sẵn trạng thái đó.
   window.openHomeStatusFilter = function (key) {
     try { activePendingStatusFilter = [key]; pendingClaimsCurrentPage = 1; } catch (_) {}
     switchWorkspaceTab('pending');
   };
-  window.openHomeRecentClaim = function (id) {
-    switchWorkspaceTab('pending');
-    if (typeof openEditPendingClaimModal === 'function') openEditPendingClaimModal(id);
-  };
+
 
   function moduleTile(m) {
     return `<button type="button" class="hp-tile" onclick="switchWorkspaceTab('${m.tab}')">
@@ -190,7 +154,6 @@
           </section>
           ${st ? statusPanel(st) : ''}
         </div>
-        ${st ? recentPanel(st) : ''}
       </section>`;
   };
 
