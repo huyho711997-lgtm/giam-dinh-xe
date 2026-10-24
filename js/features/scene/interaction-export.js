@@ -544,6 +544,153 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
   const right = x + w / 2;
   const top = y - h / 2;
 
+  // ---- XE TẢI: cùng ngôn ngữ ký hiệu với ô tô con (khung chữ nhật, mũi tam giác chỉ hướng,
+  // bánh xe tối), thêm thùng hàng dài, cabin hẹp hơn và cầu sau đôi. Đầu xe hướng +x.
+  if (type === 'truck') {
+    const dashed = !!(shapeData && shapeData.dashed);
+    if (dashed) ctx.setLineDash([Math.max(5, w * 0.045), Math.max(3, w * 0.027)]);
+    const bottom = y + h / 2;
+    const boxW = w * 0.66;
+    const gapW = Math.max(2, w * 0.035);
+    const cabX = left + boxW + gapW;
+    const cabW = right - cabX;
+    const cabInset = h * 0.07;
+    const cabTop = top + cabInset;
+    const cabH = h - cabInset * 2;
+
+    // Thùng hàng + hai gân thùng mảnh.
+    ctx.strokeRect(left, top, boxW, h);
+    ctx.save();
+    ctx.lineWidth = Math.max(0.8, width * 0.6);
+    ctx.globalAlpha = 0.55;
+    [1 / 3, 2 / 3].forEach(f => {
+      ctx.beginPath();
+      ctx.moveTo(left + boxW * f, top + h * 0.14);
+      ctx.lineTo(left + boxW * f, bottom - h * 0.14);
+      ctx.stroke();
+    });
+    ctx.restore();
+
+    // Khớp nối ngắn giữa thùng và cabin.
+    ctx.beginPath();
+    ctx.moveTo(left + boxW, y - h * 0.16);
+    ctx.lineTo(cabX, y - h * 0.16);
+    ctx.moveTo(left + boxW, y + h * 0.16);
+    ctx.lineTo(cabX, y + h * 0.16);
+    ctx.stroke();
+
+    // Cabin với vạch ngăn và mũi tam giác giống ô tô con.
+    ctx.strokeRect(cabX, cabTop, cabW, cabH);
+    const frontLen = Math.min(cabW * 0.62, cabH * 0.75);
+    const sepX = right - frontLen;
+    ctx.beginPath();
+    ctx.moveTo(sepX, cabTop);
+    ctx.lineTo(sepX, cabTop + cabH);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(sepX, cabTop);
+    ctx.lineTo(right, y);
+    ctx.lineTo(sepX, cabTop + cabH);
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+    // Cầu sau đôi dưới thùng + cầu trước dưới cabin.
+    drawVehicleWheelPairs(ctx, [left + boxW * 0.14, left + boxW * 0.32, cabX + cabW * 0.5], top, bottom, w, h, color, dashed);
+    ctx.restore();
+    return;
+  }
+
+  // ---- TRẠM THU PHÍ (nhìn từ trên xuống): mái che nét đứt, các làn xe chạy theo trục dọc,
+  // đảo phân làn có buồng thu phí, barie chắn ở cửa ra và mũi tên hướng đi mỗi làn.
+  if (type === 'toll_station') {
+    const bottom = y + h / 2;
+    const lanes = Math.max(2, Math.min(8, Math.round(w / 50))); // ~50px/làn: rõ ràng khi in A4
+    const islandW = Math.max(5, Math.min(14, (w / lanes) * 0.24));
+    const laneW = (w - islandW) / lanes;
+    const canopyH = h * 0.44;
+    const canopyTop = y - canopyH / 2;
+    const islandH = h * 0.7;
+    const islandTop = y - islandH / 2;
+    const thin = Math.max(0.9, width * 0.75);
+
+    // Mái che.
+    ctx.save();
+    ctx.setLineDash([Math.max(4, w * 0.02), Math.max(3, w * 0.013)]);
+    ctx.lineWidth = thin;
+    ctx.strokeRect(left, canopyTop, w, canopyH);
+    ctx.restore();
+
+    for (let i = 0; i <= lanes; i++) {
+      const ix = left + i * laneW;
+      // Đảo phân làn.
+      ctx.beginPath();
+      drawRoundRectCompat(ctx, ix, islandTop, islandW, islandH, Math.min(islandW / 2, 4));
+      ctx.fillStyle = 'rgba(255,255,255,.96)';
+      ctx.fill();
+      ctx.lineWidth = thin;
+      ctx.stroke();
+      // Buồng thu phí trên đảo.
+      const boothW = Math.min(islandW * 1.7, laneW * 0.42);
+      const boothH = Math.min(canopyH * 0.36, boothW * 1.25);
+      const bx = ix + islandW / 2 - boothW / 2;
+      const by = y - boothH / 2;
+      ctx.beginPath();
+      drawRoundRectCompat(ctx, bx, by, boothW, boothH, Math.min(2.5, boothW * 0.2));
+      ctx.fillStyle = 'rgba(255,255,255,1)';
+      ctx.fill();
+      ctx.lineWidth = Math.max(1, width);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(bx + boothW * 0.22, by + boothH * 0.32);
+      ctx.lineTo(bx + boothW * 0.78, by + boothH * 0.32);
+      ctx.lineWidth = thin;
+      ctx.stroke();
+    }
+
+    // Barie chắn (cửa ra phía trên) và mũi tên hướng đi của từng làn.
+    for (let i = 0; i < lanes; i++) {
+      const laneLeft = left + islandW + i * laneW;
+      const laneInner = laneW - islandW;
+      const barY = canopyTop + canopyH * 0.14;
+      ctx.save();
+      ctx.lineWidth = Math.max(1.6, width * 1.4);
+      ctx.setLineDash([Math.max(3, laneInner * 0.12), Math.max(2.4, laneInner * 0.09)]);
+      ctx.beginPath();
+      ctx.moveTo(laneLeft + 2, barY);
+      ctx.lineTo(laneLeft + laneInner * 0.82, barY);
+      ctx.stroke();
+      ctx.restore();
+      ctx.beginPath();
+      ctx.arc(laneLeft + 2, barY, Math.max(1.6, width * 1.2), 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      const ax = laneLeft + laneInner / 2;
+      const aTop = y + h * 0.24;
+      const aBottom = Math.min(bottom - h * 0.04, y + h * 0.42);
+      const head = Math.max(3, Math.min(7, laneInner * 0.2));
+      ctx.lineWidth = thin;
+      ctx.beginPath();
+      ctx.moveTo(ax, aBottom);
+      ctx.lineTo(ax, aTop);
+      ctx.moveTo(ax - head, aTop + head);
+      ctx.lineTo(ax, aTop);
+      ctx.lineTo(ax + head, aTop + head);
+      ctx.stroke();
+    }
+
+    // Nhãn khi đủ rộng.
+    if (w >= 110 && h >= 60) {
+      ctx.fillStyle = color;
+      ctx.font = `700 ${Math.max(8, Math.min(12, h * 0.085))}px Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText('TRẠM THU PHÍ', x, top + h * 0.02);
+    }
+    ctx.restore();
+    return;
+  }
+
   if (type === 'geo_circle') {
     const radius = Math.max(5, Math.min(w, h) * 0.43);
     ctx.beginPath();

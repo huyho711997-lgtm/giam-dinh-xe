@@ -968,7 +968,8 @@ function isSceneryAssetType(type) {
   return type === 'utility_pole' || type === 'road_boundary_marker' || type === 'pothole' ||
     type === 'geo_circle' || type === 'geo_triangle' || type === 'geo_round_triangle' ||
     type === 'sign_circle_post' || type === 'sign_triangle_post' ||
-    type === 'tree' || type === 'median_tree' || type === 'rice_field' || type === 'forest';
+    type === 'tree' || type === 'median_tree' || type === 'rice_field' || type === 'forest' ||
+    type === 'truck' || type === 'toll_station';
 }
 
 
@@ -1272,6 +1273,8 @@ function getSceneryAspectRatio(type) {
   if (type === 'median_tree') return 0.38;
   if (type === 'rice_field') return 0.58;
   if (type === 'forest') return 0.62;
+  if (type === 'truck') return 0.4;
+  if (type === 'toll_station') return 0.62;
   return 0.5;
 }
 
@@ -1287,6 +1290,8 @@ function getSceneryMinimumLength(type) {
   if (type === 'median_tree') return 55;
   if (type === 'rice_field') return 60;
   if (type === 'forest') return 60;
+  if (type === 'truck') return 60;
+  if (type === 'toll_station') return 90;
   return 24;
 }
 

@@ -665,6 +665,8 @@ function getShapeDisplayName(shape) {
     case 'tree': return 'Cây xanh';
     case 'median_tree': return 'Cây trên dải phân cách';
     case 'rice_field': return 'Đồng lúa';
+    case 'truck': return 'Xe tải';
+    case 'toll_station': return 'Trạm thu phí';
     case 'forest': return 'Rừng cây';
     case 'line': return 'Mũi tên di chuyển (nét liền)';
     case 'dashed_line': return 'Mũi tên di chuyển (nét đứt)';
