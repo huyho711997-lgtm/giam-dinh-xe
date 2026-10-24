@@ -1303,17 +1303,19 @@ function isVehicleShape(shape) {
 
 function getVehicleDimensions(shape) {
   if (!shape) return { w: 0, h: 0 };
+  // vehicleH: chiều ngang riêng của xe khi người dùng kéo cạnh trên/dưới (sơ đồ cũ không có → giữ tỷ lệ mặc định).
+  const vehicleHeight = (w, ratio) => (Number.isFinite(shape.vehicleH) && shape.vehicleH > 0 ? shape.vehicleH : w * ratio);
   if (shape.type === 'container') {
     const w = shape.containerW || 70;
-    return { w, h: w * 0.3 };
+    return { w, h: vehicleHeight(w, 0.3) };
   }
   if (shape.type === 'car') {
     const w = shape.carW || 30;
-    return { w, h: w * 0.5 };
+    return { w, h: vehicleHeight(w, 0.5) };
   }
   if (shape.type === 'fallen_bike') {
     const w = shape.fallenBikeW || 42;
-    return { w, h: w * 0.48 };
+    return { w, h: vehicleHeight(w, 0.48) };
   }
   if (isSceneryAssetShape(shape)) {
     const w = shape.objectW || getSceneryMinimumLength(shape.type);
@@ -1324,7 +1326,17 @@ function getVehicleDimensions(shape) {
     return { w, h };
   }
   const w = shape.bikeW || 20;
-  return { w, h: w * 0.42 };
+  return { w, h: vehicleHeight(w, 0.42) };
+}
+
+// Tỷ lệ cao/dài mặc định của từng loại xe (dùng cho chiều cao tối thiểu khi co giãn).
+function getDefaultVehicleAspect(shape) {
+  if (!shape) return 0.5;
+  if (shape.type === 'container') return 0.3;
+  if (shape.type === 'car') return 0.5;
+  if (shape.type === 'fallen_bike') return 0.48;
+  if (shape.type === 'bike') return 0.42;
+  return 0.5;
 }
 
 
@@ -1527,11 +1539,14 @@ function resizeVehicleFromPointer(shape, original, handle, px, py) {
   const baseHalfW = originalWidth / 2 + pad;
   const baseHalfH = originalHeight / 2 + pad;
 
-  // Nhóm cảnh quan / hình học có cơ chế resize hai chiều:
+  // Cơ chế resize hai chiều cho MỌI đối tượng dạng khung (xe & cảnh quan / hình học):
   // - cạnh trái/phải: chỉ đổi chiều dài;
-  // - cạnh trên/dưới: chỉ đổi độ cao;
+  // - cạnh trên/dưới: chỉ đổi độ cao (chiều ngang của xe);
   // - bốn góc: phóng to/thu nhỏ đồng bộ theo tỷ lệ.
-  if (isSceneryAssetShape(shape)) {
+  // Trước đây xe (ô tô, xe máy, container…) chỉ có MỘT hệ số phóng từ tâm và khóa tỷ lệ,
+  // nên kéo cạnh trái/phải không thể co riêng chiều ngang như hướng dẫn trên panel.
+  {
+    const isScenery = isSceneryAssetShape(shape);
     const pointerLocalX = localX + originalWidth / 2;
     const pointerLocalY = localY;
     const pullsEast = handle.includes('e');
@@ -1566,7 +1581,9 @@ function resizeVehicleFromPointer(shape, original, handle, px, py) {
     }
 
     nextWidth = Math.max(getMinimumVehicleLength(original), Math.min(900, nextWidth));
-    const minimumHeight = Math.max(12, getSceneryMinimumLength(original.type) * getSceneryAspectRatio(original.type) * 0.35);
+    const minimumHeight = isScenery
+      ? Math.max(12, getSceneryMinimumLength(original.type) * getSceneryAspectRatio(original.type) * 0.35)
+      : Math.max(6, getMinimumVehicleLength(original) * getDefaultVehicleAspect(original) * 0.5);
     nextHeight = Math.max(minimumHeight, Math.min(600, nextHeight));
     const oldDimensions = getVehicleDimensions(shape);
 
@@ -1578,32 +1595,18 @@ function resizeVehicleFromPointer(shape, original, handle, px, py) {
 
     shape.startX = original.startX + alongShift * cos - normalShift * sin;
     shape.startY = original.startY + alongShift * sin + normalShift * cos;
-    shape.objectW = nextWidth;
-    shape.objectH = nextHeight;
-    shape.sizeScale = Math.max(0.5, Math.min(3, nextWidth / Math.max(0.001, getSceneryMinimumLength(shape.type))));
+    if (isScenery) {
+      shape.objectW = nextWidth;
+      shape.objectH = nextHeight;
+      shape.sizeScale = Math.max(0.5, Math.min(3, nextWidth / Math.max(0.001, getSceneryMinimumLength(shape.type))));
+    } else {
+      setVehicleLength(shape, nextWidth);
+      shape.vehicleH = nextHeight;
+      shape.sizeScale = Math.max(0.5, Math.min(3, (original.sizeScale || 1) * (nextWidth / originalWidth)));
+    }
     return Math.abs(nextWidth - oldDimensions.w) > 0.15 || Math.abs(nextHeight - oldDimensions.h) > 0.15;
   }
 
-  let scale;
-  if (handle === 'e' || handle === 'w') {
-    scale = Math.abs(localX) / baseHalfW;
-  } else if (handle === 'n' || handle === 's') {
-    scale = Math.abs(localY) / baseHalfH;
-  } else {
-    scale = Math.max(Math.abs(localX) / baseHalfW, Math.abs(localY) / baseHalfH);
-  }
-
-  const minScale = getMinimumVehicleLength(original) / originalWidth;
-  const maxScale = 900 / originalWidth;
-  scale = Math.max(minScale, Math.min(maxScale, scale));
-  const nextWidth = originalWidth * scale;
-  const oldWidth = getVehicleDimensions(shape).w;
-
-  shape.startX = center.x - Math.cos(angle) * nextWidth / 2;
-  shape.startY = center.y - Math.sin(angle) * nextWidth / 2;
-  setVehicleLength(shape, nextWidth);
-  shape.sizeScale = Math.max(0.5, Math.min(3, (original.sizeScale || 1) * scale));
-  return Math.abs(nextWidth - oldWidth) > 0.15;
 }
 
 
@@ -1703,6 +1706,8 @@ function scaleSelectedInfrastructure(factor) {
     setVehicleLength(shape, nextLength);
     if (isSceneryAssetShape(shape)) {
       shape.objectH = Math.max(12, Math.min(600, dimensions.h * appliedFactor));
+    } else if (Number.isFinite(shape.vehicleH)) {
+      shape.vehicleH = Math.max(6, Math.min(600, dimensions.h * appliedFactor)); // giữ tỷ lệ đã chỉnh
     }
   } else if (shape.type === 'number_note') {
     const currentRadius = shape.radius || 13;

@@ -954,26 +954,26 @@ function renderShape(ctx, shape) {
     ctx.save();
     ctx.translate(shape.startX, shape.startY);
     ctx.rotate(shape.angle);
-    drawTemplateCar(ctx, shape.carW / 2, 0, color, width, shape.carW, shape.carW * 0.5, !!shape.dashed);
+    drawTemplateCar(ctx, shape.carW / 2, 0, color, width, shape.carW, getVehicleDimensions(shape).h, !!shape.dashed);
     ctx.restore();
   } else if (shape.type === 'container') {
     ctx.save();
     ctx.translate(shape.startX, shape.startY);
     ctx.rotate(shape.angle);
-    drawTemplateContainer(ctx, shape.containerW / 2, 0, color, width, shape.containerW, shape.containerW * 0.3, !!shape.dashed);
+    drawTemplateContainer(ctx, shape.containerW / 2, 0, color, width, shape.containerW, getVehicleDimensions(shape).h, !!shape.dashed);
     ctx.restore();
   } else if (shape.type === 'bike') {
     ctx.save();
     ctx.translate(shape.startX, shape.startY);
     ctx.rotate(shape.angle);
-    drawTemplateBike(ctx, shape.bikeW / 2, 0, color, width, shape.bikeW, shape.bikeW * 0.42, !!shape.dashed);
+    drawTemplateBike(ctx, shape.bikeW / 2, 0, color, width, shape.bikeW, getVehicleDimensions(shape).h, !!shape.dashed);
     ctx.restore();
   } else if (shape.type === 'fallen_bike') {
     const fallenBikeW = shape.fallenBikeW || 42;
     ctx.save();
     ctx.translate(shape.startX, shape.startY);
     ctx.rotate(shape.angle || 0);
-    drawFallenBike(ctx, fallenBikeW / 2, 0, color, width, fallenBikeW, fallenBikeW * 0.48, !!shape.dashed);
+    drawFallenBike(ctx, fallenBikeW / 2, 0, color, width, fallenBikeW, getVehicleDimensions(shape).h, !!shape.dashed);
     ctx.restore();
   } else if (isSceneryAssetType(shape.type)) {
     const assetDimensions = getVehicleDimensions(shape);
