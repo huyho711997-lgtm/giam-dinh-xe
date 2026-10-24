@@ -47,148 +47,185 @@
     }
 
 
-    // Mục menu: nút thật (bàn phím + trình đọc màn hình), icon cùng một kiểu; active theo tab hiện tại.
-    function renderHeaderSubmenuItems(items) {
-      return items.filter(item => item.show).map(item => {
-        const active = activeDashboardTab === item.tab;
-        return `<button type="button" role="menuitem" class="header-nav-submenu-item ${active ? 'active' : ''}" ${active ? 'aria-current="page"' : ''} onclick="navigateHeaderTab('${item.tab}')">
-                <span class="header-nav-submenu-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${item.icon}</svg></span>
-                <span class="header-nav-submenu-copy">
-                  <span class="header-nav-submenu-title">${item.title}${item.badge ? `<span class="header-nav-new-badge">${item.badge}</span>` : ''}</span>
-                  <span class="header-nav-submenu-desc">${item.desc}</span>
-                </span>
-              </button>`;
-      }).join('');
+    // ==========================================================================
+    // SIDEBAR ĐIỀU HƯỚNG (thay cho các tab trên header) – css/app-sidebar.css
+    // Giữ tên hàm cũ (renderHeaderNavigationLinks / removeHeaderNavigationLinks / navigateHeaderTab)
+    // vì application.js, workspace.js, users.js, system.js đang gọi trực tiếp.
+    // ==========================================================================
+    const APP_SIDEBAR_COLLAPSE_KEY = 'app-sidebar-collapsed';
+    const APP_SIDEBAR_ICONS = {
+      home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/>',
+      list:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+      pending:'<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>',
+      tracker:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+      cancel:'<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6m0-6 6 6"/>',
+      report:'<path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/>',
+      payment:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',
+      transfer:'<path d="M4 7h13l-3-3M20 17H7l3 3"/>',
+      field:'<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
+      forms:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+      system:'<path d="M12 3 4 6v6c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/>',
+      collapse:'<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16M15 10l-2 2 2 2"/>',
+      menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+      close:'<path d="m6 6 12 12M18 6 6 18"/>'
+    };
+    const appSidebarIcon = (name, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${APP_SIDEBAR_ICONS[name] || ''}</svg>`;
+
+    // Cấu trúc menu theo nhóm; quyền hiển thị giữ đúng như các tab header trước đây.
+    function getAppSidebarGroups() {
+      const showList = hasUserPermission('list', 'view');
+      const showPending = hasUserPermission('pending', 'view');
+      const showReport = hasUserPermission('report', 'view');
+      return [
+        { label: 'Tổng quan', items: [
+          { tab: 'home', title: 'Trang chủ', icon: 'home', show: true }
+        ]},
+        { label: 'Quản lý hồ sơ', items: [
+          { tab: 'list', title: 'Hồ sơ giám định', icon: 'list', show: showList, also: ['create'] },
+          { tab: 'pending', title: 'Hồ sơ bồi thường', icon: 'pending', show: showPending },
+          { tab: 'pending_notes_tracker', title: 'Tiến độ hồ sơ tồn', icon: 'tracker', show: showPending },
+          { tab: 'claim_cancellation', title: 'Đề xuất hủy hồ sơ', icon: 'cancel', show: showPending || showList, badge: 'Mới' },
+          { tab: 'gdv_report', title: 'Báo cáo & thống kê GĐV', icon: 'report', show: showReport }
+        ]},
+        { label: 'Kế toán', items: [
+          { tab: 'accounting_claims', title: 'Hồ sơ thanh toán', icon: 'payment', show: hasUserPermission('accounting', 'review') },
+          { tab: 'accounting_transfer', title: 'Chuyển hồ sơ', icon: 'transfer', show: hasUserPermission('accounting', 'view') }
+        ]},
+        { label: 'Nghiệp vụ', items: [
+          { tab: 'field_reimbursements', title: 'Hiện trường', icon: 'field', show: hasUserPermission('field_reimb', 'view') },
+          { tab: 'shared_forms', title: 'Biểu mẫu dùng chung', icon: 'forms', show: true }
+        ]},
+        { label: 'Hệ thống', items: [
+          { tab: 'users', title: 'Quản trị hệ thống', icon: 'system', show: hasUserPermission('users', 'view'), also: ['system'] }
+        ]}
+      ].map(group => ({ ...group, items: group.items.filter(item => item.show) })).filter(group => group.items.length);
     }
 
-    function setHeaderSubmenuOpen(sub, open) {
-      sub.classList.toggle('open', open);
-      document.querySelector('[aria-controls="' + sub.id + '"]')?.setAttribute('aria-expanded', String(open));
+    function isAppSidebarItemActive(item) {
+      return activeDashboardTab === item.tab || (item.also || []).includes(activeDashboardTab);
     }
 
-    function toggleHeaderSubmenu(evt, submenuId) {
-      if (evt) evt.stopPropagation();
-      const sub = document.getElementById(submenuId);
-      document.querySelectorAll('.header-nav-submenu').forEach(s => { if (s.id !== submenuId) setHeaderSubmenuOpen(s, false); });
-      if (!sub) return;
-      const open = !sub.classList.contains('open');
-      setHeaderSubmenuOpen(sub, open);
-      // Mở bằng bàn phím (Enter/Space) thì đưa tiêu điểm vào mục đầu tiên.
-      if (open && evt && evt.detail === 0) sub.querySelector('[role="menuitem"]')?.focus();
+    function readAppSidebarCollapsed() {
+      try { return localStorage.getItem(APP_SIDEBAR_COLLAPSE_KEY) === '1'; } catch (_) { return false; }
     }
 
-    // Phím tắt trong menu: ↑/↓/Home/End di chuyển, Esc đóng và trả tiêu điểm về nút mở.
+    function toggleAppSidebarCollapsed() {
+      const collapsed = !document.body.classList.contains('app-sidebar-collapsed');
+      document.body.classList.toggle('app-sidebar-collapsed', collapsed);
+      try { localStorage.setItem(APP_SIDEBAR_COLLAPSE_KEY, collapsed ? '1' : '0'); } catch (_) {}
+      const btn = document.getElementById('appSidebarCollapseBtn');
+      if (btn) {
+        btn.setAttribute('aria-pressed', String(collapsed));
+        btn.title = collapsed ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên';
+        btn.setAttribute('aria-label', btn.title);
+      }
+    }
+
+    // Mobile: sidebar trượt ra trên lớp phủ.
+    function setAppSidebarOpen(open) {
+      document.body.classList.toggle('app-sidebar-open', !!open);
+      document.getElementById('appSidebarMenuBtn')?.setAttribute('aria-expanded', String(!!open));
+      if (open) document.querySelector('#appSidebar .app-sidebar-link.is-active, #appSidebar .app-sidebar-link')?.focus({ preventScroll: true });
+    }
+
     document.addEventListener('keydown', event => {
-      const sub = event.target.closest?.('.header-nav-submenu') || (event.target.matches?.('.header-nav-trigger') ? document.getElementById(event.target.getAttribute('aria-controls')) : null);
-      if (!sub) return;
-      const items = [...sub.querySelectorAll('[role="menuitem"]')], index = items.indexOf(document.activeElement);
-      if (event.key === 'Escape' && sub.classList.contains('open')) {
-        event.preventDefault(); setHeaderSubmenuOpen(sub, false);
-        document.querySelector('[aria-controls="' + sub.id + '"]')?.focus();
-      } else if (['ArrowDown','ArrowUp','Home','End'].includes(event.key) && items.length) {
-        event.preventDefault();
-        if (!sub.classList.contains('open')) setHeaderSubmenuOpen(sub, true);
-        const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : event.key === 'ArrowDown' ? (index + 1) % items.length : (index - 1 + items.length) % items.length;
-        items[next].focus();
-      } else if (event.key === 'Tab' && sub.classList.contains('open') && index !== -1) {
-        setHeaderSubmenuOpen(sub, false);
+      if (event.key === 'Escape' && document.body.classList.contains('app-sidebar-open')) {
+        setAppSidebarOpen(false);
+        document.getElementById('appSidebarMenuBtn')?.focus();
       }
     });
 
+    function renderAppSidebarMarkup(groups) {
+      const collapsed = document.body.classList.contains('app-sidebar-collapsed');
+      return `
+        <div class="app-sidebar-brand">
+          <button type="button" class="app-sidebar-logo" onclick="navigateHeaderTab('home')" title="Về trang chủ" aria-label="TASCO DLK – về trang chủ">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
+          </button>
+          <div class="app-sidebar-brand-copy"><strong>TASCO DLK</strong><span>Xe cơ giới</span></div>
+          <button type="button" class="app-sidebar-close" onclick="setAppSidebarOpen(false)" aria-label="Đóng menu">${appSidebarIcon('close')}</button>
+        </div>
+        <nav class="app-sidebar-nav" aria-label="Điều hướng chính">
+          ${groups.map(group => `
+            <div class="app-sidebar-group" role="group" aria-label="${group.label}">
+              <div class="app-sidebar-group-label" aria-hidden="true">${group.label}</div>
+              ${group.items.map(item => {
+                const active = isAppSidebarItemActive(item);
+                return `<button type="button" class="app-sidebar-link${active ? ' is-active' : ''}" data-tab="${item.tab}" onclick="navigateHeaderTab('${item.tab}')" title="${item.title}" ${active ? 'aria-current="page"' : ''}>
+                  ${appSidebarIcon(item.icon, 'app-sidebar-link-icon')}
+                  <span class="app-sidebar-link-text">${item.title}</span>
+                  ${item.badge ? `<span class="app-sidebar-badge">${item.badge}</span>` : ''}
+                </button>`;
+              }).join('')}
+            </div>`).join('')}
+        </nav>
+        <div class="app-sidebar-foot">
+          <button type="button" id="appSidebarCollapseBtn" class="app-sidebar-collapse" onclick="toggleAppSidebarCollapsed()" aria-pressed="${collapsed}" title="${collapsed ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên'}" aria-label="${collapsed ? 'Mở rộng thanh bên' : 'Thu gọn thanh bên'}">
+            ${appSidebarIcon('collapse')}<span class="app-sidebar-link-text">Thu gọn</span>
+          </button>
+        </div>`;
+    }
 
     function renderHeaderNavigationLinks() {
       const navContainer = document.getElementById('mainNavigationBar');
       if (!navContainer) return;
-      
-      let tabsContainer = document.getElementById('headerNavTabsContainer');
-      if (!tabsContainer) {
-        tabsContainer = document.createElement('div');
-        tabsContainer.id = 'headerNavTabsContainer';
-        tabsContainer.className = 'header-nav-tabs-container';
-        const userSpace = document.getElementById('navUserActionSpace');
-        navContainer.insertBefore(tabsContainer, userSpace);
+      document.getElementById('headerNavTabsContainer')?.remove(); // bỏ tab header kiểu cũ (nếu còn)
+
+      const groups = getAppSidebarGroups();
+      if (!document.body.classList.contains('has-app-sidebar') && readAppSidebarCollapsed()) document.body.classList.add('app-sidebar-collapsed');
+      document.body.classList.add('has-app-sidebar');
+
+      let sidebar = document.getElementById('appSidebar');
+      if (!sidebar) {
+        sidebar = document.createElement('aside');
+        sidebar.id = 'appSidebar';
+        sidebar.className = 'app-sidebar';
+        sidebar.setAttribute('aria-label', 'Thanh điều hướng');
+        document.body.prepend(sidebar);
+        const backdrop = document.createElement('div');
+        backdrop.id = 'appSidebarBackdrop';
+        backdrop.className = 'app-sidebar-backdrop';
+        backdrop.addEventListener('click', () => setAppSidebarOpen(false));
+        document.body.prepend(backdrop);
       }
+      const navScroll = sidebar.querySelector('.app-sidebar-nav')?.scrollTop || 0;
+      sidebar.innerHTML = renderAppSidebarMarkup(groups);
+      sidebar.querySelector('.app-sidebar-nav').scrollTop = navScroll;
 
-      const isGroup1Active = ['list', 'pending', 'pending_notes_tracker', 'claim_cancellation', 'gdv_report', 'create'].includes(activeDashboardTab);
-      const isAccActive = ['accounting_transfer', 'accounting_claims'].includes(activeDashboardTab) ? 'active' : '';
-      const isGroup3Active = ['users', 'system'].includes(activeDashboardTab);
-
-      const homeActive = activeDashboardTab === 'home' ? 'active' : '';
-      const showList = hasUserPermission('list', 'view');
-      const showPending = hasUserPermission('pending', 'view');
-      const showReport = hasUserPermission('report', 'view');
-      const showCreate = hasUserPermission('list', 'add');
-      const showGroup1 = showList || showPending || showReport || showCreate;
-
-      tabsContainer.innerHTML = `
-        <div class="header-nav-tabs">
-          
-          <!-- 1. TRANG CHỦ -->
-          <button id="headerNavHomeBtn" class="header-nav-btn ${homeActive}" onclick="navigateHeaderTab('home')">
-            <span class="nav-btn-text">Trang chủ</span>
-          </button>
-
-          <!-- 2. QUẢN LÝ HỒ SƠ – menu thả xuống (css/header-navigation.css) -->
-          ${showGroup1 ? `
-          <div class="header-nav-dropdown-wrapper">
-            <button type="button" id="headerNavClaimMgmtBtn" class="header-nav-btn header-nav-trigger ${isGroup1Active ? 'active' : ''}" aria-haspopup="menu" aria-expanded="false" aria-controls="submenuClaimMgmt" onclick="toggleHeaderSubmenu(event, 'submenuClaimMgmt')">
-              <span class="nav-btn-text">Quản lý Hồ sơ</span>
-              <svg class="header-nav-caret" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>
-            </button>
-            <div id="submenuClaimMgmt" class="header-nav-submenu" role="menu" aria-labelledby="headerNavClaimMgmtBtn">
-              ${renderHeaderSubmenuItems([
-                {tab:'list', show:showList, title:'Hồ sơ giám định', desc:'Danh sách ca xe, PASC & duyệt HSBT', icon:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>'},
-                {tab:'pending', show:showPending, title:'Hồ sơ bồi thường', desc:'Theo dõi tồn đọng & nhập Excel', icon:'<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>'},
-                {tab:'pending_notes_tracker', show:showPending, title:'Tiến độ hồ sơ tồn', desc:'Theo dõi & ghi chú độc lập', icon:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'},
-                {tab:'claim_cancellation', show:showPending || showList, title:'Đề xuất hủy hồ sơ', desc:'Tổng hợp hồ sơ GĐV cần hủy', badge:'Mới', icon:'<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6m0-6 6 6"/>'},
-                {tab:'gdv_report', show:showReport, title:'Báo cáo & thống kê GĐV', desc:'Biểu đồ KPI & trích xuất báo cáo', icon:'<path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/>'}
-              ])}
-            </div>
-          </div>
-          ` : ''}
-
-          <!-- 3. KẾ TOÁN (DIRECT TAB BUTTONS - ROLE BASED) -->
-          ${hasUserPermission('accounting', 'review') ? `
-            <button id="headerNavAccountingClaimsBtn" class="header-nav-btn ${activeDashboardTab === 'accounting_claims' ? 'active' : ''}" onclick="navigateHeaderTab('accounting_claims')">
-              <span class="nav-btn-text">Hồ sơ thanh toán</span>
-            </button>
-          ` : ''}
-          ${hasUserPermission('accounting', 'view') ? `
-          <button id="headerNavAccountingBtn" class="header-nav-btn ${activeDashboardTab === 'accounting_transfer' ? 'active' : ''}" onclick="navigateHeaderTab('accounting_transfer')">
-            <span class="nav-btn-text">Chuyển hồ sơ</span>
-          </button>
-          ` : ''}
-          ${hasUserPermission('field_reimb', 'view') ? `
-          <button id="headerNavFieldReimbursementBtn" class="header-nav-btn ${activeDashboardTab === 'field_reimbursements' ? 'active' : ''}" onclick="navigateHeaderTab('field_reimbursements')">
-            <span class="nav-btn-text">Hiện trường</span>
-          </button>
-          ` : ''}
-
-          <button id="headerNavSharedFormsBtn" type="button" class="header-nav-btn ${activeDashboardTab === 'shared_forms' ? 'active' : ''}" onclick="navigateHeaderTab('shared_forms')" ${activeDashboardTab === 'shared_forms' ? 'aria-current="page"' : ''}>
-            <span class="nav-btn-text">Biểu mẫu dùng chung</span>
-          </button>
-
-          <!-- 4. QUẢN TRỊ SYSTEM -->
-          ${hasUserPermission('users', 'view') ? `
-          <button id="headerNavSystemAdminBtn" type="button" class="header-nav-btn ${isGroup3Active ? 'active' : ''}" onclick="navigateHeaderTab('users')" ${isGroup3Active ? 'aria-current="page"' : ''}>
-            <span class="nav-btn-text">Quản trị System</span>
-          </button>
-          ` : ''}
-
-        </div>
-      `;
+      // Thanh trên: nút menu (mobile) + tên trang hiện tại.
+      let context = document.getElementById('appTopbarContext');
+      if (!context) {
+        context = document.createElement('div');
+        context.id = 'appTopbarContext';
+        context.className = 'app-topbar-context';
+        navContainer.insertBefore(context, document.getElementById('navUserActionSpace'));
+      }
+      let current = null, currentGroup = null;
+      for (const group of groups) for (const item of group.items) if (!current && isAppSidebarItemActive(item)) { current = item; currentGroup = group; }
+      context.innerHTML = `
+        <button type="button" id="appSidebarMenuBtn" class="app-topbar-menu" onclick="setAppSidebarOpen(true)" aria-controls="appSidebar" aria-expanded="${document.body.classList.contains('app-sidebar-open')}" aria-label="Mở menu điều hướng">${appSidebarIcon('menu')}</button>
+        <div class="app-topbar-title">
+          ${currentGroup && current && current.tab !== 'home' ? `<span>${currentGroup.label}</span>` : ''}
+          <strong>${current ? current.title : 'Trang chủ'}</strong>
+        </div>`;
     }
 
 
     function removeHeaderNavigationLinks() {
-      const tabsContainer = document.getElementById('headerNavTabsContainer');
-      if (tabsContainer) tabsContainer.remove();
+      document.getElementById('headerNavTabsContainer')?.remove();
+      document.getElementById('appSidebar')?.remove();
+      document.getElementById('appSidebarBackdrop')?.remove();
+      document.getElementById('appTopbarContext')?.remove();
+      document.body.classList.remove('has-app-sidebar', 'app-sidebar-open');
     }
+
+    // Tương thích ngược: runtime.js vẫn gọi để đóng menu header khi bấm ra ngoài.
+    function setHeaderSubmenuOpen(sub, open) { sub?.classList.toggle('open', !!open); }
+    function toggleHeaderSubmenu() {}
 
 
     function navigateHeaderTab(tabName) {
-      // Auto-close open dropdown submenus on item select
-      document.querySelectorAll('.header-nav-submenu').forEach(s => setHeaderSubmenuOpen(s, false));
+      setAppSidebarOpen(false); // mobile: đóng sidebar sau khi chọn
 
       if (tabName === 'gdv_report') {
         activeGdvReportView = 'weekly_zone';

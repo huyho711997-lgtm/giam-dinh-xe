@@ -1,0 +1,114 @@
+/* ==========================================================================
+   Sidebar điều hướng chính (js/core/navigation.js) – thay cho các tab trên header.
+   - Desktop: cố định bên trái, 256px; thu gọn thành thanh icon 76px (nhớ trong localStorage).
+   - ≤1024px: ẩn, trượt ra khi bấm nút ☰ trên thanh trên, có lớp phủ; Esc / chạm lớp phủ để đóng.
+   Một màu nhấn (--primary) cho mục đang chọn, icon đồng nhất – cùng ngôn ngữ với header-navigation.css.
+   ========================================================================== */
+body.has-app-sidebar { --app-sidebar-w: 256px; padding-left: var(--app-sidebar-w); transition: padding-left .2s ease; }
+body.has-app-sidebar.app-sidebar-collapsed { --app-sidebar-w: 76px; }
+
+.app-sidebar {
+  position: fixed; inset: 0 auto 0 0; z-index: 2100;
+  display: flex; flex-direction: column; width: var(--app-sidebar-w, 256px);
+  border-right: 1px solid var(--border); background: var(--surface-strong);
+  transition: width .2s ease, transform .22s ease;
+}
+[data-theme="dark"] .app-sidebar, body:not(.light-mode) .app-sidebar { background: rgba(15,18,24,.98); }
+
+/* ---- Thương hiệu ---- */
+.app-sidebar-brand { display: flex; align-items: center; gap: 12px; height: 72px; box-sizing: border-box; padding: 0 16px; border-bottom: 1px solid var(--border); flex: 0 0 auto; }
+.app-sidebar-logo {
+  display: grid; place-items: center; flex: 0 0 42px; width: 42px; height: 42px; padding: 0;
+  border: 1px solid color-mix(in srgb,var(--primary) 30%,transparent); border-radius: 12px;
+  background: color-mix(in srgb,var(--primary) 12%,transparent); color: var(--primary); cursor: pointer;
+}
+.app-sidebar-logo svg { width: 21px; height: 21px; }
+.app-sidebar-brand-copy { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; white-space: nowrap; }
+.app-sidebar-brand-copy strong { color: var(--text-main); font-size: 14.5px; font-weight: 850; letter-spacing: -.02em; }
+.app-sidebar-brand-copy span { margin-top: 2px; color: var(--primary); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.app-sidebar-close { display: none; }
+
+/* ---- Danh sách mục ---- */
+.app-sidebar-nav { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 12px 12px 16px; scrollbar-width: thin; scrollbar-color: color-mix(in srgb,var(--primary) 30%,transparent) transparent; }
+.app-sidebar-group + .app-sidebar-group { margin-top: 14px; }
+.app-sidebar-group-label { padding: 0 10px 6px; color: var(--text-muted); font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; opacity: .85; }
+.app-sidebar-link, .app-sidebar-collapse {
+  position: relative; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 40px; margin: 0 0 2px; padding: 0 10px;
+  border: 1px solid transparent; border-radius: 10px; background: transparent;
+  color: var(--text-muted); font: inherit; font-size: 13px; font-weight: 650; letter-spacing: -.005em; text-align: left; white-space: nowrap; cursor: pointer;
+  transition: background-color .14s ease, color .14s ease, border-color .14s ease;
+}
+.app-sidebar-link-icon, .app-sidebar-collapse svg { flex: 0 0 18px; width: 18px; height: 18px; }
+.app-sidebar-link-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.app-sidebar-link:hover, .app-sidebar-collapse:hover { background: var(--surface-hover); color: var(--text-main); }
+.app-sidebar-link:focus-visible, .app-sidebar-collapse:focus-visible, .app-sidebar-logo:focus-visible, .app-topbar-menu:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.app-sidebar-link.is-active {
+  border-color: color-mix(in srgb,var(--primary) 26%,transparent);
+  background: color-mix(in srgb,var(--primary) 10%,transparent); color: var(--primary); font-weight: 750;
+}
+.app-sidebar-link.is-active::before { content: ''; position: absolute; left: -12px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: var(--primary); }
+.app-sidebar-badge {
+  margin-left: auto; padding: 2px 6px; border-radius: 5px;
+  background: color-mix(in srgb,var(--primary) 16%,transparent); color: var(--primary);
+  font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; line-height: 1.3;
+}
+
+/* ---- Chân: nút thu gọn ---- */
+.app-sidebar-foot { flex: 0 0 auto; padding: 10px 12px 14px; border-top: 1px solid var(--border); }
+.app-sidebar-collapse { margin: 0; }
+.app-sidebar-collapsed .app-sidebar-collapse svg { transform: scaleX(-1); }
+
+/* ---- Trạng thái thu gọn (desktop) ---- */
+body.app-sidebar-collapsed .app-sidebar-brand { justify-content: center; padding: 0; }
+body.app-sidebar-collapsed :is(.app-sidebar-brand-copy, .app-sidebar-link-text, .app-sidebar-badge) { display: none; }
+body.app-sidebar-collapsed .app-sidebar-group-label { height: 1px; margin: 0 10px 10px; padding: 0; overflow: hidden; color: transparent; background: var(--border); }
+body.app-sidebar-collapsed .app-sidebar-group:first-child .app-sidebar-group-label { display: none; }
+body.app-sidebar-collapsed :is(.app-sidebar-link, .app-sidebar-collapse) { justify-content: center; padding: 0; }
+
+/* ---- Thanh trên: ẩn logo cũ, hiện tên trang ---- */
+body.has-app-sidebar .tasco-public-nav-wrapper .nav-brand { display: none; }
+body.has-app-sidebar .tasco-public-nav-inner { min-height: 72px; }
+.app-topbar-context { display: flex; align-items: center; gap: 12px; min-width: 0; margin-right: auto; }
+.app-topbar-menu {
+  display: none; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; padding: 0;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-main); cursor: pointer;
+}
+.app-topbar-menu svg { width: 18px; height: 18px; }
+.app-topbar-title { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.app-topbar-title span { color: var(--text-muted); font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.app-topbar-title strong { overflow: hidden; color: var(--text-main); font-size: 16px; font-weight: 800; letter-spacing: -.02em; text-overflow: ellipsis; white-space: nowrap; }
+
+.app-sidebar-backdrop { display: none; }
+
+/* ---- Màn hình hẹp: sidebar trượt ---- */
+@media (max-width: 1024px) {
+  body.has-app-sidebar, body.has-app-sidebar.app-sidebar-collapsed { --app-sidebar-w: 280px; padding-left: 0; }
+  .app-sidebar { transform: translateX(-100%); box-shadow: none; max-width: 86vw; }
+  body.app-sidebar-open .app-sidebar { transform: none; box-shadow: 0 24px 60px rgba(0,0,0,.3); }
+  .app-sidebar-backdrop { position: fixed; inset: 0; z-index: 2090; display: block; background: rgba(8,10,14,.45); opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  body.app-sidebar-open .app-sidebar-backdrop { opacity: 1; pointer-events: auto; }
+  body.app-sidebar-open { overflow: hidden; }
+  /* Trên mobile luôn hiện đầy đủ chữ dù desktop đang thu gọn */
+  body.app-sidebar-collapsed .app-sidebar-brand { justify-content: flex-start; padding: 0 16px; }
+  body.app-sidebar-collapsed :is(.app-sidebar-brand-copy, .app-sidebar-link-text, .app-sidebar-badge) { display: revert; }
+  body.app-sidebar-collapsed .app-sidebar-badge { display: inline-block; }
+  body.app-sidebar-collapsed .app-sidebar-group-label { height: auto; margin: 0; padding: 0 10px 6px; color: var(--text-muted); background: none; }
+  body.app-sidebar-collapsed .app-sidebar-group:first-child .app-sidebar-group-label { display: block; }
+  body.app-sidebar-collapsed :is(.app-sidebar-link, .app-sidebar-collapse) { justify-content: flex-start; padding: 0 10px; }
+  .app-sidebar-close {
+    display: grid; place-items: center; width: 36px; height: 36px; margin-left: auto; padding: 0;
+    border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--text-muted); cursor: pointer;
+  }
+  .app-sidebar-close svg { width: 16px; height: 16px; }
+  .app-sidebar-foot { display: none; }
+  .app-topbar-menu { display: grid; }
+  body.has-app-sidebar .tasco-public-nav-inner { min-height: 62px; padding: 10px 14px !important; }
+}
+@media (max-width: 560px) {
+  .app-topbar-title span { display: none; }
+  .app-topbar-title strong { font-size: 14px; }
+  body.has-app-sidebar .nav-user-copy { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.has-app-sidebar, .app-sidebar, .app-sidebar-backdrop, .app-sidebar-link { transition: none; }
+}
