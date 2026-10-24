@@ -3,10 +3,6 @@
   --sf-paper:var(--ce-paper); --sf-ink:var(--ce-ink); --sf-muted:var(--ce-muted); --sf-line:var(--ce-line); --sf-soft:var(--ce-soft);
   --sf-gold:var(--ce-gold); --sf-gold-bg:var(--ce-gold-soft); --sf-action:var(--ce-action); --sf-action-hover:var(--ce-action-hover); --sf-action-text:var(--ce-action-text);
 }
-#addPendingClaimModalOverlay .claim-editor-header-actions { flex-wrap:wrap; }
-#addPendingClaimModalOverlay .claim-reduction-header-button { gap:8px; padding:0 12px; color:var(--ce-ink); }
-.claim-reduction-header-icon { display:grid; place-items:center; width:26px; height:26px; padding:5px; border:1px solid color-mix(in srgb,var(--ce-gold) 22%,transparent); border-radius:7px; color:var(--ce-gold); background:var(--ce-gold-soft); }
-.claim-reduction-header-icon svg { width:16px; height:16px; }
 .claim-reduction-section>header { padding:22px 24px; gap:14px; background:var(--ce-paper); }
 .claim-reduction-emblem { display:grid; place-items:center; width:42px; height:42px; flex-shrink:0; padding:10px; border:1px solid color-mix(in srgb,var(--ce-gold) 24%,var(--ce-line)); border-radius:12px; background:var(--ce-gold-soft); color:var(--ce-gold); }
 .claim-reduction-emblem svg { width:22px; height:22px; }

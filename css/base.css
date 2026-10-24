@@ -3274,69 +3274,69 @@ body.light-mode .collection-guide-preview iframe { background: #eae8e1; color-sc
 
       /* 1. Nút HỦY BỎ ĐỀ XUẤT HỦY: Màu Đỏ sang trọng (Red/Crimson) */
       .btn-header-revert-cancel {
-        background: rgba(239, 68, 68, 0.08) !important;
-        color: #ef4444 !important;
-        border: 1.5px solid rgba(239, 68, 68, 0.45) !important;
+        background: rgba(239, 68, 68, 0.08);
+        color: #ef4444;
+        border: 1.5px solid rgba(239, 68, 68, 0.45);
       }
       .btn-header-revert-cancel:hover {
-        background: rgba(239, 68, 68, 0.18) !important;
-        border-color: #ef4444 !important;
-        color: #dc2626 !important;
+        background: rgba(239, 68, 68, 0.18);
+        border-color: #ef4444;
+        color: #dc2626;
         box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
       }
       .btn-header-revert-cancel:active {
-        background: rgba(239, 68, 68, 0.25) !important;
+        background: rgba(239, 68, 68, 0.25);
         box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
       }
 
       /* 2. Nút ĐÃ ĐỀ XUẤT HỦY: Màu Vàng Hổ Phách / Cam cảnh báo (Amber/Warning) */
       .btn-header-cancel-proposed {
-        background: rgba(245, 158, 11, 0.12) !important;
-        color: #d97706 !important;
-        border: 1.5px solid rgba(245, 158, 11, 0.45) !important;
+        background: rgba(245, 158, 11, 0.12);
+        color: #d97706;
+        border: 1.5px solid rgba(245, 158, 11, 0.45);
       }
       .btn-header-cancel-proposed:hover {
-        background: rgba(245, 158, 11, 0.22) !important;
-        border-color: #f59e0b !important;
-        color: #b45309 !important;
+        background: rgba(245, 158, 11, 0.22);
+        border-color: #f59e0b;
+        color: #b45309;
         box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
       }
       .btn-header-cancel-proposed:active {
-        background: rgba(245, 158, 11, 0.28) !important;
+        background: rgba(245, 158, 11, 0.28);
         box-shadow: 0 2px 6px rgba(245, 158, 11, 0.15);
       }
 
       /* 3. Nút HỦY HỒ SƠ (Bình thường): Màu Đỏ viền mảnh */
       .btn-header-cancel-normal {
-        background: rgba(239, 68, 68, 0.07) !important;
-        color: #ef4444 !important;
-        border: 1.5px solid rgba(239, 68, 68, 0.5) !important;
+        background: rgba(239, 68, 68, 0.07);
+        color: #ef4444;
+        border: 1.5px solid rgba(239, 68, 68, 0.5);
       }
       .btn-header-cancel-normal:hover {
-        background: rgba(239, 68, 68, 0.16) !important;
-        border-color: #ef4444 !important;
-        color: #dc2626 !important;
+        background: rgba(239, 68, 68, 0.16);
+        border-color: #ef4444;
+        color: #dc2626;
         box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
       }
       .btn-header-cancel-normal:active {
-        background: rgba(239, 68, 68, 0.22) !important;
+        background: rgba(239, 68, 68, 0.22);
         box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
       }
 
       /* 4. Nút ĐÃ DUYỆT HỦY: Màu Đỏ đã khóa */
       .btn-header-cancel-declined {
-        background: rgba(239, 68, 68, 0.12) !important;
-        color: #ef4444 !important;
-        border: 1.5px solid rgba(239, 68, 68, 0.35) !important;
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+        border: 1.5px solid rgba(239, 68, 68, 0.35);
       }
       .btn-header-cancel-declined:hover {
-        background: rgba(239, 68, 68, 0.2) !important;
-        border-color: #ef4444 !important;
-        color: #dc2626 !important;
+        background: rgba(239, 68, 68, 0.2);
+        border-color: #ef4444;
+        color: #dc2626;
         box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
       }
       .btn-header-cancel-declined:active {
-        background: rgba(239, 68, 68, 0.25) !important;
+        background: rgba(239, 68, 68, 0.25);
         box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
       }
 
@@ -3345,9 +3345,9 @@ body.light-mode .collection-guide-preview iframe { background: #eae8e1; color-sc
         height: 36px;
         padding: 0 10px 0 5px;
         gap: 8px;
-        background: linear-gradient(180deg, var(--surface-strong), var(--surface-soft)) !important;
-        color: var(--text-main) !important;
-        border: 1px solid rgba(196, 145, 48, 0.42) !important;
+        background: linear-gradient(180deg, var(--surface-strong), var(--surface-soft));
+        color: var(--text-main);
+        border: 1px solid rgba(196, 145, 48, 0.42);
         border-radius: 11px;
         box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
         font-weight: 800;
@@ -3381,10 +3381,10 @@ body.light-mode .collection-guide-preview iframe { background: #eae8e1; color-sc
       }
       .btn-header-scene-draw:hover {
         transform: translateY(-1px);
-        background: linear-gradient(180deg, var(--surface), rgba(216,180,109,.1)) !important;
-        border-color: rgba(190, 132, 28, 0.78) !important;
+        background: linear-gradient(180deg, var(--surface), rgba(216,180,109,.1));
+        border-color: rgba(190, 132, 28, 0.78);
         box-shadow: 0 7px 18px rgba(135, 94, 24, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.78);
-        color: var(--text-main) !important;
+        color: var(--text-main);
       }
       .btn-header-scene-draw:hover .scene-draw-icon-wrap {
         transform: translateY(-1px) scale(1.04);

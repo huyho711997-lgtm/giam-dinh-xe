@@ -586,6 +586,20 @@
     }
 
 
+    // Dựng nội dung nút tác vụ ở header theo cùng cấu trúc với markup tĩnh trong index.html
+    // (chip icon + nhãn) để nút trạng thái hủy không bị "rơi" khỏi hệ thiết kế khi JS đổi trạng thái.
+    const HEADER_CLAIM_ACTION_ICONS = {
+      cancel: '<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6m0-6 6 6"/>',
+      clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+      lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'
+    };
+    function headerClaimActionMarkup(iconKey, label) {
+      const paths = HEADER_CLAIM_ACTION_ICONS[iconKey] || HEADER_CLAIM_ACTION_ICONS.cancel;
+      const safeLabel = String(label).replace(/[&<>"']/g, ch => `&#${ch.charCodeAt(0)};`);
+      return `<span class="ce-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg></span><span class="ce-action-label">${safeLabel}</span>`;
+    }
+
+
     function updateHeaderCancelClaimProposalButton(item) {
       const cancelBtn = document.getElementById('btnHeaderCancelClaimProposal');
       const revertBtn = document.getElementById('btnHeaderRevertCancelProposal');
@@ -602,18 +616,12 @@
 
       if (isDeclined) {
         cancelBtn.className = 'btn-header-claim-action btn-header-cancel-declined';
-        cancelBtn.innerHTML = `
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-          <span>Đã duyệt hủy</span>
-        `;
+        cancelBtn.innerHTML = headerClaimActionMarkup('lock', 'Đã duyệt hủy');
         cancelBtn.title = 'Hồ sơ đã được phê duyệt Từ chối/Hủy. Nhấp để xem chi tiết lý do';
         if (revertBtn) revertBtn.style.display = 'none';
       } else if (isProposed) {
         cancelBtn.className = 'btn-header-claim-action btn-header-cancel-proposed';
-        cancelBtn.innerHTML = `
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-          <span>Đã đề xuất hủy</span>
-        `;
+        cancelBtn.innerHTML = headerClaimActionMarkup('clock', 'Đã đề xuất hủy');
         cancelBtn.title = 'Hồ sơ đang ở trạng thái Chờ duyệt hủy. Nhấp để điều chỉnh lý do đề xuất';
         if (revertBtn) {
           revertBtn.className = 'btn-header-claim-action btn-header-revert-cancel';
@@ -621,10 +629,7 @@
         }
       } else {
         cancelBtn.className = 'btn-header-claim-action btn-header-cancel-normal';
-        cancelBtn.innerHTML = `
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-          <span>Hủy hồ sơ</span>
-        `;
+        cancelBtn.innerHTML = headerClaimActionMarkup('cancel', 'Hủy hồ sơ');
         cancelBtn.title = 'Nhấp để chuyển hồ sơ sang trạng thái Đề xuất hủy';
         if (revertBtn) revertBtn.style.display = 'none';
       }

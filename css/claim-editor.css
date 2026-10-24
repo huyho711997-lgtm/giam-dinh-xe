@@ -92,10 +92,6 @@ body.claim-editor-open { overflow:hidden; }
 #addPendingClaimModalOverlay .claim-editor-content .input-premium { height:40px; border-color:var(--ce-line); border-radius:10px; background:var(--ce-paper); box-shadow:none; }
 #addPendingClaimModalOverlay .claim-editor-content :is(input,textarea):focus { border-color:var(--ce-gold); box-shadow:0 0 0 3px color-mix(in srgb,var(--ce-gold) 12%,transparent); }
 #addPendingClaimModalOverlay .collection-guide-search .input-premium { padding-left:39px; padding-right:30px; }
-#addPendingClaimModalOverlay :is(.btn-header-claim-action,.claim-editor-header-actions>.btn-premium) { min-height:40px; height:40px; border-radius:10px; border-color:var(--ce-line); background:var(--ce-paper); box-shadow:none; }
-#addPendingClaimModalOverlay .btn-header-claim-action:hover { border-color:var(--ce-gold); background:var(--ce-gold-soft); transform:none; }
-#addPendingClaimModalOverlay .btn-header-cancel-normal { border-color:color-mix(in srgb,var(--danger) 40%,transparent); color:var(--danger); }
-#addPendingClaimModalOverlay :is(.scene-draw-icon-wrap,.collection-word-trigger-icon) { color:var(--ce-gold); background:var(--ce-gold-soft); border-color:color-mix(in srgb,var(--ce-gold) 20%,transparent); box-shadow:none; }
 #addPendingClaimModalOverlay .claim-editor-header-icon { color:var(--ce-gold); background:var(--ce-gold-soft); box-shadow:none; }
 #addPendingClaimModalOverlay .claim-editor-footer .btn-premium { border-radius:10px; box-shadow:none; }
 #addPendingClaimModalOverlay #btnSubmitAddPendingClaim { background:var(--ce-action) !important; color:var(--ce-action-text) !important; }
@@ -153,7 +149,6 @@ body .ce-document-menu .collection-word-menu-document:is(:hover,:focus-within) {
   #addPendingClaimModalOverlay .claim-editor-header-icon { width:36px; height:36px; flex-basis:36px; }
   #addPendingClaimModalOverlay h3 { font-size:14px !important; }
   #addPendingClaimModalOverlay .claim-editor-header-actions { gap:6px !important; }
-  #addPendingClaimModalOverlay .btn-header-claim-action { font-size:10px; }
   .claim-editor-content { padding:16px; }
   .claim-editor-form-grid { grid-template-columns:minmax(0,1fr); padding:14px; }
   .claim-editor-form-grid>[style*="grid-column:"] { grid-column:1 / -1 !important; }

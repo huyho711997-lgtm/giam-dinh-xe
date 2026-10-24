@@ -1,0 +1,201 @@
+/* ==========================================================================
+   Nhóm tác vụ ở header màn hình hồ sơ (Thông báo giảm trừ · Vẽ sơ đồ · Xuất Word · Hủy · Đóng)
+   Nguồn style DUY NHẤT cho các nút này. Mọi nút dùng chung cấu trúc:
+     <button class="btn-header-claim-action [biến thể]">
+       <span class="ce-action-icon">svg</span><span class="ce-action-label">…</span>[svg.ce-action-caret]
+     </button>
+   Biến thể chỉ đổi bộ màu (token), không đổi kích thước, bo góc hay khoảng cách.
+   Nạp sau claim-editor.css / reduction-notice.css; selector có #id nên không cần !important.
+   ========================================================================== */
+
+#addPendingClaimModalOverlay .claim-editor-header-actions {
+  --cha-height: 40px;
+  --cha-radius: 10px;
+  --cha-chip: 28px;
+  --cha-accent: var(--ce-gold);
+  --cha-accent-soft: var(--ce-gold-soft);
+  --cha-danger: #b42318;
+  --cha-danger-soft: #fef3f2;
+  --cha-danger-line: #f3cbc6;
+  --cha-warn: #a15c07;
+  --cha-warn-soft: #fff6e5;
+  --cha-warn-line: #f0d6a4;
+  --cha-highlight: rgba(255, 255, 255, .75);
+  --cha-shadow: 0 1px 2px rgba(48, 40, 24, .05);
+  --cha-shadow-hover: 0 6px 16px rgba(120, 86, 28, .10), 0 1px 2px rgba(48, 40, 24, .06);
+
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+body:not(.light-mode) #addPendingClaimModalOverlay .claim-editor-header-actions {
+  --cha-danger: #f4a199;
+  --cha-danger-soft: #2f1f20;
+  --cha-danger-line: #5a3030;
+  --cha-warn: #f0c46e;
+  --cha-warn-soft: #2e2716;
+  --cha-warn-line: #5a4a23;
+  --cha-highlight: rgba(255, 255, 255, .04);
+  --cha-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+  --cha-shadow-hover: 0 6px 18px rgba(0, 0, 0, .30);
+}
+
+/* ---- Nút gốc (dùng chung cho mọi biến thể) ---- */
+#addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-claim-action {
+  /* Mỗi biến thể chỉ ghi đè 4 token này */
+  --cha-fg: var(--ce-ink);
+  --cha-line: var(--ce-line);
+  --cha-line-hover: color-mix(in srgb, var(--cha-accent) 55%, var(--ce-line));
+  --cha-chip-fg: var(--cha-accent);
+  --cha-chip-bg: var(--cha-accent-soft);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  height: var(--cha-height);
+  min-height: var(--cha-height);
+  margin: 0;
+  padding: 0 14px 0 6px;
+  /* Khai báo đủ width/style: thiếu phần này nút rơi về viền outset mặc định của trình duyệt */
+  border: 1px solid var(--cha-line);
+  border-radius: var(--cha-radius);
+  background: var(--ce-paper);
+  color: var(--cha-fg);
+  box-shadow: var(--cha-shadow), inset 0 1px 0 var(--cha-highlight);
+  font: 700 12.5px/1 'Plus Jakarta Sans', system-ui, sans-serif;
+  letter-spacing: -.005em;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  overflow: visible;
+  transform: none;
+  transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, color .18s ease, transform .18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+#addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-claim-action:has(.ce-action-caret) { padding-right: 10px; }
+
+#addPendingClaimModalOverlay .claim-editor-header-actions .ce-action-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 var(--cha-chip);
+  width: var(--cha-chip);
+  height: var(--cha-chip);
+  border: 1px solid color-mix(in srgb, var(--cha-chip-fg) 18%, transparent);
+  border-radius: 7px;
+  background: var(--cha-chip-bg);
+  color: var(--cha-chip-fg);
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+#addPendingClaimModalOverlay .claim-editor-header-actions .ce-action-icon svg { display: block; width: 15px; height: 15px; }
+#addPendingClaimModalOverlay .claim-editor-header-actions .ce-action-label { line-height: 1; }
+#addPendingClaimModalOverlay .claim-editor-header-actions .ce-action-caret {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+  margin-left: -2px;
+  color: var(--ce-muted);
+  transition: transform .2s ease, color .18s ease;
+}
+
+/* ---- Trạng thái tương tác ---- */
+#addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-claim-action:hover {
+  border-color: var(--cha-line-hover);
+  background: color-mix(in srgb, var(--cha-chip-bg) 35%, var(--ce-paper));
+  color: var(--cha-fg);
+  box-shadow: var(--cha-shadow-hover), inset 0 1px 0 var(--cha-highlight);
+  transform: translateY(-1px);
+}
+#addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-claim-action:hover .ce-action-icon {
+  border-color: color-mix(in srgb, var(--cha-chip-fg) 32%, transparent);
+}
+#addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-claim-action:hover .ce-action-caret { color: var(--cha-chip-fg); }
+#addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-claim-action:hover .ce-action-caret--next { transform: translateX(2px); }
+#addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-claim-action:active {
+  transform: translateY(0);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .08);
+}
+#addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-claim-action:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cha-chip-fg) 26%, transparent), var(--cha-shadow);
+}
+/* Menu Xuất Word đang mở */
+#addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-claim-action[aria-expanded="true"] {
+  border-color: var(--cha-accent);
+  background: color-mix(in srgb, var(--cha-accent-soft) 45%, var(--ce-paper));
+}
+#addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-claim-action[aria-expanded="true"] .ce-action-caret {
+  color: var(--cha-accent);
+  transform: rotate(180deg);
+}
+
+/* ---- Biến thể màu (chỉ đổi token) ---- */
+#addPendingClaimModalOverlay .claim-editor-header-actions :is(.btn-header-cancel-normal, .btn-header-revert-cancel) {
+  --cha-fg: var(--cha-danger);
+  --cha-line: var(--cha-danger-line);
+  --cha-line-hover: var(--cha-danger);
+  --cha-chip-fg: var(--cha-danger);
+  --cha-chip-bg: var(--cha-danger-soft);
+}
+#addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-cancel-proposed {
+  --cha-fg: var(--cha-warn);
+  --cha-line: var(--cha-warn-line);
+  --cha-line-hover: var(--cha-warn);
+  --cha-chip-fg: var(--cha-warn);
+  --cha-chip-bg: var(--cha-warn-soft);
+}
+/* Đã duyệt hủy: trạng thái chốt, nền đỏ nhạt cố định thay vì nút hành động */
+#addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-cancel-declined {
+  --cha-fg: var(--cha-danger);
+  --cha-line: var(--cha-danger-line);
+  --cha-line-hover: var(--cha-danger);
+  --cha-chip-fg: var(--ce-paper);
+  --cha-chip-bg: var(--cha-danger);
+  background: var(--cha-danger-soft);
+}
+
+/* ---- Nút đóng: cùng chiều cao/bo góc, chỉ có icon ---- */
+#addPendingClaimModalOverlay .claim-editor-header-actions .ce-action-close {
+  --cha-fg: var(--ce-muted);
+  --cha-chip-bg: var(--ce-soft);
+  width: var(--cha-height);
+  min-width: var(--cha-height);
+  padding: 0;
+}
+#addPendingClaimModalOverlay .claim-editor-header-actions .ce-action-close svg { width: 17px; height: 17px; }
+#addPendingClaimModalOverlay .claim-editor-header-actions .ce-action-close:hover {
+  --cha-fg: var(--ce-ink);
+  --cha-line-hover: var(--ce-muted);
+  background: var(--ce-soft);
+  transform: none;
+}
+
+/* Vạch ngăn nhóm công cụ với nhóm hủy/đóng */
+#addPendingClaimModalOverlay .claim-editor-header-actions .ce-action-divider {
+  flex: 0 0 1px;
+  width: 1px;
+  height: 24px;
+  margin: 0 4px;
+  background: var(--ce-line);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 900px) {
+  #addPendingClaimModalOverlay .claim-editor-header-actions { justify-content: flex-start; gap: 6px; }
+  /* Nút đóng luôn nằm ở mép phải khi hàng nút xuống dòng */
+  #addPendingClaimModalOverlay .claim-editor-header-actions .ce-action-close { margin-left: auto; }
+  #addPendingClaimModalOverlay .claim-editor-header-actions .ce-action-divider { display: none; }
+}
+@media (max-width: 600px) {
+  #addPendingClaimModalOverlay .claim-editor-header-actions { --cha-height: 36px; --cha-chip: 24px; }
+  #addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-claim-action { gap: 7px; padding: 0 10px 0 5px; font-size: 11.5px; }
+  #addPendingClaimModalOverlay .claim-editor-header-actions .ce-action-icon svg { width: 13px; height: 13px; }
+  #addPendingClaimModalOverlay .claim-editor-header-actions .ce-action-close { padding: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #addPendingClaimModalOverlay .claim-editor-header-actions :is(.btn-header-claim-action, .ce-action-icon, .ce-action-caret) { transition: none; }
+  #addPendingClaimModalOverlay .claim-editor-header-actions .btn-header-claim-action:hover { transform: none; }
+}
