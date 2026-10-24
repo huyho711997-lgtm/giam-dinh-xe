@@ -139,6 +139,7 @@
       if (!modal) return;
 
       editingPendingClaimId = null;
+      ClaimReductionNotice.load({});
 
       modal.querySelectorAll('input[id^="modalPending"],textarea[id^="modalPending"]').forEach(field => { field.value = ''; });
 
@@ -319,6 +320,7 @@
       setVal('modalPendingNgayNhanDuHoSo', formatCleanDateField(item.ngayNhanDuHoSo));
       setVal('modalPendingNgayKtXacNhan', formatCleanDateField(item.ngayKtXacNhan));
       setVal('modalPendingGhiChu', item.ghiChu || '');
+      ClaimReductionNotice.load(item.thongBaoGiamTru || {});
       setVal('modalPendingTndsGhiChu', item.tndsGhiChu || '');
 
       const editTndsInfoEl = document.getElementById('modalPendingTndsLastUpdatedInfo');
@@ -573,6 +575,7 @@
         ngayKtXacNhan: formatCleanDateField(getVal('modalPendingNgayKtXacNhan')) || getVal('modalPendingNgayKtXacNhan') || existingItem.ngayKtXacNhan || '',
         ngayThanhToan: getVal('modalPendingNgayThanhToan') || existingItem.ngayThanhToan || '',
         ghiChu: generalNoteVal,
+        thongBaoGiamTru: ClaimReductionNotice.getState(),
         tndsGhiChu: tndsNoteVal,
         tndsLastUpdated: tndsLastUpdated,
         tndsUpdatedBy: tndsUpdatedBy,

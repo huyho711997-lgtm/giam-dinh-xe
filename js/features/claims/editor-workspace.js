@@ -119,6 +119,7 @@ const ClaimEditorWorkspace = (() => {
     historySignature = '';
     document.body.classList.add('claim-editor-open');
     prepareForms();
+    ClaimReductionNotice.mount();
     showMain();
     refreshSummary();
     refreshNotes();
@@ -126,6 +127,7 @@ const ClaimEditorWorkspace = (() => {
     document.getElementById('addPendingClaimModalTitle')?.focus({preventScroll:true});
   }
   function close() {
+    ClaimReductionNotice.close();
     opened = false;
     historySignature = '';
     document.body.classList.remove('claim-editor-open');

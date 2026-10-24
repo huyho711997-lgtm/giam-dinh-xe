@@ -1,0 +1,165 @@
+const ClaimReductionNotice = (() => {
+  const stages = ['Đang xem xét','Dự kiến áp dụng','Đã phê duyệt','Đã áp dụng'];
+  const fields = {reason:'Lý do giảm trừ / chế tài',impact:'Mức giảm trừ / chế tài',basis:'Căn cứ / ghi nhận hồ sơ',stage:'Trạng thái xử lý'};
+  let draft = {}, dialog = null;
+  const node = (tag, text, className) => {
+    const element = document.createElement(tag);
+    if (text) element.textContent = text;
+    if (className) element.className = className;
+    return element;
+  };
+  const button = (text, action, primary = false) => {
+    const element = node('button',text,'sf-button' + (primary ? ' sf-primary' : ''));
+    element.type = 'button'; element.onclick = action; return element;
+  };
+  const value = id => { const text = String(document.getElementById('modalPending' + id)?.value || '').trim(); return text === '—' ? '' : text; };
+  const owner = () => firebase.auth().currentUser?.uid;
+  function close() { if (dialog?.open) dialog.close(); }
+  function load(data) {
+    if (dialog) dialog.dataset.discard = 'true';
+    close(); draft = {};
+    for (const key of ['reason','impact','basis','stage','to','cc','subject','body','signature']) {
+      draft[key] = typeof data?.[key] === 'string' ? data[key].slice(0,key === 'signature' ? 16000 : 6000) : '';
+    }
+    if (!stages.includes(draft.stage)) draft.stage = stages[0];
+    for (const key of Object.keys(fields)) {
+      const input = document.getElementById('modalPendingReduction_' + key);
+      if (input) input.value = draft[key] || '';
+    }
+    const section = document.getElementById('claimReductionSection');
+    if (section) SharedFormsControls.enhance(section);
+  }
+  function getState() {
+    for (const key of Object.keys(fields)) {
+      const input = document.getElementById('modalPendingReduction_' + key);
+      if (input) draft[key] = input.value.trim();
+    }
+    return {...draft};
+  }
+  function mount() {
+    const pane = document.getElementById('tabPane_Financial');
+    if (!pane || document.getElementById('claimReductionSection')) return;
+    const section = node('section',null,'claim-editor-form-section claim-reduction-section'); section.id = 'claimReductionSection';
+    const header = node('header'), title = node('div');
+    title.append(node('h4','Thông báo giảm trừ / chế tài'),node('p','Soạn nhanh thông tin gửi đơn vị cấp đơn để phối hợp với khách hàng.'));
+    header.append(title);
+    const grid = node('div',null,'claim-editor-form-grid claim-reduction-fields');
+    for (const [key,label] of Object.entries(fields)) {
+      const group = node('div',null,'form-group'), caption = node('label',label);
+      const input = node(key === 'stage' ? 'select' : ['reason','basis'].includes(key) ? 'textarea' : 'input');
+      input.id = 'modalPendingReduction_' + key; caption.htmlFor = input.id;
+      input.className = key === 'stage' ? '' : 'input-premium';
+      if (key === 'stage') {
+        stages.forEach(stage => { const option = node('option',stage); option.value = stage; input.append(option); });
+        input.dataset.sfSelect = ''; input.dataset.sfLabel = label; input.dataset.sfIcon = 'file';
+      } else {
+        input.maxLength = key === 'impact' ? 200 : 1500;
+        if (input.tagName === 'TEXTAREA') input.rows = 3;
+        input.placeholder = ({reason:'Nhập lý do được ghi nhận trong hồ sơ',impact:'Ví dụ: 10% hoặc 2.000.000 đồng; để trống nếu chưa xác định',basis:'Điều khoản / tài liệu liên quan (nếu có)'})[key];
+      }
+      input.value = draft[key] || (key === 'stage' ? stages[0] : '');
+      group.append(caption,input); grid.append(group);
+    }
+    const footer = node('div',null,'claim-reduction-footer');
+    footer.append(node('p','Thông tin được lưu khi bấm Lưu cập nhật hồ sơ.','claim-editor-hint'),button('Soạn thông báo cấp đơn',compose,true));
+    section.append(header,grid,footer); pane.append(section); SharedFormsControls.enhance(section);
+    const summary = document.querySelector('#claimEditorSidebar .claim-editor-sidebar-card');
+    if (summary) {
+      const shortcut = button('Thông báo giảm trừ / chế tài',show);
+      shortcut.classList.add('claim-reduction-shortcut'); summary.append(shortcut);
+    }
+  }
+  function show() {
+    switchEditClaimTab('Financial'); ClaimEditorWorkspace.showMain();
+    document.getElementById('claimReductionSection')?.scrollIntoView({block:'start'});
+    document.getElementById('modalPendingReduction_reason')?.focus({preventScroll:true});
+  }
+  function template() {
+    const state = getState();
+    const info = {
+      plate:value('BienSo'),customer:value('KhachHang'),hsbt:value('SoHoSoBoiThuong'),vtt:value('MaVuTonThat'),
+      policy:value('SoHd'),certificate:value('SoGcn'),unit:value('DonViCapDon'),issuer:value('NguoiCapDon'),
+      date:value('NgayVTT'),assessor:value('GdvTiepNhan'),reason:state.reason,impact:state.impact,basis:state.basis,stage:state.stage,
+      sender:String(activeUserProfile?.displayName || firebase.auth().currentUser?.displayName || value('GdvTiepNhan') || '')
+    };
+    const facts = [
+      ['Biển số xe',info.plate],['Khách hàng',info.customer],['Số HSBT',info.hsbt],['Mã vụ tổn thất',info.vtt],
+      ['Hợp đồng bảo hiểm',info.policy],['Số GCNBH',info.certificate],['Ngày xảy ra tổn thất',info.date],
+      ['Đơn vị cấp đơn',info.unit],['Người cấp đơn',info.issuer],['Giám định viên',info.assessor]
+    ].filter(([,text]) => text && text !== '—').map(([label,text]) => '- ' + label + ': ' + text);
+    const body = [
+      'Kính gửi ' + (info.unit || 'Anh/Chị phụ trách cấp đơn') + ',', '',
+      'Bộ phận giám định gửi thông tin giảm trừ / chế tài của hồ sơ sau để đơn vị cấp đơn nắm thông tin:',
+      '',...facts,'','NỘI DUNG GIẢM TRỪ / CHẾ TÀI',
+      '- Trạng thái: ' + info.stage,'- Lý do: ' + info.reason,
+      '- Mức giảm trừ / chế tài: ' + (info.impact || 'Chưa xác định'),
+      ...(info.basis ? ['- Căn cứ / ghi nhận: ' + info.basis] : []),'',
+      'Kính đề nghị đơn vị cấp đơn nắm thông tin, phối hợp trao đổi với khách hàng và phản hồi nếu có thông tin cần bổ sung.',
+      '', 'Trân trọng,', info.sender
+    ].join('\n').trim();
+    return {subject:'[Thông tin giảm trừ/chế tài] ' + info.plate + (info.hsbt ? ' – ' + info.hsbt : ''),body,signature:JSON.stringify(info)};
+  }
+  function addresses(text) {
+    const list = text.split(/[;,\n]+/).map(item => item.trim()).filter(Boolean);
+    if (list.some(item => !/^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/.test(item))) throw new Error('Nhập địa chỉ email hợp lệ, phân cách bằng dấu chấm phẩy.');
+    return [...new Set(list)];
+  }
+  function compose() {
+    if (!owner()) return triggerToast('Vui lòng đăng nhập để soạn thông báo.','warning');
+    if (!value('BienSo')) return triggerToast('Nhập biển số xe trước khi soạn thông báo.','warning');
+    const state = getState();
+    if (!state.reason) { document.getElementById('modalPendingReduction_reason')?.focus(); return triggerToast('Nhập lý do giảm trừ / chế tài.','warning'); }
+    close();
+    const generated = template(), claim = editingPendingClaimId, uid = owner();
+    const sheet = node('dialog',null,'sf-dialog claim-reduction-compose'); dialog = sheet;
+    sheet.setAttribute('aria-labelledby','claimReductionComposeTitle');
+    const form = node('form',null,'sf-dialog-form'), header = node('header'), title = node('div');
+    const heading = node('h2','Thông báo đơn vị cấp đơn'); heading.id = 'claimReductionComposeTitle';
+    title.append(node('small','GIẢM TRỪ / CHẾ TÀI'),heading); const dismiss = button('×',close); dismiss.setAttribute('aria-label','Đóng thông báo'); header.append(title,dismiss);
+    const recipientGrid = node('div',null,'claim-reduction-recipients'); const inputs = {};
+    for (const [key,label] of [['to','Email đơn vị cấp đơn'],['cc','CC (nếu có)'],['subject','Tiêu đề'],['body','Nội dung thông báo']]) {
+      const wrapper = node('label',label), input = node(key === 'body' ? 'textarea' : 'input');
+      input.id = 'claimReductionMail_' + key; wrapper.htmlFor = input.id;
+      input.maxLength = key === 'body' ? 6000 : key === 'subject' ? 250 : 1000;
+      if (key === 'body') input.rows = 15;
+      input.value = key === 'subject' || key === 'body' ? (draft.signature === generated.signature && draft[key] ? draft[key] : generated[key]) : draft[key] || '';
+      if (key === 'to' || key === 'cc') { input.placeholder = 'email@donvi.vn; emailkhac@donvi.vn'; input.autocomplete = 'off'; input.inputMode = 'email'; }
+      inputs[key] = input; wrapper.append(input); (key === 'to' || key === 'cc' ? recipientGrid : form).append(wrapper);
+    }
+    form.prepend(header,recipientGrid);
+    const feedback = node('p',null,'sf-feedback'); feedback.setAttribute('role','status');
+    const sameContext = () => owner() === uid && editingPendingClaimId === claim && sheet.dataset.discard !== 'true';
+    const remember = () => { if (!sameContext()) return false; for (const key of Object.keys(inputs)) draft[key] = inputs[key].value; draft.signature = generated.signature; return true; };
+    form.addEventListener('input',remember);
+    const footer = node('footer');
+    const copy = button('Sao chép nội dung',async () => {
+      if (!sameContext()) return close();
+      remember();
+      try { await navigator.clipboard.writeText(inputs.body.value); feedback.textContent = 'Đã sao chép nội dung thông báo.'; }
+      catch (_) { inputs.body.focus(); inputs.body.select(); feedback.textContent = 'Nhấn Ctrl+C để sao chép nội dung đã chọn.'; }
+    });
+    const outlook = button('Mở thư Outlook',() => {
+      if (!sameContext()) return close();
+      try {
+        const to = addresses(inputs.to.value), cc = addresses(inputs.cc.value);
+        if (!to.length) throw new Error('Nhập email đơn vị cấp đơn trước khi mở Outlook.');
+        if (!inputs.subject.value.trim() || !inputs.body.value.trim()) throw new Error('Nhập tiêu đề và nội dung thông báo.');
+        const url = new URL('https://outlook.cloud.microsoft/mail/deeplink/compose');
+        url.searchParams.set('to',to.join(';')); if (cc.length) url.searchParams.set('cc',cc.join(';'));
+        url.searchParams.set('subject',inputs.subject.value.replace(/[\r\n]/g,' ')); url.searchParams.set('body',inputs.body.value);
+        if (url.href.length > 12000) throw new Error('Nội dung dài. Dùng Sao chép nội dung rồi dán vào Outlook.');
+        remember(); window.open(url.href,'_blank','noopener,noreferrer');
+        feedback.textContent = 'Đã yêu cầu mở cửa sổ soạn thư. Kiểm tra tài khoản gửi, người nhận và bấm Gửi trong Outlook. Nếu chưa thấy thư, cho phép mở cửa sổ mới hoặc sao chép nội dung.';
+      } catch (error) { feedback.textContent = error.message; }
+    },true);
+    footer.append(button('Tạo lại nội dung mẫu',() => { inputs.subject.value = generated.subject; inputs.body.value = generated.body; remember(); feedback.textContent = 'Đã tạo lại nội dung từ thông tin hồ sơ.'; }),copy,outlook);
+    form.append(node('p','Có thể sửa nội dung trước khi gửi. Thông tin được lưu cùng hồ sơ khi bạn bấm Lưu cập nhật hồ sơ.','claim-reduction-note'),feedback,footer);
+    form.onsubmit = event => event.preventDefault(); sheet.append(form);
+    const returnFocus = document.activeElement;
+    sheet.addEventListener('keydown',event => { event.stopPropagation(); if (event.key === 'Escape') { event.preventDefault(); sheet.close(); } });
+    sheet.addEventListener('cancel',event => { event.preventDefault(); sheet.close(); });
+    sheet.addEventListener('close',() => { remember(); if (dialog === sheet) dialog = null; sheet.remove(); if (returnFocus?.isConnected) returnFocus.focus({preventScroll:true}); },{once:true});
+    document.body.append(sheet); sheet.showModal(); inputs.to.focus();
+  }
+  return {mount,load,getState,close,show};
+})();
