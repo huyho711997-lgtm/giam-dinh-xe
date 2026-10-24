@@ -33,7 +33,7 @@
 <link rel="stylesheet" href="css/remaining-report-views.css">
 <link rel="stylesheet" href="css/pending-workspace.css">
 <link rel="stylesheet" href="css/shared-forms.css?v=20261023-confirm-5">
-<link rel="stylesheet" href="css/claim-editor.css?v=20261022-premium">
+<link rel="stylesheet" href="css/claim-editor.css?v=20261024-tnds-1">
 <link rel="stylesheet" href="css/claim-documents.css?v=20261023-confirm-5">
 <link rel="stylesheet" href="css/reduction-notice.css?v=20261024-notice-3">
 <link rel="stylesheet" href="css/claim-header-actions.css?v=20261024-actions-1">
@@ -273,11 +273,15 @@
             <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H5v18h14V8zM14 3v5h5M8 12h8M8 16h6"/></svg><label for="modalPendingGhiChu">Ghi chú hồ sơ / Lý do đề xuất hủy</label></h4>
             <textarea id="modalPendingGhiChu" class="textarea-premium" rows="3" placeholder="Nhập ghi chú cần lưu cùng hồ sơ…" aria-describedby="claimEditorNoteHint"></textarea>
             <p id="claimEditorNoteHint" class="claim-editor-hint">Ghi chú được lưu khi bạn lưu cập nhật hồ sơ.</p>
-            <details class="claim-editor-tnds-note">
-              <summary>Ghi chú quản lý TNDS</summary>
-              <p data-claim-summary="modalPendingTndsGhiChu" data-empty="Chưa có ghi chú TNDS.">Chưa có ghi chú TNDS.</p>
-              <button type="button" onclick="switchEditClaimTab('Financial'); ClaimEditorWorkspace.showMain(); document.getElementById('modalPendingTndsGhiChu').focus()">Sửa ghi chú TNDS →</button>
-            </details>
+            <!-- Ghi chú TNDS: chuyển từ tab "Bồi thường, PASC & Thanh toán" về đây, giữ nguyên id để pending-editor.js đọc/ghi như cũ -->
+            <div class="claim-editor-tnds-note">
+              <div class="claim-editor-tnds-head">
+                <label for="modalPendingTndsGhiChu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-3.5 7-9V5.5L12 3 5 5.5V12c0 5.5 7 9 7 9Z"/></svg>Ghi chú quản lý TNDS</label>
+                <span class="claim-editor-tnds-tag" title="Nội dung này hiển thị tại Báo cáo TNDS tồn">Báo cáo TNDS tồn</span>
+              </div>
+              <textarea id="modalPendingTndsGhiChu" class="textarea-premium" rows="3" placeholder="Nhập tiến độ giải quyết hồ sơ TNDS…" aria-describedby="modalPendingTndsLastUpdatedInfo"></textarea>
+              <div id="modalPendingTndsLastUpdatedInfo" class="claim-editor-tnds-meta" aria-live="polite"></div>
+            </div>
           </section>
           <section class="claim-editor-sidebar-card claim-editor-progress">
             <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Ghi chú tiến độ<span id="claimEditorNoteCount" class="claim-editor-note-count">0</span></h4>
@@ -606,17 +610,6 @@
               <input id="modalPendingNgayKtXacNhan" class="input-premium" type="text" placeholder="DD/MM/YYYY" />
             </div>
 
-            <!-- Dedicated TNDS Note Field in Claim Details Modal -->
-            <div class="form-group" style="grid-column: span 3; background: rgba(234, 179, 8, 0.05); padding: 16px 18px; border-radius: 14px; border: 1px solid rgba(234, 179, 8, 0.3); margin-top: 6px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-                <label style="font-size: 13px; font-weight: 850; color: #eab308; display: inline-flex; align-items: center; gap: 8px;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#eab308" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                  <span>Ghi chú quản lý hồ sơ TNDS (Hiển thị tại Báo cáo TNDS Tồn)</span>
-                </label>
-                <div id="modalPendingTndsLastUpdatedInfo" style="font-size: 11.5px; color: var(--text-soft); font-weight: 700;"></div>
-              </div>
-              <textarea id="modalPendingTndsGhiChu" class="textarea-premium" rows="3" placeholder="Nhập ghi chú chi tiết tiến độ giải quyết hồ sơ TNDS..." style="width: 100%; min-height: 75px; padding: 10px 14px; resize: vertical; line-height: 1.5; font-family: inherit; font-size: 13px; font-weight: 600; border-radius: 10px;"></textarea>
-            </div>
           </div>
         </div>
 

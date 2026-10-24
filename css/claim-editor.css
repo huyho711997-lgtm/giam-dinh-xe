@@ -44,10 +44,14 @@ body.claim-editor-open { overflow:hidden; }
 .claim-editor-facts .claim-editor-money { color:var(--ce-green); font-weight:800; }
 #addPendingClaimModalOverlay .claim-editor-notes textarea { min-height:94px; padding:11px 12px; border:1px solid var(--ce-line); border-radius:9px; background:var(--ce-soft); color:var(--ce-ink); font:500 12px/1.7 'Plus Jakarta Sans',system-ui,sans-serif; resize:vertical; }
 .claim-editor-hint { margin:8px 0 0; color:var(--ce-muted); font-size:10px; line-height:1.7; }
-.claim-editor-tnds-note { margin-top:14px; padding-top:12px; border-top:1px solid var(--ce-line); }
-.claim-editor-tnds-note summary { cursor:pointer; color:var(--ce-gold); font-size:11px; font-weight:750; }
-.claim-editor-tnds-note p { margin:12px 0; color:var(--ce-ink); font-size:11px; line-height:1.7; white-space:pre-wrap; overflow-wrap:anywhere; }
-.claim-editor-tnds-note button { padding:0; border:0; background:transparent; color:var(--ce-gold); font-family:inherit; font-size:10.5px; font-weight:750; cursor:pointer; }
+.claim-editor-tnds-note { margin-top:16px; padding-top:14px; border-top:1px solid var(--ce-line); }
+.claim-editor-tnds-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 8px; margin-bottom:9px; }
+.claim-editor-tnds-head label { display:inline-flex; align-items:center; gap:7px; color:var(--ce-ink); font-size:11.5px; font-weight:800; line-height:1.5; }
+.claim-editor-tnds-head label svg { width:15px; height:15px; flex-shrink:0; color:var(--ce-gold); }
+.claim-editor-tnds-tag { padding:3px 7px; border:1px solid color-mix(in srgb,var(--ce-gold) 24%,var(--ce-line)); border-radius:6px; background:var(--ce-gold-soft); color:var(--ce-gold); font-size:9.5px; font-weight:750; line-height:1.4; white-space:nowrap; }
+.claim-editor-tnds-meta { margin-top:8px; color:var(--ce-muted); font-size:10px; line-height:1.7; overflow-wrap:anywhere; }
+.claim-editor-tnds-meta:empty { display:none; }
+.claim-editor-tnds-meta b { font-weight:750; }
 .claim-editor-note-count { margin-left:auto; padding:2px 7px; border-radius:5px; background:var(--ce-gold-soft); color:var(--ce-gold); font-size:10px; }
 .claim-editor-note-history { display:flex; flex-direction:column; gap:12px; max-height:300px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--ce-line) transparent; }
 .claim-editor-note-history .claim-editor-hint { margin:0; }
