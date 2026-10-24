@@ -1,0 +1,23 @@
+{
+  "rules": {
+    "claim_import_history": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+      "$versionId": {
+        ".validate": "newData.hasChildren(['id', 'kind', 'createdAt', 'createdBy']) && newData.child('id').val() === $versionId",
+        "kind": { ".validate": "newData.val() === 'import' || newData.val() === 'restore'" },
+        "createdAt": { ".validate": "newData.isNumber()" }
+      }
+    },
+    "claim_import_blobs": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+      "$versionId": {
+        "$part": {
+          ".validate": "$part === 'rows' || $part === 'before'",
+          "$chunk": { ".validate": "newData.isString() && newData.val().length <= 4000000" }
+        }
+      }
+    }
+  }
+}

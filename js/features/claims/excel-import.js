@@ -1,6 +1,12 @@
 
 
+// Cập nhật dữ liệu hồ sơ từ file Excel: file mới là dữ liệu hiển thị, mỗi lần nhập lưu phiên bản (import-versions.js).
+let excelImportFileName = '';
 function openImportExcelModal() {
+      if (typeof ClaimImportVersions !== 'undefined' && !ClaimImportVersions.isAdmin()) {
+        triggerToast('Chỉ quản trị viên được cập nhật dữ liệu hồ sơ từ file Excel.', 'error');
+        return;
+      }
       const modal = document.getElementById('importExcelModalOverlay');
       if (modal) {
         modal.style.display = 'grid';
@@ -8,14 +14,12 @@ function openImportExcelModal() {
       }
       const fileInp = document.getElementById('fileExcelInput');
       if (fileInp) fileInp.value = '';
-      document.getElementById('lblExcelFileName').textContent = 'Kéo thả tệp Excel (.xlsx, .xls, .csv) vào đây hoặc bấm để chọn tệp';
-      document.getElementById('excelPreviewContainer').style.display = 'none';
-      document.getElementById('tblExcelPreviewBody').innerHTML = '';
+      excelImportFileName = '';
+      document.getElementById('lblExcelFileName').innerHTML = 'Kéo thả file Excel vào đây hoặc <u>chọn từ máy</u>';
+      const preview = document.getElementById('excelPreviewContainer');
+      preview.style.display = 'none'; preview.innerHTML = '';
       const btnSubmit = document.getElementById('btnSubmitImportExcel');
-      if (btnSubmit) {
-        btnSubmit.disabled = true;
-        btnSubmit.style.opacity = '0.5';
-      }
+      if (btnSubmit) btnSubmit.disabled = true;
       document.getElementById('lblSubmitCount').textContent = '0';
       parsedExcelBatchRows = [];
     }
@@ -55,7 +59,8 @@ function openImportExcelModal() {
         return;
       }
 
-      document.getElementById('lblExcelFileName').innerHTML = `<span>Đang đọc tệp: ${escapeHtmlOutput(file.name)}...</span>`;
+      excelImportFileName = file.name;
+      document.getElementById('lblExcelFileName').textContent = 'Đang đọc tệp: ' + file.name + '…';
 
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -72,6 +77,7 @@ function openImportExcelModal() {
           }
 
           processParsedExcelData(jsonRows);
+          document.getElementById('lblExcelFileName').textContent = file.name + ' · bấm để chọn file khác';
         } catch (err) {
           console.error("Lỗi đọc Excel:", err);
           triggerToast('Lỗi đọc tệp Excel: ' + err.message, 'error');
@@ -623,60 +629,14 @@ function formatDateDisplay(val) {
         });
       }
 
-      const tbody = document.getElementById('tblExcelPreviewBody');
-      const validBatchRows = parsedExcelBatchRows; // All valid rows from Excel (both existing and new)
-
-      document.getElementById('lblMatchedExcelCount').textContent = validBatchRows.length;
-      document.getElementById('lblSubmitCount').textContent = validBatchRows.length;
-
-      if (parsedExcelBatchRows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="empty-state-text">Không đọc được dòng dữ liệu nào từ tệp.</td></tr>`;
-      } else {
-        const previewLimit = 150;
-        const displayRows = parsedExcelBatchRows.slice(0, previewLimit);
-        let html = displayRows.map((r, idx) => {
-          const isMatched = !!r.matchedClaim;
-          const statusObj = PENDING_STATUS_MAP[r.targetStatus] || PENDING_STATUS_MAP['moi'];
-          const statusBadge = r.targetStatus ? `<span class="badge-status" style="background:${statusObj.bg}; color:${statusObj.color}; border:1px solid ${statusObj.border}; padding:3px 8px; border-radius:99px; font-size:11px;">${statusObj.label}</span>` : '<span style="color:var(--text-muted)">Giữ nguyên</span>';
-
-          let matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px; background: rgba(16,185,129,0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(16,185,129,0.25);">${SVGS.ROCKET} Hồ sơ mới (Sẽ tạo mới)</span>`;
-          if (r.matchType === 'so_hsbt') matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Số HSBT (Cập nhật)</span>`;
-          else if (r.matchType === 'bsx_date') matchBadge = `<span style="color:#10b981; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Biển số + Ngày (Cập nhật)</span>`;
-          else if (r.matchType === 'bsx') matchBadge = `<span style="color:#3b82f6; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Biển số xe (Cập nhật)</span>`;
-          else if (r.matchType === 'vtt') matchBadge = `<span style="color:#8b5cf6; font-weight:800; display:inline-flex; align-items:center; gap:4px;">${SVGS.CHECK} Khớp Mã vụ TT (Cập nhật)</span>`;
-
-          return `
-            <tr style="${isMatched ? '' : 'background: rgba(16,185,129,0.02);'}">
-              <td style="text-align: center; font-weight: 700;">${idx + 1}</td>
-              <td>
-                <strong style="color: var(--primary); ">${escapeHtmlOutput(r.rawBsx || r.matchedClaim?.bienSo || '—')}</strong>
-                ${r.rawSoHsbt ? `<div style="font-size: 10.5px; color: #10b981;  font-weight: 700;">HSBT: ${escapeHtmlOutput(r.rawSoHsbt)}</div>` : ''}
-              </td>
-              <td><span style=" font-size: 11px;">${escapeHtmlOutput(r.rawVtt || r.matchedClaim?.maVuTonThat || '—')}</span></td>
-              <td>${escapeHtmlOutput(r.rawGara || r.matchedClaim?.garaSuaChua || '—')}</td>
-              <td>${statusBadge}</td>
-              <td><span style="">${escapeHtmlOutput(r.rawAmount || '—')}</span></td>
-              <td style="text-align: center; font-size: 11.5px;">${matchBadge}</td>
-            </tr>
-          `;
-        }).join('');
-
-        if (parsedExcelBatchRows.length > previewLimit) {
-          html += `<tr><td colspan="7" style="text-align:center; padding:12px; font-weight:750; color:var(--text-muted); background:var(--bg-soft);">... Còn tiếp ${parsedExcelBatchRows.length - previewLimit} hồ sơ nữa (Toàn bộ ${parsedExcelBatchRows.length} hồ sơ sẽ được xử lý khi bấm Xác nhận).</td></tr>`;
-        }
-        tbody.innerHTML = html;
+      if (!parsedExcelBatchRows.length) {
+        const box = document.getElementById('excelPreviewContainer');
+        box.style.display = 'block';
+        box.innerHTML = '<div class="cim-note is-error"><div><p>Không đọc được dòng dữ liệu nào từ tệp. Kiểm tra dòng tiêu đề có cột Số HSBT / Biển số.</p></div></div>';
+        document.getElementById('btnSubmitImportExcel').disabled = true;
+        return;
       }
-
-      const btnSubmit = document.getElementById('btnSubmitImportExcel');
-      if (validBatchRows.length > 0) {
-        btnSubmit.disabled = false;
-        btnSubmit.style.opacity = '1';
-      } else {
-        btnSubmit.disabled = true;
-        btnSubmit.style.opacity = '0.5';
-      }
-
-      document.getElementById('excelPreviewContainer').style.display = 'block';
+      ClaimImportUI.renderPreview(parsedExcelBatchRows, excelImportFileName);
     }
 
 
@@ -751,119 +711,23 @@ function formatDateDisplay(val) {
     }
 
 
+    // Áp dụng file mới: lưu phiên bản (bản sao lưu + dữ liệu file) TRƯỚC, rồi mới ghi. Lưu phiên bản lỗi → không ghi gì.
     async function executeApplyExcelBatchUpdate() {
-      if (!parsedExcelBatchRows || parsedExcelBatchRows.length === 0) return;
-
-      const totalRows = parsedExcelBatchRows.length;
-      
-      // 1. Close modal immediately to free up the user
+      if (!parsedExcelBatchRows || !parsedExcelBatchRows.length || !ClaimImportUI.hasPending()) return;
+      const fileName = excelImportFileName;
       closeImportExcelModal();
-      triggerToast('Đang xử lý nhập tệp Excel chạy nền...', 'success');
-
-      // 2. Initialize floating background progress widget
-      updateBackgroundImportProgress(0, `Chuẩn bị ghi dữ liệu cho ${totalRows} hồ sơ...`);
-
-      // 3. Process inside a short timeout to run in the background
-      setTimeout(async () => {
-        try {
-          let updatedCounter = 0;
-          let createdCounter = 0;
-          const batchUpdates = {};
-
-          for (const r of parsedExcelBatchRows) {
-            if (r.matchedClaim) {
-              // Update Existing Claim
-              const claimId = r.matchedClaim.id;
-              const updates = { updatedAt: Date.now() };
-
-              if (r.targetStatus) updates.trangThai = r.targetStatus;
-              if (r.rawBsx && r.rawBsx !== '—') updates.bienSo = r.rawBsx.toUpperCase();
-              if (r.rawGara && r.rawGara !== '—') {
-                updates.garaSuaChua = r.rawGara;
-                updates.tenGara = r.rawGara;
-              }
-              if (r.rawSoHsbt && r.rawSoHsbt !== '—') updates.soHoSoBoiThuong = r.rawSoHsbt;
-              if (r.rawDate && r.rawDate !== '—') {
-                updates.ngayDuyetBT = r.rawDate;
-                updates.ngayVTT = r.rawDate;
-                updates.ngayTonThat = r.rawDate;
-              }
-              if (r.rawAmount && r.rawAmount !== '—') updates.soTienDuyetBT = r.rawAmount;
-              if (r.rawVtt && r.rawVtt !== '—' && r.rawVtt !== r.matchedClaim.maVuTonThat) updates.maVuTonThat = r.rawVtt;
-              if (r.fullRowMeta?.ngayNhanDuHoSo && r.fullRowMeta.ngayNhanDuHoSo !== '—') updates.ngayNhanDuHoSo = r.fullRowMeta.ngayNhanDuHoSo;
-
-              if (r.fullRowMeta && typeof r.fullRowMeta === 'object') {
-                Object.entries(r.fullRowMeta).forEach(([k, v]) => {
-                  if (v && v !== '—') updates[k] = v;
-                });
-              }
-
-              Object.entries(updates).forEach(([k, v]) => {
-                batchUpdates[`pending_claims/${claimId}/${k}`] = v;
-              });
-              updatedCounter++;
-            } else {
-              // Create New Claim from Excel Row
-              const newId = 'claim_' + Date.now() + '_' + Math.floor(Math.random() * 100000) + '_' + createdCounter;
-              const newClaimObj = {
-                id: newId,
-                maVuTonThat: r.rawVtt || r.rawSoHsbt || ('VTT/XCG/' + new Date().getFullYear() + '/' + Math.floor(100000 + Math.random() * 900000)),
-                bienSo: (r.rawBsx || 'CHƯA_XÁC_ĐỊNH').toUpperCase(),
-                soHoSoBoiThuong: r.rawSoHsbt || '',
-                garaSuaChua: r.rawGara || '',
-                tenGara: r.rawGara || '',
-                trangThai: r.targetStatus || 'moi',
-                ngayVTT: r.rawDate || '—',
-                ngayTonThat: r.rawDate || new Date().toLocaleDateString('vi-VN'),
-                soTienDuyetBT: r.rawAmount || '',
-                createdAt: Date.now(),
-                updatedAt: Date.now(),
-                gdvTiepNhan: r.fullRowMeta?.gdvHo || 'Hệ thống Excel',
-                canBoXuLy: r.fullRowMeta?.gdvHo || 'Hệ thống Excel',
-                donViCapDon: r.fullRowMeta?.chiNhanh || r.fullRowMeta?.chiNhanhXuly || ''
-              };
-
-              if (r.fullRowMeta && typeof r.fullRowMeta === 'object') {
-                Object.entries(r.fullRowMeta).forEach(([k, v]) => {
-                  if (v && v !== '—') newClaimObj[k] = v;
-                });
-              }
-
-              batchUpdates[`pending_claims/${newId}`] = newClaimObj;
-              createdCounter++;
-            }
-          }
-
-          // Multi-location Batch Updates in Chunks of 300 paths for maximum speed, stability, and UX response
-          const keys = Object.keys(batchUpdates);
-          const totalKeys = keys.length;
-          const CHUNK_SIZE = 300;
-
-          for (let i = 0; i < totalKeys; i += CHUNK_SIZE) {
-            const chunk = {};
-            const end = Math.min(i + CHUNK_SIZE, totalKeys);
-            for (let j = i; j < end; j++) {
-              chunk[keys[j]] = batchUpdates[keys[j]];
-            }
-            
-            const progressPercent = Math.round((end / totalKeys) * 100);
-            updateBackgroundImportProgress(progressPercent, `Đang ghi dữ liệu... (${end}/${totalKeys})`);
-            
-            await dbNodeInstance.ref().update(chunk);
-          }
-
-          let msg = [];
-          if (createdCounter > 0) msg.push(`Tạo mới ${createdCounter} hồ sơ`);
-          if (updatedCounter > 0) msg.push(`Cập nhật ${updatedCounter} hồ sơ`);
-          
-          const summaryText = `Đã hoàn tất: ${msg.join(', ')}.`;
-          updateBackgroundImportProgress(100, `Hoàn thành ghi dữ liệu.`, true, false, summaryText);
-          
-          // Re-render dashboard claims list automatically
-          executeUIRenderPendingClaims();
-        } catch (err) {
-          console.error("Lỗi nhập Excel chạy nền:", err);
-          updateBackgroundImportProgress(100, `Gặp lỗi khi ghi dữ liệu.`, false, true, err.message);
-        }
-      }, 50);
+      updateBackgroundImportProgress(0, 'Chuẩn bị cập nhật dữ liệu từ ' + fileName + '…');
+      try {
+        const result = await ClaimImportUI.applyPending((percent, text) => updateBackgroundImportProgress(percent, text));
+        if (!result) return;
+        const s = result.planned.summary, parts = [];
+        if (s.added) parts.push('thêm ' + s.added);
+        if (s.changed) parts.push('cập nhật ' + s.changed);
+        if (s.removed) parts.push('gỡ ' + s.removed);
+        updateBackgroundImportProgress(100, 'Hoàn thành cập nhật dữ liệu.', true, false, (parts.length ? 'Đã ' + parts.join(', ') + ' hồ sơ.' : 'Dữ liệu không thay đổi.') + ' Đã lưu phiên bản để khôi phục khi cần.');
+        executeUIRenderPendingClaims();
+      } catch (err) {
+        console.error('Lỗi cập nhật dữ liệu từ Excel:', err);
+        updateBackgroundImportProgress(100, 'Không cập nhật được dữ liệu.', false, true, err.message + ' – Dữ liệu hồ sơ chưa bị thay đổi nếu lỗi xảy ra ở bước sao lưu.');
+      }
     }

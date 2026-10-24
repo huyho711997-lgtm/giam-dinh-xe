@@ -640,10 +640,16 @@ ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pil
                     </button>
                   ` : ''}
 
-                  ${(activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin') ? `
+                  ${(typeof ClaimImportVersions !== 'undefined' && ClaimImportVersions.isAdmin()) ? `
+                  <button type="button" class="pending-action-btn" onclick="openClaimImportHistory()" title="Xem lịch sử cập nhật, so sánh và khôi phục dữ liệu hồ sơ">
+                    <span class="pending-action-btn__icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg></span>
+                    <span>Lịch sử cập nhật</span>
+                  </button>
+                  ` : ''}
+                  ${(typeof ClaimImportVersions !== 'undefined' ? ClaimImportVersions.isAdmin() : (activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin')) ? `
                   <button type="button" class="pending-action-btn pending-action-btn--import" onclick="openImportExcelModal()" title="Nhập mới hoặc cập nhật hồ sơ từ tệp Excel">
                     <span class="pending-action-btn__icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M8 13h8"></path><path d="M8 17h8"></path><path d="M10 9h4"></path></svg></span>
-                    <span>Nhập & Cập nhật Hồ sơ từ Excel</span>
+                    <span>Cập nhật dữ liệu từ Excel</span>
                   </button>
                   ` : ''}
                 </div>

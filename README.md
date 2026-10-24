@@ -119,3 +119,14 @@ Trong màn hình chỉnh sửa hồ sơ, mở tab **Trưng cầu hồ sơ**. Nh�
 - Trạng thái tab nằm trong `collection_guides/<hsbtKey>/state/authorityRequest`, dùng cơ chế tự lưu/khôi phục theo số HSBT hiện có. Xoá rồi nạp lại hồ sơ cùng số sẽ nạp lại phần đã lưu.
 
 Mã tại `js/features/documents/authority-request.js`, CSS tại `css/authority-request.css`, metadata tại `js/data/authority-request.js`, mẫu tại `assets/templates/authority-request.docx`. Mẫu đã bỏ toàn bộ thông tin vụ việc và liên hệ cá nhân của tài liệu tham chiếu. Khi xuất, chỉ thay `word/document.xml`; logo, styles, numbering, section, header/footer và các phần khác của ZIP được giữ nguyên. Bản xem trước HTML dùng cùng XML đã điền, có thể khác phân trang của Microsoft Word. Môi trường triển khai tính năng chưa có trình kết xuất Word/LibreOffice hoạt động để đối chiếu phân trang DOCX.
+
+
+## Cập nhật dữ liệu hồ sơ từ Excel (phiên bản, chỉ quản trị viên)
+
+Trang **Hồ sơ bồi thường → Cập nhật dữ liệu từ Excel** dùng file xuất đầy đủ làm dữ liệu hiển thị:
+
+- Đối chiếu theo Số HSBT (thiếu thì Mã VTT, rồi Biển số + ngày tổn thất). Hồ sơ trong file được thêm hoặc cập nhật; hồ sơ có Số HSBT không còn trong file được gỡ khỏi danh sách; hồ sơ tạo trong ứng dụng chưa có Số HSBT được giữ nguyên.
+- Chỉ ghi các trường thay đổi. Dữ liệu chỉ có trong ứng dụng (thông báo giảm trừ, ghi chú TNDS, đề xuất hủy…) không bị đụng tới. Ô trống trong file chỉ xóa giá trị do file trước ghi vào; cột trống toàn bộ không xóa gì.
+- Trước khi ghi, ứng dụng lưu một phiên bản: bản sao toàn bộ `pending_claims` và dữ liệu của file (gzip, chia khối ≤ 4 MB). Không lưu được phiên bản thì không ghi gì.
+- **Lịch sử cập nhật**: xem các lần nhập/khôi phục, so sánh hai file bất kỳ (thêm mới, thay đổi theo từng trường, không còn trong file), **khôi phục về trước một lần cập nhật**. Khôi phục cũng tự sao lưu dữ liệu hiện tại thành phiên bản mới nên có thể hoàn tác.
+- Dữ liệu lưu tại `claim_import_history/{id}` (thông tin) và `claim_import_blobs/{id}/rows|before` (dữ liệu nén). Gộp `firebase/claim-imports.rules.json` vào Realtime Database Rules để chỉ quản trị viên đọc/ghi các nhánh này.
