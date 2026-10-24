@@ -63,17 +63,19 @@ test('a stale cached folder ID falls back to searching Drive',()=>{
   assert.equal(s.call({action:'list'}).ok,true);assert.equal(s.searches(),2);
 });
 
-function client() {
-  const requests=[];
+function client(responses=[]) {
+  const requests=[],toasts=[];
+  const ok={ok:true,status:200,json:async()=>({ok:true,file:{id:'saved-word',name:'test.docx'}})};
   const context=vm.createContext({
     CONFIG:{CLAIM_DOCUMENTS_ENDPOINT:'https://script.google.com/macros/s/test/exec'},editingPendingClaimId:'claim-one',
     firebase:{auth:()=>({currentUser:{uid:context.uid,getIdToken:async()=> 'token'}})},
-    uid:'first-user',crypto,AbortSignal,triggerToast:()=>{},
+    uid:'first-user',crypto,AbortSignal,triggerToast:(message,type)=>toasts.push({message,type}),
+    setTimeout:callback=>{queueMicrotask(callback);return 1;},clearTimeout:()=>{},document:{getElementById:()=>null},
     FileReader:class {readAsDataURL(){this.result='data:application/octet-stream;base64,YQ==';this.onload();}},
-    fetch:async(_,options)=>{requests.push(JSON.parse(options.body));return {ok:true,json:async()=>({ok:true,file:{id:'saved-word',name:'test.docx'}})};}
+    fetch:async(_,options)=>{requests.push(JSON.parse(options.body));const next=responses.shift();if(next instanceof Error)throw next;return next||ok;}
   });
   vm.runInContext(fs.readFileSync(new URL('../js/features/documents/claim-documents.js',import.meta.url),'utf8')+'\nthis.documents=ClaimDocuments;',context);
-  return {context,requests};
+  return {context,requests,toasts};
 }
 test('Word keeps the original claim even if another claim is opened while generating it',async()=>{
   const {context,requests}=client(), captured=context.documents.capture();
@@ -84,4 +86,25 @@ test('Word keeps the original claim even if another claim is opened while genera
 test('Word upload stops if the signed-in account changes during generation',async()=>{
   const {context,requests}=client(), captured=context.documents.capture();context.uid='second-user';
   await context.documents.saveWord({size:1},'test.docx',captured);assert.equal(requests.length,0);
+});
+
+test('a transient CORS/network failure is retried and the upload still succeeds once',async()=>{
+  const {context,requests,toasts}=client([new TypeError('Failed to fetch')]);
+  await context.documents.saveWord({size:1},'test.docx',context.documents.capture());
+  assert.equal(requests.length,2);assert.equal(requests[0].requestId,requests[1].requestId,'retry reuses the idempotency key');
+  assert.equal(toasts.at(-1).type,'success');
+});
+test('a Google HTML error page is treated as transient and retried',async()=>{
+  const html={ok:false,status:404,json:async()=>{throw new SyntaxError('html');}};
+  const {context,requests,toasts}=client([html,html]);
+  await context.documents.saveWord({size:1},'test.docx',context.documents.capture());
+  assert.equal(requests.length,3);assert.equal(toasts.at(-1).type,'success');
+});
+test('retries stop after two attempts and a real server error is not retried',async()=>{
+  const failing=client([new TypeError('x'),new TypeError('x'),new TypeError('x'),new TypeError('x')]);
+  await failing.context.documents.saveWord({size:1},'test.docx',failing.context.documents.capture());
+  assert.equal(failing.requests.length,3);assert.equal(failing.toasts.at(-1).type,'warning');
+  const denied=client([{ok:true,status:200,json:async()=>({ok:false,error:'Tài khoản chưa được cấp quyền'})}]);
+  await denied.context.documents.saveWord({size:1},'test.docx',denied.context.documents.capture());
+  assert.equal(denied.requests.length,1);
 });

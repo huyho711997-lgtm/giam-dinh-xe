@@ -66,16 +66,47 @@ const ClaimDocuments = (() => {
       if(document.getElementById('lightbox')?.classList.contains('claim-document-lightbox'))closeLightbox();
     });
   }
-  async function request(action,id,payload={},owner=currentUser()?.uid,signal){
-    if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(endpoint()))throw new Error('Kho Drive hồ sơ chưa được kích hoạt.');
+  // ---- Gọi Apps Script ----------------------------------------------------------------------
+  // Google đôi khi treo request 30–40s rồi trả trang lỗi HTML không có header CORS → trình duyệt báo
+  // "blocked by CORS policy / Failed to fetch". Gửi lại ngay thường thành công (~1,5s). Vì vậy:
+  //  - thao tác đọc (và upload — đã chống trùng bằng requestId) tự thử lại tối đa 2 lần;
+  //  - mỗi lần thử có thời hạn riêng để không kẹt khung chờ tới 3 phút;
+  //  - 'remove' không tự thử lại vì không chắc lần trước đã chạy hay chưa.
+  const RETRYABLE=new Set(['list','thumbnails','thumbnail','download','upload']);
+  const ATTEMPT_TIMEOUT={list:45000,thumbnails:45000,thumbnail:45000,download:90000,upload:180000,remove:60000};
+  const RETRY_DELAYS=[800,2500];
+  class TransientError extends Error {}
+  const sleep=(ms,signal)=>new Promise((resolve,reject)=>{const timer=setTimeout(resolve,ms);signal?.addEventListener('abort',()=>{clearTimeout(timer);reject(signal.reason);},{once:true});});
+  async function attempt(action,id,payload,owner,signal){
     const user=currentUser();if(!user||user.uid!==owner)throw new Error('Phiên đăng nhập đã thay đổi.');
-    const token=await user.getIdToken(),timeout=AbortSignal.timeout(180000);
-    const response=await fetch(endpoint(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,action,claimId:id,token}),credentials:'omit',redirect:'follow',signal:signal?AbortSignal.any([signal,timeout]):timeout});
+    const token=await user.getIdToken(),timeout=AbortSignal.timeout(ATTEMPT_TIMEOUT[action]||60000);
+    let response;
+    try{
+      response=await fetch(endpoint(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({...payload,action,claimId:id,token}),credentials:'omit',redirect:'follow',signal:signal?AbortSignal.any([signal,timeout]):timeout});
+    }catch(error){
+      if(signal?.aborted)throw error;
+      // TypeError = lỗi mạng/CORS; TimeoutError = quá thời hạn của lần thử này.
+      throw new TransientError(error?.name==='TimeoutError'?'Kho Drive phản hồi quá lâu.':'Không kết nối được kho Drive.');
+    }
+    if(response.status>=500||response.status===429||response.status===404)throw new TransientError('Máy chủ Google tạm thời lỗi ('+response.status+').');
     if(!response.ok)throw new Error('Không kết nối được kho Drive. Vui lòng thử lại.');
-    let result;try{result=await response.json();}catch(_){throw new Error('Dịch vụ Drive chưa được triển khai đúng.');}
+    let result;try{result=await response.json();}catch(_){throw new TransientError('Máy chủ Google trả về phản hồi không hợp lệ.');}
     if(currentUser()?.uid!==owner)throw new Error('Phiên đăng nhập đã thay đổi.');
     if(!result.ok)throw new Error(result.error||'Không thể xử lý tài liệu.');
     return result;
+  }
+  async function request(action,id,payload={},owner=currentUser()?.uid,signal){
+    if(!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(endpoint()))throw new Error('Kho Drive hồ sơ chưa được kích hoạt.');
+    const retries=RETRYABLE.has(action)?RETRY_DELAYS.length:0;
+    for(let index=0;;index++){
+      try{return await attempt(action,id,payload,owner,signal);}
+      catch(error){
+        if(!(error instanceof TransientError))throw error;
+        if(index>=retries)throw new Error(error.message+' Vui lòng kiểm tra mạng rồi bấm Làm mới.');
+        if(currentUser()?.uid!==owner)throw new Error('Phiên đăng nhập đã thay đổi.');
+        await sleep(RETRY_DELAYS[index],signal);
+      }
+    }
   }
   function base64(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(new Error('Không đọc được tệp.'));reader.readAsDataURL(blob);});}
   const decode=data=>Uint8Array.from(atob(data),character=>character.charCodeAt(0));
