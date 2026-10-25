@@ -247,17 +247,46 @@ const ClaimReductionNotice = (() => {
     chevron.innerHTML = icon('<path d="m6 9 6 6 6-6"/>');
     heading.append(node('strong','Danh bạ email'),node('small',(unit || 'Chưa có đơn vị cấp đơn') + ' · dùng chung cho mọi người dùng'));
     summary.append(badge,heading,status,chevron); details.append(summary);
-    const list = node('div',null,'crr-directory-list'), fields = {};
+    const list = node('div',null,'crr-directory-list'), fields = {}, picks = {}, lastValue = {};
+    // Ô tích "đưa vào CC": tích = các email của dòng đó nằm trong ô CC; bỏ tích = gỡ khỏi CC. Trạng thái luôn suy ra từ nội dung ô CC nên không cần lưu riêng.
+    const ccKeys = () => new Set(splitAddresses(inputs.cc.value).map(item => item.toLowerCase()));
+    const syncPicks = () => {
+      const present = ccKeys();
+      for (const row of rows) {
+        const pick = picks[row.id]; if (!pick) continue;
+        const own = splitAddresses(fields[row.id].value);
+        pick.disabled = !own.length;
+        pick.checked = own.length > 0 && own.every(address => present.has(address.toLowerCase()));
+      }
+    };
+    const removeFromCc = list => { const drop = new Set(splitAddresses(list).map(item => item.toLowerCase())); inputs.cc.value = splitAddresses(inputs.cc.value).filter(item => !drop.has(item.toLowerCase())).join('; '); };
     for (const row of rows) {
-      const line = node('label',null,'crr-directory-row'), meta = node('span',null,'crr-directory-meta'), caption = node('span',null,'crr-directory-caption'), input = node('input');
+      const line = node('div',null,'crr-directory-row'), meta = node('span',null,'crr-directory-meta'), caption = node('span',null,'crr-directory-caption'), input = node('input');
       input.id = 'claimReductionDirectory_' + row.id; line.htmlFor = input.id;
       caption.append(node('b',row.label),node('i',row.tag));
       meta.append(caption,node('span',row.name || 'Chưa có trong hồ sơ','crr-directory-name'));
       input.className = 'input-premium'; input.maxLength = 1000; input.autocomplete = 'off'; input.inputMode = 'email';
       input.placeholder = row.key ? 'email@donvi.vn; emailkhac@donvi.vn' : (row.id === 'zone' ? 'Hồ sơ chưa có Zone / Khu vực GĐ' : uk ? 'Hồ sơ chưa có thông tin này' : 'Hồ sơ chưa có đơn vị cấp đơn');
-      input.disabled = !row.key; fields[row.id] = input;
-      line.append(meta,input); list.append(line);
+      input.disabled = !row.key; fields[row.id] = input; lastValue[row.id] = '';
+      const pickCell = node('span',null,'crr-directory-pick');
+      if (row.tag === 'CC') {
+        const pick = node('input'); pick.type = 'checkbox'; pick.id = 'claimReductionDirectoryCc_' + row.id; pick.disabled = true;
+        pick.setAttribute('aria-label','Đưa ' + row.label.toLowerCase() + ' vào CC'); pick.title = 'Đưa vào CC';
+        pick.addEventListener('change',() => {
+          const own = fields[row.id].value;
+          if (pick.checked) inputs.cc.value = mergeAddresses(inputs.cc.value,own); else removeFromCc(own);
+          remember(); syncPicks();
+        });
+        // Sửa email của dòng đang tích → CC cập nhật theo (gỡ địa chỉ cũ, thêm địa chỉ mới).
+        input.addEventListener('input',() => {
+          if (pick.checked) { removeFromCc(lastValue[row.id]); inputs.cc.value = mergeAddresses(inputs.cc.value,input.value); remember(); }
+          lastValue[row.id] = input.value; syncPicks();
+        });
+        picks[row.id] = pickCell.appendChild(pick);
+      }
+      line.append(pickCell,meta,input); list.append(line);
     }
+    inputs.cc.addEventListener('input',syncPicks);
     const canEdit = typeof hasUserPermission !== 'function' || hasUserPermission('pending','edit');
     const save = button('Lưu vào danh bạ',async () => {
       if (!sameContext()) return;
@@ -274,7 +303,8 @@ const ClaimReductionNotice = (() => {
         if (!sameContext()) return;
         inputs.to.value = mergeAddresses(inputs.to.value, values.unit);
         inputs.cc.value = mergeAddresses(inputs.cc.value, values.issuer, values.dept, values.zone);
-        remember(); status.textContent = 'Đã lưu';
+        for (const row of rows) lastValue[row.id] = fields[row.id].value;
+        remember(); syncPicks(); status.textContent = 'Đã lưu';
         feedback('Đã lưu email vào danh bạ. Lần sau soạn thông báo cho ' + (unit || 'đơn vị này') + ' sẽ được điền sẵn.','success');
       } catch (error) {
         feedback(error?.code === 'PERMISSION_DENIED'
@@ -284,19 +314,20 @@ const ClaimReductionNotice = (() => {
     },true);
     save.disabled = !rows.some(row => row.key) || !canEdit; if (!canEdit) save.title = 'Bạn không có quyền chỉnh sửa hồ sơ.';
     const footer = node('div',null,'crr-directory-footer');
-    footer.append(node('span','Để trống ô nào thì xóa email đã lưu của mục đó. CC sẽ tự gồm cán bộ cấp đơn, TPKD và quản lý khu vực.'),save);
+    footer.append(node('span','Để trống ô nào thì xóa email đã lưu của mục đó. Tích ô bên trái để đưa người đó vào CC, bỏ tích để gỡ ra.'),save);
     details.append(list,footer);
     // Nạp danh bạ rồi điền sẵn To / CC (chỉ khi ô còn trống, không ghi đè nội dung đã sửa).
     const apply = directory => {
       if (!sameContext()) return;
       const stored = row => (row.key && directory?.[row.path]?.[row.key]?.[row.prop]) || '';
-      for (const row of rows) fields[row.id].value = stored(row);
+      for (const row of rows) { fields[row.id].value = stored(row); lastValue[row.id] = fields[row.id].value; }
       if (!fields.unit.value && inputs.to.value.trim()) fields.unit.value = inputs.to.value.trim();  // gợi ý: lưu luôn email đang nhập
       let filled = false;
       if (!inputs.to.value.trim() && stored(rows[0])) { inputs.to.value = stored(rows[0]); filled = true; }
       const cc = mergeAddresses(stored(rows[1]), stored(rows[2]), stored(rows[3]));
       if (!inputs.cc.value.trim() && cc) { inputs.cc.value = cc; filled = true; }
       if (filled) remember();
+      syncPicks();
       const any = rows.some(row => stored(row));
       status.textContent = filled ? 'Đã điền sẵn' : any ? 'Đã có email lưu' : 'Chưa lưu';
       details.open = !any;
