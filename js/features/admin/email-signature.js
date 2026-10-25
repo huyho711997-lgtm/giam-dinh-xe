@@ -32,14 +32,14 @@ const EmailSignature = (() => {
     return lines.concat(contact.length ? [''] : [],contact).join('\n');
   }
   function html(sig) {
-    const font = 'font-family:Calibri,Arial,sans-serif;font-size:14px;';
+    const font = 'font-family:"Times New Roman",Times,serif;font-size:12pt;';
     const row = (content, style = '') => content ? '<div style="' + font + style + '">' + content + '</div>' : '';
     const site = sig.website ? '<a href="' + escapeHtml(safeUrl(sig.website,{allowBare:true}) || '#') + '" style="color:#1f5fa8;">' + escapeHtml(websiteText(sig)) + '</a>' : '';
     const phone = sig.phone ? 'T: ' + escapeHtml(sig.phone) : '';
     const mail = sig.email ? 'E: <a href="mailto:' + escapeHtml(sig.email) + '" style="color:#1f5fa8;text-decoration:none;">' + escapeHtml(sig.email) + '</a>' : '';
     const web = site ? 'W: ' + site : '';
     return '<div class="email-signature">'
-      + row(escapeHtml(sig.name),'font-weight:700;font-size:16px;color:#1f5fa8;')
+      + row(escapeHtml(sig.name),'font-weight:700;font-size:14pt;color:#1f5fa8;')
       + row(escapeHtml(sig.title),'color:#1f5fa8;')
       + (phone || mail || web ? '<div style="height:12px"></div>' : '')
       + row(phone) + row([mail,web].filter(Boolean).join('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'))

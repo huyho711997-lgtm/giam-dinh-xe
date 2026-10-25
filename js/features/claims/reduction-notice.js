@@ -178,7 +178,19 @@ const ClaimReductionNotice = (() => {
     const main = cut ? trimmed.slice(0,trimmed.length - plain.length) : trimmed;
     const paragraphs = EmailSignature.escapeHtml(main).replace(/\n/g,'<br>');
     const banner = '<div style="margin-top:8px"><img src="' + EmailSignature.escapeHtml(signature.banner) + '" alt="" style="max-width:600px;width:100%;height:auto;border:0;display:block"></div>';
-    return '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><div style="font-family:Calibri,Arial,sans-serif;font-size:14px;line-height:1.5">' + paragraphs + '</div>' + (cut ? EmailSignature.html(signature) : banner) + '</body></html>';
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:\'Times New Roman\',Times,serif;font-size:12pt"><div style="font-family:\'Times New Roman\',Times,serif;font-size:12pt;line-height:1.4">' + paragraphs + '</div>' + (cut ? EmailSignature.html(signature) : banner) + '</body></html>';
+  }
+  // Thư định dạng (Times New Roman 12pt, chân chữ ký có ảnh) ở dạng HTML + văn bản thường để dán vào Outlook.
+  function richMail(body) {
+    const signature = typeof EmailSignature !== 'undefined' && activeUserProfile ? EmailSignature.resolve(activeUserProfile) : null;
+    return signature ? bodyToHtml(body,signature) : '';
+  }
+  async function copyRich(html, plain) {
+    try {
+      if (!html || !navigator.clipboard?.write || typeof ClipboardItem === 'undefined') return false;
+      await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([plain],{type:'text/plain'})})]);
+      return true;
+    } catch (_) { return false; }
   }
   function checkDeadline(text) {
     if (!text) return;
@@ -363,10 +375,11 @@ const ClaimReductionNotice = (() => {
     const copy = button('Sao chép nội dung',async () => {
       if (!sameContext()) return close();
       remember();
+      if (await copyRich(richMail(inputs.body.value),inputs.body.value)) return feedback('Đã sao chép thư định dạng (Times New Roman, kèm chân chữ ký). Dán vào thân thư bằng Ctrl+V.','success');
       try { await navigator.clipboard.writeText(inputs.body.value); feedback('Đã sao chép nội dung thông báo.','success'); }
       catch (_) { inputs.body.focus(); inputs.body.select(); feedback('Nhấn Ctrl+C để sao chép nội dung đã chọn.','warning'); }
     });
-    const outlook = button('Mở Outlook',() => {
+    const outlook = button('Mở Outlook',async () => {
       if (!sameContext()) return close();
       try {
         const to = addresses(inputs.to.value), cc = addresses(inputs.cc.value);
@@ -378,13 +391,16 @@ const ClaimReductionNotice = (() => {
         const params = {to:to.join(',')};
         if (cc.length) params.cc = cc.join(',');
         params.subject = inputs.subject.value.replace(/[\r\n]/g,' ');
-        params.body = inputs.body.value;
+        // Ưu tiên chép thư định dạng vào clipboard (dán vào Outlook giữ font + ảnh chân ký); chép không được thì truyền văn bản thường qua link.
+        const copiedRich = await copyRich(richMail(inputs.body.value),inputs.body.value);
+        if (!copiedRich) params.body = inputs.body.value;
         // Outlook's compose route keeps form-encoded '+' characters as literal text.
         // Encode spaces as %20 and actual plus signs as %2B in every parameter.
         const query = Object.entries(params).map(([key,text]) => encodeURIComponent(key) + '=' + encodeURIComponent(text)).join('&');
         const url = 'https://outlook.cloud.microsoft/mail/deeplink/compose?' + query;
         if (url.length > 12000) throw new Error('Nội dung dài. Dùng Sao chép nội dung rồi dán vào Outlook.');
         remember(); window.open(url,'_blank','noopener,noreferrer');
+        if (copiedRich) return feedback('Đã sao chép thư định dạng Times New Roman kèm ảnh chân chữ ký. Bấm vào nội dung thư trong Outlook rồi nhấn Ctrl+V.' + (cc.length ? ' CC: bấm "Sao chép CC" rồi dán vào ô Cc.' : ''),'success');
         // Link soạn thư của Outlook web KHÔNG hỗ trợ tham số CC (Microsoft không có tài liệu) → chép sẵn CC vào clipboard để dán.
         if (cc.length) {
           const note = 'Outlook web không nhận CC qua link. Email CC đã được sao chép: bấm vào ô Cc trong Outlook rồi nhấn Ctrl+V.';
@@ -425,9 +441,9 @@ const ClaimReductionNotice = (() => {
         const wrap = text => text.replace(/.{1,76}/g,'$&\r\n').trimEnd();
         const lines = ['X-Unsent: 1','To: ' + to.join(', ')];
         if (cc.length) lines.push('Cc: ' + cc.join(', '));
-        // Có banner trong chân email → xuất thư HTML (chữ ký có định dạng + ảnh); không thì giữ văn bản thường.
+        // Xuất thư HTML (Times New Roman, chữ ký có định dạng + ảnh banner).
         const signature = typeof EmailSignature !== 'undefined' && activeUserProfile ? EmailSignature.resolve(activeUserProfile) : null;
-        const html = signature?.banner ? bodyToHtml(inputs.body.value,signature) : '';
+        const html = signature ? bodyToHtml(inputs.body.value,signature) : '';
         lines.push('Subject: =?UTF-8?B?' + b64(inputs.subject.value.replace(/[\r\n]/g,' ')) + '?=','MIME-Version: 1.0','Content-Type: ' + (html ? 'text/html' : 'text/plain') + '; charset=UTF-8','Content-Transfer-Encoding: base64','',wrap(b64(html || inputs.body.value)));
         const link = document.createElement('a');
         link.href = URL.createObjectURL(new Blob([lines.join('\r\n')],{type:'message/rfc822'}));
