@@ -26,8 +26,8 @@ test('chữ ký thư đổi khi đổi lựa chọn → nháp cũ không ghi đ�
   assert.notEqual(a, b);
 });
 
-test('lưu / nạp trạng thái: giữ lựa chọn, bỏ mục lạ, mặc định chọn tất cả', () => {
-  assert.equal(Email.getState().imageRequest.items.length, Email.IMAGE_ITEMS.length);
+test('lưu / nạp trạng thái: giữ lựa chọn, bỏ mục lạ, mặc định chỉ tích hình các mặt xe', () => {
+  assert.deepEqual([...Email.getState().imageRequest.items], ['body'], 'mặc định chỉ tích hình ảnh các mặt xe');
   Email.load({imageRequest: {items: ['body', 'khong-ton-tai'], note: 'x', mail: {to: 'a@x.vn', cc: 'b@x.vn', body: 'nháp', extra: 'bỏ'}}});
   const state = Email.getState().imageRequest;
   assert.deepEqual([...state.items], ['body']);

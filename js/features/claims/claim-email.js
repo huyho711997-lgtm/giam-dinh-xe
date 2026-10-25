@@ -12,7 +12,7 @@ const ClaimEmail = (() => {
   const MAIL_KEYS = ['to','cc','subject','body','signature','deadline'];
   const clip = (text, max) => typeof text === 'string' ? text.slice(0,max) : '';
   let state = emptyState();
-  function emptyState() { return {imageRequest:{items:IMAGE_ITEMS.map(([key]) => key),note:'',mail:{}}}; }
+  function emptyState() { return {imageRequest:{items:['body'],note:'',mail:{}}}; }
   const node = (tag, text, className) => { const element = document.createElement(tag); if (text) element.textContent = text; if (className) element.className = className; return element; };
 
   function load(data) {
