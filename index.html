@@ -70,7 +70,7 @@
 <link rel="stylesheet" href="css/shared-forms-page.css?v=20261024-dialog-4">
 <link rel="stylesheet" href="css/claim-editor.css?v=20261025-back-1">
 <link rel="stylesheet" href="css/claim-documents.css?v=20261024-docs-1">
-<link rel="stylesheet" href="css/reduction-notice.css?v=20261025-dl-2">
+<link rel="stylesheet" href="css/reduction-notice.css?v=20261025-email-1">
 <link rel="stylesheet" href="css/reduction-rules.css?v=20261024-scene-1">
 <link rel="stylesheet" href="css/claim-header-actions.css?v=20261025-back-1">
 <link rel="stylesheet" href="css/document-preview.css?v=20261024-preview-1">
@@ -364,6 +364,7 @@
             <span>Bồi thường, PASC & Thanh toán</span>
           </button>
           <button id="tabBtn_Documents" type="button" onclick="switchEditClaimTab('Documents')" class="edit-tab-btn"><span>Tài liệu hồ sơ</span></button>
+          <button id="tabBtn_Email" type="button" onclick="switchEditClaimTab('Email')" class="edit-tab-btn"><span>Email</span></button>
           <button id="tabBtn_AuthorityRequest" type="button" onclick="switchEditClaimTab('AuthorityRequest')" class="edit-tab-btn"><span>Trưng cầu hồ sơ</span></button>
           <button id="tabBtn_CollectionGuide" type="button" onclick="switchEditClaimTab('CollectionGuide')" class="edit-tab-btn">
             <span>Hướng dẫn thu thập hồ sơ</span>
@@ -374,6 +375,7 @@
       <div class="claim-editor-content">
 
         <div id="tabPane_Documents" class="edit-tab-pane" style="display:none"></div>
+        <div id="tabPane_Email" class="edit-tab-pane claim-email-pane" style="display:none"></div>
         <div id="tabPane_AuthorityRequest" class="edit-tab-pane" style="display:none">
           <div class="authority-request-header">
             <div class="authority-request-heading">
@@ -1725,9 +1727,10 @@
   <script src="js/features/auth/login.js"></script>
   <script src="js/data/insurance-reduction-rules.js?v=20261024-scene-1"></script>
   <script src="js/features/claims/reduction-rules.js?v=20261025-steps-1"></script>
-  <script src="js/features/claims/reduction-notice.js?v=20261025-font-2"></script>
+  <script src="js/features/claims/reduction-notice.js?v=20261025-email-1"></script>
+  <script src="js/features/claims/claim-email.js?v=20261025-email-1"></script>
   <script src="js/features/claims/editor-workspace.js?v=20261024-status-1"></script>
-  <script src="js/features/claims/pending-editor.js?v=20261024-guard-1"></script>
+  <script src="js/features/claims/pending-editor.js?v=20261025-email-1"></script>
   <script src="js/features/claims/notes.js"></script>
   <script src="js/features/claims/import-versions.js?v=20261024-imports-2"></script>
   <script src="js/features/claims/import-history.js?v=20261024-imports-3"></script>

@@ -100,7 +100,7 @@ const ClaimReductionNotice = (() => {
     stage.input.value = draft.stage || defaultStage;
     Object.assign(stage.input.dataset,{sfSelect:'',sfLabel:'Trạng thái xử lý',sfIcon:'shield',sfDescription:'Trạng thái này được đưa vào nội dung thông báo.'});
     stage.input.addEventListener('change',refreshStage);
-    const create = button('',compose,true); create.classList.add('crr-compose'); create.innerHTML = envelope; create.append(node('span','Soạn thông báo cấp đơn'));
+    const create = button('',() => compose(),true); create.classList.add('crr-compose'); create.innerHTML = envelope; create.append(node('span','Soạn thông báo cấp đơn'));
     actions.append(stage.group,create,node('p','Nội dung được lưu khi bấm Lưu cập nhật hồ sơ.','crr-field-hint'));
     const ruleHost = node('div',null,'claim-reduction-rules');
     section.append(header,context,ruleHost); pane.append(section);
@@ -129,7 +129,17 @@ const ClaimReductionNotice = (() => {
     if (line) result = /^Trân trọng,/m.test(result) ? result.replace(/^Trân trọng,/m,line + '\n\nTrân trọng,') : result.trimEnd() + '\n\n' + line;
     return result.replace(/\n{3,}/g,'\n\n').trim();
   }
-  function template() {
+  // Ngữ cảnh dùng chung cho mọi loại thư trong hồ sơ: các dòng thông tin hồ sơ + chữ ký người gửi.
+  function mailContext() {
+    const facts = [
+      ['Biển số xe',value('BienSo')],['Khách hàng',value('KhachHang')],['Số HSBT',value('SoHoSoBoiThuong')],['Mã vụ tổn thất',value('MaVuTonThat')],
+      ['Hợp đồng bảo hiểm',value('SoHd')],['Số GCNBH',value('SoGcn')],['Ngày xảy ra tổn thất',value('NgayVTT')],
+      ['Đơn vị cấp đơn',value('DonViCapDon')],['Người cấp đơn',value('NguoiCapDon')],['Giám định viên',value('GdvTiepNhan')]
+    ].filter(([,text]) => text && text !== '—').map(([label,text]) => '- ' + label + ': ' + text);
+    const sender = String(typeof EmailSignature !== 'undefined' && activeUserProfile ? EmailSignature.text(EmailSignature.resolve(activeUserProfile)) : '') || String(activeUserProfile?.displayName || firebase.auth().currentUser?.displayName || value('GdvTiepNhan') || '');
+    return {value,facts,sender,plate:value('BienSo'),hsbt:value('SoHoSoBoiThuong'),unit:value('DonViCapDon')};
+  }
+  function template(store = draft) {
     const state = getState();
     const info = {
       plate:value('BienSo'),customer:value('KhachHang'),hsbt:value('SoHoSoBoiThuong'),vtt:value('MaVuTonThat'),
@@ -169,7 +179,7 @@ const ClaimReductionNotice = (() => {
       'Kính đề nghị đơn vị cấp đơn nắm thông tin, phối hợp trao đổi với khách hàng và phản hồi nếu có thông tin cần bổ sung.',
       '', 'Trân trọng,', info.sender
     ].join('\n').trim();
-    return {subject:'[Thông tin giảm trừ/chế tài] ' + info.plate + (info.hsbt ? ' – ' + info.hsbt : ''),body:withDeadline(body,draft.deadline),signature:JSON.stringify(info)};
+    return {subject:'[Thông tin giảm trừ/chế tài] ' + info.plate + (info.hsbt ? ' – ' + info.hsbt : ''),body:withDeadline(body,store.deadline),signature:JSON.stringify(info)};
   }
   // Chuyển nội dung thư sang HTML; nếu cuối thư đúng là chân email dạng văn bản thì thay bằng chân email có định dạng + banner.
   function bodyToHtml(body, signature) {
@@ -299,25 +309,37 @@ const ClaimReductionNotice = (() => {
     loadDirectory().then(apply).catch(() => { if (sameContext()) status.textContent = 'Không tải được danh bạ'; });
     return details;
   }
-  function compose() {
+  // Loại thư mặc định của mục giảm trừ. Các loại thư khác (xem ClaimEmail) truyền spec cùng dạng vào compose():
+  // {eyebrow, title, store (đối tượng lưu to/cc/subject/body/signature/deadline), build(ctx) → {subject, body, signature}}.
+  function reductionSpec() {
+    return {eyebrow:'GIẢM TRỪ / CHẾ TÀI',title:'Thông báo đơn vị cấp đơn',store:draft,
+      precheck() {
+        const state = getState();
+        if (!state.reason && !state.notes) { document.querySelector('#claimReductionSection .crr-item-head input')?.focus(); triggerToast('Chọn ít nhất một vi phạm hoặc nhập ghi nhận thực tế.','warning'); return true; }
+        return false;
+      },
+      build:() => template(draft)};
+  }
+  function compose(spec = reductionSpec()) {
     if (!owner()) return triggerToast('Vui lòng đăng nhập để soạn thông báo.','warning');
     if (!value('BienSo')) return triggerToast('Nhập biển số xe trước khi soạn thông báo.','warning');
-    const state = getState();
-    if (!state.reason && !state.notes) { document.querySelector('#claimReductionSection .crr-item-head input')?.focus(); return triggerToast('Chọn ít nhất một vi phạm hoặc nhập ghi nhận thực tế.','warning'); }
+    if (spec.precheck?.()) return;
     close();
-    const generated = template(), claim = editingPendingClaimId, uid = owner();
+    const store = spec.store;
+    const generated = spec.build(mailContext(),store), claim = editingPendingClaimId, uid = owner();
+    generated.body = withDeadline(generated.body,store.deadline);
     const sheet = node('dialog',null,'sf-dialog claim-reduction-compose'); dialog = sheet;
     sheet.setAttribute('aria-labelledby','claimReductionComposeTitle');
     const form = node('form',null,'sf-dialog-form'), header = node('header'), title = node('div');
-    const heading = node('h2','Thông báo đơn vị cấp đơn'); heading.id = 'claimReductionComposeTitle';
-    title.append(node('small','GIẢM TRỪ / CHẾ TÀI'),heading); const dismiss = button('×',close); dismiss.setAttribute('aria-label','Đóng thông báo'); header.append(title,dismiss);
+    const heading = node('h2',spec.title); heading.id = 'claimReductionComposeTitle';
+    title.append(node('small',spec.eyebrow),heading); const dismiss = button('×',close); dismiss.setAttribute('aria-label','Đóng thông báo'); header.append(title,dismiss);
     const recipientGrid = node('div',null,'claim-reduction-recipients'), bodyBox = node('div',null,'crr-compose-body'); const inputs = {};
     for (const [key,label] of [['to','Email đơn vị cấp đơn'],['cc','CC (nếu có)'],['subject','Tiêu đề'],['body','Nội dung thông báo']]) {
       const wrapper = node('label',label), input = node(key === 'body' ? 'textarea' : 'input');
       input.id = 'claimReductionMail_' + key; wrapper.htmlFor = input.id;
       input.maxLength = key === 'body' ? 6000 : key === 'subject' ? 250 : 1000;
       if (key === 'body') input.rows = 12;
-      input.value = key === 'subject' || key === 'body' ? (draft.signature === generated.signature && draft[key] ? draft[key] : generated[key]) : draft[key] || '';
+      input.value = key === 'subject' || key === 'body' ? (store.signature === generated.signature && store[key] ? store[key] : generated[key]) : store[key] || '';
       if (key === 'to' || key === 'cc') { input.placeholder = 'email@donvi.vn; emailkhac@donvi.vn'; input.autocomplete = 'off'; input.inputMode = 'email'; }
       inputs[key] = input; wrapper.append(input); (key === 'to' || key === 'cc' ? recipientGrid : bodyBox).append(wrapper);
     }
@@ -325,13 +347,13 @@ const ClaimReductionNotice = (() => {
     // Thông báo kết quả hiển thị dạng toast (góc phải trên) thay vì dòng chữ trong hộp thoại.
     const feedback = (message, type = 'warning') => { if (message) triggerToast(message,type); };
     const sameContext = () => owner() === uid && editingPendingClaimId === claim && sheet.dataset.discard !== 'true';
-    const remember = () => { if (!sameContext()) return false; for (const key of Object.keys(inputs)) draft[key] = inputs[key].value; draft.signature = generated.signature; return true; };
+    const remember = () => { if (!sameContext()) return false; for (const key of Object.keys(inputs)) store[key] = inputs[key].value; store.signature = generated.signature; return true; };
     form.addEventListener('input',remember);
     recipientGrid.after(directoryPanel(inputs,remember,feedback,sameContext));
     // Thời hạn phản hồi chậm nhất → tự đưa vào nội dung thư.
     const deadlineCard = node('section',null,'crr-deadline'), deadlineHead = node('div',null,'crr-deadline-head');
     // Hai ô chọn dùng chung bộ SharedFormsControls (cùng giao diện với các dropdown khác) thay cho hộp chọn ngày giờ gốc của trình duyệt.
-    const deadlineInput = node('input'); deadlineInput.type = 'hidden'; deadlineInput.id = 'claimReductionMail_deadline'; deadlineInput.value = draft.deadline || '';
+    const deadlineInput = node('input'); deadlineInput.type = 'hidden'; deadlineInput.id = 'claimReductionMail_deadline'; deadlineInput.value = store.deadline || '';
     const deadlineLabel = node('span','Thời hạn phản hồi chậm nhất','crr-deadline-title');
     deadlineHead.append(deadlineLabel,node('small','Quá thời hạn, bộ phận bồi thường giải quyết quyền lợi theo quy định.'));
     const deadlineTools = node('div',null,'crr-deadline-tools'), chips = node('div',null,'crr-deadline-chips');
@@ -350,7 +372,7 @@ const ClaimReductionNotice = (() => {
     const today = new Date();
     for (let offset = 0; offset <= 30; offset++) { const date = new Date(today.getFullYear(),today.getMonth(),today.getDate() + offset); addOption(dateSelect,isoDate(date),dateText(isoDate(date))); }
     for (let minutes = 7 * 60; minutes <= 21 * 60; minutes += 30) { const text = pad(Math.floor(minutes / 60)) + ':' + pad(minutes % 60); addOption(timeSelect,text,text); }
-    const [savedDate = '',savedTime = ''] = String(draft.deadline || '').split('T');
+    const [savedDate = '',savedTime = ''] = String(store.deadline || '').split('T');
     if (savedDate) addOption(dateSelect,savedDate,dateText(savedDate));
     if (savedTime) addOption(timeSelect,savedTime,savedTime);
     dateSelect.value = savedDate; timeSelect.value = savedTime || '17:00';
@@ -464,5 +486,5 @@ const ClaimReductionNotice = (() => {
     SharedFormsControls.enhance(sheet);
     document.body.append(sheet); sheet.showModal(); inputs.to.focus();
   }
-  return {mount,load,getState,close,show,directory:{slug,mergeAddresses},deadline:{withDeadline,format:formatDeadline}};
+  return {mount,load,getState,close,show,compose,mailContext,directory:{slug,mergeAddresses},deadline:{withDeadline,format:formatDeadline}};
 })();

@@ -154,6 +154,7 @@
 
       editingPendingClaimId = null;
       ClaimReductionNotice.load({});
+      ClaimEmail.load({});
 
       modal.querySelectorAll('input[id^="modalPending"],textarea[id^="modalPending"]').forEach(field => { field.value = ''; });
 
@@ -337,6 +338,7 @@
       setVal('modalPendingNgayKtXacNhan', formatCleanDateField(item.ngayKtXacNhan));
       setVal('modalPendingGhiChu', item.ghiChu || '');
       ClaimReductionNotice.load(item.thongBaoGiamTru || {});
+      ClaimEmail.load(item.emailTemplates || {});
       setVal('modalPendingTndsGhiChu', item.tndsGhiChu || '');
 
       renderTndsLastUpdatedInfo(item);
@@ -398,7 +400,7 @@
 
 
     function switchEditClaimTab(tabName) {
-      const tabs = ['Policy', 'Vehicle', 'Event', 'Unit', 'Financial', 'Documents', 'CollectionGuide', 'AuthorityRequest'];
+      const tabs = ['Policy', 'Vehicle', 'Event', 'Unit', 'Financial', 'Documents', 'Email', 'CollectionGuide', 'AuthorityRequest'];
       tabs.forEach(t => {
         const tabBtn = document.getElementById('tabBtn_' + t);
         const tabPane = document.getElementById('tabPane_' + t);
@@ -407,6 +409,7 @@
       });
       if (tabName === 'AuthorityRequest') { ensureCollectionGuide(); authorityRequestRefresh(); }
       if (tabName === 'Documents') ClaimDocuments.render();
+      if (tabName === 'Email') ClaimEmail.render();
       if (tabName === 'CollectionGuide') { ensureCollectionGuide(); refreshCollectionGuideSummary(); }
       if (typeof ClaimEditorWorkspace !== 'undefined') ClaimEditorWorkspace.tabChanged(tabName);
     }
@@ -612,6 +615,7 @@
         ngayThanhToan: getVal('modalPendingNgayThanhToan') || existingItem.ngayThanhToan || '',
         ghiChu: generalNoteVal,
         thongBaoGiamTru: ClaimReductionNotice.getState(),
+        emailTemplates: ClaimEmail.getState(),
         tndsGhiChu: tndsNoteVal,
         tndsLastUpdated: tndsLastUpdated,
         tndsUpdatedBy: tndsUpdatedBy,

@@ -32,6 +32,7 @@ function setup(seed={},failure='') {
     dbNodeInstance:{ref:path=>ref(path||'')},hasUserPermission:()=>true,
     // pending-editor.js phụ thuộc module thông báo giảm trừ (nạp trước nó trong index.html); test chỉ cần stub trạng thái.
     ClaimReductionNotice:{load:()=>{},getState:()=>({}),mount:()=>{},close:()=>{},show:()=>{}},
+    ClaimEmail:{load:()=>{},getState:()=>({}),render:()=>{}},
     collectionDocumentDraftIdentity:snapshot=>({source:JSON.stringify(snapshot)}),collectionDocumentReadEdits:()=>structuredClone(context.currentEdits),
     collectionDocumentWriteEdits:(snapshot,edits)=>{context.currentEdits=structuredClone(edits);},
     initializeCollectionGuide:item=>{context.collectionGuideDraft=structuredClone(item.huongDanThuThapHoSo||{version:1,meta:{},items:{},extras:[]});},
