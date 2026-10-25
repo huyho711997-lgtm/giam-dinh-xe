@@ -43,12 +43,12 @@ const ClaimEmail = (() => {
     const body = [
       'Kính gửi ' + (ctx.unit || 'Anh/Chị phụ trách cấp đơn') + ',','',
       'Để có cơ sở xem xét và giải quyết hồ sơ bồi thường, Bộ phận giám định đề nghị đơn vị cấp đơn cung cấp hình ảnh tại thời điểm cấp đơn của hồ sơ sau:','',
-      ...ctx.facts,'','NỘI DUNG ĐỀ NGHỊ CUNG CẤP',
+      ...ctx.facts,...(ctx.incident || []),'','NỘI DUNG ĐỀ NGHỊ CUNG CẤP',
       ...wanted,...extra,'',
       'Hình ảnh cần rõ nét, đầy đủ góc chụp và có thể gửi lại trực tiếp qua email này. Kính đề nghị đơn vị cấp đơn phối hợp cung cấp sớm.',
       '','Trân trọng,',ctx.sender
     ].join('\n').trim();
-    return {subject:'[Yêu cầu cung cấp hình ảnh cấp đơn] ' + ctx.plate + (ctx.hsbt ? ' – ' + ctx.hsbt : ''),body,signature:JSON.stringify({kind:'imageRequest',items:request.items,note:request.note,facts:ctx.facts,unit:ctx.unit,sender:ctx.sender})};
+    return {subject:'[Yêu cầu cung cấp hình ảnh cấp đơn] ' + ctx.plate + (ctx.hsbt ? ' – ' + ctx.hsbt : ''),body,signature:JSON.stringify({kind:'imageRequest',items:request.items,note:request.note,facts:ctx.facts,incident:ctx.incident,unit:ctx.unit,sender:ctx.sender})};
   }
   function imageSpec() {
     readForm();

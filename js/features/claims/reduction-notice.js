@@ -137,15 +137,25 @@ const ClaimReductionNotice = (() => {
     const line = GREETING_CC + ' ' + ccLine;
     return /^Kính gửi .*$/m.test(result) ? result.replace(/^(Kính gửi .*)$/m,(match) => match + '\n' + line) : line + '\n' + result;
   }
+  // Thông tin vụ tổn thất (tab "Vụ tổn thất & Diễn biến") dùng chung cho mọi loại thư.
+  const lossFacts = () => [
+    ['Ngày xảy ra tổn thất',value('NgayVTT')],['Tỉnh / Thành tổn thất',value('TinhTonThat')],['Địa điểm tổn thất',value('DiaDiemVTT')],
+    ['Tình trạng hiện trường',value('HienTruong')],['Nhóm nguyên nhân',value('NguyenNhan')]
+  ];
+  // Khối "DIỄN BIẾN TỔN THẤT": giữ xuống dòng của người nhập, bỏ dòng trống thừa; không có mô tả thì không thêm khối.
+  const incidentBlock = () => {
+    const text = String(document.getElementById('modalPendingMoTaTonThat')?.value || '').split('\n').map(line => line.trim()).filter(Boolean).join('\n');
+    return text ? ['','DIỄN BIẾN TỔN THẤT',text] : [];
+  };
   // Ngữ cảnh dùng chung cho mọi loại thư trong hồ sơ: các dòng thông tin hồ sơ + chữ ký người gửi.
   function mailContext() {
     const facts = [
-      ['Biển số xe',value('BienSo')],['Khách hàng',value('KhachHang')],['Số HSBT',value('SoHoSoBoiThuong')],['Mã vụ tổn thất',value('MaVuTonThat')],
-      ['Hợp đồng bảo hiểm',value('SoHd')],['Số GCNBH',value('SoGcn')],['Ngày xảy ra tổn thất',value('NgayVTT')],
+      ['Biển số xe',value('BienSo')],['Khách hàng',value('KhachHang')],['Số HSBT',value('SoHoSoBoiThuong')],
+      ['Hợp đồng bảo hiểm',value('SoHd')],['Số GCNBH',value('SoGcn')],...lossFacts(),
       ['Đơn vị cấp đơn',value('DonViCapDon')],['Người cấp đơn',value('NguoiCapDon')],['Giám định viên',value('GdvTiepNhan')]
     ].filter(([,text]) => text && text !== '—').map(([label,text]) => '- ' + label + ': ' + text);
     const sender = String(typeof EmailSignature !== 'undefined' && activeUserProfile ? EmailSignature.text(EmailSignature.resolve(activeUserProfile)) : '') || String(activeUserProfile?.displayName || firebase.auth().currentUser?.displayName || value('GdvTiepNhan') || '');
-    return {value,facts,sender,plate:value('BienSo'),hsbt:value('SoHoSoBoiThuong'),unit:value('DonViCapDon')};
+    return {value,facts,incident:incidentBlock(),sender,plate:value('BienSo'),hsbt:value('SoHoSoBoiThuong'),unit:value('DonViCapDon')};
   }
   function template(store = draft) {
     const state = getState();
@@ -166,16 +176,17 @@ const ClaimReductionNotice = (() => {
       '- Số tiền bồi thường sau giảm trừ: ' + vnd(evaluated.remain)
     ] : [];
     info.money = money;
+    info.loss = [lossFacts(),incidentBlock()];  // đưa vào signature để sửa vụ tổn thất / diễn biến thì thư được tạo lại
     const facts = [
-      ['Biển số xe',info.plate],['Khách hàng',info.customer],['Số HSBT',info.hsbt],['Mã vụ tổn thất',info.vtt],
-      ['Hợp đồng bảo hiểm',info.policy],['Số GCNBH',info.certificate],['Ngày xảy ra tổn thất',info.date],
+      ['Biển số xe',info.plate],['Khách hàng',info.customer],['Số HSBT',info.hsbt],
+      ['Hợp đồng bảo hiểm',info.policy],['Số GCNBH',info.certificate],...lossFacts(),
       ['Đơn vị cấp đơn',info.unit],['Người cấp đơn',info.issuer],['Giám định viên',info.assessor]
     ].filter(([,text]) => text && text !== '—').map(([label,text]) => '- ' + label + ': ' + text);
     const list = text => text.split('\n').filter(Boolean).map(line => '   + ' + line.replace(/^\s*[-+•]\s*/,''));
     const body = [
       'Kính gửi ' + (info.unit || 'Anh/Chị phụ trách cấp đơn') + ',', '',
       'Bộ phận giám định gửi thông tin giảm trừ / chế tài của hồ sơ sau để đơn vị cấp đơn nắm thông tin:',
-      '',...facts,'','NỘI DUNG GIẢM TRỪ / CHẾ TÀI',
+      '',...facts,...incidentBlock(),'','NỘI DUNG GIẢM TRỪ / CHẾ TÀI',
       '- Trạng thái: ' + info.stage,
       // Khi có bảng số tiền bên dưới, kết luận chỉ nêu tỷ lệ để không lặp số liệu.
       '- Kết luận: ' + ((money.length ? info.impact.split(':')[0] : info.impact) || 'Chưa xác định mức áp dụng'),
