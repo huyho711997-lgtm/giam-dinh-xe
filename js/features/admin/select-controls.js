@@ -152,6 +152,8 @@ function refreshPermissionSummary(prefix) {
   const selected = controls.filter(input => input.checked).length;
   const count = document.getElementById(prefix + 'PermissionCount');
   if (count) count.textContent = selected + ' / ' + controls.length + ' quyền đã chọn';
+  const tabBadge = document.getElementById(prefix + 'PermissionTabBadge');
+  if (tabBadge) tabBadge.textContent = selected + '/' + controls.length;
   const note = document.getElementById(prefix + 'PermissionAdminNote');
   if (note) note.hidden = document.getElementById(prefix + 'AdminRole')?.value !== 'Admin';
 }

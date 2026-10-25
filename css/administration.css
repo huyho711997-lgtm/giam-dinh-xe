@@ -1055,20 +1055,37 @@ body.light-mode [data-garage-portal="active"] { --border:rgba(28,31,38,.09); }
 @media(max-height:380px) { .custom-camera-modal[data-orientation="landscape"] .camera-capture-inner { width:46px; height:46px; } }
 
 
-/* Chân email theo người dùng (trong hộp sửa thành viên) */
-.admin-signature { margin-top:20px; border:1px solid var(--border); border-radius:14px; background:var(--surface, #fff); overflow:hidden; }
-.admin-signature>summary { display:flex; align-items:center; gap:12px; padding:13px 14px; cursor:pointer; list-style:none; }
-.admin-signature>summary::-webkit-details-marker { display:none; }
-.admin-signature-title { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
-.admin-signature-title strong { font-size:13px; color:var(--text); }
-.admin-signature-title small { font-size:11px; color:var(--text-muted); line-height:1.4; }
-.admin-signature-chevron { width:16px; height:16px; color:var(--text-muted); transition:transform .18s; flex-shrink:0; }
-.admin-signature[open] .admin-signature-chevron { transform:rotate(180deg); }
-.admin-signature[open]>summary { border-bottom:1px solid var(--border); }
-.admin-signature-body { display:flex; flex-direction:column; gap:14px; padding:16px 14px 18px; }
-.admin-signature-pair { display:grid; grid-template-columns:1fr; gap:14px; }
+/* Hộp sửa thành viên: 2 tab (Thông tin & chân email | Phân quyền) */
+.admin-member-tabs { display:flex; gap:6px; flex-shrink:0; padding:0 28px; border-bottom:1px solid var(--border); background:var(--modal-bg); }
+.admin-member-tab { position:relative; display:inline-flex; align-items:center; gap:9px; padding:14px 16px 13px; border:0; background:transparent; color:var(--text-muted); font:inherit; font-size:13px; font-weight:700; cursor:pointer; border-radius:10px 10px 0 0; transition:color .15s,background .15s; }
+.admin-member-tab svg { width:16px; height:16px; }
+.admin-member-tab:hover { color:var(--text-main); background:var(--surface-soft); }
+.admin-member-tab.is-active { color:var(--primary); }
+.admin-member-tab.is-active::after { content:""; position:absolute; left:12px; right:12px; bottom:-1px; height:2px; border-radius:2px; background:var(--primary); }
+.admin-member-tab:focus-visible { outline:2px solid var(--primary); outline-offset:-2px; }
+.admin-member-tab em { font-style:normal; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:999px; background:var(--admin-fill); border:1px solid var(--admin-line); color:var(--primary); }
+.admin-member-tab em:empty { display:none; }
+.admin-member-layout--tabs { display:block; }
+.admin-profile-pane { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:24px; align-items:start; }
+.admin-profile-pane[hidden],.admin-permissions-section[hidden] { display:none; }
+.admin-user-modal .admin-profile-pane .admin-user-details .admin-account-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:16px !important; }
+.admin-profile-pane .admin-role-note { margin-top:20px; }
+/* Chân email: thẻ luôn hiển thị ở tab thứ nhất */
+.admin-signature-card { padding:20px; background:var(--surface-soft); border:1px solid var(--border); border-radius:18px; min-width:0; }
+.admin-signature-body { display:flex; flex-direction:column; gap:15px; margin-top:22px; }
+.admin-signature-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
 .admin-signature-hint { display:block; margin-top:6px; font-size:10.5px; line-height:1.5; color:var(--text-muted); }
 .admin-signature-hint[data-invalid="true"] { color:#b4443a; }
 .admin-signature-preview-wrap>span { display:block; margin-bottom:8px; font-size:11px; font-weight:700; color:var(--text-soft); }
 .admin-signature-preview { padding:14px 16px; border:1px dashed var(--border); border-radius:12px; background:#fff; color:#222; overflow:hidden; }
 .admin-signature-empty { font-size:12px; color:#8a8a8a; }
+@media (max-width:1000px) { .admin-profile-pane { grid-template-columns:1fr; } }
+@media (max-width:720px) { .admin-member-tabs { padding:0 12px; overflow-x:auto; } .admin-member-tab { padding:12px 10px; white-space:nowrap; } .admin-user-modal .admin-profile-pane .admin-user-details .admin-account-grid,.admin-signature-pair { grid-template-columns:1fr !important; } .admin-signature-card { padding:15px; } }
+
+/* Ghi đè kiểu nút toàn cục để tab hiển thị dạng gạch chân thay vì nút vàng */
+.admin-user-modal .admin-member-tabs button.admin-member-tab { background:transparent !important; box-shadow:none !important; border:0 !important; color:var(--text-muted) !important; min-height:0; height:auto; text-shadow:none; transform:none !important; }
+.admin-user-modal .admin-member-tabs button.admin-member-tab:hover { background:var(--surface-soft) !important; color:var(--text-main) !important; }
+.admin-user-modal .admin-member-tabs button.admin-member-tab.is-active { color:var(--primary) !important; background:transparent !important; }
+.admin-user-modal .admin-member-tabs button.admin-member-tab em { background:var(--admin-fill); border:1px solid var(--admin-line); color:var(--primary); }
+.admin-user-modal .admin-member-editor > .admin-member-body { padding:24px 28px; }
+.admin-member-tabs { padding-top:4px; }

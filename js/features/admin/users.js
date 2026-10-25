@@ -267,6 +267,22 @@
     }
 
 
+    // Hai nhóm thiết lập trong hộp sửa thành viên: "profile" (thông tin + chân email) và "permissions" (phân quyền).
+    function switchEditUserTab(tab, focus = false) {
+      const active = tab === 'permissions' ? 'permissions' : 'profile';
+      const layout = document.querySelector('#editUserModalOverlay .admin-member-layout');
+      if (layout) layout.dataset.tab = active;
+      document.getElementById('editPaneProfile').hidden = active !== 'profile';
+      document.getElementById('editPanePermissions').hidden = active !== 'permissions';
+      for (const [key, id] of [['profile','editTabProfile'],['permissions','editTabPermissions']]) {
+        const button = document.getElementById(id);
+        button.classList.toggle('is-active', key === active); button.setAttribute('aria-selected', String(key === active)); button.tabIndex = key === active ? 0 : -1;
+        if (focus && key === active) button.focus();
+      }
+      const body = document.querySelector('#editUserModalOverlay .admin-member-body');
+      if (body) body.scrollTop = 0;
+    }
+
     function openEditUserModal(uid) {
       if (!hasUserPermission('users', 'admin')) {
         triggerToast('Bạn không có quyền chỉnh sửa thông tin thành viên.', 'warning');
@@ -284,7 +300,7 @@
       document.getElementById('editAdminPhone').value = profile.phone ?? profile.phoneNumber ?? '';
       setFormUserPermissions('edit', profile.permissions, profile.role);
       EmailSignature.fillForm('edit', profile);
-      document.getElementById('editSignatureSection')?.removeAttribute('open');
+      switchEditUserTab('profile');
       
       const overlay = document.getElementById('editUserModalOverlay');
       if (!overlay) return;
@@ -322,7 +338,7 @@
       
       if (!displayName) return triggerToast('Vui lòng nhập họ và tên hiển thị.', 'warning');
       const signature = EmailSignature.collect('edit');
-      if (signature.error) { document.getElementById('editSignatureSection')?.setAttribute('open',''); return triggerToast(signature.error, 'warning'); }
+      if (signature.error) { switchEditUserTab('profile'); document.getElementById('editSigBanner')?.focus(); return triggerToast(signature.error, 'warning'); }
       
       const button = document.getElementById('btnSubmitEditUser');
       toggleButtonUIPendingState(button, true, 'Đang lưu...');
