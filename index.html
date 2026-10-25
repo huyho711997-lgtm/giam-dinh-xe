@@ -68,7 +68,7 @@
 <link rel="stylesheet" href="css/pending-page.css?v=20261024-1">
 <link rel="stylesheet" href="css/shared-forms.css?v=20261023-confirm-5">
 <link rel="stylesheet" href="css/shared-forms-page.css?v=20261024-dialog-4">
-<link rel="stylesheet" href="css/claim-editor.css?v=20261025-back-1">
+<link rel="stylesheet" href="css/claim-editor.css?v=20261025-cov-1">
 <link rel="stylesheet" href="css/claim-documents.css?v=20261024-docs-1">
 <link rel="stylesheet" href="css/reduction-notice.css?v=20261025-cc-2">
 <link rel="stylesheet" href="css/reduction-rules.css?v=20261024-scene-1">
@@ -501,26 +501,36 @@
               <input id="modalPendingNguoiLienHe" class="input-premium" type="text" placeholder="Họ tên người liên hệ" />
             </div>
 
-            <div class="form-group" style="grid-column: span 3; border-top: 1px dashed var(--border); padding-top: 12px; margin-top: 6px;">
-              <label style="font-size: 12px; font-weight: 800; color: #3b82f6; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; text-transform: uppercase;">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                <span>Phạm vi Bảo hiểm VCX & TNDS</span>
-              </label>
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-                <div>
-                  <label style="font-size: 11.5px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Loại tổn thất</label>
-                  <input id="modalPendingLoaiTonThat" class="input-premium" type="text" placeholder="VD: Con người, Tài sản" />
-                </div>
-                <div>
-                  <label style="font-size: 11.5px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Bảo hiểm Vật chất xe (VCX)</label>
-                  <input id="modalPendingVcx" class="input-premium" type="text" placeholder="Thông tin gói VCX" />
-                </div>
-                <div>
-                  <label style="font-size: 11.5px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Bảo hiểm Trách nhiệm dân sự (TNDS)</label>
-                  <input id="modalPendingTnds" class="input-premium" type="text" placeholder="Thông tin gói TNDS" />
+            <section class="claim-coverage form-group" style="grid-column: span 3;" aria-labelledby="claimCoverageTitle">
+              <header class="claim-coverage-head">
+                <span class="claim-coverage-shield"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span>
+                <div class="claim-coverage-title"><strong id="claimCoverageTitle">Phạm vi bảo hiểm VCX &amp; TNDS</strong><small>Dữ liệu lấy từ hợp đồng và hệ thống, không chỉnh sửa tại đây.</small></div>
+                <span class="claim-coverage-lock" title="Chỉ xem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Chỉ xem</span>
+              </header>
+              <div class="claim-coverage-grid">
+              <div class="claim-coverage-item">
+                <span class="claim-coverage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4"/><path d="M12 17.2v.1"/></svg></span>
+                <div class="claim-coverage-text">
+                  <label for="modalPendingLoaiTonThat">Loại tổn thất</label>
+                  <input id="modalPendingLoaiTonThat" class="claim-coverage-value" type="text" readonly tabindex="-1" aria-readonly="true" placeholder="Chưa có dữ liệu" />
                 </div>
               </div>
-            </div>
+              <div class="claim-coverage-item">
+                <span class="claim-coverage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5"/><path d="M3 16h18v3H3z"/><circle cx="7.5" cy="16" r="0.6"/><circle cx="16.5" cy="16" r="0.6"/></svg></span>
+                <div class="claim-coverage-text">
+                  <label for="modalPendingVcx">Bảo hiểm vật chất xe (VCX)</label>
+                  <input id="modalPendingVcx" class="claim-coverage-value" type="text" readonly tabindex="-1" aria-readonly="true" placeholder="Chưa có dữ liệu" />
+                </div>
+              </div>
+              <div class="claim-coverage-item">
+                <span class="claim-coverage-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3 2.7-4.5 5.5-4.5s4.9 1.5 5.5 4.5"/><path d="M16 5.5a3 3 0 0 1 0 5.5"/><path d="M18 14.8c1.7.6 2.8 2 3.2 4.2"/></svg></span>
+                <div class="claim-coverage-text">
+                  <label for="modalPendingTnds">Bảo hiểm trách nhiệm dân sự (TNDS)</label>
+                  <input id="modalPendingTnds" class="claim-coverage-value" type="text" readonly tabindex="-1" aria-readonly="true" placeholder="Chưa có dữ liệu" />
+                </div>
+              </div>
+              </div>
+            </section>
           </div>
         </div>
 

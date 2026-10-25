@@ -173,3 +173,24 @@ body .ce-document-menu .collection-word-menu-document:is(:hover,:focus-within) {
   #addPendingClaimModalOverlay .claim-editor-footer>div { width:100%; gap:8px !important; }
   #addPendingClaimModalOverlay .claim-editor-footer .btn-premium { flex:1; justify-content:center; padding:0 12px !important; font-size:11px; }
 }
+
+/* Phạm vi bảo hiểm VCX & TNDS: dữ liệu chỉ đọc, trình bày dạng thẻ thông tin thay cho ô nhập. */
+.claim-coverage { margin-top:6px; border:1px solid var(--ce-line); border-radius:14px; background:var(--ce-soft); overflow:hidden; }
+.claim-coverage-head { display:flex; align-items:center; gap:12px; padding:13px 16px; border-bottom:1px solid var(--ce-line); background:var(--ce-paper); }
+.claim-coverage-shield { display:grid; place-items:center; width:34px; height:34px; flex:0 0 34px; border-radius:10px; background:var(--ce-gold-soft); color:var(--ce-gold); }
+.claim-coverage-shield svg { width:18px; height:18px; }
+.claim-coverage-title { display:grid; gap:2px; min-width:0; }
+.claim-coverage-title strong { color:var(--ce-ink); font-size:13px; font-weight:800; letter-spacing:-.01em; line-height:1.3; }
+.claim-coverage-title small { color:var(--ce-muted); font-size:11px; font-weight:600; line-height:1.4; }
+.claim-coverage-lock { display:inline-flex; align-items:center; gap:5px; margin-left:auto; padding:4px 10px; border:1px solid var(--ce-line); border-radius:99px; background:var(--ce-soft); color:var(--ce-muted); font-size:10.5px; font-weight:750; white-space:nowrap; }
+.claim-coverage-lock svg { width:12px; height:12px; }
+.claim-coverage-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+.claim-coverage-item { display:flex; align-items:flex-start; gap:12px; min-width:0; padding:15px 16px; }
+.claim-coverage-item + .claim-coverage-item { border-left:1px solid var(--ce-line); }
+.claim-coverage-icon { display:grid; place-items:center; width:30px; height:30px; flex:0 0 30px; border-radius:9px; background:var(--ce-paper); border:1px solid var(--ce-line); color:var(--ce-muted); }
+.claim-coverage-icon svg { width:16px; height:16px; }
+.claim-coverage-text { display:grid; gap:4px; min-width:0; flex:1; }
+.claim-coverage-text label { display:block; margin:0; color:var(--ce-muted); font-size:10px; font-weight:800; letter-spacing:.06em; line-height:1.4; text-transform:uppercase; cursor:default; }
+#addPendingClaimModalOverlay .claim-coverage-value { width:100%; min-height:0; height:auto; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; color:var(--ce-ink); font:700 14px/1.4 inherit; font-family:inherit; text-overflow:ellipsis; cursor:default; pointer-events:none; outline:none; }
+#addPendingClaimModalOverlay .claim-coverage-value::placeholder { color:var(--ce-muted); font-weight:500; opacity:.7; }
+@media (max-width: 900px) { .claim-coverage-grid { grid-template-columns:1fr; } .claim-coverage-item + .claim-coverage-item { border-left:0; border-top:1px solid var(--ce-line); } }
