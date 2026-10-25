@@ -1,8 +1,10 @@
 // ==========================================================================
 // ĐỒNG BỘ TRANG ĐANG XEM ↔ ĐƯỜNG DẪN (hash routing)
-// Ví dụ: …/giam-dinh-xe/#/ho-so-boi-thuong, #/quan-tri/nhat-ky
+// Ví dụ: …/giam-dinh-xe/#/ho-so-boi-thuong, #/quan-tri/nhat-ky,
+//        #/ho-so-boi-thuong/<mã hồ sơ>  (đang mở form chỉnh sửa một hồ sơ bồi thường)
 // - Tải lại trang / mở link chia sẻ → mở đúng trang (kiểm tra quyền, không có quyền → Trang chủ).
 // - Mỗi lần chuyển trang → ghi vào lịch sử trình duyệt, nút Back/Forward hoạt động.
+// - Mở một hồ sơ bồi thường → đường dẫn mang theo mã hồ sơ; F5 / Back / Forward / chia sẻ link mở lại đúng hồ sơ.
 // - Không đụng đường dẫn ca xe ?idCa=… (Garage / kết quả giám định).
 // Cơ chế: bọc các hàm sẵn có (evaluateViewRoutingState, switchWorkspaceTab,
 // renderManagerDashboardWorkspace, switchSystemAdminSubTab) – không sửa logic bên trong.
@@ -46,16 +48,27 @@
     }
   }
 
+  // Mã hồ sơ đọc từ đường dẫn, đang chờ dữ liệu Firebase về để mở lại (sau F5 / mở link).
+  let pendingResumeId = null;
+  let pendingDataReady = false;
+  let openingClaim = false;   // openEditPendingClaimModal đang chạy
+  let syncingClaim = false;   // đang mở/đóng hồ sơ theo đường dẫn (Back/Forward/F5) → không ghi ngược lại URL
+
   const isCaseUrl = () => new URLSearchParams(location.search).has('idCa');
 
   // Đọc trang từ hash; null nếu đường dẫn không mang thông tin trang.
   function readRoute() {
-    const match = String(location.hash || '').match(/^#\/([a-z0-9-]+)(?:\/([a-z0-9-]+))?\/?$/i);
+    // Đoạn thứ 2 giữ nguyên chữ hoa/thường (mã hồ sơ Firebase phân biệt hoa thường).
+    const match = String(location.hash || '').match(/^#\/([a-z0-9-]+)(?:\/([^/?#]+))?\/?$/i);
     if (!match) return null;
     const tab = SLUG_TABS[match[1].toLowerCase()];
-    if (!tab) return { tab: 'home', sub: null, unknown: true };
+    if (!tab) return { tab: 'home', sub: null, claimId: null, unknown: true };
     const sub = tab === 'users' && match[2] ? (SLUG_SUBS[match[2].toLowerCase()] || null) : null;
-    return { tab, sub };
+    let claimId = null;
+    if (tab === 'pending' && match[2]) {
+      try { claimId = decodeURIComponent(match[2]); } catch (_) { claimId = null; }
+    }
+    return { tab, sub, claimId };
   }
 
   function currentHash() {
@@ -64,6 +77,10 @@
     const normalized = tab === 'system' ? 'users' : tab;
     const slug = TAB_SLUGS[normalized];
     if (!slug) return null;
+    if (normalized === 'pending') {
+      const id = (typeof editingPendingClaimId !== 'undefined' && editingPendingClaimId) || pendingResumeId;
+      if (id) return `#/${slug}/${encodeURIComponent(id)}`;
+    }
     if (normalized === 'users' && typeof activeSystemAdminSubTab !== 'undefined') {
       const sub = ADMIN_SUB_SLUGS[activeSystemAdminSubTab || 'users'];
       if (sub) return `#/${slug}/${sub}`;
@@ -94,6 +111,68 @@
     }
   }
 
+  // Ghi mã hồ sơ đang mở lên đường dẫn: lần đầu mở → mục lịch sử mới (Back quay về danh sách);
+  // đã có mã hồ sơ trên URL (F5, tạo mới → chuyển sang sửa) → thay thế, không chồng thêm mục.
+  function writeClaimRoute() {
+    if (isCaseUrl()) return;
+    const hash = currentHash();
+    if (!hash || location.hash === hash) return;
+    const hadClaim = !!(readRoute() || {}).claimId;
+    const url = getCleanOriginBaseUrl() + hash;
+    try {
+      if (hadClaim) window.history.replaceState(window.history.state, '', url);
+      else window.history.pushState({ appClaim: true }, '', url);
+    } catch (_) { /* file:// … */ }
+  }
+
+  function claimExists(id) {
+    const payload = typeof cachedPendingClaimsPayload !== 'undefined' ? cachedPendingClaimsPayload : null;
+    if (!payload) return false;
+    return !!payload[id] || Object.values(payload).some(c => c && (c.id === id || c.idCa === id || c.maVuTonThat === id));
+  }
+
+  function openClaimFromRoute(id) {
+    if (openingClaim || syncingClaim) return;
+    pendingResumeId = null;
+    if (!claimExists(id)) {
+      if (typeof triggerToast === 'function') triggerToast('Không tìm thấy hồ sơ trong đường dẫn (hồ sơ đã bị xóa hoặc bạn không có quyền xem).', 'error');
+      writeRoute('replace'); // bỏ mã hồ sơ khỏi URL
+      return;
+    }
+    syncingClaim = true;
+    Promise.resolve(window.openEditPendingClaimModal(id)).catch(() => {}).finally(() => { syncingClaim = false; });
+  }
+
+  // Đồng bộ form hồ sơ ↔ đường dẫn, gọi quanh mỗi lần ứng dụng đánh giá lại màn hình (gồm Back/Forward).
+  //  'before' – trước khi vẽ: đóng form nếu URL không còn mã hồ sơ; giữ mã hồ sơ của URL để lần vẽ
+  //             không ghi đè mất nó. 'after' – sau khi vẽ: mở hồ sơ mà URL yêu cầu (nếu dữ liệu đã về).
+  function syncClaimFromRoute(phase) {
+    if (isCaseUrl() || openingClaim || syncingClaim) return;
+    const route = readRoute();
+    const wanted = route && route.tab === 'pending' && canAccessTab('pending') ? route.claimId : null;
+    const open = typeof editingPendingClaimId !== 'undefined' ? editingPendingClaimId : null;
+    if (wanted) {
+      if (wanted === open) return;
+      pendingResumeId = wanted;
+      if (phase === 'after' && pendingDataReady && activeDashboardTab === 'pending') openClaimFromRoute(wanted);
+    } else {
+      pendingResumeId = null;
+      if (phase === 'before' && open && typeof window.closeAddPendingClaimModal === 'function') {
+        syncingClaim = true;
+        try { window.closeAddPendingClaimModal(); } finally { syncingClaim = false; }
+      }
+    }
+  }
+
+  // Firebase trả dữ liệu hồ sơ → nếu URL đang chờ mở một hồ sơ thì mở ngay.
+  function onPendingClaimsLoaded() {
+    pendingDataReady = true;
+    if (!pendingResumeId) return;
+    if (activeDashboardTab !== 'pending') { pendingResumeId = null; return; }
+    if (typeof editingPendingClaimId !== 'undefined' && editingPendingClaimId) { pendingResumeId = null; return; }
+    openClaimFromRoute(pendingResumeId);
+  }
+
   function wrap(name, make) {
     const original = window[name];
     if (typeof original !== 'function' || original.__routeSync) return;
@@ -108,8 +187,11 @@
     if (userInstance && !isCaseUrl()) {
       const route = readRoute();
       if (route) applyRoute(route);
+      syncClaimFromRoute('before');
     }
-    return original.call(this, userInstance, ...rest);
+    const result = original.call(this, userInstance, ...rest);
+    if (userInstance && !isCaseUrl()) syncClaimFromRoute('after');
+    return result;
   });
 
   // 2) Vẽ bảng điều khiển xong → chuẩn hoá đường dẫn (không tạo mục lịch sử mới),
@@ -135,6 +217,32 @@
     return result;
   });
 
+  // 5) Mở form hồ sơ bồi thường → ghi mã hồ sơ lên đường dẫn.
+  wrap('openEditPendingClaimModal', original => async function (claimId, ...rest) {
+    openingClaim = true;
+    try {
+      return await original.call(this, claimId, ...rest);
+    } finally {
+      openingClaim = false;
+      const open = typeof editingPendingClaimId !== 'undefined' ? editingPendingClaimId : null;
+      if (open && open === claimId && activeDashboardTab === 'pending') { pendingResumeId = null; writeClaimRoute(); }
+    }
+  });
+
+  // 6) Đóng form hồ sơ → bỏ mã hồ sơ khỏi đường dẫn (quay về danh sách).
+  wrap('closeAddPendingClaimModal', original => function (...args) {
+    const result = original.apply(this, args);
+    pendingResumeId = null;
+    if (!syncingClaim && !isCaseUrl() && (readRoute() || {}).claimId) {
+      if (window.history.state && window.history.state.appClaim) {
+        try { window.history.back(); } catch (_) { writeRoute('replace'); }
+      } else {
+        writeRoute('replace');
+      }
+    }
+    return result;
+  });
+
   // Cho phần khác dùng (vd. sao chép đường dẫn trang hiện tại).
-  window.AppRoute = { read: readRoute, hashFor: currentHash, slugs: { ...TAB_SLUGS } };
+  window.AppRoute = { read: readRoute, hashFor: currentHash, slugs: { ...TAB_SLUGS }, onPendingClaimsLoaded };
 })();

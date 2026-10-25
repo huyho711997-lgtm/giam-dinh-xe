@@ -136,6 +136,7 @@
         rawPendingClaimsPayload = val;
         const currentUser = firebase.auth().currentUser;
         cachedPendingClaimsPayload = filterPendingClaimsByUserPrivileges(val, currentUser);
+        if (window.AppRoute?.onPendingClaimsLoaded) AppRoute.onPendingClaimsLoaded(); // URL #/ho-so-boi-thuong/<mã> → mở lại hồ sơ
         if (typeof refreshHomeDashboard === 'function') refreshHomeDashboard(); // số liệu trang chủ
         if (activeDashboardTab === 'pending') {
           // Dữ liệu (cachedPendingClaimsPayload) đã cập nhật đồng bộ ở trên; chỉ việc VẼ được gom nhịp.
