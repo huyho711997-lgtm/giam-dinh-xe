@@ -15,6 +15,7 @@ const RescuePage = (() => {
     alert:'<path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4M12 17.2v.1"/>',
     user:'<circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c.7-3.6 3.2-5.5 6.5-5.5s5.8 1.9 6.5 5.5"/>',
     receipt:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/>',
+    image:'<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.7"/><path d="m4 17 5-4.5 3.5 3L16 12l4 4.5"/>',
     pin:'<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>'
   };
   const svg = name => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (icons[name] || '') + '</svg>';
@@ -151,6 +152,41 @@ const RescuePage = (() => {
     catch (_) { triggerToast('Không sao chép được. Hãy cho phép trình duyệt truy cập bộ nhớ tạm.','warning'); }
   }
 
+  // Xuất ảnh PNG của bảng tính: tải xuống (trên điện thoại dùng bảng chia sẻ nếu có).
+  function exportModel() {
+    const R = RescueCalc, result = lastResult, input = state, tow = input.service !== 'crane', crane = input.service !== 'tow';
+    const lines = result.lines.map(line => ({label:line.label,value:line.amount == null ? 'Báo giá' : vnd(line.amount)}));
+    if (result.region.pct) lines.push({label:'Hệ số ' + result.region.name + ' (+' + result.region.pct + '%)',value:'+' + vnd(result.regionAmount)});
+    if (!result.quote || result.rescue) lines.push({label:'Giá cứu hộ sau hệ số vùng',value:vnd(result.rescue),sub:true});
+    for (const line of result.surcharges) lines.push({label:line.label,value:'+' + vnd(line.amount)});
+    if (result.capped) lines.push({label:'Phụ phí sau khi áp trần ' + R.SURCHARGE_CAP * 100 + '%',value:'+' + vnd(result.surchargeTotal),sub:true});
+    const picked = R.SURCHARGES.filter(item => input.surcharges[item.key]).map(item => item.label);
+    const kmSource = tow && kmMode === 'locate' ? locate?.describe() : '';
+    const info = [['Hạng mục',(SERVICES.find(item => item[0] === input.service) || SERVICES[0])[1]]];
+    if (tow) { info.push(['Nhóm xe (kéo)',(R.TOW[input.towGroup] || R.TOW[0]).label],['Quãng đường kéo',(input.km || '0') + ' km' + (kmSource ? '\n' + kmSource.replace(/^Quãng đường: [^ ]+ km /,'') : '')]); }
+    if (crane) { const group = R.CLASSES[input.craneClass] || R.CLASSES[0]; info.push(['Nhóm xe (cẩu)','Nhóm ' + group.key + ' · ' + group.range],['Vị trí xe cần cẩu',(R.CRANE[input.cranePos] || R.CRANE[0]).label]); }
+    info.push(['Vùng địa lý',result.region.name + ' · +' + result.region.pct + '%'],['Phụ phí điều kiện',picked.length ? picked.join('; ') : 'Không'],['Tình huống đặc biệt',[input.special ? 'Xe đặc biệt / sự cố nghiêm trọng' : '',input.over ? 'Chi phí đề xuất vượt barem' : ''].filter(Boolean).join('; ') || 'Không']);
+    return {title:'Bảng tính chi phí cứu hộ',time:'Lập lúc ' + new Date().toLocaleString('vi-VN'),info,lines,total:R.totalText(result),
+      totalNote:result.quote ? 'Hạng mục cẩu trên 100 m / nhiều xe cẩu cần báo giá riêng.' : '',approver:result.approver,warnings:R.warnings(result),
+      footer:'Trần nội bộ, chưa VAT. Thanh toán theo hóa đơn hợp lệ, không vượt số tiền được duyệt. Kết quả chỉ mang tính tham khảo theo barem nội bộ.'};
+  }
+  async function exportImage(button) {
+    if (!lastResult) return;
+    button.disabled = true;
+    try {
+      const blob = await RescueExport.render(exportModel()), stamp = new Date(), pad = number => String(number).padStart(2,'0');
+      const name = 'chi-phi-cuu-ho-' + stamp.getFullYear() + pad(stamp.getMonth() + 1) + pad(stamp.getDate()) + '-' + pad(stamp.getHours()) + pad(stamp.getMinutes()) + '.png';
+      const file = new File([blob],name,{type:'image/png'});
+      if (matchMedia('(pointer:coarse)').matches && navigator.canShare?.({files:[file]})) {
+        try { await navigator.share({files:[file],title:'Chi phí cứu hộ'}); return; } catch (error) { if (error?.name === 'AbortError') return; }
+      }
+      const url = URL.createObjectURL(blob), link = document.createElement('a');
+      link.href = url; link.download = name; document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url),4000);
+      triggerToast('Đã xuất ảnh bảng tính chi phí.','success');
+    } catch (error) { triggerToast('Không xuất được ảnh: ' + (error?.message || 'lỗi không xác định'),'error'); }
+    finally { button.disabled = false; }
+  }
+
   function paint() {
     const calc = tab === 'calc';
     host.querySelector('[data-rc-pane=calc]').hidden = !calc;
@@ -169,12 +205,12 @@ const RescuePage = (() => {
     host.className = 'sf-workspace rc-workspace';
     host.setAttribute('aria-label','Chi phí cứu hộ');
     host.innerHTML = '<header class="sf-page-head"><div class="sf-page-title"><span class="sf-page-emblem" aria-hidden="true">' + svg('truck') + '</span><div><div class="sf-eyebrow">NGHIỆP VỤ · CỨU HỘ PHƯƠNG TIỆN</div><h1>Chi phí cứu hộ</h1><p>Tính nhanh chi phí kéo xe, cẩu xe theo barem nội bộ và xác định cấp phê duyệt.</p></div></div>' +
-      '<div class="sf-toolbar" data-rc-actions><button type="button" class="sf-button" data-rc-reset>' + svg('reset') + 'Đặt lại</button><button type="button" class="sf-button sf-primary" data-rc-copy>' + svg('copy') + 'Sao chép kết quả</button></div></header>' +
+      '<div class="sf-toolbar" data-rc-actions><button type="button" class="sf-button" data-rc-reset>' + svg('reset') + 'Đặt lại</button><button type="button" class="sf-button" data-rc-export>' + svg('image') + 'Xuất ảnh</button><button type="button" class="sf-button sf-primary" data-rc-copy>' + svg('copy') + 'Sao chép kết quả</button></div></header>' +
       '<section class="sf-library rc-card"><div class="sf-library-bar"><div class="sf-sources" role="group" aria-label="Chế độ"><button type="button" class="sf-source-tab" data-rc-tab="calc" aria-pressed="true">' + svg('calc') + 'Tính chi phí</button><button type="button" class="sf-source-tab" data-rc-tab="ref" aria-pressed="false">' + svg('book') + 'Đơn giá & quy định</button><button type="button" class="sf-source-tab" data-rc-tab="garage" aria-pressed="false">' + svg('pin') + 'Gara</button></div>' +
       '<span class="sf-count">' + svg('receipt') + 'Trần nội bộ · chưa VAT</span></div>' +
       '<div data-rc-pane="calc">' + calcPane() + '</div><div data-rc-pane="ref" hidden></div><div data-rc-pane="garage" hidden></div></section>';
     host.addEventListener('click',event => {
-      const target = event.target.closest('[data-rc-tab],[data-rc-service],[data-rc-ref],[data-rc-reset],[data-rc-copy],[data-rc-kmmode]');
+      const target = event.target.closest('[data-rc-tab],[data-rc-service],[data-rc-ref],[data-rc-reset],[data-rc-copy],[data-rc-export],[data-rc-kmmode]');
       if (!target) return;
       if (target.dataset.rcKmmode) setKmMode(target.dataset.rcKmmode);
       else if (target.dataset.rcTab) { tab = target.dataset.rcTab; paint(); }
@@ -182,6 +218,7 @@ const RescuePage = (() => {
       else if (target.dataset.rcRef) { refTab = target.dataset.rcRef; paint(); }
       else if (target.hasAttribute('data-rc-reset')) reset();
       else if (target.hasAttribute('data-rc-copy')) copy();
+      else if (target.hasAttribute('data-rc-export')) exportImage(target);
     });
     host.addEventListener('input',event => { if (event.target.closest('[data-rc],[data-rc-sur],[data-rc-flag]')) update(); });
     host.addEventListener('change',event => { if (event.target.closest('[data-rc],[data-rc-sur],[data-rc-flag]')) update(); });
