@@ -39,11 +39,11 @@ test('lưu / nạp trạng thái: giữ lựa chọn, bỏ mục lạ, mặc đ�
 });
 
 test('thư hình ảnh: khối diễn biến tổn thất nằm sau thông tin hồ sơ, đổi diễn biến thì đổi signature', () => {
-  const withIncident = {...ctx, incident: ['', 'DIỄN BIẾN TỔN THẤT', 'Xe va quệt với xe tải.']};
+  const withIncident = {...ctx, incident: ['', 'MÔ TẢ CHI TIẾT DIỄN BIẾN TỔN THẤT', 'Xe va quệt với xe tải.']};
   const mail = Email.buildImageRequest(withIncident, {items: ['body'], note: ''});
-  assert.match(mail.body, /- Biển số xe: 47H11450\n\nDIỄN BIẾN TỔN THẤT\nXe va quệt với xe tải\.\n\nNỘI DUNG ĐỀ NGHỊ CUNG CẤP/);
+  assert.match(mail.body, /- Biển số xe: 47H11450\n\nMÔ TẢ CHI TIẾT DIỄN BIẾN TỔN THẤT\nXe va quệt với xe tải\.\n\nNỘI DUNG ĐỀ NGHỊ CUNG CẤP/);
   assert.doesNotMatch(mail.body, /Mã vụ tổn thất/);
-  const other = Email.buildImageRequest({...ctx, incident: ['', 'DIỄN BIẾN TỔN THẤT', 'Khác.']}, {items: ['body'], note: ''});
+  const other = Email.buildImageRequest({...ctx, incident: ['', 'MÔ TẢ CHI TIẾT DIỄN BIẾN TỔN THẤT', 'Khác.']}, {items: ['body'], note: ''});
   assert.notEqual(mail.signature, other.signature);
   assert.doesNotMatch(Email.buildImageRequest(ctx, {items: ['body'], note: ''}).body, /DIỄN BIẾN/);
 });

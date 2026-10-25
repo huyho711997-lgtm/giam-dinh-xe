@@ -139,13 +139,12 @@ const ClaimReductionNotice = (() => {
   }
   // Thông tin vụ tổn thất (tab "Vụ tổn thất & Diễn biến") dùng chung cho mọi loại thư.
   const lossFacts = () => [
-    ['Ngày xảy ra tổn thất',value('NgayVTT')],['Tỉnh / Thành tổn thất',value('TinhTonThat')],['Địa điểm tổn thất',value('DiaDiemVTT')],
-    ['Tình trạng hiện trường',value('HienTruong')],['Nhóm nguyên nhân',value('NguyenNhan')]
-  ];
-  // Khối "DIỄN BIẾN TỔN THẤT": giữ xuống dòng của người nhập, bỏ dòng trống thừa; không có mô tả thì không thêm khối.
+    ['Ngày xảy ra tổn thất',value('NgayVTT')],['Tỉnh / Thành tổn thất',value('TinhTonThat')],['Nhóm nguyên nhân',value('NguyenNhan')]
+  ];  // Không đưa địa điểm / tình trạng hiện trường vào thư: hai ô này thường chứa cùng một địa chỉ nên bị lặp.
+  // Khối "MÔ TẢ CHI TIẾT DIỄN BIẾN TỔN THẤT": giữ xuống dòng của người nhập, bỏ dòng trống thừa; không có mô tả thì không thêm khối.
   const incidentBlock = () => {
     const text = String(document.getElementById('modalPendingMoTaTonThat')?.value || '').split('\n').map(line => line.trim()).filter(Boolean).join('\n');
-    return text ? ['','DIỄN BIẾN TỔN THẤT',text] : [];
+    return text ? ['','MÔ TẢ CHI TIẾT DIỄN BIẾN TỔN THẤT',text] : [];
   };
   // Ngữ cảnh dùng chung cho mọi loại thư trong hồ sơ: các dòng thông tin hồ sơ + chữ ký người gửi.
   function mailContext() {
