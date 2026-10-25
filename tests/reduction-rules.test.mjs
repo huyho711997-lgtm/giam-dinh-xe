@@ -146,3 +146,13 @@ test('trạng thái xử lý mặc định là "Dự kiến áp dụng"; trạng
   notice.notice.load({stage:'Đã phê duyệt'});
   assert.equal(notice.notice.getState().stage, 'Đã phê duyệt');
 });
+
+test('danh bạ email: khóa bỏ dấu theo tên, gộp địa chỉ không trùng (không phân biệt hoa/thường)', () => {
+  const {slug, mergeAddresses} = notice.notice.directory;
+  assert.equal(slug('Chi nhánh Đắk Lắk'), 'chi-nhanh-dak-lak');
+  assert.equal(slug('  Bùi Thị Thanh Thảo '), 'bui-thi-thanh-thao');
+  assert.equal(slug('Phòng KD số 2 / TTKD.1'), 'phong-kd-so-2-ttkd-1', 'không chứa ký tự cấm trong khóa Firebase (. / # $ [ ])');
+  assert.equal(slug(''), '');
+  assert.equal(mergeAddresses('a@x.vn; B@x.vn', 'b@X.vn, c@x.vn', '', null), 'a@x.vn; B@x.vn; c@x.vn');
+  assert.equal(mergeAddresses('', ''), '');
+});

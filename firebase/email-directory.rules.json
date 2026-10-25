@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "reduction_email_directory": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$kind": {
+        ".validate": "$kind === 'units' || $kind === 'issuers' || $kind === 'departments'",
+        "$entry": {
+          ".validate": "newData.hasChildren(['name']) && (newData.hasChild('to') || newData.hasChild('email'))",
+          "name": { ".validate": "newData.isString() && newData.val().length <= 200" },
+          "to": { ".validate": "newData.isString() && newData.val().length <= 1000" },
+          "email": { ".validate": "newData.isString() && newData.val().length <= 1000" },
+          "updatedAt": { ".validate": "newData.isNumber()" },
+          "updatedBy": { ".validate": "newData.isString() && newData.val().length <= 200" },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}

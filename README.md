@@ -130,3 +130,9 @@ Trang **Hồ sơ bồi thường → Cập nhật dữ liệu từ Excel** dùng
 - Trước khi ghi, ứng dụng lưu một phiên bản: bản sao toàn bộ `pending_claims` và dữ liệu của file (gzip, chia khối ≤ 4 MB). Không lưu được phiên bản thì không ghi gì.
 - **Lịch sử cập nhật**: xem các lần nhập/khôi phục, so sánh hai file bất kỳ (thêm mới, thay đổi theo từng trường, không còn trong file), **khôi phục về trước một lần cập nhật**. Khôi phục cũng tự sao lưu dữ liệu hiện tại thành phiên bản mới nên có thể hoàn tác.
 - Dữ liệu lưu tại `claim_import_history/{id}` (thông tin) và `claim_import_blobs/{id}/rows|before` (dữ liệu nén). Gộp `firebase/claim-imports.rules.json` vào Realtime Database Rules để chỉ quản trị viên đọc/ghi các nhánh này.
+
+## Danh bạ email thông báo giảm trừ
+
+- Trong hộp "Thông báo đơn vị cấp đơn" có mục **Email đã lưu cho đơn vị này**: lưu email đơn vị cấp đơn (To), email cán bộ cấp đơn và email TPKD phụ trách phòng KD (CC). Lần sau soạn cho cùng đơn vị, To/CC được điền sẵn (chỉ khi ô còn trống).
+- Dữ liệu dùng chung ở `reduction_email_directory/{units|issuers|departments}/{khóa}`; cán bộ và phòng KD gắn theo đơn vị (`<đơn-vị>__<tên>`). Gộp `firebase/email-directory.rules.json` vào Firebase Realtime Database Rules (chỉ thêm nhánh này, không ghi đè toàn bộ rules).
+

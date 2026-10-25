@@ -159,6 +159,93 @@ const ClaimReductionNotice = (() => {
     if (list.some(item => !/^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/.test(item))) throw new Error('Nhập địa chỉ email hợp lệ, phân cách bằng dấu chấm phẩy.');
     return [...new Set(list)];
   }
+
+  // ===== Danh bạ email dùng chung (Firebase: reduction_email_directory) =====
+  // units/<đơn vị>            → email đơn vị cấp đơn (ô "Email đơn vị cấp đơn")
+  // issuers/<đơn vị>__<người> → email cán bộ cấp đơn (tự thêm vào CC)
+  // departments/<đơn vị>__<phòng KD> → email TPKD phụ trách phòng KD (tự thêm vào CC)
+  // Khóa = tên đã bỏ dấu/viết thường; cán bộ và phòng KD gắn theo đơn vị để không nhầm giữa các chi nhánh.
+  const DIRECTORY_PATH = 'reduction_email_directory';
+  const slug = text => String(text || '').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/gi,'d').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,80);
+  const splitAddresses = text => String(text || '').split(/[;,\n]+/).map(item => item.trim()).filter(Boolean);
+  const mergeAddresses = (...lists) => {
+    const seen = new Set(), out = [];
+    for (const list of lists) for (const address of splitAddresses(list)) { const key = address.toLowerCase(); if (!seen.has(key)) { seen.add(key); out.push(address); } }
+    return out.join('; ');
+  };
+  async function loadDirectory() {
+    if (typeof dbNodeInstance === 'undefined' || !dbNodeInstance) throw new Error('Chưa kết nối cơ sở dữ liệu.');
+    return (await dbNodeInstance.ref(DIRECTORY_PATH).once('value')).val() || {};
+  }
+  function directoryPanel(inputs, remember, feedback, sameContext) {
+    const unit = value('DonViCapDon'), issuer = value('NguoiCapDon'), dept = value('Ttkd'), uk = slug(unit);
+    const rows = [
+      {id:'unit', label:'Đơn vị cấp đơn', name:unit, key:uk, path:'units', prop:'to', note:'Gửi tới (To)'},
+      {id:'issuer', label:'Cán bộ cấp đơn', name:issuer, key:uk && issuer ? uk + '__' + slug(issuer) : '', path:'issuers', prop:'email', note:'Tự thêm vào CC'},
+      {id:'dept', label:'TPKD phụ trách phòng KD', name:dept, key:uk && dept ? uk + '__' + slug(dept) : '', path:'departments', prop:'email', note:'Tự thêm vào CC'}
+    ];
+    const details = node('details',null,'crr-directory'), summary = node('summary','Email đã lưu cho đơn vị này'), status = node('span',null,'crr-directory-status');
+    summary.append(status); details.append(summary);
+    const grid = node('div',null,'crr-directory-grid'), fields = {};
+    for (const row of rows) {
+      const wrapper = node('label'), input = node('input'), caption = node('span',row.label + (row.name ? ' · ' + row.name : ''));
+      input.id = 'claimReductionDirectory_' + row.id; wrapper.htmlFor = input.id;
+      input.className = 'input-premium'; input.maxLength = 1000; input.autocomplete = 'off'; input.inputMode = 'email';
+      input.placeholder = row.key ? 'email@donvi.vn; emailkhac@donvi.vn' : (uk ? 'Hồ sơ chưa có thông tin này' : 'Hồ sơ chưa có đơn vị cấp đơn');
+      input.disabled = !row.key; fields[row.id] = input;
+      wrapper.append(caption,input,node('em',row.note)); grid.append(wrapper);
+    }
+    const canEdit = typeof hasUserPermission !== 'function' || hasUserPermission('pending','edit');
+    const save = button('Lưu vào danh bạ',async () => {
+      if (!sameContext()) return;
+      let values;
+      try { values = Object.fromEntries(rows.filter(row => row.key).map(row => [row.id, addresses(fields[row.id].value).join('; ')])); }
+      catch (error) { feedback.textContent = error.message; return; }
+      const now = Date.now(), by = String(firebase.auth().currentUser?.email || '').slice(0,200), updates = {};
+      for (const row of rows.filter(item => item.key)) {
+        updates[row.path + '/' + row.key] = values[row.id] ? {name:row.name.slice(0,200), [row.prop]:values[row.id], updatedAt:now, updatedBy:by} : null;
+      }
+      save.disabled = true;
+      try {
+        await dbNodeInstance.ref(DIRECTORY_PATH).update(updates);
+        if (!sameContext()) return;
+        inputs.to.value = mergeAddresses(inputs.to.value, values.unit);
+        inputs.cc.value = mergeAddresses(inputs.cc.value, values.issuer, values.dept);
+        remember(); status.textContent = 'Đã lưu';
+        feedback.textContent = 'Đã lưu email vào danh bạ. Lần sau soạn thông báo cho ' + (unit || 'đơn vị này') + ' sẽ được điền sẵn.';
+      } catch (error) {
+        feedback.textContent = error?.code === 'PERMISSION_DENIED'
+          ? 'Chưa lưu được: cần gộp firebase/email-directory.rules.json vào Firebase Rules.'
+          : 'Chưa lưu được danh bạ email: ' + (error?.message || 'lỗi không xác định');
+      } finally { save.disabled = false; }
+    },true);
+    save.disabled = !uk || !canEdit; if (!canEdit) save.title = 'Bạn không có quyền chỉnh sửa hồ sơ.';
+    const footer = node('div',null,'crr-directory-footer');
+    footer.append(save,node('span','Dùng chung cho mọi người dùng. Để trống ô nào thì xóa email đã lưu của mục đó.'));
+    details.append(grid,footer);
+    // Nạp danh bạ rồi điền sẵn To / CC (chỉ khi ô còn trống, không ghi đè nội dung đã sửa).
+    const apply = directory => {
+      if (!sameContext()) return;
+      const stored = row => (row.key && directory?.[row.path]?.[row.key]?.[row.prop]) || '';
+      for (const row of rows) fields[row.id].value = stored(row);
+      if (!fields.unit.value && inputs.to.value.trim()) fields.unit.value = inputs.to.value.trim();  // gợi ý: lưu luôn email đang nhập
+      let filled = false;
+      if (!inputs.to.value.trim() && stored(rows[0])) { inputs.to.value = stored(rows[0]); filled = true; }
+      const cc = mergeAddresses(stored(rows[1]), stored(rows[2]));
+      if (!inputs.cc.value.trim() && cc) { inputs.cc.value = cc; filled = true; }
+      if (filled) remember();
+      const any = rows.some(row => stored(row));
+      status.textContent = filled ? 'Đã điền sẵn' : any ? 'Đã có email lưu' : 'Chưa lưu';
+      details.open = !any;
+    };
+    // Gõ email vào ô "Email đơn vị cấp đơn" phía trên → ô danh bạ của đơn vị theo luôn (trừ khi người dùng đã sửa riêng ô này).
+    let unitEdited = false;
+    fields.unit.addEventListener('input',() => { unitEdited = true; });
+    inputs.to.addEventListener('input',() => { if (!unitEdited && !fields.unit.disabled) fields.unit.value = inputs.to.value; });
+    status.textContent = 'Đang tải…';
+    loadDirectory().then(apply).catch(() => { if (sameContext()) status.textContent = 'Không tải được danh bạ'; });
+    return details;
+  }
   function compose() {
     if (!owner()) return triggerToast('Vui lòng đăng nhập để soạn thông báo.','warning');
     if (!value('BienSo')) return triggerToast('Nhập biển số xe trước khi soạn thông báo.','warning');
@@ -186,6 +273,7 @@ const ClaimReductionNotice = (() => {
     const sameContext = () => owner() === uid && editingPendingClaimId === claim && sheet.dataset.discard !== 'true';
     const remember = () => { if (!sameContext()) return false; for (const key of Object.keys(inputs)) draft[key] = inputs[key].value; draft.signature = generated.signature; return true; };
     form.addEventListener('input',remember);
+    recipientGrid.after(directoryPanel(inputs,remember,feedback,sameContext));
     const footer = node('footer');
     const copy = button('Sao chép nội dung',async () => {
       if (!sameContext()) return close();
@@ -219,5 +307,5 @@ const ClaimReductionNotice = (() => {
     sheet.addEventListener('close',() => { remember(); if (dialog === sheet) dialog = null; sheet.remove(); if (returnFocus?.isConnected) returnFocus.focus({preventScroll:true}); },{once:true});
     document.body.append(sheet); sheet.showModal(); inputs.to.focus();
   }
-  return {mount,load,getState,close,show};
+  return {mount,load,getState,close,show,directory:{slug,mergeAddresses}};
 })();

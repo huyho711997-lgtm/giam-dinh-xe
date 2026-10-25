@@ -54,3 +54,18 @@
   .claim-reduction-recipients { grid-template-columns:1fr; }
   .claim-reduction-compose footer .sf-button { flex:1; }
 }
+
+/* Danh bạ email đã lưu trong hộp soạn thông báo */
+.crr-directory { border:1px solid var(--sf-line); border-radius:9px; background:var(--sf-soft); }
+.crr-directory>summary { display:flex; align-items:center; gap:10px; padding:11px 14px; cursor:pointer; font-size:12px; font-weight:750; color:var(--sf-ink); list-style:none; }
+.crr-directory>summary::-webkit-details-marker { display:none; }
+.crr-directory>summary::before { content:'▸'; font-size:11px; color:var(--sf-muted); transition:transform .15s ease; }
+.crr-directory[open]>summary::before { transform:rotate(90deg); }
+.crr-directory-status { margin-left:auto; padding:2px 9px; border-radius:99px; background:var(--sf-paper); border:1px solid var(--sf-line); font-size:10.5px; font-weight:700; color:var(--sf-muted); }
+.crr-directory-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; padding:2px 14px 4px; }
+.crr-directory-grid label { display:grid; gap:5px; align-content:start; }
+.crr-directory-grid label>span { font-size:11px; font-weight:750; color:var(--sf-ink); line-height:1.4; }
+.crr-directory-grid label>em { font-style:normal; font-size:10.5px; color:var(--sf-muted); }
+.crr-directory-grid input:disabled { opacity:.6; cursor:not-allowed; }
+.crr-directory-footer { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 14px 14px; font-size:10.5px; color:var(--sf-muted); }
+@media (max-width: 760px) { .crr-directory-grid { grid-template-columns:1fr; } }
