@@ -175,3 +175,15 @@ test('thời hạn phản hồi: chèn, thay và bỏ câu thời hạn trong n�
   assert.match(twice, /09:30 ngày 30\/10\/2026/);
   assert.equal(withDeadline(twice, ''), base, 'bỏ thời hạn → về lại nội dung gốc');
 });
+
+test('lời chào: thêm/thay/bỏ dòng "Đồng kính gửi" theo người được tích CC', () => {
+  const {withGreeting} = notice.notice.greeting;
+  const base = 'Kính gửi Chi nhánh A,\n\nNội dung.\n\nTrân trọng,\nHuy';
+  const one = withGreeting(base, 'cán bộ cấp đơn Minh; TPKD phụ trách Team 01');
+  assert.match(one, /^Kính gửi Chi nhánh A,\nĐồng kính gửi: cán bộ cấp đơn Minh; TPKD phụ trách Team 01\n\nNội dung\./);
+  const two = withGreeting(one, 'quản lý khu vực giám định Zone B');
+  assert.equal((two.match(/Đồng kính gửi/g) || []).length, 1, 'đổi người CC thì thay dòng cũ');
+  assert.match(two, /Đồng kính gửi: quản lý khu vực giám định Zone B\n/);
+  assert.equal(withGreeting(two, ''), base, 'bỏ hết CC → về lại lời chào gốc');
+  assert.equal(withGreeting(base, 'a $& b').includes('a $& b'), true, 'không diễn giải ký tự đặc biệt');
+});

@@ -129,6 +129,14 @@ const ClaimReductionNotice = (() => {
     if (line) result = /^Trân trọng,/m.test(result) ? result.replace(/^Trân trọng,/m,line + '\n\nTrân trọng,') : result.trimEnd() + '\n\n' + line;
     return result.replace(/\n{3,}/g,'\n\n').trim();
   }
+  // Lời chào theo người nhận: dòng "Kính gửi <đơn vị>," giữ nguyên, thêm dòng "Đồng kính gửi: …" cho những người được tích CC.
+  const GREETING_CC = 'Đồng kính gửi:';
+  function withGreeting(body, ccLine) {
+    let result = String(body || '').replace(new RegExp('^' + GREETING_CC + '.*\\n?','m'),'');
+    if (!ccLine) return result;
+    const line = GREETING_CC + ' ' + ccLine;
+    return /^Kính gửi .*$/m.test(result) ? result.replace(/^(Kính gửi .*)$/m,(match) => match + '\n' + line) : line + '\n' + result;
+  }
   // Ngữ cảnh dùng chung cho mọi loại thư trong hồ sơ: các dòng thông tin hồ sơ + chữ ký người gửi.
   function mailContext() {
     const facts = [
@@ -236,9 +244,9 @@ const ClaimReductionNotice = (() => {
     const unit = value('DonViCapDon'), issuer = value('NguoiCapDon'), dept = value('Ttkd'), zone = value('ZoneBoiThuong'), uk = slug(unit);
     const rows = [
       {id:'unit', label:'Đơn vị cấp đơn', tag:'To', name:unit, key:uk, path:'units', prop:'to'},
-      {id:'issuer', label:'Cán bộ cấp đơn', tag:'CC', name:issuer, key:uk && issuer ? uk + '__' + slug(issuer) : '', path:'issuers', prop:'email'},
-      {id:'dept', label:'TPKD phụ trách phòng KD', tag:'CC', name:dept, key:uk && dept ? uk + '__' + slug(dept) : '', path:'departments', prop:'email'},
-      {id:'zone', label:'Quản lý khu vực giám định', tag:'CC', name:zone, key:slug(zone), path:'zones', prop:'email'}
+      {id:'issuer', label:'Cán bộ cấp đơn', role:'cán bộ cấp đơn', tag:'CC', name:issuer, key:uk && issuer ? uk + '__' + slug(issuer) : '', path:'issuers', prop:'email'},
+      {id:'dept', label:'TPKD phụ trách phòng KD', role:'TPKD phụ trách', tag:'CC', name:dept, key:uk && dept ? uk + '__' + slug(dept) : '', path:'departments', prop:'email'},
+      {id:'zone', label:'Quản lý khu vực giám định', role:'quản lý khu vực giám định', tag:'CC', name:zone, key:slug(zone), path:'zones', prop:'email'}
     ];
     const icon = (path) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>';
     const details = node('details',null,'crr-directory'), summary = node('summary',null,'crr-directory-head'), status = node('span',null,'crr-directory-status');
@@ -258,7 +266,16 @@ const ClaimReductionNotice = (() => {
         pick.disabled = !own.length;
         pick.checked = own.length > 0 && own.every(address => present.has(address.toLowerCase()));
       }
+      applyGreeting();
     };
+    // Người được tích CC (có tên trong hồ sơ) → thêm vào lời chào đầu thư; chỉ ghi lại khi nội dung thực sự đổi.
+    const applyGreeting = () => {
+      if (!inputs.body) return;
+      const names = rows.filter(row => picks[row.id]?.checked && row.name).map(row => row.role + ' ' + row.name);
+      const next = withGreeting(inputs.body.value,names.join('; '));
+      if (next !== inputs.body.value) { inputs.body.value = next; remember(); }
+    };
+    details.applyGreeting = applyGreeting;
     const removeFromCc = list => { const drop = new Set(splitAddresses(list).map(item => item.toLowerCase())); inputs.cc.value = splitAddresses(inputs.cc.value).filter(item => !drop.has(item.toLowerCase())).join('; '); };
     for (const row of rows) {
       const line = node('div',null,'crr-directory-row'), meta = node('span',null,'crr-directory-meta'), caption = node('span',null,'crr-directory-caption'), input = node('input');
@@ -380,7 +397,8 @@ const ClaimReductionNotice = (() => {
     const sameContext = () => owner() === uid && editingPendingClaimId === claim && sheet.dataset.discard !== 'true';
     const remember = () => { if (!sameContext()) return false; for (const key of Object.keys(inputs)) store[key] = inputs[key].value; store.signature = generated.signature; return true; };
     form.addEventListener('input',remember);
-    recipientGrid.after(directoryPanel(inputs,remember,feedback,sameContext));
+    const directory = directoryPanel(inputs,remember,feedback,sameContext);
+    recipientGrid.after(directory);
     // Thời hạn phản hồi chậm nhất → tự đưa vào nội dung thư.
     const deadlineCard = node('section',null,'crr-deadline'), deadlineHead = node('div',null,'crr-deadline-head');
     // Hai ô chọn dùng chung bộ SharedFormsControls (cùng giao diện với các dropdown khác) thay cho hộp chọn ngày giờ gốc của trình duyệt.
@@ -506,7 +524,7 @@ const ClaimReductionNotice = (() => {
         remember(); feedback('Đã tải thư nháp. Mở file .eml bằng Outlook: đủ người nhận, CC và nội dung.','success');
       } catch (error) { feedback(error.message,'warning'); }
     });
-    footer.append(button('Tạo lại mẫu',() => { inputs.subject.value = generated.subject; inputs.body.value = withDeadline(generated.body,inputs.deadline.value); remember(); feedback('Đã tạo lại nội dung từ thông tin hồ sơ.','success'); }),copy,copyCc,emlDraft,mailApp,outlook);
+    footer.append(button('Tạo lại mẫu',() => { inputs.subject.value = generated.subject; inputs.body.value = withDeadline(generated.body,inputs.deadline.value); directory.applyGreeting(); remember(); feedback('Đã tạo lại nội dung từ thông tin hồ sơ.','success'); }),copy,copyCc,emlDraft,mailApp,outlook);
     bodyBox.append(node('p','Có thể sửa nội dung trước khi gửi. Thông tin được lưu cùng hồ sơ khi bạn bấm Lưu cập nhật hồ sơ.','claim-reduction-note'));
     const foot = node('div',null,'crr-compose-foot'); foot.append(footer); form.append(foot);
     form.onsubmit = event => event.preventDefault(); sheet.append(form);
@@ -517,5 +535,5 @@ const ClaimReductionNotice = (() => {
     SharedFormsControls.enhance(sheet);
     document.body.append(sheet); sheet.showModal(); inputs.to.focus();
   }
-  return {mount,load,getState,close,show,compose,mailContext,directory:{slug,mergeAddresses},deadline:{withDeadline,format:formatDeadline}};
+  return {mount,load,getState,close,show,compose,mailContext,directory:{slug,mergeAddresses},greeting:{withGreeting},deadline:{withDeadline,format:formatDeadline}};
 })();
