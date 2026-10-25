@@ -8,6 +8,9 @@
       toast.setAttribute('role', 'status');
       toast.textContent = String(message || 'Đã hoàn tất thao tác.');
       container.appendChild(toast);
+      // Container là popover (lớp trên cùng của trình duyệt) để toast không bị ::backdrop của <dialog>.showModal() che.
+      // Ẩn rồi hiện lại để nó luôn nằm trên dialog mở sau cùng.
+      try { if (container.showPopover) { if (container.matches(':popover-open')) container.hidePopover(); container.showPopover(); } } catch (_) { /* trình duyệt cũ: dùng z-index như trước */ }
       window.setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(-10px)';
