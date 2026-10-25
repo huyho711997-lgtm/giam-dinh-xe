@@ -180,20 +180,27 @@ const ClaimReductionNotice = (() => {
   function directoryPanel(inputs, remember, feedback, sameContext) {
     const unit = value('DonViCapDon'), issuer = value('NguoiCapDon'), dept = value('Ttkd'), uk = slug(unit);
     const rows = [
-      {id:'unit', label:'Đơn vị cấp đơn', name:unit, key:uk, path:'units', prop:'to', note:'Gửi tới (To)'},
-      {id:'issuer', label:'Cán bộ cấp đơn', name:issuer, key:uk && issuer ? uk + '__' + slug(issuer) : '', path:'issuers', prop:'email', note:'Tự thêm vào CC'},
-      {id:'dept', label:'TPKD phụ trách phòng KD', name:dept, key:uk && dept ? uk + '__' + slug(dept) : '', path:'departments', prop:'email', note:'Tự thêm vào CC'}
+      {id:'unit', label:'Đơn vị cấp đơn', tag:'To', name:unit, key:uk, path:'units', prop:'to'},
+      {id:'issuer', label:'Cán bộ cấp đơn', tag:'CC', name:issuer, key:uk && issuer ? uk + '__' + slug(issuer) : '', path:'issuers', prop:'email'},
+      {id:'dept', label:'TPKD phụ trách phòng KD', tag:'CC', name:dept, key:uk && dept ? uk + '__' + slug(dept) : '', path:'departments', prop:'email'}
     ];
-    const details = node('details',null,'crr-directory'), summary = node('summary','Email đã lưu cho đơn vị này'), status = node('span',null,'crr-directory-status');
-    summary.append(status); details.append(summary);
-    const grid = node('div',null,'crr-directory-grid'), fields = {};
+    const icon = (path) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>';
+    const details = node('details',null,'crr-directory'), summary = node('summary',null,'crr-directory-head'), status = node('span',null,'crr-directory-status');
+    const badge = node('span',null,'crr-directory-icon'), heading = node('span',null,'crr-directory-title'), chevron = node('span',null,'crr-directory-chevron');
+    badge.innerHTML = icon('<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z"/><path d="M5 17a3 3 0 0 1 3-3h11"/><circle cx="12.5" cy="8.5" r="1.8"/><path d="M9.5 12c.6-1.2 1.7-1.8 3-1.8s2.4.6 3 1.8"/>');
+    chevron.innerHTML = icon('<path d="m6 9 6 6 6-6"/>');
+    heading.append(node('strong','Danh bạ email'),node('small',(unit || 'Chưa có đơn vị cấp đơn') + ' · dùng chung cho mọi người dùng'));
+    summary.append(badge,heading,status,chevron); details.append(summary);
+    const list = node('div',null,'crr-directory-list'), fields = {};
     for (const row of rows) {
-      const wrapper = node('label'), input = node('input'), caption = node('span',row.label + (row.name ? ' · ' + row.name : ''));
-      input.id = 'claimReductionDirectory_' + row.id; wrapper.htmlFor = input.id;
+      const line = node('label',null,'crr-directory-row'), meta = node('span',null,'crr-directory-meta'), caption = node('span',null,'crr-directory-caption'), input = node('input');
+      input.id = 'claimReductionDirectory_' + row.id; line.htmlFor = input.id;
+      caption.append(node('b',row.label),node('i',row.tag));
+      meta.append(caption,node('span',row.name || 'Chưa có trong hồ sơ','crr-directory-name'));
       input.className = 'input-premium'; input.maxLength = 1000; input.autocomplete = 'off'; input.inputMode = 'email';
       input.placeholder = row.key ? 'email@donvi.vn; emailkhac@donvi.vn' : (uk ? 'Hồ sơ chưa có thông tin này' : 'Hồ sơ chưa có đơn vị cấp đơn');
       input.disabled = !row.key; fields[row.id] = input;
-      wrapper.append(caption,input,node('em',row.note)); grid.append(wrapper);
+      line.append(meta,input); list.append(line);
     }
     const canEdit = typeof hasUserPermission !== 'function' || hasUserPermission('pending','edit');
     const save = button('Lưu vào danh bạ',async () => {
@@ -221,8 +228,8 @@ const ClaimReductionNotice = (() => {
     },true);
     save.disabled = !uk || !canEdit; if (!canEdit) save.title = 'Bạn không có quyền chỉnh sửa hồ sơ.';
     const footer = node('div',null,'crr-directory-footer');
-    footer.append(save,node('span','Dùng chung cho mọi người dùng. Để trống ô nào thì xóa email đã lưu của mục đó.'));
-    details.append(grid,footer);
+    footer.append(node('span','Để trống ô nào thì xóa email đã lưu của mục đó. CC sẽ tự gồm cán bộ cấp đơn và TPKD.'),save);
+    details.append(list,footer);
     // Nạp danh bạ rồi điền sẵn To / CC (chỉ khi ô còn trống, không ghi đè nội dung đã sửa).
     const apply = directory => {
       if (!sameContext()) return;
