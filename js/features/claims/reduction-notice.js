@@ -296,8 +296,12 @@ const ClaimReductionNotice = (() => {
         const to = addresses(inputs.to.value), cc = addresses(inputs.cc.value);
         if (!to.length) throw new Error('Nhập email đơn vị cấp đơn trước khi mở Outlook.');
         if (!inputs.subject.value.trim() || !inputs.body.value.trim()) throw new Error('Nhập tiêu đề và nội dung thông báo.');
-        const params = {to:to.join(';'),subject:inputs.subject.value.replace(/[\r\n]/g,' '),body:inputs.body.value};
-        if (cc.length) params.cc = cc.join(';');
+        // Thứ tự to → cc → subject → body: cc đứng trước phần nội dung dài để không bị cắt/bỏ qua.
+        // Outlook web chỉ nhận danh sách địa chỉ phân cách bằng dấu phẩy.
+        const params = {to:to.join(',')};
+        if (cc.length) params.cc = cc.join(',');
+        params.subject = inputs.subject.value.replace(/[\r\n]/g,' ');
+        params.body = inputs.body.value;
         // Outlook's compose route keeps form-encoded '+' characters as literal text.
         // Encode spaces as %20 and actual plus signs as %2B in every parameter.
         const query = Object.entries(params).map(([key,text]) => encodeURIComponent(key) + '=' + encodeURIComponent(text)).join('&');
@@ -307,7 +311,27 @@ const ClaimReductionNotice = (() => {
         feedback.textContent = 'Đã yêu cầu mở cửa sổ soạn thư. Kiểm tra tài khoản gửi, người nhận và bấm Gửi trong Outlook. Nếu chưa thấy thư, cho phép mở cửa sổ mới hoặc sao chép nội dung.';
       } catch (error) { feedback.textContent = error.message; }
     },true);
-    footer.append(button('Tạo lại nội dung mẫu',() => { inputs.subject.value = generated.subject; inputs.body.value = generated.body; remember(); feedback.textContent = 'Đã tạo lại nội dung từ thông tin hồ sơ.'; }),copy,outlook);
+    // Outlook web đôi khi bỏ qua tham số cc của deeplink → có 2 đường dự phòng đảm bảo CC không bị mất.
+    const copyCc = button('Sao chép CC',async () => {
+      const cc = addresses(inputs.cc.value);
+      if (!cc.length) { feedback.textContent = 'Chưa có email CC để sao chép.'; return; }
+      try { await navigator.clipboard.writeText(cc.join('; ')); feedback.textContent = 'Đã sao chép ' + cc.length + ' email CC. Dán vào ô Cc trong Outlook (Ctrl+V).'; }
+      catch (_) { inputs.cc.focus(); inputs.cc.select(); feedback.textContent = 'Nhấn Ctrl+C để sao chép email CC đã chọn.'; }
+    });
+    const mailApp = button('Mở bằng ứng dụng thư',() => {
+      if (!sameContext()) return close();
+      try {
+        const to = addresses(inputs.to.value), cc = addresses(inputs.cc.value);
+        if (!to.length) throw new Error('Nhập email đơn vị cấp đơn trước.');
+        const query = [['subject',inputs.subject.value.replace(/[\r\n]/g,' ')],['body',inputs.body.value]];
+        if (cc.length) query.unshift(['cc',cc.join(',')]);
+        const url = 'mailto:' + to.map(encodeURIComponent).join(',') + '?' + query.map(([key,text]) => key + '=' + encodeURIComponent(text)).join('&');
+        if (url.length > 8000) throw new Error('Nội dung dài. Dùng Sao chép nội dung rồi dán vào thư.');
+        remember(); window.location.href = url;
+        feedback.textContent = 'Đã mở ứng dụng thư mặc định với đủ người nhận và CC.';
+      } catch (error) { feedback.textContent = error.message; }
+    });
+    footer.append(button('Tạo lại nội dung mẫu',() => { inputs.subject.value = generated.subject; inputs.body.value = generated.body; remember(); feedback.textContent = 'Đã tạo lại nội dung từ thông tin hồ sơ.'; }),copy,copyCc,mailApp,outlook);
     form.append(node('p','Có thể sửa nội dung trước khi gửi. Thông tin được lưu cùng hồ sơ khi bạn bấm Lưu cập nhật hồ sơ.','claim-reduction-note'),feedback,footer);
     form.onsubmit = event => event.preventDefault(); sheet.append(form);
     const returnFocus = document.activeElement;
