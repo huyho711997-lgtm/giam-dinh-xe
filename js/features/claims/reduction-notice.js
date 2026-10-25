@@ -307,19 +307,44 @@ const ClaimReductionNotice = (() => {
     recipientGrid.after(directoryPanel(inputs,remember,feedback,sameContext));
     // Thời hạn phản hồi chậm nhất → tự đưa vào nội dung thư.
     const deadlineCard = node('section',null,'crr-deadline'), deadlineHead = node('div',null,'crr-deadline-head');
-    const deadlineInput = node('input'); deadlineInput.type = 'datetime-local'; deadlineInput.id = 'claimReductionMail_deadline'; deadlineInput.value = draft.deadline || '';
-    const deadlineLabel = node('label','Thời hạn phản hồi chậm nhất'); deadlineLabel.htmlFor = deadlineInput.id;
+    // Hai ô chọn dùng chung bộ SharedFormsControls (cùng giao diện với các dropdown khác) thay cho hộp chọn ngày giờ gốc của trình duyệt.
+    const deadlineInput = node('input'); deadlineInput.type = 'hidden'; deadlineInput.id = 'claimReductionMail_deadline'; deadlineInput.value = draft.deadline || '';
+    const deadlineLabel = node('span','Thời hạn phản hồi chậm nhất','crr-deadline-title');
     deadlineHead.append(deadlineLabel,node('small','Quá thời hạn, bộ phận bồi thường giải quyết quyền lợi theo quy định.'));
     const deadlineTools = node('div',null,'crr-deadline-tools'), chips = node('div',null,'crr-deadline-chips');
-    const pad = number => String(number).padStart(2,'0');
-    const setDeadline = text => { deadlineInput.value = text; deadlineInput.dispatchEvent(new Event('input',{bubbles:true})); };
-    [1,2,3,5].forEach(days => chips.append(button(days + ' ngày',() => {
-      const date = new Date(); date.setDate(date.getDate() + days);
-      setDeadline(date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T17:00');
-    })));
+    const pad = number => String(number).padStart(2,'0'), isoDate = date => date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+    const weekdays = ['Chủ nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+    const dateText = iso => { const date = new Date(iso + 'T00:00'); return Number.isNaN(date.getTime()) ? iso : weekdays[date.getDay()] + ', ' + pad(date.getDate()) + '/' + pad(date.getMonth() + 1) + '/' + date.getFullYear(); };
+    const makeSelect = (label,icon,description,placeholder) => {
+      const select = node('select'); select.setAttribute('aria-label',label);
+      Object.assign(select.dataset,{sfSelect:'',sfLabel:label,sfIcon:icon,sfDescription:description});
+      const empty = node('option',placeholder); empty.value = ''; select.append(empty);
+      return select;
+    };
+    const addOption = (select,value,text) => { if (![...select.options].some(option => option.value === value)) { const option = node('option',text); option.value = value; select.append(option); } };
+    const dateSelect = makeSelect('Ngày phản hồi','calendar','Chọn ngày chậm nhất đơn vị cấp đơn cần phản hồi.','Chọn ngày');
+    const timeSelect = makeSelect('Giờ phản hồi','clock','Chọn giờ chậm nhất trong ngày.','Giờ');
+    const today = new Date();
+    for (let offset = 0; offset <= 30; offset++) { const date = new Date(today.getFullYear(),today.getMonth(),today.getDate() + offset); addOption(dateSelect,isoDate(date),dateText(isoDate(date))); }
+    for (let minutes = 7 * 60; minutes <= 21 * 60; minutes += 30) { const text = pad(Math.floor(minutes / 60)) + ':' + pad(minutes % 60); addOption(timeSelect,text,text); }
+    const [savedDate = '',savedTime = ''] = String(draft.deadline || '').split('T');
+    if (savedDate) addOption(dateSelect,savedDate,dateText(savedDate));
+    if (savedTime) addOption(timeSelect,savedTime,savedTime);
+    dateSelect.value = savedDate; timeSelect.value = savedTime || '17:00';
+    const syncDeadline = () => {
+      deadlineInput.value = dateSelect.value ? dateSelect.value + 'T' + (timeSelect.value || '17:00') : '';
+      deadlineInput.dispatchEvent(new Event('input',{bubbles:true}));
+    };
+    const setDeadline = (date,time = '17:00') => {
+      if (date) { addOption(dateSelect,date,dateText(date)); addOption(timeSelect,time,time); }
+      dateSelect.value = date; timeSelect.value = time; SharedFormsControls.enhance(deadlineTools); syncDeadline();
+    };
+    dateSelect.addEventListener('change',syncDeadline); timeSelect.addEventListener('change',syncDeadline);
+    [1,2,3,5].forEach(days => chips.append(button(days + ' ngày',() => { const date = new Date(); date.setDate(date.getDate() + days); setDeadline(isoDate(date)); })));
     chips.append(button('Bỏ',() => setDeadline('')));
     chips.querySelectorAll('button').forEach(chip => chip.classList.add('crr-deadline-chip'));
-    deadlineTools.append(deadlineInput,chips); deadlineCard.append(deadlineHead,deadlineTools);
+    const pickers = node('div',null,'crr-deadline-pickers'); pickers.append(dateSelect,timeSelect);
+    deadlineTools.append(pickers,chips,deadlineInput); deadlineCard.append(deadlineHead,deadlineTools);
     inputs.deadline = deadlineInput;
     deadlineInput.addEventListener('input',() => { inputs.body.value = withDeadline(inputs.body.value,deadlineInput.value); remember(); });
     bodyBox.children[1].after(deadlineCard);
@@ -406,6 +431,7 @@ const ClaimReductionNotice = (() => {
     sheet.addEventListener('keydown',event => { event.stopPropagation(); if (event.key === 'Escape') { event.preventDefault(); sheet.close(); } });
     sheet.addEventListener('cancel',event => { event.preventDefault(); sheet.close(); });
     sheet.addEventListener('close',() => { remember(); if (dialog === sheet) dialog = null; sheet.remove(); if (returnFocus?.isConnected) returnFocus.focus({preventScroll:true}); },{once:true});
+    SharedFormsControls.enhance(sheet);
     document.body.append(sheet); sheet.showModal(); inputs.to.focus();
   }
   return {mount,load,getState,close,show,directory:{slug,mergeAddresses},deadline:{withDeadline,format:formatDeadline}};
