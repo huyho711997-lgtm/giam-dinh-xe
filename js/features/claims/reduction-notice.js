@@ -3,7 +3,7 @@ const ClaimReductionNotice = (() => {
   // được TỰ SINH khi soạn thư. Người dùng chỉ nhập thêm điều máy không biết: ghi nhận thực tế & tài liệu.
   const stages = ['Đang xem xét','Dự kiến áp dụng','Đã phê duyệt','Đã áp dụng'];
   const defaultStage = stages[1]; // 'Dự kiến áp dụng' – trạng thái mặc định khi hồ sơ chưa có thông báo giảm trừ
-  const MAIL_KEYS = ['to','cc','subject','body','signature'];
+  const MAIL_KEYS = ['to','cc','subject','body','signature','deadline'];
   let draft = {}, dialog = null;
   const node = (tag, text, className) => {
     const element = document.createElement(tag);
@@ -46,7 +46,7 @@ const ClaimReductionNotice = (() => {
     close();
     const migrated = migrate(data);
     draft = {stage:stages.includes(data?.stage) ? data.stage : defaultStage, notes:migrated.notes, evidence:migrated.evidence};
-    for (const key of MAIL_KEYS) draft[key] = clip(data?.[key], key === 'signature' ? 16000 : 6000);
+    for (const key of MAIL_KEYS) draft[key] = clip(data?.[key], key === 'signature' ? 16000 : key === 'deadline' ? 40 : 6000);
     rules()?.load(migrated.rule);
     for (const key of ['stage','notes','evidence']) { const input = document.getElementById('modalPendingReduction_' + key); if (input) input.value = draft[key] || ''; }
     const section = document.getElementById('claimReductionSection');
@@ -113,6 +113,22 @@ const ClaimReductionNotice = (() => {
     document.getElementById('claimReductionSection')?.scrollIntoView({block:'start'});
     document.querySelector('#claimReductionSection .crr-item-head input')?.focus({preventScroll:true});
   }
+  // Thời hạn phản hồi: giá trị 'YYYY-MM-DDTHH:mm' (datetime-local). Câu đưa vào thư luôn mở đầu bằng DEADLINE_PREFIX để thay thế được khi đổi thời hạn.
+  const DEADLINE_PREFIX = 'Đề nghị đơn vị cấp đơn phản hồi chậm nhất';
+  function formatDeadline(text) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(String(text || ''));
+    return match ? match[4] + ':' + match[5] + ' ngày ' + match[3] + '/' + match[2] + '/' + match[1] : '';
+  }
+  function deadlineLine(text) {
+    const when = formatDeadline(text);
+    return when ? DEADLINE_PREFIX + ' trước ' + when + '. Quá thời hạn trên, bộ phận bồi thường sẽ giải quyết quyền lợi của khách hàng theo quy định.' : '';
+  }
+  function withDeadline(body, text) {
+    const line = deadlineLine(text);
+    let result = String(body || '').replace(new RegExp('^' + DEADLINE_PREFIX + '.*\\n?','m'),'');
+    if (line) result = /^Trân trọng,/m.test(result) ? result.replace(/^Trân trọng,/m,line + '\n\nTrân trọng,') : result.trimEnd() + '\n\n' + line;
+    return result.replace(/\n{3,}/g,'\n\n').trim();
+  }
   function template() {
     const state = getState();
     const info = {
@@ -152,7 +168,13 @@ const ClaimReductionNotice = (() => {
       'Kính đề nghị đơn vị cấp đơn nắm thông tin, phối hợp trao đổi với khách hàng và phản hồi nếu có thông tin cần bổ sung.',
       '', 'Trân trọng,', info.sender
     ].join('\n').trim();
-    return {subject:'[Thông tin giảm trừ/chế tài] ' + info.plate + (info.hsbt ? ' – ' + info.hsbt : ''),body,signature:JSON.stringify(info)};
+    return {subject:'[Thông tin giảm trừ/chế tài] ' + info.plate + (info.hsbt ? ' – ' + info.hsbt : ''),body:withDeadline(body,draft.deadline),signature:JSON.stringify(info)};
+  }
+  function checkDeadline(text) {
+    if (!text) return;
+    const time = new Date(text).getTime();
+    if (!Number.isFinite(time)) throw new Error('Thời hạn phản hồi không hợp lệ.');
+    if (time <= Date.now()) throw new Error('Thời hạn phản hồi đã qua. Chọn thời điểm trong tương lai hoặc bấm Bỏ.');
   }
   function addresses(text) {
     const list = text.split(/[;,\n]+/).map(item => item.trim()).filter(Boolean);
@@ -267,22 +289,40 @@ const ClaimReductionNotice = (() => {
     const form = node('form',null,'sf-dialog-form'), header = node('header'), title = node('div');
     const heading = node('h2','Thông báo đơn vị cấp đơn'); heading.id = 'claimReductionComposeTitle';
     title.append(node('small','GIẢM TRỪ / CHẾ TÀI'),heading); const dismiss = button('×',close); dismiss.setAttribute('aria-label','Đóng thông báo'); header.append(title,dismiss);
-    const recipientGrid = node('div',null,'claim-reduction-recipients'); const inputs = {};
+    const recipientGrid = node('div',null,'claim-reduction-recipients'), bodyBox = node('div',null,'crr-compose-body'); const inputs = {};
     for (const [key,label] of [['to','Email đơn vị cấp đơn'],['cc','CC (nếu có)'],['subject','Tiêu đề'],['body','Nội dung thông báo']]) {
       const wrapper = node('label',label), input = node(key === 'body' ? 'textarea' : 'input');
       input.id = 'claimReductionMail_' + key; wrapper.htmlFor = input.id;
       input.maxLength = key === 'body' ? 6000 : key === 'subject' ? 250 : 1000;
-      if (key === 'body') input.rows = 15;
+      if (key === 'body') input.rows = 12;
       input.value = key === 'subject' || key === 'body' ? (draft.signature === generated.signature && draft[key] ? draft[key] : generated[key]) : draft[key] || '';
       if (key === 'to' || key === 'cc') { input.placeholder = 'email@donvi.vn; emailkhac@donvi.vn'; input.autocomplete = 'off'; input.inputMode = 'email'; }
-      inputs[key] = input; wrapper.append(input); (key === 'to' || key === 'cc' ? recipientGrid : form).append(wrapper);
+      inputs[key] = input; wrapper.append(input); (key === 'to' || key === 'cc' ? recipientGrid : bodyBox).append(wrapper);
     }
-    form.prepend(header,recipientGrid);
+    bodyBox.prepend(recipientGrid); form.prepend(header,bodyBox);
     const feedback = node('p',null,'sf-feedback'); feedback.setAttribute('role','status');
     const sameContext = () => owner() === uid && editingPendingClaimId === claim && sheet.dataset.discard !== 'true';
     const remember = () => { if (!sameContext()) return false; for (const key of Object.keys(inputs)) draft[key] = inputs[key].value; draft.signature = generated.signature; return true; };
     form.addEventListener('input',remember);
     recipientGrid.after(directoryPanel(inputs,remember,feedback,sameContext));
+    // Thời hạn phản hồi chậm nhất → tự đưa vào nội dung thư.
+    const deadlineCard = node('section',null,'crr-deadline'), deadlineHead = node('div',null,'crr-deadline-head');
+    const deadlineInput = node('input'); deadlineInput.type = 'datetime-local'; deadlineInput.id = 'claimReductionMail_deadline'; deadlineInput.value = draft.deadline || '';
+    const deadlineLabel = node('label','Thời hạn phản hồi chậm nhất'); deadlineLabel.htmlFor = deadlineInput.id;
+    deadlineHead.append(deadlineLabel,node('small','Quá thời hạn, bộ phận bồi thường giải quyết quyền lợi theo quy định.'));
+    const deadlineTools = node('div',null,'crr-deadline-tools'), chips = node('div',null,'crr-deadline-chips');
+    const pad = number => String(number).padStart(2,'0');
+    const setDeadline = text => { deadlineInput.value = text; deadlineInput.dispatchEvent(new Event('input',{bubbles:true})); };
+    [1,2,3,5].forEach(days => chips.append(button(days + ' ngày',() => {
+      const date = new Date(); date.setDate(date.getDate() + days);
+      setDeadline(date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + 'T17:00');
+    })));
+    chips.append(button('Bỏ',() => setDeadline('')));
+    chips.querySelectorAll('button').forEach(chip => chip.classList.add('crr-deadline-chip'));
+    deadlineTools.append(deadlineInput,chips); deadlineCard.append(deadlineHead,deadlineTools);
+    inputs.deadline = deadlineInput;
+    deadlineInput.addEventListener('input',() => { inputs.body.value = withDeadline(inputs.body.value,deadlineInput.value); remember(); });
+    bodyBox.children[1].after(deadlineCard);
     const footer = node('footer');
     const copy = button('Sao chép nội dung',async () => {
       if (!sameContext()) return close();
@@ -290,12 +330,13 @@ const ClaimReductionNotice = (() => {
       try { await navigator.clipboard.writeText(inputs.body.value); feedback.textContent = 'Đã sao chép nội dung thông báo.'; }
       catch (_) { inputs.body.focus(); inputs.body.select(); feedback.textContent = 'Nhấn Ctrl+C để sao chép nội dung đã chọn.'; }
     });
-    const outlook = button('Mở thư Outlook',() => {
+    const outlook = button('Mở Outlook',() => {
       if (!sameContext()) return close();
       try {
         const to = addresses(inputs.to.value), cc = addresses(inputs.cc.value);
         if (!to.length) throw new Error('Nhập email đơn vị cấp đơn trước khi mở Outlook.');
         if (!inputs.subject.value.trim() || !inputs.body.value.trim()) throw new Error('Nhập tiêu đề và nội dung thông báo.');
+        checkDeadline(inputs.deadline.value);
         // Thứ tự to → cc → subject → body: cc đứng trước phần nội dung dài để không bị cắt/bỏ qua.
         // Outlook web chỉ nhận danh sách địa chỉ phân cách bằng dấu phẩy.
         const params = {to:to.join(',')};
@@ -323,11 +364,12 @@ const ClaimReductionNotice = (() => {
       try { await navigator.clipboard.writeText(cc.join('; ')); feedback.textContent = 'Đã sao chép ' + cc.length + ' email CC. Dán vào ô Cc trong Outlook (Ctrl+V).'; }
       catch (_) { inputs.cc.focus(); inputs.cc.select(); feedback.textContent = 'Nhấn Ctrl+C để sao chép email CC đã chọn.'; }
     });
-    const mailApp = button('Mở bằng ứng dụng thư',() => {
+    const mailApp = button('Ứng dụng thư',() => {
       if (!sameContext()) return close();
       try {
         const to = addresses(inputs.to.value), cc = addresses(inputs.cc.value);
         if (!to.length) throw new Error('Nhập email đơn vị cấp đơn trước.');
+        checkDeadline(inputs.deadline.value);
         const query = [['subject',inputs.subject.value.replace(/[\r\n]/g,' ')],['body',inputs.body.value]];
         if (cc.length) query.unshift(['cc',cc.join(',')]);
         const url = 'mailto:' + to.map(encodeURIComponent).join(',') + '?' + query.map(([key,text]) => key + '=' + encodeURIComponent(text)).join('&');
@@ -337,11 +379,12 @@ const ClaimReductionNotice = (() => {
       } catch (error) { feedback.textContent = error.message; }
     });
     // .eml nháp (X-Unsent) mở được bằng Outlook desktop / ứng dụng thư, giữ đủ To + Cc + nội dung.
-    const emlDraft = button('Tải thư nháp (.eml)',() => {
+    const emlDraft = button('Tải .eml',() => {
       if (!sameContext()) return close();
       try {
         const to = addresses(inputs.to.value), cc = addresses(inputs.cc.value);
         if (!to.length) throw new Error('Nhập email đơn vị cấp đơn trước.');
+        checkDeadline(inputs.deadline.value);
         const b64 = text => btoa(String.fromCharCode(...new TextEncoder().encode(text)));
         const wrap = text => text.replace(/.{1,76}/g,'$&\r\n').trimEnd();
         const lines = ['X-Unsent: 1','To: ' + to.join(', ')];
@@ -355,8 +398,9 @@ const ClaimReductionNotice = (() => {
         remember(); feedback.textContent = 'Đã tải thư nháp. Mở file .eml bằng Outlook: đủ người nhận, CC và nội dung.';
       } catch (error) { feedback.textContent = error.message; }
     });
-    footer.append(button('Tạo lại nội dung mẫu',() => { inputs.subject.value = generated.subject; inputs.body.value = generated.body; remember(); feedback.textContent = 'Đã tạo lại nội dung từ thông tin hồ sơ.'; }),copy,copyCc,emlDraft,mailApp,outlook);
-    form.append(node('p','Có thể sửa nội dung trước khi gửi. Thông tin được lưu cùng hồ sơ khi bạn bấm Lưu cập nhật hồ sơ.','claim-reduction-note'),feedback,footer);
+    footer.append(button('Tạo lại mẫu',() => { inputs.subject.value = generated.subject; inputs.body.value = withDeadline(generated.body,inputs.deadline.value); remember(); feedback.textContent = 'Đã tạo lại nội dung từ thông tin hồ sơ.'; }),copy,copyCc,emlDraft,mailApp,outlook);
+    bodyBox.append(node('p','Có thể sửa nội dung trước khi gửi. Thông tin được lưu cùng hồ sơ khi bạn bấm Lưu cập nhật hồ sơ.','claim-reduction-note'));
+    const foot = node('div',null,'crr-compose-foot'); foot.append(feedback,footer); form.append(foot);
     form.onsubmit = event => event.preventDefault(); sheet.append(form);
     const returnFocus = document.activeElement;
     sheet.addEventListener('keydown',event => { event.stopPropagation(); if (event.key === 'Escape') { event.preventDefault(); sheet.close(); } });
@@ -364,5 +408,5 @@ const ClaimReductionNotice = (() => {
     sheet.addEventListener('close',() => { remember(); if (dialog === sheet) dialog = null; sheet.remove(); if (returnFocus?.isConnected) returnFocus.focus({preventScroll:true}); },{once:true});
     document.body.append(sheet); sheet.showModal(); inputs.to.focus();
   }
-  return {mount,load,getState,close,show,directory:{slug,mergeAddresses}};
+  return {mount,load,getState,close,show,directory:{slug,mergeAddresses},deadline:{withDeadline,format:formatDeadline}};
 })();

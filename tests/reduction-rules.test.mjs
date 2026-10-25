@@ -162,3 +162,16 @@ test('danh bạ email: khóa khu vực giám định không phụ thuộc đơn 
   assert.equal(slug('Zone Tây Nguyên'), 'zone-tay-nguyen');
   assert.equal(mergeAddresses('thao@x.vn', 'tpkd@x.vn; THAO@x.vn', 'qlkv@x.vn'), 'thao@x.vn; tpkd@x.vn; qlkv@x.vn');
 });
+
+test('thời hạn phản hồi: chèn, thay và bỏ câu thời hạn trong nội dung thư', () => {
+  const {withDeadline, format} = notice.notice.deadline;
+  const base = 'Kính gửi A,\n\nNội dung.\n\nKính đề nghị phản hồi.\n\nTrân trọng,\nHuy';
+  assert.equal(format('2026-10-28T17:00'), '17:00 ngày 28/10/2026');
+  assert.equal(format('abc'), '');
+  const once = withDeadline(base, '2026-10-28T17:00');
+  assert.match(once, /chậm nhất trước 17:00 ngày 28\/10\/2026\. Quá thời hạn trên, bộ phận bồi thường sẽ giải quyết quyền lợi của khách hàng theo quy định\.\n\nTrân trọng,/);
+  const twice = withDeadline(once, '2026-10-30T09:30');
+  assert.equal((twice.match(/chậm nhất/g) || []).length, 1, 'đổi thời hạn thì thay câu cũ, không nhân đôi');
+  assert.match(twice, /09:30 ngày 30\/10\/2026/);
+  assert.equal(withDeadline(twice, ''), base, 'bỏ thời hạn → về lại nội dung gốc');
+});
