@@ -81,8 +81,9 @@
       const readSet = getReadNotificationIdsSet();
       const transfers = Object.values(cachedAccountingTransfersPayload || {});
       transfers.forEach(t => {
+        // Chỉ đánh dấu đúng trạng thái hiện tại; KHÔNG ghi mã phiếu trần, nếu không mọi thay đổi trạng thái sau này
+        // của phiếu đều bị coi là "đã đọc" và người dùng không bao giờ thấy thông báo mới.
         if (t.transferId && t.trangThai) readSet.add(String(t.transferId + '_' + t.trangThai));
-        if (t.transferId) readSet.add(String(t.transferId)); // backward compat
       });
       saveReadNotificationIdsSet(readSet);
       triggerToast('Đã đánh dấu đọc tất cả thông báo.', 'success');
@@ -95,7 +96,6 @@
       const transfers = Object.values(cachedAccountingTransfersPayload || {});
       transfers.forEach(t => {
         if (t.transferId && t.trangThai) dismissedSet.add(String(t.transferId + '_' + t.trangThai));
-        if (t.transferId) dismissedSet.add(String(t.transferId)); // backward compat
       });
       saveDismissedNotificationIdsSet(dismissedSet);
       triggerToast('Đã xóa tất cả thông báo.', 'success');
@@ -125,16 +125,29 @@
 
       let transfers = Object.values(cachedAccountingTransfersPayload || {});
 
-      // For regular GĐV, only include notifications for their own transfer batches
-      if (!isKeToanOrAdmin && currentLoggedInGdvName) {
+      const readSet = getReadNotificationIdsSet();
+      const dismissedSet = getDismissedNotificationIdsSet();
+
+      // Dữ liệu cũ lưu mã phiếu trần (vd. "PBG1") làm mọi trạng thái sau này bị coi là đã đọc/đã xóa.
+      // Chuyển thành khóa theo trạng thái hiện tại (giữ nguyên những gì người dùng đã đọc/xóa), rồi bỏ mã trần.
+      let legacyMigrated = false;
+      transfers.forEach(t => {
+        if (!t.transferId) return;
+        const bareId = String(t.transferId), stateId = bareId + '_' + (t.trangThai || 'unknown');
+        if (readSet.has(bareId)) { readSet.add(stateId); readSet.delete(bareId); legacyMigrated = true; }
+        if (dismissedSet.has(bareId)) { dismissedSet.add(stateId); dismissedSet.delete(bareId); legacyMigrated = true; }
+      });
+      if (legacyMigrated) { saveReadNotificationIdsSet(readSet); saveDismissedNotificationIdsSet(dismissedSet); }
+
+      // GĐV thường chỉ thấy phiếu của mình. Không xác định được người (thiếu tên GĐV trên phiếu hoặc hồ sơ người dùng)
+      // thì ẩn, tránh lộ phiếu của người khác.
+      if (!isKeToanOrAdmin) {
         transfers = transfers.filter(t => {
           const tGdv = String(t.gdvName || '').trim().toLowerCase();
+          if (!tGdv || !currentLoggedInGdvName) return false;
           return tGdv.includes(currentLoggedInGdvName) || currentLoggedInGdvName.includes(tGdv);
         });
       }
-
-      const readSet = getReadNotificationIdsSet();
-      const dismissedSet = getDismissedNotificationIdsSet();
       const notifications = [];
 
       transfers.forEach(t => {
@@ -147,8 +160,8 @@
            if (dp) notifTimestamp = new Date(dp.year, dp.month - 1, dp.day, dp.hours || 0, dp.minutes || 0, dp.seconds || 0).getTime();
         }
 
-        const isRead = readSet.has(String(notifId)) || readSet.has(String(batchId));
-        const isDismissed = dismissedSet.has(String(notifId)) || dismissedSet.has(String(batchId));
+        const isRead = readSet.has(String(notifId));
+        const isDismissed = dismissedSet.has(String(notifId));
 
         if (isDismissed) return; // Skip dismissed
 
