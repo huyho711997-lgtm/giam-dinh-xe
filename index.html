@@ -68,11 +68,11 @@
 <link rel="stylesheet" href="css/pending-page.css?v=20261024-1">
 <link rel="stylesheet" href="css/shared-forms.css?v=20261023-confirm-5">
 <link rel="stylesheet" href="css/shared-forms-page.css?v=20261024-dialog-4">
-<link rel="stylesheet" href="css/claim-editor.css?v=20261024-preview-1">
+<link rel="stylesheet" href="css/claim-editor.css?v=20261025-back-1">
 <link rel="stylesheet" href="css/claim-documents.css?v=20261024-docs-1">
 <link rel="stylesheet" href="css/reduction-notice.css?v=20261024-notice-3">
 <link rel="stylesheet" href="css/reduction-rules.css?v=20261024-scene-1">
-<link rel="stylesheet" href="css/claim-header-actions.css?v=20261024-actions-1">
+<link rel="stylesheet" href="css/claim-header-actions.css?v=20261025-back-1">
 <link rel="stylesheet" href="css/document-preview.css?v=20261024-preview-1">
 <link rel="stylesheet" href="css/collection-guide-type.css?v=20261024-4">
 <link rel="stylesheet" href="css/header-navigation.css?v=20261024-nav-1">
@@ -248,9 +248,9 @@
       <div class="claim-editor-topbar">
         <div class="claim-editor-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
           <div class="claim-editor-header-identity" style="display: flex; align-items: center; gap: 14px;">
-            <div class="claim-editor-header-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6M19 8v3"/><path d="M13.5 3v5H19l-5.5-5ZM8 12h4M8 16h2.5"/><path d="m13 17 6.6-6.6a1.4 1.4 0 0 1 2 2L15 19l-3 1 1-3Zm5.5-5.5 2 2"/></svg>
-            </div>
+            <button type="button" class="claim-editor-header-icon claim-editor-back" onclick="closeAddPendingClaimModal()" aria-label="Quay lại danh sách hồ sơ" title="Quay lại danh sách (Esc)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            </button>
             <div>
               <span class="claim-editor-eyebrow">Hồ sơ bồi thường · Xe cơ giới</span>
               <h3 id="addPendingClaimModalTitle" tabindex="-1" style="font-size: 17px; font-weight: 850; color: var(--text-main); margin: 0;">Chỉnh sửa chi tiết hồ sơ bồi thường</h3>
@@ -281,7 +281,6 @@
               <span class="ce-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6m0-6 6 6"/></svg></span>
               <span class="ce-action-label">Hủy hồ sơ</span>
             </button>
-            <button type="button" class="btn-header-claim-action ce-action-close" onclick="closeAddPendingClaimModal()" aria-label="Đóng" title="Đóng (Esc)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
           </div>
         </div>
 

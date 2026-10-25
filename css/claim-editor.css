@@ -101,6 +101,12 @@ body:not(.light-mode) .claim-editor-record .claim-editor-status { color:color-mi
 #addPendingClaimModalOverlay .claim-editor-content :is(input,textarea):focus { border-color:var(--ce-gold); box-shadow:0 0 0 3px color-mix(in srgb,var(--ce-gold) 12%,transparent); }
 #addPendingClaimModalOverlay .collection-guide-search .input-premium { padding-left:39px; padding-right:30px; }
 #addPendingClaimModalOverlay .claim-editor-header-icon { color:var(--ce-gold); background:var(--ce-gold-soft); box-shadow:none; }
+/* Nút Quay lại (thay cho nút X ở góc phải): cùng khung 44px với icon cũ */
+#addPendingClaimModalOverlay .claim-editor-back { cursor:pointer; padding:0; font:inherit; transition:background .15s ease,color .15s ease,border-color .15s ease,transform .15s ease; }
+#addPendingClaimModalOverlay .claim-editor-back:hover { color:var(--ce-paper); background:var(--ce-gold); border-color:var(--ce-gold); transform:translateX(-2px); }
+#addPendingClaimModalOverlay .claim-editor-back:active { transform:translateX(-3px) scale(.97); }
+#addPendingClaimModalOverlay .claim-editor-back:focus-visible { outline:2px solid var(--ce-gold); outline-offset:2px; }
+@media (prefers-reduced-motion: reduce) { #addPendingClaimModalOverlay .claim-editor-back { transition:none; } #addPendingClaimModalOverlay .claim-editor-back:hover { transform:none; } }
 #addPendingClaimModalOverlay .claim-editor-footer .btn-premium { border-radius:10px; box-shadow:none; }
 #addPendingClaimModalOverlay #btnSubmitAddPendingClaim { background:var(--ce-action) !important; color:var(--ce-action-text) !important; }
 #addPendingClaimModalOverlay .claim-editor-footer .btn-secondary { border-color:var(--ce-line); color:var(--ce-ink); background:var(--ce-paper); }
