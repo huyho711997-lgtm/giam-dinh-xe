@@ -1,5 +1,101 @@
 
 
+
+    /* ÂM THANH THÔNG BÁO MỚI
+       - Phát chuông 2 nốt (Web Audio, không cần file âm thanh) khi xuất hiện thông báo CHƯA ĐỌC mới.
+       - Không phát khi mới tải trang/đăng nhập (lần dữ liệu đầu coi như đã biết), khi mở/đóng hộp, đọc hay xóa thông báo.
+       - Trình duyệt chỉ cho phát âm thanh sau khi người dùng đã bấm/gõ phím trên trang ít nhất một lần.
+       - Bật/tắt bằng nút loa trong hộp thông báo (lưu theo trình duyệt). */
+    const notificationSound = {
+      ctx: null,
+      loaded: { transfers: false, cases: false },
+      baselineUid: null,
+      seen: new Set()
+    };
+
+    function isNotificationSoundEnabled() {
+      try { return localStorage.getItem('notif_sound_off') !== '1'; } catch (e) { return true; }
+    }
+
+    function getNotificationAudioContext() {
+      if (notificationSound.ctx) return notificationSound.ctx;
+      const AudioCtor = typeof window !== 'undefined' ? (window.AudioContext || window.webkitAudioContext) : null;
+      if (!AudioCtor) return null;
+      try { notificationSound.ctx = new AudioCtor(); } catch (e) { notificationSound.ctx = null; }
+      return notificationSound.ctx;
+    }
+
+    // Mở khóa âm thanh ở lần tương tác đầu tiên (chính sách autoplay của trình duyệt).
+    (function bindNotificationAudioUnlock() {
+      if (typeof document === 'undefined' || typeof document.addEventListener !== 'function') return;
+      const unlock = () => {
+        const ctx = getNotificationAudioContext();
+        if (ctx && ctx.state === 'suspended') { try { ctx.resume(); } catch (e) {} }
+        ['pointerdown', 'keydown', 'touchstart'].forEach(name => document.removeEventListener(name, unlock, true));
+      };
+      ['pointerdown', 'keydown', 'touchstart'].forEach(name => document.addEventListener(name, unlock, true));
+    })();
+
+    function playNotificationChime() {
+      if (!isNotificationSoundEnabled()) return false;
+      const ctx = getNotificationAudioContext();
+      if (!ctx) return false;
+      try {
+        if (ctx.state === 'suspended') ctx.resume();
+        const start = ctx.currentTime;
+        [[880, 0], [1318.5, 0.16]].forEach(([frequency, offset]) => {
+          const osc = ctx.createOscillator(), gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = frequency;
+          gain.gain.setValueAtTime(0.0001, start + offset);
+          gain.gain.exponentialRampToValueAtTime(0.2, start + offset + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + offset + 0.4);
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.start(start + offset); osc.stop(start + offset + 0.42);
+        });
+        return true;
+      } catch (e) { return false; }
+    }
+
+    // Dữ liệu từng nguồn (phiếu bàn giao, ca giám định) đã về lần đầu → từ đó mới được coi là "mới".
+    function markNotificationSourceLoaded(source) {
+      if (source in notificationSound.loaded) notificationSound.loaded[source] = true;
+    }
+
+    // Gọi sau mỗi lần dựng danh sách: chuông nếu có thông báo chưa đọc mà phiên này chưa từng thấy.
+    function ringForNewNotifications(notifications, uid) {
+      const ready = notificationSound.loaded.transfers && notificationSound.loaded.cases;
+      if (!ready) return;
+      if (notificationSound.baselineUid !== uid) {   // lần đầu / đổi tài khoản → ghi nhận hiện trạng, không chuông
+        notificationSound.baselineUid = uid;
+        notificationSound.seen = new Set(notifications.map(n => n.id));
+        return;
+      }
+      const fresh = notifications.filter(n => !n.isRead && !notificationSound.seen.has(n.id));
+      notifications.forEach(n => notificationSound.seen.add(n.id));
+      if (fresh.length) playNotificationChime();
+    }
+
+    function toggleNotificationSound(evt) {
+      if (evt) evt.stopPropagation();
+      const turnOff = isNotificationSoundEnabled();
+      try { localStorage.setItem('notif_sound_off', turnOff ? '1' : '0'); } catch (e) {}
+      syncNotificationSoundButton();
+      if (!turnOff) playNotificationChime();   // bật lại → phát thử cho người dùng nghe
+    }
+
+    function syncNotificationSoundButton() {
+      const button = document.getElementById('btnNotifSoundToggle');
+      if (!button) return;
+      const on = isNotificationSoundEnabled();
+      button.title = on ? 'Âm thanh thông báo: đang bật (bấm để tắt)' : 'Âm thanh thông báo: đang tắt (bấm để bật)';
+      button.setAttribute('aria-pressed', String(on));
+      button.style.opacity = on ? '1' : '0.5';
+      button.innerHTML = on
+        ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>'
+        : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
+    }
+
     /* REALTIME PERSISTENT READ NOTIFICATION CONTROLLER */
     function getReadNotificationIdsSet() {
       try {
@@ -258,6 +354,9 @@
       notifications.sort((a, b) => b.timestamp - a.timestamp);
 
       const unreadCount = notifications.filter(n => !n.isRead).length;
+
+      syncNotificationSoundButton();
+      ringForNewNotifications(notifications, String(activeUserProfile?.uid || firebase.auth().currentUser?.uid || 'default'));
 
       if (badge) {
         if (unreadCount > 0) {

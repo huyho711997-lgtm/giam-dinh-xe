@@ -26,6 +26,8 @@
                   <span id="lblNotifUnreadCount" style="font-size: 11px; background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850; padding: 3px 10px; border-radius: 99px; display: none;">0 mới</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px;">
+                  <button type="button" id="btnNotifSoundToggle" onclick="toggleNotificationSound(event)" aria-label="Bật/tắt âm thanh thông báo" style="background: transparent; border: none; color: var(--primary); padding: 2px; cursor: pointer; display: inline-flex; align-items: center;"></button>
+                  <div style="width: 1px; height: 12px; background: var(--border-strong);"></div>
                   <button type="button" onclick="markAllNotificationsAsRead()" style="background: transparent; border: none; font-size: 12px; color: var(--primary); font-weight: 800; cursor: pointer; text-decoration: underline; padding: 0;" title="Đánh dấu đã đọc tất cả">Đã đọc tất cả</button>
                   <div style="width: 1px; height: 12px; background: var(--border-strong);"></div>
                   <button type="button" onclick="dismissAllNotifications()" style="background: transparent; border: none; font-size: 12px; color: var(--text-soft); font-weight: 800; cursor: pointer; text-decoration: underline; transition: color 0.2s; padding: 0;" onmouseover="this.style.color='var(--text-main)';" onmouseout="this.style.color='var(--text-soft)';" title="Xóa tất cả">Xóa tất cả</button>

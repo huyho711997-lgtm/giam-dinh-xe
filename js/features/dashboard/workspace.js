@@ -84,7 +84,9 @@
         const filteredVal = filterCasesByUserPrivileges(val, currentUser);
         
         cachedCasesPayload = filteredVal;
-        
+        if (typeof markNotificationSourceLoaded === 'function') markNotificationSourceLoaded('cases');
+        if (typeof renderNotificationCenterItems === 'function') renderNotificationCenterItems(); // thông báo "Gara hoàn tất" cập nhật tức thời
+
         updateStatsCounters(filteredVal);
         if (typeof refreshHomeDashboard === 'function') refreshHomeDashboard();
 
@@ -169,6 +171,7 @@
       dbNodeInstance.ref('accounting_transfers').off();
       dbNodeInstance.ref('accounting_transfers').on('value', (snapshot) => {
         cachedAccountingTransfersPayload = snapshot.val() || {};
+        if (typeof markNotificationSourceLoaded === 'function') markNotificationSourceLoaded('transfers');
         if (typeof refreshHomeDashboard === 'function') refreshHomeDashboard();
         if (activeDashboardTab === 'accounting_transfer') renderAccountingTransferPage();
         if (activeDashboardTab === 'accounting_claims') renderAccountingClaimsPage();

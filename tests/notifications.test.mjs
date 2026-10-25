@@ -17,7 +17,14 @@ function setup(profile, transfers, storage = {}) {
     getLoggedInUserAccountingRole: () => profile.acc || '', formatDateDisplay: String, parseDateParts: () => null,
     escapeHtmlOutput: String, triggerToast() {}, STATUS_COMPLETED: 'done'
   });
-  vm.runInContext(`${source}\n;this.api={renderNotificationCenterItems,markAllNotificationsAsRead,dismissAllNotifications};`, context);
+  context.plays = 0;
+  context.window = { AudioContext: class {
+    constructor() { this.state = 'running'; this.currentTime = 0; this.destination = {}; }
+    createOscillator() { return { frequency: {}, connect() {}, start() { context.plays++; }, stop() {} }; }
+    createGain() { return { gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {} }; }
+    resume() {}
+  } };
+  vm.runInContext(`${source}\n;this.api={renderNotificationCenterItems,markAllNotificationsAsRead,dismissAllNotifications,markNotificationSourceLoaded,toggleNotificationSound,dismissNotification,markNotificationAsRead};`, context);
   return { context, holder, badge, storage, setTransfers: value => { context.cachedAccountingTransfersPayload = value; } };
 }
 const gdv = { role: 'Giám định viên', displayName: 'Nguyen Van A' };
@@ -72,4 +79,47 @@ test('GĐV chỉ thấy phiếu của mình; phiếu thiếu tên GĐV hoặc us
   const admin = setup({ role: 'Admin' }, rows);
   admin.context.api.renderNotificationCenterItems();
   assert.match(admin.holder.innerHTML, /PBG1[\s\S]*PBG2|PBG2[\s\S]*PBG1/, 'Admin/Kế toán thấy tất cả');
+});
+
+// Mỗi lần phát chuông = 2 nốt → plays tăng 2.
+function ready(env) { env.context.api.markNotificationSourceLoaded('transfers'); env.context.api.markNotificationSourceLoaded('cases'); }
+
+test('chuông: không kêu lúc tải lần đầu, chỉ kêu khi có thông báo chưa đọc mới', () => {
+  const env = setup(gdv, transfer('cho_xac_nhan'));
+  env.context.api.renderNotificationCenterItems();            // dữ liệu chưa về đủ
+  ready(env);
+  env.context.api.renderNotificationCenterItems();            // ghi nhận hiện trạng
+  assert.equal(env.context.plays, 0, 'tải trang không kêu dù đang có thông báo chưa đọc');
+  env.context.api.renderNotificationCenterItems();
+  assert.equal(env.context.plays, 0, 'vẽ lại không đổi gì thì không kêu');
+  env.setTransfers(transfer('can_bo_sung'));
+  env.context.api.renderNotificationCenterItems();
+  assert.equal(env.context.plays, 2, 'có yêu cầu bổ sung mới → kêu 1 lần (2 nốt)');
+  env.context.api.renderNotificationCenterItems();
+  assert.equal(env.context.plays, 2, 'không kêu lặp lại cho cùng thông báo');
+});
+
+test('chuông: đọc/xóa thông báo hoặc tắt âm thì không kêu', () => {
+  const env = setup(gdv, transfer('cho_xac_nhan'));
+  ready(env);
+  env.context.api.renderNotificationCenterItems();
+  env.context.api.markAllNotificationsAsRead();
+  env.context.api.dismissAllNotifications();
+  assert.equal(env.context.plays, 0);
+  env.context.api.toggleNotificationSound();                  // tắt
+  assert.equal(env.storage?.notif_sound_off ?? env.context.localStorage.getItem('notif_sound_off'), '1');
+  env.setTransfers(transfer('da_xac_nhan'));
+  env.context.api.renderNotificationCenterItems();
+  assert.equal(env.context.plays, 0, 'đã tắt âm → im lặng');
+  env.context.api.toggleNotificationSound();                  // bật lại → phát thử
+  assert.equal(env.context.plays, 2);
+});
+
+test('chuông: thông báo ca gara hoàn tất kêu khi tới sau lần tải đầu', () => {
+  const env = setup({ ...gdv, uid: 'u', email: 'a@x.test' }, {});
+  ready(env);
+  env.context.api.renderNotificationCenterItems();
+  env.context.cachedCasesPayload = { c1: { trangThai: 'done', bienSo: '47A1', nguoiTao: { uid: 'u' }, tenGara: 'Gara X' } };
+  env.context.api.renderNotificationCenterItems();
+  assert.equal(env.context.plays, 2);
 });
