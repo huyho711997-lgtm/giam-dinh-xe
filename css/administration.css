@@ -1089,3 +1089,9 @@ body.light-mode [data-garage-portal="active"] { --border:rgba(28,31,38,.09); }
 .admin-user-modal .admin-member-tabs button.admin-member-tab em { background:var(--admin-fill); border:1px solid var(--admin-line); color:var(--primary); }
 .admin-user-modal .admin-member-editor > .admin-member-body { padding:24px 28px; }
 .admin-member-tabs { padding-top:4px; }
+
+.admin-signature-upload { display:flex; gap:10px; align-items:stretch; }
+.admin-signature-upload .input-premium { flex:1; min-width:0; }
+.admin-signature-upload .admin-button { flex:0 0 auto; height:43px; padding:0 16px; white-space:nowrap; font-size:12px; }
+.admin-signature-upload .admin-button:disabled { opacity:.6; cursor:progress; }
+@media (max-width:720px) { .admin-signature-upload { flex-direction:column; } }

@@ -34,3 +34,11 @@ test('banner chỉ nhận https; HTML được escape', () => {
   assert.ok(!html.includes('<img src=x'), 'tên bị escape');
   assert.match(html, /<img src="https:\/\/cdn\.tasco\.vn\/b\.png"/);
 });
+
+test('kiểm tra tệp banner: đúng định dạng và dung lượng', () => {
+  assert.equal(Sig.validateBannerFile({type: 'image/png', size: 1000}), '');
+  assert.match(Sig.validateBannerFile({type: 'application/pdf', size: 1000}), /PNG, JPG/);
+  assert.match(Sig.validateBannerFile({type: 'image/svg+xml', size: 1000}), /PNG, JPG/, 'SVG bị chặn vì có thể chứa mã');
+  assert.match(Sig.validateBannerFile({type: 'image/jpeg', size: 6 * 1024 * 1024}), /5MB/);
+  assert.ok(Sig.validateBannerFile(null));
+});

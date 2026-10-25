@@ -56,7 +56,7 @@
 
   <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/scene-toolbar.css">
-<link rel="stylesheet" href="css/administration.css?v=20261025-tabs-3" id="systemAdminPremiumStyles">
+<link rel="stylesheet" href="css/administration.css?v=20261025-up-1" id="systemAdminPremiumStyles">
 <link rel="stylesheet" href="css/outstanding-report.css">
 <link rel="stylesheet" href="css/report-dropdowns.css">
 <link rel="stylesheet" href="css/weekly-report.css">
@@ -218,7 +218,7 @@
                 <div class="admin-account-field"><label for="editSigEmail">Email (E)</label><input id="editSigEmail" class="input-premium" type="email" placeholder="ten@baohiemtasco.vn" maxlength="120" oninput="EmailSignature.preview('edit')"></div>
               </div>
               <div class="admin-account-field"><label for="editSigWebsite">Website (W)</label><input id="editSigWebsite" class="input-premium" type="text" placeholder="www.tascoinsurance.com.vn" maxlength="120" oninput="EmailSignature.preview('edit')"></div>
-              <div class="admin-account-field"><label for="editSigBanner">Banner (đường dẫn ảnh https)</label><input id="editSigBanner" class="input-premium" type="url" placeholder="https://…/banner.png" maxlength="500" oninput="EmailSignature.preview('edit')"><span class="admin-signature-hint" id="editSigBannerHint">Banner chỉ hiện khi tải thư nháp .eml (thư gửi qua link Outlook chỉ gồm văn bản). Chỉ nhận đường dẫn https.</span></div>
+              <div class="admin-account-field"><label for="editSigBanner">Banner</label><div class="admin-signature-upload"><input id="editSigBanner" class="input-premium" type="url" placeholder="Tải ảnh lên hoặc dán đường dẫn https://…" maxlength="500" oninput="EmailSignature.preview('edit')"><button type="button" id="editSigBannerUpload" class="admin-button admin-button--secondary" onclick="document.getElementById('editSigBannerFile').click()">Tải ảnh lên</button><input type="file" id="editSigBannerFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden onchange="EmailSignature.handleBannerPick('edit',this)"></div><span class="admin-signature-hint" id="editSigBannerHint">Ảnh PNG, JPG, WEBP hoặc GIF, tối đa 5MB (ảnh rộng hơn 1200px được tự thu nhỏ). Banner chỉ hiện khi tải thư nháp .eml; thư gửi qua link Outlook chỉ gồm văn bản.</span></div>
               <div class="admin-signature-preview-wrap"><span>Xem trước</span><div class="admin-signature-preview" id="editSigPreview"></div></div>
             </div>
           </section>
@@ -1720,7 +1720,7 @@
   <script src="js/features/notifications/notification-center.js?v=20261025-sound-1"></script>
   <script src="js/core/navigation.js?v=20261025-sound-1"></script>
   <script src="js/features/claims/creation-form.js"></script>
-  <script src="js/features/admin/email-signature.js?v=20261025-sig-1"></script>
+  <script src="js/features/admin/email-signature.js?v=20261025-up-1"></script>
   <script src="js/features/admin/users.js?v=20261025-tabs-1"></script>
   <script src="js/features/auth/login.js"></script>
   <script src="js/data/insurance-reduction-rules.js?v=20261024-scene-1"></script>
