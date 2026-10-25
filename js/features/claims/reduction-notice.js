@@ -308,7 +308,12 @@ const ClaimReductionNotice = (() => {
         const url = 'https://outlook.cloud.microsoft/mail/deeplink/compose?' + query;
         if (url.length > 12000) throw new Error('Nội dung dài. Dùng Sao chép nội dung rồi dán vào Outlook.');
         remember(); window.open(url,'_blank','noopener,noreferrer');
-        feedback.textContent = 'Đã yêu cầu mở cửa sổ soạn thư. Kiểm tra tài khoản gửi, người nhận và bấm Gửi trong Outlook. Nếu chưa thấy thư, cho phép mở cửa sổ mới hoặc sao chép nội dung.';
+        // Link soạn thư của Outlook web KHÔNG hỗ trợ tham số CC (Microsoft không có tài liệu) → chép sẵn CC vào clipboard để dán.
+        if (cc.length) {
+          const note = 'Outlook web không nhận CC qua link. Email CC đã được sao chép: bấm vào ô Cc trong Outlook rồi nhấn Ctrl+V.';
+          navigator.clipboard?.writeText(cc.join('; ')).then(() => { feedback.textContent = note; },() => { feedback.textContent = 'Outlook web không nhận CC qua link. Bấm "Sao chép CC" rồi dán vào ô Cc.'; });
+          feedback.textContent = note;
+        } else feedback.textContent = 'Đã yêu cầu mở cửa sổ soạn thư. Kiểm tra tài khoản gửi, người nhận và bấm Gửi trong Outlook.';
       } catch (error) { feedback.textContent = error.message; }
     },true);
     // Outlook web đôi khi bỏ qua tham số cc của deeplink → có 2 đường dự phòng đảm bảo CC không bị mất.
@@ -331,7 +336,26 @@ const ClaimReductionNotice = (() => {
         feedback.textContent = 'Đã mở ứng dụng thư mặc định với đủ người nhận và CC.';
       } catch (error) { feedback.textContent = error.message; }
     });
-    footer.append(button('Tạo lại nội dung mẫu',() => { inputs.subject.value = generated.subject; inputs.body.value = generated.body; remember(); feedback.textContent = 'Đã tạo lại nội dung từ thông tin hồ sơ.'; }),copy,copyCc,mailApp,outlook);
+    // .eml nháp (X-Unsent) mở được bằng Outlook desktop / ứng dụng thư, giữ đủ To + Cc + nội dung.
+    const emlDraft = button('Tải thư nháp (.eml)',() => {
+      if (!sameContext()) return close();
+      try {
+        const to = addresses(inputs.to.value), cc = addresses(inputs.cc.value);
+        if (!to.length) throw new Error('Nhập email đơn vị cấp đơn trước.');
+        const b64 = text => btoa(String.fromCharCode(...new TextEncoder().encode(text)));
+        const wrap = text => text.replace(/.{1,76}/g,'$&\r\n').trimEnd();
+        const lines = ['X-Unsent: 1','To: ' + to.join(', ')];
+        if (cc.length) lines.push('Cc: ' + cc.join(', '));
+        lines.push('Subject: =?UTF-8?B?' + b64(inputs.subject.value.replace(/[\r\n]/g,' ')) + '?=','MIME-Version: 1.0','Content-Type: text/plain; charset=UTF-8','Content-Transfer-Encoding: base64','',wrap(b64(inputs.body.value)));
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([lines.join('\r\n')],{type:'message/rfc822'}));
+        link.download = 'thong-bao-giam-tru.eml';
+        document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(() => URL.revokeObjectURL(link.href),10000);
+        remember(); feedback.textContent = 'Đã tải thư nháp. Mở file .eml bằng Outlook: đủ người nhận, CC và nội dung.';
+      } catch (error) { feedback.textContent = error.message; }
+    });
+    footer.append(button('Tạo lại nội dung mẫu',() => { inputs.subject.value = generated.subject; inputs.body.value = generated.body; remember(); feedback.textContent = 'Đã tạo lại nội dung từ thông tin hồ sơ.'; }),copy,copyCc,emlDraft,mailApp,outlook);
     form.append(node('p','Có thể sửa nội dung trước khi gửi. Thông tin được lưu cùng hồ sơ khi bạn bấm Lưu cập nhật hồ sơ.','claim-reduction-note'),feedback,footer);
     form.onsubmit = event => event.preventDefault(); sheet.append(form);
     const returnFocus = document.activeElement;
