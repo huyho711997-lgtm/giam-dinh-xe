@@ -1054,3 +1054,21 @@ body.light-mode [data-garage-portal="active"] { --border:rgba(28,31,38,.09); }
 @media(prefers-reduced-motion:reduce) { .custom-camera-modal * { animation:none !important; transition:none !important; } }
 @media(max-height:380px) { .custom-camera-modal[data-orientation="landscape"] .camera-capture-inner { width:46px; height:46px; } }
 
+
+/* Chân email theo người dùng (trong hộp sửa thành viên) */
+.admin-signature { margin-top:20px; border:1px solid var(--border); border-radius:14px; background:var(--surface, #fff); overflow:hidden; }
+.admin-signature>summary { display:flex; align-items:center; gap:12px; padding:13px 14px; cursor:pointer; list-style:none; }
+.admin-signature>summary::-webkit-details-marker { display:none; }
+.admin-signature-title { display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; }
+.admin-signature-title strong { font-size:13px; color:var(--text); }
+.admin-signature-title small { font-size:11px; color:var(--text-muted); line-height:1.4; }
+.admin-signature-chevron { width:16px; height:16px; color:var(--text-muted); transition:transform .18s; flex-shrink:0; }
+.admin-signature[open] .admin-signature-chevron { transform:rotate(180deg); }
+.admin-signature[open]>summary { border-bottom:1px solid var(--border); }
+.admin-signature-body { display:flex; flex-direction:column; gap:14px; padding:16px 14px 18px; }
+.admin-signature-pair { display:grid; grid-template-columns:1fr; gap:14px; }
+.admin-signature-hint { display:block; margin-top:6px; font-size:10.5px; line-height:1.5; color:var(--text-muted); }
+.admin-signature-hint[data-invalid="true"] { color:#b4443a; }
+.admin-signature-preview-wrap>span { display:block; margin-bottom:8px; font-size:11px; font-weight:700; color:var(--text-soft); }
+.admin-signature-preview { padding:14px 16px; border:1px dashed var(--border); border-radius:12px; background:#fff; color:#222; overflow:hidden; }
+.admin-signature-empty { font-size:12px; color:#8a8a8a; }

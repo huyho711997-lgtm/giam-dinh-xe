@@ -136,7 +136,8 @@ const ClaimReductionNotice = (() => {
       policy:value('SoHd'),certificate:value('SoGcn'),unit:value('DonViCapDon'),issuer:value('NguoiCapDon'),
       date:value('NgayVTT'),assessor:value('GdvTiepNhan'),reason:state.reason,impact:state.impact,basis:state.basis,stage:state.stage,
       notes:state.notes,evidence:state.evidence,
-      sender:String(activeUserProfile?.displayName || firebase.auth().currentUser?.displayName || value('GdvTiepNhan') || '')
+      // Chân email theo người dùng (cài ở Quản lý người dùng); chưa cài thì chỉ ký tên.
+      sender:String(typeof EmailSignature !== 'undefined' && activeUserProfile ? EmailSignature.text(EmailSignature.resolve(activeUserProfile)) : '') || String(activeUserProfile?.displayName || firebase.auth().currentUser?.displayName || value('GdvTiepNhan') || '')
     };
     // Số liệu tính theo quy tắc (chỉ khi đã có tỷ lệ áp dụng và số tiền trước giảm trừ).
     const evaluated = rules() && state.rule ? rules().evaluate(state.rule) : null;
@@ -169,6 +170,15 @@ const ClaimReductionNotice = (() => {
       '', 'Trân trọng,', info.sender
     ].join('\n').trim();
     return {subject:'[Thông tin giảm trừ/chế tài] ' + info.plate + (info.hsbt ? ' – ' + info.hsbt : ''),body:withDeadline(body,draft.deadline),signature:JSON.stringify(info)};
+  }
+  // Chuyển nội dung thư sang HTML; nếu cuối thư đúng là chân email dạng văn bản thì thay bằng chân email có định dạng + banner.
+  function bodyToHtml(body, signature) {
+    const plain = EmailSignature.text(signature), trimmed = String(body || '').trimEnd();
+    const cut = plain && trimmed.endsWith(plain);
+    const main = cut ? trimmed.slice(0,trimmed.length - plain.length) : trimmed;
+    const paragraphs = EmailSignature.escapeHtml(main).replace(/\n/g,'<br>');
+    const banner = '<div style="margin-top:8px"><img src="' + EmailSignature.escapeHtml(signature.banner) + '" alt="" style="max-width:600px;width:100%;height:auto;border:0;display:block"></div>';
+    return '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><div style="font-family:Calibri,Arial,sans-serif;font-size:14px;line-height:1.5">' + paragraphs + '</div>' + (cut ? EmailSignature.html(signature) : banner) + '</body></html>';
   }
   function checkDeadline(text) {
     if (!text) return;
@@ -414,7 +424,10 @@ const ClaimReductionNotice = (() => {
         const wrap = text => text.replace(/.{1,76}/g,'$&\r\n').trimEnd();
         const lines = ['X-Unsent: 1','To: ' + to.join(', ')];
         if (cc.length) lines.push('Cc: ' + cc.join(', '));
-        lines.push('Subject: =?UTF-8?B?' + b64(inputs.subject.value.replace(/[\r\n]/g,' ')) + '?=','MIME-Version: 1.0','Content-Type: text/plain; charset=UTF-8','Content-Transfer-Encoding: base64','',wrap(b64(inputs.body.value)));
+        // Có banner trong chân email → xuất thư HTML (chữ ký có định dạng + ảnh); không thì giữ văn bản thường.
+        const signature = typeof EmailSignature !== 'undefined' && activeUserProfile ? EmailSignature.resolve(activeUserProfile) : null;
+        const html = signature?.banner ? bodyToHtml(inputs.body.value,signature) : '';
+        lines.push('Subject: =?UTF-8?B?' + b64(inputs.subject.value.replace(/[\r\n]/g,' ')) + '?=','MIME-Version: 1.0','Content-Type: ' + (html ? 'text/html' : 'text/plain') + '; charset=UTF-8','Content-Transfer-Encoding: base64','',wrap(b64(html || inputs.body.value)));
         const link = document.createElement('a');
         link.href = URL.createObjectURL(new Blob([lines.join('\r\n')],{type:'message/rfc822'}));
         link.download = 'thong-bao-giam-tru.eml';

@@ -283,6 +283,8 @@
       document.getElementById('editAdminEmployeeId').value = profile.employeeId || '';
       document.getElementById('editAdminPhone').value = profile.phone ?? profile.phoneNumber ?? '';
       setFormUserPermissions('edit', profile.permissions, profile.role);
+      EmailSignature.fillForm('edit', profile);
+      document.getElementById('editSignatureSection')?.removeAttribute('open');
       
       const overlay = document.getElementById('editUserModalOverlay');
       if (!overlay) return;
@@ -319,6 +321,8 @@
       if (phone === null) return;
       
       if (!displayName) return triggerToast('Vui lòng nhập họ và tên hiển thị.', 'warning');
+      const signature = EmailSignature.collect('edit');
+      if (signature.error) { document.getElementById('editSignatureSection')?.setAttribute('open',''); return triggerToast(signature.error, 'warning'); }
       
       const button = document.getElementById('btnSubmitEditUser');
       toggleButtonUIPendingState(button, true, 'Đang lưu...');
@@ -334,6 +338,7 @@
           employeeId,
           phone,
           permissions,
+          emailSignature: signature.value,
           updatedAt: Date.now()
         };
         
