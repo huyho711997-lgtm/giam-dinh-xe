@@ -135,3 +135,14 @@ test('scene violations: "tự ý di dời" and "không có hiện trường" sha
   assert.match(mixed.basis, /Nghĩa vụ bị vi phạm: khoản 2\.3, khoản 2\.5, điểm a khoản 2\.7, điểm b khoản 2\.7, khoản 2\.8 mục 2 Điều 5\./, 'duties sorted numerically');
   assert.doesNotMatch(rules.texts({items:[{id:'speed',actual:'90',limit:'50'}]}).basis, /Nghĩa vụ/, 'refusals cite Điều 10 only');
 });
+
+test('trạng thái xử lý mặc định là "Dự kiến áp dụng"; trạng thái đã lưu được giữ nguyên', () => {
+  notice.notice.load({});
+  assert.equal(notice.notice.getState().stage, 'Dự kiến áp dụng', 'hồ sơ chưa có thông báo giảm trừ');
+  notice.notice.load({stage:'Không hợp lệ'});
+  assert.equal(notice.notice.getState().stage, 'Dự kiến áp dụng', 'giá trị lạ quay về mặc định');
+  notice.notice.load({stage:'Đang xem xét'});
+  assert.equal(notice.notice.getState().stage, 'Đang xem xét', 'hồ sơ đã lưu "Đang xem xét" không bị đổi');
+  notice.notice.load({stage:'Đã phê duyệt'});
+  assert.equal(notice.notice.getState().stage, 'Đã phê duyệt');
+});

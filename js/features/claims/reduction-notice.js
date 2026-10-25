@@ -2,6 +2,7 @@ const ClaimReductionNotice = (() => {
   // Một luồng nhập duy nhất: chọn vi phạm theo quy tắc (ClaimReductionRules) → lý do, mức áp dụng, căn cứ
   // được TỰ SINH khi soạn thư. Người dùng chỉ nhập thêm điều máy không biết: ghi nhận thực tế & tài liệu.
   const stages = ['Đang xem xét','Dự kiến áp dụng','Đã phê duyệt','Đã áp dụng'];
+  const defaultStage = stages[1]; // 'Dự kiến áp dụng' – trạng thái mặc định khi hồ sơ chưa có thông báo giảm trừ
   const MAIL_KEYS = ['to','cc','subject','body','signature'];
   let draft = {}, dialog = null;
   const node = (tag, text, className) => {
@@ -21,7 +22,7 @@ const ClaimReductionNotice = (() => {
   const envelope = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg>';
   function refreshStage() {
     const badge = document.getElementById('claimReductionStage');
-    const stage = document.getElementById('modalPendingReduction_stage')?.value || stages[0];
+    const stage = document.getElementById('modalPendingReduction_stage')?.value || defaultStage;
     if (badge) { badge.textContent = stage; badge.dataset.stage = String(stages.indexOf(stage)); }
   }
   function close() { if (dialog?.open) dialog.close(); }
@@ -44,7 +45,7 @@ const ClaimReductionNotice = (() => {
     if (dialog) dialog.dataset.discard = 'true';
     close();
     const migrated = migrate(data);
-    draft = {stage:stages.includes(data?.stage) ? data.stage : stages[0], notes:migrated.notes, evidence:migrated.evidence};
+    draft = {stage:stages.includes(data?.stage) ? data.stage : defaultStage, notes:migrated.notes, evidence:migrated.evidence};
     for (const key of MAIL_KEYS) draft[key] = clip(data?.[key], key === 'signature' ? 16000 : 6000);
     rules()?.load(migrated.rule);
     for (const key of ['stage','notes','evidence']) { const input = document.getElementById('modalPendingReduction_' + key); if (input) input.value = draft[key] || ''; }
@@ -96,7 +97,7 @@ const ClaimReductionNotice = (() => {
     const actions = node('div',null,'crr-actions');
     const stage = field('stage','Trạng thái xử lý','select');
     stages.forEach(item => { const option = node('option',item); option.value = item; stage.input.append(option); });
-    stage.input.value = draft.stage || stages[0];
+    stage.input.value = draft.stage || defaultStage;
     Object.assign(stage.input.dataset,{sfSelect:'',sfLabel:'Trạng thái xử lý',sfIcon:'shield',sfDescription:'Trạng thái này được đưa vào nội dung thông báo.'});
     stage.input.addEventListener('change',refreshStage);
     const create = button('',compose,true); create.classList.add('crr-compose'); create.innerHTML = envelope; create.append(node('span','Soạn thông báo cấp đơn'));
