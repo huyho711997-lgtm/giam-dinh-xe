@@ -75,29 +75,51 @@ const ClaimEmail = (() => {
   function actionButton(label, onClick, primary = false) {
     const button = node('button',label,'cem-button' + (primary ? ' is-primary' : '')); button.type = 'button'; button.onclick = onClick; return button;
   }
-  function render() {
+  // Khung tab: thanh chuyển loại thư + mỗi loại một panel. Panel giảm trừ do ClaimReductionNotice.mount() đổ nội dung vào #claimEmailReductionHost.
+  const PANELS = [['reduction','Thông báo giảm trừ / chế tài'],['image','Yêu cầu hình ảnh cấp đơn']];
+  let activePanel = 'reduction';
+  function showPanel(id) {
+    activePanel = PANELS.some(([key]) => key === id) ? id : 'reduction';
+    for (const [key] of PANELS) {
+      const button = document.getElementById('claimEmailSwitch_' + key), panel = document.getElementById('claimEmailPanel_' + key);
+      if (button) { button.classList.toggle('is-active',key === activePanel); button.setAttribute('aria-selected',String(key === activePanel)); button.tabIndex = key === activePanel ? 0 : -1; }
+      if (panel) panel.hidden = key !== activePanel;
+    }
+  }
+  function mount() {
     const pane = document.getElementById('tabPane_Email');
-    if (!pane) return;
-    readForm();
-    pane.replaceChildren();
+    if (!pane || document.getElementById('claimEmailReductionHost')) return;
     const intro = node('div',null,'cem-intro');
     intro.append(node('h3','Soạn email gửi đơn vị cấp đơn'),node('p','Chọn loại thư, kiểm tra nội dung rồi gửi qua Outlook. Người nhận, CC, thời hạn phản hồi và chân email được điền sẵn.'));
-    const grid = node('div',null,'cem-grid');
-
-    // Thẻ 1: thông báo giảm trừ / chế tài (nội dung thiết lập ở mục Giảm trừ trong tab Bồi thường).
-    const reduction = card('claimEmailCardReduction',icons.mail,'Thông báo giảm trừ / chế tài','Thông báo mức giảm trừ, căn cứ và số tiền bồi thường sau giảm trừ.');
+    const switcher = node('div',null,'cem-switch'); switcher.setAttribute('role','tablist'); switcher.setAttribute('aria-label','Loại email');
+    for (const [key,label] of PANELS) {
+      const button = node('button',null,'cem-switch-button'); button.type = 'button'; button.id = 'claimEmailSwitch_' + key; button.setAttribute('role','tab'); button.setAttribute('aria-controls','claimEmailPanel_' + key);
+      button.append(node('span',label),node('em')); button.lastChild.id = 'claimEmailBadge_' + key;
+      button.onclick = () => showPanel(key);
+      switcher.append(button);
+    }
+    const reductionPanel = node('div',null,'cem-panel'); reductionPanel.id = 'claimEmailPanel_reduction'; reductionPanel.setAttribute('role','tabpanel');
+    const host = node('div'); host.id = 'claimEmailReductionHost'; reductionPanel.append(host);
+    const imagePanel = node('div',null,'cem-panel'); imagePanel.id = 'claimEmailPanel_image'; imagePanel.setAttribute('role','tabpanel'); imagePanel.hidden = true;
+    pane.replaceChildren(intro,switcher,reductionPanel,imagePanel);
+    showPanel(activePanel); render();
+  }
+  function render() {
+    const panel = document.getElementById('claimEmailPanel_image');
+    if (!panel) return;
+    readForm();
+    panel.replaceChildren();
+    // Huy hiệu trạng thái ở thanh chuyển: giảm trừ hiện trạng thái xử lý, hình ảnh hiện số mục đã chọn.
     const reductionState = typeof ClaimReductionNotice !== 'undefined' ? ClaimReductionNotice.getState() : {};
-    const ready = Boolean(reductionState.reason || reductionState.notes);
-    const status = node('p',ready ? 'Trạng thái: ' + (reductionState.stage || '—') + ' · ' + (reductionState.impact || 'Đã có ghi nhận') : 'Chưa chọn vi phạm. Thiết lập ở mục Giảm trừ / chế tài trong tab Bồi thường.','cem-status' + (ready ? ' is-ready' : ''));
-    const reductionActions = node('div',null,'cem-actions');
-    reductionActions.append(actionButton('Thiết lập giảm trừ',() => ClaimReductionNotice.show()),actionButton('Soạn thư',() => ClaimReductionNotice.compose(),true));
-    reduction.append(status,reductionActions);
+    const reductionBadge = document.getElementById('claimEmailBadge_reduction'), imageBadge = document.getElementById('claimEmailBadge_image');
+    if (reductionBadge) reductionBadge.textContent = reductionState.reason || reductionState.notes ? (reductionState.stage || '') : '';
+    if (imageBadge) imageBadge.textContent = state.imageRequest.items.length + '/' + IMAGE_ITEMS.length;
 
-    // Thẻ 2: yêu cầu cung cấp hình ảnh cấp đơn.
     const image = card('claimEmailCardImage',icons.image,'Yêu cầu cung cấp hình ảnh cấp đơn','Đề nghị đơn vị cấp đơn gửi hình ảnh xe và giấy tờ tại thời điểm cấp đơn.');
     const list = node('div',null,'cem-checks'); list.id = 'claimEmailImageItems';
     IMAGE_ITEMS.forEach(([key,label]) => {
       const row = node('label',null,'cem-check'), input = node('input'); input.type = 'checkbox'; input.value = key; input.checked = state.imageRequest.items.includes(key);
+      input.addEventListener('change',() => { readForm(); if (imageBadge) imageBadge.textContent = state.imageRequest.items.length + '/' + IMAGE_ITEMS.length; });
       const mark = node('span',null,'cem-check-mark'); mark.setAttribute('aria-hidden','true');
       row.append(input,mark,node('span',label)); list.append(row);
     });
@@ -105,8 +127,7 @@ const ClaimEmail = (() => {
     note.placeholder = 'Ví dụ: Hình ảnh xe trước và sau khi sửa chữa gần nhất'; noteLabel.htmlFor = note.id; note.className = 'input-premium';
     const imageActions = node('div',null,'cem-actions'); imageActions.append(actionButton('Soạn thư',() => ClaimReductionNotice.compose(imageSpec()),true));
     image.append(list,noteLabel,note,imageActions);
-    grid.append(reduction,image); pane.append(intro,grid);
+    panel.append(image);
   }
-  function mount() { render(); }
-  return {load,getState,render,mount,buildImageRequest,IMAGE_ITEMS};
+  return {load,getState,render,mount,showPanel,buildImageRequest,IMAGE_ITEMS};
 })();

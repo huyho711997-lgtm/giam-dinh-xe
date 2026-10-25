@@ -144,3 +144,14 @@
 .cem-button:hover { border-color:var(--ce-gold,var(--primary)); }
 .cem-button.is-primary { background:var(--ce-gold,var(--primary)); border-color:var(--ce-gold,var(--primary)); color:#fff; }
 .cem-button.is-primary:hover { filter:brightness(1.06); }
+
+/* Thanh chuyển loại thư trong tab Email */
+.cem-switch { display:flex; gap:8px; margin-bottom:20px; padding:5px; border:1px solid var(--ce-line,var(--border)); border-radius:14px; background:var(--ce-soft,var(--surface-soft)); width:fit-content; max-width:100%; overflow-x:auto; }
+.cem-switch-button { display:inline-flex; align-items:center; gap:9px; padding:10px 16px; border:0; border-radius:10px; background:transparent; color:var(--ce-muted,var(--text-muted)); font:inherit; font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap; transition:background .15s,color .15s; }
+.cem-switch-button:hover { color:var(--ce-ink,var(--text-main)); }
+.cem-switch-button.is-active { background:var(--ce-paper,#fff); color:var(--ce-ink,var(--text-main)); box-shadow:0 1px 2px rgba(62,51,31,.1),0 0 0 1px var(--ce-line,var(--border)); }
+.cem-switch-button em { font-style:normal; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:999px; background:var(--ce-gold-soft,rgba(184,134,50,.12)); color:var(--ce-gold,var(--primary)); }
+.cem-switch-button em:empty { display:none; }
+.cem-switch-button:focus-visible { outline:2px solid var(--ce-gold,var(--primary)); outline-offset:2px; }
+.cem-panel[hidden] { display:none; }
+.cem-panel .cem-card { max-width:720px; }

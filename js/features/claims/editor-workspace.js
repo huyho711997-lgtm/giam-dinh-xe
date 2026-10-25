@@ -128,6 +128,7 @@ const ClaimEditorWorkspace = (() => {
     historySignature = '';
     document.body.classList.add('claim-editor-open');
     prepareForms();
+    ClaimEmail.mount();
     ClaimReductionNotice.mount();
     showMain();
     refreshSummary();

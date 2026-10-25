@@ -72,7 +72,8 @@ const ClaimReductionNotice = (() => {
     return {group,input};
   }
   function mount() {
-    const pane = document.getElementById('tabPane_Financial');
+    // Mục giảm trừ nằm trong tab Email (khung do ClaimEmail.mount() dựng sẵn).
+    const pane = document.getElementById('claimEmailReductionHost');
     if (!pane || document.getElementById('claimReductionSection')) return;
     const section = node('section',null,'claim-editor-form-section claim-reduction-section'); section.id = 'claimReductionSection';
     const header = node('header'), title = node('div',null,'claim-reduction-heading');
@@ -109,8 +110,7 @@ const ClaimReductionNotice = (() => {
     SharedFormsControls.enhance(section); refreshStage();
   }
   function show() {
-    switchEditClaimTab('Financial'); ClaimEditorWorkspace.showMain();
-    document.getElementById('claimReductionSection')?.scrollIntoView({block:'start'});
+    switchEditClaimTab('Email'); ClaimEmail.showPanel('reduction'); ClaimEditorWorkspace.showMain();
     document.querySelector('#claimReductionSection .crr-item-head input')?.focus({preventScroll:true});
   }
   // Thời hạn phản hồi: giá trị 'YYYY-MM-DDTHH:mm' (datetime-local). Câu đưa vào thư luôn mở đầu bằng DEADLINE_PREFIX để thay thế được khi đổi thời hạn.
