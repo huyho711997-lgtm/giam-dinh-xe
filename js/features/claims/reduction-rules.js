@@ -171,7 +171,11 @@ const ClaimReductionRules = (() => {
         input.oninput = () => { const value = toNumber(input.value); entry.rate = value === null ? null : value; update(); };
         input.onblur = () => { if (entry.rate !== null) { entry.rate = clamp(entry.rate, item.min, item.max); input.value = entry.rate; update(); } };
         const chips = node('span', null, 'crr-chips');
-        for (const value of [...new Set([item.min, Math.round((item.min + item.max) / 2 / 5) * 5, item.max])]) {
+        // Khoảng hẹp (vd. 20–50%): mỗi nút cách nhau 5% → 20, 25, 30, 35, 40, 45, 50. Khoảng rộng (50–100%): chỉ đầu / giữa / cuối.
+        const presets = (item.max - item.min) / 5 <= 8
+          ? Array.from({length: Math.floor((item.max - item.min) / 5) + 1}, (_, index) => item.min + index * 5).concat(item.max)
+          : [item.min, Math.round((item.min + item.max) / 2 / 5) * 5, item.max];
+        for (const value of [...new Set(presets)]) {
           const chip = node('button', value >= 100 ? 'Toàn bộ' : value + '%', 'crr-chip'); chip.type = 'button';
           chip.onclick = () => { entry.rate = value; input.value = value; update(); };
           chips.append(chip);
