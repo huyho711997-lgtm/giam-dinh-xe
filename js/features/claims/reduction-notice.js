@@ -391,16 +391,16 @@ const ClaimReductionNotice = (() => {
         const params = {to:to.join(',')};
         if (cc.length) params.cc = cc.join(',');
         params.subject = inputs.subject.value.replace(/[\r\n]/g,' ');
-        // Ưu tiên chép thư định dạng vào clipboard (dán vào Outlook giữ font + ảnh chân ký); chép không được thì truyền văn bản thường qua link.
+        // Nội dung luôn đi qua link (văn bản thường) để thư không bao giờ trống; đồng thời chép bản định dạng (Times New Roman + ảnh chân chữ ký) vào clipboard để dán đè khi cần.
         const copiedRich = await copyRich(richMail(inputs.body.value),inputs.body.value);
-        if (!copiedRich) params.body = inputs.body.value;
+        params.body = inputs.body.value;
         // Outlook's compose route keeps form-encoded '+' characters as literal text.
         // Encode spaces as %20 and actual plus signs as %2B in every parameter.
         const query = Object.entries(params).map(([key,text]) => encodeURIComponent(key) + '=' + encodeURIComponent(text)).join('&');
         const url = 'https://outlook.cloud.microsoft/mail/deeplink/compose?' + query;
         if (url.length > 12000) throw new Error('Nội dung dài. Dùng Sao chép nội dung rồi dán vào Outlook.');
         remember(); window.open(url,'_blank','noopener,noreferrer');
-        if (copiedRich) return feedback('Đã sao chép thư định dạng Times New Roman kèm ảnh chân chữ ký. Bấm vào nội dung thư trong Outlook rồi nhấn Ctrl+V.' + (cc.length ? ' CC: bấm "Sao chép CC" rồi dán vào ô Cc.' : ''),'success');
+        if (copiedRich) return feedback('Đã chuyển nội dung sang Outlook. Muốn có font Times New Roman và ảnh chân chữ ký: bấm vào thân thư, nhấn Ctrl+A rồi Ctrl+V.' + (cc.length ? ' CC: bấm "Sao chép CC" rồi dán vào ô Cc.' : ''),'success');
         // Link soạn thư của Outlook web KHÔNG hỗ trợ tham số CC (Microsoft không có tài liệu) → chép sẵn CC vào clipboard để dán.
         if (cc.length) {
           const note = 'Outlook web không nhận CC qua link. Email CC đã được sao chép: bấm vào ô Cc trong Outlook rồi nhấn Ctrl+V.';
