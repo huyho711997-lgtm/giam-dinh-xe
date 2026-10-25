@@ -164,6 +164,7 @@ const ClaimReductionNotice = (() => {
   // units/<đơn vị>            → email đơn vị cấp đơn (ô "Email đơn vị cấp đơn")
   // issuers/<đơn vị>__<người> → email cán bộ cấp đơn (tự thêm vào CC)
   // departments/<đơn vị>__<phòng KD> → email TPKD phụ trách phòng KD (tự thêm vào CC)
+  // zones/<khu vực giám định>  → email quản lý khu vực giám định (tự thêm vào CC; không phụ thuộc đơn vị cấp đơn)
   // Khóa = tên đã bỏ dấu/viết thường; cán bộ và phòng KD gắn theo đơn vị để không nhầm giữa các chi nhánh.
   const DIRECTORY_PATH = 'reduction_email_directory';
   const slug = text => String(text || '').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/đ/gi,'d').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,80);
@@ -178,11 +179,12 @@ const ClaimReductionNotice = (() => {
     return (await dbNodeInstance.ref(DIRECTORY_PATH).once('value')).val() || {};
   }
   function directoryPanel(inputs, remember, feedback, sameContext) {
-    const unit = value('DonViCapDon'), issuer = value('NguoiCapDon'), dept = value('Ttkd'), uk = slug(unit);
+    const unit = value('DonViCapDon'), issuer = value('NguoiCapDon'), dept = value('Ttkd'), zone = value('ZoneBoiThuong'), uk = slug(unit);
     const rows = [
       {id:'unit', label:'Đơn vị cấp đơn', tag:'To', name:unit, key:uk, path:'units', prop:'to'},
       {id:'issuer', label:'Cán bộ cấp đơn', tag:'CC', name:issuer, key:uk && issuer ? uk + '__' + slug(issuer) : '', path:'issuers', prop:'email'},
-      {id:'dept', label:'TPKD phụ trách phòng KD', tag:'CC', name:dept, key:uk && dept ? uk + '__' + slug(dept) : '', path:'departments', prop:'email'}
+      {id:'dept', label:'TPKD phụ trách phòng KD', tag:'CC', name:dept, key:uk && dept ? uk + '__' + slug(dept) : '', path:'departments', prop:'email'},
+      {id:'zone', label:'Quản lý khu vực giám định', tag:'CC', name:zone, key:slug(zone), path:'zones', prop:'email'}
     ];
     const icon = (path) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>';
     const details = node('details',null,'crr-directory'), summary = node('summary',null,'crr-directory-head'), status = node('span',null,'crr-directory-status');
@@ -198,7 +200,7 @@ const ClaimReductionNotice = (() => {
       caption.append(node('b',row.label),node('i',row.tag));
       meta.append(caption,node('span',row.name || 'Chưa có trong hồ sơ','crr-directory-name'));
       input.className = 'input-premium'; input.maxLength = 1000; input.autocomplete = 'off'; input.inputMode = 'email';
-      input.placeholder = row.key ? 'email@donvi.vn; emailkhac@donvi.vn' : (uk ? 'Hồ sơ chưa có thông tin này' : 'Hồ sơ chưa có đơn vị cấp đơn');
+      input.placeholder = row.key ? 'email@donvi.vn; emailkhac@donvi.vn' : (row.id === 'zone' ? 'Hồ sơ chưa có Zone / Khu vực GĐ' : uk ? 'Hồ sơ chưa có thông tin này' : 'Hồ sơ chưa có đơn vị cấp đơn');
       input.disabled = !row.key; fields[row.id] = input;
       line.append(meta,input); list.append(line);
     }
@@ -217,7 +219,7 @@ const ClaimReductionNotice = (() => {
         await dbNodeInstance.ref(DIRECTORY_PATH).update(updates);
         if (!sameContext()) return;
         inputs.to.value = mergeAddresses(inputs.to.value, values.unit);
-        inputs.cc.value = mergeAddresses(inputs.cc.value, values.issuer, values.dept);
+        inputs.cc.value = mergeAddresses(inputs.cc.value, values.issuer, values.dept, values.zone);
         remember(); status.textContent = 'Đã lưu';
         feedback.textContent = 'Đã lưu email vào danh bạ. Lần sau soạn thông báo cho ' + (unit || 'đơn vị này') + ' sẽ được điền sẵn.';
       } catch (error) {
@@ -226,9 +228,9 @@ const ClaimReductionNotice = (() => {
           : 'Chưa lưu được danh bạ email: ' + (error?.message || 'lỗi không xác định');
       } finally { save.disabled = false; }
     },true);
-    save.disabled = !uk || !canEdit; if (!canEdit) save.title = 'Bạn không có quyền chỉnh sửa hồ sơ.';
+    save.disabled = !rows.some(row => row.key) || !canEdit; if (!canEdit) save.title = 'Bạn không có quyền chỉnh sửa hồ sơ.';
     const footer = node('div',null,'crr-directory-footer');
-    footer.append(node('span','Để trống ô nào thì xóa email đã lưu của mục đó. CC sẽ tự gồm cán bộ cấp đơn và TPKD.'),save);
+    footer.append(node('span','Để trống ô nào thì xóa email đã lưu của mục đó. CC sẽ tự gồm cán bộ cấp đơn, TPKD và quản lý khu vực.'),save);
     details.append(list,footer);
     // Nạp danh bạ rồi điền sẵn To / CC (chỉ khi ô còn trống, không ghi đè nội dung đã sửa).
     const apply = directory => {
@@ -238,7 +240,7 @@ const ClaimReductionNotice = (() => {
       if (!fields.unit.value && inputs.to.value.trim()) fields.unit.value = inputs.to.value.trim();  // gợi ý: lưu luôn email đang nhập
       let filled = false;
       if (!inputs.to.value.trim() && stored(rows[0])) { inputs.to.value = stored(rows[0]); filled = true; }
-      const cc = mergeAddresses(stored(rows[1]), stored(rows[2]));
+      const cc = mergeAddresses(stored(rows[1]), stored(rows[2]), stored(rows[3]));
       if (!inputs.cc.value.trim() && cc) { inputs.cc.value = cc; filled = true; }
       if (filled) remember();
       const any = rows.some(row => stored(row));

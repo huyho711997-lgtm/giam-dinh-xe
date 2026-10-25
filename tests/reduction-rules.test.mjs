@@ -156,3 +156,9 @@ test('danh bạ email: khóa bỏ dấu theo tên, gộp địa chỉ không tr�
   assert.equal(mergeAddresses('a@x.vn; B@x.vn', 'b@X.vn, c@x.vn', '', null), 'a@x.vn; B@x.vn; c@x.vn');
   assert.equal(mergeAddresses('', ''), '');
 });
+
+test('danh bạ email: khóa khu vực giám định không phụ thuộc đơn vị, gộp được 3 nguồn CC', () => {
+  const {slug, mergeAddresses} = notice.notice.directory;
+  assert.equal(slug('Zone Tây Nguyên'), 'zone-tay-nguyen');
+  assert.equal(mergeAddresses('thao@x.vn', 'tpkd@x.vn; THAO@x.vn', 'qlkv@x.vn'), 'thao@x.vn; tpkd@x.vn; qlkv@x.vn');
+});

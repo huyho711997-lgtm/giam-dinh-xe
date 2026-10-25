@@ -4,7 +4,7 @@
       ".read": "auth != null",
       ".write": "auth != null",
       "$kind": {
-        ".validate": "$kind === 'units' || $kind === 'issuers' || $kind === 'departments'",
+        ".validate": "$kind === 'units' || $kind === 'issuers' || $kind === 'departments' || $kind === 'zones'",
         "$entry": {
           ".validate": "newData.hasChildren(['name']) && (newData.hasChild('to') || newData.hasChild('email'))",
           "name": { ".validate": "newData.isString() && newData.val().length <= 200" },

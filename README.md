@@ -133,6 +133,6 @@ Trang **Hồ sơ bồi thường → Cập nhật dữ liệu từ Excel** dùng
 
 ## Danh bạ email thông báo giảm trừ
 
-- Trong hộp "Thông báo đơn vị cấp đơn" có mục **Email đã lưu cho đơn vị này**: lưu email đơn vị cấp đơn (To), email cán bộ cấp đơn và email TPKD phụ trách phòng KD (CC). Lần sau soạn cho cùng đơn vị, To/CC được điền sẵn (chỉ khi ô còn trống).
-- Dữ liệu dùng chung ở `reduction_email_directory/{units|issuers|departments}/{khóa}`; cán bộ và phòng KD gắn theo đơn vị (`<đơn-vị>__<tên>`). Gộp `firebase/email-directory.rules.json` vào Firebase Realtime Database Rules (chỉ thêm nhánh này, không ghi đè toàn bộ rules).
+- Trong hộp "Thông báo đơn vị cấp đơn" có mục **Email đã lưu cho đơn vị này**: lưu email đơn vị cấp đơn (To), email cán bộ cấp đơn, TPKD phụ trách phòng KD và quản lý khu vực giám định (CC). Lần sau soạn cho cùng đơn vị, To/CC được điền sẵn (chỉ khi ô còn trống).
+- Dữ liệu dùng chung ở `reduction_email_directory/{units|issuers|departments|zones}/{khóa}`; cán bộ và phòng KD gắn theo đơn vị (`<đơn-vị>__<tên>`), khu vực giám định lấy theo trường "Zone / Khu vực GĐ". Gộp `firebase/email-directory.rules.json` vào Firebase Realtime Database Rules (chỉ thêm nhánh này, không ghi đè toàn bộ rules).
 
