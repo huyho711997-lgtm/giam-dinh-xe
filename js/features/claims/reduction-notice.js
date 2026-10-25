@@ -241,7 +241,7 @@ const ClaimReductionNotice = (() => {
       if (!sameContext()) return;
       let values;
       try { values = Object.fromEntries(rows.filter(row => row.key).map(row => [row.id, addresses(fields[row.id].value).join('; ')])); }
-      catch (error) { feedback.textContent = error.message; return; }
+      catch (error) { feedback(error.message,'warning'); return; }
       const now = Date.now(), by = String(firebase.auth().currentUser?.email || '').slice(0,200), updates = {};
       for (const row of rows.filter(item => item.key)) {
         updates[row.path + '/' + row.key] = values[row.id] ? {name:row.name.slice(0,200), [row.prop]:values[row.id], updatedAt:now, updatedBy:by} : null;
@@ -253,11 +253,11 @@ const ClaimReductionNotice = (() => {
         inputs.to.value = mergeAddresses(inputs.to.value, values.unit);
         inputs.cc.value = mergeAddresses(inputs.cc.value, values.issuer, values.dept, values.zone);
         remember(); status.textContent = 'Đã lưu';
-        feedback.textContent = 'Đã lưu email vào danh bạ. Lần sau soạn thông báo cho ' + (unit || 'đơn vị này') + ' sẽ được điền sẵn.';
+        feedback('Đã lưu email vào danh bạ. Lần sau soạn thông báo cho ' + (unit || 'đơn vị này') + ' sẽ được điền sẵn.','success');
       } catch (error) {
-        feedback.textContent = error?.code === 'PERMISSION_DENIED'
+        feedback(error?.code === 'PERMISSION_DENIED'
           ? 'Chưa lưu được: cần gộp firebase/email-directory.rules.json vào Firebase Rules.'
-          : 'Chưa lưu được danh bạ email: ' + (error?.message || 'lỗi không xác định');
+          : 'Chưa lưu được danh bạ email: ' + (error?.message || 'lỗi không xác định'),'error');
       } finally { save.disabled = false; }
     },true);
     save.disabled = !rows.some(row => row.key) || !canEdit; if (!canEdit) save.title = 'Bạn không có quyền chỉnh sửa hồ sơ.';
@@ -310,7 +310,8 @@ const ClaimReductionNotice = (() => {
       inputs[key] = input; wrapper.append(input); (key === 'to' || key === 'cc' ? recipientGrid : bodyBox).append(wrapper);
     }
     bodyBox.prepend(recipientGrid); form.prepend(header,bodyBox);
-    const feedback = node('p',null,'sf-feedback'); feedback.setAttribute('role','status');
+    // Thông báo kết quả hiển thị dạng toast (góc phải trên) thay vì dòng chữ trong hộp thoại.
+    const feedback = (message, type = 'warning') => { if (message) triggerToast(message,type); };
     const sameContext = () => owner() === uid && editingPendingClaimId === claim && sheet.dataset.discard !== 'true';
     const remember = () => { if (!sameContext()) return false; for (const key of Object.keys(inputs)) draft[key] = inputs[key].value; draft.signature = generated.signature; return true; };
     form.addEventListener('input',remember);
@@ -362,8 +363,8 @@ const ClaimReductionNotice = (() => {
     const copy = button('Sao chép nội dung',async () => {
       if (!sameContext()) return close();
       remember();
-      try { await navigator.clipboard.writeText(inputs.body.value); feedback.textContent = 'Đã sao chép nội dung thông báo.'; }
-      catch (_) { inputs.body.focus(); inputs.body.select(); feedback.textContent = 'Nhấn Ctrl+C để sao chép nội dung đã chọn.'; }
+      try { await navigator.clipboard.writeText(inputs.body.value); feedback('Đã sao chép nội dung thông báo.','success'); }
+      catch (_) { inputs.body.focus(); inputs.body.select(); feedback('Nhấn Ctrl+C để sao chép nội dung đã chọn.','warning'); }
     });
     const outlook = button('Mở Outlook',() => {
       if (!sameContext()) return close();
@@ -387,17 +388,17 @@ const ClaimReductionNotice = (() => {
         // Link soạn thư của Outlook web KHÔNG hỗ trợ tham số CC (Microsoft không có tài liệu) → chép sẵn CC vào clipboard để dán.
         if (cc.length) {
           const note = 'Outlook web không nhận CC qua link. Email CC đã được sao chép: bấm vào ô Cc trong Outlook rồi nhấn Ctrl+V.';
-          navigator.clipboard?.writeText(cc.join('; ')).then(() => { feedback.textContent = note; },() => { feedback.textContent = 'Outlook web không nhận CC qua link. Bấm "Sao chép CC" rồi dán vào ô Cc.'; });
-          feedback.textContent = note;
-        } else feedback.textContent = 'Đã yêu cầu mở cửa sổ soạn thư. Kiểm tra tài khoản gửi, người nhận và bấm Gửi trong Outlook.';
-      } catch (error) { feedback.textContent = error.message; }
+          (navigator.clipboard?.writeText(cc.join('; ')) || Promise.reject(new Error('no-clipboard')))
+            .then(() => feedback(note,'warning'),() => feedback('Outlook web không nhận CC qua link. Bấm "Sao chép CC" rồi dán vào ô Cc.','warning'));
+        } else feedback('Đã yêu cầu mở cửa sổ soạn thư. Kiểm tra tài khoản gửi, người nhận và bấm Gửi trong Outlook.','success');
+      } catch (error) { feedback(error.message,'warning'); }
     },true);
     // Outlook web đôi khi bỏ qua tham số cc của deeplink → có 2 đường dự phòng đảm bảo CC không bị mất.
     const copyCc = button('Sao chép CC',async () => {
       const cc = addresses(inputs.cc.value);
-      if (!cc.length) { feedback.textContent = 'Chưa có email CC để sao chép.'; return; }
-      try { await navigator.clipboard.writeText(cc.join('; ')); feedback.textContent = 'Đã sao chép ' + cc.length + ' email CC. Dán vào ô Cc trong Outlook (Ctrl+V).'; }
-      catch (_) { inputs.cc.focus(); inputs.cc.select(); feedback.textContent = 'Nhấn Ctrl+C để sao chép email CC đã chọn.'; }
+      if (!cc.length) { feedback('Chưa có email CC để sao chép.','warning'); return; }
+      try { await navigator.clipboard.writeText(cc.join('; ')); feedback('Đã sao chép ' + cc.length + ' email CC. Dán vào ô Cc trong Outlook (Ctrl+V).','success'); }
+      catch (_) { inputs.cc.focus(); inputs.cc.select(); feedback('Nhấn Ctrl+C để sao chép email CC đã chọn.','warning'); }
     });
     const mailApp = button('Ứng dụng thư',() => {
       if (!sameContext()) return close();
@@ -410,8 +411,8 @@ const ClaimReductionNotice = (() => {
         const url = 'mailto:' + to.map(encodeURIComponent).join(',') + '?' + query.map(([key,text]) => key + '=' + encodeURIComponent(text)).join('&');
         if (url.length > 8000) throw new Error('Nội dung dài. Dùng Sao chép nội dung rồi dán vào thư.');
         remember(); window.location.href = url;
-        feedback.textContent = 'Đã mở ứng dụng thư mặc định với đủ người nhận và CC.';
-      } catch (error) { feedback.textContent = error.message; }
+        feedback('Đã mở ứng dụng thư mặc định với đủ người nhận và CC.','success');
+      } catch (error) { feedback(error.message,'warning'); }
     });
     // .eml nháp (X-Unsent) mở được bằng Outlook desktop / ứng dụng thư, giữ đủ To + Cc + nội dung.
     const emlDraft = button('Tải .eml',() => {
@@ -433,12 +434,12 @@ const ClaimReductionNotice = (() => {
         link.download = 'thong-bao-giam-tru.eml';
         document.body.appendChild(link); link.click(); link.remove();
         setTimeout(() => URL.revokeObjectURL(link.href),10000);
-        remember(); feedback.textContent = 'Đã tải thư nháp. Mở file .eml bằng Outlook: đủ người nhận, CC và nội dung.';
-      } catch (error) { feedback.textContent = error.message; }
+        remember(); feedback('Đã tải thư nháp. Mở file .eml bằng Outlook: đủ người nhận, CC và nội dung.','success');
+      } catch (error) { feedback(error.message,'warning'); }
     });
-    footer.append(button('Tạo lại mẫu',() => { inputs.subject.value = generated.subject; inputs.body.value = withDeadline(generated.body,inputs.deadline.value); remember(); feedback.textContent = 'Đã tạo lại nội dung từ thông tin hồ sơ.'; }),copy,copyCc,emlDraft,mailApp,outlook);
+    footer.append(button('Tạo lại mẫu',() => { inputs.subject.value = generated.subject; inputs.body.value = withDeadline(generated.body,inputs.deadline.value); remember(); feedback('Đã tạo lại nội dung từ thông tin hồ sơ.','success'); }),copy,copyCc,emlDraft,mailApp,outlook);
     bodyBox.append(node('p','Có thể sửa nội dung trước khi gửi. Thông tin được lưu cùng hồ sơ khi bạn bấm Lưu cập nhật hồ sơ.','claim-reduction-note'));
-    const foot = node('div',null,'crr-compose-foot'); foot.append(feedback,footer); form.append(foot);
+    const foot = node('div',null,'crr-compose-foot'); foot.append(footer); form.append(foot);
     form.onsubmit = event => event.preventDefault(); sheet.append(form);
     const returnFocus = document.activeElement;
     sheet.addEventListener('keydown',event => { event.stopPropagation(); if (event.key === 'Escape') { event.preventDefault(); sheet.close(); } });
