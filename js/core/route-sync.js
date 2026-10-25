@@ -23,6 +23,7 @@
     accounting_transfer: 'chuyen-ho-so',
     field_reimbursements: 'hien-truong',
     shared_forms: 'bieu-mau',
+    rescue_cost: 'chi-phi-cuu-ho',
     users: 'quan-tri'
   };
   const ADMIN_SUB_SLUGS = { users: 'tai-khoan', 'api-keys': 'gemini-api', cloudinary: 'cloudinary', 'audit-logs': 'nhat-ky', 'kpi-config': 'he-so-kpi' };
@@ -34,7 +35,7 @@
   function canAccessTab(tab) {
     const can = (m, a) => typeof hasUserPermission === 'function' && hasUserPermission(m, a);
     switch (tab) {
-      case 'home': case 'shared_forms': return true;
+      case 'home': case 'shared_forms': case 'rescue_cost': return true;
       case 'list': return can('list', 'view');
       case 'create': return can('list', 'add');
       case 'pending': case 'pending_notes_tracker': return can('pending', 'view');

@@ -1,0 +1,115 @@
+/* ==========================================================================
+   Trang "Chi phí cứu hộ" (js/features/rescue/rescue-page.js)
+   Dùng token --sf-* và các class .sf-page-head / .sf-library / .sf-source-tab / .sf-button / dropdown chung
+   của trang Biểu mẫu; ở đây chỉ bổ sung phần riêng của máy tính chi phí.
+   ========================================================================== */
+.rc-workspace .sf-library-bar .sf-count { display:inline-flex; align-items:center; gap:6px; }
+.rc-workspace .sf-library-bar .sf-count svg { width:14px; height:14px; color:var(--sf-gold); }
+.rc-workspace .sf-source-tab svg { width:16px; height:16px; }
+.rc-workspace [hidden] { display:none !important; }
+
+/* ---- Bố cục: biểu mẫu bên trái, kết quả (dính) bên phải ---- */
+.rc-calc { display:grid; grid-template-columns:minmax(0,1fr) minmax(340px,410px); gap:20px; align-items:start; padding:20px; }
+.rc-form { display:grid; gap:16px; min-width:0; }
+.rc-block { border:1px solid var(--sf-line); border-radius:14px; background:var(--sf-paper); overflow:hidden; }
+.rc-block>header { display:flex; align-items:center; gap:12px; padding:13px 16px; border-bottom:1px solid var(--sf-line); background:var(--sf-soft); }
+.rc-block>header h2 { margin:0; color:var(--sf-ink); font-size:13px; font-weight:800; line-height:1.3; letter-spacing:-.01em; }
+.rc-block>header p { margin:2px 0 0; color:var(--sf-muted); font-size:11px; line-height:1.5; }
+.rc-step { display:grid; place-items:center; flex:0 0 28px; width:28px; height:28px; border:1px solid color-mix(in srgb,var(--sf-gold) 30%,var(--sf-line)); border-radius:9px; background:var(--sf-gold-bg); color:var(--sf-gold); font-size:10.5px; font-weight:800; }
+.rc-block-body { display:grid; gap:14px; padding:16px; }
+
+/* ---- Trường nhập ---- */
+.rc-field { display:grid; gap:6px; min-width:0; }
+.rc-label { display:block; color:var(--sf-muted); font-size:10px; font-weight:800; letter-spacing:.06em; line-height:1.4; text-transform:uppercase; }
+.rc-hint { margin:0; color:var(--sf-muted); font-size:11px; line-height:1.55; }
+.rc-hint:empty { display:none; }
+.rc-unit { display:flex; align-items:center; height:40px; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-paper); transition:border-color .15s ease,box-shadow .15s ease; }
+.rc-unit:hover { border-color:var(--sf-gold); }
+.rc-unit:focus-within { border-color:var(--sf-gold); box-shadow:0 0 0 3px color-mix(in srgb,var(--sf-gold) 18%,transparent); }
+.rc-unit input { flex:1; min-width:0; height:100%; padding:0 12px; border:0; border-radius:10px; background:transparent; color:var(--sf-ink); font:700 13px/1 'Plus Jakarta Sans',system-ui,sans-serif; box-shadow:none; outline:none; font-variant-numeric:tabular-nums; }
+.rc-unit input::placeholder { color:var(--sf-muted); font-weight:500; opacity:.7; }
+.rc-unit input[aria-invalid="true"] { color:var(--sf-rose); }
+.rc-unit i { padding:0 14px; border-left:1px solid var(--sf-line); color:var(--sf-muted); font-size:11px; font-style:normal; font-weight:750; line-height:40px; }
+.rc-workspace .sf-select-trigger { height:40px; min-height:40px; font-size:12px; }
+
+/* ---- Chọn hạng mục ---- */
+.rc-seg { display:flex; flex-wrap:wrap; gap:7px; }
+.rc-seg .sf-source-tab { flex:1 1 130px; min-height:42px; border:1px solid var(--sf-line); background:var(--sf-paper); }
+.rc-seg .sf-source-tab[aria-pressed="true"] { border-color:color-mix(in srgb,var(--sf-gold) 45%,var(--sf-line)); background:var(--sf-gold-bg); color:var(--sf-ink); box-shadow:none; font-weight:750; }
+
+/* ---- Ô tích dạng thẻ ---- */
+.rc-checks { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; }
+.rc-check { position:relative; display:flex; align-items:flex-start; gap:12px; margin:0; padding:12px 14px; border:1px solid var(--sf-line); border-radius:12px; background:var(--sf-paper); cursor:pointer; transition:border-color .15s ease,background-color .15s ease; }
+.rc-check:hover { border-color:var(--sf-gold); }
+.rc-check:has(input:checked) { border-color:color-mix(in srgb,var(--sf-gold) 55%,var(--sf-line)); background:var(--sf-gold-bg); }
+.rc-check:has(input:focus-visible) { outline:2px solid var(--sf-gold); outline-offset:2px; }
+.rc-check input { position:absolute; opacity:0; pointer-events:none; }
+.rc-box { display:grid; place-items:center; flex:0 0 20px; width:20px; height:20px; margin-top:1px; border:1.5px solid var(--sf-line); border-radius:6px; background:var(--sf-paper); color:transparent; transition:background-color .15s ease,border-color .15s ease,color .15s ease; }
+.rc-box svg { width:13px; height:13px; stroke-width:3; }
+.rc-check input:checked+.rc-box { border-color:var(--sf-gold); background:var(--sf-gold); color:#fff; }
+.rc-check-copy { display:grid; gap:3px; min-width:0; }
+.rc-check-copy strong { color:var(--sf-ink); font-size:12.5px; font-weight:750; line-height:1.45; }
+.rc-check-copy small { color:var(--sf-muted); font-size:11px; line-height:1.55; }
+
+/* ---- Kết quả ---- */
+.rc-result { position:sticky; top:16px; display:grid; gap:14px; padding:18px; border:1px solid var(--sf-line); border-radius:16px; background:var(--sf-soft); box-shadow:var(--sf-shadow); min-width:0; }
+.rc-total { display:grid; gap:6px; padding:16px; border:1px solid color-mix(in srgb,var(--sf-gold) 30%,var(--sf-line)); border-radius:12px; background:var(--sf-paper); }
+.rc-total small { color:var(--sf-gold); font-size:9.5px; font-weight:800; letter-spacing:.08em; }
+.rc-total strong { color:var(--sf-ink); font-size:clamp(24px,2.4vw,30px); font-weight:800; line-height:1.2; letter-spacing:-.03em; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.rc-total em { color:var(--sf-muted); font-size:11px; font-style:normal; line-height:1.55; }
+.rc-lines { display:grid; margin:0; padding:0; border:1px solid var(--sf-line); border-radius:12px; background:var(--sf-paper); list-style:none; overflow:hidden; }
+.rc-lines li { display:flex; align-items:baseline; justify-content:space-between; gap:14px; padding:10px 14px; border-bottom:1px solid var(--sf-line); color:var(--sf-muted); font-size:12px; line-height:1.5; }
+.rc-lines li:last-child { border-bottom:0; }
+.rc-lines li b { flex-shrink:0; color:var(--sf-ink); font-size:12.5px; font-weight:750; font-variant-numeric:tabular-nums; }
+.rc-lines li.rc-sub { background:var(--sf-soft); color:var(--sf-ink); font-weight:700; }
+.rc-approval { display:flex; align-items:flex-start; gap:12px; padding:13px 14px; border:1px solid var(--sf-line); border-radius:12px; background:var(--sf-paper); }
+.rc-approval-icon { display:grid; place-items:center; flex:0 0 32px; width:32px; height:32px; border-radius:10px; background:var(--sf-gold-bg); color:var(--sf-gold); }
+.rc-approval-icon svg { width:17px; height:17px; }
+.rc-approval div { display:grid; gap:3px; min-width:0; }
+.rc-approval small { color:var(--sf-muted); font-size:9.5px; font-weight:800; letter-spacing:.07em; }
+.rc-approval strong { color:var(--sf-ink); font-size:13px; font-weight:800; line-height:1.4; }
+.rc-approval em { color:var(--sf-muted); font-size:10.5px; font-style:normal; line-height:1.55; }
+.rc-notice { display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border:1px solid color-mix(in srgb,var(--sf-gold) 40%,var(--sf-line)); border-radius:12px; background:var(--sf-gold-bg); }
+.rc-notice-icon { flex:0 0 18px; margin-top:1px; color:var(--sf-gold); }
+.rc-notice-icon svg { width:18px; height:18px; }
+.rc-notice ul { display:grid; gap:6px; margin:0; padding:0; list-style:none; color:var(--sf-ink); font-size:11.5px; line-height:1.6; }
+.rc-more { border:1px solid var(--sf-line); border-radius:12px; background:var(--sf-paper); }
+.rc-more summary { padding:11px 14px; color:var(--sf-ink); font-size:12px; font-weight:750; cursor:pointer; }
+.rc-more summary:focus-visible { outline:2px solid var(--sf-gold); outline-offset:-2px; border-radius:12px; }
+.rc-more ul { display:grid; gap:6px; margin:0; padding:0 14px 12px 30px; color:var(--sf-muted); font-size:11.5px; line-height:1.6; }
+.rc-more h4 { margin:0; padding:0 14px 6px; color:var(--sf-muted); font-size:9.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; }
+
+/* ---- Tra cứu đơn giá ---- */
+.rc-ref { display:grid; gap:16px; padding:20px; }
+.rc-refnav { display:flex; flex-wrap:wrap; gap:7px; }
+.rc-ref-body { display:grid; gap:14px; min-width:0; }
+.rc-table-wrap { overflow-x:auto; border:1px solid var(--sf-line); border-radius:12px; background:var(--sf-paper); }
+.rc-table { width:100%; min-width:520px; border-collapse:collapse; }
+.rc-table th { padding:11px 16px; border-bottom:1px solid var(--sf-line); background:var(--sf-soft); color:var(--sf-muted); font-size:9.5px; font-weight:800; letter-spacing:.06em; text-align:right; text-transform:uppercase; white-space:nowrap; }
+.rc-table td { padding:11px 16px; border-bottom:1px solid var(--sf-line); color:var(--sf-ink); font-size:12px; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+.rc-table th:first-child,.rc-table td:first-child { text-align:left; }
+.rc-table.is-first-wide td:first-child,.rc-table td:first-child { white-space:normal; }
+.rc-table tbody tr:last-child td { border-bottom:0; }
+.rc-table tbody tr:hover { background:color-mix(in srgb,var(--sf-soft) 70%,var(--sf-paper)); }
+.rc-table td.rc-quote { color:var(--sf-gold); font-weight:750; }
+.rc-ref-note { margin:0; color:var(--sf-muted); font-size:11.5px; line-height:1.7; }
+.rc-ref-note b { color:var(--sf-ink); }
+.rc-ref-title { margin:6px 0 -4px; color:var(--sf-muted); font-size:10px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; }
+.rc-ref-list { display:grid; margin:0; padding:0; border:1px solid var(--sf-line); border-radius:12px; background:var(--sf-paper); list-style:none; overflow:hidden; }
+.rc-ref-list li { display:grid; gap:3px; padding:12px 16px; border-bottom:1px solid var(--sf-line); }
+.rc-ref-list li:last-child { border-bottom:0; }
+.rc-ref-list strong { color:var(--sf-ink); font-size:12.5px; font-weight:750; line-height:1.5; }
+.rc-ref-list span { color:var(--sf-muted); font-size:11.5px; line-height:1.65; }
+.rc-ref-plain li span { color:var(--sf-ink); }
+
+@media (max-width: 1100px) {
+  .rc-calc { grid-template-columns:1fr; padding:16px; }
+  .rc-result { position:static; }
+}
+@media (max-width: 640px) {
+  .rc-ref { padding:14px; }
+  .rc-block-body { padding:14px; }
+  .rc-checks { grid-template-columns:1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .rc-unit,.rc-check,.rc-box { transition:none; } }
+.rc-block-body>[data-rc-block] { display:grid; gap:14px; }

@@ -281,6 +281,11 @@
         return;
       }
 
+      if (activeDashboardTab === 'rescue_cost') {
+        RescuePage.mount(container);
+        return;
+      }
+
       const isAdmin = activeUserProfile && (
         String(activeUserProfile.role || '').trim().toLowerCase() === 'admin' ||
         String(activeUserProfile.role || '').trim().toLowerCase() === 'truong_nhom' ||
