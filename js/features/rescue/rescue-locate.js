@@ -49,7 +49,7 @@ const RescueLocate = (() => {
       searchCard('scene','Vị trí hiện trường','a') + '<button type="button" class="sf-button rl-wide" data-rl-gps>' + icon('pin') + 'Dùng vị trí hiện tại</button>' + searchBox('scene','Hoặc tìm theo địa chỉ','Địa chỉ hoặc toạ độ') + feedback('scene') + '</section>' +
       searchCard('garage','Gara (điểm đến)','b') +
       '<label class="rc-field"><span class="rc-label">Chọn gara</span><select data-rl-garage data-sf-select data-sf-label="Gara" data-sf-description="Chọn gara trong danh sách dùng chung" data-sf-icon="pin"></select></label>' +
-      '<div class="rl-row"><button type="button" class="sf-button" data-rl-nearest>' + icon('arrow') + 'Chọn gara gần nhất</button><button type="button" class="rl-link" data-rl-manage>Quản lý danh sách gara →</button></div>' +
+      '<p class="rc-hint" data-rl-gnote hidden></p><div class="rl-row"><button type="button" class="sf-button" data-rl-nearest>' + icon('arrow') + 'Chọn gara gần nhất</button><button type="button" class="rl-link" data-rl-manage>Quản lý danh sách gara →</button></div>' +
       '<div class="rl-other" data-rl-other hidden>' + searchBox('garage','Địa chỉ gara khác','Địa chỉ gara / toạ độ (vĩ độ, kinh độ)') + '</div>' + feedback('garage') + '</section></div>' +
       '<span class="rc-label">Chạm bản đồ để đặt điểm</span>' +
       '<div class="rc-seg" role="group" aria-label="Điểm đang đặt"><button type="button" class="sf-source-tab" data-rl-target="scene" aria-pressed="true">' + icon('pin') + 'A · Hiện trường</button><button type="button" class="sf-source-tab" data-rl-target="garage" aria-pressed="false">' + icon('truck') + 'B · Gara</button></div>' +
@@ -58,7 +58,7 @@ const RescueLocate = (() => {
       '<div class="rl-summary" data-rl-summary aria-live="polite" hidden></div>';
     const q = selector => root.querySelector(selector), qa = selector => root.querySelectorAll(selector);
     const part = key => ({q:q('[data-rl-q="' + key + '"]'),btn:q('[data-rl-search="' + key + '"]'),list:q('[data-rl-list="' + key + '"]'),msg:q('[data-rl-msg="' + key + '"]'),info:q('[data-rl-info="' + key + '"]')});
-    const ui = {gps:q('[data-rl-gps]'),select:q('[data-rl-garage]'),nearest:q('[data-rl-nearest]'),other:q('[data-rl-other]'),mapEl:q('[data-rl-map]'),summary:q('[data-rl-summary]')};
+    const ui = {gps:q('[data-rl-gps]'),select:q('[data-rl-garage]'),nearest:q('[data-rl-nearest]'),gnote:q('[data-rl-gnote]'),other:q('[data-rl-other]'),mapEl:q('[data-rl-map]'),summary:q('[data-rl-summary]')};
     SharedFormsControls.enhance(root);
 
     const setMsg = (key, text) => { const node = part(key).msg; node.hidden = !text; node.textContent = text || ''; };
@@ -139,6 +139,9 @@ const RescueLocate = (() => {
       ui.select.innerHTML = '<option value="">Chọn gara…</option>' + rows.map(row => '<option value="' + esc(row.garage.id) + '">' + esc(row.garage.name + (row.estimate != null ? ' · ≈ ' + RescueGeo.fmtKm(row.estimate) + ' km' : '')) + '</option>').join('') + '<option value="' + OTHER + '">Gara khác · tìm địa chỉ / chạm bản đồ</option>';
       ui.select.value = keep === OTHER || rows.some(row => row.garage.id === keep) ? keep : '';
       ui.nearest.hidden = !list.length; refreshSelect();
+      const ready = garages.status === 'ready';
+      ui.gnote.hidden = ready && list.length > 0;
+      ui.gnote.textContent = garages.status === 'signedout' ? 'Đăng nhập tài khoản Supabase ở tab Gara để dùng danh sách gara dùng chung.' : garages.status === 'error' ? garages.message : garages.status === 'ready' ? 'Danh sách gara đang trống. Thêm gara ở tab Gara hoặc chọn “Gara khác”.' : 'Đang tải danh sách gara…';
     }
     let syncing = false;
     function refreshSelect() { syncing = true; ui.select.dispatchEvent(new Event('change',{bubbles:true})); syncing = false; }  // cập nhật nhãn dropdown dùng chung, không kích hoạt lại logic chọn
