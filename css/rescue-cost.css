@@ -113,3 +113,63 @@
 }
 @media (prefers-reduced-motion: reduce) { .rc-unit,.rc-check,.rc-box { transition:none; } }
 .rc-block-body>[data-rc-block] { display:grid; gap:14px; }
+
+/* ---- Định vị tính km (rescue-locate.js) ---- */
+.rl-root { display:grid; gap:14px; padding-top:4px; border-top:1px dashed var(--sf-line); }
+.rl-points { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.rl-card { display:grid; gap:10px; align-content:start; padding:14px; border:1px solid var(--sf-line); border-radius:12px; background:var(--sf-soft); min-width:0; }
+.rl-head { display:flex; align-items:center; gap:10px; color:var(--sf-ink); font-size:12.5px; }
+.rl-dot { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; color:#fff; font-size:11px; font-style:normal; font-weight:800; }
+.rl-dot--a { background:var(--sf-gold); }
+.rl-dot--b { background:#2f6f5e; }
+.rl-wide { width:100%; justify-content:center; }
+.rl-row { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.rl-link { padding:0; border:0; background:none; color:var(--sf-gold); font:700 11.5px/1.5 inherit; cursor:pointer; text-align:left; }
+.rl-link:hover { text-decoration:underline; }
+.rl-search { display:flex; gap:8px; }
+.rl-search input { flex:1; min-width:0; height:40px; padding:0 12px; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-paper); color:var(--sf-ink); font:600 12.5px/1 'Plus Jakarta Sans',system-ui,sans-serif; }
+.rl-search input:focus { outline:none; border-color:var(--sf-gold); box-shadow:0 0 0 3px color-mix(in srgb,var(--sf-gold) 18%,transparent); }
+.rl-search .sf-icon-button { flex:0 0 40px; height:40px; }
+.rl-list { display:grid; margin:0; padding:0; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-paper); list-style:none; max-height:220px; overflow:auto; }
+.rl-list li+li { border-top:1px solid var(--sf-line); }
+.rl-list button { width:100%; padding:9px 12px; border:0; background:none; color:var(--sf-ink); font-size:12px; line-height:1.5; text-align:left; cursor:pointer; }
+.rl-list button:hover,.rl-list button:focus-visible { background:var(--sf-gold-bg); outline:none; }
+.rl-empty { padding:9px 12px; color:var(--sf-muted); font-size:11.5px; }
+.rl-msg { margin:0; padding:9px 12px; border:1px solid color-mix(in srgb,var(--sf-rose) 40%,var(--sf-line)); border-radius:10px; background:color-mix(in srgb,var(--sf-rose) 8%,var(--sf-paper)); color:var(--sf-ink); font-size:11.5px; line-height:1.55; }
+.rl-info { display:grid; gap:2px; color:var(--sf-muted); font-size:11.5px; line-height:1.5; }
+.rl-info[data-has="1"] b { color:var(--sf-ink); font-size:12px; overflow-wrap:anywhere; }
+.rl-warn { color:var(--sf-rose); }
+.rl-map { height:360px; border:1px solid var(--sf-line); border-radius:12px; background:var(--sf-soft); overflow:hidden; z-index:0; }
+.rl-map-fail { display:grid; place-items:center; height:100%; padding:20px; color:var(--sf-muted); font-size:12px; text-align:center; }
+.rl-pin span { display:grid; place-items:center; width:30px; height:30px; border:2px solid #fff; border-radius:50% 50% 50% 0; transform:rotate(-45deg); color:#fff; font-size:12px; font-weight:800; box-shadow:0 2px 6px rgba(0,0,0,.35); }
+.rl-pin b { transform:rotate(45deg); font-style:normal; }
+.rl-pin--a span { background:var(--sf-gold,#8a6a32); }
+.rl-pin--b span { background:#2f6f5e; }
+.rl-summary { display:grid; gap:8px; padding:14px; border:1px solid color-mix(in srgb,var(--sf-gold) 35%,var(--sf-line)); border-radius:12px; background:var(--sf-gold-bg); color:var(--sf-ink); font-size:12px; }
+.rl-summary[data-state="estimate"] { border-color:color-mix(in srgb,var(--sf-rose) 45%,var(--sf-line)); }
+.rl-summary-main { display:flex; align-items:center; gap:12px; }
+.rl-summary-main strong { display:block; font-size:18px; font-weight:800; font-variant-numeric:tabular-nums; }
+.rl-summary-main small { color:var(--sf-muted); font-size:11px; }
+.rl-summary-icon { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; background:var(--sf-paper); color:var(--sf-gold); }
+.rl-summary-icon svg { width:18px; height:18px; }
+.rl-summary-note { margin:0; color:var(--sf-muted); font-size:11px; line-height:1.55; }
+
+/* ---- Tab Gara (rescue-garages.js) ---- */
+.rc-garage { display:grid; gap:14px; padding:20px; }
+.rc-garage-bar { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
+.rc-garage-note { margin:0; padding:10px 14px; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-soft); color:var(--sf-muted); font-size:11.5px; }
+.rc-garage-table td { white-space:normal; }
+.rc-garage-actions { white-space:nowrap !important; }
+.rc-garage-coords { color:var(--sf-muted); font-size:11px; font-variant-numeric:tabular-nums; }
+.rc-garage-empty { padding:28px 16px; color:var(--sf-muted); font-size:12px; text-align:center; }
+.rc-badge { display:inline-block; padding:2px 8px; border-radius:999px; background:var(--sf-gold-bg); color:var(--sf-gold); font-size:10.5px; font-weight:750; }
+.rc-badge[data-off] { background:var(--sf-soft); color:var(--sf-muted); }
+.rc-garage-dialog .rc-garage-geo { display:grid; gap:8px; }
+.rc-garage-geo-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.rc-garage-active { display:flex; align-items:center; gap:8px; font-size:12px; }
+
+@media (max-width: 760px) {
+  .rl-points { grid-template-columns:1fr; }
+  .rl-map { height:300px; }
+  .rc-garage { padding:14px; }
+}

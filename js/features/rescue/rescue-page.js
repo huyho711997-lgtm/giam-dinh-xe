@@ -14,7 +14,8 @@ const RescuePage = (() => {
     shield:'<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="m8 12 3 3 5-6"/>',
     alert:'<path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4M12 17.2v.1"/>',
     user:'<circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c.7-3.6 3.2-5.5 6.5-5.5s5.8 1.9 6.5 5.5"/>',
-    receipt:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/>'
+    receipt:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/>',
+    pin:'<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>'
   };
   const svg = name => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (icons[name] || '') + '</svg>';
   const esc = text => String(text ?? '').replace(/[&<>"']/g,char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -23,7 +24,7 @@ const RescuePage = (() => {
   const REF_TABS = [['tow','Kéo xe'],['crane','Cẩu xe'],['surcharge','Phụ phí & vùng'],['approval','Phê duyệt'],['control','Hồ sơ & kiểm soát']];
   const DEFAULTS = () => ({service:'tow',towGroup:0,km:'10',cranePos:0,craneClass:0,region:0,surcharges:{},special:false,over:false});
 
-  let host = null, state = DEFAULTS(), tab = 'calc', refTab = 'tow';
+  let host = null, state = DEFAULTS(), tab = 'calc', refTab = 'tow', kmMode = 'manual', locate = null, geoClient = null;
 
   const options = (items, label) => items.map((item,index) => '<option value="' + index + '">' + esc(label(item,index)) + '</option>').join('');
   const select = (id, label, description, icon, html) => '<label class="rc-field"><span class="rc-label">' + esc(label) + '</span><select id="' + id + '" data-rc="' + id + '" data-sf-select data-sf-label="' + esc(label) + '" data-sf-description="' + esc(description) + '" data-sf-icon="' + icon + '">' + html + '</select></label>';
@@ -34,7 +35,9 @@ const RescuePage = (() => {
     const R = RescueCalc;
     const service = '<div class="rc-seg" role="group" aria-label="Hạng mục cứu hộ">' + SERVICES.map(([key,label,icon]) => '<button type="button" class="sf-source-tab" data-rc-service="' + key + '" aria-pressed="' + (state.service === key) + '">' + svg(icon) + esc(label) + '</button>').join('') + '</div>';
     const tow = '<div data-rc-block="tow">' + select('towGroup','Nhóm xe (kéo)','Chọn theo số chỗ hoặc tải trọng','truck',options(R.TOW,item => item.label)) +
-      '<label class="rc-field"><span class="rc-label">Quãng đường kéo</span><span class="rc-unit"><input id="km" data-rc="km" type="number" inputmode="decimal" min="0" max="' + R.MAX_KM + '" step="0.1" placeholder="Ví dụ 25" value="' + esc(state.km) + '"><i>km</i></span><small class="rc-hint" data-rc-kmhint></small></label></div>';
+      '<label class="rc-field"><span class="rc-label">Quãng đường kéo</span><span class="rc-unit"><input id="km" data-rc="km" type="number" inputmode="decimal" min="0" max="' + R.MAX_KM + '" step="0.1" placeholder="Ví dụ 25" value="' + esc(state.km) + '"><i>km</i></span><small class="rc-hint" data-rc-kmhint></small></label>' +
+      '<div class="rc-seg" role="group" aria-label="Cách xác định quãng đường"><button type="button" class="sf-source-tab" data-rc-kmmode="manual" aria-pressed="true">Nhập số km</button><button type="button" class="sf-source-tab" data-rc-kmmode="locate" aria-pressed="false">' + svg('pin') + 'Định vị tính km</button></div>' +
+      '<div class="rl-root" data-rc-locate hidden></div></div>';
     const crane = '<div data-rc-block="crane">' + select('craneClass','Nhóm xe (cẩu)','Chọn theo số chỗ hoặc tải trọng','crane',options(R.CLASSES,item => 'Nhóm ' + item.key + ' · ' + item.range)) +
       select('cranePos','Vị trí xe cần cẩu','Mức độ khó của hiện trường','pin',options(R.CRANE,item => item.label)) + '</div>';
     const region = select('region','Vùng địa lý','Hệ số vùng áp dụng cho giá cứu hộ','globe',options(R.REGIONS,item => item.name + ' · +' + item.pct + '%')) + '<p class="rc-hint" data-rc-regionhint></p>';
@@ -100,6 +103,7 @@ const RescuePage = (() => {
     read();
     const R = RescueCalc;
     host.querySelector('[data-rc-block=tow]').hidden = state.service === 'crane';
+    syncLocate();
     host.querySelector('[data-rc-block=crane]').hidden = state.service === 'tow';
     host.querySelectorAll('[data-rc-service]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.rcService === state.service)));
     const result = lastResult = R.calculate({...state,service:state.service});
@@ -115,6 +119,20 @@ const RescuePage = (() => {
     const km = host.querySelector('#km'); if (km) km.setAttribute('aria-invalid',String(result.kmClamped));
   }
 
+  function syncLocate() {
+    const box = host.querySelector('[data-rc-locate]');
+    host.querySelectorAll('[data-rc-kmmode]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.rcKmmode === kmMode)));
+    const active = kmMode === 'locate' && state.service !== 'crane' && tab === 'calc';
+    box.hidden = kmMode !== 'locate';
+    if (!locate) return;
+    if (active) locate.show(); else locate.hide();
+  }
+  function setKmMode(mode) {
+    kmMode = mode;
+    if (mode === 'locate' && !locate) locate = RescueLocate.create(host.querySelector('[data-rc-locate]'),{kmInput:host.querySelector('#km'),geo:geoClient,garages:RescueGarages,onManage:() => { tab = 'garage'; paint(); }});
+    update();
+  }
+
   function setValue(id, value) {
     const element = host.querySelector('[data-rc="' + id + '"]'); element.value = value;
     element.dispatchEvent(new Event('change',{bubbles:true}));  // dropdown dùng chung cập nhật nhãn hiển thị
@@ -123,38 +141,43 @@ const RescuePage = (() => {
     state = DEFAULTS();
     ['towGroup','craneClass','cranePos','region'].forEach(id => setValue(id,'0'));
     host.querySelector('#km').value = '10';
+    locate?.reset(); kmMode = 'manual';
     host.querySelectorAll('.rc-check input').forEach(input => { input.checked = false; });
     update();
   }
   async function copy() {
     if (!lastResult) return;
-    try { await navigator.clipboard.writeText(RescueCalc.summaryText(lastResult)); triggerToast('Đã sao chép kết quả tính chi phí cứu hộ.','success'); }
+    try { const source = state.service !== 'crane' && kmMode === 'locate' ? locate?.describe() : ''; await navigator.clipboard.writeText(RescueCalc.summaryText(lastResult) + (source ? '\n' + source : '')); triggerToast('Đã sao chép kết quả tính chi phí cứu hộ.','success'); }
     catch (_) { triggerToast('Không sao chép được. Hãy cho phép trình duyệt truy cập bộ nhớ tạm.','warning'); }
   }
 
   function paint() {
     const calc = tab === 'calc';
     host.querySelector('[data-rc-pane=calc]').hidden = !calc;
-    host.querySelector('[data-rc-pane=ref]').hidden = calc;
+    host.querySelector('[data-rc-pane=ref]').hidden = tab !== 'ref';
+    host.querySelector('[data-rc-pane=garage]').hidden = tab !== 'garage';
     host.querySelectorAll('[data-rc-tab]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.rcTab === tab)));
     host.querySelectorAll('[data-rc-actions] button').forEach(button => { button.hidden = !calc; });
-    if (calc) update(); else host.querySelector('[data-rc-pane=ref]').innerHTML = refPane();
+    if (tab !== 'garage') RescueGarages.unmountManager();
+    if (calc) update(); else { locate?.hide(); if (tab === 'ref') host.querySelector('[data-rc-pane=ref]').innerHTML = refPane(); else RescueGarages.mountManager(host.querySelector('[data-rc-pane=garage]'),geoClient); }
   }
 
   function mount(container) {
-    state = DEFAULTS(); tab = 'calc'; refTab = 'tow';
+    leave(); state = DEFAULTS(); tab = 'calc'; refTab = 'tow'; kmMode = 'manual';
+    geoClient = RescueGeo.createClient({fetch:(...args) => fetch(...args)});
     host = document.createElement('section');
     host.className = 'sf-workspace rc-workspace';
     host.setAttribute('aria-label','Chi phí cứu hộ');
     host.innerHTML = '<header class="sf-page-head"><div class="sf-page-title"><span class="sf-page-emblem" aria-hidden="true">' + svg('truck') + '</span><div><div class="sf-eyebrow">NGHIỆP VỤ · CỨU HỘ PHƯƠNG TIỆN</div><h1>Chi phí cứu hộ</h1><p>Tính nhanh chi phí kéo xe, cẩu xe theo barem nội bộ và xác định cấp phê duyệt.</p></div></div>' +
       '<div class="sf-toolbar" data-rc-actions><button type="button" class="sf-button" data-rc-reset>' + svg('reset') + 'Đặt lại</button><button type="button" class="sf-button sf-primary" data-rc-copy>' + svg('copy') + 'Sao chép kết quả</button></div></header>' +
-      '<section class="sf-library rc-card"><div class="sf-library-bar"><div class="sf-sources" role="group" aria-label="Chế độ"><button type="button" class="sf-source-tab" data-rc-tab="calc" aria-pressed="true">' + svg('calc') + 'Tính chi phí</button><button type="button" class="sf-source-tab" data-rc-tab="ref" aria-pressed="false">' + svg('book') + 'Đơn giá & quy định</button></div>' +
+      '<section class="sf-library rc-card"><div class="sf-library-bar"><div class="sf-sources" role="group" aria-label="Chế độ"><button type="button" class="sf-source-tab" data-rc-tab="calc" aria-pressed="true">' + svg('calc') + 'Tính chi phí</button><button type="button" class="sf-source-tab" data-rc-tab="ref" aria-pressed="false">' + svg('book') + 'Đơn giá & quy định</button><button type="button" class="sf-source-tab" data-rc-tab="garage" aria-pressed="false">' + svg('pin') + 'Gara</button></div>' +
       '<span class="sf-count">' + svg('receipt') + 'Trần nội bộ · chưa VAT</span></div>' +
-      '<div data-rc-pane="calc">' + calcPane() + '</div><div data-rc-pane="ref" hidden></div></section>';
+      '<div data-rc-pane="calc">' + calcPane() + '</div><div data-rc-pane="ref" hidden></div><div data-rc-pane="garage" hidden></div></section>';
     host.addEventListener('click',event => {
-      const target = event.target.closest('[data-rc-tab],[data-rc-service],[data-rc-ref],[data-rc-reset],[data-rc-copy]');
+      const target = event.target.closest('[data-rc-tab],[data-rc-service],[data-rc-ref],[data-rc-reset],[data-rc-copy],[data-rc-kmmode]');
       if (!target) return;
-      if (target.dataset.rcTab) { tab = target.dataset.rcTab; paint(); }
+      if (target.dataset.rcKmmode) setKmMode(target.dataset.rcKmmode);
+      else if (target.dataset.rcTab) { tab = target.dataset.rcTab; paint(); }
       else if (target.dataset.rcService) { state.service = target.dataset.rcService; update(); }
       else if (target.dataset.rcRef) { refTab = target.dataset.rcRef; paint(); }
       else if (target.hasAttribute('data-rc-reset')) reset();
@@ -167,5 +190,12 @@ const RescuePage = (() => {
     update();
   }
 
-  return {mount};
+  // Rời trang: huỷ bản đồ, ngừng nghe danh sách gara.
+  function leave() {
+    locate?.destroy(); locate = null;
+    if (host) { RescueGarages.unmountManager(); RescueGarages.stop(); }
+    host = null;
+  }
+
+  return {mount,leave};
 })();

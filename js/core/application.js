@@ -121,6 +121,7 @@
 
     function evaluateViewRoutingState(userInstance) {
       SharedForms.leave();
+      RescuePage.leave();
       const URLQueryStrings = new URLSearchParams(window.location.search);
       const caseIdToken = URLQueryStrings.get('idCa');
       const targetedViewArg = URLQueryStrings.get('view');

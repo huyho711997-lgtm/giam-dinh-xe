@@ -275,6 +275,7 @@
       const container = document.getElementById('tabContentContainer');
       if (!container) return;
       SharedForms.leave();
+      RescuePage.leave();
 
       if (activeDashboardTab === 'shared_forms') {
         SharedForms.mount(container);
