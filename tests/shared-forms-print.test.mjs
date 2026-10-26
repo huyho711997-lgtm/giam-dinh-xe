@@ -82,7 +82,7 @@ test('every shipped preview is a real PDF for a root template or an existing bui
   assert.equal(manifest.engine,'Microsoft Word');
   assert.equal(manifest.catalogAt,catalog.syncedAt);
   const templates = catalog.folders[catalog.rootFolderId].files.filter(file => /\.docx?$/.test(file.name));
-  assert.equal(Object.keys(manifest.files).length,templates.length + 2);
+  assert.equal(Object.keys(manifest.files).length,templates.length + 3);
   const fixture = setup();
   fixture.context.fetch = async () => ({ok:true,json:async () => manifest});
   for (const [id,entry] of Object.entries(manifest.files)) {
@@ -92,7 +92,7 @@ test('every shipped preview is a real PDF for a root template or an existing bui
       const resolved = await fixture.printing.resolve({...file,source:'drive',catalogAt:catalog.syncedAt},{folderId:catalog.rootFolderId});
       assert.equal(resolved?.url,entry.url + '?v=' + entry.sourceSha256);
     }
-    else assert.ok(['builtin_tnds','builtin_collection'].includes(id));
+    else assert.ok(['builtin_tnds','builtin_collection','builtin_scene_blank'].includes(id));
     const pdf = fs.readFileSync(new URL('../' + entry.url,import.meta.url));
     assert.equal(pdf.subarray(0,5).toString(),'%PDF-');
     assert.equal(pdf.length,entry.size);
