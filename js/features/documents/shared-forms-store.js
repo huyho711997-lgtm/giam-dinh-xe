@@ -154,6 +154,7 @@ const SharedFormsStore = (() => {
     try { response = await fetch(driveEndpoint(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'forms_upload',token,folderId:target.folderId,rootFolderId:target.rootFolderId,name,requestId,data}),credentials:'omit',redirect:'follow',signal:AbortSignal.timeout(120000)}); }
     catch { throw new Error('Không kết nối được dịch vụ Google Drive. Kiểm tra mạng rồi thử lại.'); }
     let result; try { result = await response.json(); } catch { throw new Error('Dịch vụ Google Drive trả về dữ liệu không hợp lệ.'); }
+    if (result?.error === 'Thao tác không hợp lệ.') throw new Error('Dịch vụ Apps Script chưa được cập nhật bản mới hỗ trợ tải biểu mẫu. Quản trị viên cần dán Code.gs mới, thêm FORMS_ROOT_FOLDER_ID và Deploy phiên bản mới (xem google-apps-script/claim-documents/README.md).');
     if (!response.ok || !result?.ok) throw new Error(result?.error || 'Không tải được file lên Google Drive.');
     if (user()?.uid !== owner.uid) throw new Error('Phiên đăng nhập đã thay đổi.');
     return {...result.file,source:'drive',originalName:result.file.name,category:'Google Drive',updatedAt:result.file.modifiedTime};
