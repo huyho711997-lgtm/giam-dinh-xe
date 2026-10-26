@@ -296,6 +296,8 @@
     function filterPortalHangMucCards(searchTerm) {
       portalSearchTerm = searchTerm;
       const term = (searchTerm || '').trim().toLowerCase();
+      const statusFilter = window.workshopStatusFilter || 'all';
+      const filtering = !!term || statusFilter !== 'all';
       const sections = document.querySelectorAll('.evidence-group-section');
       
       sections.forEach(section => {
@@ -307,7 +309,9 @@
           if (!titleEl) return;
           const text = (titleEl.textContent || '').toLowerCase();
           
-          if (!term || text.includes(term)) {
+          const isDone = card.classList.contains('is-complete');
+          const statusOk = statusFilter === 'all' || (statusFilter === 'done' ? isDone : !isDone);
+          if ((!term || text.includes(term)) && statusOk) {
             card.style.display = '';
             visibleCardsInGroup++;
           } else {
@@ -315,14 +319,14 @@
           }
         });
         
-        if (term && visibleCardsInGroup === 0) {
+        if (filtering && visibleCardsInGroup === 0) {
           section.style.display = 'none';
         } else {
           section.style.display = '';
           const body = section.querySelector('.evidence-cards-list');
           const chevron = section.querySelector('.evidence-group-header [id^="evidenceGroupChevron_"]');
           const header = section.querySelector('.evidence-group-header');
-          if (term) {
+          if (filtering) {
             if (body) {
               body.style.display = 'flex';
               body.classList.remove('is-hidden');
@@ -360,11 +364,11 @@
         if (c.style.display !== 'none') totalVisible++;
       });
       
-      if (term && totalVisible === 0) {
+      if (filtering && totalVisible === 0) {
         const noResultDiv = document.createElement('div');
         noResultDiv.id = 'noPortalHangMucResult';
         noResultDiv.style.cssText = 'padding: 24px; text-align: center; color: var(--text-soft); font-size: 13px; font-style: italic; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-top: 8px;';
-        noResultDiv.innerHTML = 'Không tìm thấy hạng mục nào khớp với "<strong style="color: var(--primary);">' + escapeHtmlOutput(searchTerm) + '</strong>"';
+        noResultDiv.innerHTML = term ? 'Không tìm thấy hạng mục nào khớp với "<strong style="color: var(--primary);">' + escapeHtmlOutput(searchTerm) + '</strong>"' : (statusFilter === 'pending' ? 'Tuyệt vời! Tất cả hạng mục đã có ảnh.' : 'Chưa có hạng mục nào được chụp ảnh.');
         const searchInput = document.getElementById('searchPortalHangMucInput');
         if (searchInput && searchInput.parentNode) {
           searchInput.parentNode.parentNode.insertBefore(noResultDiv, searchInput.parentNode.nextSibling);
@@ -812,11 +816,14 @@
       };
 
       if (!window.sectionCollapseState) {
-        window.sectionCollapseState = {
-          documents: true,
-          overall: true,
-          damages: true
-        };
+        // Mặc định chỉ mở nhóm đầu tiên còn hạng mục chưa có ảnh để gara chụp ngay, các nhóm khác thu gọn.
+        const pendingByGroup = {};
+        localActiveRequestedItems.forEach(item => {
+          const key = getCategoryGroupInfo(item.tenHangMuc, !!item.taoBoiGara).key;
+          if (!normalizeEvidenceImageUrls(item).length) pendingByGroup[key] = true;
+        });
+        const firstOpen = ['documents', 'overall', 'damages'].find(key => pendingByGroup[key]) || 'damages';
+        window.sectionCollapseState = { documents: firstOpen !== 'documents', overall: firstOpen !== 'overall', damages: firstOpen !== 'damages' };
       }
 
       const toggleAllToolbarMarkup = renderWorkshopToolbar(groupedDefinitions);
@@ -853,13 +860,16 @@
       const selStart = searchActive ? document.activeElement.selectionStart : null;
       const selEnd = searchActive ? document.activeElement.selectionEnd : null;
 
+      const workshopKeys = new Set(localActiveRequestedItems.map(item => getCategoryGroupInfo(item.tenHangMuc, !!item.taoBoiGara).key));
+      const workshopSingleGroup = workshopKeys.size === 0 || (workshopKeys.size === 1 && workshopKeys.has('damages'));
       const activeThemeIcon = currentTheme === 'light' ? SVGS.MOON : SVGS.SUN;
       const nodeData = localActiveCaseNode || {};
       rootContainer.innerHTML = `
         <div class="portal-shell" data-garage-portal="active">
           ${renderWorkshopHero(nodeData,activeThemeIcon)}
+          ${renderWorkshopStickyBar(localActiveRequestedItems.length, localActiveImageStack.length > 0)}
 
-          <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list workshop-workspace">${imageInputSection}${evidenceRequestSection || garageAddItemBox}</div></div>
+          <div class="focus-portal-layout">${buildHtmlComponentSidebarCaseMetadata('input')}<div class="image-workspace-list workshop-workspace${workshopSingleGroup ? ' is-single-group' : ''}">${imageInputSection}${evidenceRequestSection || garageAddItemBox}</div></div>
           ${renderWorkshopBottomBar()}
         </div>`;
 
@@ -891,9 +901,10 @@
 
       initializeSidebarCollapse();
       refreshGarageProgressUI();
-      if (portalSearchTerm) {
-        filterPortalHangMucCards(portalSearchTerm);
+      if (portalSearchTerm || (window.workshopStatusFilter && window.workshopStatusFilter !== 'all')) {
+        filterPortalHangMucCards(portalSearchTerm || '');
       }
+      syncWorkshopFilterChips();
       if (searchActive) {
         const inputEl = document.getElementById('searchPortalHangMucInput');
         if (inputEl) {

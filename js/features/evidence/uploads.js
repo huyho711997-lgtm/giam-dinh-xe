@@ -353,6 +353,9 @@
       if (fill) fill.style.width = `${percent}%`;
       const mobilePercentNode = document.getElementById('mobileBottomBarProgressPercent');
       if (mobilePercentNode) mobilePercentNode.textContent = `${percent}%`;
+      const mobileCountNode = document.getElementById('mobileBottomBarProgressCount');
+      if (mobileCountNode) mobileCountNode.textContent = `${evidenceDone}/${evidenceTotal}`;
+      if (typeof syncWorkshopFilterChips === 'function') syncWorkshopFilterChips();
       syncWorkshopDisclosures();
     }
 

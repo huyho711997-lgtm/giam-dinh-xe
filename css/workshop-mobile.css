@@ -1,0 +1,67 @@
+/* Cổng giám định Workshop — bố cục gọn, chụp ảnh nhanh (tải sau administration.css). */
+[data-garage-portal="active"] .workshop-hero { padding:16px 18px; margin-bottom:10px; border-radius:18px; }
+[data-garage-portal="active"] .workshop-hero-top { margin-bottom:8px; }
+[data-garage-portal="active"] .workshop-hero h1 { margin:0 0 10px; font-size:18px; line-height:1.4; }
+[data-garage-portal="active"] .workshop-hero .workshop-vehicle { margin-bottom:0; }
+
+/* Thanh tiến độ + bộ lọc luôn bám đầu màn hình khi cuộn */
+.workshop-sticky { position:sticky; top:0; z-index:30; margin:0 0 10px; padding:10px 12px 10px; border:1px solid var(--border); border-radius:16px; background:color-mix(in srgb,var(--surface) 92%,transparent); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); box-shadow:0 6px 18px rgba(15,23,42,.07); }
+.workshop-sticky-top { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:7px; color:var(--text-muted); font-size:11px; }
+.workshop-sticky-count strong { margin-left:4px; color:var(--status-completed-text); font-size:13px; font-weight:800; font-variant-numeric:tabular-nums; }
+.workshop-sticky-count em { margin:0 7px; font-style:normal; opacity:.5; }
+.workshop-sticky-count em ~ strong { color:var(--primary); }
+.workshop-sticky .workshop-progress-track { height:6px; margin-bottom:10px; }
+.workshop-sticky .garage-progress-percent { color:var(--primary); font-size:13px; font-weight:800; }
+.workshop-chips { display:flex; gap:5px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+.workshop-chips::-webkit-scrollbar { display:none; }
+.workshop-chips button { flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:0 10px; border:1px solid var(--border); border-radius:999px; color:var(--text-soft); background:var(--bg-soft); font-family:inherit; font-size:11.5px; font-weight:650; line-height:1; cursor:pointer; white-space:nowrap; }
+.workshop-chips button b { min-width:18px; padding:2px 5px; border-radius:999px; color:var(--text-muted); background:var(--surface-soft); font-size:10px; font-weight:750; text-align:center; font-variant-numeric:tabular-nums; }
+.workshop-chips button[aria-pressed="true"] { color:var(--primary); border-color:var(--workshop-line); background:var(--workshop-fill); }
+.workshop-chips button[aria-pressed="true"] b { color:var(--primary); background:var(--bg-soft); }
+.workshop-chips .workshop-next { margin-left:auto; color:#080b11; border-color:transparent; background:var(--primary-gradient); font-weight:800; }
+.workshop-chips .workshop-next svg { width:13px; height:13px; }
+.workshop-chips .workshop-next:disabled { opacity:.45; cursor:default; }
+
+/* Dòng hạng mục: số · tên · trạng thái · nút chụp nhanh */
+[data-garage-portal="active"] .workshop-card-head { padding:10px 12px !important; }
+.workshop-card-row { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:10px; }
+.workshop-card-title { min-width:0; }
+[data-garage-portal="active"] .workshop-card-head h3 { font-size:13.5px !important; line-height:1.4; }
+.workshop-card-sub .evidence-request-status { margin:0 !important; }
+.workshop-card-sub { display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; margin-top:3px; }
+.workshop-card-row .workshop-card-state { display:flex; align-items:center; gap:6px; }
+.workshop-quick-camera { display:grid; place-items:center; width:44px; height:44px; flex:0 0 44px; padding:0; border:0; border-radius:13px; color:#080b11; background:var(--primary-gradient); box-shadow:0 4px 10px rgba(179,140,67,.25); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.workshop-quick-camera svg { width:20px; height:20px; }
+.workshop-quick-camera:active { transform:scale(.94); }
+.evidence-request-card.is-complete .workshop-quick-camera { color:var(--status-completed-text); background:rgba(5,150,105,.08); border:1px solid rgba(5,150,105,.25); box-shadow:none; }
+.evidence-request-card.is-spotlight { animation:workshopSpot 1.8s ease; }
+@keyframes workshopSpot { 0%,60% { box-shadow:0 0 0 3px rgba(216,180,109,.55) !important; } 100% { box-shadow:0 0 0 0 rgba(216,180,109,0) !important; } }
+
+/* Thu gọn thanh công cụ danh sách */
+[data-garage-portal="active"] .workshop-toolbar-icon { display:none; }
+.workshop-bottom-percent { display:none; }
+@media(max-width:1050px) {
+  .workshop-sticky { top:calc(env(safe-area-inset-top) + 4px); }
+  [data-garage-portal="active"] .workshop-bottom-bar { grid-template-columns:64px minmax(0,1fr); }
+  .workshop-bottom-bar .mobile-bottom-bar-percentage { font-size:17px; }
+}
+@media(max-width:600px) {
+  [data-garage-portal="active"] .workshop-hero h1 { font-size:16px; }
+  [data-garage-portal="active"] .workshop-hero .workshop-mobile-break { display:none; }
+  .workshop-toolbar { flex-direction:row; align-items:center; gap:10px; }
+  .workshop-disclosure-actions { display:flex; }
+  .workshop-disclosure-actions button { min-height:34px; padding:0 9px; font-size:11px; }
+  .workshop-disclosure-actions button svg { display:none; }
+  .workshop-toolbar p { display:none; }
+}
+@media(prefers-reduced-motion:reduce) { .evidence-request-card.is-spotlight { animation:none; outline:2px solid var(--primary); } }
+
+.is-single-group .evidence-group-header { display:none !important; }
+.is-single-group .evidence-group-section { margin-top:0 !important; }
+/* Cho phép thanh tiến độ bám (sticky) theo cuộn của trang: bỏ vùng cuộn lồng trên app-container/body. */
+html:has([data-garage-portal="active"]),body:has([data-garage-portal="active"]),body:has([data-garage-portal="active"]) .app-container { overflow:visible !important; overflow-x:clip !important; }
+@media(max-width:480px) {
+  .workshop-chips { gap:4px; }
+  .workshop-chips button { padding:0 8px; gap:4px; font-size:11px; }
+  .workshop-chips button b { min-width:0; padding:2px 4px; }
+}
