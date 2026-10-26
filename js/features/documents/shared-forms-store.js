@@ -36,6 +36,7 @@ const SharedFormsStore = (() => {
   function builtins() {
     return [
       {id:'builtin_tnds',name:'Đề nghị tạm ứng bồi thường TNDS',originalName:'tnds-advance.docx',url:'assets/templates/tnds-advance.docx'},
+      {id:'builtin_scene_blank',name:'Sơ đồ hiện trường (mẫu để khách ký trước)',originalName:'scene-diagram-blank.docx',url:'assets/templates/scene-diagram-blank.docx'},
       {id:'builtin_collection',name:'Hướng dẫn thu thập hồ sơ',originalName:'collection-guide.docx',url:'assets/templates/collection-guide.docx'}
     ].map(file => ({...file,source:'builtin',category:'Biểu mẫu hệ thống',mimeType:types.docx}));
   }

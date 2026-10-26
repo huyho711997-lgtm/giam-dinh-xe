@@ -301,6 +301,15 @@
       "url": "assets/shared-form-previews/builtin_collection.pdf",
       "size": 232157,
       "pages": 2
+    },
+    "builtin_scene_blank": {
+      "source": "builtin",
+      "sourceUrl": "assets/templates/scene-diagram-blank.docx",
+      "sourceModifiedTime": null,
+      "sourceSha256": "44c90106d3acb518e44f24828d03d68088496cfd8a7923a5bf41d09a44e8dfda",
+      "url": "assets/shared-form-previews/builtin_scene_blank.pdf",
+      "size": 58361,
+      "pages": 1
     }
   }
 }
