@@ -137,6 +137,27 @@ const SharedFormsStore = (() => {
     } while (pageToken);
     return files;
   }
+  // Đẩy file lên đúng thư mục Drive qua Apps Script (chạy bằng tài khoản chủ Drive; ứng dụng chỉ đọc Drive bằng API key).
+  const driveEndpoint = () => typeof CONFIG === 'undefined' ? '' : String(CONFIG.CLAIM_DOCUMENTS_ENDPOINT || '').trim();
+  const driveMaxBytes = 10 * 1024 * 1024;
+  const base64 = blob => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(',')[1] || ''); reader.onerror = () => reject(new Error('Không đọc được file.')); reader.readAsDataURL(blob); });
+  async function uploadToDrive(file, target) {
+    const owner = requireUser(), mimeType = validateFile(file);
+    if (!driveEndpoint()) throw new Error('Chưa cấu hình dịch vụ đẩy file lên Google Drive (CLAIM_DOCUMENTS_ENDPOINT).');
+    if (file.size > driveMaxBytes) throw new Error('Tải lên Google Drive tối đa 10 MB mỗi file.');
+    if (!parseFolder(target.folderId) || !parseFolder(target.rootFolderId)) throw new Error('Thư mục đích không hợp lệ.');
+    const ext = extension(file.name), typed = String(target.name || '').trim();
+    const name = ((typed || file.name).replace(/[\x00-\x1f<>:"/\\|?*]/g,'_').slice(0,180).replace(/\.[A-Za-z0-9]{1,5}$/,m => m.slice(1).toLowerCase() === ext ? '' : m) || 'Bieu mau') + '.' + ext;
+    const token = await owner.getIdToken(), data = await base64(file);
+    const requestId = target.requestId || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2) + '0123456789abcdef');
+    let response;
+    try { response = await fetch(driveEndpoint(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'forms_upload',token,folderId:target.folderId,rootFolderId:target.rootFolderId,name,requestId,data}),credentials:'omit',redirect:'follow',signal:AbortSignal.timeout(120000)}); }
+    catch { throw new Error('Không kết nối được dịch vụ Google Drive. Kiểm tra mạng rồi thử lại.'); }
+    let result; try { result = await response.json(); } catch { throw new Error('Dịch vụ Google Drive trả về dữ liệu không hợp lệ.'); }
+    if (!response.ok || !result?.ok) throw new Error(result?.error || 'Không tải được file lên Google Drive.');
+    if (user()?.uid !== owner.uid) throw new Error('Phiên đăng nhập đã thay đổi.');
+    return {...result.file,source:'drive',originalName:result.file.name,category:'Google Drive',updatedAt:result.file.modifiedTime};
+  }
   async function loadDriveConfig() {
     requireUser();
     const saved = (await dbNodeInstance.ref(root + '/drive').once('value')).val();
@@ -159,5 +180,5 @@ const SharedFormsStore = (() => {
     await dbNodeInstance.ref(root + '/drive').set(config);
     return config;
   }
-  return {user,admin,canManage,extension,normalize,kind,validateFile,safeUrl,builtins,subscribe,upload,update,remove,parseFolder,listDrive,loadDriveConfig,defaultDriveConfig,saveDriveConfig,driveRequest,maxBytes,types};
+  return {user,admin,canManage,extension,normalize,kind,validateFile,safeUrl,builtins,subscribe,upload,uploadToDrive,driveEndpoint,update,remove,parseFolder,listDrive,loadDriveConfig,defaultDriveConfig,saveDriveConfig,driveRequest,maxBytes,types};
 })();

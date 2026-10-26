@@ -38,3 +38,11 @@ Trạng thái của ứng dụng hiện tại: đã cấp quyền và triển kh
 Giới hạn: Apps Script có hạn mức thực thi của tài khoản Google; giới hạn 10 MB/file, không tải tiếp phần dở dang. Thời gian thực tế phụ thuộc mạng và Drive. Không chia sẻ công khai hay đồng bộ các file Word đã xuất trước khi kích hoạt. Thumbnails Drive chưa sẵn sàng sẽ dùng bản gốc, vẫn qua dịch vụ xác thực.
 
 Tài liệu gốc: https://developers.google.com/apps-script/guides/web · https://developers.google.com/apps-script/guides/content · https://firebase.google.com/docs/reference/rest/auth#section-get-account-info
+
+
+## Tải biểu mẫu lên đúng thư mục Google Drive (trang Biểu mẫu dùng chung)
+
+- Thêm vào Script Properties: `FORMS_ROOT_FOLDER_ID` = ID thư mục gốc kho biểu mẫu (đúng thư mục đã bấm "Kết nối Drive" trong ứng dụng). Chỉ ghi được vào thư mục gốc này và các thư mục con.
+- Tài khoản chạy script phải có quyền **chỉnh sửa** thư mục đó (chủ sở hữu hoặc được chia sẻ quyền Editor). UID người dùng phải nằm trong `ALLOWED_UIDS`.
+- Sau khi cập nhật `Code.gs`, tạo phiên bản mới trong Manage deployments (giữ nguyên URL `/exec`).
+- Trong ứng dụng: mở tab **Kho Google Drive**, vào thư mục cần thiết, bấm **Tải biểu mẫu lên** → file được đẩy vào đúng thư mục đang mở (tối đa 10 MB/file; trùng tên sẽ thêm số thứ tự, không ghi đè). Tab **Thư viện ứng dụng** vẫn tải lên Cloudinary như trước.

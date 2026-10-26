@@ -56,17 +56,24 @@ const SharedForms = (() => {
   }
   function uploadDialog() {
     if (!SharedFormsStore.user()) { triggerToast('Vui lòng đăng nhập để tải file lên.','warning'); return; }
-    const node = makeDialog('Tải biểu mẫu lên','<label class="sf-drop"><input name="files" type="file" multiple required accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp"><span class="sf-drop-icon" aria-hidden="true">' + icon('upload') + '</span><span class="sf-drop-copy"><strong>Kéo thả file vào đây hoặc <u>chọn từ máy</u></strong><small>PDF, Word, Excel, CSV, TXT và ảnh · tối đa 20 MB/file · chọn được nhiều file</small></span></label><ul class="sf-picked" data-sf-picked hidden></ul><p class="sf-field-hint" data-sf-multi-hint hidden>Tải nhiều file: dùng tên file gốc; phân loại và ghi chú áp dụng cho tất cả.</p>' + detailsMarkup() + '<div class="sf-upload-progress" hidden><progress max="100" value="0" aria-label="Tiến trình tải lên"></progress><span data-sf-progress-text></span></div>',{icon:'upload',description:'Thêm biểu mẫu vào thư viện dùng chung của ứng dụng.',submit:'Tải lên',submitIcon:'upload'});
+    // Đang ở Kho Google Drive → đẩy file vào đúng thư mục đang mở; tab Thư viện ứng dụng → Cloudinary như trước.
+    const toDrive = source === 'drive' && !!config;
+    if (toDrive && !SharedFormsStore.driveEndpoint()) { triggerToast('Chưa cấu hình dịch vụ đẩy file lên Google Drive. Liên hệ quản trị viên.','warning'); return; }
+    const target = toDrive ? {folderId:stack.at(-1)?.id || config.folderId,rootFolderId:config.folderId,folderName:stack.at(-1)?.name || config.folderName || 'Thư mục gốc',path:stack.map(item => item.name).join(' › ')} : null;
+    const fileLimitText = toDrive ? '10 MB' : '20 MB';
+    const node = makeDialog(toDrive ? 'Tải lên Google Drive' : 'Tải biểu mẫu lên','<label class="sf-drop"><input name="files" type="file" multiple required accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp"><span class="sf-drop-icon" aria-hidden="true">' + icon('upload') + '</span><span class="sf-drop-copy"><strong>Kéo thả file vào đây hoặc <u>chọn từ máy</u></strong><small>PDF, Word, Excel, CSV, TXT và ảnh · tối đa ' + fileLimitText + '/file · chọn được nhiều file</small></span></label><ul class="sf-picked" data-sf-picked hidden></ul><p class="sf-field-hint" data-sf-multi-hint hidden>Tải nhiều file: dùng tên file gốc; phân loại và ghi chú áp dụng cho tất cả.</p>' + detailsMarkup() + '<div class="sf-upload-progress" hidden><progress max="100" value="0" aria-label="Tiến trình tải lên"></progress><span data-sf-progress-text></span></div>',{icon:'upload',description:toDrive ? 'File sẽ được đẩy vào thư mục Google Drive: ' + target.path : 'Thêm biểu mẫu vào thư viện dùng chung của ứng dụng.',submit:'Tải lên',submitIcon:'upload'});
     const form = node.querySelector('form');
     const status = node.querySelector('[role="status"]');
     const submit = node.querySelector('[type="submit"]'), submitLabel = node.querySelector('[data-sf-submit-label]');
     const picked = node.querySelector('[data-sf-picked]'), nameField = node.querySelector('[data-sf-name-field]'), multiHint = node.querySelector('[data-sf-multi-hint]');
     let pending = [];
+    if (toDrive) node.querySelectorAll('select[name="category"],textarea[name="notes"],input[name="notes"]').forEach(field => { const wrapper = field.closest('.sf-field') || field; wrapper.hidden = true; });
+    const driveLimit = file => { if (toDrive && file.size > 10 * 1024 * 1024) throw new Error('Tải lên Google Drive tối đa 10 MB mỗi file.'); };
     // Danh sách file đã chọn: icon theo loại + tên + dung lượng + lỗi kiểm tra ngay khi chọn.
     const showPicked = () => {
       picked.hidden = !pending.length;
       picked.innerHTML = pending.map((file,index) => {
-        let error = ''; try { SharedFormsStore.validateFile(file); } catch (problem) { error = problem.message; }
+        let error = ''; try { SharedFormsStore.validateFile(file); driveLimit(file); } catch (problem) { error = problem.message; }
         const kind = error ? 'invalid' : SharedFormsStore.kind({name:file.name,mimeType:file.type});
         const badge = error ? (SharedFormsStore.extension(file.name).toUpperCase().slice(0,4) || 'FILE') : (icons[kind] || 'FILE');
         return '<li class="' + (error ? 'is-invalid' : '') + '"><span class="sf-file-icon sf-kind-' + kind + '">' + escape(badge) + '</span><span class="sf-picked-copy"><strong>' + escape(file.name) + '</strong><small>' + escape(error || sizeText(file.size)) + '</small></span><button type="button" class="sf-icon-button sf-picked-remove" data-sf-unpick="' + index + '" aria-label="Bỏ chọn ' + escape(file.name) + '" title="Bỏ chọn">' + icon('close') + '</button></li>';
@@ -75,7 +82,7 @@ const SharedForms = (() => {
       status.textContent = '';
       const invalid = picked.querySelectorAll('.is-invalid').length;
       submitLabel.textContent = pending.length > 1 ? 'Tải lên ' + pending.length + ' file' : 'Tải lên';
-      if (invalid) status.textContent = invalid + ' file không đúng định dạng hoặc quá 20 MB – bấm × để bỏ chọn.';
+      if (invalid) status.textContent = invalid + ' file không đúng định dạng hoặc quá ' + fileLimitText + ' – bấm × để bỏ chọn.';
       submit.disabled = !pending.length || invalid > 0;
     };
     form.elements.files.onchange = () => { pending = [...form.elements.files.files]; showPicked(); };
@@ -97,7 +104,7 @@ const SharedForms = (() => {
     form.onsubmit = async event => {
       event.preventDefault();
       if (!pending.length) { status.textContent = 'Vui lòng chọn file cần tải lên.'; return; }
-      try { pending.forEach(SharedFormsStore.validateFile); } catch (error) { status.textContent = error.message; return; }
+      try { pending.forEach(file => { SharedFormsStore.validateFile(file); driveLimit(file); }); } catch (error) { status.textContent = error.message; return; }
       const details = {name:pending.length === 1 ? form.elements.name.value : '',category:form.elements.category.value,notes:form.elements.notes.value};
       const progress = node.querySelector('.sf-upload-progress progress'), progressBox = node.querySelector('.sf-upload-progress'), progressText = node.querySelector('[data-sf-progress-text]');
       const failed = [];
@@ -108,15 +115,21 @@ const SharedForms = (() => {
       for (const file of pending) {
         try {
           progressText.textContent = 'Đang tải ' + (completed + failed.length + 1) + '/' + total + ': ' + file.name;
-          await SharedFormsStore.upload(file,details,percent => { progress.value = percent; });
+          if (toDrive) { progress.value = 30; await SharedFormsStore.uploadToDrive(file,{...target,name:details.name,requestId:file.sfRequestId || (file.sfRequestId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(36).slice(2) + '0123456789abcdef'))}); progress.value = 100; }
+          else await SharedFormsStore.upload(file,details,percent => { progress.value = percent; });
           completed++;
         } catch (error) { failed.push({file,message:error.message}); }
       }
       busy(node,false);
       if (!failed.length) {
         if (dialog === node) closeDialog();
-        if (host) selectSource('app');
-        triggerToast('Đã thêm ' + completed + ' biểu mẫu vào thư viện.');
+        if (toDrive) {
+          triggerToast('Đã tải ' + completed + ' file lên thư mục “' + target.folderName + '” trên Google Drive.' + (config.apiKey ? '' : ' Danh sách sẽ hiện sau khi đồng bộ danh mục Drive.'));
+          if (host && source === 'drive' && stack.at(-1)?.id === target.folderId) loadFolder();
+        } else {
+          if (host) selectSource('app');
+          triggerToast('Đã thêm ' + completed + ' biểu mẫu vào thư viện.');
+        }
       } else {
         pending = failed.map(item => item.file);
         submitLabel.textContent = 'Thử lại file lỗi'; showPicked(); progressBox.hidden = true;

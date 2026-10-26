@@ -73,10 +73,69 @@ function record_(file, source) {
   let meta = {}; try { meta = JSON.parse(file.getDescription() || '{}'); } catch (_) {}
   return {id:file.getId(),name:file.getName(),size:file.getSize(),mimeType:file.getMimeType(),createdAt:file.getDateCreated().toISOString(),source,uploadedBy:meta.uploadedBy || ''};
 }
+// ---- Biểu mẫu dùng chung: đẩy file lên đúng thư mục đang mở trong kho Google Drive ----------------
+// Cần Script Property FORMS_ROOT_FOLDER_ID = ID thư mục gốc kho biểu mẫu (cùng thư mục đã "Kết nối Drive" trong ứng dụng).
+// Chỉ ghi được vào thư mục gốc đó hoặc thư mục con của nó; tài khoản chạy script phải có quyền chỉnh sửa thư mục.
+const FORMS_EXTENSIONS = {pdf:'application/pdf',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',csv:'text/csv',txt:'text/plain',jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp'};
+
+function authorizeUser_(request, props) {
+  const key = props.getProperty('FIREBASE_API_KEY');
+  const allowed = (props.getProperty('ALLOWED_UIDS') || '').split(',').map(x => x.trim()).filter(Boolean);
+  if (!key || !allowed.length) throw new Error('Quản trị viên chưa cấu hình dịch vụ Google Drive.');
+  if (typeof request.token !== 'string' || request.token.length > 10000) throw new Error('Yêu cầu không hợp lệ.');
+  const result = fetchJson_('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + encodeURIComponent(key), {method:'post',contentType:'application/json',payload:JSON.stringify({idToken:request.token})});
+  const user = result.users && result.users[0];
+  if (!user || user.disabled || !allowed.includes(user.localId)) throw new Error('Tài khoản chưa được cấp quyền tải file lên Google Drive.');
+  return {localId:user.localId};
+}
+
+function insideFolder_(folder, rootId) {
+  let current = folder;
+  for (let depth = 0; current && depth < 20; depth++) {
+    if (current.getId() === rootId) return true;
+    const parents = current.getParents();
+    current = parents.hasNext() ? parents.next() : null;
+  }
+  return false;
+}
+
+function formsUpload_(request, props) {
+  const auth = authorizeUser_(request, props);
+  const rootId = props.getProperty('FORMS_ROOT_FOLDER_ID');
+  if (!rootId) throw new Error('Quản trị viên cần thêm FORMS_ROOT_FOLDER_ID vào Script Properties.');
+  if (!/^[\w-]{8,100}$/.test(request.folderId || '') || request.rootFolderId !== rootId) throw new Error('Thư mục đích không hợp lệ.');
+  const fileName = safeName_(request.name), ext = fileName.split('.').pop().toLowerCase(), mime = FORMS_EXTENSIONS[ext];
+  if (!mime || !/^[\w-]{16,80}$/.test(request.requestId || '')) throw new Error('Định dạng tệp không được hỗ trợ.');
+  if (typeof request.data !== 'string' || !/^[A-Za-z0-9+/]*={0,2}$/.test(request.data)) throw new Error('Dữ liệu tệp không hợp lệ.');
+  const bytes = Utilities.base64Decode(request.data);
+  if (!bytes.length || bytes.length > MAX_FILE_BYTES) throw new Error('Tệp phải có nội dung và không vượt quá 10 MB.');
+  let folder;
+  try { folder = DriveApp.getFolderById(request.folderId); } catch (_) { throw new Error('Không tìm thấy thư mục đích trên Google Drive.'); }
+  if (folder.isTrashed() || !insideFolder_(folder, rootId)) throw new Error('Thư mục đích nằm ngoài kho biểu mẫu.');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('Kho đang bận. Vui lòng thử lại.');
+  try {
+    // Gửi lại cùng requestId (mất phản hồi) thì trả bản đã tạo, không tạo trùng.
+    const same = folder.getFilesByName(fileName);
+    while (same.hasNext()) {
+      const file = same.next(); let meta = {}; try { meta = JSON.parse(file.getDescription()); } catch (_) {}
+      if (meta.requestId === request.requestId && meta.uploadedBy === auth.localId) return {ok:true,file:{id:file.getId(),name:file.getName(),size:file.getSize(),mimeType:file.getMimeType(),modifiedTime:file.getLastUpdated().toISOString()}};
+    }
+    // Trùng tên với file khác → thêm số thứ tự, không ghi đè.
+    let finalName = fileName, count = 1;
+    const dot = fileName.lastIndexOf('.'), stem = fileName.slice(0, dot), tail = fileName.slice(dot);
+    while (folder.getFilesByName(finalName).hasNext()) finalName = stem + ' (' + (++count) + ')' + tail;
+    const created = folder.createFile(Utilities.newBlob(bytes, mime, finalName));
+    created.setDescription(JSON.stringify({requestId:request.requestId,uploadedBy:auth.localId,source:'shared-forms'}));
+    return {ok:true,file:{id:created.getId(),name:finalName,size:bytes.length,mimeType:mime,modifiedTime:created.getLastUpdated().toISOString()}};
+  } finally { lock.releaseLock(); }
+}
+
 function doPost(e) {
   try {
     if (!e.postData || e.postData.contents.length > MAX_FILE_BYTES * 1.4 + 20000) throw new Error('Mỗi file tối đa 10 MB.');
     const request = JSON.parse(e.postData.contents);
+    if (request.action === 'forms_upload') return jsonResponse_(formsUpload_(request, PropertiesService.getScriptProperties()));
     if (!['list','upload','download','thumbnail','thumbnails','remove'].includes(request.action)) throw new Error('Thao tác không hợp lệ.');
     const props = PropertiesService.getScriptProperties(), auth = authorize_(request, props);
     const rootId = props.getProperty('ROOT_FOLDER_ID');
