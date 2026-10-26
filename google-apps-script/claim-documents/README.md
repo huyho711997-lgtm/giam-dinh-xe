@@ -45,4 +45,5 @@ Tài liệu gốc: https://developers.google.com/apps-script/guides/web · https
 - Thêm vào Script Properties: `FORMS_ROOT_FOLDER_ID` = ID thư mục gốc kho biểu mẫu (đúng thư mục đã bấm "Kết nối Drive" trong ứng dụng). Chỉ ghi được vào thư mục gốc này và các thư mục con.
 - Tài khoản chạy script phải có quyền **chỉnh sửa** thư mục đó (chủ sở hữu hoặc được chia sẻ quyền Editor). UID người dùng phải nằm trong `ALLOWED_UIDS`.
 - Sau khi cập nhật `Code.gs`, tạo phiên bản mới trong Manage deployments (giữ nguyên URL `/exec`).
+- Quản trị viên có nút **Xóa** ở cột Thao tác của Kho Google Drive: file được chuyển vào thùng rác Drive (khôi phục được), chỉ áp dụng cho file trong kho `FORMS_ROOT_FOLDER_ID`. Cần Deploy phiên bản mới của `Code.gs` (hành động `forms_delete`).
 - Trong ứng dụng: mở tab **Kho Google Drive**, vào thư mục cần thiết, bấm **Tải biểu mẫu lên** → file được đẩy vào đúng thư mục đang mở (tối đa 10 MB/file; trùng tên sẽ thêm số thứ tự, không ghi đè). Tab **Thư viện ứng dụng** vẫn tải lên Cloudinary như trước.

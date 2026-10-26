@@ -131,11 +131,31 @@ function formsUpload_(request, props) {
   } finally { lock.releaseLock(); }
 }
 
+// Xóa biểu mẫu: chỉ chuyển vào thùng rác Google Drive (khôi phục được 30 ngày), không xóa vĩnh viễn.
+function formsDelete_(request, props) {
+  const auth = authorizeUser_(request, props);
+  const rootId = props.getProperty('FORMS_ROOT_FOLDER_ID');
+  if (!rootId) throw new Error('Quản trị viên cần thêm FORMS_ROOT_FOLDER_ID vào Script Properties.');
+  if (!/^[\w-]{8,100}$/.test(request.fileId || '') || request.rootFolderId !== rootId) throw new Error('Yêu cầu không hợp lệ.');
+  let file;
+  try { file = DriveApp.getFileById(request.fileId); } catch (_) { throw new Error('Không tìm thấy biểu mẫu trên Google Drive (có thể đã bị xóa).'); }
+  if (file.isTrashed()) return {ok:true,alreadyTrashed:true};
+  const parents = file.getParents();
+  let inside = false;
+  while (parents.hasNext()) if (insideFolder_(parents.next(), rootId)) { inside = true; break; }
+  if (!inside) throw new Error('Biểu mẫu nằm ngoài kho biểu mẫu.');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('Kho đang bận. Vui lòng thử lại.');
+  try { file.setTrashed(true); } finally { lock.releaseLock(); }
+  return {ok:true,id:request.fileId,deletedBy:auth.localId};
+}
+
 function doPost(e) {
   try {
     if (!e.postData || e.postData.contents.length > MAX_FILE_BYTES * 1.4 + 20000) throw new Error('Mỗi file tối đa 10 MB.');
     const request = JSON.parse(e.postData.contents);
     if (request.action === 'forms_upload') return jsonResponse_(formsUpload_(request, PropertiesService.getScriptProperties()));
+    if (request.action === 'forms_delete') return jsonResponse_(formsDelete_(request, PropertiesService.getScriptProperties()));
     if (!['list','upload','download','thumbnail','thumbnails','remove'].includes(request.action)) throw new Error('Thao tác không hợp lệ.');
     const props = PropertiesService.getScriptProperties(), auth = authorize_(request, props);
     const rootId = props.getProperty('ROOT_FOLDER_ID');

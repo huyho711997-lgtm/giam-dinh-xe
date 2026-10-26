@@ -156,7 +156,20 @@ const SharedForms = (() => {
       finally { busy(node,false); }
     };
   }
+  async function removeDriveFile(file) {
+    if (!file || !config || !SharedFormsStore.canDeleteDrive(file)) return;
+    if (!await showConfirmModal('Xóa biểu mẫu khỏi Google Drive?', 'File “' + file.name + '” sẽ được chuyển vào thùng rác của Google Drive (có thể khôi phục tại đó) và biến mất khỏi danh sách dùng chung.', 'Xóa biểu mẫu')) return;
+    try {
+      await SharedFormsStore.removeFromDrive(file,config.folderId);
+      driveFiles = driveFiles.filter(item => item.id !== file.id);
+      SharedFormsViewer.close();
+      paint();
+      triggerToast('Đã chuyển “' + file.name + '” vào thùng rác Google Drive.' + (config.apiKey ? '' : ' Danh mục tĩnh sẽ cập nhật sau khi đồng bộ.'));
+      if (config.apiKey) loadFolder();
+    } catch (error) { triggerToast(error.message || 'Chưa xóa được biểu mẫu.','error'); }
+  }
   async function removeFile(file) {
+    if (file?.source === 'drive') return removeDriveFile(file);
     if (!SharedFormsStore.canManage(file)) return;
     if (!await showConfirmModal('Xóa khỏi thư viện?', 'Biểu mẫu “' + file.name + '” sẽ được gỡ khỏi danh sách dùng chung. File gốc vẫn lưu trên Cloudinary và có thể quản lý tại đó.', 'Xóa biểu mẫu')) return;
     try { await SharedFormsStore.remove(file); triggerToast('Đã xóa biểu mẫu khỏi thư viện.'); }
@@ -230,7 +243,7 @@ const SharedForms = (() => {
     });
   }
   function actions(file,folder) {
-    return '<div class="sf-card-actions"><button class="sf-icon-button" type="button" data-sf-open="' + escape(file.id) + '" aria-label="' + (folder ? 'Mở thư mục ' : 'Xem ') + escape(file.name) + '" title="' + (folder ? 'Mở thư mục' : 'Xem trong trang') + '">' + icon(folder ? 'arrow' : 'eye') + '</button>' + (!folder ? '<button class="sf-icon-button" type="button" data-sf-download="' + escape(file.id) + '" aria-label="Tải về ' + escape(file.name) + '" title="Tải về">' + icon('download') + '</button>' : '') + (SharedFormsStore.canManage(file) ? '<button class="sf-icon-button" type="button" data-sf-edit="' + escape(file.id) + '" aria-label="Sửa thông tin ' + escape(file.name) + '" title="Sửa thông tin">' + icon('tag') + '</button><button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa">' + icon('close') + '</button>' : '') + '</div>';
+    return '<div class="sf-card-actions"><button class="sf-icon-button" type="button" data-sf-open="' + escape(file.id) + '" aria-label="' + (folder ? 'Mở thư mục ' : 'Xem ') + escape(file.name) + '" title="' + (folder ? 'Mở thư mục' : 'Xem trong trang') + '">' + icon(folder ? 'arrow' : 'eye') + '</button>' + (!folder ? '<button class="sf-icon-button" type="button" data-sf-download="' + escape(file.id) + '" aria-label="Tải về ' + escape(file.name) + '" title="Tải về">' + icon('download') + '</button>' : '') + (SharedFormsStore.canDeleteDrive(file) ? '<button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa khỏi Google Drive">' + icon('trash') + '</button>' : '') + (SharedFormsStore.canManage(file) ? '<button class="sf-icon-button" type="button" data-sf-edit="' + escape(file.id) + '" aria-label="Sửa thông tin ' + escape(file.name) + '" title="Sửa thông tin">' + icon('tag') + '</button><button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa">' + icon('close') + '</button>' : '') + '</div>';
   }
   // Dạng thẻ: khối màu theo loại tệp + tên + định dạng/ngày + thao tác.
   function tile(file) {

@@ -117,6 +117,17 @@ test('restricts edit/delete to owner or admin, preserving template assets',async
   await fixture.store.remove(file);
   assert.equal(fixture.read('shared_forms/files/uploaded-file'),undefined);
 });
+test('only admins may delete Google Drive forms, and never folders',async () => {
+  const fixture = setup();
+  const driveFile = {id:'1abcDEFghiJKLmnop',name:'Quy tac.pdf',source:'drive',mimeType:'application/pdf'};
+  const folder = {...driveFile,id:'1folderFolderFolder',mimeType:'application/vnd.google-apps.folder'};
+  assert.equal(fixture.store.canDeleteDrive(driveFile),false);
+  await assert.rejects(fixture.store.removeFromDrive(driveFile,'1rootRootRootRoot'),/Chỉ quản trị viên/);
+  fixture.context.isAdmin = true;
+  assert.equal(fixture.store.canDeleteDrive(driveFile),true);
+  assert.equal(fixture.store.canDeleteDrive(folder),false);
+  assert.equal(fixture.store.canDeleteDrive({...driveFile,source:'upload'}),false);
+});
 test('requires authentication before listing and uploading',async () => {
   const fixture = setup();
   fixture.setUser(null);

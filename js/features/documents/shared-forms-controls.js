@@ -12,6 +12,7 @@ const SharedFormsControls = (() => {
     upload:'<path d="M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6"/>',
     print:'<path d="M7 8V3h10v5M7 17H3V9h18v8h-4M7 14h10v7H7zM17 11h1"/>',
     download:'<path d="M12 3v12m-4-4 4 4 4-4M4 16v5h16v-5"/>',
+    trash:'<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>',
     close:'<path d="m6 6 12 12M18 6 6 18"/>',
     expand:'<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/>',
     eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',

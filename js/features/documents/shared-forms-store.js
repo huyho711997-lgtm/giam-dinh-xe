@@ -4,6 +4,8 @@ const SharedFormsStore = (() => {
   const types = {pdf:'application/pdf',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',doc:'application/msword',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',xls:'application/vnd.ms-excel',csv:'text/csv',txt:'text/plain',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',webp:'image/webp'};
   const user = () => typeof firebase !== 'undefined' ? firebase.auth().currentUser : null;
   const admin = () => !!user() && hasUserPermission('users', 'admin');
+  // Admin được xóa file trong kho Google Drive (chuyển vào thùng rác); file thường chỉ xóa được nếu là file mình tải lên.
+  const canDeleteDrive = file => !!user() && admin() && file?.source === 'drive' && file.mimeType !== 'application/vnd.google-apps.folder';
   const canManage = file => !!user() && file?.source === 'upload' && (admin() || file.createdByUid === user().uid);
   const extension = name => String(name || '').split('.').pop().toLowerCase();
   const normalize = text => String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
@@ -159,6 +161,20 @@ const SharedFormsStore = (() => {
     if (user()?.uid !== owner.uid) throw new Error('Phiên đăng nhập đã thay đổi.');
     return {...result.file,source:'drive',originalName:result.file.name,category:'Google Drive',updatedAt:result.file.modifiedTime};
   }
+  async function removeFromDrive(file, rootFolderId) {
+    const owner = requireUser();
+    if (!canDeleteDrive(file)) throw new Error('Chỉ quản trị viên được xóa biểu mẫu trong kho Google Drive.');
+    if (!driveEndpoint()) throw new Error('Chưa cấu hình dịch vụ Google Drive (CLAIM_DOCUMENTS_ENDPOINT).');
+    if (!parseFolder(file.id) || !parseFolder(rootFolderId)) throw new Error('Biểu mẫu không hợp lệ.');
+    const token = await owner.getIdToken();
+    let response;
+    try { response = await fetch(driveEndpoint(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'forms_delete',token,fileId:file.id,rootFolderId}),credentials:'omit',redirect:'follow',signal:AbortSignal.timeout(60000)}); }
+    catch { throw new Error('Không kết nối được dịch vụ Google Drive. Kiểm tra mạng rồi thử lại.'); }
+    let result; try { result = await response.json(); } catch { throw new Error('Dịch vụ Google Drive trả về dữ liệu không hợp lệ.'); }
+    if (result?.error === 'Thao tác không hợp lệ.') throw new Error('Dịch vụ Apps Script chưa được cập nhật bản hỗ trợ xóa biểu mẫu. Quản trị viên cần Deploy phiên bản mới của Code.gs.');
+    if (!response.ok || !result?.ok) throw new Error(result?.error || 'Không xóa được biểu mẫu trên Google Drive.');
+    return true;
+  }
   async function loadDriveConfig() {
     requireUser();
     const saved = (await dbNodeInstance.ref(root + '/drive').once('value')).val();
@@ -181,5 +197,5 @@ const SharedFormsStore = (() => {
     await dbNodeInstance.ref(root + '/drive').set(config);
     return config;
   }
-  return {user,admin,canManage,extension,normalize,kind,validateFile,safeUrl,builtins,subscribe,upload,uploadToDrive,driveEndpoint,update,remove,parseFolder,listDrive,loadDriveConfig,defaultDriveConfig,saveDriveConfig,driveRequest,maxBytes,types};
+  return {user,admin,canManage,canDeleteDrive,removeFromDrive,extension,normalize,kind,validateFile,safeUrl,builtins,subscribe,upload,uploadToDrive,driveEndpoint,update,remove,parseFolder,listDrive,loadDriveConfig,defaultDriveConfig,saveDriveConfig,driveRequest,maxBytes,types};
 })();
