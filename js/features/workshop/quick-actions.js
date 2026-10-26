@@ -11,6 +11,13 @@ function syncWorkshopFilterChips() {
   Object.keys(counts).forEach(id => { const node = document.getElementById(id); if (node) node.textContent = String(counts[id]); });
   const current = window.workshopStatusFilter || 'all';
   document.querySelectorAll('[data-ws-filter]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.wsFilter === current)));
+  // Làm nổi bật duy nhất hạng mục tiếp theo cần chụp.
+  let marked = false;
+  cards.forEach(card => {
+    const isNext = !marked && !card.classList.contains('is-complete');
+    if (isNext) marked = true;
+    card.classList.toggle('is-next', isNext);
+  });
   const next = document.querySelector('.workshop-next');
   if (next) next.disabled = total > 0 && done === total;
 }
@@ -44,3 +51,8 @@ function goToNextPendingWorkshopItem() {
   target.classList.add('is-spotlight');
   setTimeout(() => target.classList.remove('is-spotlight'), 1800);
 }
+
+// Rung nhẹ khi bấm nút chụp nhanh (thiết bị hỗ trợ).
+document.addEventListener('click', event => {
+  if (event.target.closest && event.target.closest('.workshop-quick-camera') && navigator.vibrate) { try { navigator.vibrate(8); } catch (_) {} }
+}, true);
