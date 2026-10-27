@@ -1,106 +1,147 @@
 
 
-    function renderFieldReimbursementsPage(containerDOM) {
-      const container = containerDOM || document.getElementById('tabContentContainer');
-      if (!container) return;
+    // ---- Trang "Hiện trường": dùng bộ giao diện sf-* dùng chung (shared-forms) ----
+    // Trạng thái lọc/tìm kiếm được giữ ở module để realtime re-render không làm mất.
+    const fieldReimbView = { status: 'all', query: '' };
 
-      const currentUser = firebase.auth().currentUser;
-      const myUid = currentUser?.uid;
+    function fieldReimbStatusKey(r) {
+      const s = String((r && r.status) || '');
+      if (s === 'approved' || s === 'paid') return 'paid';
+      if (s === 'rejected') return 'rejected';
+      return 'new';
+    }
+
+    function fieldReimbIcon(name) {
+      const icons = (typeof SharedFormsControls !== 'undefined' && SharedFormsControls.icon) ? SharedFormsControls.icon : null;
+      return icons ? icons(name) : '';
+    }
+
+    function setFieldReimbStatus(status) {
+      fieldReimbView.status = status;
+      renderFieldReimbursementsPage();
+    }
+
+    function setFieldReimbQuery(value) {
+      fieldReimbView.query = String(value || '');
+      paintFieldReimbList();
+    }
+
+    function getFieldReimbRows() {
+      const myUid = firebase.auth().currentUser?.uid;
+      let all = Object.values(cachedFieldReimbursementsPayload || {});
+      if (!hasUserPermission('field_reimb', 'review')) all = all.filter(r => r.gdvUid === myUid);
+      return all.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    }
+
+    function paintFieldReimbList() {
+      const host = document.getElementById('fieldReimbList');
+      if (!host) return;
+      const myUid = firebase.auth().currentUser?.uid;
       const isAdmin = activeUserProfile && (
         String(activeUserProfile.role || '').trim().toLowerCase() === 'admin' ||
         activeUserProfile.isAdmin === true
       );
+      const all = getFieldReimbRows();
+      const norm = s => removeVietnameseTones(String(s || '').toLowerCase());
+      const q = norm(fieldReimbView.query.trim());
+      const rows = all.filter(r => {
+        if (fieldReimbView.status !== 'all' && fieldReimbStatusKey(r) !== fieldReimbView.status) return false;
+        return !q || norm(r.id).includes(q) || norm(r.gdvName).includes(q);
+      });
 
-      let allReimb = Object.values(cachedFieldReimbursementsPayload || {});
-      const canReview = hasUserPermission('field_reimb', 'review');
-      if (!canReview) {
-        allReimb = allReimb.filter(r => r.gdvUid === myUid);
+      const total = rows.reduce((sum, r) => sum + (Number(r.totalAmount) || 0), 0);
+      const countEl = document.getElementById('fieldReimbCount');
+      if (countEl) countEl.textContent = rows.length + ' phiếu · ' + total.toLocaleString('vi-VN') + ' đ';
+
+      if (!rows.length) {
+        const filtered = q || fieldReimbView.status !== 'all';
+        host.innerHTML = `<div class="sf-empty"><span class="fr-empty-icon">${fieldReimbIcon('file')}</span><h3>${filtered ? 'Không tìm thấy phiếu phù hợp' : 'Chưa có phiếu thanh toán nào'}</h3><p>${filtered ? 'Thử đổi từ khóa hoặc bộ lọc trạng thái.' : 'Bạn có thể tạo phiếu mới để bắt đầu.'}</p></div>`;
+        return;
       }
 
-      allReimb.sort((a,b) => b.createdAt - a.createdAt);
+      const badge = key => key === 'paid'
+        ? '<span class="fr-badge fr-paid">Đã chi trả</span>'
+        : key === 'rejected' ? '<span class="fr-badge fr-rejected">Từ chối</span>'
+        : '<span class="fr-badge fr-new">Mới tạo</span>';
+
+      host.innerHTML = `<div class="sf-table-scroll"><table class="sf-table fr-table">
+        <caption class="sf-sr-only">Danh sách phiếu thanh toán đi hiện trường</caption>
+        <thead><tr>
+          <th>Mã phiếu</th><th class="sf-col-date">Ngày tạo</th><th>Người tạo</th>
+          <th class="fr-num">Số vụ</th><th class="fr-money">Tổng thanh toán</th>
+          <th class="fr-center">Trạng thái</th><th class="sf-col-actions">Thao tác</th>
+        </tr></thead>
+        <tbody>${rows.map(r => {
+          const canDelete = isAdmin || (r.gdvUid === myUid && fieldReimbStatusKey(r) !== 'paid');
+          const id = escapeHtmlOutput(r.id);
+          return `<tr class="sf-row fr-row" tabindex="0" onclick="viewFieldReimbursementDetail('${id}')" onkeydown="if(event.key==='Enter'){viewFieldReimbursementDetail('${id}')}">
+            <td class="fr-code" data-label="Mã phiếu">${id}</td>
+            <td class="sf-col-date" data-label="Ngày tạo">${formatDateDisplay(r.createdAt)}</td>
+            <td class="fr-person" data-label="Người tạo">${escapeHtmlOutput(r.gdvName)}</td>
+            <td class="fr-num" data-label="Số vụ">${(r.items || []).length}</td>
+            <td class="fr-money" data-label="Tổng thanh toán">${(Number(r.totalAmount) || 0).toLocaleString('vi-VN')} đ</td>
+            <td class="fr-center" data-label="Trạng thái">${badge(fieldReimbStatusKey(r))}</td>
+            <td class="sf-col-actions"><div class="fr-actions">
+              <button class="sf-icon-button" type="button" title="Xem chi tiết" aria-label="Xem chi tiết ${id}" onclick="event.stopPropagation(); viewFieldReimbursementDetail('${id}')">${fieldReimbIcon('eye')}</button>
+              ${canDelete ? `<button class="sf-icon-button sf-danger" type="button" title="Xoá phiếu này" aria-label="Xoá phiếu ${id}" onclick="event.stopPropagation(); deleteFieldReimbursement('${id}')">${fieldReimbIcon('trash')}</button>` : ''}
+            </div></td>
+          </tr>`;
+        }).join('')}</tbody></table></div>`;
+    }
+
+    function renderFieldReimbursementsPage(containerDOM) {
+      const container = containerDOM || document.getElementById('tabContentContainer');
+      if (!container) return;
 
       const canCreate = hasUserPermission('field_reimb', 'create');
+      const all = getFieldReimbRows();
+      const counts = { all: all.length, new: 0, paid: 0, rejected: 0 };
+      all.forEach(r => { counts[fieldReimbStatusKey(r)]++; });
+      const tabs = [['all', 'Tất cả'], ['new', 'Mới tạo'], ['paid', 'Đã chi trả'], ['rejected', 'Từ chối']];
+
+      // Giữ focus + vị trí con trỏ của ô tìm kiếm khi realtime re-render
+      const prev = document.getElementById('fieldReimbSearch');
+      const hadFocus = prev && document.activeElement === prev;
+      const caret = hadFocus ? prev.selectionStart : null;
 
       container.innerHTML = `
-        <!-- ADAPTIVE HERO BANNER HEADER -->
-        <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px 28px; margin-bottom: 22px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-          <!-- Decorative Orbs -->
-          <div style="position: absolute; right: -50px; top: -50px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(216,180,109,0.2) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(24px);"></div>
-          <div style="position: absolute; left: 5%; bottom: -60px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
-          
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
-            <div style="flex: 1; min-width: 320px;">
-              <div style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); border-radius: 16px; font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;">
-                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                Thanh toán & Chi phí
+        <section class="sf-workspace fr-workspace">
+          <header class="sf-page-head">
+            <div class="sf-page-title">
+              <span class="sf-page-emblem">${fieldReimbIcon('truck')}</span>
+              <div>
+                <div class="sf-eyebrow">Thanh toán &amp; Chi phí · Tasco DLK</div>
+                <h1>Phiếu thanh toán đi hiện trường</h1>
+                <p>Quản lý các đề nghị thanh toán chi phí di chuyển khi giám định hiện trường.</p>
               </div>
-              <h1 style="font-size: 28px; font-weight: 900; background: linear-gradient(135deg, var(--text-main) 0%, #9ca3af 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 10px 0; letter-spacing: -0.02em; line-height: 1.2;">
-                Phiếu thanh toán đi hiện trường
-              </h1>
-              <p style="color: var(--text-soft); font-size: 13.5px; line-height: 1.5; margin: 0; max-width: 500px;">
-                Quản lý các đề nghị thanh toán chi phí di chuyển khi giám định hiện trường
-              </p>
             </div>
-            
-            <div style="display: flex; gap: 12px; align-items: center;">
-              ${canCreate ? `
-                <button class="btn-premium" onclick="openCreateFieldReimbursementModal()" style="padding: 10px 20px; border-radius: 12px; box-shadow: 0 8px 24px rgba(216,180,109,0.25); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 12px 28px rgba(216,180,109,0.35)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 8px 24px rgba(216,180,109,0.25)'">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> TẠO PHIẾU MỚI
-                </button>
-              ` : ''}
+            <div class="sf-toolbar">
+              <button class="sf-button" type="button" onclick="renderFieldReimbursementsPage()" title="Làm mới danh sách">${fieldReimbIcon('refresh')} Làm mới</button>
+              ${canCreate ? `<button class="sf-button sf-primary" type="button" onclick="openCreateFieldReimbursementModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Tạo phiếu mới</button>` : ''}
             </div>
-          </div>
-        </div>
+          </header>
 
-        <div class="p-card" style="padding: 0; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid var(--border-strong);">
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-              <thead style="background: var(--bg-soft); border-bottom: 1px solid var(--border);">
-                <tr>
-                  <th style="padding: 14px 24px; font-weight: 700; color: var(--text-soft);">Mã Phiếu</th>
-                  <th style="padding: 14px 24px; font-weight: 700; color: var(--text-soft);">Ngày tạo</th>
-                  <th style="padding: 14px 24px; font-weight: 700; color: var(--text-soft);">Người tạo</th>
-                  <th style="padding: 14px 24px; text-align: center; font-weight: 700; color: var(--text-soft);">Số lượng vụ</th>
-                  <th style="padding: 14px 24px; text-align: right; font-weight: 700; color: var(--text-soft);">Tổng thanh toán</th>
-                  <th style="padding: 14px 24px; text-align: center; font-weight: 700; color: var(--text-soft);">Trạng thái</th>
-                  <th style="padding: 14px 24px; text-align: center; font-weight: 700; color: var(--text-soft);">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody style="color: var(--text-main);">
-                ${allReimb.length === 0 ? `
-                  <tr><td colspan="7"><div class="empty-state-premium" style="padding: 60px 20px; text-align: center; color: var(--text-soft);"><div class="empty-icon" style="margin-bottom: 16px;">${SVGS.SEARCH}</div><strong>Chưa có phiếu thanh toán nào</strong><p style="font-size: 13px; margin-top: 4px;">Bạn có thể tạo phiếu mới để bắt đầu.</p></div></td></tr>
-                ` : allReimb.map(r => {
-                  let statusHtml = '';
-                    if (r.status === 'pending' || r.status === 'new') statusHtml = '<span style="background: rgba(59,130,246,0.15); color: #3b82f6; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Mới tạo</span>';
-                    else if (r.status === 'approved' || r.status === 'paid') statusHtml = '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Đã chi trả</span>';
-                    else if (r.status === 'rejected') statusHtml = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 4px 10px; border-radius: 99px; font-weight: 750;">Từ chối</span>';
-
-                    return `
-                      <tr onclick="viewFieldReimbursementDetail('${r.id}')" style="border-bottom: 1px solid var(--border); transition: background 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background='transparent'">
-                        <td style="padding: 18px 24px; font-weight: 750; color: var(--primary);">${escapeHtmlOutput(r.id)}</td>
-                        <td style="padding: 18px 24px; color: var(--text-soft);">${formatDateDisplay(r.createdAt)}</td>
-                        <td style="padding: 18px 24px;"><strong>${escapeHtmlOutput(r.gdvName)}</strong></td>
-                        <td style="padding: 18px 24px; text-align: center;"><strong>${(r.items || []).length}</strong></td>
-                        <td style="padding: 18px 24px; text-align: right; font-weight: 850; color: #10b981;">${r.totalAmount ? r.totalAmount.toLocaleString('vi-VN') : '0'} đ</td>
-                        <td style="padding: 18px 24px; text-align: center;">${statusHtml}</td>
-                        <td style="padding: 18px 24px; text-align: center;">
-                          <div style="display: flex; justify-content: center;">
-                            ${( isAdmin || ( r.gdvUid === myUid && r.status !== 'approved' && r.status !== 'paid' ) ) ? `
-                              <button style="background: rgba(239,68,68,0.08); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); padding: 8px; border-radius: 8px; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.15)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'" onclick="if(typeof event !== 'undefined') event.stopPropagation(); deleteFieldReimbursement('${r.id}')" title="Xoá phiếu này">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path></svg>
-                              </button>
-                            ` : '-'}
-                          </div>
-                        </td>
-                      </tr>
-                    `;
-                  }).join('')}
-                </tbody>
-              </table>
+          <section class="sf-library">
+            <div class="sf-library-bar">
+              <div class="sf-sources" role="group" aria-label="Lọc theo trạng thái">
+                ${tabs.map(([key, label]) => `<button class="sf-source-tab" type="button" aria-pressed="${fieldReimbView.status === key}" onclick="setFieldReimbStatus('${key}')">${label} <span class="fr-tab-count">${counts[key]}</span></button>`).join('')}
+              </div>
+              <span class="sf-count" id="fieldReimbCount"></span>
             </div>
-          </div>
-        </div>
-      `;
+            <div class="sf-library-filters">
+              <div class="sf-controls">
+                <label class="sf-search">${fieldReimbIcon('search')}<span class="sf-sr-only">Tìm phiếu</span><input id="fieldReimbSearch" type="search" placeholder="Tìm theo mã phiếu hoặc người tạo…" autocomplete="off" value="${escapeHtmlOutput(fieldReimbView.query)}" oninput="setFieldReimbQuery(this.value)"></label>
+              </div>
+            </div>
+            <div id="fieldReimbList"></div>
+          </section>
+        </section>`;
+
+      paintFieldReimbList();
+      if (hadFocus) {
+        const input = document.getElementById('fieldReimbSearch');
+        if (input) { input.focus(); try { input.setSelectionRange(caret, caret); } catch (e) {} }
+      }
     }
 
 

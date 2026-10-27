@@ -1,0 +1,45 @@
+/* Trang "Hiện trường" — bổ sung nhỏ trên nền sf-* (shared-forms) */
+.fr-workspace .sf-library { box-shadow: var(--sf-shadow); }
+.fr-tab-count { display:inline-grid; place-items:center; min-width:20px; height:18px; padding:0 6px; margin-left:2px; border-radius:999px; background:var(--sf-soft); color:var(--sf-muted); font-size:10px; font-weight:750; font-variant-numeric:tabular-nums; }
+.sf-source-tab[aria-pressed="true"] .fr-tab-count { background:var(--sf-paper); color:var(--sf-gold); }
+.fr-table { min-width:760px; }
+.fr-table td { color:var(--sf-ink); font-size:12px; vertical-align:middle; }
+.fr-table td.sf-col-date { color:var(--sf-muted); }
+.fr-row { cursor:pointer; }
+.fr-row:focus-visible { outline:2px solid var(--sf-gold); outline-offset:-2px; }
+.fr-code { font-weight:800; color:var(--sf-gold); letter-spacing:.01em; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.fr-person { font-weight:650; }
+.fr-num { text-align:center; font-variant-numeric:tabular-nums; font-weight:700; }
+.fr-money { text-align:right; font-variant-numeric:tabular-nums; font-weight:800; color:var(--sf-green) !important; white-space:nowrap; }
+.fr-center { text-align:center; }
+.fr-table th.fr-money { color:var(--sf-muted) !important; }
+.fr-actions { display:flex; justify-content:flex-end; gap:2px; }
+.fr-actions .sf-icon-button:hover { background:var(--sf-soft); border-color:transparent; color:var(--sf-ink); }
+.fr-actions .sf-danger:hover { background:color-mix(in srgb,var(--sf-rose) 12%,transparent); color:var(--sf-rose); }
+.fr-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; border:1px solid transparent; font-size:10.5px; font-weight:750; white-space:nowrap; }
+.fr-badge::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+.fr-new { color:#2f6fb3; background:#e8f1fb; border-color:#cfe0f3; }
+.fr-paid { color:var(--sf-green); background:#e6f4ec; border-color:#c8e5d6; }
+.fr-rejected { color:var(--sf-rose); background:#fbeceb; border-color:#f1d2cf; }
+body:not(.light-mode) .fr-new { color:#8db9ea; background:#172a3d; border-color:#27425e; }
+body:not(.light-mode) .fr-paid { background:#183428; border-color:#28503d; }
+body:not(.light-mode) .fr-rejected { background:#3a2523; border-color:#5a3a33; }
+.fr-empty-icon { display:grid; place-items:center; width:52px; height:52px; border-radius:14px; background:var(--sf-gold-bg); color:var(--sf-gold); }
+.fr-empty-icon svg { width:24px; height:24px; }
+
+@media (max-width: 760px) {
+  .fr-table, .fr-table tbody, .fr-table tr, .fr-table td { display:block; min-width:0; width:100%; }
+  .fr-table thead { display:none; }
+  .fr-table tr.fr-row { position:relative; display:grid; grid-template-columns:1fr auto; gap:4px 12px; padding:14px; border-bottom:1px solid var(--sf-line); }
+  .fr-table tr:last-child { border-bottom:0; }
+  .fr-table td { padding:0 !important; border:0 !important; width:auto; text-align:left; }
+  .fr-table td.fr-code { grid-column:1; font-size:13px; }
+  .fr-table td.fr-center { grid-column:2; grid-row:1; text-align:right; }
+  .fr-table td.fr-person { grid-column:1 / -1; }
+  .fr-table td.sf-col-date { grid-column:1; display:block !important; font-size:11px; }
+  .fr-table td.fr-num { grid-column:1; text-align:left; font-weight:600; color:var(--sf-muted); }
+  .fr-table td.fr-num::before { content:"Số vụ: "; font-weight:500; }
+  .fr-table td.fr-money { grid-column:2; grid-row:3 / span 2; align-self:end; font-size:14px; }
+  .fr-table td.sf-col-actions { grid-column:1 / -1; min-width:0 !important; width:auto !important; padding-top:6px !important; }
+  .fr-actions { justify-content:flex-start; }
+}
