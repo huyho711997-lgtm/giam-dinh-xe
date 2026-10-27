@@ -875,6 +875,44 @@
     }
 
 
+    // Tính lại chi phí đi lại của cả phiếu theo quy tắc hiện hành (km 1 chiều ×2, <100 km 4.000đ/km, ≥100 km 3.000đ/km).
+    function planReimbursementTravelRecalc(items) {
+      let changed = 0;
+      const nextItems = (items || []).map(item => {
+        if (!item || item.vehicle !== 'Phương tiện cá nhân') return item;
+        const km = Number(item.distanceKm) || 0;
+        if (km <= 30 && !item.isSpecialCase) return item;
+        const nextCost = calculatePersonalTravelCost(km);
+        if (nextCost === (Number(item.travelCost) || 0)) return item;
+        changed++;
+        return {...item, travelCost: nextCost};
+      });
+      const totalAmount = nextItems.reduce((acc, it) => acc + ((it.calcResult && it.calcResult.finalCost) || 0) + (Number(it.travelCost) || 0) + (Number(it.perDiem) || 0) + (Number(it.hotelCost) || 0), 0);
+      return {nextItems, changed, totalAmount};
+    }
+
+
+    async function recalculateReimbursementTravelCost(batchId) {
+      const payload = cachedFieldReimbursementsPayload && cachedFieldReimbursementsPayload[batchId];
+      if (!payload) return;
+      const plan = planReimbursementTravelRecalc(payload.items);
+      if (!plan.changed) return triggerToast('Chi phí đi lại của phiếu đã đúng quy tắc, không cần tính lại.', 'success');
+      const oldTotal = Number(payload.totalAmount) || 0;
+      const ok = await showConfirmModal('Tính lại chi phí đi lại?', `${plan.changed} vụ sẽ được tính lại theo quãng đường 2 chiều (dưới 100 km: 4.000đ/km, từ 100 km: 3.000đ/km). Tổng phiếu: ${oldTotal.toLocaleString('vi-VN')}đ → ${plan.totalAmount.toLocaleString('vi-VN')}đ.`, 'Tính lại');
+      if (!ok) return;
+      try {
+        await dbNodeInstance.ref(`field_reimbursements/${batchId}`).update({items: plan.nextItems, totalAmount: plan.totalAmount});
+        logUserActivity('RECALC_FIELD_REIMB', `Tính lại chi phí đi lại phiếu ${batchId} (${oldTotal.toLocaleString('vi-VN')}đ → ${plan.totalAmount.toLocaleString('vi-VN')}đ)`);
+        triggerToast(`Đã tính lại ${plan.changed} vụ. Tổng phiếu: ${plan.totalAmount.toLocaleString('vi-VN')}đ`, 'success');
+        document.getElementById('viewFieldReimbModal')?.remove();
+        setTimeout(() => viewFieldReimbursementDetail(batchId), 500);
+      } catch (error) {
+        console.error(error);
+        triggerToast('Không cập nhật được phiếu. Kiểm tra quyền và kết nối.', 'error');
+      }
+    }
+
+
     function viewFieldReimbursementDetail(batchId) {
       const payload = cachedFieldReimbursementsPayload[batchId];
       if (!payload) return;
@@ -903,6 +941,9 @@
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             SỬA PHIẾU
           </button>
+          ${!isPaid ? `
+          <button class="btn-premium" title="Tính lại chi phí đi lại theo quãng đường 2 chiều" style="width: auto !important; padding:10px 18px; border-radius:12px; font-weight:800; background: var(--surface); color: var(--primary); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); white-space:nowrap;" onclick="recalculateReimbursementTravelCost('${payload.id}')">TÍNH LẠI ĐI LẠI</button>
+          ` : ''}
           ${!isPaid ? `
           <button class="btn-premium" style="width: auto !important; background: #10b981; color: #fff; box-shadow: 0 8px 20px rgba(16,185,129,0.25); padding:10px 20px; border-radius:12px; font-weight:800; white-space:nowrap;" onclick="actionFieldReimbursement('${payload.id}', 'paid')">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>

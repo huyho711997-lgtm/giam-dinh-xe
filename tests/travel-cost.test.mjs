@@ -19,3 +19,20 @@ test('personal vehicle travel cost doubles one-way km and prices by round-trip d
   assert.equal(calc(60), 360000);   // 120 km x 3.000
   assert.equal(calc(81), 486000);   // 162 km x 3.000
 });
+
+test('batch recalculation updates only personal-vehicle items above the free distance', () => {
+  const calcMatch = source.match(/function planReimbursementTravelRecalc[\s\S]*?\n    }\n/);
+  const ctx = vm.createContext({calculatePersonalTravelCost: calc});
+  vm.runInContext(calcMatch[0] + '\nthis.plan = planReimbursementTravelRecalc;', ctx);
+  const items = [
+    {distanceKm:60, vehicle:'Phương tiện cá nhân', travelCost:480000, calcResult:{finalCost:600000}},
+    {distanceKm:24, vehicle:'Phương tiện cá nhân', travelCost:0, calcResult:{finalCost:300000}},
+    {distanceKm:38, vehicle:'Phương tiện cá nhân', travelCost:344000, calcResult:{finalCost:400000}},
+    {distanceKm:50, vehicle:'Ô tô cơ quan', travelCost:0, calcResult:{finalCost:200000}},
+    {distanceKm:32, vehicle:'Phương tiện cá nhân', travelCost:256000, calcResult:{finalCost:200000}}
+  ];
+  const result = ctx.plan(items);
+  assert.equal(result.changed, 2);
+  assert.deepEqual(result.nextItems.map(item => item.travelCost), [360000, 0, 304000, 0, 256000]);
+  assert.equal(result.totalAmount, 600000 + 360000 + 300000 + 400000 + 304000 + 200000 + 200000 + 256000);
+});
