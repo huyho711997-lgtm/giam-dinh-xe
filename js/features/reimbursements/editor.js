@@ -954,18 +954,24 @@
     }
 
 
+    function closeFieldReimbDetail() {
+      document.getElementById('viewFieldReimbModal')?.remove();
+    }
+
     function viewFieldReimbursementDetail(batchId) {
       const payload = cachedFieldReimbursementsPayload[batchId];
       if (!payload) return;
+      closeFieldReimbDetail();
 
-      const m = document.createElement('div');
-      m.id = 'viewFieldReimbModal';
-      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(11,15,25,0.82); backdrop-filter:blur(16px); z-index:999999; display:flex; justify-content:center; align-items:center; padding:24px; overflow:hidden;';
-      
-      let statusHtml = '';
-      if (payload.status === 'pending' || payload.status === 'new') statusHtml = '<span style="background: rgba(59,130,246,0.15); color: #3b82f6; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#3b82f6; display:inline-block;"></span>Mới tạo</span>';
-      else if (payload.status === 'approved' || payload.status === 'paid') statusHtml = '<span style="background: rgba(16,185,129,0.15); color: #10b981; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#10b981; display:inline-block;"></span>Đã chi trả</span>';
-      else if (payload.status === 'rejected') statusHtml = '<span style="background: rgba(239,68,68,0.15); color: #ef4444; padding: 6px 14px; border-radius: 99px; font-weight: 800; font-size: 13px; display:inline-flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#ef4444; display:inline-block;"></span>Từ chối</span>';
+      const ic = fieldReimbIcon;
+      const money = n => (Number(n) || 0).toLocaleString('vi-VN') + ' đ';
+      const moneyOrDash = n => (Number(n) || 0) > 0 ? money(n) : '<span class="fr-dash">–</span>';
+      const id = escapeHtmlOutput(payload.id);
+
+      const key = fieldReimbStatusKey(payload);
+      const statusHtml = key === 'paid' ? '<span class="fr-badge fr-paid">Đã chi trả</span>'
+        : key === 'rejected' ? '<span class="fr-badge fr-rejected">Từ chối</span>'
+        : '<span class="fr-badge fr-new">Mới tạo</span>';
 
       const isAdmin = activeUserProfile && (
         String(activeUserProfile.role || '').trim().toLowerCase() === 'admin' ||
@@ -975,157 +981,111 @@
       const isNew = payload.status === 'pending' || payload.status === 'new' || payload.status === 'rejected';
       const isPaid = payload.status === 'approved' || payload.status === 'paid';
 
-      let headerActions = '';
+      const btn = (cls, iconName, label, onclick, title) =>
+        `<button type="button" class="sf-button ${cls}"${title ? ` title="${title}"` : ''} onclick="${onclick}">${ic(iconName)}<span>${label}</span></button>`;
+
+      // Nhóm hành động: giữ nguyên toàn bộ quyền như bản cũ
+      let primary = '';
+      let secondary = '';
+      let danger = '';
       if ((isCreator && isNew) || isAdmin) {
-        headerActions += `
-          <button class="btn-premium" style="width: auto !important; padding:10px 20px; border-radius:12px; font-weight:800; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); white-space:nowrap;" onclick="document.getElementById('viewFieldReimbModal').remove(); openCreateFieldReimbursementModal('${payload.id}')">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            SỬA PHIẾU
-          </button>
-          ${!isPaid ? `
-          <button class="btn-premium" title="Tính lại chi phí đi lại theo quãng đường 2 chiều" style="width: auto !important; padding:10px 18px; border-radius:12px; font-weight:800; background: var(--surface); color: var(--primary); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); white-space:nowrap;" onclick="recalculateReimbursementTravelCost('${payload.id}')">TÍNH LẠI ĐI LẠI</button>
-          ` : ''}
-          ${!isPaid ? `
-          <button class="btn-premium" style="width: auto !important; background: #10b981; color: #fff; box-shadow: 0 8px 20px rgba(16,185,129,0.25); padding:10px 20px; border-radius:12px; font-weight:800; white-space:nowrap;" onclick="actionFieldReimbursement('${payload.id}', 'paid')">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            ĐÁNH DẤU ĐÃ CHI TRẢ
-          </button>
-          ` : ''}
-        `;
+        secondary += btn('', 'file', 'Sửa phiếu', `closeFieldReimbDetail(); openCreateFieldReimbursementModal('${id}')`);
+        if (!isPaid) {
+          secondary += btn('', 'refresh', 'Tính lại đi lại', `recalculateReimbursementTravelCost('${id}')`, 'Tính lại chi phí đi lại theo quãng đường 2 chiều');
+          primary += btn('sf-primary', 'check', 'Đánh dấu đã chi trả', `actionFieldReimbursement('${id}', 'paid')`);
+        }
       }
-      if ((isCreator && isPaid) || (isAdmin && isPaid)) {
-        headerActions += `
-          <button class="btn-premium" style="width: auto !important; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm); padding:10px 20px; border-radius:12px; font-weight:800; white-space:nowrap;" onclick="actionFieldReimbursement('${payload.id}', 'new')">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
-            CHUYỂN VỀ MỚI TẠO
-          </button>
-        `;
+      if (isPaid && (isCreator || isAdmin)) {
+        secondary += btn('', 'refresh', 'Chuyển về mới tạo', `actionFieldReimbursement('${id}', 'new')`);
       }
       if (isAdmin || (isCreator && isNew)) {
-        headerActions += `
-          <button class="btn-premium" style="width: auto !important; background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); box-shadow: var(--shadow-sm); padding:10px 18px; border-radius:12px; font-weight:800; white-space:nowrap; cursor:pointer;" onclick="document.getElementById('viewFieldReimbModal')?.remove(); deleteFieldReimbursement('${payload.id}')">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path></svg>
-            XOÁ PHIẾU
-          </button>
-        `;
+        danger += btn('sf-danger', 'trash', 'Xoá phiếu', `closeFieldReimbDetail(); deleteFieldReimbursement('${id}')`);
       }
-      
-      headerActions += `
-        <button class="btn-premium" style="width: auto !important; white-space: nowrap; padding:10px 20px; border-radius:12px; font-weight:800; background: #3b82f6; color: #fff; box-shadow: 0 8px 20px rgba(59,130,246,0.25); " onclick="exportFieldReimbursementToExcel('${payload.id}')">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          XUẤT BẢNG KÊ
-        </button>
-        <button class="btn-premium" style="width: auto !important; white-space: nowrap; padding:10px 20px; border-radius:12px; font-weight:800; background: #eab308; color: #fff; box-shadow: 0 8px 20px rgba(234,179,8,0.25);" onclick="printFieldReimbursementTemplate('${payload.id}')">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-          IN PHIẾU
-        </button>
-      `;
+      secondary += btn('', 'download', 'Xuất bảng kê', `exportFieldReimbursementToExcel('${id}')`);
+      secondary += btn('', 'print', 'In phiếu', `printFieldReimbursementTemplate('${id}')`);
 
+      const items = payload.items || [];
+      const sum = { gd: 0, travel: 0, perDiem: 0, hotel: 0 };
+      const rows = items.map((it, idx) => {
+        const tlGD = it.calcResult?.finalCost || 0;
+        const cpDL = it.travelCost || 0;
+        const ctp = it.perDiem || 0;
+        const lt = it.hotelCost || 0;
+        sum.gd += tlGD; sum.travel += cpDL; sum.perDiem += ctp; sum.hotel += lt;
+        const when = v => v ? formatDateDisplay(v).replace('—', '<br>') : '<span class="fr-dash">–</span>';
+        return `<tr class="sf-row">
+          <td class="fr-num fr-idx">${idx + 1}</td>
+          <td class="sf-col-date">${when(it.startDatetime)}</td>
+          <td class="sf-col-date">${when(it.datetime)}</td>
+          <td class="fr-plate">${escapeHtmlOutput(it.bienSo)}</td>
+          <td class="fr-hsbt">${escapeHtmlOutput(it.soHSBT || '-')}</td>
+          <td class="fr-right">${escapeHtmlOutput(it.distanceKm)} km</td>
+          <td class="fr-right">${moneyOrDash(tlGD)}</td>
+          <td>${escapeHtmlOutput(it.vehicle || '-')}</td>
+          <td class="fr-right">${moneyOrDash(cpDL)}</td>
+          <td class="fr-right">${moneyOrDash(ctp)}</td>
+          <td class="fr-right">${moneyOrDash(lt)}</td>
+          <td>${escapeHtmlOutput(it.location || '-')}</td>
+          <td class="fr-money">${money(tlGD + cpDL + ctp + lt)}</td>
+        </tr>`;
+      }).join('');
+
+      const stat = (label, value, cls) => `<div class="fr-stat ${cls || ''}"><span>${label}</span><strong>${value}</strong></div>`;
+      const m = document.createElement('div');
+      m.id = 'viewFieldReimbModal';
+      m.className = 'fr-modal';
       m.innerHTML = `
-        <section class="profile-modal-panel" role="dialog" style="width: 96vw; height: 92vh; max-width: 98vw; min-width: 900px; max-height: 92vh; min-height: 600px; display: flex; flex-direction: column; overflow: hidden; padding: 0; border-radius: 16px; box-shadow: 0 25px 60px -15px rgba(0,0,0,0.5); background: var(--surface); animation: zoomIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-          
-          <!-- Header -->
-          <div style="padding: 20px 28px 14px; border-bottom: 1px solid var(--border); background: var(--surface-strong); flex-shrink: 0;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
-              <div style="display: flex; gap: 16px;">
-                <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--primary-gradient); color: #080b11; display: grid; place-items: center; flex-shrink: 0; box-shadow: var(--shadow-sm);">
-                  <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        <section class="fr-panel" role="dialog" aria-modal="true" aria-label="Chi tiết đề nghị thanh toán ${id}">
+          <header class="fr-head">
+            <div class="sf-page-title">
+              <span class="sf-page-emblem">${ic('file')}</span>
+              <div>
+                <div class="sf-eyebrow">Đề nghị thanh toán · Hiện trường</div>
+                <h2>Chi tiết đề nghị thanh toán</h2>
+                <div class="fr-meta">
+                  <span class="fr-code">${id}</span>
+                  ${statusHtml}
+                  <span class="fr-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4.5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg><strong>${escapeHtmlOutput(payload.gdvName)}</strong></span>
+                  <span class="fr-meta-item">${ic('clock')}${new Date(payload.createdAt).toLocaleString('vi-VN')}</span>
                 </div>
-                <div>
-                  <h3 style="font-size: 20px; font-weight: 850; color: var(--text-main); margin: 0 0 8px 0; letter-spacing: -0.01em;">Chi tiết đề nghị thanh toán</h3>
-                  <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                    <div style="font-size: 13px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em;">
-                      MÃ PHIẾU: <strong style="color: var(--text-main);">${escapeHtmlOutput(payload.id)}</strong>
-                    </div>
-                    ${statusHtml}
-                    <div style="width: 1px; height: 14px; background: var(--border-strong);"></div>
-                    <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-soft); font-weight: 600;">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 1 0-16 0"></path></svg>
-                      <strong style="color: var(--primary);">${escapeHtmlOutput(payload.gdvName)}</strong>
-                    </span>
-                    <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-soft); font-weight: 600;">
-                      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                      ${new Date(payload.createdAt).toLocaleString('vi-VN')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div style="display: flex; gap: 12px; align-items: flex-start;">
-                ${headerActions}
-                
-                <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('viewFieldReimbModal').remove()" aria-label="Đóng" style="width: 38px; height: 38px; min-width: 38px; min-height: 38px; padding: 0; border-radius: 10px; font-size: 18px; display: grid; place-items: center; cursor: pointer; margin-left: 4px;">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
               </div>
             </div>
+            <button type="button" class="sf-icon-button sf-bordered fr-close" aria-label="Đóng" onclick="closeFieldReimbDetail()">${ic('close')}</button>
+          </header>
+
+          <div class="fr-actions-bar">
+            <div class="fr-actions-group">${secondary}</div>
+            <div class="fr-actions-group fr-actions-end">${danger}${primary}</div>
           </div>
 
-          <!-- Content -->
-          <div style="flex-grow: 1; overflow-y: auto; background: var(--surface);">
-            <div style="padding: 24px 28px;">
-              <h4 style="font-size: 14.5px; font-weight: 800; color: var(--text-main); margin: 0 0 16px 0; letter-spacing: -0.01em;">Danh sách vụ giám định (${(payload.items || []).length})</h4>
-              
-              <div style="border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface-strong);">
-                <table class="p-table" style="margin: 0; white-space: nowrap;">
-                  <thead style="position: sticky; top: 0; z-index: 10;">
-                    <tr style="background: var(--bg-soft);">
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">STT</th>
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">Bắt đầu</th>
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">Kết thúc</th>
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">Biển số xe KH</th>
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">Số HSBT</th>
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); text-align:right;">Khoảng cách</th>
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); text-align:right;">Thù lao GĐ</th>
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">Phương tiện</th>
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); text-align:right;">Chi phí đi lại</th>
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); text-align:right;">Công tác phí</th>
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); text-align:right;">Lưu trú</th>
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border);">Địa bàn</th>
-                      <th style="padding:12px 16px; font-size:11px; font-weight:800; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid var(--border); text-align:right;">Thành tiền</th>
-                    </tr>
-                  </thead>
-                  <tbody style="background: var(--surface);">
-                    ${(payload.items || []).map((it, idx) => {
-                      const tlGD = it.calcResult?.finalCost || 0;
-                      const cpDL = it.travelCost || 0;
-                      const ctp = it.perDiem || 0;
-                      const lt = it.hotelCost || 0;
-                      const rTotal = tlGD + cpDL + ctp + lt;
-                      return `
-                        <tr style="border-bottom:1px solid var(--border); background:${idx%2===0?'var(--surface)':'var(--bg-soft)'};">
-                          <td style="padding:12px 16px; font-size:13px; color:var(--text-soft); text-align:center;">${idx + 1}</td>
-                          <td style="padding:12px 16px; font-size:13px; color:var(--text-main);">${it.startDatetime ? formatDateDisplay(it.startDatetime).replace('—', '<br>') : '-'}</td>
-                          <td style="padding:12px 16px; font-size:13px; color:var(--text-main);">${formatDateDisplay(it.datetime).replace('—', '<br>')}</td>
-                          <td style="padding:12px 16px; font-size:13px; font-weight:700; color:var(--text-main);">${escapeHtmlOutput(it.bienSo)}</td>
-                          <td style="padding:12px 16px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.soHSBT || '-')}</td>
-                          <td style="padding:12px 16px; font-size:13px; color:var(--text-main); text-align:right;">${escapeHtmlOutput(it.distanceKm)} km</td>
-                          <td style="padding:12px 16px; font-size:13px; color:var(--text-soft); text-align:right;">${tlGD > 0 ? tlGD.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding:12px 16px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.vehicle || '-')}</td>
-                          <td style="padding:12px 16px; font-size:13px; color:var(--text-soft); text-align:right;">${cpDL > 0 ? cpDL.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding:12px 16px; font-size:13px; color:var(--text-soft); text-align:right;">${ctp > 0 ? ctp.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding:12px 16px; font-size:13px; color:var(--text-soft); text-align:right;">${lt > 0 ? lt.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-                          <td style="padding:12px 16px; font-size:13px; color:var(--text-main);">${escapeHtmlOutput(it.location || '-')}</td>
-                          <td style="padding:12px 16px; font-size:14px; font-weight:800; color:#10b981; text-align:right;">${rTotal.toLocaleString('vi-VN')} đ</td>
-                        </tr>
-                      `;
-                    }).join('')}
-                  </tbody>
+          <div class="fr-body">
+            <div class="fr-stats">
+              ${stat('Số vụ giám định', items.length)}
+              ${stat('Thù lao giám định', money(sum.gd))}
+              ${stat('Chi phí đi lại', money(sum.travel))}
+              ${stat('Công tác phí & lưu trú', money(sum.perDiem + sum.hotel))}
+            </div>
+            <h3 class="fr-section">Danh sách vụ giám định <span class="sf-count">${items.length} vụ</span></h3>
+            <div class="fr-table-card">
+              <div class="sf-table-scroll">
+                <table class="sf-table fr-detail-table">
+                  <caption class="sf-sr-only">Danh sách vụ giám định trong phiếu ${id}</caption>
+                  <thead><tr>
+                    <th class="fr-num">STT</th><th>Bắt đầu</th><th>Kết thúc</th><th>Biển số xe KH</th><th>Số HSBT</th>
+                    <th class="fr-right">Khoảng cách</th><th class="fr-right">Thù lao GĐ</th><th>Phương tiện</th>
+                    <th class="fr-right">Chi phí đi lại</th><th class="fr-right">Công tác phí</th><th class="fr-right">Lưu trú</th>
+                    <th>Địa bàn</th><th class="fr-right">Thành tiền</th>
+                  </tr></thead>
+                  <tbody>${rows || '<tr><td colspan="13"><div class="sf-empty"><p>Phiếu chưa có vụ giám định nào.</p></div></td></tr>'}</tbody>
                 </table>
               </div>
             </div>
           </div>
 
-          <!-- Footer -->
-          <div style="padding: 20px 28px; border-top: 1px solid var(--border); background: var(--surface-strong); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
-            <div style="display: flex; flex-direction: column;">
-              <span style="font-size: 11.5px; color: var(--text-soft); font-weight: 750; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Tổng tiền thanh toán</span>
-              <span style="color: #10b981; font-size: 24px; font-weight: 900; line-height: 1.1; letter-spacing: -0.01em;">${payload.totalAmount ? payload.totalAmount.toLocaleString('vi-VN') : '0'} đ</span>
-            </div>
-            <div style="display: flex; gap: 12px;">
-              <button type="button" class="btn-premium btn-secondary" onclick="document.getElementById('viewFieldReimbModal').remove()" style="width: auto !important; padding: 0 24px; height: 42px; cursor: pointer;">Đóng chi tiết</button>
-            </div>
-          </div>
-
+          <footer class="fr-foot">
+            <div class="fr-total"><span>Tổng tiền thanh toán</span><strong>${money(payload.totalAmount)}</strong></div>
+            <button type="button" class="sf-button" onclick="closeFieldReimbDetail()">Đóng chi tiết</button>
+          </footer>
         </section>`;
       document.body.appendChild(m);
     }
