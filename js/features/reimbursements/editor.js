@@ -365,86 +365,93 @@
     }
 
 
+    function closeFieldReimbForm() {
+      document.getElementById('createFieldReimbModal')?.remove();
+    }
+
     function openCreateFieldReimbursementModal(editBatchId = null) {
-      if (editBatchId && cachedFieldReimbursementsPayload[editBatchId]) {
-        localFieldReimbursementDraft = JSON.parse(JSON.stringify(cachedFieldReimbursementsPayload[editBatchId].items || []));
-      } else {
-        localFieldReimbursementDraft = [];
-      }
+      const editing = editBatchId && cachedFieldReimbursementsPayload[editBatchId] ? cachedFieldReimbursementsPayload[editBatchId] : null;
+      localFieldReimbursementDraft = editing ? JSON.parse(JSON.stringify(editing.items || [])) : [];
+      closeFieldReimbForm();
+
+      const ic = fieldReimbIcon;
+      const val = v => escapeHtmlOutput(v || '');
+      const bankBeneficiary = editing?.bankBeneficiary || localStorage.getItem('savedBankBeneficiary') || activeUserProfile?.displayName || firebase.auth().currentUser?.email || '';
+      const bankAccount = editing?.bankAccount || localStorage.getItem('savedBankAccount') || '';
+      const bankName = editing?.bankName || localStorage.getItem('savedBankName') || '';
+      const req = '<span class="fr-req" aria-hidden="true">*</span>';
+      const plus = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+
       const m = document.createElement('div');
       m.id = 'createFieldReimbModal';
-      m.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); backdrop-filter:blur(8px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box; animation: fadeIn 0.2s ease-out;';
+      m.className = 'fr-modal';
       m.innerHTML = `
-        <div style="background:var(--surface); border-radius:24px; width:98vw; max-width:98vw; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,0.2); border:1px solid var(--border-strong); overflow:hidden; transform: translateY(0); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
-          
-          <div style="padding:24px 32px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background: var(--surface); position: relative; overflow: hidden;">
-            <div style="position: absolute; right: -20px; top: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(216,180,109,0.15) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
-            
-            <div style="position: relative; z-index: 2;">
-              <h3 style="margin:0 0 4px 0; font-size:22px; font-weight:900; color: #080b11; letter-spacing: -0.02em;">${editBatchId ? 'Cập Nhật' : 'Tạo'} Phiếu Thanh Toán Đi Hiện Trường</h3>
-              <p style="margin:0; font-size:13px; color:var(--text-soft);">Thêm các vụ giám định đã hoàn tất để đề nghị thanh toán chi phí di chuyển.</p>
+        <section class="fr-panel fr-form-panel" role="dialog" aria-modal="true" aria-label="${editing ? 'Cập nhật' : 'Tạo'} phiếu thanh toán đi hiện trường">
+          <header class="fr-head">
+            <div class="sf-page-title">
+              <span class="sf-page-emblem">${ic('truck')}</span>
+              <div>
+                <div class="sf-eyebrow">Thanh toán &amp; Chi phí · Hiện trường</div>
+                <h2>${editing ? 'Cập nhật' : 'Tạo'} phiếu thanh toán đi hiện trường</h2>
+                <div class="fr-meta">
+                  ${editing ? `<span class="fr-code">${val(editing.id)}</span>` : ''}
+                  <span>Thêm các vụ giám định đã hoàn tất để đề nghị thanh toán chi phí di chuyển.</span>
+                </div>
+              </div>
             </div>
-            
-            <button onclick="document.getElementById('createFieldReimbModal').remove()" style="background:var(--surface-strong); border:1px solid var(--border); color:var(--text-soft); cursor:pointer; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:12px; transition:all 0.2s; position: relative; z-index: 2;" onmouseover="this.style.background='var(--border-strong)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='var(--surface-strong)'; this.style.color='var(--text-soft)'">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-          </div>
-          
-          <div style="padding:32px; flex:1; overflow-y:auto; background: var(--bg-main);">
-            <div style="margin-bottom: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 24px;">
-              <h4 style="margin: 0; color: var(--text-main); font-size: 16px; font-weight: 800; display:flex; align-items:center; gap:8px;">
-                <span style="display:flex; align-items:center; justify-content:center; width:28px; height:28px; background:rgba(216,180,109,0.15); color:var(--primary); border-radius:10px;">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                </span>
-                Khai báo thông tin vụ giám định
-              </h4>
+            <button type="button" class="sf-icon-button sf-bordered fr-close" aria-label="Đóng" onclick="closeFieldReimbForm()">${ic('close')}</button>
+          </header>
 
-              <div style="display: flex; flex-direction: column; gap: 24px;">
-                <!-- Row 1: Thông tin cơ bản -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 20px;">
-                  <div style="position: relative;">
-                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Biển số xe KH <span style="color:#ef4444">*</span></label>
-                    <input type="text" id="reimbInputBS" class="p-input" placeholder="VD: 47A-123.45" style="width:100%; padding: 12px; border-radius: 10px;" oninput="lookupCaseInfoByBS(this.value)" autocomplete="off">
-                    <div id="reimbBSDropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.12); z-index: 1000; max-height: 240px; overflow-y: auto; overflow-x: hidden;"></div>
+          <div class="fr-body fr-form-body">
+            <section class="fr-card">
+              <div class="fr-card-head"><span class="fr-step">1</span><div><h3>Khai báo thông tin vụ giám định</h3><p>Nhập từng vụ rồi bấm “Thêm vụ này”; chi phí được tính tự động theo quy định.</p></div></div>
+
+              <div class="fr-group">
+                <div class="fr-group-title">Vụ việc</div>
+                <div class="fr-grid">
+                  <div class="fr-field fr-col-4 fr-rel">
+                    <label for="reimbInputBS">Biển số xe KH ${req}</label>
+                    <input type="text" id="reimbInputBS" class="fr-input" placeholder="VD: 47A-123.45" oninput="lookupCaseInfoByBS(this.value)" autocomplete="off">
+                    <div id="reimbBSDropdown" class="fr-dropdown" style="display:none;"></div>
                   </div>
-                  <div>
-                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Số HSBT</label>
-                    <input type="text" id="reimbInputHSBT" class="p-input" placeholder="VD: HSBT/XCG/..." style="width:100%; padding: 12px; border-radius: 10px;">
+                  <div class="fr-field fr-col-4">
+                    <label for="reimbInputHSBT">Số HSBT</label>
+                    <input type="text" id="reimbInputHSBT" class="fr-input" placeholder="VD: HSBT/XCG/...">
                   </div>
-                  <div id="reimbInputLocationContainer" style="display: none;">
-                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Địa bàn giám định <span style="color:#ef4444">*</span></label>
-                    <input type="text" id="reimbInputLocation" class="p-input" placeholder="Nhập địa bàn" style="width:100%; padding: 12px; border-radius: 10px;">
-                  </div>
-                </div>
-                
-                <!-- Row 2: Thời gian & Đặc thù -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 20px; align-items: end;">
-                  <div>
-                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ bắt đầu GĐ</label>
-                    <input type="datetime-local" id="reimbInputStartDate" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;" onchange="checkSunday(); updateQuickReimbPreview()">
-                  </div>
-                  <div>
-                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Giờ kết thúc GĐ <span style="color:#ef4444">*</span></label>
-                    <input type="datetime-local" id="reimbInputDate" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;" onchange="checkSunday(); updateQuickReimbPreview()" oninput="updateQuickReimbPreview()">
-                  </div>
-                  <div style="display: flex; gap: 20px; align-items: center; padding: 12px 16px; background: var(--bg-soft); border-radius: 10px; border: 1px dashed var(--border-strong); height: 46px; box-sizing: border-box;">
-                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--text-main); cursor: pointer; margin: 0;">
-                      <input type="checkbox" id="reimbInputHoliday" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);" onchange="updateQuickReimbPreview()">
-                      Ngày Lễ / Cuối tuần
-                    </label>
-                    <div style="width: 1px; height: 16px; background: var(--border-strong);"></div>
-                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: var(--text-main); cursor: pointer; margin: 0;" title="Áp dụng cho Cao tốc cấm xe máy hoặc Đặc thù (Có phê duyệt)">
-                      <input type="checkbox" id="reimbInputSpecialCase" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);" onchange="autoCalculateTravelCost()">
-                      Đặc thù / Cao tốc
-                    </label>
+                  <div class="fr-field fr-col-4" id="reimbInputLocationContainer" style="display:none;">
+                    <label for="reimbInputLocation">Địa bàn giám định ${req}</label>
+                    <input type="text" id="reimbInputLocation" class="fr-input" placeholder="Nhập địa bàn">
                   </div>
                 </div>
-                
-                <!-- Row 3: Di chuyển -->
-                <div style="display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; gap: 20px;">
-                  <div>
-                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Phương tiện di chuyển</label>
-                    <select id="reimbInputVehicle" class="p-input" style="width:100%; padding: 12px; border-radius: 10px;" onchange="autoCalculateTravelCost()">
+              </div>
+
+              <div class="fr-group">
+                <div class="fr-group-title">Thời gian giám định</div>
+                <div class="fr-grid">
+                  <div class="fr-field fr-col-4">
+                    <label for="reimbInputStartDate">Giờ bắt đầu GĐ</label>
+                    <input type="datetime-local" id="reimbInputStartDate" class="fr-input" onchange="checkSunday(); updateQuickReimbPreview()">
+                  </div>
+                  <div class="fr-field fr-col-4">
+                    <label for="reimbInputDate">Giờ kết thúc GĐ ${req}</label>
+                    <input type="datetime-local" id="reimbInputDate" class="fr-input" onchange="checkSunday(); updateQuickReimbPreview()" oninput="updateQuickReimbPreview()">
+                  </div>
+                  <div class="fr-field fr-col-4">
+                    <label>Điều kiện áp dụng</label>
+                    <div class="fr-checks">
+                      <label class="fr-check"><input type="checkbox" id="reimbInputHoliday" onchange="updateQuickReimbPreview()"><span>Ngày Lễ / Cuối tuần</span></label>
+                      <label class="fr-check" title="Áp dụng cho Cao tốc cấm xe máy hoặc Đặc thù (Có phê duyệt)"><input type="checkbox" id="reimbInputSpecialCase" onchange="autoCalculateTravelCost()"><span>Đặc thù / Cao tốc</span></label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fr-group">
+                <div class="fr-group-title">Di chuyển &amp; chi phí</div>
+                <div class="fr-grid">
+                  <div class="fr-field fr-col-4">
+                    <label for="reimbInputVehicle">Phương tiện di chuyển</label>
+                    <select id="reimbInputVehicle" class="fr-input" onchange="autoCalculateTravelCost()">
                       <option value="Phương tiện cá nhân">Phương tiện cá nhân</option>
                       <option value="Ô tô cơ quan">Ô tô cơ quan</option>
                       <option value="Xe khách">Xe khách</option>
@@ -453,94 +460,57 @@
                       <option value="Máy bay">Máy bay</option>
                     </select>
                   </div>
-                  <div>
-                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Khoảng cách (km) <span style="color:#ef4444">*</span></label>
-                    <input type="number" id="reimbInputKm" class="p-input" min="0" step="1" placeholder="VD: 35" style="width:100%; padding: 12px; border-radius: 10px;" oninput="autoCalculateTravelCost()">
+                  <div class="fr-field fr-col-4">
+                    <label for="reimbInputKm">Khoảng cách 1 chiều (km) ${req}</label>
+                    <div class="fr-affix"><input type="number" id="reimbInputKm" class="fr-input" min="0" step="1" placeholder="VD: 35" oninput="autoCalculateTravelCost()"><span>km</span></div>
                   </div>
-                  <div>
-                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Chi phí đi lại (đ)</label>
-                    <input type="number" id="reimbInputTravelCost" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
+                  <div class="fr-field fr-col-4">
+                    <label for="reimbInputTravelCost">Chi phí đi lại</label>
+                    <div class="fr-affix"><input type="number" id="reimbInputTravelCost" class="fr-input" min="0" step="1000" placeholder="0" oninput="updateQuickReimbPreview()"><span>đ</span></div>
                   </div>
-                </div>
-
-                <!-- Row 4: Phụ phí -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                  <div>
-                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Công tác phí (đ)</label>
-                    <input type="number" id="reimbInputPerDiem" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
+                  <div class="fr-field fr-col-6">
+                    <label for="reimbInputPerDiem">Công tác phí</label>
+                    <div class="fr-affix"><input type="number" id="reimbInputPerDiem" class="fr-input" min="0" step="1000" placeholder="0" oninput="updateQuickReimbPreview()"><span>đ</span></div>
                   </div>
-                  <div>
-                    <label style="display: block; font-size: 13.5px; color: var(--text-soft); font-weight: 700; margin-bottom: 8px;">Lưu trú (đ)</label>
-                    <input type="number" id="reimbInputHotelCost" class="p-input" min="0" step="1000" placeholder="0" style="width:100%; padding: 12px; border-radius: 10px;" oninput="updateQuickReimbPreview()">
+                  <div class="fr-field fr-col-6">
+                    <label for="reimbInputHotelCost">Lưu trú</label>
+                    <div class="fr-affix"><input type="number" id="reimbInputHotelCost" class="fr-input" min="0" step="1000" placeholder="0" oninput="updateQuickReimbPreview()"><span>đ</span></div>
                   </div>
                 </div>
               </div>
-            
-              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px dashed var(--border-strong);">
-                <div style="display: flex; align-items: center; gap: 16px;">
-                  <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(16,185,129,0.15); color: #10b981; display: flex; align-items: center; justify-content: center;">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
-                  </div>
-                  <div>
-                    <div style="font-size: 11.5px; font-weight: 700; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Tạm tính vụ này</div>
-                    <div id="quickReimbPreviewAmount" style="font-size: 20px; font-weight: 900; color: #10b981; line-height: 1;">0 đ</div>
-                  </div>
-                </div>
-                
-                <button type="button" class="btn-premium" style="width: auto; min-width: 150px; flex-shrink: 0; padding: 0 24px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #d8b46d, #b98c3e); box-shadow: 0 6px 16px rgba(216,180,109,0.3); color: #fff; border: none; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; cursor: pointer;" onclick="addReimbursementItemFromForm()">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                  Thêm vụ này
-                </button>
-              </div>
-            </div>
 
-            <div style="margin-bottom: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 20px;">
-              <h4 style="margin: 0; color: var(--text-main); font-size: 16px; font-weight: 800; display:flex; align-items:center; gap:8px;">
-                <span style="display:flex; align-items:center; justify-content:center; width:28px; height:28px; background:rgba(59,130,246,0.15); color:#3b82f6; border-radius:8px;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="5" width="18" height="14" rx="2" ry="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                </span>
-                Thông tin chuyển khoản (Sẽ lưu mặc định cho lần sau)
-              </h4>
-              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
-                <div>
-                  <label style="display:block; font-size:13px; font-weight:700; color:var(--text-soft); margin-bottom:6px;">Người thụ hưởng</label>
-                  <input type="text" id="reimbBeneficiaryName" value="${(editBatchId && cachedFieldReimbursementsPayload[editBatchId]?.bankBeneficiary) ? escapeHtmlOutput(cachedFieldReimbursementsPayload[editBatchId].bankBeneficiary) : (localStorage.getItem('savedBankBeneficiary') || escapeHtmlOutput(activeUserProfile?.displayName || firebase.auth().currentUser?.email || ''))}" class="p-input" placeholder="Ví dụ: NGUYEN VAN A">
+              <div class="fr-preview">
+                <div class="fr-preview-total">
+                  <span class="fr-preview-icon">${ic('file')}</span>
+                  <div><span>Tạm tính vụ này</span><strong id="quickReimbPreviewAmount">0 đ</strong></div>
                 </div>
-                <div>
-                  <label style="display:block; font-size:13px; font-weight:700; color:var(--text-soft); margin-bottom:6px;">Số tài khoản</label>
-                  <input type="text" id="reimbBankAccount" value="${(editBatchId && cachedFieldReimbursementsPayload[editBatchId]?.bankAccount) ? escapeHtmlOutput(cachedFieldReimbursementsPayload[editBatchId].bankAccount) : (localStorage.getItem('savedBankAccount') || '')}" class="p-input" placeholder="Số tài khoản">
-                </div>
-                <div>
-                  <label style="display:block; font-size:13px; font-weight:700; color:var(--text-soft); margin-bottom:6px;">Tại ngân hàng</label>
-                  <input type="text" id="reimbBankName" value="${(editBatchId && cachedFieldReimbursementsPayload[editBatchId]?.bankName) ? escapeHtmlOutput(cachedFieldReimbursementsPayload[editBatchId].bankName) : (localStorage.getItem('savedBankName') || '')}" class="p-input" placeholder="Ví dụ: Vietcombank CN Hà Nội">
-                </div>
+                <button type="button" class="sf-button sf-primary" onclick="addReimbursementItemFromForm()">${plus}<span>Thêm vụ này</span></button>
               </div>
-            </div>
+            </section>
 
-            <h4 style="margin: 0 0 16px 0; color: var(--text-main); font-size: 15px; font-weight: 800; display:flex; align-items:center; gap:8px;">
-               <span style="display:flex; align-items:center; justify-content:center; width:24px; height:24px; background:rgba(16,185,129,0.15); color:#10b981; border-radius:8px;">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                </span>
-              Danh sách chi tiết trong phiếu
-            </h4>
-            <div id="reimbDraftItemsContainer"></div>
+            <section class="fr-card">
+              <div class="fr-card-head"><span class="fr-step">2</span><div><h3>Thông tin chuyển khoản</h3><p>Sẽ được lưu làm mặc định cho các lần sau.</p></div></div>
+              <div class="fr-grid">
+                <div class="fr-field fr-col-4"><label for="reimbBeneficiaryName">Người thụ hưởng</label><input type="text" id="reimbBeneficiaryName" value="${val(bankBeneficiary)}" class="fr-input" placeholder="Ví dụ: NGUYEN VAN A"></div>
+                <div class="fr-field fr-col-4"><label for="reimbBankAccount">Số tài khoản</label><input type="text" id="reimbBankAccount" value="${val(bankAccount)}" class="fr-input" placeholder="Số tài khoản" inputmode="numeric"></div>
+                <div class="fr-field fr-col-4"><label for="reimbBankName">Tại ngân hàng</label><input type="text" id="reimbBankName" value="${val(bankName)}" class="fr-input" placeholder="Ví dụ: Vietcombank CN Hà Nội"></div>
+              </div>
+            </section>
+
+            <section class="fr-card fr-card-flush">
+              <div class="fr-card-head fr-card-head-pad"><span class="fr-step">3</span><div><h3>Danh sách chi tiết trong phiếu</h3><p>Kiểm tra lại các vụ đã thêm; có thể sửa trực tiếp từng dòng.</p></div></div>
+              <div id="reimbDraftItemsContainer"></div>
+            </section>
           </div>
-          
-          <div style="padding:20px 32px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; background:var(--surface-strong);">
-            <div style="display:flex; flex-direction:column;">
-              <span style="font-size:11.5px; color:var(--text-soft); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px;">Tổng cộng</span>
-              <span id="reimbDraftTotalAmount" style="color: #10b981; font-size: 20px; font-weight: 900; line-height:1;">0 đ</span>
+
+          <footer class="fr-foot">
+            <div class="fr-total"><span>Tổng cộng</span><strong id="reimbDraftTotalAmount">0 đ</strong></div>
+            <div class="fr-foot-actions">
+              <button type="button" class="sf-button" onclick="closeFieldReimbForm()">Đóng</button>
+              <button type="button" class="sf-button sf-primary" id="btnSubmitReimb" onclick="submitFieldReimbursementBatch('${editBatchId || ''}')">${ic('arrow')}<span>${editing ? 'Cập nhật phiếu' : 'Tạo phiếu'}</span></button>
             </div>
-            <div style="display:flex; gap:12px;">
-              <button class="btn-premium btn-secondary" style="width: auto !important; height: 44px; padding: 0 24px; border-radius:12px; font-weight:700; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('createFieldReimbModal').remove()">Đóng</button>
-              <button class="btn-premium" style="width: auto !important; height: 44px; padding: 0 24px; border-radius:12px; font-weight:800; font-size: 14px; box-shadow: 0 6px 16px rgba(216,180,109,0.3); display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; white-space: nowrap; min-width: 140px;" onclick="submitFieldReimbursementBatch('${editBatchId || ''}')" id="btnSubmitReimb">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-                ${editBatchId ? 'Cập nhật phiếu' : 'Tạo phiếu'}
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
+          </footer>
+        </section>`;
       document.body.appendChild(m);
       renderReimbursementDraftItems();
     }
@@ -698,116 +668,88 @@
       if (!container || !totalLbl) return;
 
       if (localFieldReimbursementDraft.length === 0) {
-        container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-soft); font-style: italic; border: 1px dashed var(--border-strong); border-radius: 12px;">Chưa thêm vụ nào.</div>';
+        container.innerHTML = `<div class="sf-empty fr-draft-empty"><span class="fr-empty-icon">${fieldReimbIcon('file')}</span><h3>Chưa thêm vụ nào</h3><p>Điền thông tin ở bước 1 rồi bấm “Thêm vụ này”.</p></div>`;
         totalLbl.textContent = '0 đ';
         return;
       }
 
+      const money = n => (Number(n) || 0).toLocaleString('vi-VN') + ' đ';
+      const moneyOrDash = n => (Number(n) || 0) > 0 ? money(n) : '<span class="fr-dash">–</span>';
       let total = 0;
       let html = `
-        <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);">
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; white-space: nowrap;">
-            <thead style="background: var(--surface-strong); border-bottom: 1px solid var(--border-strong);">
-              <tr>
-                <th style="padding: 10px; border-right: 1px solid var(--border);">STT</th>
-                <th style="padding: 10px; border-right: 1px solid var(--border);">Bắt đầu</th>
-                <th style="padding: 10px; border-right: 1px solid var(--border);">Kết thúc</th>
-                <th style="padding: 10px; border-right: 1px solid var(--border);">Biển số xe KH</th>
-                <th style="padding: 10px; border-right: 1px solid var(--border);">Số HSBT</th>
-                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: center;">Khoảng cách</th>
-                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Thù lao GĐ</th>
-                <th style="padding: 10px; border-right: 1px solid var(--border);">Phương tiện</th>
-                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Chi phí đi lại</th>
-                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Công tác phí</th>
-                <th style="padding: 10px; border-right: 1px solid var(--border); text-align: right;">Lưu trú</th>
-                <th style="padding: 10px; border-right: 1px solid var(--border);">Địa bàn</th>
-                <th style="padding: 10px; text-align: right;">Thành tiền</th>
-                <th style="padding: 10px; text-align: center;">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-      `;
+        <div class="sf-table-scroll">
+          <table class="sf-table fr-detail-table">
+            <thead><tr>
+              <th class="fr-num">STT</th><th>Bắt đầu</th><th>Kết thúc</th><th>Biển số xe KH</th><th>Số HSBT</th>
+              <th class="fr-right">Khoảng cách</th><th class="fr-right">Thù lao GĐ</th><th>Phương tiện</th>
+              <th class="fr-right">Chi phí đi lại</th><th class="fr-right">Công tác phí</th><th class="fr-right">Lưu trú</th>
+              <th>Địa bàn</th><th class="fr-right">Thành tiền</th><th class="fr-center">Thao tác</th>
+            </tr></thead>
+            <tbody>`;
 
       html += localFieldReimbursementDraft.map((item, idx) => {
-        let subtotal = (item.calcResult.finalCost || 0) + (item.travelCost || 0) + (item.perDiem || 0) + (item.hotelCost || 0);
+        const subtotal = (item.calcResult.finalCost || 0) + (item.travelCost || 0) + (item.perDiem || 0) + (item.hotelCost || 0);
         total += subtotal;
-        
-        let noteStr = [];
+
+        const noteStr = [];
         if (item.calcResult.isWeekendOrHoliday) noteStr.push('Lễ/Cuối tuần');
         else if (item.calcResult.isAfterHours) noteStr.push('Ngoài giờ');
         if (item.isSpecialCase) noteStr.push('Đặc thù/Cao tốc');
-        
-        
+
         if (window.editingReimbIndex === idx) {
           return `
-            <tr style="border-bottom: 1px solid var(--border); background: rgba(59,130,246,0.05);">
-              <td style="padding: 4px; text-align: center;">${idx + 1}</td>
-              <td style="padding: 2px;"><input type="datetime-local" id="inlineStart_${idx}" value="${item.startDatetime || ''}" class="p-input" style="padding:4px; font-size:11px; width:125px; border-radius:6px;"></td>
-              <td style="padding: 2px;">
-                <input type="datetime-local" id="inlineEnd_${idx}" value="${item.datetime || ''}" class="p-input" style="padding:4px; font-size:11px; width:125px; border-radius:6px; margin-bottom:4px;">
-                <div style="display:flex; flex-direction:column; gap:2px;">
-                  <label style="font-size:10px; display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" id="inlineHol_${idx}" ${item.isHolidayChecked ? 'checked' : ''} style="accent-color:var(--primary);"> Lễ/Cuối tuần</label>
-                  <label style="font-size:10px; display:flex; align-items:center; gap:4px; cursor:pointer;"><input type="checkbox" id="inlineSpec_${idx}" ${item.isSpecialCase ? 'checked' : ''} style="accent-color:var(--primary);"> Đặc thù/Cao tốc</label>
+            <tr class="sf-row fr-editing">
+              <td class="fr-num fr-idx">${idx + 1}</td>
+              <td><input type="datetime-local" id="inlineStart_${idx}" value="${item.startDatetime || ''}" class="fr-input fr-input-sm" style="width:170px"></td>
+              <td>
+                <input type="datetime-local" id="inlineEnd_${idx}" value="${item.datetime || ''}" class="fr-input fr-input-sm" style="width:170px">
+                <div class="fr-inline-checks">
+                  <label class="fr-check"><input type="checkbox" id="inlineHol_${idx}" ${item.isHolidayChecked ? 'checked' : ''}><span>Lễ/Cuối tuần</span></label>
+                  <label class="fr-check"><input type="checkbox" id="inlineSpec_${idx}" ${item.isSpecialCase ? 'checked' : ''}><span>Đặc thù/Cao tốc</span></label>
                 </div>
               </td>
-              <td style="padding: 2px;"><input type="text" id="inlineBS_${idx}" value="${escapeHtmlOutput(item.bienSo)}" class="p-input" style="padding:4px; font-size:11px; width:80px; border-radius:6px;"></td>
-              <td style="padding: 2px;"><input type="text" id="inlineHSBT_${idx}" value="${escapeHtmlOutput(item.soHSBT || '')}" class="p-input" style="padding:4px; font-size:11px; width:100px; border-radius:6px;"></td>
-              <td style="padding: 2px;"><input type="number" id="inlineKm_${idx}" value="${item.distanceKm}" class="p-input" style="padding:4px; font-size:11px; width:50px; border-radius:6px;"></td>
-              <td style="padding: 2px; font-size: 11px; color: var(--text-soft); text-align:center;">(Tự động)</td>
-              <td style="padding: 2px;"><input type="text" id="inlineVeh_${idx}" value="${escapeHtmlOutput(item.vehicle || '')}" class="p-input" style="padding:4px; font-size:11px; width:80px; border-radius:6px;"></td>
-              <td style="padding: 2px;"><input type="number" id="inlineTrav_${idx}" value="${item.travelCost || ''}" class="p-input" style="padding:4px; font-size:11px; width:70px; border-radius:6px;"></td>
-              <td style="padding: 2px;"><input type="number" id="inlinePer_${idx}" value="${item.perDiem || ''}" class="p-input" style="padding:4px; font-size:11px; width:70px; border-radius:6px;"></td>
-              <td style="padding: 2px;"><input type="number" id="inlineHot_${idx}" value="${item.hotelCost || ''}" class="p-input" style="padding:4px; font-size:11px; width:70px; border-radius:6px;"></td>
-              <td style="padding: 2px;"><input type="text" id="inlineLoc_${idx}" value="${escapeHtmlOutput(item.location || '')}" class="p-input" style="padding:4px; font-size:11px; width:80px; border-radius:6px;"></td>
-              <td style="padding: 2px; font-size: 11px; color: var(--text-soft); text-align:center;">(Tự động)</td>
-              <td style="padding: 4px; text-align: center;">
-                <div style="display:flex; gap:4px; flex-direction:column;">
-                  <button onclick="saveInlineEdit(${idx})" style="background: #10b981; color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size:11px; font-weight:bold; cursor: pointer; box-shadow: 0 2px 5px rgba(16,185,129,0.3);">Lưu</button>
-                  <button onclick="cancelInlineEdit()" style="background: var(--surface-strong); color: var(--text-main); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size:11px; font-weight:bold; cursor: pointer;">Hủy</button>
-                </div>
-              </td>
-            </tr>
-          `;
+              <td><input type="text" id="inlineBS_${idx}" value="${escapeHtmlOutput(item.bienSo)}" class="fr-input fr-input-sm" style="width:110px"></td>
+              <td><input type="text" id="inlineHSBT_${idx}" value="${escapeHtmlOutput(item.soHSBT || '')}" class="fr-input fr-input-sm" style="width:150px"></td>
+              <td><input type="number" id="inlineKm_${idx}" value="${item.distanceKm}" class="fr-input fr-input-sm" style="width:70px"></td>
+              <td class="fr-right fr-dash">Tự động</td>
+              <td><input type="text" id="inlineVeh_${idx}" value="${escapeHtmlOutput(item.vehicle || '')}" class="fr-input fr-input-sm" style="width:130px"></td>
+              <td><input type="number" id="inlineTrav_${idx}" value="${item.travelCost || ''}" class="fr-input fr-input-sm" style="width:100px"></td>
+              <td><input type="number" id="inlinePer_${idx}" value="${item.perDiem || ''}" class="fr-input fr-input-sm" style="width:100px"></td>
+              <td><input type="number" id="inlineHot_${idx}" value="${item.hotelCost || ''}" class="fr-input fr-input-sm" style="width:100px"></td>
+              <td><input type="text" id="inlineLoc_${idx}" value="${escapeHtmlOutput(item.location || '')}" class="fr-input fr-input-sm" style="width:110px"></td>
+              <td class="fr-right fr-dash">Tự động</td>
+              <td class="fr-center"><div class="fr-row-actions">
+                <button type="button" class="sf-button sf-primary fr-mini" onclick="saveInlineEdit(${idx})">Lưu</button>
+                <button type="button" class="sf-button fr-mini" onclick="cancelInlineEdit()">Hủy</button>
+              </div></td>
+            </tr>`;
         }
 
         return `
-          <tr style="border-bottom: 1px solid var(--border);">
-            <td style="padding: 8px 10px; text-align: center; border-right: 1px solid var(--border);">${idx + 1}</td>
-            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${item.startDatetime ? formatDateDisplay(item.startDatetime).replace('—', '<br>') : '-'}</td>
-            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${formatDateDisplay(item.datetime).replace('—', '<br>')}
-              ${noteStr.length ? `<br><span style="color:#f59e0b; font-size:10px; font-weight:700;">${noteStr.join(',')}</span>` : ''}
-            </td>
-            <td style="padding: 8px 10px; font-weight: 700; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.bienSo)}</td>
-            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.soHSBT || '')}</td>
-            <td style="padding: 8px 10px; text-align: center; border-right: 1px solid var(--border);">${item.distanceKm} km</td>
-            <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.calcResult.finalCost.toLocaleString('vi-VN')} đ</td>
-            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.vehicle || '')}</td>
-            <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.travelCost ? item.travelCost.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-            <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.perDiem ? item.perDiem.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-            <td style="padding: 8px 10px; text-align: right; border-right: 1px solid var(--border);">${item.hotelCost ? item.hotelCost.toLocaleString('vi-VN') + ' đ' : '-'}</td>
-            <td style="padding: 8px 10px; border-right: 1px solid var(--border);">${escapeHtmlOutput(item.location || '')}</td>
-            <td style="padding: 8px 10px; text-align: right; color: #10b981; font-weight: 800;">${subtotal.toLocaleString('vi-VN')} đ</td>
-            <td style="padding: 8px 10px; text-align: center;">
-              <div style="display: flex; justify-content: center; gap: 6px;">
-                <button onclick="enableInlineEdit(${idx})" style="background: rgba(59,130,246,0.1); color: #3b82f6; border: none; padding: 6px; border-radius: 8px; cursor: pointer;" title="Sửa vụ này">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                </button>
-                <button onclick="removeReimbursementItem(${idx})" style="background: rgba(239,68,68,0.1); color: #ef4444; border: none; padding: 6px; border-radius: 8px; cursor: pointer;" title="Xóa vụ này">
-                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
+          <tr class="sf-row">
+            <td class="fr-num fr-idx">${idx + 1}</td>
+            <td class="sf-col-date">${item.startDatetime ? formatDateDisplay(item.startDatetime).replace('—', '<br>') : '<span class="fr-dash">–</span>'}</td>
+            <td class="sf-col-date">${formatDateDisplay(item.datetime).replace('—', '<br>')}${noteStr.length ? `<br><span class="fr-note">${noteStr.join(', ')}</span>` : ''}</td>
+            <td class="fr-plate">${escapeHtmlOutput(item.bienSo)}</td>
+            <td class="fr-hsbt">${escapeHtmlOutput(item.soHSBT || '')}</td>
+            <td class="fr-right">${item.distanceKm} km</td>
+            <td class="fr-right">${money(item.calcResult.finalCost)}</td>
+            <td>${escapeHtmlOutput(item.vehicle || '')}</td>
+            <td class="fr-right">${moneyOrDash(item.travelCost)}</td>
+            <td class="fr-right">${moneyOrDash(item.perDiem)}</td>
+            <td class="fr-right">${moneyOrDash(item.hotelCost)}</td>
+            <td>${escapeHtmlOutput(item.location || '')}</td>
+            <td class="fr-money">${money(subtotal)}</td>
+            <td class="fr-center"><div class="fr-row-actions">
+              <button type="button" class="sf-icon-button" onclick="enableInlineEdit(${idx})" title="Sửa vụ này" aria-label="Sửa vụ ${idx + 1}">${fieldReimbIcon('file')}</button>
+              <button type="button" class="sf-icon-button sf-danger" onclick="removeReimbursementItem(${idx})" title="Xóa vụ này" aria-label="Xóa vụ ${idx + 1}">${fieldReimbIcon('trash')}</button>
+            </div></td>
+          </tr>`;
       }).join('');
-      
-      html += `
-            </tbody>
-          </table>
-        </div>
-      `;
+
+      html += `</tbody></table></div>`;
       container.innerHTML = html;
-      totalLbl.textContent = total.toLocaleString('vi-VN') + ' đ';
+      totalLbl.textContent = money(total);
     }
 
 
