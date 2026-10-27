@@ -241,6 +241,17 @@
     }
 
 
+    // Chi phí đi lại bằng phương tiện cá nhân: km nhập là 1 chiều → nhân 2 ra quãng đường 2 chiều.
+    // Đơn giá theo tổng quãng đường 2 chiều: dưới 100 km = 4.000đ/km, từ 100 km trở lên = 3.000đ/km.
+    function calculatePersonalTravelCost(oneWayKm) {
+      const km = Number(oneWayKm);
+      if (!Number.isFinite(km) || km <= 0) return 0;
+      const roundTripKm = km * 2;
+      const rate = roundTripKm < 100 ? 4000 : 3000;
+      return Math.round(roundTripKm * rate);
+    }
+
+
     function autoCalculateTravelCost() {
       const kmStr = document.getElementById('reimbInputKm')?.value;
       const vehicle = document.getElementById('reimbInputVehicle')?.value;
@@ -262,10 +273,7 @@
       }
 
       if (vehicle === 'Phương tiện cá nhân') {
-        let rate = 4000;
-        if (km >= 100) rate = 3000;
-        const totalCost = (km * 2) * rate; // paid 2-way
-        costInput.value = totalCost;
+        costInput.value = calculatePersonalTravelCost(km);
       }
       
       updateQuickReimbPreview();
@@ -612,6 +620,13 @@
       const isSpec = document.getElementById('inlineSpec_' + idx).checked;
       
       const calc = calculateFieldCost(km, date, isHol);
+      // Đổi km (hoặc phương tiện) mà không sửa tay chi phí đi lại → tính lại theo quy tắc 2 chiều.
+      const previous = localFieldReimbursementDraft[idx] || {};
+      const vehicleValue = document.getElementById('inlineVeh_' + idx).value;
+      let travelValue = parseFloat(document.getElementById('inlineTrav_' + idx).value) || 0;
+      if (travelValue === (previous.travelCost || 0) && (km !== previous.distanceKm || vehicleValue !== previous.vehicle)) {
+        travelValue = vehicleValue === 'Phương tiện cá nhân' && (km > 30 || isSpec) ? calculatePersonalTravelCost(km) : 0;
+      }
       
       localFieldReimbursementDraft[idx] = {
         ...localFieldReimbursementDraft[idx],
@@ -623,7 +638,7 @@
         soHSBT: document.getElementById('inlineHSBT_' + idx).value,
         distanceKm: km,
         vehicle: document.getElementById('inlineVeh_' + idx).value,
-        travelCost: parseFloat(document.getElementById('inlineTrav_' + idx).value) || 0,
+        travelCost: travelValue,
         perDiem: parseFloat(document.getElementById('inlinePer_' + idx).value) || 0,
         hotelCost: parseFloat(document.getElementById('inlineHot_' + idx).value) || 0,
         location: document.getElementById('inlineLoc_' + idx).value,
