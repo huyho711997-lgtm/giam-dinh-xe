@@ -3581,3 +3581,9 @@ body.light-mode .collection-guide-preview iframe { background: #eae8e1; color-sc
       }
 
 
+
+/* In ấn: tắt các lớp trang trí cố định của ứng dụng (lưới nền, mặt nạ mờ đầu trang)
+   vì chúng lặp lại ở mép trên mọi trang in và che mất logo/nội dung. */
+@media print {
+  body::before, body::after { display: none !important; content: none !important; }
+}
