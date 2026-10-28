@@ -305,11 +305,13 @@
 
       if (vehicle === 'Ô tô cơ quan') {
         costInput.value = 0;
+        updateQuickReimbPreview();
         return;
       }
 
       if (km <= 30 && !specialCase) {
         costInput.value = 0;
+        updateQuickReimbPreview();
         return;
       }
 
@@ -498,7 +500,7 @@
             </section>
 
             <section class="fr-card fr-card-flush">
-              <div class="fr-card-head fr-card-head-pad"><span class="fr-step">3</span><div><h3>Danh sách chi tiết trong phiếu</h3><p>Kiểm tra lại các vụ đã thêm; có thể sửa trực tiếp từng dòng.</p></div></div>
+              <div class="fr-card-head fr-card-head-pad"><span class="fr-step">3</span><div><h3>Danh sách chi tiết trong phiếu</h3><p>Kiểm tra lại các vụ đã thêm; bấm biểu tượng sửa (hoặc nhấp đúp dòng) để chỉnh từng vụ.</p></div></div>
               <div id="reimbDraftItemsContainer"></div>
             </section>
           </div>
@@ -612,53 +614,161 @@
     }
 
 
-    function enableInlineEdit(idx) {
-      window.editingReimbIndex = idx;
-      renderReimbursementDraftItems();
+    // ---- Sửa một vụ trong phiếu: hộp thoại riêng thay cho sửa trực tiếp trên dòng ----
+    function closeReimbItemEditor() {
+      document.getElementById('reimbItemEditModal')?.remove();
     }
 
+    function openReimbItemEditor(idx) {
+      const item = localFieldReimbursementDraft[idx];
+      if (!item) return;
+      closeReimbItemEditor();
+      const ic = fieldReimbIcon;
+      const val = v => escapeHtmlOutput(v == null ? '' : v);
+      const req = '<span class="fr-req" aria-hidden="true">*</span>';
+      const vehicles = ['Phương tiện cá nhân', 'Ô tô cơ quan', 'Xe khách', 'Taxi', 'Tàu hỏa', 'Máy bay'];
+      const vehicleOptions = (vehicles.includes(item.vehicle) || !item.vehicle ? vehicles : [item.vehicle, ...vehicles])
+        .map(v => `<option value="${val(v)}" ${v === (item.vehicle || 'Phương tiện cá nhân') ? 'selected' : ''}>${val(v)}</option>`).join('');
+      const affix = (id, v, unit, extra = '') => `<div class="fr-affix"><input type="number" id="${id}" class="fr-input" min="0" step="${unit === 'km' ? 1 : 1000}" value="${v || v === 0 && unit === 'km' ? val(v) : ''}" placeholder="0" ${extra}><span>${unit}</span></div>`;
 
-    function cancelInlineEdit() {
-      window.editingReimbIndex = -1;
-      renderReimbursementDraftItems();
+      const m = document.createElement('div');
+      m.id = 'reimbItemEditModal';
+      m.className = 'fr-modal fr-item-modal';
+      m.dataset.idx = String(idx);
+      m.dataset.prevKm = String(item.distanceKm ?? '');
+      m.dataset.prevVehicle = item.vehicle || '';
+      m.dataset.prevTravel = String(item.travelCost || 0);
+      m.innerHTML = `
+        <section class="fr-panel fr-item-panel" role="dialog" aria-modal="true" aria-label="Sửa vụ giám định số ${idx + 1}">
+          <header class="fr-head">
+            <div class="sf-page-title">
+              <span class="sf-page-emblem">${ic('file')}</span>
+              <div>
+                <div class="sf-eyebrow">Vụ giám định số ${idx + 1}</div>
+                <h2>Sửa vụ giám định</h2>
+                <div class="fr-meta"><span>Chi phí tự tính lại khi bạn đổi km, thời gian hoặc phương tiện.</span></div>
+              </div>
+            </div>
+            <button type="button" class="sf-icon-button sf-bordered fr-close" aria-label="Đóng" onclick="closeReimbItemEditor()">${ic('close')}</button>
+          </header>
+
+          <div class="fr-body fr-form-body">
+            <section class="fr-card">
+              <div class="fr-group">
+                <div class="fr-group-title">Vụ việc</div>
+                <div class="fr-grid">
+                  <div class="fr-field fr-col-6"><label for="editItemBS">Biển số xe KH ${req}</label><input type="text" id="editItemBS" class="fr-input" value="${val(item.bienSo)}" autocomplete="off"></div>
+                  <div class="fr-field fr-col-6"><label for="editItemHSBT">Số HSBT</label><input type="text" id="editItemHSBT" class="fr-input" value="${val(item.soHSBT)}" autocomplete="off"></div>
+                </div>
+              </div>
+              <div class="fr-group">
+                <div class="fr-group-title">Thời gian giám định</div>
+                <div class="fr-grid">
+                  <div class="fr-field fr-col-6"><label for="editItemStart">Giờ bắt đầu GĐ</label><input type="datetime-local" id="editItemStart" class="fr-input" value="${val(item.startDatetime)}" onchange="reimbItemEditorPreview()"></div>
+                  <div class="fr-field fr-col-6"><label for="editItemEnd">Giờ kết thúc GĐ ${req}</label><input type="datetime-local" id="editItemEnd" class="fr-input" value="${val(item.datetime)}" onchange="reimbItemEditorPreview()" oninput="reimbItemEditorPreview()"></div>
+                  <div class="fr-field fr-col-12">
+                    <div class="fr-checks">
+                      <label class="fr-check"><input type="checkbox" id="editItemHoliday" ${item.isHolidayChecked ? 'checked' : ''} onchange="reimbItemEditorPreview()"><span>Ngày Lễ / Cuối tuần</span></label>
+                      <label class="fr-check" title="Áp dụng cho Cao tốc cấm xe máy hoặc Đặc thù (Có phê duyệt)"><input type="checkbox" id="editItemSpecial" ${item.isSpecialCase ? 'checked' : ''} onchange="reimbItemEditorTravel()"><span>Đặc thù / Cao tốc</span></label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="fr-group">
+                <div class="fr-group-title">Di chuyển &amp; chi phí</div>
+                <div class="fr-grid">
+                  <div class="fr-field fr-col-4"><label for="editItemVehicle">Phương tiện di chuyển</label><select id="editItemVehicle" class="fr-input" onchange="reimbItemEditorTravel()">${vehicleOptions}</select></div>
+                  <div class="fr-field fr-col-4"><label for="editItemKm">Khoảng cách 1 chiều ${req}</label>${affix('editItemKm', item.distanceKm, 'km', 'oninput="reimbItemEditorTravel()"')}</div>
+                  <div class="fr-field fr-col-4"><label for="editItemTravel">Chi phí đi lại</label>${affix('editItemTravel', item.travelCost, 'đ', 'oninput="this.dataset.manual=\'1\'; reimbItemEditorPreview()"')}</div>
+                  <div class="fr-field fr-col-4"><label for="editItemPerDiem">Công tác phí</label>${affix('editItemPerDiem', item.perDiem, 'đ', 'oninput="reimbItemEditorPreview()"')}</div>
+                  <div class="fr-field fr-col-4"><label for="editItemHotel">Lưu trú</label>${affix('editItemHotel', item.hotelCost, 'đ', 'oninput="reimbItemEditorPreview()"')}</div>
+                  <div class="fr-field fr-col-4" id="editItemLocationBox"><label for="editItemLocation">Địa bàn giám định <span class="fr-req" id="editItemLocReq" aria-hidden="true">*</span></label><input type="text" id="editItemLocation" class="fr-input" value="${val(item.location)}" placeholder="Nhập địa bàn"></div>
+                </div>
+              </div>
+            </section>
+            <div class="fr-breakdown" id="editItemBreakdown"></div>
+          </div>
+
+          <footer class="fr-foot">
+            <div class="fr-total"><span>Thành tiền vụ này</span><strong id="editItemTotal">0 đ</strong></div>
+            <div class="fr-foot-actions">
+              <button type="button" class="sf-button" onclick="closeReimbItemEditor()">Hủy</button>
+              <button type="button" class="sf-button sf-primary" onclick="saveReimbItemEdit(${idx})">${ic('check')}<span>Lưu thay đổi</span></button>
+            </div>
+          </footer>
+        </section>`;
+      document.body.appendChild(m);
+      reimbItemEditorPreview();
+      document.getElementById('editItemBS')?.focus();
     }
 
+    // Đổi km / phương tiện / đặc thù → tính lại chi phí đi lại, trừ khi người dùng đã tự gõ số khác
+    function reimbItemEditorTravel() {
+      const modal = document.getElementById('reimbItemEditModal');
+      const input = document.getElementById('editItemTravel');
+      if (!modal || !input) return;
+      const km = parseFloat(document.getElementById('editItemKm').value) || 0;
+      const vehicle = document.getElementById('editItemVehicle').value;
+      const special = document.getElementById('editItemSpecial').checked;
+      input.dataset.manual = '';
+      if (vehicle === 'Ô tô cơ quan' || (km <= 30 && !special)) input.value = 0;
+      else if (vehicle === 'Phương tiện cá nhân') input.value = calculatePersonalTravelCost(km);
+      reimbItemEditorPreview();
+    }
 
-    function saveInlineEdit(idx) {
-      const km = parseFloat(document.getElementById('inlineKm_' + idx).value) || 0;
-      const date = document.getElementById('inlineEnd_' + idx).value;
-      const isHol = document.getElementById('inlineHol_' + idx).checked;
-      const isSpec = document.getElementById('inlineSpec_' + idx).checked;
-      
-      const calc = calculateFieldCost(km, date, isHol);
-      // Đổi km (hoặc phương tiện) mà không sửa tay chi phí đi lại → tính lại theo quy tắc 2 chiều.
-      const previous = localFieldReimbursementDraft[idx] || {};
-      const vehicleValue = document.getElementById('inlineVeh_' + idx).value;
-      let travelValue = parseFloat(document.getElementById('inlineTrav_' + idx).value) || 0;
-      if (travelValue === (previous.travelCost || 0) && (km !== previous.distanceKm || vehicleValue !== previous.vehicle)) {
-        travelValue = vehicleValue === 'Phương tiện cá nhân' && (km > 30 || isSpec) ? calculatePersonalTravelCost(km) : 0;
-      }
-      
+    function reimbItemEditorPreview() {
+      const num = id => parseFloat(document.getElementById(id)?.value) || 0;
+      const km = num('editItemKm');
+      const calc = calculateFieldCost(km, document.getElementById('editItemEnd')?.value, !!document.getElementById('editItemHoliday')?.checked);
+      const travel = num('editItemTravel'), perDiem = num('editItemPerDiem'), hotel = num('editItemHotel');
+      const total = calc.finalCost + travel + perDiem + hotel;
+      const money = n => n.toLocaleString('vi-VN') + ' đ';
+      const need = hotel > 0;
+      const locReq = document.getElementById('editItemLocReq');
+      if (locReq) locReq.style.display = need ? '' : 'none';
+      const note = calc.isWeekendOrHoliday ? ' · Lễ/Cuối tuần' : calc.isAfterHours ? ' · Ngoài giờ' : '';
+      const box = document.getElementById('editItemBreakdown');
+      if (box) box.innerHTML = [
+        ['Thù lao giám định' + note, calc.finalCost], ['Chi phí đi lại', travel], ['Công tác phí', perDiem], ['Lưu trú', hotel]
+      ].map(([l, v]) => `<div class="fr-stat"><span>${l}</span><strong>${money(v)}</strong></div>`).join('');
+      const t = document.getElementById('editItemTotal');
+      if (t) t.textContent = money(total);
+    }
+
+    function saveReimbItemEdit(idx) {
+      const previous = localFieldReimbursementDraft[idx];
+      if (!previous) return closeReimbItemEditor();
+      const get = id => document.getElementById(id);
+      const bs = get('editItemBS').value.trim();
+      const date = get('editItemEnd').value;
+      const km = parseFloat(get('editItemKm').value);
+      const hotelCost = parseFloat(get('editItemHotel').value) || 0;
+      const location = get('editItemLocation').value.trim();
+      if (!bs) return triggerToast('Vui lòng nhập Biển số xe', 'error');
+      if (!date) return triggerToast('Vui lòng chọn thời gian kết thúc', 'error');
+      if (isNaN(km) || km < 0) return triggerToast('Vui lòng nhập số km hợp lệ', 'error');
+      if (hotelCost > 0 && !location) return triggerToast('Vui lòng nhập Địa bàn giám định (bắt buộc khi có lưu trú)', 'error');
+
+      const isHoliday = get('editItemHoliday').checked;
       localFieldReimbursementDraft[idx] = {
-        ...localFieldReimbursementDraft[idx],
-        startDatetime: document.getElementById('inlineStart_' + idx).value,
+        ...previous,
+        bienSo: bs,
+        soHSBT: get('editItemHSBT').value.trim(),
+        startDatetime: get('editItemStart').value,
         datetime: date,
-        isHolidayChecked: isHol,
-        isSpecialCase: isSpec,
-        bienSo: document.getElementById('inlineBS_' + idx).value,
-        soHSBT: document.getElementById('inlineHSBT_' + idx).value,
         distanceKm: km,
-        vehicle: document.getElementById('inlineVeh_' + idx).value,
-        travelCost: travelValue,
-        perDiem: parseFloat(document.getElementById('inlinePer_' + idx).value) || 0,
-        hotelCost: parseFloat(document.getElementById('inlineHot_' + idx).value) || 0,
-        location: document.getElementById('inlineLoc_' + idx).value,
-        calcResult: calc
+        isHolidayChecked: isHoliday,
+        isSpecialCase: get('editItemSpecial').checked,
+        vehicle: get('editItemVehicle').value,
+        travelCost: parseFloat(get('editItemTravel').value) || 0,
+        perDiem: parseFloat(get('editItemPerDiem').value) || 0,
+        hotelCost,
+        location,
+        calcResult: calculateFieldCost(km, date, isHoliday)
       };
-      
-      window.editingReimbIndex = -1;
-      if (typeof updateQuickReimbPreview === 'function') updateQuickReimbPreview();
+      closeReimbItemEditor();
       renderReimbursementDraftItems();
+      triggerToast('Đã cập nhật vụ số ' + (idx + 1), 'success');
     }
 
 
@@ -696,37 +806,8 @@
         else if (item.calcResult.isAfterHours) noteStr.push('Ngoài giờ');
         if (item.isSpecialCase) noteStr.push('Đặc thù/Cao tốc');
 
-        if (window.editingReimbIndex === idx) {
-          return `
-            <tr class="sf-row fr-editing">
-              <td class="fr-num fr-idx">${idx + 1}</td>
-              <td><input type="datetime-local" id="inlineStart_${idx}" value="${item.startDatetime || ''}" class="fr-input fr-input-sm" style="width:170px"></td>
-              <td>
-                <input type="datetime-local" id="inlineEnd_${idx}" value="${item.datetime || ''}" class="fr-input fr-input-sm" style="width:170px">
-                <div class="fr-inline-checks">
-                  <label class="fr-check"><input type="checkbox" id="inlineHol_${idx}" ${item.isHolidayChecked ? 'checked' : ''}><span>Lễ/Cuối tuần</span></label>
-                  <label class="fr-check"><input type="checkbox" id="inlineSpec_${idx}" ${item.isSpecialCase ? 'checked' : ''}><span>Đặc thù/Cao tốc</span></label>
-                </div>
-              </td>
-              <td><input type="text" id="inlineBS_${idx}" value="${escapeHtmlOutput(item.bienSo)}" class="fr-input fr-input-sm" style="width:110px"></td>
-              <td><input type="text" id="inlineHSBT_${idx}" value="${escapeHtmlOutput(item.soHSBT || '')}" class="fr-input fr-input-sm" style="width:150px"></td>
-              <td><input type="number" id="inlineKm_${idx}" value="${item.distanceKm}" class="fr-input fr-input-sm" style="width:70px"></td>
-              <td class="fr-right fr-dash">Tự động</td>
-              <td><input type="text" id="inlineVeh_${idx}" value="${escapeHtmlOutput(item.vehicle || '')}" class="fr-input fr-input-sm" style="width:130px"></td>
-              <td><input type="number" id="inlineTrav_${idx}" value="${item.travelCost || ''}" class="fr-input fr-input-sm" style="width:100px"></td>
-              <td><input type="number" id="inlinePer_${idx}" value="${item.perDiem || ''}" class="fr-input fr-input-sm" style="width:100px"></td>
-              <td><input type="number" id="inlineHot_${idx}" value="${item.hotelCost || ''}" class="fr-input fr-input-sm" style="width:100px"></td>
-              <td><input type="text" id="inlineLoc_${idx}" value="${escapeHtmlOutput(item.location || '')}" class="fr-input fr-input-sm" style="width:110px"></td>
-              <td class="fr-right fr-dash">Tự động</td>
-              <td class="fr-center"><div class="fr-row-actions">
-                <button type="button" class="sf-button sf-primary fr-mini" onclick="saveInlineEdit(${idx})">Lưu</button>
-                <button type="button" class="sf-button fr-mini" onclick="cancelInlineEdit()">Hủy</button>
-              </div></td>
-            </tr>`;
-        }
-
         return `
-          <tr class="sf-row">
+          <tr class="sf-row fr-editable" ondblclick="openReimbItemEditor(${idx})" title="Nhấp đúp để sửa">
             <td class="fr-num fr-idx">${idx + 1}</td>
             <td class="sf-col-date">${item.startDatetime ? formatDateDisplay(item.startDatetime).replace('—', '<br>') : '<span class="fr-dash">–</span>'}</td>
             <td class="sf-col-date">${formatDateDisplay(item.datetime).replace('—', '<br>')}${noteStr.length ? `<br><span class="fr-note">${noteStr.join(', ')}</span>` : ''}</td>
@@ -741,7 +822,7 @@
             <td>${escapeHtmlOutput(item.location || '')}</td>
             <td class="fr-money">${money(subtotal)}</td>
             <td class="fr-center"><div class="fr-row-actions">
-              <button type="button" class="sf-icon-button" onclick="enableInlineEdit(${idx})" title="Sửa vụ này" aria-label="Sửa vụ ${idx + 1}">${fieldReimbIcon('file')}</button>
+              <button type="button" class="sf-icon-button" onclick="openReimbItemEditor(${idx})" title="Sửa vụ này" aria-label="Sửa vụ ${idx + 1}">${fieldReimbIcon('file')}</button>
               <button type="button" class="sf-icon-button sf-danger" onclick="removeReimbursementItem(${idx})" title="Xóa vụ này" aria-label="Xóa vụ ${idx + 1}">${fieldReimbIcon('trash')}</button>
             </div></td>
           </tr>`;
