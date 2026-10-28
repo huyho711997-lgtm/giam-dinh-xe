@@ -219,3 +219,18 @@ body:not(.light-mode) .fr-modal { color-scheme:dark; }
   .fr-item-panel { width:100vw; height:100dvh; max-height:none; }
   .fr-breakdown { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+/* ===== Xem trước bản in ===== */
+.fr-print-overlay { display:block; overflow-y:auto; padding:0 20px 40px; z-index:9999999; background:rgba(20,18,12,.62); }
+body:not(.light-mode) .fr-print-overlay { background:rgba(5,9,14,.8); }
+.fr-print-bar { position:sticky; top:0; z-index:5; width:210mm; max-width:100%; margin:16px auto 20px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid var(--sf-line); border-radius:14px; background:var(--sf-paper); box-shadow:0 10px 30px rgba(0,0,0,.25); }
+.fr-print-title { display:flex; flex-direction:column; align-items:center; min-width:0; text-align:center; }
+.fr-print-title strong { font-size:13px; font-weight:800; color:var(--sf-ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.fr-print-title .sf-eyebrow { font-size:9px; display:inline-flex; color:var(--sf-gold); font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.fr-print-overlay .sf-button { height:38px; border-radius:10px; font-size:12px; white-space:nowrap; border:1px solid var(--sf-line); background:var(--sf-paper); color:var(--sf-ink); display:inline-flex; align-items:center; gap:7px; padding:0 14px; cursor:pointer; font-family:inherit; font-weight:650; }
+.fr-print-overlay .sf-button svg { width:16px; height:16px; }
+.fr-print-overlay .sf-button:hover { background:var(--sf-soft); border-color:var(--sf-gold); }
+.fr-print-overlay .sf-button.sf-primary { background:var(--sf-action); border-color:var(--sf-action); color:var(--sf-action-text); }
+.fr-print-overlay .sf-button.sf-primary:hover { background:var(--sf-action-hover); }
+@media (max-width: 640px) { .fr-print-title { display:none; } .fr-print-bar { justify-content:space-between; } }
+@media print { .fr-print-overlay { background:#fff !important; backdrop-filter:none !important; } }

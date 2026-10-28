@@ -111,16 +111,12 @@
 
       const overlay = document.createElement('div');
       overlay.id = 'printOverlayModal';
-      overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.75); backdrop-filter:blur(12px); z-index:9999999; overflow-y:auto; padding:30px 20px; box-sizing:border-box; animation: fadeIn 0.2s;';
+      overlay.className = 'fr-modal fr-print-overlay';
+      const ic = (typeof fieldReimbIcon === 'function') ? fieldReimbIcon : () => '';
       
       overlay.innerHTML = `
         <style>
           #printOverlayModal * { box-sizing: border-box; }
-          .print-action-bar { width: 210mm; margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; }
-          .btn-print { background: #3b82f6; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-family: 'Plus Jakarta Sans', Arial, sans-serif; box-shadow: 0 4px 15px rgba(59,130,246,0.3); transition: all 0.2s; }
-          .btn-print:hover { background: #2563eb; transform: translateY(-1px); }
-          .btn-close-print { background: #ef4444; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-family: 'Plus Jakarta Sans', Arial, sans-serif; box-shadow: 0 4px 15px rgba(239,68,68,0.3); transition: all 0.2s; }
-          .btn-close-print:hover { background: #dc2626; transform: translateY(-1px); }
           .print-page { background: white; width: 210mm; min-height: 297mm; padding: 20mm; box-shadow: 0 30px 80px rgba(0,0,0,0.5); border-radius: 8px; margin: 0 auto 40px auto; font-family: 'Times New Roman', serif; font-size: 12.5px; color: #000; overflow: hidden; }
           .print-page .header-logo { color: #004b87; font-weight: bold; font-family: Arial, sans-serif; font-size: 20px; line-height: 1.2; }
           .print-page .header-logo span { color: #00a4e4; font-weight: normal; font-size: 16px; display: block; }
@@ -142,7 +138,7 @@
               html, body { background: white !important; margin: 0 !important; padding: 0 !important; height: auto !important; min-height: auto !important; max-width: none !important; width: auto !important; overflow: visible !important; }
               body > *:not(#printOverlayModal) { display: none !important; }
               #printOverlayModal { position: static !important; background: white !important; margin: 0 !important; padding: 0 !important; width: 100% !important; height: auto !important; display: block !important; overflow: visible !important; box-shadow: none !important; border: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
-              .print-action-bar, .btn-print, .btn-close-print { display: none !important; height: 0 !important; overflow: hidden !important; }
+              .print-action-bar { display: none !important; height: 0 !important; overflow: hidden !important; }
               .print-page { margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; width: 100% !important; min-height: auto !important; height: auto !important; page-break-after: auto !important; overflow: visible !important; background: white !important; }
               table { page-break-inside: auto !important; }
               tr { page-break-inside: auto !important; page-break-after: auto !important; }
@@ -153,15 +149,10 @@
         
 </style>
         
-        <div class="print-action-bar">
-          <button class="btn-close-print" onclick="document.getElementById('printOverlayModal').remove()">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            QUAY LẠI
-          </button>
-          <button class="btn-print" onclick="window.print()" style="background: var(--primary); color: #111;">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-            IN TÀI LIỆU
-          </button>
+        <div class="print-action-bar fr-print-bar">
+          <button type="button" class="sf-button" onclick="document.getElementById('printOverlayModal').remove()">${ic('arrow').replace('<svg','<svg style="transform:scaleX(-1)"')}<span>Quay lại</span></button>
+          <div class="fr-print-title"><span class="sf-eyebrow">Xem trước bản in</span><strong>Giấy đề nghị thanh toán · ${escapeHtmlOutput(payload.id)}</strong></div>
+          <button type="button" class="sf-button sf-primary" onclick="window.print()">${ic('print')}<span>In phiếu</span></button>
         </div>
         
         <div class="print-page">
