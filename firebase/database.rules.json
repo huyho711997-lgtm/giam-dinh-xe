@@ -173,6 +173,18 @@
           ".validate": false
         }
       }
+    },
+    "user_secrets": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "geminiApiKey": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     }
   }
 }

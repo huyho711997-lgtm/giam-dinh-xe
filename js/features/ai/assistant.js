@@ -71,16 +71,16 @@
     input.setSelectionRange(input.value.length, input.value.length);
   }
 
-  function setGeminiApiKey() {
-    const currentKey = localStorage.getItem('gemini_api_key') || '';
-    const key = prompt('Nhập API Key Gemini (Lấy từ Google AI Studio):', currentKey);
+  async function setGeminiApiKey() {
+    const key = prompt('Nhập API Key Gemini (lấy từ Google AI Studio). Khoá được lưu riêng cho tài khoản của bạn:', await GeminiKeyStore.get());
     const currentModel = localStorage.getItem('gemini_model_name') || 'gemini-2.5-pro';
     const model = prompt('Nhập tên Model (VD: gemini-2.5-flash, gemini-2.5-pro...):', currentModel);
-    if (key !== null) {
-      localStorage.setItem('gemini_api_key', key.trim());
+    if (key === null) return;
+    try {
+      const result = await GeminiKeyStore.set(key);
       if (model !== null) localStorage.setItem('gemini_model_name', model.trim());
-      alert('Đã lưu API Key thành công!');
-    }
+      alert(result.scope === 'account' ? 'Đã lưu API Key vào tài khoản của bạn!' : 'Đã lưu API Key trên trình duyệt này (chưa lưu được vào tài khoản).');
+    } catch (error) { alert(error.message); }
   }
 
   async function sendTascoAIMessage() {
@@ -88,7 +88,7 @@
     const msg = inputEl.value.trim();
     if (!msg) return;
 
-    const apiKey = localStorage.getItem('gemini_api_key');
+    const apiKey = await GeminiKeyStore.get();
     const modelName = localStorage.getItem('gemini_model_name') || 'gemini-2.5-pro';
     if (!apiKey) {
       alert('Vui lòng cài đặt Gemini API Key (nút ⚙️) trước khi sử dụng!');

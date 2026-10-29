@@ -68,7 +68,7 @@
 <link rel="stylesheet" href="css/pending-workspace.css?v=20261024-v2">
 <link rel="stylesheet" href="css/pending-page.css?v=20261024-1">
 <link rel="stylesheet" href="css/shared-forms.css?v=20261023-confirm-5">
-<link rel="stylesheet" href="css/shared-forms-page.css?v=20261029-ai-2">
+<link rel="stylesheet" href="css/shared-forms-page.css?v=20261029-ai-4">
 <link rel="stylesheet" href="css/field-reimbursements.css?v=20261028-fr-8">
 <link rel="stylesheet" href="css/rescue-cost.css?v=20261025-geo-2">
 <link rel="stylesheet" href="css/claim-editor.css?v=20261025-cov-1">
@@ -368,6 +368,7 @@
           </button>
           <button id="tabBtn_Documents" type="button" onclick="switchEditClaimTab('Documents')" class="edit-tab-btn"><span>Tài liệu hồ sơ</span></button>
           <button id="tabBtn_Email" type="button" onclick="switchEditClaimTab('Email')" class="edit-tab-btn"><span>Email</span></button>
+          <button id="tabBtn_FormsAI" type="button" onclick="switchEditClaimTab('FormsAI')" class="edit-tab-btn"><span>Biểu mẫu AI</span></button>
           <button id="tabBtn_AuthorityRequest" type="button" onclick="switchEditClaimTab('AuthorityRequest')" class="edit-tab-btn"><span>Trưng cầu hồ sơ</span></button>
           <button id="tabBtn_CollectionGuide" type="button" onclick="switchEditClaimTab('CollectionGuide')" class="edit-tab-btn">
             <span>Hướng dẫn thu thập hồ sơ</span>
@@ -379,6 +380,7 @@
 
         <div id="tabPane_Documents" class="edit-tab-pane" style="display:none"></div>
         <div id="tabPane_Email" class="edit-tab-pane claim-email-pane" style="display:none"></div>
+        <div id="tabPane_FormsAI" class="edit-tab-pane" style="display:none"></div>
         <div id="tabPane_AuthorityRequest" class="edit-tab-pane" style="display:none">
           <div class="authority-request-header">
             <div class="authority-request-heading">
@@ -1743,8 +1745,9 @@
   <script src="js/features/claims/reduction-rules.js?v=20261025-steps-1"></script>
   <script src="js/features/claims/reduction-notice.js?v=20261025-loss-2"></script>
   <script src="js/features/claims/claim-email.js?v=20261025-loss-2"></script>
+  <script src="js/features/claims/claim-forms-ai.js?v=20261029-ai-3"></script>
   <script src="js/features/claims/editor-workspace.js?v=20261025-email-2"></script>
-  <script src="js/features/claims/pending-editor.js?v=20261025-email-1"></script>
+  <script src="js/features/claims/pending-editor.js?v=20261029-ai-3"></script>
   <script src="js/features/claims/notes.js"></script>
   <script src="js/features/claims/import-versions.js?v=20261024-imports-2"></script>
   <script src="js/features/claims/import-history.js?v=20261024-imports-3"></script>
@@ -1782,8 +1785,8 @@
   <script src="js/features/documents/shared-forms-store.js?v=20261026-del-1"></script>
   <script src="js/features/documents/claim-documents.js?v=20261024-retry-1"></script>
   <script src="js/features/documents/shared-forms-print.js"></script>
-  <script src="js/features/documents/shared-forms-viewer.js?v=20261029-ai-1"></script>
-  <script src="js/features/documents/shared-forms-ai.js?v=20261029-ai-1"></script>
+  <script src="js/features/documents/shared-forms-viewer.js?v=20261029-ai-3"></script>
+  <script src="js/features/documents/shared-forms-ai.js?v=20261029-ai-3"></script>
   <script src="js/features/documents/shared-forms.js?v=20261029-ai-1"></script>
   <script src="js/features/rescue/rescue-calc.js?v=20261025-rescue-1"></script>
   <script src="js/features/rescue/rescue-geo.js?v=20261025-geo-1"></script>
@@ -1866,7 +1869,8 @@
   </div>
 </div>
 
-<script src="js/features/ai/assistant.js"></script>
+<script src="js/features/ai/gemini-key.js?v=20261029-ai-3"></script>
+<script src="js/features/ai/assistant.js?v=20261029-ai-3"></script>
 <!-- /TASCO AI ASSISTANT -->
 
 

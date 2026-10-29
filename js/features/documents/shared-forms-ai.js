@@ -176,39 +176,60 @@ const SharedFormsAI = (() => {
     return rows;
   }
 
-  function open(file, options) {
-    document.getElementById('sfAiDialog')?.remove();
-    const records = listRecords();
-    const hasKey = (() => { try { return !!localStorage.getItem('gemini_api_key'); } catch (_) { return false; } })();
-    const node = document.createElement('dialog');
-    node.id = 'sfAiDialog';
-    node.className = 'sf-dialog sf-dialog-v2 sf-ai-dialog';
-    node.setAttribute('aria-labelledby', 'sfAiTitle');
-    const groups = ['Hồ sơ giám định', 'Hồ sơ tồn'].map(group => {
-      const items = records.filter(row => row.group === group);
+  // Bộ soạn dùng chung cho hộp thoại ở Kho biểu mẫu và tab "Biểu mẫu AI" trong hồ sơ bồi thường.
+  // options.records: danh sách hồ sơ để chọn; options.setRecord/setFile cho phép bên ngoài đổi hồ sơ/biểu mẫu.
+  function createComposer(options = {}) {
+    const root = document.createElement('div');
+    root.className = 'sf-ai-composer';
+    const selectable = Array.isArray(options.records);
+    const groups = selectable ? ['Hồ sơ giám định', 'Hồ sơ tồn'].map(group => {
+      const items = options.records.filter(row => row.group === group);
       return items.length ? '<optgroup label="' + group + '">' + items.map(row => '<option value="' + escapeHtml(row.key) + '">' + escapeHtml(row.label) + '</option>').join('') + '</optgroup>' : '';
-    }).join('');
-    node.innerHTML = '<form class="sf-dialog-form"><header class="sf-dialog-head"><span class="sf-dialog-emblem" aria-hidden="true">' + SharedFormsControls.icon('file') + '</span>'
-      + '<div><small>THƯ VIỆN BIỂU MẪU</small><h2 id="sfAiTitle">Soạn bằng AI</h2><p>' + escapeHtml(file.name) + '</p></div>'
-      + '<button type="button" class="sf-icon-button sf-dialog-close" data-ai-close aria-label="Đóng" title="Đóng (Esc)">' + SharedFormsControls.icon('close') + '</button></header>'
-      + '<div class="sf-dialog-body">'
-      + '<label class="sf-field"><span class="sf-field-label">Hồ sơ áp dụng</span><select name="record"><option value="">— Không chọn hồ sơ —</option>' + groups + '</select></label>'
-      + '<label class="sf-field"><span class="sf-field-label">Lệnh cho AI</span><textarea name="command" rows="4" maxlength="1500" placeholder="VD: Điền thông tin chủ xe, biển số, số hồ sơ và ngày tổn thất vào biểu mẫu; kính gửi Bảo hiểm Bảo Việt."></textarea></label>'
-      + (hasKey ? '' : '<label class="sf-field"><span class="sf-field-label">Khoá Gemini API (lưu trên trình duyệt này)</span><input name="apiKey" type="password" autocomplete="off" placeholder="Lấy miễn phí tại aistudio.google.com"></label>')
-      + '<p class="sf-ai-privacy">Dữ liệu văn bản của hồ sơ đã chọn (không gồm ảnh) và nội dung biểu mẫu sẽ được gửi tới Google Gemini để xử lý.</p>'
-      + '<div class="sf-ai-result" data-ai-result hidden></div><p class="sf-feedback" role="status" aria-live="polite" data-ai-feedback></p></div>'
-      + '<footer class="sf-dialog-foot"><button type="button" class="sf-button" data-ai-close>Đóng</button>'
-      + '<button type="button" class="sf-button" data-ai-download hidden>' + SharedFormsControls.icon('download') + ' Tải .docx</button>'
-      + '<button type="submit" class="sf-button sf-primary"><span data-ai-label>Phân tích</span></button></footer></form>';
-    document.body.appendChild(node);
-    const form = node.querySelector('form'), feedback = node.querySelector('[data-ai-feedback]'), resultBox = node.querySelector('[data-ai-result]');
-    const submit = node.querySelector('[type=submit]'), downloadButton = node.querySelector('[data-ai-download]');
-    let controller = null, loaded = null, proposal = null;
-    const close = () => { controller?.abort(); SharedFormsControls.close(); node.close(); node.remove(); };
-    node.querySelectorAll('[data-ai-close]').forEach(button => button.onclick = close);
-    node.addEventListener('cancel', event => { event.preventDefault(); close(); });
+    }).join('') : '';
+    root.innerHTML = (selectable ? '<label class="sf-field"><span class="sf-field-label">Hồ sơ áp dụng</span><select name="record"><option value="">— Không chọn hồ sơ —</option>' + groups + '</select></label>' : '<div class="sf-ai-record" data-ai-record></div>')
+      + '<label class="sf-field"><span class="sf-field-label">Lệnh cho AI</span><textarea name="command" rows="3" maxlength="1500" placeholder="VD: Điền thông tin chủ xe, biển số, số hồ sơ và ngày tổn thất vào biểu mẫu; kính gửi Bảo hiểm Bảo Việt."></textarea></label>'
+      + '<div class="sf-ai-chips" data-ai-chips><button type="button" data-ai-chip="Điền đầy đủ các thông tin có trong hồ sơ vào biểu mẫu.">Điền tất cả thông tin hồ sơ</button><button type="button" data-ai-chip="Chỉ điền họ tên chủ xe, biển số xe, số hồ sơ bồi thường và ngày tổn thất.">Chỉ thông tin cơ bản</button></div>'
+      + '<div class="sf-ai-key" data-ai-key></div>'
+      + '<p class="sf-ai-privacy">Dữ liệu văn bản của hồ sơ (không gồm ảnh) và nội dung biểu mẫu được gửi tới Google Gemini để xử lý.</p>'
+      + '<div class="sf-ai-actions"><button type="submit" class="sf-button sf-primary" data-ai-run><span>Phân tích</span></button><button type="button" class="sf-button" data-ai-download hidden>' + SharedFormsControls.icon('download') + ' Tải .docx</button></div>'
+      + '<div class="sf-ai-result" data-ai-result hidden></div><p class="sf-feedback" role="status" aria-live="polite" data-ai-feedback></p>';
+    const $ = selector => root.querySelector(selector);
+    const feedback = $('[data-ai-feedback]'), resultBox = $('[data-ai-result]'), run = $('[data-ai-run]'), downloadButton = $('[data-ai-download]'), keyBox = $('[data-ai-key]');
+    const command = $('textarea[name=command]');
+    let file = null, loadBytes = null, loaded = null, proposal = null, controller = null, fixed = null, hasKey = false, editingKey = false;
     const say = (text, bad) => { feedback.textContent = text; feedback.classList.toggle('is-error', !!bad); };
-    const chosen = () => [...resultBox.querySelectorAll('input[data-edit]:checked')].map(box => Number(box.dataset.edit));
+    const currentRow = () => selectable ? options.records.find(item => item.key === $('select[name=record]').value) : fixed;
+    const reset = () => { proposal = null; loaded = null; resultBox.hidden = true; resultBox.innerHTML = ''; downloadButton.hidden = true; say(''); };
+
+    async function paintKey() {
+      hasKey = !!(await GeminiKeyStore.get());
+      if (hasKey && !editingKey) {
+        keyBox.innerHTML = '<span>Khoá Gemini API đã lưu trong tài khoản của bạn.</span> <button type="button" class="sf-ai-link" data-ai-key-edit>Đổi khoá</button>';
+      } else {
+        keyBox.innerHTML = '<label class="sf-field"><span class="sf-field-label">Khoá Gemini API (lưu riêng cho tài khoản của bạn)</span><input name="apiKey" type="password" autocomplete="off" placeholder="Lấy miễn phí tại aistudio.google.com"></label>'
+          + '<div class="sf-ai-key-actions"><button type="button" class="sf-button" data-ai-key-save>Lưu khoá</button>' + (hasKey ? '<button type="button" class="sf-ai-link" data-ai-key-cancel>Hủy</button>' : '') + '</div>';
+      }
+    }
+    async function saveKey() {
+      const input = keyBox.querySelector('input[name=apiKey]');
+      try {
+        const result = await GeminiKeyStore.set(input?.value);
+        editingKey = false;
+        await paintKey();
+        say(result.scope === 'account' ? 'Đã lưu khoá vào tài khoản của bạn.' : 'Đã lưu khoá trên trình duyệt này (chưa lưu được vào tài khoản — cần quản trị viên cập nhật Firebase Rules).');
+      } catch (error) { say(error.message, true); }
+    }
+    root.addEventListener('click', event => {
+      const button = event.target.closest('button');
+      if (!button) return;
+      if (button.dataset.aiChip) { command.value = button.dataset.aiChip; command.focus(); }
+      else if (button.hasAttribute('data-ai-key-edit')) { editingKey = true; paintKey(); }
+      else if (button.hasAttribute('data-ai-key-cancel')) { editingKey = false; paintKey(); }
+      else if (button.hasAttribute('data-ai-key-save')) saveKey();
+      else if (button.hasAttribute('data-ai-download')) download();
+      else if (button.hasAttribute('data-ai-run')) analyze();
+    });
+    $('select[name=record]')?.addEventListener('change', reset);
 
     function paintProposal() {
       const rows = proposal.edits.map(edit => '<label class="sf-ai-edit"><input type="checkbox" data-edit="' + edit.id + '" checked>'
@@ -220,57 +241,81 @@ const SharedFormsAI = (() => {
       downloadButton.hidden = !proposal.edits.length;
     }
 
-    form.onsubmit = async event => {
-      event.preventDefault();
-      const command = form.command.value.trim();
-      if (!command) { say('Hãy nhập lệnh cho AI.', true); form.command.focus(); return; }
-      let apiKey = '';
-      try { apiKey = localStorage.getItem('gemini_api_key') || ''; } catch (_) { /* bỏ qua */ }
-      if (!apiKey && form.apiKey) apiKey = form.apiKey.value.trim();
-      if (!apiKey) { say('Cần khoá Gemini API (miễn phí tại aistudio.google.com).', true); form.apiKey?.focus(); return; }
-      const row = records.find(item => item.key === form.record.value);
+    async function analyze() {
+      if (!file || !loadBytes) { say('Hãy chọn biểu mẫu Word (.docx) trước.', true); return; }
+      const text = command.value.trim();
+      if (!text) { say('Hãy nhập lệnh cho AI.', true); command.focus(); return; }
+      const apiKey = await GeminiKeyStore.get();
+      if (!apiKey) { say('Cần lưu khoá Gemini API (miễn phí tại aistudio.google.com) trước.', true); return; }
       controller?.abort();
       controller = new AbortController();
-      submit.disabled = true; downloadButton.hidden = true; resultBox.hidden = true;
+      run.disabled = true; downloadButton.hidden = true; resultBox.hidden = true;
       say('Đang đọc biểu mẫu và hỏi AI…');
       try {
-        loaded = loaded || await loadDocx(file, options.loadBytes);
+        loaded = loaded || await loadDocx(file, loadBytes);
         const paragraphs = readParagraphs(loaded.xml);
         if (!paragraphs.length) throw new Error('Biểu mẫu không có đoạn văn bản nào để sửa (có thể là bản scan).');
         let model = 'gemini-2.5-flash';
         try { model = localStorage.getItem('gemini_form_model') || model; } catch (_) { /* bỏ qua */ }
-        const raw = await callGemini(buildRequest(paragraphs, describeRecord(row?.record), command), apiKey, model, controller.signal);
-        if (form.apiKey?.value.trim()) { try { localStorage.setItem('gemini_api_key', apiKey); } catch (_) { /* bỏ qua */ } }
+        const raw = await callGemini(buildRequest(paragraphs, describeRecord(currentRow()?.record), text), apiKey, model, controller.signal);
         proposal = parseResponse(raw, paragraphs);
         say('');
         paintProposal();
       } catch (error) {
         if (error.name !== 'AbortError') say(error.message || 'Không thể soạn bằng AI.', true);
-      } finally { submit.disabled = false; }
-    };
+      } finally { run.disabled = false; }
+    }
 
-    downloadButton.onclick = async () => {
-      const ids = new Set(chosen());
+    async function download() {
+      const ids = new Set([...resultBox.querySelectorAll('input[data-edit]:checked')].map(box => Number(box.dataset.edit)));
       const edits = proposal.edits.filter(edit => ids.has(edit.id));
       if (!edits.length) { say('Hãy chọn ít nhất một chỗ sửa.', true); return; }
       try {
         loaded.zip.file('word/document.xml', applyEdits(loaded.xml, edits));
         const blob = await loaded.zip.generateAsync({type: 'blob', mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
-        const row = records.find(item => item.key === form.record.value);
         const base = String(file.originalName || file.name).replace(/\.docx$/i, '');
-        const suffix = row?.record?.bienSo ? ' - ' + String(row.record.bienSo).replace(/[^\w.-]+/g, '') : '';
+        const plate = currentRow()?.record?.bienSo;
+        const suffix = plate ? ' - ' + String(plate).replace(/[^\w.-]+/g, '') : '';
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a'); link.href = url; link.download = base + suffix + ' (AI).docx';
         document.body.appendChild(link); link.click(); link.remove();
         setTimeout(() => URL.revokeObjectURL(url), 60000);
-        say('Đã tạo bản sửa. Biểu mẫu gốc trong kho không bị thay đổi.');
+        say('Đã tạo bản sửa. Biểu mẫu gốc không bị thay đổi.');
       } catch (error) { say(error.message || 'Không tạo được file.', true); }
-    };
+    }
 
-    node.showModal();
-    SharedFormsControls.enhance(node);
-    form.command.focus();
+    paintKey();
+    return {
+      element: root,
+      setFile(nextFile, nextLoadBytes) { file = nextFile; loadBytes = nextLoadBytes; reset(); },
+      setRecord(row) { fixed = row; const box = $('[data-ai-record]'); if (box) box.innerHTML = row ? '<span>Hồ sơ áp dụng</span><strong>' + escapeHtml(row.label) + '</strong>' : '<span>Chưa có hồ sơ đang mở</span>'; reset(); },
+      focus() { command.focus(); },
+      destroy() { controller?.abort(); }
+    };
   }
 
-  return {open, readParagraphs, applyEdits, describeRecord, buildRequest, parseResponse};
+  function open(file, options) {
+    document.getElementById('sfAiDialog')?.remove();
+    const node = document.createElement('dialog');
+    node.id = 'sfAiDialog';
+    node.className = 'sf-dialog sf-dialog-v2 sf-ai-dialog';
+    node.setAttribute('aria-labelledby', 'sfAiTitle');
+    node.innerHTML = '<form class="sf-dialog-form"><header class="sf-dialog-head"><span class="sf-dialog-emblem" aria-hidden="true">' + SharedFormsControls.icon('file') + '</span>'
+      + '<div><small>THƯ VIỆN BIỂU MẪU</small><h2 id="sfAiTitle">Soạn bằng AI</h2><p>' + escapeHtml(file.name) + '</p></div>'
+      + '<button type="button" class="sf-icon-button sf-dialog-close" data-ai-close aria-label="Đóng" title="Đóng (Esc)">' + SharedFormsControls.icon('close') + '</button></header>'
+      + '<div class="sf-dialog-body" data-ai-host></div></form>';
+    document.body.appendChild(node);
+    const composer = createComposer({records: listRecords()});
+    composer.setFile(file, options.loadBytes);
+    node.querySelector('[data-ai-host]').appendChild(composer.element);
+    const close = () => { composer.destroy(); SharedFormsControls.close(); node.close(); node.remove(); };
+    node.querySelector('[data-ai-close]').onclick = close;
+    node.addEventListener('cancel', event => { event.preventDefault(); close(); });
+    node.querySelector('form').onsubmit = event => event.preventDefault();
+    node.showModal();
+    SharedFormsControls.enhance(node);
+    composer.focus();
+  }
+
+  return {open, createComposer, readParagraphs, applyEdits, describeRecord, buildRequest, parseResponse};
 })();
