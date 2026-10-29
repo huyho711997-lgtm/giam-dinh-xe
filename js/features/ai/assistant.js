@@ -71,7 +71,7 @@
     input.setSelectionRange(input.value.length, input.value.length);
   }
 
-  const TASCO_MODELS = [['gemini-2.5-flash', 'Gemini 2.5 Flash — nhanh, hạn mức miễn phí cao (khuyên dùng)'], ['gemini-2.5-pro', 'Gemini 2.5 Pro — suy luận sâu hơn, chậm hơn'], ['gemini-2.5-flash-lite', 'Gemini 2.5 Flash-Lite — nhẹ nhất']];
+  const TASCO_MODELS = [['gemini-2.5-flash', 'Gemini 2.5 Flash (khuyên dùng)', 'Nhanh, hạn mức miễn phí cao — hợp tra cứu và soạn biểu mẫu.'], ['gemini-2.5-pro', 'Gemini 2.5 Pro', 'Suy luận sâu hơn nhưng chậm hơn, hạn mức miễn phí thấp hơn.'], ['gemini-2.5-flash-lite', 'Gemini 2.5 Flash-Lite', 'Nhẹ nhất, rẻ nhất; câu trả lời đơn giản hơn.']];
 
   function tascoAIModel() { try { return localStorage.getItem('gemini_model_name') || 'gemini-2.5-flash'; } catch (_) { return 'gemini-2.5-flash'; } }
 
@@ -86,14 +86,18 @@
     box.setAttribute('autocomplete', 'off');
     box.innerHTML = '<div class="tasco-ai-settings__head"><button type="button" class="tasco-ai-settings__back" data-ai-back aria-label="Quay lại cuộc trò chuyện">←</button><div><strong>Thiết lập kết nối AI</strong><small>Khoá và mô hình Gemini dùng cho trợ lý và soạn biểu mẫu</small></div></div>'
       + '<label class="tasco-ai-field"><span>Khoá Gemini API</span><div class="tasco-ai-keyrow"><input type="password" name="apiKey" autocomplete="off" spellcheck="false" placeholder="Dán khoá API"><button type="button" data-ai-reveal aria-label="Hiện hoặc ẩn khoá" title="Hiện/ẩn">👁</button></div><small data-ai-keystate></small></label>'
-      + '<label class="tasco-ai-field"><span>Mô hình</span><select name="model"></select><input type="text" name="customModel" placeholder="VD: gemini-2.5-flash" hidden></label>'
+      + '<label class="tasco-ai-field"><span>Mô hình</span><select name="model" data-sf-select data-sf-label="Mô hình Gemini" data-sf-description="Chọn mô hình dùng cho trợ lý" data-sf-icon="spark"></select><input type="text" name="customModel" placeholder="VD: gemini-2.5-flash" hidden><small data-ai-modelhint></small></label>'
       + '<p class="tasco-ai-settings__hint">Khoá được lưu riêng cho tài khoản của bạn. Lấy khoá miễn phí tại <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com</a>. Dữ liệu hồ sơ được gửi tới Google Gemini khi bạn đặt câu hỏi.</p>'
       + '<p class="tasco-ai-settings__msg" role="status" aria-live="polite" data-ai-msg></p>'
       + '<div class="tasco-ai-settings__actions"><button type="submit" class="tasco-ai-btn-primary" data-ai-save>Lưu & kiểm tra</button><button type="button" class="tasco-ai-btn-ghost" data-ai-clear>Xoá khoá</button></div>';
     panel.querySelector('.tasco-ai-header').after(box);
     const select = box.querySelector('select[name=model]'), custom = box.querySelector('input[name=customModel]');
     select.innerHTML = TASCO_MODELS.map(([value, label]) => '<option value="' + value + '">' + escapeTascoAI(label) + '</option>').join('') + '<option value="__custom">Khác (nhập tên mô hình)…</option>';
-    select.onchange = () => { custom.hidden = select.value !== '__custom'; if (!custom.hidden) custom.focus(); };
+    const hint = box.querySelector('[data-ai-modelhint]');
+    const syncModel = () => { custom.hidden = select.value !== '__custom'; hint.textContent = TASCO_MODELS.find(item => item[0] === select.value)?.[2] || 'Nhập đúng tên mô hình Gemini có trong Google AI Studio.'; };
+    select.onchange = () => { syncModel(); if (!custom.hidden && !box.silent) custom.focus(); };
+    box.syncModel = syncModel;
+    if (typeof SharedFormsControls !== 'undefined') SharedFormsControls.enhance(box);
     box.querySelector('[data-ai-back]').onclick = () => toggleTascoAISettings(false);
     box.querySelector('[data-ai-reveal]').onclick = () => { const input = box.apiKey; input.type = input.type === 'password' ? 'text' : 'password'; };
     box.querySelector('[data-ai-clear]').onclick = async () => {
@@ -124,6 +128,8 @@
     box.model.value = known ? model : '__custom';
     box.customModel.hidden = known;
     box.customModel.value = known ? '' : model;
+    box.syncModel?.();
+    box.silent = true; box.model.dispatchEvent(new Event('change')); box.silent = false;
     box.querySelector('[data-ai-clear]').hidden = !key;
   }
 
