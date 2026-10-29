@@ -71,17 +71,104 @@
     input.setSelectionRange(input.value.length, input.value.length);
   }
 
-  async function setGeminiApiKey() {
-    const key = prompt('Nhập API Key Gemini (lấy từ Google AI Studio). Khoá được lưu riêng cho tài khoản của bạn:', await GeminiKeyStore.get());
-    const currentModel = localStorage.getItem('gemini_model_name') || 'gemini-2.5-pro';
-    const model = prompt('Nhập tên Model (VD: gemini-2.5-flash, gemini-2.5-pro...):', currentModel);
-    if (key === null) return;
-    try {
-      const result = await GeminiKeyStore.set(key);
-      if (model !== null) localStorage.setItem('gemini_model_name', model.trim());
-      alert(result.scope === 'account' ? 'Đã lưu API Key vào tài khoản của bạn!' : 'Đã lưu API Key trên trình duyệt này (chưa lưu được vào tài khoản).');
-    } catch (error) { alert(error.message); }
+  const TASCO_MODELS = [['gemini-2.5-flash', 'Gemini 2.5 Flash — nhanh, hạn mức miễn phí cao (khuyên dùng)'], ['gemini-2.5-pro', 'Gemini 2.5 Pro — suy luận sâu hơn, chậm hơn'], ['gemini-2.5-flash-lite', 'Gemini 2.5 Flash-Lite — nhẹ nhất']];
+
+  function tascoAIModel() { try { return localStorage.getItem('gemini_model_name') || 'gemini-2.5-flash'; } catch (_) { return 'gemini-2.5-flash'; } }
+
+  // Biểu mẫu thiết lập nằm ngay trong khung chat (thay cho các hộp thoại prompt): khoá API + mô hình.
+  function buildTascoAISettings() {
+    const panel = document.getElementById('tasco-ai-panel');
+    let box = document.getElementById('tasco-ai-settings');
+    if (box || !panel) return box;
+    box = document.createElement('form');
+    box.id = 'tasco-ai-settings';
+    box.className = 'tasco-ai-settings';
+    box.setAttribute('autocomplete', 'off');
+    box.innerHTML = '<div class="tasco-ai-settings__head"><button type="button" class="tasco-ai-settings__back" data-ai-back aria-label="Quay lại cuộc trò chuyện">←</button><div><strong>Thiết lập kết nối AI</strong><small>Khoá và mô hình Gemini dùng cho trợ lý và soạn biểu mẫu</small></div></div>'
+      + '<label class="tasco-ai-field"><span>Khoá Gemini API</span><div class="tasco-ai-keyrow"><input type="password" name="apiKey" autocomplete="off" spellcheck="false" placeholder="Dán khoá API"><button type="button" data-ai-reveal aria-label="Hiện hoặc ẩn khoá" title="Hiện/ẩn">👁</button></div><small data-ai-keystate></small></label>'
+      + '<label class="tasco-ai-field"><span>Mô hình</span><select name="model"></select><input type="text" name="customModel" placeholder="VD: gemini-2.5-flash" hidden></label>'
+      + '<p class="tasco-ai-settings__hint">Khoá được lưu riêng cho tài khoản của bạn. Lấy khoá miễn phí tại <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">aistudio.google.com</a>. Dữ liệu hồ sơ được gửi tới Google Gemini khi bạn đặt câu hỏi.</p>'
+      + '<p class="tasco-ai-settings__msg" role="status" aria-live="polite" data-ai-msg></p>'
+      + '<div class="tasco-ai-settings__actions"><button type="submit" class="tasco-ai-btn-primary" data-ai-save>Lưu & kiểm tra</button><button type="button" class="tasco-ai-btn-ghost" data-ai-clear>Xoá khoá</button></div>';
+    panel.querySelector('.tasco-ai-header').after(box);
+    const select = box.querySelector('select[name=model]'), custom = box.querySelector('input[name=customModel]');
+    select.innerHTML = TASCO_MODELS.map(([value, label]) => '<option value="' + value + '">' + escapeTascoAI(label) + '</option>').join('') + '<option value="__custom">Khác (nhập tên mô hình)…</option>';
+    select.onchange = () => { custom.hidden = select.value !== '__custom'; if (!custom.hidden) custom.focus(); };
+    box.querySelector('[data-ai-back]').onclick = () => toggleTascoAISettings(false);
+    box.querySelector('[data-ai-reveal]').onclick = () => { const input = box.apiKey; input.type = input.type === 'password' ? 'text' : 'password'; };
+    box.querySelector('[data-ai-clear]').onclick = async () => {
+      await GeminiKeyStore.clear();
+      box.apiKey.value = '';
+      tascoSettingsMessage('Đã xoá khoá API.', false);
+      refreshTascoAISettings();
+    };
+    box.onsubmit = async event => { event.preventDefault(); await saveTascoAISettings(box); };
+    return box;
   }
+
+  function tascoSettingsMessage(text, bad) {
+    const message = document.querySelector('#tasco-ai-settings [data-ai-msg]');
+    if (!message) return;
+    message.textContent = text;
+    message.classList.toggle('is-error', !!bad);
+    message.classList.toggle('is-ok', !!text && !bad);
+  }
+
+  async function refreshTascoAISettings() {
+    const box = buildTascoAISettings();
+    if (!box) return;
+    const key = await GeminiKeyStore.get();
+    box.querySelector('[data-ai-keystate]').textContent = key ? 'Đã lưu khoá (…' + key.slice(-4) + '). Để trống ô này nếu muốn giữ nguyên.' : 'Chưa có khoá. Trợ lý chưa hoạt động.';
+    box.apiKey.placeholder = key ? '•••••••• (giữ nguyên)' : 'Dán khoá API';
+    const model = tascoAIModel(), known = TASCO_MODELS.some(([value]) => value === model);
+    box.model.value = known ? model : '__custom';
+    box.customModel.hidden = known;
+    box.customModel.value = known ? '' : model;
+    box.querySelector('[data-ai-clear]').hidden = !key;
+  }
+
+  async function saveTascoAISettings(box) {
+    const save = box.querySelector('[data-ai-save]');
+    const model = (box.model.value === '__custom' ? box.customModel.value : box.model.value).trim();
+    if (!/^[\w.\-]{3,80}$/.test(model)) { tascoSettingsMessage('Tên mô hình không hợp lệ.', true); return; }
+    save.disabled = true;
+    tascoSettingsMessage('Đang lưu và kiểm tra kết nối…', false);
+    try {
+      let scope = '';
+      if (box.apiKey.value.trim()) scope = (await GeminiKeyStore.set(box.apiKey.value)).scope;
+      const apiKey = await GeminiKeyStore.get();
+      if (!apiKey) throw new Error('Hãy nhập khoá Gemini API.');
+      try { localStorage.setItem('gemini_model_name', model); } catch (_) { /* bỏ qua */ }
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
+        method: 'POST', headers: {'Content-Type': 'application/json', 'x-goog-api-key': apiKey},
+        body: JSON.stringify({contents: [{role: 'user', parts: [{text: 'Trả lời đúng một từ: OK'}]}], generationConfig: {maxOutputTokens: 8}})
+      });
+      if (!response.ok) {
+        const detail = (await response.json().catch(() => null))?.error?.message || 'HTTP ' + response.status;
+        if (response.status === 400 || response.status === 403) throw new Error('Khoá không hợp lệ hoặc không dùng được mô hình này (' + detail + ').');
+        if (response.status === 404) throw new Error('Không tìm thấy mô hình "' + model + '". Hãy chọn mô hình khác.');
+        if (response.status === 429) { tascoSettingsMessage('Đã lưu. Khoá hợp lệ nhưng đang hết hạn mức tạm thời, hãy thử lại sau ít phút.', false); box.apiKey.value = ''; refreshTascoAISettings(); return; }
+        throw new Error('Gemini lỗi: ' + detail);
+      }
+      box.apiKey.value = '';
+      tascoSettingsMessage('Kết nối thành công' + (scope === 'browser' ? ' — khoá chỉ lưu trên trình duyệt này (cần quản trị viên cập nhật Firebase Rules để lưu theo tài khoản).' : '.'), false);
+      refreshTascoAISettings();
+    } catch (error) { tascoSettingsMessage(error.message || 'Không lưu được thiết lập.', true); }
+    finally { save.disabled = false; }
+  }
+
+  function toggleTascoAISettings(force) {
+    const panel = document.getElementById('tasco-ai-panel');
+    if (!panel) return;
+    const open = typeof force === 'boolean' ? force : !panel.classList.contains('tasco-ai-settings-open');
+    if (open) { buildTascoAISettings(); tascoSettingsMessage('', false); refreshTascoAISettings(); }
+    panel.classList.toggle('tasco-ai-settings-open', open);
+    if (open) setTimeout(() => document.querySelector('#tasco-ai-settings input[name=apiKey]')?.focus(), 50);
+    else document.getElementById('tasco-ai-input')?.focus();
+  }
+
+  // Nút ⚙️ ở đầu khung chat.
+  function setGeminiApiKey() { toggleTascoAISettings(); }
 
   const TASCO_MAX_TURNS = 6, TASCO_HISTORY_LIMIT = 20;
   let tascoAIBusy = false;
@@ -148,10 +235,11 @@
     if (!msg || tascoAIBusy) return;
     const apiKey = await GeminiKeyStore.get();
     if (!apiKey) {
-      appendTascoAIMessage('ai', 'Bạn chưa thiết lập khoá Gemini API. Bấm nút ⚙️ ở góc trên (khoá được lưu riêng cho tài khoản của bạn, lấy miễn phí tại aistudio.google.com).');
+      appendTascoAIMessage('ai', 'Bạn chưa thiết lập khoá Gemini API. Đang mở phần thiết lập cho bạn.');
+      toggleTascoAISettings(true);
       return;
     }
-    const model = localStorage.getItem('gemini_model_name') || 'gemini-2.5-flash';
+    const model = tascoAIModel();
     appendTascoAIMessage('user', escapeTascoAI(msg));
     inputEl.value = '';
     tascoAIBusy = true;

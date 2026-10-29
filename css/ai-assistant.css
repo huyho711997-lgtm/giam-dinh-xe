@@ -177,3 +177,30 @@
 .tasco-ai-edit ins { color:#15803d; text-decoration:none; font-weight:650; }
 .tasco-ai-download { margin-top:6px; padding:8px 14px; border:0; border-radius:10px; background:linear-gradient(145deg,#edc86f,#c28e35); color:#17120a; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
 .tasco-ai-warn { color:#b45309; font-size:11.5px; }
+
+/* Biểu mẫu thiết lập khoá/mô hình ngay trong khung chat */
+.tasco-ai-settings { display:none; flex:1; flex-direction:column; gap:14px; overflow-y:auto; padding:18px; background:var(--surface-strong); }
+#tasco-ai-panel.tasco-ai-settings-open .tasco-ai-settings { display:flex; }
+#tasco-ai-panel.tasco-ai-settings-open :is(.tasco-ai-body,.tasco-ai-footer) { display:none; }
+.tasco-ai-settings__head { display:flex; align-items:center; gap:12px; }
+.tasco-ai-settings__head strong { display:block; font-size:14px; color:var(--text-main); }
+.tasco-ai-settings__head small { display:block; margin-top:2px; font-size:11px; color:var(--text-muted); line-height:1.4; }
+.tasco-ai-settings__back { flex:none; width:32px; height:32px; border:1px solid var(--border); border-radius:10px; background:transparent; color:var(--text-main); font-size:16px; cursor:pointer; }
+.tasco-ai-field { display:grid; gap:6px; }
+.tasco-ai-field > span { font-size:11.5px; font-weight:700; color:var(--text-soft,var(--text-muted)); }
+.tasco-ai-field small { font-size:11px; color:var(--text-muted); line-height:1.45; }
+.tasco-ai-field :is(input,select) { width:100%; min-height:40px; padding:9px 12px; border:1px solid var(--border); border-radius:10px; background:var(--surface-soft,transparent); color:var(--text-main); font:inherit; font-size:13px; box-sizing:border-box; }
+.tasco-ai-field :is(input,select):focus-visible { outline:2px solid var(--primary); outline-offset:1px; }
+.tasco-ai-keyrow { display:flex; gap:8px; }
+.tasco-ai-keyrow input { flex:1; }
+.tasco-ai-keyrow button { flex:none; width:40px; border:1px solid var(--border); border-radius:10px; background:transparent; cursor:pointer; }
+.tasco-ai-settings__hint { margin:0; font-size:11.5px; line-height:1.55; color:var(--text-muted); }
+.tasco-ai-settings__hint a { color:var(--primary); font-weight:700; }
+.tasco-ai-settings__msg { margin:0; min-height:16px; font-size:12px; line-height:1.5; }
+.tasco-ai-settings__msg.is-error { color:#dc2626; }
+.tasco-ai-settings__msg.is-ok { color:#15803d; }
+.tasco-ai-settings__actions { display:flex; gap:10px; margin-top:auto; }
+.tasco-ai-btn-primary,.tasco-ai-btn-ghost { min-height:40px; padding:0 16px; border-radius:11px; font:inherit; font-size:12.5px; font-weight:800; cursor:pointer; }
+.tasco-ai-btn-primary { flex:1; border:0; background:linear-gradient(145deg,#edc86f,#c28e35); color:#17120a; }
+.tasco-ai-btn-primary:disabled { opacity:.6; cursor:progress; }
+.tasco-ai-btn-ghost { border:1px solid var(--border); background:transparent; color:var(--text-main); }
