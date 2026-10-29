@@ -8,7 +8,7 @@ function setup(pending, cases = {}) {
   const context = vm.createContext({
     console, JSON, Map, Set, Array, Object, Number, String, Math, Promise, Error,
     cachedPendingClaimsPayload: pending, cachedCasesPayload: cases,
-    PENDING_STATUS_MAP: { moi: { label: 'Mới' }, cho_gdct: { label: 'Chờ GĐCT' } },
+    PENDING_STATUS_MAP: { moi: { label: 'Mới' }, cho_gdct: { label: 'Chờ GĐCT' }, kt_duyet: { label: 'KT duyệt' }, cho_kt_duyet: { label: 'Chờ KT duyệt' }, da_duyet_hsbt: { label: 'Đã duyệt HSBT' } },
     document: { readyState: 'complete', addEventListener() {}, querySelectorAll: () => [], getElementById: () => null, documentElement: { classList: { toggle() {} } } },
     localStorage: { getItem: () => null }, MutationObserver: class { observe() {} }, window: {}
   });
@@ -69,4 +69,48 @@ test('định dạng trả lời: thoát HTML, danh sách, in đậm và liên k
   assert.ok(!html.includes('<img'));
   assert.match(html, /<b>Xong<\/b>/);
   assert.match(html, /<ul><li><button type="button" class="tasco-ai-link" data-ai-open="a1">47H11450 - HIỆP<\/button><\/li><li>hai<\/li><\/ul>/);
+});
+
+const dated = {
+  d1: { bienSo: 'A1', trangThai: 'da_duyet_hsbt', toTrinhNgayDuyet: '05/10/2026', soTienDuyetBT: '12.500.000 đ' },
+  d2: { bienSo: 'A2', trangThai: 'kt_duyet', ngayDuyetHsbt: '2026-10-20', soTienDuyetBT: 7500000 },
+  d3: { bienSo: 'A3', trangThai: 'da_duyet_hsbt', toTrinhNgayDuyet: '30/09/2026', soTienDuyetBT: '1.000.000' },
+  d4: { bienSo: 'A4', trangThai: 'cho_gdct' },
+  d5: { bienSo: 'A5', trangThai: 'da_duyet_hsbt', pascNgayDuyet: 1792400000000 }
+};
+
+test('lọc theo khoảng ngày duyệt: đọc được dd/mm/yyyy, ISO và mili-giây; hồ sơ thiếu ngày bị loại và được báo', () => {
+  const { tools } = setup(dated);
+  const result = tools.stats('ton', 'khong', { tu_ngay: '2026-10-01', den_ngay: '2026-10-31' });
+  assert.equal(result.so_ho_so_khop_bo_loc, 3);
+  assert.equal(result.so_ho_so_khong_co_ngay_nen_bi_loai, 1);
+  assert.equal(result.thong_ke[0].so_luong, 3);
+});
+
+test('kết hợp nhiều trạng thái và loại trừ trạng thái', () => {
+  const { tools } = setup(dated);
+  assert.equal(tools.search('ton', { trang_thai: ['Đã duyệt HSBT', 'KT duyệt'] }).so_ket_qua_khop, 4);
+  assert.equal(tools.search('ton', { loai_tru_trang_thai: ['da_duyet_hsbt', 'kt_duyet'] }).ket_qua[0].ma, 'd4');
+  assert.equal(tools.search('ton', { trang_thai: 'Đã duyệt HSBT', tu_ngay: '2026-10-01', den_ngay: '2026-10-31' }).so_ket_qua_khop, 2);
+});
+
+test('thống kê theo tháng và cộng tổng tiền (đọc "12.500.000 đ")', () => {
+  const { tools } = setup(dated);
+  const result = tools.stats('ton', 'thang', { tu_ngay: '2026-09-01', den_ngay: '2026-10-31', tinh_tong: 'soTienDuyetBT' });
+  assert.deepEqual(plain(result.thong_ke.map(row => [row.gia_tri, row.so_luong, row.tong_tien])), [['09/2026', 1, 1000000], ['10/2026', 3, 20000000]]);
+  assert.equal(result.tong_tien, 21000000);
+});
+
+test('ngày không hợp lệ bị bỏ qua, không ném lỗi', () => {
+  const { tools } = setup(dated);
+  assert.equal(tools.dayNumber('abc'), 0);
+  assert.equal(tools.dayNumber('31/02/2026') > 0, true);
+  assert.equal(tools.dayNumber('1970-01-01'), 0);
+  assert.equal(tools.search('ton', { tu_ngay: 'xxx' }).so_ket_qua_khop, 5);
+});
+
+test('loại trừ "KT duyệt" không loại nhầm "Chờ KT duyệt"', () => {
+  const { tools } = setup({ ...dated, d6: { bienSo: 'A6', trangThai: 'cho_kt_duyet' } });
+  const result = tools.search('ton', { loai_tru_trang_thai: ['Đã duyệt HSBT', 'KT duyệt'] });
+  assert.deepEqual(plain(result.ket_qua.map(row => row.ma).sort()), ['d4', 'd6']);
 });
