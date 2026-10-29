@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "notification_state": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "read": {
+          "$key": { ".validate": "newData.val() === true && $key.length <= 200" }
+        },
+        "dismissed": {
+          "$key": { ".validate": "newData.val() === true && $key.length <= 200" }
+        },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}

@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const source = fs.readFileSync(new URL('../js/features/notifications/notification-center.js', import.meta.url), 'utf8');
 
-function setup(profile, transfers, storage = {}) {
+function setup(profile, transfers, storage = {}, db) {
   const holder = { innerHTML: '' }, badge = { style: {}, textContent: '' }, label = { style: {}, textContent: '' };
   const elements = { notificationItemsHolder: holder, navNotificationBadge: badge, lblNotifUnreadCount: label };
   const context = vm.createContext({
@@ -15,7 +15,8 @@ function setup(profile, transfers, storage = {}) {
     firebase: { auth: () => ({ currentUser: { uid: 'u', displayName: '' } }) },
     activeUserProfile: profile, cachedAccountingTransfersPayload: transfers, cachedCasesPayload: null,
     getLoggedInUserAccountingRole: () => profile.acc || '', formatDateDisplay: String, parseDateParts: () => null,
-    escapeHtmlOutput: String, triggerToast() {}, STATUS_COMPLETED: 'done'
+    escapeHtmlOutput: String, triggerToast() {}, STATUS_COMPLETED: 'done',
+    ...(db ? { dbNodeInstance: db } : {})
   });
   context.plays = 0;
   context.window = { AudioContext: class {
@@ -122,4 +123,102 @@ test('chuông: thông báo ca gara hoàn tất kêu khi tới sau lần tải đ
   env.context.cachedCasesPayload = { c1: { trangThai: 'done', bienSo: '47A1', nguoiTao: { uid: 'u' }, tenGara: 'Gara X' } };
   env.context.api.renderNotificationCenterItems();
   assert.equal(env.context.plays, 2);
+});
+
+
+// ---- Đồng bộ trạng thái đã đọc/đã xóa giữa các máy qua Firebase ----
+function fakeDb(initial = {}, { failRead = false } = {}) {
+  const tree = JSON.parse(JSON.stringify(initial));
+  const listeners = [];
+  const at = path => path.split('/').filter(Boolean).reduce((o, k) => (o && typeof o === 'object') ? o[k] : undefined, tree);
+  const snap = path => ({ val: () => { const v = at(path); return v === undefined ? null : JSON.parse(JSON.stringify(v)); } });
+  const db = {
+    tree, writes: [],
+    ref: path => ({
+      on(event, cb, err) { if (failRead) { err && err(new Error('permission_denied')); return cb; } listeners.push({ path, cb }); cb(snap(path)); return cb; },
+      off(event, cb) { const i = listeners.findIndex(l => l.path === path && l.cb === cb); if (i >= 0) listeners.splice(i, 1); },
+      async update(updates) {
+        db.writes.push({ path, updates });
+        Object.entries(updates).forEach(([sub, value]) => {
+          const keys = (path + '/' + sub).split('/').filter(Boolean);
+          let o = tree; keys.slice(0, -1).forEach(k => { o = (o[k] = o[k] && typeof o[k] === 'object' ? o[k] : {}); });
+          o[keys[keys.length - 1]] = value;
+        });
+        listeners.filter(l => l.path === path).forEach(l => l.cb(snap(path)));
+      }
+    })
+  };
+  return db;
+}
+
+test('đồng bộ: đọc ở máy A thì máy B (trình duyệt trống) không hiện lại là chưa đọc', () => {
+  const db = fakeDb();
+  const a = setup(gdv, transfer('cho_xac_nhan'), {}, db);
+  a.context.api.renderNotificationCenterItems();
+  assert.equal(a.badge.textContent, 1, 'máy A: có 1 thông báo chưa đọc');
+  a.context.api.markNotificationAsRead(null, 'PBG1_cho_xac_nhan');
+  assert.deepEqual(Object.keys(db.tree.notification_state.u.read), ['PBG1_cho_xac_nhan']);
+
+  const b = setup(gdv, transfer('cho_xac_nhan'), {}, db);     // máy khác: localStorage rỗng
+  b.context.api.renderNotificationCenterItems();
+  assert.equal(b.badge.style.display, 'none', 'máy B: đã đọc, không còn huy hiệu');
+  assert.ok(!b.holder.innerHTML.includes('Đã đọc</button>'), 'không còn nút "Đã đọc" của thông báo chưa đọc');
+});
+
+test('đồng bộ: xóa thông báo ở máy A thì máy B cũng không thấy nữa; trạng thái mới của phiếu vẫn báo', () => {
+  const db = fakeDb();
+  const a = setup(gdv, transfer('cho_xac_nhan'), {}, db);
+  a.context.api.renderNotificationCenterItems();
+  a.context.api.dismissNotification(null, 'PBG1_cho_xac_nhan');
+  const b = setup(gdv, transfer('cho_xac_nhan'), {}, db);
+  b.context.api.renderNotificationCenterItems();
+  assert.match(b.holder.innerHTML, /Hiện chưa có thông báo nào/);
+  b.setTransfers(transfer('da_xac_nhan'));
+  b.context.api.renderNotificationCenterItems();
+  assert.match(b.holder.innerHTML, /Đã xác nhận Phiếu PBG1/, 'đổi trạng thái → thông báo mới vẫn hiện');
+  assert.equal(b.badge.textContent, 1);
+});
+
+test('đồng bộ: lịch sử đọc cũ chỉ có trong localStorage được đưa lên Firebase ở lần đầu', () => {
+  const db = fakeDb();
+  const storage = { read_notifs_u: JSON.stringify(['PBG1_cho_xac_nhan']) };
+  const a = setup(gdv, transfer('cho_xac_nhan'), storage, db);
+  a.context.api.renderNotificationCenterItems();
+  assert.ok(db.tree.notification_state?.u?.read?.PBG1_cho_xac_nhan === true);
+  const b = setup(gdv, transfer('cho_xac_nhan'), {}, db);
+  b.context.api.renderNotificationCenterItems();
+  assert.equal(b.badge.style.display, 'none');
+});
+
+test('đồng bộ: mã có ký tự cấm của Firebase được mã hóa và giải mã đúng', () => {
+  const db = fakeDb();
+  const weird = { p1: { transferId: 'PBG/2026.01', trangThai: 'cho_xac_nhan', gdvName: 'Nguyen Van A', danhSachHoSo: [{}] } };
+  const a = setup(gdv, weird, {}, db);
+  a.context.api.renderNotificationCenterItems();
+  a.context.api.markNotificationAsRead(null, 'PBG/2026.01_cho_xac_nhan');
+  const keys = Object.keys(db.tree.notification_state.u.read);
+  assert.deepEqual(keys, ['PBG%2f2026%2e01_cho_xac_nhan']);
+  const b = setup(gdv, weird, {}, db);
+  b.context.api.renderNotificationCenterItems();
+  assert.equal(b.badge.style.display, 'none');
+});
+
+test('đồng bộ: Firebase từ chối đọc → vẫn dùng localStorage, không mất tính năng', () => {
+  const db = fakeDb({}, { failRead: true });
+  const env = setup(gdv, transfer('cho_xac_nhan'), {}, db);
+  env.context.api.renderNotificationCenterItems();
+  env.context.api.markNotificationAsRead(null, 'PBG1_cho_xac_nhan');
+  env.context.api.renderNotificationCenterItems();
+  assert.equal(env.badge.style.display, 'none');
+  assert.ok(JSON.parse(env.storage.read_notifs_u).includes('PBG1_cho_xac_nhan'));
+});
+
+test('đồng bộ: trong lúc chờ Firebase trả lời lần đầu không hiện huy hiệu chưa đọc', () => {
+  let deliver;
+  const db = { ref: () => ({ on(ev, cb) { deliver = () => cb({ val: () => ({ read: { PBG1_cho_xac_nhan: true } }) }); }, off() {}, async update() {} }) };
+  const env = setup(gdv, transfer('cho_xac_nhan'), {}, db);
+  env.context.api.renderNotificationCenterItems();
+  assert.equal(env.badge.style.display, 'none', 'đang chờ → ẩn huy hiệu');
+  deliver();
+  assert.equal(env.badge.style.display, 'none', 'đã đọc ở máy khác → vẫn ẩn');
 });

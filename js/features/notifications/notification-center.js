@@ -96,42 +96,154 @@
         : '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
     }
 
-    /* REALTIME PERSISTENT READ NOTIFICATION CONTROLLER */
-    function getReadNotificationIdsSet() {
+    /* TRẠNG THÁI ĐÃ ĐỌC / ĐÃ XÓA — ĐỒNG BỘ THEO TÀI KHOẢN
+       Trước đây chỉ lưu trong localStorage nên đăng nhập máy khác là mọi thông báo hiện lại như chưa đọc.
+       Nay lưu thêm trên Firebase tại notification_state/{uid}/{read|dismissed}/{mã đã mã hóa} = true.
+       - localStorage vẫn giữ làm bộ nhớ đệm (hiển thị tức thì, dùng được khi Firebase từ chối/mất mạng).
+       - Hợp nhất kiểu "hợp của hai tập" vì đã đọc/đã xóa chỉ đi một chiều.
+       - Lần đồng bộ đầu tiên của một máy sẽ đẩy phần chỉ có ở máy đó lên Firebase (không mất lịch sử đã đọc cũ).
+       - Trong lúc chờ dữ liệu từ Firebase lần đầu (tối đa vài giây) không hiện huy hiệu "chưa đọc" để tránh nháy 100%. */
+    const NOTIF_STATE_TIMEOUT_MS = 4000;
+    const notificationStateSync = {
+      uid: null, ref: null, handler: null, timer: null,
+      ready: true,                      // true = không còn chờ Firebase (hoặc không dùng Firebase)
+      remote: { read: new Set(), dismissed: new Set() }
+    };
+
+    // Khóa Firebase không được chứa . $ # [ ] / → mã hóa dạng %xx (và giải mã ngược lại)
+    function encodeNotificationKey(id) {
+      return String(id).replace(/[.$#\[\]\/%]/g, c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'));
+    }
+
+    function decodeNotificationKey(key) {
+      return String(key).replace(/%([0-9a-f]{2})/g, (m, hex) => String.fromCharCode(parseInt(hex, 16)));
+    }
+
+    function currentNotificationUid() {
+      try { return activeUserProfile?.uid || firebase.auth().currentUser?.uid || 'default'; } catch (e) { return 'default'; }
+    }
+
+    function readLocalNotificationSet(kind, uid) {
       try {
-        const uid = activeUserProfile?.uid || firebase.auth().currentUser?.uid || 'default';
-        const raw = localStorage.getItem('read_notifs_' + uid);
+        const raw = localStorage.getItem(kind + '_notifs_' + uid);
         return new Set(raw ? JSON.parse(raw) : []);
       } catch (e) {
         return new Set();
       }
+    }
+
+    function writeLocalNotificationSet(kind, uid, setObj) {
+      try { localStorage.setItem(kind + '_notifs_' + uid, JSON.stringify(Array.from(setObj))); } catch (e) {}
+    }
+
+    function notificationStateDb() {
+      try { return (typeof dbNodeInstance !== 'undefined' && dbNodeInstance) ? dbNodeInstance : null; } catch (e) { return null; }
+    }
+
+    // Đẩy các mã chưa có trên Firebase lên (read/dismissed). Lỗi quyền/mạng chỉ ghi log, app vẫn chạy bằng localStorage.
+    function pushNotificationStateToRemote(kind, ids) {
+      const uid = notificationStateSync.uid;
+      const db = notificationStateDb();
+      if (!db || !uid || uid === 'default') return;
+      const updates = {};
+      ids.forEach(id => { if (!notificationStateSync.remote[kind].has(id)) updates[kind + '/' + encodeNotificationKey(id)] = true; });
+      if (!Object.keys(updates).length) return;
+      ids.forEach(id => notificationStateSync.remote[kind].add(id));   // ghi nhận tạm để không đẩy lặp
+      try {
+        const result = db.ref('notification_state/' + uid).update(updates);
+        if (result && typeof result.catch === 'function') result.catch(error => console.info('Không đồng bộ được trạng thái thông báo:', error && error.message));
+      } catch (error) { console.info('Không đồng bộ được trạng thái thông báo:', error && error.message); }
+    }
+
+    function finishNotificationStateWait() {
+      if (notificationStateSync.timer) { clearTimeout(notificationStateSync.timer); notificationStateSync.timer = null; }
+      if (notificationStateSync.ready) return false;
+      notificationStateSync.ready = true;
+      return true;
+    }
+
+    // Gắn listener Firebase cho tài khoản hiện tại (một lần mỗi tài khoản).
+    function ensureNotificationStateSync() {
+      const uid = currentNotificationUid();
+      if (notificationStateSync.uid === uid) return;
+      const db = notificationStateDb();
+
+      if (notificationStateSync.ref && notificationStateSync.handler) {
+        try { notificationStateSync.ref.off('value', notificationStateSync.handler); } catch (e) {}
+      }
+      finishNotificationStateWait();
+      Object.assign(notificationStateSync, { uid, ref: null, handler: null, remote: { read: new Set(), dismissed: new Set() }, ready: true });
+      if (!db || uid === 'default') return;
+
+      notificationStateSync.ready = false;
+      const ref = db.ref('notification_state/' + uid);
+      let firstSnapshot = true;
+      const handler = snapshot => {
+        if (notificationStateSync.uid !== uid) return;
+        const value = (snapshot && typeof snapshot.val === 'function' ? snapshot.val() : null) || {};
+        const toSet = obj => new Set(Object.keys(obj || {}).filter(k => obj[k]).map(decodeNotificationKey));
+        notificationStateSync.remote = { read: toSet(value.read), dismissed: toSet(value.dismissed) };
+        const justReady = finishNotificationStateWait();
+        if (firstSnapshot) {
+          firstSnapshot = false;
+          // Máy này đã có lịch sử đọc/xóa cục bộ → đưa lên Firebase để các máy khác thấy.
+          ['read', 'dismissed'].forEach(kind => {
+            const key = kind === 'read' ? 'read' : 'dismissed';
+            const local = readLocalNotificationSet(key, uid);
+            pushNotificationStateToRemote(kind, Array.from(local));
+          });
+        }
+        if (typeof renderNotificationCenterItems === 'function') renderNotificationCenterItems();
+        return justReady;
+      };
+      notificationStateSync.ref = ref;
+      notificationStateSync.handler = handler;
+      try {
+        ref.on('value', handler, error => {
+          console.info('Đọc trạng thái thông báo từ Firebase thất bại, dùng bộ nhớ trình duyệt:', error && error.message);
+          if (finishNotificationStateWait() && typeof renderNotificationCenterItems === 'function') renderNotificationCenterItems();
+        });
+      } catch (error) {
+        finishNotificationStateWait();
+        return;
+      }
+      if (typeof setTimeout === 'function') {
+        notificationStateSync.timer = setTimeout(() => {
+          notificationStateSync.timer = null;
+          if (!notificationStateSync.ready) {
+            notificationStateSync.ready = true;
+            if (typeof renderNotificationCenterItems === 'function') renderNotificationCenterItems();
+          }
+        }, NOTIF_STATE_TIMEOUT_MS);
+      }
+    }
+
+    /* REALTIME PERSISTENT READ NOTIFICATION CONTROLLER */
+    function getReadNotificationIdsSet() {
+      const uid = currentNotificationUid();
+      const merged = readLocalNotificationSet('read', uid);
+      if (notificationStateSync.uid === uid) notificationStateSync.remote.read.forEach(id => merged.add(id));
+      return merged;
     }
 
 
     function saveReadNotificationIdsSet(setObj) {
-      try {
-        const uid = activeUserProfile?.uid || firebase.auth().currentUser?.uid || 'default';
-        localStorage.setItem('read_notifs_' + uid, JSON.stringify(Array.from(setObj)));
-      } catch (e) {}
+      writeLocalNotificationSet('read', currentNotificationUid(), setObj);
+      pushNotificationStateToRemote('read', Array.from(setObj));
     }
 
 
     function getDismissedNotificationIdsSet() {
-      try {
-        const uid = activeUserProfile?.uid || firebase.auth().currentUser?.uid || 'default';
-        const raw = localStorage.getItem('dismissed_notifs_' + uid);
-        return new Set(raw ? JSON.parse(raw) : []);
-      } catch (e) {
-        return new Set();
-      }
+      const uid = currentNotificationUid();
+      const merged = readLocalNotificationSet('dismissed', uid);
+      if (notificationStateSync.uid === uid) notificationStateSync.remote.dismissed.forEach(id => merged.add(id));
+      return merged;
     }
 
 
     function saveDismissedNotificationIdsSet(setObj) {
-      try {
-        const uid = activeUserProfile?.uid || firebase.auth().currentUser?.uid || 'default';
-        localStorage.setItem('dismissed_notifs_' + uid, JSON.stringify(Array.from(setObj)));
-      } catch (e) {}
+      writeLocalNotificationSet('dismissed', currentNotificationUid(), setObj);
+      pushNotificationStateToRemote('dismissed', Array.from(setObj));
     }
 
 
@@ -215,6 +327,9 @@
       const badge = document.getElementById('navNotificationBadge');
       const unreadLbl = document.getElementById('lblNotifUnreadCount');
       if (!holder) return;
+
+      ensureNotificationStateSync();
+      const awaitingRemote = !notificationStateSync.ready;   // đang chờ trạng thái đọc từ Firebase
 
       const isKeToanOrAdmin = getLoggedInUserAccountingRole() === 'ketoan' || (activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin');
       const currentLoggedInGdvName = String(activeUserProfile?.fullName || activeUserProfile?.displayName || activeUserProfile?.name || firebase.auth().currentUser?.displayName || '').trim().toLowerCase();
@@ -352,6 +467,9 @@
       }
 
       notifications.sort((a, b) => b.timestamp - a.timestamp);
+
+      // Chưa có trạng thái đọc từ Firebase → coi như đã đọc tạm thời, tránh nháy huy hiệu 100% chưa đọc ở máy mới.
+      if (awaitingRemote) notifications.forEach(n => { n.isRead = true; });
 
       const unreadCount = notifications.filter(n => !n.isRead).length;
 
