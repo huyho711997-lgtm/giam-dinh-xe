@@ -139,7 +139,7 @@ const ClaimImportUI = (() => {
     const options = versions.map(item => '<option value="' + esc(item.id) + '">' + esc(versionLabel(item) + ' — ' + (item.fileName || '')) + '</option>').join('');
     const body = !versions.length
       ? '<div class="cim-empty-state">' + ICON.history + '<strong>Chưa có phiên bản nào</strong><p>Lần nhập file Excel tiếp theo sẽ tự lưu phiên bản đầu tiên kèm bản sao lưu dữ liệu hiện tại.</p></div>'
-      : '<div class="cim-compare-bar"><span>' + ICON.compare + 'So sánh hai file</span><label><small>Bản cũ</small><select data-cim-a>' + options + '</select></label>' + ICON.arrow + '<label><small>Bản mới</small><select data-cim-b>' + options + '</select></label><button type="button" class="cim-btn" data-cim-compare-selected>So sánh</button></div>'
+      : '<div class="cim-compare-bar"><span>' + ICON.compare + 'So sánh hai file</span><label><small>Bản cũ</small><select data-cim-a data-sf-select data-sf-menu-fit data-sf-label="Bản cũ" data-sf-description="Chọn phiên bản làm mốc để so sánh" data-sf-icon="clock">' + options + '</select></label>' + ICON.arrow + '<label><small>Bản mới</small><select data-cim-b data-sf-select data-sf-menu-fit data-sf-label="Bản mới" data-sf-description="Chọn phiên bản mới hơn để so sánh" data-sf-icon="clock">' + options + '</select></label><button type="button" class="cim-btn" data-cim-compare-selected>So sánh</button></div>'
         + '<ol class="cim-timeline">' + versions.map((item, index) => {
           const s = item.summary || {}, current = index === 0;
           const chips = item.kind === 'restore' ? '<span class="cim-chip">' + (s.total || 0).toLocaleString('vi-VN') + ' hồ sơ sau khôi phục</span>'
@@ -155,6 +155,8 @@ const ClaimImportUI = (() => {
     const a = historyOverlay.querySelector('[data-cim-a]'), b = historyOverlay.querySelector('[data-cim-b]');
     const imports = versions.filter(item => item.kind !== 'restore');
     if (a && b && imports.length) { b.value = imports[0].id; a.value = (imports[1] || imports[0]).id; }
+    // Ô chọn dùng chung hệ thống thiết kế (có tìm kiếm, bảng chọn rộng bằng ô chọn) thay cho dropdown mặc định của trình duyệt.
+    if (typeof SharedFormsControls !== 'undefined') SharedFormsControls.enhance(historyOverlay);
   }
   async function onHistoryClick(event) {
     if (event.target === historyOverlay || event.target.closest('[data-cim-close]')) { closeHistory(); return; }
