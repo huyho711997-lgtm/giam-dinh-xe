@@ -275,7 +275,7 @@
           #carplaSourceModal .carpla-modal-search input:focus { border-color: rgba(201,154,67,.58) !important; box-shadow: 0 0 0 3px rgba(201,154,67,.09), 0 8px 20px rgba(15,23,42,.07); }
           #carplaSourceModal .carpla-modal-table-shell {
             padding: 18px 20px !important;
-            background: radial-gradient(circle at 10% 0%, rgba(201,154,67,.055), transparent 26%), var(--bg-main) !important;
+            background: radial-gradient(circle at 10% 0%, rgba(201,154,67,.055), transparent 26%), var(--bg-main, var(--surface-strong)) !important;
           }
           #carplaSourceModal .carpla-modal-table {
             border-color: rgba(201,154,67,.25) !important;
@@ -363,7 +363,7 @@
           </div>
 
           <!-- Table Body -->
-          <div class="custom-scroll carpla-modal-table-shell" style="flex-grow:1; overflow-y:auto; padding:16px 20px; background:var(--bg-main);">
+          <div class="custom-scroll carpla-modal-table-shell" style="flex-grow:1; overflow-y:auto; padding:16px 20px; background:var(--bg-main, var(--surface-strong));">
             <table class="carpla-modal-table" style="width:100%; border-collapse:separate; border-spacing:0; background:var(--surface); border-radius:14px; overflow:hidden; border:1px solid var(--border-strong); box-shadow:var(--shadow-xs);">
               <thead style="background:var(--surface-strong); position:sticky; top:0; z-index:2; border-bottom:1px solid var(--border-strong);">
                 <tr>

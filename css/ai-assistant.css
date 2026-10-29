@@ -7,7 +7,7 @@
     width: min(410px, calc(100vw - 32px));
     height: 640px;
     max-height: calc(100vh - 184px);
-    background: color-mix(in srgb, var(--surface-strong) 96%, transparent);
+    background: var(--surface-strong);
     border-radius: 25px;
     box-shadow: 0 30px 80px rgba(15,23,42,.24), 0 8px 24px rgba(15,23,42,.12), inset 0 1px 0 rgba(255,255,255,.75);
     border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
@@ -75,10 +75,10 @@
       radial-gradient(circle at 88% 4%, rgba(216,180,109,.11), transparent 29%),
       linear-gradient(rgba(148,163,184,.055) 1px, transparent 1px),
       linear-gradient(90deg, rgba(148,163,184,.055) 1px, transparent 1px),
-      var(--bg-main);
+      var(--surface-strong);
     background-size: auto, 28px 28px, 28px 28px, auto;
   }
-  .tasco-ai-welcome { position: relative; overflow: hidden; padding: 17px; border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border)); border-radius: 18px; background: color-mix(in srgb, var(--surface-strong) 95%, transparent); box-shadow: 0 10px 28px rgba(15,23,42,.07), inset 0 1px 0 rgba(255,255,255,.68); }
+  .tasco-ai-welcome { position: relative; overflow: hidden; padding: 17px; border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border)); border-radius: 18px; background: var(--surface-strong); box-shadow: 0 10px 28px rgba(15,23,42,.07), inset 0 1px 0 rgba(255,255,255,.68); }
   .tasco-ai-welcome::after { content: ''; position: absolute; width: 96px; height: 96px; right: -43px; top: -48px; border-radius: 50%; background: rgba(216,180,109,.1); }
   .tasco-ai-welcome__head { display: flex; align-items: center; gap: 10px; }
   .tasco-ai-welcome__avatar { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; color: #966f2d; border: 1px solid rgba(179,140,67,.22); border-radius: 11px; background: rgba(216,180,109,.1); }
@@ -93,7 +93,7 @@
   .tasco-ai-key-note svg { width: 12px; height: 12px; flex: 0 0 12px; color: var(--primary); }
   .tasco-ai-footer {
     padding: 12px 13px 13px;
-    background: color-mix(in srgb, var(--surface-strong) 96%, transparent);
+    background: var(--surface-strong);
     border-top: 1px solid var(--border);
   }
   .tasco-ai-composer { display: grid; grid-template-columns: minmax(0,1fr) 43px; align-items: center; gap: 8px; padding: 5px; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface-soft); box-shadow: inset 0 1px 0 rgba(255,255,255,.62); transition: border-color .2s ease, box-shadow .2s ease; }
