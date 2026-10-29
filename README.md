@@ -78,6 +78,8 @@ Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở t
 
 ### Quyền Firebase khi triển khai
 
+`firebase/database.rules.json` là bộ rules HOÀN CHỈNH (giai đoạn 1: khoá toàn bộ DB cho người chưa đăng nhập, riêng cổng garage vẫn đọc/ghi hồ sơ theo mã; đã gộp 4 file rules bên dưới). Dán thay toàn bộ nội dung ở Firebase Console → Realtime Database → Rules → Publish, rồi thử bằng Rules Playground.
+
 `firebase/shared-forms.rules.json` là phần rules tham khảo cho nhánh mới `shared_forms`. Ghép riêng nhánh này vào rules hiện có trong Firebase Console; không ghi đè toàn bộ rules đang vận hành. Kiểm tra và bỏ các quyền đọc/ghi quá rộng ở nhánh cha vì Firebase Rules cho phép kế thừa không thể bị thu hẹp bằng rules con. Rules kiểm tra quyền trên server, giữ nguyên chủ sở hữu và liên kết file khi sửa metadata. Chưa tự triển khai rules hoặc thay đổi dữ liệu thật.
 
 Kiểm tra phần lưu trữ bằng `node --test tests/shared-forms.test.mjs`. Chạy `node scripts/check.mjs` để kiểm tra cú pháp và các tài nguyên giao diện.

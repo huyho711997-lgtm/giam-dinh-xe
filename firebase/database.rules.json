@@ -1,0 +1,178 @@
+{
+  "rules": {
+    "cases": {
+      ".read": "auth != null",
+      "$caseId": {
+        ".read": true,
+        ".write": "auth != null",
+        "hangMucYeuCauAnh": {
+          ".write": "root.child('cases').child($caseId).exists() && root.child('cases').child($caseId).child('trangThai').val() !== 'Đã điền'"
+        },
+        "soLuongHangMucYeuCauAnh": {
+          ".write": "root.child('cases').child($caseId).exists() && root.child('cases').child($caseId).child('trangThai').val() !== 'Đã điền'"
+        },
+        "hinhAnh": {
+          ".write": "root.child('cases').child($caseId).exists() && root.child('cases').child($caseId).child('trangThai').val() !== 'Đã điền'"
+        },
+        "garageSubmittedAt": {
+          ".write": "root.child('cases').child($caseId).exists() && root.child('cases').child($caseId).child('trangThai').val() !== 'Đã điền'"
+        },
+        "trangThai": {
+          ".write": "newData.val() === 'Đã điền' && root.child('cases').child($caseId).exists() && root.child('cases').child($caseId).child('trangThai').val() !== 'Đã điền'"
+        }
+      }
+    },
+    "system_notifications": {
+      ".read": "auth != null",
+      "$id": {
+        ".write": "auth != null || !data.exists()"
+      }
+    },
+    "auditLogs": {
+      ".read": "auth != null",
+      "$id": {
+        ".write": "!data.exists()"
+      }
+    },
+    "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && (auth.uid === $uid || (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true))"
+      }
+    },
+    "$other": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "claim_import_history": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+      "$versionId": {
+        ".validate": "newData.hasChildren(['id', 'kind', 'createdAt', 'createdBy']) && newData.child('id').val() === $versionId",
+        "kind": {
+          ".validate": "newData.val() === 'import' || newData.val() === 'restore'"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    "claim_import_blobs": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+      "$versionId": {
+        "$part": {
+          ".validate": "$part === 'rows' || $part === 'before'",
+          "$chunk": {
+            ".validate": "newData.isString() && newData.val().length <= 4000000"
+          }
+        }
+      }
+    },
+    "reduction_email_directory": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$kind": {
+        ".validate": "$kind === 'units' || $kind === 'issuers' || $kind === 'departments' || $kind === 'zones'",
+        "$entry": {
+          ".validate": "newData.hasChildren(['name']) && (newData.hasChild('to') || newData.hasChild('email'))",
+          "name": {
+            ".validate": "newData.isString() && newData.val().length <= 200"
+          },
+          "to": {
+            ".validate": "newData.isString() && newData.val().length <= 1000"
+          },
+          "email": {
+            ".validate": "newData.isString() && newData.val().length <= 1000"
+          },
+          "updatedAt": {
+            ".validate": "newData.isNumber()"
+          },
+          "updatedBy": {
+            ".validate": "newData.isString() && newData.val().length <= 200"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "shared_forms": {
+      ".read": "auth != null",
+      "files": {
+        "$fileId": {
+          ".write": "auth != null && ((!data.exists() && newData.child('createdByUid').val() === auth.uid) || data.child('createdByUid').val() === auth.uid || root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+          ".validate": "newData.hasChildren(['name', 'originalName', 'category', 'mimeType', 'size', 'url', 'createdByUid', 'createdAt', 'updatedAt']) && (!data.exists() ? newData.child('createdByUid').val() === auth.uid : newData.child('createdByUid').val() === data.child('createdByUid').val() && newData.child('url').val() === data.child('url').val() && newData.child('createdAt').val() === data.child('createdAt').val())",
+          "name": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
+          },
+          "originalName": {
+            ".validate": "newData.isString() && newData.val().length <= 250"
+          },
+          "category": {
+            ".validate": "newData.isString() && newData.val().length <= 100"
+          },
+          "notes": {
+            ".validate": "newData.isString() && newData.val().length <= 2000"
+          },
+          "mimeType": {
+            ".validate": "newData.isString()"
+          },
+          "size": {
+            ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 20971520"
+          },
+          "url": {
+            ".validate": "newData.isString() && newData.val().beginsWith('https://res.cloudinary.com/')"
+          },
+          "createdByUid": {
+            ".validate": "newData.isString() && newData.val().length > 0"
+          },
+          "createdAt": {
+            ".validate": "newData.isNumber()"
+          },
+          "updatedAt": {
+            ".validate": "newData.isNumber()"
+          }
+        }
+      },
+      "drive": {
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+        ".validate": "newData.child('disabled').val() === true || newData.hasChildren(['folderId', 'apiKey', 'folderName', 'updatedAt'])",
+        "disabled": {
+          ".validate": "newData.isBoolean()"
+        },
+        "folderId": {
+          ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{8,}$/)"
+        },
+        "apiKey": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        },
+        "folderName": {
+          ".validate": "newData.isString() && newData.val().length <= 100"
+        },
+        "updatedAt": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+    "notification_state": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "read": {
+          "$key": {
+            ".validate": "newData.val() === true && $key.length <= 200"
+          }
+        },
+        "dismissed": {
+          "$key": {
+            ".validate": "newData.val() === true && $key.length <= 200"
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}
