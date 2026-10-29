@@ -114,3 +114,19 @@ test('loại trừ "KT duyệt" không loại nhầm "Chờ KT duyệt"', () => 
   const result = tools.search('ton', { loai_tru_trang_thai: ['Đã duyệt HSBT', 'KT duyệt'] });
   assert.deepEqual(plain(result.ket_qua.map(row => row.ma).sort()), ['d4', 'd6']);
 });
+
+test('gom hồ sơ theo xe: tìm theo tên hoặc biển số, xe nhiều vụ có nhiều hồ sơ', () => {
+  const { tools } = setup({
+    c1: { bienSo: '47H-114.50', khachHang: 'TRẦN VĂN HIỆP', maVuTonThat: 'V1', ngayTonThat: '01/03/2026' },
+    c2: { bienSo: '47H11450', khachHang: 'TRẦN VĂN HIỆP', maVuTonThat: 'V2', ngayTonThat: '15/09/2026', diaDiemTonThat: 'QL14' },
+    c3: { bienSo: '51K99999', khachHang: 'LÊ THỊ MAI' }
+  });
+  const byOwner = tools.vehicleGroups('hiep');
+  assert.equal(byOwner.total, 1);
+  assert.equal(byOwner.groups[0].claims.length, 2);
+  assert.deepEqual(plain(byOwner.groups[0].claims.map(claim => claim.label.vtt).sort()), ['V1', 'V2']);
+  assert.equal(byOwner.groups[0].claims.find(claim => claim.label.vtt === 'V2').label.ngay, '15/09/2026');
+  assert.equal(tools.vehicleGroups('51k99999').groups[0].claims.length, 1);
+  assert.equal(tools.vehicleGroups('khong co').total, 0);
+  assert.equal(tools.vehicleGroups('').total, 2);
+});

@@ -152,6 +152,8 @@ const TascoAITools = (() => {
     {name: 'mo_ho_so', description: 'Mở cửa sổ chỉnh sửa của một hồ sơ bồi thường (loai="ton") trên màn hình người dùng.',
       parameters: {type: 'OBJECT', properties: {ma: {type: 'STRING'}}, required: ['ma']}},
     {name: 'ds_bieu_mau', description: 'Liệt kê các biểu mẫu Word (.docx) trong thư viện ứng dụng có thể soạn bằng AI.', parameters: {type: 'OBJECT', properties: {}}},
+    {name: 'mo_trinh_soan_bieu_mau', description: 'Mở trình soạn biểu mẫu từng bước trong khung chat (người dùng tự chọn biểu mẫu, chọn hồ sơ theo tên chủ xe/biển số, chọn vụ tổn thất nếu xe có nhiều vụ). Ưu tiên dùng khi người dùng muốn soạn biểu mẫu mà chưa nói rõ biểu mẫu hoặc hồ sơ nào.',
+      parameters: {type: 'OBJECT', properties: {ten_bieu_mau: {type: 'STRING'}, tu_khoa_ho_so: {type: 'STRING', description: 'Biển số hoặc tên chủ xe nếu người dùng đã nói'}}}},
     {name: 'soan_bieu_mau', description: 'Soạn nháp một biểu mẫu Word theo một hồ sơ bồi thường và yêu cầu của người dùng. Người dùng sẽ duyệt từng thay đổi rồi tải về trong khung chat. Chỉ gọi khi đã biết rõ biểu mẫu và hồ sơ.',
       parameters: {type: 'OBJECT', properties: {ten_bieu_mau: {type: 'STRING'}, ma_ho_so: {type: 'STRING', description: 'Mã hồ sơ tồn (trường ma)'}, lenh: {type: 'STRING', description: 'Yêu cầu soạn/sửa biểu mẫu'}}, required: ['ten_bieu_mau', 'ma_ho_so', 'lenh']}}
   ];
@@ -178,6 +180,11 @@ const TascoAITools = (() => {
         await openEditPendingClaimModal(item.id);
         return {ket_qua: 'Đã mở hồ sơ ' + (item.fields.bienSo || item.id) + ' trên màn hình.'};
       }
+      if (name === 'mo_trinh_soan_bieu_mau') {
+        if (typeof TascoFormWizard === 'undefined') return {loi: 'Trình soạn biểu mẫu chưa sẵn sàng.'};
+        TascoFormWizard.start({form: args.ten_bieu_mau, query: args.tu_khoa_ho_so});
+        return {ket_qua: 'Đã mở trình soạn biểu mẫu trong khung chat để người dùng chọn tiếp. Hãy nói ngắn gọn rằng bạn đã mở trình chọn.'};
+      }
       if (name === 'ds_bieu_mau') return {bieu_mau: (await libraryForms()).map(file => file.name)};
       if (name === 'soan_bieu_mau') {
         const item = find('ton', args.ma_ho_so);
@@ -195,5 +202,29 @@ const TascoAITools = (() => {
     } catch (error) { return {loi: error?.message || 'Công cụ gặp lỗi.'}; }
   }
 
-  return {DECLARATIONS, run, search, detail, stats, norm, dayNumber};
+  // Danh sách hồ sơ gom theo xe (biển số; không có thì theo tên khách) cho trình soạn biểu mẫu từng bước.
+  const OWNER_FIELDS = ['bienSo', 'khachHang', 'chuXe', 'tenChuXe', 'nguoiLienHe', 'laiXe', 'soHoSoBoiThuong', 'maVuTonThat', 'soHd'];
+  function vehicleGroups(query, limit = 8) {
+    const tokens = norm(query).split(/\s+/).filter(Boolean);
+    const groups = new Map();
+    for (const item of items('ton')) {
+      if (tokens.length) { const text = norm(OWNER_FIELDS.map(name => item.fields[name] || '').join(' ')); if (!tokens.every(token => text.includes(token))) continue; }
+      const plate = String(item.fields.bienSo || '').trim();
+      const key = norm(plate || item.fields.khachHang || item.id).replace(/[^a-z0-9]/g, '') || item.id;
+      const group = groups.get(key) || {key, plate, owner: item.fields.khachHang || item.fields.chuXe || item.fields.tenChuXe || '', claims: []};
+      group.claims.push({id: item.id, record: item.record, label: claimLabel(item)});
+      groups.set(key, group);
+    }
+    const list = [...groups.values()].sort((first, second) => second.claims.length - first.claims.length || first.plate.localeCompare(second.plate));
+    return {total: list.length, groups: list.slice(0, limit)};
+  }
+  function claimLabel(item) {
+    const status = statusOf(item);
+    return {
+      id: item.id, hsbt: item.fields.soHoSoBoiThuong || '', vtt: item.fields.maVuTonThat || '', ngay: dayText(dateOf(item, 'ngay_ton_that')),
+      diaDiem: String(item.fields.diaDiemTonThat || item.fields.diaDiemVTT || '').slice(0, 80), trangThai: status.label, nguyenNhan: String(item.fields.nguyenNhan || item.fields.moTaTonThat || '').slice(0, 80)
+    };
+  }
+
+  return {DECLARATIONS, run, search, detail, stats, norm, dayNumber, libraryForms, vehicleGroups};
 })();

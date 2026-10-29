@@ -1809,7 +1809,7 @@
 <!-- /SCROLL TO TOP BUTTON -->
 
 <!-- TASCO AI ASSISTANT -->
-<link rel="stylesheet" href="css/ai-assistant.css?v=20261029-ai-10">
+<link rel="stylesheet" href="css/ai-assistant.css?v=20261029-ai-11">
 
 <div id="tasco-floating-dock" aria-label="Công cụ hỗ trợ nhanh">
   <button id="scrollToTopBtn" class="tasco-floating-action" type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" data-tooltip="Lên đầu trang" aria-label="Lên đầu trang">
@@ -1855,7 +1855,7 @@
         <button type="button" class="tasco-ai-quick-action" onclick="fillTascoAIPrompt('Thống kê hồ sơ bồi thường theo trạng thái')">Thống kê theo trạng thái</button>
         <button type="button" class="tasco-ai-quick-action" onclick="fillTascoAIPrompt('Tìm hồ sơ biển số ')">Tìm hồ sơ</button>
         <button type="button" class="tasco-ai-quick-action" onclick="fillTascoAIPrompt('Hồ sơ nào đang chờ GĐCT? Liệt kê giúp tôi')">Hồ sơ chờ GĐCT</button>
-        <button type="button" class="tasco-ai-quick-action" onclick="fillTascoAIPrompt('Soạn biểu mẫu đề nghị tạm ứng bồi thường TNDS cho hồ sơ đang mở')">Soạn biểu mẫu cho hồ sơ</button>
+        <button type="button" class="tasco-ai-quick-action" onclick="TascoFormWizard.start()">Soạn biểu mẫu cho hồ sơ</button>
       </div>
       <div class="tasco-ai-key-note" role="button" tabindex="0" style="cursor:pointer" onclick="setGeminiApiKey()" onkeydown="if(event.key==='Enter')setGeminiApiKey()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>Cần khoá Gemini API (nút ⚙️) để bắt đầu.</div>
     </div>
@@ -1870,8 +1870,9 @@
 </div>
 
 <script src="js/features/ai/gemini-key.js?v=20261029-ai-3"></script>
-<script src="js/features/ai/assistant-tools.js?v=20261029-ai-6"></script>
-<script src="js/features/ai/assistant.js?v=20261029-ai-10"></script>
+<script src="js/features/ai/assistant-tools.js?v=20261029-ai-11"></script>
+<script src="js/features/ai/assistant-form-wizard.js?v=20261029-ai-11"></script>
+<script src="js/features/ai/assistant.js?v=20261029-ai-11"></script>
 <!-- /TASCO AI ASSISTANT -->
 
 

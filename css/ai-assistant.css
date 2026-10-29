@@ -207,3 +207,20 @@
 
 .tasco-ai-settings .sf-select-trigger { height:42px; min-height:42px; font-size:12.5px; }
 .tasco-ai-settings .sf-select-wrap { display:block; width:100%; }
+
+/* Trình soạn biểu mẫu từng bước trong chat */
+.msg-ai.tasco-ai-wizard { max-width:96%; width:96%; }
+.tasco-ai-choices { display:grid; gap:7px; margin-top:8px; }
+.tasco-ai-choice { display:grid; gap:2px; width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:11px; background:var(--surface-soft,transparent); color:var(--text-main); font:inherit; text-align:left; cursor:pointer; transition:border-color .15s,background .15s; }
+.tasco-ai-choice:hover:not(:disabled) { border-color:var(--primary); background:color-mix(in srgb,var(--primary) 8%,transparent); }
+.tasco-ai-choice strong { font-size:12px; line-height:1.4; }
+.tasco-ai-choice small,.tasco-ai-more { font-size:11px; line-height:1.45; color:var(--text-muted); }
+.tasco-ai-choice.is-picked { border-color:var(--primary); }
+.tasco-ai-choice:disabled { opacity:.6; cursor:default; }
+.tasco-ai-wizard-input { width:100%; box-sizing:border-box; min-height:38px; margin-top:8px; padding:8px 11px; border:1px solid var(--border); border-radius:10px; background:var(--surface-soft,transparent); color:var(--text-main); font:inherit; font-size:12px; }
+.tasco-ai-wizard-input:focus-visible { outline:2px solid var(--primary); outline-offset:1px; }
+.tasco-ai-chiprow { display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; }
+.tasco-ai-chip { padding:6px 11px; border:1px solid var(--border); border-radius:999px; background:transparent; color:var(--text-main); font:inherit; font-size:11.5px; cursor:pointer; }
+.tasco-ai-chip:hover:not(:disabled) { border-color:var(--primary); }
+.tasco-ai-wizard-go { width:100%; margin-top:8px; }
+.tasco-ai-wizard :is(button,input):disabled { opacity:.6; cursor:default; }
