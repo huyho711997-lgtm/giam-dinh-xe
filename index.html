@@ -1809,7 +1809,7 @@
 <!-- /SCROLL TO TOP BUTTON -->
 
 <!-- TASCO AI ASSISTANT -->
-<link rel="stylesheet" href="css/ai-assistant.css?v=20261029-ai-11">
+<link rel="stylesheet" href="css/ai-assistant.css?v=20261029-ai-13">
 
 <div id="tasco-floating-dock" aria-label="Công cụ hỗ trợ nhanh">
   <button id="scrollToTopBtn" class="tasco-floating-action" type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" data-tooltip="Lên đầu trang" aria-label="Lên đầu trang">
@@ -1840,6 +1840,7 @@
       </div>
     </div>
     <div class="tasco-ai-header__actions">
+      <button type="button" class="tasco-ai-header__btn" onclick="newTascoAIChat()" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
       <button type="button" class="tasco-ai-header__btn" onclick="setGeminiApiKey()" title="Thiết lập kết nối AI" aria-label="Thiết lập kết nối AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09A1.65 1.65 0 0 0 20.91 10H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z"></path></svg></button>
       <button type="button" class="tasco-ai-header__btn tasco-ai-header__btn--close" onclick="toggleTascoAI()" title="Đóng" aria-label="Đóng Trợ lý TASCO AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
     </div>
@@ -1861,7 +1862,10 @@
     </div>
   </div>
   <div class="tasco-ai-footer">
+    <div class="tasco-ai-suggest" id="tasco-ai-suggest"></div>
+    <div class="tasco-ai-attachments" id="tasco-ai-attachments" hidden></div>
     <div class="tasco-ai-composer">
+      <label class="tasco-ai-attach-btn" title="Đính kèm ảnh/PDF giấy tờ (hoặc dán ảnh, kéo thả)" aria-label="Đính kèm ảnh hoặc PDF giấy tờ"><input type="file" id="tasco-ai-file" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf" multiple hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"></path></svg></label>
       <input type="text" id="tasco-ai-input" class="tasco-ai-input" placeholder="Nhập câu hỏi cho TASCO AI..." onkeypress="if(event.key === 'Enter') sendTascoAIMessage()" autocomplete="off">
       <button type="button" class="tasco-ai-send" onclick="sendTascoAIMessage()" title="Gửi câu hỏi" aria-label="Gửi câu hỏi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 3-7.2 18-4.1-7.7L2 9.2 21 3Z"></path><path d="m9.7 13.3 4.1-4.1"></path></svg></button>
     </div>
@@ -1870,9 +1874,12 @@
 </div>
 
 <script src="js/features/ai/gemini-key.js?v=20261029-ai-3"></script>
-<script src="js/features/ai/assistant-tools.js?v=20261029-ai-11"></script>
-<script src="js/features/ai/assistant-form-wizard.js?v=20261029-ai-11"></script>
-<script src="js/features/ai/assistant.js?v=20261029-ai-11"></script>
+<script src="js/features/ai/assistant-tools.js?v=20261029-ai-13"></script>
+<script src="js/features/ai/assistant-export.js?v=20261029-ai-13"></script>
+<script src="js/features/ai/assistant-chat-store.js?v=20261029-ai-13"></script>
+<script src="js/features/ai/assistant-vision.js?v=20261029-ai-13"></script>
+<script src="js/features/ai/assistant-form-wizard.js?v=20261029-ai-13"></script>
+<script src="js/features/ai/assistant.js?v=20261029-ai-13"></script>
 <!-- /TASCO AI ASSISTANT -->
 
 

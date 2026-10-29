@@ -82,6 +82,8 @@ Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở t
 
 `firebase/user-secrets.rules.json` (đã nằm trong `database.rules.json`): nhánh `user_secrets/{uid}` lưu khoá Gemini API riêng từng tài khoản, chỉ chính chủ đọc/ghi.
 
+`user_chats/{uid}` (đã nằm trong `database.rules.json`): lịch sử trò chuyện của Trợ lý AI theo từng tài khoản (tối đa 40 tin, văn bản thuần) và các câu hay hỏi; chỉ chính chủ đọc/ghi. Chưa publish rules thì lịch sử tạm lưu trên trình duyệt.
+
 `firebase/shared-forms.rules.json` là phần rules tham khảo cho nhánh mới `shared_forms`. Ghép riêng nhánh này vào rules hiện có trong Firebase Console; không ghi đè toàn bộ rules đang vận hành. Kiểm tra và bỏ các quyền đọc/ghi quá rộng ở nhánh cha vì Firebase Rules cho phép kế thừa không thể bị thu hẹp bằng rules con. Rules kiểm tra quyền trên server, giữ nguyên chủ sở hữu và liên kết file khi sửa metadata. Chưa tự triển khai rules hoặc thay đổi dữ liệu thật.
 
 Kiểm tra phần lưu trữ bằng `node --test tests/shared-forms.test.mjs`. Chạy `node scripts/check.mjs` để kiểm tra cú pháp và các tài nguyên giao diện.

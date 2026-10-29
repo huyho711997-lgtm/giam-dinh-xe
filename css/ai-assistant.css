@@ -96,7 +96,7 @@
     background: var(--surface-strong);
     border-top: 1px solid var(--border);
   }
-  .tasco-ai-composer { display: grid; grid-template-columns: minmax(0,1fr) 43px; align-items: center; gap: 8px; padding: 5px; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface-soft); box-shadow: inset 0 1px 0 rgba(255,255,255,.62); transition: border-color .2s ease, box-shadow .2s ease; }
+  .tasco-ai-composer { display: grid; grid-template-columns: 36px minmax(0,1fr) 43px; align-items: center; gap: 8px; padding: 5px; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface-soft); box-shadow: inset 0 1px 0 rgba(255,255,255,.62); transition: border-color .2s ease, box-shadow .2s ease; }
   .tasco-ai-composer:focus-within { border-color: rgba(179,140,67,.48); box-shadow: 0 0 0 3px rgba(216,180,109,.1), inset 0 1px 0 rgba(255,255,255,.7); }
   .tasco-ai-input {
     width: 100%;
@@ -224,3 +224,48 @@
 .tasco-ai-chip:hover:not(:disabled) { border-color:var(--primary); }
 .tasco-ai-wizard-go { width:100%; margin-top:8px; }
 .tasco-ai-wizard :is(button,input):disabled { opacity:.6; cursor:default; }
+
+/* Gợi ý câu hỏi, đính kèm, thanh xuất, thẻ tóm tắt tồn đọng */
+.tasco-ai-suggest { display:flex; gap:6px; margin:0 0 9px; padding-bottom:2px; overflow-x:auto; scrollbar-width:none; }
+.tasco-ai-suggest::-webkit-scrollbar { display:none; }
+.tasco-ai-suggest:empty { display:none; }
+.tasco-ai-suggest__chip { flex:0 0 auto; padding:6px 11px; border:1px solid var(--border-strong); border-radius:999px; background:var(--surface-soft); color:var(--text-main); font:inherit; font-size:11.5px; font-weight:650; cursor:pointer; white-space:nowrap; transition:border-color .15s ease, background .15s ease; }
+.tasco-ai-suggest__chip:hover { border-color:var(--primary); background:color-mix(in srgb,var(--primary) 8%,var(--surface-soft)); }
+.tasco-ai-attach-btn { display:grid; place-items:center; width:34px; height:34px; margin-left:2px; border-radius:10px; color:var(--text-muted); cursor:pointer; transition:color .15s ease, background .15s ease; }
+.tasco-ai-attach-btn:hover, .tasco-ai-attach-btn:focus-within { color:var(--primary); background:color-mix(in srgb,var(--primary) 10%,transparent); }
+.tasco-ai-attach-btn svg { width:18px; height:18px; }
+.tasco-ai-attachments { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 9px; }
+.tasco-ai-attachments[hidden] { display:none; }
+.tasco-ai-attach { position:relative; display:grid; place-items:center; width:52px; height:52px; border:1px solid var(--border-strong); border-radius:11px; background:var(--surface-soft); overflow:visible; }
+.tasco-ai-attach img { width:100%; height:100%; object-fit:cover; border-radius:10px; }
+.tasco-ai-attach em { font-style:normal; font-size:11px; font-weight:800; color:var(--text-muted); }
+.tasco-ai-attach button { position:absolute; top:-6px; right:-6px; width:20px; height:20px; padding:0; border:1px solid var(--border-strong); border-radius:50%; background:var(--surface-strong); color:var(--text-main); font-size:13px; line-height:1; cursor:pointer; }
+.tasco-ai-thumbs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:6px; }
+.tasco-ai-thumb { width:56px; height:56px; object-fit:cover; border-radius:9px; border:1px solid rgba(255,255,255,.35); }
+.tasco-ai-thumb--file { display:grid; place-items:center; font-size:11px; font-weight:800; background:rgba(0,0,0,.12); }
+.tasco-ai-actions { display:grid; gap:7px; margin-top:10px; padding-top:9px; border-top:1px dashed var(--border); }
+.tasco-ai-actions__row { display:flex; flex-wrap:wrap; align-items:center; gap:7px; }
+.tasco-ai-actions__row span { flex:1 1 100%; font-size:11px; color:var(--text-muted); }
+.tasco-ai-actions__row button { padding:6px 11px; border:1px solid var(--border-strong); border-radius:9px; background:var(--surface-soft); color:var(--text-main); font:inherit; font-size:11.5px; font-weight:700; cursor:pointer; }
+.tasco-ai-actions__row button:hover { border-color:var(--primary); color:var(--primary); }
+.tasco-ai-summary { display:grid; gap:8px; }
+.tasco-ai-summary p { margin:0; }
+.tasco-ai-summary__title { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.tasco-ai-summary__count { min-width:28px; padding:2px 9px; border-radius:999px; background:#c2410c; color:#fff; font-size:12px; font-weight:800; text-align:center; }
+.tasco-ai-summary__count.is-zero { background:#15803d; }
+.tasco-ai-summary__note { font-size:10.5px; line-height:1.5; color:var(--text-muted); }
+.tasco-ai-summary .tasco-ai-chiprow { margin-top:0; }
+.tasco-ai-chip[aria-pressed="true"] { border-color:var(--primary); background:color-mix(in srgb,var(--primary) 12%,transparent); font-weight:800; }
+.tasco-ai-gdv { border:1px solid var(--border); border-radius:11px; background:var(--surface-soft); }
+.tasco-ai-gdv summary { display:flex; justify-content:space-between; gap:10px; padding:9px 11px; font-size:12px; font-weight:750; cursor:pointer; list-style:none; }
+.tasco-ai-gdv summary::-webkit-details-marker { display:none; }
+.tasco-ai-gdv summary em { font-style:normal; font-weight:600; font-size:11px; color:var(--text-muted); text-align:right; }
+.tasco-ai-gdv ul { display:grid; gap:6px; margin:0; padding:0 11px 10px; list-style:none; }
+.tasco-ai-gdv li { display:grid; gap:1px; font-size:11.5px; }
+.tasco-ai-gdv li small { font-size:10.5px; color:var(--text-muted); }
+.tasco-ai-summary__ask { min-height:34px; font-size:12px; }
+.tasco-ai-choice[aria-pressed="true"] { border-color:var(--primary); background:color-mix(in srgb,var(--primary) 10%,transparent); }
+.tasco-ai-download:disabled { opacity:.55; cursor:not-allowed; }
+.tasco-ai-edit .tasco-ai-edit__val { display:block; }
+.tasco-ai-edit small { color:var(--text-muted); font-size:10.5px; }
+.tasco-ai-suggest { -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent); }

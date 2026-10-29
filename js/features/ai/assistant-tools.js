@@ -53,7 +53,8 @@ const TascoAITools = (() => {
     ngay_ton_that: ['ngayTonThat', 'ngayVTT'],
     ngay_mo_hs: ['ngayMoHs', 'createdAt'],
     ngay_thanh_toan: ['ngayThanhToan'],
-    ngay_tao: ['createdAt']
+    ngay_tao: ['createdAt'],
+    cap_nhat: ['updatedAt', 'ngayCapNhat', 'ngayMoHs', 'createdAt']
   };
   function dateOf(item, field) {
     const names = DATE_FIELDS[field] || DATE_FIELDS.ngay_duyet;
@@ -61,6 +62,11 @@ const TascoAITools = (() => {
     for (const name of names) { const day = dayNumber(item.record[name] ?? item.fields[name]); if (day) return day; }
     return 0;
   }
+  const dayMs = day => Date.UTC(Math.floor(day / 10000), Math.floor(day / 100) % 100 - 1, day % 100);
+  const ageDays = (day, today) => Math.floor((dayMs(today) - dayMs(day)) / 86400000);
+  const todayNumber = override => { const fixed = isoDay(override); if (fixed) return fixed; const now = new Date(); return now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate(); };
+  // Hồ sơ đã xong việc của người xử lý nên không tính là "tồn": đã duyệt HSBT, KT duyệt, đã thanh toán, từ chối.
+  const CLOSED_STATUSES = ['da_duyet_hsbt', 'kt_duyet', 'da_thanh_toan', 'tu_choi'];
   const dayText = day => day ? String(day % 100).padStart(2, '0') + '/' + String(Math.floor(day / 100) % 100).padStart(2, '0') + '/' + Math.floor(day / 10000) : '';
   // "1.234.567 đ", "1,234,567", 1234567 → 1234567 (đơn vị: đồng).
   const moneyOf = value => { if (typeof value === 'number') return Number.isFinite(value) ? value : 0; const digits = String(value ?? '').replace(/[^\d-]/g, ''); return digits && digits !== '-' ? Number(digits) : 0; };
@@ -88,17 +94,26 @@ const TascoAITools = (() => {
     if (from || to) {
       rows = rows.filter(item => { const day = dateOf(item, field); if (!day) { noDate++; return false; } return (!from || day >= from) && (!to || day <= to); });
     }
-    return {rows, total, field, noDate, ranged: !!(from || to)};
+    const minAge = Number(args.ton_tren_ngay);
+    const aged = Number.isFinite(minAge) && args.ton_tren_ngay !== undefined && args.ton_tren_ngay !== null && args.ton_tren_ngay !== '';
+    const ageBasis = DATE_FIELDS[args.tinh_tu] ? args.tinh_tu : 'cap_nhat';
+    if (aged) {
+      const today = todayNumber(args.hom_nay);
+      rows = rows.filter(item => { const day = dateOf(item, ageBasis); if (!day) { noDate++; return false; } item.age = ageDays(day, today); return item.age > minAge; });
+    }
+    return {rows, total, field, noDate, ranged: !!(from || to) || aged, aged, ageBasis};
   }
 
   function search(kind, args = {}) {
-    const {rows, total, field, noDate, ranged} = filterRows(kind, args);
+    const {rows, total, field, noDate, ranged, aged, ageBasis} = filterRows(kind, args);
     const limit = limitOf(args.gioi_han);
     const out = {tong_so_ho_so_trong_nhom: total, so_ket_qua_khop: rows.length, dang_hien_thi: Math.min(limit, rows.length), ket_qua: rows.slice(0, limit).map(item => {
       const row = brief(item);
-      if (ranged || args.truong_ngay) row.ngay = dayText(dateOf(item, field || 'ngay_duyet'));
+      if (aged) row.so_ngay_ton = item.age;
+      else if (ranged || args.truong_ngay) row.ngay = dayText(dateOf(item, field || 'ngay_duyet'));
       return row;
     })};
+    if (aged) out.tinh_so_ngay_ton_tu = ageBasis;
     if (ranged) out.so_ho_so_khong_co_ngay_nen_bi_loai = noDate;
     return out;
   }
@@ -118,7 +133,7 @@ const TascoAITools = (() => {
   // Thống kê số lượng (và tổng tiền nếu có tinh_tong) theo nhóm, sau khi áp dụng cùng bộ lọc với tim_ho_so.
   const SUM_FIELDS = new Set(['soTienDuyetBT', 'ttbtTongSoTienBoiThuong', 'ttbtSoTienBoiThuong', 'duPhongBoiThuong', 'pascSoTienDuyet', 'soTienDaThanhToan', 'uocThietHai', 'chiPhiGiamDinh', 'chiPhiCuuHo', 'chiPhiKhac', 'tongBoiThuongSauThue', 'giaTriXe', 'soTienBh', 'phiBh']);
   function stats(kind, groupBy, args = {}) {
-    const {rows, total, field, noDate, ranged} = filterRows(kind, args);
+    const {rows, total, field, noDate, ranged, aged, ageBasis} = filterRows(kind, args);
     const sumField = SUM_FIELDS.has(args.tinh_tong) ? args.tinh_tong : '';
     const groups = new Map();
     let overall = 0;
@@ -138,17 +153,69 @@ const TascoAITools = (() => {
       .slice(0, 31).map(([gia_tri, entry]) => sumField ? {gia_tri, so_luong: entry.so_luong, tong_tien: entry.tong_tien} : {gia_tri, so_luong: entry.so_luong});
     const out = {tong_so_ho_so_trong_nhom: total, so_ho_so_khop_bo_loc: rows.length, nhom_theo: groupBy || 'khong', thong_ke: ordered};
     if (sumField) { out.tinh_tong = sumField; out.tong_tien = overall; out.don_vi_tien = 'đồng'; }
-    if (ranged) { out.truong_ngay = field || 'ngay_duyet'; out.so_ho_so_khong_co_ngay_nen_bi_loai = noDate; }
+    if (ranged) { if (field) out.truong_ngay = field; if (aged) out.tinh_so_ngay_ton_tu = ageBasis; out.so_ho_so_khong_co_ngay_nen_bi_loai = noDate; }
     return out;
+  }
+
+  // ---- Hồ sơ tồn đọng ----
+  const gdvOf = item => pick(item.fields, GDV_FIELDS) || '(chưa phân công)';
+  const claimRow = item => ({
+    ma: item.id, bienSo: item.fields.bienSo || '', khachHang: item.fields.khachHang || item.fields.chuXe || '', hsbt: item.fields.soHoSoBoiThuong || '', vtt: item.fields.maVuTonThat || '',
+    trangThai: statusOf(item).label, gdv: gdvOf(item), gara: pick(item.fields, GROUPS.gara), ngayTonThat: dayText(dateOf(item, 'ngay_ton_that')), soNgayTon: item.age
+  });
+  // Báo cáo đầy đủ (dùng cho thẻ tóm tắt và xuất file); công cụ gửi cho AI chỉ lấy phần rút gọn.
+  function overdueReport(args = {}) {
+    const days = Math.max(0, Math.floor(Number(args.ton_tren_ngay ?? 7)) || 0);
+    const hasStatus = list(args.trang_thai).length > 0;
+    const query = {...args, ton_tren_ngay: days};
+    if (!hasStatus) query.loai_tru_trang_thai = [...CLOSED_STATUSES, ...list(args.loai_tru_trang_thai)];
+    const {rows, total, noDate, ageBasis} = filterRows('ton', query);
+    const groups = new Map();
+    for (const item of rows) {
+      const name = gdvOf(item);
+      const group = groups.get(name) || {gdv: name, claims: []};
+      group.claims.push(claimRow(item));
+      groups.set(name, group);
+    }
+    const ordered = [...groups.values()].map(group => {
+      group.claims.sort((first, second) => second.soNgayTon - first.soNgayTon);
+      return {...group, count: group.claims.length, oldest: group.claims[0].soNgayTon};
+    }).sort((first, second) => second.count - first.count || second.oldest - first.oldest);
+    return {days, basis: ageBasis, total, count: rows.length, noDate, groups: ordered, statuses: hasStatus ? list(args.trang_thai) : 'tất cả trừ đã duyệt HSBT, KT duyệt, đã thanh toán, từ chối'};
+  }
+  function overdueForModel(report) {
+    return {tieu_chi: {ton_tren_ngay: report.days, tinh_so_ngay_ton_tu: report.basis, trang_thai: report.statuses},
+      tong_so_ho_so_trong_nhom: report.total, so_ho_so_ton: report.count, so_ho_so_khong_co_ngay_nen_bi_loai: report.noDate,
+      theo_gdv: report.groups.slice(0, 15).map(group => ({gdv: group.gdv, so_luong: group.count, ton_lau_nhat_ngay: group.oldest, ho_so_ton_lau_nhat: group.claims.slice(0, 5).map(row => ({ma: row.ma, bienSo: row.bienSo, khachHang: row.khachHang, trangThai: row.trangThai, so_ngay_ton: row.soNgayTon}))}))};
+  }
+
+  // ---- Bảng để xuất Excel / dán email (đầy đủ kết quả, không bị giới hạn như phần AI nhìn thấy) ----
+  const TABLE_CAP = 5000;
+  const CLAIM_HEAD = ['Biển số', 'Khách hàng', 'Số HSBT', 'Mã VTT', 'Trạng thái', 'GĐV', 'Gara', 'Ngày tổn thất'];
+  const claimCells = item => [item.fields.bienSo || '', item.fields.khachHang || item.fields.chuXe || '', item.fields.soHoSoBoiThuong || '', item.fields.maVuTonThat || '', statusOf(item).label, gdvOf(item), pick(item.fields, GROUPS.gara), dayText(dateOf(item, 'ngay_ton_that'))];
+  function searchTable(kind, args = {}) {
+    const {rows, aged} = filterRows(kind, args);
+    return {title: 'Danh sách hồ sơ', head: aged ? [...CLAIM_HEAD, 'Số ngày tồn'] : CLAIM_HEAD, rows: rows.slice(0, TABLE_CAP).map(item => aged ? [...claimCells(item), item.age] : claimCells(item))};
+  }
+  function statsTable(result) {
+    const money = !!result.tinh_tong;
+    const label = {khong: 'Nhóm', trang_thai: 'Trạng thái', gdv: 'GĐV', don_vi: 'Đơn vị', gara: 'Gara', nghiep_vu: 'Nghiệp vụ', thang: 'Tháng'}[result.nhom_theo] || 'Nhóm';
+    return {title: 'Thống kê theo ' + label.toLowerCase(), head: money ? [label, 'Số lượng', 'Tổng tiền (đồng)'] : [label, 'Số lượng'], rows: result.thong_ke.map(row => money ? [row.gia_tri, row.so_luong, row.tong_tien] : [row.gia_tri, row.so_luong])};
+  }
+  function overdueTable(report) {
+    return {title: 'Hồ sơ tồn trên ' + report.days + ' ngày', head: ['GĐV', 'Biển số', 'Khách hàng', 'Số HSBT', 'Mã VTT', 'Trạng thái', 'Ngày tổn thất', 'Số ngày tồn'],
+      rows: report.groups.flatMap(group => group.claims.map(row => [row.gdv, row.bienSo, row.khachHang, row.hsbt, row.vtt, row.trangThai, row.ngayTonThat, row.soNgayTon])).slice(0, TABLE_CAP)};
   }
 
   const DECLARATIONS = [
     {name: 'tim_ho_so', description: 'Tìm/lọc danh sách hồ sơ theo từ khoá (biển số, tên khách hàng, số hồ sơ, mã vụ tổn thất...), trạng thái, giám định viên, gara, đơn vị và khoảng ngày. loai="ton" là Hồ sơ bồi thường/tồn; loai="giam_dinh" là hồ sơ giám định hiện trường.',
-      parameters: {type: 'OBJECT', properties: {loai: {type: 'STRING', enum: ['ton', 'giam_dinh']}, tu_khoa: {type: 'STRING'}, trang_thai: {type: 'ARRAY', items: {type: 'STRING'}, description: 'Chỉ lấy các trạng thái này (tên hoặc mã), VD ["Chờ GĐCT"]'}, loai_tru_trang_thai: {type: 'ARRAY', items: {type: 'STRING'}, description: 'Loại các trạng thái này, VD ["Đã duyệt HSBT","KT duyệt"]'}, gdv: {type: 'STRING'}, gara: {type: 'STRING'}, don_vi: {type: 'STRING'}, truong_ngay: {type: 'STRING', enum: ['ngay_duyet', 'ngay_ton_that', 'ngay_mo_hs', 'ngay_thanh_toan', 'ngay_tao'], description: 'Ngày dùng để lọc/nhóm; mặc định ngay_duyet (ngày duyệt HSBT/tờ trình)'}, tu_ngay: {type: 'STRING', description: 'YYYY-MM-DD, tính cả ngày này'}, den_ngay: {type: 'STRING', description: 'YYYY-MM-DD, tính cả ngày này'}, gioi_han: {type: 'INTEGER'}}, required: ['loai']}},
+      parameters: {type: 'OBJECT', properties: {loai: {type: 'STRING', enum: ['ton', 'giam_dinh']}, tu_khoa: {type: 'STRING'}, trang_thai: {type: 'ARRAY', items: {type: 'STRING'}, description: 'Chỉ lấy các trạng thái này (tên hoặc mã), VD ["Chờ GĐCT"]'}, loai_tru_trang_thai: {type: 'ARRAY', items: {type: 'STRING'}, description: 'Loại các trạng thái này, VD ["Đã duyệt HSBT","KT duyệt"]'}, gdv: {type: 'STRING'}, gara: {type: 'STRING'}, don_vi: {type: 'STRING'}, truong_ngay: {type: 'STRING', enum: ['ngay_duyet', 'ngay_ton_that', 'ngay_mo_hs', 'ngay_thanh_toan', 'ngay_tao'], description: 'Ngày dùng để lọc/nhóm; mặc định ngay_duyet (ngày duyệt HSBT/tờ trình)'}, tu_ngay: {type: 'STRING', description: 'YYYY-MM-DD, tính cả ngày này'}, den_ngay: {type: 'STRING', description: 'YYYY-MM-DD, tính cả ngày này'}, ton_tren_ngay: {type: 'INTEGER', description: 'Chỉ lấy hồ sơ tồn LỚN HƠN số ngày này (VD "quá 7 ngày" → 7)'}, tinh_tu: {type: 'STRING', enum: ['cap_nhat', 'ngay_mo_hs', 'ngay_ton_that', 'ngay_duyet'], description: 'Mốc tính số ngày tồn; mặc định cap_nhat (lần cập nhật gần nhất của hồ sơ)'}, gioi_han: {type: 'INTEGER'}}, required: ['loai']}},
+    {name: 'ton_dong', description: 'Báo cáo hồ sơ bồi thường tồn đọng (chưa xong) quá N ngày, gom theo giám định viên (GĐV) kèm hồ sơ tồn lâu nhất. Dùng cho "hồ sơ nào tồn quá 7 ngày", "ai đang tồn nhiều nhất", "hồ sơ chờ duyệt lâu". Mặc định loại các hồ sơ đã duyệt HSBT, KT duyệt, đã thanh toán, từ chối; muốn riêng một trạng thái thì truyền trang_thai (VD ["Chờ GĐCT"]).',
+      parameters: {type: 'OBJECT', properties: {ton_tren_ngay: {type: 'INTEGER', description: 'Số ngày, mặc định 7; tồn LỚN HƠN số này'}, tinh_tu: {type: 'STRING', enum: ['cap_nhat', 'ngay_mo_hs', 'ngay_ton_that'], description: 'Mốc tính; mặc định cap_nhat'}, trang_thai: {type: 'ARRAY', items: {type: 'STRING'}}, gdv: {type: 'STRING'}, gara: {type: 'STRING'}, don_vi: {type: 'STRING'}}}},
     {name: 'chi_tiet_ho_so', description: 'Lấy toàn bộ thông tin văn bản của một hồ sơ theo mã (trường "ma" hoặc biển số/số hồ sơ chính xác).',
       parameters: {type: 'OBJECT', properties: {loai: {type: 'STRING', enum: ['ton', 'giam_dinh']}, ma: {type: 'STRING'}}, required: ['loai', 'ma']}},
     {name: 'thong_ke', description: 'Đếm số hồ sơ (và cộng tổng tiền nếu cần) sau khi lọc, có thể nhóm theo trang_thai, gdv, don_vi, gara, nghiep_vu, thang (theo truong_ngay) hoặc khong (chỉ tổng). Dùng cho mọi câu hỏi "bao nhiêu", "tổng", "theo tháng". Ví dụ "tháng 10/2026 có bao nhiêu hồ sơ duyệt" → tu_ngay=2026-10-01, den_ngay=2026-10-31, nhom_theo=khong.',
-      parameters: {type: 'OBJECT', properties: {loai: {type: 'STRING', enum: ['ton', 'giam_dinh']}, nhom_theo: {type: 'STRING', enum: ['khong', 'trang_thai', 'gdv', 'don_vi', 'gara', 'nghiep_vu', 'thang']}, tinh_tong: {type: 'STRING', enum: ['soTienDuyetBT', 'ttbtTongSoTienBoiThuong', 'duPhongBoiThuong', 'pascSoTienDuyet', 'soTienDaThanhToan', 'uocThietHai', 'chiPhiGiamDinh', 'chiPhiCuuHo', 'tongBoiThuongSauThue'], description: 'Trường tiền cần cộng tổng (đồng)'}, tu_khoa: {type: 'STRING'}, trang_thai: {type: 'ARRAY', items: {type: 'STRING'}, description: 'Chỉ lấy các trạng thái này (tên hoặc mã), VD ["Chờ GĐCT"]'}, loai_tru_trang_thai: {type: 'ARRAY', items: {type: 'STRING'}, description: 'Loại các trạng thái này, VD ["Đã duyệt HSBT","KT duyệt"]'}, gdv: {type: 'STRING'}, gara: {type: 'STRING'}, don_vi: {type: 'STRING'}, truong_ngay: {type: 'STRING', enum: ['ngay_duyet', 'ngay_ton_that', 'ngay_mo_hs', 'ngay_thanh_toan', 'ngay_tao'], description: 'Ngày dùng để lọc/nhóm; mặc định ngay_duyet (ngày duyệt HSBT/tờ trình)'}, tu_ngay: {type: 'STRING', description: 'YYYY-MM-DD, tính cả ngày này'}, den_ngay: {type: 'STRING', description: 'YYYY-MM-DD, tính cả ngày này'}}, required: ['loai', 'nhom_theo']}},
+      parameters: {type: 'OBJECT', properties: {loai: {type: 'STRING', enum: ['ton', 'giam_dinh']}, nhom_theo: {type: 'STRING', enum: ['khong', 'trang_thai', 'gdv', 'don_vi', 'gara', 'nghiep_vu', 'thang']}, tinh_tong: {type: 'STRING', enum: ['soTienDuyetBT', 'ttbtTongSoTienBoiThuong', 'duPhongBoiThuong', 'pascSoTienDuyet', 'soTienDaThanhToan', 'uocThietHai', 'chiPhiGiamDinh', 'chiPhiCuuHo', 'tongBoiThuongSauThue'], description: 'Trường tiền cần cộng tổng (đồng)'}, tu_khoa: {type: 'STRING'}, trang_thai: {type: 'ARRAY', items: {type: 'STRING'}, description: 'Chỉ lấy các trạng thái này (tên hoặc mã), VD ["Chờ GĐCT"]'}, loai_tru_trang_thai: {type: 'ARRAY', items: {type: 'STRING'}, description: 'Loại các trạng thái này, VD ["Đã duyệt HSBT","KT duyệt"]'}, gdv: {type: 'STRING'}, gara: {type: 'STRING'}, don_vi: {type: 'STRING'}, truong_ngay: {type: 'STRING', enum: ['ngay_duyet', 'ngay_ton_that', 'ngay_mo_hs', 'ngay_thanh_toan', 'ngay_tao'], description: 'Ngày dùng để lọc/nhóm; mặc định ngay_duyet (ngày duyệt HSBT/tờ trình)'}, tu_ngay: {type: 'STRING', description: 'YYYY-MM-DD, tính cả ngày này'}, ton_tren_ngay: {type: 'INTEGER', description: 'Chỉ lấy hồ sơ tồn LỚN HƠN số ngày này (VD "quá 7 ngày" → 7)'}, tinh_tu: {type: 'STRING', enum: ['cap_nhat', 'ngay_mo_hs', 'ngay_ton_that', 'ngay_duyet'], description: 'Mốc tính số ngày tồn; mặc định cap_nhat (lần cập nhật gần nhất của hồ sơ)'}, den_ngay: {type: 'STRING', description: 'YYYY-MM-DD, tính cả ngày này'}}, required: ['loai', 'nhom_theo']}},
     {name: 'mo_ho_so', description: 'Mở cửa sổ chỉnh sửa của một hồ sơ bồi thường (loai="ton") trên màn hình người dùng.',
       parameters: {type: 'OBJECT', properties: {ma: {type: 'STRING'}}, required: ['ma']}},
     {name: 'ds_bieu_mau', description: 'Liệt kê các biểu mẫu Word (.docx) trong thư viện ứng dụng có thể soạn bằng AI.', parameters: {type: 'OBJECT', properties: {}}},
@@ -170,9 +237,10 @@ const TascoAITools = (() => {
   // `ui` do trợ lý chat truyền vào: {showDraft(card)} để hiển thị bản nháp biểu mẫu trong khung chat.
   async function run(name, args = {}, ui = {}) {
     try {
-      if (name === 'tim_ho_so') return search(args.loai === 'giam_dinh' ? 'giam_dinh' : 'ton', args);
+      if (name === 'tim_ho_so') { const kind = args.loai === 'giam_dinh' ? 'giam_dinh' : 'ton'; const result = search(kind, args); if (result.so_ket_qua_khop) ui.onTable?.(searchTable(kind, args)); return result; }
+      if (name === 'ton_dong') { const report = overdueReport(args); if (report.count) ui.onTable?.(overdueTable(report)); return overdueForModel(report); }
       if (name === 'chi_tiet_ho_so') return detail(args.loai === 'giam_dinh' ? 'giam_dinh' : 'ton', args.ma);
-      if (name === 'thong_ke') return stats(args.loai === 'giam_dinh' ? 'giam_dinh' : 'ton', args.nhom_theo, args);
+      if (name === 'thong_ke') { const result = stats(args.loai === 'giam_dinh' ? 'giam_dinh' : 'ton', args.nhom_theo, args); if (result.thong_ke.length) ui.onTable?.(statsTable(result)); return result; }
       if (name === 'mo_ho_so') {
         const item = find('ton', args.ma);
         if (!item) return {loi: 'Không tìm thấy hồ sơ để mở.'};
@@ -208,7 +276,11 @@ const TascoAITools = (() => {
     const tokens = norm(query).split(/\s+/).filter(Boolean);
     const groups = new Map();
     for (const item of items('ton')) {
-      if (tokens.length) { const text = norm(OWNER_FIELDS.map(name => item.fields[name] || '').join(' ')); if (!tokens.every(token => text.includes(token))) continue; }
+      if (tokens.length) {
+        // Biển số gõ kiểu "47H-114.50" hay "47h 11450" đều khớp "47H11450": so sánh thêm bản đã bỏ ký tự phân cách.
+        const text = norm(OWNER_FIELDS.map(name => item.fields[name] || '').join(' ')), packed = text.replace(/[^a-z0-9]/g, '');
+        if (!tokens.every(token => text.includes(token) || (token.replace(/[^a-z0-9]/g, '').length >= 4 && packed.includes(token.replace(/[^a-z0-9]/g, ''))))) continue;
+      }
       const plate = String(item.fields.bienSo || '').trim();
       const key = norm(plate || item.fields.khachHang || item.id).replace(/[^a-z0-9]/g, '') || item.id;
       const group = groups.get(key) || {key, plate, owner: item.fields.khachHang || item.fields.chuXe || item.fields.tenChuXe || '', claims: []};
@@ -226,5 +298,5 @@ const TascoAITools = (() => {
     };
   }
 
-  return {DECLARATIONS, run, search, detail, stats, norm, dayNumber, libraryForms, vehicleGroups};
+  return {DECLARATIONS, run, search, detail, stats, norm, dayNumber, libraryForms, vehicleGroups, overdueReport, overdueTable, searchTable, statsTable};
 })();

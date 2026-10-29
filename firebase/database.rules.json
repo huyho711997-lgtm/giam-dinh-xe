@@ -185,6 +185,52 @@
           ".validate": false
         }
       }
+    },
+    "user_chats": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "updatedAt": {
+          ".validate": "newData.isNumber()"
+        },
+        "messages": {
+          ".validate": "newData.numChildren() <= 60",
+          "$i": {
+            "r": {
+              ".validate": "newData.isString() && (newData.val() === 'u' || newData.val() === 'a')"
+            },
+            "x": {
+              ".validate": "newData.isString() && newData.val().length <= 4000"
+            },
+            "t": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "freq": {
+          ".validate": "newData.numChildren() <= 20",
+          "$i": {
+            "k": {
+              ".validate": "newData.isString() && newData.val().length <= 120"
+            },
+            "x": {
+              ".validate": "newData.isString() && newData.val().length <= 120"
+            },
+            "n": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     }
   }
 }
