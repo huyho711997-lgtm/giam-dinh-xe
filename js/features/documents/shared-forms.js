@@ -242,8 +242,10 @@ const SharedForms = (() => {
       return (new Date(second.updatedAt || 0).getTime() - new Date(first.updatedAt || 0).getTime()) || first.name.localeCompare(second.name,'vi');
     });
   }
+  // Chỉ file Word .docx thật (không phải Google Docs gốc) mới sửa được nội dung bằng AI.
+  const canAiEdit = file => SharedFormsStore.extension(file.originalName || file.name) === 'docx' && !String(file.mimeType).startsWith('application/vnd.google-apps.');
   function actions(file,folder) {
-    return '<div class="sf-card-actions"><button class="sf-icon-button" type="button" data-sf-open="' + escape(file.id) + '" aria-label="' + (folder ? 'Mở thư mục ' : 'Xem ') + escape(file.name) + '" title="' + (folder ? 'Mở thư mục' : 'Xem trong trang') + '">' + icon(folder ? 'arrow' : 'eye') + '</button>' + (!folder ? '<button class="sf-icon-button" type="button" data-sf-download="' + escape(file.id) + '" aria-label="Tải về ' + escape(file.name) + '" title="Tải về">' + icon('download') + '</button>' : '') + (SharedFormsStore.canDeleteDrive(file) ? '<button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa khỏi Google Drive">' + icon('trash') + '</button>' : '') + (SharedFormsStore.canManage(file) ? '<button class="sf-icon-button" type="button" data-sf-edit="' + escape(file.id) + '" aria-label="Sửa thông tin ' + escape(file.name) + '" title="Sửa thông tin">' + icon('tag') + '</button><button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa">' + icon('close') + '</button>' : '') + '</div>';
+    return '<div class="sf-card-actions"><button class="sf-icon-button" type="button" data-sf-open="' + escape(file.id) + '" aria-label="' + (folder ? 'Mở thư mục ' : 'Xem ') + escape(file.name) + '" title="' + (folder ? 'Mở thư mục' : 'Xem trong trang') + '">' + icon(folder ? 'arrow' : 'eye') + '</button>' + (canAiEdit(file) ? '<button class="sf-icon-button" type="button" data-sf-ai="' + escape(file.id) + '" aria-label="Soạn bằng AI ' + escape(file.name) + '" title="Soạn bằng AI theo hồ sơ">' + icon('spark') + '</button>' : '') + (!folder ? '<button class="sf-icon-button" type="button" data-sf-download="' + escape(file.id) + '" aria-label="Tải về ' + escape(file.name) + '" title="Tải về">' + icon('download') + '</button>' : '') + (SharedFormsStore.canDeleteDrive(file) ? '<button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa khỏi Google Drive">' + icon('trash') + '</button>' : '') + (SharedFormsStore.canManage(file) ? '<button class="sf-icon-button" type="button" data-sf-edit="' + escape(file.id) + '" aria-label="Sửa thông tin ' + escape(file.name) + '" title="Sửa thông tin">' + icon('tag') + '</button><button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa">' + icon('close') + '</button>' : '') + '</div>';
   }
   // Dạng thẻ: khối màu theo loại tệp + tên + định dạng/ngày + thao tác.
   function tile(file) {
@@ -396,6 +398,7 @@ const SharedForms = (() => {
         else openFile(file);
       }
       else if (control.dataset.sfDownload) { const file = findFile(control.dataset.sfDownload); if (file) SharedFormsViewer.download(file); }
+      else if (control.dataset.sfAi) { const file = findFile(control.dataset.sfAi); if (file) SharedFormsAI.open(file,{loadBytes:() => SharedFormsViewer.bytes(file,config)}); }
       else if (control.dataset.sfEdit) editDialog(findFile(control.dataset.sfEdit));
       else if (control.dataset.sfDelete) removeFile(findFile(control.dataset.sfDelete));
       else if (control.matches('[data-sf-prev],[data-sf-next]')) {

@@ -247,3 +247,18 @@ body:not(.light-mode) .sf-dialog-v2::backdrop { background:rgba(4,10,14,.62); }
   .sf-dialog-v2 .sf-dialog-foot .sf-button { flex:1; }
 }
 @media (prefers-reduced-motion:reduce) { .sf-dialog-v2 { animation:none; } }
+
+/* Soạn biểu mẫu bằng AI */
+.sf-ai-dialog .sf-dialog-body { display:grid; gap:14px; }
+.sf-ai-dialog select { width:100%; min-height:42px; padding:9px 12px; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-soft); color:var(--sf-ink); font:inherit; }
+.sf-ai-privacy { margin:0; font-size:12px; color:var(--sf-muted,#6b7280); line-height:1.5; }
+.sf-ai-result { display:grid; gap:8px; max-height:min(46vh,420px); overflow:auto; padding:2px; }
+.sf-ai-count,.sf-ai-warn,.sf-ai-note { margin:0; font-size:13px; line-height:1.5; }
+.sf-ai-warn { padding:9px 12px; border-radius:10px; background:rgba(217,119,6,.12); color:#b45309; }
+.sf-ai-note { color:var(--sf-muted,#6b7280); }
+.sf-ai-dialog .sf-ai-edit { display:grid; grid-template-columns:20px minmax(0,1fr); gap:10px; align-items:start; flex-direction:row; padding:10px 12px; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-soft); cursor:pointer; }
+.sf-ai-dialog .sf-ai-edit input { width:auto; min-height:0; margin-top:3px; }
+.sf-ai-dialog .sf-ai-edit span { display:grid; gap:4px; font-size:13px; line-height:1.5; overflow-wrap:anywhere; }
+.sf-ai-dialog .sf-ai-edit del { color:#b91c1c; text-decoration-thickness:1px; opacity:.85; }
+.sf-ai-dialog .sf-ai-edit ins { color:#15803d; text-decoration:none; font-weight:600; }
+.sf-feedback.is-error { color:#dc2626; }

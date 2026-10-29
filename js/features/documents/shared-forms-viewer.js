@@ -278,5 +278,5 @@ const SharedFormsViewer = (() => {
     SharedFormsControls.enhance(overlay);
     render(state,config).catch(error => { if (current === state && !state.basic && error.name !== 'AbortError') { state.print.disabled = true; state.status.textContent = error.message + ' Bạn có thể tải về để xem và in.'; } });
   }
-  return {open,close,download,downloadUrl};
+  return {open,close,download,downloadUrl,bytes};
 })();
