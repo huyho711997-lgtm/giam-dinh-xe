@@ -42,7 +42,9 @@ const SharedFormsControls = (() => {
     if (!active) return;
     if (!active.trigger.isConnected || active.select.disabled || active.select.hidden) { close(); return; }
     const rect = active.trigger.getBoundingClientRect();
-    const width = Math.min(340,document.documentElement.clientWidth - 24);
+    // data-sf-menu-fit: bảng chọn rộng bằng đúng ô chọn (dùng trong khung hẹp như trợ lý AI).
+    const fit = active.select.hasAttribute('data-sf-menu-fit');
+    const width = fit ? Math.min(rect.width,document.documentElement.clientWidth - 24) : Math.min(340,document.documentElement.clientWidth - 24);
     const height = window.visualViewport ? Math.min(window.innerHeight,window.visualViewport.height) : window.innerHeight;
     const topEdge = window.visualViewport?.offsetTop || 0;
     const below = height + topEdge - rect.bottom - 20;
