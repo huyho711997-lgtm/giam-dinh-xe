@@ -400,7 +400,7 @@
 
 
     function switchEditClaimTab(tabName) {
-      const tabs = ['Policy', 'Vehicle', 'Event', 'Unit', 'Financial', 'Documents', 'Email', 'CollectionGuide', 'AuthorityRequest', 'FormsAI'];
+      const tabs = ['Policy', 'Vehicle', 'Event', 'Unit', 'Financial', 'Documents', 'Email', 'CollectionGuide', 'AuthorityRequest'];
       tabs.forEach(t => {
         const tabBtn = document.getElementById('tabBtn_' + t);
         const tabPane = document.getElementById('tabPane_' + t);
@@ -410,7 +410,6 @@
       if (tabName === 'AuthorityRequest') { ensureCollectionGuide(); authorityRequestRefresh(); }
       if (tabName === 'Documents') ClaimDocuments.render();
       if (tabName === 'Email') ClaimEmail.render();
-      if (tabName === 'FormsAI') ClaimFormsAI.render();
       if (tabName === 'CollectionGuide') { ensureCollectionGuide(); refreshCollectionGuideSummary(); }
       if (typeof ClaimEditorWorkspace !== 'undefined') ClaimEditorWorkspace.tabChanged(tabName);
     }
