@@ -162,3 +162,18 @@
     display: none !important;
   }
 
+
+/* Trợ lý có công cụ: danh sách, liên kết mở hồ sơ, bản nháp biểu mẫu */
+.msg-ai ul,.msg-ai ol { margin:4px 0 8px; padding-left:18px; }
+.msg-ai li { margin:2px 0; }
+.msg-ai code { padding:1px 5px; border-radius:5px; background:rgba(127,127,127,.16); font-size:11px; }
+.tasco-ai-link { display:inline; padding:0; border:0; background:none; color:var(--primary); font:inherit; font-weight:700; text-decoration:underline; text-underline-offset:2px; cursor:pointer; text-align:left; }
+.tasco-ai-status-text { margin-left:6px; font-style:normal; font-size:11px; color:var(--text-muted); align-self:center; }
+.msg-ai.tasco-ai-draft { max-width:96%; }
+.tasco-ai-edit { display:grid; grid-template-columns:18px minmax(0,1fr); gap:8px; align-items:start; margin:6px 0; padding:8px 10px; border:1px solid var(--border); border-radius:10px; cursor:pointer; }
+.tasco-ai-edit input { margin-top:3px; }
+.tasco-ai-edit span { display:grid; gap:3px; font-size:11.5px; line-height:1.5; overflow-wrap:anywhere; }
+.tasco-ai-edit del { color:#b91c1c; opacity:.85; }
+.tasco-ai-edit ins { color:#15803d; text-decoration:none; font-weight:650; }
+.tasco-ai-download { margin-top:6px; padding:8px 14px; border:0; border-radius:10px; background:linear-gradient(145deg,#edc86f,#c28e35); color:#17120a; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
+.tasco-ai-warn { color:#b45309; font-size:11.5px; }

@@ -1809,7 +1809,7 @@
 <!-- /SCROLL TO TOP BUTTON -->
 
 <!-- TASCO AI ASSISTANT -->
-<link rel="stylesheet" href="css/ai-assistant.css">
+<link rel="stylesheet" href="css/ai-assistant.css?v=20261029-ai-5">
 
 <div id="tasco-floating-dock" aria-label="Công cụ hỗ trợ nhanh">
   <button id="scrollToTopBtn" class="tasco-floating-action" type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" data-tooltip="Lên đầu trang" aria-label="Lên đầu trang">
@@ -1850,14 +1850,14 @@
         <span class="tasco-ai-welcome__avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="16" height="13" rx="4"></rect><path d="M12 3v3"></path><circle cx="12" cy="2.5" r="1"></circle><circle cx="9" cy="12" r="1" fill="currentColor" stroke="none"></circle><circle cx="15" cy="12" r="1" fill="currentColor" stroke="none"></circle><path d="M9 16h6"></path></svg></span>
         <span><strong>Xin chào, tôi là TASCO AI</strong><small>Sẵn sàng hỗ trợ nghiệp vụ của bạn</small></span>
       </div>
-      <p>Hãy đặt câu hỏi về hồ sơ, tiến độ xử lý hoặc yêu cầu tôi tóm tắt dữ liệu đang hiển thị.</p>
+      <p>Tôi tra cứu hồ sơ theo biển số, tên, trạng thái; thống kê; mở hồ sơ giúp bạn và soạn biểu mẫu Word theo hồ sơ.</p>
       <div class="tasco-ai-quick-actions">
-        <button type="button" class="tasco-ai-quick-action" onclick="fillTascoAIPrompt('Tóm tắt tình hình hồ sơ đang tồn đọng')">Tóm tắt hồ sơ tồn</button>
-        <button type="button" class="tasco-ai-quick-action" onclick="fillTascoAIPrompt('Phân tích tiến độ xử lý hồ sơ hiện tại')">Phân tích tiến độ</button>
-        <button type="button" class="tasco-ai-quick-action" onclick="fillTascoAIPrompt('Hồ sơ nào cần được ưu tiên xử lý?')">Đề xuất ưu tiên</button>
-        <button type="button" class="tasco-ai-quick-action" onclick="fillTascoAIPrompt('Tạo báo cáo tóm tắt cho quản lý')">Soạn báo cáo nhanh</button>
+        <button type="button" class="tasco-ai-quick-action" onclick="fillTascoAIPrompt('Thống kê hồ sơ bồi thường theo trạng thái')">Thống kê theo trạng thái</button>
+        <button type="button" class="tasco-ai-quick-action" onclick="fillTascoAIPrompt('Tìm hồ sơ biển số ')">Tìm hồ sơ</button>
+        <button type="button" class="tasco-ai-quick-action" onclick="fillTascoAIPrompt('Hồ sơ nào đang chờ GĐCT? Liệt kê giúp tôi')">Hồ sơ chờ GĐCT</button>
+        <button type="button" class="tasco-ai-quick-action" onclick="fillTascoAIPrompt('Soạn biểu mẫu đề nghị tạm ứng bồi thường TNDS cho hồ sơ đang mở')">Soạn biểu mẫu cho hồ sơ</button>
       </div>
-      <div class="tasco-ai-key-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>Thiết lập API Key trong mục cài đặt để bắt đầu trò chuyện.</div>
+      <div class="tasco-ai-key-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>Cần khoá Gemini API (nút ⚙️) để bắt đầu.</div>
     </div>
   </div>
   <div class="tasco-ai-footer">
@@ -1870,7 +1870,8 @@
 </div>
 
 <script src="js/features/ai/gemini-key.js?v=20261029-ai-3"></script>
-<script src="js/features/ai/assistant.js?v=20261029-ai-3"></script>
+<script src="js/features/ai/assistant-tools.js?v=20261029-ai-5"></script>
+<script src="js/features/ai/assistant.js?v=20261029-ai-5"></script>
 <!-- /TASCO AI ASSISTANT -->
 
 

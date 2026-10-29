@@ -165,6 +165,31 @@ const SharedFormsAI = (() => {
     return {zip, xml: await entry.async('string')};
   }
 
+  // Dùng cho trợ lý chat: soạn nháp không qua hộp thoại. Trả về đề xuất + công cụ tạo file khi người dùng duyệt.
+  async function draft(file, loadBytes, record, command, signal) {
+    const apiKey = await GeminiKeyStore.get();
+    if (!apiKey) throw new Error('Chưa có khoá Gemini API.');
+    const docx = await loadDocx(file, loadBytes);
+    const paragraphs = readParagraphs(docx.xml);
+    if (!paragraphs.length) throw new Error('Biểu mẫu không có đoạn văn bản nào để sửa.');
+    let model = 'gemini-2.5-flash';
+    try { model = localStorage.getItem('gemini_form_model') || model; } catch (_) { /* bỏ qua */ }
+    const raw = await callGemini(buildRequest(paragraphs, describeRecord(record), command), apiKey, model, signal);
+    return {proposal: parseResponse(raw, paragraphs), docx};
+  }
+  async function buildFile(docx, edits, file, plate) {
+    docx.zip.file('word/document.xml', applyEdits(docx.xml, edits));
+    const blob = await docx.zip.generateAsync({type: 'blob', mimeType: file.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    const base = String(file.originalName || file.name).replace(/\.docx$/i, '');
+    return {blob, name: base + (plate ? ' - ' + String(plate).replace(/[^\w.-]+/g, '') : '') + ' (AI).docx'};
+  }
+  function saveBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a'); link.href = url; link.download = name;
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
   // ---- Giao diện ----
   function listRecords() {
     const rows = [];
@@ -317,5 +342,5 @@ const SharedFormsAI = (() => {
     composer.focus();
   }
 
-  return {open, createComposer, readParagraphs, applyEdits, describeRecord, buildRequest, parseResponse};
+  return {open, createComposer, draft, buildFile, saveBlob, escapeHtml, readParagraphs, applyEdits, describeRecord, buildRequest, parseResponse};
 })();
