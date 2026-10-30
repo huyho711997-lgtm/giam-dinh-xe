@@ -11,7 +11,7 @@ test('manifest hợp lệ và chỉ xin quyền cần thiết cho Zalo', () => {
   assert.equal(manifest.manifest_version, 3);
   assert.deepEqual(manifest.permissions.sort(), ['cookies', 'declarativeNetRequest']);
   assert.ok(manifest.host_permissions.every(url => /zalo(app)?\.(me|com)/.test(url)));
-  for (const file of [manifest.background.service_worker, manifest.declarative_net_request.rule_resources[0].path, ...manifest.content_scripts[0].js]) assert.ok(fs.existsSync(new URL(file, dir)), file);
+  for (const file of [manifest.background.service_worker, manifest.declarative_net_request.rule_resources[0].path, ...manifest.content_scripts.flatMap(item => item.js)]) assert.ok(fs.existsSync(new URL(file, dir)), file);
 });
 
 test('luật gỡ tiêu đề chỉ áp dụng cho khung Zalo do tên miền của app nhúng', () => {

@@ -25,3 +25,6 @@ Sửa `initiatorDomains` trong `rules.json` và `matches` trong `manifest.json`,
 
 ## Gỡ
 `chrome://extensions` → **Xóa** tiện ích. Cookie Zalo trở về như Zalo đặt ban đầu sau lần đăng nhập kế tiếp.
+
+## Nút "Cho phép" trong khung Zalo
+Nếu khung Zalo báo lỗi `indexeddb` hoặc QR trống, tiện ích hiện thanh "Zalo cần quyền lưu dữ liệu" ở đáy khung. Bấm **Cho phép** (trình duyệt có thể hỏi thêm), khung sẽ tự tải lại. Dùng Storage Access API chính thức của trình duyệt.
