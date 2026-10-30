@@ -2,11 +2,11 @@
   #tasco-ai-panel {
     isolation: isolate;
     position: fixed;
-    bottom: 22px;
-    right: 94px;
-    width: min(410px, calc(100vw - 118px));
+    bottom: 94px;
+    right: 22px;
+    width: min(410px, calc(100vw - 32px));
     height: 640px;
-    max-height: calc(100vh - 44px);
+    max-height: calc(100vh - 184px);
     background: var(--surface-strong);
     border-radius: 25px;
     box-shadow: 0 30px 80px rgba(15,23,42,.24), 0 8px 24px rgba(15,23,42,.12), inset 0 1px 0 rgba(255,255,255,.75);
@@ -21,6 +21,7 @@
     pointer-events: none;
     transition: opacity .25s ease, transform .3s cubic-bezier(.2,.8,.25,1), bottom .24s ease;
   }
+  .tasco-scroll-action-visible #tasco-ai-panel { bottom: 149px; }
   #tasco-ai-panel.active {
     transform: translateY(0) scale(1);
     opacity: 1;
@@ -157,8 +158,7 @@
 
   /* Không để nút/trợ lý AI che các form chi tiết và hộp thoại nghiệp vụ. */
   html.tasco-ai-detail-form-open #tasco-floating-dock,
-  html.tasco-ai-detail-form-open #tasco-ai-panel,
-  html.tasco-ai-detail-form-open #tasco-zalo-panel {
+  html.tasco-ai-detail-form-open #tasco-ai-panel {
     display: none !important;
   }
 

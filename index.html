@@ -1795,7 +1795,7 @@
 
 
 <!-- SCROLL TO TOP BUTTON -->
-<link rel="stylesheet" href="css/floating-dock.css?v=20261030-zalo-1">
+<link rel="stylesheet" href="css/floating-dock.css">
   <script src="js/data/tnds-advance.js"></script>
   <script src="js/features/documents/tnds-advance.js?v=20261024-preview-1"></script>
   <script src="js/data/authority-request.js"></script>
@@ -1806,15 +1806,11 @@
 <!-- /SCROLL TO TOP BUTTON -->
 
 <!-- TASCO AI ASSISTANT -->
-<link rel="stylesheet" href="css/ai-assistant.css?v=20261030-zalo-3">
-<link rel="stylesheet" href="css/zalo-panel.css?v=20261030-zalo-3">
+<link rel="stylesheet" href="css/ai-assistant.css?v=20261029-ai-14">
 
 <div id="tasco-floating-dock" aria-label="Công cụ hỗ trợ nhanh">
   <button id="scrollToTopBtn" class="tasco-floating-action" type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" data-tooltip="Lên đầu trang" aria-label="Lên đầu trang">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 14.5 5.5-5 5.5 5"></path></svg>
-  </button>
-  <button id="tasco-zalo-btn" class="tasco-floating-action" type="button" onclick="ZaloPanel.toggle()" data-tooltip="Zalo Web" aria-label="Mở khung Zalo Web" aria-controls="tasco-zalo-panel" aria-expanded="false" aria-pressed="false">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5Z"></path><path d="M9 9h5.5L9 14h6"></path></svg>
   </button>
   <button id="tasco-ai-btn" class="tasco-floating-action" type="button" onclick="toggleTascoAI()" data-tooltip="Trợ lý TASCO AI" aria-label="Mở Trợ lý TASCO AI" aria-controls="tasco-ai-panel" aria-expanded="false">
     <svg class="tasco-ai-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -1874,24 +1870,6 @@
   </div>
 </div>
 
-<div id="tasco-zalo-panel" role="dialog" aria-label="Zalo Web">
-  <div class="tasco-zalo-header">
-    <div class="tasco-zalo-brand">
-      <span class="tasco-zalo-brand__mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a7.5 7.5 0 0 1-10.9 6.7L4 19.5l1.4-4.4A7.5 7.5 0 1 1 20 11.5Z"></path><path d="M9 9h5.5L9 14h6"></path></svg></span>
-      <div><strong>Zalo Web</strong><small>Chat công việc</small></div>
-    </div>
-    <div class="tasco-zalo-actions">
-      <button type="button" class="tasco-ai-header__btn" data-zalo-action="reload" title="Tải lại Zalo" aria-label="Tải lại Zalo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7A9 9 0 1 0 21 14M20 3v5h-5"></path></svg></button>
-      <button type="button" class="tasco-ai-header__btn" data-zalo-action="detach" title="Tách thành cửa sổ riêng" aria-label="Tách thành cửa sổ riêng"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-8 8M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path></svg></button>
-      <button type="button" class="tasco-ai-header__btn tasco-ai-header__btn--close" data-zalo-action="close" title="Đóng" aria-label="Đóng khung Zalo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
-    </div>
-  </div>
-  <div class="tasco-zalo-body"><iframe id="tasco-zalo-frame" title="Zalo Web" allow="clipboard-read; clipboard-write; notifications; fullscreen; microphone; camera"></iframe></div>
-  <div class="tasco-zalo-foot">Khung trắng hoặc không đăng nhập được? <button type="button" data-zalo-action="login">Đăng nhập ở cửa sổ riêng</button><span aria-hidden="true">·</span><button type="button" data-zalo-action="detach">Mở cửa sổ nổi</button></div>
-</div>
-
-<script src="js/features/zalo/zalo-window.js?v=20261030-zalo-3"></script>
-<script src="js/features/zalo/zalo-panel.js?v=20261030-zalo-2"></script>
 <script src="js/features/ai/gemini-key.js?v=20261029-ai-3"></script>
 <script src="js/features/ai/assistant-tools.js?v=20261029-ai-13"></script>
 <script src="js/features/ai/assistant-export.js?v=20261029-ai-13"></script>

@@ -61,7 +61,7 @@
       button.setAttribute('aria-expanded', String(isActive));
       button.setAttribute('aria-label', isActive ? 'Đóng Trợ lý TASCO AI' : 'Mở Trợ lý TASCO AI');
     }
-    if (isActive) { if (typeof ZaloPanel !== 'undefined') ZaloPanel.close(); initTascoAIChat(); }
+    if (isActive) initTascoAIChat();
   }
 
   function fillTascoAIPrompt(promptText) {

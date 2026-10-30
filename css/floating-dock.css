@@ -79,6 +79,4 @@
     animation: tascoDockActionIn .22s cubic-bezier(.2,.8,.25,1);
   }
   @keyframes tascoDockActionIn { from { opacity: 0; transform: translateY(9px) scale(.88); } to { opacity: 1; transform: translateY(0) scale(1); } }
-  /* Nút Zalo đang mở cửa sổ nổi + ẩn ở cổng gara (không đăng nhập) */
-  #tasco-zalo-btn.is-active { color: #17120a; border-color: rgba(179,140,67,.5); background: linear-gradient(145deg, #efca72, #c28e35); }
-  body:has([data-garage-portal="active"]) #tasco-zalo-btn { display: none; }
+
