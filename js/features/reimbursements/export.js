@@ -17,7 +17,8 @@
           let t = Math.floor((chunk % 100) / 10);
           let u = chunk % 10;
           if (h > 0) chunkStr += units[h] + " trăm ";
-          else if (str !== "") chunkStr += "không trăm ";
+          // Chỉ đọc "không trăm" khi phía trước (hàng lớn hơn) còn số; nhóm đầu như 007 phải đọc "bảy"
+          else if (num > 0 && (t > 0 || u > 0)) chunkStr += "không trăm ";
           
           if (t === 0 && u > 0 && chunkStr !== "") chunkStr += "lẻ ";
           else if (t === 1) chunkStr += "mười ";
