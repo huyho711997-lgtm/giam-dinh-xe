@@ -1,0 +1,25 @@
+/* Khung Zalo Web nằm cùng vị trí với cửa sổ chat AI (xem css/ai-assistant.css) */
+#tasco-zalo-panel {
+  isolation: isolate; position: fixed; bottom: 22px; right: 94px; width: min(440px, calc(100vw - 118px)); height: 700px; max-height: calc(100vh - 44px);
+  display: flex; flex-direction: column; overflow: hidden; z-index: 9999; border-radius: 25px; background: var(--surface-strong);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+  box-shadow: 0 30px 80px rgba(15,23,42,.24), 0 8px 24px rgba(15,23,42,.12), inset 0 1px 0 rgba(255,255,255,.75);
+  transform-origin: bottom right; transform: translateY(18px) scale(.955); opacity: 0; pointer-events: none; visibility: hidden;
+  transition: opacity .25s ease, transform .3s cubic-bezier(.2,.8,.25,1), bottom .24s ease, visibility 0s .3s;
+}
+#tasco-zalo-panel.active { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
+[data-theme="dark"] #tasco-zalo-panel { box-shadow: 0 32px 85px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.055); }
+.tasco-zalo-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 62px; padding: 11px 14px; color: #fff; background: linear-gradient(125deg, #0a3a78 0%, #0b63c8 58%, #1c86ef 100%); }
+.tasco-zalo-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.tasco-zalo-brand__mark { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; color: #0b63c8; border-radius: 11px; background: #fff; box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+.tasco-zalo-brand__mark svg { width: 21px; height: 21px; }
+.tasco-zalo-brand strong { display: block; font-size: 14.5px; font-weight: 900; letter-spacing: -.02em; }
+.tasco-zalo-brand small { display: block; margin-top: 2px; font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: rgba(255,255,255,.75); }
+.tasco-zalo-actions { display: flex; gap: 7px; }
+.tasco-zalo-body { position: relative; flex: 1; min-height: 0; background: #fff; }
+.tasco-zalo-body iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; }
+.tasco-zalo-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 8px; padding: 8px 12px; border-top: 1px solid var(--border); background: var(--surface-strong); color: var(--text-muted); font-size: 10.5px; line-height: 1.4; text-align: center; }
+.tasco-zalo-foot button { padding: 0; border: 0; background: none; color: var(--primary); font: inherit; font-weight: 800; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+/* Màn hình hẹp: khung nằm phía trên dock thay vì bên cạnh */
+@media (max-width: 640px) { #tasco-zalo-panel, #tasco-ai-panel { right: 16px; bottom: 196px; width: calc(100vw - 32px); max-height: calc(100vh - 216px); } }
+body:has([data-garage-portal="active"]) #tasco-zalo-panel { display: none; }

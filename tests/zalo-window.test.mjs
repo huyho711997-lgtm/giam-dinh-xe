@@ -30,15 +30,14 @@ test('màn hình nhỏ: thu cửa sổ lại nhưng không nhỏ hơn mức tố
 });
 
 test('mở: trang trắng → ngắt opener → chuyển tới Zalo; nhấn lại thì chỉ đưa lên trước', () => {
-  const { api, opened, fakeWindow, classes, attrs } = setup();
+  const { api, opened, fakeWindow } = setup();
   const win = api.open();
   assert.equal(opened.length, 1);
   assert.equal(opened[0].url, 'about:blank');
   assert.equal(opened[0].name, 'tasco_zalo_web');
   assert.equal(win.opener, null, 'Zalo không giữ tham chiếu ngược về app');
   assert.equal(fakeWindow.location.href, 'https://chat.zalo.me/');
-  assert.ok(classes.has('is-active'));
-  assert.equal(attrs['aria-pressed'], 'true');
+  assert.equal(api.isOpen(), true);
   api.open();
   assert.equal(opened.length, 1, 'không mở thêm cửa sổ thứ hai');
   assert.equal(fakeWindow.focused, 1);

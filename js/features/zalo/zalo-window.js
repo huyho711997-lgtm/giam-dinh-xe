@@ -1,5 +1,6 @@
 // Cửa sổ nổi Zalo Web: Zalo không cho nhúng vào trang khác (khung nhúng hiển thị trắng), nên mở chat.zalo.me
 // trong một cửa sổ riêng kích thước nhỏ ở góc màn hình. Nhấn lại nút khi cửa sổ đang mở thì đưa nó lên trước.
+// Dùng cho nút "Mở cửa sổ nổi" và "Đăng nhập ở cửa sổ riêng" của khung Zalo (ZaloPanel).
 // Đăng nhập Zalo thực hiện ngay trong cửa sổ đó (app không nhận hay lưu bất kỳ thông tin đăng nhập nào).
 const ZaloWindow = (() => {
   const URL = 'https://chat.zalo.me/', NAME = 'tasco_zalo_web', WIDTH = 440, HEIGHT = 720, MARGIN = 16, MIN_WIDTH = 320, MIN_HEIGHT = 420;
@@ -16,11 +17,8 @@ const ZaloWindow = (() => {
   }
 
   const isOpen = () => !!popup && !popup.closed;
-  function syncButton() {
-    const button = document.getElementById('tasco-zalo-btn');
-    if (button) { button.classList.toggle('is-active', isOpen()); button.setAttribute('aria-pressed', String(isOpen())); }
-    if (!isOpen()) { clearInterval(timer); timer = null; popup = null; }
-  }
+  // Dọn tham chiếu khi người dùng đóng cửa sổ (trạng thái nút Zalo do ZaloPanel quản lý).
+  function syncButton() { if (!isOpen()) { clearInterval(timer); timer = null; popup = null; } }
 
   function open() {
     if (isOpen()) { try { popup.focus(); } catch (_) { /* bỏ qua */ } syncButton(); return popup; }
