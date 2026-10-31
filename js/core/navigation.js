@@ -88,8 +88,7 @@
           { tab: 'pending', title: 'Hồ sơ bồi thường', icon: 'pending', show: showPending },
           { tab: 'pending_notes_tracker', title: 'Tiến độ hồ sơ tồn', icon: 'tracker', show: showPending },
           { tab: 'claim_cancellation', title: 'Đề xuất hủy hồ sơ', icon: 'cancel', show: showPending || showList, badge: 'Mới' },
-          { tab: 'gdv_report', title: 'Báo cáo & thống kê GĐV', icon: 'report', show: showReport },
-          { tab: 'kpi_zone', title: 'Báo cáo KPI bồi thường', icon: 'report', show: showReport, badge: 'Mới' }
+          { tab: 'gdv_report', title: 'Báo cáo & thống kê GĐV', icon: 'report', show: showReport }
         ]},
         { label: 'Kế toán', items: [
           { tab: 'accounting_claims', title: 'Hồ sơ thanh toán', icon: 'payment', show: hasUserPermission('accounting', 'review') },

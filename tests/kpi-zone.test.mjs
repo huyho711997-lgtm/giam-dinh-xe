@@ -150,3 +150,42 @@ test('khoảng 3.000 dòng tính dưới 1 giây', () => {
   K.computeReport(prep.records, {year: 2026, month: 10, gdvs: G, asOf: prep.asOf});
   assert.ok(performance.now() - t0 < 1000);
 });
+
+// ----- Dữ liệu lấy từ hồ sơ bồi thường trong hệ thống (pending_claims) -----
+const STATUS_KEYS = {'Mới': 'moi', 'Chờ duyệt PASC': 'cho_duyet_pasc', 'Đã giám định HT': 'da_giam_dinh_ht', 'Đã duyệt PASC': 'da_duyet_pasc',
+  'Chờ GĐCT': 'cho_gdct', 'Đã GĐCT': 'da_gdct', 'Đã duyệt HSBT': 'da_duyet_hsbt', 'Đã Thanh toán': 'da_thanh_toan'};
+const STATUS_MAP = Object.fromEntries(Object.entries(STATUS_KEYS).map(([label, key]) => [key, {label}]));
+function toClaims(list) {
+  const out = {};
+  list.forEach((r, i) => {
+    const asText = serial => { const p = K.partsOf(serial); const frac = serial - Math.floor(serial); const mins = Math.round(frac * 1440);
+      return String(p.d).padStart(2, '0') + '/' + String(p.m).padStart(2, '0') + '/' + p.y + ' ' + String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0'); };
+    const asMs = serial => Date.UTC(1899, 11, 30) + serial * 86400000 - 7 * 3600000;
+    out['-N' + i] = {
+      soHoSoBoiThuong: r[C.id], gdvHo: r[C.gdv], zoneBoiThuong: r[C.zone], trangThai: i % 2 ? STATUS_KEYS[r[C.status]] : r[C.status],
+      ngayMoHs: i % 3 ? asText(r[C.open]) : asMs(r[C.open]), toTrinhNgayDuyet: r[C.approve] === '' ? '' : (i % 3 ? asText(r[C.approve]) : asMs(r[C.approve])),
+      ttbtTongSoTienBoiThuong: r[C.paid] ? String(r[C.paid]).replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '0', duPhongBoiThuong: r[C.reserve], uocThietHai: r[C.damage]
+    };
+  });
+  return out;
+}
+
+test('lấy từ hồ sơ bồi thường trong hệ thống cho cùng kết quả mục 6', () => {
+  const prep = K.fromClaims(toClaims(rows), STATUS_MAP);
+  assert.equal(prep.records.length, rows.length);
+  assert.equal(prep.warnings.unknownStatus.length, 0);
+  const r = K.computeReport(prep.records, {year: 2026, month: 10, gdvs: G, asOf: prep.asOf});
+  const t = r.current.totals;
+  assert.deepEqual([t.issued, t.approved, t.ton, t.ytd, t.sample, t.excluded], [184, 138, 114, 1445, 151, 33]);
+  near(r.current.kpis.uncapped, 0.9276); near(r.current.kpis.capped, 0.9009);
+  near(r.previous.kpis.uncapped, 1.2034); assert.equal(r.previous.totals.ton, 72);
+});
+
+test('hồ sơ thiếu ngày mở hoặc trùng số hồ sơ vào cảnh báo, không làm hỏng', () => {
+  const claims = toClaims(rows.slice(0, 4));
+  claims['-N1'].ngayMoHs = ''; claims['-N2'].soHoSoBoiThuong = claims['-N0'].soHoSoBoiThuong; claims['-N3'].trangThai = 'trạng_thái_lạ';
+  const prep = K.fromClaims(claims, STATUS_MAP);
+  assert.equal(prep.records.length, 2); assert.equal(prep.warnings.noOpen, 1); assert.equal(prep.warnings.duplicate, 1);
+  assert.equal(prep.warnings.unknownStatus[0], 'trạng_thái_lạ');
+  assert.equal(K.fromClaims(null, STATUS_MAP).records.length, 0);
+});

@@ -1,9 +1,10 @@
-// Trang "Báo cáo KPI bồi thường" theo Zone: đọc file B001 (.xlsx) NGAY TRONG TRÌNH DUYỆT, không gửi dữ liệu ra ngoài.
+// "Báo cáo KPI bồi thường" theo Zone: một góc nhìn trong Báo cáo & thống kê GĐV.
+// Dữ liệu lấy từ các hồ sơ bồi thường đã có trong hệ thống (pending_claims, nhập từ B001); tính ngay trong trình duyệt.
 // Phần tính nằm ở kpi-zone-calc.js (hàm thuần); file này chỉ nạp file, vẽ bảng và xuất Excel.
 const KpiZonePage = (() => {
   const K = KpiZoneCalc;
-  const XLSX_SRC = 'js/vendor/xlsx-js-style-1.2.0.min.js?v=20261031-kpi-1';
-  let host = null, prep = null, fileName = '', loadedAt = null, selected = null, report = null;
+  const XLSX_SRC = 'js/vendor/xlsx-js-style-1.2.0.bundle.js?v=20261031-kpi-3';
+  let host = null, prep = null, selected = null, report = null;
   let listFilter = {gdv: '', status: '', sort: 'desc'};
 
   const esc = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -41,30 +42,25 @@ const KpiZonePage = (() => {
   }
 
   function shell() {
-    return '<header class="sf-page-head"><div class="sf-page-title"><span class="sf-page-emblem" aria-hidden="true">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>' +
-      '<div><div class="sf-eyebrow">BÁO CÁO · KPI BỒI THƯỜNG ZONE</div><h1>Báo cáo KPI bồi thường</h1>' +
-      '<p>Tính ngay trên máy bạn từ file B001 — dữ liệu không được gửi đi đâu.</p></div></div>' +
-      '<div class="sf-toolbar"><button type="button" class="sf-button" data-kz-export disabled>Xuất Excel</button></div></header>' +
-      '<section class="sf-library kz-card"><div class="kz-controls">' +
+    return '<section class="sf-library kz-card"><div class="kz-controls">' +
       '<label class="kz-field"><span>Tháng</span><input type="month" data-kz-month value="' + monthValue + '"></label>' +
-      '<div class="kz-field kz-upload"><span>File B001 (.xlsx)</span><label class="sf-button kz-file"><input type="file" accept=".xlsx,.xlsm,.xls" data-kz-file hidden>Chọn file B001…</label></div>' +
-      '<div class="kz-field kz-meta" data-kz-meta><span>Dữ liệu</span><b>Chưa nạp file</b></div></div>' +
+      '<div class="kz-field kz-meta" data-kz-meta><span>Dữ liệu</span></div>' +
+      '<div class="kz-field kz-actions"><span>&nbsp;</span><button type="button" class="sf-button" data-kz-export disabled>Xuất Excel</button></div></div>' +
       '<div data-kz-gdvs class="kz-gdvs"></div><div data-kz-msg class="kz-msg" role="status"></div></section>' +
       '<div data-kz-body></div>';
   }
 
   function paintMeta() {
     const meta = host.querySelector('[data-kz-meta]');
-    meta.innerHTML = '<span>Dữ liệu</span>' + (prep
-      ? '<b>' + esc(fileName) + '</b><small>Dữ liệu đến ngày ' + fmt.fmtDate(prep.asOf) + ' · ' + prep.records.length.toLocaleString('vi-VN') + '/' + prep.total.toLocaleString('vi-VN') + ' dòng hợp lệ</small>'
-      : '<b>Chưa nạp file</b>');
+    meta.innerHTML = '<span>Dữ liệu</span>' + (prep && prep.records.length
+      ? '<b>Hồ sơ bồi thường trong hệ thống</b><small>Đến ngày ' + fmt.fmtDate(prep.asOf) + ' · ' + prep.records.length.toLocaleString('vi-VN') + '/' + prep.total.toLocaleString('vi-VN') + ' hồ sơ có Ngày mở HS</small>'
+      : '<b>Chưa có hồ sơ</b>');
     host.querySelector('[data-kz-export]').disabled = !report;
   }
 
   function paintGdvs() {
     const box = host.querySelector('[data-kz-gdvs]');
-    if (!prep) { box.innerHTML = ''; return; }
+    if (!prep || !prep.records.length) { box.innerHTML = ''; return; }
     const list = K.listGdvs(prep.records);
     const picked = new Set(selected.map(K.nameKey));
     box.innerHTML = '<span class="kz-label">GĐV tính KPI</span>' + list.map(item =>
@@ -93,7 +89,7 @@ const KpiZonePage = (() => {
   function recalc() {
     const body = host.querySelector('[data-kz-body]');
     report = null;
-    if (!prep) { body.innerHTML = '<div class="kz-empty">Chọn file B001 (.xlsx) để xem báo cáo. File chỉ được đọc trên máy này.</div>'; paintMeta(); return; }
+    if (!prep || !prep.records.length) { body.innerHTML = '<div class="kz-empty">Chưa có hồ sơ bồi thường nào có Ngày mở HS. Hãy nhập hồ sơ (Excel B001) ở trang Hồ sơ bồi thường.</div>'; paintMeta(); return; }
     const [year, month] = monthValue.split('-').map(Number);
     if (!year || !month) { body.innerHTML = '<div class="kz-empty">Hãy chọn tháng cần xem.</div>'; paintMeta(); return; }
     try {
@@ -179,32 +175,18 @@ const KpiZonePage = (() => {
   const block = (title, inner) => '<section class="sf-library kz-card"><h2 class="kz-h">' + title + '</h2>' + inner + '</section>';
   const table = (heads, rows, foot) => '<div class="kz-tablewrap"><table class="kz-table"><thead><tr>' + heads.map((h, i) => '<th' + (i ? ' class="n"' : '') + '>' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody>' + (foot ? '<tfoot>' + foot + '</tfoot>' : '') + '</table></div>';
 
-  // ----- Nạp file -----
-  async function readFile(file) {
-    message('Đang đọc file…', 'info');
-    try {
-      const XLSX = await loadXlsx();
-      const buffer = await file.arrayBuffer();
-      const t0 = performance.now();
-      // Không dùng cellDates: giữ nguyên số serial Excel để không bị lệch múi giờ.
-      const book = XLSX.read(buffer, {type: 'array', cellDates: false});
-      const sheet = book.Sheets['Sheet1'];
-      if (!sheet) throw new Error('File không có sheet "Sheet1" (các sheet hiện có: ' + book.SheetNames.join(', ') + ').');
-      const rows = XLSX.utils.sheet_to_json(sheet, {defval: '', raw: true});
-      if (!rows.length) throw new Error('Sheet1 không có dòng dữ liệu nào.');
-      const result = K.prepare(rows);
-      prep = result; fileName = file.name; loadedAt = new Date();
-      selected = K.listGdvs(result.records).map(x => x.name).filter(n => K.DEFAULT_GDVS.map(K.nameKey).includes(K.nameKey(n)));
+  // ----- Nạp dữ liệu từ hồ sơ bồi thường trong hệ thống -----
+  function loadClaims() {
+    const statusMap = typeof PENDING_STATUS_MAP !== 'undefined' ? PENDING_STATUS_MAP : {};
+    prep = K.fromClaims(typeof cachedPendingClaimsPayload !== 'undefined' ? cachedPendingClaimsPayload : {}, statusMap);
+    const known = K.listGdvs(prep.records).map(x => x.name);
+    if (selected) selected = selected.filter(n => known.some(k => K.nameKey(k) === K.nameKey(n)));
+    if (!selected || !selected.length) {
+      selected = known.filter(n => K.DEFAULT_GDVS.map(K.nameKey).includes(K.nameKey(n)));
       if (!selected.length) selected = [...K.DEFAULT_GDVS];
-      listFilter = {gdv: '', status: '', sort: 'desc'};
-      paintGdvs(); recalc();
-      const warn = warningText(result.warnings);
-      message('Đã đọc ' + result.records.length.toLocaleString('vi-VN') + ' hồ sơ trong ' + Math.round(performance.now() - t0) + ' ms.' + (warn ? ' ' + esc(warn) : ''), warn ? 'warn' : 'ok');
-    } catch (error) {
-      console.error(error);
-      // Giữ nguyên dữ liệu đang xem (nếu có); chỉ báo lỗi rõ ràng.
-      message(esc(error.message || 'Không đọc được file.'), 'bad');
     }
+    const warn = warningText(prep.warnings);
+    message(warn ? esc(warn) : '', warn ? 'warn' : '');
   }
 
   // ----- Xuất Excel -----
@@ -248,8 +230,7 @@ const KpiZonePage = (() => {
     host.innerHTML = shell();
     host.addEventListener('change', event => {
       const el = event.target;
-      if (el.matches('[data-kz-file]')) { if (el.files[0]) readFile(el.files[0]); el.value = ''; }
-      else if (el.matches('[data-kz-month]')) { monthValue = el.value || defaultMonth(); recalc(); }
+      if (el.matches('[data-kz-month]')) { monthValue = el.value || defaultMonth(); recalc(); }
       else if (el.matches('[data-kz-gdv]')) {
         selected = [...host.querySelectorAll('[data-kz-gdv]:checked')].map(x => x.value);
         if (!selected.length) { el.checked = true; selected = [el.value]; message('Cần chọn ít nhất một GĐV.', 'warn'); }
@@ -262,12 +243,17 @@ const KpiZonePage = (() => {
     });
     host.addEventListener('click', event => { if (event.target.closest('[data-kz-export]')) exportExcel(); });
     container.replaceChildren(host);
-    if (prep) { paintGdvs(); }
-    recalc();
+    refresh();
   }
 
-  // Rời trang giữ dữ liệu trong bộ nhớ trang (để quay lại không phải nạp lại); chỉ bỏ tham chiếu giao diện.
+  // Tính lại từ hồ sơ hiện có (gọi khi mở trang và mỗi lần danh sách hồ sơ cập nhật).
+  function refresh() {
+    if (!host || !host.isConnected) return;
+    try { loadClaims(); } catch (error) { console.error(error); prep = null; message('Không đọc được dữ liệu hồ sơ: ' + esc(error.message), 'bad'); }
+    paintGdvs(); recalc();
+  }
+
   function leave() { host = null; }
 
-  return {mount, leave};
+  return {mount, refresh, leave};
 })();

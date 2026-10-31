@@ -439,6 +439,13 @@
           icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>`
         },
         {
+          id: 'kpi_zone',
+          title: 'KPI bồi thường Zone',
+          badge: 'MỚI',
+          desc: 'Điểm KPI tháng từ hồ sơ bồi thường: hoàn thành, CP bình quân, tồn',
+          icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>`
+        },
+        {
           id: 'annual_claims_gdv',
           title: 'Phát sinh theo năm',
           badge: 'Năm & GĐV',
@@ -501,7 +508,10 @@
       let heroReportTitle = "Báo cáo hồ sơ bồi thường";
       let heroReportSubtitle = `Thống kê tổng hợp tình hình giải quyết hồ sơ bồi thường trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>), phân bổ lượng hồ sơ theo từng trạng thái và đối chiếu KPI.`;
 
-      if (activeGdvReportView === 'weekly_zone') {
+      if (activeGdvReportView === 'kpi_zone') {
+        heroReportTitle = "Báo cáo KPI bồi thường Zone";
+        heroReportSubtitle = "Điểm KPI tháng của các GĐV tính từ hồ sơ bồi thường trong hệ thống: tỷ lệ hoàn thành, CP bình quân, tỉ lệ tồn.";
+      } else if (activeGdvReportView === 'weekly_zone') {
         heroReportTitle = "Báo cáo tiến độ tuần/tháng";
         heroReportSubtitle = `Thống kê phân bổ hồ sơ bồi thường theo Vùng và Giám định viên trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>).`;
       } else if (activeGdvReportView === 'annual_claims_gdv') {
@@ -2217,7 +2227,7 @@
 
           </section>
 
-          ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone' && activeGdvReportView !== 'annual_claims_gdv' && activeGdvReportView !== 'daklak_reserve' && activeGdvReportView !== 'ton_chua_hoa_don' && activeGdvReportView !== 'car_brand_loss' && activeGdvReportView !== 'tnds_ton') ? `
+          ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone' && activeGdvReportView !== 'kpi_zone' && activeGdvReportView !== 'annual_claims_gdv' && activeGdvReportView !== 'daklak_reserve' && activeGdvReportView !== 'ton_chua_hoa_don' && activeGdvReportView !== 'car_brand_loss' && activeGdvReportView !== 'tnds_ton') ? `
           <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
           <div class="${activeGdvReportView === 'chart' ? 'kpi-summary-strip' : activeGdvReportView === 'table' ? 'rp-summary-strip' : ''}" aria-label="Tổng quan hiệu suất" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
@@ -2257,7 +2267,7 @@
           ` : ''}
 
           <!-- CONDITIONAL RENDERING BASED ON activeGdvReportView -->
-          ${activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'annual_claims_gdv' ? renderAnnualGdvClaimsReportHtml() : activeGdvReportView === 'tnds_ton' ? renderTndsTonReportTableHtml() : activeGdvReportView === 'car_brand_loss' ? renderCarBrandLossReportTableHtml() : activeGdvReportView === 'daklak_reserve' ? renderDakLakReserveReportTableHtml() : activeGdvReportView === 'ton_chua_hoa_don' ? renderTonChuaHoaDonReportTableHtml() : activeGdvReportView === 'garage' ? `
+          ${activeGdvReportView === 'kpi_zone' ? '<div id="kpiZoneHost"></div>' : activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'annual_claims_gdv' ? renderAnnualGdvClaimsReportHtml() : activeGdvReportView === 'tnds_ton' ? renderTndsTonReportTableHtml() : activeGdvReportView === 'car_brand_loss' ? renderCarBrandLossReportTableHtml() : activeGdvReportView === 'daklak_reserve' ? renderDakLakReserveReportTableHtml() : activeGdvReportView === 'ton_chua_hoa_don' ? renderTonChuaHoaDonReportTableHtml() : activeGdvReportView === 'garage' ? `
             
             <!-- EXECUTIVE GARAGE REPORT DASHBOARD -->
             <div class="rp-summary-strip rp-summary-strip--garage" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
@@ -2687,5 +2697,12 @@
         favoriteFilterSlot.appendChild(favoriteFilterWrapper);
       }
       renderFavFiltersDropdownContent();
+      // Góc nhìn KPI Zone có bộ lọc riêng (tháng, GĐV) nên ẩn thanh lọc chung của trang báo cáo.
+      const kpiHost = document.getElementById('kpiZoneHost');
+      if (kpiHost) {
+        const hub = container.querySelector('.gdv-report-filter-hub');
+        if (hub) hub.style.setProperty('display', 'none', 'important');
+        KpiZonePage.mount(kpiHost);
+      } else KpiZonePage.leave();
       if (typeof enhanceRemainingReportControls === 'function') enhanceRemainingReportControls(container);
     }

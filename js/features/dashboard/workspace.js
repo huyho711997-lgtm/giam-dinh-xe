@@ -144,6 +144,7 @@
           // Dữ liệu (cachedPendingClaimsPayload) đã cập nhật đồng bộ ở trên; chỉ việc VẼ được gom nhịp.
           if (typeof schedulePendingClaimsRender === 'function') schedulePendingClaimsRender(); else executeUIRenderPendingClaims();
         }
+        if (activeDashboardTab === 'gdv_report' && activeGdvReportView === 'kpi_zone' && typeof KpiZonePage !== 'undefined') KpiZonePage.refresh(); // KPI Zone theo hồ sơ mới nhất
         if (activeDashboardTab === 'claim_cancellation') {
           renderClaimCancellationPage();
         }
@@ -211,11 +212,6 @@
         if (activeDashboardTab === 'claim_cancellation') activeDashboardTab = 'home';
         return;
       }
-      if (tabName === 'kpi_zone' && !hasUserPermission('report', 'view')) {
-        triggerToast('Bạn không có quyền truy cập báo cáo KPI bồi thường.', 'warning');
-        if (activeDashboardTab === 'kpi_zone') activeDashboardTab = 'home';
-        return;
-      }
       if (tabName === 'gdv_report' && !hasUserPermission('report', 'view')) {
         triggerToast('Bạn không có quyền truy cập báo cáo & thống kê GĐV.', 'warning');
         if (activeDashboardTab === 'gdv_report') activeDashboardTab = 'home';
@@ -281,12 +277,6 @@
       if (!container) return;
       SharedForms.leave();
       RescuePage.leave();
-      KpiZonePage.leave();
-
-      if (activeDashboardTab === 'kpi_zone') {
-        KpiZonePage.mount(container);
-        return;
-      }
 
       if (activeDashboardTab === 'shared_forms') {
         SharedForms.mount(container);

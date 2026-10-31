@@ -18,10 +18,10 @@ const KpiZoneCalc = (() => {
   const DEFAULT_GDVS = ['Huỳnh Văn Phúc', 'Hồ Quang Huy', 'Nguyễn Quang Huy_DL'];
   const ZONE_GDV_MAP = {}; // ví dụ: {'Đắk Lắk': ['Huỳnh Văn Phúc', ...]}; để trống = lọc theo cột "GĐV HO"
 
-  const STATUSES = ['Mới', 'Đã giám định HT', 'Chờ duyệt PASC', 'Đã duyệt PASC', 'Chờ GĐCT', 'Đã GĐCT',
-    'Đã duyệt HSBT', 'Chờ KT duyệt', 'KT duyệt', 'Đã Thanh toán', 'Từ chối'];
+  const STATUSES = ['Mới', 'Chờ giám định HT', 'Đã giám định HT', 'Chờ duyệt PASC', 'Đã duyệt PASC', 'Chờ GĐCT', 'Đã GĐCT',
+    'Đã duyệt HSBT', 'Chờ duyệt HSBT', 'Chờ duyệt ĐNTT', 'Chờ KT duyệt', 'KT duyệt', 'Đã Thanh toán', 'Từ chối'];
   // Tồn chưa giải quyết = còn ở các bước trước khi duyệt HSBT (không gồm "Từ chối").
-  const TON_STATUSES = ['Mới', 'Đã giám định HT', 'Chờ duyệt PASC', 'Đã duyệt PASC', 'Chờ GĐCT', 'Đã GĐCT'];
+  const TON_STATUSES = ['Mới', 'Chờ giám định HT', 'Đã giám định HT', 'Chờ duyệt PASC', 'Đã duyệt PASC', 'Chờ GĐCT', 'Đã GĐCT'];
   const REJECTED = 'Từ chối';
 
   const KPI = {
@@ -59,7 +59,10 @@ const KpiZoneCalc = (() => {
       if (Number.isNaN(value.getTime())) return NaN;
       return (value.getTime() + VN_OFFSET_MS - EPOCH_MS) / DAY_MS; // thời điểm thật → giờ VN
     }
-    if (typeof value === 'number') return Number.isFinite(value) && value > 0 ? value : NaN;
+    if (typeof value === 'number') {
+      if (value >= 1e11) return (value + VN_OFFSET_MS - EPOCH_MS) / DAY_MS; // mốc thời gian (ms) do ứng dụng lưu
+      return Number.isFinite(value) && value > 0 ? value : NaN;
+    }
     const text = String(value).trim();
     if (!text) return null;
     if (/^\d+(\.\d+)?$/.test(text) && Number(text) > 20000 && Number(text) < 80000) return Number(text);
@@ -95,6 +98,42 @@ const KpiZoneCalc = (() => {
     const have = new Set((headers || []).map(norm));
     const missing = Object.values(REQUIRED_COLUMNS).filter(name => !have.has(norm(name)));
     return {ok: !missing.length, missing};
+  }
+
+  // Hồ sơ bồi thường trong hệ thống (pending_claims, do nhập từ B001): chuyển về cùng dạng bản ghi để tính.
+  // statusMap: {khoá: {label}} (PENDING_STATUS_MAP) để đổi mã trạng thái thành tên hiển thị.
+  const FIELD_FALLBACK = {gdv: ['gdvHo', 'gdvTiepNhan'], approve: ['toTrinhNgayDuyet', 'toTrinhBtNgayDuyet', 'ngayDuyetHsbt']};
+  const firstFilled = (c, names) => { for (const n of names) { const v = c[n]; if (v !== undefined && v !== null && String(v).trim() !== '' && v !== '—' && v !== '-') return v; } return null; };
+  function statusLabel(raw, statusMap) {
+    const text = norm(raw), lower = text.toLowerCase();
+    for (const [key, info] of Object.entries(statusMap || {})) if (lower === key || lower === String(info.label).toLowerCase()) return info.label;
+    return text;
+  }
+  function fromClaims(payload, statusMap) {
+    const records = [], warnings = {noId: 0, duplicate: 0, noOpen: 0, badOpen: 0, badApprove: 0, badMoney: 0, unknownStatus: new Set()};
+    const seen = new Set(); let total = 0;
+    for (const [key, c] of Object.entries(payload || {})) {
+      if (!c || typeof c !== 'object') continue;
+      total++;
+      const id = norm(c.soHoSoBoiThuong || c.maVuTonThat || key);
+      if (seen.has(id)) { warnings.duplicate++; continue; }
+      seen.add(id);
+      const open = parseDate(firstFilled(c, ['ngayMoHs']));
+      if (open === null) { warnings.noOpen++; continue; }
+      if (Number.isNaN(open)) { warnings.badOpen++; continue; }
+      let approve = parseDate(firstFilled(c, FIELD_FALLBACK.approve));
+      if (Number.isNaN(approve)) { warnings.badApprove++; approve = null; }
+      let paid = parseMoney(c.ttbtTongSoTienBoiThuong), reserve = parseMoney(c.duPhongBoiThuong), damage = parseMoney(c.uocThietHai);
+      if (Number.isNaN(paid) || Number.isNaN(reserve) || Number.isNaN(damage)) warnings.badMoney++;
+      paid = Number.isNaN(paid) ? 0 : paid; reserve = Number.isNaN(reserve) ? 0 : reserve; damage = Number.isNaN(damage) ? 0 : damage;
+      const status = statusLabel(c.trangThai, statusMap);
+      if (status && !STATUSES.includes(status)) warnings.unknownStatus.add(status);
+      records.push({id, gdv: norm(firstFilled(c, FIELD_FALLBACK.gdv)), zone: norm(c.zoneBoiThuong), open, approve, status,
+        amount: paid > 0 ? paid : reserve, damage});
+    }
+    let asOf = 0;
+    for (const r of records) asOf = Math.max(asOf, r.open, r.approve || 0);
+    return {records, warnings: {...warnings, unknownStatus: [...warnings.unknownStatus]}, asOf, total};
   }
 
   // rows: mảng object {tên cột: giá trị}. Không ném lỗi vì dữ liệu bẩn: gom vào warnings để trang vẫn hiển thị.
@@ -291,6 +330,6 @@ const KpiZoneCalc = (() => {
   }
 
   return {REQUIRED_COLUMNS, DEFAULT_GDVS, ZONE_GDV_MAP, STATUSES, TON_STATUSES, KPI, COST_CAP, AGE_BUCKETS,
-    parseDate, parseMoney, validateColumns, prepare, score, computeMonth, computeReport, previousMonth, listGdvs,
+    parseDate, parseMoney, validateColumns, prepare, fromClaims, score, computeMonth, computeReport, previousMonth, listGdvs,
     monthStart, monthEndExclusive, partsOf, serialFromParts, fmtInt, fmtPct, fmtScore, fmtDate, nameKey};
 })();

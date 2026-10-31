@@ -111,8 +111,7 @@
         o.showPending && { tab:'pending', icon:'pending', title:'Hồ sơ bồi thường', desc:`${fmt(o.totalPendingClaims)} hồ sơ tồn · nhập Excel` },
         o.showPending && { tab:'pending_notes_tracker', icon:'tracker', title:'Tiến độ hồ sơ tồn', desc:'Ghi chú & nhắc việc theo hồ sơ' },
         o.showCancellation && { tab:'claim_cancellation', icon:'cancel', title:'Đề xuất hủy hồ sơ', desc:'Lập phiếu & phê duyệt hủy', badge:'Mới' },
-        o.showReport && { tab:'kpi_zone', icon:'report', title:'Báo cáo KPI bồi thường', desc:'Điểm KPI Zone từ file B001', badge:'Mới' },
-        o.showReport && { tab:'gdv_report', icon:'report', title:'Báo cáo & thống kê GĐV', desc:'Tuần · tháng · KPI · Excel' },
+        o.showReport && { tab:'gdv_report', icon:'report', title:'Báo cáo & thống kê GĐV', desc:'Tuần · tháng · KPI bồi thường · Excel' },
         o.showCreate && { tab:'create', icon:'create', title:'Khởi tạo ca giám định', desc:'Cấp link cho Garage trong 30 giây' }
       ]},
       { label:'Kế toán & nghiệp vụ', items:[
