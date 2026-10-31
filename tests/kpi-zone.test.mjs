@@ -181,6 +181,18 @@ test('lấy từ hồ sơ bồi thường trong hệ thống cho cùng kết qu�
   near(r.previous.kpis.uncapped, 1.2034); assert.equal(r.previous.totals.ton, 72);
 });
 
+test('ST/DPBT bỏ giá trị importer tự điền từ PASC / sau thuế khi chưa có TTBT thật', () => {
+  const base = {gdvHo: G[0], zoneBoiThuong: 'Zone Đắk Lắk', trangThai: 'da_duyet_pasc', ngayMoHs: '05/09/2026', toTrinhNgayDuyet: '10/09/2026 08:00', duPhongBoiThuong: 4000000};
+  const claims = {
+    a: {...base, soHoSoBoiThuong: 'A', ttbtSoTienBoiThuong: '3.000.000', ttbtTongSoTienBoiThuong: '3.000.000'},
+    b: {...base, soHoSoBoiThuong: 'B', ttbtSoTienBoiThuong: '', ttbtTongSoTienBoiThuong: '20.300.000', pascSoTienDuyet: '20.300.000'},
+    c: {...base, soHoSoBoiThuong: 'C', ttbtSoTienBoiThuong: '', ttbtTongSoTienBoiThuong: '6.000.000', tongBoiThuongSauThue: '6.000.000'},
+    d: {...base, soHoSoBoiThuong: 'D', ttbtTongSoTienBoiThuong: '5.000.000'}
+  };
+  const amount = Object.fromEntries(K.fromClaims(claims, STATUS_MAP).records.map(r => [r.id, r.amount]));
+  assert.deepEqual(amount, {A: 3000000, B: 4000000, C: 4000000, D: 5000000});
+});
+
 test('hồ sơ thiếu ngày mở hoặc trùng số hồ sơ vào cảnh báo, không làm hỏng', () => {
   const claims = toClaims(rows.slice(0, 4));
   claims['-N1'].ngayMoHs = ''; claims['-N2'].soHoSoBoiThuong = claims['-N0'].soHoSoBoiThuong; claims['-N3'].trangThai = 'trạng_thái_lạ';

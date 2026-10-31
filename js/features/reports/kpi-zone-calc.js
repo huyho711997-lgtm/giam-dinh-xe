@@ -123,7 +123,13 @@ const KpiZoneCalc = (() => {
       if (Number.isNaN(open)) { warnings.badOpen++; continue; }
       let approve = parseDate(firstFilled(c, FIELD_FALLBACK.approve));
       if (Number.isNaN(approve)) { warnings.badApprove++; approve = null; }
-      let paid = parseMoney(c.ttbtTongSoTienBoiThuong), reserve = parseMoney(c.duPhongBoiThuong), damage = parseMoney(c.uocThietHai);
+      // ST/DPBT: ưu tiên "Số tiền bồi thường" thật của TTBT. Importer tự điền ttbtTong bằng số tiền PASC / sau thuế khi
+      // TTBT trống -> bỏ các giá trị trùng PASC/sau thuế đó để không biến hồ sơ chưa có TTBT thành "đã có ST thật".
+      const ttSo = parseMoney(c.ttbtSoTienBoiThuong), ttTong = parseMoney(c.ttbtTongSoTienBoiThuong);
+      const ttPasc = parseMoney(c.pascSoTienDuyet), ttThue = parseMoney(c.tongBoiThuongSauThue);
+      let paid = ttSo > 0 ? ttSo
+        : (ttTong > 0 && ttTong !== ttPasc && ttTong !== ttThue ? ttTong : (Number.isNaN(ttTong) ? ttTong : 0));
+      let reserve = parseMoney(c.duPhongBoiThuong), damage = parseMoney(c.uocThietHai);
       if (Number.isNaN(paid) || Number.isNaN(reserve) || Number.isNaN(damage)) warnings.badMoney++;
       paid = Number.isNaN(paid) ? 0 : paid; reserve = Number.isNaN(reserve) ? 0 : reserve; damage = Number.isNaN(damage) ? 0 : damage;
       const status = statusLabel(c.trangThai, statusMap);
