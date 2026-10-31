@@ -6,6 +6,11 @@ const KpiZonePage = (() => {
   const XLSX_SRC = 'js/vendor/xlsx-js-style-1.2.0.bundle.js?v=20261031-kpi-4';
   let host = null, prep = null, selected = null, report = null;
   let listFilter = {gdv: '', status: '', sort: 'desc'};
+  // Zone BT map do người dùng gán (lưu trên trình duyệt này): {zone chuẩn hoá: 'in' | 'out'}; chưa gán = theo GĐV.
+  const ZONE_KEY = 'kpiZoneBtMap:v1';
+  const loadZoneMap = () => { try { const v = JSON.parse(localStorage.getItem(ZONE_KEY) || '{}'); return v && typeof v === 'object' ? v : {}; } catch (_) { return {}; } };
+  const saveZoneMap = () => { try { localStorage.setItem(ZONE_KEY, JSON.stringify(zoneMap)); } catch (_) { /* trình duyệt chặn lưu: vẫn dùng được trong phiên */ } };
+  let zoneMap = loadZoneMap();
 
   const esc = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const now = new Date();
@@ -216,7 +221,7 @@ const KpiZonePage = (() => {
       '<button type="button" class="sf-button" data-kz-step="1" aria-label="Tháng sau">›</button></div>' +
       '<div class="kz-source" data-kz-meta></div>' +
       '<button type="button" class="sf-button kz-export" data-kz-export disabled>Xuất Excel</button></div>' +
-      '<div data-kz-gdvs class="kz-gdvs"></div><div data-kz-msg class="kz-msg" role="status"></div><div data-kz-body></div>';
+      '<div data-kz-gdvs class="kz-gdvs"></div><details class="kz-zones" data-kz-zones hidden></details><div data-kz-msg class="kz-msg" role="status"></div><div data-kz-body></div>';
   }
 
   function paintMeta() {
@@ -230,8 +235,25 @@ const KpiZonePage = (() => {
     const box = host.querySelector('[data-kz-gdvs]');
     if (!prep || !prep.records.length) { box.innerHTML = ''; return; }
     const picked = new Set(selected.map(K.nameKey));
-    box.innerHTML = '<span class="kz-label">GĐV tính KPI</span>' + K.listGdvs(prep.records).map(item =>
+    box.innerHTML = '<span class="kz-label" title="Dùng cho hồ sơ chưa có Zone BT map">GĐV (khi hồ sơ chưa có Zone BT map)</span>' + K.listGdvs(prep.records).map(item =>
       '<label class="kz-chip"><input type="checkbox" data-kz-gdv value="' + esc(item.name) + '"' + (picked.has(K.nameKey(item.name)) ? ' checked' : '') + '><span>' + esc(item.name) + ' <small>' + item.count + '</small></span></label>').join('');
+  }
+
+  // Bảng gán Zone BT map: ưu tiên Zone BT map, sau đó mới theo GĐV.
+  function paintZones() {
+    const box = host.querySelector('[data-kz-zones]');
+    if (!prep || !prep.records.length) { box.hidden = true; return; }
+    const zones = K.listZones(prep.records, selected);
+    const mapped = zones.filter(z => zoneMap[z.key]).length;
+    const sc = report ? report.current.scope : null;
+    const wasOpen = box.open;
+    box.hidden = false;
+    box.innerHTML = '<summary><b>Zone BT map</b><span>' + (mapped ? mapped + '/' + zones.length + ' zone đã gán' : 'chưa gán: đang tính theo GĐV') + '</span>' +
+      (sc ? '<small>Hồ sơ phát sinh trong năm: ' + fmt.fmtInt(sc.zone) + ' theo Zone map · ' + fmt.fmtInt(sc.gdv) + ' theo GĐV · ' + fmt.fmtInt(sc.out) + ' ngoài zone</small>' : '') + '</summary>' +
+      '<div class="kz-zbody"><p class="kz-note">Cột “Zone bồi thường” của từng hồ sơ được xét trước: gán “Thuộc zone báo cáo” thì hồ sơ được tính dù GĐV nào xử lý, gán “Zone khác” thì bị loại dù GĐV là ai. Hồ sơ không có Zone bồi thường hoặc chưa gán thì xét theo GĐV đã chọn.</p>' +
+      '<div class="kz-tablewrap"><table class="kz-table"><thead><tr><th>Zone bồi thường</th><th class="n">Số hồ sơ</th><th class="n">Do GĐV đã chọn xử lý</th><th>Gán</th></tr></thead><tbody>' +
+      zones.map(z => '<tr><td>' + esc(z.name) + '</td><td class="n">' + fmt.fmtInt(z.count) + '</td><td class="n">' + fmt.fmtInt(z.byGdvs) + '</td><td>' + (z.key ? '<select data-kz-zone="' + esc(z.key) + '" aria-label="Gán zone ' + esc(z.name) + '"><option value="">Theo GĐV (chưa gán)</option><option value="in"' + (zoneMap[z.key] === 'in' ? ' selected' : '') + '>Thuộc zone báo cáo</option><option value="out"' + (zoneMap[z.key] === 'out' ? ' selected' : '') + '>Zone khác</option></select>' : '<span class="kz-none">luôn theo GĐV</span>') + '</td></tr>').join('') + '</tbody></table></div></div>';
+    box.open = wasOpen;
   }
 
   function message(text, kind) {
@@ -259,13 +281,13 @@ const KpiZonePage = (() => {
     const [year, month] = monthValue.split('-').map(Number);
     if (!year || !month) { body.innerHTML = '<div class="kz-empty">Chọn tháng cần xem.</div>'; paintMeta(); return; }
     try {
-      report = K.computeReport(prep.records, {year, month, gdvs: selected, asOf: prep.asOf});
+      report = K.computeReport(prep.records, {year, month, gdvs: selected, zoneMap, asOf: prep.asOf});
       body.innerHTML = view(report);
     } catch (error) {
       console.error(error);
       body.innerHTML = '<div class="kz-empty kz-bad">Không tính được báo cáo: ' + esc(error.message) + '</div>';
     }
-    paintMeta();
+    paintMeta(); paintZones();
   }
 
   function loadClaims() {
@@ -289,7 +311,7 @@ const KpiZonePage = (() => {
       const c = report.current, p = report.previous, t = c.totals, a = c.analysis;
       const book = XLSX.utils.book_new();
       const sheet = (name, aoa, widths) => { const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = widths.map(w => ({wch: w})); XLSX.utils.book_append_sheet(book, ws, name); };
-      sheet('KPI', [['Báo cáo KPI bồi thường ' + label(c) + (c.estimate ? ' (tồn ước tính)' : '')], ['Dữ liệu đến ngày', fmt.fmtDate(prep.asOf)], [],
+      sheet('KPI', [['Báo cáo KPI bồi thường ' + label(c) + (c.estimate ? ' (tồn ước tính)' : '')], ['Dữ liệu đến ngày', fmt.fmtDate(prep.asOf)], ['Cách gán hồ sơ (phát sinh trong năm)', 'Theo Zone map: ' + c.scope.zone + ' · theo GĐV: ' + c.scope.gdv + ' · ngoài zone: ' + c.scope.out], [],
         ['Nhóm KPI', 'Tỷ trọng', 'Mục tiêu', 'Kết quả', 'Điểm', 'Điểm sau giới hạn', 'Điểm hụt'],
         ...c.kpis.rows.map(k => [k.label, k.weight, k.target, k.result ?? '-', k.score ?? '-', k.cappedScore ?? '-', k.shortfall ?? '-']),
         ['Tổng', 1, '', '', c.kpis.uncapped, c.kpis.capped, '']], [34, 10, 14, 14, 12, 18, 12]);
@@ -326,7 +348,10 @@ const KpiZonePage = (() => {
     host.innerHTML = shell();
     host.addEventListener('change', event => {
       const el = event.target;
-      if (el.matches('[data-kz-month]')) { monthValue = el.value || defaultMonth(); recalc(); }
+      if (el.matches('[data-kz-zone]')) {
+        if (el.value) zoneMap[el.dataset.kzZone] = el.value; else delete zoneMap[el.dataset.kzZone];
+        saveZoneMap(); recalc();
+      } else if (el.matches('[data-kz-month]')) { monthValue = el.value || defaultMonth(); recalc(); }
       else if (el.matches('[data-kz-gdv]')) {
         selected = [...host.querySelectorAll('[data-kz-gdv]:checked')].map(x => x.value);
         if (!selected.length) { el.checked = true; selected = [el.value]; message('Cần chọn ít nhất một GĐV.', 'warn'); }

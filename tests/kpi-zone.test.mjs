@@ -218,3 +218,22 @@ test('phân tích chuyên sâu: nhịp duyệt, thời gian xử lý, phân bố
   // Tháng đã qua không có nhịp.
   assert.equal(K.computeMonth(prep.records, {year: 2026, month: 9, gdvs: G, asOf: prep.asOf}).pace, null);
 });
+
+test('gán hồ sơ vào zone: ưu tiên Zone BT map, sau đó mới theo GĐV', () => {
+  const data = rows.map(r => ({...r}));
+  // 5 hồ sơ T10 của Phúc có Zone BT khác; 4 hồ sơ T10 của Phúc để trống Zone BT.
+  const phucOct = data.filter(r => r[C.gdv] === G[0] && K.partsOf(r[C.open]).m === 10 && K.partsOf(r[C.open]).y === 2026);
+  phucOct.slice(0, 5).forEach(r => { r[C.zone] = 'Gia Lai'; });
+  phucOct.slice(5, 9).forEach(r => { r[C.zone] = ''; });
+  const prep = K.prepare(data), base = {year: 2026, month: 10, gdvs: G, asOf: prep.asOf};
+  const issued = zoneMap => K.computeMonth(prep.records, {...base, zoneMap}).totals.issued;
+  assert.equal(issued(undefined), 184);                                   // chưa có map: theo GĐV
+  assert.equal(issued({'gia lai': 'out'}), 179);                          // Zone BT map thắng GĐV: Gia Lai bị loại dù Phúc xử lý
+  assert.equal(issued({'đắk lắk': 'in'}), 184 + 30);                      // hồ sơ Zone Đắk Lắk của GĐV khác được tính; Gia Lai chưa map và Zone trống vẫn theo GĐV
+  assert.equal(issued({'đắk lắk': 'in', 'gia lai': 'out'}), 184 + 30 - 5);
+  assert.equal(issued({'đắk lắk': 'out'}), 9);                            // chỉ còn 5 Gia Lai (chưa map, theo GĐV) + 4 Zone trống
+  const withZone = K.computeMonth(prep.records, {...base, zoneMap: {'đắk lắk': 'in'}});
+  assert.ok(withZone.perGdv.some(g => /Triều/.test(g.gdv)));              // GĐV ngoài danh sách hiện thành hàng riêng
+  assert.equal(withZone.perGdv.reduce((a, g) => a + g.issued, 0), withZone.totals.issued);
+  assert.equal(K.listZones(prep.records, G).find(z => z.key === 'gia lai').count, 5);
+});

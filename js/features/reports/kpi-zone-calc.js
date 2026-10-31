@@ -14,9 +14,9 @@ const KpiZoneCalc = (() => {
     damage: 'Ước thiệt hại'
   };
 
-  // Ba GĐV tính KPI mặc định. Chỗ sau này thay bằng bảng Zone → GĐV (ZONE_GDV_MAP) nếu muốn lọc theo Zone.
+  // Ba GĐV mặc định, dùng cho hồ sơ chưa có Zone BT map (ưu tiên Zone BT map trước, sau đó mới theo GĐV).
   const DEFAULT_GDVS = ['Huỳnh Văn Phúc', 'Hồ Quang Huy', 'Nguyễn Quang Huy_DL'];
-  const ZONE_GDV_MAP = {}; // ví dụ: {'Đắk Lắk': ['Huỳnh Văn Phúc', ...]}; để trống = lọc theo cột "GĐV HO"
+  // Zone BT map: {zone đã chuẩn hoá: 'in' (thuộc zone báo cáo) | 'out' (thuộc zone khác)}; zone trống/chưa map → theo GĐV.
 
   const STATUSES = ['Mới', 'Chờ giám định HT', 'Đã giám định HT', 'Chờ duyệt PASC', 'Đã duyệt PASC', 'Chờ GĐCT', 'Đã GĐCT',
     'Đã duyệt HSBT', 'Chờ duyệt HSBT', 'Chờ duyệt ĐNTT', 'Chờ KT duyệt', 'KT duyệt', 'Đã Thanh toán', 'Từ chối'];
@@ -234,10 +234,28 @@ const KpiZoneCalc = (() => {
     return TON_STATUSES.includes(r.status);
   }
 
-  function pickRecords(records, gdvs, zone) {
+  // Quy tắc gán hồ sơ vào zone: ƯU TIÊN Zone BT map; hồ sơ chưa có Zone BT hoặc Zone BT chưa map thì xét theo GĐV.
+  function scopeOf(r, wanted, zoneMap) {
+    const mode = zoneMap ? zoneMap[nameKey(r.zone)] : undefined;
+    if (mode === 'in') return 'zone';
+    if (mode === 'out') return 'out';
+    return wanted.has(nameKey(r.gdv)) ? 'gdv' : 'out';
+  }
+  function pickRecords(records, gdvs, zoneMap) {
     const wanted = new Set((gdvs || []).map(nameKey));
-    const zoneMap = ZONE_GDV_MAP[zone];
-    return records.filter(r => wanted.has(nameKey(r.gdv)) && (!zone || !zoneMap || zoneMap.map(nameKey).includes(nameKey(r.gdv))));
+    return records.filter(r => scopeOf(r, wanted, zoneMap) !== 'out');
+  }
+
+  // Các giá trị "Zone bồi thường" có trong dữ liệu: số hồ sơ, bao nhiêu hồ sơ do các GĐV đã chọn xử lý — để người dùng gán map.
+  function listZones(records, gdvs) {
+    const wanted = new Set((gdvs || []).map(nameKey)), map = new Map();
+    for (const r of records) {
+      const key = nameKey(r.zone);
+      const item = map.get(key) || {key, name: r.zone || '(trống)', count: 0, byGdvs: 0};
+      item.count++; if (wanted.has(nameKey(r.gdv))) item.byGdvs++;
+      map.set(key, item);
+    }
+    return [...map.values()].sort((a, b) => b.count - a.count);
   }
 
   function daysBetween(refDay, openSerial) { return Math.max(0, Math.floor(refDay) - Math.floor(openSerial)); }
@@ -255,15 +273,21 @@ const KpiZoneCalc = (() => {
     const ctx = {start: monthStart(year, month), end: monthEndExclusive(year, month), yearStart: monthStart(year, 1),
       estimate: index < snapIndex};
     const refDay = Math.min(Math.floor(asOf), Math.floor(ctx.end) - 1);
-    const picked = pickRecords(records, gdvs, options.zone);
+    const picked = pickRecords(records, gdvs, options.zoneMap);
+    // Thống kê cách gán hồ sơ phát sinh trong năm: theo Zone map / theo GĐV / không thuộc zone.
+    const wantedSet = new Set(gdvs.map(nameKey)), scope = {zone: 0, gdv: 0, out: 0};
+    for (const r of records) if (inRange(r.open, ctx.yearStart, ctx.end)) scope[scopeOf(r, wantedSet, options.zoneMap)]++;
 
     const total = aggregate(picked, ctx);
     const kpis = buildKpis(total);
-    const perGdv = gdvs.map(name => {
-      const agg = aggregate(picked.filter(r => nameKey(r.gdv) === nameKey(name)), ctx);
+    // Hàng theo GĐV: các GĐV đã chọn, cộng thêm GĐV khác có hồ sơ được gán vào zone nhờ Zone BT map.
+    const extra = [...new Set(picked.map(r => r.gdv || 'Chưa phân công'))].filter(n => !gdvs.some(g => nameKey(g) === nameKey(n)));
+    const perGdv = [...gdvs, ...extra].map(name => {
+      const same = r => nameKey(r.gdv || 'Chưa phân công') === nameKey(name);
+      const agg = aggregate(picked.filter(same), ctx);
       const tonAges = agg.tonList.map(r => daysBetween(refDay, r.open));
       const need = Math.ceil(Math.round(KPI.completion.target * agg.issued * 1e6) / 1e6);
-      const open = picked.filter(r => nameKey(r.gdv) === nameKey(name) && inRange(r.open, ctx.start, ctx.end) && r.approve === null).length;
+      const open = picked.filter(r => same(r) && inRange(r.open, ctx.start, ctx.end) && r.approve === null).length;
       return {gdv: name, issued: agg.issued, approved: agg.approved, completion: agg.completion, cost: agg.cost,
         gap: need - agg.approved, // dương = còn thiếu so với 90%, âm = đang dư
         ages: bucketCounts(tonAges), tonOver30: tonAges.filter(d => d > 30).length, lead: describe(agg.leads),
@@ -299,7 +323,7 @@ const KpiZoneCalc = (() => {
       costGap: total.cost === null ? null : total.cost - KPI.cost.target
     };
     const {tonList, leads, amounts, ...totals} = total;
-    const result = {year, month, estimate: ctx.estimate, asOf, futureMonth: index > snapIndex, gdvs, totals, kpis, perGdv, unapproved, analysis,
+    const result = {year, month, estimate: ctx.estimate, asOf, futureMonth: index > snapIndex, gdvs, scope, totals, kpis, perGdv, unapproved, analysis,
       ageBuckets, byStatus: Object.entries(byStatus).map(([status, count]) => ({status, count})).sort((a, b) => b.count - a.count),
       needMore: total.needMore, target: Math.ceil(Math.round(KPI.completion.target * total.issued * 1e6) / 1e6)};
     result.pace = buildPace(result, ctx, asOf);
@@ -460,7 +484,7 @@ const KpiZoneCalc = (() => {
     return String(p.d).padStart(2, '0') + '/' + String(p.m).padStart(2, '0') + '/' + p.y;
   }
 
-  return {REQUIRED_COLUMNS, DEFAULT_GDVS, ZONE_GDV_MAP, STATUSES, TON_STATUSES, KPI, COST_CAP, AGE_BUCKETS,
-    parseDate, parseMoney, validateColumns, prepare, fromClaims, computeTrend, buildInsights, COST_BUCKETS, describe, score, computeMonth, computeReport, previousMonth, listGdvs,
+  return {REQUIRED_COLUMNS, DEFAULT_GDVS, STATUSES, TON_STATUSES, KPI, COST_CAP, AGE_BUCKETS,
+    parseDate, parseMoney, validateColumns, prepare, fromClaims, listZones, computeTrend, buildInsights, COST_BUCKETS, describe, score, computeMonth, computeReport, previousMonth, listGdvs,
     monthStart, monthEndExclusive, partsOf, serialFromParts, fmtInt, fmtPct, fmtScore, fmtDate, nameKey};
 })();
