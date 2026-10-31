@@ -39,6 +39,13 @@ const TascoLibStore = (() => {
     invalidate();
     return ref.key;
   }
+  // Sửa tài liệu đã lưu: giữ nguyên người tạo/ngày tạo, chỉ ghi lại thông tin và các đoạn.
+  async function update(id, {meta, chunks}) {
+    const clean = cleanChunks(chunks);
+    if (!clean.length) throw new Error('Tài liệu phải còn ít nhất một đoạn.');
+    await db().ref(PATH + '/' + id).update({meta: cleanMeta(meta), chunks: clean, updatedAt: Date.now()});
+    invalidate();
+  }
   async function remove(id) { await db().ref(PATH + '/' + id).remove(); invalidate(); }
   async function setStatus(id, status) {
     if (!['dang_hieu_luc', 'het_hieu_luc', 'da_thay_the'].includes(status)) throw new Error('Trạng thái không hợp lệ.');
@@ -51,5 +58,5 @@ const TascoLibStore = (() => {
   }
   async function find(docId) { return (await list()).find(doc => doc.id === docId) || null; }
 
-  return {list, save, remove, setStatus, index, find, invalidate, cleanMeta, cleanChunks, safeUrl};
+  return {list, save, update, remove, setStatus, index, find, invalidate, cleanMeta, cleanChunks, safeUrl};
 })();

@@ -33,12 +33,13 @@ const TascoLibrary = (() => {
     body.innerHTML = '<p class="dlib-note dlib-note--ok">' + docs.length + ' tài liệu · ' + docs.reduce((sum, doc) => sum + doc.chunks.length, 0) + ' đoạn tra cứu. Chat AI chỉ tra các tài liệu đang hiệu lực.</p><div class="dlib-list">' + docs.map(doc => {
       const m = doc.meta, link = TascoLibStore.safeUrl(m.nguon);
       return '<div class="dlib-doc" data-id="' + esc(doc.id) + '"><div><strong>' + esc(m.ten) + '</strong><small>' + [m.soHieu, m.hieuLucTu ? 'hiệu lực từ ' + m.hieuLucTu.split('-').reverse().join('/') : '', doc.chunks.length + ' đoạn'].filter(Boolean).map(esc).join(' · ') + (link ? ' · <a class="dlib-link" href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">bản gốc</a>' : '') + '</small></div>'
-        + (admin ? '<select data-dl-status aria-label="Trạng thái">' + Object.keys(STATUS).map(key => '<option value="' + key + '"' + (m.trangThai === key ? ' selected' : '') + '>' + STATUS[key] + '</option>').join('') + '</select><button type="button" class="dlib-btn dlib-btn--danger" data-dl-del>Xoá</button>'
+        + (admin ? '<button type="button" class="dlib-btn" data-dl-edit>Sửa</button><select data-dl-status aria-label="Trạng thái">' + Object.keys(STATUS).map(key => '<option value="' + key + '"' + (m.trangThai === key ? ' selected' : '') + '>' + STATUS[key] + '</option>').join('') + '</select><button type="button" class="dlib-btn dlib-btn--danger" data-dl-del>Xoá</button>'
           : '<span class="dlib-badge' + (m.trangThai === 'dang_hieu_luc' ? '' : ' dlib-badge--off') + '">' + STATUS[m.trangThai] + '</span>') + '</div>';
     }).join('') + '</div>';
     body.querySelectorAll('.dlib-doc').forEach(row => {
       const id = row.dataset.id;
       row.querySelector('[data-dl-status]')?.addEventListener('change', async event => { try { await TascoLibStore.setStatus(id, event.target.value); toast('Đã cập nhật trạng thái', 'success'); } catch (error) { toast(error.message || 'Không cập nhật được (cần quyền quản trị).', 'error'); } });
+      row.querySelector('[data-dl-edit]')?.addEventListener('click', () => { const doc = docs.find(item => item.id === id); if (doc) openEdit(doc); });
       row.querySelector('[data-dl-del]')?.addEventListener('click', async () => {
         if (!confirm('Xoá tài liệu "' + row.querySelector('strong').textContent + '" khỏi thư viện?')) return;
         try { await TascoLibStore.remove(id); toast('Đã xoá tài liệu', 'success'); open(); } catch (error) { toast(error.message || 'Không xoá được (cần quyền quản trị).', 'error'); }
@@ -69,9 +70,20 @@ const TascoLibrary = (() => {
     foot.querySelector('[data-dl-readpaste]').addEventListener('click', () => { const text = body.querySelector('[data-dl-paste]').value; if (text.trim()) run(async () => TascoLibParse.fromText(text, 'Văn bản dán')); });
   }
 
+  function openEdit(doc) {
+    if (!isAdmin()) { toast('Chỉ quản trị viên được sửa tài liệu.', 'error'); return; }
+    draft = {editId: doc.id, meta: {...doc.meta}, chunks: doc.chunks.map(chunk => ({...chunk})), note: '', truncated: false};
+    renderPreview();
+  }
+  // Đọc lại các ô đang nhập vào draft (để thêm/xoá đoạn mà không mất phần đã sửa).
+  function collect(body) {
+    body.querySelectorAll('[data-f]').forEach(field => { draft.meta[field.dataset.f] = field.value.trim(); });
+    draft.chunks = draft.chunks.map((chunk, index) => ({t: body.querySelector('[data-title="' + index + '"]')?.value.trim() || chunk.t, x: body.querySelector('[data-text="' + index + '"]')?.value ?? chunk.x, keep: body.querySelector('[data-keep="' + index + '"]')?.checked !== false}));
+  }
+
   // Xem trước các đoạn đã cắt: sửa thông tin, bỏ đoạn không cần, sửa chữ trước khi lưu.
   function renderPreview() {
-    const {body, foot} = shell('Xem trước tài liệu', 'Kiểm tra trước khi lưu');
+    const {body, foot} = shell(draft.editId ? 'Sửa tài liệu' : 'Xem trước tài liệu', draft.editId ? 'Thư viện tài liệu' : 'Kiểm tra trước khi lưu');
     const m = draft.meta;
     body.innerHTML = (draft.note ? '<p class="dlib-note">' + esc(draft.note) + ' Hãy đọc lại, chữ nhận dạng có thể sai.</p>' : '')
       + (draft.truncated ? '<p class="dlib-note dlib-note--bad">Tài liệu quá dài, chỉ giữ ' + draft.chunks.length + ' đoạn đầu. Hãy tách thành nhiều tài liệu.</p>' : '')
@@ -79,9 +91,10 @@ const TascoLibrary = (() => {
       + '<label>Trạng thái<select data-f="trangThai">' + Object.keys(STATUS).map(key => '<option value="' + key + '"' + (m.trangThai === key ? ' selected' : '') + '>' + STATUS[key] + '</option>').join('') + '</select></label><label>Thay thế tài liệu số<input autocomplete="off" data-f="thayThe" value="' + esc(m.thayThe || '') + '" maxlength="80"></label>'
       + '<label class="wide">Đường dẫn bản gốc (Drive/SharePoint, tuỳ chọn)<input autocomplete="off" data-f="nguon" value="' + esc(m.nguon || '') + '" placeholder="https://…"></label></div>'
       + '<div data-dl-err></div><p class="dlib-note dlib-note--ok">' + draft.chunks.length + ' đoạn tra cứu. Mở từng đoạn để sửa; bỏ tích những đoạn không cần (mục lục, trang bìa).</p><div class="dlib-chunks">'
-      + draft.chunks.map((chunk, index) => '<details class="dlib-chunk"><summary><input type="checkbox" data-keep="' + index + '" checked><span>' + esc(chunk.t) + '</span><small>' + chunk.x.length + ' ký tự</small></summary><textarea data-text="' + index + '">' + esc(chunk.x) + '</textarea></details>').join('') + '</div>';
-    foot.innerHTML = '<button type="button" class="dlib-btn" data-dl-back>← Chọn lại</button><button type="button" class="dlib-btn dlib-btn--primary" data-dl-save>Lưu vào thư viện</button>';
-    foot.querySelector('[data-dl-back]').addEventListener('click', openUpload);
+      + draft.chunks.map((chunk, index) => '<details class="dlib-chunk"' + (chunk.open ? ' open' : '') + '><summary><input type="checkbox" data-keep="' + index + '"' + (chunk.keep === false ? '' : ' checked') + ' title="Giữ đoạn này"><span>' + esc(chunk.t) + '</span><small>' + chunk.x.length + ' ký tự</small></summary><input class="dlib-title" autocomplete="off" data-title="' + index + '" value="' + esc(chunk.t) + '" maxlength="200" placeholder="Tên mục, ví dụ: Điều 5. Loại trừ bảo hiểm"><textarea data-text="' + index + '">' + esc(chunk.x) + '</textarea></details>').join('') + '</div><button type="button" class="dlib-btn" data-dl-addchunk>+ Thêm đoạn</button>';
+    foot.innerHTML = '<button type="button" class="dlib-btn" data-dl-back>' + (draft.editId ? '← Danh sách' : '← Chọn lại') + '</button><button type="button" class="dlib-btn dlib-btn--primary" data-dl-save>' + (draft.editId ? 'Lưu thay đổi' : 'Lưu vào thư viện') + '</button>';
+    foot.querySelector('[data-dl-back]').addEventListener('click', draft.editId ? open : openUpload);
+    body.querySelector('[data-dl-addchunk]').addEventListener('click', () => { collect(body); draft.chunks.push({t: 'Mục mới', x: '', open: true, keep: true}); renderPreview(); setTimeout(() => overlay?.querySelector('.dlib-body').scrollTo({top: 1e6}), 0); });
     body.querySelectorAll('summary input').forEach(box => box.addEventListener('click', event => event.stopPropagation()));
     foot.querySelector('[data-dl-save]').addEventListener('click', async event => {
       const button = event.currentTarget;
@@ -91,10 +104,11 @@ const TascoLibrary = (() => {
       const fail = text => { const box = body.querySelector('[data-dl-err]'); box.innerHTML = '<p class="dlib-note dlib-note--bad">' + esc(text) + '</p>'; box.scrollIntoView({block: 'nearest'}); };
       body.querySelector('[data-dl-err]').innerHTML = '';
       if (meta.nguon && !TascoLibStore.safeUrl(meta.nguon)) { fail('Đường dẫn bản gốc phải là liên kết bắt đầu bằng http:// hoặc https:// (ví dụ link Google Drive). Để trống nếu không có.'); body.querySelector('[data-f="nguon"]').focus(); return; }
-      const chunks = draft.chunks.map((chunk, index) => ({t: chunk.t, x: body.querySelector('[data-text="' + index + '"]').value})).filter((chunk, index) => body.querySelector('[data-keep="' + index + '"]').checked && chunk.x.trim());
+      const chunks = draft.chunks.map((chunk, index) => ({t: body.querySelector('[data-title="' + index + '"]').value.trim() || chunk.t, x: body.querySelector('[data-text="' + index + '"]').value})).filter((chunk, index) => body.querySelector('[data-keep="' + index + '"]').checked && chunk.x.trim());
       if (!chunks.length) { fail('Chưa chọn đoạn nào để lưu.'); return; }
       button.disabled = true; button.textContent = 'Đang lưu…';
-      try { await TascoLibStore.save({meta, chunks}); toast('Đã lưu tài liệu vào thư viện', 'success'); draft = null; open(); } catch (error) { button.disabled = false; button.textContent = 'Lưu vào thư viện'; fail('Không lưu được: ' + (error?.message || 'lỗi không rõ') + (/permission|PERMISSION/.test(String(error?.code || error?.message)) ? ' — tài khoản chưa có quyền ghi thư viện (cần quản trị viên, hoặc rules Firebase chưa cập nhật).' : '')); }
+      const editing = draft.editId;
+      try { if (editing) await TascoLibStore.update(editing, {meta, chunks}); else await TascoLibStore.save({meta, chunks}); toast(editing ? 'Đã cập nhật tài liệu' : 'Đã lưu tài liệu vào thư viện', 'success'); draft = null; open(); } catch (error) { button.disabled = false; button.textContent = editing ? 'Lưu thay đổi' : 'Lưu vào thư viện'; fail('Không lưu được: ' + (error?.message || 'lỗi không rõ') + (/permission|PERMISSION/.test(String(error?.code || error?.message)) ? ' — tài khoản chưa có quyền ghi thư viện (cần quản trị viên, hoặc rules Firebase chưa cập nhật).' : '')); }
     });
   }
 
@@ -113,5 +127,5 @@ const TascoLibrary = (() => {
   }
 
   document.addEventListener('click', event => { const cite = event.target.closest?.('[data-lib-cite]'); if (cite) showCitation(cite.dataset.libCite); });
-  return {open, openUpload, showCitation, close};
+  return {open, openUpload, openEdit, showCitation, close};
 })();
