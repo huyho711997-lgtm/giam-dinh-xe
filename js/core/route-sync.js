@@ -19,6 +19,7 @@
     pending_notes_tracker: 'tien-do-ho-so-ton',
     claim_cancellation: 'de-xuat-huy-ho-so',
     gdv_report: 'bao-cao-gdv',
+    kpi_zone: 'bao-cao-kpi-boi-thuong',
     accounting_claims: 'ho-so-thanh-toan',
     accounting_transfer: 'chuyen-ho-so',
     field_reimbursements: 'hien-truong',
@@ -40,7 +41,7 @@
       case 'create': return can('list', 'add');
       case 'pending': case 'pending_notes_tracker': return can('pending', 'view');
       case 'claim_cancellation': return can('pending', 'view') || can('list', 'view');
-      case 'gdv_report': return can('report', 'view');
+      case 'gdv_report': case 'kpi_zone': return can('report', 'view');
       case 'accounting_claims': return can('accounting', 'review');
       case 'accounting_transfer': return can('accounting', 'view');
       case 'field_reimbursements': return can('field_reimb', 'view');
