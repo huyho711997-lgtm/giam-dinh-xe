@@ -51,6 +51,22 @@
     initializeTascoAIDetailFormGuard();
   }
   
+  // Toàn màn hình: nhớ lựa chọn trên trình duyệt; Esc thu nhỏ lại.
+  function toggleTascoAIMax(force) {
+    const panel = document.getElementById('tasco-ai-panel');
+    if (!panel) return;
+    const on = panel.classList.toggle('tasco-ai-max', typeof force === 'boolean' ? force : undefined);
+    const button = document.getElementById('tasco-ai-max-btn');
+    if (button) { button.title = on ? 'Thu nhỏ (Esc)' : 'Toàn màn hình (Esc để thu nhỏ)'; button.setAttribute('aria-label', on ? 'Thu nhỏ khung chat' : 'Phóng to khung chat'); }
+    try { localStorage.setItem('tasco_ai_max', on ? '1' : '0'); } catch (_) { /* không lưu được thì thôi */ }
+    const body = document.getElementById('tasco-ai-body');
+    if (body) body.scrollTop = body.scrollHeight;
+  }
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && document.getElementById('tasco-ai-panel')?.classList.contains('tasco-ai-max') && !document.querySelector('.dlib-overlay')) toggleTascoAIMax(false);
+  });
+  try { if (localStorage.getItem('tasco_ai_max') === '1') document.getElementById('tasco-ai-panel')?.classList.add('tasco-ai-max'); } catch (_) { /* bỏ qua */ }
+
   function toggleTascoAI() {
     const panel = document.getElementById('tasco-ai-panel');
     const button = document.getElementById('tasco-ai-btn');
