@@ -218,6 +218,8 @@ const TascoAITools = (() => {
       parameters: {type: 'OBJECT', properties: {loai: {type: 'STRING', enum: ['ton', 'giam_dinh']}, nhom_theo: {type: 'STRING', enum: ['khong', 'trang_thai', 'gdv', 'don_vi', 'gara', 'nghiep_vu', 'thang']}, tinh_tong: {type: 'STRING', enum: ['soTienDuyetBT', 'ttbtTongSoTienBoiThuong', 'duPhongBoiThuong', 'pascSoTienDuyet', 'soTienDaThanhToan', 'uocThietHai', 'chiPhiGiamDinh', 'chiPhiCuuHo', 'tongBoiThuongSauThue'], description: 'Trường tiền cần cộng tổng (đồng)'}, tu_khoa: {type: 'STRING'}, trang_thai: {type: 'ARRAY', items: {type: 'STRING'}, description: 'Chỉ lấy các trạng thái này (tên hoặc mã), VD ["Chờ GĐCT"]'}, loai_tru_trang_thai: {type: 'ARRAY', items: {type: 'STRING'}, description: 'Loại các trạng thái này, VD ["Đã duyệt HSBT","KT duyệt"]'}, gdv: {type: 'STRING'}, gara: {type: 'STRING'}, don_vi: {type: 'STRING'}, truong_ngay: {type: 'STRING', enum: ['ngay_duyet', 'ngay_ton_that', 'ngay_mo_hs', 'ngay_thanh_toan', 'ngay_tao'], description: 'Ngày dùng để lọc/nhóm; mặc định ngay_duyet (ngày duyệt HSBT/tờ trình)'}, tu_ngay: {type: 'STRING', description: 'YYYY-MM-DD, tính cả ngày này'}, ton_tren_ngay: {type: 'INTEGER', description: 'Chỉ lấy hồ sơ tồn LỚN HƠN số ngày này (VD "quá 7 ngày" → 7)'}, tinh_tu: {type: 'STRING', enum: ['cap_nhat', 'ngay_mo_hs', 'ngay_ton_that', 'ngay_duyet'], description: 'Mốc tính số ngày tồn; mặc định cap_nhat (lần cập nhật gần nhất của hồ sơ)'}, den_ngay: {type: 'STRING', description: 'YYYY-MM-DD, tính cả ngày này'}}, required: ['loai', 'nhom_theo']}},
     {name: 'mo_ho_so', description: 'Mở cửa sổ chỉnh sửa của một hồ sơ bồi thường (loai="ton") trên màn hình người dùng.',
       parameters: {type: 'OBJECT', properties: {ma: {type: 'STRING'}}, required: ['ma']}},
+    {name: 'tra_cuu_tai_lieu', description: 'Tra cứu thư viện tài liệu nghiệp vụ của công ty (quy trình, điều khoản bảo hiểm, quy định, bảng giá/tỷ lệ, hướng dẫn). Dùng cho mọi câu hỏi về quy định/quy trình/điều khoản/điều kiện bồi thường/loại trừ/hồ sơ cần có. Truyền tu_khoa là các cụm từ khoá quan trọng KÈM từ đồng nghĩa và cách gọi khác (VD ["đăng kiểm","hết hạn kiểm định","loại trừ bảo hiểm"]); nếu kết quả chưa đủ, gọi lại với từ khoá khác. Chỉ trả lời dựa trên nội dung nhận được.',
+      parameters: {type: 'OBJECT', properties: {cau_hoi: {type: 'STRING', description: 'Câu hỏi gốc của người dùng'}, tu_khoa: {type: 'ARRAY', items: {type: 'STRING'}, description: 'Cụm từ khoá và từ đồng nghĩa'}, so_doan: {type: 'INTEGER', description: 'Số đoạn lấy về, mặc định 6, tối đa 10'}, ca_ban_cu: {type: 'BOOLEAN', description: 'true để tra cả bản hết hiệu lực/đã thay thế'}}, required: ['cau_hoi']}},
     {name: 'ds_bieu_mau', description: 'Liệt kê các biểu mẫu Word (.docx) trong thư viện ứng dụng có thể soạn bằng AI.', parameters: {type: 'OBJECT', properties: {}}},
     {name: 'mo_trinh_soan_bieu_mau', description: 'Mở trình soạn biểu mẫu từng bước trong khung chat (người dùng tự chọn biểu mẫu, chọn hồ sơ theo tên chủ xe/biển số, chọn vụ tổn thất nếu xe có nhiều vụ). Ưu tiên dùng khi người dùng muốn soạn biểu mẫu mà chưa nói rõ biểu mẫu hoặc hồ sơ nào.',
       parameters: {type: 'OBJECT', properties: {ten_bieu_mau: {type: 'STRING'}, tu_khoa_ho_so: {type: 'STRING', description: 'Biển số hoặc tên chủ xe nếu người dùng đã nói'}}}},
@@ -232,6 +234,19 @@ const TascoAITools = (() => {
       forms.push(...uploaded);
     } catch (_) { /* chỉ dùng biểu mẫu hệ thống */ }
     return forms.filter(file => SharedFormsStore.extension(file.originalName || file.name) === 'docx');
+  }
+
+
+  // Tra cứu thư viện tài liệu: trả các đoạn liên quan kèm mã nguồn để AI trích dẫn dạng [[tl:MA|nhãn]].
+  async function libraryLookup(args, ui) {
+    if (typeof TascoLibStore === 'undefined') return {loi: 'Thư viện tài liệu chưa sẵn sàng.'};
+    const docs = await TascoLibStore.list();
+    if (!docs.length) return {loi: 'Thư viện tài liệu đang trống. Quản trị viên cần nạp tài liệu trước.'};
+    const rows = TascoLibSearch.search(await TascoLibStore.index(), String(args.cau_hoi || ''), {keywords: Array.isArray(args.tu_khoa) ? args.tu_khoa.map(String) : [], limit: args.so_doan, includeInactive: !!args.ca_ban_cu});
+    ui.sources = ui.sources || new Set();
+    const label = {dang_hieu_luc: 'đang hiệu lực', het_hieu_luc: 'hết hiệu lực', da_thay_the: 'đã thay thế'};
+    const results = rows.map(row => { const code = row.docId + ':' + row.index; ui.sources.add(code); return {ma_nguon: code, tai_lieu: row.doc.meta.ten, so_hieu: row.doc.meta.soHieu || '', muc: row.chunk.t, hieu_luc_tu: row.doc.meta.hieuLucTu || '', trang_thai: label[row.doc.meta.trangThai], noi_dung: row.chunk.x}; });
+    return results.length ? {so_doan: results.length, ket_qua: results, luu_y: 'Chỉ trả lời từ nội dung trên; trích dẫn bằng [[tl:ma_nguon|Tên tài liệu – mục]].'} : {so_doan: 0, ghi_chu: 'Không có đoạn nào khớp. Thử từ khoá khác/đồng nghĩa, hoặc trả lời là không có trong tài liệu đã nạp.', tong_tai_lieu: docs.length};
   }
 
   // `ui` do trợ lý chat truyền vào: {showDraft(card)} để hiển thị bản nháp biểu mẫu trong khung chat.
@@ -253,6 +268,7 @@ const TascoAITools = (() => {
         TascoFormWizard.start({form: args.ten_bieu_mau, query: args.tu_khoa_ho_so});
         return {ket_qua: 'Đã mở trình soạn biểu mẫu trong khung chat để người dùng chọn tiếp. Hãy nói ngắn gọn rằng bạn đã mở trình chọn.'};
       }
+      if (name === 'tra_cuu_tai_lieu') return await libraryLookup(args, ui);
       if (name === 'ds_bieu_mau') return {bieu_mau: (await libraryForms()).map(file => file.name)};
       if (name === 'soan_bieu_mau') {
         const item = find('ton', args.ma_ho_so);

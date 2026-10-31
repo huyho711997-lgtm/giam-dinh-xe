@@ -1806,7 +1806,8 @@
 <!-- /SCROLL TO TOP BUTTON -->
 
 <!-- TASCO AI ASSISTANT -->
-<link rel="stylesheet" href="css/ai-assistant.css?v=20261029-ai-14">
+<link rel="stylesheet" href="css/ai-assistant.css?v=20261031-lib-1">
+<link rel="stylesheet" href="css/doc-library.css?v=20261031-lib-1">
 
 <div id="tasco-floating-dock" aria-label="Công cụ hỗ trợ nhanh">
   <button id="scrollToTopBtn" class="tasco-floating-action" type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" data-tooltip="Lên đầu trang" aria-label="Lên đầu trang">
@@ -1838,6 +1839,7 @@
     </div>
     <div class="tasco-ai-header__actions">
       <button type="button" class="tasco-ai-header__btn" onclick="newTascoAIChat()" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
+      <button type="button" class="tasco-ai-header__btn" onclick="TascoLibrary.open()" title="Thư viện tài liệu nghiệp vụ" aria-label="Thư viện tài liệu nghiệp vụ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path></svg></button>
       <button type="button" class="tasco-ai-header__btn" onclick="setGeminiApiKey()" title="Thiết lập kết nối AI" aria-label="Thiết lập kết nối AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09A1.65 1.65 0 0 0 20.91 10H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z"></path></svg></button>
       <button type="button" class="tasco-ai-header__btn tasco-ai-header__btn--close" onclick="toggleTascoAI()" title="Đóng" aria-label="Đóng Trợ lý TASCO AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
     </div>
@@ -1871,12 +1873,16 @@
 </div>
 
 <script src="js/features/ai/gemini-key.js?v=20261029-ai-3"></script>
-<script src="js/features/ai/assistant-tools.js?v=20261029-ai-13"></script>
+<script src="js/features/ai/assistant-tools.js?v=20261031-lib-1"></script>
 <script src="js/features/ai/assistant-export.js?v=20261029-ai-13"></script>
 <script src="js/features/ai/assistant-chat-store.js?v=20261029-ai-13"></script>
+<script src="js/features/ai/library-parse.js?v=20261031-lib-1"></script>
+<script src="js/features/ai/library-search.js?v=20261031-lib-1"></script>
+<script src="js/features/ai/library-store.js?v=20261031-lib-1"></script>
+<script src="js/features/ai/library-ui.js?v=20261031-lib-1"></script>
 <script src="js/features/ai/assistant-vision.js?v=20261029-ai-13"></script>
 <script src="js/features/ai/assistant-form-wizard.js?v=20261029-ai-13"></script>
-<script src="js/features/ai/assistant.js?v=20261029-ai-13"></script>
+<script src="js/features/ai/assistant.js?v=20261031-lib-1"></script>
 <!-- /TASCO AI ASSISTANT -->
 
 

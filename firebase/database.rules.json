@@ -186,6 +186,25 @@
         }
       }
     },
+    "doc_library": {
+      ".read": "auth != null",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+      "$docId": {
+        ".validate": "newData.hasChildren(['meta', 'chunks', 'createdAt'])",
+        "meta": {
+          "ten": { ".validate": "newData.isString() && newData.val().length <= 160" },
+          "trangThai": { ".validate": "newData.val() === 'dang_hieu_luc' || newData.val() === 'het_hieu_luc' || newData.val() === 'da_thay_the'" }
+        },
+        "chunks": {
+          ".validate": "newData.numChildren() <= 600",
+          "$i": {
+            "t": { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "x": { ".validate": "newData.isString() && newData.val().length <= 6000" },
+            "$other": { ".validate": false }
+          }
+        }
+      }
+    },
     "user_chats": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

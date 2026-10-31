@@ -267,3 +267,7 @@
 .tasco-ai-download:disabled { opacity:.55; cursor:not-allowed; }
 .tasco-ai-edit .tasco-ai-edit__val { display:block; }
 .tasco-ai-edit small { color:var(--text-muted); font-size:10.5px; }
+
+/* Trích dẫn nguồn từ thư viện tài liệu trong câu trả lời */
+.tasco-ai-cite { display:inline; padding:1px 7px; border:1px solid color-mix(in srgb, var(--primary) 35%, transparent); border-radius:999px; background:color-mix(in srgb, var(--primary) 10%, transparent); color:var(--primary); font:inherit; font-size:.88em; font-weight:700; cursor:pointer; }
+.tasco-ai-cite--bad { border-color:#d9a09a; background:#fef3f2; color:#b42318; cursor:help; }
