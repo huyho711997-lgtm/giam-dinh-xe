@@ -210,21 +210,21 @@ const KpiZoneCalc = (() => {
   function aggregate(recs, ctx) {
     const {start, end, yearStart, estimate} = ctx;
     let issued = 0, approved = 0, ytd = 0, sampleSum = 0, sample = 0, excluded = 0;
-    const tonList = [];
+    const tonList = [], leads = [], amounts = [];
     for (const r of recs) {
       const openedInMonth = inRange(r.open, start, end);
       if (openedInMonth) {
-        issued++;
+        issued++; amounts.push(r.amount);
         if (r.amount >= 0 && r.amount < COST_CAP) { sample++; sampleSum += r.amount; } else excluded++;
       }
-      if (inRange(r.approve, start, end)) approved++;
+      if (inRange(r.approve, start, end)) { approved++; leads.push(Math.max(0, Math.floor(r.approve) - Math.floor(r.open))); }
       if (inRange(r.open, yearStart, end)) ytd++;
       if (r.open < end && isTon(r, end, estimate)) tonList.push(r);
     }
     const completion = issued > 0 ? approved / issued : null;
     const cost = sample > 0 ? sampleSum / sample : null;
     const backlogRate = ytd > 0 ? tonList.length / ytd : null;
-    return {issued, approved, completion, sample, excluded, cost, ton: tonList.length, tonList, ytd, backlogRate,
+    return {issued, approved, completion, sample, excluded, cost, ton: tonList.length, tonList, ytd, backlogRate, leads, amounts,
       needMore: Math.max(0, Math.ceil(Math.round(KPI.completion.target * issued * 1e6) / 1e6) - approved)};
   }
 
@@ -261,8 +261,13 @@ const KpiZoneCalc = (() => {
     const kpis = buildKpis(total);
     const perGdv = gdvs.map(name => {
       const agg = aggregate(picked.filter(r => nameKey(r.gdv) === nameKey(name)), ctx);
+      const tonAges = agg.tonList.map(r => daysBetween(refDay, r.open));
+      const need = Math.ceil(Math.round(KPI.completion.target * agg.issued * 1e6) / 1e6);
       const open = picked.filter(r => nameKey(r.gdv) === nameKey(name) && inRange(r.open, ctx.start, ctx.end) && r.approve === null).length;
       return {gdv: name, issued: agg.issued, approved: agg.approved, completion: agg.completion, cost: agg.cost,
+        gap: need - agg.approved, // dương = còn thiếu so với 90%, âm = đang dư
+        ages: bucketCounts(tonAges), tonOver30: tonAges.filter(d => d > 30).length, lead: describe(agg.leads),
+        costDescribe: describe(agg.amounts.filter(a => a >= 0 && a < COST_CAP)),
         sample: agg.sample, ton: agg.ton, ytd: agg.ytd, backlogRate: agg.backlogRate, unapproved: open};
     });
 
@@ -279,13 +284,138 @@ const KpiZoneCalc = (() => {
       byStatus[status] = (byStatus[status] || 0) + 1;
     }
 
-    const {tonList, ...totals} = total;
-    return {year, month, estimate: ctx.estimate, asOf, futureMonth: index > snapIndex, gdvs, totals, kpis, perGdv, unapproved,
+    const lead = describe(total.leads);
+    const analysis = {
+      lead: {...lead, buckets: bucketCounts(total.leads)},
+      cost: {buckets: histogram(COST_BUCKETS, total.amounts), ...describe(total.amounts.filter(a => a >= 0 && a < COST_CAP)),
+        outlierCount: total.amounts.filter(a => a >= COST_CAP || a < 0).length,
+        outlierSum: total.amounts.filter(a => a >= COST_CAP).reduce((a, b) => a + b, 0)},
+      tonOver30: total.tonList.filter(r => daysBetween(refDay, r.open) > 30).length,
+      // Mỗi hồ sơ duyệt thêm làm điểm hoàn thành tăng bao nhiêu (0 khi đã đạt mục tiêu vì điểm bị giới hạn).
+      marginalApproval: total.issued > 0 && total.approved < Math.ceil(Math.round(KPI.completion.target * total.issued * 1e6) / 1e6)
+        ? KPI.completion.weight / (KPI.completion.target * total.issued) : 0,
+      // Số hồ sơ tồn có thể phát sinh thêm mà vẫn không vượt 10% (âm = cần giải quyết bớt).
+      backlogHeadroom: total.ytd > 0 ? Math.floor(Math.round(KPI.backlog.target * total.ytd * 1e6) / 1e6) - total.ton : null,
+      costGap: total.cost === null ? null : total.cost - KPI.cost.target
+    };
+    const {tonList, leads, amounts, ...totals} = total;
+    const result = {year, month, estimate: ctx.estimate, asOf, futureMonth: index > snapIndex, gdvs, totals, kpis, perGdv, unapproved, analysis,
       ageBuckets, byStatus: Object.entries(byStatus).map(([status, count]) => ({status, count})).sort((a, b) => b.count - a.count),
       needMore: total.needMore, target: Math.ceil(Math.round(KPI.completion.target * total.issued * 1e6) / 1e6)};
+    result.pace = buildPace(result, ctx, asOf);
+    return result;
+  }
+
+  // ---------- Phân tích chuyên sâu ----------
+  function quantile(sorted, q) {
+    if (!sorted.length) return null;
+    const pos = (sorted.length - 1) * q, lo = Math.floor(pos), hi = Math.ceil(pos);
+    return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+  }
+  function describe(list) {
+    if (!list.length) return {n: 0, mean: null, median: null, p90: null, max: null};
+    const sorted = [...list].sort((a, b) => a - b);
+    return {n: list.length, mean: sorted.reduce((a, b) => a + b, 0) / sorted.length, median: quantile(sorted, 0.5), p90: quantile(sorted, 0.9), max: sorted[sorted.length - 1]};
+  }
+  const COST_BUCKETS = [
+    {key: 'c1', label: 'Dưới 1 triệu', max: 1e6}, {key: 'c2', label: '1–2 triệu', max: 2e6}, {key: 'c3', label: '2–3,5 triệu', max: 3.5e6},
+    {key: 'c4', label: '3,5–5 triệu', max: 5e6}, {key: 'c5', label: '5–10 triệu', max: COST_CAP}, {key: 'c6', label: 'Từ 10 triệu (loại)', max: Infinity}
+  ];
+  function histogram(buckets, values) {
+    const out = buckets.map(b => ({key: b.key, label: b.label, count: 0, excluded: b.max === Infinity}));
+    for (const v of values) { const i = buckets.findIndex(b => v < b.max); out[i < 0 ? out.length - 1 : i].count++; }
+    return out;
+  }
+  const bucketCounts = list => { const c = AGE_BUCKETS.map(b => ({key: b.key, label: b.label, count: 0})); for (const d of list) c[AGE_BUCKETS.findIndex(b => d <= b.max)].count++; return c; };
+
+  function daysIn(year, month) { return Math.round(monthEndExclusive(year, month) - monthStart(year, month)); }
+
+  // Nhịp duyệt hiện tại và dự báo cuối tháng (chỉ cho tháng đang chạy).
+  function buildPace(c, ctx, asOf) {
+    const total = daysIn(c.year, c.month), elapsed = Math.min(total, Math.floor(asOf) - Math.floor(ctx.start) + 1);
+    const t = c.totals;
+    if (c.estimate || c.futureMonth || elapsed < 1) return null;
+    const left = Math.max(0, total - elapsed);
+    const perDayApproved = t.approved / elapsed, perDayIssued = t.issued / elapsed;
+    const projApproved = t.approved + perDayApproved * left, projIssued = t.issued + perDayIssued * left;
+    return {daysInMonth: total, elapsed, left, perDayApproved, perDayIssued, projApproved, projIssued,
+      projCompletion: projIssued > 0 ? projApproved / projIssued : null,
+      requiredPerDay: left > 0 ? Math.max(0, c.needMore) / left : null};
   }
 
   function previousMonth(year, month) { return month === 1 ? {year: year - 1, month: 12} : {year, month: month - 1}; }
+
+  // Chuỗi các tháng gần nhất (mặc định 12) để xem xu hướng; tháng đã qua có tồn ước tính.
+  function computeTrend(records, options, months = 12) {
+    const out = [];
+    let y = options.year, m = options.month;
+    for (let i = 0; i < months; i++) {
+      const r = computeMonth(records, {...options, year: y, month: m});
+      out.unshift({year: y, month: m, label: 'T' + m + (m === 1 || i === months - 1 ? '/' + String(y).slice(2) : ''), estimate: r.estimate, futureMonth: r.futureMonth,
+        issued: r.totals.issued, approved: r.totals.approved, completion: r.totals.completion, cost: r.totals.cost, ton: r.totals.ton,
+        backlogRate: r.totals.backlogRate, capped: r.kpis.capped, uncapped: r.kpis.uncapped, scores: r.kpis.rows.map(k => k.score)});
+      const p = previousMonth(y, m); y = p.year; m = p.month;
+    }
+    return out;
+  }
+
+  // Nhận định tự động bằng lời; mỗi mục có mức: good / warn / bad / info.
+  function buildInsights(report, trend) {
+    const c = report.current, t = c.totals, a = c.analysis, out = [];
+    const add = (tone, title, text) => out.push({tone, title, text});
+    const pct = fmtPct, int = fmtInt;
+    if (c.futureMonth || !t.issued) { add('info', 'Chưa có số liệu', 'Tháng này chưa có hồ sơ phát sinh trong dữ liệu hiện có.'); return out; }
+    if (c.estimate) add('info', 'Tháng đã qua', 'Tồn của tháng này là ước tính (hồ sơ mở tới cuối tháng, chưa có ngày duyệt hoặc duyệt sau đó, không bị từ chối), nên điểm tồn có thể lệch nhẹ so với thời điểm đó.');
+
+    // 1. Hoàn thành
+    if (t.completion !== null) {
+      if (t.completion >= KPI.completion.target) add('good', 'Hoàn thành đạt mục tiêu', 'Đã duyệt ' + int(t.approved) + '/' + int(t.issued) + ' hồ sơ phát sinh (' + pct(t.completion) + '), vượt mức 90%. Điểm hoàn thành bị giới hạn ở ' + KPI.completion.weight + ' nên duyệt thêm không làm tăng điểm tháng.');
+      else {
+        let text = 'Mới duyệt ' + int(t.approved) + '/' + int(t.issued) + ' (' + pct(t.completion) + '), còn thiếu ' + int(c.needMore) + ' hồ sơ để đạt 90%.';
+        if (c.pace && c.pace.left > 0) text += ' Còn ' + c.pace.left + ' ngày: cần duyệt ' + c.pace.requiredPerDay.toFixed(1).replace('.', ',') + ' hồ sơ/ngày, trong khi nhịp hiện tại là ' + c.pace.perDayApproved.toFixed(1).replace('.', ',') + '. Giữ nhịp này, cuối tháng dự kiến đạt khoảng ' + pct(c.pace.projCompletion) + '.';
+        else if (c.pace) text += ' Dữ liệu đã tới cuối tháng.';
+        if (a.marginalApproval > 0) text += ' Mỗi hồ sơ duyệt thêm cộng khoảng ' + (a.marginalApproval).toFixed(4).replace('.', ',') + ' điểm.';
+        add(t.completion >= 0.75 ? 'warn' : 'bad', 'Hoàn thành chưa đạt', text);
+      }
+    }
+    // 2. Chi phí
+    if (t.cost !== null) {
+      const over = t.cost > KPI.cost.target;
+      let text = 'CP bình quân ' + int(t.cost) + ' đ (mục tiêu ' + int(KPI.cost.target) + ' đ), mẫu ' + int(t.sample) + ' hồ sơ.';
+      if (a.cost.median !== null && t.cost > a.cost.median * 1.15) text += ' Trung vị chỉ ' + int(a.cost.median) + ' đ: vài hồ sơ giá trị cao đang kéo trung bình lên.';
+      if (a.cost.outlierCount) text += ' ' + int(a.cost.outlierCount) + ' hồ sơ từ 10 triệu (tổng ' + int(a.cost.outlierSum / 1e6) + ' triệu) đã được loại khỏi mẫu theo quy định.';
+      add(over ? 'warn' : 'good', over ? 'Chi phí vượt mục tiêu' : 'Chi phí trong mục tiêu', text);
+    }
+    // 3. Tồn
+    if (t.backlogRate !== null) {
+      const ok = t.backlogRate <= KPI.backlog.target;
+      let text = 'Tồn lũy kế ' + int(t.ton) + ' hồ sơ trên ' + int(t.ytd) + ' hồ sơ phát sinh từ đầu năm (' + pct(t.backlogRate, 2) + ', mục tiêu 10%).';
+      text += a.backlogHeadroom >= 0 ? ' Còn dư địa ' + int(a.backlogHeadroom) + ' hồ sơ tồn trước khi vượt 10%.' : ' Cần giải quyết bớt ' + int(-a.backlogHeadroom) + ' hồ sơ để về dưới 10%.';
+      if (a.tonOver30 > 0 && t.ton > 0) text += ' ' + int(a.tonOver30) + ' hồ sơ tồn quá 30 ngày (' + pct(a.tonOver30 / t.ton, 0) + ' số tồn).';
+      add(ok ? (a.tonOver30 / Math.max(1, t.ton) > 0.4 ? 'warn' : 'good') : 'bad', ok ? 'Tồn trong mục tiêu' : 'Tồn vượt mục tiêu', text);
+    }
+    // 4. Theo GĐV
+    const withData = c.perGdv.filter(g => g.issued >= 5 && g.completion !== null);
+    if (withData.length > 1) {
+      const sorted = [...withData].sort((x, y) => x.completion - y.completion), low = sorted[0], high = sorted[sorted.length - 1];
+      if (high.completion - low.completion >= 0.15) add('warn', 'Chênh lệch giữa các GĐV', low.gdv + ' hoàn thành ' + pct(low.completion) + ' (thiếu ' + int(Math.max(0, low.gap)) + ' hồ sơ), trong khi ' + high.gdv + ' đạt ' + pct(high.completion) + '. KPI tính gộp nên GĐV dư có thể bù cho GĐV thiếu, nhưng nên cân đối lại hồ sơ.');
+    }
+    const heaviest = [...c.perGdv].sort((x, y) => y.ton - x.ton)[0];
+    if (heaviest && t.ton > 0 && heaviest.ton / t.ton >= 0.45 && c.perGdv.length > 1) add('warn', 'Tồn tập trung', heaviest.gdv + ' giữ ' + int(heaviest.ton) + '/' + int(t.ton) + ' hồ sơ tồn (' + pct(heaviest.ton / t.ton, 0) + '), tỉ lệ tồn riêng ' + pct(heaviest.backlogRate, 1) + '.');
+    // 5. Điểm bị cắt
+    const capped = c.kpis.rows.filter(k => k.score !== null && k.score > k.weight);
+    if (capped.length) add('info', 'Điểm vượt tỷ trọng bị cắt', capped.map(k => k.label + ' (' + fmtScore(k.score) + '/' + k.weight + ')').join('; ') + '. Phần vượt không bù được cho nhóm khác: tổng có giới hạn ' + fmtScore(c.kpis.capped) + ', chưa giới hạn ' + fmtScore(c.kpis.uncapped) + '.');
+    // 6. Xu hướng
+    const series = (trend || []).filter(x => !x.futureMonth && x.issued > 0);
+    if (series.length >= 4) {
+      const last = series[series.length - 1], best = [...series].sort((x, y) => y.capped - x.capped)[0], worst = [...series].sort((x, y) => x.capped - y.capped)[0];
+      const avg3 = series.slice(-4, -1).reduce((acc, x) => acc + x.capped, 0) / 3;
+      add(last.capped >= avg3 ? 'good' : 'warn', 'Xu hướng ' + series.length + ' tháng', 'Điểm có giới hạn tháng này ' + fmtScore(last.capped) + ', ' + (last.capped >= avg3 ? 'cao hơn' : 'thấp hơn') + ' trung bình 3 tháng trước (' + fmtScore(avg3) + '). Cao nhất T' + best.month + '/' + best.year + ' (' + fmtScore(best.capped) + '), thấp nhất T' + worst.month + '/' + worst.year + ' (' + fmtScore(worst.capped) + ').');
+    }
+    // 7. Thời gian xử lý
+    if (a.lead.n >= 5 && a.lead.median !== null) add('info', 'Thời gian xử lý', 'Hồ sơ duyệt trong tháng có thời gian từ lúc mở tới lúc duyệt trung vị ' + a.lead.median.toFixed(0) + ' ngày, 9/10 hồ sơ xong trong ' + a.lead.p90.toFixed(0) + ' ngày.');
+    return out;
+  }
 
   // Tháng chọn + tháng liền trước + chênh lệch.
   function computeReport(records, options) {
@@ -303,7 +433,8 @@ const KpiZoneCalc = (() => {
       uncapped: diff(current.kpis.uncapped, previous.kpis.uncapped),
       capped: diff(current.kpis.capped, previous.kpis.capped)
     };
-    return {current, previous, compare};
+    const trend = computeTrend(records, options, options.trendMonths || 12);
+    return {current, previous, compare, trend, insights: buildInsights({current, previous}, trend)};
   }
 
   // Danh sách GĐV có trong dữ liệu (để người dùng chọn thêm), kèm số hồ sơ.
@@ -330,6 +461,6 @@ const KpiZoneCalc = (() => {
   }
 
   return {REQUIRED_COLUMNS, DEFAULT_GDVS, ZONE_GDV_MAP, STATUSES, TON_STATUSES, KPI, COST_CAP, AGE_BUCKETS,
-    parseDate, parseMoney, validateColumns, prepare, fromClaims, score, computeMonth, computeReport, previousMonth, listGdvs,
+    parseDate, parseMoney, validateColumns, prepare, fromClaims, computeTrend, buildInsights, COST_BUCKETS, describe, score, computeMonth, computeReport, previousMonth, listGdvs,
     monthStart, monthEndExclusive, partsOf, serialFromParts, fmtInt, fmtPct, fmtScore, fmtDate, nameKey};
 })();

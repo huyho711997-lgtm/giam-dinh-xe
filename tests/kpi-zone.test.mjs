@@ -189,3 +189,32 @@ test('hồ sơ thiếu ngày mở hoặc trùng số hồ sơ vào cảnh báo, 
   assert.equal(prep.warnings.unknownStatus[0], 'trạng_thái_lạ');
   assert.equal(K.fromClaims(null, STATUS_MAP).records.length, 0);
 });
+
+test('phân tích chuyên sâu: nhịp duyệt, thời gian xử lý, phân bố chi phí, xu hướng, nhận định', () => {
+  const prep = K.prepare(rows);
+  const r = K.computeReport(prep.records, {year: 2026, month: 10, gdvs: G, asOf: prep.asOf});
+  const c = r.current, a = c.analysis;
+  // Nhịp: dữ liệu tới 30/10 → đã qua 30 ngày, còn 1 ngày; cần 28 hồ sơ.
+  assert.equal(c.pace.elapsed, 30); assert.equal(c.pace.left, 1);
+  near(c.pace.requiredPerDay, 28, 1e-9);
+  near(c.pace.projApproved, 138 + 138 / 30, 1e-9);
+  // Phân bố chi phí cộng đủ số hồ sơ phát sinh; nhóm "từ 10 triệu" = số bị loại.
+  assert.equal(a.cost.buckets.reduce((x, b) => x + b.count, 0), 184);
+  assert.equal(a.cost.buckets[a.cost.buckets.length - 1].count, 33);
+  assert.equal(a.lead.buckets.reduce((x, b) => x + b.count, 0), 138);
+  assert.equal(a.lead.n, 138);
+  near(a.marginalApproval, 0.5 / (0.9 * 184), 1e-9);
+  assert.equal(a.backlogHeadroom, Math.floor(0.1 * 1445) - 114); // 144 - 114 = 30
+  // Mỗi GĐV: khoảng thiếu/dư so với 90% và tuổi tồn cộng đủ.
+  const phuc = c.perGdv.find(g => g.gdv === G[0]);
+  assert.equal(phuc.gap, Math.ceil(0.9 * 88) - 77);
+  assert.equal(phuc.ages.reduce((x, b) => x + b.count, 0), phuc.ton);
+  // Xu hướng 12 tháng, tháng cuối trùng tháng chọn; tháng trước là ước tính.
+  assert.equal(r.trend.length, 12);
+  near(r.trend[11].capped, 0.9009); assert.equal(r.trend[10].estimate, true); near(r.trend[10].capped, 0.9875);
+  // Nhận định có đủ mức và nhắc số hồ sơ còn thiếu.
+  assert.ok(r.insights.some(x => x.tone === 'warn' || x.tone === 'bad'));
+  assert.ok(r.insights.some(x => /28 hồ sơ/.test(x.text)));
+  // Tháng đã qua không có nhịp.
+  assert.equal(K.computeMonth(prep.records, {year: 2026, month: 9, gdvs: G, asOf: prep.asOf}).pace, null);
+});
