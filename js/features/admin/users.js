@@ -36,6 +36,8 @@
       const phone = readUserPhone('profilePhone');
       if (phone === null) return;
       if (displayName.length < 2) return triggerToast('Vui lòng nhập họ tên hiển thị hợp lệ.', 'error');
+      // "Chức danh" là chữ tự do nhưng "Admin" là quyền quản trị: chỉ quản trị viên hiện tại được giữ/đặt giá trị này (rules Firebase cũng chặn).
+      if (/^\s*admin\s*$/i.test(role) && !/^\s*admin\s*$/i.test(String(activeUserProfile?.role || '')) && activeUserProfile?.permissions?.users?.admin !== true) return triggerToast('Chức danh "Admin" chỉ do quản trị viên cấp trong mục Quản trị hệ thống.', 'warning');
       const button = document.getElementById('btnSaveUserProfile');
       toggleButtonUIPendingState(button, true, 'Đang lưu...');
       const payload = { ...activeUserProfile, displayName, role, department, phone,

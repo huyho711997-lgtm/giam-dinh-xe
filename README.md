@@ -145,3 +145,11 @@ Trang **Hồ sơ bồi thường → Cập nhật dữ liệu từ Excel** dùng
 - Trong hộp "Thông báo đơn vị cấp đơn" có mục **Email đã lưu cho đơn vị này**: lưu email đơn vị cấp đơn (To), email cán bộ cấp đơn, TPKD phụ trách phòng KD và quản lý khu vực giám định (CC). Lần sau soạn cho cùng đơn vị, To/CC được điền sẵn (chỉ khi ô còn trống).
 - Dữ liệu dùng chung ở `reduction_email_directory/{units|issuers|departments|zones}/{khóa}`; cán bộ và phòng KD gắn theo đơn vị (`<đơn-vị>__<tên>`), khu vực giám định lấy theo trường "Zone / Khu vực GĐ". Gộp `firebase/email-directory.rules.json` vào Firebase Realtime Database Rules (chỉ thêm nhánh này, không ghi đè toàn bộ rules).
 
+
+
+### Bảo mật Realtime Database (cần publish `firebase/database.rules.json`)
+- Chỉ **quản trị viên** được đặt `profile/role = Admin`, `profile/isAdmin` và `profile/permissions/users/admin` (người dùng thường vẫn sửa được hồ sơ, cài đặt và bộ lọc yêu thích của chính mình). Trước đây ai đăng nhập cũng tự nâng quyền được.
+- Nhánh dữ liệu nghiệp vụ (`$other`) chỉ cho tài khoản **đã có `users/{uid}/profile`**; tài khoản chỉ tạo hồ sơ qua quản trị viên (màn Quản trị hệ thống), không tự tạo.
+- **Trước khi publish:** mở Quản trị hệ thống và chắc chắn mọi người đang dùng đều có tên trong danh sách người dùng (có `profile`); tài khoản chỉ có trong Authentication mà không có hồ sơ sẽ mất quyền đọc/ghi dữ liệu cho tới khi quản trị viên tạo hồ sơ.
+- Kiểm thử logic rules: `tests/database-rules.test.mjs` (giả lập tối giản, không thay thế Firebase Emulator/Rules Playground).
+- Cũng nên tắt tự đăng ký tài khoản (Authentication → Settings) và giới hạn khoá API theo tên miền trong Google Cloud Console.

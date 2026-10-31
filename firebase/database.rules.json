@@ -37,12 +37,31 @@
     "users": {
       ".read": "auth != null",
       "$uid": {
-        ".write": "auth != null && (auth.uid === $uid || (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true))"
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+        "profile": {
+          ".write": "auth != null && auth.uid === $uid && data.exists()",
+          "role": {
+            ".validate": "newData.isString() && (!newData.val().toLowerCase().matches(/^\\s*admin\\s*$/) || (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true) || data.val() === newData.val())"
+          },
+          "isAdmin": {
+            ".validate": "newData.isBoolean() && (newData.val() !== true || (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true) || data.val() === true)"
+          },
+          "permissions": {
+            "users": {
+              "admin": {
+                ".validate": "newData.val() !== true || (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true) || data.val() === true"
+              }
+            }
+          }
+        },
+        "$child": {
+          ".write": "auth != null && auth.uid === $uid"
+        }
       }
     },
     "$other": {
-      ".read": "auth != null",
-      ".write": "auth != null"
+      ".read": "auth != null && root.child('users').child(auth.uid).child('profile').exists()",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('profile').exists()"
     },
     "claim_import_history": {
       ".read": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
