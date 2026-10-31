@@ -107,8 +107,8 @@ const KpiZonePage = (() => {
       return '<div class="kz-fact ' + (row.pass === null ? '' : row.pass ? 'ok' : 'miss') + '"><span>' + esc(row.label) + '</span><b>' + res + '</b><small>mục tiêu ' + (row.key === 'completion' ? '≥' : '≤') + ' ' + tgt + '</small></div>';
     }).join('');
     return '<section class="kz-ledger"><div class="kz-ledger-main"><span class="kz-ledger-title">Điểm KPI ' + label(c) + (c.estimate ? ' ' + estTag : '') + '</span>' +
-      '<div class="kz-big"><b>' + fmt.fmtScore(k.capped) + '</b><span>/ 1,0000</span></div>' +
-      '<div class="kz-ledger-sub"><span>Chưa giới hạn <b>' + fmt.fmtScore(k.uncapped) + '</b></span><span>so với ' + label(r.previous) + ' ' + delta(r.compare.capped, 'score') + '</span></div></div>' +
+      '<div class="kz-big"><b>' + fmt.fmtPct(k.uncapped, 2) + '</b><span>tổng KPI (' + fmt.fmtScore(k.uncapped) + ')</span></div>' +
+      '<div class="kz-ledger-sub"><span>Có giới hạn tỷ trọng <b>' + fmt.fmtPct(k.capped, 2) + '</b> (' + fmt.fmtScore(k.capped) + ' / 1,0000)</span><span>so với ' + label(r.previous) + ' ' + delta(r.compare.uncapped, 'score') + '</span></div></div>' +
       '<div class="kz-ledger-scale"><div class="kz-segs">' + segs + '</div><div class="kz-facts">' + facts + '</div></div></section>';
   }
 
