@@ -48,7 +48,7 @@ const KpiZonePage = (() => {
 
   // ----- Biểu đồ SVG nhẹ, không phụ thuộc thư viện -----
   function lineChart(points, o) {
-    const W = 320, H = 132, L = 10, R = 12, T = 20, B = 22;
+    const W = 320, H = 136, L = 10, R = 12, T = 28, B = 22;
     const vals = points.map(p => p.value).filter(v => v !== null && v !== undefined);
     if (vals.length < 2) return '<div class="kz-none">Chưa đủ dữ liệu</div>';
     let lo = Math.min(...vals, o.target), hi = Math.max(...vals, o.target);
@@ -62,9 +62,9 @@ const KpiZonePage = (() => {
     const ticks = points.map((p, i) => (i === 0 || i === lastIdx || (i % 3 === 0 && i < lastIdx - 1)) ? '<text x="' + x(i).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="' + (i === 0 ? 'start' : i === lastIdx ? 'end' : 'middle') + '" class="kz-tick">' + esc(p.label) + '</text>' : '').join('');
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="kz-svg" role="img" aria-label="' + esc(o.title) + '">' +
       '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(o.target).toFixed(1) + '" y2="' + y(o.target).toFixed(1) + '" class="kz-target"/>' +
-      '<text x="' + (W - R) + '" y="' + (y(o.target) - 4).toFixed(1) + '" text-anchor="end" class="kz-tick">mục tiêu ' + o.fmt(o.target) + '</text>' +
+      '<text x="' + L + '" y="9" text-anchor="start" class="kz-tick kz-tgt-label">┄ mục tiêu ' + o.fmt(o.target) + '</text>' +
       '<path d="' + path + '" class="kz-line"/>' + dots +
-      (last.value !== null && last.value !== undefined ? '<text x="' + (x(lastIdx) - 6).toFixed(1) + '" y="' + (y(last.value) - 9).toFixed(1) + '" text-anchor="end" class="kz-val">' + o.fmt(last.value) + '</text>' : '') + ticks + '</svg>';
+      (last.value !== null && last.value !== undefined ? '<text x="' + (x(lastIdx) - 6).toFixed(1) + '" y="' + (y(last.value) - 9).toFixed(1) + '" text-anchor="end" class="kz-val kz-val-last">' + o.fmt(last.value) + '</text>' : '') + ticks + '</svg>';
   }
 
   function barChart(trend) {
@@ -94,22 +94,27 @@ const KpiZonePage = (() => {
   // ----- Các khối -----
   function ledger(r) {
     const c = r.current, k = c.kpis;
-    const names = {completion: 'Hoàn thành', cost: 'CP bình quân', backlog: 'Tồn'};
-    const segs = k.rows.map(row => {
+    const names = {completion: 'Tỷ lệ hoàn thành zone', cost: 'CP bình quân', backlog: 'Tỉ lệ tồn hồ sơ'};
+    const cards = k.rows.map(row => {
       const fill = row.score === null ? 0 : Math.min(1, row.score / row.weight) * 100;
       const over = row.score !== null && row.score > row.weight;
-      return '<div class="kz-seg" style="flex:' + row.weight * 100 + ' 1 0"><div class="kz-track"><i class="' + (row.pass ? 'ok' : row.pass === false ? 'miss' : '') + '" style="width:' + fill.toFixed(1) + '%"></i></div>' +
-        '<div class="kz-segl"><b>' + names[row.key] + '</b><span>' + fmt.fmtScore(row.cappedScore) + ' / ' + String(row.weight).replace('.', ',') + (over ? ' <em title="Phần vượt tỷ trọng bị cắt">+' + dec(row.score - row.weight, 4) + ' bị cắt</em>' : '') + '</span></div></div>';
-    }).join('');
-    const facts = k.rows.map(row => {
-      const res = row.key === 'cost' ? fmt.fmtInt(row.result) : fmt.fmtPct(row.result, row.key === 'completion' ? 1 : 2);
+      const res = row.key === 'cost' ? fmt.fmtInt(row.result) : fmt.fmtPct(row.result, row.key === 'completion' ? 2 : 2);
       const tgt = row.key === 'cost' ? fmt.fmtInt(row.target) : fmt.fmtPct(row.target, 0);
-      return '<div class="kz-fact ' + (row.pass === null ? '' : row.pass ? 'ok' : 'miss') + '"><span>' + esc(row.label) + '</span><b>' + res + '</b><small>mục tiêu ' + (row.key === 'completion' ? '≥' : '≤') + ' ' + tgt + '</small></div>';
+      const state = row.pass === null ? '' : row.pass ? 'ok' : 'miss';
+      const badge = row.pass === null ? '' : '<em class="kz-state ' + state + '">' + (row.pass ? 'Đạt' : 'Chưa đạt') + '</em>';
+      return '<article class="kz-kpi ' + state + '"><header><span class="kz-kpi-name">' + names[row.key] + '</span><span class="kz-kpi-w">' + Math.round(row.weight * 100) + '%</span></header>' +
+        '<div class="kz-kpi-val"><b>' + res + '</b>' + badge + '</div>' +
+        '<div class="kz-kpi-tgt">Mục tiêu ' + (row.key === 'completion' ? '≥' : '≤') + ' ' + tgt + '</div>' +
+        '<div class="kz-track"><i style="width:' + fill.toFixed(1) + '%"></i></div>' +
+        '<footer><span>Điểm <b>' + fmt.fmtScore(row.score) + '</b> / ' + String(row.weight).replace('.', ',') + '</span>' +
+        (over ? '<span class="kz-cut" title="Phần vượt tỷ trọng bị cắt">cắt +' + dec(row.score - row.weight, 4) + '</span>' : '') + '</footer></article>';
     }).join('');
-    return '<section class="kz-ledger"><div class="kz-ledger-main"><span class="kz-ledger-title">Điểm KPI ' + label(c) + (c.estimate ? ' ' + estTag : '') + '</span>' +
-      '<div class="kz-big"><b>' + fmt.fmtPct(k.uncapped, 2) + '</b><span>tổng KPI (' + fmt.fmtScore(k.uncapped) + ')</span></div>' +
-      '<div class="kz-ledger-sub"><span>Có giới hạn tỷ trọng <b>' + fmt.fmtPct(k.capped, 2) + '</b> (' + fmt.fmtScore(k.capped) + ' / 1,0000)</span><span>so với ' + label(r.previous) + ' ' + delta(r.compare.uncapped, 'score') + '</span></div></div>' +
-      '<div class="kz-ledger-scale"><div class="kz-segs">' + segs + '</div><div class="kz-facts">' + facts + '</div></div></section>';
+    return '<section class="kz-ledger"><div class="kz-ledger-main"><span class="kz-ledger-title">Tổng KPI ' + label(c) + (c.estimate ? ' ' + estTag : '') + '</span>' +
+      '<div class="kz-big"><b>' + fmt.fmtPct(k.uncapped, 2) + '</b></div>' +
+      '<div class="kz-ledger-sub"><span>Điểm chưa giới hạn <b>' + fmt.fmtScore(k.uncapped) + '</b></span>' +
+      '<span>Có giới hạn tỷ trọng <b>' + fmt.fmtPct(k.capped, 2) + '</b> <small>(' + fmt.fmtScore(k.capped) + ' / 1,0000)</small></span>' +
+      '<span class="kz-vs">so với ' + label(r.previous) + ' ' + delta(r.compare.uncapped, 'score') + '</span></div></div>' +
+      '<div class="kz-kpis">' + cards + '</div></section>';
   }
 
   function insightsBlock(r) {

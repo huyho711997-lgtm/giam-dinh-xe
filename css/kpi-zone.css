@@ -27,28 +27,33 @@
 .kz-empty.kz-bad { color:var(--sf-rose); }
 
 /* Bảng điểm: khối nhấn duy nhất, nền tối cố định để nổi trên cả hai giao diện */
-.kz-ledger { display:grid; grid-template-columns:minmax(220px,300px) 1fr; gap:34px; padding:28px 32px; border-radius:24px; color:#f3eee2;
-  background:radial-gradient(120% 140% at 0% 0%,#2d3e34 0%,#1d2822 55%,#18211c 100%); box-shadow:0 18px 44px rgba(23,39,31,.22), inset 0 1px 0 rgba(255,255,255,.06); }
-.kz-ledger-title { font-size:13px; color:#cdbf9f; font-weight:600; }
-.kz-big { display:flex; align-items:baseline; gap:10px; margin:6px 0 10px; }
-.kz-big b { font-size:clamp(44px,6vw,64px); line-height:1; font-weight:800; letter-spacing:-.02em; color:#f0cf8c; }
-.kz-big span { font-size:15px; color:#a9ab9c; }
-.kz-ledger-sub { display:grid; gap:4px; font-size:12.5px; color:#bfc2b4; }
-.kz-ledger-sub b { color:#f3eee2; }
+.kz-ledger { display:grid; grid-template-columns:minmax(240px,320px) minmax(0,1fr); gap:32px; padding:32px 34px; border-radius:26px; color:#f3eee2; position:relative; overflow:hidden;
+  background:radial-gradient(90% 120% at 0% 0%,#34493c 0%,#1f2b25 52%,#161e19 100%); box-shadow:0 24px 54px rgba(20,34,27,.28), inset 0 1px 0 rgba(255,255,255,.08); }
+.kz-ledger::after { content:""; position:absolute; right:-80px; top:-80px; width:260px; height:260px; border-radius:50%; background:radial-gradient(circle,rgba(240,207,140,.12),transparent 70%); pointer-events:none; }
+.kz-ledger-main { display:flex; flex-direction:column; justify-content:center; gap:4px; min-width:0; position:relative; z-index:1; }
+.kz-ledger-title { font-size:12px; color:#cdbf9f; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.kz-big { margin:10px 0 14px; }
+.kz-big b { display:block; font-size:clamp(46px,7vw,68px); line-height:1; font-weight:800; letter-spacing:-.03em; color:#f0cf8c; overflow-wrap:anywhere; }
+.kz-ledger-sub { display:grid; gap:8px; font-size:13px; color:#bfc2b4; padding-top:14px; border-top:1px solid rgba(255,255,255,.1); }
+.kz-ledger-sub b { color:#f3eee2; } .kz-ledger-sub small { color:#979a8c; }
 .kz-ledger .kz-delta { color:#bfc2b4; } .kz-ledger .kz-delta.good { color:#8fd0b0; } .kz-ledger .kz-delta.bad { color:#eba39a; }
 .kz-ledger .kz-est { background:rgba(240,207,140,.14); color:#f0cf8c; border-color:rgba(240,207,140,.25); }
-.kz-ledger-scale { display:grid; gap:22px; align-content:center; min-width:0; }
-.kz-segs { display:flex; gap:6px; }
-.kz-seg { min-width:0; }
-.kz-track { height:22px; border-radius:7px; background:repeating-linear-gradient(135deg,rgba(255,255,255,.07) 0 5px,rgba(255,255,255,.03) 5px 10px); overflow:hidden; }
-.kz-track i { display:block; height:100%; border-radius:7px; background:#d6b36d; transition:width .5s cubic-bezier(.2,.7,.2,1); }
-.kz-track i.ok { background:linear-gradient(90deg,#6fbf9c,#9ad8b9); } .kz-track i.miss { background:linear-gradient(90deg,#c99a4b,#e8c786); }
-.kz-segl { display:grid; gap:1px; margin-top:8px; font-size:12px; }
-.kz-segl b { color:#f3eee2; font-weight:700; } .kz-segl span { color:#bfc2b4; } .kz-segl em { font-style:normal; color:#f0cf8c; margin-left:4px; }
-.kz-facts { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
-.kz-fact { display:grid; gap:2px; padding:12px 14px; border-radius:12px; background:rgba(255,255,255,.05); border-left:3px solid #6b6f60; }
-.kz-fact.ok { border-left-color:#6fbf9c; } .kz-fact.miss { border-left-color:#e08f84; }
-.kz-fact span { font-size:11.5px; color:#bfc2b4; } .kz-fact b { font-size:20px; color:#f3eee2; font-weight:750; } .kz-fact small { font-size:11px; color:#979a8c; }
+.kz-kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; align-content:center; min-width:0; position:relative; z-index:1; }
+.kz-kpi { display:flex; flex-direction:column; gap:8px; padding:18px 18px 16px; border-radius:18px; background:rgba(255,255,255,.055); border:1px solid rgba(255,255,255,.09); min-width:0; }
+.kz-kpi.ok { border-top:3px solid #6fbf9c; } .kz-kpi.miss { border-top:3px solid #e08f84; }
+.kz-kpi header { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.kz-kpi-name { font-size:12.5px; font-weight:700; color:#e6e0cf; line-height:1.35; }
+.kz-kpi-w { flex:none; font-size:11px; font-weight:800; color:#f0cf8c; padding:3px 8px; border-radius:999px; background:rgba(240,207,140,.14); }
+.kz-kpi-val { display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin-top:4px; }
+.kz-kpi-val b { font-size:clamp(22px,2.4vw,28px); line-height:1.1; font-weight:800; color:#f3eee2; letter-spacing:-.01em; }
+.kz-state { font-style:normal; font-size:10.5px; font-weight:800; padding:3px 9px; border-radius:999px; }
+.kz-state.ok { color:#9ad8b9; background:rgba(111,191,156,.16); } .kz-state.miss { color:#eba39a; background:rgba(224,143,132,.16); }
+.kz-kpi-tgt { font-size:11.5px; color:#979a8c; }
+.kz-track { height:8px; border-radius:99px; background:rgba(255,255,255,.09); overflow:hidden; margin-top:4px; }
+.kz-track i { display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,#c99a4b,#e8c786); transition:width .5s cubic-bezier(.2,.7,.2,1); }
+.kz-kpi.ok .kz-track i { background:linear-gradient(90deg,#6fbf9c,#9ad8b9); }
+.kz-kpi footer { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 10px; font-size:12px; color:#bfc2b4; }
+.kz-kpi footer b { color:#f3eee2; } .kz-cut { color:#f0cf8c; font-weight:700; }
 
 /* Khối thường: nhẹ hơn, phân cấp bằng khoảng trắng thay vì khung dày */
 .kz-card { padding:22px 24px; border-radius:18px; box-shadow:none; }
@@ -130,8 +135,8 @@
 .kz-filters label { display:grid; gap:4px; font-size:11.5px; color:var(--sf-muted); font-weight:600; }
 .kz-filters select { min-height:38px; padding:0 10px; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-paper); color:var(--sf-ink); font:inherit; font-size:13px; }
 
-@media (max-width:900px) { .kz-ledger { grid-template-columns:1fr; gap:22px; padding:22px 20px; } .kz-split { grid-template-columns:1fr; } }
-@media (max-width:640px) { .kz-card { padding:16px 14px; } .kz-export { margin-left:0; width:100%; } .kz-hrow { grid-template-columns:96px 1fr 38px 34px; gap:8px; } }
+@media (max-width:900px) { .kz-ledger { grid-template-columns:1fr; gap:24px; padding:26px 22px; } .kz-split { grid-template-columns:1fr; } }
+@media (max-width:640px) { .kz-ledger { padding:22px 16px; border-radius:20px; } .kz-kpis { grid-template-columns:1fr; } .kz-card { padding:16px 14px; } .kz-export { margin-left:0; width:100%; } .kz-hrow { grid-template-columns:96px 1fr 38px 34px; gap:8px; } }
 @media (prefers-reduced-motion:reduce) { .kz-track i, .kz-chip span { transition:none; } }
 
 /* Zone BT map */
@@ -144,3 +149,23 @@
 .kz-zones[open] > summary::before { content:'▾'; }
 .kz-zbody { padding:0 16px 16px; }
 .kz-zbody select { min-height:36px; padding:0 8px; border:1px solid var(--sf-line); border-radius:9px; background:var(--sf-paper); color:var(--sf-ink); font:inherit; font-size:12.5px; }
+
+/* Khoảng thở giữa các khối: vùng nội dung là grid có gap (trước đây các khối dính sát nhau) */
+.kz-workspace { gap:24px; }
+[data-kz-body] { display:grid; gap:24px; min-width:0; }
+[data-kz-body] > * { min-width:0; }
+.kz-split, .kz-pair { gap:24px; }
+.kz-card { border:1px solid var(--sf-line); background:var(--sf-paper); box-shadow:0 1px 2px rgba(23,39,31,.04), 0 10px 28px rgba(23,39,31,.05); }
+.kz-head { padding-bottom:12px; border-bottom:1px solid var(--sf-line); margin-bottom:18px; }
+.kz-head h2 { font-size:14.5px; letter-spacing:.005em; }
+.kz-insight-card .kz-insights { gap:0; } .kz-insights li { padding:14px 0; } .kz-insights li:first-child { padding-top:0; }
+.kz-gdvs { padding:2px 0; }
+.kz-zones { box-shadow:0 1px 2px rgba(23,39,31,.04); overflow:hidden; }
+.kz-zones > summary { padding:14px 18px; gap:6px 12px; align-items:center; }
+.kz-zones > summary small { flex-basis:100%; padding-left:0; line-height:1.5; }
+.kz-zbody { padding:4px 18px 18px; display:grid; gap:14px; }
+.kz-zbody p { margin:0; line-height:1.6; }
+@media (max-width:640px) { .kz-workspace, [data-kz-body] { gap:18px; } .kz-split, .kz-pair { gap:18px; } }
+.kz-tgt-label { fill:var(--sf-rose); opacity:.85; }
+.kz-val-last { paint-order:stroke; stroke:var(--sf-paper); stroke-width:3px; stroke-linejoin:round; }
+.kz-pair { align-items:stretch; }
