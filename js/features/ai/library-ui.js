@@ -3,7 +3,7 @@ const TascoLibrary = (() => {
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch]));
   const STATUS = {dang_hieu_luc: 'Đang hiệu lực', het_hieu_luc: 'Hết hiệu lực', da_thay_the: 'Đã thay thế'};
   const isAdmin = () => { const p = typeof activeUserProfile !== 'undefined' ? activeUserProfile : null; return !!p && (String(p.role || '').trim().toLowerCase() === 'admin' || p.isAdmin === true || p.permissions?.users?.admin === true); };
-  const toast = (message, type) => { if (typeof showToast === 'function') showToast(message, type); };
+  const toast = (message, type) => { if (typeof triggerToast === 'function') triggerToast(message, type === 'error' ? 'warning' : type); };
   let overlay = null, draft = null;
 
   function shell(title, kicker, small) {
@@ -75,10 +75,10 @@ const TascoLibrary = (() => {
     const m = draft.meta;
     body.innerHTML = (draft.note ? '<p class="dlib-note">' + esc(draft.note) + ' Hãy đọc lại, chữ nhận dạng có thể sai.</p>' : '')
       + (draft.truncated ? '<p class="dlib-note dlib-note--bad">Tài liệu quá dài, chỉ giữ ' + draft.chunks.length + ' đoạn đầu. Hãy tách thành nhiều tài liệu.</p>' : '')
-      + '<div class="dlib-grid"><label class="wide">Tên tài liệu<input data-f="ten" value="' + esc(m.ten) + '" maxlength="160"></label><label>Số hiệu<input data-f="soHieu" value="' + esc(m.soHieu || '') + '" maxlength="80"></label><label>Hiệu lực từ<input type="date" data-f="hieuLucTu" value="' + esc(m.hieuLucTu || '') + '"></label>'
-      + '<label>Trạng thái<select data-f="trangThai">' + Object.keys(STATUS).map(key => '<option value="' + key + '"' + (m.trangThai === key ? ' selected' : '') + '>' + STATUS[key] + '</option>').join('') + '</select></label><label>Thay thế tài liệu số<input data-f="thayThe" value="' + esc(m.thayThe || '') + '" maxlength="80"></label>'
-      + '<label class="wide">Đường dẫn bản gốc (Drive/SharePoint, tuỳ chọn)<input data-f="nguon" value="' + esc(m.nguon || '') + '" placeholder="https://…"></label></div>'
-      + '<p class="dlib-note dlib-note--ok">' + draft.chunks.length + ' đoạn tra cứu. Mở từng đoạn để sửa; bỏ tích những đoạn không cần (mục lục, trang bìa).</p><div class="dlib-chunks">'
+      + '<div class="dlib-grid"><label class="wide">Tên tài liệu<input autocomplete="off" data-f="ten" value="' + esc(m.ten) + '" maxlength="160"></label><label>Số hiệu<input autocomplete="off" data-f="soHieu" value="' + esc(m.soHieu || '') + '" maxlength="80"></label><label>Hiệu lực từ<input type="date" data-f="hieuLucTu" value="' + esc(m.hieuLucTu || '') + '"></label>'
+      + '<label>Trạng thái<select data-f="trangThai">' + Object.keys(STATUS).map(key => '<option value="' + key + '"' + (m.trangThai === key ? ' selected' : '') + '>' + STATUS[key] + '</option>').join('') + '</select></label><label>Thay thế tài liệu số<input autocomplete="off" data-f="thayThe" value="' + esc(m.thayThe || '') + '" maxlength="80"></label>'
+      + '<label class="wide">Đường dẫn bản gốc (Drive/SharePoint, tuỳ chọn)<input autocomplete="off" data-f="nguon" value="' + esc(m.nguon || '') + '" placeholder="https://…"></label></div>'
+      + '<div data-dl-err></div><p class="dlib-note dlib-note--ok">' + draft.chunks.length + ' đoạn tra cứu. Mở từng đoạn để sửa; bỏ tích những đoạn không cần (mục lục, trang bìa).</p><div class="dlib-chunks">'
       + draft.chunks.map((chunk, index) => '<details class="dlib-chunk"><summary><input type="checkbox" data-keep="' + index + '" checked><span>' + esc(chunk.t) + '</span><small>' + chunk.x.length + ' ký tự</small></summary><textarea data-text="' + index + '">' + esc(chunk.x) + '</textarea></details>').join('') + '</div>';
     foot.innerHTML = '<button type="button" class="dlib-btn" data-dl-back>← Chọn lại</button><button type="button" class="dlib-btn dlib-btn--primary" data-dl-save>Lưu vào thư viện</button>';
     foot.querySelector('[data-dl-back]').addEventListener('click', openUpload);
@@ -87,11 +87,14 @@ const TascoLibrary = (() => {
       const button = event.currentTarget;
       const meta = {...m};
       body.querySelectorAll('[data-f]').forEach(field => { meta[field.dataset.f] = field.value.trim(); });
-      if (meta.nguon && !TascoLibStore.safeUrl(meta.nguon)) { toast('Đường dẫn bản gốc phải bắt đầu bằng http:// hoặc https://', 'error'); return; }
+      // Lỗi hiện ngay trong hộp thoại (thông báo nổi có thể bị che bởi hộp thoại này).
+      const fail = text => { const box = body.querySelector('[data-dl-err]'); box.innerHTML = '<p class="dlib-note dlib-note--bad">' + esc(text) + '</p>'; box.scrollIntoView({block: 'nearest'}); };
+      body.querySelector('[data-dl-err]').innerHTML = '';
+      if (meta.nguon && !TascoLibStore.safeUrl(meta.nguon)) { fail('Đường dẫn bản gốc phải là liên kết bắt đầu bằng http:// hoặc https:// (ví dụ link Google Drive). Để trống nếu không có.'); body.querySelector('[data-f="nguon"]').focus(); return; }
       const chunks = draft.chunks.map((chunk, index) => ({t: chunk.t, x: body.querySelector('[data-text="' + index + '"]').value})).filter((chunk, index) => body.querySelector('[data-keep="' + index + '"]').checked && chunk.x.trim());
-      if (!chunks.length) { toast('Chưa chọn đoạn nào để lưu.', 'error'); return; }
+      if (!chunks.length) { fail('Chưa chọn đoạn nào để lưu.'); return; }
       button.disabled = true; button.textContent = 'Đang lưu…';
-      try { await TascoLibStore.save({meta, chunks}); toast('Đã lưu tài liệu vào thư viện', 'success'); draft = null; open(); } catch (error) { button.disabled = false; button.textContent = 'Lưu vào thư viện'; toast(error.message || 'Không lưu được (cần quyền quản trị).', 'error'); }
+      try { await TascoLibStore.save({meta, chunks}); toast('Đã lưu tài liệu vào thư viện', 'success'); draft = null; open(); } catch (error) { button.disabled = false; button.textContent = 'Lưu vào thư viện'; fail('Không lưu được: ' + (error?.message || 'lỗi không rõ') + (/permission|PERMISSION/.test(String(error?.code || error?.message)) ? ' — tài khoản chưa có quyền ghi thư viện (cần quản trị viên, hoặc rules Firebase chưa cập nhật).' : '')); }
     });
   }
 
