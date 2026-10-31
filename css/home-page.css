@@ -151,3 +151,14 @@ body.light-mode .hp-page {
   .hp-hero-kpis { grid-template-columns: repeat(var(--hp-kpis,4),minmax(0,1fr)); }
 }
 @media (prefers-reduced-motion: reduce) { .hp-page *, .hp-page *::before { transition: none !important; } }
+
+/* Hero: KPI Zone (Admin) / KPI cá nhân (GĐV) – hiện dòng phụ và trạng thái đạt/chưa đạt */
+.hp-hero-kpis--score .hp-hero-kpi { cursor: pointer; }
+.hp-hero-kpis--score .hp-hero-kpi em { display: block; color: rgba(236,234,226,.62); font-size: 11px; font-weight: 600; line-height: 1.4; letter-spacing: 0; }
+.hp-hero-kpis--score .hp-hero-kpi:hover em { color: rgba(236,234,226,.85); }
+.hp-hero-kpis--score .hp-hero-kpi.is-ok { box-shadow: inset 0 3px 0 #6fbf9c; }
+.hp-hero-kpis--score .hp-hero-kpi.is-miss { box-shadow: inset 0 3px 0 #e08f84; }
+.hp-hero-kpis--score .hp-hero-kpi.is-ok strong { color: #9ad8b9; }
+.hp-hero-kpis--score .hp-hero-kpi.is-miss strong { color: #f0b0a6; }
+.hp-hero-kpis--score .hp-hero-kpi.is-lead strong { color: transparent; }
+.hp-hero-kpis--score { grid-template-columns: repeat(2, minmax(210px, 1fr)); }

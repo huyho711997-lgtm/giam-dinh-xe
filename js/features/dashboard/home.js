@@ -93,12 +93,61 @@
     </button>`;
   }
 
+
+  // ---- Số liệu KPI cho băng hero: Admin xem KPI cả Zone; GĐV xem số liệu & KPI của riêng mình ----
+  // Dùng đúng KpiZoneCalc của trang "Báo cáo KPI bồi thường Zone" nên hai nơi luôn cùng một con số.
+  function openKpiZonePage() {
+    try { activeGdvReportView = 'kpi_zone'; } catch (_) {}
+    switchWorkspaceTab('gdv_report');
+  }
+  window.openHomeKpiZone = openKpiZonePage;
+
+  function heroKpiData(isAdmin) {
+    try {
+      if (typeof KpiZoneCalc === 'undefined' || typeof cachedPendingClaimsPayload === 'undefined') return null;
+      const K = KpiZoneCalc;
+      const prep = K.fromClaims(cachedPendingClaimsPayload || {}, (typeof PENDING_STATUS_MAP !== 'undefined' && PENDING_STATUS_MAP) || {});
+      if (!prep.records.length || !prep.asOf) return null;
+      const p = K.partsOf(prep.asOf), period = 'T' + p.m + '.' + p.y;
+      const base = {year: p.y, month: p.m, asOf: prep.asOf};
+      if (isAdmin) {
+        let zoneMap = {};
+        try { zoneMap = JSON.parse(localStorage.getItem('kpiZoneBtMap:v1') || '{}') || {}; } catch (_) { zoneMap = {}; }
+        const c = K.computeMonth(prep.records, {...base, gdvs: K.DEFAULT_GDVS, zoneMap});
+        const row = key => c.kpis.rows.find(r => r.key === key) || {};
+        const state = r => (r.pass === null || r.pass === undefined ? '' : r.pass ? 'ok' : 'miss');
+        return {mode: 'zone', period, tiles: [
+          {label: 'KPI Zone ' + period, text: K.fmtPct(c.kpis.uncapped, 2), sub: 'Điểm ' + K.fmtScore(c.kpis.uncapped) + ' · có giới hạn ' + K.fmtPct(c.kpis.capped, 1)},
+          {label: 'Tỷ lệ hoàn thành', text: K.fmtPct(row('completion').result, 2), sub: 'Mục tiêu ≥ 90% · ' + K.fmtInt(c.totals.approved) + '/' + K.fmtInt(c.totals.issued) + ' hồ sơ', state: state(row('completion'))},
+          {label: 'CP bình quân', text: K.fmtInt(row('cost').result), sub: 'Mục tiêu ≤ 3.500.000 đ', state: state(row('cost'))},
+          {label: 'Tỉ lệ tồn', text: K.fmtPct(row('backlog').result, 2), sub: 'Mục tiêu ≤ 10% · tồn ' + K.fmtInt(c.totals.ton) + ' hồ sơ', state: state(row('backlog'))}
+        ]};
+      }
+      const profile = (typeof activeUserProfile !== 'undefined' && activeUserProfile) || {};
+      const me = K.listGdvs(prep.records).find(g => [profile.displayName, profile.email].some(v => v && K.nameKey(v) === K.nameKey(g.name)));
+      if (!me) return null;
+      const c = K.computeMonth(prep.records, {...base, gdvs: [me.name], zoneMap: {}});
+      const done = c.kpis.rows.find(r => r.key === 'completion') || {};
+      return {mode: 'gdv', period, tiles: [
+        {label: 'Hồ sơ phát sinh ' + period, text: K.fmtInt(c.totals.issued), sub: 'Mở trong tháng'},
+        {label: 'Đã duyệt', text: K.fmtInt(c.totals.approved), sub: 'Tỷ lệ hoàn thành ' + K.fmtPct(done.result, 1)},
+        {label: 'Chưa duyệt', text: K.fmtInt(c.unapproved.length), sub: 'Mở trong tháng, chờ duyệt', state: c.unapproved.length ? 'miss' : 'ok'},
+        {label: 'KPI của bạn', text: K.fmtPct(c.kpis.uncapped, 2), sub: 'Điểm ' + K.fmtScore(c.kpis.uncapped) + ' · ' + esc(me.name)}
+      ]};
+    } catch (error) {
+      console.warn('Không tính được KPI trang chủ:', error);
+      return null;
+    }
+  }
+
   window.renderHomeDashboardPage = function (o) {
     const now = new Date();
     const name = (typeof activeUserProfile !== 'undefined' && activeUserProfile && (activeUserProfile.displayName || activeUserProfile.email)) || 'bạn';
     const st = o.showPending ? pendingStats() : null;
 
-    const kpis = [
+    const isAdminUser = typeof activeUserProfile !== 'undefined' && activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin';
+    const kpiData = o.showPending || isAdminUser ? heroKpiData(isAdminUser) : null;
+    const kpis = kpiData ? [] : [
       o.showPending && { tab:'pending', label:'Hồ sơ bồi thường tồn', value:o.totalPendingClaims },
       o.showList && { tab:'list', label:'Ca giám định trực tuyến', value:o.totalCases },
       o.showAccountingView && { tab:'accounting_transfer', label:'Đợt bàn giao kế toán', value:o.totalTransfers },
@@ -137,7 +186,13 @@
               <button type="button" class="hp-btn hp-btn--glass" onclick="switchWorkspaceTab('shared_forms')">${svg('forms')}<span>Biểu mẫu</span></button>
             </div>
           </div>
-          ${kpis.length ? `<div class="hp-hero-kpis" style="--hp-kpis:${kpis.length}">
+          ${kpiData ? `<div class="hp-hero-kpis hp-hero-kpis--score" style="--hp-kpis:${kpiData.tiles.length}" aria-label="${kpiData.mode === 'zone' ? 'KPI Zone' : 'KPI của bạn'}">
+            ${kpiData.tiles.map((k, i) => `<button type="button" class="hp-hero-kpi${i === 0 ? ' is-lead' : ''}${k.state ? ' is-' + k.state : ''}" onclick="openHomeKpiZone()" title="Mở Báo cáo KPI bồi thường Zone">
+              <span>${esc(k.label)}</span>
+              <strong>${esc(k.text)}</strong>
+              <em>${k.sub}</em>
+            </button>`).join('')}
+          </div>` : kpis.length ? `<div class="hp-hero-kpis" style="--hp-kpis:${kpis.length}">
             ${kpis.map((k, i) => `<button type="button" class="hp-hero-kpi${i === 0 ? ' is-lead' : ''}" onclick="switchWorkspaceTab('${k.tab}')">
               <span>${k.label}</span>
               <strong>${fmt(k.value)}</strong>
