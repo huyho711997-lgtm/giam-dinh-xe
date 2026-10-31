@@ -284,3 +284,19 @@
 #tasco-ai-panel.tasco-ai-max .tasco-ai-ico-min { display:block; }
 body:has(#tasco-ai-panel.tasco-ai-max.active) #tasco-ai-btn { visibility:hidden; }
 @media (max-width:640px) { #tasco-ai-panel.tasco-ai-max .msg-bubble { max-width:92%; } }
+
+/* Gọn hơn: thanh đầu một dòng, hàng gợi ý nhỏ để nhường chỗ cho nội dung chat */
+#tasco-ai-panel .tasco-ai-header { min-height:58px; padding:9px 12px; gap:8px; }
+#tasco-ai-panel .tasco-ai-brand { gap:9px; flex:1 1 auto; overflow:hidden; }
+#tasco-ai-panel .tasco-ai-brand__mark { width:34px; height:34px; flex-basis:34px; border-radius:11px; }
+#tasco-ai-panel .tasco-ai-brand__mark svg { width:19px; height:19px; }
+#tasco-ai-panel .tasco-ai-brand__title { font-size:14px; white-space:nowrap; gap:6px; }
+#tasco-ai-panel .tasco-ai-brand__subtitle { margin-top:1px; font-size:8.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#tasco-ai-panel .tasco-ai-status { white-space:nowrap; padding:2px 5px; }
+#tasco-ai-panel .tasco-ai-header__actions { gap:4px; flex:0 0 auto; }
+#tasco-ai-panel .tasco-ai-header__btn { width:28px; height:28px; border-radius:9px; }
+#tasco-ai-panel .tasco-ai-header__btn svg { width:14px; height:14px; }
+#tasco-ai-panel .tasco-ai-footer { padding:8px 11px 9px; }
+#tasco-ai-panel .tasco-ai-suggest { gap:5px; margin-bottom:7px; }
+#tasco-ai-panel .tasco-ai-suggest__chip { padding:3px 8px; font-size:11px; }
+#tasco-ai-panel .tasco-ai-footer__note { margin-top:5px; }
