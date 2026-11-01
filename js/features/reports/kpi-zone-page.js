@@ -495,11 +495,16 @@ const KpiZonePage = (() => {
     const title = card.dataset.kzTitle || (card.querySelector('.kz-head h2') || {}).textContent || 'bao-cao';
     button.disabled = true;
     try {
+      try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (_) { /* không chặn việc tải ảnh */ }
       const bg = (getComputedStyle(card).backgroundColor || '').replace(/\s/g, '') === 'rgba(0,0,0,0)' ? '#ffffff' : getComputedStyle(card).backgroundColor;
       const canvas = await html2canvas(card, {
         scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)), backgroundColor: bg, useCORS: true, logging: false,
         ignoreElements: el => el.hasAttribute && (el.hasAttribute('data-kz-img') || el.hasAttribute('data-kz-xls')),
         onclone: (doc, clone) => {
+          // html2canvas vẽ chữ bằng canvas, không hỗ trợ số cùng độ rộng/kerning/ligature của font web -> chữ bị lệch, dính. Tắt các tính năng đó trong bản chụp.
+          const fix = doc.createElement('style');
+          fix.textContent = '*{font-variant-numeric:normal!important;font-feature-settings:normal!important;font-kerning:none!important;font-variant-ligatures:none!important;letter-spacing:normal!important;text-rendering:auto!important;-webkit-font-smoothing:antialiased}';
+          doc.head.appendChild(fix);
           // Bảng cuộn: mở rộng để ảnh chứa đủ dòng.
           clone.querySelectorAll('.kz-scroll, .kz-tablewrap').forEach(el => { el.style.maxHeight = 'none'; el.style.overflow = 'visible'; });
           // Ô nhiệt dùng color-mix() mà html2canvas chưa hiểu -> thay bằng rgba tính sẵn.
