@@ -170,31 +170,6 @@ body.light-mode .hp-page {
   color: #f4d9a3; background: linear-gradient(135deg, rgba(190,60,60,.28), rgba(216,180,109,.16)); border: 1px solid rgba(216,180,109,.35); vertical-align: middle; }
 .hp-season svg { color: #f4d9a3; }
 
-/* Trang cấu hình của Admin */
-.seasonal-admin { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-sm); display: grid; gap: 22px; }
-.seasonal-admin__head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.seasonal-admin__head h3 { margin: 0; font-size: 17px; font-weight: 850; color: var(--text-main); }
-.seasonal-admin__head p { margin: 3px 0 0; font-size: 12.5px; color: var(--text-muted); max-width: 640px; }
-.seasonal-admin__head > div { flex: 1 1 320px; }
-.seasonal-admin__icon { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: rgba(190,60,60,.12); color: #c0504d; border: 1px solid rgba(190,60,60,.28); }
-.seasonal-admin__icon svg { width: 20px; height: 20px; }
-.seasonal-admin__state { padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; background: var(--bg-soft); color: var(--text-muted); border: 1px solid var(--border); }
-.seasonal-admin__state.is-on { background: rgba(34,160,107,.12); color: #1f9d68; border-color: rgba(34,160,107,.35); }
-.seasonal-admin__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px 24px; }
-.seasonal-field { display: grid; gap: 8px; align-content: start; }
-.seasonal-field--wide { grid-column: 1 / -1; }
-.seasonal-field > label:first-child { font-size: 12px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: .04em; }
-.seasonal-field small { font-size: 11.5px; color: var(--text-muted); line-height: 1.45; }
-.seasonal-seg { display: inline-flex; padding: 3px; gap: 3px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px; flex-wrap: wrap; }
-.seasonal-seg label { margin: 0; cursor: pointer; }
-.seasonal-seg input { position: absolute; opacity: 0; pointer-events: none; }
-.seasonal-seg span { display: block; padding: 8px 14px; border-radius: 9px; font-size: 12.5px; font-weight: 700; color: var(--text-muted); }
-.seasonal-seg input:checked + span { background: var(--surface); color: var(--text-main); box-shadow: 0 1px 4px rgba(0,0,0,.18); outline: 1px solid var(--border); }
-.seasonal-seg input:focus-visible + span { outline: 2px solid var(--primary); }
-.seasonal-dates { display: flex; align-items: center; gap: 10px; }
-.seasonal-dates input { width: 96px; text-align: center; }
-.seasonal-check { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; font-weight: 600; color: var(--text-main); cursor: pointer; }
-.seasonal-admin__actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .season-snow-btn[hidden] { display: none !important; }
 .season-snow-btn { color: #9fc4e8; }
 .season-snow-btn.is-off { color: var(--text-muted); }
