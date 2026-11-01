@@ -441,7 +441,7 @@ const KpiZonePage = (() => {
     const body = rows.map((row, i) => '<tr data-bn-row="' + esc(row.id) + '"><td class="kz-bn-n"><b>' + (i + 1) + '</b><button type="button" class="kz-bn-del" data-bn-del="' + esc(row.id) + '" title="Bỏ dòng này khỏi báo cáo" aria-label="Bỏ dòng ' + (i + 1) + '">×</button></td>' + BN.COLUMNS.map(col => cell(row, col.key)).join('') + '</tr>').join('');
     const head = '<tr><th class="kz-bn-n">Stt</th>' + BN.COLUMNS.map(col => '<th>' + esc(col.label) + '</th>').join('') + '</tr>';
     const note = '<p class="kz-note">Nguyên nhân và hành động là <b>gợi ý suy ra từ số liệu</b>, cần Trưởng Zone xác nhận với thực tế trước khi gửi cấp trên. Nhấp vào ô để sửa; bản sửa lưu trên máy này theo từng tháng. Ô có nền vàng nhạt do AI soạn; dấu ⚠ nghĩa là có con số AI viết chưa đối chiếu được với dữ liệu. AI chỉ nhận số liệu tổng hợp (không có tên khách hàng, biển số, mã hồ sơ).</p>';
-    return block('Điểm nghẽn & đề xuất xử lý (báo cáo cấp trên)', notice + summary + '<div class="kz-tablewrap kz-bn-wrap"><table class="kz-table kz-bn-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' + note, tools, 'kz-bn-card');
+    return block('Điểm nghẽn & đề xuất xử lý<span class="kz-bn-sub"> (báo cáo cấp trên)</span>', notice + summary + '<div class="kz-tablewrap kz-bn-wrap"><table class="kz-table kz-bn-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' + note, tools, 'kz-bn-card');
   }
 
   function bnRepaint() {
@@ -678,6 +678,8 @@ const KpiZonePage = (() => {
           fix.textContent = '*{font-variant-numeric:normal!important;font-feature-settings:normal!important;font-kerning:none!important;font-variant-ligatures:none!important;letter-spacing:normal!important;text-rendering:auto!important;-webkit-font-smoothing:antialiased}';
           doc.head.appendChild(fix);
           if (wide > card.offsetWidth) { clone.style.width = wide + 'px'; clone.style.maxWidth = 'none'; }
+          // Ảnh chỉ giữ bảng: bỏ phụ đề tiêu đề, thông báo AI, khung tóm tắt và ghi chú chân bảng.
+          clone.querySelectorAll('.kz-bn-sub, .kz-bn-notice, .kz-bn-summary, .kz-bn-card .kz-note').forEach(el => el.remove());
           // Ô sửa được: bỏ viền/khung sửa khi chụp.
           clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
           // Bảng cuộn: mở rộng để ảnh chứa đủ dòng.
