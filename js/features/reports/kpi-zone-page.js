@@ -43,7 +43,8 @@ const KpiZonePage = (() => {
     return '<span class="kz-delta ' + (flat ? '' : good ? 'good' : 'bad') + '">' + (flat ? '' : up ? '▲ ' : '▼ ') + text + '</span>';
   };
   const imgBtn = '<button type="button" class="kz-img" data-kz-img title="Tải ảnh khối này về máy" aria-label="Tải ảnh về máy"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>Tải ảnh</span></button>';
-  const block = (title, inner, extra = '', cls = '') => '<section class="sf-library kz-card ' + cls + '"><div class="kz-head"><h2>' + title + '</h2><span class="kz-head-tools">' + extra + imgBtn + '</span></div>' + inner + '</section>';
+  const xlsBtn = '<button type="button" class="kz-img kz-xls" data-kz-xls title="Xuất bảng này ra Excel" aria-label="Xuất Excel"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9.5 12.5l5 5M14.5 12.5l-5 5"/></svg><span>Xuất Excel</span></button>';
+  const block = (title, inner, extra = '', cls = '') => '<section class="sf-library kz-card ' + cls + '"><div class="kz-head"><h2>' + title + '</h2><span class="kz-head-tools">' + extra + (inner.indexOf('<table') >= 0 ? xlsBtn : '') + imgBtn + '</span></div>' + inner + '</section>';
   const table = (heads, rows, foot, cls = '') => '<div class="kz-tablewrap"><table class="kz-table ' + cls + '"><thead><tr>' + heads.map((h, i) => '<th' + (i ? ' class="n"' : '') + '>' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody>' + (foot ? '<tfoot>' + foot + '</tfoot>' : '') + '</table></div>';
   const estTag = '<em class="kz-est">ước tính</em>';
 
@@ -373,6 +374,8 @@ const KpiZonePage = (() => {
     host.addEventListener('click', event => {
       if (onDropdownClick(event)) return;
       if (event.target.closest('[data-kz-export]')) exportExcel();
+      const xls = event.target.closest('[data-kz-xls]');
+      if (xls) { const card = xls.closest('.kz-card'); if (card) downloadExcel(card, xls); return; }
       const img = event.target.closest('[data-kz-img]');
       if (img) { const card = img.closest('.kz-card, .kz-ledger'); if (card) downloadImage(card, img); return; }
       const step = event.target.closest('[data-kz-step]');
@@ -495,7 +498,7 @@ const KpiZonePage = (() => {
       const bg = (getComputedStyle(card).backgroundColor || '').replace(/\s/g, '') === 'rgba(0,0,0,0)' ? '#ffffff' : getComputedStyle(card).backgroundColor;
       const canvas = await html2canvas(card, {
         scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)), backgroundColor: bg, useCORS: true, logging: false,
-        ignoreElements: el => el.hasAttribute && el.hasAttribute('data-kz-img'),
+        ignoreElements: el => el.hasAttribute && (el.hasAttribute('data-kz-img') || el.hasAttribute('data-kz-xls')),
         onclone: (doc, clone) => {
           // Bảng cuộn: mở rộng để ảnh chứa đủ dòng.
           clone.querySelectorAll('.kz-scroll, .kz-tablewrap').forEach(el => { el.style.maxHeight = 'none'; el.style.overflow = 'visible'; });
@@ -518,6 +521,39 @@ const KpiZonePage = (() => {
       link.href = url; link.download = name; document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
       toast('Đã tải ảnh ' + name, 'success');
     } catch (error) { toast('Không tải được ảnh: ' + (error && error.message || 'lỗi không xác định'), 'error'); }
+    finally { button.disabled = false; }
+  }
+
+  // ----- Xuất Excel từng bảng (đúng như đang hiển thị, kể cả bộ lọc) -----
+  function cellValue(text) {
+    const t = String(text || '').replace(/\s+/g, ' ').trim();
+    if (/^-?\d{1,3}(\.\d{3})+( ?đ)?$/.test(t) || /^-?\d+( ?đ)?$/.test(t)) return {v: Number(t.replace(/[^\d-]/g, '')), z: '#,##0'};
+    if (/^-?\d+(,\d+)?%$/.test(t)) return {v: Number(t.replace('%', '').replace(',', '.')) / 100, z: '0.00%'};
+    if (/^-?\d+,\d+$/.test(t)) return {v: Number(t.replace(',', '.')), z: '0.0000'};
+    return {v: t, z: null};
+  }
+  async function downloadExcel(card, button) {
+    const tables = [...card.querySelectorAll('table')];
+    if (!tables.length) return;
+    const title = ((card.querySelector('.kz-head h2') || {}).textContent || 'Bao cao').replace(/\s+/g, ' ').trim();
+    button.disabled = true;
+    try {
+      const XLSX = await loadXlsx(), book = XLSX.utils.book_new(), used = new Set();
+      tables.forEach((table, index) => {
+        const rows = [...table.querySelectorAll('tr')].map(tr => [...tr.children].map(td => cellValue(td.textContent)));
+        const aoa = [[title + ' · ' + (report ? label(report.current) : monthValue)], [], ...rows.map(r => r.map(c => c.v))];
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        rows.forEach((r, ri) => r.forEach((c, ci) => { const ref = XLSX.utils.encode_cell({r: ri + 2, c: ci}); if (c.z && ws[ref]) ws[ref].z = c.z; }));
+        const cols = Math.max(0, ...rows.map(r => r.length));
+        ws['!cols'] = Array.from({length: cols}, (_, ci) => ({wch: Math.min(44, Math.max(10, ...rows.map(r => String((r[ci] || {}).v ?? '').length + 2)))}));
+        let name = (tables.length > 1 ? title + ' ' + (index + 1) : title).replace(/[\\/?*\[\]:]/g, ' ').slice(0, 28).trim() || 'Bang'; let n = 2;
+        while (used.has(name.toLowerCase())) name = name.slice(0, 25) + ' ' + n++;
+        used.add(name.toLowerCase()); XLSX.utils.book_append_sheet(book, ws, name);
+      });
+      const file = 'kpi-zone-' + slugify(title) + '-' + monthValue + '.xlsx';
+      XLSX.writeFile(book, file);
+      toast('Đã xuất ' + file, 'success');
+    } catch (error) { toast('Không xuất được Excel: ' + (error && error.message || 'lỗi không xác định'), 'error'); }
     finally { button.disabled = false; }
   }
   const toast = (text, type) => { if (typeof triggerToast === 'function') triggerToast(text, type); else message(text, type === 'error' ? 'bad' : 'info'); };
