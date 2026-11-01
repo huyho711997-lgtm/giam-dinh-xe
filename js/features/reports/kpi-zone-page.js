@@ -42,7 +42,8 @@ const KpiZonePage = (() => {
     const text = kind === 'pct' ? dec(Math.abs(value) * 100) + ' đ.%' : kind === 'score' ? dec(Math.abs(value), 4) : Math.round(Math.abs(value)).toLocaleString('vi-VN');
     return '<span class="kz-delta ' + (flat ? '' : good ? 'good' : 'bad') + '">' + (flat ? '' : up ? '▲ ' : '▼ ') + text + '</span>';
   };
-  const block = (title, inner, extra = '', cls = '') => '<section class="sf-library kz-card ' + cls + '"><div class="kz-head"><h2>' + title + '</h2>' + extra + '</div>' + inner + '</section>';
+  const imgBtn = '<button type="button" class="kz-img" data-kz-img title="Tải ảnh khối này về máy" aria-label="Tải ảnh về máy"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>Tải ảnh</span></button>';
+  const block = (title, inner, extra = '', cls = '') => '<section class="sf-library kz-card ' + cls + '"><div class="kz-head"><h2>' + title + '</h2><span class="kz-head-tools">' + extra + imgBtn + '</span></div>' + inner + '</section>';
   const table = (heads, rows, foot, cls = '') => '<div class="kz-tablewrap"><table class="kz-table ' + cls + '"><thead><tr>' + heads.map((h, i) => '<th' + (i ? ' class="n"' : '') + '>' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' + rows + '</tbody>' + (foot ? '<tfoot>' + foot + '</tfoot>' : '') + '</table></div>';
   const estTag = '<em class="kz-est">ước tính</em>';
 
@@ -68,7 +69,7 @@ const KpiZonePage = (() => {
   }
 
   function barChart(trend) {
-    const W = 920, H = 210, L = 34, R = 8, T = 16, B = 26;
+    const W = 920, H = 220, L = 34, R = 8, T = 26, B = 26;
     const max = Math.max(1, ...trend.map(t => Math.max(t.issued, t.approved)));
     const nice = Math.ceil(max / 50) * 50 || 50;
     const slot = (W - L - R) / trend.length, bw = Math.min(26, slot * 0.34);
@@ -80,7 +81,8 @@ const KpiZonePage = (() => {
       svg += '<rect x="' + (cx - bw - 1).toFixed(1) + '" y="' + y(t.issued).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(0, y(0) - y(t.issued)).toFixed(1) + '" rx="3" class="kz-bar a"><title>' + esc(t.label) + ' · phát sinh ' + t.issued + '</title></rect>' +
         '<rect x="' + (cx + 1).toFixed(1) + '" y="' + y(t.approved).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + Math.max(0, y(0) - y(t.approved)).toFixed(1) + '" rx="3" class="kz-bar b"><title>' + esc(t.label) + ' · duyệt ' + t.approved + '</title></rect>' +
         '<text x="' + cx.toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" class="kz-tick">' + esc(t.label) + '</text>';
-      if (i === trend.length - 1) svg += '<text x="' + (cx - bw / 2 - 1).toFixed(1) + '" y="' + (y(t.issued) - 5).toFixed(1) + '" text-anchor="middle" class="kz-val">' + t.issued + '</text><text x="' + (cx + bw / 2 + 1).toFixed(1) + '" y="' + (y(t.approved) - 5).toFixed(1) + '" text-anchor="middle" class="kz-val">' + t.approved + '</text>';
+      const lab = (v, x) => v > 0 ? '<text x="' + x.toFixed(1) + '" y="' + (y(v) - 4).toFixed(1) + '" text-anchor="middle" class="kz-val kz-val-bar' + (i === trend.length - 1 ? ' last' : '') + '">' + Math.round(v) + '</text>' : '';
+      svg += lab(t.issued, cx - bw / 2 - 1) + lab(t.approved, cx + bw / 2 + 1);
     });
     return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="kz-svg kz-svg-wide" role="img" aria-label="Hồ sơ phát sinh và hồ sơ duyệt theo tháng">' + svg + '</svg>' +
       '<div class="kz-legend"><span><i class="kz-sw a"></i>Phát sinh</span><span><i class="kz-sw b"></i>Duyệt</span></div>';
@@ -109,7 +111,7 @@ const KpiZonePage = (() => {
         '<footer><span>Điểm <b>' + fmt.fmtScore(row.score) + '</b> / ' + String(row.weight).replace('.', ',') + '</span>' +
         (over ? '<span class="kz-cut" title="Phần vượt tỷ trọng bị cắt">cắt +' + dec(row.score - row.weight, 4) + '</span>' : '') + '</footer></article>';
     }).join('');
-    return '<section class="kz-ledger"><div class="kz-ledger-main"><span class="kz-ledger-title">Tổng KPI ' + label(c) + (c.estimate ? ' ' + estTag : '') + '</span>' +
+    return '<section class="kz-ledger" data-kz-title="Tong-KPI"><button type="button" class="kz-img kz-img-dark" data-kz-img title="Tải ảnh khối này về máy" aria-label="Tải ảnh về máy"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>Tải ảnh</span></button><div class="kz-ledger-main"><span class="kz-ledger-title">Tổng KPI ' + label(c) + (c.estimate ? ' ' + estTag : '') + '</span>' +
       '<div class="kz-big"><b>' + fmt.fmtPct(k.uncapped, 2) + '</b></div>' +
       '<div class="kz-ledger-sub"><span>Điểm chưa giới hạn <b>' + fmt.fmtScore(k.uncapped) + '</b></span>' +
       '<span>Có giới hạn tỷ trọng <b>' + fmt.fmtPct(k.capped, 2) + '</b> <small>(' + fmt.fmtScore(k.capped) + ' / 1,0000)</small></span>' +
@@ -368,6 +370,8 @@ const KpiZonePage = (() => {
     });
     host.addEventListener('click', event => {
       if (event.target.closest('[data-kz-export]')) exportExcel();
+      const img = event.target.closest('[data-kz-img]');
+      if (img) { const card = img.closest('.kz-card, .kz-ledger'); if (card) downloadImage(card, img); return; }
       const step = event.target.closest('[data-kz-step]');
       if (step) {
         let [y, m] = monthValue.split('-').map(Number); m += Number(step.dataset.kzStep);
@@ -379,6 +383,44 @@ const KpiZonePage = (() => {
     container.replaceChildren(host);
     refresh();
   }
+
+
+  // ----- Tải ảnh một khối (biểu đồ / bảng) về máy -----
+  const slugify = text => String(text || 'bao-cao').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase().slice(0, 48) || 'bao-cao';
+  async function downloadImage(card, button) {
+    if (typeof html2canvas === 'undefined') { toast('Thư viện xuất ảnh chưa tải xong, thử lại sau ít giây.', 'warning'); return; }
+    const title = card.dataset.kzTitle || (card.querySelector('.kz-head h2') || {}).textContent || 'bao-cao';
+    button.disabled = true;
+    try {
+      const bg = (getComputedStyle(card).backgroundColor || '').replace(/\s/g, '') === 'rgba(0,0,0,0)' ? '#ffffff' : getComputedStyle(card).backgroundColor;
+      const canvas = await html2canvas(card, {
+        scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)), backgroundColor: bg, useCORS: true, logging: false,
+        ignoreElements: el => el.hasAttribute && el.hasAttribute('data-kz-img'),
+        onclone: (doc, clone) => {
+          // Bảng cuộn: mở rộng để ảnh chứa đủ dòng.
+          clone.querySelectorAll('.kz-scroll, .kz-tablewrap').forEach(el => { el.style.maxHeight = 'none'; el.style.overflow = 'visible'; });
+          // Ô nhiệt dùng color-mix() mà html2canvas chưa hiểu -> thay bằng rgba tính sẵn.
+          const probe = document.createElement('i'); probe.style.color = 'var(--sf-gold)'; card.appendChild(probe);
+          const gold = (getComputedStyle(probe).color.match(/\d+(\.\d+)?/g) || ['176', '122', '31']).slice(0, 3).join(','); probe.remove();
+          clone.querySelectorAll('td.kz-heat').forEach(td => { const h = parseFloat(td.style.getPropertyValue('--h')) || 0; td.style.background = 'rgba(' + gold + ',' + (h * 0.55).toFixed(3) + ')'; });
+          // SVG: html2canvas chỉ chép được SVG nếu kiểu dáng nằm trong thuộc tính -> nhúng giá trị tính toán.
+          const view = doc.defaultView, props = ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-linecap', 'stroke-linejoin', 'opacity', 'font-size', 'font-weight', 'font-family', 'paint-order'];
+          clone.querySelectorAll('svg *').forEach(node => {
+            const cs = view.getComputedStyle(node);
+            props.forEach(prop => { const v = cs.getPropertyValue(prop); if (v) node.style.setProperty(prop, v); });
+          });
+        }
+      });
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('Không tạo được ảnh');
+      const name = 'kpi-zone-' + slugify(title) + '-' + monthValue + '.png';
+      const url = URL.createObjectURL(blob), link = document.createElement('a');
+      link.href = url; link.download = name; document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+      toast('Đã tải ảnh ' + name, 'success');
+    } catch (error) { toast('Không tải được ảnh: ' + (error && error.message || 'lỗi không xác định'), 'error'); }
+    finally { button.disabled = false; }
+  }
+  const toast = (text, type) => { if (typeof triggerToast === 'function') triggerToast(text, type); else message(text, type === 'error' ? 'bad' : 'info'); };
 
   // Tính lại từ hồ sơ hiện có (gọi khi mở trang và mỗi lần danh sách hồ sơ cập nhật).
   function refresh() {
