@@ -29,7 +29,8 @@ test('phát hiện đủ điểm nghẽn hoàn thành / chi phí / tồn bằng 
   assert.ok(done.figures.includes(K.fmtInt(t.approved) + '/' + K.fmtInt(t.issued)));
   assert.ok(done.figures.includes('thiếu ' + K.fmtInt(report.current.needMore)));
   assert.ok(done.cause.includes('Chờ duyệt PASC'), done.cause);
-  assert.ok(done.owner.includes('Hồ Quang Huy'));
+  assert.ok(!done.owner.includes('Hồ Quang Huy'), 'Trưởng Zone không bị giao việc như GĐV');
+  assert.ok(!JSON.stringify(rows).includes('Hồ Quang Huy'), 'Trưởng Zone không xuất hiện trong bảng điểm nghẽn');
   assert.match(done.deadline, /^\d{2}\/\d{2}\/2026$/);
   assert.match(done.actions, /^1\. /);
   for (const r of rows) for (const f of ['title', 'figures', 'cause', 'evidence', 'actions', 'owner', 'deadline', 'expected']) assert.ok(typeof r[f] === 'string' && r[f].length, r.id + '.' + f);

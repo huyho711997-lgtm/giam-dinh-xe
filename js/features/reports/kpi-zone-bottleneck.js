@@ -29,11 +29,16 @@ const KpiBottleneck = (() => {
     return K.fmtDate(Math.floor(c.asOf) + 14);
   }
 
+  const plain = text => String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().trim();
+  const isZoneHead = name => plain(name) === 'ho quang huy';
+
   function detect(report, K) {
     const c = report && report.current, p = report && report.previous;
     if (!c || c.futureMonth || !c.totals.issued) return [];
     const t = c.totals, a = c.analysis, int = K.fmtInt, pct = K.fmtPct;
     const rows = [], tag = 'T' + c.month + '.' + c.year, deadline = suggestDeadline(c, K);
+    // Hồ Quang Huy là Trưởng Zone: không xếp vào nhóm GĐV để so sánh / giao việc (số hồ sơ của anh vẫn nằm trong KPI chung).
+    const staff = c.perGdv.filter(g => !isZoneHead(g.gdv));
     const ratio = (x, y) => (y > 0 ? x / y : 0);
     const prevText = (value, fn) => (p && value !== null && value !== undefined && p.totals.issued ? ' Tháng trước: ' + fn(value) + '.' : '');
 
@@ -44,8 +49,8 @@ const KpiBottleneck = (() => {
       for (const r of open) byStatus.set(r.status || '(trống)', (byStatus.get(r.status || '(trống)') || 0) + 1);
       const statuses = [...byStatus.entries()].sort((x, y) => y[1] - x[1]);
       const over14 = open.filter(r => r.days > 14).length, over30 = open.filter(r => r.days > 30).length;
-      const short = c.perGdv.filter(g => g.gap > 0 && g.issued > 0).sort((x, y) => y.gap - x.gap);
-      const surplus = c.perGdv.filter(g => g.gap < 0).sort((x, y) => x.gap - y.gap);
+      const short = staff.filter(g => g.gap > 0 && g.issued > 0).sort((x, y) => y.gap - x.gap);
+      const surplus = staff.filter(g => g.gap < 0).sort((x, y) => x.gap - y.gap);
       const [topStatus, topCount] = statuses[0] || [];
       const causes = [];
       if (topStatus && open.length >= 5 && topCount / open.length >= 0.3) causes.push('Hồ sơ chưa duyệt dồn ở trạng thái "' + topStatus + '" (' + int(topCount) + '/' + int(open.length) + ' HS, ' + pct(topCount / open.length, 0) + '), chưa chuyển sang bước duyệt tiếp theo.');
@@ -79,7 +84,7 @@ const KpiBottleneck = (() => {
       const buckets = a.cost.buckets.filter(b => !b.excluded), mid = buckets.find(b => b.key === 'c5') || {count: 0, sum: 0};
       const sampleSum = buckets.reduce((x, b) => x + b.sum, 0), sample = t.sample;
       const gap = t.cost - costRow.target;
-      const byCost = c.perGdv.filter(g => g.sample >= 5 && g.costDescribe && g.costDescribe.mean !== null).sort((x, y) => y.costDescribe.mean - x.costDescribe.mean);
+      const byCost = staff.filter(g => g.sample >= 5 && g.costDescribe && g.costDescribe.mean !== null).sort((x, y) => y.costDescribe.mean - x.costDescribe.mean);
       const worst = byCost.length > 1 ? byCost[0] : null;
       const causes = [];
       if (mid.count && sample) causes.push('Nhóm HS 5–10 triệu chỉ chiếm ' + pct(ratio(mid.count, sample), 0) + ' số HS (' + int(mid.count) + ' HS) nhưng đóng góp ' + pct(ratio(mid.sum, sampleSum), 0) + ' tổng chi phí mẫu, kéo bình quân lên.');
@@ -109,18 +114,18 @@ const KpiBottleneck = (() => {
     const backlog = c.kpis.rows.find(r => r.key === 'backlog') || {};
     const tonShare = ratio(a.tonOver30, t.ton);
     if (t.backlogRate !== null && t.ton > 0 && (t.backlogRate > backlog.target * 0.8 || tonShare >= 0.4)) {
-      const heaviest = [...c.perGdv].sort((x, y) => y.ton - x.ton)[0];
+      const heaviest = [...staff].sort((x, y) => y.ton - x.ton)[0];
       const statuses = c.byStatus.slice(0, 2);
       const over = t.backlogRate > backlog.target;
       const causes = [];
       if (statuses.length) causes.push('Hồ sơ tồn đang nằm ở: ' + statuses.map(s => '"' + s.status + '" ' + int(s.count) + ' HS (' + pct(s.count / t.ton, 0) + ')').join('; ') + '.');
-      if (heaviest && c.perGdv.length > 1 && heaviest.ton / t.ton >= 0.4) causes.push(heaviest.gdv + ' giữ ' + int(heaviest.ton) + '/' + int(t.ton) + ' HS tồn (' + pct(heaviest.ton / t.ton, 0) + '), tỉ lệ tồn riêng ' + pct(heaviest.backlogRate, 1) + '.');
+      if (heaviest && staff.length > 1 && heaviest.ton / t.ton >= 0.4) causes.push(heaviest.gdv + ' giữ ' + int(heaviest.ton) + '/' + int(t.ton) + ' HS tồn (' + pct(heaviest.ton / t.ton, 0) + '), tỉ lệ tồn riêng ' + pct(heaviest.backlogRate, 1) + '.');
       if (a.tonOver30) causes.push(int(a.tonOver30) + ' HS tồn quá 30 ngày (' + pct(tonShare, 0) + ' số tồn): hồ sơ vướng kéo dài chưa được xử lý dứt điểm.');
       const top = statuses[0];
       const actions = [
         a.tonOver30 ? 'Lập danh sách ' + int(a.tonOver30) + ' HS tồn > 30 ngày, phân công từng HS cho GĐV phụ trách và theo dõi dứt điểm hằng tuần.' : 'Rà soát ' + int(t.ton) + ' HS tồn, phân công từng HS cho GĐV phụ trách và theo dõi hằng tuần.',
         top ? (/PASC/i.test(top.status) ? 'Phối hợp PASC xử lý nhóm "' + top.status + '" (' + int(top.count) + ' HS).' : 'Xử lý dứt điểm nhóm HS đang "' + top.status + '" (' + int(top.count) + ' HS).') : '',
-        heaviest && heaviest.ton / t.ton >= 0.4 && c.perGdv.length > 1 ? 'Hỗ trợ ' + heaviest.gdv + ' giải quyết bớt HS tồn; cân đối lại hồ sơ mới giữa các GĐV.' : ''
+        heaviest && heaviest.ton / t.ton >= 0.4 && staff.length > 1 ? 'Hỗ trợ ' + heaviest.gdv + ' giải quyết bớt HS tồn; cân đối lại hồ sơ mới giữa các GĐV.' : ''
       ];
       rows.push({
         id: 'backlog', kpi: 'backlog', impact: num(backlog.shortfall) || (over ? 0 : 0.001),
@@ -129,7 +134,7 @@ const KpiBottleneck = (() => {
         cause: causes.join(' '),
         evidence: 'Báo cáo KPI ' + tag + ': bảng "Tồn lũy kế theo tuổi và GĐV" và "Tồn theo trạng thái".',
         actions: numbered(actions),
-        owner: (heaviest && c.perGdv.length > 1 ? 'GĐV ' + heaviest.gdv + ' xử lý trực tiếp; ' : 'Các GĐV xử lý trực tiếp; ') + 'Trưởng Zone đôn đốc.',
+        owner: (heaviest && staff.length > 1 ? 'GĐV ' + heaviest.gdv + ' xử lý trực tiếp; ' : 'Các GĐV xử lý trực tiếp; ') + 'Trưởng Zone đôn đốc.',
         deadline,
         expected: over ? '≤ 10% (giải quyết ≥ ' + int(-a.backlogHeadroom) + ' HS tồn).' : 'Giảm HS tồn > 30 ngày từ ' + int(a.tonOver30) + ' xuống ≤ ' + int(Math.floor(a.tonOver30 / 2)) + ' HS; giữ tồn ≤ 10%.',
         facts: {rate: t.backlogRate, ton: t.ton, ytd: t.ytd, over30: a.tonOver30, share: tonShare, headroom: a.backlogHeadroom, statuses: statuses.map(s => ({status: s.status, count: s.count})),
@@ -138,7 +143,7 @@ const KpiBottleneck = (() => {
     }
 
     // ---- 4. Chênh lệch giữa các GĐV ----
-    const withData = c.perGdv.filter(g => g.issued >= 5 && g.completion !== null);
+    const withData = staff.filter(g => g.issued >= 5 && g.completion !== null);
     if (withData.length > 1) {
       const sorted = [...withData].sort((x, y) => x.completion - y.completion), low = sorted[0], high = sorted[sorted.length - 1];
       if (high.completion - low.completion >= 0.15) {
