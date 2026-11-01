@@ -177,7 +177,7 @@
       <section class="hp-page${st ? '' : ' hp-page--single'}" aria-label="Trang chủ">
         <header class="hp-hero">
           <div class="hp-hero-copy">
-            <span class="hp-hero-date">${todayLabel(now)}</span>
+            <span class="hp-hero-date">${todayLabel(now)}</span>${typeof HomeSeasonal !== 'undefined' ? HomeSeasonal.badge() : ''}
             <h1>${greeting(now)},<br><span>${esc(name)}</span></h1>
             <p>Trung tâm điều hành giám định – bồi thường xe cơ giới Tasco DLK.</p>
             <div class="hp-hero-actions">

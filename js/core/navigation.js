@@ -235,7 +235,7 @@
 
     // ---- Đường dẫn trên thanh trên: Trang chủ › Nhóm › Trang [› Mục con] ----
     // "Trang chủ" và cấp trang (khi đang ở mục con) bấm được; cấp cuối là trang hiện tại.
-    const APP_ADMIN_SUBTAB_LABELS = { users: 'Tài khoản', 'api-keys': 'Gemini API', cloudinary: 'Cloudinary', 'audit-logs': 'Nhật ký hoạt động', 'kpi-config': 'Hệ số KPI & lương' };
+    const APP_ADMIN_SUBTAB_LABELS = { users: 'Tài khoản', 'api-keys': 'Gemini API', cloudinary: 'Cloudinary', 'audit-logs': 'Nhật ký hoạt động', 'kpi-config': 'Hệ số KPI & lương', seasonal: 'Hiệu ứng mùa lễ' };
     function getAppBreadcrumbSubLevel() {
       if (activeDashboardTab === 'create') return 'Khởi tạo ca giám định';
       if (['users', 'system'].includes(activeDashboardTab) && typeof activeSystemAdminSubTab !== 'undefined') return APP_ADMIN_SUBTAB_LABELS[activeSystemAdminSubTab || 'users'] || '';

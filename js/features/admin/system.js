@@ -217,7 +217,7 @@
 
 
     function switchSystemAdminSubTab(subTabName) {
-      if (['api-keys', 'cloudinary', 'kpi-config'].includes(subTabName) && !hasUserPermission('users', 'admin')) {
+      if (['api-keys', 'cloudinary', 'kpi-config', 'seasonal'].includes(subTabName) && !hasUserPermission('users', 'admin')) {
         subTabName = 'users';
       }
       activeSystemAdminSubTab = subTabName;
@@ -449,6 +449,8 @@
         fetchAndBindAuditLogsRealtime();
       } else if (activeSystemAdminSubTab === 'kpi-config') {
         renderKpiConfigSubTabUI(container);
+      } else if (activeSystemAdminSubTab === 'seasonal') {
+        HomeSeasonal.renderAdmin(container);
       }
     }
 

@@ -345,6 +345,7 @@
           showList, showCreate, showPending, showReport, showAccountingReview, showAccountingView, showFieldReimb, showCancellation, showAdmin,
           totalCases, totalPendingClaims, totalTransfers, totalReimbs
         });
+        if (typeof HomeSeasonal !== 'undefined') HomeSeasonal.mount(container); // hiệu ứng mùa lễ: chỉ ở Trang chủ
       } else if (activeDashboardTab === 'list') {
         container.innerHTML=renderInspectionRegisterPage();
         syncAdminSelects(container);
@@ -366,7 +367,8 @@
 ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pill ${activeSubTab === 'api-keys' ? 'active' : ''}" onclick="switchSystemAdminSubTab('api-keys')" aria-pressed="${activeSubTab === 'api-keys'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="16" r="5"/><path d="m11 12 10-10m-5 5 3 3 3-3-3-3"/></svg><span>Gemini API</span></button>` : ''}
 ${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pill ${activeSubTab === 'cloudinary' ? 'active' : ''}" onclick="switchSystemAdminSubTab('cloudinary')" aria-pressed="${activeSubTab === 'cloudinary'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg><span>Cloudinary</span></button>` : ''}
 <button type="button" class="filter-pill ${activeSubTab === 'audit-logs' ? 'active' : ''}" onclick="switchSystemAdminSubTab('audit-logs')" aria-pressed="${activeSubTab === 'audit-logs'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Nhật ký hoạt động</span></button>
-${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pill ${activeSubTab === 'kpi-config' ? 'active' : ''}" onclick="switchSystemAdminSubTab('kpi-config')" aria-pressed="${activeSubTab === 'kpi-config'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 20V10M12 20v-6M18 20V4"/></svg><span>Hệ số KPI & lương</span></button>` : ''}</nav>
+${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pill ${activeSubTab === 'kpi-config' ? 'active' : ''}" onclick="switchSystemAdminSubTab('kpi-config')" aria-pressed="${activeSubTab === 'kpi-config'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 20V10M12 20v-6M18 20V4"/></svg><span>Hệ số KPI & lương</span></button>` : ''}
+${hasUserPermission('users', 'admin') ? `<button type="button" class="filter-pill ${activeSubTab === 'seasonal' ? 'active' : ''}" onclick="switchSystemAdminSubTab('seasonal')" aria-pressed="${activeSubTab === 'seasonal'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M4.2 7l15.6 10M19.8 7 4.2 17"/></svg>Hiệu ứng mùa lễ</button>` : ''}</nav>
               <div id="systemAdminSubTabContainer"></div>
             </section>
           </div>

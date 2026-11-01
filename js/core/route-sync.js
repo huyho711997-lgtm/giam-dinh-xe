@@ -26,8 +26,8 @@
     rescue_cost: 'chi-phi-cuu-ho',
     users: 'quan-tri'
   };
-  const ADMIN_SUB_SLUGS = { users: 'tai-khoan', 'api-keys': 'gemini-api', cloudinary: 'cloudinary', 'audit-logs': 'nhat-ky', 'kpi-config': 'he-so-kpi' };
-  const ADMIN_ONLY_SUBS = ['api-keys', 'cloudinary', 'kpi-config'];
+  const ADMIN_SUB_SLUGS = { users: 'tai-khoan', 'api-keys': 'gemini-api', cloudinary: 'cloudinary', 'audit-logs': 'nhat-ky', 'kpi-config': 'he-so-kpi', seasonal: 'hieu-ung-mua-le' };
+  const ADMIN_ONLY_SUBS = ['api-keys', 'cloudinary', 'kpi-config', 'seasonal'];
   const SLUG_TABS = Object.fromEntries(Object.entries(TAB_SLUGS).map(([tab, slug]) => [slug, tab]));
   const SLUG_SUBS = Object.fromEntries(Object.entries(ADMIN_SUB_SLUGS).map(([sub, slug]) => [slug, sub]));
 
