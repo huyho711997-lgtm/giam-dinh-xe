@@ -1,651 +1,450 @@
-
-
-    
-function renderPendingNotesTrackerPage(targetContainer) {
-  const container = targetContainer || document.getElementById('tabContentContainer');
-  if (!container) return;
-
-  container.innerHTML = `
-    <div class="workspace-grid single-col">
-      <section class="p-card cases-panel" style="padding: 28px;">
-        
-        <!-- Header Title & Action Buttons -->
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 18px;">
-          <div>
-            <h2 style="font-size: 22px; font-weight: 850; color: var(--text-main); display: flex; align-items: center; gap: 10px; margin: 0;">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-              <span>Quản lý tiến độ Hồ sơ tồn</span>
-            </h2>
-            <p style="margin-top: 6px; font-size: 13px; color: var(--text-soft);">Bảng theo dõi và ghi chú tình trạng xử lý độc lập cho các hồ sơ tồn đọng.</p>
-          </div>
-        </div>
-
-        <!-- Stats Container -->
-        <div id="pendingNotesStatsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
-          <!-- Rendered dynamically -->
-        </div>
-
-        <!-- Filter Toolbar Row Premium Luxury System -->
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; background: var(--surface); padding: 14px 20px; border-radius: 16px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
-          
-          <!-- Left Side: Search Input -->
-          <div class="search-wrap" style="margin: 0; min-width: 240px; max-width: 320px; flex: 1; position: relative;">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-icon" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="pendingNotesSearchInput" class="input-premium" placeholder="Tìm kiếm BSX, Mã VTT, GĐV..." autocomplete="off" style="width: 100%; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; border: 1px solid var(--input-border, var(--border)); background: var(--bg-soft); color: var(--text-main); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);" oninput="setPendingNotesPage(1)" />
-          </div>
-
-          <!-- Middle Side: Unified Dropdown Filter Control Group -->
-          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; flex: 2; min-width: 300px;">
-            <!-- Filter 1: Status -->
-            <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 160px; max-width: 220px;">
-              <button id="btnPendingNotesStatusDropdown" type="button" onclick="togglePendingNotesStatusDropdown(event)" style="width: 100%; height: 42px; padding: 0 28px 0 34px; border-radius: 12px; font-size: 12.5px; font-weight: 750; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; transition: all 0.2s ease;">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--primary); pointer-events: none;"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                <span id="lblPendingNotesStatusDropdownSelected" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 750;">Tất cả trạng thái (0)</span>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </button>
-              <div id="menuPendingNotesStatusDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; width: 100%; min-width: 210px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.06); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
-                <!-- Rendered dynamically -->
-              </div>
-            </div>
-
-            <!-- Filter 2: GDV Team -->
-            <div class="custom-dropdown-container" style="position: relative; flex: 1; min-width: 140px; max-width: 200px;">
-              <button id="btnPendingNotesGdvDropdown" type="button" onclick="togglePendingNotesGdvDropdown(event)" style="width: 100%; height: 42px; padding: 0 28px 0 34px; border-radius: 12px; font-size: 12.5px; font-weight: 750; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.03); position: relative; transition: all 0.2s ease;">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #3b82f6; pointer-events: none;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                <span id="lblPendingNotesGdvDropdownSelected" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 750;">Tất cả GĐV team</span>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </button>
-              <div id="menuPendingNotesGdvDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: calc(100% + 5px); left: 0; width: 100%; min-width: 190px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; box-shadow: 0 12px 30px -4px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.06); padding: 4px; z-index: 1000; backdrop-filter: blur(12px);">
-                <!-- Rendered dynamically -->
-              </div>
-            </div>
-
-            <!-- Quick Reset Filters Button -->
-            <button type="button" class="btn-premium btn-secondary" onclick="resetAllPendingNotesFilters()" title="Đặt lại bộ lọc" style="width: 42px; height: 42px; min-width: 42px; min-height: 42px; padding: 0; border-radius: 12px; display: grid; place-items: center; cursor: pointer;" aria-label="Đặt lại bộ lọc">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-            </button>
-          </div>
-
-          <!-- Right Side: Luxury Pagination -->
-          <div id="pendingNotesPaginationContainer" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: nowrap; flex: 1;">
-            <!-- Rendered by JS -->
-          </div>
-        </div>
-
-        <!-- Table Container -->
-        <div class="table-container" style="border: 1px solid var(--border); border-radius: 14px; background: var(--bg-soft); overflow: hidden;">
-          <table class="p-table" id="pendingNotesTable" style="width: 100%; border-collapse: collapse; min-width: 1300px; table-layout: fixed;">
-            <thead>
-              <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong);">
-                <th style="width: 50px; text-align: center;">STT</th>
-                <th style="width: 120px;">Trạng thái</th>
-                <th style="width: 150px;">Biển số / Mã VTT</th>
-                <th style="width: 180px;">Tên chủ xe</th>
-                <th style="width: 190px;">Hãng xe & Đơn vị cấp</th>
-                <th style="width: 300px;">Nội dung tổn thất</th>
-                <th style="width: 150px;">GĐV Xử lý</th>
-                <th style="width: 350px;">Ghi chú tiến độ (Độc lập)</th>
-              </tr>
-            </thead>
-            <tbody id="tblPendingNotesBody">
-              <!-- Rendered by JS -->
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-
-    <!-- Note Modal -->
-    <div id="pendingNoteModalOverlay" class="p-modal-overlay" aria-hidden="true" style="display: none; z-index: 9999;">
-      <div class="p-modal" style="width: 100%; max-width: 550px; padding: 28px; text-align: left;">
-        <h3 style="margin: 0 0 16px 0; color: var(--text-main); font-size: 20px; font-weight: 850; display: flex; align-items: center; gap: 8px;">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#10b981" stroke-width="3"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-          Lịch sử Ghi chú Tiến độ
-        </h3>
-        <div style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border-subtle);">
-          Cập nhật tiến độ cho hồ sơ: <strong id="lblPendingNoteTitle" style="color: var(--text-main); font-weight: 800;"></strong>
-        </div>
-
-        <div id="pendingNoteHistoryContainer" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; padding-right: 8px;">
-          <!-- History rendered here -->
-        </div>
-
-        <div style="margin-bottom: 20px;">
-          <label style="display: block; font-size: 12px; font-weight: 800; color: var(--text-soft); margin-bottom: 8px;">NHẬP GHI CHÚ MỚI</label>
-          <textarea id="txtPendingNoteInput" class="input-premium" placeholder="VD: Đã liên hệ KH yêu cầu bổ sung đăng kiểm..." style="width: 100%; min-height: 90px; resize: vertical; padding: 14px; font-size: 13.5px;"></textarea>
-        </div>
-
-        <div style="display: flex; justify-content: flex-end; gap: 12px;">
-          <button class="btn-premium btn-secondary" onclick="closePendingNoteModal()" style="padding: 0 20px; height: 42px;">Hủy bỏ</button>
-          <button id="btnSavePendingNote" class="btn-premium btn-primary" onclick="savePendingNote()" style="padding: 0 24px; height: 42px; display: flex; align-items: center; gap: 8px; font-weight: 800;">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-            Lưu Ghi Chú
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  executeUIRenderPendingNotesTable();
-}
-
-
-function togglePendingNotesStatusDropdown(event) {
-  if (event) event.stopPropagation();
-  const menu = document.getElementById('menuPendingNotesStatusDropdown');
-  if (!menu) return;
-  const isHidden = menu.style.display === 'none' || !menu.style.display;
-  closeAllCustomDropdowns();
-  if (isHidden) menu.style.display = 'block';
-}
-
-
-function selectPendingNotesStatusFilter(event, statusKey) {
-  if (event) event.stopPropagation();
-  let arr = Array.isArray(activePendingNotesStatusFilter) ? activePendingNotesStatusFilter : [activePendingNotesStatusFilter || 'all'];
-
-  if (statusKey === 'all') {
-    arr = ['all'];
-  } else {
-    if (arr.includes('all')) {
-      arr = [statusKey];
-    } else {
-      if (arr.includes(statusKey)) {
-        arr = arr.filter(k => k !== statusKey);
-        if (arr.length === 0) arr = ['all'];
-      } else {
-        arr.push(statusKey);
-      }
-    }
-  }
-  activePendingNotesStatusFilter = arr;
-  setPendingNotesPage(1);
-}
-
-
-function togglePendingNotesGdvDropdown(event) {
-  if (event) event.stopPropagation();
-  const menu = document.getElementById('menuPendingNotesGdvDropdown');
-  if (!menu) return;
-  const isHidden = menu.style.display === 'none' || !menu.style.display;
-  closeAllCustomDropdowns();
-  if (isHidden) menu.style.display = 'block';
-}
-
-
-function selectPendingNotesGdvFilter(val) {
-  activePendingNotesGdvFilter = val;
-  setPendingNotesPage(1);
-}
-
-
-function resetAllPendingNotesFilters() {
-  activePendingNotesStatusFilter = ['all'];
-  activePendingNotesGdvFilter = 'all';
-  const searchInput = document.getElementById('pendingNotesSearchInput');
-  if (searchInput) searchInput.value = '';
-  setPendingNotesPage(1);
-}
-
-
-function setPendingNotesPerPage(val) {
-  pendingNotesPerPage = parseInt(val, 10) || 20;
-  pendingNotesCurrentPage = 1;
-  executeUIRenderPendingNotesTable();
-}
-
-
-function setPendingNotesPage(page) {
-  pendingNotesCurrentPage = page;
-  executeUIRenderPendingNotesTable();
-}
-
-
-function executeUIRenderPendingNotesTable() {
-  const tbody = document.getElementById('tblPendingNotesBody');
-  if (!tbody) return;
-
-  const searchVal = (document.getElementById('pendingNotesSearchInput')?.value || '').toLowerCase().trim();
-  const claimsList = Object.values(cachedPendingClaimsPayload || {});
-
-  
-  
-  const allowedStatuses = [
-    'moi', 'cho_giam_dinh_ht', 'da_giam_dinh_ht', 'cho_gdct',
-    'da_gdct', 'cho_duyet_pasc', 'da_duyet_pasc', 'cho_duyet_hsbt'
+/* Tiến độ hồ sơ tồn — theo dõi tuổi tồn, ghi chú tiến độ, hẹn xử lý, xuất Excel.
+ * Dữ liệu: cachedPendingClaimsPayload (hồ sơ) + cachedPendingNotesPayload (pending_notes/{BSX|Mã HS}/history[]).
+ * Giao diện dùng token --sf-* và dropdown .kz-dd* chung với trang Báo cáo KPI Zone (css/pending-notes.css). */
+const PendingNotesPage = (() => {
+  const TON_STATUSES = ['moi', 'cho_giam_dinh_ht', 'da_giam_dinh_ht', 'cho_gdct', 'da_gdct', 'cho_duyet_pasc', 'da_duyet_pasc', 'cho_duyet_hsbt'];
+  const STALE_DAYS = 3;               // ghi chú cũ hơn số ngày này (hoặc chưa có) => "cần cập nhật"
+  const DAY_MS = 86400000;
+  const XLSX_SRC = 'js/vendor/xlsx-js-style-1.2.0.bundle.js?v=20261031-kpi-4';
+  const AGE_BUCKETS = [
+    {key: 'b1', label: '≤ 7 ngày', tone: 'ok', test: a => a <= 7},
+    {key: 'b2', label: '8 – 14 ngày', tone: 'warn', test: a => a >= 8 && a <= 14},
+    {key: 'b3', label: '15 – 30 ngày', tone: 'hot', test: a => a >= 15 && a <= 30},
+    {key: 'over30', label: '> 30 ngày', tone: 'crit', test: a => a > 30}
   ];
-  let baseFiltered = claimsList.filter(c => allowedStatuses.includes(String(c.trangThai || 'moi').toLowerCase()));
+  const TEMPLATES = ['Đã liên hệ khách hàng', 'Chờ khách bổ sung hồ sơ', 'Chờ garage báo giá', 'Đã gửi hồ sơ lên PASC', 'Chờ PASC duyệt', 'Hồ sơ vướng, cần hỗ trợ'];
+  const SORTS = [
+    {key: 'age', label: 'Tồn lâu nhất'},
+    {key: 'stale', label: 'Cần cập nhật trước'},
+    {key: 'note', label: 'Ghi chú mới nhất'},
+    {key: 'due', label: 'Hẹn gần nhất'},
+    {key: 'new', label: 'Mới mở nhất'}
+  ];
+  const PER_PAGE = [10, 20, 50, 100];
+  const state = {q: '', status: 'all', gdv: 'all', quick: 'all', sort: 'age', page: 1, per: 20};
+  let host = null, rows = [], modal = null, ddOpen = null, searchTimer = 0, xlsxPromise = null;
 
-  // Determine available GDVs
-  const gdvMap = {};
-  baseFiltered.forEach(c => {
-    let gdv = (c.gdvHo || c.canBoXuLy || '').trim();
-    if (!gdv) gdv = 'Chưa rõ';
-    gdvMap[gdv] = (gdvMap[gdv] || 0) + 1;
-  });
-  const gdvOptions = Object.keys(gdvMap).sort();
+  const I = {
+    note: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+    filter: '<path d="M22 3H2l8 9.5V19l4 2v-8.5z"/>', user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+    sort: '<path d="M3 6h13M3 12h9M3 18h5M17 10v10m0 0-3-3m3 3 3-3"/>', rows: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+    chev: '<path d="m6 9 6 6 6-6"/>', check: '<path d="m5 12 5 5 9-10"/>', reset: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
+    xls: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 13l4 5M13 13l-4 5"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', alert: '<circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/>',
+    list: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h8"/>',
+    cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>', left: '<path d="m15 18-6-6 6-6"/>', right: '<path d="m9 18 6-6-6-6"/>',
+    close: '<path d="M18 6 6 18M6 6l12 12"/>', pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>'
+  };
+  const svg = (name, size = 16) => '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (I[name] || '') + '</svg>';
+  const esc = v => (typeof escapeHtmlOutput === 'function' ? escapeHtmlOutput(v) : String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch])));
+  const attr = v => esc(v);
+  const plain = text => String(text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase().trim();
+  const toast = (message, kind) => { if (typeof triggerToast === 'function') triggerToast(message, kind || 'success'); };
+  const calc = () => (typeof KpiZoneCalc !== 'undefined' ? KpiZoneCalc : null);
 
-  // Apply Status filter
-  let filtered = baseFiltered;
-  if (!activePendingNotesStatusFilter.includes('all')) {
-    filtered = filtered.filter(c => activePendingNotesStatusFilter.includes(String(c.trangThai || 'moi').toLowerCase()));
+  // ----- Dữ liệu -----
+  const statusKey = c => String(c.trangThai || 'moi').toLowerCase();
+  const gdvName = c => String(c.gdvHo || c.canBoXuLy || '').trim() || 'Chưa rõ';
+  const identifierOf = c => String(c.bienSo || c.soHoSoBoiThuong || c.id || '').replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase();
+  const statusInfo = key => (typeof PENDING_STATUS_MAP !== 'undefined' && PENDING_STATUS_MAP[key]) || {label: key, bg: 'rgba(148,163,184,.14)', color: '#64748b', border: 'rgba(148,163,184,.35)'};
+  const median = list => { if (!list.length) return null; const s = [...list].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2); };
+
+  function todaySerial() {
+    const K = calc();
+    if (K) { const v = K.parseDate(new Date()); if (Number.isFinite(v)) return v; }
+    return Date.now() / DAY_MS + 25569;
   }
-
-  // Apply GDV filter
-  if (activePendingNotesGdvFilter !== 'all') {
-    filtered = filtered.filter(c => {
-      let gdv = (c.gdvHo || c.canBoXuLy || '').trim() || 'Chưa rõ';
-      return gdv === activePendingNotesGdvFilter;
-    });
+  function openSerial(c) {
+    const K = calc();
+    if (K) { const v = K.parseDate(c.ngayMoHs); if (v !== null && Number.isFinite(v)) return v; }
+    return Number(c.createdAt) > 1e11 ? (K ? K.parseDate(Number(c.createdAt)) : Number(c.createdAt) / DAY_MS + 25569) : null;
   }
-
-
-
-  if (searchVal) {
-    filtered = filtered.filter(c => {
-      const bsx = (c.bienSo || '').toLowerCase();
-      const hsbt = (c.soHoSoBoiThuong || '').toLowerCase();
-      const gdv = (c.gdvHo || c.canBoXuLy || '').toLowerCase();
-      return bsx.includes(searchVal) || hsbt.includes(searchVal) || gdv.includes(searchVal);
-    });
+  function notesOf(identifier) {
+    const history = (typeof cachedPendingNotesPayload !== 'undefined' && cachedPendingNotesPayload[identifier] || {}).history || {};
+    return Object.values(history).filter(n => n && typeof n === 'object' && n.content).sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
   }
+  function ago(ms, now) {
+    const d = Math.floor((now - ms) / DAY_MS);
+    if (d <= 0) return 'hôm nay';
+    if (d === 1) return 'hôm qua';
+    return d + ' ngày trước';
+  }
+  function isoDate(date) { const p = n => String(n).padStart(2, '0'); return date.getFullYear() + '-' + p(date.getMonth() + 1) + '-' + p(date.getDate()); }
+  function viDate(iso) { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; }
+  const viDateTime = ms => new Date(ms).toLocaleString('vi-VN');
 
-  filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-  const totalFilteredCount = filtered.length;
-
-  // Calculate Stats
-  let countWithNotes = 0;
-  let countWithoutNotes = 0;
-  let countOver3Days = 0;
-  const nowMs = Date.now();
-  const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
-
-  filtered.forEach(c => {
-    const identifier = (c.bienSo || c.soHoSoBoiThuong || c.id || '').replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase();
-    const noteData = cachedPendingNotesPayload[identifier] || {};
-    const history = noteData.history || [];
-    if (history.length > 0) {
-      countWithNotes++;
-    } else {
-      countWithoutNotes++;
+  function buildRows() {
+    const K = calc(), today = todaySerial(), todayDay = Math.floor(today), now = Date.now();
+    const me = plain(typeof activeUserProfile !== 'undefined' && activeUserProfile ? activeUserProfile.displayName : '');
+    const out = [];
+    for (const [key, c] of Object.entries(typeof cachedPendingClaimsPayload !== 'undefined' ? cachedPendingClaimsPayload || {} : {})) {
+      if (!c || typeof c !== 'object' || !TON_STATUSES.includes(statusKey(c))) continue;
+      const id = c.id || key, identifier = identifierOf({...c, id});
+      const open = openSerial(c), age = open === null ? null : Math.max(0, Math.floor(today - open));
+      const history = notesOf(identifier), last = history[history.length - 1] || null;
+      const noteDays = last ? Math.max(0, Math.floor((now - Number(last.timestamp || 0)) / DAY_MS)) : null;
+      const dueIso = last && /^\d{4}-\d{2}-\d{2}$/.test(String(last.due || '')) ? last.due : '';
+      const dueSerial = dueIso && K ? K.parseDate(dueIso) : null;
+      const dueIn = dueSerial !== null && Number.isFinite(dueSerial) ? Math.floor(dueSerial) - todayDay : null;
+      const gdv = gdvName(c);
+      out.push({
+        id, identifier, c, gdv, status: statusKey(c), age, bucket: age === null ? null : AGE_BUCKETS.find(b => b.test(age)).key,
+        history, last, noteDays, stale: !last || noteDays > STALE_DAYS, fresh: !!last && noteDays <= STALE_DAYS,
+        dueIso, dueIn, overdue: dueIn !== null && dueIn < 0, mine: !!me && plain(gdv) === me,
+        owner: typeof extractClaimOwnerName === 'function' ? extractClaimOwnerName(c) : (c.khachHang || c.tenChuXe || ''),
+        openText: String(c.ngayMoHs || '').trim().split(/\s+/)[0] || ''
+      });
     }
+    return out;
+  }
 
-    // Check if created > 3 days ago and no notes OR last note was > 3 days ago
-    
-    const dateStr = c.ngayMoHs || c.ngayTonThat || c.ngayVTT;
-    let createdAtMs = c.createdAt || nowMs;
-    if (dateStr && dateStr !== '—') {
-      const parts = dateStr.split(/[\s/:-]/);
-      // Usually DD/MM/YYYY or similar, very basic fallback parsing
-      if (parts.length >= 3) {
-        let d = parseInt(parts[0], 10);
-        let m = parseInt(parts[1], 10);
-        let y = parseInt(parts[2], 10);
-        if (y < 100) y += 2000;
-        if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
-          createdAtMs = new Date(y, m - 1, d).getTime();
+  const matchesSearch = (r, q) => !q || [r.c.bienSo, r.c.soHoSoBoiThuong, r.gdv, r.owner, r.c.moTaTonThat, r.c.hangXe, r.c.hieuXe].some(v => plain(v).includes(q));
+  const quickTest = {
+    all: () => true, mine: r => r.mine, over30: r => r.bucket === 'over30', b1: r => r.bucket === 'b1', b2: r => r.bucket === 'b2', b3: r => r.bucket === 'b3',
+    stale: r => r.stale, overdue: r => r.overdue, fresh: r => r.fresh
+  };
+  function sortRows(list) {
+    const by = {
+      age: (a, b) => (b.age ?? -1) - (a.age ?? -1),
+      stale: (a, b) => (a.last ? 1 : 0) - (b.last ? 1 : 0) || (b.noteDays ?? 0) - (a.noteDays ?? 0) || (b.age ?? -1) - (a.age ?? -1),
+      note: (a, b) => Number(b.last?.timestamp || 0) - Number(a.last?.timestamp || 0),
+      due: (a, b) => (a.dueIn === null ? 1e9 : a.dueIn) - (b.dueIn === null ? 1e9 : b.dueIn) || (b.age ?? -1) - (a.age ?? -1),
+      new: (a, b) => (a.age ?? 1e9) - (b.age ?? 1e9)
+    };
+    return list.sort(by[state.sort] || by.age);
+  }
+  function view() {
+    const q = plain(state.q);
+    const scoped = rows.filter(r => (state.status === 'all' || r.status === state.status) && (state.gdv === 'all' || r.gdv === state.gdv) && matchesSearch(r, q));
+    const list = sortRows(scoped.filter(quickTest[state.quick] || quickTest.all));
+    return {scoped, list};
+  }
+
+  // ----- Thành phần giao diện -----
+  function dd(name, icon, caption, value, options, extraClass) {
+    const current = options.find(o => String(o.value) === String(value)) || options[0];
+    return '<div class="kz-dd ' + (extraClass || '') + '" data-pn-dd="' + name + '"><button type="button" class="kz-dd-trigger" aria-haspopup="listbox" aria-expanded="false">' +
+      '<span class="kz-dd-ic">' + svg(icon, 15) + '</span><span class="kz-dd-label"><small>' + esc(caption) + '</small> <b>' + esc(current.label) + '</b></span><span class="kz-dd-chev">' + svg('chev', 14) + '</span></button>' +
+      '<div class="kz-dd-menu" role="listbox" hidden><div class="kz-dd-head">' + esc(caption) + '</div><div class="kz-dd-list">' +
+      options.map(o => '<button type="button" class="kz-dd-opt' + (String(o.value) === String(value) ? ' is-selected' : '') + '" role="option" data-pn-opt="' + attr(o.value) + '"><span>' + esc(o.label) + (o.count !== undefined ? ' <small>(' + o.count + ')</small>' : '') + '</span>' + (String(o.value) === String(value) ? svg('check', 14) : '') + '</button>').join('') +
+      '</div></div></div>';
+  }
+  function ageBadge(r) {
+    if (r.age === null) return '<span class="pn-age pn-age--na">—</span>';
+    const bucket = AGE_BUCKETS.find(b => b.key === r.bucket);
+    return '<span class="pn-age pn-age--' + bucket.tone + '" title="Mở hồ sơ ' + attr(r.openText) + '"><i></i>' + r.age + ' ngày</span>';
+  }
+  function dueChip(r) {
+    if (!r.dueIso) return '';
+    const text = r.overdue ? 'Quá hẹn ' + (-r.dueIn) + ' ngày' : r.dueIn === 0 ? 'Hẹn hôm nay' : 'Hẹn ' + viDate(r.dueIso);
+    return '<span class="pn-due ' + (r.overdue ? 'is-late' : r.dueIn === 0 ? 'is-today' : '') + '">' + svg('cal', 12) + esc(text) + '</span>';
+  }
+  function tags(c) {
+    const out = [];
+    if (c.vcx) out.push('<span class="pn-tag pn-tag--blue">VCX</span>');
+    if (c.tnds) {
+      out.push('<span class="pn-tag pn-tag--violet">TNDS</span>');
+      const text = plain(c.loaiTonThat);
+      if (/nguoi/.test(text)) out.push('<span class="pn-tag pn-tag--rose">Con người</span>');
+      if (/tai san|xe|hang hoa/.test(text)) out.push('<span class="pn-tag pn-tag--green">Tài sản</span>');
+    }
+    return out.join('');
+  }
+
+  function renderSummary(all) {
+    const ages = all.map(r => r.age).filter(a => a !== null);
+    const total = all.length, over30 = all.filter(r => r.bucket === 'over30').length, stale = all.filter(r => r.stale).length, noNote = all.filter(r => !r.last).length;
+    const overdue = all.filter(r => r.overdue).length, scheduled = all.filter(r => r.dueIso).length, fresh = all.filter(r => r.fresh).length;
+    const pct = (n, d) => (d ? Math.round(n / d * 100) : 0) + '%';
+    const card = (quick, tone, icon, label, value, unit, sub) => '<button type="button" class="pn-kpi pn-kpi--' + tone + (state.quick === quick ? ' is-active' : '') + '" data-pn-quick="' + quick + '"><span class="pn-kpi-top"><span class="pn-kpi-ic">' + svg(icon, 15) + '</span>' + esc(label) + '</span><span class="pn-kpi-val">' + value + (unit ? '<small>' + unit + '</small>' : '') + '</span><span class="pn-kpi-sub">' + sub + '</span></button>';
+    return card('all', 'gold', 'list', 'Tổng hồ sơ tồn', total, 'hồ sơ', ages.length ? 'Tuổi trung vị <b>' + median(ages) + '</b> ngày · lâu nhất <b>' + Math.max(...ages) + '</b> ngày' : 'Chưa có dữ liệu ngày mở') +
+      card('over30', 'rose', 'alert', 'Tồn quá 30 ngày', over30, 'hồ sơ', '<b>' + pct(over30, total) + '</b> tổng số hồ sơ tồn') +
+      card('stale', 'amber', 'clock', 'Cần cập nhật', stale, 'hồ sơ', '<b>' + noNote + '</b> chưa có ghi chú · <b>' + (stale - noNote) + '</b> quá ' + STALE_DAYS + ' ngày') +
+      card(overdue ? 'overdue' : 'fresh', overdue ? 'rose' : 'green', overdue ? 'cal' : 'pulse', overdue ? 'Quá hẹn xử lý' : 'Đã cập nhật gần đây', overdue || fresh, 'hồ sơ',
+        overdue ? '<b>' + scheduled + '</b> hồ sơ đang có lịch hẹn' : '<b>' + pct(fresh, total) + '</b> được ghi chú trong ' + STALE_DAYS + ' ngày');
+  }
+  function renderAges(all) {
+    const total = all.length || 1;
+    const seg = AGE_BUCKETS.map(b => ({...b, n: all.filter(r => r.bucket === b.key).length}));
+    const unknown = all.filter(r => r.bucket === null).length;
+    return '<div class="pn-card-head"><h2>Tuổi hồ sơ tồn</h2><span>Bấm vào nhóm để lọc danh sách</span></div>' +
+      '<div class="pn-stack" role="img" aria-label="Phân bố tuổi hồ sơ tồn">' + seg.filter(s => s.n).map(s => '<button type="button" class="pn-stack-seg pn-tone-' + s.tone + (state.quick === s.key ? ' is-active' : '') + '" style="flex:' + s.n + '" data-pn-quick="' + s.key + '" title="' + attr(s.label + ': ' + s.n + ' hồ sơ') + '"><span>' + s.n + '</span></button>').join('') + '</div>' +
+      '<ul class="pn-legend">' + seg.map(s => '<li><button type="button" data-pn-quick="' + s.key + '" class="' + (state.quick === s.key ? 'is-active' : '') + '"><i class="pn-tone-' + s.tone + '"></i><span>' + s.label + '</span><b>' + s.n + '</b><small>' + Math.round(s.n / total * 100) + '%</small></button></li>').join('') + '</ul>' +
+      '<div class="pn-sub-head">Theo trạng thái</div><div class="pn-statuses">' + TON_STATUSES.filter(k => all.some(r => r.status === k)).map(k => { const st = statusInfo(k); return '<button type="button" data-pn-status="' + k + '" class="' + (state.status === k ? 'is-active' : '') + '"><i style="background:' + st.color + '"></i>' + esc(st.label) + ' <b>' + all.filter(r => r.status === k).length + '</b></button>'; }).join('') + '</div>' +
+      (unknown ? '<p class="pn-hint">' + unknown + ' hồ sơ chưa có ngày mở nên không tính tuổi.</p>' : '');
+  }
+  function renderGdvs(all) {
+    const map = new Map();
+    for (const r of all) { const g = map.get(r.gdv) || {name: r.gdv, n: 0, over30: 0, stale: 0}; g.n++; if (r.bucket === 'over30') g.over30++; if (r.stale) g.stale++; map.set(r.gdv, g); }
+    const list = [...map.values()].sort((a, b) => b.n - a.n), max = Math.max(1, ...list.map(g => g.n));
+    return '<div class="pn-card-head"><h2>Theo giám định viên</h2><span>Bấm tên để lọc</span></div><div class="pn-gdv-head"><span>GĐV</span><span>Tồn</span><span>&gt; 30 ngày</span><span>Cần cập nhật</span></div>' +
+      '<ul class="pn-gdv">' + list.map(g => '<li><button type="button" data-pn-gdv="' + attr(g.name) + '" class="' + (state.gdv === g.name ? 'is-active' : '') + '"><span class="pn-gdv-name"><b>' + esc(g.name) + '</b><span class="pn-gdv-bar"><i style="width:' + Math.round(g.n / max * 100) + '%"></i></span></span><span class="pn-num">' + g.n + '</span><span class="pn-num ' + (g.over30 ? 'is-crit' : '') + '">' + g.over30 + '</span><span class="pn-num ' + (g.stale ? 'is-warn' : '') + '">' + g.stale + '</span></button></li>').join('') + '</ul>';
+  }
+  function renderChips(scoped) {
+    const items = [['all', 'Tất cả'], ['mine', 'Của tôi'], ['over30', 'Quá 30 ngày'], ['stale', 'Cần cập nhật'], ['overdue', 'Quá hẹn'], ['fresh', 'Đã cập nhật']];
+    const hasMine = rows.some(r => r.mine);
+    const html = items.filter(([key]) => key !== 'mine' || hasMine).map(([key, label]) => '<button type="button" class="pn-chip' + (state.quick === key ? ' is-active' : '') + '" data-pn-quick="' + key + '">' + label + '<small>' + scoped.filter(quickTest[key]).length + '</small></button>').join('');
+    const extra = /^b[123]$/.test(state.quick) ? '<button type="button" class="pn-chip is-active" data-pn-quick="all">' + AGE_BUCKETS.find(b => b.key === state.quick).label + ' ' + svg('close', 12) + '</button>' : '';
+    return html + extra;
+  }
+  function renderRow(r, index) {
+    const c = r.c, st = statusInfo(r.status), last = r.last;
+    const note = last
+      ? '<div class="pn-note-text">' + esc(last.content) + '</div><div class="pn-note-meta"><b>' + esc(last.author || '—') + '</b><span>·</span><span title="' + attr(viDateTime(Number(last.timestamp))) + '">' + ago(Number(last.timestamp), Date.now()) + '</span>' + dueChip(r) + '</div>'
+      : '<div class="pn-note-empty"><i></i>Chưa có ghi chú</div>';
+    return '<tr class="pn-row' + (r.stale ? ' is-stale' : '') + '" data-pn-open="' + attr(r.id) + '" tabindex="0">' +
+      '<td class="pn-c-stt">' + String(index + 1).padStart(2, '0') + '</td>' +
+      '<td><div class="pn-plate">' + esc(c.bienSo || '—') + '</div><div class="pn-code">' + esc(c.soHoSoBoiThuong || '—') + '</div><div class="pn-owner" title="' + attr(r.owner) + '">' + esc(r.owner || '—') + '</div></td>' +
+      '<td><span class="pn-status" style="background:' + st.bg + ';color:' + st.color + ';border-color:' + st.border + '">' + esc(st.label) + '</span><div class="pn-sub">Mở ' + esc(r.openText || '—') + '</div></td>' +
+      '<td>' + ageBadge(r) + '</td>' +
+      '<td><div class="pn-car" title="' + attr((c.hangXe || '') + ' ' + (c.hieuXe || '')) + '">' + esc((c.hangXe || '—') + ' ' + (c.hieuXe || '')) + '</div><div class="pn-sub" title="' + attr(c.donViCapDon || '') + '">' + esc(c.donViCapDon || '—') + '</div><div class="pn-tags">' + tags(c) + '</div></td>' +
+      '<td><div class="pn-damage">' + esc(c.moTaTonThat || c.nguyenNhan || '—') + '</div></td>' +
+      '<td class="pn-gdv-cell">' + esc(r.gdv === 'Chưa rõ' ? '—' : r.gdv) + '</td>' +
+      '<td class="pn-c-note">' + note + '</td>' +
+      '<td class="pn-c-act"><button type="button" class="sf-button' + (r.stale ? ' sf-primary' : '') + '" data-pn-open-btn="' + attr(r.id) + '">' + svg('note', 14) + (last ? 'Cập nhật' : 'Ghi chú') + (r.history.length ? '<em>' + r.history.length + '</em>' : '') + '</button></td></tr>';
+  }
+  function pageButtons(page, pages) {
+    const out = [], push = n => out.push('<button type="button" class="pn-page' + (n === page ? ' is-active' : '') + '" data-pn-page="' + n + '"' + (n === page ? ' aria-current="page"' : '') + '>' + n + '</button>');
+    const set = new Set([1, pages, page - 1, page, page + 1].filter(n => n >= 1 && n <= pages));
+    let prev = 0;
+    for (const n of [...set].sort((a, b) => a - b)) { if (n - prev > 1) out.push('<span class="pn-gap">…</span>'); push(n); prev = n; }
+    return out.join('');
+  }
+
+  // ----- Vẽ lại các vùng động (không đụng tới ô tìm kiếm / hộp thoại đang mở) -----
+  function paint() {
+    if (!host) return;
+    const {scoped, list} = view();
+    const total = list.length, pages = Math.max(1, Math.ceil(total / state.per));
+    state.page = Math.min(Math.max(1, state.page), pages);
+    const start = (state.page - 1) * state.per, pageRows = list.slice(start, start + state.per);
+    const set = (id, html) => { const el = host.querySelector(id); if (el) el.innerHTML = html; };
+    set('#pnSummary', renderSummary(rows));
+    set('#pnAges', renderAges(rows));
+    set('#pnGdvs', renderGdvs(rows));
+    set('#pnChips', renderChips(scoped));
+    const statusOptions = [{value: 'all', label: 'Tất cả trạng thái', count: rows.length}, ...TON_STATUSES.filter(k => rows.some(r => r.status === k)).map(k => ({value: k, label: statusInfo(k).label, count: rows.filter(r => r.status === k).length}))];
+    const gdvs = [...new Set(rows.map(r => r.gdv))].sort((a, b) => a.localeCompare(b, 'vi'));
+    if (state.gdv !== 'all' && !gdvs.includes(state.gdv)) state.gdv = 'all';
+    if (state.status !== 'all' && !statusOptions.some(o => o.value === state.status)) state.status = 'all';
+    const keepOpen = ddOpen; closeDd();
+    set('#pnFilters', dd('status', 'filter', 'Trạng thái', state.status, statusOptions) + dd('gdv', 'user', 'GĐV', state.gdv, [{value: 'all', label: 'Tất cả GĐV'}, ...gdvs.map(g => ({value: g, label: g, count: rows.filter(r => r.gdv === g).length}))]) + dd('sort', 'sort', 'Sắp xếp', state.sort, SORTS.map(s => ({value: s.key, label: s.label}))));
+    const filtered = state.q || state.status !== 'all' || state.gdv !== 'all' || state.quick !== 'all';
+    host.querySelector('[data-pn-reset]').disabled = !filtered;
+    host.querySelector('#pnCount').innerHTML = '<b>' + total + '</b> / ' + rows.length + ' hồ sơ';
+    host.querySelector('#pnBody').innerHTML = pageRows.length ? pageRows.map((r, i) => renderRow(r, start + i)).join('')
+      : '<tr><td colspan="9"><div class="pn-empty">' + svg('search', 28) + '<b>' + (rows.length ? 'Không có hồ sơ phù hợp bộ lọc' : 'Chưa có hồ sơ tồn') + '</b><span>' + (rows.length ? 'Thử bỏ bớt bộ lọc hoặc đổi từ khóa tìm kiếm.' : 'Hồ sơ tồn sẽ xuất hiện ở đây khi có dữ liệu.') + '</span>' + (rows.length && filtered ? '<button type="button" class="sf-button" data-pn-reset>Xóa bộ lọc</button>' : '') + '</div></td></tr>';
+    host.querySelector('#pnPager').innerHTML = total ? '<div class="pn-pager-info">Hiển thị <b>' + (start + 1) + '–' + Math.min(start + state.per, total) + '</b> / ' + total + '</div>' +
+      '<div class="pn-pager-nav"><button type="button" class="pn-page" data-pn-page="' + (state.page - 1) + '" ' + (state.page <= 1 ? 'disabled' : '') + ' aria-label="Trang trước">' + svg('left', 14) + '</button>' + pageButtons(state.page, pages) +
+      '<button type="button" class="pn-page" data-pn-page="' + (state.page + 1) + '" ' + (state.page >= pages ? 'disabled' : '') + ' aria-label="Trang sau">' + svg('right', 14) + '</button></div>' +
+      dd('per', 'rows', 'Mỗi trang', state.per, PER_PAGE.map(n => ({value: n, label: n + ' hồ sơ'})), 'kz-dd-sm pn-dd-up') : '';
+    if (keepOpen) { const el = host.querySelector('[data-pn-dd="' + keepOpen + '"]'); if (el) openDd(el); }
+    if (modal) paintModalHistory();
+  }
+
+  // ----- Dropdown (cùng kiểu với trang KPI Zone) -----
+  function closeDd() {
+    if (!host) return;
+    host.querySelectorAll('.kz-dd.is-open').forEach(el => { el.classList.remove('is-open'); el.querySelector('.kz-dd-menu').hidden = true; el.querySelector('.kz-dd-trigger').setAttribute('aria-expanded', 'false'); });
+    ddOpen = null;
+  }
+  function placeDd(wrap) {
+    const trigger = wrap.querySelector('.kz-dd-trigger'), menu = wrap.querySelector('.kz-dd-menu'), rect = trigger.getBoundingClientRect();
+    const width = Math.max(rect.width, 230);
+    menu.style.width = width + 'px';
+    menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)) + 'px';
+    const room = window.innerHeight - rect.bottom - 14, above = rect.top - 14, up = room < 240 && above > room, space = Math.max(160, Math.min(360, up ? above : room));
+    menu.querySelector('.kz-dd-list').style.maxHeight = (space - 44) + 'px';
+    menu.style.top = up ? Math.max(8, rect.top - Math.min(menu.offsetHeight || space, space) - 6) + 'px' : (rect.bottom + 6) + 'px';
+  }
+  function openDd(wrap) {
+    closeDd();
+    wrap.classList.add('is-open');
+    const menu = wrap.querySelector('.kz-dd-menu'); menu.hidden = false;
+    wrap.querySelector('.kz-dd-trigger').setAttribute('aria-expanded', 'true');
+    ddOpen = wrap.dataset.pnDd; placeDd(wrap);
+    (menu.querySelector('.is-selected') || menu.querySelector('.kz-dd-opt'))?.focus({preventScroll: true});
+  }
+  const onViewportMove = () => { if (ddOpen && host) { const wrap = host.querySelector('.kz-dd.is-open'); if (wrap) placeDd(wrap); } };
+
+  // ----- Hộp thoại ghi chú -----
+  function openModal(id) {
+    const r = rows.find(x => String(x.id) === String(id));
+    if (!r) return;
+    modal = {id: r.id, identifier: r.identifier};
+    const el = host.querySelector('#pnModal');
+    el.querySelector('#pnModalTitle').textContent = (r.c.bienSo || '—') + ' · ' + (r.c.soHoSoBoiThuong || '—');
+    el.querySelector('#pnModalMeta').innerHTML = [statusInfo(r.status).label, r.age !== null ? 'Tồn ' + r.age + ' ngày' : '', r.gdv !== 'Chưa rõ' ? 'GĐV ' + r.gdv : '', r.owner].filter(Boolean).map(t => '<span>' + esc(t) + '</span>').join('');
+    el.querySelector('#pnNoteInput').value = '';
+    el.querySelector('#pnDueInput').value = '';
+    el.querySelector('#pnDueInput').min = isoDate(new Date());
+    el.querySelector('[data-pn-save]').disabled = false;
+    paintModalHistory(true);
+    el.hidden = false;
+    document.body.classList.add('pn-modal-open');
+    setTimeout(() => el.querySelector('#pnNoteInput').focus(), 30);
+  }
+  function closeModal() {
+    modal = null;
+    const el = host && host.querySelector('#pnModal');
+    if (el) el.hidden = true;
+    document.body.classList.remove('pn-modal-open');
+  }
+  function paintModalHistory(scrollTop) {
+    const box = host.querySelector('#pnHistory'), r = rows.find(x => String(x.id) === String(modal.id));
+    if (!box) return;
+    const history = r ? r.history : notesOf(modal.identifier);
+    box.innerHTML = history.length ? history.slice().reverse().map((n, i) => '<li class="' + (i === 0 ? 'is-latest' : '') + '"><div class="pn-h-meta"><b>' + esc(n.author || '—') + '</b><span>' + esc(viDateTime(Number(n.timestamp))) + '</span>' + (/^\d{4}-\d{2}-\d{2}$/.test(String(n.due || '')) ? '<span class="pn-due">' + svg('cal', 12) + 'Hẹn ' + viDate(n.due) + '</span>' : '') + '</div><p>' + esc(n.content) + '</p></li>').join('')
+      : '<li class="pn-h-empty">Chưa có lịch sử ghi chú cho hồ sơ này.</li>';
+    host.querySelector('#pnHistoryCount').textContent = history.length;
+    if (scrollTop) box.scrollTop = 0;
+  }
+  async function saveNote() {
+    if (!modal) return;
+    const el = host.querySelector('#pnModal'), input = el.querySelector('#pnNoteInput'), due = el.querySelector('#pnDueInput').value;
+    const content = input.value.trim();
+    if (!content) { toast('Vui lòng nhập nội dung ghi chú', 'warning'); input.focus(); return; }
+    const button = el.querySelector('[data-pn-save]'); button.disabled = true;
+    try {
+      const author = (typeof activeUserProfile !== 'undefined' && activeUserProfile && activeUserProfile.displayName) || (firebase.auth().currentUser && firebase.auth().currentUser.email) || 'Unknown';
+      const note = {content, author, timestamp: Date.now()};
+      if (/^\d{4}-\d{2}-\d{2}$/.test(due)) note.due = due;
+      const ref = dbNodeInstance.ref('pending_notes/' + modal.identifier + '/history');
+      // Giao dịch: hai người ghi chú cùng lúc không ghi đè lên nhau.
+      await ref.transaction(current => { const list = Array.isArray(current) ? current.slice() : Object.values(current || {}); list.push(note); return list; });
+      toast('Đã lưu ghi chú' + (note.due ? ' · hẹn ' + viDate(note.due) : ''), 'success');
+      closeModal();
+    } catch (error) {
+      console.error(error);
+      toast('Lỗi lưu ghi chú: ' + (error && error.message || 'không xác định'), 'error');
+      button.disabled = false;
+    }
+  }
+
+  // ----- Xuất Excel (đúng danh sách đang lọc/sắp xếp, mọi trang) -----
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    xlsxPromise = xlsxPromise || new Promise((resolve, reject) => {
+      const script = document.createElement('script'); script.src = XLSX_SRC;
+      script.onload = () => (window.XLSX ? resolve(window.XLSX) : reject(new Error('Không nạp được thư viện Excel.')));
+      script.onerror = () => { xlsxPromise = null; reject(new Error('Không nạp được thư viện Excel.')); };
+      document.head.appendChild(script);
+    });
+    return xlsxPromise;
+  }
+  async function exportExcel(button) {
+    const {list} = view();
+    if (!list.length) { toast('Không có hồ sơ để xuất', 'warning'); return; }
+    button.disabled = true;
+    try {
+      const XLSX = await loadXlsx();
+      const head = ['STT', 'Biển số', 'Số HSBT', 'Chủ xe', 'Hãng xe', 'Đơn vị cấp', 'Trạng thái', 'Ngày mở HS', 'Tuổi tồn (ngày)', 'Nội dung tổn thất', 'GĐV xử lý', 'Ghi chú mới nhất', 'Người ghi', 'Thời điểm ghi', 'Hẹn xử lý', 'Cần cập nhật'];
+      const body = list.map((r, i) => [i + 1, r.c.bienSo || '', r.c.soHoSoBoiThuong || '', r.owner || '', ((r.c.hangXe || '') + ' ' + (r.c.hieuXe || '')).trim(), r.c.donViCapDon || '', statusInfo(r.status).label, r.openText, r.age === null ? '' : r.age,
+        r.c.moTaTonThat || r.c.nguyenNhan || '', r.gdv === 'Chưa rõ' ? '' : r.gdv, r.last ? r.last.content : '', r.last ? r.last.author || '' : '', r.last ? viDateTime(Number(r.last.timestamp)) : '', viDate(r.dueIso), r.stale ? 'Có' : 'Không']);
+      const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
+      const border = {top: {style: 'thin', color: {rgb: 'E7E3D9'}}, bottom: {style: 'thin', color: {rgb: 'E7E3D9'}}, left: {style: 'thin', color: {rgb: 'E7E3D9'}}, right: {style: 'thin', color: {rgb: 'E7E3D9'}}};
+      const wrap = new Set([3, 5, 9, 11]);
+      for (let c = 0; c < head.length; c++) {
+        ws[XLSX.utils.encode_cell({r: 0, c})].s = {font: {bold: true, color: {rgb: 'FFFFFF'}}, fill: {fgColor: {rgb: '8A6A32'}}, alignment: {horizontal: 'center', vertical: 'center', wrapText: true}, border};
+        for (let r = 1; r <= body.length; r++) {
+          const cell = ws[XLSX.utils.encode_cell({r, c})]; if (!cell) continue;
+          const crit = c === 8 && Number(cell.v) > 30;
+          cell.s = {alignment: {vertical: 'top', wrapText: wrap.has(c), horizontal: c === 0 || c === 8 ? 'center' : 'left'}, border, ...(crit ? {font: {bold: true, color: {rgb: 'B34C48'}}} : {})};
         }
       }
-    }
-
-    const lastNoteMs = history.length > 0 ? history[history.length - 1].timestamp : 0;
-    
-    if (history.length === 0) {
-      if (nowMs - createdAtMs > threeDaysMs) countOver3Days++;
-    } else {
-      if (nowMs - lastNoteMs > threeDaysMs) countOver3Days++;
-    }
-  });
-
-  const rateNotes = totalFilteredCount > 0 ? Math.round((countWithNotes / totalFilteredCount) * 100) : 0;
-
-  
-  const statsEl = document.getElementById('pendingNotesStatsContainer');
-  if (statsEl) {
-    statsEl.innerHTML = `
-      <!-- Box 1: Tổng số hồ sơ (Gold) -->
-      <div style="background: linear-gradient(180deg, rgba(216,180,109,0.03) 0%, rgba(216,180,109,0.06) 100%), var(--surface); border: 1px solid rgba(216,180,109,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(216,180,109,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(216,180,109,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(216,180,109,0.04)'">
-        <div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: var(--primary); transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-        </div>
-        <div style="position: relative; z-index: 2;">
-          <span style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-            TỔNG SỐ HỒ SƠ TỒN
-          </span>
-          <div style="font-size: 28px; font-weight: 900; color: var(--primary); display: flex; align-items: baseline; gap: 6px;">
-            ${totalFilteredCount} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft);">ca</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Box 2: Đã cập nhật (Green) -->
-      <div style="background: linear-gradient(180deg, rgba(16,185,129,0.03) 0%, rgba(16,185,129,0.06) 100%), var(--surface); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(16,185,129,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(16,185,129,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(16,185,129,0.04)'">
-        <div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: #10b981; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-        </div>
-        <div style="position: relative; z-index: 2;">
-          <span style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: #10b981; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-            ĐÃ CẬP NHẬT GHI CHÚ
-          </span>
-          <div style="font-size: 28px; font-weight: 900; color: #10b981; display: flex; align-items: baseline; gap: 6px;">
-            ${countWithNotes} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft);">ca</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Box 3: Cảnh báo (Red) -->
-      <div style="background: linear-gradient(180deg, rgba(239,68,68,0.03) 0%, rgba(239,68,68,0.06) 100%), var(--surface); border: 1px solid rgba(239,68,68,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(239,68,68,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(239,68,68,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(239,68,68,0.04)'">
-        <div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: #ef4444; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-        </div>
-        <div style="position: relative; z-index: 2;">
-          <span style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: #ef4444; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            CẢNH BÁO > 3 NGÀY
-          </span>
-          <div style="font-size: 28px; font-weight: 900; color: #ef4444; display: flex; align-items: baseline; gap: 6px;">
-            ${countOver3Days} <span style="font-size: 13px; font-weight: 700; color: var(--text-soft);">ca</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Box 4: Tỷ lệ tương tác (Blue) -->
-      <div style="background: linear-gradient(180deg, rgba(59,130,246,0.03) 0%, rgba(59,130,246,0.06) 100%), var(--surface); border: 1px solid rgba(59,130,246,0.25); border-radius: 16px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(59,130,246,0.04); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(59,130,246,0.12)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(59,130,246,0.04)'">
-        <div style="position: absolute; right: 10px; bottom: 10px; opacity: 0.05; color: #3b82f6; transform: scale(4) rotate(-15deg); pointer-events: none; z-index: 0;">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-        </div>
-        <div style="position: relative; z-index: 2;">
-          <span style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 850; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-            TỶ LỆ TƯƠNG TÁC
-          </span>
-          <div style="font-size: 28px; font-weight: 900; color: #3b82f6; display: flex; align-items: baseline; gap: 6px;">
-            ${rateNotes}%
-          </div>
-        </div>
-      </div>
-    `;
+      ws['!cols'] = [6, 12, 22, 24, 22, 20, 18, 12, 10, 38, 20, 44, 18, 20, 12, 12].map(wch => ({wch}));
+      ws['!rows'] = [{hpt: 32}];
+      ws['!autofilter'] = {ref: XLSX.utils.encode_range({s: {r: 0, c: 0}, e: {r: body.length, c: head.length - 1}})};
+      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Hồ sơ tồn');
+      XLSX.writeFile(wb, 'tien-do-ho-so-ton-' + isoDate(new Date()) + '.xlsx');
+      toast('Đã xuất ' + list.length + ' hồ sơ ra Excel', 'success');
+    } catch (error) { toast('Không xuất được Excel: ' + (error && error.message || 'lỗi không xác định'), 'error'); }
+    finally { button.disabled = false; }
   }
 
-
-  const totalPages = Math.ceil(totalFilteredCount / pendingNotesPerPage) || 1;
-  if (pendingNotesCurrentPage > totalPages) pendingNotesCurrentPage = totalPages;
-  if (pendingNotesCurrentPage < 1) pendingNotesCurrentPage = 1;
-
-  const startIndex = (pendingNotesCurrentPage - 1) * pendingNotesPerPage;
-  const paginatedItems = filtered.slice(startIndex, startIndex + pendingNotesPerPage);
-
-  const paginationContainer = document.getElementById('pendingNotesPaginationContainer');
-  if (totalFilteredCount === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" class="empty-state-text">Không tìm thấy hồ sơ phù hợp.</td></tr>`;
-    if (paginationContainer) paginationContainer.innerHTML = '';
-    return;
+  // ----- Khung trang & sự kiện -----
+  function skeleton() {
+    return '<div class="sf-workspace pn-workspace" id="pnRoot">' +
+      '<header class="sf-page-head"><div class="sf-page-title"><span class="sf-page-emblem" aria-hidden="true">' + svg('note', 22) + '</span><div><div class="sf-eyebrow">NGHIỆP VỤ · HỒ SƠ BỒI THƯỜNG</div><h1>Tiến độ hồ sơ tồn</h1><p>Theo dõi tuổi tồn, ghi chú tiến độ và lịch hẹn xử lý của từng hồ sơ — hồ sơ cần chú ý nhất được xếp lên đầu.</p></div></div>' +
+      '<div class="sf-toolbar"><button type="button" class="sf-button" data-pn-refresh title="Tính lại theo dữ liệu mới nhất">' + svg('reset', 15) + 'Làm mới</button><button type="button" class="sf-button sf-primary" data-pn-export>' + svg('xls', 15) + 'Xuất Excel</button></div></header>' +
+      '<section class="pn-kpis" id="pnSummary" aria-label="Tổng quan hồ sơ tồn"></section>' +
+      '<section class="pn-insight"><div class="sf-library pn-card" id="pnAges"></div><div class="sf-library pn-card" id="pnGdvs"></div></section>' +
+      '<section class="sf-library pn-library"><div class="pn-bar"><label class="pn-search">' + svg('search', 16) + '<input type="search" id="pnSearch" placeholder="Tìm biển số, số HSBT, chủ xe, GĐV, tổn thất…" autocomplete="off" aria-label="Tìm hồ sơ tồn"></label><div class="pn-filters" id="pnFilters"></div>' +
+      '<button type="button" class="sf-button" data-pn-reset>' + svg('reset', 14) + 'Xóa lọc</button><span class="pn-count" id="pnCount"></span></div>' +
+      '<div class="pn-chips" id="pnChips" role="group" aria-label="Lọc nhanh"></div>' +
+      '<div class="pn-tablewrap"><table class="pn-table"><thead><tr><th class="pn-c-stt">#</th><th>Hồ sơ</th><th>Trạng thái</th><th>Tuổi tồn</th><th>Xe &amp; đơn vị cấp</th><th>Nội dung tổn thất</th><th>GĐV xử lý</th><th>Tiến độ gần nhất</th><th></th></tr></thead><tbody id="pnBody"></tbody></table></div>' +
+      '<div class="pn-pager" id="pnPager"></div></section>' +
+      '<div class="pn-modal" id="pnModal" hidden role="dialog" aria-modal="true" aria-labelledby="pnModalTitle"><div class="pn-dialog"><header><div><span class="sf-eyebrow">TIẾN ĐỘ HỒ SƠ</span><h3 id="pnModalTitle"></h3><div class="pn-modal-meta" id="pnModalMeta"></div></div><button type="button" class="pn-x" data-pn-close aria-label="Đóng">' + svg('close', 18) + '</button></header>' +
+      '<div class="pn-dialog-body"><div class="pn-h-title">Lịch sử ghi chú <span id="pnHistoryCount">0</span></div><ul class="pn-history" id="pnHistory"></ul>' +
+      '<label class="pn-label" for="pnNoteInput">Ghi chú mới</label><div class="pn-templates">' + TEMPLATES.map(t => '<button type="button" data-pn-tpl="' + attr(t) + '">' + esc(t) + '</button>').join('') + '</div>' +
+      '<textarea id="pnNoteInput" rows="3" placeholder="VD: Đã liên hệ khách hàng, hẹn bổ sung đăng kiểm trong tuần…"></textarea>' +
+      '<div class="pn-due-row"><label class="pn-label" for="pnDueInput">Hẹn xử lý tiếp <small>(tuỳ chọn)</small></label><input type="date" id="pnDueInput"><div class="pn-due-quick"><button type="button" data-pn-due="1">+1 ngày</button><button type="button" data-pn-due="3">+3 ngày</button><button type="button" data-pn-due="7">+7 ngày</button><button type="button" data-pn-due="0">Bỏ hẹn</button></div></div></div>' +
+      '<footer><span class="pn-kbd">Ctrl + Enter để lưu</span><button type="button" class="sf-button" data-pn-close>Hủy</button><button type="button" class="sf-button sf-primary" data-pn-save>' + svg('check', 14) + 'Lưu ghi chú</button></footer></div></div></div>';
   }
-
-  if (paginationContainer) {
-    
-    // Render Dropdown States
-    const lblStatus = document.getElementById('lblPendingNotesStatusDropdownSelected');
-    const menuStatus = document.getElementById('menuPendingNotesStatusDropdown');
-    if (lblStatus && menuStatus) {
-      const isAll = activePendingNotesStatusFilter.includes('all');
-      lblStatus.innerHTML = isAll ? `Tất cả trạng thái (${baseFiltered.length})` : `${activePendingNotesStatusFilter.length} trạng thái (${filtered.length})`;
-      
-      let html = `<div class="custom-dropdown-item ${isAll ? 'selected' : ''}" onclick="selectPendingNotesStatusFilter(event, 'all')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isAll ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}"><span style="font-size: 12.5px;">Tất cả trạng thái</span>${isAll ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}</div>`;
-      
-      allowedStatuses.forEach(k => {
-        const isSel = activePendingNotesStatusFilter.includes(k);
-        const config = PENDING_STATUS_MAP[k] || { label: k };
-        html += `<div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="selectPendingNotesStatusFilter(event, '${k}')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(216,180,109,0.12); color: var(--primary); font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}"><span style="font-size: 12.5px; display: flex; align-items: center; gap: 8px;"><span style="width: 8px; height: 8px; border-radius: 50%; background: ${config.color || '#94a3b8'};"></span>${config.label}</span>${isSel ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}</div>`;
-      });
-      menuStatus.innerHTML = html;
+  function setQuick(value) { state.quick = state.quick === value && value !== 'all' ? 'all' : value; state.page = 1; paint(); }
+  function onClick(event) {
+    const t = event.target;
+    const opt = t.closest('[data-pn-opt]');
+    if (opt) {
+      const name = opt.closest('[data-pn-dd]').dataset.pnDd, value = opt.dataset.pnOpt;
+      closeDd();
+      if (name === 'per') state.per = Number(value) || 20; else state[name] = value;
+      state.page = 1; paint(); return;
     }
-
-    const lblGdv = document.getElementById('lblPendingNotesGdvDropdownSelected');
-    const menuGdv = document.getElementById('menuPendingNotesGdvDropdown');
-    if (lblGdv && menuGdv) {
-      lblGdv.innerHTML = activePendingNotesGdvFilter === 'all' ? 'Tất cả GĐV team' : activePendingNotesGdvFilter;
-      
-      let html = `<div class="custom-dropdown-item ${activePendingNotesGdvFilter === 'all' ? 'selected' : ''}" onclick="selectPendingNotesGdvFilter('all')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${activePendingNotesGdvFilter === 'all' ? 'background: rgba(59,130,246,0.12); color: #3b82f6; font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}"><span style="font-size: 12.5px;">Tất cả GĐV team</span>${activePendingNotesGdvFilter === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}</div>`;
-      
-      gdvOptions.forEach(g => {
-        const isSel = activePendingNotesGdvFilter === g;
-        html += `<div class="custom-dropdown-item ${isSel ? 'selected' : ''}" onclick="selectPendingNotesGdvFilter('${g}')" style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease; margin-bottom: 2px; ${isSel ? 'background: rgba(59,130,246,0.12); color: #3b82f6; font-weight: 800;' : 'color: var(--text-main); font-weight: 600;'}"><span style="font-size: 12.5px;">${g}</span>${isSel ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}</div>`;
-      });
-      menuGdv.innerHTML = html;
+    const trigger = t.closest('.kz-dd-trigger');
+    if (trigger) { const wrap = trigger.closest('[data-pn-dd]'); wrap.classList.contains('is-open') ? closeDd() : openDd(wrap); return; }
+    if (!t.closest('.kz-dd')) closeDd();
+    const q = t.closest('[data-pn-quick]'); if (q) return void setQuick(q.dataset.pnQuick);
+    const sb = t.closest('[data-pn-status]'); if (sb) { state.status = state.status === sb.dataset.pnStatus ? 'all' : sb.dataset.pnStatus; state.page = 1; return void paint(); }
+    const g = t.closest('[data-pn-gdv]'); if (g) { state.gdv = state.gdv === g.dataset.pnGdv ? 'all' : g.dataset.pnGdv; state.page = 1; return void paint(); }
+    const page = t.closest('[data-pn-page]'); if (page && !page.disabled) { state.page = Number(page.dataset.pnPage); paint(); return void host.querySelector('.pn-library').scrollIntoView({behavior: 'smooth', block: 'start'}); }
+    if (t.closest('[data-pn-reset]')) { Object.assign(state, {q: '', status: 'all', gdv: 'all', quick: 'all', page: 1}); host.querySelector('#pnSearch').value = ''; return void paint(); }
+    if (t.closest('[data-pn-refresh]')) { rows = buildRows(); paint(); return void toast('Đã làm mới theo dữ liệu mới nhất', 'success'); }
+    if (t.closest('[data-pn-export]')) return void exportExcel(t.closest('[data-pn-export]'));
+    if (t.closest('[data-pn-close]') || t.id === 'pnModal') return void closeModal();
+    if (t.closest('[data-pn-save]')) return void saveNote();
+    const tpl = t.closest('[data-pn-tpl]');
+    if (tpl) { const input = host.querySelector('#pnNoteInput'); input.value = input.value.trim() ? input.value.trim() + '\n' + tpl.dataset.pnTpl : tpl.dataset.pnTpl; return void input.focus(); }
+    const due = t.closest('[data-pn-due]');
+    if (due) { const days = Number(due.dataset.pnDue), input = host.querySelector('#pnDueInput'); input.value = days ? isoDate(new Date(Date.now() + days * DAY_MS)) : ''; return; }
+    const open = t.closest('[data-pn-open]'); if (open) openModal(open.dataset.pnOpen);
+  }
+  function onKey(event) {
+    if (event.key === 'Escape') { if (ddOpen) { const name = ddOpen; closeDd(); host.querySelector('[data-pn-dd="' + name + '"] .kz-dd-trigger')?.focus(); } else if (modal) closeModal(); return; }
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && modal) { event.preventDefault(); return void saveNote(); }
+    if (event.key === 'Enter' && event.target.matches && event.target.matches('tr[data-pn-open]')) return void openModal(event.target.dataset.pnOpen);
+    if (ddOpen && ['ArrowDown', 'ArrowUp'].includes(event.key)) {
+      const items = [...host.querySelectorAll('.kz-dd.is-open .kz-dd-opt')], at = items.indexOf(document.activeElement);
+      if (items.length) { event.preventDefault(); items[(at + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
     }
-
-    const displayStart = totalFilteredCount > 0 ? startIndex + 1 : 0;
-    const displayEnd = Math.min(startIndex + pendingNotesPerPage, totalFilteredCount);
-    
-    let pageBtnsHtml = '';
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, pendingNotesCurrentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    if (startPage > 1) {
-      pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(1)" style="min-width: 34px; height: 42px; padding: 0 6px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">1</button>`;
-      if (startPage > 2) pageBtnsHtml += `<span style="color: var(--text-muted); font-size: 14px; font-weight: 700; padding: 0 4px;">...</span>`;
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      if (i === pendingNotesCurrentPage) {
-        pageBtnsHtml += `<button type="button" style="min-width: 34px; height: 42px; padding: 0 6px; border-radius: 12px; font-size: 12.5px; font-weight: 850; background: var(--primary); border: 1px solid var(--primary); color: #111; box-shadow: 0 4px 10px rgba(216,180,109,0.35); cursor: default;">${i}</button>`;
-      } else {
-        pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(${i})" style="min-width: 34px; height: 42px; padding: 0 6px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='var(--bg-soft)'">${i}</button>`;
-      }
-    }
-
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) pageBtnsHtml += `<span style="color: var(--text-muted); font-size: 14px; font-weight: 700; padding: 0 4px;">...</span>`;
-      pageBtnsHtml += `<button type="button" onclick="setPendingNotesPage(${totalPages})" style="min-width: 34px; height: 42px; padding: 0 6px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); cursor: pointer;">${totalPages}</button>`;
-    }
-
-    paginationContainer.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; margin-left: auto; white-space: nowrap;">
-        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-soft); font-weight: 600;">
-          <div class="custom-dropdown-container" style="position: relative; display: inline-block;">
-            <select onchange="setPendingNotesPerPage(this.value)" style="height: 42px; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); font-size: 12.5px; font-weight: 750; padding: 0 28px 0 12px; border-radius: 12px; cursor: pointer; outline: none; -webkit-appearance: none; appearance: none;">
-              <option value="10" ${pendingNotesPerPage === 10 ? 'selected' : ''}>10 / trang</option>
-              <option value="20" ${pendingNotesPerPage === 20 ? 'selected' : ''}>20 / trang</option>
-              <option value="50" ${pendingNotesPerPage === 50 ? 'selected' : ''}>50 / trang</option>
-              <option value="100" ${pendingNotesPerPage === 100 ? 'selected' : ''}>100 / trang</option>
-            </select>
-            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" style="color: var(--text-muted); position: absolute; right: 12px; top: 15px; pointer-events: none;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-          </div>
-        </div>
-
-        <div style="font-size: 12.5px; color: var(--text-soft); font-weight: 700;">
-          <strong style="color: var(--primary);">${displayStart}-${displayEnd}</strong> / <strong style="color: var(--text-main);">${totalFilteredCount}</strong>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 2px;">
-          <button type="button" onclick="setPendingNotesPage(${pendingNotesCurrentPage - 1})" ${pendingNotesCurrentPage <= 1 ? 'disabled' : ''} style="width: 34px; height: 42px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingNotesCurrentPage <= 1 ? '0.4' : '1'}; pointer-events: ${pendingNotesCurrentPage <= 1 ? 'none' : 'auto'};" title="Trang trước">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </button>
-          
-          ${pageBtnsHtml}
-
-          <button type="button" onclick="setPendingNotesPage(${pendingNotesCurrentPage + 1})" ${pendingNotesCurrentPage >= totalPages ? 'disabled' : ''} style="width: 34px; height: 42px; border-radius: 12px; font-size: 12.5px; font-weight: 700; background: var(--bg-soft); border: 1px solid var(--border); color: var(--text-main); display: grid; place-items: center; cursor: pointer; opacity: ${pendingNotesCurrentPage >= totalPages ? '0.4' : '1'}; pointer-events: ${pendingNotesCurrentPage >= totalPages ? 'none' : 'auto'};" title="Trang sau">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-          </button>
-        </div>
-      </div>
-    `;
+  }
+  function onInput(event) {
+    if (event.target.id !== 'pnSearch') return;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { state.q = event.target.value; state.page = 1; paint(); }, 160);
   }
 
-
-  tbody.innerHTML = paginatedItems.map((c, idx) => {
-    const index = startIndex + idx;
-    const identifier = (c.bienSo || c.soHoSoBoiThuong || c.id || '').replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase();
-    const noteData = cachedPendingNotesPayload[identifier] || {};
-    const history = noteData.history || [];
-    const latestNote = history.length > 0 ? history[history.length - 1] : null;
-
-    const rawStatus = String(c.trangThai || 'moi').toLowerCase();
-    const sttObj = PENDING_STATUS_MAP[rawStatus] || { label: c.trangThai || 'Mới', bg: 'rgba(148,163,184,0.14)', color: '#64748b', border: 'rgba(148,163,184,0.35)' };
-
-    return `
-      <tr class="table-row">
-        <td style="text-align: center; font-weight: 700; color: var(--text-soft); font-size: 12px;">
-          ${(index + 1).toString().padStart(2, '0')}
-        </td>
-        <td>
-          <span style="display: inline-flex; align-items: center; justify-content: center; font-size: 10.5px; padding: 4px 10px; border-radius: 20px; font-weight: 800; background: ${sttObj.bg}; color: ${sttObj.color}; border: 1px solid ${sttObj.border}; white-space: nowrap;">
-            ${sttObj.label}
-          </span>
-        </td>
-        <td>
-          <div style="font-size: 13.5px; font-weight: 850; color: var(--text-main); letter-spacing: 0.02em;">${escapeHtmlOutput(c.bienSo || '—')}</div>
-          <div style="font-size: 11px; color: var(--primary); font-family: monospace; font-weight: 600; margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; background: rgba(59,130,246,0.06); padding: 2px 6px; border-radius: 4px;">
-            <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
-            ${escapeHtmlOutput(c.soHoSoBoiThuong || '—')}
-          </div>
-        </td>
-        
-        <td style="width: 180px; vertical-align: middle;">
-          <strong style="color: var(--text-main); font-size: 13px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(extractClaimOwnerName(c))}">${escapeHtmlOutput(extractClaimOwnerName(c))}</strong>
-        </td>
-        <td style="width: 190px;">
-          <strong style="color: var(--text-main); font-size: 13px; display: block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData((c.hangXe || '') + ' ' + (c.hieuXe || ''))}">${escapeHtmlOutput(c.hangXe || '—')} ${escapeHtmlOutput(c.hieuXe || '')}</strong>
-          <span style="font-size: 11.5px; color: var(--text-soft); display: block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(c.donViCapDon || '')}">${escapeHtmlOutput(c.donViCapDon || '—')}</span>
-          <div style="margin-top: 4px; display: flex; gap: 4px; flex-wrap: wrap;">
-            ${c.vcx ? `<span style="font-size: 10px; background: rgba(59,130,246,0.1); color: #3b82f6; border: 1px solid rgba(59,130,246,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">VCX</span>` : ''}
-            ${c.tnds ? `<span style="font-size: 10px; background: rgba(168,85,247,0.1); color: #a855f7; border: 1px solid rgba(168,85,247,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">TNDS</span>` : ''}
-            ${(function(){
-              if (!c.tnds || !c.loaiTonThat) return '';
-              const text = c.loaiTonThat.toLowerCase();
-              let tags = [];
-              if (text.includes('con nguoi') || text.includes('con người') || text.includes('nguoi')) {
-                tags.push(`<span style="font-size: 10px; background: rgba(244,63,94,0.1); color: #f43f5e; border: 1px solid rgba(244,63,94,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">Con người</span>`);
-              }
-              if (text.includes('tai san') || text.includes('tài sản') || text.includes('xe') || text.includes('hang hoa')) {
-                tags.push(`<span style="font-size: 10px; background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.25); padding: 1px 5px; border-radius: 4px; font-weight: 750;">Tài sản</span>`);
-              }
-              return tags.join('');
-            })()}
-          </div>
-        </td>
-        <td>
-          <div style="font-size: 12.5px; color: var(--text-main); font-weight: 600; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 280px;">
-            ${escapeHtmlOutput(c.moTaTonThat || c.nguyenNhan || '—')}
-          </div>
-        </td>
-        <td style="font-size: 12.5px; font-weight: 750; color: var(--text-main);">
-          ${escapeHtmlOutput(c.gdvHo || c.canBoXuLy || '—')}
-        </td>
-        <td>
-          <div style="display: flex; gap: 12px; align-items: center; justify-content: space-between; background: var(--bg-soft); padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border-subtle);">
-            <div style="flex-grow: 1; min-width: 0;">
-              ${latestNote ? `
-                <div style="font-size: 12px; color: var(--text-main); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px; font-weight: 500;">
-                  ${escapeHtmlOutput(latestNote.content)}
-                </div>
-                <div style="font-size: 10px; color: var(--text-muted); font-weight: 700; display: flex; align-items: center; gap: 6px;">
-                  <span style="color: var(--primary);">${escapeHtmlOutput(latestNote.author)}</span>
-                  <span style="display: inline-block; width: 3px; height: 3px; border-radius: 50%; background: var(--text-muted);"></span>
-                  <span>${new Date(latestNote.timestamp).toLocaleString('vi-VN')}</span>
-                </div>
-              ` : `<div style="font-size: 12px; color: var(--text-muted); font-style: italic; white-space: nowrap;">Chưa có ghi chú...</div>`}
-            </div>
-            <div style="flex-shrink: 0;"><button class="btn-premium btn-secondary" onclick="openPendingNoteModal('${c.id}', '${identifier}')" style="padding: 0 14px; height: 32px; font-size: 11px; border-radius: 8px; font-weight: 750; width: auto !important;">
-              ${latestNote ? 'Cập nhật' : 'Thêm ghi chú'}
-            </button></div>
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-
-function openPendingNoteModal(claimId, identifier) {
-  activeNoteClaimId = claimId;
-  activeNotePlateOrCode = identifier;
-  const c = cachedPendingClaimsPayload[claimId] || {};
-
-  document.getElementById('lblPendingNoteTitle').textContent = `${c.bienSo || '—'} (${c.soHoSoBoiThuong || '—'})`;
-  document.getElementById('txtPendingNoteInput').value = '';
-  document.getElementById('btnSavePendingNote').disabled = false;
-
-  const historyContainer = document.getElementById('pendingNoteHistoryContainer');
-  const noteData = cachedPendingNotesPayload[identifier] || {};
-  const history = noteData.history || [];
-
-  if (history.length === 0) {
-    historyContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-style: italic; padding: 10px 0; font-size: 12.5px;">Chưa có lịch sử ghi chú.</div>`;
-  } else {
-    historyContainer.innerHTML = history.slice().reverse().map(item => `
-      <div style="background: var(--bg-soft); border: 1px solid var(--border-subtle); padding: 10px 14px; border-radius: 8px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 11px; color: var(--text-muted);">
-          <strong style="color: var(--text-main);">${escapeHtmlOutput(item.author)}</strong>
-          <span>${new Date(item.timestamp).toLocaleString('vi-VN')}</span>
-        </div>
-        <div style="font-size: 13px; color: var(--text-main); white-space: pre-wrap; line-height: 1.4;">${escapeHtmlOutput(item.content)}</div>
-      </div>
-    `).join('');
+  function render(container) {
+    const target = container || document.getElementById('tabContentContainer');
+    if (!target) return;
+    rows = buildRows();
+    if (!target.querySelector('#pnRoot')) {
+      closeModal();
+      target.innerHTML = skeleton();
+      host = target.querySelector('#pnRoot');
+      host.addEventListener('click', onClick);
+      host.addEventListener('keydown', onKey);
+      host.addEventListener('input', onInput);
+      host.querySelector('#pnSearch').value = state.q;
+      window.removeEventListener('resize', onViewportMove); window.addEventListener('resize', onViewportMove);
+      window.removeEventListener('scroll', onViewportMove, true); window.addEventListener('scroll', onViewportMove, true);
+    } else host = target.querySelector('#pnRoot');
+    paint();
   }
+  return {render, refresh: () => { if (host && host.isConnected) { rows = buildRows(); paint(); } else render(); }};
+})();
 
-  const modal = document.getElementById('pendingNoteModalOverlay');
-  if (modal) {
-    modal.style.display = 'grid';
-    modal.setAttribute('aria-hidden', 'false');
-  }
-}
-
-
-function closePendingNoteModal() {
-  activeNoteClaimId = null;
-  activeNotePlateOrCode = null;
-  const modal = document.getElementById('pendingNoteModalOverlay');
-  if (modal) {
-    modal.style.display = 'none';
-    modal.setAttribute('aria-hidden', 'true');
-  }
-}
-
-
-async function savePendingNote() {
-  if (!activeNotePlateOrCode) return;
-  const content = document.getElementById('txtPendingNoteInput').value.trim();
-  if (!content) {
-    triggerToast('Vui lòng nhập nội dung ghi chú', 'warning');
-    return;
-  }
-
-  const btn = document.getElementById('btnSavePendingNote');
-  btn.disabled = true;
-
-  try {
-    const author = (activeUserProfile && activeUserProfile.displayName) ? activeUserProfile.displayName : (firebase.auth().currentUser?.email || 'Unknown');
-    const newNote = {
-      content: content,
-      author: author,
-      timestamp: Date.now()
-    };
-
-    const nodeRef = dbNodeInstance.ref(`pending_notes/${activeNotePlateOrCode}`);
-    const snapshot = await nodeRef.once('value');
-    let data = snapshot.val() || { history: [] };
-    if (!data.history) data.history = [];
-    data.history.push(newNote);
-
-    await nodeRef.set(data);
-    triggerToast('Đã lưu ghi chú thành công', 'success');
-    closePendingNoteModal();
-    // executeUIRenderPendingNotesTable will be called automatically by on('value') listener
-  } catch (err) {
-    console.error(err);
-    triggerToast('Lỗi lưu ghi chú: ' + err.message, 'error');
-    btn.disabled = false;
-  }
-}
+// Các hàm toàn cục mà workspace.js gọi khi dữ liệu hồ sơ / ghi chú thay đổi.
+function renderPendingNotesTrackerPage(targetContainer) { PendingNotesPage.render(targetContainer); }
+function executeUIRenderPendingNotesTable() { PendingNotesPage.refresh(); }
