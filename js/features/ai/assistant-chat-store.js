@@ -73,6 +73,8 @@ const TascoChatStore = (() => {
   }
   const frequent = (limit = 3) => state.freq.filter(item => item.n >= 2).slice(0, limit).map(item => item.x);
   async function clear() { state.messages = []; await flush(); }
+  // Xoá toàn bộ lịch sử của tài khoản: tin nhắn + thống kê câu hay hỏi (cả Firebase lẫn bản dự phòng trên trình duyệt).
+  async function clearAll() { state.messages = []; state.freq = []; await flush(); writeLocal(state.uid, null); }
 
-  return {load, add, countQuestion, frequent, clear, flush, get messages() { return state.messages; }, get scope() { return state.scope; }, get uid() { return state.uid; }, _normKey: normKey};
+  return {load, add, countQuestion, frequent, clear, clearAll, flush, get messages() { return state.messages; }, get scope() { return state.scope; }, get uid() { return state.uid; }, _normKey: normKey};
 })();

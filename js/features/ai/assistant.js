@@ -305,6 +305,22 @@
     document.getElementById('tasco-ai-input')?.focus();
   }
 
+  // Xoá lịch sử trò chuyện đã lưu của tài khoản (có xác nhận, vì không khôi phục được).
+  async function deleteTascoAIHistory() {
+    if (tascoAIBusy) return;
+    const body = document.getElementById('tasco-ai-body');
+    const has = (typeof TascoChatStore !== 'undefined' && TascoChatStore.messages.length) || [...(body?.children || [])].some(child => !child.classList.contains('tasco-ai-welcome'));
+    if (!has) { if (typeof triggerToast === 'function') triggerToast('Chưa có lịch sử để xoá.', 'warning'); return; }
+    if (!window.confirm('Xoá toàn bộ lịch sử trò chuyện với TASCO AI?\nThao tác này không thể hoàn tác.')) return;
+    tascoAIChatHistory = [];
+    tascoSummaryShown = false;
+    clearTascoAIMessages();
+    try { await TascoChatStore?.clearAll(); } catch (_) { /* đã xoá trên giao diện; lần lưu sau sẽ đồng bộ lại */ }
+    renderTascoAISuggestions();
+    if (typeof triggerToast === 'function') triggerToast('Đã xoá lịch sử trò chuyện.', 'success');
+    document.getElementById('tasco-ai-input')?.focus();
+  }
+
   // Gợi ý: câu hay dùng chung + câu người dùng hay hỏi + câu theo hồ sơ đang mở.
   function renderTascoAISuggestions() {
     const holder = document.getElementById('tasco-ai-suggest');

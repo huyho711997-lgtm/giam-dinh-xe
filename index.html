@@ -1844,6 +1844,7 @@
     </div>
     <div class="tasco-ai-header__actions">
       <button type="button" class="tasco-ai-header__btn" onclick="newTascoAIChat()" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>
+      <button type="button" class="tasco-ai-header__btn" onclick="deleteTascoAIHistory()" title="Xoá lịch sử trò chuyện" aria-label="Xoá lịch sử trò chuyện"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14M10 11v5M14 11v5"/></svg></button>
       <button type="button" class="tasco-ai-header__btn" onclick="toggleTascoAIMax()" title="Toàn màn hình (Esc để thu nhỏ)" aria-label="Phóng to khung chat" id="tasco-ai-max-btn"><svg class="tasco-ai-ico-max" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg><svg class="tasco-ai-ico-min" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"></path></svg></button>
       <button type="button" class="tasco-ai-header__btn" onclick="TascoLibrary.open()" title="Thư viện tài liệu nghiệp vụ" aria-label="Thư viện tài liệu nghiệp vụ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path></svg></button>
       <button type="button" class="tasco-ai-header__btn" onclick="setGeminiApiKey()" title="Thiết lập kết nối AI" aria-label="Thiết lập kết nối AI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09A1.65 1.65 0 0 0 20.91 10H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15Z"></path></svg></button>
@@ -1881,14 +1882,14 @@
 <script src="js/features/ai/gemini-key.js?v=20261029-ai-3"></script>
 <script src="js/features/ai/assistant-tools.js?v=20261031-lib-1"></script>
 <script src="js/features/ai/assistant-export.js?v=20261029-ai-13"></script>
-<script src="js/features/ai/assistant-chat-store.js?v=20261029-ai-13"></script>
+<script src="js/features/ai/assistant-chat-store.js?v=20261101-ai-14"></script>
 <script src="js/features/ai/library-parse.js?v=20261031-lib-1"></script>
 <script src="js/features/ai/library-search.js?v=20261031-lib-1"></script>
 <script src="js/features/ai/library-store.js?v=20261031-lib-2"></script>
 <script src="js/features/ai/library-ui.js?v=20261031-lib-3"></script>
 <script src="js/features/ai/assistant-vision.js?v=20261029-ai-13"></script>
 <script src="js/features/ai/assistant-form-wizard.js?v=20261029-ai-13"></script>
-<script src="js/features/ai/assistant.js?v=20261031-lib-2"></script>
+<script src="js/features/ai/assistant.js?v=20261101-ai-14"></script>
 <!-- /TASCO AI ASSISTANT -->
 
 
