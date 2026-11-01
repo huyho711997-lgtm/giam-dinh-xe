@@ -15,7 +15,7 @@ const KpiZonePage = (() => {
   const esc = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const now = new Date();
   const defaultMonth = () => now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-  let monthValue = defaultMonth();
+  let monthValue = defaultMonth(), monthTouched = false;
   const fmt = K;
   const dec = (n, d = 1) => n.toFixed(d).replace('.', ',');
   const label = r => 'T' + r.month + '.' + r.year;
@@ -209,8 +209,10 @@ const KpiZonePage = (() => {
   function unapprovedBlock(c) {
     const gdvs = [...new Set(c.unapproved.map(x => x.gdv))], statuses = [...new Set(c.unapproved.map(x => x.status || '(trống)'))];
     const opt = (list, value) => '<option value="">Tất cả</option>' + list.map(x => '<option' + (x === value ? ' selected' : '') + '>' + esc(x) + '</option>').join('');
-    const filters = '<div class="kz-filters"><label>GĐV<select data-kz-fgdv>' + opt(gdvs, listFilter.gdv) + '</select></label><label>Trạng thái<select data-kz-fstatus>' + opt(statuses, listFilter.status) + '</select></label>' +
-      '<label>Sắp xếp<select data-kz-fsort><option value="desc"' + (listFilter.sort === 'desc' ? ' selected' : '') + '>Số ngày giảm dần</option><option value="asc"' + (listFilter.sort === 'asc' ? ' selected' : '') + '>Số ngày tăng dần</option></select></label></div>';
+    const dd = (attr, prefix, icon, title, inner) => '<select ' + attr + ' data-kz-dd data-kz-icon="' + icon + '" data-kz-prefix="' + prefix + '" data-kz-title="' + title + '" aria-label="' + title + '">' + inner + '</select>';
+    const sortOpts = '<option value="desc"' + (listFilter.sort === 'desc' ? ' selected' : '') + '>Số ngày giảm dần</option><option value="asc"' + (listFilter.sort === 'asc' ? ' selected' : '') + '>Số ngày tăng dần</option>';
+    const filters = '<div class="kz-filters">' + dd('data-kz-fgdv', 'GĐV', 'user', 'Giám định viên', opt(gdvs, listFilter.gdv)) + dd('data-kz-fstatus', 'Trạng thái', 'doc', 'Trạng thái hồ sơ', opt(statuses, listFilter.status)) +
+      dd('data-kz-fsort', 'Sắp xếp', 'sort', 'Sắp xếp theo', sortOpts) + '</div>';
     return block('Hồ sơ mở trong tháng, chưa duyệt (' + fmt.fmtInt(c.unapproved.length) + ')', filters + '<div class="kz-scroll" data-kz-list>' + table(LIST_HEADS, filteredUnapproved(c).map(listRow).join('') || '<tr><td colspan="6" class="kz-none">Không có hồ sơ</td></tr>') + '</div>');
   }
 
@@ -224,7 +226,7 @@ const KpiZonePage = (() => {
   function shell() {
     return '<div class="kz-bar-top"><div class="kz-stepper" role="group" aria-label="Chọn tháng">' +
       '<button type="button" class="sf-button" data-kz-step="-1" aria-label="Tháng trước">‹</button>' +
-      '<label class="kz-month"><span class="kz-sr">Tháng</span><input type="month" data-kz-month value="' + monthValue + '"></label>' +
+      '<div class="kz-month"><select data-kz-month data-kz-dd data-kz-icon="calendar" data-kz-title="Tháng báo cáo" aria-label="Tháng báo cáo"></select></div>' +
       '<button type="button" class="sf-button" data-kz-step="1" aria-label="Tháng sau">›</button></div>' +
       '<div class="kz-source" data-kz-meta></div>' +
       '<button type="button" class="sf-button kz-export" data-kz-export disabled>Xuất Excel</button></div>' +
@@ -259,8 +261,8 @@ const KpiZonePage = (() => {
       (sc ? '<small>Hồ sơ phát sinh trong năm: ' + fmt.fmtInt(sc.zone) + ' theo Zone map · ' + fmt.fmtInt(sc.gdv) + ' theo GĐV · ' + fmt.fmtInt(sc.out) + ' ngoài zone</small>' : '') + '</summary>' +
       '<div class="kz-zbody"><p class="kz-note">Cột “Zone bồi thường” của từng hồ sơ được xét trước: gán “Thuộc zone báo cáo” thì hồ sơ được tính dù GĐV nào xử lý, gán “Zone khác” thì bị loại dù GĐV là ai. Hồ sơ không có Zone bồi thường hoặc chưa gán thì xét theo GĐV đã chọn.</p>' +
       '<div class="kz-tablewrap"><table class="kz-table"><thead><tr><th>Zone bồi thường</th><th class="n">Số hồ sơ</th><th class="n">Do GĐV đã chọn xử lý</th><th>Gán</th></tr></thead><tbody>' +
-      zones.map(z => '<tr><td>' + esc(z.name) + '</td><td class="n">' + fmt.fmtInt(z.count) + '</td><td class="n">' + fmt.fmtInt(z.byGdvs) + '</td><td>' + (z.key ? '<select data-kz-zone="' + esc(z.key) + '" aria-label="Gán zone ' + esc(z.name) + '"><option value="">Theo GĐV (chưa gán)</option><option value="in"' + (zoneMap[z.key] === 'in' ? ' selected' : '') + '>Thuộc zone báo cáo</option><option value="out"' + (zoneMap[z.key] === 'out' ? ' selected' : '') + '>Zone khác</option></select>' : '<span class="kz-none">luôn theo GĐV</span>') + '</td></tr>').join('') + '</tbody></table></div></div>';
-    box.open = wasOpen;
+      zones.map(z => '<tr><td>' + esc(z.name) + '</td><td class="n">' + fmt.fmtInt(z.count) + '</td><td class="n">' + fmt.fmtInt(z.byGdvs) + '</td><td>' + (z.key ? '<select data-kz-zone="' + esc(z.key) + '" data-kz-dd data-kz-icon="pin" data-kz-title="Gán zone ' + esc(z.name) + '" aria-label="Gán zone ' + esc(z.name) + '"><option value="">Theo GĐV (chưa gán)</option><option value="in"' + (zoneMap[z.key] === 'in' ? ' selected' : '') + '>Thuộc zone báo cáo</option><option value="out"' + (zoneMap[z.key] === 'out' ? ' selected' : '') + '>Zone khác</option></select>' : '<span class="kz-none">luôn theo GĐV</span>') + '</td></tr>').join('') + '</tbody></table></div></div>';
+    box.open = wasOpen; enhanceDropdowns(box);
   }
 
   function message(text, kind) {
@@ -294,7 +296,7 @@ const KpiZonePage = (() => {
       console.error(error);
       body.innerHTML = '<div class="kz-empty kz-bad">Không tính được báo cáo: ' + esc(error.message) + '</div>';
     }
-    paintMeta(); paintZones();
+    enhanceDropdowns(body); paintMeta(); paintZones();
   }
 
   function loadClaims() {
@@ -358,7 +360,7 @@ const KpiZonePage = (() => {
       if (el.matches('[data-kz-zone]')) {
         if (el.value) zoneMap[el.dataset.kzZone] = el.value; else delete zoneMap[el.dataset.kzZone];
         saveZoneMap(); recalc();
-      } else if (el.matches('[data-kz-month]')) { monthValue = el.value || defaultMonth(); recalc(); }
+      } else if (el.matches('[data-kz-month]')) { monthValue = el.value || defaultMonth(); monthTouched = true; recalc(); }
       else if (el.matches('[data-kz-gdv]')) {
         selected = [...host.querySelectorAll('[data-kz-gdv]:checked')].map(x => x.value);
         if (!selected.length) { el.checked = true; selected = [el.value]; message('Cần chọn ít nhất một GĐV.', 'warn'); }
@@ -369,6 +371,7 @@ const KpiZonePage = (() => {
       }
     });
     host.addEventListener('click', event => {
+      if (onDropdownClick(event)) return;
       if (event.target.closest('[data-kz-export]')) exportExcel();
       const img = event.target.closest('[data-kz-img]');
       if (img) { const card = img.closest('.kz-card, .kz-ledger'); if (card) downloadImage(card, img); return; }
@@ -377,13 +380,110 @@ const KpiZonePage = (() => {
         let [y, m] = monthValue.split('-').map(Number); m += Number(step.dataset.kzStep);
         if (m < 1) { m = 12; y--; } else if (m > 12) { m = 1; y++; }
         monthValue = y + '-' + String(m).padStart(2, '0');
-        host.querySelector('[data-kz-month]').value = monthValue; recalc();
+        monthTouched = true; paintMonths(); enhanceDropdowns(host); recalc();
       }
     });
+    host.addEventListener('keydown', onDropdownKey);
+    document.addEventListener('click', outsideDd, true); window.addEventListener('resize', closeDdSoft); window.addEventListener('scroll', closeDdSoft, true);
     container.replaceChildren(host);
     refresh();
   }
 
+
+
+  // ----- Dropdown tuỳ biến (cùng ngôn ngữ thiết kế với bộ lọc của các báo cáo khác) -----
+  // <select> gốc vẫn là nguồn giá trị (ẩn): chọn mục -> gán value rồi phát sự kiện change như cũ.
+  const DD_ICON = {
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    doc: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+    sort: '<path d="M7 4v16M4 17l3 3 3-3M17 20V4M14 7l3-3 3 3"/>',
+    pin: '<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>'
+  };
+  const ddSvg = (name, size = 15) => '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + name + '</svg>';
+  let openDd = null;
+  function closeDd(restore) {
+    if (!openDd) return;
+    const {wrap, menu, trigger} = openDd;
+    menu.hidden = true; wrap.classList.remove('is-open'); trigger.setAttribute('aria-expanded', 'false');
+    if (restore) trigger.focus({preventScroll: true});
+    openDd = null;
+  }
+  function placeDd(wrap) {
+    const trigger = wrap.querySelector('.kz-dd-trigger'), menu = wrap.querySelector('.kz-dd-menu');
+    const r = trigger.getBoundingClientRect(), vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    const width = Math.min(Math.max(r.width, 230), vw - 24);
+    menu.style.width = width + 'px';
+    menu.style.left = Math.max(12, Math.min(r.left, vw - width - 12)) + 'px';
+    const body = menu.querySelector('.kz-dd-list'), chrome = menu.offsetHeight - body.offsetHeight;
+    const below = vh - r.bottom - 16, above = r.top - 16, up = below < 220 && above > below;
+    body.style.maxHeight = Math.max(96, Math.min(320, (up ? above : below) - chrome)) + 'px';
+    menu.style.top = (up ? r.top - menu.offsetHeight - 8 : r.bottom + 8) + 'px';
+  }
+  function openDropdown(wrap) {
+    if (openDd && openDd.wrap === wrap) { closeDd(true); return; }
+    closeDd();
+    const menu = wrap.querySelector('.kz-dd-menu'), trigger = wrap.querySelector('.kz-dd-trigger');
+    menu.hidden = false; wrap.classList.add('is-open'); trigger.setAttribute('aria-expanded', 'true');
+    openDd = {wrap, menu, trigger}; placeDd(wrap);
+    (menu.querySelector('.kz-dd-opt.is-selected') || menu.querySelector('.kz-dd-opt'))?.focus({preventScroll: false});
+  }
+  function syncDropdown(select) {
+    const wrap = select.closest('.kz-dd'); if (!wrap) return;
+    const options = [...select.options], cur = options.find(o => o.value === select.value) || options[0];
+    const prefix = select.dataset.kzPrefix;
+    wrap.querySelector('.kz-dd-label').innerHTML = (prefix ? '<small>' + esc(prefix) + ':</small> ' : '') + '<b>' + esc(cur ? cur.textContent : '') + '</b>';
+    wrap.querySelector('.kz-dd-list').innerHTML = options.map(o => '<button type="button" role="option" class="kz-dd-opt' + (o === cur ? ' is-selected' : '') + '" aria-selected="' + (o === cur) + '" data-value="' + esc(o.value) + '"><span>' + esc(o.textContent) + '</span>' + (o === cur ? ddSvg('<path d="m5 12 5 5 9-10"/>', 15) : '') + '</button>').join('');
+  }
+  function enhanceDropdowns(root) {
+    root.querySelectorAll('select[data-kz-dd]').forEach(select => {
+      if (select.closest('.kz-dd')) { syncDropdown(select); return; }
+      const wrap = document.createElement('div');
+      wrap.className = 'kz-dd' + (select.hasAttribute('data-kz-zone') ? ' kz-dd-sm' : '');
+      const icon = DD_ICON[select.dataset.kzIcon];
+      wrap.innerHTML = '<button type="button" class="kz-dd-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="' + esc(select.getAttribute('aria-label') || '') + '">' +
+        (icon ? '<span class="kz-dd-ic">' + ddSvg(icon) + '</span>' : '') + '<span class="kz-dd-label"></span><span class="kz-dd-chev">' + ddSvg('<path d="m6 9 6 6 6-6"/>', 14) + '</span></button>' +
+        '<div class="kz-dd-menu" role="listbox" hidden><div class="kz-dd-head">' + esc(select.dataset.kzTitle || '') + '</div><div class="kz-dd-list"></div></div>';
+      select.before(wrap); select.classList.add('kz-dd-native'); select.tabIndex = -1; select.setAttribute('aria-hidden', 'true'); wrap.prepend(select);
+      syncDropdown(select);
+    });
+  }
+  function onDropdownClick(event) {
+    const opt = event.target.closest('.kz-dd-opt');
+    if (opt) {
+      const wrap = opt.closest('.kz-dd'), select = wrap.querySelector('select');
+      closeDd(true);
+      if (select.value !== opt.dataset.value) { select.value = opt.dataset.value; syncDropdown(select); select.dispatchEvent(new Event('change', {bubbles: true})); }
+      return true;
+    }
+    const trigger = event.target.closest('.kz-dd-trigger');
+    if (trigger) { openDropdown(trigger.closest('.kz-dd')); return true; }
+    return false;
+  }
+  function onDropdownKey(event) {
+    const trigger = event.target.closest && event.target.closest('.kz-dd-trigger');
+    if (trigger && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) { event.preventDefault(); openDropdown(trigger.closest('.kz-dd')); return; }
+    if (!openDd) return;
+    if (event.key === 'Escape') { event.preventDefault(); closeDd(true); return; }
+    if (event.key === 'Tab') { closeDd(); return; }
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    const items = [...openDd.menu.querySelectorAll('.kz-dd-opt')]; if (!items.length) return;
+    event.preventDefault();
+    let i = items.indexOf(document.activeElement);
+    i = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : Math.max(0, Math.min(items.length - 1, i + (event.key === 'ArrowDown' ? 1 : -1)));
+    items[i].focus();
+  }
+  // Danh sách tháng cho dropdown: từ tháng dữ liệu cũ nhất tới tháng sau tháng dữ liệu mới nhất (tối đa 36 tháng).
+  function paintMonths() {
+    const select = host.querySelector('[data-kz-month]'); if (!select) return;
+    const idx = (y, m) => y * 12 + m - 1;
+    const [cy, cm] = monthValue.split('-').map(Number);
+    let hi = idx(cy, cm), lo = hi;
+    if (prep && prep.records.length) { const a = K.partsOf(prep.asOf); hi = Math.max(hi, idx(a.y, a.m) + 1); lo = Math.min(lo, idx(a.y, a.m) - 35); const first = prep.records.reduce((n, r) => Math.min(n, r.open), Infinity); const f = K.partsOf(first); lo = Math.max(lo, idx(f.y, f.m)); lo = Math.min(lo, idx(cy, cm)); }
+    let html = '';
+    for (let i = hi; i >= lo; i--) { const y = Math.floor(i / 12), m = i % 12 + 1, v = y + '-' + String(m).padStart(2, '0'); html += '<option value="' + v + '"' + (v === monthValue ? ' selected' : '') + '>Tháng ' + m + '/' + y + '</option>'; }
+    select.innerHTML = html; select.value = monthValue;
+  }
 
   // ----- Tải ảnh một khối (biểu đồ / bảng) về máy -----
   const slugify = text => String(text || 'bao-cao').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase().slice(0, 48) || 'bao-cao';
@@ -426,10 +526,14 @@ const KpiZonePage = (() => {
   function refresh() {
     if (!host || !host.isConnected) return;
     try { loadClaims(); } catch (error) { console.error(error); prep = null; message('Không đọc được dữ liệu hồ sơ: ' + esc(error.message), 'bad'); }
+    if (!monthTouched && prep && prep.records.length) { const a = K.partsOf(prep.asOf); monthValue = a.y + '-' + String(a.m).padStart(2, '0'); }
+    paintMonths(); enhanceDropdowns(host);
     paintGdvs(); recalc();
   }
 
-  function leave() { host = null; }
+  function outsideDd(event) { if (openDd && !event.target.closest('.kz-dd')) closeDd(); }
+  function closeDdSoft(event) { if (openDd && !(event && event.target && event.target.closest && event.target.closest('.kz-dd-menu'))) { if (openDd.trigger.isConnected) placeDd(openDd.wrap); else closeDd(); } }
+  function leave() { closeDd(); document.removeEventListener('click', outsideDd, true); window.removeEventListener('resize', closeDdSoft); window.removeEventListener('scroll', closeDdSoft, true); host = null; }
 
   return {mount, refresh, leave};
 })();

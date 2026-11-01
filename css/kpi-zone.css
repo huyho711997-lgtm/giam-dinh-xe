@@ -7,7 +7,6 @@
 .kz-bar-top { display:flex; flex-wrap:wrap; align-items:center; gap:14px 18px; }
 .kz-stepper { display:inline-flex; align-items:center; gap:6px; }
 .kz-stepper .sf-button { min-width:40px; padding:0; font-size:18px; line-height:1; }
-.kz-month input { min-height:40px; padding:0 12px; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-paper); color:var(--sf-ink); font:inherit; font-size:14px; font-weight:700; }
 .kz-source { display:grid; gap:2px; font-size:11.5px; color:var(--sf-muted); flex:1; min-width:200px; }
 .kz-source b { color:var(--sf-ink); font-size:12.5px; }
 .kz-export { margin-left:auto; }
@@ -132,8 +131,6 @@
 .kz-hrow b { text-align:right; } .kz-hrow small { color:var(--sf-muted); text-align:right; }
 
 .kz-filters { display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px; }
-.kz-filters label { display:grid; gap:4px; font-size:11.5px; color:var(--sf-muted); font-weight:600; }
-.kz-filters select { min-height:38px; padding:0 10px; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-paper); color:var(--sf-ink); font:inherit; font-size:13px; }
 
 @media (max-width:900px) { .kz-ledger { grid-template-columns:1fr; gap:24px; padding:26px 22px; } .kz-split { grid-template-columns:1fr; } }
 @media (max-width:640px) { .kz-ledger { padding:22px 16px; border-radius:20px; } .kz-kpis { grid-template-columns:1fr; } .kz-card { padding:16px 14px; } .kz-export { margin-left:0; width:100%; } .kz-hrow { grid-template-columns:96px 1fr 38px 34px; gap:8px; } }
@@ -180,3 +177,30 @@
 .kz-img-dark { position:absolute; top:16px; right:18px; z-index:2; color:#d9cfb4; background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.16); }
 .kz-img-dark:hover { color:#f0cf8c; background:rgba(240,207,140,.14); border-color:rgba(240,207,140,.4); }
 @media (max-width:640px) { .kz-img span { display:none; } .kz-img { padding:0 9px; } }
+
+/* Dropdown tuỳ biến: đồng bộ với bộ lọc của các báo cáo khác (nút bo tròn + ô biểu tượng, danh sách nổi có dấu chọn) */
+.kz-dd { position:relative; display:inline-block; min-width:0; max-width:100%; }
+.kz-dd-native { position:absolute !important; width:1px; height:1px; opacity:0; pointer-events:none; overflow:hidden; clip:rect(0 0 0 0); }
+.kz-dd-trigger { display:inline-flex; align-items:center; gap:10px; width:100%; min-height:42px; padding:6px 12px 6px 8px; border:1px solid var(--sf-line); border-radius:12px; background:var(--sf-paper); color:var(--sf-ink); font:inherit; font-size:13px; cursor:pointer; text-align:left;
+  box-shadow:0 1px 2px rgba(23,39,31,.05); transition:border-color .15s, box-shadow .15s, background .15s; }
+.kz-dd-trigger:hover { border-color:var(--sf-gold); }
+.kz-dd.is-open .kz-dd-trigger, .kz-dd-trigger:focus-visible { border-color:var(--sf-gold); box-shadow:0 0 0 3px var(--sf-gold-bg); outline:none; }
+.kz-dd-ic { flex:none; display:grid; place-items:center; width:28px; height:28px; border-radius:8px; background:var(--sf-gold-bg); color:var(--sf-gold); }
+.kz-dd-label { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.kz-dd-label small { color:var(--sf-muted); font-size:12px; font-weight:600; } .kz-dd-label b { font-weight:800; }
+.kz-dd-chev { flex:none; display:grid; color:var(--sf-muted); transition:transform .18s; } .kz-dd.is-open .kz-dd-chev { transform:rotate(180deg); }
+.kz-dd-menu { position:fixed; z-index:1200; display:flex; flex-direction:column; padding:8px; border:1px solid var(--sf-line); border-radius:16px; background:var(--sf-paper);
+  box-shadow:0 18px 44px rgba(23,39,31,.22), 0 2px 6px rgba(23,39,31,.08); animation:kz-dd-in .14s ease-out; }
+.kz-dd-menu[hidden] { display:none; }
+@keyframes kz-dd-in { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+.kz-dd-head { padding:6px 10px 8px; font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--sf-muted); }
+.kz-dd-list { display:grid; gap:2px; overflow-y:auto; overscroll-behavior:contain; }
+.kz-dd-opt { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; padding:9px 10px; border:1px solid transparent; border-radius:10px; background:transparent; color:var(--sf-ink); font:inherit; font-size:13px; text-align:left; cursor:pointer; }
+.kz-dd-opt:hover, .kz-dd-opt:focus-visible { background:var(--sf-soft); border-color:var(--sf-line); outline:none; }
+.kz-dd-opt.is-selected { color:var(--sf-gold); background:var(--sf-gold-bg); font-weight:800; }
+.kz-dd-opt svg { flex:none; color:var(--sf-gold); }
+.kz-month .kz-dd-trigger { min-width:170px; }
+.kz-filters { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; } .kz-filters .kz-dd { min-width:200px; }
+.kz-dd-sm .kz-dd-trigger { min-height:36px; padding:4px 10px; border-radius:10px; font-size:12.5px; } .kz-dd-sm .kz-dd-trigger { min-width:190px; }
+@media (max-width:640px) { .kz-filters .kz-dd, .kz-month .kz-dd { flex:1 1 100%; } .kz-month { flex:1; } .kz-dd-sm .kz-dd-trigger { min-width:0; } }
+@media (prefers-reduced-motion:reduce) { .kz-dd-menu { animation:none; } }
