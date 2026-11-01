@@ -126,10 +126,10 @@ const PendingNotesPage = (() => {
   function dd(name, icon, caption, value, options, opts) {
     opts = opts || {};
     const current = options.find(o => String(o.value) === String(value)) || options[0], isAll = String(value) === String(opts.base === undefined ? 'all' : opts.base);
-    const menu = '<div class="custom-dropdown-menu pending-filter-menu' + (opts.right ? ' pending-filter-menu--right' : '') + '" role="listbox" aria-label="' + attr(caption) + '" style="display:none;"><div class="pending-filter-menu__head"><span>' + esc(opts.head || caption) + '</span><small>' + esc(opts.hint || '') + '</small></div>' +
+    const cap = name.charAt(0).toUpperCase() + name.slice(1), menu = '<div id="menuPn' + cap + '" class="custom-dropdown-menu pending-filter-menu' + (opts.right ? ' pending-filter-menu--right' : '') + '" style="display:none;">' +
       options.map(o => { const sel = String(o.value) === String(value); return '<button type="button" class="custom-dropdown-item pending-filter-option' + (sel ? ' selected' : '') + '" role="option" aria-selected="' + sel + '" data-pn-opt="' + attr(o.value) + '"' + (o.color ? ' style="--option-color:' + o.color + ';"' : '') + '><span class="pending-filter-option__main">' + (o.color ? '<span class="pending-filter-option__dot"></span>' : '') + '<span class="pending-filter-option__label">' + esc(o.label) + '</span></span>' + (o.count !== undefined ? '<span class="pending-filter-option__count">' + o.count + '</span>' : '') + '<span class="pending-filter-option__check">' + (sel ? CHECK : '') + '</span></button>'; }).join('') + '</div>';
-    if (opts.compact) return '<div class="custom-dropdown-container pending-per-page" data-pn-dd="' + name + '"><button type="button" class="pending-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span class="pending-filter-trigger__icon" aria-hidden="true">' + svg(icon, 15) + '</span><span class="pending-filter-trigger__value">' + esc(current.label) + '</span><svg class="pending-filter-trigger__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7 10 5 5 5-5"></path></svg></button>' + menu + '</div>';
-    return '<div class="custom-dropdown-container pending-filter-select' + (isAll ? '' : ' is-filtered') + '" data-pn-dd="' + name + '"><button type="button" class="pending-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span class="pending-filter-trigger__icon" aria-hidden="true">' + svg(icon, 15) + '</span><span class="pending-filter-trigger__copy"><span class="pending-filter-trigger__caption">' + esc(caption) + '</span><span class="pending-filter-trigger__value">' + esc(current.label) + '</span></span><svg class="pending-filter-trigger__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7 10 5 5 5-5"></path></svg></button>' + menu + '</div>';
+    if (opts.compact) return '<div class="custom-dropdown-container pending-per-page" data-pn-dd="' + name + '"><button type="button" id="btnPn' + cap + '" class="pending-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span class="pending-filter-trigger__icon" aria-hidden="true">' + svg(icon, 15) + '</span><span class="pending-filter-trigger__value">' + esc(current.label) + '</span><svg class="pending-filter-trigger__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7 10 5 5 5-5"></path></svg></button>' + menu + '</div>';
+    return '<div class="custom-dropdown-container pending-filter-select' + (isAll ? '' : ' is-filtered') + '" data-pn-dd="' + name + '"><button type="button" id="btnPn' + cap + '" class="pending-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span class="pending-filter-trigger__icon" aria-hidden="true">' + svg(icon, 15) + '</span><span class="pending-filter-trigger__copy"><span class="pending-filter-trigger__caption">' + esc(caption) + '</span><span class="pending-filter-trigger__value">' + esc(current.label) + '</span></span><svg class="pending-filter-trigger__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7 10 5 5 5-5"></path></svg></button>' + menu + '</div>';
   }
   function ageBadge(r) {
     if (r.age === null) return '<span class="pn-age pn-age--na">—</span>';
@@ -243,22 +243,31 @@ const PendingNotesPage = (() => {
       '<div class="pending-pagination__summary"><strong>' + (start + 1) + '–' + Math.min(start + state.per, total) + '</strong> / ' + total + '</div>' +
       '<div class="pending-page-controls"><button type="button" class="pending-page-btn" data-pn-page="' + (state.page - 1) + '" ' + (state.page <= 1 ? 'disabled' : '') + ' title="Trang trước" aria-label="Trang trước">' + svg('left', 14) + '</button>' + pageButtons(state.page, pages) +
       '<button type="button" class="pending-page-btn" data-pn-page="' + (state.page + 1) + '" ' + (state.page >= pages ? 'disabled' : '') + ' title="Trang sau" aria-label="Trang sau">' + svg('right', 14) + '</button></div></div>' : '';
-    if (keepOpen) { const el = host.querySelector('[data-pn-dd="' + keepOpen + '"]'); if (el) openDd(el, true); }
+    registerMenus();
+    if (typeof enhancePendingRegisterDropdowns === 'function') enhancePendingRegisterDropdowns();
+    if (keepOpen && host.querySelector('[data-pn-dd="' + keepOpen + '"]')) openDd(keepOpen);
     if (modal) paintModalHistory();
   }
 
   // ----- Dropdown (cùng khuôn .pending-filter-* với trang Hồ sơ bồi thường) -----
   const openDdName = () => { const el = host && host.querySelector('.custom-dropdown-container.is-open'); return el ? el.dataset.pnDd : null; };
+  const menuId = name => 'menuPn' + name.charAt(0).toUpperCase() + name.slice(1);
   function closeDd() {
-    if (!host) return;
-    host.querySelectorAll('.custom-dropdown-container.is-open').forEach(el => { el.classList.remove('is-open'); const menu = el.querySelector('.custom-dropdown-menu'); if (menu) menu.style.display = 'none'; el.querySelector('.pending-filter-trigger')?.setAttribute('aria-expanded', 'false'); });
+    if (typeof closeAllCustomDropdowns === 'function') closeAllCustomDropdowns();
+    else if (host) host.querySelectorAll('.custom-dropdown-container.is-open').forEach(el => { el.classList.remove('is-open'); const m = el.querySelector('.custom-dropdown-menu'); if (m) m.style.display = 'none'; });
   }
-  function openDd(wrap, quiet) {
-    if (!quiet) { if (typeof closeAllCustomDropdowns === 'function') closeAllCustomDropdowns(); closeDd(); }
-    wrap.classList.add('is-open');
-    wrap.querySelector('.custom-dropdown-menu').style.display = 'block';
-    wrap.querySelector('.pending-filter-trigger').setAttribute('aria-expanded', 'true');
-    if (!quiet) (wrap.querySelector('.pending-filter-option.selected') || wrap.querySelector('.pending-filter-option'))?.focus({preventScroll: true});
+  // Menu "premium" (đầu menu có biểu tượng + tiêu đề, ô tìm, vị trí tự lật lên/xuống) do pending-controls.js dựng chung cho cả hai trang.
+  function registerMenus() {
+    if (typeof PENDING_DROPDOWN_UI === 'undefined') return;
+    Object.assign(PENDING_DROPDOWN_UI, {
+      menuPnStatus: {title: 'Trạng thái hồ sơ', subtitle: 'Chọn trạng thái cần theo dõi'},
+      menuPnGdv: {title: 'Giám định viên', subtitle: 'Chọn cán bộ xử lý', search: 'Tìm giám định viên...'},
+      menuPnSort: {title: 'Sắp xếp danh sách', subtitle: 'Ưu tiên hiển thị hồ sơ', width: 280},
+      menuPnPer: {title: 'Số dòng hiển thị', subtitle: 'Số hồ sơ trên mỗi trang', width: 260}
+    });
+  }
+  function openDd(name, event) {
+    if (typeof togglePendingRegisterDropdown === 'function') return void togglePendingRegisterDropdown(menuId(name), event);
   }
 
   // ----- Hộp thoại ghi chú -----
@@ -388,7 +397,7 @@ const PendingNotesPage = (() => {
       state.page = 1; paint(); return;
     }
     const trigger = t.closest('.pending-filter-trigger');
-    if (trigger) { event.stopPropagation(); const wrap = trigger.closest('[data-pn-dd]'); wrap.classList.contains('is-open') ? closeDd() : openDd(wrap); return; }
+    if (trigger) { event.stopPropagation(); return void openDd(trigger.closest('[data-pn-dd]').dataset.pnDd, event); }
     if (!t.closest('.custom-dropdown-container')) closeDd();
     const q = t.closest('[data-pn-quick]'); if (q) return void setQuick(q.dataset.pnQuick);
     const sb = t.closest('[data-pn-status]'); if (sb) { state.status = state.status === sb.dataset.pnStatus ? 'all' : sb.dataset.pnStatus; state.page = 1; return void paint(); }
@@ -410,10 +419,6 @@ const PendingNotesPage = (() => {
     if ((event.key === 'Enter' || event.key === ' ') && event.target.matches && event.target.matches('.claims-metric-card[data-pn-quick]')) { event.preventDefault(); return void setQuick(event.target.dataset.pnQuick); }
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && modal) { event.preventDefault(); return void saveNote(); }
     if (event.key === 'Enter' && event.target.matches && event.target.matches('tr[data-pn-open]')) return void openModal(event.target.dataset.pnOpen);
-    if (openDdName() && ['ArrowDown', 'ArrowUp'].includes(event.key)) {
-      const items = [...host.querySelectorAll('.custom-dropdown-container.is-open .pending-filter-option')], at = items.indexOf(document.activeElement);
-      if (items.length) { event.preventDefault(); items[(at + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
-    }
   }
   function onInput(event) {
     if (event.target.id !== 'pnSearch') return;
