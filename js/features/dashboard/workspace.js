@@ -277,6 +277,7 @@
       if (!container) return;
       SharedForms.leave();
       RescuePage.leave();
+      if (typeof HomeSeasonal !== 'undefined') { HomeSeasonal.stop(); HomeSeasonal.syncButton(); } // nút tuyết trên thanh trên chỉ có ở Trang chủ
 
       if (activeDashboardTab === 'shared_forms') {
         SharedForms.mount(container);

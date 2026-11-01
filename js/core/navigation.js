@@ -39,6 +39,7 @@
             </div>
           </div>
 
+          <button type="button" id="btnSeasonSnow" class="btn-premium btn-secondary nav-logout-icon season-snow-btn" onclick="HomeSeasonal.toggleMute()" hidden></button>
           <button class="btn-premium btn-secondary nav-logout-icon theme-btn theme-toggle-btn-node" title="Chuyển đổi giao diện Sáng/Tối" onclick="toggleTheme()">${activeThemeIcon}</button>
           <button type="button" class="nav-user-card" title="Mở hồ sơ người dùng" onclick="openUserProfileModal()">
             <div class="nav-user-avatar">${escapeHtmlOutput(profile.initials)}</div>
@@ -46,6 +47,7 @@
           </button>
           <button class="btn-premium btn-secondary nav-logout-icon" title="Đăng xuất" aria-label="Đăng xuất" onclick="executeLogoutFlow()">${SVGS.LOGOUT}</button>
         </div>`;
+    if (typeof HomeSeasonal !== 'undefined') HomeSeasonal.syncButton();
     }
 
 

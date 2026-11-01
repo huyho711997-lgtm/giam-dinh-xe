@@ -37,14 +37,28 @@ const HomeSeasonal = (() => {
   const FLAKE = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 2v20M4.2 7l15.6 10M19.8 7 4.2 17M9 3.5l3 2.5 3-2.5M9 20.5l3-2.5 3 2.5"/></svg>';
   function badge() {
     if (!isActive() || !cfg.greeting) return '';
-    const snowBtn = cfg.snow ? `<button type="button" class="hp-season-toggle" onclick="HomeSeasonal.toggleMute()" aria-pressed="${!isMuted()}" title="${isMuted() ? 'Bật' : 'Tắt'} tuyết rơi">${isMuted() ? 'Bật tuyết' : 'Tắt tuyết'}</button>` : '';
-    return `<span class="hp-season">${FLAKE}<span>${String(cfg.message).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]))}</span>${snowBtn}</span>`;
+    return `<span class="hp-season">${FLAKE}<span>${String(cfg.message).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]))}</span></span>`;
+  }
+
+  // Nút bật/tắt tuyết nằm cạnh nút Sáng/Tối trên thanh trên; chỉ hiện ở Trang chủ khi hiệu ứng đang hoạt động.
+  function syncButton() {
+    const btn = document.getElementById('btnSeasonSnow');
+    if (!btn) return;
+    const show = typeof activeDashboardTab !== 'undefined' && activeDashboardTab === 'home' && isActive() && cfg.snow && !reduced();
+    btn.hidden = !show;
+    if (!show) return;
+    const off = isMuted();
+    btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M4.2 7l15.6 10M19.8 7 4.2 17M9 3.5l3 2.5 3-2.5M9 20.5l3-2.5 3 2.5"/>' + (off ? '<path d="M3 3l18 18" stroke-width="2.2"/>' : '') + '</svg>';
+    btn.title = btn.ariaLabel = off ? 'Bật hiệu ứng tuyết rơi' : 'Tắt hiệu ứng tuyết rơi';
+    btn.setAttribute('aria-pressed', String(!off));
+    btn.classList.toggle('is-off', off);
   }
 
   function stop() { cancelAnimationFrame(raf); raf = 0; active = null; }
   function mount(root) {
     listen();
     stop();
+    syncButton();
     const page = (root || document).querySelector?.('.hp-page');
     if (!page || !isActive() || !cfg.snow || isMuted() || reduced()) return;
     const canvas = document.createElement('canvas');
@@ -154,6 +168,6 @@ const HomeSeasonal = (() => {
     const state = document.getElementById('snState'); if (state) { const on = isActive(); state.textContent = on ? 'Đang hiển thị' : 'Đang tắt'; state.classList.toggle('is-on', on); }
   }
 
-  return {mount, badge, isActive, renderAdmin, save, toggleMute, stop, sanitize, inSeason, parseDM, get config() { return cfg; }};
+  return {mount, badge, syncButton, isActive, renderAdmin, save, toggleMute, stop, sanitize, inSeason, parseDM, get config() { return cfg; }};
 })();
 window.HomeSeasonal = HomeSeasonal;
