@@ -249,3 +249,47 @@ test('gán hồ sơ vào zone: ưu tiên Zone BT map, sau đó mới theo GĐV',
   assert.equal(withZone.perGdv.reduce((a, g) => a + g.issued, 0), withZone.totals.issued);
   assert.equal(K.listZones(prep.records, G).find(z => z.key === 'gia lai').count, 5);
 });
+
+// ----- Dự báo cuối tháng (kpi-zone-forecast.js) -----
+const forecastSrc = fs.readFileSync(new URL('../js/features/reports/kpi-zone-forecast.js', import.meta.url), 'utf8');
+const F = vm.runInContext(forecastSrc + '\n;KpiZoneForecast', vm.createContext({KpiZoneCalc: K}));
+function fakeMonth(over = {}) {
+  const base = {
+    estimate: false, futureMonth: false, year: 2026, month: 11,
+    totals: {issued: 40, approved: 20, completion: 0.5, cost: 3000000, ton: 30, ytd: 400, backlogRate: 0.075},
+    pace: {daysInMonth: 30, elapsed: 10, left: 20, perDayApproved: 2, perDayIssued: 4, projApproved: 60, projIssued: 120, projCompletion: 0.5, requiredPerDay: 0},
+    analysis: {tonOver30: 5}, perGdv: [{gdv: 'A', issued: 20, approved: 5, completion: 0.25, gap: 13, unapproved: 15, ton: 10, tonOver30: 3}, {gdv: 'B', issued: 20, approved: 15, completion: 0.75, gap: 3, unapproved: 5, ton: 20, tonOver30: 2}]
+  };
+  return {...base, ...over};
+}
+test('dự báo: giữ nhịp → tỷ lệ hoàn thành & tồn cuối tháng', () => {
+  const f = F.build(fakeMonth(), K);
+  assert.equal(f.projected.completion, 0.5);                     // 60/120
+  assert.equal(f.projected.ton, 30 + (4 - 2) * 20);              // 70
+  assert.ok(Math.abs(f.projected.backlog - 70 / 480) < 1e-9);    // 70 / (400 + 4*20)
+  assert.equal(f.needTotal, 108 - 20);                           // 90% × 120 = 108
+  assert.ok(Math.abs(f.requiredPerDay - 88 / 20) < 1e-9);
+  assert.equal(f.verdict.key, 'risk');
+  assert.deepEqual([...f.failing].sort(), ['backlog', 'completion']);
+  assert.equal(f.drivers[0].gdv, 'A');                           // thiếu nhiều nhất đứng đầu
+});
+test('dự báo: đạt đủ điểm khi cả ba KPI đạt', () => {
+  const ok = fakeMonth({totals: {issued: 40, approved: 38, completion: 0.95, cost: 3000000, ton: 10, ytd: 400, backlogRate: 0.025},
+    pace: {daysInMonth: 30, elapsed: 15, left: 15, perDayApproved: 2.5, perDayIssued: 2.6, projApproved: 75.5, projIssued: 79, projCompletion: 0.956, requiredPerDay: 0}});
+  const f = F.build(ok, K);
+  assert.equal(f.verdict.key, 'on');
+  assert.ok(Math.abs(f.projected.capped - 1) < 1e-9);
+});
+test('dự báo: bỏ qua tháng đã qua/tương lai và đánh dấu độ tin cậy thấp', () => {
+  assert.equal(F.build(fakeMonth({estimate: true}), K), null);
+  assert.equal(F.build(fakeMonth({futureMonth: true}), K), null);
+  assert.equal(F.build(fakeMonth({pace: null}), K), null);
+  assert.equal(F.build(fakeMonth({pace: {...fakeMonth().pace, elapsed: 3}}), K).lowConfidence, true);
+});
+test('dự báo: tồn không âm và không chia cho 0', () => {
+  const f = F.build(fakeMonth({totals: {issued: 0, approved: 0, completion: null, cost: null, ton: 2, ytd: 0, backlogRate: null},
+    pace: {daysInMonth: 30, elapsed: 5, left: 25, perDayApproved: 3, perDayIssued: 0, projApproved: 15, projIssued: 0, projCompletion: null, requiredPerDay: 0}}), K);
+  assert.equal(f.projected.ton, 0);
+  assert.equal(f.projected.completion, null);
+  assert.equal(f.projected.backlog, null);
+});

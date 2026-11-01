@@ -142,6 +142,33 @@ const KpiZonePage = (() => {
     return block('Cần gì để đạt mục tiêu', rows + '</dl>', '', 'kz-need-card');
   }
 
+  // ----- Dự báo cuối tháng (kpi-zone-forecast.js) -----
+  function forecastBlock(r) {
+    const f = typeof KpiZoneForecast !== 'undefined' ? KpiZoneForecast.build(r.current, KpiZoneCalc) : null;
+    if (!f) return '';
+    const pr = f.projected, tone = f.verdict.key;
+    const cur = {completion: r.current.totals.completion, cost: r.current.totals.cost, backlog: r.current.totals.backlogRate};
+    const show = {completion: v => fmt.fmtPct(v, 1), cost: v => v === null ? '-' : fmt.fmtInt(v) + ' đ', backlog: v => fmt.fmtPct(v, 2)};
+    const kpiRows = pr.rows.map(k => '<li class="' + (k.pass === null ? '' : k.pass ? 'ok' : 'miss') + '"><span class="kz-fc-k">' + esc(k.label) + '<small>Mục tiêu ' + (k.key === 'completion' ? '≥ 90%' : k.key === 'cost' ? '≤ 3.500.000 đ' : '≤ 10%') + '</small></span>' +
+      '<span class="kz-fc-v"><s>' + show[k.key](cur[k.key]) + '</s><i aria-hidden="true">→</i><b>' + show[k.key](k.result) + '</b></span>' +
+      '<span class="kz-fc-s">' + (k.pass === null ? 'Chưa đủ dữ liệu' : k.pass ? 'Đạt' : 'Chưa đạt') + '</span></li>').join('');
+    const delta = f.delta.uncapped, up = delta >= 0;
+    const drivers = f.drivers.length ? table(['GĐV', 'Phát sinh', 'Đã duyệt', 'Tỷ lệ', 'So với 90%', 'Chưa duyệt (tháng)', 'Tồn > 30 ngày'],
+      f.drivers.map(g => '<tr><td>' + esc(g.gdv) + '</td><td class="n">' + fmt.fmtInt(g.issued) + '</td><td class="n">' + fmt.fmtInt(g.approved) + '</td><td class="n">' + fmt.fmtPct(g.completion, 1) + '</td>' +
+        '<td class="n ' + (g.gap > 0 ? 'bad' : 'good') + '">' + (g.issued ? (g.gap > 0 ? 'thiếu ' + g.gap : g.gap < 0 ? 'dư ' + (-g.gap) : 'đủ') : '-') + '</td><td class="n">' + fmt.fmtInt(g.unapproved) + '</td><td class="n">' + (g.tonOver30 ? '<span class="bad">' + g.tonOver30 + '</span>' : '0') + '</td></tr>')
+        .join('')) : '';
+    const body = '<div class="kz-fc ' + tone + '">' +
+      '<div class="kz-fc-hero"><span class="kz-fc-pill ' + tone + '">' + esc(f.verdict.label) + '</span>' +
+      '<div class="kz-fc-score"><b>' + fmt.fmtPct(pr.uncapped, 2) + '</b><span>điểm KPI dự kiến cuối tháng</span></div>' +
+      '<div class="kz-fc-sub"><span>Có giới hạn <b>' + fmt.fmtPct(pr.capped, 1) + '</b></span><span class="' + (up ? 'good' : 'bad') + '">' + (up ? '▲ ' : '▼ ') + dec(Math.abs(delta) * 100) + ' đ.% so với hiện tại</span></div>' +
+      '<div class="kz-fc-days"><i style="width:' + Math.min(100, f.asOfElapsed / f.daysInMonth * 100).toFixed(0) + '%"></i></div><small>Ngày ' + f.asOfElapsed + '/' + f.daysInMonth + ' · còn ' + f.daysLeft + ' ngày</small></div>' +
+      '<div class="kz-fc-main"><ul class="kz-fc-rows">' + kpiRows + '</ul>' +
+      '<ul class="kz-fc-actions">' + f.actions.map(a => '<li class="' + a.tone + '">' + esc(a.text) + '</li>').join('') + '</ul></div></div>' + drivers +
+      '<p class="kz-note">Dự báo giả định giữ nguyên nhịp mở/duyệt hồ sơ trung bình từ đầu tháng (' + dec(r.current.pace.perDayIssued) + ' mở · ' + dec(r.current.pace.perDayApproved) + ' duyệt mỗi ngày) và CP bình quân như hiện tại.' +
+      (f.lowConfidence ? ' <b>Mới ' + f.asOfElapsed + ' ngày dữ liệu nên độ tin cậy còn thấp.</b>' : '') + '</p>';
+    return block('Dự báo cuối tháng <em class="kz-est">giả định giữ nhịp hiện tại</em>', body, '', 'kz-fc-card');
+  }
+
   function trendBlock(r) {
     const tr = r.trend.filter(t => !t.futureMonth);
     if (tr.length < 2) return '';
@@ -220,7 +247,7 @@ const KpiZonePage = (() => {
   function view(r) {
     const c = r.current;
     const warn = c.futureMonth ? '<div class="kz-msg warn">Tháng này sau ngày dữ liệu (' + fmt.fmtDate(prep.asOf) + ') nên chưa có số liệu.</div>' : '';
-    return warn + ledger(r) + '<div class="kz-split">' + insightsBlock(r) + needBlock(r) + '</div>' + bnBlock(r) + trendBlock(r) + gdvBlock(r) + costLeadBlock(r) + backlogBlock(r) + compareBlock(r) + unapprovedBlock(c);
+    return warn + ledger(r) + forecastBlock(r) + '<div class="kz-split">' + insightsBlock(r) + needBlock(r) + '</div>' + bnBlock(r) + trendBlock(r) + gdvBlock(r) + costLeadBlock(r) + backlogBlock(r) + compareBlock(r) + unapprovedBlock(c);
   }
 
   // ----- Khung + điều khiển -----

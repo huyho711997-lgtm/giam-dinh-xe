@@ -114,10 +114,11 @@
         let zoneMap = {};
         try { zoneMap = JSON.parse(localStorage.getItem('kpiZoneBtMap:v1') || '{}') || {}; } catch (_) { zoneMap = {}; }
         const c = K.computeMonth(prep.records, {...base, gdvs: K.DEFAULT_GDVS, zoneMap});
+        const fc = typeof KpiZoneForecast !== 'undefined' ? KpiZoneForecast.build(c, K) : null;
         const row = key => c.kpis.rows.find(r => r.key === key) || {};
         const state = r => (r.pass === null || r.pass === undefined ? '' : r.pass ? 'ok' : 'miss');
         return {mode: 'zone', period, tiles: [
-          {label: 'KPI Zone ' + period, text: K.fmtPct(c.kpis.uncapped, 2), sub: 'Điểm ' + K.fmtScore(c.kpis.uncapped) + ' · có giới hạn ' + K.fmtPct(c.kpis.capped, 1)},
+          {label: 'KPI Zone ' + period, text: K.fmtPct(c.kpis.uncapped, 2), sub: fc ? 'Dự báo cuối tháng ' + K.fmtPct(fc.projected.uncapped, 1) + ' · ' + fc.verdict.label : 'Điểm ' + K.fmtScore(c.kpis.uncapped) + ' · có giới hạn ' + K.fmtPct(c.kpis.capped, 1), state: fc ? (fc.verdict.key === 'on' ? 'ok' : fc.verdict.key === 'risk' ? 'miss' : '') : ''},
           {label: 'Tỷ lệ hoàn thành', text: K.fmtPct(row('completion').result, 2), sub: 'Mục tiêu ≥ 90% · ' + K.fmtInt(c.totals.approved) + '/' + K.fmtInt(c.totals.issued) + ' hồ sơ', state: state(row('completion'))},
           {label: 'CP bình quân', text: K.fmtInt(row('cost').result), sub: 'Mục tiêu ≤ 3.500.000 đ', state: state(row('cost'))},
           {label: 'Tỉ lệ tồn', text: K.fmtPct(row('backlog').result, 2), sub: 'Mục tiêu ≤ 10% · tồn ' + K.fmtInt(c.totals.ton) + ' hồ sơ', state: state(row('backlog'))}
