@@ -1,6 +1,6 @@
 /* Tiến độ hồ sơ tồn — theo dõi tuổi tồn, ghi chú tiến độ, hẹn xử lý, xuất Excel.
  * Dữ liệu: cachedPendingClaimsPayload (hồ sơ) + cachedPendingNotesPayload (pending_notes/{BSX|Mã HS}/history[]).
- * Giao diện dùng token --sf-* và dropdown .kz-dd* chung với trang Báo cáo KPI Zone (css/pending-notes.css). */
+ * Giao diện dùng đúng khuôn trang Hồ sơ bồi thường (.pending-workspace--v2: pw-page-head, claims-metrics-grid, pending-register-panel, pending-filter-*) — css/pending-notes.css chỉ bổ sung phần riêng. */
 const PendingNotesPage = (() => {
   const TON_STATUSES = ['moi', 'cho_giam_dinh_ht', 'da_giam_dinh_ht', 'cho_gdct', 'da_gdct', 'cho_duyet_pasc', 'da_duyet_pasc', 'cho_duyet_hsbt'];
   const STALE_DAYS = 3;               // ghi chú cũ hơn số ngày này (hoặc chưa có) => "cần cập nhật"
@@ -22,7 +22,7 @@ const PendingNotesPage = (() => {
   ];
   const PER_PAGE = [10, 20, 50, 100];
   const state = {q: '', status: 'all', gdv: 'all', quick: 'all', sort: 'age', page: 1, per: 20};
-  let host = null, rows = [], modal = null, ddOpen = null, searchTimer = 0, xlsxPromise = null;
+  let host = null, rows = [], modal = null, searchTimer = 0, xlsxPromise = null;
 
   const I = {
     note: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
@@ -122,13 +122,14 @@ const PendingNotesPage = (() => {
   }
 
   // ----- Thành phần giao diện -----
-  function dd(name, icon, caption, value, options, extraClass) {
-    const current = options.find(o => String(o.value) === String(value)) || options[0];
-    return '<div class="kz-dd ' + (extraClass || '') + '" data-pn-dd="' + name + '"><button type="button" class="kz-dd-trigger" aria-haspopup="listbox" aria-expanded="false">' +
-      '<span class="kz-dd-ic">' + svg(icon, 15) + '</span><span class="kz-dd-label"><small>' + esc(caption) + '</small> <b>' + esc(current.label) + '</b></span><span class="kz-dd-chev">' + svg('chev', 14) + '</span></button>' +
-      '<div class="kz-dd-menu" role="listbox" hidden><div class="kz-dd-head">' + esc(caption) + '</div><div class="kz-dd-list">' +
-      options.map(o => '<button type="button" class="kz-dd-opt' + (String(o.value) === String(value) ? ' is-selected' : '') + '" role="option" data-pn-opt="' + attr(o.value) + '"><span>' + esc(o.label) + (o.count !== undefined ? ' <small>(' + o.count + ')</small>' : '') + '</span>' + (String(o.value) === String(value) ? svg('check', 14) : '') + '</button>').join('') +
-      '</div></div></div>';
+  const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg>';
+  function dd(name, icon, caption, value, options, opts) {
+    opts = opts || {};
+    const current = options.find(o => String(o.value) === String(value)) || options[0], isAll = String(value) === String(opts.base === undefined ? 'all' : opts.base);
+    const menu = '<div class="custom-dropdown-menu pending-filter-menu' + (opts.right ? ' pending-filter-menu--right' : '') + '" role="listbox" aria-label="' + attr(caption) + '" style="display:none;"><div class="pending-filter-menu__head"><span>' + esc(opts.head || caption) + '</span><small>' + esc(opts.hint || '') + '</small></div>' +
+      options.map(o => { const sel = String(o.value) === String(value); return '<button type="button" class="custom-dropdown-item pending-filter-option' + (sel ? ' selected' : '') + '" role="option" aria-selected="' + sel + '" data-pn-opt="' + attr(o.value) + '"' + (o.color ? ' style="--option-color:' + o.color + ';"' : '') + '><span class="pending-filter-option__main">' + (o.color ? '<span class="pending-filter-option__dot"></span>' : '') + '<span class="pending-filter-option__label">' + esc(o.label) + '</span></span>' + (o.count !== undefined ? '<span class="pending-filter-option__count">' + o.count + '</span>' : '') + '<span class="pending-filter-option__check">' + (sel ? CHECK : '') + '</span></button>'; }).join('') + '</div>';
+    if (opts.compact) return '<div class="custom-dropdown-container pending-per-page" data-pn-dd="' + name + '"><button type="button" class="pending-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span class="pending-filter-trigger__icon" aria-hidden="true">' + svg(icon, 15) + '</span><span class="pending-filter-trigger__value">' + esc(current.label) + '</span><svg class="pending-filter-trigger__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7 10 5 5 5-5"></path></svg></button>' + menu + '</div>';
+    return '<div class="custom-dropdown-container pending-filter-select' + (isAll ? '' : ' is-filtered') + '" data-pn-dd="' + name + '"><button type="button" class="pending-filter-trigger" aria-haspopup="listbox" aria-expanded="false"><span class="pending-filter-trigger__icon" aria-hidden="true">' + svg(icon, 15) + '</span><span class="pending-filter-trigger__copy"><span class="pending-filter-trigger__caption">' + esc(caption) + '</span><span class="pending-filter-trigger__value">' + esc(current.label) + '</span></span><svg class="pending-filter-trigger__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7 10 5 5 5-5"></path></svg></button>' + menu + '</div>';
   }
   function ageBadge(r) {
     if (r.age === null) return '<span class="pn-age pn-age--na">—</span>';
@@ -156,19 +157,22 @@ const PendingNotesPage = (() => {
     const ages = all.map(r => r.age).filter(a => a !== null);
     const total = all.length, over30 = all.filter(r => r.bucket === 'over30').length, stale = all.filter(r => r.stale).length, noNote = all.filter(r => !r.last).length;
     const overdue = all.filter(r => r.overdue).length, scheduled = all.filter(r => r.dueIso).length, fresh = all.filter(r => r.fresh).length;
-    const pct = (n, d) => (d ? Math.round(n / d * 100) : 0) + '%';
-    const card = (quick, tone, icon, label, value, unit, sub) => '<button type="button" class="pn-kpi pn-kpi--' + tone + (state.quick === quick ? ' is-active' : '') + '" data-pn-quick="' + quick + '"><span class="pn-kpi-top"><span class="pn-kpi-ic">' + svg(icon, 15) + '</span>' + esc(label) + '</span><span class="pn-kpi-val">' + value + (unit ? '<small>' + unit + '</small>' : '') + '</span><span class="pn-kpi-sub">' + sub + '</span></button>';
-    return card('all', 'gold', 'list', 'Tổng hồ sơ tồn', total, 'hồ sơ', ages.length ? 'Tuổi trung vị <b>' + median(ages) + '</b> ngày · lâu nhất <b>' + Math.max(...ages) + '</b> ngày' : 'Chưa có dữ liệu ngày mở') +
-      card('over30', 'rose', 'alert', 'Tồn quá 30 ngày', over30, 'hồ sơ', '<b>' + pct(over30, total) + '</b> tổng số hồ sơ tồn') +
-      card('stale', 'amber', 'clock', 'Cần cập nhật', stale, 'hồ sơ', '<b>' + noNote + '</b> chưa có ghi chú · <b>' + (stale - noNote) + '</b> quá ' + STALE_DAYS + ' ngày') +
-      card(overdue ? 'overdue' : 'fresh', overdue ? 'rose' : 'green', overdue ? 'cal' : 'pulse', overdue ? 'Quá hẹn xử lý' : 'Đã cập nhật gần đây', overdue || fresh, 'hồ sơ',
-        overdue ? '<b>' + scheduled + '</b> hồ sơ đang có lịch hẹn' : '<b>' + pct(fresh, total) + '</b> được ghi chú trong ' + STALE_DAYS + ' ngày');
+    const share = (n, d) => (d ? Math.round(n / d * 100) : 0);
+    const card = (quick, tone, icon, label, value, foot, footValue, progress) => '<article class="claims-metric-card claims-metric-card--' + tone + (state.quick === quick && quick !== 'all' ? ' is-active' : '') + '" role="button" tabindex="0" data-pn-quick="' + quick + '" aria-pressed="' + (state.quick === quick && quick !== 'all') + '" aria-label="' + attr(label + ': ' + value + ' hồ sơ') + '">' +
+      '<div class="claims-metric-head"><span class="claims-metric-icon" aria-hidden="true">' + svg(icon, 14) + '</span><span class="claims-metric-label">' + esc(label) + '</span></div>' +
+      '<div class="claims-metric-value-row"><strong class="claims-metric-value">' + value + '</strong><span class="claims-metric-unit">hồ sơ</span></div>' +
+      '<div class="claims-metric-foot"><span>' + foot + '</span><strong>' + footValue + '</strong></div><div class="claims-metric-track"><i style="--metric-progress:' + Math.max(0, Math.min(100, progress)) + '%"></i></div></article>';
+    return card('all', 'gold', 'list', 'Tổng hồ sơ tồn', total, ages.length ? 'Tuổi trung vị · lâu nhất' : 'Chưa có ngày mở', ages.length ? median(ages) + ' · ' + Math.max(...ages) + ' ngày' : '—', 100) +
+      card('over30', 'red', 'alert', 'Tồn quá 30 ngày', over30, 'Tỷ trọng trên tổng tồn', share(over30, total) + '%', share(over30, total)) +
+      card('stale', 'blue', 'clock', 'Cần cập nhật', stale, noNote + ' chưa ghi chú · ' + (stale - noNote) + ' quá ' + STALE_DAYS + ' ngày', share(stale, total) + '%', share(stale, total)) +
+      (overdue ? card('overdue', 'red', 'cal', 'Quá hẹn xử lý', overdue, scheduled + ' hồ sơ đang có lịch hẹn', share(overdue, scheduled) + '%', share(overdue, scheduled))
+        : card('fresh', 'green', 'pulse', 'Đã cập nhật gần đây', fresh, 'Ghi chú trong ' + STALE_DAYS + ' ngày', share(fresh, total) + '%', share(fresh, total)));
   }
   function renderAges(all) {
     const total = all.length || 1;
     const seg = AGE_BUCKETS.map(b => ({...b, n: all.filter(r => r.bucket === b.key).length}));
     const unknown = all.filter(r => r.bucket === null).length;
-    return '<div class="pn-card-head"><h2>Tuổi hồ sơ tồn</h2><span>Bấm vào nhóm để lọc danh sách</span></div>' +
+    return '<div class="pn-col-head"><h3>Tuổi hồ sơ tồn</h3><span>Bấm vào nhóm để lọc danh sách</span></div>' +
       '<div class="pn-stack" role="img" aria-label="Phân bố tuổi hồ sơ tồn">' + seg.filter(s => s.n).map(s => '<button type="button" class="pn-stack-seg pn-tone-' + s.tone + (state.quick === s.key ? ' is-active' : '') + '" style="flex:' + s.n + '" data-pn-quick="' + s.key + '" title="' + attr(s.label + ': ' + s.n + ' hồ sơ') + '"><span>' + s.n + '</span></button>').join('') + '</div>' +
       '<ul class="pn-legend">' + seg.map(s => '<li><button type="button" data-pn-quick="' + s.key + '" class="' + (state.quick === s.key ? 'is-active' : '') + '"><i class="pn-tone-' + s.tone + '"></i><span>' + s.label + '</span><b>' + s.n + '</b><small>' + Math.round(s.n / total * 100) + '%</small></button></li>').join('') + '</ul>' +
       '<div class="pn-sub-head">Theo trạng thái</div><div class="pn-statuses">' + TON_STATUSES.filter(k => all.some(r => r.status === k)).map(k => { const st = statusInfo(k); return '<button type="button" data-pn-status="' + k + '" class="' + (state.status === k ? 'is-active' : '') + '"><i style="background:' + st.color + '"></i>' + esc(st.label) + ' <b>' + all.filter(r => r.status === k).length + '</b></button>'; }).join('') + '</div>' +
@@ -178,7 +182,7 @@ const PendingNotesPage = (() => {
     const map = new Map();
     for (const r of all) { const g = map.get(r.gdv) || {name: r.gdv, n: 0, over30: 0, stale: 0}; g.n++; if (r.bucket === 'over30') g.over30++; if (r.stale) g.stale++; map.set(r.gdv, g); }
     const list = [...map.values()].sort((a, b) => b.n - a.n), max = Math.max(1, ...list.map(g => g.n));
-    return '<div class="pn-card-head"><h2>Theo giám định viên</h2><span>Bấm tên để lọc</span></div><div class="pn-gdv-head"><span>GĐV</span><span>Tồn</span><span>&gt; 30 ngày</span><span>Cần cập nhật</span></div>' +
+    return '<div class="pn-col-head"><h3>Theo giám định viên</h3><span>Bấm tên để lọc</span></div><div class="pn-gdv-head"><span>GĐV</span><span>Tồn</span><span>&gt; 30 ngày</span><span>Cần cập nhật</span></div>' +
       '<ul class="pn-gdv">' + list.map(g => '<li><button type="button" data-pn-gdv="' + attr(g.name) + '" class="' + (state.gdv === g.name ? 'is-active' : '') + '"><span class="pn-gdv-name"><b>' + esc(g.name) + '</b><span class="pn-gdv-bar"><i style="width:' + Math.round(g.n / max * 100) + '%"></i></span></span><span class="pn-num">' + g.n + '</span><span class="pn-num ' + (g.over30 ? 'is-crit' : '') + '">' + g.over30 + '</span><span class="pn-num ' + (g.stale ? 'is-warn' : '') + '">' + g.stale + '</span></button></li>').join('') + '</ul>';
   }
   function renderChips(scoped) {
@@ -202,13 +206,13 @@ const PendingNotesPage = (() => {
       '<td><div class="pn-damage">' + esc(c.moTaTonThat || c.nguyenNhan || '—') + '</div></td>' +
       '<td class="pn-gdv-cell">' + esc(r.gdv === 'Chưa rõ' ? '—' : r.gdv) + '</td>' +
       '<td class="pn-c-note">' + note + '</td>' +
-      '<td class="pn-c-act"><button type="button" class="sf-button' + (r.stale ? ' sf-primary' : '') + '" data-pn-open-btn="' + attr(r.id) + '">' + svg('note', 14) + (last ? 'Cập nhật' : 'Ghi chú') + (r.history.length ? '<em>' + r.history.length + '</em>' : '') + '</button></td></tr>';
+      '<td class="pn-c-act"><button type="button" class="pending-action-btn' + (r.stale ? ' pending-action-btn--import' : '') + '" data-pn-open-btn="' + attr(r.id) + '">' + svg('note', 14) + '<span>' + (last ? 'Cập nhật' : 'Ghi chú') + '</span>' + (r.history.length ? '<em>' + r.history.length + '</em>' : '') + '</button></td></tr>';
   }
   function pageButtons(page, pages) {
-    const out = [], push = n => out.push('<button type="button" class="pn-page' + (n === page ? ' is-active' : '') + '" data-pn-page="' + n + '"' + (n === page ? ' aria-current="page"' : '') + '>' + n + '</button>');
+    const out = [], push = n => out.push('<button type="button" class="pending-page-btn' + (n === page ? ' is-active' : '') + '" data-pn-page="' + n + '"' + (n === page ? ' aria-current="page"' : '') + '>' + n + '</button>');
     const set = new Set([1, pages, page - 1, page, page + 1].filter(n => n >= 1 && n <= pages));
     let prev = 0;
-    for (const n of [...set].sort((a, b) => a - b)) { if (n - prev > 1) out.push('<span class="pn-gap">…</span>'); push(n); prev = n; }
+    for (const n of [...set].sort((x, y) => x - y)) { if (n - prev > 1) out.push('<span class="pn-gap">…</span>'); push(n); prev = n; }
     return out.join('');
   }
 
@@ -228,45 +232,34 @@ const PendingNotesPage = (() => {
     const gdvs = [...new Set(rows.map(r => r.gdv))].sort((a, b) => a.localeCompare(b, 'vi'));
     if (state.gdv !== 'all' && !gdvs.includes(state.gdv)) state.gdv = 'all';
     if (state.status !== 'all' && !statusOptions.some(o => o.value === state.status)) state.status = 'all';
-    const keepOpen = ddOpen; closeDd();
-    set('#pnFilters', dd('status', 'filter', 'Trạng thái', state.status, statusOptions) + dd('gdv', 'user', 'GĐV', state.gdv, [{value: 'all', label: 'Tất cả GĐV'}, ...gdvs.map(g => ({value: g, label: g, count: rows.filter(r => r.gdv === g).length}))]) + dd('sort', 'sort', 'Sắp xếp', state.sort, SORTS.map(s => ({value: s.key, label: s.label}))));
+    const keepOpen = openDdName(); closeDd();
+    set('#pnFilters', dd('status', 'filter', 'Trạng thái', state.status, statusOptions, {head: 'Trạng thái hồ sơ', hint: 'Chọn một'}) + dd('gdv', 'user', 'Giám định viên', state.gdv, [{value: 'all', label: 'Tất cả GĐV'}, ...gdvs.map(g => ({value: g, label: g, count: rows.filter(r => r.gdv === g).length}))], {head: 'Giám định viên', hint: 'Chọn một'}) + dd('sort', 'sort', 'Sắp xếp', state.sort, SORTS.map(s => ({value: s.key, label: s.label})), {head: 'Sắp xếp danh sách', hint: 'Ưu tiên hiển thị', right: true, base: 'age'}));
     const filtered = state.q || state.status !== 'all' || state.gdv !== 'all' || state.quick !== 'all';
     host.querySelector('[data-pn-reset]').disabled = !filtered;
-    host.querySelector('#pnCount').innerHTML = '<b>' + total + '</b> / ' + rows.length + ' hồ sơ';
+    host.querySelector('#pnCount').innerHTML = '<strong>' + total.toLocaleString('vi-VN') + '</strong> / ' + rows.length.toLocaleString('vi-VN') + ' hồ sơ';
     host.querySelector('#pnBody').innerHTML = pageRows.length ? pageRows.map((r, i) => renderRow(r, start + i)).join('')
-      : '<tr><td colspan="9"><div class="pn-empty">' + svg('search', 28) + '<b>' + (rows.length ? 'Không có hồ sơ phù hợp bộ lọc' : 'Chưa có hồ sơ tồn') + '</b><span>' + (rows.length ? 'Thử bỏ bớt bộ lọc hoặc đổi từ khóa tìm kiếm.' : 'Hồ sơ tồn sẽ xuất hiện ở đây khi có dữ liệu.') + '</span>' + (rows.length && filtered ? '<button type="button" class="sf-button" data-pn-reset>Xóa bộ lọc</button>' : '') + '</div></td></tr>';
-    host.querySelector('#pnPager').innerHTML = total ? '<div class="pn-pager-info">Hiển thị <b>' + (start + 1) + '–' + Math.min(start + state.per, total) + '</b> / ' + total + '</div>' +
-      '<div class="pn-pager-nav"><button type="button" class="pn-page" data-pn-page="' + (state.page - 1) + '" ' + (state.page <= 1 ? 'disabled' : '') + ' aria-label="Trang trước">' + svg('left', 14) + '</button>' + pageButtons(state.page, pages) +
-      '<button type="button" class="pn-page" data-pn-page="' + (state.page + 1) + '" ' + (state.page >= pages ? 'disabled' : '') + ' aria-label="Trang sau">' + svg('right', 14) + '</button></div>' +
-      dd('per', 'rows', 'Mỗi trang', state.per, PER_PAGE.map(n => ({value: n, label: n + ' hồ sơ'})), 'kz-dd-sm pn-dd-up') : '';
-    if (keepOpen) { const el = host.querySelector('[data-pn-dd="' + keepOpen + '"]'); if (el) openDd(el); }
+      : '<tr><td colspan="9"><div class="pn-empty">' + svg('search', 28) + '<b>' + (rows.length ? 'Không có hồ sơ phù hợp bộ lọc' : 'Chưa có hồ sơ tồn') + '</b><span>' + (rows.length ? 'Thử bỏ bớt bộ lọc hoặc đổi từ khóa tìm kiếm.' : 'Hồ sơ tồn sẽ xuất hiện ở đây khi có dữ liệu.') + '</span>' + (rows.length && filtered ? '<button type="button" class="pending-action-btn" data-pn-reset><span>Xóa bộ lọc</span></button>' : '') + '</div></td></tr>';
+    host.querySelector('#pnPager').innerHTML = total ? '<div class="pending-pagination__inner">' + dd('per', 'rows', 'Mỗi trang', state.per, PER_PAGE.map(n => ({value: n, label: n + ' / trang'})), {compact: true, right: true, head: 'Số dòng hiển thị', hint: 'Mỗi trang'}) +
+      '<div class="pending-pagination__summary"><strong>' + (start + 1) + '–' + Math.min(start + state.per, total) + '</strong> / ' + total + '</div>' +
+      '<div class="pending-page-controls"><button type="button" class="pending-page-btn" data-pn-page="' + (state.page - 1) + '" ' + (state.page <= 1 ? 'disabled' : '') + ' title="Trang trước" aria-label="Trang trước">' + svg('left', 14) + '</button>' + pageButtons(state.page, pages) +
+      '<button type="button" class="pending-page-btn" data-pn-page="' + (state.page + 1) + '" ' + (state.page >= pages ? 'disabled' : '') + ' title="Trang sau" aria-label="Trang sau">' + svg('right', 14) + '</button></div></div>' : '';
+    if (keepOpen) { const el = host.querySelector('[data-pn-dd="' + keepOpen + '"]'); if (el) openDd(el, true); }
     if (modal) paintModalHistory();
   }
 
-  // ----- Dropdown (cùng kiểu với trang KPI Zone) -----
+  // ----- Dropdown (cùng khuôn .pending-filter-* với trang Hồ sơ bồi thường) -----
+  const openDdName = () => { const el = host && host.querySelector('.custom-dropdown-container.is-open'); return el ? el.dataset.pnDd : null; };
   function closeDd() {
     if (!host) return;
-    host.querySelectorAll('.kz-dd.is-open').forEach(el => { el.classList.remove('is-open'); el.querySelector('.kz-dd-menu').hidden = true; el.querySelector('.kz-dd-trigger').setAttribute('aria-expanded', 'false'); });
-    ddOpen = null;
+    host.querySelectorAll('.custom-dropdown-container.is-open').forEach(el => { el.classList.remove('is-open'); const menu = el.querySelector('.custom-dropdown-menu'); if (menu) menu.style.display = 'none'; el.querySelector('.pending-filter-trigger')?.setAttribute('aria-expanded', 'false'); });
   }
-  function placeDd(wrap) {
-    const trigger = wrap.querySelector('.kz-dd-trigger'), menu = wrap.querySelector('.kz-dd-menu'), rect = trigger.getBoundingClientRect();
-    const width = Math.max(rect.width, 230);
-    menu.style.width = width + 'px';
-    menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)) + 'px';
-    const room = window.innerHeight - rect.bottom - 14, above = rect.top - 14, up = room < 240 && above > room, space = Math.max(160, Math.min(360, up ? above : room));
-    menu.querySelector('.kz-dd-list').style.maxHeight = (space - 44) + 'px';
-    menu.style.top = up ? Math.max(8, rect.top - Math.min(menu.offsetHeight || space, space) - 6) + 'px' : (rect.bottom + 6) + 'px';
-  }
-  function openDd(wrap) {
-    closeDd();
+  function openDd(wrap, quiet) {
+    if (!quiet) { if (typeof closeAllCustomDropdowns === 'function') closeAllCustomDropdowns(); closeDd(); }
     wrap.classList.add('is-open');
-    const menu = wrap.querySelector('.kz-dd-menu'); menu.hidden = false;
-    wrap.querySelector('.kz-dd-trigger').setAttribute('aria-expanded', 'true');
-    ddOpen = wrap.dataset.pnDd; placeDd(wrap);
-    (menu.querySelector('.is-selected') || menu.querySelector('.kz-dd-opt'))?.focus({preventScroll: true});
+    wrap.querySelector('.custom-dropdown-menu').style.display = 'block';
+    wrap.querySelector('.pending-filter-trigger').setAttribute('aria-expanded', 'true');
+    if (!quiet) (wrap.querySelector('.pending-filter-option.selected') || wrap.querySelector('.pending-filter-option'))?.focus({preventScroll: true});
   }
-  const onViewportMove = () => { if (ddOpen && host) { const wrap = host.querySelector('.kz-dd.is-open'); if (wrap) placeDd(wrap); } };
 
   // ----- Hộp thoại ghi chú -----
   function openModal(id) {
@@ -365,36 +358,38 @@ const PendingNotesPage = (() => {
 
   // ----- Khung trang & sự kiện -----
   function skeleton() {
-    return '<div class="sf-workspace pn-workspace" id="pnRoot">' +
-      '<header class="sf-page-head"><div class="sf-page-title"><span class="sf-page-emblem" aria-hidden="true">' + svg('note', 22) + '</span><div><div class="sf-eyebrow">NGHIỆP VỤ · HỒ SƠ BỒI THƯỜNG</div><h1>Tiến độ hồ sơ tồn</h1><p>Theo dõi tuổi tồn, ghi chú tiến độ và lịch hẹn xử lý của từng hồ sơ — hồ sơ cần chú ý nhất được xếp lên đầu.</p></div></div>' +
-      '<div class="sf-toolbar"><button type="button" class="sf-button" data-pn-refresh title="Tính lại theo dữ liệu mới nhất">' + svg('reset', 15) + 'Làm mới</button><button type="button" class="sf-button sf-primary" data-pn-export>' + svg('xls', 15) + 'Xuất Excel</button></div></header>' +
-      '<section class="pn-kpis" id="pnSummary" aria-label="Tổng quan hồ sơ tồn"></section>' +
-      '<section class="pn-insight"><div class="sf-library pn-card" id="pnAges"></div><div class="sf-library pn-card" id="pnGdvs"></div></section>' +
-      '<section class="sf-library pn-library"><div class="pn-bar"><label class="pn-search">' + svg('search', 16) + '<input type="search" id="pnSearch" placeholder="Tìm biển số, số HSBT, chủ xe, GĐV, tổn thất…" autocomplete="off" aria-label="Tìm hồ sơ tồn"></label><div class="pn-filters" id="pnFilters"></div>' +
-      '<button type="button" class="sf-button" data-pn-reset>' + svg('reset', 14) + 'Xóa lọc</button><span class="pn-count" id="pnCount"></span></div>' +
+    const btn = (attrName, icon, text, cls) => '<button type="button" class="pending-action-btn' + (cls ? ' ' + cls : '') + '" ' + attrName + '><span class="pending-action-btn__icon" aria-hidden="true">' + svg(icon, 15) + '</span><span>' + text + '</span></button>';
+    return '<div class="workspace-grid single-col"><section class="pending-workspace pending-workspace--v2 pn-workspace" id="pnRoot" aria-label="Tiến độ hồ sơ tồn">' +
+      '<header class="pw-page-head"><div class="pw-page-title"><div class="pw-page-emblem" aria-hidden="true">' + svg('note', 22) + '</div><div><span class="pw-eyebrow">Trung tâm điều hành tổn thất</span><h1>Tiến độ hồ sơ tồn</h1><p>Theo dõi tuổi tồn, ghi chú tiến độ và lịch hẹn xử lý của từng hồ sơ — hồ sơ cần chú ý nhất được xếp lên đầu.</p></div></div>' +
+      '<div class="pending-action-group" role="group" aria-label="Thao tác">' + btn('data-pn-refresh title="Tính lại theo dữ liệu mới nhất"', 'reset', 'Làm mới') + btn('data-pn-export', 'xls', 'Xuất Excel', 'pending-action-btn--import') + '</div></header>' +
+      '<div class="claims-metrics-grid pn-metrics" id="pnSummary" aria-label="Tổng quan hồ sơ tồn"></div>' +
+      '<div class="pending-register-panel pn-insight"><div class="pn-col" id="pnAges"></div><div class="pn-col" id="pnGdvs"></div></div>' +
+      '<div class="pending-register-panel pn-list"><div class="pending-register-topbar"><div class="pending-register-header"><h3>Danh sách hồ sơ</h3><div class="pending-filter-summary" aria-live="polite"><span class="pending-filter-result-count" id="pnCount"></span></div></div><div class="pending-pagination" id="pnPager"></div></div>' +
+      '<div class="pending-filter-toolbar"><div class="pending-filter-search"><span class="pending-filter-search__icon" aria-hidden="true">' + svg('search', 16) + '</span><input type="search" id="pnSearch" class="pending-filter-search__input" placeholder="Biển số, số HSBT, chủ xe, GĐV hoặc tổn thất…" autocomplete="off" aria-label="Tìm hồ sơ tồn"></div>' +
+      '<div class="pending-filter-controls" id="pnFilters"></div><button type="button" class="pending-filter-reset" data-pn-reset title="Đặt lại toàn bộ bộ lọc" aria-label="Đặt lại bộ lọc">' + svg('reset', 16) + '</button></div>' +
       '<div class="pn-chips" id="pnChips" role="group" aria-label="Lọc nhanh"></div>' +
-      '<div class="pn-tablewrap"><table class="pn-table"><thead><tr><th class="pn-c-stt">#</th><th>Hồ sơ</th><th>Trạng thái</th><th>Tuổi tồn</th><th>Xe &amp; đơn vị cấp</th><th>Nội dung tổn thất</th><th>GĐV xử lý</th><th>Tiến độ gần nhất</th><th></th></tr></thead><tbody id="pnBody"></tbody></table></div>' +
-      '<div class="pn-pager" id="pnPager"></div></section>' +
-      '<div class="pn-modal" id="pnModal" hidden role="dialog" aria-modal="true" aria-labelledby="pnModalTitle"><div class="pn-dialog"><header><div><span class="sf-eyebrow">TIẾN ĐỘ HỒ SƠ</span><h3 id="pnModalTitle"></h3><div class="pn-modal-meta" id="pnModalMeta"></div></div><button type="button" class="pn-x" data-pn-close aria-label="Đóng">' + svg('close', 18) + '</button></header>' +
+      '<div class="table-container pending-register-table"><table class="p-table pn-table"><thead><tr><th class="pn-c-stt">#</th><th>Hồ sơ</th><th>Trạng thái</th><th>Tuổi tồn</th><th>Xe &amp; đơn vị cấp</th><th>Nội dung tổn thất</th><th>Giám định viên</th><th>Tiến độ gần nhất</th><th></th></tr></thead><tbody id="pnBody"></tbody></table></div></div>' +
+      '<div class="pn-modal" id="pnModal" hidden role="dialog" aria-modal="true" aria-labelledby="pnModalTitle"><div class="pn-dialog"><header><div><span class="pw-eyebrow">Tiến độ hồ sơ</span><h3 id="pnModalTitle"></h3><div class="pn-modal-meta" id="pnModalMeta"></div></div><button type="button" class="pn-x" data-pn-close aria-label="Đóng">' + svg('close', 18) + '</button></header>' +
       '<div class="pn-dialog-body"><div class="pn-h-title">Lịch sử ghi chú <span id="pnHistoryCount">0</span></div><ul class="pn-history" id="pnHistory"></ul>' +
       '<label class="pn-label" for="pnNoteInput">Ghi chú mới</label><div class="pn-templates">' + TEMPLATES.map(t => '<button type="button" data-pn-tpl="' + attr(t) + '">' + esc(t) + '</button>').join('') + '</div>' +
       '<textarea id="pnNoteInput" rows="3" placeholder="VD: Đã liên hệ khách hàng, hẹn bổ sung đăng kiểm trong tuần…"></textarea>' +
       '<div class="pn-due-row"><label class="pn-label" for="pnDueInput">Hẹn xử lý tiếp <small>(tuỳ chọn)</small></label><input type="date" id="pnDueInput"><div class="pn-due-quick"><button type="button" data-pn-due="1">+1 ngày</button><button type="button" data-pn-due="3">+3 ngày</button><button type="button" data-pn-due="7">+7 ngày</button><button type="button" data-pn-due="0">Bỏ hẹn</button></div></div></div>' +
-      '<footer><span class="pn-kbd">Ctrl + Enter để lưu</span><button type="button" class="sf-button" data-pn-close>Hủy</button><button type="button" class="sf-button sf-primary" data-pn-save>' + svg('check', 14) + 'Lưu ghi chú</button></footer></div></div></div>';
+      '<footer><span class="pn-kbd">Ctrl + Enter để lưu</span>' + btn('data-pn-close', 'close', 'Hủy') + btn('data-pn-save', 'check', 'Lưu ghi chú', 'pending-action-btn--import') + '</footer></div></div></section></div>';
   }
   function setQuick(value) { state.quick = state.quick === value && value !== 'all' ? 'all' : value; state.page = 1; paint(); }
   function onClick(event) {
     const t = event.target;
     const opt = t.closest('[data-pn-opt]');
     if (opt) {
+      event.stopPropagation();
       const name = opt.closest('[data-pn-dd]').dataset.pnDd, value = opt.dataset.pnOpt;
       closeDd();
       if (name === 'per') state.per = Number(value) || 20; else state[name] = value;
       state.page = 1; paint(); return;
     }
-    const trigger = t.closest('.kz-dd-trigger');
-    if (trigger) { const wrap = trigger.closest('[data-pn-dd]'); wrap.classList.contains('is-open') ? closeDd() : openDd(wrap); return; }
-    if (!t.closest('.kz-dd')) closeDd();
+    const trigger = t.closest('.pending-filter-trigger');
+    if (trigger) { event.stopPropagation(); const wrap = trigger.closest('[data-pn-dd]'); wrap.classList.contains('is-open') ? closeDd() : openDd(wrap); return; }
+    if (!t.closest('.custom-dropdown-container')) closeDd();
     const q = t.closest('[data-pn-quick]'); if (q) return void setQuick(q.dataset.pnQuick);
     const sb = t.closest('[data-pn-status]'); if (sb) { state.status = state.status === sb.dataset.pnStatus ? 'all' : sb.dataset.pnStatus; state.page = 1; return void paint(); }
     const g = t.closest('[data-pn-gdv]'); if (g) { state.gdv = state.gdv === g.dataset.pnGdv ? 'all' : g.dataset.pnGdv; state.page = 1; return void paint(); }
@@ -411,11 +406,12 @@ const PendingNotesPage = (() => {
     const open = t.closest('[data-pn-open]'); if (open) openModal(open.dataset.pnOpen);
   }
   function onKey(event) {
-    if (event.key === 'Escape') { if (ddOpen) { const name = ddOpen; closeDd(); host.querySelector('[data-pn-dd="' + name + '"] .kz-dd-trigger')?.focus(); } else if (modal) closeModal(); return; }
+    if (event.key === 'Escape') { const name = openDdName(); if (name) { closeDd(); host.querySelector('[data-pn-dd="' + name + '"] .pending-filter-trigger')?.focus(); } else if (modal) closeModal(); return; }
+    if ((event.key === 'Enter' || event.key === ' ') && event.target.matches && event.target.matches('.claims-metric-card[data-pn-quick]')) { event.preventDefault(); return void setQuick(event.target.dataset.pnQuick); }
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && modal) { event.preventDefault(); return void saveNote(); }
     if (event.key === 'Enter' && event.target.matches && event.target.matches('tr[data-pn-open]')) return void openModal(event.target.dataset.pnOpen);
-    if (ddOpen && ['ArrowDown', 'ArrowUp'].includes(event.key)) {
-      const items = [...host.querySelectorAll('.kz-dd.is-open .kz-dd-opt')], at = items.indexOf(document.activeElement);
+    if (openDdName() && ['ArrowDown', 'ArrowUp'].includes(event.key)) {
+      const items = [...host.querySelectorAll('.custom-dropdown-container.is-open .pending-filter-option')], at = items.indexOf(document.activeElement);
       if (items.length) { event.preventDefault(); items[(at + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus(); }
     }
   }
@@ -437,8 +433,6 @@ const PendingNotesPage = (() => {
       host.addEventListener('keydown', onKey);
       host.addEventListener('input', onInput);
       host.querySelector('#pnSearch').value = state.q;
-      window.removeEventListener('resize', onViewportMove); window.addEventListener('resize', onViewportMove);
-      window.removeEventListener('scroll', onViewportMove, true); window.addEventListener('scroll', onViewportMove, true);
     } else host = target.querySelector('#pnRoot');
     paint();
   }
