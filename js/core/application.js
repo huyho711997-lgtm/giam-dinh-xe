@@ -142,6 +142,9 @@
 
       if (isManagementRoute && !isUserAuthenticated) {
         if (mainNavBarDOM) mainNavBarDOM.style.display = 'none';
+        // Đăng xuất / chưa đăng nhập: gỡ sidebar, breadcrumb và lớp body của khung ứng dụng để màn hình đăng nhập chiếm toàn trang.
+        removeHeaderNavigationLinks();
+        if (userActionSpace) userActionSpace.innerHTML = '';
         renderLoginView();
         return;
       }
