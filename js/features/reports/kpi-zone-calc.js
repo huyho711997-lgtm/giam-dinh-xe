@@ -352,8 +352,8 @@ const KpiZoneCalc = (() => {
     {key: 'c4', label: '3,5–5 triệu', max: 5e6}, {key: 'c5', label: '5–10 triệu', max: COST_CAP}, {key: 'c6', label: 'Từ 10 triệu (loại)', max: Infinity}
   ];
   function histogram(buckets, values) {
-    const out = buckets.map(b => ({key: b.key, label: b.label, count: 0, excluded: b.max === Infinity}));
-    for (const v of values) { const i = buckets.findIndex(b => v < b.max); out[i < 0 ? out.length - 1 : i].count++; }
+    const out = buckets.map(b => ({key: b.key, label: b.label, count: 0, sum: 0, excluded: b.max === Infinity}));
+    for (const v of values) { const i = buckets.findIndex(b => v < b.max), slot = out[i < 0 ? out.length - 1 : i]; slot.count++; slot.sum += v; }
     return out;
   }
   const bucketCounts = list => { const c = AGE_BUCKETS.map(b => ({key: b.key, label: b.label, count: 0})); for (const d of list) c[AGE_BUCKETS.findIndex(b => d <= b.max)].count++; return c; };

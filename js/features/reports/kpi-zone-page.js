@@ -220,7 +220,7 @@ const KpiZonePage = (() => {
   function view(r) {
     const c = r.current;
     const warn = c.futureMonth ? '<div class="kz-msg warn">Tháng này sau ngày dữ liệu (' + fmt.fmtDate(prep.asOf) + ') nên chưa có số liệu.</div>' : '';
-    return warn + ledger(r) + '<div class="kz-split">' + insightsBlock(r) + needBlock(r) + '</div>' + trendBlock(r) + gdvBlock(r) + costLeadBlock(r) + backlogBlock(r) + compareBlock(r) + unapprovedBlock(c);
+    return warn + ledger(r) + '<div class="kz-split">' + insightsBlock(r) + needBlock(r) + '</div>' + bnBlock(r) + trendBlock(r) + gdvBlock(r) + costLeadBlock(r) + backlogBlock(r) + compareBlock(r) + unapprovedBlock(c);
   }
 
   // ----- Khung + điều khiển -----
@@ -336,6 +336,7 @@ const KpiZonePage = (() => {
         [], ['Cần duyệt thêm để đạt 90%', c.needMore, 'Cần', c.target]], [30, 16, 16, 16]);
       sheet('Xu hướng', [['Tháng', 'Ước tính', 'HS phát sinh', 'HS duyệt', 'Tỷ lệ hoàn thành', 'CP bình quân', 'Tồn lũy kế', 'Tỉ lệ tồn', 'Điểm chưa giới hạn', 'Điểm có giới hạn'],
         ...report.trend.filter(x => !x.futureMonth).map(x => ['T' + x.month + '.' + x.year, x.estimate ? 'có' : '', x.issued, x.approved, x.completion ?? '-', x.cost ?? '-', x.ton, x.backlogRate ?? '-', x.uncapped, x.capped])], [12, 10, 14, 12, 16, 14, 12, 12, 18, 18]);
+      if (BN) { const rowsBn = bnRows(report); if (rowsBn.length) XLSX.utils.book_append_sheet(book, bnSheet(XLSX, rowsBn, c), 'Điểm nghẽn'); }
       sheet('Phân tích', [['Nhận định'], ...report.insights.map(x => [x.title, x.text]), [],
         ['Chi phí hồ sơ phát sinh', 'Số hồ sơ'], ...a.cost.buckets.map(b => [b.label, b.count]), [],
         ['Thời gian từ mở tới duyệt', 'Số hồ sơ'], ...a.lead.buckets.map(b => [b.label, b.count]), [],
@@ -374,8 +375,9 @@ const KpiZonePage = (() => {
     host.addEventListener('click', event => {
       if (onDropdownClick(event)) return;
       if (event.target.closest('[data-kz-export]')) exportExcel();
+      if (bnClick(event)) return;
       const xls = event.target.closest('[data-kz-xls]');
-      if (xls) { const card = xls.closest('.kz-card'); if (card) downloadExcel(card, xls); return; }
+      if (xls) { const card = xls.closest('.kz-card'); if (card) (card.classList.contains('kz-bn-card') ? exportBottleneck(xls) : downloadExcel(card, xls)); return; }
       const img = event.target.closest('[data-kz-img]');
       if (img) { const card = img.closest('.kz-card, .kz-ledger'); if (card) downloadImage(card, img); return; }
       const step = event.target.closest('[data-kz-step]');
@@ -387,12 +389,180 @@ const KpiZonePage = (() => {
       }
     });
     host.addEventListener('keydown', onDropdownKey);
+    host.addEventListener('input', event => { const el = event.target.closest && event.target.closest('[data-bn-f]'); if (el) bnOnInput(el); });
+    host.addEventListener('paste', event => { const el = event.target.closest && event.target.closest('[data-bn-f]'); if (!el) return; event.preventDefault(); document.execCommand('insertText', false, (event.clipboardData || window.clipboardData).getData('text/plain')); });
     document.addEventListener('click', outsideDd, true); window.addEventListener('resize', closeDdSoft); window.addEventListener('scroll', closeDdSoft, true);
     container.replaceChildren(host);
     refresh();
   }
 
 
+
+
+  // ----- Điểm nghẽn & đề xuất xử lý (báo cáo cấp trên) -----
+  // Dòng gợi ý do KpiBottleneck.detect tính từ số liệu KPI; AI chỉ viết lại nguyên nhân/hành động. Người dùng sửa trực tiếp trong ô,
+  // bản sửa và kết quả AI lưu theo tháng trên máy này (localStorage) và ưu tiên: bản sửa > AI > gợi ý tự động.
+  const BN = typeof KpiBottleneck !== 'undefined' ? KpiBottleneck : null;
+  const bnKey = () => 'kpiZoneBn:v1:' + monthValue;
+  const bnLoad = () => { try { return JSON.parse(localStorage.getItem(bnKey()) || '{}') || {}; } catch (_) { return {}; } };
+  const bnSave = state => { try { localStorage.setItem(bnKey(), JSON.stringify(state)); } catch (_) { /* không lưu được: vẫn dùng trong phiên */ } };
+  let bnBusy = false, bnNotice = {text: '', kind: ''};
+
+  function bnRows(r) {
+    if (!BN) return [];
+    const state = bnLoad(), hidden = new Set(state.hidden || []);
+    const rows = BN.detect(r, K).filter(b => !hidden.has(b.id)).map(base => {
+      const ai = (state.ai || {})[base.id] || {}, edit = (state.edits || {})[base.id] || {};
+      const row = {...base, base};
+      row.fromAi = {};
+      for (const f of BN.AI_FIELDS) if (ai[f]) { row[f] = ai[f]; row.fromAi[f] = true; }
+      for (const [f, v] of Object.entries(edit)) { row[f] = v; delete row.fromAi[f]; }
+      row.warn = ai.warn || [];
+      return row;
+    });
+    for (const extra of state.added || []) rows.push({...extra, manual: true, fromAi: {}, warn: [], base: null});
+    return rows;
+  }
+
+  function bnBlock(r) {
+    if (!BN) return '';
+    const rows = bnRows(r), state = bnLoad();
+    const tools = '<span class="kz-bn-tools"><button type="button" class="kz-img kz-ai" data-bn-ai' + (bnBusy ? ' disabled' : '') + ' title="Gemini viết lại nguyên nhân và hành động từ số liệu đã tính">' +
+      ddSvg('<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/>', 14) + '<span>' + (bnBusy ? 'AI đang soạn…' : 'Soạn bằng AI') + '</span></button>' +
+      '<button type="button" class="kz-img" data-bn-add title="Thêm một dòng tự nhập"><span>+ Thêm dòng</span></button>' +
+      '<button type="button" class="kz-img" data-bn-reset title="Xoá bản sửa và kết quả AI của tháng này"><span>Khôi phục gợi ý</span></button></span>';
+    const notice = '<div class="kz-bn-notice ' + (bnNotice.kind || '') + '" data-bn-status role="status">' + esc(bnNotice.text) + '</div>';
+    const summary = state.summary ? '<div class="kz-bn-summary"><b>Tóm tắt cho cấp trên (AI soạn)</b><p>' + esc(state.summary) + '</p>' + ((state.summaryWarn || []).length ? '<small class="kz-bn-warn">⚠ Số chưa đối chiếu được với dữ liệu: ' + esc(state.summaryWarn.join(', ')) + '</small>' : '') + '</div>' : '';
+    if (!rows.length) return block('Điểm nghẽn & đề xuất xử lý', '<div class="kz-none kz-bn-clear">Không phát hiện điểm nghẽn nào trong ' + label(r.current) + ': các chỉ tiêu KPI đều trong mục tiêu và tồn không tập trung. Có thể bấm “Thêm dòng” nếu cần nêu vấn đề khác.</div>', tools, 'kz-bn-card');
+    const cell = (row, field) => {
+      const ai = row.fromAi[field], warn = ai && row.warn.length ? ' title="Có số chưa đối chiếu được với dữ liệu: ' + esc(row.warn.join(', ')) + '"' : '';
+      return '<td class="kz-bn-c kz-bn-' + field + (ai ? ' is-ai' : '') + (ai && row.warn.length ? ' has-warn' : '') + '"' + warn + '><div class="kz-bn-edit" contenteditable="plaintext-only" spellcheck="false" data-bn-id="' + esc(row.id) + '" data-bn-f="' + field + '">' + esc(row[field] || '') + '</div></td>';
+    };
+    const body = rows.map((row, i) => '<tr data-bn-row="' + esc(row.id) + '"><td class="kz-bn-n"><b>' + (i + 1) + '</b><button type="button" class="kz-bn-del" data-bn-del="' + esc(row.id) + '" title="Bỏ dòng này khỏi báo cáo" aria-label="Bỏ dòng ' + (i + 1) + '">×</button></td>' + BN.COLUMNS.map(col => cell(row, col.key)).join('') + '</tr>').join('');
+    const head = '<tr><th class="kz-bn-n">Stt</th>' + BN.COLUMNS.map(col => '<th>' + esc(col.label) + '</th>').join('') + '</tr>';
+    const note = '<p class="kz-note">Nguyên nhân và hành động là <b>gợi ý suy ra từ số liệu</b>, cần Trưởng Zone xác nhận với thực tế trước khi gửi cấp trên. Nhấp vào ô để sửa; bản sửa lưu trên máy này theo từng tháng. Ô có nền vàng nhạt do AI soạn; dấu ⚠ nghĩa là có con số AI viết chưa đối chiếu được với dữ liệu. AI chỉ nhận số liệu tổng hợp (không có tên khách hàng, biển số, mã hồ sơ).</p>';
+    return block('Điểm nghẽn & đề xuất xử lý (báo cáo cấp trên)', notice + summary + '<div class="kz-tablewrap kz-bn-wrap"><table class="kz-table kz-bn-table"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' + note, tools, 'kz-bn-card');
+  }
+
+  function bnRepaint() {
+    const card = host && host.querySelector('.kz-bn-card');
+    if (!card || !report) return;
+    const holder = document.createElement('div'); holder.innerHTML = bnBlock(report);
+    const fresh = holder.firstElementChild; if (fresh) card.replaceWith(fresh);
+  }
+  function bnNote(text, kind) { bnNotice = {text, kind: kind || ''}; const el = host && host.querySelector('[data-bn-status]'); if (el) { el.textContent = text; el.className = 'kz-bn-notice ' + (kind || ''); } }
+
+  let bnTimer = 0;
+  function bnOnInput(el) {
+    const id = el.dataset.bnId, field = el.dataset.bnF, text = el.innerText.replace(/ /g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    clearTimeout(bnTimer);
+    bnTimer = setTimeout(() => {
+      const state = bnLoad();
+      const extra = (state.added || []).find(x => x.id === id);
+      if (extra) extra[field] = text;
+      else { state.edits = state.edits || {}; state.edits[id] = {...(state.edits[id] || {}), [field]: text}; }
+      bnSave(state);
+      el.closest('td')?.classList.remove('is-ai', 'has-warn');
+    }, 250);
+  }
+
+  function bnClick(event) {
+    const del = event.target.closest('[data-bn-del]');
+    if (del) {
+      const id = del.dataset.bnDel, state = bnLoad();
+      if ((state.added || []).some(x => x.id === id)) state.added = state.added.filter(x => x.id !== id); else state.hidden = [...new Set([...(state.hidden || []), id])];
+      bnSave(state); bnRepaint(); return true;
+    }
+    if (event.target.closest('[data-bn-add]')) {
+      const state = bnLoad(); state.added = [...(state.added || []), {id: 'x' + Date.now(), title: '', figures: '', cause: '', evidence: '', actions: '', owner: '', deadline: '', expected: ''}];
+      bnSave(state); bnRepaint(); const last = host.querySelector('.kz-bn-table tbody tr:last-child [data-bn-f="title"]'); if (last) last.focus(); return true;
+    }
+    if (event.target.closest('[data-bn-reset]')) { try { localStorage.removeItem(bnKey()); } catch (_) { /* bỏ qua */ } bnNote('', ''); bnRepaint(); return true; }
+    if (event.target.closest('[data-bn-ai]')) { bnAskAi(); return true; }
+    return false;
+  }
+
+  async function bnGemini(request, apiKey, model) {
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 60000);
+    try {
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
+        method: 'POST', signal: controller.signal, headers: {'Content-Type': 'application/json', 'x-goog-api-key': apiKey}, body: JSON.stringify(request)
+      });
+      let data = null; try { data = await response.json(); } catch (_) { /* không phải JSON */ }
+      if (!response.ok || (data && data.error)) {
+        if (response.status === 429) throw new Error('Gemini báo hết hạn mức tạm thời. Đợi 1–2 phút rồi thử lại.');
+        if (response.status === 400 || response.status === 403) throw new Error('Khoá Gemini API không hợp lệ hoặc không dùng được mô hình này. Kiểm tra lại khoá ở Trợ lý AI.');
+        throw new Error('Gemini lỗi: ' + ((data && data.error && data.error.message) || 'HTTP ' + response.status));
+      }
+      const parts = data && data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+      const text = parts ? parts.map(p => p.text || '').join('') : '';
+      if (!text) throw new Error('AI không trả về nội dung (có thể bị bộ lọc chặn). Hãy thử lại.');
+      return text;
+    } catch (error) {
+      if (error && error.name === 'AbortError') throw new Error('AI phản hồi quá lâu. Hãy thử lại.');
+      throw error;
+    } finally { clearTimeout(timer); }
+  }
+
+  async function bnAskAi() {
+    if (!report || bnBusy || !BN) return;
+    const base = BN.detect(report, K);
+    if (!base.length) { bnNote('Không có điểm nghẽn để AI soạn.', 'warn'); return; }
+    let key = '';
+    try { key = typeof GeminiKeyStore !== 'undefined' ? await GeminiKeyStore.get() : ''; } catch (_) { key = ''; }
+    if (!key) { bnNote('Chưa có khoá Gemini API. Mở Trợ lý AI (nút robot góc phải) → biểu tượng ⚙ để nhập khoá, rồi bấm lại.', 'warn'); return; }
+    let model = 'gemini-2.5-flash'; try { model = localStorage.getItem('gemini_model_name') || model; } catch (_) { /* dùng mặc định */ }
+    bnBusy = true; bnNote('AI đang soạn từ số liệu tổng hợp…', 'info'); bnRepaint();
+    try {
+      const c = report.current;
+      const extra = [c.kpis.uncapped, c.kpis.capped].map(v => fmt.fmtPct(v, 2) + ' ' + fmt.fmtScore(v)).join(' ') + ' ' + c.kpis.rows.map(k => fmt.fmtPct(k.result, 2) + ' ' + fmt.fmtInt(k.result) + ' ' + fmt.fmtScore(k.score)).join(' ');
+      const raw = await bnGemini(BN.aiRequest(base, report, K), key, model);
+      const merged = BN.mergeAi(base, BN.parseAi(raw), extra);
+      const state = bnLoad(); state.ai = {...(state.ai || {}), ...merged.map}; state.summary = merged.summary; state.summaryWarn = merged.summaryWarn;
+      for (const id of Object.keys(merged.map)) if (state.edits && state.edits[id]) for (const f of BN.AI_FIELDS) delete state.edits[id][f];
+      bnSave(state);
+      const n = Object.keys(merged.map).length, warns = Object.values(merged.map).filter(x => x.warn.length).length;
+      bnNotice = {text: 'AI đã soạn ' + n + ' dòng' + (warns ? ' — ' + warns + ' dòng có số cần kiểm tra lại (dấu ⚠)' : '') + '. Hãy đọc và chỉnh sửa trước khi gửi cấp trên.', kind: warns ? 'warn' : 'ok'};
+    } catch (error) { bnNotice = {text: error.message || 'AI không soạn được.', kind: 'bad'}; }
+    finally { bnBusy = false; bnRepaint(); }
+  }
+
+  // Bảng Excel theo mẫu báo cáo điểm nghẽn: có viền, tiêu đề đậm, tự xuống dòng, chiều cao dòng ước lượng theo nội dung.
+  function bnSheet(XLSX, rows, c) {
+    const widths = [5, 28, 38, 42, 28, 46, 32, 13, 28], border = {top: {style: 'thin', color: {rgb: '9AA39B'}}, bottom: {style: 'thin', color: {rgb: '9AA39B'}}, left: {style: 'thin', color: {rgb: '9AA39B'}}, right: {style: 'thin', color: {rgb: '9AA39B'}}};
+    const head = {font: {bold: true, sz: 11}, fill: {fgColor: {rgb: 'F3E7C9'}}, alignment: {horizontal: 'center', vertical: 'center', wrapText: true}, border};
+    const body = {alignment: {vertical: 'top', wrapText: true}, border, font: {sz: 10}};
+    const state = bnLoad();
+    const cols = ['Stt', ...BN.COLUMNS.map(x => x.label)];
+    const aoa = [[{v: 'BÁO CÁO ĐIỂM NGHẼN ' + label(c) + ' – ZONE ĐẮK LẮK', t: 's', s: {font: {bold: true, sz: 14}}}], [{v: 'Số liệu đến ngày ' + fmt.fmtDate(prep.asOf) + ' · nguồn: Báo cáo KPI bồi thường (hồ sơ trong hệ thống)', t: 's', s: {font: {italic: true, sz: 10}}}]];
+    const merges = [{s: {r: 0, c: 0}, e: {r: 0, c: 8}}, {s: {r: 1, c: 0}, e: {r: 1, c: 8}}];
+    let summaryRows = 0;
+    if (state.summary) { aoa.push([{v: 'Tóm tắt (AI soạn, đã/chưa chỉnh sửa): ' + state.summary, t: 's', s: {alignment: {wrapText: true, vertical: 'top'}, font: {sz: 10}}}]); merges.push({s: {r: 2, c: 0}, e: {r: 2, c: 8}}); summaryRows = 1; }
+    aoa.push([]);
+    const headRow = aoa.length; aoa.push(cols.map(v => ({v, t: 's', s: head})));
+    const heights = [];
+    rows.forEach((row, i) => {
+      aoa.push([{v: i + 1, t: 'n', s: {...body, alignment: {horizontal: 'center', vertical: 'top'}}}, ...BN.COLUMNS.map(col => ({v: String(row[col.key] || ''), t: 's', s: body}))]);
+      const lines = Math.max(...BN.COLUMNS.map((col, ci) => String(row[col.key] || '').split('\n').reduce((n, part) => n + Math.max(1, Math.ceil(part.length / (widths[ci + 1] * 1.05))), 0)));
+      heights[headRow + 1 + i] = {hpx: Math.min(409, Math.max(30, lines * 14 + 8))};
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = widths.map(w => ({wch: w})); ws['!merges'] = merges;
+    ws['!rows'] = []; ws['!rows'][headRow] = {hpx: 34}; if (summaryRows) ws['!rows'][2] = {hpx: Math.min(120, 20 + Math.ceil(state.summary.length / 150) * 14)};
+    heights.forEach((h, i) => { if (h) ws['!rows'][i] = h; });
+    return ws;
+  }
+  async function exportBottleneck(button) {
+    if (!report) return;
+    button.disabled = true;
+    try {
+      const XLSX = await loadXlsx(), book = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(book, bnSheet(XLSX, bnRows(report), report.current), 'Điểm nghẽn');
+      const file = 'bao-cao-diem-nghen-' + monthValue + '.xlsx';
+      XLSX.writeFile(book, file); toast('Đã xuất ' + file, 'success');
+    } catch (error) { console.error(error); toast('Không xuất được Excel: ' + (error && error.message || 'lỗi không xác định'), 'error'); }
+    finally { button.disabled = false; }
+  }
 
   // ----- Dropdown tuỳ biến (cùng ngôn ngữ thiết kế với bộ lọc của các báo cáo khác) -----
   // <select> gốc vẫn là nguồn giá trị (ẩn): chọn mục -> gán value rồi phát sự kiện change như cũ.
@@ -497,16 +667,24 @@ const KpiZonePage = (() => {
     try {
       try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (_) { /* không chặn việc tải ảnh */ }
       const bg = (getComputedStyle(card).backgroundColor || '').replace(/\s/g, '') === 'rgba(0,0,0,0)' ? '#ffffff' : getComputedStyle(card).backgroundColor;
+      const wide = Math.max(card.offsetWidth, ...[...card.querySelectorAll('.kz-tablewrap')].map(w => w.scrollWidth + 52));
       const canvas = await html2canvas(card, {
+        ...(wide > card.offsetWidth ? {width: wide, windowWidth: wide + 80} : {}),
         scale: Math.min(3, Math.max(2, window.devicePixelRatio || 2)), backgroundColor: bg, useCORS: true, logging: false,
-        ignoreElements: el => el.hasAttribute && (el.hasAttribute('data-kz-img') || el.hasAttribute('data-kz-xls')),
+        ignoreElements: el => el.hasAttribute && (el.hasAttribute('data-kz-img') || el.hasAttribute('data-kz-xls') || el.hasAttribute('data-bn-ai') || el.hasAttribute('data-bn-add') || el.hasAttribute('data-bn-reset') || el.hasAttribute('data-bn-del')),
         onclone: (doc, clone) => {
           // html2canvas vẽ chữ bằng canvas, không hỗ trợ số cùng độ rộng/kerning/ligature của font web -> chữ bị lệch, dính. Tắt các tính năng đó trong bản chụp.
           const fix = doc.createElement('style');
           fix.textContent = '*{font-variant-numeric:normal!important;font-feature-settings:normal!important;font-kerning:none!important;font-variant-ligatures:none!important;letter-spacing:normal!important;text-rendering:auto!important;-webkit-font-smoothing:antialiased}';
           doc.head.appendChild(fix);
+          if (wide > card.offsetWidth) { clone.style.width = wide + 'px'; clone.style.maxWidth = 'none'; }
+          // Ô sửa được: bỏ viền/khung sửa khi chụp.
+          clone.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
           // Bảng cuộn: mở rộng để ảnh chứa đủ dòng.
           clone.querySelectorAll('.kz-scroll, .kz-tablewrap').forEach(el => { el.style.maxHeight = 'none'; el.style.overflow = 'visible'; });
+          // html2canvas vẽ box-shadow inset thành khối đặc -> đổi dấu cảnh báo sang viền trái.
+          const rose = getComputedStyle(card).getPropertyValue('--sf-rose').trim() || '#c0392b';
+          clone.querySelectorAll('.kz-bn-c.has-warn').forEach(td => { td.style.boxShadow = 'none'; td.style.borderLeft = '3px solid ' + rose; });
           // Ô nhiệt dùng color-mix() mà html2canvas chưa hiểu -> thay bằng rgba tính sẵn.
           const probe = document.createElement('i'); probe.style.color = 'var(--sf-gold)'; card.appendChild(probe);
           const gold = (getComputedStyle(probe).color.match(/\d+(\.\d+)?/g) || ['176', '122', '31']).slice(0, 3).join(','); probe.remove();
@@ -558,7 +736,7 @@ const KpiZonePage = (() => {
       const file = 'kpi-zone-' + slugify(title) + '-' + monthValue + '.xlsx';
       XLSX.writeFile(book, file);
       toast('Đã xuất ' + file, 'success');
-    } catch (error) { toast('Không xuất được Excel: ' + (error && error.message || 'lỗi không xác định'), 'error'); }
+    } catch (error) { console.error(error); toast('Không xuất được Excel: ' + (error && error.message || 'lỗi không xác định'), 'error'); }
     finally { button.disabled = false; }
   }
   const toast = (text, type) => { if (typeof triggerToast === 'function') triggerToast(text, type); else message(text, type === 'error' ? 'bad' : 'info'); };
