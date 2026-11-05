@@ -140,6 +140,18 @@ const ContactCalc = (() => {
     const identity = words([rec.hoTen, rec.maNv, rec.sdt, rec.email].join(' '));
     return tokens.every(t => identity.includes(' ' + t)) ? 2 : 3;
   }
+  // Tra email trong danh bạ theo TÊN cán bộ ghi trên hồ sơ (vd "Võ Thị Mỹ Dung - NTN": phần sau " - " là ký hiệu, bỏ đi).
+  // Chỉ trả email khi xác định được duy nhất một người: trùng tên thì thu hẹp theo đơn vị; vẫn nhiều email khác nhau → '' (không đoán).
+  const nameKey = v => words(String(v == null ? '' : v).replace(/\s+[-–—]\s+.*$/, '')).trim();
+  function lookupEmail(records, name, unit = '') {
+    const key = nameKey(name); if (!key) return '';
+    const hits = (records || []).filter(r => r && r.email && nameKey(r.hoTen) === key);
+    const emails = list => [...new Set(list.map(r => String(r.email).toLowerCase()))];
+    if (emails(hits).length <= 1) return hits.length ? hits[0].email : '';
+    const place = words(unit).trim();
+    const near = place ? hits.filter(r => words([r.donVi, r.phong, r.to, r.nhom, r.noiLamViec].join(' ')).includes(' ' + place + ' ')) : [];
+    return emails(near).length === 1 ? near[0].email : '';
+  }
   const fmtPhone = v => { const d = String(v || ''); return d.length === 10 ? d.slice(0, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7) : d.length === 11 ? d.slice(0, 4) + ' ' + d.slice(4, 8) + ' ' + d.slice(8) : d; };
 
   function vcard(r) {
@@ -149,6 +161,6 @@ const ContactCalc = (() => {
       r.sdt ? 'TEL;TYPE=CELL:' + r.sdt : '', r.email ? 'EMAIL;TYPE=WORK:' + r.email : '', r.noiLamViec ? 'ADR;TYPE=WORK:;;' + esc(r.noiLamViec) + ';;;;' : '', 'END:VCARD'].filter(Boolean).join('\r\n');
   }
 
-  return {FIELDS, LABELS, HEADERS, plain, clean, normPhone, normEmail, normYear, normGender, makeKey, findHeader, parseRows, diff, initials, searchText, matches, rank, fmtPhone, vcard};
+  return {FIELDS, LABELS, HEADERS, plain, clean, normPhone, normEmail, normYear, normGender, makeKey, findHeader, parseRows, diff, initials, searchText, matches, rank, lookupEmail, fmtPhone, vcard};
 })();
 if (typeof window !== 'undefined') window.ContactCalc = ContactCalc;

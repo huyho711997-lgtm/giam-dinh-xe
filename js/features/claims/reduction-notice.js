@@ -250,6 +250,14 @@ const ClaimReductionNotice = (() => {
     if (typeof dbNodeInstance === 'undefined' || !dbNodeInstance) throw new Error('Chưa kết nối cơ sở dữ liệu.');
     return (await dbNodeInstance.ref(DIRECTORY_PATH).once('value')).val() || {};
   }
+  // Danh bạ nội bộ (Firebase: contact_directory) — nguồn bổ sung khi mục chưa có email trong danh bạ email ở trên.
+  async function loadContacts() {
+    try {
+      if (typeof dbNodeInstance === 'undefined' || !dbNodeInstance) return [];
+      const all = (await dbNodeInstance.ref('contact_directory').once('value')).val() || {};
+      return Object.values(all).filter(item => item && typeof item === 'object' && item.hoTen && item.email);
+    } catch (error) { return []; }
+  }
   function directoryPanel(inputs, remember, feedback, sameContext) {
     const unit = value('DonViCapDon'), issuer = value('NguoiCapDon'), dept = value('Ttkd'), zone = value('ZoneBoiThuong'), uk = slug(unit);
     const rows = [
@@ -344,10 +352,16 @@ const ClaimReductionNotice = (() => {
     footer.append(node('span','Để trống ô nào thì xóa email đã lưu của mục đó. Tích ô bên trái để đưa người đó vào CC, bỏ tích để gỡ ra.'),save);
     details.append(list,footer);
     // Nạp danh bạ rồi điền sẵn To / CC (chỉ khi ô còn trống, không ghi đè nội dung đã sửa).
-    const apply = directory => {
+    const apply = (directory, contacts = []) => {
       if (!sameContext()) return;
-      const stored = row => (row.key && directory?.[row.path]?.[row.key]?.[row.prop]) || '';
-      for (const row of rows) { fields[row.id].value = stored(row); lastValue[row.id] = fields[row.id].value; }
+      const saved = row => (row.key && directory?.[row.path]?.[row.key]?.[row.prop]) || '';
+      // Mục CC chưa lưu email → tra theo tên trong Danh bạ nội bộ (chỉ khi xác định được duy nhất một người).
+      const fromContacts = row => row.tag === 'CC' && row.name && window.ContactCalc ? window.ContactCalc.lookupEmail(contacts, row.name, unit) : '';
+      const stored = row => saved(row) || fromContacts(row);
+      for (const row of rows) {
+        fields[row.id].value = stored(row); lastValue[row.id] = fields[row.id].value;
+        fields[row.id].title = !saved(row) && fields[row.id].value ? 'Lấy từ Danh bạ nội bộ. Bấm "Lưu vào danh bạ" để lưu vào danh bạ email.' : '';
+      }
       if (!fields.unit.value && inputs.to.value.trim()) fields.unit.value = inputs.to.value.trim();  // gợi ý: lưu luôn email đang nhập
       let filled = false;
       if (!inputs.to.value.trim() && stored(rows[0])) { inputs.to.value = stored(rows[0]); filled = true; }
@@ -364,7 +378,11 @@ const ClaimReductionNotice = (() => {
     fields.unit.addEventListener('input',() => { unitEdited = true; });
     inputs.to.addEventListener('input',() => { if (!unitEdited && !fields.unit.disabled) fields.unit.value = inputs.to.value; });
     status.textContent = 'Đang tải…';
-    loadDirectory().then(apply).catch(() => { if (sameContext()) status.textContent = 'Không tải được danh bạ'; });
+    // Danh bạ email lỗi (vd chưa gộp rules) vẫn dùng được Danh bạ nội bộ; chỉ báo lỗi khi cả hai đều không có gì.
+    Promise.all([loadDirectory().catch(() => null), loadContacts()]).then(([directory, contacts]) => {
+      if (directory === null && !contacts.length) { if (sameContext()) status.textContent = 'Không tải được danh bạ'; return; }
+      apply(directory || {}, contacts);
+    });
     return details;
   }
   // Loại thư mặc định của mục giảm trừ. Các loại thư khác (xem ClaimEmail) truyền spec cùng dạng vào compose():

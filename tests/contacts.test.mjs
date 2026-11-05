@@ -89,6 +89,21 @@ test('xếp hạng: khớp liền trong tên < đủ từ trong tên < khớp nh
   assert.equal(C.rank(other, 'nguyen quang huy'), 3);
   assert.equal(C.rank(exact, ''), 9);
 });
+test('lookupEmail: tra email theo tên trên hồ sơ, bỏ ký hiệu sau " - ", trùng tên thì xét đơn vị', () => {
+  const list = [
+    {hoTen: 'Võ Thị Mỹ Dung', email: 'dung.vtm@baohiemtasco.vn', phong: 'Chi nhánh Đắk Lắk', noiLamViec: 'Đắk Lắk'},
+    {hoTen: 'Nguyễn Văn An', email: 'an.nv1@baohiemtasco.vn', phong: 'Chi nhánh Thanh Hóa'},
+    {hoTen: 'Nguyễn Văn An', email: 'an.nv2@baohiemtasco.vn', phong: 'Chi nhánh Đắk Lắk'},
+    {hoTen: 'Lê Thị B', email: ''}
+  ];
+  assert.equal(C.lookupEmail(list, 'Võ Thị Mỹ Dung - NTN', 'Chi nhánh Đắk Lắk'), 'dung.vtm@baohiemtasco.vn');
+  assert.equal(C.lookupEmail(list, 'VÕ THỊ MỸ DUNG', ''), 'dung.vtm@baohiemtasco.vn');
+  assert.equal(C.lookupEmail(list, 'Nguyễn Văn An', 'Chi nhánh Đắk Lắk'), 'an.nv2@baohiemtasco.vn');
+  assert.equal(C.lookupEmail(list, 'Nguyễn Văn An', ''), '');            // trùng tên, không rõ đơn vị → không đoán
+  assert.equal(C.lookupEmail(list, 'Lê Thị B', ''), '');                 // có tên nhưng chưa có email
+  assert.equal(C.lookupEmail(list, 'Team kinh doanh 01', 'Chi nhánh Đắk Lắk'), '');
+  assert.equal(C.lookupEmail([], 'Võ Thị Mỹ Dung'), '');
+});
 test('vCard có tên, số điện thoại và email', () => {
   const v = C.vcard(C.parseRows(SHEET, 2026).records[0]);
   assert.match(v, /FN:Võ Hoàng Việt/); assert.match(v, /TEL;TYPE=CELL:0981236966/); assert.match(v, /EMAIL;TYPE=WORK:viet\.vh@baohiemtasco\.vn/);
