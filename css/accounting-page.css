@@ -1,6 +1,6 @@
 /* Kế toán (Hồ sơ đã nhận / Bàn giao) — đầu trang dùng cùng khuôn pw-page-head với Hồ sơ bồi thường, Danh bạ.
    Chỉ dùng cho .acc-workspace; phần thẻ số liệu và bảng vẫn do administration.css đảm nhiệm. */
-.acc-workspace { display:block; width:100%; min-width:0; max-width:1440px; margin:0 auto; }
+.acc-workspace { display:block; width:100%; min-width:0; max-width:none; margin:0; }
 .acc-workspace .pw-page-head { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px 24px; margin:8px 0 20px; }
 .acc-workspace .pw-page-title { display:flex; align-items:center; gap:16px; min-width:0; }
 .acc-workspace .pw-page-emblem { display:grid; place-items:center; flex:0 0 48px; width:48px; height:48px; border:1px solid color-mix(in srgb,var(--ton-gold) 24%,var(--ton-line)); border-radius:14px; background:var(--ton-gold-bg); color:var(--ton-gold); }
