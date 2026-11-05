@@ -423,6 +423,7 @@ function formatDateDisplay(val) {
           else if (text.includes('pasc - ngày duyệt')) colMap.pascNgayDuyet = colIdx;
           else if (text.includes('pasc - người duyệt')) colMap.pascNguoiDuyet = colIdx;
           else if (text.includes('pasc - số tiền')) colMap.pascSoTienDuyet = colIdx;
+          else if (text.includes('garage_uniq_code')) colMap.garageUniqCode = colIdx; // phải đứng trước nhánh 'gara' chung, nếu không cột mã này ghi đè cột "Gara sửa chữa"
           else if (text.includes('tên gara (viết tắt)')) colMap.tenGaraVietTat = colIdx;
           else if (text.includes('gara sửa chữa') || text.includes('gara') || text.includes('xưởng')) colMap.gara = colIdx;
           else if (text.includes('ttbt - số tiền bồi thường')) colMap.ttbtSoTienBoiThuong = colIdx;
@@ -447,7 +448,6 @@ function formatDateDisplay(val) {
           else if (text.includes('ghi chú')) colMap.ghiChu = colIdx;
           else if (text.includes('lý do đề xuất huỷ') || text.includes('lý do huỷ')) colMap.lyDoHuy = colIdx;
           else if (text.includes('agent_uniq_code')) colMap.agentUniqCode = colIdx;
-          else if (text.includes('garage_uniq_code')) colMap.garageUniqCode = colIdx;
           else if (text.includes('zone bồi thường')) colMap.zoneBoiThuong = colIdx;
           else if (text.includes('khu vực giám định')) colMap.khuVucGiamDinh = colIdx;
           else if (text.includes('mã vtt') || text.includes('mã vụ')) colMap.vtt = colIdx;
@@ -493,8 +493,8 @@ function formatDateDisplay(val) {
           const stLower = rawStatusStr.trim().toLowerCase();
           if (stLower.includes('từ chối') || stLower.includes('tu choi') || stLower.includes('hủy') || stLower.includes('huy')) targetStatus = 'tu_choi';
           else if (stLower.includes('đã thanh toán') || stLower.includes('da thanh toan') || stLower.includes('thanh toán') || stLower.includes('thanh toan')) targetStatus = 'da_thanh_toan';
-          else if (stLower === 'kt duyệt' || stLower.includes('kt duyệt') || stLower.includes('kế toán duyệt')) targetStatus = 'kt_duyet';
           else if (stLower.includes('chờ kt') || stLower.includes('cho kt') || stLower.includes('chờ kế toán')) targetStatus = 'cho_kt_duyet';
+          else if (stLower === 'kt duyệt' || stLower.includes('kt duyệt') || stLower.includes('kế toán duyệt')) targetStatus = 'kt_duyet';
           else if (stLower.includes('chờ duyệt đntt') || stLower.includes('cho duyet dntt') || stLower.includes('đntt')) targetStatus = 'cho_duyet_dntt';
           else if (stLower.includes('đã duyệt hsbt') || stLower.includes('da duyet hsbt')) targetStatus = 'da_duyet_hsbt';
           else if (stLower.includes('chờ duyệt hsbt') || stLower.includes('cho duyet hsbt')) targetStatus = 'cho_duyet_hsbt';
