@@ -1,0 +1,25 @@
+/* Đề xuất hủy hồ sơ — dùng khuôn .pending-workspace--v2 + pending-notes.css (chip, trạng thái rỗng, tag).
+   File này chỉ bổ sung ô bảng riêng của trang: trạng thái, biển số, HSBT, lý do, ghi chú, thao tác. */
+.cx-workspace .pending-register-table { border-top:1px solid var(--ton-line); }
+.cx-table th, .cx-table td { vertical-align:middle; }
+.cx-table .cx-money, .cx-table th.cx-money { text-align:right; white-space:nowrap; }
+.cx-table .cx-actions, .cx-table th.cx-actions { text-align:center; width:92px; white-space:nowrap; }
+.cx-row { transition:background .15s; } .cx-row:hover { background:var(--ton-soft); }
+.cx-status { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:99px; font-size:10.5px; white-space:nowrap; }
+.cx-status--wait { --t:#a9821f; } .cx-status--done { --t:var(--ton-green); }
+body:not(.light-mode) .cx-status--wait { --t:#e0b25c; }
+.cx-plate { display:flex; align-items:center; gap:7px; color:var(--ton-gold); } .cx-plate b { color:var(--ton-ink); font-size:13px; font-weight:800; letter-spacing:.01em; }
+.cx-hsbt { display:flex; align-items:center; gap:6px; } .cx-code { margin-top:0; max-width:170px; }
+.cx-icon-btn { display:grid; place-items:center; width:26px; height:26px; border:1px solid var(--ton-line); border-radius:8px; background:var(--ton-paper); color:var(--ton-muted); cursor:pointer; transition:color .15s, border-color .15s; }
+.cx-icon-btn:hover { color:var(--ton-gold); border-color:var(--ton-gold); }
+.cx-name { font-size:12.5px; font-weight:750; color:var(--ton-ink); }
+.cx-org { max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; color:var(--ton-muted); }
+.cx-date { white-space:nowrap; font-size:12px; font-weight:650; color:var(--ton-ink); }
+.cx-money { font-size:13px; font-weight:800; color:var(--ton-green); font-variant-numeric:tabular-nums; } .cx-money small { margin-left:3px; font-size:11px; font-weight:700; }
+.cx-reason { display:flex; flex-direction:column; align-items:flex-start; gap:5px; min-width:150px; max-width:230px; font-size:12px; font-weight:650; line-height:1.4; color:var(--ton-ink); }
+.cx-notes { min-width:200px; max-width:280px; }
+.cx-notes__text { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:12px; line-height:1.5; color:var(--ton-muted); }
+.cx-locked { display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border:1px solid var(--ton-line); border-radius:8px; background:var(--ton-soft); color:var(--ton-muted); font-size:11px; font-weight:700; }
+.cx-del { min-height:30px; padding:0 10px; }
+.cx-workspace .pn-empty .pending-action-btn { margin-top:10px; }
+@media (max-width:760px) { .cx-reason, .cx-notes { max-width:none; } }

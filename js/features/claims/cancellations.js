@@ -119,353 +119,124 @@
       const activeReasonObj = cancelReasonOptions.find(o => o.code === activeCancelReasonCodeFilter) || cancelReasonOptions[0];
       const activeReasonLabel = activeReasonObj.short;
 
+      // ---- Giao diện premium dùng chung khuôn .pending-workspace--v2 (cùng Danh bạ / Hồ sơ bồi thường) ----
+      const ico = {
+        x: '<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6m0-6 6 6"/>',
+        clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        check: '<path d="m5 12 4 4L19 6"/>',
+        coin: '<path d="M12 2v20"/><path d="M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+        xls: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13l4 5m0-5-4 5"/>',
+        upload: '<path d="M12 16V4m0 0-4 4m4-4 4 4"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+        search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+        user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+        building: '<path d="M4 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M14 9h5a1 1 0 0 1 1 1v11M3 21h18M8 8h2M8 12h2M8 16h2"/>',
+        tag: '<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="8" cy="8" r="1.4"/>',
+        reset: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>',
+        copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
+        trash: '<path d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+        lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+        truck: '<path d="M2 6h11v10H2zM13 10h4l3 3v3h-7"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="16.5" cy="17.5" r="1.8"/>'
+      };
+      const svgI = (k, s = 15) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ico[k] || ''}</svg>`;
+      const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg>';
+      const CHEV_SVG = '<svg class="pending-filter-trigger__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m7 10 5 5 5-5"></path></svg>';
+      const jsArg = v => escapeAttributeData(String(v).replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
+
+      // Dropdown theo khuôn .pending-filter-* (menu premium qua PENDING_DROPDOWN_UI)
+      const cancelDd = (id, icon, caption, current, options, handler, isAll) => {
+        const cur = options.find(o => String(o.value) === String(current)) || options[0];
+        const items = options.map(o => {
+          const sel = String(o.value) === String(current);
+          return `<button type="button" class="custom-dropdown-item pending-filter-option${sel ? ' selected' : ''}" role="option" aria-selected="${sel}" title="${escapeAttributeData(o.title || o.label)}" onclick="${handler}('${jsArg(o.value)}')"><span class="pending-filter-option__main"><span class="pending-filter-option__label">${escapeHtmlOutput(o.label)}</span></span>${o.count !== undefined ? `<span class="pending-filter-option__count">${o.count}</span>` : ''}<span class="pending-filter-option__check">${sel ? CHECK_SVG : ''}</span></button>`;
+        }).join('');
+        return `<div class="custom-dropdown-container pending-filter-select${isAll ? '' : ' is-filtered'}"><button type="button" id="btn${id}" class="pending-filter-trigger" aria-haspopup="listbox" aria-expanded="false" onclick="togglePendingRegisterDropdown('menu${id}', event)"><span class="pending-filter-trigger__icon" aria-hidden="true">${svgI(icon)}</span><span class="pending-filter-trigger__copy"><span class="pending-filter-trigger__caption">${escapeHtmlOutput(caption)}</span><span class="pending-filter-trigger__value">${escapeHtmlOutput(cur.label)}</span></span>${CHEV_SVG}</button><div id="menu${id}" class="custom-dropdown-menu pending-filter-menu" style="display:none;">${items}</div></div>`;
+      };
+      if (typeof PENDING_DROPDOWN_UI !== 'undefined') {
+        Object.assign(PENDING_DROPDOWN_UI, {
+          menuCancelGdv: { title: 'Giám định viên', subtitle: 'Người đề xuất hủy hồ sơ', search: 'Tìm giám định viên…', width: 320 },
+          menuCancelBranch: { title: 'Đơn vị cấp đơn', subtitle: 'Chi nhánh / phòng cấp đơn', search: 'Tìm chi nhánh…', width: 340 },
+          menuCancelReason: { title: 'Nhóm lý do hủy', subtitle: 'Mã lý do GĐV đã chọn', width: 340 }
+        });
+      }
+
+      const gdvOptions = [{ value: 'all', label: 'Tất cả GĐV', count: uniqueGdvs.length }].concat(uniqueGdvs.map(g => ({ value: g, label: g })));
+      const branchOptions = [{ value: 'all', label: 'Tất cả đơn vị', count: uniqueBranches.length }].concat(uniqueBranches.map(b => ({ value: b, label: b })));
+      const reasonOptions = cancelReasonOptions.map(o => ({ value: o.code, label: o.short, title: o.full }));
+
+      const metric = (tone, icon, label, value, unit, foot, footValue, progress, quick) => `<article class="claims-metric-card claims-metric-card--${tone}${quick && activeCancelStatusFilter === quick ? ' is-active' : ''}"${quick ? ` role="button" tabindex="0" aria-pressed="${activeCancelStatusFilter === quick}" onclick="setCancelStatusFilter('${quick}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setCancelStatusFilter('${quick}')}"` : ''} aria-label="${escapeAttributeData(label + ': ' + value)}"><div class="claims-metric-head"><span class="claims-metric-icon" aria-hidden="true">${svgI(icon, 14)}</span><span class="claims-metric-label">${escapeHtmlOutput(label)}</span></div><div class="claims-metric-value-row"><strong class="claims-metric-value">${value}</strong><span class="claims-metric-unit">${unit}</span></div><div class="claims-metric-foot"><span>${foot}</span><strong>${footValue}</strong></div><div class="claims-metric-track"><i style="--metric-progress:${Math.max(0, Math.min(100, progress))}%"></i></div></article>`;
+      const pct = n => totalCount ? Math.round(n / totalCount * 100) : 0;
+
+      const statusChip = (key, label, count) => `<button type="button" class="pn-chip${activeCancelStatusFilter === key ? ' is-active' : ''}" onclick="setCancelStatusFilter('${key}')">${label}<small>${count}</small></button>`;
+      const actBtn = (attrs, icon, text, cls) => `<button type="button" class="pending-action-btn${cls ? ' ' + cls : ''}" ${attrs}><span class="pending-action-btn__icon" aria-hidden="true">${svgI(icon)}</span><span>${text}</span></button>`;
+
       const rowsHtml = filtered.map((c, idx) => {
         const bsx = c.bienSo || '—';
         const hsbt = c.soHoSoBoiThuong || c.soHsbt || '—';
+        const hsbtRaw = c.soHoSoBoiThuong || c.soHsbt || '';
         const chuXe = c.chuXe || c.khachHang || c.tenLaiXe || c.hoTen || '—';
         const gdv = c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công';
         const gdht = c.gdvHienTruong || '';
         const donVi = c.donViCapDon || c.chiNhanh || '—';
         const ngayTonThat = formatDateDisplay(c.ngayVTT || c.ngayTonThat || c.ngayMoHs);
         const duPhong = formatCurrencyInputNumber(c.duPhongBoiThuong) || '0';
-        
         const isApproved = (c.trangThai === 'tu_choi' || c.cancelStatus === 'da_duyet');
         const reasonCode = c.cancelReasonCode || c.lyDoChoViecHuy || 'Huỷ';
         const reasonText = c.lyDoHuy || c.lyDoChoViecHuy || 'Đề xuất hủy hồ sơ';
-        const notes = c.cancelNotes || c.ghiChu || c.ghiChuHoSo || '—';
+        const notes = c.cancelNotes || c.ghiChu || c.ghiChuHoSo || '';
 
-        return `
-          <tr style="border-bottom: 1px solid var(--border); font-size: 13px; transition: background 0.15s ease;" onmouseover="this.style.background='var(--bg-soft)'" onmouseout="this.style.background='transparent'">
-            <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-muted); width: 45px;">${idx + 1}</td>
-            <td style="padding: 12px 10px; text-align: center; width: 130px;">
-              ${isApproved ? `
-                <span style="display: inline-block; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 850; background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35); white-space: nowrap;">
-                  Đã duyệt hủy
-                </span>
-              ` : `
-                <span style="display: inline-block; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 850; background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.35); white-space: nowrap;">
-                  Chờ duyệt hủy
-                </span>
-              `}
-            </td>
-            <td style="padding: 12px 10px; min-width: 140px;">
-              <div style="font-weight: 850; color: var(--primary); font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-                <span>${escapeHtmlOutput(bsx)}</span>
-              </div>
-              <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;" title="${escapeAttributeData(chuXe)}">${escapeHtmlOutput(chuXe)}</div>
-            </td>
-            <td style="padding: 12px 10px; font-weight: 750; color: var(--text-main); font-size: 12.5px; min-width: 140px; white-space: nowrap;">
-              <div style="display: inline-flex; align-items: center; gap: 6px;">
-                <span>${escapeHtmlOutput(hsbt)}</span>
-                ${(c.soHoSoBoiThuong || c.soHsbt) ? `
-                  <button type="button" onclick="copyHsbtToClipboard(this, '${escapeAttributeData(c.soHoSoBoiThuong || c.soHsbt)}', event)" title="Sao chép nhanh số HSBT" style="border: none; background: rgba(59,130,246,0.1); color: #3b82f6; padding: 0; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: 20px; width: 20px; flex-shrink: 0; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(59,130,246,0.2)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(59,130,246,0.1)'; this.style.transform='scale(1)'">
-                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                  </button>
-                ` : ''}
-              </div>
-            </td>
-            <td style="padding: 12px 10px; text-align: left; min-width: 130px;">
-              <div style="font-weight: 800; color: var(--text-main); font-size: 12.5px;">${escapeHtmlOutput(gdv)}</div>
-              ${gdht && gdht !== gdv ? `<div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">GĐHT: ${escapeHtmlOutput(gdht)}</div>` : ''}
-            </td>
-            <td style="padding: 12px 10px; text-align: left; max-width: 130px; font-size: 12.5px; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-              ${escapeHtmlOutput(donVi)}
-            </td>
-            <td style="padding: 12px 10px; text-align: center; width: 100px; font-size: 12px; font-weight: 700; color: var(--text-main);">
-              ${escapeHtmlOutput(ngayTonThat)}
-            </td>
-            <td style="padding: 12px 10px; text-align: right; width: 125px; font-weight: 850; color: #10b981; font-size: 13px;">
-              ${duPhong} đ
-            </td>
-            <td style="padding: 12px 10px; min-width: 160px; max-width: 220px;">
-              <div style="display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                <span style="display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 800; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.25);">
-                  ${escapeHtmlOutput(reasonCode)}
-                </span>
-                <span style="font-size: 12px; font-weight: 700; color: var(--text-main); line-height: 1.3;">
-                  ${escapeHtmlOutput(reasonText)}
-                </span>
-              </div>
-            </td>
-            <td style="padding: 12px 10px; min-width: 200px; max-width: 280px; font-size: 12px; color: var(--text-soft); line-height: 1.4;">
-              <div style="max-height: 60px; overflow-y: auto;">${escapeHtmlOutput(notes)}</div>
-            </td>
-            ${isAdmin ? `
-              <td style="padding: 12px 10px; text-align: center; width: 90px; white-space: nowrap;">
-                ${isApproved ? `
-                  <span title="Hồ sơ đã duyệt hủy không thể xóa" style="font-size: 11px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.04); cursor: not-allowed;">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    <span>Đã duyệt</span>
-                  </span>
-                ` : `
-                  <button type="button" onclick="deleteClaimCancellationProposalByAdmin('${c.id}', event)" title="Xóa đề xuất hủy (chuyển hồ sơ trở lại hồ sơ tồn)" style="border: 1px solid rgba(239, 68, 68, 0.35); background: rgba(239, 68, 68, 0.08); color: #ef4444; padding: 5px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(239, 68, 68, 0.18)'; this.style.transform='scale(1.04)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.08)'; this.style.transform='scale(1)'">
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    <span>Xóa</span>
-                  </button>
-                `}
-              </td>
-            ` : ''}
-          </tr>
-        `;
+        return `<tr class="cx-row">
+          <td class="pn-c-stt">${String(idx + 1).padStart(2, '0')}</td>
+          <td><span class="pn-tag cx-status cx-status--${isApproved ? 'done' : 'wait'}">${svgI(isApproved ? 'check' : 'clock', 12)}${isApproved ? 'Đã duyệt hủy' : 'Chờ duyệt hủy'}</span></td>
+          <td><div class="cx-plate">${svgI('truck', 14)}<b>${escapeHtmlOutput(bsx)}</b></div><div class="pn-sub" title="${escapeAttributeData(chuXe)}">${escapeHtmlOutput(chuXe)}</div></td>
+          <td><div class="cx-hsbt"><span class="pn-code cx-code" title="${escapeAttributeData(hsbt)}">${escapeHtmlOutput(hsbt)}</span>${hsbtRaw ? `<button type="button" class="cx-icon-btn" onclick="copyHsbtToClipboard(this, '${jsArg(hsbtRaw)}', event)" title="Sao chép số HSBT" aria-label="Sao chép số HSBT">${svgI('copy', 13)}</button>` : ''}</div></td>
+          <td><div class="cx-name">${escapeHtmlOutput(gdv)}</div>${gdht && gdht !== gdv ? `<div class="pn-sub">GĐHT: ${escapeHtmlOutput(gdht)}</div>` : ''}</td>
+          <td><div class="cx-org" title="${escapeAttributeData(donVi)}">${escapeHtmlOutput(donVi)}</div></td>
+          <td class="cx-date">${escapeHtmlOutput(ngayTonThat)}</td>
+          <td class="cx-money">${duPhong}<small>đ</small></td>
+          <td><div class="cx-reason"><span class="pn-tag pn-tag--rose">${escapeHtmlOutput(reasonCode)}</span><span>${escapeHtmlOutput(reasonText)}</span></div></td>
+          <td class="cx-notes">${notes ? `<div class="cx-notes__text" title="${escapeAttributeData(notes)}">${escapeHtmlOutput(notes)}</div>` : '<span class="ct-none">—</span>'}</td>
+          ${isAdmin ? `<td class="cx-actions">${isApproved
+            ? `<span class="cx-locked" title="Hồ sơ đã duyệt hủy không thể xóa">${svgI('lock', 12)}Đã khóa</span>`
+            : `<button type="button" class="pending-action-btn ct-danger cx-del" onclick="deleteClaimCancellationProposalByAdmin('${jsArg(c.id)}', event)" title="Xóa đề xuất hủy (chuyển hồ sơ trở lại hồ sơ tồn)"><span class="pending-action-btn__icon" aria-hidden="true">${svgI('trash', 14)}</span><span>Xóa</span></button>`}</td>` : ''}
+        </tr>`;
       }).join('');
 
-      container.innerHTML = `
-        <div style="padding: 16px 0 32px 0; width: 100%; max-width: 100%; margin: 0 auto;">
-          
-          <!-- HERO HEADER BANNER -->
-          <div style="background: linear-gradient(145deg, rgba(239, 68, 68, 0.04) 0%, rgba(239, 68, 68, 0.1) 100%), var(--surface); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 20px; padding: 24px 28px; margin-bottom: 20px; box-shadow: 0 8px 30px -8px rgba(0,0,0,0.12); position: relative; overflow: hidden;">
-            <div style="position: absolute; right: -50px; top: -50px; width: 280px; height: 280px; background: radial-gradient(circle, rgba(239, 68, 68, 0.18) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(24px);"></div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
-              <div style="flex: 1; min-width: 320px;">
-                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 5px 14px; border-radius: 99px; font-size: 11.5px; font-weight: 850; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px;">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                  <span>Quản lý Nghiệp vụ Hủy hồ sơ</span>
-                </div>
-                <h1 style="font-size: 27px; font-weight: 900; color: var(--text-main); margin: 0 0 8px 0; letter-spacing: -0.02em; line-height: 1.25;">
-                  Đề xuất Hủy Hồ sơ Bồi thường
-                </h1>
-                <p style="margin: 0; font-size: 13.5px; color: var(--text-soft); max-width: 950px; line-height: 1.5;">
-                  Tổng hợp toàn bộ hồ sơ do Giám định viên đề xuất hủy hoặc từ chối bồi thường • Theo dõi lý do, căn cứ giải trình và hỗ trợ nhập/xuất Excel trình ký.
-                </p>
-              </div>
+      const emptyHtml = allCancelClaims.length === 0
+        ? `<div class="pn-empty">${svgI('x', 28)}<b>Chưa có hồ sơ nào được đề xuất hủy</b><span>Để thêm hồ sơ vào bảng này, vào Quản lý Hồ sơ bồi thường và dùng nút “Đề xuất hủy hồ sơ”.</span></div>`
+        : `<div class="pn-empty">${svgI('search', 28)}<b>Không có hồ sơ phù hợp</b><span>Thử bỏ bớt bộ lọc hoặc đổi từ khóa tìm kiếm.</span><button type="button" class="pending-action-btn" onclick="resetAllCancellationFilters()"><span class="pending-action-btn__icon" aria-hidden="true">${svgI('reset')}</span><span>Đặt lại bộ lọc</span></button></div>`;
 
-              <!-- Action Buttons -->
-              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <button type="button" onclick="openImportApprovedCancellationExcelModal()" style="padding: 0 16px; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 850; background: var(--surface); color: var(--text-main); border: 1px solid var(--border-strong); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#10b981" stroke-width="2.3"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><polyline points="9 15 11 17 15 13"></polyline></svg>
-                  <span>Nhập Excel đã duyệt hủy</span>
-                </button>
-                <button type="button" onclick="exportCancellationClaimsToExcel()" style="padding: 0 16px; height: 42px; font-size: 13px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.3); transition: all 0.2s ease;">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                  <span>Xuất Excel (.xlsx)</span>
-                </button>
-              </div>
-            </div>
-          </div>
+      const hadSearchFocus = document.activeElement && document.activeElement.id === 'txtCancellationFilterSearch';
+      const caret = hadSearchFocus ? document.activeElement.selectionStart : null;
 
-          <!-- 4 SUMMARY KPI METRIC CARDS -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px;">
-            <!-- Card 1: Tổng hồ sơ đề xuất hủy -->
-            <div onclick="setCancelStatusFilter('all')" style="background: var(--surface); border: 1px solid ${activeCancelStatusFilter === 'all' ? '#ef4444' : 'var(--border-strong)'}; border-radius: 16px; padding: 18px 22px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                <span style="font-size: 12px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em;">Tổng hồ sơ cần hủy</span>
-                <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(239, 68, 68, 0.12); color: #ef4444; display: grid; place-items: center;">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                </div>
-              </div>
-              <div style="font-size: 30px; font-weight: 900; color: #ef4444; line-height: 1.1;">${totalCount}</div>
-              <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 6px; font-weight: 700;">Hồ sơ GĐV đề xuất hủy lũy kế</div>
-            </div>
-
-            <!-- Card 2: Chờ duyệt hủy -->
-            <div onclick="setCancelStatusFilter('cho_duyet')" style="background: var(--surface); border: 1px solid ${activeCancelStatusFilter === 'cho_duyet' ? '#d97706' : 'var(--border-strong)'}; border-radius: 16px; padding: 18px 22px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                <span style="font-size: 12px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em;">Chờ duyệt hủy</span>
-                <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(245, 158, 11, 0.12); color: #d97706; display: grid; place-items: center;">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                </div>
-              </div>
-              <div style="font-size: 30px; font-weight: 900; color: #d97706; line-height: 1.1;">${choDuyetCount}</div>
-              <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 6px; font-weight: 700;">Đang chờ lãnh đạo duyệt hủy</div>
-            </div>
-
-            <!-- Card 3: Đã duyệt hủy / Từ chối -->
-            <div onclick="setCancelStatusFilter('da_duyet')" style="background: var(--surface); border: 1px solid ${activeCancelStatusFilter === 'da_duyet' ? '#3b82f6' : 'var(--border-strong)'}; border-radius: 16px; padding: 18px 22px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                <span style="font-size: 12px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em;">Đã duyệt hủy</span>
-                <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(59, 130, 246, 0.12); color: #3b82f6; display: grid; place-items: center;">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-              </div>
-              <div style="font-size: 30px; font-weight: 900; color: #3b82f6; line-height: 1.1;">${daDuyetCount}</div>
-              <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 6px; font-weight: 700;">Đã hoàn tất thủ tục từ chối/hủy</div>
-            </div>
-
-            <!-- Card 4: Tổng dự phòng giải phóng -->
-            <div style="background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px; padding: 18px 22px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                <span style="font-size: 12px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.05em;">Dự phòng giải phóng</span>
-                <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(16, 185, 129, 0.12); color: #10b981; display: grid; place-items: center;">
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                </div>
-              </div>
-              <div style="font-size: 26px; font-weight: 900; color: #10b981; line-height: 1.1;">
-                ${formatCurrencyInputNumber(totalDuPhong)} <span style="font-size: 15px; font-weight: 700;">đ</span>
-              </div>
-              <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 6px; font-weight: 700;">Số tiền DPBT sẽ được giải phóng</div>
-            </div>
-          </div>
-
-          <!-- FILTER TOOLBAR ROW (STANDALONE CARD matching software design system) -->
-          <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; background: var(--surface); padding: 14px 20px; border-radius: 16px; border: 1px solid var(--border-strong); box-shadow: var(--shadow-sm);">
-            
-            <!-- Left Side: Search Input -->
-            <div class="search-wrap" style="margin: 0; min-width: 240px; max-width: 320px; flex: 1;">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="svg-icon" style="color: var(--primary);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input
-                id="txtCancellationFilterSearch"
-                class="input-premium"
-                type="search"
-                placeholder="Tìm BSX, số HSBT, GĐV, lý do..."
-                autocomplete="off"
-                value="${escapeAttributeData(activeCancelSearch)}"
-                oninput="setCancelSearch(this.value)"
-                style="height: 42px; font-size: 13px; border-radius: 12px; font-weight: 600; padding-left: 42px; width: 100%;"
-              />
-              ${activeCancelSearch ? `
-                <button type="button" onclick="setCancelSearch('')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; background: var(--bg-soft); color: var(--text-muted); display: grid; place-items: center; cursor: pointer; border: none; transition: all 0.2s ease;" title="Xóa tìm kiếm">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-              ` : ''}
-            </div>
-
-            <!-- Right Side: Filter Pills + Styled Dropdowns + Reset Button -->
-            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end;">
-              
-              <!-- Filter Status Pills (Tất cả (x), Chờ duyệt (x), Đã duyệt (x)) -->
-              <div style="display: inline-flex; align-items: center; gap: 4px; background: var(--bg-soft); padding: 4px; border-radius: 12px; border: 1px solid var(--border);">
-                <button type="button" onclick="setCancelStatusFilter('all')" style="height: 34px; padding: 0 13px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCancelStatusFilter === 'all' ? 'background: #ef4444; color: #ffffff; box-shadow: 0 2px 8px rgba(239,68,68,0.35);' : 'background: transparent; color: var(--text-soft);'}">
-                  Tất cả (${allCancelClaims.length})
-                </button>
-                <button type="button" onclick="setCancelStatusFilter('cho_duyet')" style="height: 34px; padding: 0 13px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCancelStatusFilter === 'cho_duyet' ? 'background: #d97706; color: #ffffff; box-shadow: 0 2px 8px rgba(245,158,11,0.35);' : 'background: transparent; color: var(--text-soft);'}">
-                  Chờ duyệt (${choDuyetCount})
-                </button>
-                <button type="button" onclick="setCancelStatusFilter('da_duyet')" style="height: 34px; padding: 0 13px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeCancelStatusFilter === 'da_duyet' ? 'background: #3b82f6; color: #ffffff; box-shadow: 0 2px 8px rgba(59,130,246,0.35);' : 'background: transparent; color: var(--text-soft);'}">
-                  Đã duyệt (${daDuyetCount})
-                </button>
-              </div>
-
-              <!-- Filter GĐV (Custom Dropdown) -->
-              <div class="custom-select-wrapper" style="position: relative;">
-                <button type="button" id="btnCancelGdvTrigger" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddCancelGdvMenu', event)" style="height: 42px; padding: 0 14px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border); font-size: 12px; font-weight: 750; color: var(--text-main); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; min-width: 140px; max-width: 185px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
-                  <span style="display: flex; align-items: center; gap: 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtmlOutput(activeGdvLabel)}</span>
-                  </span>
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </button>
-
-                <div id="ddCancelGdvMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddCancelGdvMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); right: 0; min-width: 220px; max-width: 280px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.25); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 300px; overflow-y: auto;">
-                  <div class="custom-select-item ${activeCancelGdvFilter === 'all' ? 'active' : ''}" data-gdv-option="all" onclick="setCancelGdvFilter('all')" style="padding: 8px 12px; border-radius: 9px; font-size: 12.5px; font-weight: 700; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 2px; transition: all 0.15s ease; ${activeCancelGdvFilter === 'all' ? 'background: rgba(59,130,246,0.12); color: #3b82f6; font-weight: 850;' : ''}">
-                    <span style="display: flex; align-items: center; gap: 7px;">
-                      <span style="width: 7px; height: 7px; border-radius: 50%; background: #3b82f6; flex-shrink: 0;"></span>
-                      <span>Tất cả GĐV (${uniqueGdvs.length})</span>
-                    </span>
-                    ${activeCancelGdvFilter === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
-                  </div>
-                  ${uniqueGdvs.map(g => `
-                    <div class="custom-select-item ${g === activeCancelGdvFilter ? 'active' : ''}" data-gdv-option="${escapeAttributeData(g)}" onclick="setCancelGdvFilter('${escapeAttributeData(g)}')" style="padding: 8px 12px; border-radius: 9px; font-size: 12.5px; font-weight: 700; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 2px; transition: all 0.15s ease; ${g === activeCancelGdvFilter ? 'background: rgba(59,130,246,0.12); color: #3b82f6; font-weight: 850;' : ''}">
-                      <span style="display: flex; align-items: center; gap: 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; flex-shrink: 0;"></span>
-                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtmlOutput(g)}</span>
-                      </span>
-                      ${g === activeCancelGdvFilter ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-
-              <!-- Filter Chi nhánh (Custom Dropdown) -->
-              <div class="custom-select-wrapper" style="position: relative;">
-                <button type="button" id="btnCancelBranchTrigger" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddCancelBranchMenu', event)" style="height: 42px; padding: 0 14px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border); font-size: 12px; font-weight: 750; color: var(--text-main); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; min-width: 140px; max-width: 185px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
-                  <span style="display: flex; align-items: center; gap: 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="22.01"></line><line x1="15" y1="22" x2="15" y2="22.01"></line><line x1="9" y1="18" x2="9" y2="18.01"></line><line x1="15" y1="18" x2="15" y2="18.01"></line><line x1="9" y1="14" x2="9" y2="14.01"></line><line x1="15" y1="14" x2="15" y2="14.01"></line><line x1="9" y1="10" x2="9" y2="10.01"></line><line x1="15" y1="10" x2="15" y2="10.01"></line><line x1="9" y1="6" x2="9" y2="6.01"></line><line x1="15" y1="6" x2="15" y2="6.01"></line></svg>
-                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtmlOutput(activeBranchLabel)}</span>
-                  </span>
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </button>
-
-                <div id="ddCancelBranchMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddCancelBranchMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); right: 0; min-width: 220px; max-width: 280px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.25); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 300px; overflow-y: auto;">
-                  <div class="custom-select-item ${activeCancelBranchFilter === 'all' ? 'active' : ''}" data-branch-option="all" onclick="setCancelBranchFilter('all')" style="padding: 8px 12px; border-radius: 9px; font-size: 12.5px; font-weight: 700; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 2px; transition: all 0.15s ease; ${activeCancelBranchFilter === 'all' ? 'background: rgba(16,185,129,0.12); color: #10b981; font-weight: 850;' : ''}">
-                    <span style="display: flex; align-items: center; gap: 7px;">
-                      <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; flex-shrink: 0;"></span>
-                      <span>Tất cả Chi nhánh</span>
-                    </span>
-                    ${activeCancelBranchFilter === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
-                  </div>
-                  ${uniqueBranches.map(b => `
-                    <div class="custom-select-item ${b === activeCancelBranchFilter ? 'active' : ''}" data-branch-option="${escapeAttributeData(b)}" onclick="setCancelBranchFilter('${escapeAttributeData(b)}')" style="padding: 8px 12px; border-radius: 9px; font-size: 12.5px; font-weight: 700; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 2px; transition: all 0.15s ease; ${b === activeCancelBranchFilter ? 'background: rgba(16,185,129,0.12); color: #10b981; font-weight: 850;' : ''}">
-                      <span style="display: flex; align-items: center; gap: 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; flex-shrink: 0;"></span>
-                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtmlOutput(b)}</span>
-                      </span>
-                      ${b === activeCancelBranchFilter ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-
-              <!-- Filter Nhóm lý do (Custom Dropdown) -->
-              <div class="custom-select-wrapper" style="position: relative;">
-                <button type="button" id="btnCancelReasonTrigger" class="custom-select-trigger" onclick="toggleCustomDropdownMenu('ddCancelReasonMenu', event)" style="height: 42px; padding: 0 14px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border); font-size: 12px; font-weight: 750; color: var(--text-main); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; min-width: 150px; max-width: 195px; justify-content: space-between; box-shadow: var(--shadow-xs); transition: all 0.2s ease;">
-                  <span style="display: flex; align-items: center; gap: 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtmlOutput(activeReasonLabel)}</span>
-                  </span>
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted); flex-shrink: 0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                </button>
-
-                <div id="ddCancelReasonMenu" class="custom-select-menu" style="display: ${activeOpenDropdownId === 'ddCancelReasonMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 6px); right: 0; min-width: 250px; max-width: 320px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: 0 16px 36px rgba(0,0,0,0.25); z-index: 999; padding: 6px; backdrop-filter: blur(16px); max-height: 320px; overflow-y: auto;">
-                  ${cancelReasonOptions.map(opt => `
-                    <div class="custom-select-item ${opt.code === activeCancelReasonCodeFilter ? 'active' : ''}" data-reason-option="${opt.code}" onclick="setCancelReasonFilter('${opt.code}')" style="padding: 8px 12px; border-radius: 9px; font-size: 12px; font-weight: 700; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 2px; transition: all 0.15s ease; ${opt.code === activeCancelReasonCodeFilter ? 'background: rgba(239,68,68,0.12); color: #ef4444; font-weight: 850;' : ''}">
-                      <span style="display: flex; align-items: center; gap: 7px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                        <span style="width: 7px; height: 7px; border-radius: 50%; background: ${opt.code === 'all' ? '#6b7280' : '#ef4444'}; flex-shrink: 0;"></span>
-                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeAttributeData(opt.full)}">${escapeHtmlOutput(opt.short)}</span>
-                      </span>
-                      ${opt.code === activeCancelReasonCodeFilter ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-
-              <!-- Quick Reset Filters Button -->
-              <button type="button" class="btn-premium btn-secondary" onclick="resetAllCancellationFilters()" title="Đặt lại bộ lọc" style="width: 42px; height: 42px; min-width: 42px; min-height: 42px; padding: 0; border-radius: 12px; display: grid; place-items: center; cursor: pointer;" aria-label="Đặt lại bộ lọc">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-              </button>
-            </div>
-
-          </div>
-
-          <!-- TABLE CONTAINER (STANDALONE CARD matching software table-container class) -->
-          <div class="table-container" style="border: 1px solid var(--border); border-radius: 16px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow-sm);">
-            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-              <table class="p-table" style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
-                <thead>
-                  <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong); color: var(--text-soft); font-weight: 850; font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px;">
-                    <th style="padding: 12px 10px; text-align: center; width: 45px;">STT</th>
-                    <th style="padding: 12px 10px; text-align: center; width: 130px;">Trạng thái</th>
-                    <th style="padding: 12px 10px; min-width: 140px;">Biển số xe / Chủ xe</th>
-                    <th style="padding: 12px 10px; min-width: 140px;">Số HSBT</th>
-                    <th style="padding: 12px 10px; min-width: 130px;">Giám định viên</th>
-                    <th style="padding: 12px 10px; max-width: 140px;">Đơn vị cấp đơn</th>
-                    <th style="padding: 12px 10px; text-align: center; width: 100px;">Ngày tổn thất</th>
-                    <th style="padding: 12px 10px; text-align: right; width: 125px;">Dự phòng BT</th>
-                    <th style="padding: 12px 10px; min-width: 180px; color: #ef4444;">Mã & Lý do hủy</th>
-                    <th style="padding: 12px 10px; min-width: 220px; color: var(--primary);">Ghi chú giải trình</th>
-                    ${isAdmin ? `<th style="padding: 12px 10px; text-align: center; width: 90px; color: #ef4444;">Thao tác</th>` : ''}
-                  </tr>
-                </thead>
-                <tbody>
-                  ${filtered.length === 0 ? `
-                    <tr>
-                      <td colspan="${isAdmin ? 11 : 10}" style="text-align: center; padding: 48px 20px; color: var(--text-soft);">
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
-                          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.5; color: #ef4444;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
-                          <span style="font-weight: 750; font-size: 14px;">${allCancelClaims.length === 0 ? 'Chưa có hồ sơ nào được đề xuất hủy.' : 'Không tìm thấy hồ sơ đề xuất hủy nào thỏa mãn điều kiện lọc.'}</span>
-                          ${allCancelClaims.length === 0 ? '<span style="font-size: 12.5px; color: var(--text-muted); margin-top: 2px;">Để thêm hồ sơ vào bảng này, vào <b>Quản lý Hồ sơ tồn & Báo cáo tổn thất</b>, mở chi tiết hồ sơ cần hủy và bấm nút <b>[ ✕ Hủy hồ sơ ]</b> trên thanh tiêu đề.</span>' : ''}
-                        </div>
-                      </td>
-                    </tr>
-                  ` : rowsHtml}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
+      container.innerHTML = `<div class="workspace-grid single-col"><section class="pending-workspace pending-workspace--v2 pn-workspace cx-workspace" aria-label="Đề xuất hủy hồ sơ">
+        <header class="pw-page-head"><div class="pw-page-title"><div class="pw-page-emblem" aria-hidden="true">${svgI('x', 22)}</div><div><span class="pw-eyebrow">Nghiệp vụ hủy hồ sơ</span><h1>Đề xuất hủy hồ sơ bồi thường</h1><p>Tổng hợp hồ sơ do Giám định viên đề xuất hủy hoặc từ chối bồi thường — theo dõi lý do, ghi chú giải trình, đối chiếu danh sách đã duyệt và xuất Excel trình ký.</p></div></div>
+          <div class="pending-action-group" role="group" aria-label="Thao tác">${actBtn('onclick="openImportApprovedCancellationExcelModal()"', 'upload', 'Nhập Excel đã duyệt hủy', 'pending-action-btn--import')}${actBtn('onclick="exportCancellationClaimsToExcel()"', 'xls', 'Xuất Excel')}</div></header>
+        <div class="claims-metrics-grid pn-metrics cx-metrics" aria-label="Tổng quan đề xuất hủy">
+          ${metric('red', 'x', 'Tổng hồ sơ cần hủy', totalCount, 'hồ sơ', 'GĐV đề xuất lũy kế', '100%', totalCount ? 100 : 0, 'all')}
+          ${metric('gold', 'clock', 'Chờ duyệt hủy', choDuyetCount, 'hồ sơ', 'Chờ lãnh đạo duyệt', pct(choDuyetCount) + '%', pct(choDuyetCount), 'cho_duyet')}
+          ${metric('blue', 'check', 'Đã duyệt hủy', daDuyetCount, 'hồ sơ', 'Đã hoàn tất thủ tục', pct(daDuyetCount) + '%', pct(daDuyetCount), 'da_duyet')}
+          ${metric('green', 'coin', 'Dự phòng giải phóng', formatCurrencyInputNumber(totalDuPhong) || '0', 'đ', 'Dự phòng BT sẽ được giải phóng', daDuyetCount + ' hồ sơ đã duyệt', pct(daDuyetCount))}
         </div>
-      `;
+        <div class="pending-register-panel pn-list">
+          <div class="pending-register-topbar"><div class="pending-register-header"><h3>Danh sách đề xuất hủy</h3><div class="pending-filter-summary" aria-live="polite"><span class="pending-filter-result-count">${filtered.length.toLocaleString('vi-VN')} / ${totalCount.toLocaleString('vi-VN')} hồ sơ</span></div></div></div>
+          <div class="pending-filter-toolbar">
+            <div class="pending-filter-search"><span class="pending-filter-search__icon" aria-hidden="true">${svgI('search', 16)}</span><input type="search" id="txtCancellationFilterSearch" class="pending-filter-search__input" placeholder="Tìm BSX, số HSBT, GĐV, lý do…" autocomplete="off" aria-label="Tìm hồ sơ đề xuất hủy" value="${escapeAttributeData(activeCancelSearch)}" oninput="setCancelSearch(this.value)"></div>
+            <div class="pending-filter-controls">
+              ${cancelDd('CancelGdv', 'user', 'Giám định viên', activeCancelGdvFilter, gdvOptions, 'setCancelGdvFilter', activeCancelGdvFilter === 'all')}
+              ${cancelDd('CancelBranch', 'building', 'Đơn vị cấp đơn', activeCancelBranchFilter, branchOptions, 'setCancelBranchFilter', activeCancelBranchFilter === 'all')}
+              ${cancelDd('CancelReason', 'tag', 'Nhóm lý do', activeCancelReasonCodeFilter, reasonOptions, 'setCancelReasonFilter', activeCancelReasonCodeFilter === 'all')}
+            </div>
+            <button type="button" class="pending-filter-reset" onclick="resetAllCancellationFilters()" title="Đặt lại toàn bộ bộ lọc" aria-label="Đặt lại bộ lọc">${svgI('reset', 16)}</button>
+          </div>
+          <div class="pn-chips" role="group" aria-label="Lọc nhanh theo trạng thái">${statusChip('all', 'Tất cả', totalCount)}${statusChip('cho_duyet', 'Chờ duyệt', choDuyetCount)}${statusChip('da_duyet', 'Đã duyệt', daDuyetCount)}</div>
+          ${filtered.length === 0 ? emptyHtml : `<div class="table-container pending-register-table"><table class="p-table cx-table"><thead><tr><th class="pn-c-stt">#</th><th>Trạng thái</th><th>Biển số / Chủ xe</th><th>Số HSBT</th><th>Giám định viên</th><th>Đơn vị cấp đơn</th><th>Ngày tổn thất</th><th class="cx-money">Dự phòng BT</th><th>Mã &amp; lý do hủy</th><th>Ghi chú giải trình</th>${isAdmin ? '<th class="cx-actions">Thao tác</th>' : ''}</tr></thead><tbody>${rowsHtml}</tbody></table></div>`}
+        </div>
+      </section></div>`;
+
+      if (hadSearchFocus) {
+        const input = document.getElementById('txtCancellationFilterSearch');
+        if (input) { input.focus({ preventScroll: true }); try { input.setSelectionRange(caret, caret); } catch (e) {} }
+      }
     }
 
 
