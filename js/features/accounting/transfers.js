@@ -396,44 +396,15 @@
       container.innerHTML = `
 
 
-        <div class="accounting-claims-page" style="padding: 24px 28px; max-width: 100%; margin: 0 auto;">
-          
-          <!-- HERO BANNER HEADER -->
-          <div class="transfer-page-hero" style="background: linear-gradient(145deg, rgba(216,180,109,0.04) 0%, rgba(216,180,109,0.1) 100%), var(--surface); border: 1px solid rgba(216,180,109,0.25); border-radius: 20px; padding: 24px 32px; margin-bottom: 24px; box-shadow: 0 8px 30px -8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.08); position: relative; overflow: hidden; backdrop-filter: blur(20px);">
-            <!-- Decorative Orbs -->
-            <div style="position: absolute; right: -50px; top: -50px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(216,180,109,0.2) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(24px);"></div>
-            <div style="position: absolute; left: 5%; bottom: -60px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
-              <div class="transfer-page-hero-copy" style="flex: 1; min-width: 320px;">
-                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); border-radius: 16px; font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                  Hồ sơ Kế toán
-                </div>
-                <h1 style="font-size: 28px; font-weight: 900; background: linear-gradient(135deg, var(--text-main) 0%, #9ca3af 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 10px 0; letter-spacing: -0.02em; line-height: 1.2;">
-                  Quản lý hồ sơ đã nhận
-                </h1>
-                <p style="font-size: 13px; color: var(--text-soft); margin: 0; max-width: 800px; line-height: 1.5;">
-                  Quản lý toàn bộ hồ sơ đã bàn giao từ Giám định viên, theo dõi tiến độ xét duyệt & gửi yêu cầu bổ sung.
-                </p>
-              </div>
-              <!-- Export Action Area -->
-              <div style="display: flex; align-items: center; gap: 12px;">
-                ${hasUserPermission('accounting', 'export') ? `
-                  <button type="button" onclick="exportAccountingClaimsToExcel()" style="padding: 0 20px; height: 44px; font-size: 13.5px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 6px 16px rgba(16,185,129,0.3), inset 0 2px 0 rgba(255,255,255,0.2); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: center;" onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 10px 20px rgba(16,185,129,0.4), inset 0 2px 0 rgba(255,255,255,0.3)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 6px 16px rgba(16,185,129,0.3), inset 0 2px 0 rgba(255,255,255,0.2)'">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span>Xuất dữ liệu</span>
-                  </button>
-                ` : ''}
-              </div>
-            </div>
-          </div>
-
+        <div class="workspace-grid single-col"><section class="acc-workspace accounting-claims-page" aria-label="Hồ sơ kế toán">
+          <header class="pw-page-head"><div class="pw-page-title"><div class="pw-page-emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div><div><span class="pw-eyebrow">Hồ sơ kế toán</span><h1>Quản lý hồ sơ đã nhận</h1><p>Quản lý toàn bộ hồ sơ đã bàn giao từ Giám định viên, theo dõi tiến độ xét duyệt và gửi yêu cầu bổ sung.</p></div></div>
+            ${hasUserPermission('accounting', 'export') ? `<div class="pending-action-group" role="group" aria-label="Thao tác"><button type="button" class="pending-action-btn pending-action-btn--import" onclick="exportAccountingClaimsToExcel()"><span class="pending-action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13l4 5m0-5-4 5"/></svg></span><span>Xuất dữ liệu</span></button></div>` : ''}
+          </header>
           ${renderAccountingClaimsMetrics({total:statTotal,confirmed:statDaXacNhan,supplement:statCanBoSung,submitted:statTrinhDntt})}
 
           ${renderClaimsRegister({rows:paginatedItems,summary:{total:statTotal,confirmed:statDaXacNhan,supplement:statCanBoSung,submitted:statTrinhDntt},startIndex,displayStart,displayEnd,totalCount:totalFilteredCount,page:accClaimsCurrentPage,totalPages})}
 
-        </div>`;
+        </section></div>`;
       syncAdminSelects(container);
     }
 
@@ -773,43 +744,15 @@
       const displayEnd = Math.min(startIndex + accTransfersPerPage, totalFilteredCount);
 
       container.innerHTML = `
-        <div class="accounting-transfer-page" style="padding: 24px 28px; max-width: 100%; margin: 0 auto;">
-          
-          <!-- HERO BANNER HEADER -->
-          <div class="transfer-page-hero" style="background: linear-gradient(145deg, rgba(216,180,109,0.04) 0%, rgba(216,180,109,0.1) 100%), var(--surface); border: 1px solid rgba(216,180,109,0.25); border-radius: 20px; padding: 24px 32px; margin-bottom: 24px; box-shadow: 0 8px 30px -8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.08); position: relative; overflow: hidden; backdrop-filter: blur(20px);">
-            <!-- Decorative Orbs -->
-            <div style="position: absolute; right: -50px; top: -50px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(216,180,109,0.2) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(24px);"></div>
-            <div style="position: absolute; left: 5%; bottom: -60px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(0,0,0,0) 70%); border-radius: 50%; pointer-events: none; filter: blur(20px);"></div>
-            
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2;">
-              <div class="transfer-page-hero-copy" style="flex: 1; min-width: 320px;">
-                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; background: rgba(216,180,109,0.12); border: 1px solid rgba(216,180,109,0.3); border-radius: 16px; font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px;">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                  Hệ thống Bàn giao Kế toán
-                </div>
-                <h1 style="font-size: 28px; font-weight: 900; background: linear-gradient(135deg, var(--text-main) 0%, #9ca3af 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 10px 0; letter-spacing: -0.02em; line-height: 1.2;">
-                  Quản lý Bàn giao Hồ sơ Kế toán
-                </h1>
-                <p style="font-size: 13px; color: var(--text-soft); margin: 0; max-width: 800px; line-height: 1.5;">
-                  Bàn giao gộp nhiều hồ sơ bồi thường từ Giám định viên cho Kế toán theo quy trình: <br/>
-                  <strong style="color: var(--text-main); font-weight: 700;">Mới (Nháp) <span style="color:var(--text-muted); margin:0 6px;">→</span> Chờ xác nhận <span style="color:var(--text-muted); margin:0 6px;">→</span> Đã xác nhận / Yêu cầu bổ sung <span style="color:var(--text-muted); margin:0 6px;">→</span> Đã trình ĐNTT.</strong>
-                </p>
-              </div>
-              
-              ${hasUserPermission('accounting', 'create') ? `
-              <button type="button" onclick="openAddAccountingTransferModal()" style="padding: 0 20px; height: 44px; font-size: 13px; border-radius: 12px; font-weight: 850; background: linear-gradient(135deg, #d8b46d 0%, #b89243 100%); color: #000; border: none; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 6px 16px rgba(216,180,109,0.3), inset 0 2px 0 rgba(255,255,255,0.2); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform-origin: center;" onmouseover="this.style.transform='translateY(-2px) scale(1.02)'; this.style.boxShadow='0 10px 20px rgba(216,180,109,0.4), inset 0 2px 0 rgba(255,255,255,0.3)'" onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 6px 16px rgba(216,180,109,0.3), inset 0 2px 0 rgba(255,255,255,0.2)'">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                <span>Tạo Phiếu Bàn giao Mới</span>
-              </button>
-              ` : ''}
-            </div>
-          </div>
-
+        <div class="workspace-grid single-col"><section class="acc-workspace accounting-transfer-page" aria-label="Bàn giao hồ sơ kế toán">
+          <header class="pw-page-head"><div class="pw-page-title"><div class="pw-page-emblem" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 12 3-8h12l3 8v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 12h5l2 4h4l2-4h5"/></svg></div><div><span class="pw-eyebrow">Hệ thống bàn giao kế toán</span><h1>Quản lý bàn giao hồ sơ kế toán</h1><p>Bàn giao gộp nhiều hồ sơ bồi thường từ Giám định viên cho Kế toán: Mới (nháp) → Chờ xác nhận → Đã xác nhận / Yêu cầu bổ sung → Đã trình ĐNTT.</p></div></div>
+            ${hasUserPermission('accounting', 'create') ? `<div class="pending-action-group" role="group" aria-label="Thao tác"><button type="button" class="pending-action-btn pending-action-btn--import" onclick="openAddAccountingTransferModal()"><span class="pending-action-btn__icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span>Tạo phiếu bàn giao mới</span></button></div>` : ''}
+          </header>
           ${renderAccountingTransferMetrics({total:statTotal,pending:statChoXacNhan,confirmed:statDaXacNhan,supplement:statCanBoSung,submitted:statTrinhDntt,submittedAmount:totalMoneyTrinhDntt})}
 
           ${renderAccountingTransferRegister({rows:paginatedTransfers,summary:{total:statTotal,draft:statMoi,pending:statChoXacNhan,confirmed:statDaXacNhan,supplement:statCanBoSung,submitted:statTrinhDntt},startIndex,displayStart,displayEnd,totalCount:totalFilteredCount,page:accTransfersCurrentPage,totalPages,isAdmin})}
 
-        </div>
+        </section></div>
       `;
       syncAdminSelects(container);
     }

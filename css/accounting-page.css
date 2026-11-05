@@ -1,0 +1,23 @@
+/* Kế toán (Hồ sơ đã nhận / Bàn giao) — đầu trang dùng cùng khuôn pw-page-head với Hồ sơ bồi thường, Danh bạ.
+   Chỉ dùng cho .acc-workspace; phần thẻ số liệu và bảng vẫn do administration.css đảm nhiệm. */
+.acc-workspace { display:block; width:100%; min-width:0; max-width:1440px; margin:0 auto; }
+.acc-workspace .pw-page-head { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px 24px; margin:8px 0 20px; }
+.acc-workspace .pw-page-title { display:flex; align-items:center; gap:16px; min-width:0; }
+.acc-workspace .pw-page-emblem { display:grid; place-items:center; flex:0 0 48px; width:48px; height:48px; border:1px solid color-mix(in srgb,var(--ton-gold) 24%,var(--ton-line)); border-radius:14px; background:var(--ton-gold-bg); color:var(--ton-gold); }
+.acc-workspace .pw-page-emblem svg { width:22px; height:22px; }
+.acc-workspace .pw-eyebrow { display:block; color:var(--ton-gold); font-size:9.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.acc-workspace .pw-page-head h1 { margin:4px 0 2px; color:var(--ton-ink); font-size:clamp(22px,2.2vw,27px); font-weight:800; line-height:1.25; letter-spacing:-.03em; }
+.acc-workspace .pw-page-head p { margin:0; max-width:820px; color:var(--ton-muted); font-size:12px; line-height:1.6; }
+.acc-workspace .pending-action-group { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:0; border:0; background:none; box-shadow:none; }
+.acc-workspace .pending-action-btn { display:inline-flex; align-items:center; justify-content:center; height:40px; min-height:40px; padding:0 14px; gap:8px; border:1px solid var(--ton-line); border-radius:10px; background:var(--ton-paper); color:var(--ton-ink); font:inherit; font-size:12px; font-weight:700; white-space:nowrap; cursor:pointer; box-shadow:0 1px 2px rgba(48,40,24,.05); }
+.acc-workspace .pending-action-btn:hover { border-color:color-mix(in srgb,var(--ton-gold) 55%,var(--ton-line)); background:var(--ton-soft); }
+.acc-workspace .pending-action-btn__icon { display:grid; place-items:center; width:17px; height:17px; flex:0 0 17px; }
+.acc-workspace .pending-action-btn--import { border-color:var(--ton-action); background:var(--ton-action); color:var(--ton-action-text); box-shadow:0 1px 2px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.14); }
+.acc-workspace .pending-action-btn--import:hover { border-color:var(--ton-action-hover); background:var(--ton-action-hover); color:var(--ton-action-text); }
+.acc-workspace :is(button,[tabindex],input,select):focus-visible { outline:2px solid var(--ton-gold); outline-offset:2px; }
+@media (max-width:760px) {
+  .acc-workspace .pw-page-head { align-items:flex-start; margin:4px 0 16px; }
+  .acc-workspace .pw-page-emblem { flex-basis:42px; width:42px; height:42px; border-radius:12px; }
+  .acc-workspace .pending-action-group { width:100%; }
+  .acc-workspace .pending-action-btn { flex:1 1 180px; }
+}
