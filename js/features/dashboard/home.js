@@ -170,7 +170,7 @@
         o.showAccountingView && { tab:'accounting_transfer', icon:'transfer', title:'Chuyển hồ sơ kế toán', desc:`${fmt(o.totalTransfers)} đợt bàn giao chứng từ` },
         o.showFieldReimb && { tab:'field_reimbursements', icon:'field', title:'Chi phí hiện trường', desc:`${fmt(o.totalReimbs)} phiếu hoàn ứng` },
         { tab:'rescue_cost', icon:'rescue', title:'Chi phí cứu hộ', desc:'Tính kéo xe, cẩu xe & cấp phê duyệt', badge:'Mới' },
-        { tab:'contacts', icon:'contacts', title:'Danh bạ nội bộ', desc:'Tra cứu SĐT, email nhân sự toàn hệ thống', badge:'Mới' },
+        o.showContacts && { tab:'contacts', icon:'contacts', title:'Danh bạ nội bộ', desc:'Tra cứu SĐT, email nhân sự toàn hệ thống', badge:'Mới' },
         { tab:'shared_forms', icon:'forms', title:'Biểu mẫu dùng chung', desc:'Thư viện tài liệu Google Drive' },
         o.showAdmin && { tab:'users', icon:'system', title:'Quản trị hệ thống', desc:'Tài khoản, phân quyền, cấu hình' }
       ]}

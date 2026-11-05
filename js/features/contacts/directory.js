@@ -32,7 +32,10 @@ const ContactDirectoryPage = (() => {
   const esc = v => (typeof escapeHtmlOutput === 'function' ? escapeHtmlOutput(v) : String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch])));
   const attr = esc;
   const toast = (message, kind) => { if (typeof triggerToast === 'function') triggerToast(message, kind || 'success'); };
-  const canEdit = () => typeof hasUserPermission === 'function' && hasUserPermission('users', 'admin');
+  // Quyền của trang (Quản trị hệ thống → Tài khoản → Danh bạ nội bộ): view / add / edit / delete.
+  const can = action => typeof hasUserPermission === 'function' && hasUserPermission('contacts', action);
+  // Người có quyền quản lý (thêm/sửa/xóa) mới thấy dữ liệu cá nhân (năm sinh, giới tính) và lịch sử cập nhật.
+  const canManage = () => can('add') || can('edit') || can('delete');
   const me = () => (typeof activeUserProfile !== 'undefined' && activeUserProfile && (activeUserProfile.displayName || activeUserProfile.email)) || (window.firebase && firebase.auth().currentUser && firebase.auth().currentUser.email) || '';
   const hue = text => { let h = 0; for (const ch of String(text)) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
   const avatar = (r, cls = '') => `<span class="ct-avatar ${cls}" style="--h:${hue(r.hoTen)}" aria-hidden="true">${esc(C().initials(r.hoTen))}</span>`;
@@ -165,7 +168,7 @@ const ContactDirectoryPage = (() => {
     host.querySelector('#ctCount').innerHTML = `<strong>${total.toLocaleString('vi-VN')}</strong> / ${records.length.toLocaleString('vi-VN')} liên hệ`;
     host.querySelectorAll('[data-ct-view]').forEach(b => { const on = b.dataset.ctView === state.view; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
     const empty = !loaded ? `<div class="pn-empty"><b>Đang tải danh bạ…</b></div>` : loadError ? `<div class="pn-empty">${svg('alert', 28)}<b>Không đọc được danh bạ</b><span>${esc(loadError)}</span></div>`
-      : `<div class="pn-empty">${svg('search', 28)}<b>${records.length ? 'Không có liên hệ phù hợp' : 'Danh bạ chưa có dữ liệu'}</b><span>${records.length ? 'Thử bỏ bớt bộ lọc hoặc đổi từ khóa tìm kiếm.' : canEdit() ? 'Bấm “Nhập Excel” để nạp danh sách nhân sự từ file Excel.' : 'Quản trị viên chưa nạp danh bạ.'}</span>${records.length && filtered ? '<button type="button" class="pending-action-btn" data-ct-reset><span>Xóa bộ lọc</span></button>' : ''}${!records.length && loaded && !loadError && canEdit() ? '<button type="button" class="pending-action-btn pending-action-btn--import" data-ct-import><span>Nhập Excel</span></button>' : ''}</div>`;
+      : `<div class="pn-empty">${svg('search', 28)}<b>${records.length ? 'Không có liên hệ phù hợp' : 'Danh bạ chưa có dữ liệu'}</b><span>${records.length ? 'Thử bỏ bớt bộ lọc hoặc đổi từ khóa tìm kiếm.' : canManage() ? 'Bấm “Nhập Excel” để nạp danh sách nhân sự từ file Excel.' : 'Quản trị viên chưa nạp danh bạ.'}</span>${records.length && filtered ? '<button type="button" class="pending-action-btn" data-ct-reset><span>Xóa bộ lọc</span></button>' : ''}${!records.length && loaded && !loadError && canManage() ? '<button type="button" class="pending-action-btn pending-action-btn--import" data-ct-import><span>Nhập Excel</span></button>' : ''}</div>`;
     const body = host.querySelector('#ctBody');
     if (!pageRows.length) body.innerHTML = empty;
     else if (state.view === 'cards') body.innerHTML = `<div class="ct-cards">${pageRows.map(renderCard).join('')}</div>`;
@@ -199,7 +202,7 @@ const ContactDirectoryPage = (() => {
     if (!list.length) { toast('Không có liên hệ để xuất', 'warning'); return; }
     button.disabled = true;
     try {
-      const XLSX = await loadXlsx(), admin = canEdit();
+      const XLSX = await loadXlsx(), admin = canManage();
       const head = ['STT', 'Mã NV', 'Họ và tên', 'Đơn vị', 'Phòng/ban/Chi nhánh', 'Tổ/nhóm', 'Chức danh', 'Nơi làm việc', ...(admin ? ['Năm sinh', 'Giới tính'] : []), 'Số điện thoại', 'Email Công ty', 'Khối/Nhóm'];
       const body = list.map((r, i) => [i + 1, r.maNv || '', r.hoTen, r.donVi || '', r.phong || '', r.to || '', r.chucDanh || '', r.noiLamViec || '', ...(admin ? [r.namSinh || '', r.gioiTinh || ''] : []), r.sdt || '', r.email || '', r.nhom || '']);
       const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
@@ -232,16 +235,17 @@ const ContactDirectoryPage = (() => {
   function openDetail(key) {
     const r = records.find(x => x.key === key); if (!r) return;
     modal = {mode: 'detail', key};
-    const admin = canEdit();
+    const admin = canManage();
     showModal(`<header><div class="ct-dhead">${avatar(r, 'ct-avatar--xl')}<div><span class="pw-eyebrow">${esc(r.nhom || 'Danh bạ nội bộ')}</span><h3>${esc(r.hoTen)}</h3><div class="pn-modal-meta">${[r.chucDanh, r.maNv].filter(Boolean).map(t => `<span>${esc(t)}</span>`).join('')}</div></div></div><button type="button" class="pn-x" data-ct-close aria-label="Đóng">${svg('close', 18)}</button></header>
       <div class="pn-dialog-body"><div class="ct-quick">${r.sdt ? `<a class="pending-action-btn pending-action-btn--import" href="tel:${attr(r.sdt)}"><span class="pending-action-btn__icon">${svg('phone', 15)}</span><span>Gọi ${esc(C().fmtPhone(r.sdt))}</span></a>` : ''}${r.email ? `<a class="pending-action-btn" href="mailto:${attr(r.email)}"><span class="pending-action-btn__icon">${svg('mail', 15)}</span><span>Gửi email</span></a>` : ''}
       ${r.sdt ? `<button type="button" class="pending-action-btn" data-ct-copy="${attr(r.sdt)}" data-ct-label="số điện thoại"><span class="pending-action-btn__icon">${svg('copy', 15)}</span><span>Sao chép SĐT</span></button>` : ''}${r.email ? `<button type="button" class="pending-action-btn" data-ct-copy="${attr(r.email)}" data-ct-label="email"><span class="pending-action-btn__icon">${svg('copy', 15)}</span><span>Sao chép email</span></button>` : ''}
       <button type="button" class="pending-action-btn" data-ct-vcf="${attr(r.key)}"><span class="pending-action-btn__icon">${svg('download', 15)}</span><span>Lưu danh bạ (.vcf)</span></button></div>
       <div class="ct-kvs">${fieldRow('Số điện thoại', C().fmtPhone(r.sdt))}${fieldRow('Email công ty', r.email)}${fieldRow('Đơn vị', r.donVi)}${fieldRow('Phòng/ban/Chi nhánh', r.phong)}${fieldRow('Tổ/nhóm', r.to)}${fieldRow('Chức danh', r.chucDanh)}${fieldRow('Nơi làm việc', r.noiLamViec)}${fieldRow('Mã nhân viên', r.maNv)}${admin ? fieldRow('Năm sinh', r.namSinh) + fieldRow('Giới tính', r.gioiTinh) : ''}${admin && r.updatedAt ? fieldRow('Cập nhật', new Date(Number(r.updatedAt)).toLocaleString('vi-VN') + (r.updatedBy ? ' · ' + r.updatedBy : '')) : ''}</div></div>
-      <footer>${admin ? `<span class="ct-foot-left">${btn(`data-ct-del="${attr(r.key)}"`, 'trash', 'Xóa', 'ct-danger')}</span>${btn(`data-ct-edit="${attr(r.key)}"`, 'edit', 'Chỉnh sửa', 'pending-action-btn--import')}` : ''}${btn('data-ct-close', 'close', 'Đóng')}</footer>`);
+      <footer>${can('delete') ? `<span class="ct-foot-left">${btn(`data-ct-del="${attr(r.key)}"`, 'trash', 'Xóa', 'ct-danger')}</span>` : ''}${can('edit') ? btn(`data-ct-edit="${attr(r.key)}"`, 'edit', 'Chỉnh sửa', 'pending-action-btn--import') : ''}${btn('data-ct-close', 'close', 'Đóng')}</footer>`);
   }
   const FORM_FIELDS = [['hoTen', 'Họ và tên', true], ['maNv', 'Mã nhân viên', true], ['donVi', 'Đơn vị'], ['phong', 'Phòng/ban/Chi nhánh'], ['to', 'Tổ/nhóm'], ['chucDanh', 'Chức danh'], ['noiLamViec', 'Nơi làm việc'], ['nhom', 'Khối/Nhóm'], ['sdt', 'Số điện thoại'], ['email', 'Email công ty'], ['namSinh', 'Năm sinh']];
   function openEdit(key) {
+    if (key ? !can('edit') : !can('add')) return void toast('Bạn không có quyền ' + (key ? 'sửa' : 'thêm') + ' liên hệ trong Danh bạ nội bộ.', 'warning');
     const r = key ? records.find(x => x.key === key) : null;
     modal = {mode: 'edit', key: key || null};
     const lists = {donVi: 'donVi', phong: 'phong', to: 'to', chucDanh: 'chucDanh', noiLamViec: 'noiLamViec', nhom: 'nhom'};
@@ -267,6 +271,9 @@ const ContactDirectoryPage = (() => {
     if (!year.valid) return fail('Năm sinh không hợp lệ.');
     Object.assign(rec, {sdt: phone.value, email: mail.value, namSinh: year.value});
     const key = C().makeKey(rec), oldKey = modal && modal.key;
+    if (oldKey ? !can('edit') : !can('add')) return fail('Bạn không có quyền ' + (oldKey ? 'sửa' : 'thêm') + ' liên hệ.');
+    // Đổi Mã NV = tạo bản ghi mới + xóa bản ghi cũ nên cần cả quyền Thêm và Xóa.
+    if (oldKey && key !== oldKey && !(can('add') && can('delete'))) return fail('Đổi Mã nhân viên cần cả quyền Thêm và Xóa. Hãy giữ nguyên Mã NV hoặc nhờ Admin.');
     if (key !== oldKey && records.some(r => r.key === key)) return fail('Mã nhân viên "' + rec.maNv + '" đã tồn tại trong danh bạ.');
     const save = host.querySelector('[data-ct-save]'); save.disabled = true; err.hidden = true;
     try {
@@ -289,6 +296,7 @@ const ContactDirectoryPage = (() => {
   function answerConfirm(value) { const el = host.querySelector('#ctConfirm'); if (el) el.hidden = true; if (confirmResolve) { const f = confirmResolve; confirmResolve = null; f(value); } }
   async function deleteContact(key) {
     const r = records.find(x => x.key === key); if (!r) return;
+    if (!can('delete')) return void toast('Bạn không có quyền xóa liên hệ trong Danh bạ nội bộ.', 'warning');
     if (!await askConfirm('Xóa liên hệ?', `<b>${esc(r.hoTen)}</b> (${esc(r.maNv || '—')}) sẽ bị xóa khỏi danh bạ cho mọi người dùng. Không thể hoàn tác.`, 'Xóa liên hệ', true)) return;
     try {
       await dbNodeInstance.ref('contact_directory/' + key).remove();
@@ -297,8 +305,9 @@ const ContactDirectoryPage = (() => {
     } catch (error) { toast('Không xóa được: ' + (error && error.message || 'lỗi không xác định'), 'error'); }
   }
 
-  // ----- Nhập Excel (chỉ Admin) -----
+  // ----- Nhập Excel (cần quyền Thêm và/hoặc Sửa; chế độ Thay thế còn cần quyền Xóa) -----
   function openImport() {
+    if (!can('add') && !can('edit')) return void toast('Bạn không có quyền nhập danh bạ từ Excel.', 'warning');
     modal = {mode: 'import'}; importState = null;
     showModal(importHtml(), true);
   }
@@ -336,6 +345,8 @@ const ContactDirectoryPage = (() => {
   async function runImport() {
     const s = importState; if (!s || !s.diff) return;
     const d = s.diff, go = host.querySelector('[data-ct-import-go]');
+    const lacking = (d.added.length && !can('add') && 'Thêm') || (d.updated.length && !can('edit') && 'Sửa') || (d.removed.length && !can('delete') && 'Xóa');
+    if (lacking) return void toast('Bạn chưa có quyền ' + lacking + ' cho các thay đổi này. Hãy bỏ chế độ Thay thế hoặc nhờ Admin cấp quyền.', 'warning');
     if (s.mode === 'replace' && d.removed.length && !await askConfirm('Thay thế toàn bộ danh bạ?', `Sẽ <b>xóa ${d.removed.length}</b> liên hệ không có trong file, thêm ${d.added.length} và cập nhật ${d.updated.length}. Không thể hoàn tác.`, 'Đồng ý thay thế', true)) return;
     go.disabled = true; go.querySelector('span:last-child').textContent = 'Đang ghi…';
     try {
@@ -351,10 +362,10 @@ const ContactDirectoryPage = (() => {
 
   // ----- Khung trang & sự kiện -----
   function skeleton() {
-    const admin = canEdit(), top = (attrs, icon, text, cls) => `<button type="button" class="pending-action-btn${cls ? ' ' + cls : ''}" ${attrs}><span class="pending-action-btn__icon" aria-hidden="true">${svg(icon, 15)}</span><span>${text}</span></button>`;
+    const admin = canManage(), top = (attrs, icon, text, cls) => `<button type="button" class="pending-action-btn${cls ? ' ' + cls : ''}" ${attrs}><span class="pending-action-btn__icon" aria-hidden="true">${svg(icon, 15)}</span><span>${text}</span></button>`;
     return `<div class="workspace-grid single-col"><section class="pending-workspace pending-workspace--v2 pn-workspace ct-workspace" id="ctRoot" aria-label="Danh bạ nội bộ">
       <header class="pw-page-head"><div class="pw-page-title"><div class="pw-page-emblem" aria-hidden="true">${svg('book', 22)}</div><div><span class="pw-eyebrow">Danh bạ nội bộ</span><h1>Tra cứu liên hệ</h1><p>Tìm nhanh nhân sự theo tên, mã nhân viên, số điện thoại, email, chức danh hoặc phòng ban — gọi, gửi email hay sao chép chỉ một chạm.</p></div></div>
-      <div class="pending-action-group" role="group" aria-label="Thao tác">${top('data-ct-export', 'xls', 'Xuất Excel', admin ? '' : 'pending-action-btn--import')}${admin ? top('data-ct-add', 'plus', 'Thêm liên hệ') + top('data-ct-import', 'upload', 'Nhập Excel', 'pending-action-btn--import') : ''}</div></header>
+      <div class="pending-action-group" role="group" aria-label="Thao tác">${top('data-ct-export', 'xls', 'Xuất Excel', admin ? '' : 'pending-action-btn--import')}${can('add') ? top('data-ct-add', 'plus', 'Thêm liên hệ') : ''}${can('add') || can('edit') ? top('data-ct-import', 'upload', 'Nhập Excel', 'pending-action-btn--import') : ''}</div></header>
       <div class="claims-metrics-grid pn-metrics ct-metrics" id="ctSummary" aria-label="Tổng quan danh bạ"></div>
       <div class="pending-register-panel pn-list"><div class="pending-register-topbar"><div class="pending-register-header"><h3>Danh bạ nhân sự</h3><div class="pending-filter-summary" aria-live="polite"><span class="pending-filter-result-count" id="ctCount"></span></div></div>
       <div class="ct-topright"><div class="ct-viewtoggle" role="group" aria-label="Kiểu hiển thị"><button type="button" data-ct-view="table" title="Dạng bảng" aria-label="Dạng bảng">${svg('list', 15)}</button><button type="button" data-ct-view="cards" title="Dạng thẻ" aria-label="Dạng thẻ">${svg('grid', 15)}</button></div><div class="pending-pagination" id="ctPager"></div></div></div>

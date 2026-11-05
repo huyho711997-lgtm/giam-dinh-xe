@@ -146,6 +146,54 @@ test('cổng gara (chưa đăng nhập) giữ nguyên hành vi hiện có', () =
   assert.equal(canWrite(null, 'users/gdv1/profile/role', 'Admin', DB), false);
 });
 
+test('contact_directory: ghi theo quyền Thêm / Sửa / Xóa của từng người dùng', () => {
+  const rec = {hoTen: 'Võ Hoàng Việt', maNv: 'TIC2125', sdt: '0981236966', email: 'viet.vh@baohiemtasco.vn', updatedAt: 1};
+  const perm = contacts => profile('Giám định viên', {permissions: {contacts}});
+  const db = {...DB, contact_directory: {TIC2125: rec}, users: {...DB.users, adder: perm({view: true, add: true}), editor: perm({view: true, edit: true}), remover: perm({view: true, delete: true}), viewer: perm({view: true})}};
+  const newRec = {...rec, hoTen: 'Người Mới', maNv: 'TIC9999'};
+  // Chỉ có quyền Thêm
+  assert.equal(canWrite(asUser('adder'), 'contact_directory/TIC9999', newRec, db), true, 'thêm liên hệ mới');
+  assert.equal(canWrite(asUser('adder'), 'contact_directory/TIC2125', {...rec, sdt: '0900000000'}, db), false, 'không sửa liên hệ đã có');
+  assert.equal(canWrite(asUser('adder'), 'contact_directory/TIC2125', null, db), false, 'không xóa');
+  // Chỉ có quyền Sửa
+  assert.equal(canWrite(asUser('editor'), 'contact_directory/TIC2125', {...rec, sdt: '0900000000'}, db), true, 'sửa liên hệ đã có');
+  assert.equal(canWrite(asUser('editor'), 'contact_directory/TIC9999', newRec, db), false, 'không thêm mới');
+  assert.equal(canWrite(asUser('editor'), 'contact_directory/TIC2125', null, db), false, 'không xóa');
+  // Chỉ có quyền Xóa
+  assert.equal(canWrite(asUser('remover'), 'contact_directory/TIC2125', null, db), true, 'xóa liên hệ');
+  assert.equal(canWrite(asUser('remover'), 'contact_directory/TIC2125', {...rec, sdt: '0900000000'}, db), false, 'không sửa');
+  assert.equal(canWrite(asUser('remover'), 'contact_directory/TIC9999', newRec, db), false, 'không thêm');
+  // Chỉ xem / không có quyền riêng: không ghi được gì; không xóa hàng loạt cả nút cha
+  assert.equal(canWrite(asUser('viewer'), 'contact_directory/TIC9999', newRec, db), false);
+  assert.equal(canWrite(asUser('gdv1'), 'contact_directory/TIC9999', newRec, db), false);
+  assert.equal(canWrite(asUser('adder'), 'contact_directory', null, db), false, 'xóa cả danh bạ');
+  assert.equal(canWrite(asUser('adder'), 'contact_directory', {TIC9999: newRec}, db), false, 'ghi đè cả danh bạ');
+  // Dữ liệu vẫn phải hợp lệ dù có quyền
+  assert.equal(canWrite(asUser('adder'), 'contact_directory/TIC9999', {...newRec, extra: 'x'}, db), false);
+  assert.equal(canWrite(asUser('adder'), 'contact_directory/TIC9999', {maNv: 'x'}, db), false);
+  // Admin vẫn ghi mọi thứ
+  assert.equal(canWrite(asUser('admin1'), 'contact_directory/TIC2125', null, db), true);
+  assert.equal(canWrite(asUser('admin2'), 'contact_directory/TIC9999', newRec, db), true);
+});
+
+test('permissions.contacts: người dùng KHÔNG tự cấp quyền Danh bạ cho mình, quản trị viên thì được', () => {
+  const perm = contacts => profile('Giám định viên', {permissions: {contacts}});
+  const db = {...DB, users: {...DB.users, editor: perm({view: true, edit: true})}};
+  const gdv = asUser('gdv1');
+  assert.equal(canWrite(gdv, 'users/gdv1/profile/permissions/contacts/edit', true, db), false, 'tự bật quyền Sửa');
+  assert.equal(canWrite(gdv, 'users/gdv1/profile/permissions/contacts/add', true, db), false);
+  assert.equal(canWrite(gdv, 'users/gdv1/profile/permissions/contacts/delete', true, db), false);
+  assert.equal(canWrite(gdv, 'users/gdv1/profile', {...DB.users.gdv1.profile, permissions: {contacts: {delete: true}}}, db), false, 'ghi cả hồ sơ kèm quyền');
+  assert.equal(canWrite(gdv, 'users/gdv1/profile/permissions/contacts/edit', false, db), true, 'tự hạ quyền thì được');
+  assert.equal(canWrite(gdv, 'users/gdv1/profile/permissions/contacts/tuy_y', true, db), false, 'khóa lạ');
+  // Người đang có quyền Sửa lưu lại hồ sơ cá nhân (giữ nguyên quyền) vẫn được; nhưng không tự thêm quyền Xóa
+  assert.equal(canWrite(asUser('editor'), 'users/editor/profile', {...db.users.editor.profile, displayName: 'Tên mới'}, db), true);
+  assert.equal(canWrite(asUser('editor'), 'users/editor/profile', {...db.users.editor.profile, permissions: {contacts: {view: true, edit: true, delete: true}}}, db), false);
+  // Quản trị viên cấp quyền cho người khác
+  assert.equal(canWrite(asUser('admin1'), 'users/gdv1/profile/permissions/contacts', {view: true, add: true, edit: true, delete: false}, db), true);
+  assert.equal(canWrite(asUser('admin2'), 'users/gdv1/profile/permissions/contacts/delete', true, db), true);
+});
+
 test('contact_directory: mọi tài khoản có hồ sơ được đọc, chỉ Admin được ghi, dữ liệu phải hợp lệ', () => {
   const rec = {hoTen: 'Võ Hoàng Việt', maNv: 'TIC2125', sdt: '0981236966', email: 'viet.vh@baohiemtasco.vn', namSinh: 2000, updatedAt: 1};
   assert.equal(canRead(asUser('gdv1'), 'contact_directory', DB), true);

@@ -242,6 +242,11 @@
         if (activeDashboardTab === 'field_reimbursements') activeDashboardTab = 'home';
         return;
       }
+      if (tabName === 'contacts' && !hasUserPermission('contacts', 'view')) {
+        triggerToast('Bạn không có quyền xem Danh bạ nội bộ.', 'warning');
+        if (activeDashboardTab === 'contacts') activeDashboardTab = 'home';
+        return;
+      }
 
       if (tabName === 'gdv_report') {
         activeGdvReportView = 'weekly_zone';
@@ -339,6 +344,7 @@
         const showAccountingReview = hasUserPermission('accounting', 'review');
         const showAccountingView = hasUserPermission('accounting', 'view');
         const showFieldReimb = hasUserPermission('field_reimb', 'view');
+        const showContacts = hasUserPermission('contacts', 'view');
         const showCancellation = showPending || showList;
         const showAdmin = isAdmin || hasUserPermission('users', 'admin') || hasUserPermission('users', 'view');
 
@@ -348,7 +354,7 @@
         const totalReimbs = Object.keys(cachedFieldReimbursementsPayload || {}).length;
 
         container.innerHTML = renderHomeDashboardPage({
-          showList, showCreate, showPending, showReport, showAccountingReview, showAccountingView, showFieldReimb, showCancellation, showAdmin,
+          showList, showCreate, showPending, showReport, showAccountingReview, showAccountingView, showFieldReimb, showContacts, showCancellation, showAdmin,
           totalCases, totalPendingClaims, totalTransfers, totalReimbs
         });
         if (typeof HomeSeasonal !== 'undefined') HomeSeasonal.mount(container); // hiệu ứng mùa lễ: chỉ ở Trang chủ

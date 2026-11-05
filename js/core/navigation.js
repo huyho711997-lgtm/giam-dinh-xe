@@ -100,7 +100,7 @@
         { label: 'Nghiệp vụ', items: [
           { tab: 'field_reimbursements', title: 'Hiện trường', icon: 'field', show: hasUserPermission('field_reimb', 'view') },
           { tab: 'rescue_cost', title: 'Chi phí cứu hộ', icon: 'rescue', show: true, badge: 'Mới' },
-          { tab: 'contacts', title: 'Danh bạ nội bộ', icon: 'contacts', show: true, badge: 'Mới' },
+          { tab: 'contacts', title: 'Danh bạ nội bộ', icon: 'contacts', show: hasUserPermission('contacts', 'view'), badge: 'Mới' },
           { tab: 'shared_forms', title: 'Biểu mẫu dùng chung', icon: 'forms', show: true }
         ]},
         { label: 'Hệ thống', items: [

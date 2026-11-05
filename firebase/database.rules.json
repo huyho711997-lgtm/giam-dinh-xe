@@ -47,6 +47,11 @@
             ".validate": "newData.isBoolean() && (newData.val() !== true || (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true) || data.val() === true)"
           },
           "permissions": {
+            "contacts": {
+              "$action": {
+                ".validate": "($action === 'view' || $action === 'add' || $action === 'edit' || $action === 'delete') && newData.isBoolean() && (newData.val() !== true || (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true) || data.val() === true)"
+              }
+            },
             "users": {
               "admin": {
                 ".validate": "newData.val() !== true || (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true) || data.val() === true"
@@ -228,6 +233,7 @@
       ".read": "auth != null && root.child('users').child(auth.uid).child('profile').exists()",
       ".write": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
       "$contactId": {
+        ".write": "auth != null && ((!data.exists() && newData.exists() && root.child('users').child(auth.uid).child('profile/permissions/contacts/add').val() === true) || (data.exists() && newData.exists() && root.child('users').child(auth.uid).child('profile/permissions/contacts/edit').val() === true) || (data.exists() && !newData.exists() && root.child('users').child(auth.uid).child('profile/permissions/contacts/delete').val() === true))",
         ".validate": "newData.hasChildren(['hoTen'])",
         "hoTen": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
         "maNv": { ".validate": "newData.isString() && newData.val().length <= 40" },

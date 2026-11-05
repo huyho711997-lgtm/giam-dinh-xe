@@ -131,6 +131,12 @@
           view: document.getElementById(prefix + 'Perm_field_reimb_view')?.checked || false,
           create: document.getElementById(prefix + 'Perm_field_reimb_create')?.checked || false,
           review: document.getElementById(prefix + 'Perm_field_reimb_review')?.checked || false
+        },
+        contacts: {
+          view: document.getElementById(prefix + 'Perm_contacts_view')?.checked || false,
+          add: document.getElementById(prefix + 'Perm_contacts_add')?.checked || false,
+          edit: document.getElementById(prefix + 'Perm_contacts_edit')?.checked || false,
+          delete: document.getElementById(prefix + 'Perm_contacts_delete')?.checked || false
         }
       };
     }
@@ -172,6 +178,13 @@
       setCheck(prefix + 'Perm_field_reimb_view', p.field_reimb?.view ?? true);
       setCheck(prefix + 'Perm_field_reimb_create', p.field_reimb?.create ?? !isRoleKeToan);
       setCheck(prefix + 'Perm_field_reimb_review', p.field_reimb?.review ?? (isRoleKeToan || isRoleAdmin));
+
+      // Danh bạ nội bộ: ai cũng xem được; thêm/sửa/xóa mặc định chỉ Admin (hoặc người đang có quyền Admin hệ thống).
+      const contactsManage = isRoleAdmin || p.users?.admin === true;
+      setCheck(prefix + 'Perm_contacts_view', p.contacts?.view ?? true);
+      setCheck(prefix + 'Perm_contacts_add', p.contacts?.add ?? contactsManage);
+      setCheck(prefix + 'Perm_contacts_edit', p.contacts?.edit ?? contactsManage);
+      setCheck(prefix + 'Perm_contacts_delete', p.contacts?.delete ?? contactsManage);
       refreshPermissionSummary(prefix);
     }
 
@@ -179,6 +192,14 @@
     function hasUserPermission(moduleKey, actionKey) {
       if (activeUserProfile && String(activeUserProfile.role || '').trim().toLowerCase() === 'admin') {
         return true;
+      }
+      // Danh bạ nội bộ: nếu hồ sơ chưa được cấp quyền riêng thì xem = có; thêm/sửa/xóa = theo quyền Admin hệ thống (như trước đây).
+      if (moduleKey === 'contacts') {
+        const stored = activeUserProfile && activeUserProfile.permissions && activeUserProfile.permissions.contacts
+          ? activeUserProfile.permissions.contacts[actionKey] : undefined;
+        if (stored !== undefined) return Boolean(stored);
+        if (actionKey === 'view') return true;
+        return Boolean(activeUserProfile && activeUserProfile.permissions && activeUserProfile.permissions.users && activeUserProfile.permissions.users.admin === true);
       }
       if (!activeUserProfile || !activeUserProfile.permissions) {
         const role = String((activeUserProfile && activeUserProfile.role) || '').trim().toLowerCase();
