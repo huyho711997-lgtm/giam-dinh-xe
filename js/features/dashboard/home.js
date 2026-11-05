@@ -10,6 +10,7 @@
     list:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
     create:'<path d="M12 5v14M5 12h14"/>',
     pending:'<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6M9 16h4"/>',
+    contacts:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><circle cx="13" cy="9" r="2.4"/><path d="M8.6 15.2c.6-1.6 2.2-2.5 4.4-2.5s3.8.9 4.4 2.5"/>',
     tracker:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     cancel:'<circle cx="12" cy="12" r="9"/><path d="m15 9-6 6m0-6 6 6"/>',
     report:'<path d="M4 20h16"/><path d="M7 16v-5M12 16V6M17 16v-8"/>',
@@ -169,6 +170,7 @@
         o.showAccountingView && { tab:'accounting_transfer', icon:'transfer', title:'Chuyển hồ sơ kế toán', desc:`${fmt(o.totalTransfers)} đợt bàn giao chứng từ` },
         o.showFieldReimb && { tab:'field_reimbursements', icon:'field', title:'Chi phí hiện trường', desc:`${fmt(o.totalReimbs)} phiếu hoàn ứng` },
         { tab:'rescue_cost', icon:'rescue', title:'Chi phí cứu hộ', desc:'Tính kéo xe, cẩu xe & cấp phê duyệt', badge:'Mới' },
+        { tab:'contacts', icon:'contacts', title:'Danh bạ nội bộ', desc:'Tra cứu SĐT, email nhân sự toàn hệ thống', badge:'Mới' },
         { tab:'shared_forms', icon:'forms', title:'Biểu mẫu dùng chung', desc:'Thư viện tài liệu Google Drive' },
         o.showAdmin && { tab:'users', icon:'system', title:'Quản trị hệ thống', desc:'Tài khoản, phân quyền, cấu hình' }
       ]}

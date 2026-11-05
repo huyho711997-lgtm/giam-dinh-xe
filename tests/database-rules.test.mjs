@@ -145,3 +145,16 @@ test('cổng gara (chưa đăng nhập) giữ nguyên hành vi hiện có', () =
   assert.equal(canWrite(null, 'pending_claims/c1/bienSo', 'HACK', DB), false);
   assert.equal(canWrite(null, 'users/gdv1/profile/role', 'Admin', DB), false);
 });
+
+test('contact_directory: mọi tài khoản có hồ sơ được đọc, chỉ Admin được ghi, dữ liệu phải hợp lệ', () => {
+  const rec = {hoTen: 'Võ Hoàng Việt', maNv: 'TIC2125', sdt: '0981236966', email: 'viet.vh@baohiemtasco.vn', namSinh: 2000, updatedAt: 1};
+  assert.equal(canRead(asUser('gdv1'), 'contact_directory', DB), true);
+  assert.equal(canRead({uid: 'ghost'}, 'contact_directory', DB), false);
+  assert.equal(canRead(null, 'contact_directory', DB), false);
+  assert.equal(canWrite(asUser('gdv1'), 'contact_directory/TIC2125', rec, DB), false);
+  assert.equal(canWrite(asUser('admin1'), 'contact_directory/TIC2125', rec, DB), true);
+  assert.equal(canWrite(asUser('admin2'), 'contact_directory/TIC2125', rec, DB), true);
+  assert.equal(canWrite(asUser('admin1'), 'contact_directory/TIC2125', {maNv: 'x'}, DB), false);                 // thiếu họ tên
+  assert.equal(canWrite(asUser('admin1'), 'contact_directory/TIC2125', {...rec, extra: 'x'}, DB), false);        // trường lạ
+  assert.equal(canWrite(asUser('admin1'), 'contact_directory/TIC2125', {...rec, hoTen: 'a'.repeat(121)}, DB), false);
+});

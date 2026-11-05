@@ -224,6 +224,29 @@
         }
       }
     },
+    "contact_directory": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('profile').exists()",
+      ".write": "auth != null && (root.child('users').child(auth.uid).child('profile/role').val() === 'Admin' || root.child('users').child(auth.uid).child('profile/role').val() === 'admin' || root.child('users').child(auth.uid).child('profile/permissions/users/admin').val() === true)",
+      "$contactId": {
+        ".validate": "newData.hasChildren(['hoTen'])",
+        "hoTen": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 120" },
+        "maNv": { ".validate": "newData.isString() && newData.val().length <= 40" },
+        "email": { ".validate": "newData.isString() && newData.val().length <= 120" },
+        "sdt": { ".validate": "newData.isString() && newData.val().length <= 20" },
+        "namSinh": { ".validate": "newData.isNumber() || newData.val() === null" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "updatedBy": { ".validate": "newData.isString() && newData.val().length <= 120" },
+        "donVi": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "phong": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "to": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "chucDanh": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "noiLamViec": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "gioiTinh": { ".validate": "newData.isString() && newData.val().length <= 10" },
+        "nhom": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "key": { ".validate": "newData.isString() && newData.val().length <= 100" },
+        "$other": { ".validate": false }
+      }
+    },
     "user_chats": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

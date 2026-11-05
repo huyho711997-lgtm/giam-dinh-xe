@@ -402,7 +402,7 @@ const PendingNotesPage = (() => {
     const q = t.closest('[data-pn-quick]'); if (q) return void setQuick(q.dataset.pnQuick);
     const sb = t.closest('[data-pn-status]'); if (sb) { state.status = state.status === sb.dataset.pnStatus ? 'all' : sb.dataset.pnStatus; state.page = 1; return void paint(); }
     const g = t.closest('[data-pn-gdv]'); if (g) { state.gdv = state.gdv === g.dataset.pnGdv ? 'all' : g.dataset.pnGdv; state.page = 1; return void paint(); }
-    const page = t.closest('[data-pn-page]'); if (page && !page.disabled) { state.page = Number(page.dataset.pnPage); paint(); return void host.querySelector('.pn-library').scrollIntoView({behavior: 'smooth', block: 'start'}); }
+    const page = t.closest('[data-pn-page]'); if (page && !page.disabled) { state.page = Number(page.dataset.pnPage); paint(); return void host.querySelector('.pn-list').scrollIntoView({behavior: 'smooth', block: 'start'}); }
     if (t.closest('[data-pn-reset]')) { Object.assign(state, {q: '', status: 'all', gdv: 'all', quick: 'all', page: 1}); host.querySelector('#pnSearch').value = ''; return void paint(); }
     if (t.closest('[data-pn-refresh]')) { rows = buildRows(); paint(); return void toast('Đã làm mới theo dữ liệu mới nhất', 'success'); }
     if (t.closest('[data-pn-export]')) return void exportExcel(t.closest('[data-pn-export]'));

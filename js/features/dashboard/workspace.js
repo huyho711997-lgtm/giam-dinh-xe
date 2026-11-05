@@ -325,6 +325,11 @@
         return;
       }
 
+      if (activeDashboardTab === 'contacts') {
+        renderContactDirectoryPage(container);
+        return;
+      }
+
 
       if (activeDashboardTab === 'home') {
         const showList = hasUserPermission('list', 'view');
