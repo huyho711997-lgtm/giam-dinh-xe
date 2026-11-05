@@ -286,6 +286,21 @@
     }
 
 
+        /* Tìm hồ sơ "sống" trong pending_claims ứng với một hồ sơ trong phiếu bàn giao.
+       Ưu tiên khoá bản ghi (claimId), sau đó mới tới Số HSBT. Tuyệt đối không so sánh undefined === undefined:
+       trước đây bản ghi thiếu trường id khớp nhầm với MỌI hồ sơ nên cả bảng hiện cùng một trạng thái (vd "Từ chối"). */
+    function findLivePendingClaim(claim) {
+      const map = cachedPendingClaimsPayload || {};
+      const key = String((claim && (claim.claimId || claim.id)) || '').trim();
+      if (key && map[key]) return map[key];
+      const hsbt = String((claim && claim.soHoSoBoiThuong) || '').trim();
+      if (hsbt) {
+        const found = Object.values(map).find(c => c && String(c.soHoSoBoiThuong || '').trim() === hsbt);
+        if (found) return found;
+      }
+      return null;
+    }
+
         function getAccountingClaimsFlatList() {
       const items = [];
       Object.values(cachedAccountingTransfersPayload || {}).forEach(t => {
@@ -300,7 +315,7 @@
       });
       const getEffectivePriority = (item) => {
         if (!item.claim.isUuTien) return false;
-        const liveClaim = Object.values(cachedPendingClaimsPayload || {}).find(c => c.id === item.claim.id || (item.claim.soHoSoBoiThuong && c.soHoSoBoiThuong === item.claim.soHoSoBoiThuong)) || item.claim;
+        const liveClaim = findLivePendingClaim(item.claim) || item.claim;
         if (liveClaim.trangThai === 'da_thanh_toan') return false;
         
         const suppList = item.transfer.hoSoYeuCauBoSung || [];

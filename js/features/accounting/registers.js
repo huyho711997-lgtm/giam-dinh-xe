@@ -255,10 +255,11 @@
     function getClaimsRegisterPresentation(item) {
       const supplements=item.transfer.hoSoYeuCauBoSung||[];
       const needsSupplement=supplements.some(s=>Number(s.chiSo)===Number(item.claimIndex)||(s.soHoSoBoiThuong&&s.soHoSoBoiThuong===item.claim.soHoSoBoiThuong)||(s.bienSo&&s.bienSo===item.claim.bienSo))||item.claim.trangThaiBoSung==='yeu_cau_bo_sung';
-      const liveClaim=Object.values(cachedPendingClaimsPayload||{}).find(c=>c.id===item.claim.id||(item.claim.soHoSoBoiThuong&&c.soHoSoBoiThuong===item.claim.soHoSoBoiThuong))||item.claim;
+      const foundLive=findLivePendingClaim(item.claim);
+      const liveClaim=foundLive||item.claim;
       const status=needsSupplement?{label:'Yêu cầu bổ sung',tone:'red',icon:'alert'}:item.claim.trangThaiBoSung==='da_bo_sung'?{label:'Đã bổ sung (Chờ duyệt)',tone:'amber',icon:'refresh'}:getTransferRegisterStatus(item.transfer.trangThai);
-      const liveStatusKey=liveClaim.trangThai||'moi';
-      const liveStatus=PENDING_STATUS_MAP[liveStatusKey]||{label:liveStatusKey};
+      const liveStatusKey=foundLive?(foundLive.trangThai||'moi'):'';
+      const liveStatus=foundLive?(PENDING_STATUS_MAP[liveStatusKey]||{label:liveStatusKey}):{label:'Không tìm thấy hồ sơ'};
       return {needsSupplement,status,liveStatus,priority:Boolean(item.claim.isUuTien)&&liveClaim.trangThai!=='da_thanh_toan'&&!needsSupplement};
     }
 
