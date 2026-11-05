@@ -118,11 +118,27 @@ const ContactCalc = (() => {
   }
 
   const initials = name => { const w = clean(name).split(' ').filter(Boolean); return ((w.length > 1 ? w[w.length - 2][0] : '') + (w[w.length - 1] || '')[0] || '?').toUpperCase(); };
-  const searchText = r => plain([r.hoTen, r.maNv, r.sdt, r.email, r.chucDanh, r.phong, r.to, r.noiLamViec, r.donVi, r.nhom].join(' '));
+  // Chuẩn hoá để khớp THEO ĐẦU TỪ: bỏ dấu, mọi ký tự không phải chữ/số → khoảng trắng, bao hai đầu bằng khoảng trắng.
+  // (Trước đây dùng includes() trên chuỗi con nên "huy" khớp nhầm giữa "chuyên", "quang" khớp "Quảng Ninh".)
+  const words = v => ' ' + plain(v).replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+  const queryTokens = query => words(query).trim().split(' ').filter(Boolean);
+  const searchText = r => words([r.hoTen, r.maNv, r.sdt, r.email, r.chucDanh, r.phong, r.to, r.noiLamViec, r.donVi, r.nhom].join(' '));
   function matches(rec, query) {
-    const q = plain(query); if (!q) return true;
-    const text = rec._s || searchText(rec), digits = q.replace(/\D/g, '');
-    return q.split(' ').every(tok => text.includes(tok)) || (digits.length >= 3 && String(rec.sdt || '').includes(digits));
+    const tokens = queryTokens(query), digits = plain(query).replace(/\D/g, '');
+    if (!tokens.length) return true;
+    const text = rec._s || searchText(rec);
+    // Mỗi từ khoá phải là ĐẦU của một từ trong hồ sơ; SĐT cho phép khớp một phần (≥ 3 chữ số).
+    return tokens.every(tok => text.includes(' ' + tok)) || (digits.length >= 3 && String(rec.sdt || '').includes(digits));
+  }
+  // Độ liên quan (số càng nhỏ càng đứng trước): 0 = cụm từ nằm liền trong tên; 1 = đủ các từ trong tên;
+  // 2 = đủ các từ trong tên/mã NV/SĐT/email; 3 = khớp nhờ các trường còn lại (chức danh, phòng ban, nơi làm việc…).
+  function rank(rec, query) {
+    const tokens = queryTokens(query); if (!tokens.length) return 9;
+    const name = words(rec.hoTen);
+    if (name.includes(' ' + tokens.join(' '))) return 0;
+    if (tokens.every(t => name.includes(' ' + t))) return 1;
+    const identity = words([rec.hoTen, rec.maNv, rec.sdt, rec.email].join(' '));
+    return tokens.every(t => identity.includes(' ' + t)) ? 2 : 3;
   }
   const fmtPhone = v => { const d = String(v || ''); return d.length === 10 ? d.slice(0, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7) : d.length === 11 ? d.slice(0, 4) + ' ' + d.slice(4, 8) + ' ' + d.slice(8) : d; };
 
@@ -133,6 +149,6 @@ const ContactCalc = (() => {
       r.sdt ? 'TEL;TYPE=CELL:' + r.sdt : '', r.email ? 'EMAIL;TYPE=WORK:' + r.email : '', r.noiLamViec ? 'ADR;TYPE=WORK:;;' + esc(r.noiLamViec) + ';;;;' : '', 'END:VCARD'].filter(Boolean).join('\r\n');
   }
 
-  return {FIELDS, LABELS, HEADERS, plain, clean, normPhone, normEmail, normYear, normGender, makeKey, findHeader, parseRows, diff, initials, searchText, matches, fmtPhone, vcard};
+  return {FIELDS, LABELS, HEADERS, plain, clean, normPhone, normEmail, normYear, normGender, makeKey, findHeader, parseRows, diff, initials, searchText, matches, rank, fmtPhone, vcard};
 })();
 if (typeof window !== 'undefined') window.ContactCalc = ContactCalc;

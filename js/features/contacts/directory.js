@@ -60,7 +60,13 @@ const ContactDirectoryPage = (() => {
       code: (a, b) => (a.maNv || '').localeCompare(b.maNv || '', 'vi', {numeric: true}),
       title: (a, b) => (a.chucDanh || '').localeCompare(b.chucDanh || '', 'vi') || sortName(a).localeCompare(sortName(b), 'vi')
     };
-    return {scoped, list: scoped.filter(quickTest[state.quick] || quickTest.all).sort(by[state.sort] || by.name)};
+    const sorter = by[state.sort] || by.name, filtered = scoped.filter(quickTest[state.quick] || quickTest.all);
+    // Đang tìm kiếm: ưu tiên độ liên quan (khớp tên lên đầu), cùng mức thì giữ thứ tự sắp xếp người dùng chọn.
+    if (state.q.trim()) {
+      const score = new Map(filtered.map(r => [r, C().rank(r, state.q)]));
+      return {scoped, list: filtered.sort((a, b) => score.get(a) - score.get(b) || sorter(a, b))};
+    }
+    return {scoped, list: filtered.sort(sorter)};
   }
   const distinct = (list, f) => [...new Set(list.map(r => r[f]).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'));
 

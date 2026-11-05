@@ -69,6 +69,26 @@ test('tìm kiếm không phân biệt dấu, theo SĐT một phần và nhiều 
   assert.equal(C.matches(r, ''), true);
   assert.equal(C.initials('Võ Hoàng Việt'), 'HV');
 });
+test('tìm kiếm khớp theo đầu từ, không khớp chuỗi con giữa từ (lỗi "nguyen quang huy")', () => {
+  const mk = o => { const r = {hoTen: '', maNv: '', sdt: '', email: '', chucDanh: '', phong: '', to: '', noiLamViec: '', donVi: '', nhom: '', ...o}; r._s = C.searchText(r); return r; };
+  const chinh = mk({hoTen: 'Nguyễn Ngọc Chính', maNv: 'TIC2336', chucDanh: 'Chuyên viên Giải pháp bảo hiểm', phong: 'Chi nhánh Quảng Ninh', noiLamViec: 'Quảng Ninh', email: 'chinh.nn@baohiemtasco.vn'});
+  const huy = mk({hoTen: 'Nguyễn Quang Huy_DL', maNv: 'TIC0001', chucDanh: 'Giám định viên', noiLamViec: 'Đắk Lắk'});
+  const huyHo = mk({hoTen: 'Hồ Quang Huy', maNv: 'TIC0002', noiLamViec: 'Đắk Lắk'});
+  assert.equal(C.matches(chinh, 'nguyen quang huy'), false);   // "huy" nằm giữa "chuyên", "quang" chỉ có ở "Quảng"
+  assert.equal(C.matches(huy, 'nguyen quang huy'), true);
+  assert.equal(C.matches(huyHo, 'nguyen quang huy'), false);
+  assert.equal(C.matches(huyHo, 'quang huy'), true);
+  assert.equal(C.matches(chinh, 'chuyen vien'), true);         // vẫn tìm được theo chức danh
+  assert.equal(C.matches(chinh, 'chinh.nn@bao'), true);        // email dán vào ô tìm kiếm
+});
+test('xếp hạng: khớp liền trong tên < đủ từ trong tên < khớp nhờ trường khác', () => {
+  const mk = o => ({hoTen: '', maNv: '', sdt: '', email: '', chucDanh: '', phong: '', noiLamViec: '', ...o});
+  const exact = mk({hoTen: 'Nguyễn Quang Huy_DL'}), loose = mk({hoTen: 'Huy Nguyễn Quang'}), other = mk({hoTen: 'Lê Văn A', maNv: 'NQH1', chucDanh: 'Huy', phong: 'Quang Nguyen'});
+  assert.equal(C.rank(exact, 'nguyen quang huy'), 0);
+  assert.equal(C.rank(loose, 'nguyen quang huy'), 1);
+  assert.equal(C.rank(other, 'nguyen quang huy'), 3);
+  assert.equal(C.rank(exact, ''), 9);
+});
 test('vCard có tên, số điện thoại và email', () => {
   const v = C.vcard(C.parseRows(SHEET, 2026).records[0]);
   assert.match(v, /FN:Võ Hoàng Việt/); assert.match(v, /TEL;TYPE=CELL:0981236966/); assert.match(v, /EMAIL;TYPE=WORK:viet\.vh@baohiemtasco\.vn/);
