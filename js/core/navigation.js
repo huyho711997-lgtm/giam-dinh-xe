@@ -99,9 +99,9 @@
         ]},
         { label: 'Nghiệp vụ', items: [
           { tab: 'field_reimbursements', title: 'Hiện trường', icon: 'field', show: hasUserPermission('field_reimb', 'view') },
-          { tab: 'rescue_cost', title: 'Chi phí cứu hộ', icon: 'rescue', show: true, badge: 'Mới' },
+          { tab: 'rescue_cost', title: 'Chi phí cứu hộ', icon: 'rescue', show: hasUserPermission('rescue_cost', 'view'), badge: 'Mới' },
           { tab: 'contacts', title: 'Danh bạ nội bộ', icon: 'contacts', show: hasUserPermission('contacts', 'view'), badge: 'Mới' },
-          { tab: 'shared_forms', title: 'Biểu mẫu dùng chung', icon: 'forms', show: true }
+          { tab: 'shared_forms', title: 'Biểu mẫu dùng chung', icon: 'forms', show: hasUserPermission('shared_forms', 'view') }
         ]},
         { label: 'Hệ thống', items: [
           { tab: 'users', title: 'Quản trị hệ thống', icon: 'system', show: hasUserPermission('users', 'view'), also: ['system'] }

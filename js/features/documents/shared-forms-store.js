@@ -5,8 +5,12 @@ const SharedFormsStore = (() => {
   const user = () => typeof firebase !== 'undefined' ? firebase.auth().currentUser : null;
   const admin = () => !!user() && hasUserPermission('users', 'admin');
   // Admin được xóa file trong kho Google Drive (chuyển vào thùng rác); file thường chỉ xóa được nếu là file mình tải lên.
-  const canDeleteDrive = file => !!user() && admin() && file?.source === 'drive' && file.mimeType !== 'application/vnd.google-apps.folder';
+  // Quyền của trang (Quản trị hệ thống → Tài khoản → Biểu mẫu dùng chung): view / add / edit / delete.
+  const can = action => typeof hasUserPermission !== 'function' || hasUserPermission('shared_forms', action);
+  const canDeleteDrive = file => !!user() && can('delete') && admin() && file?.source === 'drive' && file.mimeType !== 'application/vnd.google-apps.folder';
   const canManage = file => !!user() && file?.source === 'upload' && (admin() || file.createdByUid === user().uid);
+  const canEdit = file => canManage(file) && can('edit');
+  const canRemove = file => canManage(file) && can('delete');
   const extension = name => String(name || '').split('.').pop().toLowerCase();
   const normalize = text => String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
   function kind(file) {
@@ -90,14 +94,14 @@ const SharedFormsStore = (() => {
   }
   async function update(file, details) {
     requireUser();
-    if (!canManage(file)) throw new Error('Bạn chỉ được sửa file do mình tải lên hoặc có quyền quản trị.');
+    if (!canEdit(file)) throw new Error('Bạn chỉ được sửa file do mình tải lên hoặc có quyền quản trị.');
     const name = String(details.name || '').trim().slice(0, 200);
     if (!name) throw new Error('Vui lòng nhập tên biểu mẫu.');
     await dbNodeInstance.ref(root + '/files/' + file.id).update({name,category:(String(details.category || '').trim() || 'Chưa phân loại').slice(0,100),notes:String(details.notes || '').trim().slice(0,2000),updatedAt:Date.now()});
   }
   async function remove(file) {
     requireUser();
-    if (!canManage(file)) throw new Error('Bạn không có quyền xóa biểu mẫu này.');
+    if (!canRemove(file)) throw new Error('Bạn không có quyền xóa biểu mẫu này.');
     await dbNodeInstance.ref(root + '/files/' + file.id).remove();
   }
   function parseFolder(value) {
@@ -197,5 +201,5 @@ const SharedFormsStore = (() => {
     await dbNodeInstance.ref(root + '/drive').set(config);
     return config;
   }
-  return {user,admin,canManage,canDeleteDrive,removeFromDrive,extension,normalize,kind,validateFile,safeUrl,builtins,subscribe,upload,uploadToDrive,driveEndpoint,update,remove,parseFolder,listDrive,loadDriveConfig,defaultDriveConfig,saveDriveConfig,driveRequest,maxBytes,types};
+  return {user,admin,can,canManage,canEdit,canRemove,canDeleteDrive,removeFromDrive,extension,normalize,kind,validateFile,safeUrl,builtins,subscribe,upload,uploadToDrive,driveEndpoint,update,remove,parseFolder,listDrive,loadDriveConfig,defaultDriveConfig,saveDriveConfig,driveRequest,maxBytes,types};
 })();

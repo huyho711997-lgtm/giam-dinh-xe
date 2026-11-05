@@ -130,7 +130,21 @@
         field_reimb: {
           view: document.getElementById(prefix + 'Perm_field_reimb_view')?.checked || false,
           create: document.getElementById(prefix + 'Perm_field_reimb_create')?.checked || false,
+          edit: document.getElementById(prefix + 'Perm_field_reimb_edit')?.checked || false,
+          delete: document.getElementById(prefix + 'Perm_field_reimb_delete')?.checked || false,
           review: document.getElementById(prefix + 'Perm_field_reimb_review')?.checked || false
+        },
+        rescue_cost: {
+          view: document.getElementById(prefix + 'Perm_rescue_cost_view')?.checked || false,
+          add: document.getElementById(prefix + 'Perm_rescue_cost_add')?.checked || false,
+          edit: document.getElementById(prefix + 'Perm_rescue_cost_edit')?.checked || false,
+          delete: document.getElementById(prefix + 'Perm_rescue_cost_delete')?.checked || false
+        },
+        shared_forms: {
+          view: document.getElementById(prefix + 'Perm_shared_forms_view')?.checked || false,
+          add: document.getElementById(prefix + 'Perm_shared_forms_add')?.checked || false,
+          edit: document.getElementById(prefix + 'Perm_shared_forms_edit')?.checked || false,
+          delete: document.getElementById(prefix + 'Perm_shared_forms_delete')?.checked || false
         },
         contacts: {
           view: document.getElementById(prefix + 'Perm_contacts_view')?.checked || false,
@@ -177,7 +191,14 @@
 
       setCheck(prefix + 'Perm_field_reimb_view', p.field_reimb?.view ?? true);
       setCheck(prefix + 'Perm_field_reimb_create', p.field_reimb?.create ?? !isRoleKeToan);
+      setCheck(prefix + 'Perm_field_reimb_edit', p.field_reimb?.edit ?? true);
+      setCheck(prefix + 'Perm_field_reimb_delete', p.field_reimb?.delete ?? true);
       setCheck(prefix + 'Perm_field_reimb_review', p.field_reimb?.review ?? (isRoleKeToan || isRoleAdmin));
+
+      // Chi phí cứu hộ, Biểu mẫu dùng chung: trước đây ai cũng dùng được nên mặc định giữ nguyên (cấp đủ), Admin bỏ tick để hạn chế.
+      for (const mod of ['rescue_cost', 'shared_forms']) {
+        for (const action of ['view', 'add', 'edit', 'delete']) setCheck(prefix + 'Perm_' + mod + '_' + action, p[mod]?.[action] ?? true);
+      }
 
       // Danh bạ nội bộ: ai cũng xem được; thêm/sửa/xóa mặc định chỉ Admin (hoặc người đang có quyền Admin hệ thống).
       const contactsManage = isRoleAdmin || p.users?.admin === true;
@@ -200,6 +221,13 @@
         if (stored !== undefined) return Boolean(stored);
         if (actionKey === 'view') return true;
         return Boolean(activeUserProfile && activeUserProfile.permissions && activeUserProfile.permissions.users && activeUserProfile.permissions.users.admin === true);
+      }
+      // Trang/thao tác mới có quyền riêng (Chi phí cứu hộ, Biểu mẫu dùng chung; Sửa/Xóa của Hiện trường):
+      // chưa được cấp thì giữ hành vi cũ = được phép, để tài khoản có sẵn không bị mất quyền.
+      if (moduleKey === 'rescue_cost' || moduleKey === 'shared_forms' || (moduleKey === 'field_reimb' && (actionKey === 'edit' || actionKey === 'delete'))) {
+        const group = activeUserProfile && activeUserProfile.permissions ? activeUserProfile.permissions[moduleKey] : undefined;
+        const stored = group ? group[actionKey] : undefined;
+        return stored === undefined ? true : Boolean(stored);
       }
       if (!activeUserProfile || !activeUserProfile.permissions) {
         const role = String((activeUserProfile && activeUserProfile.role) || '').trim().toLowerCase();

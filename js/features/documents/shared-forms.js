@@ -56,6 +56,7 @@ const SharedForms = (() => {
   }
   function uploadDialog() {
     if (!SharedFormsStore.user()) { triggerToast('Vui lòng đăng nhập để tải file lên.','warning'); return; }
+    if (!SharedFormsStore.can('add')) { triggerToast('Bạn không có quyền tải biểu mẫu lên.','warning'); return; }
     // Đang ở Kho Google Drive → đẩy file vào đúng thư mục đang mở; tab Thư viện ứng dụng → Cloudinary như trước.
     const toDrive = source === 'drive' && !!config;
     if (toDrive && !SharedFormsStore.driveEndpoint()) { triggerToast('Chưa cấu hình dịch vụ đẩy file lên Google Drive. Liên hệ quản trị viên.','warning'); return; }
@@ -139,7 +140,7 @@ const SharedForms = (() => {
     };
   }
   function editDialog(file) {
-    if (!SharedFormsStore.canManage(file)) return;
+    if (!SharedFormsStore.canEdit(file)) return;
     const node = makeDialog('Thông tin biểu mẫu',detailsMarkup(),{icon:'tag',description:'Sửa tên hiển thị, phân loại và ghi chú của biểu mẫu.',submit:'Lưu thay đổi'});
     const form = node.querySelector('form');
     form.elements.name.value = file.name;
@@ -170,7 +171,7 @@ const SharedForms = (() => {
   }
   async function removeFile(file) {
     if (file?.source === 'drive') return removeDriveFile(file);
-    if (!SharedFormsStore.canManage(file)) return;
+    if (!SharedFormsStore.canRemove(file)) return;
     if (!await showConfirmModal('Xóa khỏi thư viện?', 'Biểu mẫu “' + file.name + '” sẽ được gỡ khỏi danh sách dùng chung. File gốc vẫn lưu trên Cloudinary và có thể quản lý tại đó.', 'Xóa biểu mẫu')) return;
     try { await SharedFormsStore.remove(file); triggerToast('Đã xóa biểu mẫu khỏi thư viện.'); }
     catch { triggerToast('Chưa xóa được. Kiểm tra kết nối và quyền Firebase.','error'); }
@@ -245,7 +246,7 @@ const SharedForms = (() => {
   // Chỉ file Word .docx thật (không phải Google Docs gốc) mới sửa được nội dung bằng AI.
   const canAiEdit = file => SharedFormsStore.extension(file.originalName || file.name) === 'docx' && !String(file.mimeType).startsWith('application/vnd.google-apps.');
   function actions(file,folder) {
-    return '<div class="sf-card-actions"><button class="sf-icon-button" type="button" data-sf-open="' + escape(file.id) + '" aria-label="' + (folder ? 'Mở thư mục ' : 'Xem ') + escape(file.name) + '" title="' + (folder ? 'Mở thư mục' : 'Xem trong trang') + '">' + icon(folder ? 'arrow' : 'eye') + '</button>' + (canAiEdit(file) ? '<button class="sf-icon-button" type="button" data-sf-ai="' + escape(file.id) + '" aria-label="Soạn bằng AI ' + escape(file.name) + '" title="Soạn bằng AI theo hồ sơ">' + icon('spark') + '</button>' : '') + (!folder ? '<button class="sf-icon-button" type="button" data-sf-download="' + escape(file.id) + '" aria-label="Tải về ' + escape(file.name) + '" title="Tải về">' + icon('download') + '</button>' : '') + (SharedFormsStore.canDeleteDrive(file) ? '<button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa khỏi Google Drive">' + icon('trash') + '</button>' : '') + (SharedFormsStore.canManage(file) ? '<button class="sf-icon-button" type="button" data-sf-edit="' + escape(file.id) + '" aria-label="Sửa thông tin ' + escape(file.name) + '" title="Sửa thông tin">' + icon('tag') + '</button><button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa">' + icon('close') + '</button>' : '') + '</div>';
+    return '<div class="sf-card-actions"><button class="sf-icon-button" type="button" data-sf-open="' + escape(file.id) + '" aria-label="' + (folder ? 'Mở thư mục ' : 'Xem ') + escape(file.name) + '" title="' + (folder ? 'Mở thư mục' : 'Xem trong trang') + '">' + icon(folder ? 'arrow' : 'eye') + '</button>' + (canAiEdit(file) ? '<button class="sf-icon-button" type="button" data-sf-ai="' + escape(file.id) + '" aria-label="Soạn bằng AI ' + escape(file.name) + '" title="Soạn bằng AI theo hồ sơ">' + icon('spark') + '</button>' : '') + (!folder ? '<button class="sf-icon-button" type="button" data-sf-download="' + escape(file.id) + '" aria-label="Tải về ' + escape(file.name) + '" title="Tải về">' + icon('download') + '</button>' : '') + (SharedFormsStore.canDeleteDrive(file) ? '<button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa khỏi Google Drive">' + icon('trash') + '</button>' : '') + (SharedFormsStore.canEdit(file) ? '<button class="sf-icon-button" type="button" data-sf-edit="' + escape(file.id) + '" aria-label="Sửa thông tin ' + escape(file.name) + '" title="Sửa thông tin">' + icon('tag') + '</button>' : '') + (SharedFormsStore.canRemove(file) ? '<button class="sf-icon-button sf-danger" type="button" data-sf-delete="' + escape(file.id) + '" aria-label="Xóa ' + escape(file.name) + '" title="Xóa">' + icon('close') + '</button>' : '') + '</div>';
   }
   // Dạng thẻ: khối màu theo loại tệp + tên + định dạng/ngày + thao tác.
   function tile(file) {
@@ -343,7 +344,7 @@ const SharedForms = (() => {
     host.innerHTML = `
       <header class="sf-page-head">
         <div class="sf-page-title"><span class="sf-page-emblem" aria-hidden="true">${icon('file')}</span><div><div class="sf-eyebrow">THƯ VIỆN NGHIỆP VỤ · TASCO DLK</div><h1>Biểu mẫu dùng chung</h1><p>Tra cứu, xem và in biểu mẫu nghiệp vụ trong cùng một nơi.</p></div></div>
-        <div class="sf-toolbar"><button type="button" class="sf-icon-button sf-bordered" data-sf-refresh aria-label="Làm mới" title="Làm mới danh sách">${icon('refresh')}</button>${SharedFormsStore.admin() ? '<button type="button" class="sf-button" data-sf-settings>' + icon('folder') + ' Kết nối Drive</button>' : ''}<button type="button" class="sf-button sf-primary" data-sf-upload>${icon('upload')} Tải biểu mẫu lên</button></div>
+        <div class="sf-toolbar"><button type="button" class="sf-icon-button sf-bordered" data-sf-refresh aria-label="Làm mới" title="Làm mới danh sách">${icon('refresh')}</button>${SharedFormsStore.admin() ? '<button type="button" class="sf-button" data-sf-settings>' + icon('folder') + ' Kết nối Drive</button>' : ''}${SharedFormsStore.can('add') ? `<button type="button" class="sf-button sf-primary" data-sf-upload>${icon('upload')} Tải biểu mẫu lên</button>` : ''}</div>
       </header>
       <section class="sf-library">
         <div class="sf-library-bar">

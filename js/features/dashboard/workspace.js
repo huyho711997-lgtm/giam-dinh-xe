@@ -242,6 +242,16 @@
         if (activeDashboardTab === 'field_reimbursements') activeDashboardTab = 'home';
         return;
       }
+      if (tabName === 'rescue_cost' && !hasUserPermission('rescue_cost', 'view')) {
+        triggerToast('Bạn không có quyền xem trang Chi phí cứu hộ.', 'warning');
+        if (activeDashboardTab === 'rescue_cost') activeDashboardTab = 'home';
+        return;
+      }
+      if (tabName === 'shared_forms' && !hasUserPermission('shared_forms', 'view')) {
+        triggerToast('Bạn không có quyền xem Biểu mẫu dùng chung.', 'warning');
+        if (activeDashboardTab === 'shared_forms') activeDashboardTab = 'home';
+        return;
+      }
       if (tabName === 'contacts' && !hasUserPermission('contacts', 'view')) {
         triggerToast('Bạn không có quyền xem Danh bạ nội bộ.', 'warning');
         if (activeDashboardTab === 'contacts') activeDashboardTab = 'home';
@@ -345,6 +355,8 @@
         const showAccountingView = hasUserPermission('accounting', 'view');
         const showFieldReimb = hasUserPermission('field_reimb', 'view');
         const showContacts = hasUserPermission('contacts', 'view');
+        const showRescue = hasUserPermission('rescue_cost', 'view');
+        const showForms = hasUserPermission('shared_forms', 'view');
         const showCancellation = showPending || showList;
         const showAdmin = isAdmin || hasUserPermission('users', 'admin') || hasUserPermission('users', 'view');
 
@@ -354,7 +366,7 @@
         const totalReimbs = Object.keys(cachedFieldReimbursementsPayload || {}).length;
 
         container.innerHTML = renderHomeDashboardPage({
-          showList, showCreate, showPending, showReport, showAccountingReview, showAccountingView, showFieldReimb, showContacts, showCancellation, showAdmin,
+          showList, showCreate, showPending, showReport, showAccountingReview, showAccountingView, showFieldReimb, showContacts, showRescue, showForms, showCancellation, showAdmin,
           totalCases, totalPendingClaims, totalTransfers, totalReimbs
         });
         if (typeof HomeSeasonal !== 'undefined') HomeSeasonal.mount(container); // hiệu ứng mùa lễ: chỉ ở Trang chủ

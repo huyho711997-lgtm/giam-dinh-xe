@@ -28,7 +28,8 @@ function setup() {
   const context = vm.createContext({URL,AbortSignal,Date,Promise,structuredClone,console,
     window:{location:{href:'https://example.test/giam-dinh-xe/',origin:'https://example.test'}},
     firebase:{auth:() => ({currentUser:profile})},dbNodeInstance:{ref},activeUserProfile:{displayName:'Người tải'},
-    hasUserPermission:() => context.isAdmin === true,
+    // 'shared_forms': chưa cấp quyền riêng = được phép (context.blocked liệt kê hành động bị Admin tắt); quyền khác chỉ dành cho Admin.
+    hasUserPermission:(module,action) => module === 'shared_forms' ? !(context.blocked || []).includes(action) : context.isAdmin === true,
     getCloudinaryConfig:() => ({cloudName:'fixture-cloud',preset:'fixture-preset',folder:'fixture-folder'}),
     FormData:class { values = {}; append(name,value) { this.values[name] = value; } },
     XMLHttpRequest:class {
@@ -116,6 +117,23 @@ test('restricts edit/delete to owner or admin, preserving template assets',async
   assert.equal(fixture.store.canManage(fixture.store.builtins()[0]),false);
   await fixture.store.remove(file);
   assert.equal(fixture.read('shared_forms/files/uploaded-file'),undefined);
+});
+test('quyền Biểu mẫu dùng chung: Admin tắt Thêm / Sửa / Xóa thì người tải lên cũng không làm được',async () => {
+  const fixture = setup();
+  const file = await fixture.store.upload(documentFile,{});
+  assert.equal(fixture.store.can('add'),true);
+  assert.equal(fixture.store.canEdit(file),true);
+  assert.equal(fixture.store.canRemove(file),true);
+  fixture.context.blocked = ['add','edit','delete'];
+  assert.equal(fixture.store.can('add'),false);
+  assert.equal(fixture.store.canEdit(file),false);
+  assert.equal(fixture.store.canRemove(file),false);
+  await assert.rejects(fixture.store.update(file,{name:'Bị chặn'}),/chỉ được sửa/);
+  await assert.rejects(fixture.store.remove(file),/không có quyền/);
+  assert.equal(fixture.read('shared_forms/files/uploaded-file').name,file.name);
+  fixture.context.blocked = ['delete'];
+  assert.equal(fixture.store.canEdit(file),true);
+  assert.equal(fixture.store.canRemove(file),false);
 });
 test('only admins may delete Google Drive forms, and never folders',async () => {
   const fixture = setup();

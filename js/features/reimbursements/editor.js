@@ -72,7 +72,7 @@
           <th class="fr-center">Trạng thái</th><th class="sf-col-actions">Thao tác</th>
         </tr></thead>
         <tbody>${rows.map(r => {
-          const canDelete = isAdmin || (r.gdvUid === myUid && fieldReimbStatusKey(r) !== 'paid');
+          const canDelete = hasUserPermission('field_reimb', 'delete') && (isAdmin || (r.gdvUid === myUid && fieldReimbStatusKey(r) !== 'paid'));
           const id = escapeHtmlOutput(r.id);
           return `<tr class="sf-row fr-row" tabindex="0" onclick="viewFieldReimbursementDetail('${id}')" onkeydown="if(event.key==='Enter'){viewFieldReimbursementDetail('${id}')}">
             <td class="fr-code" data-label="Mã phiếu">${id}</td>
@@ -372,6 +372,7 @@
     }
 
     function openCreateFieldReimbursementModal(editBatchId = null) {
+      if (!hasUserPermission('field_reimb', editBatchId ? 'edit' : 'create')) return triggerToast('Bạn không có quyền ' + (editBatchId ? 'sửa' : 'tạo') + ' phiếu thanh toán hiện trường.', 'warning');
       const editing = editBatchId && cachedFieldReimbursementsPayload[editBatchId] ? cachedFieldReimbursementsPayload[editBatchId] : null;
       localFieldReimbursementDraft = editing ? JSON.parse(JSON.stringify(editing.items || [])) : [];
       closeFieldReimbForm();
@@ -883,6 +884,7 @@
 
 
     function deleteFieldReimbursement(batchId) {
+      if (!hasUserPermission('field_reimb', 'delete')) return triggerToast('Bạn không có quyền xóa phiếu thanh toán hiện trường.', 'warning');
       const overlay = document.createElement('div');
       overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(11, 15, 25, 0.82); backdrop-filter: blur(16px); z-index: 999999; display: grid; place-items: center; padding: 16px; opacity: 0; transition: opacity 0.2s ease;';
       
@@ -1011,8 +1013,10 @@
       let primary = '';
       let secondary = '';
       let danger = '';
-      if ((isCreator && isNew) || isAdmin) {
+      if (((isCreator && isNew) || isAdmin) && hasUserPermission('field_reimb', 'edit')) {
         secondary += btn('', 'file', 'Sửa phiếu', `closeFieldReimbDetail(); openCreateFieldReimbursementModal('${id}')`);
+      }
+      if ((isCreator && isNew) || isAdmin) {
         if (!isPaid) {
           secondary += btn('', 'refresh', 'Tính lại đi lại', `recalculateReimbursementTravelCost('${id}')`, 'Tính lại chi phí đi lại theo quãng đường 2 chiều');
           primary += btn('sf-primary', 'check', 'Đánh dấu đã chi trả', `actionFieldReimbursement('${id}', 'paid')`);
@@ -1021,7 +1025,7 @@
       if (isPaid && (isCreator || isAdmin)) {
         secondary += btn('', 'refresh', 'Chuyển về mới tạo', `actionFieldReimbursement('${id}', 'new')`);
       }
-      if (isAdmin || (isCreator && isNew)) {
+      if ((isAdmin || (isCreator && isNew)) && hasUserPermission('field_reimb', 'delete')) {
         danger += btn('sf-danger', 'trash', 'Xoá phiếu', `closeFieldReimbDetail(); deleteFieldReimbursement('${id}')`);
       }
       secondary += btn('', 'download', 'Xuất bảng kê', `exportFieldReimbursementToExcel('${id}')`);

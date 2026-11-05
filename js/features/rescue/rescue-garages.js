@@ -8,6 +8,8 @@ const RescueGarages = (() => {
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4d21jcG9rbHhwemxpa3hvamV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1Njk0MDEsImV4cCI6MjA5NjE0NTQwMX0.dmyjtDDo_KTlUFyxQgoCGqEt5Bsq2krEEYg2BCyXeFc';
   const SDK_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
   const TABLE = 'tasco_rescue_garages';
+  // Quyền của trang (Quản trị hệ thống → Tài khoản → Chi phí cứu hộ): view / add / edit / delete. Quyền ghi thật sự ở Supabase do RLS quyết định.
+  const can = action => typeof hasUserPermission !== 'function' || hasUserPermission('rescue_cost', action);
   const TIMEOUT_MS = 12000;
   let items = [], status = 'idle', message = '', subscribers = [], client = null, sdkPromise = null, session = null, loading = null, epoch = 0, lastSync = 0;
 
@@ -103,6 +105,8 @@ const RescueGarages = (() => {
     await load();
   }
   async function save(raw, id) {
+    const known = id ? find(id) : null;
+    if (!can(known ? 'edit' : 'add')) throw new Error('Bạn không có quyền ' + (known ? 'sửa' : 'thêm') + ' gara cứu hộ.');
     const garage = RescueGeo.sanitizeGarage(raw,id || newId());
     if (!garage) throw new Error('Nhập tên gara và toạ độ hợp lệ (vĩ độ −90…90, kinh độ −180…180).');
     const existing = find(garage.id), duplicate = items.find(item => item.id !== garage.id && RescueGeo.normalize(item.name) === RescueGeo.normalize(garage.name));
@@ -116,6 +120,7 @@ const RescueGarages = (() => {
     return garage.id;
   }
   async function remove(id) {
+    if (!can('delete')) throw new Error('Bạn không có quyền xóa gara cứu hộ.');
     const current = find(id); if (!current) return;
     await mutate(async api => {
       const rows = await timed(api.from(TABLE).delete().eq('id',id).eq('updated_at',current.version).select('id'));
@@ -194,13 +199,13 @@ const RescueGarages = (() => {
     const rows = items.filter(item => !query || RescueGeo.normalize(item.name + ' ' + item.address + ' ' + item.phone).includes(query));
     managerHost.querySelector('[data-garage-count]').textContent = status === 'ready' ? (query ? rows.length + '/' : '') + items.length + ' gara · ' + active().length + ' đang hoạt động' : '';
     const signed = !!session && (status === 'ready' || status === 'loading' || status === 'error');
-    bar.innerHTML = (signed ? '<span class="rc-garage-user">' + esc(userEmail()) + '</span><button type="button" class="sf-button" data-garage-reload>' + icon('reset') + 'Tải lại</button><button type="button" class="sf-button" data-garage-signout>Đăng xuất</button>' : '') + (manage ? '<button type="button" class="sf-button sf-primary" data-garage-add>' + icon('upload') + 'Thêm gara</button>' : '');
+    bar.innerHTML = (signed ? '<span class="rc-garage-user">' + esc(userEmail()) + '</span><button type="button" class="sf-button" data-garage-reload>' + icon('reset') + 'Tải lại</button><button type="button" class="sf-button" data-garage-signout>Đăng xuất</button>' : '') + (manage && can('add') ? '<button type="button" class="sf-button sf-primary" data-garage-add>' + icon('upload') + 'Thêm gara</button>' : '');
     if (status === 'signedout') { if (!list.querySelector('[data-garage-login]')) list.innerHTML = loginHtml(); return; }
     if (status === 'loading' || status === 'idle') { list.innerHTML = '<div class="rc-garage-empty">Đang tải danh sách gara…</div>'; return; }
     if (status === 'error') { list.innerHTML = '<div class="rc-garage-empty is-error">' + esc(message) + '</div>'; return; }
     if (!rows.length) { list.innerHTML = '<div class="rc-garage-empty">' + (items.length ? 'Không có gara phù hợp với từ khóa.' : 'Chưa có gara nào. Bấm “Thêm gara” để tạo gara đầu tiên.') + '</div>'; return; }
     list.innerHTML = '<div class="rc-table-wrap"><table class="rc-table rc-garage-table"><thead><tr><th>Gara</th><th>Địa chỉ</th><th>Điện thoại</th><th>Trạng thái</th><th></th></tr></thead><tbody>' + rows.map(item => '<tr data-id="' + esc(item.id) + '"><td><strong>' + esc(item.name) + '</strong><small>' + item.lat.toFixed(5) + ', ' + item.lon.toFixed(5) + '</small></td><td>' + esc(item.address || '—') + (item.note ? '<small>' + esc(item.note) + '</small>' : '') + '</td><td>' + (item.phone ? '<a href="tel:' + esc(item.phone.replace(/[^\d+]/g,'')) + '">' + esc(item.phone) + '</a>' : '—') + '</td><td><span class="rc-badge' + (item.active ? ' is-on' : '') + '">' + (item.active ? 'Hoạt động' : 'Tạm ngưng') + '</span></td>' +
-      '<td class="rc-garage-actions"><button type="button" class="sf-icon-button" data-act="edit" aria-label="Sửa ' + esc(item.name) + '" title="Sửa">' + icon('file') + '</button><button type="button" class="sf-icon-button" data-act="toggle" aria-label="' + (item.active ? 'Tạm ngưng ' : 'Kích hoạt ') + esc(item.name) + '" title="' + (item.active ? 'Tạm ngưng' : 'Kích hoạt lại') + '">' + icon(item.active ? 'eye' : 'check') + '</button><button type="button" class="sf-icon-button sf-danger" data-act="delete" aria-label="Xóa ' + esc(item.name) + '" title="Xóa">' + icon('close') + '</button></td></tr>').join('') + '</tbody></table></div>';
+      '<td class="rc-garage-actions">' + (can('edit') ? '<button type="button" class="sf-icon-button" data-act="edit" aria-label="Sửa ' + esc(item.name) + '" title="Sửa">' + icon('file') + '</button><button type="button" class="sf-icon-button" data-act="toggle" aria-label="' + (item.active ? 'Tạm ngưng ' : 'Kích hoạt ') + esc(item.name) + '" title="' + (item.active ? 'Tạm ngưng' : 'Kích hoạt lại') + '">' + icon(item.active ? 'eye' : 'check') + '</button>' : '') + (can('delete') ? '<button type="button" class="sf-icon-button sf-danger" data-act="delete" aria-label="Xóa ' + esc(item.name) + '" title="Xóa">' + icon('close') + '</button>' : '') + '</td></tr>').join('') + '</tbody></table></div>';
   }
 
   // Tab "Gara": đăng nhập Supabase → danh sách + tìm kiếm + thêm / sửa / tạm ngưng / xóa.

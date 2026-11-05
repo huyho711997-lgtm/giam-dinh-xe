@@ -36,7 +36,9 @@
   function canAccessTab(tab) {
     const can = (m, a) => typeof hasUserPermission === 'function' && hasUserPermission(m, a);
     switch (tab) {
-      case 'home': case 'shared_forms': case 'rescue_cost': return true;
+      case 'home': return true;
+      case 'shared_forms': return can('shared_forms', 'view');
+      case 'rescue_cost': return can('rescue_cost', 'view');
       case 'contacts': return can('contacts', 'view');
       case 'list': return can('list', 'view');
       case 'create': return can('list', 'add');
