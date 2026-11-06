@@ -26,6 +26,7 @@ const PendingNotesPage = (() => {
 
   const I = {
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    detail: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/>',
     note: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
     filter: '<path d="M22 3H2l8 9.5V19l4 2v-8.5z"/>', user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
@@ -208,14 +209,14 @@ const PendingNotesPage = (() => {
       : '<div class="pn-note-empty"><i></i>Chưa có ghi chú</div>';
     return '<tr class="pn-row' + (r.stale ? ' is-stale' : '') + '" data-pn-open="' + attr(r.id) + '" tabindex="0">' +
       '<td class="pn-c-stt">' + String(index + 1).padStart(2, '0') + '</td>' +
-      '<td><div class="pn-plate">' + esc(c.bienSo || '—') + '</div><div class="pn-code">' + esc(c.soHoSoBoiThuong || '—') + '</div><div class="pn-owner" title="' + attr(r.owner) + '">' + esc(r.owner || '—') + '</div></td>' +
+      '<td><div class="pn-plate">' + esc(c.bienSo || '—') + '</div><div class="pn-code-row"><span class="pn-code">' + esc(c.soHoSoBoiThuong || '—') + '</span>' + copyBtn(c.soHoSoBoiThuong) + '</div><div class="pn-owner" title="' + attr(r.owner) + '">' + esc(r.owner || '—') + '</div></td>' +
       '<td><span class="pn-status" style="background:' + st.bg + ';color:' + st.color + ';border-color:' + st.border + '">' + esc(st.label) + '</span><div class="pn-sub">Mở ' + esc(r.openText || '—') + '</div></td>' +
       '<td>' + ageBadge(r) + '</td>' +
       '<td><div class="pn-car" title="' + attr((c.hangXe || '') + ' ' + (c.hieuXe || '')) + '">' + esc((c.hangXe || '—') + ' ' + (c.hieuXe || '')) + '</div><div class="pn-sub" title="' + attr(c.donViCapDon || '') + '">' + esc(c.donViCapDon || '—') + '</div><div class="pn-tags">' + tags(c) + '</div></td>' +
       '<td><div class="pn-damage">' + esc(c.moTaTonThat || c.nguyenNhan || '—') + '</div></td>' +
       '<td class="pn-gdv-cell">' + esc(r.gdv === 'Chưa rõ' ? '—' : r.gdv) + '</td>' +
       '<td class="pn-c-note">' + note + '</td>' +
-      '<td class="pn-c-act"><button type="button" class="pending-action-btn' + (r.stale ? ' pending-action-btn--import' : '') + '" data-pn-open-btn="' + attr(r.id) + '">' + svg('note', 14) + '<span>' + (last ? 'Cập nhật' : 'Ghi chú') + '</span>' + (r.history.length ? '<em>' + r.history.length + '</em>' : '') + '</button></td></tr>';
+      '<td class="pn-c-act"><div class="pn-act-group"><button type="button" class="pn-detail-icon" data-pn-detail="' + attr(r.id) + '" title="Xem / chỉnh sửa chi tiết hồ sơ bồi thường" aria-label="Chi tiết hồ sơ ' + attr(c.soHoSoBoiThuong || c.bienSo || '') + '">' + svg('detail', 15) + '</button><button type="button" class="pending-action-btn' + (r.stale ? ' pending-action-btn--import' : '') + '" data-pn-open-btn="' + attr(r.id) + '">' + svg('note', 14) + '<span>' + (last ? 'Cập nhật' : 'Ghi chú') + '</span>' + (r.history.length ? '<em>' + r.history.length + '</em>' : '') + '</button></div></td></tr>';
   }
   function pageButtons(page, pages) {
     const out = [], push = n => out.push('<button type="button" class="pending-page-btn' + (n === page ? ' is-active' : '') + '" data-pn-page="' + n + '"' + (n === page ? ' aria-current="page"' : '') + '>' + n + '</button>');
@@ -295,6 +296,13 @@ const PendingNotesPage = (() => {
     el.hidden = false;
     document.body.classList.add('pn-modal-open');
     setTimeout(() => el.querySelector('#pnNoteInput').focus(), 30);
+  }
+  // Mở hộp thoại chi tiết hồ sơ bồi thường (dùng chung với trang Hồ sơ bồi thường).
+  function openClaimDetail(id) {
+    if (!id) return;
+    if (typeof openEditPendingClaimModal !== 'function') return void toast('Chưa tải xong màn hình chi tiết hồ sơ, vui lòng thử lại.', 'error');
+    closeModal();   // đóng hộp thoại ghi chú để chi tiết không bị chồng lớp
+    openEditPendingClaimModal(id);
   }
   function closeModal() {
     modal = null;
@@ -387,7 +395,7 @@ const PendingNotesPage = (() => {
       '<div class="pending-filter-controls" id="pnFilters"></div><button type="button" class="pending-filter-reset" data-pn-reset title="Đặt lại toàn bộ bộ lọc" aria-label="Đặt lại bộ lọc">' + svg('reset', 16) + '</button></div>' +
       '<div class="pn-chips" id="pnChips" role="group" aria-label="Lọc nhanh"></div>' +
       '<div class="table-container pending-register-table"><table class="p-table pn-table"><thead><tr><th class="pn-c-stt">#</th><th>Hồ sơ</th><th>Trạng thái</th><th>Tuổi tồn</th><th>Xe &amp; đơn vị cấp</th><th>Nội dung tổn thất</th><th>Giám định viên</th><th>Tiến độ gần nhất</th><th></th></tr></thead><tbody id="pnBody"></tbody></table></div></div>' +
-      '<div class="pn-modal" id="pnModal" hidden role="dialog" aria-modal="true" aria-labelledby="pnModalTitle"><div class="pn-dialog"><header><div><span class="pw-eyebrow">Tiến độ hồ sơ</span><h3 id="pnModalTitle"></h3><div class="pn-modal-meta" id="pnModalMeta"></div></div><button type="button" class="pn-x" data-pn-close aria-label="Đóng">' + svg('close', 18) + '</button></header>' +
+      '<div class="pn-modal" id="pnModal" hidden role="dialog" aria-modal="true" aria-labelledby="pnModalTitle"><div class="pn-dialog"><header><div><span class="pw-eyebrow">Tiến độ hồ sơ</span><h3 id="pnModalTitle"></h3><div class="pn-modal-meta" id="pnModalMeta"></div><button type="button" class="pn-detail-link" data-pn-detail>' + svg('detail', 14) + '<span>Xem chi tiết hồ sơ bồi thường</span></button></div><button type="button" class="pn-x" data-pn-close aria-label="Đóng">' + svg('close', 18) + '</button></header>' +
       '<div class="pn-dialog-body"><div class="pn-h-title">Lịch sử ghi chú <span id="pnHistoryCount">0</span></div><ul class="pn-history" id="pnHistory"></ul>' +
       '<label class="pn-label" for="pnNoteInput">Ghi chú mới</label><div class="pn-templates">' + TEMPLATES.map(t => '<button type="button" data-pn-tpl="' + attr(t) + '">' + esc(t) + '</button>').join('') + '</div>' +
       '<textarea id="pnNoteInput" rows="3" placeholder="VD: Đã liên hệ khách hàng, hẹn bổ sung đăng kiểm trong tuần…"></textarea>' +
@@ -411,6 +419,8 @@ const PendingNotesPage = (() => {
     const q = t.closest('[data-pn-quick]'); if (q) return void setQuick(q.dataset.pnQuick);
     const sb = t.closest('[data-pn-status]'); if (sb) { state.status = state.status === sb.dataset.pnStatus ? 'all' : sb.dataset.pnStatus; state.page = 1; return void paint(); }
     const g = t.closest('[data-pn-gdv]'); if (g) { state.gdv = state.gdv === g.dataset.pnGdv ? 'all' : g.dataset.pnGdv; state.page = 1; return void paint(); }
+    const dt = t.closest('[data-pn-detail]');
+    if (dt) { event.stopPropagation(); return void openClaimDetail(dt.dataset.pnDetail || (modal && modal.id)); }
     const cp = t.closest('[data-pn-copy]'); if (cp) { event.stopPropagation(); return void copyHsbt(cp.dataset.pnCopy, cp); }
     const page = t.closest('[data-pn-page]'); if (page && !page.disabled) { state.page = Number(page.dataset.pnPage); paint(); return void host.querySelector('.pn-list').scrollIntoView({behavior: 'smooth', block: 'start'}); }
     if (t.closest('[data-pn-reset]')) { Object.assign(state, {q: '', status: 'all', gdv: 'all', quick: 'all', page: 1}); host.querySelector('#pnSearch').value = ''; return void paint(); }
