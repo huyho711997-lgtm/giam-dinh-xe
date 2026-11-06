@@ -295,8 +295,7 @@ const PendingNotesPage = (() => {
       (r.dueIso ? dueChip(r) : '');
     const fact = (label, value) => '<div><small>' + label + '</small><b title="' + attr(value) + '">' + esc(value || '—') + '</b></div>';
     el.querySelector('#pnModalFacts').innerHTML =
-      fact('Xe', ((c.hangXe || '') + ' ' + (c.hieuXe || '')).trim()) + fact('Chủ xe', r.owner) + fact('Đơn vị cấp đơn', c.donViCapDon) + fact('Giám định viên', r.gdv === 'Chưa rõ' ? '' : r.gdv) +
-      '<button type="button" class="pn-detail-link" data-pn-detail>' + svg('detail', 15) + '<span>Chi tiết hồ sơ</span><em aria-hidden="true">›</em></button>';
+      fact('Xe', ((c.hangXe || '') + ' ' + (c.hieuXe || '')).trim()) + fact('Chủ xe', r.owner) + fact('Đơn vị cấp đơn', c.donViCapDon) + fact('Giám định viên', r.gdv === 'Chưa rõ' ? '' : r.gdv);
     el.querySelector('#pnNoteInput').value = '';
     el.querySelector('#pnDueInput').value = '';
     el.querySelector('#pnDueInput').min = isoDate(new Date());
@@ -404,7 +403,7 @@ const PendingNotesPage = (() => {
       '<div class="pending-filter-controls" id="pnFilters"></div><button type="button" class="pending-filter-reset" data-pn-reset title="Đặt lại toàn bộ bộ lọc" aria-label="Đặt lại bộ lọc">' + svg('reset', 16) + '</button></div>' +
       '<div class="pn-chips" id="pnChips" role="group" aria-label="Lọc nhanh"></div>' +
       '<div class="table-container pending-register-table"><table class="p-table pn-table"><thead><tr><th class="pn-c-stt">#</th><th>Hồ sơ</th><th>Trạng thái</th><th>Tuổi tồn</th><th>Xe &amp; đơn vị cấp</th><th>Nội dung tổn thất</th><th>Giám định viên</th><th>Tiến độ gần nhất</th><th></th></tr></thead><tbody id="pnBody"></tbody></table></div></div>' +
-      '<div class="pn-modal" id="pnModal" hidden role="dialog" aria-modal="true" aria-labelledby="pnModalTitle"><div class="pn-dialog"><header class="pn-mh"><span class="pn-mh-emblem" aria-hidden="true">' + svg('note', 22) + '</span><div class="pn-mh-main"><span class="pw-eyebrow">Tiến độ hồ sơ</span><h3 id="pnModalTitle"></h3><div class="pn-mh-code" id="pnModalCode"></div><div class="pn-modal-meta" id="pnModalMeta"></div></div><div class="pn-mh-actions"><button type="button" class="pn-x" data-pn-close aria-label="Đóng">' + svg('close', 18) + '</button></div></header>' +
+      '<div class="pn-modal" id="pnModal" hidden role="dialog" aria-modal="true" aria-labelledby="pnModalTitle"><div class="pn-dialog"><header class="pn-mh"><span class="pn-mh-emblem" aria-hidden="true">' + svg('note', 22) + '</span><div class="pn-mh-main"><span class="pw-eyebrow">Tiến độ hồ sơ</span><h3 id="pnModalTitle"></h3><div class="pn-mh-code" id="pnModalCode"></div><div class="pn-modal-meta" id="pnModalMeta"></div></div><div class="pn-mh-actions"><button type="button" class="pn-detail-link" data-pn-detail title="Mở chi tiết hồ sơ bồi thường">' + svg('detail', 15) + '<span>Chi tiết hồ sơ</span><em aria-hidden="true">›</em></button><button type="button" class="pn-x" data-pn-close aria-label="Đóng">' + svg('close', 18) + '</button></div></header>' +
       '<div class="pn-facts" id="pnModalFacts"></div>' +
       '<div class="pn-dialog-body"><div class="pn-h-title">Lịch sử ghi chú <span id="pnHistoryCount">0</span></div><ul class="pn-history" id="pnHistory"></ul>' +
       '<label class="pn-label" for="pnNoteInput">Ghi chú mới</label><div class="pn-templates">' + TEMPLATES.map(t => '<button type="button" data-pn-tpl="' + attr(t) + '">' + esc(t) + '</button>').join('') + '</div>' +

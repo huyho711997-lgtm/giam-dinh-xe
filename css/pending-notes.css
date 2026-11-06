@@ -181,3 +181,12 @@ body.pn-modal-open { overflow:hidden; }
   .pn-dialog-body { padding:16px; }
 }
 .pn-history:has(.pn-h-empty) { padding-left:0; } .pn-history:has(.pn-h-empty)::before { display:none; }
+
+/* Sửa: hiển thị đủ thông tin hồ sơ, nút chi tiết đưa lên đầu hộp thoại */
+.pn-dialog { width:min(720px,100%); }
+.pn-mh-actions { display:flex; align-items:center; gap:8px; }
+.pn-mh-actions .pn-detail-link { min-height:36px; padding:0 14px; border:1px solid color-mix(in srgb,var(--ton-gold) 40%,var(--ton-line)); border-radius:10px; background:var(--ton-paper); }
+.pn-facts { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.pn-facts > div:last-child { border-right:0; }
+.pn-facts b { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal; overflow-wrap:anywhere; line-height:1.35; text-overflow:clip; }
+@media (max-width:640px) { .pn-mh-actions .pn-detail-link span { display:none; } .pn-mh-actions .pn-detail-link em { display:none; } .pn-mh-actions .pn-detail-link { width:36px; padding:0; justify-content:center; } }
