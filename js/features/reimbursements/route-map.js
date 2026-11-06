@@ -5,7 +5,8 @@ const FieldRoutePicker = (() => {
   const LEAFLET_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css';
   const LEAFLET_JS = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
   const TILES = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';   // nền sáng giống Google Maps (CARTO Voyager)
-  const DEFAULT_CENTER = [12.6667,108.0383];   // Buôn Ma Thuột
+  const DEFAULT_START = {lat:12.686955587559002,lon:108.0544871267908,label:'Văn phòng (mặc định)'};   // điểm xuất phát mặc định
+  const DEFAULT_CENTER = [DEFAULT_START.lat,DEFAULT_START.lon];
   const START_KEY = 'fieldRouteStartPoint';     // điểm xuất phát dùng lần trước (thường là văn phòng) → lần sau tự điền
   const esc = text => typeof escapeHtmlOutput === 'function' ? escapeHtmlOutput(text ?? '') : String(text ?? '').replace(/[&<>"']/g,c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const icon = name => (typeof SharedFormsControls !== 'undefined' && SharedFormsControls.icon) ? SharedFormsControls.icon(name) : '';
@@ -36,7 +37,7 @@ const FieldRoutePicker = (() => {
     close();
     const geo = RescueGeo.createClient({fetch:(...args) => fetch(...args)});
     const saved = options.saved || null;
-    const state = {a:saved?.from ? {...saved.from} : readStart(),b:saved?.to ? {...saved.to} : null,target:'a',route:null,reqId:0,captured:null,busy:false};
+    const state = {a:saved?.from ? {...saved.from} : (readStart() || {...DEFAULT_START}),b:saved?.to ? {...saved.to} : null,target:'a',route:null,reqId:0,captured:null,busy:false};
     let map = null, L = null, routeLine = null, routeTimer = 0, destroyed = false, mapFailed = false;
     const markers = {a:null,b:null};
 
