@@ -190,3 +190,8 @@ body.pn-modal-open { overflow:hidden; }
 .pn-facts > div:last-child { border-right:0; }
 .pn-facts b { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal; overflow-wrap:anywhere; line-height:1.35; text-overflow:clip; }
 @media (max-width:640px) { .pn-mh-actions .pn-detail-link span { display:none; } .pn-mh-actions .pn-detail-link em { display:none; } .pn-mh-actions .pn-detail-link { width:36px; padding:0; justify-content:center; } }
+/* Hover nút Chi tiết hồ sơ: trước đây chữ trắng trên nền trắng (độ ưu tiên selector) → đổi nhẹ nhàng, luôn đọc được */
+.pn-mh-actions .pn-detail-link { transition:background .18s,border-color .18s,box-shadow .18s,transform .18s; }
+.pn-mh-actions .pn-detail-link:hover, .pn-mh-actions .pn-detail-link:focus-visible { border-color:var(--ton-gold); background:color-mix(in srgb,var(--ton-gold) 11%,var(--ton-paper)); color:var(--ton-gold); box-shadow:0 4px 12px rgba(173,118,29,.18); transform:translateY(-1px); outline:none; }
+.pn-mh-actions .pn-detail-link:active { transform:none; box-shadow:none; }
+.pn-mh-actions .pn-detail-link:hover em { transform:translateX(3px); }
