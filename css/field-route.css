@@ -1,32 +1,53 @@
 /* Lộ trình đi hiện trường: thẻ trong form, cửa sổ chọn điểm A/B, bản đồ và ảnh xem trước. Dùng token --sf-* của .fr-modal. */
 .frp-status { display:block; }
-.frp-rc { display:flex; align-items:center; gap:11px; width:100%; padding:9px 12px; border:1px solid var(--sf-line,#e7e3d9); border-radius:12px; background:var(--sf-card,#fff); color:inherit; font:inherit; text-align:left; box-sizing:border-box; }
-.frp-rc-ico { display:grid; place-items:center; flex:none; width:34px; height:34px; border-radius:10px; background:var(--sf-gold-bg,#fff3d9); color:var(--sf-gold,#ad761d); }
-.frp-rc-ico svg { width:17px; height:17px; }
-.frp-rc-text { display:grid; gap:1px; min-width:0; flex:1; }
-.frp-rc-text b { font-size:12.5px; font-weight:700; color:var(--sf-ink,#25241f); }
-.frp-rc-text small { overflow:hidden; font-size:11.5px; color:var(--sf-muted,#77776d); text-overflow:ellipsis; white-space:nowrap; }
-.frp-rc--empty { cursor:pointer; transition:border-color .15s, background .15s; }
-.frp-rc--empty:hover { border-color:var(--sf-gold,#ad761d); background:var(--sf-gold-bg,#fff3d9); }
-.frp-rc-go { flex:none; font-size:20px; line-height:1; color:var(--sf-gold,#ad761d); }
-.frp-rc--done { border-color:color-mix(in srgb,var(--sf-green,#168052) 40%,var(--sf-line,#e7e3d9)); background:color-mix(in srgb,var(--sf-green,#168052) 6%,var(--sf-card,#fff)); }
-.frp-rc--done .frp-rc-ico { background:color-mix(in srgb,var(--sf-green,#168052) 15%,transparent); color:var(--sf-green,#168052); }
-.frp-rc-actions { display:flex; flex:none; gap:4px; }
-.frp-rc-actions button { padding:5px 10px; border:1px solid var(--sf-line,#e7e3d9); border-radius:8px; background:var(--sf-card,#fff); color:var(--sf-ink,#25241f); font:inherit; font-size:11.5px; font-weight:600; cursor:pointer; }
-.frp-rc-actions button:hover { border-color:var(--sf-gold,#ad761d); }
-.frp-rc-actions .is-danger { color:#b42318; }
-.frp-rc-actions button { display:inline-flex; align-items:center; gap:5px; }
-.frp-rc-actions button svg { width:14px; height:14px; }
-.frp-rc-actions .is-primary { border-color:var(--sf-gold,#ad761d); background:var(--sf-gold,#ad761d); color:#fff; }
-.frp-rc-actions .is-primary:hover { filter:brightness(1.07); }
-/* Nhóm "Lộ trình đi hiện trường" trong form tạo phiếu */
-.fr-group-hint { margin-left:8px; font-size:11px; font-weight:500; letter-spacing:0; text-transform:none; color:var(--sf-muted,#77776d); }
+/* ===== Bảng lộ trình trong form tạo phiếu ===== */
+.frp-node { position:relative; display:block; flex:none; width:14px; height:14px; border-radius:50%; box-sizing:border-box; }
+.frp-node--a { border:4px solid #4285f4; background:#fff; }
+.frp-node--b { border-radius:50% 50% 50% 0; background:#ea4335; transform:rotate(-45deg); }
+.frp-node--b::after { content:""; position:absolute; inset:4px; border-radius:50%; background:#fff; }
+.frp-panel { box-sizing:border-box; width:100%; max-width:100%; border:1px solid var(--sf-line); border-radius:16px; background:var(--sf-paper); box-shadow:var(--sf-shadow,0 8px 30px rgba(62,51,31,.04)); }
+/* Chưa có lộ trình */
+.frp-panel--empty { display:flex; align-items:center; gap:18px; padding:16px 18px; border-style:dashed; border-color:color-mix(in srgb,var(--sf-gold) 40%,var(--sf-line)); background:linear-gradient(135deg,var(--sf-gold-bg) 0%,var(--sf-paper) 62%); box-shadow:none; }
+.frp-panel-art { display:flex; flex-direction:column; align-items:center; justify-content:space-between; flex:none; width:46px; height:58px; padding:6px 0; border-radius:12px; background:var(--sf-paper); border:1px solid var(--sf-line); box-sizing:border-box; }
+.frp-panel-art .frp-node { width:11px; height:11px; } .frp-panel-art .frp-node--a { border-width:3px; } .frp-panel-art .frp-node--b::after { inset:3px; }
+.frp-panel-art-line { flex:1; width:0; margin:3px 0; border-left:2px dotted color-mix(in srgb,var(--sf-muted) 60%,transparent); }
+.frp-panel-copy { flex:1; min-width:0; }
+.frp-panel-copy strong { display:block; font-size:13px; font-weight:800; color:var(--sf-ink); }
+.frp-panel-copy p { margin:3px 0 0; font-size:11.5px; line-height:1.6; color:var(--sf-muted); }
+.frp-panel-cta { flex:none; }
+/* Đã lưu */
+.frp-panel--done { display:grid; grid-template-columns:184px minmax(0,1fr) auto; grid-template-areas:"thumb route stats" "thumb actions actions"; gap:12px 20px; padding:12px; }
+.frp-panel-thumb { grid-area:thumb; position:relative; overflow:hidden; width:184px; height:100%; min-height:118px; padding:0; border:1px solid var(--sf-line); border-radius:12px; background:var(--sf-soft); cursor:zoom-in; }
+.frp-panel-thumb img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform .3s ease; }
+.frp-panel-thumb span { position:absolute; left:8px; bottom:8px; display:inline-flex; align-items:center; gap:5px; padding:4px 9px; border-radius:999px; background:rgba(20,22,18,.72); color:#fff; font:700 10.5px/1.4 inherit; opacity:0; transform:translateY(4px); transition:opacity .2s, transform .2s; }
+.frp-panel-thumb span svg { width:13px; height:13px; }
+.frp-panel-thumb:hover img { transform:scale(1.05); } .frp-panel-thumb:hover span, .frp-panel-thumb:focus-visible span { opacity:1; transform:none; }
+.frp-panel-route { grid-area:route; position:relative; display:grid; gap:12px; align-content:center; margin:0; padding:4px 0 0; list-style:none; min-width:0; }
+.frp-panel-route::before { content:""; position:absolute; left:6px; top:22px; bottom:22px; border-left:2px dotted color-mix(in srgb,var(--sf-muted) 55%,transparent); }
+.frp-panel-route li { display:grid; grid-template-columns:14px minmax(0,1fr); column-gap:12px; align-items:center; }
+.frp-panel-route .frp-node { grid-row:span 2; }
+.frp-panel-route small { font-size:9.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--sf-muted); }
+.frp-panel-route b { overflow:hidden; font-size:12.5px; font-weight:650; color:var(--sf-ink); text-overflow:ellipsis; white-space:nowrap; }
+.frp-panel-stats { grid-area:stats; display:grid; gap:6px; align-content:start; justify-items:end; padding:4px 4px 0 18px; border-left:1px solid var(--sf-line); text-align:right; }
+.frp-panel-stats small { display:block; font-size:9.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--sf-muted); }
+.frp-panel-stats strong { font-size:24px; font-weight:850; line-height:1.1; color:var(--sf-green); font-variant-numeric:tabular-nums; }
+.frp-panel-stats strong em { font-size:12px; font-style:normal; font-weight:700; color:var(--sf-muted); }
+.frp-panel-stats span:not(.frp-panel-tag) { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:700; color:var(--sf-ink); }
+.frp-panel-stats span svg { width:13px; height:13px; color:var(--sf-gold); }
+.frp-panel-tag { margin-top:2px; padding:3px 9px; border:1px solid color-mix(in srgb,var(--sf-green) 30%,transparent); border-radius:999px; background:color-mix(in srgb,var(--sf-green) 10%,transparent); color:var(--sf-green); font-size:10px; font-weight:750; white-space:nowrap; }
+.frp-panel-tag.is-warn { border-color:color-mix(in srgb,var(--sf-gold) 35%,transparent); background:var(--sf-gold-bg); color:var(--sf-gold); }
+.frp-panel-actions { grid-area:actions; display:flex; align-items:center; justify-content:flex-end; gap:8px; padding-top:12px; border-top:1px solid var(--sf-line); }
+.frp-panel-actions .sf-button { min-height:36px; }
+.frp-panel-actions .sf-icon-button { min-width:36px; min-height:36px; border:1px solid var(--sf-line); }
+.frp-panel-actions .sf-danger:hover { border-color:var(--sf-rose); background:color-mix(in srgb,var(--sf-rose) 10%,transparent); }
 .fr-head-action { margin-left:auto; flex:none; }
 .fr-head-action[hidden] { display:none !important; }
-@media (max-width:640px) {
-  .frp-rc--done { flex-wrap:wrap; }
-  .frp-rc--done .frp-rc-actions { width:100%; justify-content:flex-end; }
-  .fr-group-hint { display:block; margin:2px 0 0; }
+@media (max-width:760px) {
+  .frp-panel--empty { flex-wrap:wrap; } .frp-panel-cta { width:100%; }
+  .frp-panel--done { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"thumb thumb" "route stats" "actions actions"; }
+  .frp-panel-thumb { width:100%; height:150px; }
+  .frp-panel-stats { padding-left:12px; }
+  .frp-panel-actions { flex-wrap:wrap; } .frp-panel-actions .sf-button { flex:1; }
 }
 .frp-has-map { color:var(--sf-green,#168052) !important; border-color:color-mix(in srgb,var(--sf-green,#168052) 45%,var(--sf-line,#e7e3d9)) !important; }
 
