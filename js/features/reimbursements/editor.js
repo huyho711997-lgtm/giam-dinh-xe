@@ -373,12 +373,26 @@
 
     // ----- Lộ trình đi hiện trường (bản đồ A→B, chụp ảnh in kèm hồ sơ) -----
     let localFieldRouteDraft = null;   // lộ trình của vụ đang nhập ở bước 1 (chưa thêm vào danh sách)
+    // Thẻ lộ trình dưới ô km: chưa có → thẻ mời; đã lưu → thẻ tóm tắt (km · phút, A → B) + Xem / Sửa / Bỏ.
+    function reimbRouteCardHtml() {
+      const r = localFieldRouteDraft;
+      if (!r) {
+        return `<button type="button" class="frp-rc frp-rc--empty" onclick="openReimbRoutePickerFromForm()" title="Chọn điểm xuất phát và vị trí tai nạn, vẽ lộ trình, chụp ảnh để in kèm hồ sơ">
+          <span class="frp-rc-ico">${ic('pin')}</span>
+          <span class="frp-rc-text"><b>Vẽ lộ trình &amp; chụp bản đồ</b><small>Chọn điểm đi, điểm đến rồi in kèm hồ sơ</small></span>
+          <span class="frp-rc-go" aria-hidden="true">›</span></button>`;
+      }
+      const km = Number(r.km).toLocaleString('vi-VN',{minimumFractionDigits:1,maximumFractionDigits:1});
+      const mins = Number(r.minutes) > 0 ? ' · ' + (r.minutes < 60 ? Math.round(r.minutes) + ' phút' : Math.floor(r.minutes / 60) + ' giờ ' + String(Math.round(r.minutes % 60)).padStart(2,'0')) : '';
+      const short = label => escapeHtmlOutput(String(label || '').split(',').slice(0,2).join(',').trim() || '—');
+      return `<div class="frp-rc frp-rc--done">
+          <span class="frp-rc-ico">${ic('pin')}</span>
+          <span class="frp-rc-text"><b>Đã lưu lộ trình · ${km} km${mins}</b><small title="${escapeHtmlOutput(r.from?.label)} → ${escapeHtmlOutput(r.to?.label)}">${short(r.from?.label)} → ${short(r.to?.label)}${r.estimated ? ' (ước tính)' : ''}</small></span>
+          <span class="frp-rc-actions"><button type="button" onclick="FieldRoutePicker.preview(localFieldRouteDraft)">Xem</button><button type="button" onclick="openReimbRoutePickerFromForm()">Sửa</button><button type="button" class="is-danger" onclick="clearReimbRouteDraft()">Bỏ</button></span></div>`;
+    }
     function paintReimbRouteStatus() {
       const box = document.getElementById('reimbRouteStatus');
-      if (!box) return;
-      box.innerHTML = localFieldRouteDraft
-        ? `<span class="frp-chip">✓ Đã lưu lộ trình ${Number(localFieldRouteDraft.km).toLocaleString('vi-VN')} km</span><button type="button" class="frp-link" onclick="FieldRoutePicker.preview(localFieldRouteDraft)">Xem</button><button type="button" class="frp-link" onclick="clearReimbRouteDraft()">Bỏ</button>`
-        : '';
+      if (box) box.innerHTML = reimbRouteCardHtml();
     }
     function clearReimbRouteDraft() { localFieldRouteDraft = null; paintReimbRouteStatus(); }
     function openReimbRoutePickerFromForm() {
@@ -503,7 +517,7 @@
                   <div class="fr-field fr-col-4">
                     <label for="reimbInputKm">Khoảng cách 1 chiều (km) ${req}</label>
                     <div class="fr-affix"><input type="number" id="reimbInputKm" class="fr-input" min="0" step="1" placeholder="VD: 35" oninput="autoCalculateTravelCost()"><span>km</span></div>
-                    <div class="frp-trigger-row"><button type="button" class="frp-trigger" onclick="openReimbRoutePickerFromForm()" title="Chọn điểm xuất phát và vị trí tai nạn, vẽ lộ trình, chụp ảnh để in kèm hồ sơ">${ic('pin')}<span>Vẽ lộ trình &amp; chụp bản đồ</span></button><span id="reimbRouteStatus" class="frp-status"></span></div>
+                    <div class="frp-trigger-row"><div id="reimbRouteStatus" class="frp-status">${reimbRouteCardHtml()}</div></div>
                   </div>
                   <div class="fr-field fr-col-4">
                     <label for="reimbInputTravelCost">Chi phí đi lại</label>
