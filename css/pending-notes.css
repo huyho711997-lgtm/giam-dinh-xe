@@ -129,3 +129,10 @@ body.pn-modal-open { overflow:hidden; }
   .pn-dialog header, .pn-dialog-body, .pn-dialog footer { padding-left:16px; padding-right:16px; }
 }
 @media (prefers-reduced-motion:reduce) { .pn-dialog, .pn-stack-seg, .pn-metrics .claims-metric-card { animation:none; transition:none; } }
+
+/* Nút sao chép nhanh số HSBT */
+.pn-code-row { display:flex; align-items:center; gap:5px; margin-top:5px; max-width:100%; } .pn-code-row .pn-code { margin-top:0; min-width:0; }
+.pn-copy { display:inline-grid; place-items:center; flex:none; width:22px; height:22px; padding:0; border:1px solid var(--ton-line); border-radius:6px; background:var(--ton-paper,#fff); color:var(--ton-muted); cursor:pointer; transition:color .15s,border-color .15s,background .15s; }
+.pn-copy:hover, .pn-copy:focus-visible { border-color:var(--ton-gold); color:var(--ton-gold); background:var(--ton-soft); }
+.pn-copy.is-copied { border-color:var(--ton-green,#168052); background:color-mix(in srgb,var(--ton-green,#168052) 12%,transparent); color:var(--ton-green,#168052); }
+.pn-copy--lg { width:28px; height:28px; margin-left:8px; vertical-align:2px; border-radius:8px; } .pn-copy--lg svg { width:14px; height:14px; }

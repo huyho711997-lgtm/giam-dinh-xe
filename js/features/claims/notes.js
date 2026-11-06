@@ -25,6 +25,7 @@ const PendingNotesPage = (() => {
   let host = null, rows = [], modal = null, searchTimer = 0, xlsxPromise = null;
 
   const I = {
+    copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
     note: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
     filter: '<path d="M22 3H2l8 9.5V19l4 2v-8.5z"/>', user: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
@@ -40,6 +41,14 @@ const PendingNotesPage = (() => {
   const esc = v => (typeof escapeHtmlOutput === 'function' ? escapeHtmlOutput(v) : String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch])));
   const attr = v => esc(v);
   const plain = text => String(text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase().trim();
+  // Sao chép nhanh số HSBT (không mở hộp thoại ghi chú khi bấm).
+  const copyBtn = (value, cls) => value ? '<button type="button" class="pn-copy ' + (cls || '') + '" data-pn-copy="' + attr(value) + '" title="Sao chép số HSBT" aria-label="Sao chép số HSBT ' + attr(value) + '">' + svg('copy', 12) + '</button>' : '';
+  async function copyHsbt(value, btn) {
+    try { await navigator.clipboard.writeText(value); }
+    catch (_) { const ta = document.createElement('textarea'); ta.value = value; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (__) { /* bỏ qua */ } ta.remove(); }
+    if (btn) { btn.classList.add('is-copied'); setTimeout(() => btn.classList.remove('is-copied'), 1200); }
+    toast('Đã sao chép số HSBT: ' + value, 'success');
+  }
   const toast = (message, kind) => { if (typeof triggerToast === 'function') triggerToast(message, kind || 'success'); };
   const calc = () => (typeof KpiZoneCalc !== 'undefined' ? KpiZoneCalc : null);
 
@@ -276,7 +285,7 @@ const PendingNotesPage = (() => {
     if (!r) return;
     modal = {id: r.id, identifier: r.identifier};
     const el = host.querySelector('#pnModal');
-    el.querySelector('#pnModalTitle').textContent = (r.c.bienSo || '—') + ' · ' + (r.c.soHoSoBoiThuong || '—');
+    el.querySelector('#pnModalTitle').innerHTML = esc(r.c.bienSo || '—') + ' · ' + esc(r.c.soHoSoBoiThuong || '—') + copyBtn(r.c.soHoSoBoiThuong, 'pn-copy--lg');
     el.querySelector('#pnModalMeta').innerHTML = [statusInfo(r.status).label, r.age !== null ? 'Tồn ' + r.age + ' ngày' : '', r.gdv !== 'Chưa rõ' ? 'GĐV ' + r.gdv : '', r.owner].filter(Boolean).map(t => '<span>' + esc(t) + '</span>').join('');
     el.querySelector('#pnNoteInput').value = '';
     el.querySelector('#pnDueInput').value = '';
@@ -402,6 +411,7 @@ const PendingNotesPage = (() => {
     const q = t.closest('[data-pn-quick]'); if (q) return void setQuick(q.dataset.pnQuick);
     const sb = t.closest('[data-pn-status]'); if (sb) { state.status = state.status === sb.dataset.pnStatus ? 'all' : sb.dataset.pnStatus; state.page = 1; return void paint(); }
     const g = t.closest('[data-pn-gdv]'); if (g) { state.gdv = state.gdv === g.dataset.pnGdv ? 'all' : g.dataset.pnGdv; state.page = 1; return void paint(); }
+    const cp = t.closest('[data-pn-copy]'); if (cp) { event.stopPropagation(); return void copyHsbt(cp.dataset.pnCopy, cp); }
     const page = t.closest('[data-pn-page]'); if (page && !page.disabled) { state.page = Number(page.dataset.pnPage); paint(); return void host.querySelector('.pn-list').scrollIntoView({behavior: 'smooth', block: 'start'}); }
     if (t.closest('[data-pn-reset]')) { Object.assign(state, {q: '', status: 'all', gdv: 'all', quick: 'all', page: 1}); host.querySelector('#pnSearch').value = ''; return void paint(); }
     if (t.closest('[data-pn-refresh]')) { rows = buildRows(); paint(); return void toast('Đã làm mới theo dữ liệu mới nhất', 'success'); }
