@@ -85,3 +85,8 @@
 @media (max-width:860px) { .frp-body { grid-template-columns:1fr; overflow:auto; } .frp-stage { min-height:340px; } }
 /* .fr-modal .sf-button đặt display:inline-flex nên phải ép thuộc tính hidden thắng */
 .frp-modal [hidden] { display:none !important; }
+
+/* Dán định vị khách gửi (Zalo) */
+.frp-paste { margin-top:8px; } .frp-paste svg { color:var(--sf-gold); }
+.frp-paste.is-main { border-color:color-mix(in srgb,var(--sf-gold) 45%,var(--sf-line)); background:linear-gradient(135deg,var(--sf-gold-bg),var(--sf-paper)); color:var(--sf-gold); }
+.frp-paste.is-main:hover { border-color:var(--sf-gold); box-shadow:0 4px 12px rgba(173,118,29,.16); }

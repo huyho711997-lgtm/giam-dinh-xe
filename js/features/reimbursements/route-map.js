@@ -44,6 +44,7 @@ const FieldRoutePicker = (() => {
 
     const card = (key, letter, title, hint) => '<section class="frp-card"><header><i class="frp-dot frp-dot--' + key + '">' + letter + '</i><strong>' + title + '</strong></header>' +
       '<div class="frp-search"><input type="search" class="fr-input" data-q="' + key + '" enterkeyhint="search" autocomplete="off" placeholder="' + hint + '"><button type="button" class="sf-button" data-search="' + key + '">' + icon('search') + '<span>Tìm</span></button></div>' +
+      '<button type="button" class="sf-button frp-wide frp-paste' + (key === 'b' ? ' is-main' : '') + '" data-paste="' + key + '" title="Sao chép vị trí khách gửi qua Zalo rồi bấm nút này (hoặc nhấn Ctrl+V)">' + icon('clipboard') + '<span>Dán định vị từ Zalo</span></button>' +
       (key === 'a' ? '<button type="button" class="sf-button frp-wide" data-gps>' + icon('pin') + '<span>Dùng vị trí hiện tại</span></button>' : '') +
       '<ul class="frp-list" data-list="' + key + '" hidden></ul><p class="frp-msg" data-msg="' + key + '" role="alert" hidden></p><div class="frp-info" data-info="' + key + '"></div></section>';
 
@@ -54,8 +55,8 @@ const FieldRoutePicker = (() => {
       '<div class="fr-meta">' + (options.plate ? '<span class="fr-code">' + esc(options.plate) + '</span>' : '') + (options.hsbt ? '<span>' + esc(options.hsbt) + '</span>' : '') + '<span>Chọn điểm A, B để vẽ đường đi, rồi chụp ảnh in kèm hồ sơ.</span></div></div></div>' +
       '<button type="button" class="sf-icon-button sf-bordered" data-close aria-label="Đóng">' + icon('close') + '</button></header>' +
       '<div class="frp-body"><div class="frp-side">' +
-        card('a','A','Điểm xuất phát','Địa chỉ nơi đi (hoặc toạ độ: vĩ độ, kinh độ)') +
-        card('b','B','Vị trí tai nạn / hiện trường','Địa chỉ nơi xảy ra tai nạn') +
+        card('a','A','Điểm xuất phát','Địa chỉ hoặc dán định vị') +
+        card('b','B','Vị trí tai nạn / hiện trường','Dán định vị hoặc nhập địa chỉ') +
         '<div class="frp-seg" role="group" aria-label="Điểm đang đặt khi chạm bản đồ"><span>Chạm bản đồ để đặt:</span><button type="button" data-target="a" aria-pressed="true">A · Xuất phát</button><button type="button" data-target="b" aria-pressed="false">B · Hiện trường</button></div>' +
         '<p class="frp-hint">Kéo ghim A/B để chỉnh đúng vị trí. Đường đi tính theo đường bộ.</p></div>' +
       '<div class="frp-stage"><div class="frp-map" data-map role="application" aria-label="Bản đồ lộ trình"></div><div class="frp-preview" data-preview hidden></div></div></div>' +
@@ -156,8 +157,33 @@ const FieldRoutePicker = (() => {
       }
       if (!point.label && !previous) fitMap();
     }
+    // Vị trí khách gửi (Zalo/Messenger): link Google Maps, toạ độ hoặc cả tin nhắn → đặt thẳng điểm, không cần tìm địa chỉ.
+    function applyShared(key, text) {
+      if (typeof FieldLocationParse === 'undefined') return false;
+      const result = FieldLocationParse.parse(text);
+      if (!result) return false;
+      const box = part(key); setMsg(key,''); box.list.hidden = true;
+      if (result.point) {
+        box.q.value = '';
+        setPoint(key,{lat:result.point.lat,lon:result.point.lon});
+        state.target = key; qa('[data-target]').forEach(btn => btn.setAttribute('aria-pressed',String(btn.dataset.target === key)));
+        if (map) map.setView([result.point.lat,result.point.lon],Math.max(map.getZoom(),15));
+        toast('Đã nhận vị trí khách gửi cho điểm ' + key.toUpperCase() + '.','success');
+      } else if (result.shortLink) {
+        setMsg(key,'Đây là link rút gọn của Google Maps nên không đọc được toạ độ. Hãy mở link, rồi sao chép địa chỉ đầy đủ trên thanh địa chỉ (hoặc bấm giữ vào ghim để lấy toạ độ) và dán lại.');
+      } else if (result.note) setMsg(key,result.note);
+      return true;
+    }
+    async function pasteFromClipboard(key) {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (!text.trim()) return setMsg(key,'Bộ nhớ tạm đang trống. Hãy sao chép vị trí khách gửi trong Zalo trước.');
+        if (!applyShared(key,text)) setMsg(key,'Nội dung vừa sao chép không giống một vị trí (link Google Maps hoặc toạ độ). Hãy kiểm tra lại tin nhắn khách gửi.');
+      } catch (_) { setMsg(key,'Trình duyệt chưa cho đọc bộ nhớ tạm. Hãy bấm vào ô địa chỉ rồi nhấn Ctrl+V.'); }
+    }
     async function search(key) {
       const box = part(key); setMsg(key,''); box.list.hidden = true; box.list.innerHTML = '';
+      if (applyShared(key,box.q.value)) return;
       const result = await geo.geocode(box.q.value);
       if (destroyed) return;
       if (result.point) { setPoint(key,result.point); return; }
@@ -230,6 +256,7 @@ const FieldRoutePicker = (() => {
       if (target === modal || target.closest('[data-close]')) return close();
       const pick = target.closest('[data-pick]');
       if (pick) { const [key, index] = pick.dataset.pick.split(':'), box = part(key), item = box.list._items?.[Number(index)]; if (item) { box.list.hidden = true; setPoint(key,item); } return; }
+      const pasteBtn = target.closest('[data-paste]'); if (pasteBtn) return pasteFromClipboard(pasteBtn.dataset.paste);
       const search_ = target.closest('[data-search]'); if (search_) return search(search_.dataset.search);
       if (target.closest('[data-gps]')) return useGps();
       const seg = target.closest('[data-target]');
@@ -239,6 +266,15 @@ const FieldRoutePicker = (() => {
       if (target.closest('[data-download]')) return download();
       if (target.closest('[data-back]')) { showPreview(false); renderSummary(); return; }
       if (target.closest('[data-km]') && state.route) { options.onApply?.({routeMap:null,km:Math.round(state.route.km)}); toast('Đã điền ' + Math.round(state.route.km) + ' km vào vụ.','success'); close(); }
+    });
+    // Ctrl+V: dán vào ô địa chỉ hoặc bất kỳ chỗ nào trong cửa sổ → tự nhận vị trí (ngoài ô nhập thì đặt cho điểm B)
+    modal.addEventListener('paste',event => {
+      const text = event.clipboardData?.getData('text') || '';
+      const field = event.target.closest?.('[data-q]');
+      if (!field && event.target.closest?.('input, textarea')) return;
+      if (typeof FieldLocationParse === 'undefined' || !FieldLocationParse.parse(text)) return;
+      event.preventDefault();
+      applyShared(field ? field.dataset.q : (state.b ? state.target : 'b'),text);
     });
     modal.addEventListener('keydown',event => {
       if (event.key === 'Escape') return close();
