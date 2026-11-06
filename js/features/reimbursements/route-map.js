@@ -4,7 +4,8 @@
 const FieldRoutePicker = (() => {
   const LEAFLET_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css';
   const LEAFLET_JS = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
-  const TILES = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';   // nền sáng giống Google Maps (CARTO Voyager)
+  const TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';   // nền đường phố kiểu Google (Esri, không cần key)
+  const TILES_FALLBACK = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   const DEFAULT_START = {lat:12.686955587559002,lon:108.0544871267908,label:'Văn phòng (mặc định)'};   // điểm xuất phát mặc định
   const DEFAULT_CENTER = [DEFAULT_START.lat,DEFAULT_START.lon];
   const START_KEY = 'fieldRouteStartPoint';     // điểm xuất phát dùng lần trước (thường là văn phòng) → lần sau tự điền
@@ -117,7 +118,13 @@ const FieldRoutePicker = (() => {
         L = await loadLeaflet();
         if (destroyed || map) return;
         map = L.map(ui.mapEl,{scrollWheelZoom:true}).setView(DEFAULT_CENTER,11);
-        L.tileLayer(TILES,{subdomains:'abcd',maxZoom:19,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(map);
+        const base = L.tileLayer(TILES,{maxZoom:19,crossOrigin:'anonymous',attribution:'&copy; Esri, HERE, Garmin, &copy; OpenStreetMap contributors'}).addTo(map);
+        let tileErrors = 0;
+        base.on('tileerror',() => {   // nền chính lỗi/bị chặn → chuyển sang OpenStreetMap
+          if (++tileErrors < 3 || !map) return;
+          map.removeLayer(base);
+          L.tileLayer(TILES_FALLBACK,{maxZoom:19,crossOrigin:'anonymous',attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+        });
         map.on('click',event => { const at = event.latlng.wrap(); setPoint(state.target,{lat:at.lat,lon:at.lng}); });
         updateMarker('a'); updateMarker('b'); state.route ? drawRoute() : fitMap();
       } catch (_) {
@@ -289,7 +296,7 @@ function printFieldRouteMaps(batchId) {
       '<tr><th>Quãng đường 1 chiều</th><td>' + km.toLocaleString('vi-VN',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' km' + (r.estimated ? ' (ước tính)' : '') + '</td><th>Thời gian di chuyển</th><td>' + (min ? (min >= 60 ? Math.floor(min / 60) + ' giờ ' + (min % 60) + ' phút' : min + ' phút') : '—') + '</td></tr>' +
       '</tbody></table>' +
       '<img class="rm-img" alt="Bản đồ lộ trình" src="' + esc(r.url) + '">' +
-      '<p class="rm-note">Lộ trình tính theo đường bộ, mang tính tham khảo. Nguồn dữ liệu: © OpenStreetMap contributors, © CARTO; chỉ đường: OSRM.</p>' +
+      '<p class="rm-note">Lộ trình tính theo đường bộ, mang tính tham khảo. Nguồn dữ liệu: © Esri, HERE, Garmin, © OpenStreetMap contributors; chỉ đường: OSRM.</p>' +
       '<div class="rm-sign"><div>Người lập<br><i>(Ký, ghi rõ họ tên)</i></div><div>Xác nhận của quản lý<br><i>(Ký, ghi rõ họ tên)</i></div></div></div>';
   }).join('');
   document.getElementById('printRouteOverlayModal')?.remove();

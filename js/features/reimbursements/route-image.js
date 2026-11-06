@@ -3,9 +3,9 @@
 // Không chụp màn hình bản đồ Leaflet (dễ lệch lớp SVG/ transform) mà tự vẽ lại từ cùng toạ độ → ảnh ổn định, cùng kích thước mọi máy.
 const FieldRouteImage = (() => {
   const TILE = 256;
-  // Nền sáng giống Google Maps (CARTO Voyager, dữ liệu OpenStreetMap), ô @2x để chữ/đường nét sắc khi in.
-  const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png';
-  const SUBDOMAINS = 'abcd';
+  // Nền đường phố kiểu Google (Esri World Street Map, không cần API key); lỗi thì tự chuyển sang OpenStreetMap.
+  const TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}';
+  const FALLBACK_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   const MAX_LAT = 85.0511287798;
   const valid = point => point && Number.isFinite(point.lat) && Number.isFinite(point.lon) && Math.abs(point.lat) <= 90 && Math.abs(point.lon) <= 180;
   const clampLat = lat => Math.max(-MAX_LAT, Math.min(MAX_LAT, lat));
@@ -33,6 +33,7 @@ const FieldRouteImage = (() => {
   const toPixel = (view, lat, lon) => { const p = project(lat,lon,view.zoom); return {x:p.x - view.originX,y:p.y - view.originY}; };
 
   // Các ô bản đồ phủ kín khung nhìn, kèm vị trí vẽ (dx, dy) trên canvas.
+  const fill = (template, z, x, y) => template.replace('{z}',z).replace('{x}',x).replace('{y}',y);
   function tiles(view) {
     const n = 2 ** view.zoom, list = [];
     const x0 = Math.floor(view.originX / TILE), x1 = Math.floor((view.originX + view.width - 1) / TILE);
@@ -41,7 +42,7 @@ const FieldRouteImage = (() => {
       if (y < 0 || y >= n) continue;
       for (let x = x0; x <= x1; x++) {
         const wrapped = ((x % n) + n) % n;
-        list.push({z:view.zoom,x:wrapped,y,dx:x * TILE - view.originX,dy:y * TILE - view.originY,url:TILE_URL.replace('{s}',SUBDOMAINS[(wrapped + y) % SUBDOMAINS.length]).replace('{z}',view.zoom).replace('{x}',wrapped).replace('{y}',y)});
+        list.push({z:view.zoom,x:wrapped,y,dx:x * TILE - view.originX,dy:y * TILE - view.originY,url:fill(TILE_URL,view.zoom,wrapped,y),url2:fill(FALLBACK_TILE_URL,view.zoom,wrapped,y)});
       }
     }
     return list;
@@ -49,12 +50,15 @@ const FieldRouteImage = (() => {
 
   // ---------- Phần cần trình duyệt ----------
   function loadTile(tile, timeoutMs) {
+    return loadOne(tile.url,timeoutMs).then(image => image || (tile.url2 ? loadOne(tile.url2,timeoutMs) : null));
+  }
+  function loadOne(url, timeoutMs) {
     return new Promise(resolve => {
       const image = new Image(), timer = setTimeout(() => { image.src = ''; resolve(null); }, timeoutMs);
       image.crossOrigin = 'anonymous';   // OSM trả CORS: * → canvas không bị "tainted", còn xuất được ảnh
       image.onload = () => { clearTimeout(timer); resolve(image); };
       image.onerror = () => { clearTimeout(timer); resolve(null); };
-      image.src = tile.url;
+      image.src = url;
     });
   }
   const trim = (text, max) => { const value = String(text ?? '').replace(/\s+/g,' ').trim(); return value.length > max ? value.slice(0,max - 1) + '…' : value; };
@@ -130,7 +134,7 @@ const FieldRouteImage = (() => {
     card(east ? b.x + 22 : b.x - 22 - wb,b.y - h - 6,tb,{border:'#ea4335'});
 
     // Ghi nguồn theo điều khoản OpenStreetMap / CARTO.
-    const credit = '© OpenStreetMap contributors © CARTO';
+    const credit = '© Esri, HERE, Garmin, © OpenStreetMap contributors';
     ctx.font = '11px Arial, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     const cw = Math.ceil(ctx.measureText(credit).width) + 14;
     ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillRect(width - cw,height - 20,cw,20);
@@ -142,5 +146,5 @@ const FieldRouteImage = (() => {
     catch (error) { reject(error); }
   });
 
-  return {TILE,TILE_URL,project,fit,toPixel,tiles,midpoint,render,toBlob};
+  return {TILE,TILE_URL,FALLBACK_TILE_URL,project,fit,toPixel,tiles,midpoint,render,toBlob};
 })();

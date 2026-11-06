@@ -34,7 +34,7 @@ test('tiles: phủ kín khung nhìn, toạ độ ô hợp lệ, không trùng', 
   assert.equal(new Set(list.map(t => t.x + '/' + t.y)).size, list.length);
   for (const t of list) {
     assert.ok(t.x >= 0 && t.x < n && t.y >= 0 && t.y < n);
-    assert.match(t.url, new RegExp('^https://[a-d]\\.basemaps\\.cartocdn\\.com/rastertiles/voyager/' + v.zoom + '/' + t.x + '/' + t.y + '@2x\\.png$'));
+    assert.match(t.url, new RegExp('^https://server\\.arcgisonline\\.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/' + v.zoom + '/' + t.y + '/' + t.x + '$'));
     assert.ok(t.dx > -256 && t.dx < 1200 && t.dy > -256 && t.dy < 760);
   }
   const xs = list.map(t => t.dx), ys = list.map(t => t.dy);

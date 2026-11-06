@@ -3,6 +3,7 @@
 const RescueGeo = (() => {
   const ROUTE_URL = 'https://router.project-osrm.org/route/v1/driving/';  // dịch vụ công cộng, chỉ phù hợp mức dùng nhẹ; production nên tự host
   const GEOCODE_URL = 'https://nominatim.openstreetmap.org/';
+  const PHOTON_URL = 'https://photon.komoot.io/api/';
   const STRAIGHT_FACTOR = 1.3;        // dự phòng khi không gọi được OSRM: đường chim bay × 1,3
   const FALLBACK_SPEED_KMH = 40;
   const NOMINATIM_GAP_MS = 1100;      // Nominatim: tối đa 1 yêu cầu / giây
@@ -77,11 +78,24 @@ const RescueGeo = (() => {
       const text = String(query ?? '').trim();
       if (text.length < 3) return {note:'Nhập ít nhất 3 ký tự.'};
       if (COORD_RE.test(text)) { const point = parseCoord(text); return point ? {point:{...point,label:'Toạ độ ' + point.lat + ', ' + point.lon}} : {note:'Toạ độ không hợp lệ (nhập: vĩ độ, kinh độ).'}; }
+      const toItem = (lat, lon, label) => ({lat:parseFloat(lat),lon:parseFloat(lon),label});
+      // Nominatim hay không có số nhà/hẻm ("193/22 ...") → thử lại bỏ phần số nhà; lỗi mạng/dịch vụ → thử Photon.
+      const bare = text.replace(/^\s*(số\s*)?\d+[a-zA-Z]?(\/\d+[a-zA-Z]?)*\s*[,\s]\s*/i,'').trim();
+      const variants = [text,...(bare && bare !== text && bare.length >= 3 ? [bare] : [])];
+      let failed = false;
+      for (const q of variants) {
+        try {
+          const rows = await nominatim('search',{q:/đắk lắk|buôn ma thuột|bmt/i.test(q) ? q : q + ', Đắk Lắk',format:'jsonv2','accept-language':'vi',countrycodes:'vn',limit:'5'});
+          const items = (Array.isArray(rows) ? rows : []).map(row => toItem(row.lat,row.lon,row.display_name)).filter(item => validCoord(item.lat,item.lon));
+          if (items.length) return {items,note:q === text ? '' : 'Không có đúng số nhà, đang gợi ý theo tên đường.'};
+        } catch (_) { failed = true; break; }
+      }
       try {
-        const rows = await nominatim('search',{q:text,format:'jsonv2','accept-language':'vi',countrycodes:'vn',limit:'5'});
-        const items = (Array.isArray(rows) ? rows : []).map(row => ({lat:parseFloat(row.lat),lon:parseFloat(row.lon),label:row.display_name})).filter(item => validCoord(item.lat,item.lon));
-        return {items,note:items.length ? '' : 'Không tìm thấy. Thử ghi đầy đủ hơn (số nhà, đường, phường/xã) hoặc chạm bản đồ.'};
-      } catch (_) { return {note:'Không tìm được địa chỉ (mạng/dịch vụ bận). Hãy thử lại hoặc chạm bản đồ.'}; }
+        const data = await json(PHOTON_URL + '?' + new URLSearchParams({q:bare || text,limit:'5',bbox:'102,8,110,24'}));
+        const items = (data?.features || []).map(f => { const p = f.properties || {}; return toItem(f.geometry?.coordinates?.[1],f.geometry?.coordinates?.[0],[p.name,p.street,p.district,p.city || p.county,p.state].filter(Boolean).join(', ')); }).filter(item => validCoord(item.lat,item.lon));
+        if (items.length) return {items,note:''};
+      } catch (_) { failed = true; }
+      return {note:failed ? 'Không tìm được địa chỉ (mạng/dịch vụ bận). Hãy thử lại hoặc chạm bản đồ.' : 'Không tìm thấy. Thử ghi đầy đủ hơn (đường, phường/xã) hoặc chạm bản đồ.'};
     }
     async function reverse(lat, lon) {
       try { const data = await nominatim('reverse',{lat,lon,format:'jsonv2','accept-language':'vi',zoom:'17'}); return data?.display_name || ''; }
