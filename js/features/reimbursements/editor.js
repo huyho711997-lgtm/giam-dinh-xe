@@ -371,10 +371,47 @@
       document.getElementById('createFieldReimbModal')?.remove();
     }
 
+    // ----- Lộ trình đi hiện trường (bản đồ A→B, chụp ảnh in kèm hồ sơ) -----
+    let localFieldRouteDraft = null;   // lộ trình của vụ đang nhập ở bước 1 (chưa thêm vào danh sách)
+    function paintReimbRouteStatus() {
+      const box = document.getElementById('reimbRouteStatus');
+      if (!box) return;
+      box.innerHTML = localFieldRouteDraft
+        ? `<span class="frp-chip">✓ Đã lưu lộ trình ${Number(localFieldRouteDraft.km).toLocaleString('vi-VN')} km</span><button type="button" class="frp-link" onclick="FieldRoutePicker.preview(localFieldRouteDraft)">Xem</button><button type="button" class="frp-link" onclick="clearReimbRouteDraft()">Bỏ</button>`
+        : '';
+    }
+    function clearReimbRouteDraft() { localFieldRouteDraft = null; paintReimbRouteStatus(); }
+    function openReimbRoutePickerFromForm() {
+      const val = id => document.getElementById(id)?.value.trim() || '';
+      FieldRoutePicker.open({
+        plate: val('reimbInputBS'), hsbt: val('reimbInputHSBT'), sceneText: val('reimbInputLocation'), saved: localFieldRouteDraft,
+        onApply: ({routeMap, km}) => {
+          if (routeMap) localFieldRouteDraft = routeMap;
+          if (km !== null && km !== undefined) {
+            const input = document.getElementById('reimbInputKm');
+            if (input) { input.value = km; autoCalculateTravelCost(); }
+            updateQuickReimbPreview();
+          }
+          paintReimbRouteStatus();
+        }
+      });
+    }
+    // Gắn / xem lộ trình cho một vụ đã có trong danh sách (không tự đổi km để không làm lệch chi phí đã tính).
+    function openReimbItemRoute(idx) {
+      const item = localFieldReimbursementDraft[idx];
+      if (!item) return;
+      FieldRoutePicker.open({
+        plate: item.bienSo, hsbt: item.soHSBT, sceneText: item.location || '', saved: item.routeMap || null, allowKm: false,
+        onApply: ({routeMap}) => { if (routeMap && localFieldReimbursementDraft[idx]) { localFieldReimbursementDraft[idx].routeMap = routeMap; renderReimbursementDraftItems(); } }
+      });
+    }
+    function viewReimbItemRoute(idx) { FieldRoutePicker.preview(localFieldReimbursementDraft[idx]?.routeMap); }
+
     function openCreateFieldReimbursementModal(editBatchId = null) {
       if (!hasUserPermission('field_reimb', editBatchId ? 'edit' : 'create')) return triggerToast('Bạn không có quyền ' + (editBatchId ? 'sửa' : 'tạo') + ' phiếu thanh toán hiện trường.', 'warning');
       const editing = editBatchId && cachedFieldReimbursementsPayload[editBatchId] ? cachedFieldReimbursementsPayload[editBatchId] : null;
       localFieldReimbursementDraft = editing ? JSON.parse(JSON.stringify(editing.items || [])) : [];
+      localFieldRouteDraft = null;
       closeFieldReimbForm();
 
       const ic = fieldReimbIcon;
@@ -466,6 +503,7 @@
                   <div class="fr-field fr-col-4">
                     <label for="reimbInputKm">Khoảng cách 1 chiều (km) ${req}</label>
                     <div class="fr-affix"><input type="number" id="reimbInputKm" class="fr-input" min="0" step="1" placeholder="VD: 35" oninput="autoCalculateTravelCost()"><span>km</span></div>
+                    <div class="frp-trigger-row"><button type="button" class="frp-trigger" onclick="openReimbRoutePickerFromForm()" title="Chọn điểm xuất phát và vị trí tai nạn, vẽ lộ trình, chụp ảnh để in kèm hồ sơ">${ic('pin')}<span>Vẽ lộ trình &amp; chụp bản đồ</span></button><span id="reimbRouteStatus" class="frp-status"></span></div>
                   </div>
                   <div class="fr-field fr-col-4">
                     <label for="reimbInputTravelCost">Chi phí đi lại</label>
@@ -557,8 +595,11 @@
         location: location,
         perDiem: perDiem,
         hotelCost: hotelCost,
-        calcResult: calc
+        calcResult: calc,
+        ...(localFieldRouteDraft ? {routeMap: localFieldRouteDraft} : {})
       });
+      localFieldRouteDraft = null;
+      paintReimbRouteStatus();
 
       document.getElementById('reimbInputBS').value = '';
       document.getElementById('reimbInputHSBT').value = '';
@@ -823,6 +864,9 @@
             <td>${escapeHtmlOutput(item.location || '')}</td>
             <td class="fr-money">${money(subtotal)}</td>
             <td class="fr-center"><div class="fr-row-actions">
+              ${item.routeMap
+                ? `<button type="button" class="sf-icon-button frp-has-map" onclick="viewReimbItemRoute(${idx})" ondblclick="event.stopPropagation()" title="Xem lộ trình đã lưu (${Number(item.routeMap.km).toLocaleString('vi-VN')} km)" aria-label="Xem lộ trình vụ ${idx + 1}">${fieldReimbIcon('pin')}</button>`
+                : `<button type="button" class="sf-icon-button" onclick="openReimbItemRoute(${idx})" title="Thêm lộ trình bản đồ" aria-label="Thêm lộ trình vụ ${idx + 1}">${fieldReimbIcon('pin')}</button>`}
               <button type="button" class="sf-icon-button" onclick="openReimbItemEditor(${idx})" title="Sửa vụ này" aria-label="Sửa vụ ${idx + 1}">${fieldReimbIcon('file')}</button>
               <button type="button" class="sf-icon-button sf-danger" onclick="removeReimbursementItem(${idx})" title="Xóa vụ này" aria-label="Xóa vụ ${idx + 1}">${fieldReimbIcon('trash')}</button>
             </div></td>
@@ -1030,6 +1074,7 @@
       }
       secondary += btn('', 'download', 'Xuất bảng kê', `exportFieldReimbursementToExcel('${id}')`);
       secondary += btn('', 'print', 'In phiếu', `printFieldReimbursementTemplate('${id}')`);
+      if ((payload.items || []).some(it => it.routeMap && it.routeMap.url)) secondary += btn('', 'pin', 'In lộ trình', `printFieldRouteMaps('${id}')`, 'In bản đồ lộ trình A4 để kẹp vào hồ sơ');
 
       const items = payload.items || [];
       const sum = { gd: 0, travel: 0, perDiem: 0, hotel: 0 };
