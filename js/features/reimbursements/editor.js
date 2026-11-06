@@ -388,12 +388,19 @@
       return `<div class="frp-rc frp-rc--done">
           <span class="frp-rc-ico">${fieldReimbIcon('pin')}</span>
           <span class="frp-rc-text"><b>Đã lưu lộ trình · ${km} km${mins}</b><small title="${escapeHtmlOutput(r.from?.label)} → ${escapeHtmlOutput(r.to?.label)}">${short(r.from?.label)} → ${short(r.to?.label)}${r.estimated ? ' (ước tính)' : ''}</small></span>
-          <span class="frp-rc-actions"><button type="button" onclick="FieldRoutePicker.preview(localFieldRouteDraft)">Xem</button><button type="button" onclick="openReimbRoutePickerFromForm()">Sửa</button><button type="button" class="is-danger" onclick="clearReimbRouteDraft()">Bỏ</button></span></div>`;
+          <span class="frp-rc-actions"><button type="button" onclick="FieldRoutePicker.preview(localFieldRouteDraft)">Xem</button><button type="button" class="is-primary" onclick="printReimbFormRoute()" title="In bản đồ lộ trình A4 của vụ này">${fieldReimbIcon('print')}In</button><button type="button" onclick="openReimbRoutePickerFromForm()">Sửa</button><button type="button" class="is-danger" onclick="clearReimbRouteDraft()">Bỏ</button></span></div>`;
     }
     function paintReimbRouteStatus() {
       const box = document.getElementById('reimbRouteStatus');
       if (box) box.innerHTML = reimbRouteCardHtml();
     }
+    // In lộ trình của vụ đang nhập (chưa cần thêm vào danh sách / chưa tạo phiếu).
+    function printReimbFormRoute() {
+      const val = id => document.getElementById(id)?.value.trim() || '';
+      printFieldRouteItems([{bienSo:val('reimbInputBS'),soHSBT:val('reimbInputHSBT'),startDatetime:val('reimbInputStartDate'),datetime:val('reimbInputDate'),vehicle:val('reimbInputVehicle'),routeMap:localFieldRouteDraft}]);
+    }
+    // In tất cả lộ trình của các vụ đã thêm vào danh sách (bước 3), trước khi tạo phiếu.
+    function printReimbDraftRoutes() { printFieldRouteItems(localFieldReimbursementDraft); }
     function clearReimbRouteDraft() { localFieldRouteDraft = null; paintReimbRouteStatus(); }
     function openReimbRoutePickerFromForm() {
       const val = id => document.getElementById(id)?.value.trim() || '';
@@ -501,6 +508,11 @@
               </div>
 
               <div class="fr-group">
+                <div class="fr-group-title">Lộ trình đi hiện trường <span class="fr-group-hint">Vẽ đường A → B để tự điền km và in kèm hồ sơ</span></div>
+                <div id="reimbRouteStatus" class="frp-status">${reimbRouteCardHtml()}</div>
+              </div>
+
+              <div class="fr-group">
                 <div class="fr-group-title">Di chuyển &amp; chi phí</div>
                 <div class="fr-grid">
                   <div class="fr-field fr-col-4">
@@ -517,7 +529,6 @@
                   <div class="fr-field fr-col-4">
                     <label for="reimbInputKm">Khoảng cách 1 chiều (km) ${req}</label>
                     <div class="fr-affix"><input type="number" id="reimbInputKm" class="fr-input" min="0" step="1" placeholder="VD: 35" oninput="autoCalculateTravelCost()"><span>km</span></div>
-                    <div class="frp-trigger-row"><div id="reimbRouteStatus" class="frp-status">${reimbRouteCardHtml()}</div></div>
                   </div>
                   <div class="fr-field fr-col-4">
                     <label for="reimbInputTravelCost">Chi phí đi lại</label>
@@ -553,7 +564,7 @@
             </section>
 
             <section class="fr-card fr-card-flush">
-              <div class="fr-card-head fr-card-head-pad"><span class="fr-step">3</span><div><h3>Danh sách chi tiết trong phiếu</h3><p>Kiểm tra lại các vụ đã thêm; bấm biểu tượng sửa (hoặc nhấp đúp dòng) để chỉnh từng vụ.</p></div></div>
+              <div class="fr-card-head fr-card-head-pad"><span class="fr-step">3</span><div><h3>Danh sách chi tiết trong phiếu</h3><p>Kiểm tra lại các vụ đã thêm; bấm biểu tượng sửa (hoặc nhấp đúp dòng) để chỉnh từng vụ.</p></div><button type="button" id="reimbDraftPrintRoutes" class="sf-button fr-head-action" onclick="printReimbDraftRoutes()" hidden>${ic('print')}<span>In lộ trình</span></button></div>
               <div id="reimbDraftItemsContainer"></div>
             </section>
           </div>
@@ -832,6 +843,12 @@
       const container = document.getElementById('reimbDraftItemsContainer');
       const totalLbl = document.getElementById('reimbDraftTotalAmount');
       if (!container || !totalLbl) return;
+      const printBtn = document.getElementById('reimbDraftPrintRoutes');   // chỉ hiện khi có vụ đã lưu lộ trình
+      if (printBtn) {
+        const withMap = localFieldReimbursementDraft.filter(item => item.routeMap?.url).length;
+        printBtn.hidden = !withMap;
+        const label = printBtn.querySelector('span'); if (label) label.textContent = 'In lộ trình (' + withMap + ')';
+      }
 
       if (localFieldReimbursementDraft.length === 0) {
         container.innerHTML = `<div class="sf-empty fr-draft-empty"><span class="fr-empty-icon">${fieldReimbIcon('file')}</span><h3>Chưa thêm vụ nào</h3><p>Điền thông tin ở bước 1 rồi bấm “Thêm vụ này”.</p></div>`;

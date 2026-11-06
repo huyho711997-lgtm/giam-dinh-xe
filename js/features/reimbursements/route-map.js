@@ -277,17 +277,24 @@ const FieldRoutePicker = (() => {
 })();
 
 // ---------- In A4: mỗi vụ có ảnh lộ trình = 1 trang, để kẹp vào hồ sơ ----------
+// In lộ trình của một phiếu đã lưu.
 function printFieldRouteMaps(batchId) {
   const payload = cachedFieldReimbursementsPayload?.[batchId];
-  const items = (payload?.items || []).filter(item => item.routeMap?.url);
-  if (!items.length) return typeof triggerToast === 'function' && triggerToast('Phiếu này chưa có lộ trình nào được lưu.','error');
+  printFieldRouteItems(payload?.items || [],{code:payload?.id || batchId});
+}
+// In lộ trình cho danh sách vụ bất kỳ (phiếu đã lưu, các vụ đang soạn, hoặc vụ đang nhập ở form).
+// items: [{bienSo, soHSBT, startDatetime, datetime, vehicle, routeMap}]; code: mã phiếu (bỏ trống khi chưa tạo phiếu).
+function printFieldRouteItems(allItems, {code = ''} = {}) {
+  const items = (allItems || []).filter(item => item && item.routeMap?.url);
+  if (!items.length) return typeof triggerToast === 'function' && triggerToast('Chưa có lộ trình nào được lưu để in.','error');
+  const payload = {id:code};
   const esc = text => escapeHtmlOutput(text ?? '');
   const when = item => [item.startDatetime, item.datetime].filter(Boolean).map(v => formatDateDisplay(v)).join(' → ');
   const pages = items.map((item, index) => {
     const r = item.routeMap;
     const km = Number(r.km) || 0, min = Number(r.minutes) || 0;
     return '<div class="print-page rm-page">' +
-      '<h1>Bản đồ lộ trình đi hiện trường</h1><p class="rm-sub">Phụ lục kèm giấy đề nghị thanh toán ' + esc(payload.id) + ' · Vụ ' + (index + 1) + '/' + items.length + '</p>' +
+      '<h1>Bản đồ lộ trình đi hiện trường</h1><p class="rm-sub">Phụ lục kèm giấy đề nghị thanh toán' + (payload.id ? ' ' + esc(payload.id) : '') + (items.length > 1 ? ' · Vụ ' + (index + 1) + '/' + items.length : '') + '</p>' +
       '<table class="rm-info"><tbody>' +
       '<tr><th>Số HSBT</th><td>' + esc(item.soHSBT || '—') + '</td><th>Biển số xe</th><td>' + esc(item.bienSo || '—') + '</td></tr>' +
       '<tr><th>Thời gian giám định</th><td>' + esc(when(item) || '—') + '</td><th>Phương tiện</th><td>' + esc(item.vehicle || '—') + '</td></tr>' +
@@ -321,7 +328,7 @@ function printFieldRouteMaps(batchId) {
     '#printRouteOverlayModal .rm-page:last-child { page-break-after:auto; break-after:auto; } }' +
     '</style>' +
     '<div class="print-action-bar fr-print-bar"><button type="button" class="sf-button" onclick="document.getElementById(\'printRouteOverlayModal\').remove()">' + ic('arrow').replace('<svg','<svg style="transform:scaleX(-1)"') + '<span>Quay lại</span></button>' +
-    '<div class="fr-print-title"><span class="sf-eyebrow">Xem trước bản in</span><strong>Lộ trình đi hiện trường · ' + esc(payload.id) + ' · ' + items.length + ' trang</strong></div>' +
+    '<div class="fr-print-title"><span class="sf-eyebrow">Xem trước bản in</span><strong>Lộ trình đi hiện trường' + (payload.id ? ' · ' + esc(payload.id) : '') + ' · ' + items.length + ' trang</strong></div>' +
     '<button type="button" class="sf-button sf-primary" onclick="window.print()">' + ic('print') + '<span>In lộ trình</span></button></div>' + pages;
   document.body.appendChild(overlay);
 }
