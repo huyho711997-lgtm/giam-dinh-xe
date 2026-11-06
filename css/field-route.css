@@ -14,7 +14,7 @@
 .frp-card { display:flex; flex-direction:column; gap:8px; padding:12px; border:1px solid var(--sf-line); border-radius:14px; background:var(--sf-soft); }
 .frp-card header { display:flex; align-items:center; gap:8px; font-size:13px; }
 .frp-dot { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; color:#fff; font-style:normal; font-size:12px; font-weight:800; }
-.frp-dot--a, .frp-pin--a span { background:#15803d; } .frp-dot--b, .frp-pin--b span { background:#b91c1c; }
+.frp-dot--a { background:#4285f4; } .frp-dot--b { background:#ea4335; }
 .frp-search { display:flex; gap:6px; } .frp-search .fr-input { flex:1; min-width:0; }
 .frp-wide { width:100%; justify-content:center; }
 .frp-list { display:flex; flex-direction:column; gap:2px; max-height:170px; margin:0; padding:4px; overflow:auto; list-style:none; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-paper); }
@@ -32,7 +32,9 @@
 .frp-map[hidden], .frp-preview[hidden] { display:none; }
 .frp-preview { display:grid; place-items:center; background:#e8e4da; } .frp-preview img { max-width:100%; max-height:100%; object-fit:contain; }
 .frp-map-fail { display:grid; place-items:center; height:100%; padding:24px; color:var(--sf-muted); font-size:13px; text-align:center; }
-.frp-pin span { display:grid; place-items:center; width:30px; height:30px; border:3px solid #fff; border-radius:50%; color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.35); font-size:13px; }
+.frp-pin--a span { display:block; width:22px; height:22px; border:5px solid #4285f4; border-radius:50%; background:#fff; box-shadow:0 1px 5px rgba(0,0,0,.4); }
+.frp-pin--b span { display:grid; place-items:center; width:28px; height:28px; margin:0 1px; border:1.5px solid #b31412; border-radius:50% 50% 50% 0; background:#ea4335; transform:rotate(-45deg); box-shadow:0 2px 6px rgba(0,0,0,.4); }
+.frp-pin--b i { width:10px; height:10px; border-radius:50%; background:#7f0f0d; }
 .frp-summary { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px; font-size:13px; color:var(--sf-ink); } .frp-summary strong { font-size:18px; color:var(--sf-green); }
 .frp-warn { color:var(--sf-rose); font-style:normal; font-size:11.5px; }
 .frp-view { width:min(1100px,96vw); height:auto; max-height:92vh; } .frp-view-body { padding:0 28px 24px; overflow:auto; } .frp-view-body img { display:block; width:100%; height:auto; border:1px solid var(--sf-line); border-radius:12px; }

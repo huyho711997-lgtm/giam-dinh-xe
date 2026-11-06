@@ -34,9 +34,14 @@ test('tiles: phủ kín khung nhìn, toạ độ ô hợp lệ, không trùng', 
   assert.equal(new Set(list.map(t => t.x + '/' + t.y)).size, list.length);
   for (const t of list) {
     assert.ok(t.x >= 0 && t.x < n && t.y >= 0 && t.y < n);
-    assert.match(t.url, new RegExp('^https://tile\\.openstreetmap\\.org/' + v.zoom + '/' + t.x + '/' + t.y + '\\.png$'));
+    assert.match(t.url, new RegExp('^https://[a-d]\\.basemaps\\.cartocdn\\.com/rastertiles/voyager/' + v.zoom + '/' + t.x + '/' + t.y + '@2x\\.png$'));
     assert.ok(t.dx > -256 && t.dx < 1200 && t.dy > -256 && t.dy < 760);
   }
   const xs = list.map(t => t.dx), ys = list.map(t => t.dy);
   assert.ok(Math.min(...xs) <= 0 && Math.max(...xs) + 256 >= 1200 && Math.min(...ys) <= 0 && Math.max(...ys) + 256 >= 760);
+});
+test('midpoint: nằm giữa chiều dài đường, không giữa số điểm', () => {
+  const m = R.midpoint([{x: 0, y: 0}, {x: 10, y: 0}, {x: 100, y: 0}]);   // dài 100 → giữa là x=50
+  assert.ok(Math.abs(m.x - 50) < 1e-9 && m.y === 0);
+  assert.deepEqual({...R.midpoint([{x: 3, y: 4}])}, {x: 3, y: 4});
 });

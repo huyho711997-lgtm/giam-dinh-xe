@@ -4,7 +4,7 @@
 const FieldRoutePicker = (() => {
   const LEAFLET_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css';
   const LEAFLET_JS = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js';
-  const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const TILES = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';   // nền sáng giống Google Maps (CARTO Voyager)
   const DEFAULT_CENTER = [12.6667,108.0383];   // Buôn Ma Thuột
   const START_KEY = 'fieldRouteStartPoint';     // điểm xuất phát dùng lần trước (thường là văn phòng) → lần sau tự điền
   const esc = text => typeof escapeHtmlOutput === 'function' ? escapeHtmlOutput(text ?? '') : String(text ?? '').replace(/[&<>"']/g,c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -87,7 +87,9 @@ const FieldRoutePicker = (() => {
     }
 
     // ----- Bản đồ -----
-    const pinIcon = (letter, cls) => L.divIcon({className:'frp-pin frp-pin--' + cls,html:'<span><b>' + letter + '</b></span>',iconSize:[30,30],iconAnchor:[15,15]});
+    const pinIcon = (letter, cls) => cls === 'a'
+      ? L.divIcon({className:'frp-pin frp-pin--a',html:'<span></span>',iconSize:[22,22],iconAnchor:[11,11]})
+      : L.divIcon({className:'frp-pin frp-pin--b',html:'<span><i></i></span>',iconSize:[30,42],iconAnchor:[15,40]});
     function updateMarker(key) {
       if (!map) return;
       const point = state[key];
@@ -106,15 +108,15 @@ const FieldRoutePicker = (() => {
       if (!map) return;
       if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
       if (!state.route) return;
-      routeLine = L.polyline(state.route.coords,{color:'#c2410c',weight:5,opacity:.9,dashArray:state.route.estimated ? '8 8' : null}).addTo(map);
-      map.fitBounds(routeLine.getBounds(),{padding:[50,50]});
+      routeLine = L.layerGroup([L.polyline(state.route.coords,{color:'#1a56b8',weight:10,opacity:1,lineJoin:'round'}),L.polyline(state.route.coords,{color:'#4285f4',weight:6.5,opacity:1,lineJoin:'round',dashArray:state.route.estimated ? '8 8' : null})]).addTo(map);
+      map.fitBounds(L.latLngBounds(state.route.coords),{padding:[50,50]});
     }
     async function ensureMap() {
       try {
         L = await loadLeaflet();
         if (destroyed || map) return;
         map = L.map(ui.mapEl,{scrollWheelZoom:true}).setView(DEFAULT_CENTER,11);
-        L.tileLayer(TILES,{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+        L.tileLayer(TILES,{subdomains:'abcd',maxZoom:19,attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(map);
         map.on('click',event => { const at = event.latlng.wrap(); setPoint(state.target,{lat:at.lat,lon:at.lng}); });
         updateMarker('a'); updateMarker('b'); state.route ? drawRoute() : fitMap();
       } catch (_) {
@@ -178,7 +180,7 @@ const FieldRoutePicker = (() => {
       if (!state.route || state.busy) return;
       state.busy = true; ui.capture.disabled = true; ui.summary.textContent = 'Đang chụp bản đồ…';
       try {
-        const canvas = await FieldRouteImage.render({coords:state.route.coords,from:state.a,to:state.b,estimated:state.route.estimated});
+        const canvas = await FieldRouteImage.render({coords:state.route.coords,from:state.a,to:state.b,estimated:state.route.estimated,km:state.route.km,min:state.route.min});
         const blob = await FieldRouteImage.toBlob(canvas);
         state.captured = {blob,url:URL.createObjectURL(blob)};
         ui.preview.innerHTML = '<img alt="Ảnh lộ trình" src="' + state.captured.url + '">';
@@ -286,7 +288,7 @@ function printFieldRouteMaps(batchId) {
       '<tr><th>Quãng đường 1 chiều</th><td>' + km.toLocaleString('vi-VN',{minimumFractionDigits:1,maximumFractionDigits:1}) + ' km' + (r.estimated ? ' (ước tính)' : '') + '</td><th>Thời gian di chuyển</th><td>' + (min ? (min >= 60 ? Math.floor(min / 60) + ' giờ ' + (min % 60) + ' phút' : min + ' phút') : '—') + '</td></tr>' +
       '</tbody></table>' +
       '<img class="rm-img" alt="Bản đồ lộ trình" src="' + esc(r.url) + '">' +
-      '<p class="rm-note">Lộ trình tính theo đường bộ, mang tính tham khảo. Nguồn dữ liệu: © OpenStreetMap contributors; chỉ đường: OSRM.</p>' +
+      '<p class="rm-note">Lộ trình tính theo đường bộ, mang tính tham khảo. Nguồn dữ liệu: © OpenStreetMap contributors, © CARTO; chỉ đường: OSRM.</p>' +
       '<div class="rm-sign"><div>Người lập<br><i>(Ký, ghi rõ họ tên)</i></div><div>Xác nhận của quản lý<br><i>(Ký, ghi rõ họ tên)</i></div></div></div>';
   }).join('');
   document.getElementById('printRouteOverlayModal')?.remove();
