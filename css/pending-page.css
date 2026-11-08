@@ -27,7 +27,14 @@
   border:1px solid var(--ton-line); border-radius:10px; background:var(--ton-paper); color:var(--ton-ink);
   font-size:12px; font-weight:700; white-space:nowrap; box-shadow:0 1px 2px rgba(48,40,24,.05);
 }
-.pending-workspace--v2 .pending-action-btn:hover { border-color:color-mix(in srgb,var(--ton-gold) 55%,var(--ton-line)); background:var(--ton-soft); }
+.pending-workspace--v2 .pending-action-btn:hover { border-color:color-mix(in srgb,var(--ton-gold) 55%,var(--ton-line)); background:var(--ton-soft); transform:translateY(-1px); }
+.pending-workspace--v2 .pending-action-btn:active { transform:translateY(0); }
+.pending-workspace--v2 .pending-action-btn__icon { display:grid; place-items:center; width:17px; height:17px; flex:0 0 17px; border:0; background:none; color:inherit; box-shadow:none; transform:none; }
+.pending-workspace--v2 .pending-action-btn__icon svg { width:15px; height:15px; stroke:currentColor; }
+.pending-workspace--v2 .pending-action-btn--primary,
+.pending-workspace--v2 .pending-action-btn--gold { border:1px solid var(--btn-premium-border, rgba(216,180,109,.45)); background:var(--primary-gradient, linear-gradient(135deg, #f2d998 0%, #c79b4b 50%, #916621 100%)); color:#211a0c; font-weight:800; box-shadow:0 4px 14px rgba(179,140,67,.22), inset 0 1px 0 rgba(255,255,255,.35); }
+.pending-workspace--v2 .pending-action-btn--primary:hover,
+.pending-workspace--v2 .pending-action-btn--gold:hover { border-color:var(--primary, #d8b46d); filter:brightness(1.05); box-shadow:0 7px 18px rgba(179,140,67,.32), inset 0 1px 0 rgba(255,255,255,.45); }
 .pending-workspace--v2 .pending-action-btn--danger { color:var(--ton-rose); }
 .pending-workspace--v2 .pending-action-btn--danger:hover { border-color:color-mix(in srgb,var(--ton-rose) 45%,var(--ton-line)); background:color-mix(in srgb,var(--ton-rose) 8%,var(--ton-paper)); }
 .pending-workspace--v2 .pending-action-btn--import { border-color:var(--ton-action); background:var(--ton-action); color:var(--ton-action-text); box-shadow:0 1px 2px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.14); }
