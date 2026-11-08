@@ -99,7 +99,7 @@ const BacklogWatchPage = (() => {
       : '<span>Còn dư địa <b>' + int(t.headroom) + '</b> hồ sơ tồn trước khi vượt 10%</span>';
     const tile = (cls, name, badge, value, sub, ratio) => '<article class="kz-kpi ' + cls + '"><header><span class="kz-kpi-name">' + name + '</span><span class="kz-kpi-w">' + badge + '</span></header>' +
       '<div class="kz-kpi-val"><b>' + int(value) + '</b></div><div class="kz-kpi-tgt">' + sub + '</div><div class="kz-track"><i style="width:' + (Math.min(1, ratio) * 100).toFixed(1) + '%"></i></div></article>';
-    return '<section class="kz-ledger bw-ledger"><div class="kz-ledger-main"><span class="kz-ledger-title">Hồ sơ tồn lũy kế · ' + K.fmtDate(data.asOf) + '</span>' +
+    return '<section class="kz-ledger bw-ledger"><header class="bw-overview-head"><div><span class="sf-eyebrow">THEO DÕI HỒ SƠ TỒN</span><h2>Tổng quan xử lý</h2><p>Số liệu tổng hợp theo ngày dữ liệu hồ sơ.</p></div><span class="bw-overview-date">' + icon('calendar') + 'Đến ' + K.fmtDate(data.asOf) + '</span></header><div class="kz-ledger-main"><span class="kz-ledger-title">Hồ sơ tồn lũy kế · ' + K.fmtDate(data.asOf) + '</span>' +
       '<div class="kz-big"><b>' + int(t.ton) + '</b></div><div class="kz-ledger-sub"><span>Tỉ lệ tồn <b>' + pct(t.backlogRate, 2) + '</b> <small>(mục tiêu ≤ 10% · ' + int(t.ytd) + ' hồ sơ phát sinh từ đầu năm)</small></span>' + room +
       '<span class="kz-vs">Hạn xử lý nội bộ <b>' + data.limit + ' ngày</b></span></div></div>' +
       '<div class="kz-kpis">' +
@@ -142,7 +142,7 @@ const BacklogWatchPage = (() => {
   }
 
   const SHELL = () => '<div data-bw-msg></div><div data-bw-hero></div><div data-bw-board></div>' +
-    '<section class="sf-library bw-list"><div class="sf-library-bar"><div class="sf-sources" role="group" aria-label="Mức cảnh báo" data-bw-tabs></div><span class="sf-count" data-bw-count></span></div>' +
+    '<section class="sf-library bw-list"><div class="sf-library-heading bw-list-heading"><div><span class="sf-eyebrow">CHI TIẾT HỒ SƠ</span><h2>Danh sách cần theo dõi</h2><p>Lọc theo mức cảnh báo, trạng thái và thời gian xử lý.</p></div></div><div class="sf-library-bar"><div class="sf-sources" role="group" aria-label="Mức cảnh báo" data-bw-tabs></div><span class="sf-count" data-bw-count></span></div>' +
     '<div class="sf-library-filters"><div class="sf-controls">' +
     '<label class="sf-search">' + icon('search') + '<input type="search" data-bw-q placeholder="Tìm theo số hồ sơ…" autocomplete="off" aria-label="Tìm theo số hồ sơ"></label>' +
     '<select data-bw-limit data-sf-select data-sf-label="Hạn xử lý" data-sf-description="Hồ sơ tồn quá số ngày này bị coi là quá hạn" data-sf-icon="clock">' + W.LIMITS.map(n => '<option value="' + n + '">Hạn xử lý: ' + n + ' ngày</option>').join('') + '</select>' +
