@@ -104,3 +104,31 @@ body:not(.light-mode) .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annua
   .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns { padding: 14px 16px; }
   .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__label { flex-basis: 100%; }
 }
+
+/* Tùy chỉnh bảng: nhóm lựa chọn rõ trạng thái và dễ thao tác. */
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns { gap:0; padding:0 24px; background:var(--ton-paper); }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__group { display:flex; align-items:center; gap:14px; min-height:68px; padding:14px 0; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__group + .annual-claims-columns__group { border-top:1px solid var(--ton-line); }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__label { display:grid; gap:3px; flex:0 0 145px; color:var(--ton-ink); font-size:12px; font-weight:750; letter-spacing:0; line-height:1.4; text-transform:none; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__label span { color:var(--ton-muted); font-size:10.5px; font-weight:500; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__options { display:flex; align-items:center; flex-wrap:wrap; gap:6px; min-width:0; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-chip { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:36px; padding:0 12px; border-radius:9px; color:var(--ton-muted); background:var(--ton-paper); font-size:11.5px; text-decoration:none; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-chip.is-on { border-color:color-mix(in srgb,var(--ton-gold) 42%,var(--ton-line)); background:var(--ton-gold-bg); color:var(--ton-ink); }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-check { display:grid; place-items:center; flex:0 0 15px; width:15px; height:15px; border:1px solid var(--ton-line); border-radius:5px; background:var(--ton-paper); color:transparent; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-check svg { width:11px; height:11px; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-chip.is-on .annual-col-check { border-color:var(--ton-gold); background:var(--ton-gold); color:var(--ton-paper); }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-chip.is-month { min-width:48px; gap:5px; padding:0 8px; font-variant-numeric:tabular-nums; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-chip.is-month .annual-col-check { flex-basis:13px; width:13px; height:13px; border-radius:4px; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-link { min-height:36px; margin-left:auto; padding:0 11px; border:1px solid var(--ton-line); border-radius:9px; background:var(--ton-paper); color:var(--ton-muted); font-size:11px; white-space:nowrap; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-link:hover { border-color:var(--ton-gold); background:var(--ton-gold-bg); color:var(--ton-ink); text-decoration:none; }
+@media (max-width:1000px) {
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__label { flex-basis:130px; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-link { margin-left:0; }
+}
+@media (max-width:720px) {
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns { padding:0 16px; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__group { gap:10px; padding:15px 0; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__label { flex-basis:100%; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__options { width:100%; }
+}
+@media (prefers-reduced-motion:reduce) { .annual-col-chip { transition:none !important; } }

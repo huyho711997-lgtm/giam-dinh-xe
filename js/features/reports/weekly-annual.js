@@ -361,11 +361,19 @@
       const monthWidth = subCols.reduce((sum, col) => sum + col.width, 0);
       const tableWidth = 205 + shownMonths.length * monthWidth + (prefs.summary ? 463 : 0);
       const tableCols = 1 + shownMonths.length * subCols.length + (prefs.summary ? 4 : 0);
-      const chip = (label, on, handler, extra = '') => `<button type="button" class="annual-col-chip${on ? ' is-on' : ''}${extra}" aria-pressed="${on}" onclick="${handler}">${label}</button>`;
+      const chip = (label, on, handler, extra = '', accessibleLabel = '') => `<button type="button" class="annual-col-chip${on ? ' is-on' : ''}${extra}" aria-pressed="${on}"${accessibleLabel ? ` aria-label="${accessibleLabel}"` : ''} onclick="${handler}"><span class="annual-col-check" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 8 3 3 6-6"/></svg></span><span>${label}</span></button>`;
       const columnPicker = `
-            <div class="annual-claims-columns" aria-label="Chọn cột hiển thị">
-              <div class="annual-claims-columns__group"><span class="annual-claims-columns__label">Cột mỗi tháng</span>${chip('VCX', prefs.vcx, "toggleAnnualColumn('vcx')", ' is-vcx')}${chip('TNDS', prefs.tnds, "toggleAnnualColumn('tnds')", ' is-tnds')}${chip('Tổng', prefs.total, "toggleAnnualColumn('total')")}${chip('Tổng năm &amp; BQ', prefs.summary, "toggleAnnualColumn('summary')")}</div>
-              <div class="annual-claims-columns__group"><span class="annual-claims-columns__label">Tháng</span>${monthNames.map((_, index) => chip(`T${index + 1}`, !prefs.hiddenMonths.includes(index), `toggleAnnualMonth(${index})`, ' is-month')).join('')}<button type="button" class="annual-col-link" onclick="setAnnualMonths('active')">Chỉ tháng có số liệu</button><button type="button" class="annual-col-link" onclick="resetAnnualColumns()">Hiện tất cả</button></div>
+            <div class="annual-claims-columns" aria-label="Tùy chỉnh bảng">
+              <div class="annual-claims-columns__group">
+                <div class="annual-claims-columns__label"><strong>Loại cột</strong><span>Chọn thông tin hiển thị</span></div>
+                <div class="annual-claims-columns__options" role="group" aria-label="Loại cột hiển thị">${chip('VCX', prefs.vcx, "toggleAnnualColumn('vcx')", ' is-vcx')}${chip('TNDS', prefs.tnds, "toggleAnnualColumn('tnds')", ' is-tnds')}${chip('Tổng', prefs.total, "toggleAnnualColumn('total')")}${chip('Tổng năm &amp; BQ', prefs.summary, "toggleAnnualColumn('summary')")}</div>
+                <button type="button" class="annual-col-link annual-col-reset" onclick="resetAnnualColumns()" title="Hiện tất cả cột và tháng">Khôi phục mặc định</button>
+              </div>
+              <div class="annual-claims-columns__group annual-claims-columns__group--months">
+                <div class="annual-claims-columns__label"><strong>Tháng</strong><span>Chọn tháng hiển thị</span></div>
+                <div class="annual-claims-columns__options annual-claims-columns__months" role="group" aria-label="Tháng hiển thị">${monthNames.map((name, index) => chip(`T${index + 1}`, !prefs.hiddenMonths.includes(index), `toggleAnnualMonth(${index})`, ' is-month', name)).join('')}</div>
+                <button type="button" class="annual-col-link annual-col-active" onclick="setAnnualMonths('active')">Chỉ tháng có số liệu</button>
+              </div>
             </div>`;
 
       return `
