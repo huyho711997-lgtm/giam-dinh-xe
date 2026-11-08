@@ -1599,10 +1599,12 @@
           .annual-claims-average__table .monthly-count { color: var(--text-main); font-variant-numeric: tabular-nums; }
           .annual-claims-average__table .monthly-vcx { color: #9a762f; }
           .annual-claims-average__table .monthly-tnds { color: #27856a; }
+          .annual-claims-average__table .monthly-total { color: var(--text-main); font-weight: 900; background: rgba(201,154,67,.075); }
           .annual-claims-average__table .annual-summary-col { background: rgba(201,154,67,.045); }
           .annual-claims-average__table thead .month-group { color: var(--text-main) !important; background: rgba(201,154,67,.075) !important; }
           .annual-claims-average__table thead .monthly-vcx-head { color: #9a762f; }
           .annual-claims-average__table thead .monthly-tnds-head { color: #27856a; }
+          .annual-claims-average__table thead .monthly-total-head { color: var(--text-main); }
           .annual-claims-average__table thead tr:nth-child(2) th:nth-last-child(-n+4) { white-space: normal; line-height: 1.25; padding-left: 5px; padding-right: 5px; }
           .annual-claims-average__table tfoot tr > td:first-child { position: sticky; left: 0; z-index: 8; min-width: 205px; background: var(--surface-strong) !important; box-shadow: 5px 0 9px rgba(15,23,42,.045); }
           .annual-claims-average__table tfoot td { background: linear-gradient(90deg, rgba(201,154,67,.07), rgba(16,185,129,.055)); color: var(--text-main); font-weight: 900; border-bottom: 0; }

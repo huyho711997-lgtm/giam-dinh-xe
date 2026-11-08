@@ -65,6 +65,9 @@
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-average__table tbody tr:hover td { background: var(--ton-gold-bg) !important; }
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-average__table :is(.monthly-vcx, .vcx-col, .monthly-vcx-head) { color: var(--annual-vcx) !important; }
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-average__table :is(.monthly-tnds, .tnds-col, .monthly-tnds-head) { color: var(--annual-tnds) !important; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-average__table :is(.monthly-total, .monthly-total-head) { color: var(--ton-ink) !important; font-weight: 850; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-average__table tbody td.monthly-total { background: var(--ton-gold-bg); border-right: 1px solid var(--ton-line); }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-average__table thead .monthly-total-head { background: var(--ton-gold-bg); }
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-average__table :is(.annual-summary-col, tfoot td) { background: var(--ton-gold-bg) !important; font-weight: 850; }
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-average__table tfoot td { border-bottom: 0; border-top: 1px solid var(--ton-line); color: var(--ton-ink); }
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-average__table tfoot td:first-child { background: var(--ton-gold-bg) !important; color: var(--ton-ink); }

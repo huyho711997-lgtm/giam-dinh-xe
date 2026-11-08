@@ -324,13 +324,13 @@
             </header>
             <div class="annual-claims-average__scroll">
               <table class="annual-claims-average__table">
-                <colgroup><col style="width:205px;">${monthNames.map(() => '<col style="width:52px;"><col style="width:52px;">').join('')}<col style="width:98px;"><col style="width:130px;"><col style="width:100px;"><col style="width:135px;"></colgroup>
+                <colgroup><col style="width:205px;">${monthNames.map(() => '<col style="width:52px;"><col style="width:52px;"><col style="width:58px;">').join('')}<col style="width:98px;"><col style="width:130px;"><col style="width:100px;"><col style="width:135px;"></colgroup>
                 <thead>
-                  <tr><th rowspan="2" style="width:205px;">Giám định viên</th>${monthNames.map(month => `<th colspan="2" class="month-group">${month}</th>`).join('')}<th colspan="4" class="month-group">Tổng năm & bình quân</th></tr>
-                  <tr>${monthNames.map(() => '<th class="monthly-vcx-head">VCX</th><th class="monthly-tnds-head">TNDS</th>').join('')}<th class="monthly-vcx-head">Tổng VCX</th><th class="monthly-vcx-head">BQ VCX/tháng</th><th class="monthly-tnds-head">Tổng TNDS</th><th class="monthly-tnds-head">BQ TNDS/tháng</th></tr>
+                  <tr><th rowspan="2" style="width:205px;">Giám định viên</th>${monthNames.map(month => `<th colspan="3" class="month-group">${month}</th>`).join('')}<th colspan="4" class="month-group">Tổng năm & bình quân</th></tr>
+                  <tr>${monthNames.map(() => '<th class="monthly-vcx-head">VCX</th><th class="monthly-tnds-head">TNDS</th><th class="monthly-total-head">Tổng</th>').join('')}<th class="monthly-vcx-head">Tổng VCX</th><th class="monthly-vcx-head">BQ VCX/tháng</th><th class="monthly-tnds-head">Tổng TNDS</th><th class="monthly-tnds-head">BQ TNDS/tháng</th></tr>
                 </thead>
-                <tbody>${rows.length ? rows.map(row => `<tr><td>${escapeHtmlOutput(row.name)}</td>${monthNames.map((_, monthIndex) => `<td class="monthly-count monthly-vcx">${row.types.VCX.months[monthIndex].toLocaleString('vi-VN')}</td><td class="monthly-count monthly-tnds">${row.types.TNDS.months[monthIndex].toLocaleString('vi-VN')}</td>`).join('')}<td class="annual-summary-col monthly-vcx">${row.types.VCX.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col average-value vcx-col">${row.types.VCX.average.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td><td class="annual-summary-col monthly-tnds">${row.types.TNDS.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col average-value tnds-col">${row.types.TNDS.average.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td></tr>`).join('') : `<tr><td colspan="29" class="annual-claims-empty">Chưa có dữ liệu theo bộ lọc hiện tại.</td></tr>`}</tbody>
-                ${rows.length ? `<tfoot><tr><td>Tổng cộng</td>${monthNames.map((_, monthIndex) => `<td class="monthly-count monthly-vcx">${rows.reduce((sum, row) => sum + row.types.VCX.months[monthIndex], 0).toLocaleString('vi-VN')}</td><td class="monthly-count monthly-tnds">${rows.reduce((sum, row) => sum + row.types.TNDS.months[monthIndex], 0).toLocaleString('vi-VN')}</td>`).join('')}<td class="annual-summary-col monthly-vcx">${typeTotals.VCX.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col">${typeTotals.VCX.average.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td><td class="annual-summary-col monthly-tnds">${typeTotals.TNDS.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col">${typeTotals.TNDS.average.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td></tr></tfoot>` : ''}
+                <tbody>${rows.length ? rows.map(row => `<tr><td>${escapeHtmlOutput(row.name)}</td>${monthNames.map((_, monthIndex) => `<td class="monthly-count monthly-vcx">${row.types.VCX.months[monthIndex].toLocaleString('vi-VN')}</td><td class="monthly-count monthly-tnds">${row.types.TNDS.months[monthIndex].toLocaleString('vi-VN')}</td><td class="monthly-count monthly-total">${row.months[monthIndex].toLocaleString('vi-VN')}</td>`).join('')}<td class="annual-summary-col monthly-vcx">${row.types.VCX.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col average-value vcx-col">${row.types.VCX.average.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td><td class="annual-summary-col monthly-tnds">${row.types.TNDS.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col average-value tnds-col">${row.types.TNDS.average.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td></tr>`).join('') : `<tr><td colspan="41" class="annual-claims-empty">Chưa có dữ liệu theo bộ lọc hiện tại.</td></tr>`}</tbody>
+                ${rows.length ? `<tfoot><tr><td>Tổng cộng</td>${monthNames.map((_, monthIndex) => `<td class="monthly-count monthly-vcx">${rows.reduce((sum, row) => sum + row.types.VCX.months[monthIndex], 0).toLocaleString('vi-VN')}</td><td class="monthly-count monthly-tnds">${rows.reduce((sum, row) => sum + row.types.TNDS.months[monthIndex], 0).toLocaleString('vi-VN')}</td><td class="monthly-count monthly-total">${totals[monthIndex].toLocaleString('vi-VN')}</td>`).join('')}<td class="annual-summary-col monthly-vcx">${typeTotals.VCX.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col">${typeTotals.VCX.average.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td><td class="annual-summary-col monthly-tnds">${typeTotals.TNDS.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col">${typeTotals.TNDS.average.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td></tr></tfoot>` : ''}
               </table>
             </div>
           </section>
@@ -344,7 +344,7 @@
       if (averageTableScroll) averageTableScroll.scrollLeft = 0;
       const canvas = document.getElementById('annualClaimsMonthlyChart');
       if (!canvas || typeof Chart === 'undefined') return;
-      const { rows } = getAnnualGdvClaimsData();
+      const { rows, totals } = getAnnualGdvClaimsData();
       if (annualClaimsChartInstance) {
         annualClaimsChartInstance.destroy();
         annualClaimsChartInstance = null;
@@ -361,19 +361,39 @@
         type: isLine ? 'line' : 'bar',
         data: {
           labels: monthLabels,
-          datasets: rows.map((row, index) => ({
-            label: row.name,
-            data: row.months,
-            borderColor: palette[index % palette.length],
-            backgroundColor: isLine ? palette[index % palette.length] : `${palette[index % palette.length]}cc`,
-            borderWidth: isLine ? 2.5 : 1,
-            borderRadius: isLine ? 0 : 6,
-            pointRadius: isLine ? 3.5 : 0,
-            pointHoverRadius: 5,
-            tension: .34,
-            fill: false,
-            maxBarThickness: 38
-          }))
+          datasets: [
+            ...rows.map((row, index) => ({
+              label: row.name,
+              data: row.months,
+              borderColor: palette[index % palette.length],
+              backgroundColor: isLine ? palette[index % palette.length] : `${palette[index % palette.length]}cc`,
+              borderWidth: isLine ? 2.5 : 1,
+              borderRadius: isLine ? 0 : 6,
+              pointRadius: isLine ? 3.5 : 0,
+              pointHoverRadius: 5,
+              tension: .34,
+              fill: false,
+              maxBarThickness: 38
+            })),
+            // Đường tổng toàn bộ giám định viên theo tháng: nét đứt, đậm, vẽ trên cùng (cả ở chế độ biểu đồ cột).
+            ...(rows.length > 1 ? [{
+              type: 'line',
+              label: 'Tổng',
+              data: totals,
+              borderColor: chartInk,
+              backgroundColor: chartPaper,
+              borderWidth: 3,
+              borderDash: [8, 5],
+              pointRadius: 4.5,
+              pointHoverRadius: 6,
+              pointBorderWidth: 2,
+              pointBackgroundColor: chartPaper,
+              pointBorderColor: chartInk,
+              tension: .34,
+              fill: false,
+              order: -1
+            }] : [])
+          ]
         },
         options: {
           responsive: true,
@@ -469,14 +489,15 @@
       const data = [['Giám định viên', ...monthNames, 'Tổng năm'], ...rows.map(row => [row.name, ...row.months, row.total]), ['Tổng cộng', ...totals, total]];
       const sheet = XLSX.utils.aoa_to_sheet(data);
       sheet['!cols'] = [{ wch: 30 }, ...monthNames.map(() => ({ wch: 13 })), { wch: 15 }];
-      const monthlyDetailHeaders = monthNames.flatMap(month => [`${month} - VCX`, `${month} - TNDS`]);
+      const monthlyDetailHeaders = monthNames.flatMap(month => [`${month} - VCX`, `${month} - TNDS`, `${month} - Tổng`]);
       const monthlyDetailTotals = monthNames.flatMap((_, monthIndex) => [
         rows.reduce((sum, row) => sum + row.types.VCX.months[monthIndex], 0),
-        rows.reduce((sum, row) => sum + row.types.TNDS.months[monthIndex], 0)
+        rows.reduce((sum, row) => sum + row.types.TNDS.months[monthIndex], 0),
+        totals[monthIndex]
       ]);
       const averageData = [
         ['Giám định viên', ...monthlyDetailHeaders, 'Tổng VCX', 'Bình quân VCX/tháng', 'Tổng TNDS', 'Bình quân TNDS/tháng'],
-        ...rows.map(row => [row.name, ...monthNames.flatMap((_, monthIndex) => [row.types.VCX.months[monthIndex], row.types.TNDS.months[monthIndex]]), row.types.VCX.total, Number(row.types.VCX.average.toFixed(1)), row.types.TNDS.total, Number(row.types.TNDS.average.toFixed(1))]),
+        ...rows.map(row => [row.name, ...monthNames.flatMap((_, monthIndex) => [row.types.VCX.months[monthIndex], row.types.TNDS.months[monthIndex], row.months[monthIndex]]), row.types.VCX.total, Number(row.types.VCX.average.toFixed(1)), row.types.TNDS.total, Number(row.types.TNDS.average.toFixed(1))]),
         ['Tổng cộng', ...monthlyDetailTotals, typeTotals.VCX.total, Number(typeTotals.VCX.average.toFixed(1)), typeTotals.TNDS.total, Number(typeTotals.TNDS.average.toFixed(1))]
       ];
       const averageSheet = XLSX.utils.aoa_to_sheet(averageData);
