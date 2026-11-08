@@ -25,6 +25,20 @@ const RescueLocate = (() => {
     return leafletPromise;
   }
 
+  // Vị trí khách gửi qua Zalo/Messenger: link Google Maps, toạ độ, độ-phút-giây hoặc cả đoạn tin nhắn (đọc bằng FieldLocationParse).
+  // Trả về kết quả của FieldLocationParse.parse, hoặc null nếu không giống vị trí.
+  // Địa chỉ như "Số 12, 108 Lê Duẩn" dễ bị nhầm thành cặp toạ độ: toạ độ lẫn trong chữ chỉ nhận khi cả hai số đều có ≥ 3 chữ số thập phân.
+  const BARE_COORDS = /^\s*[-+\d.,;\s]+$/, PRECISE_PAIR = /-?\d{1,3}\.\d{3,}\D+-?\d{1,3}\.\d{3,}/;
+  function readShared(text) {
+    if (typeof FieldLocationParse === 'undefined') return null;
+    const input = String(text ?? ''), result = FieldLocationParse.parse(input);
+    if (!result) return null;
+    if (result.source === 'coords' && !BARE_COORDS.test(input) && !PRECISE_PAIR.test(input)) return null;
+    return result;
+  }
+  const SHORT_LINK_MSG = 'Đây là link rút gọn của Google Maps nên không đọc được toạ độ. Hãy mở link, rồi sao chép địa chỉ đầy đủ trên thanh địa chỉ (hoặc bấm giữ vào ghim để lấy toạ độ) và dán lại.';
+  const toast = (text, type) => { if (typeof triggerToast === 'function') triggerToast(text,type); };
+
   function geoGuard() {
     if (!navigator.geolocation) return 'Thiết bị không hỗ trợ định vị. Hãy nhập địa chỉ hoặc chạm bản đồ.';
     if (window.isSecureContext === false) return 'Định vị chỉ hoạt động khi mở trang bằng HTTPS. Hãy nhập địa chỉ hoặc chạm bản đồ.';
@@ -46,7 +60,7 @@ const RescueLocate = (() => {
     const markers = {scene:null,garage:null}, searchToken = {scene:0,garage:0};
 
     root.innerHTML = '<div class="rl-points">' +
-      searchCard('scene','Vị trí hiện trường','a') + '<button type="button" class="sf-button rl-wide" data-rl-gps>' + icon('pin') + 'Dùng vị trí hiện tại</button>' + searchBox('scene','Hoặc tìm theo địa chỉ','Địa chỉ hoặc toạ độ') + feedback('scene') + '</section>' +
+      searchCard('scene','Vị trí hiện trường','a') + '<button type="button" class="sf-button rl-wide rl-paste is-main" data-rl-paste="scene" title="Sao chép vị trí khách gửi qua Zalo rồi bấm nút này (hoặc nhấn Ctrl+V)">' + icon('clipboard') + 'Dán định vị từ Zalo</button><p class="rc-hint">Khách gửi vị trí qua Zalo: sao chép link Google Maps / toạ độ / cả tin nhắn rồi bấm nút trên hoặc nhấn Ctrl+V.</p><button type="button" class="sf-button rl-wide" data-rl-gps>' + icon('pin') + 'Dùng vị trí hiện tại</button>' + searchBox('scene','Hoặc tìm theo địa chỉ','Địa chỉ, toạ độ hoặc link Google Maps') + feedback('scene') + '</section>' +
       searchCard('garage','Gara (điểm đến)','b') +
       '<label class="rc-field"><span class="rc-label">Chọn gara</span><select data-rl-garage data-sf-select data-sf-label="Gara" data-sf-description="Chọn gara trong danh sách dùng chung" data-sf-icon="pin"></select></label>' +
       '<p class="rc-hint" data-rl-gnote hidden></p><div class="rl-row"><button type="button" class="sf-button" data-rl-nearest>' + icon('arrow') + 'Chọn gara gần nhất</button><button type="button" class="rl-link" data-rl-manage>Quản lý danh sách gara →</button></div>' +
@@ -118,7 +132,7 @@ const RescueLocate = (() => {
       if (key === 'garage' && point.source !== 'list') { state.garageSel = OTHER; syncGarageSelect(); }
       renderInfo(key); updateMarker(key);
       if (!point.label) reverse(key,point);
-      if (['gps','search','list'].includes(point.source) && map && !(state.scene && state.garage)) map.setView([point.lat,point.lon],Math.max(map.getZoom(),15));
+      if (['gps','search','list','shared'].includes(point.source) && map && !(state.scene && state.garage)) map.setView([point.lat,point.lon],Math.max(map.getZoom(),15));
       if (key === 'scene') { renderGarageOptions(); if (!state.garage) setTarget('garage'); }
       if (!point.keepRoute) { state.route = null; scheduleRoute(); }
       return true;
@@ -184,8 +198,31 @@ const RescueLocate = (() => {
       list.hidden = false;
       list.innerHTML = (items || []).map((item, index) => '<li><button type="button" data-i="' + index + '">' + esc(item.label) + '</button></li>').join('') + (note ? '<li class="rl-empty">' + esc(note) + '</li>' : '');
     }
+    // Đặt thẳng điểm từ vị trí khách gửi (không cần tìm địa chỉ). Trả về true nếu nội dung được nhận diện là vị trí (kể cả khi chỉ báo lỗi).
+    function applyShared(key, text) {
+      const result = readShared(text);
+      if (!result) return false;
+      const p = part(key); showList(key,[]); setMsg(key,'');
+      if (result.point) {
+        if (setPoint(key,{lat:result.point.lat,lon:result.point.lon,source:'shared'})) {
+          p.q.value = '';
+          if (key === 'scene') setTarget('scene');
+          toast('Đã nhận vị trí khách gửi cho điểm ' + (key === 'scene' ? 'A · Hiện trường' : 'B · Gara') + '.','success');
+        } else setMsg(key,'Toạ độ nhận được không hợp lệ hoặc nằm ngoài vùng hỗ trợ.');
+      } else if (result.shortLink) setMsg(key,SHORT_LINK_MSG);
+      else if (result.note) setMsg(key,result.note);
+      return true;
+    }
+    async function pasteFromClipboard(key) {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (!String(text).trim()) return setMsg(key,'Bộ nhớ tạm đang trống. Hãy sao chép vị trí khách gửi trong Zalo trước.');
+        if (!applyShared(key,text)) setMsg(key,'Nội dung vừa sao chép không giống một vị trí (link Google Maps hoặc toạ độ). Hãy kiểm tra lại tin nhắn khách gửi.');
+      } catch (_) { setMsg(key,'Trình duyệt chưa cho đọc bộ nhớ tạm. Hãy bấm vào ô địa chỉ rồi nhấn Ctrl+V.'); }
+    }
     async function runSearch(key) {
       const p = part(key); setMsg(key,'');
+      if (applyShared(key,p.q.value)) return;
       const token = ++searchToken[key]; p.btn.disabled = true;
       const pick = item => { showList(key,[]); setPoint(key,{lat:item.lat,lon:item.lon,label:item.label,source:'search'}); };
       if (p.q.value.trim().length >= 3 && !RescueGeo.COORD_RE.test(p.q.value)) showList(key,[],'Đang tìm…',pick);
@@ -201,6 +238,16 @@ const RescueLocate = (() => {
       p.btn.addEventListener('click',() => runSearch(key));
       p.q.addEventListener('keydown',event => { if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); runSearch(key); } });
     }
+    q('[data-rl-paste]').addEventListener('click',event => pasteFromClipboard(event.currentTarget.dataset.rlPaste));
+    // Ctrl+V: dán vào ô địa chỉ (theo ô đó) hoặc bất kỳ chỗ nào trong khối định vị (mặc định điểm A) → tự nhận vị trí; nội dung khác vẫn dán bình thường.
+    root.addEventListener('paste',event => {
+      const text = event.clipboardData?.getData('text') || '';
+      const field = event.target.closest?.('[data-rl-q]');
+      if (!field && event.target.closest?.('input, textarea, select')) return;
+      if (!readShared(text)) return;
+      event.preventDefault();
+      applyShared(field ? field.dataset.rlQ : 'scene',text);
+    });
     ui.gps.addEventListener('click',() => {
       const blocked = geoGuard(); if (blocked) return setMsg('scene',blocked);
       setMsg('scene',''); ui.gps.disabled = true;
@@ -270,5 +317,5 @@ const RescueLocate = (() => {
     };
   }
 
-  return {create};
+  return {create, readShared};
 })();

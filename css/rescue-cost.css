@@ -253,3 +253,8 @@
   .rc-block-body>[data-rc-block="tow"]>.rc-seg { max-width:none; }
   .rc-result { padding:16px; }
 }
+
+/* Dán định vị khách gửi qua Zalo */
+.rl-paste svg { color:var(--sf-gold); }
+.rl-paste.is-main { border-color:color-mix(in srgb,var(--sf-gold) 45%,var(--sf-line)); background:linear-gradient(135deg,var(--sf-gold-bg),var(--sf-paper)); color:var(--sf-gold); }
+.rl-paste.is-main:hover { border-color:var(--sf-gold); box-shadow:0 4px 12px rgba(173,118,29,.16); }
