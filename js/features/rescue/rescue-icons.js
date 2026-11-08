@@ -26,6 +26,8 @@ const RescueIcons = (() => {
     edit:'<path d="m5 15.8-.8 4 4-.8L19 8.2 15.8 5z"/><path d="m13.8 7 3.2 3.2M4.2 20h15.6"/>',
     upload:'<path d="M12 15.5V4m-4 4 4-4 4 4M4.5 15v3a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3"/>',
     file:'<path d="M6 3.5h8l4 4V20H6z"/><path d="M14 3.5V8h4M9 12h6M9 15h6"/>',
+    pause:'<circle cx="12" cy="12" r="8.5"/><path d="M10 9v6m4-6v6"/>',
+    play:'<circle cx="12" cy="12" r="8.5"/><path d="m10.5 8.8 5 3.2-5 3.2z"/>',
     eye:'<path d="M3 12s3.3-6 9-6 9 6 9 6-3.3 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="2.6"/>',
     trash:'<path d="M4.5 6.5h15M9 6.5V4h6v2.5M7 6.5l.6 12a1.6 1.6 0 0 0 1.6 1.5h5.6a1.6 1.6 0 0 0 1.6-1.5l.6-12M10 10v6m4-6v6"/>'
   };
