@@ -145,6 +145,7 @@
           if (typeof schedulePendingClaimsRender === 'function') schedulePendingClaimsRender(); else executeUIRenderPendingClaims();
         }
         if (activeDashboardTab === 'gdv_report' && activeGdvReportView === 'kpi_zone' && typeof KpiZonePage !== 'undefined') KpiZonePage.refresh(); // KPI Zone theo hồ sơ mới nhất
+        if (activeDashboardTab === 'gdv_report' && activeGdvReportView === 'backlog_watch' && typeof BacklogWatchPage !== 'undefined') BacklogWatchPage.refresh(); // Hồ sơ tồn cần xử lý theo hồ sơ mới nhất
         if (activeDashboardTab === 'claim_cancellation') {
           renderClaimCancellationPage();
         }
