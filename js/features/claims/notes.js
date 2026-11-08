@@ -36,7 +36,8 @@ const PendingNotesPage = (() => {
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', alert: '<circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/>',
     list: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h8"/>',
     cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/>', left: '<path d="m15 18-6-6 6-6"/>', right: '<path d="m9 18 6-6-6-6"/>',
-    close: '<path d="M18 6 6 18M6 6l12 12"/>', pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>'
+    close: '<path d="M18 6 6 18M6 6l12 12"/>', pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+    car: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>'
   };
   const svg = (name, size = 16) => '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (I[name] || '') + '</svg>';
   const esc = v => (typeof escapeHtmlOutput === 'function' ? escapeHtmlOutput(v) : String(v == null ? '' : v).replace(/[&<>"']/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch])));
@@ -58,6 +59,10 @@ const PendingNotesPage = (() => {
   const gdvName = c => String(c.gdvHo || c.canBoXuLy || '').trim() || 'Chưa rõ';
   const identifierOf = c => String(c.bienSo || c.soHoSoBoiThuong || c.id || '').replace(/[^a-zA-Z0-9_-]/g, '').toUpperCase();
   const statusInfo = key => (typeof PENDING_STATUS_MAP !== 'undefined' && PENDING_STATUS_MAP[key]) || {label: key, bg: 'rgba(148,163,184,.14)', color: '#64748b', border: 'rgba(148,163,184,.35)'};
+  const initialsOf = name => {
+    if (typeof deriveInitials === 'function') return deriveInitials(name);
+    return String(name || 'GD').split(/\s+/).filter(Boolean).slice(0, 2).map(p => p.charAt(0)).join('').toUpperCase() || 'GD';
+  };
   const median = list => { if (!list.length) return null; const s = [...list].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2); };
 
   function todaySerial() {
@@ -204,19 +209,26 @@ const PendingNotesPage = (() => {
   }
   function renderRow(r, index) {
     const c = r.c, st = statusInfo(r.status), last = r.last;
+    const isUnknown = !r.gdv || r.gdv === 'Chưa rõ';
+    const carName = ((c.hangXe || '') + ' ' + (c.hieuXe || '')).trim() || '—';
     const note = last
-      ? '<div class="pn-note-text">' + esc(last.content) + '</div><div class="pn-note-meta"><b>' + esc(last.author || '—') + '</b><span>·</span><span title="' + attr(viDateTime(Number(last.timestamp))) + '">' + ago(Number(last.timestamp), Date.now()) + '</span>' + dueChip(r) + '</div>'
-      : '<div class="pn-note-empty"><i></i>Chưa có ghi chú</div>';
+      ? '<div class="pn-note-bubble"><div class="pn-note-text">' + esc(last.content) + '</div><div class="pn-note-meta"><span class="pn-note-author">' + esc(last.author || '—') + '</span><span class="pn-note-sep">·</span><span class="pn-note-time" title="' + attr(viDateTime(Number(last.timestamp))) + '">' + ago(Number(last.timestamp), Date.now()) + '</span>' + dueChip(r) + '</div></div>'
+      : '<div class="pn-note-empty"><span class="pn-empty-dot"></span><span>Chưa có ghi chú</span></div>';
     return '<tr class="pn-row' + (r.stale ? ' is-stale' : '') + '" data-pn-open="' + attr(r.id) + '" tabindex="0">' +
-      '<td class="pn-c-stt">' + String(index + 1).padStart(2, '0') + '</td>' +
-      '<td><div class="pn-plate">' + esc(c.bienSo || '—') + '</div><div class="pn-code-row"><span class="pn-code">' + esc(c.soHoSoBoiThuong || '—') + '</span>' + copyBtn(c.soHoSoBoiThuong) + '</div><div class="pn-owner" title="' + attr(r.owner) + '">' + esc(r.owner || '—') + '</div></td>' +
-      '<td><span class="pn-status" style="background:' + st.bg + ';color:' + st.color + ';border-color:' + st.border + '">' + esc(st.label) + '</span><div class="pn-sub">Mở ' + esc(r.openText || '—') + '</div></td>' +
-      '<td>' + ageBadge(r) + '</td>' +
-      '<td><div class="pn-car" title="' + attr((c.hangXe || '') + ' ' + (c.hieuXe || '')) + '">' + esc((c.hangXe || '—') + ' ' + (c.hieuXe || '')) + '</div><div class="pn-sub" title="' + attr(c.donViCapDon || '') + '">' + esc(c.donViCapDon || '—') + '</div><div class="pn-tags">' + tags(c) + '</div></td>' +
-      '<td><div class="pn-damage">' + esc(c.moTaTonThat || c.nguyenNhan || '—') + '</div></td>' +
-      '<td class="pn-gdv-cell">' + esc(r.gdv === 'Chưa rõ' ? '—' : r.gdv) + '</td>' +
+      '<td class="pn-c-stt"><span class="pn-stt-badge">' + String(index + 1).padStart(2, '0') + '</span></td>' +
+      '<td class="pn-c-record"><div class="pn-plate-pill"><span class="pn-plate-icon">' + svg('car', 12) + '</span><b class="pn-plate-num">' + esc(c.bienSo || '—') + '</b></div>' +
+      '<div class="pn-code-row"><span class="pn-code" title="' + attr(c.soHoSoBoiThuong || '') + '">' + esc(c.soHoSoBoiThuong || '—') + '</span>' + copyBtn(c.soHoSoBoiThuong) + '</div>' +
+      '<div class="pn-owner" title="' + attr(r.owner) + '">' + svg('user', 11) + '<span>' + esc(r.owner || '—') + '</span></div></td>' +
+      '<td class="pn-c-status"><span class="pn-status" style="background:' + st.bg + ';color:' + st.color + ';border-color:' + st.border + '"><i class="pn-status-dot"></i>' + esc(st.label) + '</span><div class="pn-open-date">' + svg('cal', 11) + '<span>Mở ' + esc(r.openText || '—') + '</span></div></td>' +
+      '<td class="pn-c-age">' + ageBadge(r) + '</td>' +
+      '<td class="pn-c-car"><div class="pn-car-title" title="' + attr(carName) + '">' + esc(carName) + '</div><div class="pn-branch" title="' + attr(c.donViCapDon || '') + '">' + esc(c.donViCapDon || '—') + '</div><div class="pn-tags">' + tags(c) + '</div></td>' +
+      '<td class="pn-c-damage"><div class="pn-damage" title="' + attr(c.moTaTonThat || c.nguyenNhan || '') + '">' + esc(c.moTaTonThat || c.nguyenNhan || '—') + '</div></td>' +
+      '<td class="pn-c-gdv"><div class="pn-gdv-wrap"><span class="pn-gdv-avatar' + (isUnknown ? ' is-empty' : '') + '">' + esc(isUnknown ? '?' : initialsOf(r.gdv)) + '</span><span class="pn-gdv-name-text' + (isUnknown ? ' is-empty' : '') + '">' + esc(isUnknown ? 'Chưa phân công' : r.gdv) + '</span></div></td>' +
       '<td class="pn-c-note">' + note + '</td>' +
-      '<td class="pn-c-act"><div class="pn-act-group"><button type="button" class="pn-detail-icon" data-pn-detail="' + attr(r.id) + '" title="Xem / chỉnh sửa chi tiết hồ sơ bồi thường" aria-label="Chi tiết hồ sơ ' + attr(c.soHoSoBoiThuong || c.bienSo || '') + '">' + svg('detail', 15) + '</button><button type="button" class="pending-action-btn' + (r.stale ? ' pending-action-btn--import' : '') + '" data-pn-open-btn="' + attr(r.id) + '">' + svg('note', 14) + '<span>' + (last ? 'Cập nhật' : 'Ghi chú') + '</span>' + (r.history.length ? '<em>' + r.history.length + '</em>' : '') + '</button></div></td></tr>';
+      '<td class="pn-c-act"><div class="pn-act-group">' +
+      '<button type="button" class="pn-row-btn pn-row-btn--detail" data-pn-detail="' + attr(r.id) + '" title="Xem / chỉnh sửa chi tiết hồ sơ bồi thường" aria-label="Chi tiết hồ sơ ' + attr(c.soHoSoBoiThuong || c.bienSo || '') + '">' + svg('detail', 14) + '</button>' +
+      '<button type="button" class="pn-row-btn pn-row-btn--note' + (r.stale ? ' pn-row-btn--stale' : ' pn-row-btn--has-note') + '" data-pn-open-btn="' + attr(r.id) + '" data-pn-open="' + attr(r.id) + '" title="' + (last ? 'Cập nhật ghi chú tiến độ' : 'Thêm ghi chú tiến độ') + '">' + svg('note', 13) + '<span>' + (last ? 'Cập nhật' : 'Ghi chú') + '</span>' + (r.history.length ? '<em class="pn-note-badge">' + r.history.length + '</em>' : '') + '</button>' +
+      '</div></td></tr>';
   }
   function pageButtons(page, pages) {
     const out = [], push = n => out.push('<button type="button" class="pending-page-btn' + (n === page ? ' is-active' : '') + '" data-pn-page="' + n + '"' + (n === page ? ' aria-current="page"' : '') + '>' + n + '</button>');
@@ -398,11 +410,11 @@ const PendingNotesPage = (() => {
       '<div class="pending-action-group" role="group" aria-label="Thao tác">' + btn('data-pn-refresh title="Tính lại theo dữ liệu mới nhất"', 'reset', 'Làm mới') + btn('data-pn-export', 'xls', 'Xuất Excel', 'pending-action-btn--import') + '</div></header>' +
       '<div class="claims-metrics-grid pn-metrics" id="pnSummary" aria-label="Tổng quan hồ sơ tồn"></div>' +
       '<div class="pending-register-panel pn-insight"><div class="pn-col" id="pnAges"></div><div class="pn-col" id="pnGdvs"></div></div>' +
-      '<div class="pending-register-panel pn-list"><div class="pending-register-topbar"><div class="pending-register-header"><div class="pn-list-title"><span class="pn-eyebrow">THEO DÕI CHI TIẾT</span><h3>Danh sách hồ sơ</h3></div><div class="pending-filter-summary" aria-live="polite"><span class="pending-filter-result-count" id="pnCount"></span></div></div><div class="pending-pagination" id="pnPager"></div></div>' +
+      '<div class="pending-register-panel pn-list"><div class="pending-register-topbar"><div class="pending-register-header"><div class="pn-list-title"><span class="pn-eyebrow">THEO DÕI TIẾN ĐỘ</span><h3>Danh sách hồ sơ tồn</h3></div><div class="pending-filter-summary" aria-live="polite"><span class="pending-filter-result-count" id="pnCount"></span></div></div><div class="pending-pagination" id="pnPager"></div></div>' +
       '<div class="pending-filter-toolbar"><div class="pending-filter-search"><span class="pending-filter-search__icon" aria-hidden="true">' + svg('search', 16) + '</span><input type="search" id="pnSearch" class="pending-filter-search__input" placeholder="Biển số, số HSBT, chủ xe, GĐV hoặc tổn thất…" autocomplete="off" aria-label="Tìm hồ sơ tồn"></div>' +
       '<div class="pending-filter-controls" id="pnFilters"></div><button type="button" class="pending-filter-reset" data-pn-reset title="Đặt lại toàn bộ bộ lọc" aria-label="Đặt lại bộ lọc">' + svg('reset', 16) + '</button></div>' +
       '<div class="pn-chips" id="pnChips" role="group" aria-label="Lọc nhanh"></div>' +
-      '<div class="table-container pending-register-table"><table class="p-table pn-table"><thead><tr><th class="pn-c-stt">#</th><th>Hồ sơ</th><th>Trạng thái</th><th>Tuổi tồn</th><th>Xe &amp; đơn vị cấp</th><th>Nội dung tổn thất</th><th>Giám định viên</th><th>Tiến độ gần nhất</th><th></th></tr></thead><tbody id="pnBody"></tbody></table></div></div>' +
+      '<div class="table-container pending-register-table"><table class="p-table pn-table"><thead><tr><th class="pn-c-stt">#</th><th class="pn-c-record">Hồ sơ</th><th class="pn-c-status">Trạng thái</th><th class="pn-c-age">Tuổi tồn</th><th class="pn-c-car">Xe &amp; đơn vị cấp</th><th class="pn-c-damage">Nội dung tổn thất</th><th class="pn-c-gdv">Giám định viên</th><th class="pn-c-note">Tiến độ gần nhất</th><th class="pn-c-act">Thao tác</th></tr></thead><tbody id="pnBody"></tbody></table></div></div>' +
       '<div class="pn-modal" id="pnModal" hidden role="dialog" aria-modal="true" aria-labelledby="pnModalTitle"><div class="pn-dialog"><header class="pn-mh"><span class="pn-mh-emblem" aria-hidden="true">' + svg('note', 22) + '</span><div class="pn-mh-main"><span class="pw-eyebrow">Tiến độ hồ sơ</span><h3 id="pnModalTitle"></h3><div class="pn-mh-code" id="pnModalCode"></div><div class="pn-modal-meta" id="pnModalMeta"></div></div><div class="pn-mh-actions"><button type="button" class="pn-detail-link" data-pn-detail title="Mở chi tiết hồ sơ bồi thường">' + svg('detail', 15) + '<span>Chi tiết hồ sơ</span><em aria-hidden="true">›</em></button><button type="button" class="pn-x" data-pn-close aria-label="Đóng">' + svg('close', 18) + '</button></div></header>' +
       '<div class="pn-facts" id="pnModalFacts"></div>' +
       '<div class="pn-dialog-body"><div class="pn-h-title">Lịch sử ghi chú <span id="pnHistoryCount">0</span></div><ul class="pn-history" id="pnHistory"></ul>' +
