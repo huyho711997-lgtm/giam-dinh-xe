@@ -87,3 +87,20 @@ body:not(.light-mode) .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annua
   .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-chart-toggle { align-self: flex-end; }
   .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-average__formula { max-width: 100%; white-space: normal; }
 }
+
+/* Bộ chọn cột của bảng bình quân theo giám định viên. */
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns { display: grid; gap: 10px; padding: 14px 24px; border-bottom: 1px solid var(--ton-line); background: var(--ton-soft); }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__label { flex: 0 0 96px; color: var(--ton-muted); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-chip { min-height: 30px; padding: 4px 12px; border: 1px solid var(--ton-line); border-radius: 999px; background: var(--ton-paper); color: var(--ton-muted); font: inherit; font-size: 11px; font-weight: 750; cursor: pointer; text-decoration: line-through; text-decoration-color: transparent; transition: background .15s ease, color .15s ease, border-color .15s ease; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-chip.is-month { min-width: 40px; padding: 4px 8px; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-chip:hover { border-color: var(--ton-gold); color: var(--ton-ink); }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-chip.is-on { border-color: var(--ton-action); background: var(--ton-action); color: var(--ton-action-text); }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-chip:focus-visible, .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-link:focus-visible { outline: 2px solid var(--ton-gold); outline-offset: 2px; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-link { margin-left: 4px; padding: 4px 8px; border: 0; background: transparent; color: var(--ton-gold); font: inherit; font-size: 11px; font-weight: 750; cursor: pointer; }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-col-link:hover { text-decoration: underline; }
+.annual-claims-report--export .annual-claims-columns { display: none !important; }
+@media (max-width: 720px) {
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns { padding: 14px 16px; }
+  .gdv-report-premium-shell:has(#gdvReportHeroBanner) #annualClaimsReportCard .annual-claims-columns__label { flex-basis: 100%; }
+}

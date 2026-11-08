@@ -284,11 +284,89 @@
     }
 
 
+    // Cột hiển thị của bảng "Bình quân hồ sơ theo giám định viên": ẩn/hiện theo nhóm (VCX, TNDS, Tổng, Tổng năm & BQ) và theo tháng.
+    const ANNUAL_COLS_KEY = 'annualClaimsColumns:v1';
+    let annualClaimsColumnPrefs = null;
+    function getAnnualColumnPrefs() {
+      if (annualClaimsColumnPrefs) return annualClaimsColumnPrefs;
+      const prefs = { vcx: true, tnds: true, total: true, summary: true, hiddenMonths: [] };
+      try {
+        const saved = JSON.parse(localStorage.getItem(ANNUAL_COLS_KEY) || 'null');
+        if (saved && typeof saved === 'object') {
+          ['vcx', 'tnds', 'total', 'summary'].forEach(key => { if (typeof saved[key] === 'boolean') prefs[key] = saved[key]; });
+          if (Array.isArray(saved.hiddenMonths)) prefs.hiddenMonths = [...new Set(saved.hiddenMonths.filter(m => Number.isInteger(m) && m >= 0 && m < 12))];
+        }
+      } catch (error) { /* localStorage không dùng được: dùng mặc định */ }
+      // Phải còn ít nhất một nhóm cột tháng và một tháng.
+      if (!prefs.vcx && !prefs.tnds && !prefs.total) prefs.vcx = prefs.tnds = prefs.total = true;
+      if (prefs.hiddenMonths.length >= 12) prefs.hiddenMonths = [];
+      annualClaimsColumnPrefs = prefs;
+      return prefs;
+    }
+    function saveAnnualColumnPrefs() {
+      try { localStorage.setItem(ANNUAL_COLS_KEY, JSON.stringify(getAnnualColumnPrefs())); } catch (error) { /* bỏ qua */ }
+    }
+    function toggleAnnualColumn(key) {
+      const prefs = getAnnualColumnPrefs();
+      if (key === 'summary') prefs.summary = !prefs.summary;
+      else if (['vcx', 'tnds', 'total'].includes(key)) {
+        if (prefs[key] && ['vcx', 'tnds', 'total'].filter(k => prefs[k]).length === 1) { triggerToast('Cần giữ lại ít nhất một cột trong mỗi tháng.', 'warning'); return; }
+        prefs[key] = !prefs[key];
+      }
+      saveAnnualColumnPrefs();
+      renderGdvMonthlyReportPage();
+    }
+    function toggleAnnualMonth(monthIndex) {
+      const prefs = getAnnualColumnPrefs(), at = prefs.hiddenMonths.indexOf(monthIndex);
+      if (at >= 0) prefs.hiddenMonths.splice(at, 1);
+      else {
+        if (prefs.hiddenMonths.length >= 11) { triggerToast('Cần giữ lại ít nhất một tháng.', 'warning'); return; }
+        prefs.hiddenMonths.push(monthIndex);
+      }
+      saveAnnualColumnPrefs();
+      renderGdvMonthlyReportPage();
+    }
+    // mode: 'all' | 'active' (chỉ giữ tháng có phát sinh)
+    function setAnnualMonths(mode) {
+      const prefs = getAnnualColumnPrefs();
+      if (mode === 'active') {
+        const { totals } = getAnnualGdvClaimsData();
+        const hidden = totals.map((count, index) => count > 0 ? -1 : index).filter(index => index >= 0);
+        prefs.hiddenMonths = hidden.length >= 12 ? [] : hidden;
+      } else prefs.hiddenMonths = [];
+      saveAnnualColumnPrefs();
+      renderGdvMonthlyReportPage();
+    }
+    function resetAnnualColumns() {
+      annualClaimsColumnPrefs = { vcx: true, tnds: true, total: true, summary: true, hiddenMonths: [] };
+      saveAnnualColumnPrefs();
+      renderGdvMonthlyReportPage();
+    }
+
     function renderAnnualGdvClaimsReportHtml() {
       const { year, rows, totals, total, typeTotals } = getAnnualGdvClaimsData();
       const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
       const activeMonth = totals.reduce((best, count, index) => count > totals[best] ? index : best, 0);
       const activeGdvCount = rows.filter(row => row.total > 0).length;
+      const prefs = getAnnualColumnPrefs();
+      const shownMonths = monthNames.map((_, index) => index).filter(index => !prefs.hiddenMonths.includes(index));
+      const fmtAvg = value => value.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      const sumBy = (type, monthIndex) => rows.reduce((sum, row) => sum + row.types[type].months[monthIndex], 0);
+      // Các cột con trong mỗi tháng đang được bật.
+      const subCols = [
+        { key: 'vcx', head: 'VCX', headCls: 'monthly-vcx-head', cls: 'monthly-vcx', width: 52, cell: (row, i) => row.types.VCX.months[i], foot: i => sumBy('VCX', i) },
+        { key: 'tnds', head: 'TNDS', headCls: 'monthly-tnds-head', cls: 'monthly-tnds', width: 52, cell: (row, i) => row.types.TNDS.months[i], foot: i => sumBy('TNDS', i) },
+        { key: 'total', head: 'Tổng', headCls: 'monthly-total-head', cls: 'monthly-total', width: 58, cell: (row, i) => row.months[i], foot: i => totals[i] }
+      ].filter(col => prefs[col.key]);
+      const monthWidth = subCols.reduce((sum, col) => sum + col.width, 0);
+      const tableWidth = 205 + shownMonths.length * monthWidth + (prefs.summary ? 463 : 0);
+      const tableCols = 1 + shownMonths.length * subCols.length + (prefs.summary ? 4 : 0);
+      const chip = (label, on, handler, extra = '') => `<button type="button" class="annual-col-chip${on ? ' is-on' : ''}${extra}" aria-pressed="${on}" onclick="${handler}">${label}</button>`;
+      const columnPicker = `
+            <div class="annual-claims-columns" aria-label="Chọn cột hiển thị">
+              <div class="annual-claims-columns__group"><span class="annual-claims-columns__label">Cột mỗi tháng</span>${chip('VCX', prefs.vcx, "toggleAnnualColumn('vcx')", ' is-vcx')}${chip('TNDS', prefs.tnds, "toggleAnnualColumn('tnds')", ' is-tnds')}${chip('Tổng', prefs.total, "toggleAnnualColumn('total')")}${chip('Tổng năm &amp; BQ', prefs.summary, "toggleAnnualColumn('summary')")}</div>
+              <div class="annual-claims-columns__group"><span class="annual-claims-columns__label">Tháng</span>${monthNames.map((_, index) => chip(`T${index + 1}`, !prefs.hiddenMonths.includes(index), `toggleAnnualMonth(${index})`, ' is-month')).join('')}<button type="button" class="annual-col-link" onclick="setAnnualMonths('active')">Chỉ tháng có số liệu</button><button type="button" class="annual-col-link" onclick="resetAnnualColumns()">Hiện tất cả</button></div>
+            </div>`;
 
       return `
         <section id="annualClaimsReportCard" class="annual-claims-report-card" aria-label="Báo cáo hồ sơ phát sinh năm ${year}">
@@ -322,15 +400,16 @@
               <div><span class="annual-claims-eyebrow">CHI TIẾT THEO NGHIỆP VỤ</span><h3>Bình quân hồ sơ theo giám định viên</h3><p>Tính riêng VCX và TNDS. Chỉ chia cho số tháng từng người có phát sinh loại hồ sơ tương ứng; tháng không phát sinh được loại khỏi mẫu số.</p></div>
               <span class="annual-claims-average__formula">Tổng hồ sơ ÷ tháng có phát sinh</span>
             </header>
+            ${columnPicker}
             <div class="annual-claims-average__scroll">
-              <table class="annual-claims-average__table">
-                <colgroup><col style="width:205px;">${monthNames.map(() => '<col style="width:52px;"><col style="width:52px;"><col style="width:58px;">').join('')}<col style="width:98px;"><col style="width:130px;"><col style="width:100px;"><col style="width:135px;"></colgroup>
+              <table class="annual-claims-average__table" style="min-width:${tableWidth}px;">
+                <colgroup><col style="width:205px;">${shownMonths.map(() => subCols.map(col => `<col style="width:${col.width}px;">`).join('')).join('')}${prefs.summary ? '<col style="width:98px;"><col style="width:130px;"><col style="width:100px;"><col style="width:135px;">' : ''}</colgroup>
                 <thead>
-                  <tr><th rowspan="2" style="width:205px;">Giám định viên</th>${monthNames.map(month => `<th colspan="3" class="month-group">${month}</th>`).join('')}<th colspan="4" class="month-group">Tổng năm & bình quân</th></tr>
-                  <tr>${monthNames.map(() => '<th class="monthly-vcx-head">VCX</th><th class="monthly-tnds-head">TNDS</th><th class="monthly-total-head">Tổng</th>').join('')}<th class="monthly-vcx-head">Tổng VCX</th><th class="monthly-vcx-head">BQ VCX/tháng</th><th class="monthly-tnds-head">Tổng TNDS</th><th class="monthly-tnds-head">BQ TNDS/tháng</th></tr>
+                  <tr><th rowspan="2" style="width:205px;">Giám định viên</th>${shownMonths.map(index => `<th colspan="${subCols.length}" class="month-group">${monthNames[index]}</th>`).join('')}${prefs.summary ? '<th colspan="4" class="month-group">Tổng năm & bình quân</th>' : ''}</tr>
+                  <tr>${shownMonths.map(() => subCols.map(col => `<th class="${col.headCls}">${col.head}</th>`).join('')).join('')}${prefs.summary ? '<th class="monthly-vcx-head">Tổng VCX</th><th class="monthly-vcx-head">BQ VCX/tháng</th><th class="monthly-tnds-head">Tổng TNDS</th><th class="monthly-tnds-head">BQ TNDS/tháng</th>' : ''}</tr>
                 </thead>
-                <tbody>${rows.length ? rows.map(row => `<tr><td>${escapeHtmlOutput(row.name)}</td>${monthNames.map((_, monthIndex) => `<td class="monthly-count monthly-vcx">${row.types.VCX.months[monthIndex].toLocaleString('vi-VN')}</td><td class="monthly-count monthly-tnds">${row.types.TNDS.months[monthIndex].toLocaleString('vi-VN')}</td><td class="monthly-count monthly-total">${row.months[monthIndex].toLocaleString('vi-VN')}</td>`).join('')}<td class="annual-summary-col monthly-vcx">${row.types.VCX.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col average-value vcx-col">${row.types.VCX.average.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td><td class="annual-summary-col monthly-tnds">${row.types.TNDS.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col average-value tnds-col">${row.types.TNDS.average.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td></tr>`).join('') : `<tr><td colspan="41" class="annual-claims-empty">Chưa có dữ liệu theo bộ lọc hiện tại.</td></tr>`}</tbody>
-                ${rows.length ? `<tfoot><tr><td>Tổng cộng</td>${monthNames.map((_, monthIndex) => `<td class="monthly-count monthly-vcx">${rows.reduce((sum, row) => sum + row.types.VCX.months[monthIndex], 0).toLocaleString('vi-VN')}</td><td class="monthly-count monthly-tnds">${rows.reduce((sum, row) => sum + row.types.TNDS.months[monthIndex], 0).toLocaleString('vi-VN')}</td><td class="monthly-count monthly-total">${totals[monthIndex].toLocaleString('vi-VN')}</td>`).join('')}<td class="annual-summary-col monthly-vcx">${typeTotals.VCX.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col">${typeTotals.VCX.average.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td><td class="annual-summary-col monthly-tnds">${typeTotals.TNDS.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col">${typeTotals.TNDS.average.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td></tr></tfoot>` : ''}
+                <tbody>${rows.length ? rows.map(row => `<tr><td>${escapeHtmlOutput(row.name)}</td>${shownMonths.map(index => subCols.map(col => `<td class="monthly-count ${col.cls}">${col.cell(row, index).toLocaleString('vi-VN')}</td>`).join('')).join('')}${prefs.summary ? `<td class="annual-summary-col monthly-vcx">${row.types.VCX.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col average-value vcx-col">${fmtAvg(row.types.VCX.average)}</td><td class="annual-summary-col monthly-tnds">${row.types.TNDS.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col average-value tnds-col">${fmtAvg(row.types.TNDS.average)}</td>` : ''}</tr>`).join('') : `<tr><td colspan="${tableCols}" class="annual-claims-empty">Chưa có dữ liệu theo bộ lọc hiện tại.</td></tr>`}</tbody>
+                ${rows.length ? `<tfoot><tr><td>Tổng cộng</td>${shownMonths.map(index => subCols.map(col => `<td class="monthly-count ${col.cls}">${col.foot(index).toLocaleString('vi-VN')}</td>`).join('')).join('')}${prefs.summary ? `<td class="annual-summary-col monthly-vcx">${typeTotals.VCX.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col">${fmtAvg(typeTotals.VCX.average)}</td><td class="annual-summary-col monthly-tnds">${typeTotals.TNDS.total.toLocaleString('vi-VN')}</td><td class="annual-summary-col">${fmtAvg(typeTotals.TNDS.average)}</td>` : ''}</tr></tfoot>` : ''}
               </table>
             </div>
           </section>
