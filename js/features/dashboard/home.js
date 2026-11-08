@@ -161,7 +161,7 @@
         o.showList && { tab:'list', icon:'list', title:'Hồ sơ giám định', desc:`${fmt(o.totalCases)} ca · link chụp ảnh cho Garage` },
         o.showPending && { tab:'pending', icon:'pending', title:'Hồ sơ bồi thường', desc:`${fmt(o.totalPendingClaims)} hồ sơ tồn · nhập Excel` },
         o.showPending && { tab:'pending_notes_tracker', icon:'tracker', title:'Tiến độ hồ sơ tồn', desc:'Ghi chú & nhắc việc theo hồ sơ' },
-        o.showCancellation && { tab:'claim_cancellation', icon:'cancel', title:'Đề xuất hủy hồ sơ', desc:'Lập phiếu & phê duyệt hủy', badge:'Mới' },
+        o.showCancellation && { tab:'claim_cancellation', icon:'cancel', title:'Đề xuất hủy hồ sơ', desc:'Lập phiếu & phê duyệt hủy' },
         o.showReport && { tab:'gdv_report', icon:'report', title:'Báo cáo & thống kê GĐV', desc:'Tuần · tháng · KPI bồi thường · Excel' },
         o.showCreate && { tab:'create', icon:'create', title:'Khởi tạo ca giám định', desc:'Cấp link cho Garage trong 30 giây' }
       ]},
@@ -169,8 +169,8 @@
         o.showAccountingReview && { tab:'accounting_claims', icon:'payment', title:'Hồ sơ thanh toán', desc:'Đối soát & duyệt tờ trình PASC' },
         o.showAccountingView && { tab:'accounting_transfer', icon:'transfer', title:'Chuyển hồ sơ kế toán', desc:`${fmt(o.totalTransfers)} đợt bàn giao chứng từ` },
         o.showFieldReimb && { tab:'field_reimbursements', icon:'field', title:'Chi phí hiện trường', desc:`${fmt(o.totalReimbs)} phiếu hoàn ứng` },
-        o.showRescue && { tab:'rescue_cost', icon:'rescue', title:'Chi phí cứu hộ', desc:'Tính kéo xe, cẩu xe & cấp phê duyệt', badge:'Mới' },
-        o.showContacts && { tab:'contacts', icon:'contacts', title:'Danh bạ nội bộ', desc:'Tra cứu SĐT, email nhân sự toàn hệ thống', badge:'Mới' },
+        o.showRescue && { tab:'rescue_cost', icon:'rescue', title:'Chi phí cứu hộ', desc:'Tính kéo xe, cẩu xe & cấp phê duyệt' },
+        o.showContacts && { tab:'contacts', icon:'contacts', title:'Danh bạ nội bộ', desc:'Tra cứu SĐT, email nhân sự toàn hệ thống' },
         o.showForms && { tab:'shared_forms', icon:'forms', title:'Biểu mẫu dùng chung', desc:'Thư viện tài liệu Google Drive' },
         o.showAdmin && { tab:'users', icon:'system', title:'Quản trị hệ thống', desc:'Tài khoản, phân quyền, cấu hình' }
       ]}

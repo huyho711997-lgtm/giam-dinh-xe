@@ -90,7 +90,7 @@
           { tab: 'list', title: 'Hồ sơ giám định', icon: 'list', show: showList, also: ['create'] },
           { tab: 'pending', title: 'Hồ sơ bồi thường', icon: 'pending', show: showPending },
           { tab: 'pending_notes_tracker', title: 'Tiến độ hồ sơ tồn', icon: 'tracker', show: showPending },
-          { tab: 'claim_cancellation', title: 'Đề xuất hủy hồ sơ', icon: 'cancel', show: showPending || showList, badge: 'Mới' },
+          { tab: 'claim_cancellation', title: 'Đề xuất hủy hồ sơ', icon: 'cancel', show: showPending || showList },
           { tab: 'gdv_report', title: 'Báo cáo & thống kê GĐV', icon: 'report', show: showReport }
         ]},
         { label: 'Kế toán', items: [
@@ -99,8 +99,8 @@
         ]},
         { label: 'Nghiệp vụ', items: [
           { tab: 'field_reimbursements', title: 'Hiện trường', icon: 'field', show: hasUserPermission('field_reimb', 'view') },
-          { tab: 'rescue_cost', title: 'Chi phí cứu hộ', icon: 'rescue', show: hasUserPermission('rescue_cost', 'view'), badge: 'Mới' },
-          { tab: 'contacts', title: 'Danh bạ nội bộ', icon: 'contacts', show: hasUserPermission('contacts', 'view'), badge: 'Mới' },
+          { tab: 'rescue_cost', title: 'Chi phí cứu hộ', icon: 'rescue', show: hasUserPermission('rescue_cost', 'view') },
+          { tab: 'contacts', title: 'Danh bạ nội bộ', icon: 'contacts', show: hasUserPermission('contacts', 'view') },
           { tab: 'shared_forms', title: 'Biểu mẫu dùng chung', icon: 'forms', show: hasUserPermission('shared_forms', 'view') }
         ]},
         { label: 'Hệ thống', items: [
