@@ -2,33 +2,17 @@
 // Số liệu và công thức nằm ở rescue-calc.js (RescueCalc). Giao diện dùng chung bộ token --sf-* và component
 // của trang Biểu mẫu (đầu trang, thẻ thư viện, dropdown SharedFormsControls) để đồng bộ với các trang khác.
 const RescuePage = (() => {
-  const icons = {
-    truck:'<path d="M3 16V8h11v8M14 11h4l3 3v2h-7M3 16h18"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/>',
-    crane:'<path d="M4 20h16M7 20V8l10-4M17 4v7"/><path d="M17 11v3a1.6 1.6 0 1 1-1.6 1.6"/>',
-    both:'<path d="M3 17V9h8v8M11 12h3l3 3v2h-6M3 17h14"/><circle cx="6.5" cy="18" r="1.5"/><circle cx="14.5" cy="18" r="1.5"/><path d="M19 4v8"/><path d="M19 12a1.5 1.5 0 1 1-1.5 1.5"/>',
-    calc:'<rect x="5" y="3" width="14" height="18" rx="2.5"/><path d="M8.5 7.5h7M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"/>',
-    book:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z"/><path d="M5 17a3 3 0 0 1 3-3h11M9 8h6"/>',
-    reset:'<path d="M20 7A9 9 0 1 0 21 14M20 3v5h-5"/>',
-    copy:'<rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
-    check:'<path d="m5 12 4 4L19 6"/>',
-    shield:'<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="m8 12 3 3 5-6"/>',
-    alert:'<path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4M12 17.2v.1"/>',
-    user:'<circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c.7-3.6 3.2-5.5 6.5-5.5s5.8 1.9 6.5 5.5"/>',
-    receipt:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/>',
-    image:'<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.7"/><path d="m4 17 5-4.5 3.5 3L16 12l4 4.5"/>',
-    pin:'<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>'
-  };
-  const svg = name => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (icons[name] || '') + '</svg>';
+  const svg = name => RescueIcons.icon(name);
   const esc = text => String(text ?? '').replace(/[&<>"']/g,char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const vnd = amount => RescueCalc.vnd(amount);
   const SERVICES = [['tow','Kéo xe','truck'],['crane','Cẩu xe','crane'],['both','Kéo + cẩu','both']];
-  const REF_TABS = [['tow','Kéo xe'],['crane','Cẩu xe'],['surcharge','Phụ phí & vùng'],['approval','Phê duyệt'],['control','Hồ sơ & kiểm soát']];
+  const REF_TABS = [['tow','Kéo xe','truck'],['crane','Cẩu xe','crane'],['surcharge','Phụ phí & vùng','globe'],['approval','Phê duyệt','shield'],['control','Hồ sơ & kiểm soát','receipt']];
   const DEFAULTS = () => ({service:'tow',towGroup:0,km:'10',cranePos:0,craneClass:0,region:0,surcharges:{},special:false,over:false});
 
   let host = null, state = DEFAULTS(), tab = 'calc', refTab = 'tow', kmMode = 'manual', locate = null, geoClient = null;
 
   const options = (items, label) => items.map((item,index) => '<option value="' + index + '">' + esc(label(item,index)) + '</option>').join('');
-  const select = (id, label, description, icon, html) => '<label class="rc-field"><span class="rc-label">' + esc(label) + '</span><select id="' + id + '" data-rc="' + id + '" data-sf-select data-sf-label="' + esc(label) + '" data-sf-description="' + esc(description) + '" data-sf-icon="' + icon + '">' + html + '</select></label>';
+  const select = (id, label, description, icon, html) => '<label class="rc-field"><span class="rc-label">' + esc(label) + '</span><select id="' + id + '" data-rc="' + id + '" data-sf-select data-sf-label="' + esc(label) + '" data-sf-description="' + esc(description) + '" data-sf-icon="rescue-' + icon + '">' + html + '</select></label>';
   const check = (attr, title, note) => '<label class="rc-check"><input type="checkbox" ' + attr + '><span class="rc-box" aria-hidden="true">' + svg('check') + '</span><span class="rc-check-copy"><strong>' + esc(title) + '</strong><small>' + esc(note) + '</small></span></label>';
   const block = (number, title, note, body) => '<section class="rc-block"><header><span class="rc-step">' + number + '</span><div><h2>' + esc(title) + '</h2><p>' + esc(note) + '</p></div></header><div class="rc-block-body">' + body + '</div></section>';
 
@@ -37,7 +21,7 @@ const RescuePage = (() => {
     const service = '<div class="rc-service-heading"><span class="rc-label">Dịch vụ cứu hộ</span><span>Chọn hạng mục cần tính</span></div><div class="rc-seg rc-services" role="group" aria-label="Hạng mục cứu hộ">' + SERVICES.map(([key,label,icon]) => '<button type="button" class="sf-source-tab" data-rc-service="' + key + '" aria-pressed="' + (state.service === key) + '"><span class="rc-service-icon">' + svg(icon) + '</span><span>' + esc(label) + '</span></button>').join('') + '</div>';
     const tow = '<div data-rc-block="tow">' + select('towGroup','Nhóm xe (kéo)','Chọn theo số chỗ hoặc tải trọng','truck',options(R.TOW,item => item.label)) +
       '<label class="rc-field"><span class="rc-label">Quãng đường kéo</span><span class="rc-unit"><input id="km" data-rc="km" type="number" inputmode="decimal" min="0" max="' + R.MAX_KM + '" step="0.1" placeholder="Ví dụ 25" value="' + esc(state.km) + '"><i>km</i></span><small class="rc-hint" data-rc-kmhint></small></label>' +
-      '<div class="rc-seg" role="group" aria-label="Cách xác định quãng đường"><button type="button" class="sf-source-tab" data-rc-kmmode="manual" aria-pressed="true">Nhập số km</button><button type="button" class="sf-source-tab" data-rc-kmmode="locate" aria-pressed="false">' + svg('pin') + 'Định vị tính km</button></div>' +
+      '<div class="rc-seg" role="group" aria-label="Cách xác định quãng đường"><button type="button" class="sf-source-tab" data-rc-kmmode="manual" aria-pressed="true">' + svg('ruler') + 'Nhập số km</button><button type="button" class="sf-source-tab" data-rc-kmmode="locate" aria-pressed="false">' + svg('pin') + 'Định vị tính km</button></div>' +
       '<div class="rl-root" data-rc-locate hidden></div></div>';
     const crane = '<div data-rc-block="crane">' + select('craneClass','Nhóm xe (cẩu)','Chọn theo số chỗ hoặc tải trọng','crane',options(R.CLASSES,item => 'Nhóm ' + item.key + ' · ' + item.range)) +
       select('cranePos','Vị trí xe cần cẩu','Mức độ khó của hiện trường','pin',options(R.CRANE,item => item.label)) + '</div>';
@@ -70,7 +54,7 @@ const RescuePage = (() => {
       '<h3 class="rc-ref-title">Kiểm soát</h3>' + refList(R.CONTROL.map(item => [item.title,item.text]));
   }
   function refPane() {
-    return '<div class="rc-ref"><div class="rc-refnav" role="group" aria-label="Nhóm tra cứu">' + REF_TABS.map(([key,label]) => '<button type="button" class="sf-source-tab" data-rc-ref="' + key + '" aria-pressed="' + (refTab === key) + '">' + esc(label) + '</button>').join('') + '</div><div class="rc-ref-body" data-rc-refbody>' + refBody() + '</div></div>';
+    return '<div class="rc-ref"><div class="rc-refnav" role="group" aria-label="Nhóm tra cứu">' + REF_TABS.map(([key,label,icon]) => '<button type="button" class="sf-source-tab" data-rc-ref="' + key + '" aria-pressed="' + (refTab === key) + '">' + svg(icon) + esc(label) + '</button>').join('') + '</div><div class="rc-ref-body" data-rc-refbody>' + refBody() + '</div></div>';
   }
 
   function read() {
@@ -192,6 +176,7 @@ const RescuePage = (() => {
     host.querySelector('[data-rc-pane=calc]').hidden = !calc;
     host.querySelector('[data-rc-pane=ref]').hidden = tab !== 'ref';
     host.querySelector('[data-rc-pane=garage]').hidden = tab !== 'garage';
+    host.querySelector('[data-rc-cap]').hidden = tab === 'garage';
     host.querySelectorAll('[data-rc-tab]').forEach(button => button.setAttribute('aria-pressed',String(button.dataset.rcTab === tab)));
     host.querySelectorAll('[data-rc-actions] button').forEach(button => { button.hidden = !calc; });
     if (tab !== 'garage') RescueGarages.unmountManager();
@@ -206,8 +191,8 @@ const RescuePage = (() => {
     host.setAttribute('aria-label','Chi phí cứu hộ');
     host.innerHTML = '<header class="sf-page-head"><div class="sf-page-title"><span class="sf-page-emblem" aria-hidden="true">' + svg('truck') + '</span><div><div class="sf-eyebrow">NGHIỆP VỤ · CỨU HỘ PHƯƠNG TIỆN</div><h1>Chi phí cứu hộ</h1><p>Tính nhanh chi phí kéo xe, cẩu xe theo barem nội bộ và xác định cấp phê duyệt.</p></div></div>' +
       '<div class="sf-toolbar" data-rc-actions><button type="button" class="sf-button" data-rc-reset>' + svg('reset') + 'Đặt lại</button><button type="button" class="sf-button" data-rc-export>' + svg('image') + 'Xuất ảnh</button><button type="button" class="sf-button sf-primary" data-rc-copy>' + svg('copy') + 'Sao chép kết quả</button></div></header>' +
-      '<section class="sf-library rc-card"><div class="sf-library-bar"><div class="sf-sources" role="group" aria-label="Chế độ"><button type="button" class="sf-source-tab" data-rc-tab="calc" aria-pressed="true">' + svg('calc') + 'Tính chi phí</button><button type="button" class="sf-source-tab" data-rc-tab="ref" aria-pressed="false">' + svg('book') + 'Đơn giá & quy định</button><button type="button" class="sf-source-tab" data-rc-tab="garage" aria-pressed="false">' + svg('pin') + 'Gara</button></div>' +
-      '<span class="sf-count">' + svg('receipt') + 'Trần nội bộ · chưa VAT</span></div>' +
+      '<section class="sf-library rc-card"><div class="sf-library-bar"><div class="sf-sources" role="group" aria-label="Chế độ"><button type="button" class="sf-source-tab" data-rc-tab="calc" aria-pressed="true">' + svg('calc') + 'Tính chi phí</button><button type="button" class="sf-source-tab" data-rc-tab="ref" aria-pressed="false">' + svg('book') + 'Đơn giá & quy định</button><button type="button" class="sf-source-tab" data-rc-tab="garage" aria-pressed="false">' + svg('garage') + 'Gara</button></div>' +
+      '<span class="sf-count" data-rc-cap>' + svg('receipt') + 'Trần nội bộ · chưa VAT</span></div>' +
       '<div data-rc-pane="calc">' + calcPane() + '</div><div data-rc-pane="ref" hidden></div><div data-rc-pane="garage" hidden></div></section>';
     host.addEventListener('click',event => {
       const target = event.target.closest('[data-rc-tab],[data-rc-service],[data-rc-ref],[data-rc-reset],[data-rc-copy],[data-rc-export],[data-rc-kmmode]');
@@ -223,6 +208,7 @@ const RescuePage = (() => {
     host.addEventListener('input',event => { if (event.target.closest('[data-rc],[data-rc-sur],[data-rc-flag]')) update(); });
     host.addEventListener('change',event => { if (event.target.closest('[data-rc],[data-rc-sur],[data-rc-flag]')) update(); });
     container.replaceChildren(host);
+    RescueIcons.register(SharedFormsControls);
     SharedFormsControls.enhance(host);
     update();
   }

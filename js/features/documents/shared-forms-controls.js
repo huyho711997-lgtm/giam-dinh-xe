@@ -31,6 +31,7 @@ const SharedFormsControls = (() => {
     globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>'
   };
   const icon = name => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (paths[name] || paths.file) + '</svg>';
+  const registerIcons = additions => Object.assign(paths, additions);
   const normalize = text => String(text ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase().trim();
   function close(returnFocus = false) {
     if (!active) return;
@@ -184,5 +185,5 @@ const SharedFormsControls = (() => {
   window.addEventListener('resize',schedulePlace);
   window.visualViewport?.addEventListener('resize',schedulePlace);
   window.visualViewport?.addEventListener('scroll',schedulePlace);
-  return {enhance,close,icon};
+  return {enhance,close,icon,registerIcons};
 })();

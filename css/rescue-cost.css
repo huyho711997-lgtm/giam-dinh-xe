@@ -1,5 +1,4 @@
-/* ==========================================================================
-   Trang "Chi phí cứu hộ" (js/features/rescue/rescue-page.js)
+/* ===================================================================   Trang "Chi phí cứu hộ" (js/features/rescue/rescue-page.js)
    Dùng token --sf-* và các class .sf-page-head / .sf-library / .sf-source-tab / .sf-button / dropdown chung
    của trang Biểu mẫu; ở đây chỉ bổ sung phần riêng của máy tính chi phí.
    ========================================================================== */
@@ -258,3 +257,83 @@
 .rl-paste svg { color:var(--sf-gold); }
 .rl-paste.is-main { border-color:color-mix(in srgb,var(--sf-gold) 45%,var(--sf-line)); background:linear-gradient(135deg,var(--sf-gold-bg),var(--sf-paper)); color:var(--sf-gold); }
 .rl-paste.is-main:hover { border-color:var(--sf-gold); box-shadow:0 4px 12px rgba(173,118,29,.16); }
+/* Bộ icon cứu hộ: cùng tỷ lệ và trọng lượng nét trên mọi điều khiển. */
+.rc-workspace .sf-page-emblem svg { width:24px; height:24px; }
+.rc-workspace .sf-toolbar .sf-button svg { width:17px; height:17px; }
+.rc-workspace .sf-library-bar .sf-source-tab svg { width:19px; height:19px; }
+.rc-workspace .sf-library-bar .sf-source-tab:not([aria-pressed="true"]) svg { color:var(--sf-muted); }
+.rc-workspace .sf-library-bar .sf-source-tab[aria-pressed="true"] svg { color:var(--sf-gold); }
+.rc-workspace .sf-library-bar .sf-count svg { width:16px; height:16px; }
+.rc-services .rc-service-icon { flex-basis:40px; width:40px; height:40px; border-radius:12px; }
+.rc-workspace .rc-services .rc-service-icon svg { width:22px; height:22px; }
+.rc-workspace .sf-select-trigger .sf-control-icon { width:32px; height:32px; padding:6px; border-radius:9px; }
+.rc-workspace .sf-select-trigger .sf-control-icon svg { width:100%; height:100%; }
+.rc-workspace [data-rc-kmmode] svg,.rc-workspace .rc-refnav svg { width:17px; height:17px; }
+.rc-workspace [data-rc-kmmode][aria-pressed="true"] svg { color:var(--sf-gold); }
+.rc-result-symbol svg,.rc-approval-icon svg { width:20px; height:20px; }
+@media (max-width:640px) {
+  .rc-services .rc-service-icon { flex-basis:36px; width:36px; height:36px; }
+  .rc-workspace .rc-services .rc-service-icon svg { width:20px; height:20px; }
+}
+
+/* Danh bạ gara: cấu trúc rõ ràng và dễ đọc trên desktop. */
+.rc-garage { gap:18px; }
+.rc-garage-heading { display:flex; align-items:center; justify-content:space-between; gap:18px; }
+.rc-garage-kicker { color:var(--sf-gold); font-size:10px; font-weight:800; letter-spacing:.09em; }
+.rc-garage-heading h2 { margin:5px 0 4px; color:var(--sf-ink); font-size:19px; line-height:1.3; letter-spacing:-.025em; }
+.rc-garage-heading p { margin:0; color:var(--sf-muted); font-size:12px; line-height:1.6; }
+.rc-garage-count { padding:8px 12px; border-radius:9px; font-size:10.5px; }
+.rc-garage-count:empty { display:none; }
+.rc-garage-bar { gap:12px; padding:14px; border:1px solid var(--sf-line); border-radius:14px; background:color-mix(in srgb,var(--sf-soft) 55%,var(--sf-paper)); }
+.rc-garage-bar .sf-search { flex:1 1 280px; max-width:480px; min-height:42px; background:var(--sf-paper); }
+.rc-garage-tools { gap:8px; }
+.rc-garage-tools .sf-button { min-height:40px; }
+.rc-garage-tools .sf-button svg { width:16px; height:16px; }
+.rc-garage-user { display:inline-flex; align-items:center; gap:7px; max-width:230px; margin-right:5px; color:var(--sf-muted); }
+.rc-garage-user svg { width:16px; height:16px; flex:none; color:var(--sf-gold); }
+.rc-garage-user span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.rc-garage-table-wrap { border-radius:14px; }
+.rc-garage-table { min-width:860px; table-layout:fixed; }
+.rc-garage-table th,.rc-garage-table td { text-align:left; }
+.rc-garage-table th { padding:14px 18px; background:color-mix(in srgb,var(--sf-soft) 85%,var(--sf-paper)); }
+.rc-garage-table th:nth-child(1) { width:31%; }
+.rc-garage-table th:nth-child(2) { width:33%; }
+.rc-garage-table th:nth-child(3) { width:13%; }
+.rc-garage-table th:nth-child(4) { width:12%; }
+.rc-garage-table th:nth-child(5) { width:11%; }
+.rc-garage-table td { padding:15px 18px; vertical-align:middle; line-height:1.6; }
+.rc-garage-identity { display:flex; align-items:center; gap:12px; min-width:0; }
+.rc-garage-avatar { display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px; border:1px solid color-mix(in srgb,var(--sf-gold) 20%,var(--sf-line)); border-radius:11px; background:var(--sf-gold-bg); color:var(--sf-gold); }
+.rc-garage-avatar svg { width:19px; height:19px; }
+.rc-garage-identity-copy { display:grid; gap:3px; min-width:0; }
+.rc-garage-identity-copy strong { color:var(--sf-ink); font-size:12.5px; font-weight:750; overflow-wrap:anywhere; }
+.rc-garage-location { display:flex; align-items:center; gap:4px; color:var(--sf-muted); font-size:10.5px; font-variant-numeric:tabular-nums; }
+.rc-garage-location svg { flex:none; width:12px; height:12px; }
+.rc-garage-address { color:var(--sf-ink); font-size:12px; overflow-wrap:anywhere; }
+.rc-garage-row-note { display:block; margin-top:4px; color:var(--sf-muted); font-size:10.5px; overflow-wrap:anywhere; }
+.rc-garage-phone { color:var(--sf-ink); font-weight:700; text-decoration:none; }
+.rc-garage-phone:hover { color:var(--sf-gold); text-decoration:underline; }
+.rc-garage-missing { color:var(--sf-muted); }
+.rc-garage-table .rc-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 9px; font-size:10.5px; white-space:nowrap; }
+.rc-garage-table .rc-badge span { width:6px; height:6px; flex:none; border-radius:50%; background:currentColor; }
+.rc-garage-table .rc-badge.is-on { color:var(--sf-green); background:color-mix(in srgb,var(--sf-green) 11%,var(--sf-paper)); }
+.rc-garage-table .rc-badge.is-off { color:var(--sf-muted); background:var(--sf-soft); }
+.rc-garage-table .rc-garage-actions { padding-left:8px; padding-right:14px; }
+.rc-garage-actions>div { display:flex; justify-content:flex-end; gap:3px; }
+.rc-garage-actions .sf-icon-button { width:32px; height:32px; min-width:32px; min-height:32px; border-radius:9px; }
+.rc-garage-actions .sf-icon-button:hover { border-color:var(--sf-line); background:var(--sf-soft); }
+.rc-garage-actions .sf-icon-button svg { width:16px; height:16px; }
+.rc-garage-empty { padding:40px 20px; border:1px solid var(--sf-line); border-radius:14px; background:var(--sf-paper); }
+@media (max-width:900px) {
+  .rc-garage-bar .sf-search { max-width:none; }
+  .rc-garage-tools { flex-wrap:wrap; }
+}
+@media (max-width:640px) {
+  .rc-garage-heading { align-items:flex-start; flex-direction:column; gap:10px; }
+  .rc-garage-heading h2 { font-size:17px; }
+  .rc-garage-bar { padding:12px; }
+  .rc-garage-tools { width:100%; margin-left:0; }
+  .rc-garage-user { max-width:100%; flex-basis:100%; padding:3px 0; }
+}
+.rc-garage { grid-template-columns:minmax(0,1fr); min-width:0; }
+.rc-garage [data-garage-body] { min-width:0; }

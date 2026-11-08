@@ -7,7 +7,7 @@ const RescueLocate = (() => {
   const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
   const DEFAULT_CENTER = [12.6667,108.0383];  // Buôn Ma Thuột
   const esc = text => String(text ?? '').replace(/[&<>"']/g,char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-  const icon = name => SharedFormsControls.icon(name);
+  const icon = name => RescueIcons.icon(name);
   const OTHER = 'other';
 
   let leafletPromise = null;
@@ -62,7 +62,7 @@ const RescueLocate = (() => {
     root.innerHTML = '<div class="rl-points">' +
       searchCard('scene','Vị trí hiện trường','a') + '<button type="button" class="sf-button rl-wide rl-paste is-main" data-rl-paste="scene" title="Sao chép vị trí khách gửi qua Zalo rồi bấm nút này (hoặc nhấn Ctrl+V)">' + icon('clipboard') + 'Dán định vị từ Zalo</button><p class="rc-hint">Khách gửi vị trí qua Zalo: sao chép link Google Maps / toạ độ / cả tin nhắn rồi bấm nút trên hoặc nhấn Ctrl+V.</p><button type="button" class="sf-button rl-wide" data-rl-gps>' + icon('pin') + 'Dùng vị trí hiện tại</button>' + searchBox('scene','Hoặc tìm theo địa chỉ','Địa chỉ, toạ độ hoặc link Google Maps') + feedback('scene') + '</section>' +
       searchCard('garage','Gara (điểm đến)','b') +
-      '<label class="rc-field"><span class="rc-label">Chọn gara</span><select data-rl-garage data-sf-select data-sf-label="Gara" data-sf-description="Chọn gara trong danh sách dùng chung" data-sf-icon="pin"></select></label>' +
+      '<label class="rc-field"><span class="rc-label">Chọn gara</span><select data-rl-garage data-sf-select data-sf-label="Gara" data-sf-description="Chọn gara trong danh sách dùng chung" data-sf-icon="rescue-garage"></select></label>' +
       '<p class="rc-hint" data-rl-gnote hidden></p><div class="rl-row"><button type="button" class="sf-button" data-rl-nearest>' + icon('arrow') + 'Chọn gara gần nhất</button><button type="button" class="rl-link" data-rl-manage>Quản lý danh sách gara →</button></div>' +
       '<div class="rl-other" data-rl-other hidden>' + searchBox('garage','Địa chỉ gara khác','Địa chỉ gara / toạ độ (vĩ độ, kinh độ)') + '</div>' + feedback('garage') + '</section></div>' +
       '<span class="rc-label">Chạm bản đồ để đặt điểm</span>' +
