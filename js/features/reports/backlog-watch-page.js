@@ -11,7 +11,7 @@ const BacklogWatchPage = (() => {
 
   const esc = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const plain = text => String(text ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase().trim();
-  const int = K.fmtInt, pct = K.fmtPct;
+  const int = K.fmtInt;
 
   if (typeof SharedFormsControls !== 'undefined' && SharedFormsControls.registerIcons) {
     SharedFormsControls.registerIcons({
@@ -92,23 +92,6 @@ const BacklogWatchPage = (() => {
       (c.over ? '<i class="o" style="flex:' + c.over / total + '"></i>' : '') + (c.soon ? '<i class="s" style="flex:' + c.soon / total + '"></i>' : '') + (c.ok ? '<i class="k" style="flex:' + c.ok / total + '"></i>' : '') + '</span>';
   };
 
-  function heroHtml() {
-    const t = data.totals, c = data.counts, total = c.over + c.soon + c.ok, share = n => (total ? n / total : 0);
-    const room = t.needResolve > 0
-      ? '<span class="bw-neg">Cần giải quyết thêm <b>' + int(t.needResolve) + '</b> hồ sơ để về mức 10%</span>'
-      : '<span>Còn dư địa <b>' + int(t.headroom) + '</b> hồ sơ tồn trước khi vượt 10%</span>';
-    const tile = (cls, name, badge, value, sub, ratio) => '<article class="kz-kpi ' + cls + '"><header><span class="kz-kpi-name">' + name + '</span><span class="kz-kpi-w">' + badge + '</span></header>' +
-      '<div class="kz-kpi-val"><b>' + int(value) + '</b></div><div class="kz-kpi-tgt">' + sub + '</div><div class="kz-track"><i style="width:' + (Math.min(1, ratio) * 100).toFixed(1) + '%"></i></div></article>';
-    return '<section class="kz-ledger bw-ledger"><header class="bw-overview-head"><div><span class="sf-eyebrow">THEO DÕI HỒ SƠ TỒN</span><h2>Tổng quan xử lý</h2><p>Số liệu tổng hợp theo ngày dữ liệu hồ sơ.</p></div><span class="bw-overview-date">' + icon('calendar') + 'Đến ' + K.fmtDate(data.asOf) + '</span></header><div class="kz-ledger-main"><span class="kz-ledger-title">Hồ sơ tồn lũy kế · ' + K.fmtDate(data.asOf) + '</span>' +
-      '<div class="kz-big"><b>' + int(t.ton) + '</b></div><div class="kz-ledger-sub"><span>Tỉ lệ tồn <b>' + pct(t.backlogRate, 2) + '</b> <small>(mục tiêu ≤ 10% · ' + int(t.ytd) + ' hồ sơ phát sinh từ đầu năm)</small></span>' + room +
-      '<span class="kz-vs">Hạn xử lý nội bộ <b>' + data.limit + ' ngày</b></span></div></div>' +
-      '<div class="kz-kpis">' +
-      tile(c.over ? 'miss' : 'ok', 'Quá hạn', '> ' + data.limit + ' ngày', c.over, c.over ? 'Ưu tiên xử lý trước' : 'Không có hồ sơ quá hạn', share(c.over)) +
-      tile(c.soon ? '' : 'ok', 'Sắp quá hạn', Math.max(0, data.limit - data.soonDays) + '–' + data.limit + ' ngày', c.soon, 'Xử lý trong vài ngày tới', share(c.soon)) +
-      tile('', 'Chờ duyệt (đôn đốc)', 'PASC · GĐCT', c.chase, 'Trong số hồ sơ cần xử lý', c.todo ? c.chase / c.todo : 0) + '</div>' +
-      '<div class="bw-dist"><div class="bw-dist-bar">' + stack({over: c.over, soon: c.soon, ok: c.ok, total}) + '</div><div class="bw-legend"><span><i class="o"></i>Quá hạn ' + int(c.over) + '</span><span><i class="s"></i>Sắp quá hạn ' + int(c.soon) + '</span><span><i class="k"></i>Trong hạn ' + int(c.ok) + '</span></div></div></section>';
-  }
-
   function boardHtml() {
     const card = (value, name, c, sub) => '<button type="button" class="bw-gcard' + (ui.gdv === value ? ' is-active' : '') + '" data-bw-gdv="' + esc(value) + '" aria-pressed="' + (ui.gdv === value) + '">' +
       '<span class="bw-gtop"><span class="bw-av">' + (value ? esc(initials(name)) : icon('bw-users')) + '</span><span class="bw-gname">' + esc(name) + '<small>' + sub + '</small></span></span>' +
@@ -184,7 +167,7 @@ const BacklogWatchPage = (() => {
     host.querySelector('.bw-list').hidden = false;
     const stale = W.staleDays(data.asOf, K.parseDate(new Date()));
     msg.innerHTML = stale >= 3 ? '<div class="kz-msg warn">Dữ liệu hồ sơ đã cũ ' + stale + ' ngày (đến ' + K.fmtDate(data.asOf) + '): tuổi hồ sơ thực tế còn lớn hơn số hiển thị. Hãy nhập lại B001 mới nhất.</div>' : '';
-    slot('hero').innerHTML = heroHtml();
+    slot('hero').innerHTML = '';
     slot('board').innerHTML = boardHtml();
     paintControls(); paintList();
   }

@@ -6,18 +6,7 @@
 .bw-workspace { display:grid; gap:18px; min-width:0; max-width:100%; font-variant-numeric:tabular-nums; }
 .bw-workspace > * { min-width:0; }
 .bw-workspace [hidden] { display:none !important; }
-.bw-workspace [data-bw-msg]:empty { display:none; }
-
-/* ---- Khối tổng quan (nền tối cố định, như bảng điểm KPI) ---- */
-.bw-ledger { grid-template-columns:minmax(260px,340px) minmax(0,1fr); }
-.bw-ledger .kz-ledger-sub b { color:#f3eee2; }
-.bw-neg { color:#eba39a; } .bw-neg b { color:#f6c4bd !important; }
-.bw-ledger .kz-kpis { grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); }
-.bw-dist { grid-column:1 / -1; display:grid; gap:10px; padding-top:20px; border-top:1px solid rgba(255,255,255,.1); position:relative; z-index:1; }
-.bw-dist-bar .bw-stack { height:12px; border-radius:99px; background:rgba(255,255,255,.09); }
-.bw-legend { display:flex; flex-wrap:wrap; gap:8px 22px; font-size:12px; color:#bfc2b4; }
-.bw-legend span { display:inline-flex; align-items:center; gap:8px; }
-.bw-legend i { width:9px; height:9px; border-radius:50%; background:#6fbf9c; } .bw-legend i.o { background:#e08f84; } .bw-legend i.s { background:#e8c786; }
+.bw-workspace [data-bw-msg]:empty, .bw-workspace [data-bw-hero]:empty, .bw-workspace [data-bw-board]:empty { display:none; }
 
 /* ---- Thanh xếp chồng (quá hạn / sắp quá hạn / trong hạn) ---- */
 .bw-stack { display:flex; width:100%; height:8px; gap:2px; border-radius:99px; overflow:hidden; background:var(--sf-soft); }
@@ -90,43 +79,14 @@
 .bw-blank .sf-empty svg { width:34px; height:34px; color:var(--sf-gold); }
 
 @media (max-width:900px) {
-  .bw-ledger { grid-template-columns:1fr; gap:22px; padding:24px 20px; }
   .bw-board-grid { padding:16px; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); }
   .bw-list .sf-controls .sf-select-wrap { flex:1 1 100%; }
 }
 @media (prefers-reduced-motion:reduce) { .bw-gcard { transition:none; } .bw-gcard:hover { transform:none; } }
-.bw-ledger .kz-kpi.miss .kz-track i { background:linear-gradient(90deg,#d9776b,#f0aaa0); }
 
-/* Tổng quan và danh sách: cùng hệ thẻ ivory, xanh trầm và champagne của ứng dụng. */
+/* Phân bổ và danh sách: cùng hệ thẻ của ứng dụng. */
 .bw-workspace { gap:20px; }
-.bw-ledger.kz-ledger { grid-template-columns:minmax(250px,300px) minmax(0,1fr); gap:20px; padding:24px; border:1px solid var(--sf-line); border-radius:18px; background:var(--sf-paper); color:var(--sf-ink); box-shadow:var(--sf-shadow); overflow:visible; }
-.bw-ledger.kz-ledger::after { display:none; }
-.bw-overview-head { grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; gap:16px; }
-.bw-overview-head h2,.bw-list-heading h2 { margin:4px 0 3px; color:var(--sf-ink); font-size:17px; font-weight:800; letter-spacing:-.02em; }
-.bw-overview-head p { margin:0; color:var(--sf-muted); font-size:12px; line-height:1.6; }
-.bw-overview-date { display:inline-flex; align-items:center; gap:7px; flex:none; padding:8px 11px; border:1px solid var(--sf-line); border-radius:10px; background:var(--sf-soft); color:var(--sf-muted); font-size:11px; font-weight:700; }
-.bw-overview-date svg { width:15px; height:15px; color:var(--sf-gold); }
-.bw-ledger .kz-ledger-main { justify-content:flex-start; gap:0; padding:20px; border:1px solid #354b40; border-radius:14px; background:linear-gradient(135deg,#263f34,#172d25); }
-.bw-ledger .kz-ledger-title { color:#d9bb7e; font-size:10px; line-height:1.5; }
-.bw-ledger .kz-big { margin:12px 0 14px; }
-.bw-ledger .kz-big b { color:#fffdf6; font-size:44px; }
-.bw-ledger .kz-ledger-sub { gap:7px; padding-top:12px; color:#d0d9cf; font-size:11.5px; line-height:1.6; }
-.bw-ledger .kz-ledger-sub small { color:#aebdb1; font-size:10.5px; }
-.bw-ledger .kz-kpis { grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; align-content:stretch; }
-.bw-ledger .kz-kpi { justify-content:space-between; gap:10px; padding:17px; border:1px solid var(--sf-line); border-radius:14px; background:var(--sf-soft); }
-.bw-ledger .kz-kpi.ok,.bw-ledger .kz-kpi.miss { border-top-width:1px; }
-.bw-ledger .kz-kpi header { flex-wrap:wrap; align-items:center; }
-.bw-ledger .kz-kpi-name { color:var(--sf-ink); font-size:12px; }
-.bw-ledger .kz-kpi-w { color:var(--sf-gold); background:var(--sf-gold-bg); font-size:10px; }
-.bw-ledger .kz-kpi-val { margin-top:7px; }
-.bw-ledger .kz-kpi-val b { color:var(--sf-ink); font-size:30px; }
-.bw-ledger .kz-kpi.miss .kz-kpi-val b { color:var(--sf-rose); }
-.bw-ledger .kz-kpi-tgt { color:var(--sf-muted); font-size:11px; line-height:1.5; }
-.bw-ledger .kz-track { height:6px; margin-top:3px; background:color-mix(in srgb,var(--sf-muted) 18%,transparent); }
-.bw-dist { gap:10px; padding:16px 0 0; border-color:var(--sf-line); }
-.bw-dist-bar .bw-stack { height:8px; background:var(--sf-soft); }
-.bw-legend { gap:8px 20px; color:var(--sf-muted); font-size:11px; }
-.bw-legend i.o { background:var(--sf-rose); }.bw-legend i.s { background:var(--sf-gold); }.bw-legend i.k { background:var(--sf-green); }
+.bw-list-heading h2 { margin:4px 0 3px; color:var(--sf-ink); font-size:17px; font-weight:800; letter-spacing:-.02em; }
 .bw-board,.bw-list.sf-library { border-radius:18px; }
 .bw-board .sf-library-heading,.bw-list-heading.sf-library-heading { padding:20px 24px; }
 .bw-board .sf-library-heading h2,.bw-list-heading h2 { font-size:16px; }
@@ -143,15 +103,7 @@
 .bw-row.over td:first-child,.bw-row.soon td:first-child,.bw-row.ok td:first-child { box-shadow:none; }
 .bw-row:hover td { background:var(--sf-soft); }
 .bw-tag.over { color:var(--sf-rose); background:color-mix(in srgb,var(--sf-rose) 12%,var(--sf-paper)); }
-@media (max-width:1000px) {
-  .bw-ledger.kz-ledger { grid-template-columns:1fr; }
-  .bw-overview-head,.bw-dist { grid-column:1; }
-}
 @media (max-width:640px) {
-  .bw-ledger.kz-ledger { gap:14px; padding:16px; }
-  .bw-overview-head { align-items:flex-start; flex-direction:column; gap:10px; }
-  .bw-ledger .kz-kpis { grid-template-columns:1fr; }
-  .bw-ledger .kz-kpi { min-height:0; }
   .bw-board .sf-library-heading,.bw-list-heading.sf-library-heading { padding:17px 16px; }
   .bw-board-grid { grid-template-columns:1fr; padding:16px; }
   .bw-list .sf-library-bar,.bw-list .sf-library-filters { padding:14px 16px; }
