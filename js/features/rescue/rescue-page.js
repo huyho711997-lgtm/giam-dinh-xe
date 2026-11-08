@@ -34,7 +34,7 @@ const RescuePage = (() => {
 
   function calcPane() {
     const R = RescueCalc;
-    const service = '<div class="rc-seg" role="group" aria-label="Hạng mục cứu hộ">' + SERVICES.map(([key,label,icon]) => '<button type="button" class="sf-source-tab" data-rc-service="' + key + '" aria-pressed="' + (state.service === key) + '">' + svg(icon) + esc(label) + '</button>').join('') + '</div>';
+    const service = '<div class="rc-service-heading"><span class="rc-label">Dịch vụ cứu hộ</span><span>Chọn hạng mục cần tính</span></div><div class="rc-seg rc-services" role="group" aria-label="Hạng mục cứu hộ">' + SERVICES.map(([key,label,icon]) => '<button type="button" class="sf-source-tab" data-rc-service="' + key + '" aria-pressed="' + (state.service === key) + '"><span class="rc-service-icon">' + svg(icon) + '</span><span>' + esc(label) + '</span></button>').join('') + '</div>';
     const tow = '<div data-rc-block="tow">' + select('towGroup','Nhóm xe (kéo)','Chọn theo số chỗ hoặc tải trọng','truck',options(R.TOW,item => item.label)) +
       '<label class="rc-field"><span class="rc-label">Quãng đường kéo</span><span class="rc-unit"><input id="km" data-rc="km" type="number" inputmode="decimal" min="0" max="' + R.MAX_KM + '" step="0.1" placeholder="Ví dụ 25" value="' + esc(state.km) + '"><i>km</i></span><small class="rc-hint" data-rc-kmhint></small></label>' +
       '<div class="rc-seg" role="group" aria-label="Cách xác định quãng đường"><button type="button" class="sf-source-tab" data-rc-kmmode="manual" aria-pressed="true">Nhập số km</button><button type="button" class="sf-source-tab" data-rc-kmmode="locate" aria-pressed="false">' + svg('pin') + 'Định vị tính km</button></div>' +
@@ -90,9 +90,9 @@ const RescuePage = (() => {
     for (const line of result.surcharges) lines.push('<li><span>' + esc(line.label) + '</span><b>+' + vnd(line.amount) + '</b></li>');
     if (result.capped) lines.push('<li class="rc-sub"><span>Phụ phí sau khi áp trần ' + R.SURCHARGE_CAP * 100 + '%</span><b>+' + vnd(result.surchargeTotal) + '</b></li>');
     const warnings = R.warnings(result), notes = warnings.length ? warnings : [];
-    return '<div class="rc-total"><small>TỔNG TRẦN CHI PHÍ · CHƯA VAT</small><strong>' + esc(R.totalText(result)) + '</strong><em>' +
+    return '<div class="rc-result-heading"><div><span class="rc-result-kicker">TỔNG QUAN CHI PHÍ</span><h2>Kết quả tính toán</h2></div><span class="rc-result-symbol">' + svg('calc') + '</span></div><div class="rc-total"><small>TỔNG TRẦN CHI PHÍ · CHƯA VAT</small><strong>' + esc(R.totalText(result)) + '</strong><em>' +
       (result.quote ? 'Hạng mục cẩu trên 100 m / nhiều xe cẩu không có đơn giá cố định, cần báo giá riêng.' : 'Thanh toán theo hóa đơn hợp lệ, không vượt số tiền được duyệt.') + '</em></div>' +
-      '<ul class="rc-lines">' + lines.join('') + '</ul>' +
+      '<div class="rc-breakdown-heading">Chi tiết tính phí</div><ul class="rc-lines">' + lines.join('') + '</ul>' +
       '<div class="rc-approval"><span class="rc-approval-icon">' + svg('user') + '</span><div><small>CẤP PHÊ DUYỆT</small><strong>' + esc(result.approver) + '</strong><em>Căn cứ tổng chi phí một sự kiện cứu hộ, không tách nhỏ để giảm cấp duyệt.</em></div></div>' +
       (notes.length ? '<div class="rc-notice" data-tone="warn"><span class="rc-notice-icon">' + svg('alert') + '</span><ul>' + notes.map(text => '<li>' + esc(text) + '</li>').join('') + '</ul></div>' : '') +
       '<details class="rc-more"><summary>Lưu ý & hồ sơ bắt buộc</summary><ul>' + R.NOTES.map(text => '<li>' + esc(text) + '</li>').join('') + '</ul><h4>Hồ sơ bắt buộc</h4><ul>' + R.EVIDENCE.map(text => '<li>' + esc(text) + '</li>').join('') + '</ul></details>';
