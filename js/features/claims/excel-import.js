@@ -2,6 +2,7 @@
 
 // Cập nhật dữ liệu hồ sơ từ file Excel: file mới là dữ liệu hiển thị, mỗi lần nhập lưu phiên bản (import-versions.js).
 let excelImportFileName = '';
+let pendingDriverImport = null; // {planned, fileName} khi file là file bổ sung Tên lái xe / Điện thoại
 function openImportExcelModal() {
       if (typeof ClaimImportVersions !== 'undefined' && !ClaimImportVersions.isAdmin()) {
         triggerToast('Chỉ quản trị viên được cập nhật dữ liệu hồ sơ từ file Excel.', 'error');
@@ -22,6 +23,7 @@ function openImportExcelModal() {
       if (btnSubmit) btnSubmit.disabled = true;
       document.getElementById('lblSubmitCount').textContent = '0';
       parsedExcelBatchRows = [];
+      pendingDriverImport = null;
     }
 
 
@@ -76,6 +78,14 @@ function openImportExcelModal() {
             return;
           }
 
+          // File chỉ có Số HSBT + Tên lái xe + Điện thoại: bổ sung thông tin lái xe, không đụng tới các dữ liệu khác của hồ sơ.
+          pendingDriverImport = null;
+          const driverFile = DriverContact.parseSheet(jsonRows);
+          if (driverFile) {
+            renderDriverContactPreview(driverFile, file.name);
+            document.getElementById('lblExcelFileName').textContent = file.name + ' · bấm để chọn file khác';
+            return;
+          }
           processParsedExcelData(jsonRows);
           document.getElementById('lblExcelFileName').textContent = file.name + ' · bấm để chọn file khác';
         } catch (err) {
@@ -711,8 +721,60 @@ function formatDateDisplay(val) {
     }
 
 
+
+    // ---- Bổ sung Tên lái xe & Điện thoại từ file Excel (đối chiếu theo Số hồ sơ bồi thường) ----
+    function renderDriverContactPreview(driverFile, fileName) {
+      const box = document.getElementById('excelPreviewContainer'), submit = document.getElementById('btnSubmitImportExcel');
+      const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[ch]);
+      parsedExcelBatchRows = [];
+      const claims = typeof cachedPendingClaimsPayload !== 'undefined' ? cachedPendingClaimsPayload : {};
+      const planned = DriverContact.plan(claims, driverFile), s = planned.summary;
+      pendingDriverImport = {planned, fileName};
+      document.getElementById('lblSubmitCount').textContent = s.changed.toLocaleString('vi-VN');
+      submit.disabled = !s.changed;
+      const show = value => value ? esc(value) : '<span class="cim-muted">trống</span>';
+      const line = (label, before, after, changed) => changed ? '<div class="cim-driver-line"><em>' + label + '</em><span>' + show(before) + '</span><b aria-hidden="true">→</b><strong>' + show(after) + '</strong></div>' : '';
+      const rows = planned.changes.slice(0, 200).map(item => '<li><div class="cim-item-head"><strong>' + esc(item.hsbt) + '</strong><small>' + esc(item.plate) + '</small></div>'
+        + line('Tên lái xe', item.before.name, item.after.name, item.nameChanged) + line('Điện thoại', item.before.phone, item.after.phone, item.phoneChanged) + '</li>').join('');
+      const notes = [];
+      if (s.notFound) notes.push(s.notFound + ' số hồ sơ trong file chưa có trong ứng dụng (ví dụ: ' + planned.notFound.slice(0, 3).map(row => row.hsbt).join(', ') + ') – bỏ qua.');
+      if (s.empty) notes.push(s.empty + ' dòng không có Tên lái xe và Điện thoại – bỏ qua.');
+      if (s.duplicates) notes.push(s.duplicates + ' dòng trùng Số HSBT – gộp thành một.');
+      notes.push('Ô trống trong file không xoá dữ liệu đang có. Các thông tin khác của hồ sơ giữ nguyên.');
+      box.style.display = 'block';
+      box.innerHTML = '<div class="cim-file"><div><strong>' + esc(fileName || 'Tệp Excel') + '</strong><small>Bổ sung Tên lái xe &amp; Điện thoại · đối chiếu theo Số hồ sơ bồi thường · ' + s.total.toLocaleString('vi-VN') + ' dòng</small></div></div>'
+        + '<div class="cim-stats">'
+        + [['Sẽ cập nhật', s.changed], ['Không đổi', s.unchanged], ['Không tìm thấy hồ sơ', s.notFound]].map(([label, n]) => '<div class="cim-stat"><div><strong>' + n.toLocaleString('vi-VN') + '</strong><small>' + label + '</small></div></div>').join('')
+        + '</div>'
+        + '<div class="cim-note"><div>' + notes.map(text => '<p>' + esc(text) + '</p>').join('') + '</div></div>'
+        + (rows ? '<ul class="cim-list cim-driver-list">' + rows + '</ul>' + (planned.changes.length > 200 ? '<p class="cim-hint">Hiển thị 200 / ' + planned.changes.length + ' hồ sơ đầu tiên; tất cả đều được cập nhật.</p>' : '') : '<p class="cim-hint">Không có hồ sơ nào cần cập nhật.</p>');
+    }
+
+    async function executeApplyDriverContactUpdate() {
+      const pending = pendingDriverImport;
+      if (!pending || !pending.planned.changes.length) return;
+      if (typeof ClaimImportVersions !== 'undefined' && !ClaimImportVersions.isAdmin()) { triggerToast('Chỉ quản trị viên được cập nhật dữ liệu hồ sơ từ file Excel.', 'error'); return; }
+      pendingDriverImport = null;
+      closeImportExcelModal();
+      updateBackgroundImportProgress(0, 'Đang cập nhật Tên lái xe & Điện thoại từ ' + pending.fileName + '…');
+      try {
+        const changes = DriverContact.updates(pending.planned), keys = Object.keys(changes);
+        for (let i = 0; i < keys.length; i += 300) {
+          const chunk = {}; for (const key of keys.slice(i, i + 300)) chunk[key] = changes[key];
+          await dbNodeInstance.ref().update(chunk);
+          updateBackgroundImportProgress(Math.round(Math.min(keys.length, i + 300) / keys.length * 100), 'Đang ghi dữ liệu… (' + Math.min(keys.length, i + 300) + '/' + keys.length + ')');
+        }
+        updateBackgroundImportProgress(100, 'Hoàn thành cập nhật lái xe.', true, false, 'Đã cập nhật Tên lái xe / Điện thoại cho ' + pending.planned.changes.length + ' hồ sơ.');
+        executeUIRenderPendingClaims();
+      } catch (err) {
+        console.error('Lỗi cập nhật lái xe từ Excel:', err);
+        updateBackgroundImportProgress(100, 'Không cập nhật được dữ liệu.', false, true, err.message);
+      }
+    }
+
     // Áp dụng file mới: lưu phiên bản (bản sao lưu + dữ liệu file) TRƯỚC, rồi mới ghi. Lưu phiên bản lỗi → không ghi gì.
     async function executeApplyExcelBatchUpdate() {
+      if (pendingDriverImport) return executeApplyDriverContactUpdate();
       if (!parsedExcelBatchRows || !parsedExcelBatchRows.length || !ClaimImportUI.hasPending()) return;
       const fileName = excelImportFileName;
       closeImportExcelModal();

@@ -9,7 +9,7 @@ function claimDocumentId(id) {
 
 function claimDocumentReference(id,item={}) {
   const reference={id:claimDocumentId(id),claimId:claimDocumentId(id)};
-  for(const key of ['maVuTonThat','soHoSoBoiThuong','bienSo','khachHang','chuXe','soKhungSoMay','ngayVTT','ngayTonThat','diaDiemVTT','hienTruong','nguyenNhan','moTaTonThat','laiXe','nguoiLienHe','gdvTiepNhan','canBoXuLy','tinhTonThat','createdByUid','createdByName']) {
+  for(const key of ['maVuTonThat','soHoSoBoiThuong','bienSo','khachHang','chuXe','soKhungSoMay','ngayVTT','ngayTonThat','diaDiemVTT','hienTruong','nguyenNhan','moTaTonThat','laiXe','dienThoaiLaiXe','nguoiLienHe','gdvTiepNhan','canBoXuLy','tinhTonThat','createdByUid','createdByName']) {
     if(item[key]!==undefined && item[key]!==null) reference[key]=String(item[key]).slice(0,10000);
   }
   if(item.nguoiTao?.uid) reference.nguoiTao={uid:String(item.nguoiTao.uid)};
@@ -18,7 +18,7 @@ function claimDocumentReference(id,item={}) {
 
 function claimDocumentFormReference(id,base={}) {
   const reference=claimDocumentReference(id,base);
-  const fields={maVuTonThat:'MaVuTonThat',soHoSoBoiThuong:'SoHoSoBoiThuong',bienSo:'BienSo',khachHang:'KhachHang',soKhungSoMay:'SoKhungSoMay',ngayVTT:'NgayVTT',diaDiemVTT:'DiaDiemVTT',hienTruong:'HienTruong',nguyenNhan:'NguyenNhan',moTaTonThat:'MoTaTonThat',laiXe:'LaiXe',nguoiLienHe:'NguoiLienHe',gdvTiepNhan:'GdvTiepNhan',canBoXuLy:'CanBoXuLy',tinhTonThat:'TinhTonThat'};
+  const fields={maVuTonThat:'MaVuTonThat',soHoSoBoiThuong:'SoHoSoBoiThuong',bienSo:'BienSo',khachHang:'KhachHang',soKhungSoMay:'SoKhungSoMay',ngayVTT:'NgayVTT',diaDiemVTT:'DiaDiemVTT',hienTruong:'HienTruong',nguyenNhan:'NguyenNhan',moTaTonThat:'MoTaTonThat',laiXe:'LaiXe',dienThoaiLaiXe:'DienThoaiLaiXe',nguoiLienHe:'NguoiLienHe',gdvTiepNhan:'GdvTiepNhan',canBoXuLy:'CanBoXuLy',tinhTonThat:'TinhTonThat'};
   for(const [key,suffix] of Object.entries(fields)) {
     const input=document.getElementById('modalPending'+suffix);
     if(input)reference[key]=String(input.value||'').trim().slice(0,10000);

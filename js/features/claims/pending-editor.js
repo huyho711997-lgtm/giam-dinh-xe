@@ -199,6 +199,7 @@
       setVal('modalPendingDiaDiemVTT', '');
       setVal('modalPendingHienTruong', '');
       setVal('modalPendingLaiXe', '');
+      setVal('modalPendingDienThoaiLaiXe', '');
       setVal('modalPendingNguoiLienHe', '');
       setVal('modalPendingLoaiTonThat', '');
         setVal('modalPendingVcx', '');
@@ -294,7 +295,7 @@
       setVal('modalPendingNamSanXuat', item.namSanXuat || '');
       setVal('modalPendingMdsd', item.mdsd || '');
       setVal('modalPendingSoChoTrongTai', item.soChoTrongTai || '');
-      setVal('modalPendingLaiXe', item.laiXe || '');
+      { const driver = DriverContact.readDriver(item); setVal('modalPendingLaiXe', driver.name); setVal('modalPendingDienThoaiLaiXe', driver.phone); } // hồ sơ cũ lưu gộp "Tên - SĐT" → tách thành 2 ô
       setVal('modalPendingNguoiLienHe', item.nguoiLienHe || item.khachHang || '');
       const spCodeVal = String(item.maSpNghiepVu || item.nghiepVu || item.loaiHinhBaoHiem || '').trim();
       const isVcxCode = spCodeVal.toUpperCase().includes('VCX');
@@ -444,7 +445,7 @@
       if (parsed.ngayVTT) setValIfPresent('modalPendingNgayVTT', parsed.ngayVTT);
       if (parsed.diaDiemVTT) setValIfPresent('modalPendingDiaDiemVTT', parsed.diaDiemVTT);
       if (parsed.hienTruong) setValIfPresent('modalPendingHienTruong', parsed.hienTruong);
-      if (parsed.laiXe) setValIfPresent('modalPendingLaiXe', parsed.laiXe);
+      if (parsed.laiXe) { const driver = DriverContact.splitLegacy(parsed.laiXe); if (driver.name) setValIfPresent('modalPendingLaiXe', driver.name); if (driver.phone) setValIfPresent('modalPendingDienThoaiLaiXe', driver.phone); }
       if (parsed.nguoiLienHe) setValIfPresent('modalPendingNguoiLienHe', parsed.nguoiLienHe);
       if (parsed.loaiTonThat) setValIfPresent('modalPendingLoaiTonThat', parsed.loaiTonThat);
         if (parsed.vcx) setValIfPresent('modalPendingVcx', parsed.vcx);
@@ -557,6 +558,11 @@
         tndsUpdatedBy = currentUserName;
       }
 
+      // Họ tên và SĐT lái xe là 2 ô riêng; nếu lỡ dán "Tên - SĐT" vào ô tên (và ô SĐT trống) thì tự tách.
+      const driverContact = (() => {
+        const typed = DriverContact.splitLegacy(getVal('modalPendingLaiXe')), phone = DriverContact.normPhone(getVal('modalPendingDienThoaiLaiXe'));
+        return {name: typed.name, phone: phone || typed.phone};
+      })();
       const payload = {
         id: targetClaimId,
         maVuTonThat: maVuTonThat || existingItem.maVuTonThat || `VTT/XCG/${new Date().getFullYear()}/${Math.floor(100000 + Math.random() * 900000)}`,
@@ -577,7 +583,8 @@
         nguyenNhan: getVal('modalPendingNguyenNhan') || '—',
         moTaTonThat: getVal('modalPendingMoTaTonThat') || '—',
         hienTruong: getVal('modalPendingHienTruong') || '—',
-        laiXe: getVal('modalPendingLaiXe') || '—',
+        laiXe: driverContact.name || '—',
+        dienThoaiLaiXe: driverContact.phone || '—',
         nguoiLienHe: getVal('modalPendingNguoiLienHe') || '—',
         gdvTiepNhan: getVal('modalPendingGdvTiepNhan') || existingItem.gdvTiepNhan || profile.displayName || 'Chưa phân công',
         canBoXuLy: getVal('modalPendingCanBoXuLy') || '—',

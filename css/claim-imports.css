@@ -184,3 +184,12 @@ button.cim-chip:hover,button.cim-chip[aria-pressed="true"] { border-color:var(--
   .cim-compare-bar > svg { display:none; }
 }
 @media (prefers-reduced-motion:reduce) { .cim-panel { animation:none; } .cim-spinner { animation-duration:2s; } }
+
+/* Bổ sung Tên lái xe & Điện thoại từ Excel */
+.cim-driver-list { max-height:340px; overflow:auto; }
+.cim-driver-line { display:grid; grid-template-columns:84px minmax(0,1fr) 16px minmax(0,1fr); align-items:baseline; gap:8px; margin-top:6px; font-size:12px; }
+.cim-driver-line em { color:var(--cim-muted); font-style:normal; font-size:11px; font-weight:650; }
+.cim-driver-line span { color:var(--cim-muted); text-decoration:line-through; text-decoration-color:color-mix(in srgb,var(--cim-muted) 50%,transparent); overflow-wrap:anywhere; }
+.cim-driver-line strong { color:var(--cim-add); font-weight:750; overflow-wrap:anywhere; }
+.cim-driver-line b { color:var(--cim-muted); font-weight:600; text-align:center; }
+.cim-muted { color:var(--cim-muted); font-style:italic; text-decoration:none; }

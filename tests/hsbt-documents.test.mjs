@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const read=file=>fs.readFileSync(new URL('../'+file,import.meta.url),'utf8');
-const scripts=['js/features/documents/hsbt.js','js/features/documents/storage.js','js/features/documents/autosave.js','js/features/scene/interaction-export.js','js/features/claims/pending-editor.js'].map(read);
+const scripts=['js/features/documents/hsbt.js','js/features/documents/storage.js','js/features/documents/autosave.js','js/features/scene/interaction-export.js','js/features/claims/driver-contact.js','js/features/claims/pending-editor.js'].map(read);
 const guide={version:1,meta:{assessor:'GĐV mẫu'},items:{paper:{selected:true,status:'missing',date:''}},extras:[]};
 const claim={id:'old_id',bienSo:'DEMO-001',maVuTonThat:'VTT-DEMO',soHoSoBoiThuong:'HSBT/XCG/2026/0096788',khachHang:'Khách hàng mẫu',createdByUid:'owner',huongDanThuThapHoSo:guide,soDoHienTruong:'data:image/png;base64,fixture',soDoHienTruongData:'[{"id":1,"type":"car"}]',soDoHienTruongMeta:'{"location":"Vị trí mẫu"}'};
 

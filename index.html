@@ -88,7 +88,7 @@
 <link rel="stylesheet" href="css/header-navigation.css?v=20261024-nav-1">
 <link rel="stylesheet" href="css/home-page.css?v=20261101-xmas-5">
 <link rel="stylesheet" href="css/app-sidebar.css?v=20261024-7">
-<link rel="stylesheet" href="css/claim-imports.css?v=20261029-imports-2">
+<link rel="stylesheet" href="css/claim-imports.css?v=20261108-drv-1">
 </head>
 <body>
 
@@ -520,9 +520,13 @@
               <input id="modalPendingSoChoTrongTai" class="input-premium" type="text" placeholder="Ví dụ: 7 chỗ / 15 tấn" />
             </div>
 
-            <div class="form-group" style="grid-column: span 2;">
-              <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Họ tên Lái xe & SĐT</label>
-              <input id="modalPendingLaiXe" class="input-premium" type="text" placeholder="Tên lái xe - SĐT" />
+            <div class="form-group">
+              <label for="modalPendingLaiXe" style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Họ tên lái xe</label>
+              <input id="modalPendingLaiXe" class="input-premium" type="text" placeholder="Họ tên lái xe" autocomplete="off" />
+            </div>
+            <div class="form-group">
+              <label for="modalPendingDienThoaiLaiXe" style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Số điện thoại lái xe</label>
+              <input id="modalPendingDienThoaiLaiXe" class="input-premium" type="tel" inputmode="tel" placeholder="Ví dụ: 0912345678" autocomplete="off" />
             </div>
             <div class="form-group">
               <label style="font-size: 12px; font-weight: 750; color: var(--text-soft); margin-bottom: 4px; display: block;">Người liên hệ VTT</label>
@@ -1446,7 +1450,7 @@
         <label id="excelDropzone" class="cim-drop">
           <input id="fileExcelInput" type="file" accept=".xlsx, .xls, .csv" onchange="handleExcelFileSelected(event)" />
           <span class="cim-drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4m0 0-4 4m4-4 4 4"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></span>
-          <span class="cim-drop-copy"><strong id="lblExcelFileName">Kéo thả file Excel vào đây hoặc <u>chọn từ máy</u></strong><small>.xlsx, .xls, .csv · đối chiếu theo Số HSBT (khi thiếu: Mã VTT, rồi Biển số + ngày tổn thất)</small></span>
+          <span class="cim-drop-copy"><strong id="lblExcelFileName">Kéo thả file Excel vào đây hoặc <u>chọn từ máy</u></strong><small>.xlsx, .xls, .csv · đối chiếu theo Số HSBT (khi thiếu: Mã VTT, rồi Biển số + ngày tổn thất). File chỉ có Tên, Tên lái xe, Điện thoại sẽ chỉ bổ sung thông tin lái xe</small></span>
         </label>
         <div id="excelPreviewContainer" class="cim-preview" style="display: none;"></div>
       </div>
@@ -1769,13 +1773,14 @@
   <script src="js/features/claims/reduction-notice.js?v=20261105-crr-1"></script>
   <script src="js/features/claims/claim-email.js?v=20261025-loss-2"></script>
   <script src="js/features/claims/editor-workspace.js?v=20261025-email-2"></script>
-  <script src="js/features/claims/pending-editor.js?v=20261029-ai-4"></script>
+  <script src="js/features/claims/driver-contact.js?v=20261108-drv-1"></script>
+  <script src="js/features/claims/pending-editor.js?v=20261108-drv-1"></script>
   <script src="js/features/claims/notes.js?v=20261108-premium-1"></script>
   <script src="js/features/contacts/contact-calc.js?v=20261105-ct-3"></script>
   <script src="js/features/contacts/directory.js?v=20261105-ct-4"></script>
   <script src="js/features/claims/import-versions.js?v=20261024-imports-2"></script>
   <script src="js/features/claims/import-history.js?v=20261029-imports-4"></script>
-  <script src="js/features/claims/excel-import.js?v=20261105-imp-1"></script>
+  <script src="js/features/claims/excel-import.js?v=20261108-drv-1"></script>
   <script src="js/features/claims/pending-register.js?v=20261024-perf-1"></script>
   <script src="js/features/claims/pending-controls.js"></script>
   <script src="js/features/dashboard/seasonal.js?v=20261101-xmas-5"></script>
