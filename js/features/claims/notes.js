@@ -114,7 +114,8 @@ const PendingNotesPage = (() => {
     return out;
   }
 
-  const matchesSearch = (r, q) => !q || [r.c.bienSo, r.c.soHoSoBoiThuong, r.gdv, r.owner, r.c.moTaTonThat, r.c.hangXe, r.c.hieuXe].some(v => plain(v).includes(q));
+  const driverPhone = claim => typeof DriverContact !== 'undefined' ? DriverContact.readDriver(claim).phone : String(claim.dienThoaiLaiXe || '').trim().replace(/^[—–-]$/, '');
+  const matchesSearch = (r, q) => !q || [r.c.bienSo, r.c.soHoSoBoiThuong, driverPhone(r.c), r.gdv, r.owner, r.c.moTaTonThat, r.c.hangXe, r.c.hieuXe].some(v => plain(v).includes(q));
   const quickTest = {
     all: () => true, mine: r => r.mine, over30: r => r.bucket === 'over30', b1: r => r.bucket === 'b1', b2: r => r.bucket === 'b2', b3: r => r.bucket === 'b3',
     stale: r => r.stale, overdue: r => r.overdue, fresh: r => r.fresh
@@ -209,6 +210,7 @@ const PendingNotesPage = (() => {
   }
   function renderRow(r, index) {
     const c = r.c, st = statusInfo(r.status), last = r.last;
+    const phone = driverPhone(c), dialable = /^\+?\d{7,15}$/.test(phone);
     const isUnknown = !r.gdv || r.gdv === 'Chưa rõ';
     const carName = ((c.hangXe || '') + ' ' + (c.hieuXe || '')).trim() || '—';
     const note = last
@@ -219,6 +221,7 @@ const PendingNotesPage = (() => {
       '<td class="pn-c-record"><div class="pn-plate-pill"><span class="pn-plate-icon">' + svg('car', 12) + '</span><b class="pn-plate-num">' + esc(c.bienSo || '—') + '</b></div>' +
       '<div class="pn-code-row"><span class="pn-code" title="' + attr(c.soHoSoBoiThuong || '') + '">' + esc(c.soHoSoBoiThuong || '—') + '</span>' + copyBtn(c.soHoSoBoiThuong) + '</div>' +
       '<div class="pn-owner" title="' + attr(r.owner) + '">' + svg('user', 11) + '<span>' + esc(r.owner || '—') + '</span></div></td>' +
+      '<td class="pn-c-phone">' + (phone ? (dialable ? '<a class="pn-phone" data-pn-phone href="tel:' + attr(phone) + '" aria-label="Gọi số điện thoại lái xe ' + attr(phone) + '">' + esc(phone) + '</a>' : '<span class="pn-phone-text">' + esc(phone) + '</span>') : '<span class="pn-phone-empty">—</span>') + '</td>' +
       '<td class="pn-c-status"><span class="pn-status" style="background:' + st.bg + ';color:' + st.color + ';border-color:' + st.border + '"><i class="pn-status-dot"></i>' + esc(st.label) + '</span><div class="pn-open-date">' + svg('cal', 11) + '<span>Mở ' + esc(r.openText || '—') + '</span></div></td>' +
       '<td class="pn-c-age">' + ageBadge(r) + '</td>' +
       '<td class="pn-c-car"><div class="pn-car-title" title="' + attr(carName) + '">' + esc(carName) + '</div><div class="pn-branch" title="' + attr(c.donViCapDon || '') + '">' + esc(c.donViCapDon || '—') + '</div><div class="pn-tags">' + tags(c) + '</div></td>' +
@@ -260,7 +263,7 @@ const PendingNotesPage = (() => {
     host.querySelector('[data-pn-reset]').disabled = !filtered;
     host.querySelector('#pnCount').innerHTML = '<strong>' + total.toLocaleString('vi-VN') + '</strong> / ' + rows.length.toLocaleString('vi-VN') + ' hồ sơ';
     host.querySelector('#pnBody').innerHTML = pageRows.length ? pageRows.map((r, i) => renderRow(r, start + i)).join('')
-      : '<tr><td colspan="9"><div class="pn-empty">' + svg('search', 28) + '<b>' + (rows.length ? 'Không có hồ sơ phù hợp bộ lọc' : 'Chưa có hồ sơ tồn') + '</b><span>' + (rows.length ? 'Thử bỏ bớt bộ lọc hoặc đổi từ khóa tìm kiếm.' : 'Hồ sơ tồn sẽ xuất hiện ở đây khi có dữ liệu.') + '</span>' + (rows.length && filtered ? '<button type="button" class="pending-action-btn" data-pn-reset><span>Xóa bộ lọc</span></button>' : '') + '</div></td></tr>';
+      : '<tr><td colspan="10"><div class="pn-empty">' + svg('search', 28) + '<b>' + (rows.length ? 'Không có hồ sơ phù hợp bộ lọc' : 'Chưa có hồ sơ tồn') + '</b><span>' + (rows.length ? 'Thử bỏ bớt bộ lọc hoặc đổi từ khóa tìm kiếm.' : 'Hồ sơ tồn sẽ xuất hiện ở đây khi có dữ liệu.') + '</span>' + (rows.length && filtered ? '<button type="button" class="pending-action-btn" data-pn-reset><span>Xóa bộ lọc</span></button>' : '') + '</div></td></tr>';
     host.querySelector('#pnPager').innerHTML = total ? '<div class="pending-pagination__inner">' + dd('per', 'rows', 'Mỗi trang', state.per, PER_PAGE.map(n => ({value: n, label: n + ' / trang'})), {compact: true, right: true, head: 'Số dòng hiển thị', hint: 'Mỗi trang'}) +
       '<div class="pending-pagination__summary"><strong>' + (start + 1) + '–' + Math.min(start + state.per, total) + '</strong> / ' + total + '</div>' +
       '<div class="pending-page-controls"><button type="button" class="pending-page-btn" data-pn-page="' + (state.page - 1) + '" ' + (state.page <= 1 ? 'disabled' : '') + ' title="Trang trước" aria-label="Trang trước">' + svg('left', 14) + '</button>' + pageButtons(state.page, pages) +
@@ -378,9 +381,9 @@ const PendingNotesPage = (() => {
     button.disabled = true;
     try {
       const XLSX = await loadXlsx();
-      const head = ['STT', 'Biển số', 'Số HSBT', 'Chủ xe', 'Hãng xe', 'Đơn vị cấp', 'Trạng thái', 'Ngày mở HS', 'Tuổi tồn (ngày)', 'Nội dung tổn thất', 'GĐV xử lý', 'Ghi chú mới nhất', 'Người ghi', 'Thời điểm ghi', 'Hẹn xử lý', 'Cần cập nhật'];
+      const head = ['STT', 'Biển số', 'Số HSBT', 'Chủ xe', 'Hãng xe', 'Đơn vị cấp', 'Trạng thái', 'Ngày mở HS', 'Tuổi tồn (ngày)', 'Nội dung tổn thất', 'GĐV xử lý', 'Ghi chú mới nhất', 'Người ghi', 'Thời điểm ghi', 'Hẹn xử lý', 'Cần cập nhật', 'Số điện thoại lái xe'];
       const body = list.map((r, i) => [i + 1, r.c.bienSo || '', r.c.soHoSoBoiThuong || '', r.owner || '', ((r.c.hangXe || '') + ' ' + (r.c.hieuXe || '')).trim(), r.c.donViCapDon || '', statusInfo(r.status).label, r.openText, r.age === null ? '' : r.age,
-        r.c.moTaTonThat || r.c.nguyenNhan || '', r.gdv === 'Chưa rõ' ? '' : r.gdv, r.last ? r.last.content : '', r.last ? r.last.author || '' : '', r.last ? viDateTime(Number(r.last.timestamp)) : '', viDate(r.dueIso), r.stale ? 'Có' : 'Không']);
+        r.c.moTaTonThat || r.c.nguyenNhan || '', r.gdv === 'Chưa rõ' ? '' : r.gdv, r.last ? r.last.content : '', r.last ? r.last.author || '' : '', r.last ? viDateTime(Number(r.last.timestamp)) : '', viDate(r.dueIso), r.stale ? 'Có' : 'Không', driverPhone(r.c)]);
       const ws = XLSX.utils.aoa_to_sheet([head, ...body]);
       const border = {top: {style: 'thin', color: {rgb: 'E7E3D9'}}, bottom: {style: 'thin', color: {rgb: 'E7E3D9'}}, left: {style: 'thin', color: {rgb: 'E7E3D9'}}, right: {style: 'thin', color: {rgb: 'E7E3D9'}}};
       const wrap = new Set([3, 5, 9, 11]);
@@ -392,7 +395,7 @@ const PendingNotesPage = (() => {
           cell.s = {alignment: {vertical: 'top', wrapText: wrap.has(c), horizontal: c === 0 || c === 8 ? 'center' : 'left'}, border, ...(crit ? {font: {bold: true, color: {rgb: 'B34C48'}}} : {})};
         }
       }
-      ws['!cols'] = [6, 12, 22, 24, 22, 20, 18, 12, 10, 38, 20, 44, 18, 20, 12, 12].map(wch => ({wch}));
+      ws['!cols'] = [6, 12, 22, 24, 22, 20, 18, 12, 10, 38, 20, 44, 18, 20, 12, 12, 20].map(wch => ({wch}));
       ws['!rows'] = [{hpt: 32}];
       ws['!autofilter'] = {ref: XLSX.utils.encode_range({s: {r: 0, c: 0}, e: {r: body.length, c: head.length - 1}})};
       const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Hồ sơ tồn');
@@ -411,10 +414,10 @@ const PendingNotesPage = (() => {
       '<div class="claims-metrics-grid pn-metrics" id="pnSummary" aria-label="Tổng quan hồ sơ tồn"></div>' +
       '<div class="pending-register-panel pn-insight"><div class="pn-col" id="pnAges"></div><div class="pn-col" id="pnGdvs"></div></div>' +
       '<div class="pending-register-panel pn-list"><div class="pending-register-topbar"><div class="pending-register-header"><div class="pn-list-title"><span class="pn-eyebrow">THEO DÕI TIẾN ĐỘ</span><h3>Danh sách hồ sơ tồn</h3></div><div class="pending-filter-summary" aria-live="polite"><span class="pending-filter-result-count" id="pnCount"></span></div></div><div class="pending-pagination" id="pnPager"></div></div>' +
-      '<div class="pending-filter-toolbar"><div class="pending-filter-search"><span class="pending-filter-search__icon" aria-hidden="true">' + svg('search', 16) + '</span><input type="search" id="pnSearch" class="pending-filter-search__input" placeholder="Biển số, số HSBT, chủ xe, GĐV hoặc tổn thất…" autocomplete="off" aria-label="Tìm hồ sơ tồn"></div>' +
+      '<div class="pending-filter-toolbar"><div class="pending-filter-search"><span class="pending-filter-search__icon" aria-hidden="true">' + svg('search', 16) + '</span><input type="search" id="pnSearch" class="pending-filter-search__input" placeholder="Biển số, số HSBT, SĐT lái xe, chủ xe hoặc GĐV…" autocomplete="off" aria-label="Tìm hồ sơ tồn"></div>' +
       '<div class="pending-filter-controls" id="pnFilters"></div><button type="button" class="pending-filter-reset" data-pn-reset title="Đặt lại toàn bộ bộ lọc" aria-label="Đặt lại bộ lọc">' + svg('reset', 16) + '</button></div>' +
       '<div class="pn-chips" id="pnChips" role="group" aria-label="Lọc nhanh"></div>' +
-      '<div class="table-container pending-register-table"><table class="p-table pn-table"><thead><tr><th class="pn-c-stt">#</th><th class="pn-c-record">Hồ sơ</th><th class="pn-c-status">Trạng thái</th><th class="pn-c-age">Tuổi tồn</th><th class="pn-c-car">Xe &amp; đơn vị cấp</th><th class="pn-c-damage">Nội dung tổn thất</th><th class="pn-c-gdv">Giám định viên</th><th class="pn-c-note">Tiến độ gần nhất</th><th class="pn-c-act">Thao tác</th></tr></thead><tbody id="pnBody"></tbody></table></div></div>' +
+      '<div class="table-container pending-register-table"><table class="p-table pn-table"><thead><tr><th class="pn-c-stt">#</th><th class="pn-c-record">Hồ sơ</th><th class="pn-c-phone">SĐT lái xe</th><th class="pn-c-status">Trạng thái</th><th class="pn-c-age">Tuổi tồn</th><th class="pn-c-car">Xe &amp; đơn vị cấp</th><th class="pn-c-damage">Nội dung tổn thất</th><th class="pn-c-gdv">Giám định viên</th><th class="pn-c-note">Tiến độ gần nhất</th><th class="pn-c-act">Thao tác</th></tr></thead><tbody id="pnBody"></tbody></table></div></div>' +
       '<div class="pn-modal" id="pnModal" hidden role="dialog" aria-modal="true" aria-labelledby="pnModalTitle"><div class="pn-dialog"><header class="pn-mh"><span class="pn-mh-emblem" aria-hidden="true">' + svg('note', 22) + '</span><div class="pn-mh-main"><span class="pw-eyebrow">Tiến độ hồ sơ</span><h3 id="pnModalTitle"></h3><div class="pn-mh-code" id="pnModalCode"></div><div class="pn-modal-meta" id="pnModalMeta"></div></div><div class="pn-mh-actions"><button type="button" class="pn-detail-link" data-pn-detail title="Mở chi tiết hồ sơ bồi thường">' + svg('detail', 15) + '<span>Chi tiết hồ sơ</span><em aria-hidden="true">›</em></button><button type="button" class="pn-x" data-pn-close aria-label="Đóng">' + svg('close', 18) + '</button></div></header>' +
       '<div class="pn-facts" id="pnModalFacts"></div>' +
       '<div class="pn-dialog-body"><div class="pn-h-title">Lịch sử ghi chú <span id="pnHistoryCount">0</span></div><ul class="pn-history" id="pnHistory"></ul>' +
@@ -426,6 +429,7 @@ const PendingNotesPage = (() => {
   function setQuick(value) { state.quick = state.quick === value && value !== 'all' ? 'all' : value; state.page = 1; paint(); }
   function onClick(event) {
     const t = event.target;
+    if (t.closest('[data-pn-phone]')) return;
     const opt = t.closest('[data-pn-opt]');
     if (opt) {
       event.stopPropagation();
