@@ -492,5 +492,5 @@ const KpiZoneCalc = (() => {
 
   return {REQUIRED_COLUMNS, DEFAULT_GDVS, STATUSES, TON_STATUSES, KPI, COST_CAP, AGE_BUCKETS,
     parseDate, parseMoney, validateColumns, prepare, fromClaims, listZones, computeTrend, buildInsights, COST_BUCKETS, describe, score, computeMonth, computeReport, previousMonth, listGdvs,
-    monthStart, monthEndExclusive, partsOf, serialFromParts, fmtInt, fmtPct, fmtScore, fmtDate, nameKey};
+    monthStart, monthEndExclusive, partsOf, serialFromParts, fmtInt, fmtPct, fmtScore, fmtDate, nameKey, pickRecords, daysBetween};
 })();

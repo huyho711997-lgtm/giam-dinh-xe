@@ -247,7 +247,7 @@ const KpiZonePage = (() => {
   function view(r) {
     const c = r.current;
     const warn = c.futureMonth ? '<div class="kz-msg warn">Tháng này sau ngày dữ liệu (' + fmt.fmtDate(prep.asOf) + ') nên chưa có số liệu.</div>' : '';
-    return warn + ledger(r) + forecastBlock(r) + '<div class="kz-split">' + insightsBlock(r) + needBlock(r) + '</div>' + bnBlock(r) + trendBlock(r) + gdvBlock(r) + costLeadBlock(r) + backlogBlock(r) + compareBlock(r) + unapprovedBlock(c);
+    return warn + ledger(r) + worklistBlock() + forecastBlock(r) + '<div class="kz-split">' + insightsBlock(r) + needBlock(r) + '</div>' + bnBlock(r) + trendBlock(r) + gdvBlock(r) + costLeadBlock(r) + backlogBlock(r) + compareBlock(r) + unapprovedBlock(c);
   }
 
   // ----- Khung + điều khiển -----
@@ -394,6 +394,11 @@ const KpiZonePage = (() => {
         selected = [...host.querySelectorAll('[data-kz-gdv]:checked')].map(x => x.value);
         if (!selected.length) { el.checked = true; selected = [el.value]; message('Cần chọn ít nhất một GĐV.', 'warn'); }
         recalc();
+      } else if (el.matches('[data-wl-limit],[data-wl-all]')) {
+        const limitEl = host.querySelector('[data-wl-limit]'), allEl = host.querySelector('[data-wl-all]');
+        if (limitEl) wl.limit = WL ? WL.cleanLimit(limitEl.value) : 30;
+        if (allEl) wl.all = allEl.checked;
+        wlSave(); wlRepaint();
       } else if (el.matches('[data-kz-fgdv],[data-kz-fstatus],[data-kz-fsort]')) {
         listFilter = {gdv: host.querySelector('[data-kz-fgdv]').value, status: host.querySelector('[data-kz-fstatus]').value, sort: host.querySelector('[data-kz-fsort]').value};
         if (report) host.querySelector('[data-kz-list]').innerHTML = table(LIST_HEADS, filteredUnapproved(report.current).map(listRow).join('') || '<tr><td colspan="6" class="kz-none">Không có hồ sơ</td></tr>');
@@ -401,6 +406,8 @@ const KpiZonePage = (() => {
     });
     host.addEventListener('click', event => {
       if (onDropdownClick(event)) return;
+      const wlTab = event.target.closest('[data-wl-tab]');
+      if (wlTab) { wl.gdv = wlTab.dataset.wlTab; wlRepaint(); return; }
       if (event.target.closest('[data-kz-export]')) exportExcel();
       if (bnClick(event)) return;
       const xls = event.target.closest('[data-kz-xls]');
@@ -425,6 +432,63 @@ const KpiZonePage = (() => {
 
 
 
+
+  // ----- Việc cần xử lý hôm nay: hồ sơ tồn quá hạn / sắp quá hạn theo GĐV (kpi-zone-worklist.js) -----
+  // Luôn tính theo ngày dữ liệu mới nhất (không phụ thuộc tháng đang xem) vì đây là danh sách việc đang tồn đọng.
+  // Hạn xử lý nội bộ (số ngày) lưu trên trình duyệt này; mặc định 30 ngày, trùng mốc "tồn > 30 ngày" của báo cáo KPI.
+  const WL = typeof KpiWorklist !== 'undefined' ? KpiWorklist : null;
+  const WL_KEY = 'kpiWorklist:v1';
+  const wlStored = () => { try { const v = JSON.parse(localStorage.getItem(WL_KEY) || '{}'); return v && typeof v === 'object' ? v : {}; } catch (_) { return {}; } };
+  const wlSave = () => { try { localStorage.setItem(WL_KEY, JSON.stringify({limit: wl.limit, all: wl.all})); } catch (_) { /* trình duyệt chặn lưu: vẫn dùng trong phiên */ } };
+  const wl = {limit: WL ? WL.cleanLimit(wlStored().limit) : 30, all: !!wlStored().all, gdv: ''};
+  const WL_HEADS = ['Số hồ sơ', 'GĐV', 'Trạng thái', 'Ngày mở', 'Số ngày', 'Mức cảnh báo', 'Việc cần làm', 'Ước thiệt hại'];
+
+  function wlData() {
+    if (!WL || !prep || !prep.records.length) return null;
+    return WL.build(prep.records, K, {gdvs: selected, zoneMap, asOf: prep.asOf, limit: wl.limit});
+  }
+
+  function wlBody(w) {
+    const rowsOf = items => items.filter(x => wl.all || x.level !== 'ok');
+    const group = wl.gdv ? w.groups.find(g => g.gdv === wl.gdv) : null;
+    const shown = rowsOf(group ? group.items : w.items);
+    const lv = WL.LEVELS;
+    const rows = shown.map(x => '<tr class="kz-wl-' + x.level + '"><td>' + esc(x.id) + '</td><td>' + esc(x.gdv) + '</td><td>' + esc(x.status) + '</td><td class="n">' + fmt.fmtDate(x.open) +
+      '</td><td class="n"><b>' + x.days + '</b></td><td><span class="kz-wl-tag ' + x.level + '">' + lv[x.level].label + '</span></td><td>' + (x.chase ? '<em class="kz-wl-chase">' + esc(x.action) + '</em>' : esc(x.action)) +
+      '</td><td class="n">' + fmt.fmtInt(x.damage) + '</td></tr>').join('');
+    const none = '<tr><td colspan="' + WL_HEADS.length + '" class="kz-none">' + (wl.all ? 'Không có hồ sơ tồn.' : 'Không có hồ sơ quá hạn hoặc sắp quá hạn. Tốt!') + '</td></tr>';
+    return '<div class="kz-scroll kz-wl-list" data-wl-list>' + table(WL_HEADS, rows || none) + '</div>';
+  }
+
+  function worklistBlock() {
+    const w = wlData();
+    if (!w) return '';
+    if (w.empty || !w.items.length) return block('Việc cần xử lý hôm nay', '<div class="kz-none kz-wl-clear">Không có hồ sơ tồn nào trong phạm vi báo cáo.</div>', '', 'kz-wl-card');
+    if (wl.gdv && !w.groups.some(g => g.gdv === wl.gdv)) wl.gdv = '';
+    const t = w.totals, c = w.counts, stale = WL.staleDays(w.asOf, K.parseDate(new Date()));
+    const tile = (tone, value, name, sub) => '<div class="kz-wl-tile ' + tone + '"><b>' + value + '</b><span>' + name + '</span><small>' + sub + '</small></div>';
+    const tiles = '<div class="kz-wl-tiles">' +
+      tile(t.needResolve > 0 ? 'bad' : 'ok', fmt.fmtInt(t.ton), 'Hồ sơ tồn lũy kế', 'Tỉ lệ ' + fmt.fmtPct(t.backlogRate, 2) + ' (mục tiêu ≤ 10%) · ' + (t.needResolve > 0 ? 'cần giải quyết thêm <b>' + fmt.fmtInt(t.needResolve) + '</b> hồ sơ' : 'còn dư địa <b>' + fmt.fmtInt(t.headroom) + '</b> hồ sơ')) +
+      tile(c.over ? 'bad' : 'ok', fmt.fmtInt(c.over), 'Quá hạn (> ' + w.limit + ' ngày)', 'Ưu tiên xử lý trước') +
+      tile(c.soon ? 'warn' : 'ok', fmt.fmtInt(c.soon), 'Sắp quá hạn (' + Math.max(0, w.limit - w.soonDays) + '–' + w.limit + ' ngày)', 'Xử lý trong vài ngày tới') +
+      tile('info', fmt.fmtInt(c.chase), 'Đang chờ duyệt (đôn đốc)', 'Trong số việc cần xử lý: chờ PASC / GĐCT') + '</div>';
+    const tab = (value, name, counts) => '<button type="button" class="kz-wl-tab' + (wl.gdv === value ? ' is-active' : '') + '" data-wl-tab="' + esc(value) + '" aria-pressed="' + (wl.gdv === value) + '">' + esc(name) +
+      '<span class="kz-wl-n' + (counts.over ? ' has-over' : counts.todo ? ' has-soon' : '') + '" title="' + counts.over + ' quá hạn · ' + counts.soon + ' sắp quá hạn">' + counts.todo + '</span></button>';
+    const tabs = '<div class="kz-wl-tabs" role="group" aria-label="Chọn GĐV">' + tab('', 'Tất cả', c) + w.groups.map(g => tab(g.gdv, g.gdv, g.counts)).join('') + '</div>';
+    const opts = WL.LIMITS.map(n => '<option value="' + n + '"' + (n === w.limit ? ' selected' : '') + '>' + n + ' ngày</option>').join('');
+    const limitSel = '<select data-wl-limit data-kz-dd data-kz-icon="calendar" data-kz-prefix="Hạn xử lý" data-kz-title="Hạn xử lý hồ sơ tồn" aria-label="Hạn xử lý hồ sơ tồn">' + opts + '</select>';
+    const controls = '<div class="kz-wl-controls">' + limitSel + '<label class="kz-wl-all"><input type="checkbox" data-wl-all' + (wl.all ? ' checked' : '') + '><span>Hiện cả hồ sơ trong hạn</span></label></div>';
+    const staleNote = stale >= 3 ? '<div class="kz-msg warn">Dữ liệu hồ sơ đã cũ ' + stale + ' ngày (đến ' + fmt.fmtDate(w.asOf) + '): tuổi hồ sơ thực tế còn lớn hơn số hiển thị. Hãy nhập lại B001 mới nhất.</div>' : '';
+    const note = '<p class="kz-note">Chỉ gồm hồ sơ mà báo cáo KPI đang tính là tồn (cùng phạm vi Zone/GĐV). Tuổi tính từ ngày mở hồ sơ tới ' + fmt.fmtDate(w.asOf) + '. Mức “sắp quá hạn” là ' + w.soonDays + ' ngày cuối trước hạn. Hồ sơ chờ PASC/GĐCT duyệt cần đôn đốc, các hồ sơ còn lại GĐV tự xử lý.</p>';
+    return block('Việc cần xử lý hôm nay <em class="kz-est">hồ sơ tồn · ' + fmt.fmtDate(w.asOf) + '</em>', staleNote + tiles + '<div class="kz-wl-bar">' + tabs + controls + '</div>' + wlBody(w) + note, '', 'kz-wl-card');
+  }
+
+  function wlRepaint() {
+    const card = host && host.querySelector('.kz-wl-card');
+    if (!card || !prep) return;
+    const holder = document.createElement('div'); holder.innerHTML = worklistBlock();
+    const fresh = holder.firstElementChild; if (fresh) { card.replaceWith(fresh); enhanceDropdowns(fresh); }
+  }
 
   // ----- Điểm nghẽn & đề xuất xử lý (báo cáo cấp trên) -----
   // Dòng gợi ý do KpiBottleneck.detect tính từ số liệu KPI; AI chỉ viết lại nguyên nhân/hành động. Người dùng sửa trực tiếp trong ô,
