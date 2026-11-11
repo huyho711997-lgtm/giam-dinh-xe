@@ -1123,7 +1123,7 @@
           </div>
 
           <link rel="stylesheet" href="css/scene-selection.css">
-          <link rel="stylesheet" href="css/scene-editor.css?v=20261111-area-1">
+          <link rel="stylesheet" href="css/scene-editor.css?v=20261111-layer-1">
 
           <!-- Floating Selection Inspector with Rotation Controls -->
           <div id="sceneSelectedBadge" class="scene-selection-panel" style="display: none;">
@@ -1215,7 +1215,7 @@
 
             <!-- Layer Ordering & Overlap Switch Group -->
             <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
-              <span style="color: #a0aec0; font-size: 11px; font-weight: 600; padding-left: 2px;">Lớp: <span id="selectedShapeLayerText" style="color: #d8b46d; font-weight: 750;">1/1</span></span>
+              <span style="color: #a0aec0; font-size: 11px; font-weight: 600; padding-left: 2px;">Lớp: <span id="selectedShapeLayerText" tabindex="0" role="button" title="Nhấp để nhập nhanh số lớp (1 = dưới cùng)" style="color: #d8b46d; font-weight: 750;">1/1</span></span>
               <button type="button" onclick="bringShapeForward()" title="Chuyển hình này lên 1 lớp (Ctrl + ] hoặc PageUp)" style="background: transparent; border: none; color: #e2e8f0; border-radius: 8px; padding: 2px 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">
                 <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
                 Lên
@@ -1965,6 +1965,7 @@
   <script src="js/features/documents/autosave.js"></script>
   <script src="js/core/chart-ready.js?v=20261024-1"></script>
   <script src="js/core/route-sync.js?v=20261105-perm-2"></script>
-  <script src="js/features/scene/scene-editor-ui.js?v=20261111-area-3"></script>
+  <script src="js/features/scene/layer-order.js?v=20261111-layer-1"></script>
+  <script src="js/features/scene/scene-editor-ui.js?v=20261111-layer-1"></script>
 </body>
 </html>

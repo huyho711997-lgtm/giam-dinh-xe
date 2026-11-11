@@ -474,3 +474,9 @@ body:not(.light-mode) #sceneDrawingModalOverlay #strokeWidthPopover { box-shadow
 #sceneDrawingModalOverlay #sceneSelectedBadge > div .scene-area-shape-seg button[aria-pressed="true"] { background: color-mix(in srgb,var(--se-gold) 16%,transparent) !important; border-color: color-mix(in srgb,var(--se-gold) 42%,transparent) !important; color: var(--se-gold) !important; }
 #sceneDrawingModalOverlay #selectedAreaShapeGroup > small { padding: 0 2px; color: var(--se-muted, #a0aec0); font-size: 10.5px; line-height: 1.45; }
 #sceneDrawingModalOverlay #sceneCanvasViewport.is-outline-drawing, #sceneDrawingModalOverlay #sceneCanvasViewport.is-outline-drawing canvas { cursor: crosshair !important; }
+
+/* Nhập nhanh số lớp: nhấp "Lớp: x/N" để gõ số (scene-editor-ui.js) */
+#sceneDrawingModalOverlay #selectedShapeLayerText { cursor: text; border-radius: 6px; padding: 1px 4px; transition: background .15s; }
+#sceneDrawingModalOverlay #selectedShapeLayerText:hover,
+#sceneDrawingModalOverlay #selectedShapeLayerText:focus-visible { background: color-mix(in srgb,var(--se-gold) 18%,transparent); outline: none; }
+#sceneDrawingModalOverlay .scene-layer-input { width: 3.4ch; padding: 0 2px; margin: 0; border: 0; border-bottom: 1.5px solid var(--se-gold); border-radius: 0; background: transparent; color: inherit; font: inherit; text-align: right; outline: none; }

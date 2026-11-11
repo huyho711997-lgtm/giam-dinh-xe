@@ -112,6 +112,96 @@ function changeSelectedTollLanes(delta) {
   window.updateSelectionBadge = wrapped;
 })();
 
+// ---- Nhập nhanh số lớp: nhấp "Lớp: x/N" rồi gõ số, Enter để chuyển, Esc để huỷ ----
+// Chỉ áp dụng khi chọn đúng một hình; phần tính vị trí nằm ở layer-order.js (có test).
+(function () {
+  const LABEL_ID = 'selectedShapeLayerText';
+  let editing = null; // { id, input }
+
+  function singleSelectedShape() {
+    if (typeof sceneShapes === 'undefined' || !selectedShapeId || currentDrawTool !== 'select') return null;
+    const ids = Array.isArray(selectedShapeIds) ? selectedShapeIds : [];
+    if (ids.length > 1) return null;
+    return sceneShapes.find(s => s.id === selectedShapeId) || null;
+  }
+  const toast = (message, type) => { if (typeof showToast === 'function') showToast(message, type); };
+
+  // Trả về true nếu đã chuyển hoặc hình đã ở đúng lớp; false nếu số gõ vào không hợp lệ.
+  function applyLayer(id, text) {
+    const layer = sceneParseLayerNumber(text, sceneShapes.length);
+    if (layer === null) {
+      toast('Nhập số lớp từ 1 đến ' + sceneShapes.length + ' (1 = dưới cùng).', 'warning');
+      return false;
+    }
+    const result = sceneMoveShapeToLayer(sceneShapes, id, layer);
+    if (!result.ok || !result.changed) return true;
+    sceneShapes = result.shapes;
+    redrawSceneCanvas(true);
+    updateSelectionBadge();
+    if (typeof saveDrawingState === 'function') saveDrawingState(); // ghi vào lịch sử → Hoàn tác được
+    toast('Đã chuyển hình từ lớp ' + result.from + ' sang lớp ' + result.to, 'info');
+    return true;
+  }
+
+  function finish(commit) {
+    if (!editing) return;
+    const { id, input } = editing;
+    editing = null; // đặt trước khi đổi DOM để blur do gỡ ô nhập không chạy lại
+    if (commit) applyLayer(id, input.value);
+    const label = document.getElementById(LABEL_ID);
+    if (label) {
+      const index = sceneShapes.findIndex(s => s.id === id);
+      label.textContent = index >= 0 ? (index + 1) + '/' + sceneShapes.length : '';
+    }
+    updateSelectionBadge();
+  }
+
+  function startEdit() {
+    const label = document.getElementById(LABEL_ID);
+    if (!label || editing) return;
+    const shape = singleSelectedShape();
+    if (!shape) { toast('Chọn một hình để nhập số lớp.', 'info'); return; }
+    const total = sceneShapes.length;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.inputMode = 'numeric';
+    input.autocomplete = 'off';
+    input.maxLength = 4;
+    input.className = 'scene-layer-input';
+    input.value = String(sceneShapes.indexOf(shape) + 1);
+    input.setAttribute('aria-label', 'Số lớp, từ 1 đến ' + total);
+    input.title = 'Gõ số lớp (1 = dưới cùng, ' + total + ' = trên cùng), Enter để chuyển, Esc để huỷ';
+    label.textContent = '';
+    label.append(input, document.createTextNode('/' + total));
+    editing = { id: shape.id, input };
+    input.addEventListener('keydown', event => {
+      event.stopPropagation(); // không để phím tắt của trình vẽ (Esc bỏ chọn, Delete…) xử lý
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (sceneParseLayerNumber(input.value, sceneShapes.length) === null) {
+          applyLayer(editing.id, input.value); // chỉ để báo lỗi; giữ ô nhập để sửa lại
+          input.select();
+        } else finish(true);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        finish(false);
+      }
+    });
+    input.addEventListener('input', () => { input.value = input.value.replace(/\D/g, ''); });
+    input.addEventListener('blur', () => finish(sceneParseLayerNumber(input.value, sceneShapes.length) !== null));
+    input.focus();
+    input.select();
+  }
+
+  document.addEventListener('click', event => {
+    const label = event.target.closest && event.target.closest('#' + LABEL_ID);
+    if (label && !event.target.closest('.scene-layer-input')) startEdit();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && event.target && event.target.id === LABEL_ID) { event.preventDefault(); startEdit(); }
+  });
+})();
+
 // ---- Bàn tay: nắm chuột kéo để di chuyển vùng nhìn ----
 function toggleSceneHandMode(force) {
   sceneHandMode = typeof force === 'boolean' ? force : !sceneHandMode;
