@@ -153,100 +153,219 @@ function setSelectedSceneryAreaShape(kind) {
   if (typeof saveDrawingState === 'function') saveDrawingState();
 }
 
-// Chế độ vẽ ranh giới: chặn sự kiện chuột của trình vẽ (pha capture trên window) trong lúc vẽ.
+// ---- Ranh giới tự vẽ ----
+// Hai cách vẽ trong cùng một chế độ:
+//  • Nhấp từng điểm dọc mép vùng (khuyên dùng): đường cong mượt đi qua các điểm; nhấp đúp / Enter / nhấp lại điểm đầu để xong.
+//  • Giữ chuột rê liền một nét: nét tay được làm mượt và rải lại điểm đều nên không còn răng cưa, méo.
+// Sau khi vẽ, chọn vùng sẽ hiện các điểm neo: kéo để nắn, nhấp đúp điểm để xoá, nhấp đúp lên viền để thêm điểm.
 let sceneOutlineDraw = null;
+const sceneAreaZoom = () => (typeof currentSceneZoom === 'number' && currentSceneZoom > 0 ? currentSceneZoom : 1);
+function sceneAreaToWorld(shape, u, v) {
+  const d = getVehicleDimensions(shape), a = shape.angle || 0, lx = u * d.w, ly = (v - 0.5) * d.h;
+  return { x: shape.startX + lx * Math.cos(a) - ly * Math.sin(a), y: shape.startY + lx * Math.sin(a) + ly * Math.cos(a) };
+}
+function sceneAreaAnchors(shape) {
+  return (shape.areaOutline || []).map(p => sceneAreaToWorld(shape, Number(p[0]), Number(p[1])));
+}
+// Gán các điểm neo (toạ độ sơ đồ) cho vùng: tính lại khung bao theo hướng xoay hiện tại rồi chuẩn hoá về 0..1.
+function applySceneAreaAnchors(shape, worldPoints, resetAngle) {
+  if (resetAngle) shape.angle = 0;
+  const a = shape.angle || 0, cos = Math.cos(a), sin = Math.sin(a);
+  const local = worldPoints.map(p => { const dx = p.x - shape.startX, dy = p.y - shape.startY; return { x: dx * cos + dy * sin, y: -dx * sin + dy * cos }; });
+  const minX = Math.min(...local.map(p => p.x)), maxX = Math.max(...local.map(p => p.x));
+  const minY = Math.min(...local.map(p => p.y)), maxY = Math.max(...local.map(p => p.y));
+  const W = Math.max(1, maxX - minX), H = Math.max(1, maxY - minY), midY = (minY + maxY) / 2;
+  shape.startX += minX * cos - midY * sin;
+  shape.startY += minX * sin + midY * cos;
+  shape.objectW = W; shape.objectH = H;
+  shape.areaShape = 'custom';
+  shape.areaOutline = local.map(p => [Number(((p.x - minX) / W).toFixed(4)), Number(((p.y - minY) / H).toFixed(4))]);
+}
+// Làm mượt nét rê tay: trung bình trượt để khử rung, rồi rải lại điểm cách đều theo chiều dài nét.
+function smoothSceneFreehand(raw) {
+  const n = raw.length, win = 4, avg = [];
+  for (let i = 0; i < n; i++) {
+    let sx = 0, sy = 0, c = 0;
+    for (let k = -win; k <= win; k++) { const p = raw[(((i + k) % n) + n) % n]; sx += p.x; sy += p.y; c++; }
+    avg.push({ x: sx / c, y: sy / c });
+  }
+  let total = 0; const seg = [];
+  for (let i = 0; i < n; i++) { const a = avg[i], b = avg[(i + 1) % n], d = Math.hypot(b.x - a.x, b.y - a.y); seg.push(d); total += d; }
+  const count = Math.max(8, Math.min(36, Math.round(total / 42))), step = total / count, out = [];
+  let i = 0, walked = 0;
+  for (let k = 0; k < count; k++) {
+    const target = k * step;
+    while (i < n - 1 && walked + seg[i] < target) { walked += seg[i]; i++; }
+    const a = avg[i], b = avg[(i + 1) % n], t = seg[i] ? (target - walked) / seg[i] : 0;
+    out.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
+  }
+  return out;
+}
+function strokeSceneAreaPreview(points, closed) {
+  if (!sceneCtx || !points.length) return;
+  const z = sceneAreaZoom(), curve = points.length >= 3 ? sampleSceneClosedSpline(points, 10) : points;
+  sceneCtx.save();
+  sceneCtx.beginPath();
+  curve.forEach((p, i) => (i ? sceneCtx.lineTo(p.x, p.y) : sceneCtx.moveTo(p.x, p.y)));
+  if (points.length >= 3) { sceneCtx.closePath(); sceneCtx.fillStyle = 'rgba(113,181,104,.16)'; sceneCtx.fill(); }
+  sceneCtx.setLineDash(closed ? [] : [6 / z, 4 / z]);
+  sceneCtx.strokeStyle = '#2f7a3b'; sceneCtx.lineWidth = 1.6 / z; sceneCtx.stroke();
+  sceneCtx.restore();
+}
+function drawSceneAreaHandles(points, activeIndex) {
+  if (!sceneCtx) return;
+  const z = sceneAreaZoom();
+  sceneCtx.save();
+  points.forEach((p, i) => {
+    sceneCtx.beginPath(); sceneCtx.arc(p.x, p.y, (i === activeIndex ? 5.5 : 4.5) / z, 0, Math.PI * 2);
+    sceneCtx.fillStyle = i === activeIndex ? '#2f7a3b' : '#fff'; sceneCtx.fill();
+    sceneCtx.strokeStyle = '#2f7a3b'; sceneCtx.lineWidth = 1.6 / z; sceneCtx.stroke();
+  });
+  sceneCtx.restore();
+}
 function stopSceneryOutlineDraw(silent) {
   if (!sceneOutlineDraw) return;
-  window.removeEventListener('mousedown', sceneOutlineDraw.down, true);
-  window.removeEventListener('mousemove', sceneOutlineDraw.move, true);
-  window.removeEventListener('mouseup', sceneOutlineDraw.up, true);
-  window.removeEventListener('keydown', sceneOutlineDraw.key, true);
+  ['mousedown', 'mousemove', 'mouseup', 'dblclick', 'keydown'].forEach(type => window.removeEventListener(type, sceneOutlineDraw[type], true));
   document.getElementById('sceneCanvasViewport')?.classList.remove('is-outline-drawing');
   sceneOutlineDraw = null;
   redrawSceneCanvas(true);
   updateSelectionBadge();
   if (!silent && typeof showToast === 'function') showToast('Đã thoát chế độ vẽ ranh giới.', 'info');
 }
-function simplifySceneOutline(points, tolerance) {
-  // Ramer–Douglas–Peucker: bỏ điểm thừa của nét tay, giữ dáng ranh giới.
-  if (points.length < 3) return points.slice();
-  const dist = (p, a, b) => { const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1; return Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / len; };
-  let maxD = 0, index = 0;
-  for (let i = 1; i < points.length - 1; i++) { const d = dist(points[i], points[0], points[points.length - 1]); if (d > maxD) { maxD = d; index = i; } }
-  if (maxD <= tolerance) return [points[0], points[points.length - 1]];
-  const left = simplifySceneOutline(points.slice(0, index + 1), tolerance);
-  return left.slice(0, -1).concat(simplifySceneOutline(points.slice(index), tolerance));
-}
-function drawSceneOutlinePreview(points) {
-  redrawSceneCanvas(true);
-  if (!points.length || !sceneCtx) return;
-  sceneCtx.save();
-  sceneCtx.beginPath();
-  points.forEach((p, i) => (i ? sceneCtx.lineTo(p.x, p.y) : sceneCtx.moveTo(p.x, p.y)));
-  if (points.length > 2) sceneCtx.closePath();
-  sceneCtx.fillStyle = 'rgba(113,181,104,.18)';
-  sceneCtx.fill();
-  sceneCtx.setLineDash([6, 4]);
-  sceneCtx.strokeStyle = '#2f7a3b';
-  sceneCtx.lineWidth = 1.6;
-  sceneCtx.stroke();
-  sceneCtx.restore();
-}
 function startSceneryOutlineDraw() {
   const shape = getSelectedAreaShapeTarget();
   if (!shape) return;
   if (sceneOutlineDraw) return stopSceneryOutlineDraw();
   const targetId = shape.id;
-  let points = null;
+  const points = [];           // các điểm neo đã nhấp
+  let press = null, stroke = null, cursor = null;
   const onCanvas = e => typeof sceneCanvas !== 'undefined' && e.target === sceneCanvas;
+  const eat = e => { e.preventDefault(); e.stopImmediatePropagation(); };
+  const paint = () => {
+    redrawSceneCanvas(false);
+    if (stroke) return strokeSceneAreaPreview(stroke.length >= 3 ? smoothSceneFreehand(stroke) : stroke, false);
+    const live = cursor && points.length ? points.concat([cursor]) : points;
+    strokeSceneAreaPreview(live, false);
+    drawSceneAreaHandles(points, points.length >= 3 && cursor && Math.hypot(cursor.x - points[0].x, cursor.y - points[0].y) < 9 / sceneAreaZoom() ? 0 : -1);
+  };
+  const finish = anchors => {
+    const target = sceneShapes.find(s => s.id === targetId);
+    const xs = anchors.map(p => p.x), ys = anchors.map(p => p.y);
+    if (!target || anchors.length < 3 || Math.max(...xs) - Math.min(...xs) < 30 || Math.max(...ys) - Math.min(...ys) < 20) {
+      if (typeof showToast === 'function') showToast('Ranh giới cần ít nhất 3 điểm và đủ rộng. Hãy nhấp thêm điểm dọc mép vùng.', 'warning');
+      return paint();
+    }
+    applySceneAreaAnchors(target, anchors, true);
+    if (typeof saveDrawingState === 'function') saveDrawingState();
+    stopSceneryOutlineDraw(true);
+    if (typeof showToast === 'function') showToast('Đã vẽ ranh giới. Kéo các điểm tròn để nắn lại; nhấp đúp điểm để xoá, nhấp đúp lên viền để thêm điểm.', 'success');
+  };
   const state = {
-    down(e) {
-      if (!onCanvas(e) || e.button > 0) return;
-      e.preventDefault(); e.stopImmediatePropagation();
-      points = [getMousePos(sceneCanvas, e)];
+    mousedown(e) { if (!onCanvas(e) || e.button > 0) return; eat(e); press = getMousePos(sceneCanvas, e); stroke = null; },
+    mousemove(e) {
+      if (!press && !onCanvas(e)) return;
+      const p = getMousePos(sceneCanvas, e);
+      if (press) {
+        eat(e);
+        if (!stroke && Math.hypot(p.x - press.x, p.y - press.y) > 7 / sceneAreaZoom() && !points.length) stroke = [press];
+        if (stroke) { const last = stroke[stroke.length - 1]; if (Math.hypot(p.x - last.x, p.y - last.y) >= 2) stroke.push(p); }
+      } else { e.stopImmediatePropagation(); }
+      cursor = p; paint();
     },
-    move(e) {
-      if (!points) return;
-      e.preventDefault(); e.stopImmediatePropagation();
-      const p = getMousePos(sceneCanvas, e), last = points[points.length - 1];
-      if (Math.hypot(p.x - last.x, p.y - last.y) >= 2.5) { points.push(p); drawSceneOutlinePreview(points); }
+    mouseup(e) {
+      if (!press) return;
+      eat(e);
+      const at = press, drawn = stroke; press = null; stroke = null;
+      if (drawn && drawn.length >= 12) return finish(smoothSceneFreehand(drawn));
+      if (points.length >= 3 && Math.hypot(at.x - points[0].x, at.y - points[0].y) < 9 / sceneAreaZoom()) return finish(points.slice());
+      const last = points[points.length - 1];
+      if (!last || Math.hypot(at.x - last.x, at.y - last.y) > 4 / sceneAreaZoom()) points.push(at);
+      paint();
     },
-    up(e) {
-      if (!points) return;
-      e.preventDefault(); e.stopImmediatePropagation();
-      const raw = points; points = null;
-      const target = sceneShapes.find(s => s.id === targetId);
-      const xs = raw.map(p => p.x), ys = raw.map(p => p.y);
-      const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-      if (!target || raw.length < 6 || maxX - minX < 30 || maxY - minY < 20) {
-        redrawSceneCanvas(true);
-        if (typeof showToast === 'function') showToast('Ranh giới quá nhỏ. Hãy giữ chuột và rê một vòng quanh khu vực cần vẽ.', 'warning');
-        return;
-      }
-      const simple = simplifySceneOutline(raw, 1.8).slice(0, 120);
-      const W = maxX - minX, H = maxY - minY;
-      target.angle = 0;
-      target.startX = minX;
-      target.startY = (minY + maxY) / 2;
-      target.objectW = W;
-      target.objectH = H;
-      target.areaShape = 'custom';
-      target.areaOutline = simple.map(p => [Number(((p.x - minX) / W).toFixed(4)), Number(((p.y - minY) / H).toFixed(4))]);
-      if (typeof saveDrawingState === 'function') saveDrawingState();
-      stopSceneryOutlineDraw(true);
-      if (typeof showToast === 'function') showToast('Đã cập nhật ranh giới khu rừng. Kéo các cạnh để chỉnh thêm nếu cần.', 'success');
-    },
-    key(e) { if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); stopSceneryOutlineDraw(); } }
+    dblclick(e) { if (!onCanvas(e)) return; eat(e); finish(points.slice()); },
+    keydown(e) {
+      if (e.key === 'Escape') { eat(e); stopSceneryOutlineDraw(); }
+      else if (e.key === 'Enter') { eat(e); finish(points.slice()); }
+      else if (e.key === 'Backspace' || e.key === 'Delete') { eat(e); points.pop(); paint(); }
+    }
   };
   sceneOutlineDraw = state;
-  window.addEventListener('mousedown', state.down, true);
-  window.addEventListener('mousemove', state.move, true);
-  window.addEventListener('mouseup', state.up, true);
-  window.addEventListener('keydown', state.key, true);
+  ['mousedown', 'mousemove', 'mouseup', 'dblclick', 'keydown'].forEach(type => window.addEventListener(type, state[type], true));
   document.getElementById('sceneCanvasViewport')?.classList.add('is-outline-drawing');
   updateSelectionBadge();
-  if (typeof showToast === 'function') showToast('Giữ chuột và rê theo mép khu rừng/đồi cây, thả ra để hoàn tất (Esc để huỷ).', 'info');
+  if (typeof showToast === 'function') showToast('Nhấp từng điểm dọc mép vùng (Enter hoặc nhấp đúp để xong, Backspace bỏ điểm cuối, Esc huỷ). Cũng có thể giữ chuột rê một vòng.', 'info');
 }
+
+// ---- Nắn ranh giới đã vẽ: điểm neo hiện khi chọn vùng "custom" ----
+function getSceneAreaEditTarget() {
+  if (sceneOutlineDraw || typeof currentDrawTool === 'undefined' || currentDrawTool !== 'select') return null;
+  const shape = getSelectedAreaShapeTarget();
+  return shape && shape.areaShape === 'custom' && Array.isArray(shape.areaOutline) && shape.areaOutline.length >= 3 ? shape : null;
+}
+(function () {
+  const original = window.redrawSceneCanvas;
+  if (typeof original !== 'function' || original.__areaHandles) return;
+  const wrapped = function (includeSelectionUI = true) {
+    const result = original.call(this, includeSelectionUI);
+    if (includeSelectionUI) { const shape = getSceneAreaEditTarget(); if (shape) drawSceneAreaHandles(sceneAreaAnchors(shape), sceneAreaDrag ? sceneAreaDrag.index : -1); }
+    return result;
+  };
+  wrapped.__areaHandles = true;
+  window.redrawSceneCanvas = wrapped;
+})();
+let sceneAreaDrag = null;
+function findSceneAreaAnchor(shape, pos) {
+  const anchors = sceneAreaAnchors(shape), reach = 8 / sceneAreaZoom();
+  let best = -1, bestD = reach;
+  anchors.forEach((p, i) => { const d = Math.hypot(p.x - pos.x, p.y - pos.y); if (d <= bestD) { bestD = d; best = i; } });
+  return { anchors, index: best };
+}
+window.addEventListener('mousedown', e => {
+  const shape = getSceneAreaEditTarget();
+  if (!shape || e.button > 0 || typeof sceneCanvas === 'undefined' || e.target !== sceneCanvas) return;
+  const hit = findSceneAreaAnchor(shape, getMousePos(sceneCanvas, e));
+  if (hit.index < 0) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  sceneAreaDrag = { id: shape.id, index: hit.index, anchors: hit.anchors, moved: false };
+}, true);
+window.addEventListener('mousemove', e => {
+  if (!sceneAreaDrag) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const shape = sceneShapes.find(s => s.id === sceneAreaDrag.id);
+  if (!shape) { sceneAreaDrag = null; return; }
+  sceneAreaDrag.anchors[sceneAreaDrag.index] = getMousePos(sceneCanvas, e);
+  sceneAreaDrag.moved = true;
+  applySceneAreaAnchors(shape, sceneAreaDrag.anchors, false);
+  redrawSceneCanvas(true);
+}, true);
+window.addEventListener('mouseup', e => {
+  if (!sceneAreaDrag) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const moved = sceneAreaDrag.moved; sceneAreaDrag = null;
+  redrawSceneCanvas(true);
+  if (moved && typeof saveDrawingState === 'function') saveDrawingState();
+}, true);
+// Nhấp đúp điểm neo: xoá điểm (giữ tối thiểu 3). Nhấp đúp lên viền: chèn điểm mới tại đó.
+window.addEventListener('dblclick', e => {
+  const shape = getSceneAreaEditTarget();
+  if (!shape || typeof sceneCanvas === 'undefined' || e.target !== sceneCanvas) return;
+  const pos = getMousePos(sceneCanvas, e), hit = findSceneAreaAnchor(shape, pos), anchors = hit.anchors;
+  if (hit.index >= 0) {
+    if (anchors.length <= 3) return;
+    anchors.splice(hit.index, 1);
+  } else {
+    // tìm đoạn viền (giữa hai điểm neo liên tiếp) gần vị trí nhấp nhất
+    const curve = sampleSceneClosedSpline(anchors, 10);
+    let best = -1, bestD = 7 / sceneAreaZoom();
+    curve.forEach((p, i) => { const d = Math.hypot(p.x - pos.x, p.y - pos.y); if (d < bestD) { bestD = d; best = i; } });
+    if (best < 0) return;
+    anchors.splice(Math.floor(best / 10) + 1, 0, pos);
+  }
+  e.preventDefault(); e.stopImmediatePropagation();
+  applySceneAreaAnchors(shape, anchors, false);
+  redrawSceneCanvas(true);
+  if (typeof saveDrawingState === 'function') saveDrawingState();
+}, true);
 
 (function () {
   const original = window.updateSelectionBadge;

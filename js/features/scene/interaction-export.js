@@ -1343,14 +1343,32 @@ function getSceneryAreaOutline(shapeData, left, top, w, h) {
   if (!uv) return null;
   const pts = uv.map(p => ({ x: left + Number(p[0]) * w, y: top + Number(p[1]) * h })).filter(p => Number.isFinite(p.x) && Number.isFinite(p.y));
   if (pts.length < 3) return null;
-  // Làm mượt: nối trung điểm các cạnh bằng đường cong bậc hai, lấy mẫu thành đa giác dày để vẽ và kiểm tra điểm trong vùng.
-  const out = [], n = pts.length, steps = 8;
+  return shapeData.areaShape === 'custom' ? sampleSceneClosedSpline(pts, 10) : sampleSceneClosedMidpointCurve(pts, 8);
+}
+// Viền "tự nhiên": nối trung điểm các cạnh bằng đường cong bậc hai (bo tròn mềm, không cần đi qua điểm).
+function sampleSceneClosedMidpointCurve(pts, steps) {
+  const out = [], n = pts.length;
   for (let i = 0; i < n; i++) {
     const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n];
     const a = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 }, b = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
     for (let k = 0; k < steps; k++) {
       const t = k / steps, mt = 1 - t;
       out.push({ x: mt * mt * a.x + 2 * mt * t * p1.x + t * t * b.x, y: mt * mt * a.y + 2 * mt * t * p1.y + t * t * b.y });
+    }
+  }
+  return out;
+}
+// Ranh giới tự vẽ: đường cong Catmull-Rom khép kín ĐI QUA từng điểm neo → kéo điểm nào, viền đi theo điểm đó, không méo.
+function sampleSceneClosedSpline(pts, steps) {
+  const out = [], n = pts.length;
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
+    for (let k = 0; k < steps; k++) {
+      const t = k / steps, t2 = t * t, t3 = t2 * t;
+      out.push({
+        x: 0.5 * (2 * p1.x + (p2.x - p0.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (3 * p1.x - p0.x - 3 * p2.x + p3.x) * t3),
+        y: 0.5 * (2 * p1.y + (p2.y - p0.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (3 * p1.y - p0.y - 3 * p2.y + p3.y) * t3)
+      });
     }
   }
   return out;
