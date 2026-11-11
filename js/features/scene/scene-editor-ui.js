@@ -131,10 +131,10 @@ window.addEventListener('keydown', event => {
   window.closeSceneDrawingModal = wrapped;
 })();
 
-// ---- Rừng cây / đồi cây: chọn hình dạng vùng và vẽ ranh giới tự do ----
+// ---- Rừng cây / đồi cây / đồng lúa: chọn hình dạng vùng và vẽ ranh giới tự do ----
 // Khung chữ nhật không khớp khi đường cong cắt qua sườn đồi → cho phép viền tự nhiên hoặc tự vẽ ranh giới.
 // Ranh giới lưu dạng toạ độ chuẩn hoá trong khung (areaOutline) nên kéo giãn / xoay / in vẫn đúng hình.
-const SCENE_AREA_SHAPE_TYPES = ['forest'];
+const SCENE_AREA_SHAPE_TYPES = ['forest', 'rice_field'];
 function getSelectedAreaShapeTarget() {
   if (typeof sceneShapes === 'undefined' || !selectedShapeId) return null;
   const ids = (typeof selectedShapeIds !== 'undefined' && Array.isArray(selectedShapeIds)) ? selectedShapeIds : [];
