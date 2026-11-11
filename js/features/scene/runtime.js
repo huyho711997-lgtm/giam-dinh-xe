@@ -174,6 +174,7 @@ const TOOL_ICONS_MAP = {
   median: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="8" rx="4"></rect><line x1="7" y1="9" x2="4" y2="15"></line><line x1="13" y1="9" x2="10" y2="15"></line><line x1="19" y1="9" x2="16" y2="15"></line></svg>',
   median_blocks: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linejoin="round"><path d="M2 8.5l1.5-1.5h4.8l1.4 1.5v7L8.3 17H3.5L2 15.5z"></path><path d="M9.7 8.5L11.1 7h4.8l1.4 1.5v7L15.9 17h-4.8l-1.4-1.5z"></path><path d="M17.3 8.5L18.7 7H21l1 1.5v7L21 17h-2.3l-1.4-1.5z"></path><line x1="2.5" y1="12" x2="21.5" y2="12" opacity=".55"></line></svg>',
   tire_track: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 21c0-5 3-6 3-10S7 6 8 3"></path><path d="M15 21c0-5 3-6 3-10s-2-5-1-8"></path><path d="M5.5 17h2M14.5 17h2M7 11h2M16 11h2M7 5h2M16 5h2" stroke-width="1.2"></path></svg>',
+  guardrail: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 15.5c6-1 13-5 19-10.5"></path><path d="M2.5 19.5c6-1 13-5 19-10.5"></path><path d="M5 17.6c5-1.2 10-4.2 14-8.4" stroke-dasharray="2 2" opacity=".6"></path><rect x="4.2" y="15.8" width="2.6" height="2.6" fill="currentColor" stroke="none"></rect><rect x="10.7" y="12.4" width="2.6" height="2.6" fill="currentColor" stroke="none"></rect><rect x="17.2" y="7.4" width="2.6" height="2.6" fill="currentColor" stroke="none"></rect></svg>',
   utility_pole: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.7 6.5L9.5 20h5L13.3 6.5z" fill="rgba(148,163,184,.3)"></path><rect x="3" y="4" width="18" height="2.4" rx="1.2" fill="currentColor" opacity=".65"></rect><line x1="4" y1="2.7" x2="4" y2="8"></line><line x1="12" y1="2.7" x2="12" y2="8"></line><line x1="20" y1="2.7" x2="20" y2="8"></line><circle cx="4" cy="2.7" r="1.2" fill="white"></circle><circle cx="12" cy="2.7" r="1.2" fill="white"></circle><circle cx="20" cy="2.7" r="1.2" fill="white"></circle><rect x="8" y="20" width="8" height="2" rx="1"></rect></svg>',
   road_boundary_marker: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5h8l1.5 2v16H6.5v-16z" fill="rgba(248,250,252,.92)"></path><path d="M8 2.5h8l1.5 2v3H6.5v-3z" fill="currentColor"></path><path d="M9 11h6M9 14h6M9 17h6" stroke="currentColor" stroke-width="1.2"></path><path d="M5 20.5h14" opacity=".5"></path></svg>',
   geo_circle: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"></circle></svg>',
@@ -245,7 +246,7 @@ const TOOL_GROUPS_CONFIG = {
       { id: 'fallen_bike', name: 'Xe máy nằm ngã', desc: 'Xe máy đổ nghiêng, nằm trên mặt đường' },
       { id: 'person', name: 'Người / Nạn nhân', desc: 'Vị trí người đi bộ, nạn nhân' },
       { id: 'xmark', name: 'Điểm va chạm (X)', desc: 'Vị trí va chạm, xung đột' },
-      { id: 'rect', name: 'Khối hộp / Hộ lan', desc: 'Vật cản, dải phân cách cứng' }
+      { id: 'rect', name: 'Khối hộp / Vật cản', desc: 'Khung chữ nhật rỗng cho vật cản; hộ lan dùng công cụ Hộ lan tôn sóng' }
     ]
   },
   road_assets: {
@@ -255,6 +256,7 @@ const TOOL_GROUPS_CONFIG = {
     tools: [
       { id: 'crosswalk', name: 'Vạch người đi bộ', desc: 'Kéo để tạo cụm vạch sang đường' },
       { id: 'tire_track', name: 'Vệt bánh xe cong', desc: 'Nhấp điểm đầu, xem trước đường cong rồi nhấp điểm cuối' },
+      { id: 'guardrail', name: 'Hộ lan tôn sóng', desc: 'Nhấp điểm đầu và điểm cuối; kéo chấm giữa để uốn cong theo đường' },
       { id: 'traffic_light', name: 'Đèn tín hiệu', desc: 'Đèn đỏ, vàng, xanh có thể xoay' },
       { id: 'median', name: 'Dải phân cách cứng', desc: 'Dải bê tông liền khối có gạch chéo' },
       { id: 'median_blocks', name: 'Dải phân cách ghép khối', desc: 'Các mô-đun bê tông ghép nối, có khe phân khối rõ ràng' },

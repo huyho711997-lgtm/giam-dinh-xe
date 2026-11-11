@@ -106,9 +106,20 @@ function syncCurvedTireTrackPoints(shape) {
 }
 
 
-function makeCurvedTireTrackShape(x1, y1, x2, y2, color, width) {
-  const control = getTireTrackCurveControl(x1, y1, x2, y2);
-  return {
+// Hai công cụ dùng chung cơ chế "nhấp điểm đầu → nhấp điểm cuối → kéo chấm giữa để uốn":
+// vệt bánh xe và hộ lan tôn sóng (hộ lan là shape tire_track có railStyle = 'guardrail').
+function isTireTrackTool(tool) {
+  return tool === 'tire_track' || tool === 'guardrail';
+}
+
+
+function makeCurvedTireTrackShape(x1, y1, x2, y2, color, width, railStyle) {
+  const isGuardrail = railStyle === 'guardrail';
+  // Hộ lan mặc định thẳng (điểm điều khiển nằm giữa đoạn); người dùng kéo chấm giữa hoặc bấm "Cong +" để uốn.
+  const control = isGuardrail
+    ? { x: (x1 + x2) / 2, y: (y1 + y2) / 2 }
+    : getTireTrackCurveControl(x1, y1, x2, y2);
+  const shape = {
     id: genShapeId(),
     type: 'tire_track',
     points: sampleTireTrackCurvePoints(x1, y1, control.x, control.y, x2, y2),
@@ -124,6 +135,8 @@ function makeCurvedTireTrackShape(x1, y1, x2, y2, color, width) {
       y2: y2
     }
   };
+  if (isGuardrail) shape.railStyle = 'guardrail';
+  return shape;
 }
 
 
@@ -131,13 +144,15 @@ function completeTireTrackCurveCreation(endX, endY) {
   if (!tireTrackPendingStart) return;
   const color = document.getElementById('drawColorPicker').value;
   const width = parseFloat(document.getElementById('drawStrokeWidth').value);
+  const isGuardrail = currentDrawTool === 'guardrail';
   const newShape = makeCurvedTireTrackShape(
     tireTrackPendingStart.x,
     tireTrackPendingStart.y,
     endX,
     endY,
     color,
-    width
+    width,
+    isGuardrail ? 'guardrail' : undefined
   );
   sceneShapes.push(newShape);
   setSelectedShapes([newShape.id]);
@@ -147,7 +162,9 @@ function completeTireTrackCurveCreation(endX, endY) {
   updateSelectionBadge();
   redrawSceneCanvas(true);
   if (typeof showToast === 'function') {
-    showToast('Đã tạo vệt bánh xe cong từ điểm đầu đến điểm cuối', 'success');
+    showToast(isGuardrail
+      ? 'Đã tạo hộ lan. Kéo chấm vàng ở giữa để uốn cong theo đường'
+      : 'Đã tạo vệt bánh xe cong từ điểm đầu đến điểm cuối', 'success');
   }
 }
 
@@ -541,15 +558,17 @@ function onCanvasMouseDown(e) {
     return;
   }
 
-  // Vệt bánh xe cong: nhấp lần 1 chọn điểm đầu, lần 2 chọn điểm cuối.
-  if (currentDrawTool === 'tire_track') {
+  // Vệt bánh xe cong / hộ lan tôn sóng: nhấp lần 1 chọn điểm đầu, lần 2 chọn điểm cuối.
+  if (isTireTrackTool(currentDrawTool)) {
     const snap = findSnapPoint(pos);
     const point = { x: snap ? snap.x : pos.x, y: snap ? snap.y : pos.y };
     if (!tireTrackPendingStart) {
       tireTrackPendingStart = point;
       redrawSceneCanvas(false);
       if (typeof showToast === 'function') {
-        showToast('Đã chọn điểm đầu vệt bánh xe. Hãy nhấp điểm cuối', 'info');
+        showToast(currentDrawTool === 'guardrail'
+          ? 'Đã chọn điểm đầu hộ lan. Hãy nhấp điểm cuối'
+          : 'Đã chọn điểm đầu vệt bánh xe. Hãy nhấp điểm cuối', 'info');
       }
     } else if (Math.hypot(point.x - tireTrackPendingStart.x, point.y - tireTrackPendingStart.y) > 8) {
       completeTireTrackCurveCreation(point.x, point.y);
@@ -897,8 +916,8 @@ function onCanvasMouseMove(e) {
     return;
   }
 
-  // Xem trước vệt bánh xe cong giữa điểm đầu và vị trí con trỏ.
-  if (currentDrawTool === 'tire_track') {
+  // Xem trước vệt bánh xe cong / hộ lan giữa điểm đầu và vị trí con trỏ.
+  if (isTireTrackTool(currentDrawTool)) {
     const snap = findSnapPoint(pos);
     const hoverX = snap ? snap.x : pos.x;
     const hoverY = snap ? snap.y : pos.y;
@@ -917,7 +936,8 @@ function onCanvasMouseMove(e) {
           hoverX,
           hoverY,
           color,
-          width
+          width,
+          currentDrawTool === 'guardrail' ? 'guardrail' : undefined
         );
         drawTireTrackShape(sceneCtx, previewShape);
       }

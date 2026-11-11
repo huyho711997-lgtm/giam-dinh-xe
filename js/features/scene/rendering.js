@@ -671,13 +671,13 @@ function getShapeDisplayName(shape) {
     case 'forest': return 'Rừng cây';
     case 'line': return 'Mũi tên di chuyển (nét liền)';
     case 'dashed_line': return 'Mũi tên di chuyển (nét đứt)';
-    case 'rect': return 'Khối hộp / Hộ lan';
+    case 'rect': return 'Khối hộp / Vật cản';
     case 'person': return 'Người / Nạn nhân';
     case 'measure': return 'Đo khoảng cách';
     case 'xmark': return 'Điểm va chạm (X)';
     case 'number_note': return `Chú thích số ${shape.noteNumber || '?'}`;
     case 'text': return `Chữ: "${(shape.text || '').substring(0, 15)}"`;
-    case 'tire_track': return 'Vệt bánh xe';
+    case 'tire_track': return shape.railStyle === 'guardrail' ? 'Hộ lan tôn sóng' : 'Vệt bánh xe';
     case 'pen': return 'Nét vẽ tự do';
     case 'eraser': return 'Vết xóa';
     default: return 'Đối tượng';
@@ -1364,8 +1364,18 @@ function adjustSelectedCurveBend(factor) {
 
   const mx = (curveTarget.x1 + curveTarget.x2) / 2;
   const my = (curveTarget.y1 + curveTarget.y2) / 2;
-  const vx = curveTarget.cx - mx;
-  const vy = curveTarget.cy - my;
+  let vx = curveTarget.cx - mx;
+  let vy = curveTarget.cy - my;
+
+  // Đối tượng đang thẳng (vd. hộ lan mới vẽ): nhân với hệ số không tạo ra độ cong nên tạo độ uốn ban đầu.
+  if (Math.hypot(vx, vy) < 0.5 && factor > 1) {
+    const dx = curveTarget.x2 - curveTarget.x1;
+    const dy = curveTarget.y2 - curveTarget.y1;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const seed = Math.max(8, Math.min(60, distance * 0.1));
+    vx = (-dy / distance) * seed;
+    vy = (dx / distance) * seed;
+  }
 
   curveTarget.cx = mx + vx * factor;
   curveTarget.cy = my + vy * factor;

@@ -364,7 +364,7 @@ function setActiveDrawTool(toolName) {
   closeAllToolSubmenus();
   roadIntersectionHoverPos = null;
   if (toolName === 'road_intersection') clearSelection();
-  if (toolName !== 'tire_track') tireTrackPendingStart = null;
+  if (!isTireTrackTool(toolName)) tireTrackPendingStart = null;
   if (toolName !== 'eraser') {
     eraserHoverPos = null;
     eraserTargetShapeId = null;
@@ -849,8 +849,104 @@ function strokeSmoothScenePath(ctx, points) {
 }
 
 
+// ---- Hộ lan tôn sóng ----
+// Dải rộng 5–9px chạy dọc đường (thẳng hoặc cong): hai mép, gân sóng đứt nét ở giữa, nắp hai đầu
+// và trụ vuông cách đều. Dùng chung dữ liệu với vệt bánh xe cong (points + curveSource).
+function getSceneGuardrailMetrics(shape) {
+  const lineWidth = Math.max(1, Number(shape && shape.width) || 1.5);
+  const band = Math.max(5, Math.min(9, 4 + lineWidth));
+  return {
+    band: band,
+    half: band / 2,
+    postSize: Math.max(3.2, Math.min(5.5, band * 0.62)),
+    postSpacing: Math.max(16, band * 3.4),
+    edgeWidth: Math.max(1, Math.min(2.2, lineWidth * 0.9))
+  };
+}
+
+
+// Vị trí các trụ cách đều theo chiều dài đường; luôn có trụ ở hai đầu. Mỗi trụ kèm hướng tiếp tuyến (rad).
+function getSceneGuardrailPosts(points, spacing) {
+  if (!Array.isArray(points) || points.length < 2) return [];
+  const step = Math.max(4, Number(spacing) || 16);
+  const lengths = [0];
+  for (let i = 1; i < points.length; i++) {
+    lengths.push(lengths[i - 1] + Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y));
+  }
+  const total = lengths[lengths.length - 1];
+  if (!(total >= 1)) return [];
+  const count = Math.max(1, Math.round(total / step));
+  const posts = [];
+  let segment = 1;
+  for (let k = 0; k <= count; k++) {
+    const target = total * k / count;
+    while (segment < points.length - 1 && lengths[segment] < target) segment++;
+    const a = points[segment - 1];
+    const b = points[segment];
+    const span = lengths[segment] - lengths[segment - 1];
+    const t = span > 0 ? Math.min(1, Math.max(0, (target - lengths[segment - 1]) / span)) : 0;
+    posts.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, angle: Math.atan2(b.y - a.y, b.x - a.x) });
+  }
+  return posts;
+}
+
+
+function drawSceneGuardrailShape(ctx, shape) {
+  if (!shape || !Array.isArray(shape.points) || shape.points.length < 2) return;
+  const metrics = getSceneGuardrailMetrics(shape);
+  const color = shape.color || '#000000';
+  const left = getOffsetFreehandPoints(shape.points, -metrics.half);
+  const right = getOffsetFreehandPoints(shape.points, metrics.half);
+
+  ctx.save();
+  ctx.lineCap = 'butt';
+  ctx.lineJoin = 'round';
+  ctx.setLineDash([]);
+
+  // Nền dải (che nét đường bên dưới để hộ lan nhìn rõ).
+  ctx.beginPath();
+  left.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+  for (let i = right.length - 1; i >= 0; i--) ctx.lineTo(right[i].x, right[i].y);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(241,245,249,.96)';
+  ctx.fill();
+
+  // Hai mép và nắp hai đầu.
+  ctx.strokeStyle = color;
+  ctx.lineWidth = metrics.edgeWidth;
+  strokeSmoothScenePath(ctx, left);
+  strokeSmoothScenePath(ctx, right);
+  [[left[0], right[0]], [left[left.length - 1], right[right.length - 1]]].forEach(([a, b]) => {
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  });
+
+  // Gân sóng của tôn lượn sóng: nét đứt mảnh dọc tim dải.
+  ctx.save();
+  ctx.globalAlpha = 0.7;
+  ctx.lineWidth = Math.max(0.7, metrics.edgeWidth * 0.5);
+  ctx.setLineDash([5, 3.5]);
+  strokeSmoothScenePath(ctx, shape.points);
+  ctx.restore();
+
+  // Trụ đỡ.
+  ctx.fillStyle = color;
+  getSceneGuardrailPosts(shape.points, metrics.postSpacing).forEach(post => {
+    ctx.save();
+    ctx.translate(post.x, post.y);
+    ctx.rotate(post.angle);
+    ctx.fillRect(-metrics.postSize / 2, -metrics.postSize / 2, metrics.postSize, metrics.postSize);
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+
 function drawTireTrackShape(ctx, shape) {
   if (!shape || !Array.isArray(shape.points) || shape.points.length === 0) return;
+  if (shape.railStyle === 'guardrail') { drawSceneGuardrailShape(ctx, shape); return; }
   const spacing = getTireTrackSpacing(shape);
   const leftTrack = getOffsetFreehandPoints(shape.points, -spacing / 2);
   const rightTrack = getOffsetFreehandPoints(shape.points, spacing / 2);
