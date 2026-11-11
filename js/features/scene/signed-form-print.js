@@ -33,7 +33,7 @@ const SceneSignedForm = (() => {
       ctx.textAlign = 'center'; ctx.font = 'bold 14px Arial'; ctx.fillText('Chú thích',GRID.legendX + 80,GRID.y + 25);
       ctx.font = 'italic 12px Arial'; ctx.fillText('(Số — nội dung giải thích)',GRID.legendX + 80,GRID.y + 45);
       ctx.beginPath(); ctx.moveTo(GRID.legendX,GRID.y + 55); ctx.lineTo(GRID.sceneW - 20,GRID.y + 55); ctx.stroke();
-      drawSceneNumberLegend(ctx,GRID.legendX,GRID.y,GRID.sceneW - 20 - GRID.legendX,GRID.h);
+      drawSceneLegendColumn(ctx,GRID.legendX,GRID.y,GRID.sceneW - 20 - GRID.legendX,GRID.h);
     }
     ctx.save(); applySceneDrawingAreaClip(ctx);
     for (let i = 0; i < sceneShapes.length; i++) renderShape(ctx,sceneShapes[i]);

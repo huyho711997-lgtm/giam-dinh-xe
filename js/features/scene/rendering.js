@@ -1497,7 +1497,7 @@ function wrapSceneLegendText(ctx, text, maxWidth, maxLines = 3) {
 }
 
 
-function drawSceneNumberLegend(ctx, legendX, gridY, legendWidth, gridHeight) {
+function drawSceneNumberLegend(ctx, legendX, gridY, legendWidth, gridHeight, reserveBottom = 0) {
   const notes = getSortedSceneNumberNotes();
   if (notes.length === 0) return;
 
@@ -1505,7 +1505,8 @@ function drawSceneNumberLegend(ctx, legendX, gridY, legendWidth, gridHeight) {
   const left = legendX + 11;
   const textX = legendX + 34;
   const maxTextWidth = legendWidth - 45;
-  const maxY = gridY + gridHeight - 12;
+  // reserveBottom: chiều cao dành cho bảng "Ký hiệu" neo ở đáy cột.
+  const maxY = gridY + gridHeight - 12 - Math.max(0, reserveBottom);
   let cursorY = gridY + 73;
 
   for (let i = 0; i < notes.length; i++) {
@@ -1595,7 +1596,7 @@ function drawTemplate(ctx, w, h) {
   ctx.lineTo(w - 20, gridY + 55);
   ctx.stroke();
 
-  drawSceneNumberLegend(ctx, legendX, gridY, w - 20 - legendX, gridH);
+  drawSceneLegendColumn(ctx, legendX, gridY, w - 20 - legendX, gridH);
   
   const footerY = gridY + gridH + 45;
   // Khoảng cách 3 cột chữ ký cân đối đều nhau (mỗi cột 320px, cách lề đều 160px)

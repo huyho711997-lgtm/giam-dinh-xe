@@ -11,7 +11,9 @@ function cloneSceneTemplateMeta(meta) {
     accidentDateTime: String(source.accidentDateTime || ''),
     accidentLocation: String(source.accidentLocation || ''),
     reportPlace: String(source.reportPlace || ''),
-    reportDate: String(source.reportDate || '')
+    reportDate: String(source.reportDate || ''),
+    // Bảng "Ký hiệu" mặc định hiện; chỉ tắt khi người dùng chủ động bỏ chọn.
+    showSymbolLegend: source.showSymbolLegend !== false
   };
 }
 
@@ -78,6 +80,8 @@ function parseSceneDateParts(value, includeTime = false) {
 function getSceneTemplateHotspot(x, y) {
   if (x >= 245 && x <= 755 && y >= 40 && y <= 78) return 'accident';
   if (x >= 660 && x <= 975 && y >= 558 && y <= 598) return 'report';
+  // Tiêu đề cột "Chú thích": bấm để bật/tắt bảng Ký hiệu.
+  if (x >= 822 && x <= 978 && y >= 87 && y <= 138) return 'legend';
   return null;
 }
 
@@ -113,6 +117,13 @@ function ensureSceneTemplateMetaEditor() {
             <input id="sceneMetaReportDate" type="text" placeholder="Ví dụ: 03/10/2026" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border-strong,rgba(255,255,255,.16));background:var(--input-bg,rgba(0,0,0,.25));color:inherit;font:inherit;outline:none;" />
           </label>
         </div>
+        <div id="sceneMetaLegendFields" style="display:none;gap:10px;">
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:750;cursor:pointer;">
+            <input id="sceneMetaShowSymbolLegend" type="checkbox" style="width:18px;height:18px;cursor:pointer;" />
+            Hiện bảng "Ký hiệu" ở cột Chú thích
+          </label>
+          <div style="font-size:12px;color:var(--text-muted,#94a3b8);line-height:1.5;">Bảng tự liệt kê các loại vật thể đã vẽ (xe, vạch kẻ đường, hộ lan, biển báo…) kèm hình mẫu và tên gọi, xuất hiện cả khi xuất ảnh và in.</div>
+        </div>
       </div>
       <div style="padding:14px 22px 20px;display:flex;justify-content:flex-end;gap:12px;">
         <button type="button" id="btnCancelSceneTemplateMeta" class="btn-premium btn-secondary" style="width:auto !important;padding:0 20px;height:42px;cursor:pointer;">Hủy</button>
@@ -133,10 +144,14 @@ function ensureSceneTemplateMetaEditor() {
 function openSceneTemplateMetaEditor(section) {
   const meta = ensureSceneTemplateMeta(true);
   const overlay = ensureSceneTemplateMetaEditor();
-  overlay.dataset.section = section === 'report' ? 'report' : 'accident';
-  document.getElementById('sceneTemplateMetaTitle').textContent = section === 'report' ? 'Chỉnh nơi và ngày lập sơ đồ' : 'Chỉnh thời gian và địa điểm tai nạn';
-  document.getElementById('sceneMetaAccidentFields').style.display = section === 'report' ? 'none' : 'grid';
-  document.getElementById('sceneMetaReportFields').style.display = section === 'report' ? 'grid' : 'none';
+  const sec = section === 'report' || section === 'legend' ? section : 'accident';
+  overlay.dataset.section = sec;
+  const titles = { report: 'Chỉnh nơi và ngày lập sơ đồ', legend: 'Bảng ký hiệu trên sơ đồ', accident: 'Chỉnh thời gian và địa điểm tai nạn' };
+  document.getElementById('sceneTemplateMetaTitle').textContent = titles[sec];
+  document.getElementById('sceneMetaAccidentFields').style.display = sec === 'accident' ? 'grid' : 'none';
+  document.getElementById('sceneMetaReportFields').style.display = sec === 'report' ? 'grid' : 'none';
+  document.getElementById('sceneMetaLegendFields').style.display = sec === 'legend' ? 'grid' : 'none';
+  document.getElementById('sceneMetaShowSymbolLegend').checked = meta.showSymbolLegend !== false;
   document.getElementById('sceneMetaAccidentDateTime').value = meta.accidentDateTime;
   document.getElementById('sceneMetaAccidentLocation').value = meta.accidentLocation;
   document.getElementById('sceneMetaReportPlace').value = meta.reportPlace;
@@ -144,7 +159,7 @@ function openSceneTemplateMetaEditor(section) {
   overlay.style.display = 'flex';
   overlay.setAttribute('aria-hidden', 'false');
   setTimeout(() => {
-    const focusId = section === 'report' ? 'sceneMetaReportPlace' : 'sceneMetaAccidentDateTime';
+    const focusId = { report: 'sceneMetaReportPlace', legend: 'sceneMetaShowSymbolLegend' }[sec] || 'sceneMetaAccidentDateTime';
     document.getElementById(focusId)?.focus();
   }, 40);
 }
@@ -160,9 +175,12 @@ function closeSceneTemplateMetaEditor() {
 
 function applySceneTemplateMetaEditor() {
   const overlay = document.getElementById('sceneTemplateMetaOverlay');
-  const section = overlay && overlay.dataset.section === 'report' ? 'report' : 'accident';
+  const rawSection = overlay ? overlay.dataset.section : '';
+  const section = rawSection === 'report' || rawSection === 'legend' ? rawSection : 'accident';
   const nextMeta = cloneSceneTemplateMeta(ensureSceneTemplateMeta());
-  if (section === 'report') {
+  if (section === 'legend') {
+    nextMeta.showSymbolLegend = !!document.getElementById('sceneMetaShowSymbolLegend')?.checked;
+  } else if (section === 'report') {
     nextMeta.reportPlace = String(document.getElementById('sceneMetaReportPlace')?.value || '').trim();
     nextMeta.reportDate = String(document.getElementById('sceneMetaReportDate')?.value || '').trim() || getTodaySceneDateString();
   } else {
