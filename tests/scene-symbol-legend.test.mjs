@@ -145,3 +145,56 @@ test('đấu nối: index.html nạp module, hai nơi vẽ cột dùng drawScene
   const geo = fs.readFileSync(new URL('geometry.js', root), 'utf8');
   assert.match(geo, /sceneMetaShowSymbolLegend/);
 });
+
+test('tùy chỉnh: ẩn, đổi tên, sắp xếp; khóa không đổi khi đổi tên', () => {
+  const { context, run } = load();
+  context.shapes = [
+    mk({ type: 'car', startX: 1, startY: 1, angle: 0, carW: 60 }),
+    mk({ type: 'road_line', x1: 0, y1: 0, x2: 100, y2: 0 }),
+    mk({ type: 'tree', startX: 1, startY: 1, angle: 0, objectW: 30, objectH: 30 })
+  ];
+  context.cfg = { hidden: ['Cây xanh'], order: ['Vạch kẻ đường nét liền', 'Xe ô tô'], labels: { 'Xe ô tô': 'Xe BKS 47C-26837' } };
+  const shown = run('buildSceneSymbolLegendEntries(shapes, getShapeDisplayName, cfg).map(e => e.key + "=>" + e.label).join("|")');
+  assert.equal(shown, 'Vạch kẻ đường nét liền=>Vạch kẻ đường nét liền|Xe ô tô=>Xe BKS 47C-26837');
+  const all = run('buildSceneSymbolLegendEntries(shapes, getShapeDisplayName, cfg, true).map(e => e.key + ":" + e.hidden).join("|")');
+  assert.equal(all, 'Vạch kẻ đường nét liền:false|Xe ô tô:false|Cây xanh:true');
+});
+
+test('cấu hình hỏng/quá khổ được làm sạch', () => {
+  const { context, run } = load();
+  context.bad = { hidden: 'x', order: [1, null, 'a', 'a'], labels: { a: '  ', b: 'B'.repeat(200), c: 5 } };
+  const out = JSON.parse(run('JSON.stringify(normalizeSceneSymbolLegendConfig(bad))'));
+  assert.deepEqual(out.hidden, []);
+  assert.deepEqual(out.order, ['1', 'a']);
+  assert.equal(out.labels.a, undefined);
+  assert.equal(out.labels.b.length, 60);
+  assert.equal(out.labels.c, '5');
+  assert.deepEqual(JSON.parse(run('JSON.stringify(normalizeSceneSymbolLegendConfig(null))')), { hidden: [], order: [], labels: {} });
+});
+
+test('templateMeta giữ và làm sạch cấu hình ký hiệu qua cloneSceneTemplateMeta', () => {
+  const { context, run } = load();
+  context.m = { symbolLegend: { hidden: ['A'], order: ['B', 'A'], labels: { B: 'Tên B' } } };
+  const out = JSON.parse(run('JSON.stringify(cloneSceneTemplateMeta(cloneSceneTemplateMeta(m)).symbolLegend)'));
+  assert.deepEqual(out, { hidden: ['A'], order: ['B', 'A'], labels: { B: 'Tên B' } });
+  assert.deepEqual(JSON.parse(run('JSON.stringify(cloneSceneTemplateMeta({}).symbolLegend)')), { hidden: [], order: [], labels: {} });
+});
+
+test('vẽ cột chú thích dùng tên tùy chỉnh và bỏ ký hiệu đã ẩn', () => {
+  const { context, ctx, log, run } = load();
+  context.ctx = ctx;
+  context.sceneShapes = [
+    mk({ type: 'car', startX: 1, startY: 1, angle: 0, carW: 60 }),
+    mk({ type: 'tree', startX: 1, startY: 1, angle: 0, objectW: 30, objectH: 30 })
+  ];
+  run('sceneTemplateMeta = cloneSceneTemplateMeta({ symbolLegend: { hidden: ["Cây xanh"], labels: { "Xe ô tô": "Xe tải lật" } } })');
+  run('drawSceneLegendColumn(ctx, 820, 85, 160, 475)');
+  const texts = log.filter(c => c[0] === 'fillText').map(c => String(c[1]));
+  assert.ok(texts.includes('Xe tải lật'));
+  assert.ok(!texts.some(t => t.includes('Cây')));
+  // Ẩn hết → không còn bảng
+  log.length = 0;
+  run('sceneTemplateMeta = cloneSceneTemplateMeta({ symbolLegend: { hidden: ["Cây xanh", "Xe ô tô"] } })');
+  run('drawSceneLegendColumn(ctx, 820, 85, 160, 475)');
+  assert.ok(!log.filter(c => c[0] === 'fillText').some(c => c[1] === 'Ký hiệu'));
+});

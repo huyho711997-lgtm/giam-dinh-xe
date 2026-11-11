@@ -13,7 +13,9 @@ function cloneSceneTemplateMeta(meta) {
     reportPlace: String(source.reportPlace || ''),
     reportDate: String(source.reportDate || ''),
     // Bảng "Ký hiệu" mặc định hiện; chỉ tắt khi người dùng chủ động bỏ chọn.
-    showSymbolLegend: source.showSymbolLegend !== false
+    showSymbolLegend: source.showSymbolLegend !== false,
+    // Chọn/đổi tên/sắp xếp ký hiệu: { hidden:[], order:[], labels:{} }
+    symbolLegend: normalizeSceneSymbolLegendConfig(source.symbolLegend)
   };
 }
 
@@ -122,7 +124,8 @@ function ensureSceneTemplateMetaEditor() {
             <input id="sceneMetaShowSymbolLegend" type="checkbox" style="width:18px;height:18px;cursor:pointer;" />
             Hiện bảng "Ký hiệu" ở cột Chú thích
           </label>
-          <div style="font-size:12px;color:var(--text-muted,#94a3b8);line-height:1.5;">Bảng tự liệt kê các loại vật thể đã vẽ (xe, vạch kẻ đường, hộ lan, biển báo…) kèm hình mẫu và tên gọi, xuất hiện cả khi xuất ảnh và in.</div>
+          <div style="font-size:12px;color:var(--text-muted,#94a3b8);line-height:1.5;">Bảng tự liệt kê các loại vật thể đã vẽ kèm hình mẫu và tên gọi, xuất hiện cả khi xuất ảnh và in. Bỏ tích ký hiệu không cần giải thích, sửa tên ở ô bên phải (để trống = tên mặc định), dùng ▲▼ để sắp xếp.</div>
+          <div id="sceneMetaLegendList" style="display:grid;gap:7px;max-height:min(46vh,380px);overflow:auto;padding:2px 2px 2px 0;"></div>
         </div>
       </div>
       <div style="padding:14px 22px 20px;display:flex;justify-content:flex-end;gap:12px;">
@@ -152,6 +155,7 @@ function openSceneTemplateMetaEditor(section) {
   document.getElementById('sceneMetaReportFields').style.display = sec === 'report' ? 'grid' : 'none';
   document.getElementById('sceneMetaLegendFields').style.display = sec === 'legend' ? 'grid' : 'none';
   document.getElementById('sceneMetaShowSymbolLegend').checked = meta.showSymbolLegend !== false;
+  if (sec === 'legend') renderSceneSymbolLegendEditor(document.getElementById('sceneMetaLegendList'), meta);
   document.getElementById('sceneMetaAccidentDateTime').value = meta.accidentDateTime;
   document.getElementById('sceneMetaAccidentLocation').value = meta.accidentLocation;
   document.getElementById('sceneMetaReportPlace').value = meta.reportPlace;
@@ -180,6 +184,8 @@ function applySceneTemplateMetaEditor() {
   const nextMeta = cloneSceneTemplateMeta(ensureSceneTemplateMeta());
   if (section === 'legend') {
     nextMeta.showSymbolLegend = !!document.getElementById('sceneMetaShowSymbolLegend')?.checked;
+    const legendList = document.getElementById('sceneMetaLegendList');
+    if (legendList) nextMeta.symbolLegend = readSceneSymbolLegendEditor(legendList);
   } else if (section === 'report') {
     nextMeta.reportPlace = String(document.getElementById('sceneMetaReportPlace')?.value || '').trim();
     nextMeta.reportDate = String(document.getElementById('sceneMetaReportDate')?.value || '').trim() || getTodaySceneDateString();
