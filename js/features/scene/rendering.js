@@ -658,6 +658,7 @@ function getShapeDisplayName(shape) {
     case 'road_boundary_marker': return 'Cột mốc lộ giới';
     case 'pothole': return 'Ổ gà';
     case 'geo_circle': return 'Hình tròn';
+    case 'geo_rect': return 'Hình chữ nhật';
     case 'geo_triangle': return 'Hình tam giác';
     case 'geo_round_triangle': return 'Hình tam giác bo góc';
     case 'sign_circle_post': return 'Biển báo tròn có trụ';

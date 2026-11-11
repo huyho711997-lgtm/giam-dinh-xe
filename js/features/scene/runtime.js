@@ -177,6 +177,7 @@ const TOOL_ICONS_MAP = {
   utility_pole: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.7 6.5L9.5 20h5L13.3 6.5z" fill="rgba(148,163,184,.3)"></path><rect x="3" y="4" width="18" height="2.4" rx="1.2" fill="currentColor" opacity=".65"></rect><line x1="4" y1="2.7" x2="4" y2="8"></line><line x1="12" y1="2.7" x2="12" y2="8"></line><line x1="20" y1="2.7" x2="20" y2="8"></line><circle cx="4" cy="2.7" r="1.2" fill="white"></circle><circle cx="12" cy="2.7" r="1.2" fill="white"></circle><circle cx="20" cy="2.7" r="1.2" fill="white"></circle><rect x="8" y="20" width="8" height="2" rx="1"></rect></svg>',
   road_boundary_marker: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5h8l1.5 2v16H6.5v-16z" fill="rgba(248,250,252,.92)"></path><path d="M8 2.5h8l1.5 2v3H6.5v-3z" fill="currentColor"></path><path d="M9 11h6M9 14h6M9 17h6" stroke="currentColor" stroke-width="1.2"></path><path d="M5 20.5h14" opacity=".5"></path></svg>',
   geo_circle: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"></circle></svg>',
+  geo_rect: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12"></rect></svg>',
   geo_triangle: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 17H3z"></path></svg>',
   geo_round_triangle: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M10.2 4.2a2 2 0 0 1 3.6 0l7 13.2A2 2 0 0 1 19 20H5a2 2 0 0 1-1.8-2.6z"></path></svg>',
   sign_circle_post: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="5"></circle><path d="M9 12v10M6 22h6"></path></svg>',
@@ -225,6 +226,7 @@ const TOOL_GROUPS_CONFIG = {
     defaultTool: 'geo_circle',
     tools: [
       { id: 'geo_circle', name: 'Hình tròn', desc: 'Kéo để vẽ đường tròn rỗng' },
+      { id: 'geo_rect', name: 'Hình chữ nhật', desc: 'Kéo để vẽ; kéo cạnh để đổi dài/rộng, kéo góc để phóng to theo tỷ lệ' },
       { id: 'geo_triangle', name: 'Hình tam giác', desc: 'Tam giác cạnh thẳng' },
       { id: 'geo_round_triangle', name: 'Tam giác bo góc', desc: 'Tam giác được bo mềm tại ba đỉnh' },
       { id: 'sign_circle_post', name: 'Biển báo tròn có trụ', desc: 'Mặt biển tròn và trụ đỡ đơn sắc' },

@@ -710,6 +710,16 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
     ctx.strokeStyle = color;
     ctx.lineWidth = Math.max(1, width);
     ctx.stroke();
+  } else if (type === 'geo_rect') {
+    // Khung khít với ô chọn (w × h) để kéo cạnh nào thì đúng cạnh đó di chuyển; góc vuông, không bo.
+    ctx.lineJoin = 'miter';
+    ctx.beginPath();
+    ctx.rect(left, top, w, h);
+    ctx.fillStyle = 'rgba(255,255,255,.72)';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = Math.max(1, width);
+    ctx.stroke();
   } else if (type === 'geo_triangle' || type === 'geo_round_triangle') {
     const triangleW = w * 0.88;
     const triangleH = h * 0.88;

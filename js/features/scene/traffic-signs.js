@@ -995,7 +995,7 @@ function isInfrastructureAssetShape(shape) {
 
 function isSceneryAssetType(type) {
   return type === 'utility_pole' || type === 'road_boundary_marker' || type === 'pothole' ||
-    type === 'geo_circle' || type === 'geo_triangle' || type === 'geo_round_triangle' ||
+    type === 'geo_circle' || type === 'geo_rect' || type === 'geo_triangle' || type === 'geo_round_triangle' ||
     type === 'sign_circle_post' || type === 'sign_triangle_post' ||
     type === 'tree' || type === 'median_tree' || type === 'rice_field' || type === 'forest' ||
     type === 'truck' || type === 'toll_station';
@@ -1295,6 +1295,7 @@ function getSceneryAspectRatio(type) {
   if (type === 'road_boundary_marker') return 0.46;
   if (type === 'pothole') return 0.62;
   if (type === 'geo_circle') return 1;
+  if (type === 'geo_rect') return 0.6;
   if (type === 'geo_triangle' || type === 'geo_round_triangle') return 0.9;
   if (type === 'sign_circle_post') return 0.62;
   if (type === 'sign_triangle_post') return 0.68;
@@ -1311,6 +1312,7 @@ function getSceneryAspectRatio(type) {
 function getSceneryMinimumLength(type) {
   if (type === 'tree') return 28;
   if (type === 'geo_circle') return 24;
+  if (type === 'geo_rect') return 30;
   if (type === 'geo_triangle' || type === 'geo_round_triangle') return 28;
   if (type === 'sign_circle_post' || type === 'sign_triangle_post') return 42;
   if (type === 'utility_pole') return 32;
