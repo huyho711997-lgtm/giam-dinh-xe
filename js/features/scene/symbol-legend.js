@@ -3,6 +3,9 @@
 // vẽ của sơ đồ nên đúng màu/kiểu người dùng đã chọn) + tên gọi.
 
 // Các loại không phải "ký hiệu": chữ, số chú thích, nét tự do, vết xóa.
+// Vùng bảng ký hiệu trên canvas lần vẽ gần nhất (null nếu đang ẩn/không có ký hiệu).
+var sceneSymbolLegendHitRect = null;
+
 const SCENE_SYMBOL_LEGEND_SKIP_TYPES = ['text', 'number_note', 'pen', 'eraser'];
 const SCENE_SYMBOL_LEGEND_HEADER_HEIGHT = 26;
 const SCENE_SYMBOL_LEGEND_ICON_W = 36;
@@ -75,63 +78,100 @@ function getSceneSymbolLegendConfig() {
 }
 
 
-// ---- Hộp thoại chỉnh sửa: chọn ký hiệu cần giải thích, sửa tên, đổi thứ tự ----
+// ---- Hộp thoại chỉnh sửa: chọn ký hiệu cần giải thích, sửa tên, đổi thứ tự, xem trước trực tiếp ----
+function sceneLegendEl(tag, className, text) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text != null) el.textContent = text;
+  return el;
+}
+
+
 function renderSceneSymbolLegendEditor(container, meta) {
   if (!container) return;
   const cfg = normalizeSceneSymbolLegendConfig(meta && meta.symbolLegend);
   const entries = buildSceneSymbolLegendEntries(sceneShapes, getShapeDisplayName, cfg, true);
+  const root = container.closest('#sceneMetaLegendFields') || container.parentElement;
+  const master = document.getElementById('sceneMetaShowSymbolLegend');
+  const countEl = document.getElementById('sceneMetaLegendCount');
   container.textContent = '';
   container.dataset.cfg = JSON.stringify(cfg);
+
+  const rows = () => Array.from(container.querySelectorAll('.scene-symbol-row'));
+  const refresh = () => {
+    const all = rows();
+    all.forEach((row, index) => {
+      const on = row.querySelector('.scene-symbol-check').checked;
+      row.classList.toggle('is-off', !on);
+      const buttons = row.querySelectorAll('.sl-move button');
+      buttons[0].disabled = index === 0;
+      buttons[1].disabled = index === all.length - 1;
+    });
+    const active = all.filter(row => row.querySelector('.scene-symbol-check').checked).length;
+    if (countEl) countEl.textContent = all.length ? `${active}/${all.length} ký hiệu được hiển thị` : 'Chưa có ký hiệu nào';
+    drawSceneSymbolLegendPreview(document.getElementById('sceneMetaLegendPreview'), readSceneSymbolLegendEditor(container), !master || master.checked);
+  };
+  container._refresh = refresh;
+
   if (entries.length === 0) {
-    const empty = document.createElement('div');
-    empty.style.cssText = 'font-size:12px;color:var(--text-muted,#94a3b8);padding:8px 0;';
-    empty.textContent = 'Chưa có ký hiệu nào trên sơ đồ. Hãy vẽ vật thể rồi quay lại chỉnh sửa.';
-    container.appendChild(empty);
+    container.appendChild(sceneLegendEl('div', 'sl-empty', 'Chưa có ký hiệu nào trên sơ đồ. Hãy vẽ vật thể rồi quay lại chỉnh sửa.'));
+    refresh();
     return;
   }
-  const inputStyle = 'flex:1;min-width:0;padding:7px 9px;border-radius:8px;border:1px solid var(--border-strong,rgba(255,255,255,.16));background:var(--input-bg,rgba(0,0,0,.25));color:inherit;font:inherit;font-size:12px;outline:none;';
-  const btnStyle = 'width:26px;height:26px;border-radius:7px;border:1px solid var(--border,rgba(255,255,255,.12));background:var(--surface-soft,rgba(255,255,255,.06));color:inherit;cursor:pointer;font-size:12px;line-height:1;padding:0;';
+
   entries.forEach(entry => {
-    const row = document.createElement('div');
-    row.className = 'scene-symbol-row';
+    const row = sceneLegendEl('div', 'scene-symbol-row');
     row.dataset.key = entry.key;
-    row.style.cssText = 'display:flex;align-items:center;gap:8px;';
 
-    const check = document.createElement('input');
+    const sw = sceneLegendEl('label', 'sl-switch');
+    sw.title = 'Đưa ký hiệu này vào bảng';
+    const check = sceneLegendEl('input', 'scene-symbol-check');
     check.type = 'checkbox';
-    check.className = 'scene-symbol-check';
     check.checked = !entry.hidden;
-    check.title = 'Đưa ký hiệu này vào bảng';
-    check.style.cssText = 'width:17px;height:17px;cursor:pointer;flex:none;';
+    sw.append(check, sceneLegendEl('i'));
 
-    const preview = document.createElement('canvas');
-    preview.width = 72; preview.height = 36;
-    preview.style.cssText = 'width:36px;height:18px;flex:none;background:#fff;border-radius:3px;';
+    const tile = sceneLegendEl('canvas', 'sl-tile');
+    tile.width = 128; tile.height = 72;
     try {
-      const pctx = preview.getContext('2d');
-      pctx.scale(2, 2);
-      drawSceneSymbolSample(pctx, entry.sample, 0, 0, 36, 18);
+      const tctx = tile.getContext('2d');
+      tctx.scale(2, 2);
+      drawSceneSymbolSample(tctx, entry.sample, 4, 4, 56, 28);
     } catch (_) { /* không vẽ được hình mẫu thì để trống */ }
 
-    const input = document.createElement('input');
+    const input = sceneLegendEl('input', 'scene-symbol-label');
     input.type = 'text';
-    input.className = 'scene-symbol-label';
     input.maxLength = 60;
     input.placeholder = entry.autoLabel;
     input.value = entry.label === entry.autoLabel ? '' : entry.label;
     input.title = 'Để trống để dùng tên mặc định: ' + entry.autoLabel;
-    input.style.cssText = inputStyle;
+    input.setAttribute('aria-label', 'Tên hiển thị của ' + entry.autoLabel);
+    const top = sceneLegendEl('div', 'sl-field-top');
+    top.append(input, sceneLegendEl('span', 'sl-count', '×' + entry.count));
+    const field = sceneLegendEl('div', 'sl-field');
+    field.append(top, sceneLegendEl('div', 'sl-hint', 'Mặc định: ' + entry.autoLabel));
 
-    const up = document.createElement('button');
-    up.type = 'button'; up.textContent = '▲'; up.title = 'Đưa lên'; up.style.cssText = btnStyle;
-    up.onclick = () => { if (row.previousElementSibling) container.insertBefore(row, row.previousElementSibling); };
-    const down = document.createElement('button');
-    down.type = 'button'; down.textContent = '▼'; down.title = 'Đưa xuống'; down.style.cssText = btnStyle;
-    down.onclick = () => { if (row.nextElementSibling) container.insertBefore(row.nextElementSibling, row); };
+    const move = sceneLegendEl('div', 'sl-move');
+    const up = sceneLegendEl('button', '', '▲');
+    up.type = 'button'; up.title = 'Đưa lên'; up.setAttribute('aria-label', 'Đưa lên');
+    up.onclick = () => { if (row.previousElementSibling) { container.insertBefore(row, row.previousElementSibling); refresh(); } };
+    const down = sceneLegendEl('button', '', '▼');
+    down.type = 'button'; down.title = 'Đưa xuống'; down.setAttribute('aria-label', 'Đưa xuống');
+    down.onclick = () => { if (row.nextElementSibling) { container.insertBefore(row.nextElementSibling, row); refresh(); } };
+    move.append(up, down);
 
-    row.append(check, preview, input, up, down);
+    row.append(sw, tile, field, move);
     container.appendChild(row);
   });
+
+  container.oninput = refresh;
+  container.onchange = refresh;
+  if (master) master.onchange = refresh;
+  const setAll = on => { rows().forEach(row => { row.querySelector('.scene-symbol-check').checked = on; }); refresh(); };
+  const bind = (id, fn) => { const btn = document.getElementById(id); if (btn) btn.onclick = fn; };
+  bind('btnSceneLegendAll', () => setAll(true));
+  bind('btnSceneLegendNone', () => setAll(false));
+  bind('btnSceneLegendResetNames', () => { rows().forEach(row => { row.querySelector('.scene-symbol-label').value = ''; }); refresh(); });
+  refresh();
 }
 
 
@@ -153,6 +193,37 @@ function readSceneSymbolLegendEditor(container) {
   previous.hidden.forEach(key => { if (present.indexOf(key) === -1) next.hidden.push(key); });
   Object.keys(previous.labels).forEach(key => { if (present.indexOf(key) === -1) next.labels[key] = previous.labels[key]; });
   return normalizeSceneSymbolLegendConfig(next);
+}
+
+
+// Xem trước cột Chú thích (khung + chú thích số + bảng ký hiệu) đúng như bản in.
+function drawSceneSymbolLegendPreview(canvas, config, enabled) {
+  if (!canvas || typeof canvas.getContext !== 'function') return;
+  const COL = { x: 820, y: 85, w: 160, h: 475 };
+  const scale = 3;
+  if (canvas.width !== COL.w * scale) { canvas.width = COL.w * scale; canvas.height = COL.h * scale; }
+  const pctx = canvas.getContext('2d');
+  if (!pctx) return;
+  pctx.setTransform(1, 0, 0, 1, 0, 0);
+  pctx.clearRect(0, 0, canvas.width, canvas.height);
+  pctx.setTransform(scale, 0, 0, scale, -COL.x * scale, -COL.y * scale);
+  pctx.fillStyle = '#ffffff';
+  pctx.fillRect(COL.x, COL.y, COL.w, COL.h);
+  pctx.fillStyle = '#000000';
+  pctx.strokeStyle = '#000000';
+  pctx.lineWidth = 1.5;
+  pctx.strokeRect(COL.x, COL.y, COL.w, COL.h);
+  pctx.textAlign = 'center';
+  pctx.textBaseline = 'alphabetic';
+  pctx.font = 'bold 14px Arial';
+  pctx.fillText('Chú thích', COL.x + 80, COL.y + 25);
+  pctx.font = 'italic 12px Arial';
+  pctx.fillText('(Số — nội dung giải thích)', COL.x + 80, COL.y + 45);
+  pctx.beginPath();
+  pctx.moveTo(COL.x, COL.y + 55);
+  pctx.lineTo(COL.x + COL.w, COL.y + 55);
+  pctx.stroke();
+  drawSceneLegendColumn(pctx, COL.x, COL.y, COL.w, COL.h, { config, enabled, preview: true });
 }
 
 
@@ -330,11 +401,15 @@ function drawSceneSymbolLegend(ctx, legendX, legendWidth, bottomY, layout) {
 
 // Điểm vào duy nhất cho cột Chú thích: chú thích số ở trên, bảng ký hiệu ở đáy.
 // Dùng chung cho màn hình, xuất ảnh và in lên giấy ký sẵn.
-function drawSceneLegendColumn(ctx, legendX, gridY, legendWidth, gridHeight) {
+function drawSceneLegendColumn(ctx, legendX, gridY, legendWidth, gridHeight, override) {
+  // override (chỉ dùng cho xem trước): { config, enabled, preview } thay cho cấu hình đang lưu.
+  const isPreview = !!(override && override.preview);
   let layout = null;
   try {
-    if (isSceneSymbolLegendEnabled() && typeof sceneShapes !== 'undefined') {
-      const entries = buildSceneSymbolLegendEntries(sceneShapes, getShapeDisplayName, getSceneSymbolLegendConfig());
+    const enabled = override && typeof override.enabled === 'boolean' ? override.enabled : isSceneSymbolLegendEnabled();
+    if (enabled && typeof sceneShapes !== 'undefined') {
+      const config = override && override.config ? override.config : getSceneSymbolLegendConfig();
+      const entries = buildSceneSymbolLegendEntries(sceneShapes, getShapeDisplayName, config);
       const noteCount = typeof getSortedSceneNumberNotes === 'function' ? getSortedSceneNumberNotes().length : 0;
       const ratio = getSceneSymbolLegendRatio(gridHeight, noteCount);
       layout = layoutSceneSymbolLegend(ctx, entries, legendWidth, gridHeight * ratio);
@@ -342,6 +417,10 @@ function drawSceneLegendColumn(ctx, legendX, gridY, legendWidth, gridHeight) {
   } catch (_) { layout = null; /* lỗi bảng ký hiệu không được chặn chú thích số */ }
 
   const bottomY = gridY + gridHeight;
+  // Vùng bảng để nhận cú bấm mở hộp thoại chỉnh sửa (xem getSceneTemplateHotspot).
+  if (!isPreview) {
+    sceneSymbolLegendHitRect = layout ? { x: legendX, y: bottomY - layout.height, w: legendWidth, h: layout.height } : null;
+  }
   drawSceneNumberLegend(ctx, legendX, gridY, legendWidth, gridHeight, layout ? layout.height + 6 : 0);
   if (layout) drawSceneSymbolLegend(ctx, legendX, legendWidth, bottomY, layout);
 }

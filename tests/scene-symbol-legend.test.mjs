@@ -198,3 +198,26 @@ test('vẽ cột chú thích dùng tên tùy chỉnh và bỏ ký hiệu đã �
   run('drawSceneLegendColumn(ctx, 820, 85, 160, 475)');
   assert.ok(!log.filter(c => c[0] === 'fillText').some(c => c[1] === 'Ký hiệu'));
 });
+
+test('bấm trực tiếp vào bảng Ký hiệu mở trình chỉnh sửa; ẩn bảng thì vùng bấm biến mất', () => {
+  const { context, ctx, run } = load();
+  context.ctx = ctx;
+  context.sceneShapes = [mk({ type: 'road_line', x1: 0, y1: 0, x2: 100, y2: 0 })];
+  run('sceneTemplateMeta = cloneSceneTemplateMeta({})');
+  run('drawSceneLegendColumn(ctx, 820, 85, 160, 475)');
+  const rect = JSON.parse(run('JSON.stringify(sceneSymbolLegendHitRect)'));
+  assert.equal(rect.x, 820);
+  assert.equal(rect.y + rect.h, 560, 'bảng neo sát đáy cột');
+  context.px = rect.x + 50; context.py = rect.y + rect.h / 2;
+  assert.equal(run('getSceneTemplateHotspot(px, py)'), 'legend');
+  assert.equal(run('getSceneTemplateHotspot(900, 250)'), null, 'vùng chú thích số không mở hộp thoại');
+  assert.equal(run('getSceneTemplateHotspot(400, 300)'), null, 'vùng vẽ không bị chiếm');
+  // Xem trước không được ghi đè vùng bấm của bản vẽ thật
+  run('drawSceneLegendColumn(ctx, 0, 0, 160, 475, { config: { hidden: ["Vạch kẻ đường nét liền"] }, enabled: true, preview: true })');
+  assert.equal(JSON.parse(run('JSON.stringify(sceneSymbolLegendHitRect)')).x, 820);
+  // Tắt bảng → hết vùng bấm, nhưng tiêu đề cột Chú thích vẫn là lối vào để bật lại
+  run('sceneTemplateMeta = cloneSceneTemplateMeta({ showSymbolLegend: false })');
+  run('drawSceneLegendColumn(ctx, 820, 85, 160, 475)');
+  assert.equal(run('sceneSymbolLegendHitRect'), null);
+  assert.equal(run('getSceneTemplateHotspot(900, 100)'), 'legend');
+});

@@ -82,7 +82,9 @@ function parseSceneDateParts(value, includeTime = false) {
 function getSceneTemplateHotspot(x, y) {
   if (x >= 245 && x <= 755 && y >= 40 && y <= 78) return 'accident';
   if (x >= 660 && x <= 975 && y >= 558 && y <= 598) return 'report';
-  // Tiêu đề cột "Chú thích": bấm để bật/tắt bảng Ký hiệu.
+  // Bấm thẳng vào bảng Ký hiệu để chỉnh sửa; tiêu đề cột Chú thích là lối vào dự phòng khi bảng đang ẩn.
+  const rect = typeof sceneSymbolLegendHitRect !== 'undefined' ? sceneSymbolLegendHitRect : null;
+  if (rect && x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) return 'legend';
   if (x >= 822 && x <= 978 && y >= 87 && y <= 138) return 'legend';
   return null;
 }
@@ -119,13 +121,23 @@ function ensureSceneTemplateMetaEditor() {
             <input id="sceneMetaReportDate" type="text" placeholder="Ví dụ: 03/10/2026" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--border-strong,rgba(255,255,255,.16));background:var(--input-bg,rgba(0,0,0,.25));color:inherit;font:inherit;outline:none;" />
           </label>
         </div>
-        <div id="sceneMetaLegendFields" style="display:none;gap:10px;">
-          <label style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:750;cursor:pointer;">
-            <input id="sceneMetaShowSymbolLegend" type="checkbox" style="width:18px;height:18px;cursor:pointer;" />
-            Hiện bảng "Ký hiệu" ở cột Chú thích
-          </label>
-          <div style="font-size:12px;color:var(--text-muted,#94a3b8);line-height:1.5;">Bảng tự liệt kê các loại vật thể đã vẽ kèm hình mẫu và tên gọi, xuất hiện cả khi xuất ảnh và in. Bỏ tích ký hiệu không cần giải thích, sửa tên ở ô bên phải (để trống = tên mặc định), dùng ▲▼ để sắp xếp.</div>
-          <div id="sceneMetaLegendList" style="display:grid;gap:7px;max-height:min(46vh,380px);overflow:auto;padding:2px 2px 2px 0;"></div>
+        <div id="sceneMetaLegendFields" class="sl-wrap" style="display:none;">
+          <div class="sl-toolbar">
+            <label class="sl-master">
+              <span class="sl-switch"><input id="sceneMetaShowSymbolLegend" type="checkbox" /><i></i></span>
+              <span>Hiện bảng "Ký hiệu"<small id="sceneMetaLegendCount">&nbsp;</small></span>
+            </label>
+            <div class="sl-actions">
+              <button type="button" class="sl-chip" id="btnSceneLegendAll">Chọn tất cả</button>
+              <button type="button" class="sl-chip" id="btnSceneLegendNone">Bỏ chọn tất cả</button>
+              <button type="button" class="sl-chip" id="btnSceneLegendResetNames">Đặt lại tên</button>
+            </div>
+          </div>
+          <div class="sl-body">
+            <div id="sceneMetaLegendList" class="sl-list"></div>
+            <aside class="sl-preview"><h4>Xem trước</h4><canvas id="sceneMetaLegendPreview" width="480" height="1425"></canvas></aside>
+          </div>
+          <p class="sl-foot">Bật/tắt từng ký hiệu để chọn mục cần giải thích. Gõ vào ô tên để đổi cách gọi (<kbd>trống</kbd> = tên mặc định), dùng ▲▼ để sắp xếp. Bảng xuất hiện cả khi xuất ảnh và in.</p>
         </div>
       </div>
       <div style="padding:14px 22px 20px;display:flex;justify-content:flex-end;gap:12px;">
@@ -149,6 +161,7 @@ function openSceneTemplateMetaEditor(section) {
   const overlay = ensureSceneTemplateMetaEditor();
   const sec = section === 'report' || section === 'legend' ? section : 'accident';
   overlay.dataset.section = sec;
+  overlay.classList.toggle('scene-meta--legend', sec === 'legend');
   const titles = { report: 'Chỉnh nơi và ngày lập sơ đồ', legend: 'Bảng ký hiệu trên sơ đồ', accident: 'Chỉnh thời gian và địa điểm tai nạn' };
   document.getElementById('sceneTemplateMetaTitle').textContent = titles[sec];
   document.getElementById('sceneMetaAccidentFields').style.display = sec === 'accident' ? 'grid' : 'none';
