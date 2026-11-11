@@ -1198,7 +1198,33 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
     const borderRadius = Math.max(4, Math.min(13, h * 0.1));
     const outerLine = Math.max(1.15, width * 0.9);
     const inset = Math.max(3, Math.min(6, h * 0.055));
+    // Ranh giới vùng: chữ nhật (mặc định) hoặc đường viền tự nhiên / tự vẽ (bám theo mép đường, sườn đồi...).
+    const outline = getSceneryAreaOutline(shapeData, left, top, w, h);
 
+    if (outline) {
+      ctx.beginPath();
+      outline.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(240,247,241,.94)';
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = outerLine;
+      ctx.stroke();
+      // Viền trong nét đứt: co đường viền về tâm một khoảng bằng inset.
+      if (w > inset * 5 && h > inset * 5) {
+        const c = outline.reduce((a, p) => ({ x: a.x + p.x / outline.length, y: a.y + p.y / outline.length }), { x: 0, y: 0 });
+        const fx = 1 - (inset * 2) / w, fy = 1 - (inset * 2) / h;
+        ctx.save();
+        ctx.beginPath();
+        outline.forEach((p, i) => { const px = c.x + (p.x - c.x) * fx, py = c.y + (p.y - c.y) * fy; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+        ctx.closePath();
+        ctx.setLineDash([Math.max(3, h * 0.04), Math.max(2.5, h * 0.03)]);
+        ctx.strokeStyle = 'rgba(15,23,42,.38)';
+        ctx.lineWidth = Math.max(0.65, width * 0.48);
+        ctx.stroke();
+        ctx.restore();
+      }
+    } else {
     // Khung khu rừng: nền xanh rất nhạt để vẫn in rõ, viền liền bên ngoài.
     ctx.beginPath();
     drawRoundRectCompat(ctx, left, top, w, h, borderRadius);
@@ -1219,8 +1245,11 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
       ctx.stroke();
       ctx.restore();
     }
+    }
 
-    const forestLabel = getSceneryAreaLabelLayout(ctx, (shapeData && shapeData.areaLabel) || 'RỪNG CÂY', x, y, w, h);
+    // Nhãn đặt ở chỗ "rộng" nhất bên trong vùng (vùng tự vẽ có thể lệch khỏi tâm khung).
+    const labelAt = outline ? getSceneryAreaLabelAnchor(outline, left, top, w, h) : { x, y };
+    const forestLabel = getSceneryAreaLabelLayout(ctx, (shapeData && shapeData.areaLabel) || 'RỪNG CÂY', labelAt.x, labelAt.y, w, h);
 
     // Tán cây nhìn từ trên xuống, xếp so le dày đặc. Kéo rộng khu rừng sẽ sinh thêm cây
     // thay vì kéo giãn tán cây; độ lệch ngẫu nhiên cố định giúp trông tự nhiên mà không nhấp nháy.
@@ -1256,6 +1285,8 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
             cy + rr > forestLabel.top - 2 && cy - rr < forestLabel.bottom + 2) {
           continue;
         }
+        // Vùng có đường viền: chỉ trồng cây nằm hẳn bên trong (không tràn ra mép đường).
+        if (outline && (!scenePointInPolygon(cx, cy, outline) || scenePolygonEdgeDistance(cx, cy, outline) < rr * 0.75 + inset * 0.5)) continue;
 
         // Tán cây dạng răng cưa mềm (6 thùy), tô xanh xen kẽ hai sắc độ.
         const phase = seeded(row + 3, col + 9) * Math.PI;
@@ -1286,6 +1317,73 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
     drawSceneryAreaLabel(ctx, forestLabel, color, width, shapeData);
   }
   ctx.restore();
+}
+
+
+// ---- Vùng cảnh quan có đường viền tuỳ biến (rừng cây / đồi cây) ----
+// shape.areaShape: 'rect' (mặc định) | 'natural' (viền tự nhiên, lượn sóng) | 'custom' (người dùng tự vẽ ranh giới).
+// shape.areaOutline: [[u, v], ...] toạ độ chuẩn hoá 0..1 theo khung đối tượng → kéo giãn / xoay vẫn giữ đúng hình.
+function getSceneryNaturalOutlineUV(seedText) {
+  let seed = 0;
+  String(seedText || 'forest').split('').forEach(ch => { seed = (seed * 31 + ch.charCodeAt(0)) >>> 0; });
+  const rand = i => { const v = Math.sin((seed % 997) * 12.9898 + i * 78.233) * 43758.5453; return v - Math.floor(v); };
+  const count = 14, out = [];
+  for (let i = 0; i < count; i++) {
+    const t = (i / count) * Math.PI * 2;
+    const r = 0.86 + rand(i) * 0.14;
+    out.push([0.5 + Math.cos(t) * 0.5 * r, 0.5 + Math.sin(t) * 0.5 * r]);
+  }
+  return out;
+}
+function getSceneryAreaOutline(shapeData, left, top, w, h) {
+  if (!shapeData || !w || !h) return null;
+  let uv = null;
+  if (shapeData.areaShape === 'custom' && Array.isArray(shapeData.areaOutline) && shapeData.areaOutline.length >= 3) uv = shapeData.areaOutline;
+  else if (shapeData.areaShape === 'natural') uv = getSceneryNaturalOutlineUV(shapeData.id);
+  if (!uv) return null;
+  const pts = uv.map(p => ({ x: left + Number(p[0]) * w, y: top + Number(p[1]) * h })).filter(p => Number.isFinite(p.x) && Number.isFinite(p.y));
+  if (pts.length < 3) return null;
+  // Làm mượt: nối trung điểm các cạnh bằng đường cong bậc hai, lấy mẫu thành đa giác dày để vẽ và kiểm tra điểm trong vùng.
+  const out = [], n = pts.length, steps = 8;
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n];
+    const a = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 }, b = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    for (let k = 0; k < steps; k++) {
+      const t = k / steps, mt = 1 - t;
+      out.push({ x: mt * mt * a.x + 2 * mt * t * p1.x + t * t * b.x, y: mt * mt * a.y + 2 * mt * t * p1.y + t * t * b.y });
+    }
+  }
+  return out;
+}
+function scenePointInPolygon(x, y, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i], b = poly[j];
+    if ((a.y > y) !== (b.y > y) && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
+  }
+  return inside;
+}
+function scenePolygonEdgeDistance(x, y, poly) {
+  let best = Infinity;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[j], b = poly[i], dx = b.x - a.x, dy = b.y - a.y, len = dx * dx + dy * dy;
+    const t = len ? Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / len)) : 0;
+    best = Math.min(best, Math.hypot(x - (a.x + dx * t), y - (a.y + dy * t)));
+  }
+  return best;
+}
+// Điểm bên trong vùng xa mép nhất (lưới thô) — dùng làm tâm nhãn "RỪNG CÂY".
+function getSceneryAreaLabelAnchor(poly, left, top, w, h) {
+  let best = { x: left + w / 2, y: top + h / 2 }, bestD = -1;
+  for (let gx = 1; gx < 16; gx++) {
+    for (let gy = 1; gy < 10; gy++) {
+      const px = left + (w * gx) / 16, py = top + (h * gy) / 10;
+      if (!scenePointInPolygon(px, py, poly)) continue;
+      const d = Math.min(scenePolygonEdgeDistance(px, py, poly), h);
+      if (d > bestD + 0.5) { bestD = d; best = { x: px, y: py }; }
+    }
+  }
+  return best;
 }
 
 

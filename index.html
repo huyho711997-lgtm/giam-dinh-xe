@@ -1123,7 +1123,7 @@
           </div>
 
           <link rel="stylesheet" href="css/scene-selection.css">
-          <link rel="stylesheet" href="css/scene-editor.css?v=20261026-ssf-1">
+          <link rel="stylesheet" href="css/scene-editor.css?v=20261111-area-1">
 
           <!-- Floating Selection Inspector with Rotation Controls -->
           <div id="sceneSelectedBadge" class="scene-selection-panel" style="display: none;">
@@ -1161,6 +1161,17 @@
               <output id="selectedTollLanesText" aria-live="polite">4</output>
               <button type="button" id="btnTollLanesPlus" onclick="changeSelectedTollLanes(1)" title="Thêm một làn" aria-label="Thêm một làn">+</button>
               <button type="button" id="btnTollLanesAuto" onclick="changeSelectedTollLanes(0)" title="Tự tính số làn theo bề rộng trạm">Tự động</button>
+            </div>
+
+            <!-- Hình dạng vùng rừng/đồi cây (scene-editor-ui.js hiện khi chọn Rừng cây) -->
+            <div id="selectedAreaShapeGroup" class="scene-area-shape" style="display: none;" role="group" aria-label="Hình dạng vùng">
+              <span>Hình dạng vùng</span>
+              <div class="scene-area-shape-seg">
+                <button type="button" data-area-shape="rect" onclick="setSelectedSceneryAreaShape('rect')" title="Khung chữ nhật bo góc">Chữ nhật</button>
+                <button type="button" data-area-shape="natural" onclick="setSelectedSceneryAreaShape('natural')" title="Viền tự nhiên, lượn sóng như đồi cây">Tự nhiên</button>
+                <button type="button" data-area-shape="custom" onclick="startSceneryOutlineDraw()" title="Giữ chuột và vẽ ranh giới vùng theo mép đường, sườn đồi">Vẽ ranh giới</button>
+              </div>
+              <small id="selectedAreaShapeHint">Vẽ ranh giới: giữ chuột rê theo mép vùng rồi thả. Cây tự xếp bên trong, không tràn ra đường.</small>
             </div>
 
             <!-- Quick Rotate Buttons Group -->
@@ -1938,7 +1949,7 @@
   <script src="js/features/scene/objects.js?v=20261024-pan-1"></script>
   <script src="js/features/scene/traffic-signs.js?v=20261024-pan-2"></script>
   <script src="js/features/scene/rendering.js?v=20261024-tools-1"></script>
-  <script src="js/features/scene/interaction-export.js?v=20261024-toll-2"></script>
+  <script src="js/features/scene/interaction-export.js?v=20261111-area-1"></script>
   <script src="js/features/scene/signed-form-print.js?v=20261026-ssf-3"></script>
   <script src="js/features/scene/text-editor.js"></script>
   <script src="js/features/admin/select-controls.js"></script>
@@ -1954,6 +1965,6 @@
   <script src="js/features/documents/autosave.js"></script>
   <script src="js/core/chart-ready.js?v=20261024-1"></script>
   <script src="js/core/route-sync.js?v=20261105-perm-2"></script>
-  <script src="js/features/scene/scene-editor-ui.js?v=20261024-4"></script>
+  <script src="js/features/scene/scene-editor-ui.js?v=20261111-area-1"></script>
 </body>
 </html>
