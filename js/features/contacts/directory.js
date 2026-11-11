@@ -403,7 +403,8 @@ const ContactDirectoryPage = (() => {
     if (t.closest('[data-ct-import]') || t.closest('[data-ct-import-again]')) { if (t.closest('[data-ct-import-again]')) { importState = null; dialogEl().innerHTML = importHtml(); } else openImport(); return; }
     if (t.closest('[data-ct-import-go]')) return void runImport();
     const drop = t.closest('#ctDrop'); if (drop && !t.closest('input')) return void drop.querySelector('input').click();
-    if (t.closest('[data-ct-close]') || t.id === 'ctModal') return void closeModal();
+    // Chỉ đóng bằng nút X / Đóng / Esc; bấm ra ngoài (nền mờ) không đóng để tránh mất dữ liệu đang nhập.
+    if (t.closest('[data-ct-close]')) return void closeModal();
     if (t.closest('[data-ct-save]')) return void saveContact();
     const edit = t.closest('[data-ct-edit]'); if (edit) return void openEdit(edit.dataset.ctEdit);
     const del = t.closest('[data-ct-del]'); if (del) return void deleteContact(del.dataset.ctDel);
