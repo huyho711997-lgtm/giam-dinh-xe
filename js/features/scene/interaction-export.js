@@ -1358,6 +1358,9 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
       }
     }
     drawSceneryAreaLabel(ctx, forestLabel, color, width, shapeData);
+  } else if (typeof isSceneTerrainType === 'function' && isSceneTerrainType(type)) {
+    // Bãi đá / đồi núi: xem terrain-assets.js
+    drawSceneryTerrain(ctx, type, x, y, color, width, w, h, shapeData);
   }
   ctx.restore();
 }

@@ -185,6 +185,8 @@ const TOOL_ICONS_MAP = {
   sign_triangle_post: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M9 2l6 10H3z"></path><path d="M9 12v10M6 22h6"></path></svg>',
   tree: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="8"></circle><circle cx="9" cy="9" r="4"></circle><circle cx="15" cy="9" r="4"></circle><path d="M12 12v9M9 21h6"></path></svg>',
   median_tree: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="5"></rect><circle cx="7" cy="10" r="3"></circle><circle cx="12" cy="9" r="3"></circle><circle cx="17" cy="10" r="3"></circle><path d="M7 12v3M12 11v4M17 12v3"></path></svg>',
+  rock_field: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19l3-6 4 1 2-5 4 3 5-1-2 8z"></path><path d="M10 14l2 5M12 9l4 3"></path></svg>',
+  hill: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20c3-1 4-8 8-11 3-2 5 2 7 4s4 5 5 7"></path><path d="M6 20c2-1 3-5 5-7 2-1 3 1 4 3s2 3 3 4"></path><path d="M11 20c1-1 2-3 3-3"></path></svg>',
   rice_field: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"></rect><path d="M5 7c4-2 10-2 14 0M5 12c4-2 10-2 14 0M5 17c4-2 10-2 14 0"></path><path d="M8 6v12M16 6v12"></path></svg>',
   forest: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"></rect><circle cx="7.5" cy="8.5" r="2.8" fill="rgba(113,181,104,.35)"></circle><circle cx="15.5" cy="8" r="2.8" fill="rgba(79,151,86,.35)"></circle><circle cx="11.5" cy="15" r="2.8" fill="rgba(113,181,104,.35)"></circle><circle cx="18" cy="15.5" r="2.2" fill="rgba(79,151,86,.35)"></circle><circle cx="5.5" cy="15.5" r="2.2" fill="rgba(79,151,86,.35)"></circle></svg>',
   pothole: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12c0-3.1 3.2-5.5 7.5-5.7 4.7-.3 8.4 2 8.5 5.4.1 3.5-3.2 6-7.8 6.1C7.5 18 4 15.7 4 12z" fill="rgba(100,116,139,.18)"></path><path d="M7.3 12c0-1.8 2-3.1 4.7-3.2 2.8-.1 4.9 1.2 4.9 3s-2 3.2-4.7 3.3c-2.8.1-4.9-1.2-4.9-3.1z" fill="rgba(51,65,85,.28)"></path></svg>'
@@ -267,7 +269,9 @@ const TOOL_GROUPS_CONFIG = {
       { id: 'tree', name: 'Cây xanh', desc: 'Tán cây nhìn từ trên xuống' },
       { id: 'median_tree', name: 'Cây trên dải phân cách', desc: 'Dải phân cách trồng nhiều cây xanh' },
       { id: 'rice_field', name: 'Đồng lúa', desc: 'Khoảnh ruộng có luống và biểu tượng cây lúa' },
-      { id: 'forest', name: 'Rừng cây', desc: 'Khu rừng nhiều tán cây, kéo rộng để thêm cây' }
+      { id: 'forest', name: 'Rừng cây', desc: 'Khu rừng nhiều tán cây, kéo rộng để thêm cây' },
+      { id: 'rock_field', name: 'Bãi đá', desc: 'Khối đá góc cạnh; kéo rộng để thêm đá, chọn "Vẽ ranh giới" để bám theo sườn núi' },
+      { id: 'hill', name: 'Đồi núi', desc: 'Đường đồng mức quanh đỉnh; chọn "Vẽ ranh giới" để bám theo địa hình thật' }
     ]
   }
 };

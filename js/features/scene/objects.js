@@ -1410,6 +1410,7 @@ function onCanvasMouseUp(e) {
       signOrientationVersion: isUprightSign ? 1 : undefined,
       signKind: currentDrawTool === 'sign_circle_post' ? 'speed_limit' : (currentDrawTool === 'sign_triangle_post' ? 'intersection_non_priority' : undefined),
       speedLimit: currentDrawTool === 'sign_circle_post' ? 50 : undefined,
+      areaShape: currentDrawTool === 'hill' ? 'natural' : undefined,
       color: color,
       width: width,
       sizeScale: 1
