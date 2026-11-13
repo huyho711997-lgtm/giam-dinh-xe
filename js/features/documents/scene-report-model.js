@@ -336,7 +336,11 @@ table.pt td:nth-child(2) { width: 38%; } table.pt td:nth-child(3) { width: 30%; 
 .keep { break-inside: avoid; }
 .diagram { page: diagramPage; break-before: page; display: flex; align-items: center; justify-content: center; height: 194mm; }
 .diagram img { max-width: 100%; max-height: 194mm; object-fit: contain; }
-@media screen { body { padding: 6mm 12mm; max-width: 210mm; margin: 0 auto; } }
+@media screen {
+  html { background: transparent; padding: 24px 16px 36px; }
+  body { padding: 16mm 16mm 20mm 20mm; max-width: 210mm; margin: 0 auto; background: #fff; border: 1px solid rgba(216,180,109,.28); box-shadow: 0 24px 64px rgba(31,39,51,.20), 0 2px 8px rgba(31,39,51,.10); }
+  .diagram { height: auto; margin-top: 24px; padding-top: 18px; border-top: 1px dashed #cbd5e1; }
+}
 </style></head><body>
 <div class="hd">${o.logoUrl ? `<img src="${E(o.logoUrl)}" alt="TASCO INSURANCE">` : '<b>TASCO INSURANCE</b>'}</div>
 <h1>Biên bản giám định hiện trường/xác minh hiện trường<br>tổn thất xe cơ giới</h1>
