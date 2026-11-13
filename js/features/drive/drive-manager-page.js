@@ -183,7 +183,6 @@ const DriveManager = (() => {
     q('[data-drv-file-input]').addEventListener('change', event => { queueUploads([...event.target.files]); event.target.value = ''; });
 
     host.addEventListener('click', onClick);
-    host.addEventListener('dblclick', onDoubleClick);
     host.addEventListener('contextmenu', onContextMenu);
     host.addEventListener('keydown', onKey);
 
@@ -220,8 +219,7 @@ const DriveManager = (() => {
       const row = event.target.closest('[data-drv-item]');
       if (!row || view === 'trash') return;
       const id = row.dataset.drvItem;
-      if (!selected.has(id)) { selected = new Set([id]); anchorId = id; paintSelection(); }
-      const ids = [...selected].filter(itemId => { const file = byId(itemId); return file && !file.system; });
+      const ids = (selected.has(id) ? [...selected] : [id]).filter(itemId => { const file = byId(itemId); return file && !file.system; });
       if (!ids.length) { event.preventDefault(); return; }
       event.dataTransfer.setData('application/x-drv-items', JSON.stringify(ids));
       event.dataTransfer.effectAllowed = 'move';
@@ -267,35 +265,28 @@ const DriveManager = (() => {
     if (data.drvRestore) { event.stopPropagation(); const file = byId(data.drvRestore); if (file) runAction('restore', [file]); return; }
     if (data.drvDetailsAction) { const file = byId(detailsId) || (folder && folder.id === detailsId ? folder : null); if (file) runAction(data.drvDetailsAction, [file]); return; }
     if (data.drvStar) { event.stopPropagation(); const file = byId(data.drvStar); if (file) runAction(file.starred ? 'unstar' : 'star', [file]); return; }
-    if (data.drvMenu) { event.stopPropagation(); const file = byId(data.drvMenu); if (file) { if (!selected.has(file.id)) { selected = new Set([file.id]); anchorId = file.id; paintSelection(); } openItemMenu(control, null); } return; }
-    if (data.drvOpen) { event.stopPropagation(); const file = byId(data.drvOpen); if (file) openItem(file); return; }
-    if (data.drvCheck) { event.stopPropagation(); toggleOne(data.drvCheck); return; }
-    if (data.drvItem) { selectByClick(data.drvItem, event); return; }
-  }
-  function onDoubleClick(event) {
-    const row = event.target.closest('[data-drv-item]');
-    if (!row || event.target.closest('button,a,input')) return;
-    const file = byId(row.dataset.drvItem);
-    if (file) openItem(file);
+    if (data.drvMenu) { event.stopPropagation(); const file = byId(data.drvMenu); if (file) openItemMenu(control, null, file); return; }
+    if (data.drvCheck) { event.stopPropagation(); toggleOne(data.drvCheck, event); return; }
+    if (data.drvOpen || data.drvItem) { event.stopPropagation(); const file = byId(data.drvOpen || data.drvItem); if (file && event.detail < 2) openItem(file); return; }
   }
   function onContextMenu(event) {
     const row = event.target.closest('[data-drv-item]');
     if (!row) return;
     event.preventDefault();
-    const id = row.dataset.drvItem;
-    if (!selected.has(id)) { selected = new Set([id]); anchorId = id; paintSelection(); }
-    openItemMenu(null, {x:event.clientX, y:event.clientY});
+    const file = byId(row.dataset.drvItem);
+    if (file) openItemMenu(null, {x:event.clientX, y:event.clientY}, file);
   }
   function onKey(event) {
     if (event.target.closest('input,textarea,select,dialog')) return;
     const mod = event.ctrlKey || event.metaKey;
     if (mod && event.key.toLowerCase() === 'a' && files.length) { event.preventDefault(); selected = new Set(files.map(file => file.id)); paintSelection(); return; }
     if (event.key === 'Escape' && (selected.size || detailsId)) { selected.clear(); detailsId = null; paintSelection(); paintDetails(); return; }
+    const row = event.target.closest('[data-drv-item]');
+    if (event.key === 'Enter' && row && !event.target.closest('button,a')) { event.preventDefault(); const file = byId(row.dataset.drvItem); if (file) openItem(file); return; }
     const chosen = selectedFiles();
     if (!chosen.length) return;
     if (event.key === 'Delete') { event.preventDefault(); runAction(view === 'trash' ? 'remove' : 'trash', chosen); }
     else if (event.key === 'F2' && chosen.length === 1) { event.preventDefault(); runAction('rename', chosen); }
-    else if (event.key === 'Enter' && chosen.length === 1 && event.target.closest('[data-drv-item]')) { event.preventDefault(); openItem(chosen[0]); }
   }
   // Phím tắt toàn trang: "/" focus ô tìm kiếm (khi không gõ trong ô nhập).
   function onGlobalKey(event) {
@@ -540,7 +531,7 @@ const DriveManager = (() => {
       ${list.map(file => {
         const on = selected.has(file.id), folderItem = isFolder(file);
         return `<div class="drv-tr drv-row${on ? ' is-selected' : ''}${file.trashed ? ' is-trashed' : ''}" role="row" aria-selected="${on}" tabindex="0" data-drv-item="${esc(file.id)}" draggable="${view !== 'trash' && !file.system}"${folderItem && view !== 'trash' ? ` data-drv-drop="${esc(file.id)}" data-drv-drop-name="${esc(file.name)}"` : ''}>
-          <span class="drv-cell drv-col-check" role="gridcell"><button type="button" class="drv-check${on ? ' is-on' : ''}" data-drv-check="${esc(file.id)}" aria-label="${on ? 'Bỏ chọn' : 'Chọn'} ${esc(file.name)}" tabindex="-1">${icon('check')}</button></span>
+          <span class="drv-cell drv-col-check" role="gridcell"><button type="button" class="drv-check${on ? ' is-on' : ''}" data-drv-check="${esc(file.id)}" aria-label="${on ? 'Bỏ chọn' : 'Chọn'} ${esc(file.name)}" aria-pressed="${on}">${icon('check')}</button></span>
           <span class="drv-cell drv-col-name" role="gridcell">${fileGlyph(file)}<span class="drv-name"><button type="button" class="drv-name-button" data-drv-open="${esc(file.id)}" title="${esc(file.name)}" tabindex="-1">${esc(file.name)}</button><small>${esc(Api.typeLabel(file))}</small></span><span class="drv-badges">${rowBadges(file)}</span></span>
           <span class="drv-cell drv-col-owner" role="gridcell">${file.ownedByMe ? '<span class="drv-owner is-me">Tôi</span>' : `<span class="drv-owner">${esc(file.owner || '—')}</span>`}</span>
           <span class="drv-cell drv-col-date" role="gridcell" title="${esc(Api.formatDateTime(file.modifiedTime))}">${esc(Api.formatDate(file.modifiedTime))}${file.lastModifiedBy && view !== 'trash' ? `<small>${esc(file.lastModifiedBy)}</small>` : ''}</span>
@@ -556,7 +547,7 @@ const DriveManager = (() => {
     const folderTiles = folders.map(file => {
       const on = selected.has(file.id);
       return `<div class="drv-folder-tile${on ? ' is-selected' : ''}" role="option" aria-selected="${on}" tabindex="0" data-drv-item="${esc(file.id)}" draggable="${view !== 'trash' && !file.system}"${view !== 'trash' ? ` data-drv-drop="${esc(file.id)}" data-drv-drop-name="${esc(file.name)}"` : ''}>
-        ${fileGlyph(file, 'folder')}<button type="button" class="drv-name-button" data-drv-open="${esc(file.id)}" title="${esc(file.name)}" tabindex="-1">${esc(file.name)}</button><span class="drv-badges">${rowBadges(file)}</span>
+        <button type="button" class="drv-check${on ? ' is-on' : ''}" data-drv-check="${esc(file.id)}" aria-label="${on ? 'Bỏ chọn' : 'Chọn'} ${esc(file.name)}" aria-pressed="${on}">${icon('check')}</button>${fileGlyph(file, 'folder')}<button type="button" class="drv-name-button" data-drv-open="${esc(file.id)}" title="${esc(file.name)}" tabindex="-1">${esc(file.name)}</button><span class="drv-badges">${rowBadges(file)}</span>
         <button type="button" class="sf-icon-button drv-row-action" data-drv-menu="${esc(file.id)}" aria-label="Thao tác cho ${esc(file.name)}" aria-haspopup="menu" tabindex="-1">${icon('more')}</button>
       </div>`;
     }).join('');
@@ -564,7 +555,7 @@ const DriveManager = (() => {
       const on = selected.has(file.id), kind = Api.kindOf(file), thumb = thumbs.get(file.id);
       return `<article class="drv-tile drv-kind-${kind}${on ? ' is-selected' : ''}" role="option" aria-selected="${on}" tabindex="0" data-drv-item="${esc(file.id)}" draggable="${view !== 'trash'}">
         <div class="drv-tile-media"${!thumb && file.hasThumbnail && !thumbFailed.has(file.id) ? ` data-drv-thumb="${esc(file.id)}"` : ''}>${thumb ? `<img src="${thumb}" alt="" loading="lazy" decoding="async">` : `<span class="drv-tile-icon">${icon(kindIcon(kind))}</span>`}
-          <button type="button" class="drv-check drv-tile-check${on ? ' is-on' : ''}" data-drv-check="${esc(file.id)}" aria-label="${on ? 'Bỏ chọn' : 'Chọn'} ${esc(file.name)}" tabindex="-1">${icon('check')}</button>
+          <button type="button" class="drv-check drv-tile-check${on ? ' is-on' : ''}" data-drv-check="${esc(file.id)}" aria-label="${on ? 'Bỏ chọn' : 'Chọn'} ${esc(file.name)}" aria-pressed="${on}">${icon('check')}</button>
           ${file.starred ? `<span class="drv-tile-star">${icon('star')}</span>` : ''}
         </div>
         <div class="drv-tile-foot"><span class="drv-glyph drv-kind-${kind} is-small">${icon(kindIcon(kind))}</span><div class="drv-tile-copy"><button type="button" class="drv-name-button" data-drv-open="${esc(file.id)}" title="${esc(file.name)}" tabindex="-1">${esc(file.name)}</button><small>${esc(Api.formatDate(file.modifiedTime))} · ${esc(Api.formatBytes(file.size))}</small></div>
@@ -603,21 +594,18 @@ const DriveManager = (() => {
   }
 
   // ---- Chọn mục --------------------------------------------------------------------------
-  function selectByClick(id, event) {
+  function toggleOne(id, event = {}) {
     const ordered = [...host.querySelectorAll('[data-drv-item]')].map(node => node.dataset.drvItem);
     if (event.shiftKey && anchorId && ordered.includes(anchorId)) {
       const [a, b] = [ordered.indexOf(anchorId), ordered.indexOf(id)].sort((x, y) => x - y);
       if (!(event.ctrlKey || event.metaKey)) selected.clear();
       ordered.slice(a, b + 1).forEach(itemId => selected.add(itemId));
-    } else if (event.ctrlKey || event.metaKey) {
-      selected.has(id) ? selected.delete(id) : selected.add(id); anchorId = id;
     } else {
-      selected = new Set([id]); anchorId = id;
+      selected.has(id) ? selected.delete(id) : selected.add(id); anchorId = id;
     }
     if (detailsId) detailsId = selected.size === 1 ? [...selected][0] : detailsId;
     paintSelection(); paintDetails();
   }
-  function toggleOne(id) { selected.has(id) ? selected.delete(id) : selected.add(id); anchorId = id; paintSelection(); }
   function toggleSelectAll() { selected = selected.size === files.length ? new Set() : new Set(files.map(file => file.id)); paintSelection(); }
   function paintSelection() {
     if (!host) return;
@@ -626,7 +614,11 @@ const DriveManager = (() => {
       node.classList.toggle('is-selected', on);
       node.setAttribute('aria-selected', String(on));
       const check = node.querySelector('[data-drv-check]');
-      if (check) check.classList.toggle('is-on', on);
+      if (check) {
+        check.classList.toggle('is-on', on);
+        check.setAttribute('aria-pressed', String(on));
+        check.setAttribute('aria-label', (on ? 'Bỏ chọn ' : 'Chọn ') + (byId(node.dataset.drvItem)?.name || 'mục'));
+      }
     });
     const all = host.querySelector('[data-drv-select-all]');
     if (all) {
@@ -744,8 +736,8 @@ const DriveManager = (() => {
       {key:'upload', icon:'upload', label:'Tải tệp lên', hint:'≤ 10 MB', run:pickFiles}
     ], anchor);
   }
-  function openItemMenu(anchor, point) {
-    const chosen = selectedFiles();
+  function openItemMenu(anchor, point, file) {
+    const chosen = selected.has(file.id) ? selectedFiles() : [file];
     if (!chosen.length) return;
     const single = chosen.length === 1 ? chosen[0] : null;
     const anySystem = chosen.some(file => file.system), anyFile = chosen.some(file => !isFolder(file));
