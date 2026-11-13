@@ -1071,6 +1071,64 @@
     }
 
 
+    function canChangeFieldReimbursementStatus(payload, status) {
+      const user = firebase.auth().currentUser;
+      if (!user || !payload || !['paid', 'new'].includes(status)) return false;
+      const isAdmin = activeUserProfile && (
+        String(activeUserProfile.role || '').trim().toLowerCase() === 'admin' || activeUserProfile.isAdmin === true
+      );
+      const isCreator = payload.gdvUid === user.uid;
+      const isPaid = fieldReimbStatusKey(payload) === 'paid';
+      if (status === 'new') return isPaid && (isCreator || isAdmin);
+      return !isPaid && (isAdmin || (isCreator && ['pending', 'new', 'rejected'].includes(payload.status)));
+    }
+
+    const fieldReimbStatusInFlight = new Set();
+    async function actionFieldReimbursement(batchId, status) {
+      if (fieldReimbStatusInFlight.has(batchId)) return;
+      const payload = cachedFieldReimbursementsPayload?.[batchId];
+      if (!payload) return triggerToast('Không tìm thấy phiếu thanh toán.', 'warning');
+      if (!canChangeFieldReimbursementStatus(payload, status)) {
+        return triggerToast('Bạn không thể chuyển trạng thái này cho phiếu thanh toán.', 'warning');
+      }
+
+      fieldReimbStatusInFlight.add(batchId);
+      try {
+        const paid = status === 'paid';
+        const confirmed = await showPremiumConfirmModal({
+          title: paid ? 'Đánh dấu đã chi trả?' : 'Chuyển về mới tạo?',
+          message: paid ? `Xác nhận phiếu ${batchId} đã được chi trả?` : `Chuyển phiếu ${batchId} về trạng thái mới tạo?`,
+          confirmText: paid ? 'Đã chi trả' : 'Chuyển về mới tạo',
+          eyebrow: 'THANH TOÁN HIỆN TRƯỜNG'
+        });
+        if (!confirmed) return;
+
+        // Đọc trạng thái mới nhất trong giao dịch, không tạo lại phiếu đã bị xóa
+        // hoặc ghi đè các thông tin vừa được người khác chỉnh sửa.
+        const result = await dbNodeInstance.ref(`field_reimbursements/${batchId}`).transaction(current => {
+          if (!canChangeFieldReimbursementStatus(current, status)) return;
+          return {...current, status, updatedAt: firebase.database.ServerValue.TIMESTAMP};
+        });
+        if (!result.committed) {
+          return triggerToast('Phiếu đã thay đổi hoặc bạn không còn quyền cập nhật. Vui lòng kiểm tra lại.', 'warning');
+        }
+
+        if (!cachedFieldReimbursementsPayload) cachedFieldReimbursementsPayload = {};
+        cachedFieldReimbursementsPayload[batchId] = result.snapshot.val();
+        if (activeDashboardTab === 'field_reimbursements') renderFieldReimbursementsPage();
+        if (document.getElementById('viewFieldReimbModal')?.dataset.batchId === batchId) {
+          viewFieldReimbursementDetail(batchId);
+        }
+        logUserActivity('UPDATE_FIELD_REIMB_STATUS', `Chuyển phiếu ${batchId} sang ${paid ? 'đã chi trả' : 'mới tạo'}`);
+        triggerToast(paid ? 'Đã đánh dấu phiếu đã chi trả.' : 'Đã chuyển phiếu về mới tạo.', 'success');
+      } catch (error) {
+        console.error(error);
+        triggerToast('Không cập nhật được trạng thái phiếu. Kiểm tra quyền và kết nối rồi thử lại.', 'error');
+      } finally {
+        fieldReimbStatusInFlight.delete(batchId);
+      }
+    }
+
     function closeFieldReimbDetail() {
       document.getElementById('viewFieldReimbModal')?.remove();
     }
@@ -1111,10 +1169,12 @@
       if ((isCreator && isNew) || isAdmin) {
         if (!isPaid) {
           secondary += btn('', 'refresh', 'Tính lại đi lại', `recalculateReimbursementTravelCost('${id}')`, 'Tính lại chi phí đi lại theo quãng đường 2 chiều');
-          primary += btn('sf-primary', 'check', 'Đánh dấu đã chi trả', `actionFieldReimbursement('${id}', 'paid')`);
         }
       }
-      if (isPaid && (isCreator || isAdmin)) {
+      if (canChangeFieldReimbursementStatus(payload, 'paid')) {
+        primary += btn('sf-primary', 'check', 'Đánh dấu đã chi trả', `actionFieldReimbursement('${id}', 'paid')`);
+      }
+      if (canChangeFieldReimbursementStatus(payload, 'new')) {
         secondary += btn('', 'refresh', 'Chuyển về mới tạo', `actionFieldReimbursement('${id}', 'new')`);
       }
       if ((isAdmin || (isCreator && isNew)) && hasUserPermission('field_reimb', 'delete')) {
@@ -1154,6 +1214,7 @@
       const m = document.createElement('div');
       m.id = 'viewFieldReimbModal';
       m.className = 'fr-modal';
+      m.dataset.batchId = batchId;
       m.innerHTML = `
         <section class="fr-panel" role="dialog" aria-modal="true" aria-label="Chi tiết đề nghị thanh toán ${id}">
           <header class="fr-head">

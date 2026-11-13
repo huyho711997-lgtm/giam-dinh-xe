@@ -47,3 +47,31 @@ Tài liệu gốc: https://developers.google.com/apps-script/guides/web · https
 - Sau khi cập nhật `Code.gs`, tạo phiên bản mới trong Manage deployments (giữ nguyên URL `/exec`).
 - Quản trị viên có nút **Xóa** ở cột Thao tác của Kho Google Drive: file được chuyển vào thùng rác Drive (khôi phục được), chỉ áp dụng cho file trong kho `FORMS_ROOT_FOLDER_ID`. Cần Deploy phiên bản mới của `Code.gs` (hành động `forms_delete`).
 - Trong ứng dụng: mở tab **Kho Google Drive**, vào thư mục cần thiết, bấm **Tải biểu mẫu lên** → file được đẩy vào đúng thư mục đang mở (tối đa 10 MB/file; trùng tên sẽ thêm số thứ tự, không ghi đè). Tab **Thư viện ứng dụng** vẫn tải lên Cloudinary như trước.
+
+
+## Trang "Google Drive" – quản lý toàn bộ Drive của chủ tài khoản
+
+Trang nằm ở thanh bên → **Hệ thống → Google Drive** (đường dẫn `#/google-drive`), chỉ hiện với Admin hệ thống. Dịch vụ chạy dưới tài khoản sở hữu Drive (Execute as: Me) nên thao tác trên **toàn bộ** Drive của tài khoản đó.
+
+### Kích hoạt (một lần)
+
+1. Trong dự án Apps Script, bấm **+ → Script**, đặt tên `DriveManager`, dán nội dung `DriveManager.gs` (giữ nguyên `Code.gs` bản mới trong thư mục này).
+2. **Services (+) → Drive API → Version v3 → Identifier `Drive` → Add** (hoặc dán `appsscript.json` mới, đã khai báo sẵn dịch vụ nâng cao này).
+3. Script Properties → thêm `DRIVE_MANAGER_UIDS` = UID Firebase của người được quản lý Drive (phân tách bằng dấu phẩy). Danh sách này **tách riêng** với `ALLOWED_UIDS`; để trống = không ai dùng được trang.
+4. Deploy → Manage deployments → Edit → Version: *New version* → Deploy (giữ nguyên URL `/exec`). Lần đầu Google sẽ hỏi cấp quyền lại.
+
+### Tính năng
+
+- Khu vực: Drive của tôi, Gần đây, Có gắn dấu sao, Được chia sẻ với tôi, Thùng rác; thanh dung lượng (Drive / Thùng rác / Gmail & Ảnh).
+- Tìm kiếm toàn Drive (phím `/`), lọc theo loại, sắp xếp, xem Danh sách / Lưới (có ảnh thu nhỏ), phân trang "Tải thêm".
+- Tạo thư mục, tải tệp lên (nút Mới hoặc kéo thả, ≤ 10 MB/tệp, 2 tệp song song, trùng tên tự thêm số thứ tự, gửi lại không tạo trùng), xem trước trong ứng dụng (PDF, Word, Excel, ảnh, Google Docs/Sheets/Slides xuất PDF), tải về (≤ 20 MB; tệp Google xuất DOCX/XLSX/PPTX).
+- Đổi tên (F2), di chuyển (hộp thoại chọn thư mục hoặc kéo thả vào thư mục / đường dẫn), tạo bản sao, gắn sao, sao chép liên kết, chi tiết tệp.
+- Chọn nhiều (Ctrl/Shift + click, Ctrl+A), menu chuột phải, thùng rác (Delete) / khôi phục / xóa vĩnh viễn / dọn sạch thùng rác (có xác nhận).
+- Mỗi thao tác thay đổi được ghi vào Nhật ký hoạt động (`DRIVE_MANAGE`).
+
+### An toàn
+
+- Bắt buộc Firebase ID token hợp lệ + UID trong `DRIVE_MANAGER_UIDS` (cache 5 phút theo băm token; gỡ UID có hiệu lực ngay).
+- Client không gửi được truy vấn Drive thô: điều kiện `q`, `orderBy`, `fields` do máy chủ dựng từ danh sách trắng; chuỗi tìm kiếm được thoát ký tự; mọi ID kiểm tra định dạng.
+- Thư mục hệ thống của ứng dụng (`ROOT_FOLDER_ID`, `FORMS_ROOT_FOLDER_ID`, gốc Drive) không thể đổi tên / di chuyển / xóa. Không cho chuyển thư mục vào thư mục con của chính nó.
+- Xóa vĩnh viễn chỉ áp dụng cho mục đã ở thùng rác; dọn thùng rác cần mã xác nhận. Không có thao tác đổi quyền chia sẻ.

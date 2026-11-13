@@ -154,6 +154,8 @@ function doPost(e) {
   try {
     if (!e.postData || e.postData.contents.length > MAX_FILE_BYTES * 1.4 + 20000) throw new Error('Mỗi file tối đa 10 MB.');
     const request = JSON.parse(e.postData.contents);
+    // Trang "Google Drive" (DriveManager.gs): quản lý toàn bộ Drive, quyền riêng DRIVE_MANAGER_UIDS.
+    if (typeof request.action === 'string' && request.action.indexOf('drive_') === 0 && typeof driveManager_ === 'function') return jsonResponse_(driveManager_(request, PropertiesService.getScriptProperties()));
     if (request.action === 'forms_upload') return jsonResponse_(formsUpload_(request, PropertiesService.getScriptProperties()));
     if (request.action === 'forms_delete') return jsonResponse_(formsDelete_(request, PropertiesService.getScriptProperties()));
     if (!['list','upload','download','thumbnail','thumbnails','remove'].includes(request.action)) throw new Error('Thao tác không hợp lệ.');
