@@ -67,20 +67,21 @@
       host.innerHTML = `<div class="sf-table-scroll"><table class="sf-table fr-table">
         <caption class="sf-sr-only">Danh sách phiếu thanh toán đi hiện trường</caption>
         <thead><tr>
+          <th class="fr-center">Trạng thái</th>
           <th>Mã phiếu</th><th class="sf-col-date">Ngày tạo</th><th>Người tạo</th>
           <th class="fr-num">Số vụ</th><th class="fr-money">Tổng thanh toán</th>
-          <th class="fr-center">Trạng thái</th><th class="sf-col-actions">Thao tác</th>
+          <th class="sf-col-actions">Thao tác</th>
         </tr></thead>
         <tbody>${rows.map(r => {
           const canDelete = hasUserPermission('field_reimb', 'delete') && (isAdmin || (r.gdvUid === myUid && fieldReimbStatusKey(r) !== 'paid'));
           const id = escapeHtmlOutput(r.id);
           return `<tr class="sf-row fr-row" tabindex="0" onclick="viewFieldReimbursementDetail('${id}')" onkeydown="if(event.key==='Enter'){viewFieldReimbursementDetail('${id}')}">
+            <td class="fr-center" data-label="Trạng thái">${badge(fieldReimbStatusKey(r))}</td>
             <td class="fr-code" data-label="Mã phiếu">${id}</td>
             <td class="sf-col-date" data-label="Ngày tạo">${formatDateDisplay(r.createdAt)}</td>
             <td class="fr-person" data-label="Người tạo">${escapeHtmlOutput(r.gdvName)}</td>
             <td class="fr-num" data-label="Số vụ">${(r.items || []).length}</td>
             <td class="fr-money" data-label="Tổng thanh toán">${(Number(r.totalAmount) || 0).toLocaleString('vi-VN')} đ</td>
-            <td class="fr-center" data-label="Trạng thái">${badge(fieldReimbStatusKey(r))}</td>
             <td class="sf-col-actions"><div class="fr-actions">
               <button class="sf-icon-button" type="button" title="Xem chi tiết" aria-label="Xem chi tiết ${id}" onclick="event.stopPropagation(); viewFieldReimbursementDetail('${id}')">${fieldReimbIcon('eye')}</button>
               ${canDelete ? `<button class="sf-icon-button sf-danger" type="button" title="Xoá phiếu này" aria-label="Xoá phiếu ${id}" onclick="event.stopPropagation(); deleteFieldReimbursement('${id}')">${fieldReimbIcon('trash')}</button>` : ''}
