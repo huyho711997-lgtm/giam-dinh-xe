@@ -282,8 +282,29 @@ button.drv-crumb:hover { background:var(--sf-soft); color:var(--sf-ink); }
 .drv-empty-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:6px; }
 .drv-empty.is-error .drv-empty-art { background:radial-gradient(circle at 30% 25%,var(--sf-paper),color-mix(in srgb,var(--sf-rose) 14%,var(--sf-paper))); color:var(--sf-rose); box-shadow:0 0 0 10px color-mix(in srgb,var(--sf-rose) 7%,transparent); }
 
-.drv-more { display:flex; justify-content:center; padding:6px 18px 20px; }
-.drv-more[hidden] { display:none; }
+.drv-main { scroll-margin-top:80px; }
+.drv-pagination { display:flex; align-items:center; flex-wrap:wrap; gap:10px 16px; padding:12px 18px; border-block:1px solid var(--sf-line); background:var(--sf-soft); }
+.drv-pagination[hidden] { display:none; }
+.drv-pagination-bottom { margin-top:auto; border-bottom:0; }
+.drv-page-result { margin-right:auto; color:var(--sf-muted); font-size:11px; font-weight:650; font-variant-numeric:tabular-nums; }
+.drv-page-size { display:flex; align-items:center; gap:8px; color:var(--sf-muted); font-size:11px; white-space:nowrap; }
+.drv-page-size select { height:34px; min-width:64px; padding:0 8px; border:1px solid var(--sf-line); border-radius:8px; background:var(--sf-paper); color:var(--sf-ink); font:700 12px 'Plus Jakarta Sans',system-ui,sans-serif; cursor:pointer; color-scheme:light; }
+body:not(.light-mode) .drv-page-size select { color-scheme:dark; }
+.drv-page-buttons { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; max-width:100%; gap:4px; }
+.drv-page-button { display:grid; place-items:center; min-width:34px; height:34px; padding:0 8px; border:1px solid var(--sf-line); border-radius:8px; background:var(--sf-paper); color:var(--sf-muted); font:750 12px 'Plus Jakarta Sans',system-ui,sans-serif; cursor:pointer; }
+.drv-page-button svg { width:14px; height:14px; }
+.drv-page-button.is-prev svg { transform:rotate(180deg); }
+.drv-page-button:hover:not(:disabled) { border-color:var(--sf-gold); color:var(--sf-ink); }
+.drv-page-button.is-current { background:var(--sf-gold-bg); border-color:var(--sf-gold); color:var(--sf-gold); }
+.drv-page-button:disabled { opacity:.45; cursor:default; }
+.drv-page-ellipsis { color:var(--sf-muted); padding:0 2px; }
+@media (max-width:600px) {
+  .drv-pagination { padding:10px 12px; gap:8px; }
+  .drv-page-result { flex-basis:100%; }
+  .drv-page-size { margin-right:auto; }
+  .drv-page-size > span { display:none; }
+  .drv-page-button { min-width:30px; height:32px; padding:0 6px; }
+}
 
 /* ---- Thả tệp ---- */
 .drv-dropmask { position:absolute; inset:8px; z-index:8; display:grid; place-items:center; border:2px dashed var(--sf-gold); border-radius:14px; background:color-mix(in srgb,var(--sf-gold-bg) 88%,transparent); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:opacity .18s; }

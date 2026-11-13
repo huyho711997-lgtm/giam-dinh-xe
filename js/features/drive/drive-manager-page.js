@@ -8,6 +8,8 @@ const DriveManager = (() => {
   const Api = DriveManagerApi;
   const LAYOUT_KEY = 'drive-manager-layout';
   const SORT_KEY = 'drive-manager-sort';
+  const PAGE_SIZE_KEY = 'drive-manager-page-size';
+  const PAGE_SIZES = [20, 50, 100];
   const THUMB_BATCH = 6, EMPTY_PAGE_HOPS = 5, THUMB_CACHE_LIMIT = 400, UPLOAD_WORKERS = 2;
   const VIEWS = {
     folder: {label:'Drive của tôi', icon:'drive', empty:'Thư mục này chưa có tệp nào', hint:'Kéo thả tệp vào đây hoặc bấm “Mới” để tải lên.'},
@@ -75,7 +77,8 @@ const DriveManager = (() => {
   let host = null, generation = 0, listController = null, observer = null, dialog = null, menu = null;
   let view = 'folder', folderId = 'root', path = [{id:'root', name:'Drive của tôi'}], folder = null;
   let query = '', type = '', sort = readPref(SORT_KEY, 'name_asc', SORTS.map(s => s[0])), layout = readPref(LAYOUT_KEY, 'list', ['list', 'grid']);
-  let files = [], nextPageToken = '', loading = false, loadingMore = false, errorText = '', about = null, aboutError = '';
+  let files = [], nextPageToken = '', loading = false, pageLoading = false, errorText = '', about = null, aboutError = '';
+  let pages = [], pageIndex = 0, pageSize = Number(readPref(PAGE_SIZE_KEY, '20', PAGE_SIZES.map(String)));
   let selected = new Set(), anchorId = null, detailsId = null, searchTimer = 0, dragDepth = 0;
   const thumbs = new Map(), thumbPending = new Set(), thumbFailed = new Set(), thumbRetried = new Set();
   const uploads = [];
@@ -148,10 +151,11 @@ const DriveManager = (() => {
           </div>
           <div class="drv-chips" role="group" aria-label="Lọc theo loại" data-drv-chips></div>
           <div class="drv-context" data-drv-context></div>
+          <nav class="drv-pagination" data-drv-pagination aria-label="Phân trang đầu danh sách" hidden></nav>
           <div class="drv-selbar" data-drv-selbar role="toolbar" aria-label="Thao tác với mục đã chọn" hidden></div>
           <p class="drv-notice" data-drv-notice role="alert" hidden></p>
           <div class="drv-content" data-drv-content tabindex="-1"></div>
-          <div class="drv-more" data-drv-more hidden></div>
+          <nav class="drv-pagination drv-pagination-bottom" data-drv-pagination aria-label="Phân trang cuối danh sách" hidden></nav>
           <div class="drv-dropmask" data-drv-dropmask aria-hidden="true"><div>${icon('upload')}<strong>Thả để tải lên</strong><span data-drv-drop-target></span></div></div>
         </section>
         <aside class="drv-details" data-drv-details aria-label="Chi tiết tệp" hidden></aside>
@@ -172,6 +176,9 @@ const DriveManager = (() => {
     });
     q('[data-drv-search]').addEventListener('keydown', event => { if (event.key === 'Escape' && event.target.value) { event.stopPropagation(); event.target.value = ''; query = ''; load(); } });
     q('[data-drv-sort]').addEventListener('change', event => { sort = event.target.value; writePref(SORT_KEY, sort); load(); });
+    host.addEventListener('change', event => {
+      if (event.target.matches('[data-drv-page-size]')) setPageSize(event.target.value);
+    });
     q('[data-drv-file-input]').addEventListener('change', event => { queueUploads([...event.target.files]); event.target.value = ''; });
 
     host.addEventListener('click', onClick);
@@ -246,7 +253,7 @@ const DriveManager = (() => {
     if (data.drvType !== undefined) { type = data.drvType; selected.clear(); load(); return; }
     if (data.drvLayout) { layout = data.drvLayout; writePref(LAYOUT_KEY, layout); paint(); return; }
     if (data.drvCrumb) { openFolder(data.drvCrumb); return; }
-    if (data.drvMore !== undefined) { loadMore(); return; }
+    if (data.drvPage !== undefined) { goToPage(Number(data.drvPage)); return; }
     if (data.drvRetry !== undefined) { load(); return; }
     if (data.drvClearSearch !== undefined) { host.querySelector('[data-drv-search]').value = ''; query = ''; load(); return; }
     if (data.drvUpload !== undefined) { pickFiles(); return; }
@@ -335,31 +342,42 @@ const DriveManager = (() => {
     if (own === aboutToken && host) paintRail();
   }
   function listOptions(pageToken) {
-    return {view, folderId, query, type, sort, pageSize:80, pageToken:pageToken || undefined};
+    return {view, folderId, query, type, sort, pageSize, pageToken:pageToken || undefined};
+  }
+  async function readPage(pageToken, signal) {
+    let result = await Api.list(listOptions(pageToken), signal);
+    const metadata = {path:result.path, folder:result.folder};
+    // Drive có thể trả trang rỗng kèm token: tiếp tục tìm dữ liệu như trước đây.
+    for (let hop = 0; !result.files?.length && result.nextPageToken && hop < EMPTY_PAGE_HOPS; hop++) {
+      if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      result = await Api.list(listOptions(result.nextPageToken), signal);
+    }
+    return {...result, ...metadata, files:result.files || [], nextPageToken:result.nextPageToken || ''};
+  }
+  function setPageSize(value) {
+    const size = Number(value);
+    if (!PAGE_SIZES.includes(size) || size === pageSize) return;
+    pageSize = size;
+    writePref(PAGE_SIZE_KEY, String(size));
+    return load();
   }
   async function load() {
     if (!host) return;
     listController?.abort();
     const controller = listController = new AbortController();
     const own = ++generation;
-    loading = true; errorText = ''; nextPageToken = ''; files = [];
+    loading = true; pageLoading = false; errorText = ''; nextPageToken = ''; files = [];
+    pages = []; pageIndex = 0; selected.clear(); anchorId = null; detailsId = null;
     paint();
     try {
-      const result = await Api.list(listOptions(), controller.signal);
+      const result = await readPage('', controller.signal);
       if (own !== generation || !host) return;
       files = result.files || [];
       nextPageToken = result.nextPageToken || '';
+      pages = [{files, nextPageToken}];
       if (view === 'folder' && !query) {
         if (Array.isArray(result.path) && result.path.length) path = result.path;
         folder = result.folder || null;
-      }
-      // Drive đôi khi trả trang RỖNG kèm nextPageToken (dữ liệu nằm ở trang sau) → theo token tới khi có dữ liệu,
-      // tránh báo "thư mục trống" sai.
-      for (let hop = 0; !files.length && nextPageToken && hop < EMPTY_PAGE_HOPS; hop++) {
-        const more = await Api.list(listOptions(nextPageToken), controller.signal);
-        if (own !== generation || !host) return;
-        files = more.files || [];
-        nextPageToken = more.nextPageToken || '';
       }
       selected = new Set([...selected].filter(id => files.some(file => file.id === id)));
     } catch (error) {
@@ -369,18 +387,33 @@ const DriveManager = (() => {
       if (own === generation) { loading = false; if (host) paint(); }
     }
   }
-  async function loadMore() {
-    if (!nextPageToken || loadingMore) return;
-    const own = generation;
-    loadingMore = true; paintMore();
+  async function goToPage(index) {
+    if (!host || loading || pageLoading || !Number.isInteger(index) || index < 0 || index === pageIndex) return;
+    if (index > pages.length || (index === pages.length && !pages.at(-1)?.nextPageToken)) return;
+    closeMenu();
+    if (pages[index]) { showPage(index); return; }
+    listController?.abort();
+    const controller = listController = new AbortController();
+    const own = ++generation;
+    pageLoading = true; paintPagination();
     try {
-      const result = await Api.list(listOptions(nextPageToken));
-      if (own !== generation) return;
-      const known = new Set(files.map(file => file.id));
-      files = files.concat((result.files || []).filter(file => !known.has(file.id)));
-      nextPageToken = result.nextPageToken || '';
-    } catch (error) { if (own === generation) toast(error.message, 'error'); }
-    finally { if (own === generation) { loadingMore = false; paint(); } }
+      const result = await readPage(pages.at(-1).nextPageToken, controller.signal);
+      if (own !== generation || !host) return;
+      pages.push({files:result.files, nextPageToken:result.nextPageToken});
+      showPage(index);
+    } catch (error) { if (own === generation && error.name !== 'AbortError') toast(error.message, 'error'); }
+    finally { if (own === generation) { pageLoading = false; if (host) paintPagination(); } }
+  }
+  function showPage(index) {
+    pageIndex = index;
+    ({files, nextPageToken} = pages[index]);
+    selected.clear(); anchorId = null; detailsId = null;
+    paint();
+    host.querySelector('.drv-main')?.scrollIntoView({block:'start', behavior:'auto'});
+  }
+  function pageRange() {
+    const before = pages.slice(0, pageIndex).reduce((total, page) => total + page.files.length, 0);
+    return files.length ? `${before + 1}–${before + files.length} mục` : '0 mục';
   }
 
   // ---- Vẽ giao diện ----------------------------------------------------------------------
@@ -418,13 +451,13 @@ const DriveManager = (() => {
     notice.hidden = true;
     paintContent();
     paintSelection();
-    paintMore();
+    paintPagination();
     paintDetails();
   }
 
   function paintContext() {
     const node = host.querySelector('[data-drv-context]');
-    const count = loading ? '' : `<span class="drv-count" role="status" aria-live="polite">${files.length}${nextPageToken ? '+' : ''} mục</span>`;
+    const count = loading ? '' : `<span class="drv-count" role="status" aria-live="polite">${pageRange()} · Trang ${pageIndex + 1}</span>`;
     if (query) {
       node.innerHTML = `<div class="drv-context-title">${icon('search')}<span>Kết quả cho “<strong>${esc(query)}</strong>”${type ? ' · ' + esc(TYPE_FILTERS.find(item => item[0] === type)?.[1] || '') : ''}</span></div>${count}<button type="button" class="drv-link-button" data-drv-clear-search>Xóa tìm kiếm</button>`;
       return;
@@ -465,7 +498,7 @@ const DriveManager = (() => {
     observer?.disconnect();
     if (loading) { content.innerHTML = skeleton(); return; }
     if (errorText) { content.innerHTML = errorState(); return; }
-    if (!files.length && nextPageToken) { content.innerHTML = '<div class="drv-empty"><strong>Trang này chưa có mục nào hiển thị</strong><p>Bấm “Tải thêm” bên dưới để xem tiếp.</p></div>'; return; }
+    if (!files.length && nextPageToken) { content.innerHTML = '<div class="drv-empty"><strong>Trang này chưa có mục nào hiển thị</strong><p>Bấm “Trang tiếp” để xem tiếp.</p></div>'; return; }
     if (!files.length) { content.innerHTML = emptyState(); return; }
     const list = Api.sortFiles(files, view === 'recent' && !query ? '' : sort);
     content.innerHTML = layout === 'grid' ? gridMarkup(list) : listMarkup(list);
@@ -533,11 +566,20 @@ const DriveManager = (() => {
     const setup = /DRIVE_MANAGER_UIDS|Apps Script|Drive API|CLAIM_DOCUMENTS_ENDPOINT/.test(errorText);
     return `<div class="drv-empty is-error"><span class="drv-empty-art" aria-hidden="true">${icon(setup ? 'shield' : 'alert')}</span><strong>${setup ? 'Cần hoàn tất cấu hình dịch vụ Google Drive' : 'Chưa tải được dữ liệu Google Drive'}</strong><p>${esc(errorText)}</p><button type="button" class="sf-button" data-drv-retry>${icon('refresh')} Thử lại</button></div>`;
   }
-  function paintMore() {
-    const node = host?.querySelector('[data-drv-more]');
-    if (!node) return;
-    node.hidden = loading || !nextPageToken;
-    node.innerHTML = `<button type="button" class="sf-button" data-drv-more ${loadingMore ? 'disabled' : ''}>${loadingMore ? '<span class="drv-spinner" aria-hidden="true"></span> Đang tải…' : icon('chevronDown') + ' Tải thêm'}</button>`;
+  function paintPagination() {
+    if (!host) return;
+    const maxPage = Math.max(0, pages.length - 1) + (pages.at(-1)?.nextPageToken ? 1 : 0);
+    const busy = loading || pageLoading;
+    const pageButton = index => `<button type="button" class="drv-page-button${index === pageIndex ? ' is-current' : ''}" data-drv-page="${index}" aria-label="Trang ${index + 1}"${index === pageIndex ? ' aria-current="page"' : ''}${busy ? ' disabled' : ''}>${index + 1}</button>`;
+    const start = Math.max(0, pageIndex - 2), end = Math.min(maxPage, pageIndex + 2);
+    let numbers = start > 0 ? pageButton(0) + (start > 1 ? '<span class="drv-page-ellipsis" aria-hidden="true">…</span>' : '') : '';
+    for (let index = start; index <= end; index++) numbers += pageButton(index);
+    host.querySelectorAll('[data-drv-pagination]').forEach(node => {
+      node.hidden = loading || !!errorText || (!files.length && !nextPageToken && !pageIndex);
+      node.innerHTML = `<span class="drv-page-result">${pageRange()} · Trang ${pageIndex + 1}${pageLoading ? ' · Đang tải…' : ''}</span>
+        <label class="drv-page-size"><span>Số mục / trang</span><select data-drv-page-size aria-label="Số mục mỗi trang"${busy ? ' disabled' : ''}>${PAGE_SIZES.map(size => `<option value="${size}"${size === pageSize ? ' selected' : ''}>${size}</option>`).join('')}</select></label>
+        <div class="drv-page-buttons"><button type="button" class="drv-page-button is-prev" data-drv-page="${pageIndex - 1}" aria-label="Trang trước"${busy || !pageIndex ? ' disabled' : ''}>${icon('chevron')}</button>${numbers}<button type="button" class="drv-page-button" data-drv-page="${pageIndex + 1}" aria-label="Trang tiếp"${busy || pageIndex >= maxPage ? ' disabled' : ''}>${icon('chevron')}</button></div>`;
+    });
   }
 
   // ---- Chọn mục --------------------------------------------------------------------------
@@ -730,7 +772,7 @@ const DriveManager = (() => {
       case 'copy': {
         try {
           const result = await Api.copy(chosen[0].id);
-          if (view === 'folder' && !query) { files = [result.file, ...files]; selected = new Set([result.file.id]); paint(); }
+          if (view === 'folder' && !query) await load();
           toast('Đã tạo “' + result.file.name + '”.');
           audit('Tạo bản sao tệp trên Google Drive: ' + chosen[0].name, {fileId:chosen[0].id});
         } catch (error) { toast(error.message, 'error'); }
@@ -744,7 +786,8 @@ const DriveManager = (() => {
         try {
           const result = await Api.star(ids, starred);
           if (result.failed?.length) { result.failed.forEach(item => { const file = byId(item.id); if (file) file.starred = !starred; }); paint(); toast('Có ' + result.failed.length + ' mục chưa cập nhật được dấu sao.', 'warning'); }
-        } catch (error) { chosen.forEach(file => { file.starred = !starred; }); paint(); toast(error.message, 'error'); }
+          if (view === 'starred' && !starred) await load();
+        } catch (error) { chosen.forEach(file => { file.starred = !starred; }); paint(); toast(error.message, 'error'); if (view === 'starred' && !starred) await load(); }
         return;
       }
       case 'trash': {
@@ -770,7 +813,7 @@ const DriveManager = (() => {
       if (removeFromList) files = files.filter(file => !done.has(file.id));
       selected = new Set([...selected].filter(id => !done.has(id)));
       if (detailsId && done.has(detailsId)) detailsId = null;
-      paint();
+      if (removeFromList && done.size) await load(); else paint();
       if (result.failed?.length) toast((done.size ? 'Đã xử lý ' + done.size + ' mục. ' : '') + result.failed.length + ' mục lỗi: ' + result.failed[0].error, 'warning');
       else toast(success);
       if (done.size) { audit(auditText, {count:done.size}); loadAbout(); }
@@ -785,7 +828,7 @@ const DriveManager = (() => {
     if (!await confirmAction('Dọn sạch thùng rác?', 'Toàn bộ mục trong thùng rác Google Drive sẽ bị xóa vĩnh viễn và KHÔNG THỂ khôi phục.', 'Xóa vĩnh viễn tất cả')) return;
     try {
       await Api.emptyTrash();
-      files = []; selected.clear(); detailsId = null; paint();
+      files = []; pages = []; pageIndex = 0; nextPageToken = ''; selected.clear(); detailsId = null; paint();
       toast('Đã dọn sạch thùng rác.');
       audit('Dọn sạch thùng rác Google Drive');
       loadAbout();
@@ -864,7 +907,7 @@ const DriveManager = (() => {
     const parentId = folderId, parentName = path.at(-1)?.name || 'Drive của tôi';
     nameDialog({title:'Thư mục mới', description:'Tạo trong: ' + parentName, value:'Thư mục không có tiêu đề', submit:'Tạo thư mục', icon:'folderPlus', onSubmit:async name => {
       const result = await Api.createFolder(parentId, name);
-      if (view === 'folder' && folderId === parentId && !query) { files = [result.file, ...files]; selected = new Set([result.file.id]); anchorId = result.file.id; paint(); }
+      if (view === 'folder' && folderId === parentId && !query) await load();
       toast('Đã tạo thư mục “' + result.file.name + '”.');
       audit('Tạo thư mục Google Drive: ' + result.file.name, {parentId});
     }});
@@ -876,7 +919,7 @@ const DriveManager = (() => {
       const result = await Api.rename(file.id, name);
       const target = byId(file.id); if (target) Object.assign(target, result.file);
       if (folder && folder.id === file.id) { folder = result.file; path = path.map(item => item.id === file.id ? {...item, name:result.file.name} : item); }
-      paint();
+      await load();
       toast('Đã đổi tên thành “' + result.file.name + '”.');
       audit('Đổi tên trên Google Drive: ' + file.name + ' → ' + result.file.name, {fileId:file.id});
     }});
@@ -962,8 +1005,8 @@ const DriveManager = (() => {
       paintTray();
       Api.upload(item.file, item.parentId, item.id).then(result => {
         item.status = 'done'; item.result = result.file;
-        // Đang mở đúng thư mục → chèn ngay, không cần tải lại cả danh sách.
-        if (host && view === 'folder' && !query && folderId === item.parentId && !files.some(file => file.id === result.file.id)) { files = [result.file, ...files]; paint(); }
+        // Tải lại đúng thư mục để giữ thứ tự và giới hạn số mục mỗi trang.
+        if (host && view === 'folder' && !query && folderId === item.parentId) load();
         audit('Tải tệp lên Google Drive: ' + result.file.name, {parentId:item.parentId, size:item.size});
       }).catch(error => { item.status = 'error'; item.error = error.message; })
         .finally(() => {
