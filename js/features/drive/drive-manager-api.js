@@ -6,8 +6,23 @@
 const DriveManagerApi = (() => {
   const FOLDER_MIME = 'application/vnd.google-apps.folder';
   const UPLOAD_MAX = 10 * 1024 * 1024;
-  const TIMEOUTS = {drive_upload:180000, drive_download:180000, drive_thumbnails:60000, drive_move:120000, drive_trash:120000, drive_restore:120000, drive_delete:120000, drive_empty_trash:120000};
+  const TIMEOUTS = {drive_about:30000, drive_list:45000, drive_folders:45000, drive_upload:180000, drive_download:180000, drive_thumbnails:60000, drive_move:120000, drive_trash:120000, drive_restore:120000, drive_delete:120000, drive_empty_trash:120000};
   const OUTDATED = 'Thao tác không hợp lệ.';
+  // Thao tác CHỈ ĐỌC tự thử lại khi gặp lỗi tạm thời (Apps Script khởi động nguội, quá tải, mạng chập).
+  // Thao tác ghi (tải lên, di chuyển, xóa…) KHÔNG thử lại để tránh làm trùng hoặc thao tác hai lần.
+  const RETRY_ATTEMPTS = {drive_about:3, drive_list:3, drive_folders:3, drive_thumbnails:2};
+  const RETRY_DELAYS = [700, 1800];
+  const TRANSIENT_MESSAGE = /rate limit|backend error|too many times|service invoked|internal error|timed out|timeout|try again|temporarily|unavailable|quá tải|tạm thời/i;
+  const transient = error => Object.assign(error, {transient:true});
+  const abortError = () => Object.assign(new Error('Aborted'), {name:'AbortError'});
+  function wait(ms, signal) {
+    return new Promise((resolve, reject) => {
+      if (signal && signal.aborted) { reject(abortError()); return; }
+      const onAbort = () => { clearTimeout(timer); reject(abortError()); };
+      const timer = setTimeout(() => { if (signal) signal.removeEventListener('abort', onAbort); resolve(); }, ms);
+      if (signal) signal.addEventListener('abort', onAbort, {once:true});
+    });
+  }
 
   const endpoint = () => typeof CONFIG === 'undefined' ? '' : String(CONFIG.CLAIM_DOCUMENTS_ENDPOINT || '').trim();
   const currentUser = () => typeof firebase !== 'undefined' ? firebase.auth().currentUser : null;
@@ -106,7 +121,7 @@ const DriveManagerApi = (() => {
   }
 
   // ---- Gọi dịch vụ ---------------------------------------------------------------------
-  async function call(action, payload = {}, signal) {
+  async function callOnce(action, payload = {}, signal) {
     if (!endpoint()) throw new Error('Chưa cấu hình dịch vụ Google Drive (CLAIM_DOCUMENTS_ENDPOINT).');
     const user = currentUser();
     if (!user) throw new Error('Vui lòng đăng nhập để quản lý Google Drive.');
@@ -118,15 +133,30 @@ const DriveManagerApi = (() => {
       response = await fetch(endpoint(), {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify({...payload, action, token}), credentials:'omit', redirect:'follow', signal:combined});
     } catch (error) {
       if (signal && signal.aborted) throw error;
-      if (error && error.name === 'TimeoutError') throw new Error('Google Drive phản hồi quá lâu. Vui lòng thử lại.');
-      throw new Error('Không kết nối được dịch vụ Google Drive. Kiểm tra mạng rồi thử lại.');
+      if (error && error.name === 'TimeoutError') throw transient(new Error('Google Drive phản hồi quá lâu. Vui lòng thử lại.'));
+      throw transient(new Error('Không kết nối được dịch vụ Google Drive. Kiểm tra mạng rồi thử lại.'));
     }
     let result;
-    try { result = await response.json(); } catch (_) { throw new Error('Dịch vụ Google Drive trả về dữ liệu không hợp lệ.'); }
+    // Google trả trang HTML lỗi (quá tải / hạn mức) thay vì JSON → coi là lỗi tạm thời.
+    try { result = await response.json(); } catch (_) { throw transient(new Error('Dịch vụ Google Drive trả về dữ liệu không hợp lệ.')); }
     if (result && result.error === OUTDATED) throw new Error('Dịch vụ Apps Script chưa có tính năng quản lý Google Drive. Quản trị viên cần thêm DriveManager.gs, bật Drive API và Deploy phiên bản mới (xem google-apps-script/claim-documents/README.md).');
-    if (!response.ok || !result || !result.ok) throw new Error((result && result.error) || 'Google Drive chưa xử lý được yêu cầu.');
+    if (!response.ok || !result || !result.ok) {
+      const failure = new Error((result && result.error) || 'Google Drive chưa xử lý được yêu cầu.');
+      if (response.status === 429 || response.status >= 500 || TRANSIENT_MESSAGE.test(failure.message)) transient(failure);
+      throw failure;
+    }
     if (currentUser() && currentUser().uid !== user.uid) throw new Error('Phiên đăng nhập đã thay đổi.');
     return result;
+  }
+  async function call(action, payload = {}, signal) {
+    const attempts = RETRY_ATTEMPTS[action] || 1;
+    for (let attempt = 1; ; attempt++) {
+      try { return await callOnce(action, payload, signal); }
+      catch (error) {
+        if (attempt >= attempts || !error || !error.transient || (signal && signal.aborted)) throw error;
+        await wait(RETRY_DELAYS[attempt - 1] || RETRY_DELAYS[RETRY_DELAYS.length - 1], signal);
+      }
+    }
   }
   function base64(file) {
     return new Promise((resolve, reject) => {
@@ -170,5 +200,5 @@ const DriveManagerApi = (() => {
     }
   };
 
-  return {...api, call, endpoint, formatBytes, formatDate, formatDateTime, kindOf, typeLabel, canPreview, isNative, validateName, quotaSummary, sortFiles, requestId, FOLDER_MIME, UPLOAD_MAX, KIND_LABELS};
+  return {...api, call, endpoint, RETRY_ATTEMPTS, formatBytes, formatDate, formatDateTime, kindOf, typeLabel, canPreview, isNative, validateName, quotaSummary, sortFiles, requestId, FOLDER_MIME, UPLOAD_MAX, KIND_LABELS};
 })();

@@ -8,7 +8,7 @@ const DriveManager = (() => {
   const Api = DriveManagerApi;
   const LAYOUT_KEY = 'drive-manager-layout';
   const SORT_KEY = 'drive-manager-sort';
-  const THUMB_BATCH = 12, THUMB_CACHE_LIMIT = 400, UPLOAD_WORKERS = 2;
+  const THUMB_BATCH = 6, EMPTY_PAGE_HOPS = 5, THUMB_CACHE_LIMIT = 400, UPLOAD_WORKERS = 2;
   const VIEWS = {
     folder: {label:'Drive của tôi', icon:'drive', empty:'Thư mục này chưa có tệp nào', hint:'Kéo thả tệp vào đây hoặc bấm “Mới” để tải lên.'},
     recent: {label:'Gần đây', icon:'clock', empty:'Chưa có tệp mở gần đây', hint:'Các tệp bạn vừa xem hoặc chỉnh sửa sẽ xuất hiện ở đây.'},
@@ -77,7 +77,7 @@ const DriveManager = (() => {
   let query = '', type = '', sort = readPref(SORT_KEY, 'name_asc', SORTS.map(s => s[0])), layout = readPref(LAYOUT_KEY, 'list', ['list', 'grid']);
   let files = [], nextPageToken = '', loading = false, loadingMore = false, errorText = '', about = null, aboutError = '';
   let selected = new Set(), anchorId = null, detailsId = null, searchTimer = 0, dragDepth = 0;
-  const thumbs = new Map(), thumbPending = new Set(), thumbFailed = new Set();
+  const thumbs = new Map(), thumbPending = new Set(), thumbFailed = new Set(), thumbRetried = new Set();
   const uploads = [];
   let uploadWorkers = 0, trayCollapsed = false, sessionUid = '';
 
@@ -108,7 +108,7 @@ const DriveManager = (() => {
     const user = typeof firebase !== 'undefined' ? firebase.auth().currentUser : null;
     if (!user) { container.textContent = 'Vui lòng đăng nhập để quản lý Google Drive.'; return; }
     // Đổi tài khoản → bỏ ảnh thu nhỏ đã lưu của phiên trước.
-    if (sessionUid !== user.uid) { thumbs.forEach(url => URL.revokeObjectURL(url)); thumbs.clear(); thumbFailed.clear(); sessionUid = user.uid; about = null; }
+    if (sessionUid !== user.uid) { thumbs.forEach(url => URL.revokeObjectURL(url)); thumbs.clear(); thumbFailed.clear(); thumbRetried.clear(); sessionUid = user.uid; about = null; }
     selected = new Set(); detailsId = null; errorText = '';
     host = document.createElement('section');
     host.className = 'sf-workspace drv-workspace';
@@ -353,6 +353,14 @@ const DriveManager = (() => {
         if (Array.isArray(result.path) && result.path.length) path = result.path;
         folder = result.folder || null;
       }
+      // Drive đôi khi trả trang RỖNG kèm nextPageToken (dữ liệu nằm ở trang sau) → theo token tới khi có dữ liệu,
+      // tránh báo "thư mục trống" sai.
+      for (let hop = 0; !files.length && nextPageToken && hop < EMPTY_PAGE_HOPS; hop++) {
+        const more = await Api.list(listOptions(nextPageToken), controller.signal);
+        if (own !== generation || !host) return;
+        files = more.files || [];
+        nextPageToken = more.nextPageToken || '';
+      }
       selected = new Set([...selected].filter(id => files.some(file => file.id === id)));
     } catch (error) {
       if (own !== generation || error.name === 'AbortError') return;
@@ -457,6 +465,7 @@ const DriveManager = (() => {
     observer?.disconnect();
     if (loading) { content.innerHTML = skeleton(); return; }
     if (errorText) { content.innerHTML = errorState(); return; }
+    if (!files.length && nextPageToken) { content.innerHTML = '<div class="drv-empty"><strong>Trang này chưa có mục nào hiển thị</strong><p>Bấm “Tải thêm” bên dưới để xem tiếp.</p></div>'; return; }
     if (!files.length) { content.innerHTML = emptyState(); return; }
     const list = Api.sortFiles(files, view === 'recent' && !query ? '' : sort);
     content.innerHTML = layout === 'grid' ? gridMarkup(list) : listMarkup(list);
@@ -1017,7 +1026,12 @@ const DriveManager = (() => {
           thumbs.set(item.id, URL.createObjectURL(blob));
           if (thumbs.size > THUMB_CACHE_LIMIT) { const [oldest, url] = thumbs.entries().next().value; URL.revokeObjectURL(url); thumbs.delete(oldest); }
         });
-      } catch (_) { batch.forEach(id => thumbFailed.add(id)); }
+      } catch (_) {
+        // Lỗi tạm thời (mạng / quá tải): cho thử lại MỘT lần sau ít giây, không đánh dấu hỏng vĩnh viễn ngay.
+        const again = batch.filter(id => !thumbRetried.has(id));
+        batch.forEach(id => { if (thumbRetried.has(id)) thumbFailed.add(id); else thumbRetried.add(id); });
+        if (again.length && own === generation) setTimeout(() => { if (host && own === generation) requestThumbs(again); }, 2500);
+      }
       finally { batch.forEach(id => thumbPending.delete(id)); }
       if (own === generation && host) applyThumbs(batch);
     }

@@ -206,3 +206,56 @@ test('kiểm tra tên và tóm tắt dung lượng', () => {
   assert.equal(Api.quotaSummary({limit:100, usage:92}).level, 'critical');
   assert.equal(Api.quotaSummary({limit:0, usage:5}).unlimited, true);
 });
+
+// ---------------- Trình duyệt: tự thử lại thao tác chỉ đọc khi lỗi tạm thời ----------------
+function retryApi(responses) {
+  const calls = [];
+  const sandbox = vm.createContext({
+    Intl, console, setTimeout, clearTimeout, AbortSignal, Error, JSON,
+    CONFIG:{CLAIM_DOCUMENTS_ENDPOINT:'https://script.example/exec'},
+    firebase:{auth:() => ({currentUser:{uid:'u1', getIdToken:async () => 'tok'}})},
+    fetch:async (url, options) => {
+      calls.push(JSON.parse(options.body).action);
+      const next = responses.shift();
+      if (next instanceof Error) throw next;
+      return next;
+    }
+  });
+  vm.runInContext(fs.readFileSync(new URL('../js/features/drive/drive-manager-api.js', import.meta.url), 'utf8') + '\nthis.api = DriveManagerApi;', sandbox);
+  return {api:sandbox.api, calls};
+}
+const jsonResponse = (body, status = 200) => ({ok:status < 400, status, json:async () => body});
+const htmlResponse = () => ({ok:true, status:200, json:async () => { throw new SyntaxError('Unexpected token <'); }});
+
+test('danh sách tự thử lại khi Google trả trang lỗi rồi thành công', async () => {
+  const {api, calls} = retryApi([htmlResponse(), jsonResponse({ok:true, files:[{id:'a'}]})]);
+  const result = await api.list({view:'folder'});
+  assert.equal(result.files[0].id, 'a');
+  assert.deepEqual(calls, ['drive_list', 'drive_list']);
+});
+
+test('thao tác ghi không bao giờ tự thử lại', async () => {
+  const {api, calls} = retryApi([htmlResponse(), jsonResponse({ok:true})]);
+  await assert.rejects(() => api.trash(['aaaaaaaaaaaaaaaaaaaa']), /không hợp lệ/);
+  assert.deepEqual(calls, ['drive_trash']);
+});
+
+test('lỗi nghiệp vụ từ máy chủ không bị thử lại', async () => {
+  const {api, calls} = retryApi([jsonResponse({ok:false, error:'Tài khoản chưa được cấp quyền quản lý Google Drive.'}), jsonResponse({ok:true, files:[]})]);
+  await assert.rejects(() => api.list({}), /chưa được cấp quyền/);
+  assert.deepEqual(calls, ['drive_list']);
+});
+
+test('dừng thử lại sau số lần tối đa và báo lỗi cuối', async () => {
+  const {api, calls} = retryApi([htmlResponse(), htmlResponse(), htmlResponse(), jsonResponse({ok:true, files:[]})]);
+  await assert.rejects(() => api.list({}), /dữ liệu không hợp lệ/);
+  assert.equal(calls.length, api.RETRY_ATTEMPTS.drive_list);
+});
+
+test('hủy yêu cầu thì không thử lại', async () => {
+  const controller = new AbortController();
+  const {api, calls} = retryApi([Object.assign(new Error('x'), {name:'AbortError'}), jsonResponse({ok:true, files:[]})]);
+  controller.abort();
+  await assert.rejects(() => api.list({}, controller.signal));
+  assert.equal(calls.length, 1);
+});
