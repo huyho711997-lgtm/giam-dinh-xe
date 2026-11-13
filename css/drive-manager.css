@@ -446,3 +446,5 @@ body:not(.light-mode) .drv-chip[aria-pressed="true"] { background:var(--sf-gold)
 /* Trang Google Drive không dùng trợ lý AI: ẩn nút AI và khung chat, giữ nút "Lên đầu trang". */
 body:has(.drv-shell) #tasco-ai-btn,
 body:has(.drv-shell) #tasco-ai-panel { display: none !important; }
+/* Cả hai nút đều ẩn thì bỏ luôn khung, tránh còn lại vòng tròn rỗng ở góc trang. */
+body:has(.drv-shell) #tasco-floating-dock:not(:has(#scrollToTopBtn.visible)) { display:none; }
