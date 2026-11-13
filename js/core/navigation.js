@@ -70,6 +70,7 @@
       field:'<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
       forms:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
       rescue:'<path d="M3 16V8h11v8M14 11h4l3 3v2h-7M3 16h18"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/>',
+      drive:'<path d="M8.5 3h7l6 10.5-3.5 6H6L2.5 13.5Z"/><path d="m8.5 3 6 10.5H21M15.5 3l-9.5 16.5M2.5 13.5h12"/>',
       system:'<path d="M12 3 4 6v6c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/>',
       pin:'<path d="M9 4h6l-1 6 3 3v2H7v-2l3-3Z"/><path d="M12 15v6"/>',
       menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
@@ -104,7 +105,9 @@
           { tab: 'shared_forms', title: 'Biểu mẫu dùng chung', icon: 'forms', show: hasUserPermission('shared_forms', 'view') }
         ]},
         { label: 'Hệ thống', items: [
-          { tab: 'users', title: 'Quản trị hệ thống', icon: 'system', show: hasUserPermission('users', 'view'), also: ['system'] }
+          { tab: 'users', title: 'Quản trị hệ thống', icon: 'system', show: hasUserPermission('users', 'view'), also: ['system'] },
+          // Quản lý toàn bộ Google Drive của chủ tài khoản: chỉ Admin hệ thống (máy chủ kiểm tra thêm DRIVE_MANAGER_UIDS).
+          { tab: 'drive_manager', title: 'Google Drive', icon: 'drive', show: hasUserPermission('users', 'admin') }
         ]}
       ].map(group => ({ ...group, items: group.items.filter(item => item.show) })).filter(group => group.items.length);
     }

@@ -25,6 +25,7 @@
     shared_forms: 'bieu-mau',
     contacts: 'danh-ba',
     rescue_cost: 'chi-phi-cuu-ho',
+    drive_manager: 'google-drive',
     users: 'quan-tri'
   };
   const ADMIN_SUB_SLUGS = { users: 'tai-khoan', 'api-keys': 'gemini-api', cloudinary: 'cloudinary', 'audit-logs': 'nhat-ky', 'kpi-config': 'he-so-kpi', seasonal: 'hieu-ung-mua-le' };
@@ -40,6 +41,7 @@
       case 'shared_forms': return can('shared_forms', 'view');
       case 'rescue_cost': return can('rescue_cost', 'view');
       case 'contacts': return can('contacts', 'view');
+      case 'drive_manager': return can('users', 'admin');
       case 'list': return can('list', 'view');
       case 'create': return can('list', 'add');
       case 'pending': case 'pending_notes_tracker': return can('pending', 'view');
