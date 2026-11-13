@@ -328,6 +328,8 @@ const DriveManager = (() => {
         kindOf:Api.viewerKind,
         load:async (item, signal) => { const result = await Api.download(item.id, 'preview', signal); return {bytes:result.bytes, mimeType:result.mimeType}; },
         thumb:item => thumbs.get(item.id),
+        fetchThumbs:ids => requestThumbs(ids),
+        details:item => [['Tên', item.name], ['Loại', Api.typeLabel(item)], ['Dung lượng', Api.formatBytes(item.size)], ['Sửa đổi', item.modifiedTime ? Api.formatDateTime(item.modifiedTime) : ''], ['Ngày tạo', item.createdTime ? Api.formatDateTime(item.createdTime) : ''], ['Chủ sở hữu', item.owner], ['Người sửa cuối', item.lastModifiedBy]],
         format:{size:item => Api.formatBytes(item.size), date:item => item.modifiedTime ? 'Sửa ' + Api.formatDateTime(item.modifiedTime) : ''},
         onDownload:item => download([item]),
         openDocument:item => { DriveViewer.close(); previewDocument(item); },

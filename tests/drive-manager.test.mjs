@@ -312,3 +312,16 @@ test('văn bản: bỏ BOM, dàn lại JSON, đếm dòng', () => {
   assert.equal(json.text, '{\n  "a": 1\n}');
   assert.equal(Viewer.decodeText(encode('{hỏng'), 'a.json').pretty, false);
 });
+
+test('biên kéo ảnh: ảnh vừa khung đứng yên, ảnh phóng to kéo được tới mép; xoay đổi chiều', () => {
+  assert.deepEqual({...Viewer.panBounds(1000, 500, 0.5, 0, 800, 600)}, {bx:0, by:0});
+  assert.deepEqual({...Viewer.panBounds(1000, 500, 2, 0, 800, 600)}, {bx:600, by:200});
+  assert.deepEqual({...Viewer.panBounds(1000, 500, 2, 90, 800, 600)}, {bx:100, by:700});
+});
+
+test('kéo vượt biên bị níu lại (đàn hồi), trong biên giữ nguyên', () => {
+  assert.equal(Viewer.rubber(50, -100, 100), 50);
+  assert.equal(Viewer.rubber(200, -100, 100), 135);
+  assert.equal(Viewer.rubber(-300, -100, 100), -170);
+  assert.equal(Viewer.rubber(200, -100, 100, 0), 100);
+});
