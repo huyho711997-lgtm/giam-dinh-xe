@@ -8,6 +8,8 @@
   --drv-radius:16px;
   --drv-row-h:56px;
   --drv-ease:cubic-bezier(.2,.8,.2,1);
+  /* Phần màn hình nằm ngoài khung tệp (thanh trên + đầu trang + lề dưới) — để khung kéo dài tới đáy, không chừa khoảng trống. */
+  --drv-chrome-h:262px;
 }
 /* Menu ngữ cảnh gắn vào <body> nên không thừa hưởng token từ .sf-workspace → khai báo lại. */
 .drv-menu, .drv-drag-ghost {
@@ -67,7 +69,9 @@ body:not(.light-mode) :is(.drv-workspace,.drv-dialog) {
 
 /* ---- Khung chính ---- */
 .drv-shell {
-  position:relative; display:grid; grid-template-columns:248px minmax(0,1fr); min-height:620px;
+  position:relative; display:grid; grid-template-columns:248px minmax(0,1fr);
+  /* Lấp đầy chiều cao còn lại của màn hình (tối thiểu 620px) thay vì dừng giữa chừng khi thư mục trống. */
+  min-height:620px; min-height:max(620px,calc(100vh - var(--drv-chrome-h))); min-height:max(620px,calc(100dvh - var(--drv-chrome-h)));
   background:var(--sf-paper); border:1px solid var(--sf-line); border-radius:var(--drv-radius); box-shadow:var(--sf-shadow); overflow:clip;
   transition:grid-template-columns .28s var(--drv-ease);
 }
