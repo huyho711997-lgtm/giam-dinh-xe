@@ -259,3 +259,56 @@ test('hủy yêu cầu thì không thử lại', async () => {
   await assert.rejects(() => api.list({}, controller.signal));
   assert.equal(calls.length, 1);
 });
+
+// ---------------- Bộ xem theo loại tệp ----------------
+test('chọn bộ xem theo loại tệp', () => {
+  assert.equal(Api.viewerKind({mimeType:'image/jpeg', name:'a.jpg', size:100}), 'image');
+  assert.equal(Api.viewerKind({mimeType:'video/mp4', name:'a.mp4', size:100}), 'video');
+  assert.equal(Api.viewerKind({mimeType:'audio/mpeg', name:'a.mp3', size:100}), 'audio');
+  assert.equal(Api.viewerKind({mimeType:'text/csv', name:'a.csv', size:100}), 'sheet');
+  assert.equal(Api.viewerKind({mimeType:'application/json', name:'a.json', size:100}), 'text');
+  assert.equal(Api.viewerKind({mimeType:'application/pdf', name:'a.pdf', size:100}), 'document');
+  assert.equal(Api.viewerKind({mimeType:'application/vnd.google-apps.spreadsheet', name:'Bảng'}), 'document');
+  assert.equal(Api.viewerKind({mimeType:'video/mp4', name:'to.mp4', size:21 * 1024 * 1024}), '');
+  assert.equal(Api.viewerKind({mimeType:'application/zip', name:'a.zip', size:100}), '');
+});
+
+const viewerCtx = vm.createContext({console, TextDecoder, JSON, Map, Set, Math});
+vm.runInContext(fs.readFileSync(new URL('../js/features/drive/drive-viewer.js', import.meta.url), 'utf8') + '\nthis.viewer = DriveViewer;', viewerCtx);
+const Viewer = viewerCtx.viewer;
+
+test('ảnh vừa khung không phóng quá kích thước thật và đổi chiều khi xoay', () => {
+  assert.equal(Viewer.fitScale(4000, 2000, 1000, 1000, 0), 0.25);
+  assert.equal(Viewer.fitScale(4000, 2000, 1000, 1000, 90), 0.25);
+  assert.equal(Viewer.fitScale(4000, 1000, 2000, 1000, 90), 0.25);
+  assert.equal(Viewer.fitScale(100, 100, 1000, 1000, 0), 1);
+  assert.equal(Viewer.fitScale(0, 0, 1000, 1000, 0), 1);
+});
+
+test('phóng to quanh con trỏ giữ nguyên điểm dưới con trỏ và có giới hạn', () => {
+  const next = Viewer.zoomAt({scale:1, x:0, y:0}, 2, 100, 50);
+  assert.deepEqual({...next}, {scale:2, x:-100, y:-50});
+  assert.equal(Viewer.zoomAt({scale:1, x:0, y:0}, 999, 0, 0).scale, 8);
+  assert.equal(Viewer.zoomAt({scale:1, x:0, y:0}, 0, 0, 0).scale, 0.05);
+});
+
+test('ô gộp của bảng tính: ô gốc có span, ô bị che bỏ qua, cắt theo vùng hiển thị', () => {
+  const {spans, covered} = Viewer.mergeMap([{s:{r:0, c:0}, e:{r:1, c:2}}, {s:{r:5, c:0}, e:{r:99, c:0}}, {s:{r:50, c:0}, e:{r:51, c:0}}], 9, 1);
+  assert.deepEqual({...spans.get('0:0')}, {rowSpan:2, colSpan:2});
+  assert.equal(covered.has('1:1'), true);
+  assert.equal(covered.has('0:2'), false);
+  assert.deepEqual({...spans.get('5:0')}, {rowSpan:5, colSpan:1});
+  assert.equal(spans.has('50:0'), false);
+  assert.deepEqual([0, 25, 26, 701, 702].map(Viewer.columnName), ['A', 'Z', 'AA', 'ZZ', 'AAA']);
+});
+
+test('văn bản: bỏ BOM, dàn lại JSON, đếm dòng', () => {
+  const encode = value => new TextEncoder().encode(value);
+  const plain = Viewer.decodeText(encode('﻿dòng 1\ndòng 2'), 'a.txt');
+  assert.equal(plain.text, 'dòng 1\ndòng 2');
+  assert.equal(plain.lines, 2);
+  const json = Viewer.decodeText(encode('{"a":1}'), 'a.json');
+  assert.equal(json.pretty, true);
+  assert.equal(json.text, '{\n  "a": 1\n}');
+  assert.equal(Viewer.decodeText(encode('{hỏng'), 'a.json').pretty, false);
+});

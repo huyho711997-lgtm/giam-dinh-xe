@@ -1,0 +1,88 @@
+/* ==========================================================================
+   Bộ xem tệp của trang Google Drive – js/features/drive/drive-viewer.js
+   Dùng khung toàn màn hình .sf-viewer (token --sf-*), mỗi loại tệp một vùng hiển thị riêng:
+   ảnh / video (nền tối) · âm thanh · bảng tính (lưới + thẻ trang tính) · văn bản (số dòng).
+   ========================================================================== */
+.drv-viewer { --drv-v-dark:#12171a; font-family:'Plus Jakarta Sans',system-ui,sans-serif; color:var(--sf-ink); }
+.drv-v-head { display:flex; align-items:center; gap:12px; min-height:64px; padding:10px 16px; border-bottom:1px solid var(--sf-line); background:var(--sf-paper); }
+.drv-v-badge { display:grid; place-items:center; flex:0 0 40px; width:40px; height:40px; border-radius:12px; background:var(--sf-gold-bg); color:var(--sf-gold); }
+.drv-v-badge svg { width:20px; height:20px; }
+.drv-v-title { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1 1 auto; }
+.drv-v-title strong { color:var(--sf-ink); font-size:14px; font-weight:800; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.drv-v-title small { color:var(--sf-muted); font-size:11px; font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.drv-v-tools, .drv-v-actions { display:flex; align-items:center; gap:6px; flex:0 0 auto; }
+.drv-v-tools:not(:empty) { padding:4px; border:1px solid var(--sf-line); border-radius:12px; background:var(--sf-soft); }
+.drv-viewer .sf-button { min-height:36px; height:36px; padding:0 12px; border-radius:9px; font-size:12px; text-decoration:none; }
+.drv-viewer .sf-icon-button { width:36px; height:36px; min-width:36px; min-height:36px; border-radius:9px; color:var(--sf-ink); }
+.drv-viewer :is(.sf-button,.sf-icon-button) svg { width:16px; height:16px; }
+.drv-v-tools .drv-v-tool { border-color:transparent; background:transparent; box-shadow:none; }
+.drv-v-tools .drv-v-tool:hover, .drv-v-tools .drv-v-tool.is-on { background:var(--sf-paper); border-color:var(--sf-line); }
+.drv-v-tools .drv-v-tool.is-on { color:var(--sf-gold); }
+.drv-v-zoom { min-width:48px; color:var(--sf-ink); font-size:11.5px; font-weight:800; text-align:center; font-variant-numeric:tabular-nums; }
+
+.drv-v-body { position:relative; display:flex; flex:1 1 auto; min-height:0; }
+.drv-v-stage { position:relative; flex:1 1 auto; min-width:0; min-height:0; display:grid; place-items:center; overflow:hidden; background:var(--sf-soft); }
+.drv-viewer:is([data-kind="image"],[data-kind="video"]) .drv-v-stage { background:var(--drv-v-dark); }
+.drv-v-nav { position:absolute; top:50%; z-index:3; display:grid; place-items:center; width:44px; height:44px; margin-top:-22px; border:1px solid var(--sf-line); border-radius:50%; background:var(--sf-paper); color:var(--sf-ink); box-shadow:0 8px 24px rgba(0,0,0,.18); cursor:pointer; opacity:.85; transition:opacity .15s,transform .15s; }
+.drv-v-nav:hover { opacity:1; transform:scale(1.06); }
+.drv-v-nav svg { width:20px; height:20px; }
+.drv-v-nav.is-prev { left:16px; } .drv-v-nav.is-next { right:16px; }
+
+/* Đang tải · lỗi */
+.drv-v-loading { position:absolute; inset:0; display:grid; place-items:center; }
+.drv-v-placeholder { max-width:min(70%,720px); max-height:70%; border-radius:10px; filter:blur(6px); opacity:.55; }
+.drv-v-loading-chip { position:absolute; display:inline-flex; align-items:center; gap:10px; max-width:80%; padding:10px 16px; border:1px solid var(--sf-line); border-radius:999px; background:var(--sf-paper); color:var(--sf-ink); font-size:12px; font-weight:650; box-shadow:0 10px 30px rgba(0,0,0,.14); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.drv-v-message { display:flex; flex-direction:column; align-items:center; gap:8px; max-width:460px; padding:32px 24px; border:1px solid var(--sf-line); border-radius:18px; background:var(--sf-paper); text-align:center; }
+.drv-v-message-art { display:grid; place-items:center; width:64px; height:64px; margin-bottom:6px; border-radius:20px; background:color-mix(in srgb,var(--sf-rose) 12%,var(--sf-paper)); color:var(--sf-rose); }
+.drv-v-message-art svg { width:28px; height:28px; }
+.drv-v-message strong { font-size:15px; font-weight:800; }
+.drv-v-message p { margin:0 0 8px; color:var(--sf-muted); font-size:12px; line-height:1.65; }
+.drv-v-message-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+
+/* Ảnh */
+.drv-v-stage.is-image { cursor:zoom-in; touch-action:none; user-select:none; }
+.drv-v-stage.is-image.can-pan { cursor:grab; }
+.drv-v-stage.is-image.is-dragging { cursor:grabbing; }
+.drv-v-image { position:absolute; left:50%; top:50%; max-width:none; max-height:none; transform-origin:center; will-change:transform; box-shadow:0 12px 48px rgba(0,0,0,.45); }
+.drv-v-stage.is-image:not(.is-dragging) .drv-v-image { transition:transform .12s ease-out; }
+
+/* Video · âm thanh */
+.drv-v-video { max-width:100%; max-height:100%; background:#000; outline:none; }
+.drv-v-audio-card { display:flex; flex-direction:column; align-items:center; gap:14px; width:min(520px,90%); padding:36px 28px 28px; border:1px solid var(--sf-line); border-radius:22px; background:var(--sf-paper); box-shadow:0 18px 48px rgba(23,39,31,.1); text-align:center; }
+.drv-v-audio-art { display:grid; place-items:center; width:92px; height:92px; border-radius:28px; background:radial-gradient(circle at 30% 25%,var(--sf-paper),var(--sf-gold-bg)); color:var(--sf-gold); }
+.drv-v-audio-art svg { width:40px; height:40px; }
+.drv-v-audio-card strong { font-size:14px; font-weight:800; overflow-wrap:anywhere; }
+.drv-v-audio { width:100%; }
+
+/* Bảng tính */
+.drv-v-stage.is-sheet, .drv-v-stage.is-text { display:block; background:var(--sf-paper); }
+.drv-v-stage.is-sheet > .drv-v-message { margin:48px auto; }
+.drv-v-grid-scroll { width:100%; height:100%; overflow:auto; outline:none; }
+.drv-v-grid { border-collapse:separate; border-spacing:0; font-size:12px; color:var(--sf-ink); }
+.drv-v-grid :is(td,th) { min-width:72px; max-width:420px; height:26px; padding:3px 8px; border-right:1px solid var(--sf-line); border-bottom:1px solid var(--sf-line); white-space:pre-wrap; overflow-wrap:anywhere; vertical-align:middle; text-align:left; }
+.drv-v-grid td.is-number { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.drv-v-grid th { position:sticky; z-index:1; min-width:0; background:var(--sf-soft); color:var(--sf-muted); font-size:10.5px; font-weight:800; text-align:center; user-select:none; }
+.drv-v-grid thead th { top:0; z-index:2; }
+.drv-v-grid tbody th { left:0; min-width:46px; width:46px; font-variant-numeric:tabular-nums; }
+.drv-v-grid thead th.drv-v-corner { left:0; z-index:3; min-width:46px; width:46px; }
+.drv-v-grid tbody tr:hover td { background:color-mix(in srgb,var(--sf-gold-bg) 45%,transparent); }
+.drv-v-foot { border-top:1px solid var(--sf-line); background:var(--sf-soft); }
+.drv-v-tabs { display:flex; gap:2px; padding:0 12px; overflow-x:auto; scrollbar-width:thin; }
+.drv-v-tab { flex:0 0 auto; max-width:220px; height:38px; padding:0 14px; border:0; border-top:2px solid transparent; background:transparent; color:var(--sf-muted); font:700 12px/1 'Plus Jakarta Sans',system-ui,sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+.drv-v-tab:hover { color:var(--sf-ink); }
+.drv-v-tab.is-active { border-top-color:var(--sf-gold); background:var(--sf-paper); color:var(--sf-ink); }
+
+/* Văn bản */
+.drv-v-code { display:flex; align-items:stretch; width:100%; height:100%; overflow:auto; outline:none; font:12.5px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+.drv-v-code pre { margin:0; padding:16px 0; font:inherit; min-height:100%; height:max-content; }
+.drv-v-gutter { position:sticky; left:0; flex:0 0 auto; min-width:52px; padding:16px 10px 16px 14px !important; border-right:1px solid var(--sf-line); background:var(--sf-soft); color:var(--sf-muted); text-align:right; user-select:none; }
+.drv-v-text { flex:1 1 auto; padding:16px 20px !important; color:var(--sf-ink); white-space:pre; tab-size:4; }
+.drv-v-code.is-wrap .drv-v-text { white-space:pre-wrap; overflow-wrap:anywhere; min-width:0; }
+.drv-v-code.is-wrap .drv-v-gutter { display:none; }
+
+@media (max-width:860px) {
+  .drv-v-head { flex-wrap:wrap; }
+  .drv-v-title { flex-basis:calc(100% - 60px); }
+  .drv-v-actions .sf-button { font-size:0; gap:0; padding:0 10px; }
+}
+@media (prefers-reduced-motion:reduce) { .drv-v-image, .drv-v-nav { transition:none !important; } }

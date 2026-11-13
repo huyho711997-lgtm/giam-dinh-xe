@@ -65,6 +65,7 @@ Trang nằm ở thanh bên → **Hệ thống → Google Drive** (đường dẫ
 - Khu vực: Drive của tôi, Gần đây, Có gắn dấu sao, Được chia sẻ với tôi, Thùng rác; thanh dung lượng (Drive / Thùng rác / Gmail & Ảnh).
 - Tìm kiếm toàn Drive (phím `/`), lọc theo loại, sắp xếp, xem Danh sách / Lưới (có ảnh thu nhỏ), phân trang "Tải thêm".
 - Tạo thư mục, tải tệp lên (nút Mới hoặc kéo thả, ≤ 10 MB/tệp, 2 tệp song song, trùng tên tự thêm số thứ tự, gửi lại không tạo trùng), xem trước trong ứng dụng (PDF, Word, Excel, ảnh, Google Docs/Sheets/Slides xuất PDF), tải về (≤ 20 MB; tệp Google xuất DOCX/XLSX/PPTX).
+- Bộ xem riêng theo loại tệp (không cần Deploy lại Apps Script): **ảnh** (phóng to/thu nhỏ bằng con lăn, kéo để di chuyển, xoay, ←/→ chuyển ảnh trong thư mục), **video / âm thanh** (trình phát, ≤ 20 MB), **bảng tính** (thẻ trang tính, tiêu đề cột/dòng cố định, ô gộp, nút *Bản in*), **văn bản / JSON** (số dòng, ngắt dòng, sao chép). PDF, Word và tệp Google vẫn mở bằng trình xem tài liệu có dàn trang và in.
 - Đổi tên (F2), di chuyển (hộp thoại chọn thư mục hoặc kéo thả vào thư mục / đường dẫn), tạo bản sao, gắn sao, sao chép liên kết, chi tiết tệp.
 - Chọn nhiều (Ctrl/Shift + click, Ctrl+A), menu chuột phải, thùng rác (Delete) / khôi phục / xóa vĩnh viễn / dọn sạch thùng rác (có xác nhận).
 - Mỗi thao tác thay đổi được ghi vào Nhật ký hoạt động (`DRIVE_MANAGE`).

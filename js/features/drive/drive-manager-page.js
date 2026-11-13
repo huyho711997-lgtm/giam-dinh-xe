@@ -101,6 +101,7 @@ const DriveManager = (() => {
     clearTimeout(searchTimer);
     closeMenu();
     closeDialog();
+    if (typeof DriveViewer !== 'undefined') { DriveViewer.close(); DriveViewer.clearCache(); }
     document.removeEventListener('keydown', onGlobalKey, true);
     if (host) host.remove();
     host = null;
@@ -322,11 +323,30 @@ const DriveManager = (() => {
   function openItem(file) {
     if (view === 'trash') { toast('Khôi phục mục này trước khi mở.', 'warning'); return; }
     if (isFolder(file)) { openFolder(file.id, file.name); return; }
-    if (Api.canPreview(file) && typeof SharedFormsViewer !== 'undefined') { preview(file); return; }
+    const viewer = Api.viewerKind(file);
+    if (viewer && (viewer === 'document' ? typeof SharedFormsViewer !== 'undefined' : typeof DriveViewer !== 'undefined' || typeof SharedFormsViewer !== 'undefined')) { preview(file); return; }
     if (file.webViewLink) { window.open(file.webViewLink, '_blank', 'noopener,noreferrer'); return; }
     download([file]);
   }
   function preview(file) {
+    // Ảnh, video, âm thanh, bảng tính, văn bản có bộ xem riêng; PDF/Word/tệp Google dùng trình xem tài liệu (dàn trang + in).
+    if (Api.viewerKind(file) !== 'document' && typeof DriveViewer !== 'undefined') {
+      const shown = Api.sortFiles(files, view === 'recent' && !query ? '' : sort);
+      DriveViewer.open(file, {
+        files:shown.filter(item => !isFolder(item) && Api.viewerKind(item) && Api.viewerKind(item) !== 'document'),
+        kindOf:Api.viewerKind,
+        load:async (item, signal) => { const result = await Api.download(item.id, 'preview', signal); return {bytes:result.bytes, mimeType:result.mimeType}; },
+        thumb:item => thumbs.get(item.id),
+        format:{size:item => Api.formatBytes(item.size), date:item => item.modifiedTime ? 'Sửa ' + Api.formatDateTime(item.modifiedTime) : ''},
+        onDownload:item => download([item]),
+        openDocument:item => { DriveViewer.close(); previewDocument(item); },
+        toast
+      });
+      return;
+    }
+    previewDocument(file);
+  }
+  function previewDocument(file) {
     const native = Api.isNative(file);
     const viewerFile = {...file, source:'drive', originalName:native ? file.name.replace(/\.pdf$/i, '') + '.pdf' : file.name, mimeType:file.mimeType};
     SharedFormsViewer.open(viewerFile, null, {loadBytes:async signal => (await Api.download(file.id, 'preview', signal)).bytes.buffer});

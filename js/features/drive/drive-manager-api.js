@@ -10,7 +10,7 @@ const DriveManagerApi = (() => {
   const OUTDATED = 'Thao tác không hợp lệ.';
   // Thao tác CHỈ ĐỌC tự thử lại khi gặp lỗi tạm thời (Apps Script khởi động nguội, quá tải, mạng chập).
   // Thao tác ghi (tải lên, di chuyển, xóa…) KHÔNG thử lại để tránh làm trùng hoặc thao tác hai lần.
-  const RETRY_ATTEMPTS = {drive_about:3, drive_list:3, drive_folders:3, drive_thumbnails:2};
+  const RETRY_ATTEMPTS = {drive_about:3, drive_list:3, drive_folders:3, drive_thumbnails:2, drive_download:2};
   const RETRY_DELAYS = [700, 1800];
   const TRANSIENT_MESSAGE = /rate limit|backend error|too many times|service invoked|internal error|timed out|timeout|try again|temporarily|unavailable|quá tải|tạm thời/i;
   const transient = error => Object.assign(error, {transient:true});
@@ -68,7 +68,15 @@ const DriveManagerApi = (() => {
   function canPreview(file) {
     const mime = String(file && file.mimeType || '');
     if (['application/vnd.google-apps.document', 'application/vnd.google-apps.spreadsheet', 'application/vnd.google-apps.presentation', 'application/vnd.google-apps.drawing'].includes(mime)) return true;
-    return ['pdf', 'word', 'sheet', 'image', 'text'].includes(kindOf(file)) && Number(file.size || 0) <= 20 * 1024 * 1024 && !/\.(doc|ppt|pptx)$/i.test(file.name || '');
+    return ['pdf', 'word', 'sheet', 'image', 'text', 'video', 'audio'].includes(kindOf(file)) && Number(file.size || 0) <= 20 * 1024 * 1024 && !/\.(doc|ppt|pptx)$/i.test(file.name || '');
+  }
+  // Bộ xem dành cho từng loại tệp: 'image' | 'video' | 'audio' | 'sheet' | 'text' → DriveViewer;
+  // 'document' (PDF, Word, tệp Google xuất PDF) → trình xem tài liệu có dàn trang và in; '' = không xem được trong ứng dụng.
+  function viewerKind(file) {
+    if (!canPreview(file)) return '';
+    if (isNative(file)) return 'document';
+    const kind = kindOf(file);
+    return ['image', 'video', 'audio', 'sheet', 'text'].includes(kind) ? kind : 'document';
   }
   const isNative = file => String(file && file.mimeType || '').indexOf('application/vnd.google-apps.') === 0;
   // Ngày giờ ngắn kiểu Drive: hôm nay → giờ; năm nay → ngày tháng; khác → dd/mm/yyyy.
@@ -200,5 +208,5 @@ const DriveManagerApi = (() => {
     }
   };
 
-  return {...api, call, endpoint, RETRY_ATTEMPTS, formatBytes, formatDate, formatDateTime, kindOf, typeLabel, canPreview, isNative, validateName, quotaSummary, sortFiles, requestId, FOLDER_MIME, UPLOAD_MAX, KIND_LABELS};
+  return {...api, call, endpoint, RETRY_ATTEMPTS, formatBytes, formatDate, formatDateTime, kindOf, typeLabel, canPreview, viewerKind, isNative, validateName, quotaSummary, sortFiles, requestId, FOLDER_MIME, UPLOAD_MAX, KIND_LABELS};
 })();
