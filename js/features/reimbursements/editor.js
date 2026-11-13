@@ -1,6 +1,6 @@
 
 
-    // ---- Trang "Hiện trường": dùng bộ giao diện sf-* dùng chung (shared-forms) ----
+    // ---- Trang "Hiện trường": đầu trang dùng chung với Hồ sơ và Kế toán ----
     // Trạng thái lọc/tìm kiếm được giữ ở module để realtime re-render không làm mất.
     const fieldReimbView = { status: 'all', query: '' };
 
@@ -67,20 +67,21 @@
       host.innerHTML = `<div class="sf-table-scroll"><table class="sf-table fr-table">
         <caption class="sf-sr-only">Danh sách phiếu thanh toán đi hiện trường</caption>
         <thead><tr>
+          <th class="fr-center">Trạng thái</th>
           <th>Mã phiếu</th><th class="sf-col-date">Ngày tạo</th><th>Người tạo</th>
           <th class="fr-num">Số vụ</th><th class="fr-money">Tổng thanh toán</th>
-          <th class="fr-center">Trạng thái</th><th class="sf-col-actions">Thao tác</th>
+          <th class="sf-col-actions">Thao tác</th>
         </tr></thead>
         <tbody>${rows.map(r => {
           const canDelete = hasUserPermission('field_reimb', 'delete') && (isAdmin || (r.gdvUid === myUid && fieldReimbStatusKey(r) !== 'paid'));
           const id = escapeHtmlOutput(r.id);
           return `<tr class="sf-row fr-row" tabindex="0" onclick="viewFieldReimbursementDetail('${id}')" onkeydown="if(event.key==='Enter'){viewFieldReimbursementDetail('${id}')}">
+            <td class="fr-center" data-label="Trạng thái">${badge(fieldReimbStatusKey(r))}</td>
             <td class="fr-code" data-label="Mã phiếu">${id}</td>
             <td class="sf-col-date" data-label="Ngày tạo">${formatDateDisplay(r.createdAt)}</td>
             <td class="fr-person" data-label="Người tạo">${escapeHtmlOutput(r.gdvName)}</td>
             <td class="fr-num" data-label="Số vụ">${(r.items || []).length}</td>
             <td class="fr-money" data-label="Tổng thanh toán">${(Number(r.totalAmount) || 0).toLocaleString('vi-VN')} đ</td>
-            <td class="fr-center" data-label="Trạng thái">${badge(fieldReimbStatusKey(r))}</td>
             <td class="sf-col-actions"><div class="fr-actions">
               <button class="sf-icon-button" type="button" title="Xem chi tiết" aria-label="Xem chi tiết ${id}" onclick="event.stopPropagation(); viewFieldReimbursementDetail('${id}')">${fieldReimbIcon('eye')}</button>
               ${canDelete ? `<button class="sf-icon-button sf-danger" type="button" title="Xoá phiếu này" aria-label="Xoá phiếu ${id}" onclick="event.stopPropagation(); deleteFieldReimbursement('${id}')">${fieldReimbIcon('trash')}</button>` : ''}
@@ -105,32 +106,31 @@
       const caret = hadFocus ? prev.selectionStart : null;
 
       container.innerHTML = `
-        <section class="sf-workspace fr-workspace">
-          <header class="sf-page-head">
-            <div class="sf-page-title">
-              <span class="sf-page-emblem">${fieldReimbIcon('truck')}</span>
+        <section class="acc-workspace sf-workspace fr-workspace" aria-label="Thanh toán đi hiện trường">
+          <header class="pw-page-head">
+            <div class="pw-page-title">
+              <span class="pw-page-emblem" aria-hidden="true">${fieldReimbIcon('truck')}</span>
               <div>
-                <div class="sf-eyebrow">Thanh toán &amp; Chi phí · Tasco DLK</div>
+                <span class="pw-eyebrow">Thanh toán &amp; Chi phí · Tasco DLK</span>
                 <h1>Phiếu thanh toán đi hiện trường</h1>
                 <p>Quản lý các đề nghị thanh toán chi phí di chuyển khi giám định hiện trường.</p>
               </div>
             </div>
-            <div class="sf-toolbar">
-              <button class="sf-button" type="button" onclick="renderFieldReimbursementsPage()" title="Làm mới danh sách">${fieldReimbIcon('refresh')} Làm mới</button>
-              ${canCreate ? `<button class="sf-button sf-primary" type="button" onclick="openCreateFieldReimbursementModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Tạo phiếu mới</button>` : ''}
+            <div class="pending-action-group">
+              <button class="pending-action-btn" type="button" onclick="renderFieldReimbursementsPage()" title="Làm mới danh sách"><span class="pending-action-btn__icon">${fieldReimbIcon('refresh')}</span> Làm mới</button>
+              ${canCreate ? `<button class="pending-action-btn pending-action-btn--primary" type="button" onclick="openCreateFieldReimbursementModal()"><span class="pending-action-btn__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span> Tạo phiếu mới</button>` : ''}
             </div>
           </header>
 
-          <section class="sf-library">
-            <div class="sf-library-bar">
-              <div class="sf-sources" role="group" aria-label="Lọc theo trạng thái">
-                ${tabs.map(([key, label]) => `<button class="sf-source-tab" type="button" aria-pressed="${fieldReimbView.status === key}" onclick="setFieldReimbStatus('${key}')">${label} <span class="fr-tab-count">${counts[key]}</span></button>`).join('')}
-              </div>
-              <span class="sf-count" id="fieldReimbCount"></span>
+          <section class="sf-library" aria-labelledby="fieldReimbListTitle">
+            <div class="fr-register-head">
+              <h2 id="fieldReimbListTitle">Danh sách phiếu thanh toán</h2>
+              <span class="sf-count" id="fieldReimbCount" role="status" aria-live="polite"></span>
             </div>
-            <div class="sf-library-filters">
-              <div class="sf-controls">
-                <label class="sf-search">${fieldReimbIcon('search')}<span class="sf-sr-only">Tìm phiếu</span><input id="fieldReimbSearch" type="search" placeholder="Tìm theo mã phiếu hoặc người tạo…" autocomplete="off" value="${escapeHtmlOutput(fieldReimbView.query)}" oninput="setFieldReimbQuery(this.value)"></label>
+            <div class="sf-library-filters fr-filters">
+              <label class="sf-search">${fieldReimbIcon('search')}<span class="sf-sr-only">Tìm phiếu</span><input id="fieldReimbSearch" type="search" placeholder="Tìm theo mã phiếu hoặc người tạo…" autocomplete="off" value="${escapeHtmlOutput(fieldReimbView.query)}" oninput="setFieldReimbQuery(this.value)"></label>
+              <div class="fr-status-filters" role="group" aria-label="Lọc theo trạng thái">
+                ${tabs.map(([key, label]) => `<button class="sf-source-tab" type="button" aria-pressed="${fieldReimbView.status === key}" onclick="setFieldReimbStatus('${key}')">${label} <span class="fr-tab-count">${counts[key]}</span></button>`).join('')}
               </div>
             </div>
             <div id="fieldReimbList"></div>
