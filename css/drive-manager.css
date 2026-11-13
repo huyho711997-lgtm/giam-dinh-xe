@@ -415,3 +415,7 @@ body:not(.light-mode) .drv-chip[aria-pressed="true"] { background:var(--sf-gold)
   .drv-search { flex-basis:100%; }
   .drv-row-action { opacity:1; }
 }
+
+/* Trang Google Drive không dùng trợ lý AI: ẩn nút AI và khung chat, giữ nút "Lên đầu trang". */
+body:has(.drv-shell) #tasco-ai-btn,
+body:has(.drv-shell) #tasco-ai-panel { display: none !important; }
