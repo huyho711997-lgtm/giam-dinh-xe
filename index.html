@@ -385,6 +385,7 @@
           <button id="tabBtn_Event" type="button" onclick="switchEditClaimTab('Event')" class="edit-tab-btn">
             <span>Vụ tổn thất & Diễn biến</span>
           </button>
+          <button id="tabBtn_SceneReport" type="button" onclick="switchEditClaimTab('SceneReport')" class="edit-tab-btn"><span>Biên bản hiện trường</span></button>
           <button id="tabBtn_Unit" type="button" onclick="switchEditClaimTab('Unit')" class="edit-tab-btn">
             <span>Đơn vị & Giám định viên</span>
           </button>
@@ -404,6 +405,7 @@
 
         <div id="tabPane_Documents" class="edit-tab-pane" style="display:none"></div>
         <div id="tabPane_Email" class="edit-tab-pane claim-email-pane" style="display:none"></div>
+        <div id="tabPane_SceneReport" class="edit-tab-pane" style="display:none"></div>
         <div id="tabPane_AuthorityRequest" class="edit-tab-pane" style="display:none">
           <div class="authority-request-header">
             <div class="authority-request-heading">
@@ -1786,7 +1788,7 @@
   <script src="js/features/claims/claim-email.js?v=20261025-loss-2"></script>
   <script src="js/features/claims/editor-workspace.js?v=20261025-email-2"></script>
   <script src="js/features/claims/driver-contact.js?v=20261108-drv-1"></script>
-  <script src="js/features/claims/pending-editor.js?v=20261108-drv-1"></script>
+  <script src="js/features/claims/pending-editor.js?v=20261113-sr-1"></script>
   <script src="js/features/claims/notes.js?v=20261108-stfirst-1"></script>
   <script src="js/features/contacts/contact-calc.js?v=20261105-ct-3"></script>
   <script src="js/features/contacts/directory.js?v=20261111-ct-5"></script>
@@ -1855,6 +1857,8 @@
   <script src="js/features/documents/tnds-advance.js?v=20261024-preview-1"></script>
   <script src="js/data/authority-request.js"></script>
   <script src="js/features/documents/authority-request.js"></script>
+  <script src="js/features/documents/scene-report-model.js?v=20261113-sr-1"></script>
+  <script src="js/features/documents/scene-report-ui.js?v=20261113-sr-1"></script>
   <script src="js/data/collection-guide.js"></script>
   <script src="js/features/documents/collection-guide.js" id="collectionGuideModule"></script>
   <script src="js/core/floating-dock.js"></script>
@@ -1946,6 +1950,7 @@
 <link rel="stylesheet" href="css/responsive.css">
 <link rel="stylesheet" href="css/document-autosave.css">
 <link rel="stylesheet" href="css/authority-request.css">
+<link rel="stylesheet" href="css/scene-report.css?v=20261113-sr-1">
 <script src="js/features/scene/geometry.js?v=20261111-legend-3"></script>
   <script src="js/features/scene/objects.js?v=20261111-terrain-1"></script>
   <script src="js/features/scene/traffic-signs.js?v=20261111-terrain-1"></script>

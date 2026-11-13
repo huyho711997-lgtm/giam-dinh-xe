@@ -401,7 +401,7 @@
 
 
     function switchEditClaimTab(tabName) {
-      const tabs = ['Policy', 'Vehicle', 'Event', 'Unit', 'Financial', 'Documents', 'Email', 'CollectionGuide', 'AuthorityRequest'];
+      const tabs = ['Policy', 'Vehicle', 'Event', 'Unit', 'Financial', 'Documents', 'Email', 'CollectionGuide', 'AuthorityRequest', 'SceneReport'];
       tabs.forEach(t => {
         const tabBtn = document.getElementById('tabBtn_' + t);
         const tabPane = document.getElementById('tabPane_' + t);
@@ -409,6 +409,7 @@
         if (tabPane) tabPane.style.display = (t === tabName) ? 'block' : 'none';
       });
       if (tabName === 'AuthorityRequest') { ensureCollectionGuide(); authorityRequestRefresh(); }
+      if (tabName === 'SceneReport') { ensureCollectionGuide(); sceneReportRefresh(); }
       if (tabName === 'Documents') ClaimDocuments.render();
       if (tabName === 'Email') ClaimEmail.render();
       if (tabName === 'CollectionGuide') { ensureCollectionGuide(); refreshCollectionGuideSummary(); }

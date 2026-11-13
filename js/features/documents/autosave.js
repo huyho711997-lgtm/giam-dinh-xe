@@ -32,7 +32,7 @@ function claimDocumentGuideSignature() {
 function updateClaimDocumentAutoStatus(message='') {
   const binding=claimDocumentStore.binding;
   let text=message || (claimDocumentStore.guideError||claimDocumentStore.sceneError?'Chưa tải được tài liệu. Vui lòng mở lại hồ sơ.':claimDocumentStore.saveError?'Chưa tự lưu được. Đang giữ bản chỉnh sửa để thử lại.':claimDocumentStore.guideDirty||claimDocumentStore.sceneDirty||claimDocumentStore.saving?'Đang tự lưu…':binding&&normalizeClaimHsbt(binding.reference.soHoSoBoiThuong)?'Tự lưu theo số HSBT '+binding.reference.soHoSoBoiThuong:'Nhập số HSBT để tự khôi phục tài liệu khi nạp lại hồ sơ.');
-  for(const id of ['claimDocumentAutoStatus','sceneDocumentAutoStatus','authorityRequestAutoStatus']) {
+  for(const id of ['claimDocumentAutoStatus','sceneDocumentAutoStatus','authorityRequestAutoStatus','sceneReportAutoStatus']) {
     const node=document.getElementById(id);if(node){node.textContent=text;node.dataset.error=String(!!claimDocumentStore.saveError);}
   }
 }

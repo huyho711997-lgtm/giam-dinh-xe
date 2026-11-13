@@ -56,7 +56,7 @@ function initializeCollectionGuide(item = {}) {
     hotline: collectionGuideFindAssessorPhone(collectionGuideValue('modalPendingCanBoXuLy') || collectionGuideValue('modalPendingGdvTiepNhan')).phone, signerTitle: '', signerName: ''
   };
   document.getElementById('tndsAdvanceDialog')?.remove();
-  collectionGuideDraft = {version:1, meta:{}, items:{}, extras:[],authorityRequest:valid && saved.authorityRequest && typeof saved.authorityRequest==='object'?JSON.parse(JSON.stringify(saved.authorityRequest)):null,tndsAdvance:valid && saved.tndsAdvance && typeof saved.tndsAdvance==='object'?JSON.parse(JSON.stringify(saved.tndsAdvance)):null};
+  collectionGuideDraft = {version:1, meta:{}, items:{}, extras:[],authorityRequest:valid && saved.authorityRequest && typeof saved.authorityRequest==='object'?JSON.parse(JSON.stringify(saved.authorityRequest)):null,tndsAdvance:valid && saved.tndsAdvance && typeof saved.tndsAdvance==='object'?JSON.parse(JSON.stringify(saved.tndsAdvance)):null,sceneReport:valid && saved.sceneReport && typeof saved.sceneReport==='object'?JSON.parse(JSON.stringify(saved.sceneReport)):null};
   collectionGuideDraft.contactPhoneManual=valid && saved.contactPhoneManual===true;
   for (const [key] of collectionGuideMetaFields) {
     const raw = valid && typeof saved.meta?.[key] === 'string' ? saved.meta[key] : defaults[key];
@@ -250,6 +250,7 @@ function getCollectionGuideState() {
   }
   collectionGuideSyncContactPhone();
   if(collectionGuideDraft.authorityRequest && typeof authorityRequestMeta==='function')authorityRequestMeta();
+  if(collectionGuideDraft.sceneReport && typeof sceneReportState==='function')sceneReportState();
   return JSON.parse(JSON.stringify(collectionGuideDraft));
 }
 function refreshCollectionGuideSummary() {
