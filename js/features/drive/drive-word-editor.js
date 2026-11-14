@@ -26,7 +26,11 @@ const DriveWordEditor = (() => {
     cloud:'<path d="M7 18a4 4 0 0 1-.6-7.96A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z"/><path d="m9 13 3-3 3 3M12 10v7"/>',
     up:'<path d="m6 15 6-6 6 6"/>',
     down:'<path d="m6 9 6 6 6-6"/>',
-    alert:'<path d="M12 4 3 20h18z"/><path d="M12 10v4M12 17h.01"/>'
+    alert:'<path d="M12 4 3 20h18z"/><path d="M12 10v4M12 17h.01"/>',
+    alignLeft:'<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>',
+    alignCenter:'<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>',
+    alignRight:'<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>',
+    alignJustify:'<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>'
   };
   const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
   const norm = text => DocxPatch.norm(text);
@@ -98,6 +102,7 @@ const DriveWordEditor = (() => {
 [contenteditable="true"]:focus{background:rgba(37,99,235,.09);box-shadow:0 0 0 2px rgba(37,99,235,.38)}
 .dwe-locked{cursor:not-allowed}.dwe-locked:hover{background:rgba(217,119,6,.10);box-shadow:0 0 0 2px rgba(217,119,6,.18)}
 ::selection{background:rgba(37,99,235,.28)}
+.dwe-picked{background:rgba(37,99,235,.14)!important;box-shadow:0 0 0 2px rgba(37,99,235,.5)!important}
 ::highlight(dwe-find){background:#fde68a;color:#111}::highlight(dwe-current){background:#fb923c;color:#111}`;
 
   function close(force) {
@@ -139,31 +144,278 @@ const DriveWordEditor = (() => {
     });
   }
 
+  // ---- Định dạng chữ / căn lề ------------------------------------------------------------------
+  // Mỗi ký tự có một "bộ kiểu" đọc từ DOM (đậm, nghiêng, gạch chân, gạch ngang, cỡ chữ nửa điểm, phông, màu). Khi lưu, so với bộ kiểu
+  // lúc mở (theo đúng ký tự mà XML thừa hưởng định dạng) → chỉ phần khác biệt mới được ghi vào tệp Word.
+  const FONTS = ['Times New Roman', 'Arial', 'Calibri', 'Cambria', 'Tahoma', 'Verdana', 'Segoe UI', 'Georgia', 'Garamond', 'Trebuchet MS', 'Courier New', 'Arial Narrow'];
+  const SIZES = [8, 9, 10, 10.5, 11, 12, 13, 14, 16, 18, 20, 22, 24, 26, 28, 32, 36, 40, 48, 60, 72];
+  const TUPLE_KEYS = ['b', 'i', 'u', 's', 'sz', 'font', 'color'];
+  const hex2 = n => Number(n).toString(16).padStart(2, '0');
+  const rgbHex = value => { const m = /rgba?\((\d+)[ ,]+(\d+)[ ,]+(\d+)/.exec(value || ''); return m ? hex2(m[1]) + hex2(m[2]) + hex2(m[3]) : '000000'; };
+  const resetStyleCache = state => { state.tupleCache = new Map(); state.decorCache = new Map(); };
+  function decorations(state, el, p) {
+    if (state.decorCache.has(el)) return state.decorCache.get(el);
+    const own = state.frame.contentWindow.getComputedStyle(el).textDecorationLine || '';
+    const value = own + ' ' + (el !== p && el.parentElement ? decorations(state, el.parentElement, p) : '');
+    state.decorCache.set(el, value);
+    return value;
+  }
+  function tuple(state, el, p) {
+    if (state.tupleCache.has(el)) return state.tupleCache.get(el);
+    const cs = state.frame.contentWindow.getComputedStyle(el), decor = decorations(state, el, p);
+    const value = {
+      b:parseInt(cs.fontWeight, 10) >= 600 || cs.fontWeight === 'bold', i:/italic|oblique/.test(cs.fontStyle),
+      u:decor.includes('underline'), s:decor.includes('line-through'),
+      sz:Math.round(parseFloat(cs.fontSize) * 1.5), font:String(cs.fontFamily).split(',')[0].trim().replace(/^["']|["']$/g, ''), color:rgbHex(cs.color)
+    };
+    state.tupleCache.set(el, value);
+    return value;
+  }
+  // Bộ kiểu của từng ký tự trong đoạn, cùng quy ước đếm ký tự với domText().
+  function charStyles(state, p) {
+    const out = [];
+    const walk = node => {
+      for (const child of node.childNodes) {
+        if (child.nodeType === 3) { const value = tuple(state, child.parentElement, p); for (let k = 0; k < child.data.length; k++) out.push(value); }
+        else if (child.nodeType === 1) {
+          const name = child.tagName;
+          if (name === 'BR') { if (!(child.parentNode === p && child === p.lastChild)) out.push(tuple(state, child.parentElement, p)); }
+          else if (isTab(child)) out.push(tuple(state, child, p));
+          else if (name === 'IMG' || name === 'SVG' || name === 'CANVAS') continue;
+          else walk(child);
+        }
+      }
+    };
+    walk(p);
+    return out;
+  }
+  function diffTuple(base, cur) {
+    if (!base) return null;
+    const props = {};
+    for (const key of TUPLE_KEYS) {
+      if (base[key] === cur[key]) continue;
+      if (key === 's') props.strike = cur.s; else props[key] = cur[key];
+    }
+    return Object.keys(props).length ? props : null;
+  }
+  function rangesFromStyles(state, el, text, baseAt) {
+    const styles = charStyles(state, el);
+    if (styles.length !== text.length) return null;
+    const ranges = [];
+    let last = null;
+    for (let k = 0; k < styles.length; k++) {
+      const props = diffTuple(baseAt(k), styles[k]);
+      const key = props ? JSON.stringify(props) : '';
+      if (!props) { last = null; continue; }
+      if (last && last.key === key && last.end === k) last.end = k + 1;
+      else { last = {start:k, end:k + 1, props, key}; ranges.push(last); }
+    }
+    return ranges.map(({start, end, props}) => ({start, end, props}));
+  }
+  function alignOf(state, el) {
+    const value = state.frame.contentWindow.getComputedStyle(el).textAlign;
+    return value === 'center' ? 'center' : value === 'right' || value === 'end' ? 'right' : value === 'justify' ? 'both' : 'left';
+  }
+  // Chụp kiểu gốc của đoạn ngay khi người dùng chạm vào đoạn lần đầu (trước mọi thay đổi).
+  function ensureSnap(state, p) {
+    const info = p && p._dwe;
+    if (!info || info.created || info.snap !== undefined) return;
+    resetStyleCache(state);
+    info.snap = charStyles(state, p);
+    info.snapAlign = alignOf(state, p);
+    info.pTuple = tuple(state, p, p);
+  }
+  const editableParagraphs = state => paragraphs(state).filter(el => el._dwe && el.isContentEditable);
+  function setPicked(state, list) {
+    for (const p of state.picked) p.classList.remove('dwe-picked');
+    state.picked = new Set(list);
+    for (const p of state.picked) p.classList.add('dwe-picked');
+    state.pickedNote.hidden = !state.picked.size;
+    state.pickedNote.textContent = state.picked.size ? 'Đang chọn ' + state.picked.size + ' đoạn' : '';
+  }
+  function pickBetween(state, a, b) {
+    const all = editableParagraphs(state), from = all.indexOf(a), to = all.indexOf(b);
+    if (from < 0 || to < 0) return;
+    setPicked(state, all.slice(Math.min(from, to), Math.max(from, to) + 1));
+  }
+  // Đối tượng áp dụng: các đoạn đang chọn nhiều → vùng chữ đang bôi đen trong một đoạn → (không bôi đen) cả đoạn đang đứng.
+  function formatTargets(state) {
+    if (state.picked.size) return [...state.picked].filter(p => p.isConnected).map(p => ({p, whole:true}));
+    const sel = state.doc.getSelection();
+    let p = sel.rangeCount ? paragraphOf(state, sel.anchorNode) : null, range = null;
+    if (p && !sel.isCollapsed && p.contains(sel.focusNode)) range = sel.getRangeAt(0);
+    else if (!p && state.lastP && state.lastP.isConnected) { p = state.lastP; range = state.lastRange && !state.lastRange.collapsed ? state.lastRange : null; }
+    return p ? [{p, whole:!range, range}] : [];
+  }
+  function selectTarget(state, target) {
+    const doc = state.doc, sel = doc.getSelection();
+    target.p.focus({preventScroll:true});
+    let range = target.range;
+    if (target.whole) { range = doc.createRange(); range.selectNodeContents(target.p); }
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+  const TOGGLES = {bold:'bold', italic:'italic', underline:'underline', strike:'strikeThrough'};
+  // Chrome đặt kiểu ở thẻ ngoài cùng; run con có quy tắc CSS riêng (lớp của docx-preview) sẽ đè lên. Kiểm tra từng phần tử chứa chữ
+  // trong vùng vừa định dạng và ghi thẳng kiểu vào phần tử nào chưa đạt giá trị mong muốn.
+  function enforceFormat(state, target, kind, value, desired) {
+    const doc = state.doc, p = target.p;
+    let range = null;
+    if (!target.whole) { const sel = doc.getSelection(); range = sel.rangeCount ? sel.getRangeAt(0) : null; if (!range) return; }
+    const targets = new Set(), walker = doc.createTreeWalker(p, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (node.nodeType === 3) {
+        if (!node.data) continue;
+        if (range) { if (!range.intersectsNode(node)) continue; if (node === range.startContainer && range.startOffset > 0) continue; if (node === range.endContainer && range.endOffset < node.data.length) continue; }
+        if (node.parentElement) targets.add(node.parentElement);
+      } else if (node.tagName === 'BR' && node.parentElement && (!range || range.intersectsNode(node)) && !(node.parentNode === p && node === p.lastChild)) targets.add(node.parentElement);
+    }
+    resetStyleCache(state);
+    for (const el of targets) {
+      if (el.closest('div[style*="inline-block"]')) continue; // khung ảnh
+      const now = tuple(state, el, p);
+      if (kind === 'font' && now.font !== value) el.style.fontFamily = "'" + value + "'";
+      else if (kind === 'size' && now.sz !== Math.round(value * 2)) el.style.fontSize = value + 'pt';
+      else if (kind === 'color' && '#' + now.color !== String(value).toLowerCase()) el.style.color = value;
+      else if (kind === 'bold' && now.b !== desired) el.style.fontWeight = desired ? 'bold' : 'normal';
+      else if (kind === 'italic' && now.i !== desired) el.style.fontStyle = desired ? 'italic' : 'normal';
+      else if (kind === 'underline' && desired && !now.u) el.style.textDecorationLine = (el.style.textDecorationLine + ' underline').trim();
+      else if (kind === 'strike' && desired && !now.s) el.style.textDecorationLine = (el.style.textDecorationLine + ' line-through').trim();
+    }
+  }
+  function runFormat(state, kind, value) {
+    const targets = formatTargets(state);
+    if (!targets.length) { state.toast('Bấm vào đoạn chữ cần định dạng trước.', 'warning'); return; }
+    const doc = state.doc;
+    doc.execCommand('styleWithCSS', false, true);
+    targets.forEach(target => ensureSnap(state, target.p));
+    const command = TOGGLES[kind];
+    let desired = true;
+    if (command) desired = !targets.every(target => { selectTarget(state, target); return doc.queryCommandState(command); });
+    for (const target of targets) {
+      if (target.whole && !domText(target.p)) continue;
+      selectTarget(state, target);
+      if (command) { if (doc.queryCommandState(command) !== desired) doc.execCommand(command); }
+      else if (kind === 'font') doc.execCommand('fontName', false, value);
+      else if (kind === 'color') doc.execCommand('foreColor', false, value);
+      else if (kind === 'size') {
+        doc.execCommand('fontSize', false, '7');
+        for (const el of target.p.querySelectorAll('span,font')) {
+          if (el.style.fontSize === 'xxx-large' || (el.tagName === 'FONT' && el.getAttribute('size') === '7')) { el.style.fontSize = value + 'pt'; el.removeAttribute('size'); }
+        }
+      }
+      enforceFormat(state, target, kind, value, desired);
+      normalizeTabs(state, target.p);
+      target.p._dwe.touched = true;
+      if (target.whole) doc.getSelection().collapseToEnd();
+    }
+    scheduleStatus(state);
+    reflectFormat(state);
+  }
+  function runAlign(state, value) {
+    const targets = formatTargets(state);
+    if (!targets.length) { state.toast('Bấm vào đoạn chữ cần căn lề trước.', 'warning'); return; }
+    for (const { p } of targets) {
+      ensureSnap(state, p);
+      p.style.textAlign = value === 'both' ? 'justify' : value;
+      p._dwe.touched = true;
+    }
+    scheduleStatus(state);
+    reflectFormat(state);
+  }
+  function setSelect(select, value, label) {
+    const text = String(value);
+    if (![...select.options].some(option => option.value === text)) { const option = document.createElement('option'); option.value = text; option.textContent = label || text; option.dataset.temp = '1'; select.appendChild(option); }
+    select.value = text;
+  }
+  function reflectFormat(state) {
+    if (!state.doc || !state.formatBar || state.formatBar.hidden) return;
+    const sel = state.doc.getSelection();
+    let p = sel && sel.rangeCount ? paragraphOf(state, sel.anchorNode) : null;
+    p = p || (state.lastP && state.lastP.isConnected ? state.lastP : null);
+    if (!p) return;
+    resetStyleCache(state);
+    const anchor = sel && sel.anchorNode && p.contains(sel.anchorNode) ? (sel.anchorNode.nodeType === 3 ? sel.anchorNode.parentElement : sel.anchorNode) : p;
+    const value = tuple(state, anchor, p), align = alignOf(state, p);
+    const bar = state.formatBar;
+    const press = (name, on) => { const button = bar.querySelector('[data-fmt="' + name + '"]'); if (button) { button.classList.toggle('is-on', !!on); button.setAttribute('aria-pressed', on ? 'true' : 'false'); } };
+    press('bold', value.b); press('italic', value.i); press('underline', value.u); press('strike', value.s);
+    for (const name of ['left', 'center', 'right', 'both']) press('align-' + name, align === name);
+    for (const temp of bar.querySelectorAll('option[data-temp]')) if (temp.value !== value.font && temp.value !== String(value.sz / 2)) temp.remove();
+    setSelect(bar.querySelector('[data-fmt="font"]'), value.font);
+    setSelect(bar.querySelector('[data-fmt="size"]'), value.sz / 2);
+    const color = bar.querySelector('[data-fmt="color"]');
+    color.value = '#' + value.color;
+    bar.querySelector('[data-dwe-colorbar]').style.background = '#' + value.color;
+  }
+  function setupFormatBar(state) {
+    const bar = state.formatBar;
+    bar.addEventListener('mousedown', event => { if (event.target.closest('button')) event.preventDefault(); });
+    bar.addEventListener('click', event => {
+      const button = event.target.closest('button[data-fmt]');
+      if (!button) return;
+      const kind = button.dataset.fmt;
+      if (kind.startsWith('align-')) runAlign(state, kind.slice(6));
+      else if (kind === 'pickall') { setPicked(state, editableParagraphs(state)); state.frame.contentWindow.focus(); }
+      else runFormat(state, kind);
+    });
+    bar.querySelector('[data-fmt="font"]').addEventListener('change', event => runFormat(state, 'font', event.target.value));
+    bar.querySelector('[data-fmt="size"]').addEventListener('change', event => runFormat(state, 'size', Number(event.target.value)));
+    bar.querySelector('[data-fmt="color"]').addEventListener('change', event => {
+      runFormat(state, 'color', event.target.value);
+    });
+  }
+
   // ---- Kế hoạch thay đổi lấy từ màn hình -----------------------------------------------------
   const paragraphs = state => [...state.doc.querySelectorAll('section.docx > article p')];
+  const emptyPlan = () => ({edits:{}, created:[], removed:[], formats:{}});
   function collectPlan(state) {
-    const edits = {}, created = [], present = new Set();
+    const edits = {}, created = [], formats = {}, present = new Set();
+    resetStyleCache(state);
     for (const el of paragraphs(state)) {
       const info = el._dwe;
       if (!info) continue;
-      if (info.created) created.push({anchor:info.anchor, cloneOf:info.cloneOf, text:domText(el)});
-      else if (info.editable) {
+      if (info.created) {
+        const item = {anchor:info.anchor, cloneOf:info.cloneOf, text:domText(el)};
+        const source = state.infoByIdx.get(info.cloneOf);
+        if (source && source.snap) {
+          const base = source.snap.length ? source.snap[source.snap.length - 1] : source.pTuple;
+          const ranges = rangesFromStyles(state, el, norm(item.text), () => base);
+          if (ranges && ranges.length) item.ranges = ranges;
+          const align = alignOf(state, el);
+          if (align !== source.snapAlign) item.align = align;
+        }
+        created.push(item);
+      } else if (info.editable) {
         present.add(info.idx);
         const text = domText(el);
         if (norm(text) !== info.snapshot) edits[info.idx] = text;
+        if (info.snap && info.touched) {
+          const format = {};
+          const n = norm(text);
+          if (n.length === text.length && info.snap.length === info.snapshot.length) {
+            const map = DocxPatch.sourceMap(info.snapshot, n);
+            const ranges = rangesFromStyles(state, el, n, k => map[k] >= 0 ? info.snap[map[k]] : info.pTuple);
+            if (ranges && ranges.length) format.ranges = ranges;
+          }
+          const align = alignOf(state, el);
+          if (align !== info.snapAlign) format.align = align;
+          if (format.ranges || format.align) formats[info.idx] = format;
+        }
       }
     }
     const removed = state.editable.filter(idx => !present.has(idx));
-    return {edits, created, removed};
+    return {edits, created, removed, formats};
   }
-  const planSignature = plan => JSON.stringify([plan.edits, plan.created, plan.removed]);
+  const planSignature = plan => JSON.stringify([plan.edits, plan.created, plan.removed, plan.formats]);
   function refreshStatus(state) {
     if (!state.doc) return;
     const plan = collectPlan(state);
     state.signature = planSignature(plan);
-    const changed = Object.keys(plan.edits).length, added = plan.created.length, removed = plan.removed.length;
+    const changed = Object.keys(plan.edits).length, added = plan.created.length, removed = plan.removed.length, styled = Object.keys(plan.formats).length;
     const parts = [];
     if (changed) parts.push(changed + ' đoạn đã sửa');
+    if (styled) parts.push(styled + ' đoạn đổi định dạng');
     if (added) parts.push(added + ' đoạn mới');
     if (removed) parts.push(removed + ' đoạn đã xóa');
     const dirty = state.dirty();
@@ -196,6 +448,10 @@ const DriveWordEditor = (() => {
     state.status.textContent = 'Đang dựng trang…';
     await window.docx.renderAsync(bytes.slice(0), doc.body, doc.head, {inWrapper:true, breakPages:true, useBase64URL:true, renderAltChunks:false, ignoreLastRenderedPageBreak:false});
     if (current !== state) return;
+    // docx-preview làm sạch <head> khi dựng trang nên phải gắn lại kiểu của trình sửa sau đó.
+    const style = doc.createElement('style');
+    style.textContent = frameCss;
+    doc.head.appendChild(style);
     attach(state);
     if (scroll) doc.scrollingElement.scrollTop = scroll;
     state.frame.contentWindow.focus();
@@ -207,6 +463,10 @@ const DriveWordEditor = (() => {
     const els = paragraphs(state);
     const mapping = DocxPatch.align(els.map(domText), list.map(item => item.text));
     state.editable = [];
+    state.infoByIdx = new Map();
+    state.picked = new Set();
+    state.lastP = null;
+    state.lastRange = null;
     state.locked = 0;
     state.readonly = 0;
     if (!mapping) { state.readonly = els.length; state.notice('Tài liệu quá lớn để bật chỉnh sửa trên màn hình.'); return; }
@@ -219,7 +479,10 @@ const DriveWordEditor = (() => {
       el.spellcheck = true;
       el._dwe = {idx:target.idx, editable:true, snapshot:norm(target.text), removable:target.removable};
       state.editable.push(target.idx);
+      state.infoByIdx.set(target.idx, el._dwe);
     });
+    doc.execCommand('styleWithCSS', false, true);
+    state.formatBar.hidden = false;
     state.savedSignature = null;
     state.savedNote = '';
     const bits = [];
@@ -227,7 +490,7 @@ const DriveWordEditor = (() => {
     if (state.readonly) bits.push(state.readonly + ' đoạn chỉ xem');
     state.limits.textContent = bits.length ? bits.join(' · ') + ' (trường tự động, hộp văn bản…)' : '';
     state.limits.hidden = !bits.length;
-    state.savedSignature = planSignature({edits:{}, created:[], removed:[]});
+    state.savedSignature = planSignature(emptyPlan());
     refreshStatus(state);
     wire(state);
   }
@@ -324,7 +587,7 @@ const DriveWordEditor = (() => {
       if (!p) return;
       const type = event.inputType;
       if (type === 'insertParagraph') { event.preventDefault(); splitParagraph(state, p); return; }
-      if (type.startsWith('format')) { event.preventDefault(); state.toast('Chế độ này chỉ sửa chữ, chưa đổi định dạng (đậm, nghiêng…).', 'warning'); return; }
+      if (type.startsWith('format')) { event.preventDefault(); return; }
       if (type === 'insertFromDrop' || type === 'insertFromYank' || type === 'insertLink' || type.startsWith('insertOrdered') || type.startsWith('insertUnordered')) { event.preventDefault(); return; }
       if (type === 'deleteContentBackward' || type === 'deleteContentForward' || type === 'deleteWordBackward' || type === 'deleteWordForward') {
         const sel = doc.getSelection();
@@ -350,12 +613,30 @@ const DriveWordEditor = (() => {
       });
       scheduleStatus(state);
     }, true);
-    doc.addEventListener('input', event => { const p = paragraphOf(state, event.target); if (p) normalizeTabs(state, p); scheduleStatus(state); });
+    doc.addEventListener('input', event => { const p = paragraphOf(state, event.target); if (p) { normalizeTabs(state, p); p._dwe.touched = true; } scheduleStatus(state); });
+    doc.addEventListener('focusin', event => { const p = paragraphOf(state, event.target); if (p) { ensureSnap(state, p); state.lastP = p; } });
+    let reflectTimer = 0;
+    doc.addEventListener('selectionchange', () => {
+      const sel = doc.getSelection();
+      const p = sel.rangeCount ? paragraphOf(state, sel.anchorNode) : null;
+      if (p) { state.lastP = p; state.lastRange = sel.getRangeAt(0).cloneRange(); }
+      cancelAnimationFrame(reflectTimer);
+      reflectTimer = requestAnimationFrame(() => { if (current === state) reflectFormat(state); });
+    });
+    doc.addEventListener('mousedown', event => {
+      const p = paragraphOf(state, event.target);
+      if (event.shiftKey && p && state.lastP && state.lastP !== p) { event.preventDefault(); pickBetween(state, state.lastP, p); return; }
+      if (state.picked.size) setPicked(state, []);
+    }, true);
     doc.addEventListener('keydown', event => {
       const key = event.key.toLowerCase();
       if ((event.ctrlKey || event.metaKey) && key === 's') { event.preventDefault(); openSave(state); return; }
       if ((event.ctrlKey || event.metaKey) && key === 'f') { event.preventDefault(); toggleFind(state, true); return; }
-      if (event.key === 'Escape') { event.preventDefault(); close(); return; }
+      if ((event.ctrlKey || event.metaKey) && key === 'a') { event.preventDefault(); setPicked(state, editableParagraphs(state)); return; }
+      const shortcut = {b:'bold', i:'italic', u:'underline'}[key];
+      if ((event.ctrlKey || event.metaKey) && shortcut && !event.altKey) { event.preventDefault(); runFormat(state, shortcut); return; }
+      if (event.key === 'Escape') { event.preventDefault(); if (state.picked.size) setPicked(state, []); else close(); return; }
+      if (state.picked.size && !event.ctrlKey && !event.metaKey && (event.key.length === 1 || ['Enter', 'Backspace', 'Delete'].includes(event.key))) setPicked(state, []);
       if (event.key === 'Tab' && !event.ctrlKey && !event.altKey && paragraphOf(state, event.target)) {
         event.preventDefault();
         doc.execCommand('insertHTML', false, `<span data-dwe-tab="">${TAB_CHAR}</span>`);
@@ -557,6 +838,24 @@ const DriveWordEditor = (() => {
           <button type="button" class="sf-icon-button" data-dwe="close" title="Đóng (Esc)" aria-label="Đóng trình chỉnh sửa">${icon('close')}</button>
         </div>
       </header>
+      <div class="dwe-format" data-dwe-format role="toolbar" aria-label="Định dạng văn bản" hidden>
+        <select class="dwe-select dwe-font" data-fmt="font" aria-label="Phông chữ" title="Phông chữ">${FONTS.map(name => `<option value="${esc(name)}">${esc(name)}</option>`).join('')}</select>
+        <select class="dwe-select dwe-size" data-fmt="size" aria-label="Cỡ chữ" title="Cỡ chữ (pt)">${SIZES.map(size => `<option value="${size}">${size}</option>`).join('')}</select>
+        <span class="dwe-sep"></span>
+        <button type="button" class="dwe-fmt" data-fmt="bold" title="Đậm (Ctrl+B)" aria-label="Đậm" aria-pressed="false"><b>B</b></button>
+        <button type="button" class="dwe-fmt" data-fmt="italic" title="Nghiêng (Ctrl+I)" aria-label="Nghiêng" aria-pressed="false"><i>I</i></button>
+        <button type="button" class="dwe-fmt" data-fmt="underline" title="Gạch chân (Ctrl+U)" aria-label="Gạch chân" aria-pressed="false"><u>U</u></button>
+        <button type="button" class="dwe-fmt" data-fmt="strike" title="Gạch ngang" aria-label="Gạch ngang" aria-pressed="false"><s>S</s></button>
+        <label class="dwe-fmt dwe-color" title="Màu chữ"><span class="dwe-color-a">A</span><span class="dwe-color-bar" data-dwe-colorbar></span><input type="color" data-fmt="color" value="#000000" aria-label="Màu chữ"></label>
+        <span class="dwe-sep"></span>
+        <button type="button" class="dwe-fmt" data-fmt="align-left" title="Căn trái" aria-label="Căn trái" aria-pressed="false">${icon('alignLeft')}</button>
+        <button type="button" class="dwe-fmt" data-fmt="align-center" title="Căn giữa" aria-label="Căn giữa" aria-pressed="false">${icon('alignCenter')}</button>
+        <button type="button" class="dwe-fmt" data-fmt="align-right" title="Căn phải" aria-label="Căn phải" aria-pressed="false">${icon('alignRight')}</button>
+        <button type="button" class="dwe-fmt" data-fmt="align-both" title="Căn đều hai bên" aria-label="Căn đều hai bên" aria-pressed="false">${icon('alignJustify')}</button>
+        <span class="dwe-sep"></span>
+        <button type="button" class="dwe-fmt dwe-wide" data-fmt="pickall" title="Chọn tất cả các đoạn (Ctrl+A) để định dạng cả tài liệu">Chọn tất cả</button>
+        <span class="dwe-picked-note" data-dwe-picked hidden></span>
+      </div>
       <div class="dwe-findbar" data-dwe-findbar hidden>
         <input type="search" data-dwe-find placeholder="Tìm…" aria-label="Tìm" autocomplete="off">
         <input type="text" data-dwe-replace placeholder="Thay bằng…" aria-label="Thay bằng" autocomplete="off">
@@ -567,7 +866,7 @@ const DriveWordEditor = (() => {
         <button type="button" class="sf-button" data-dwe="replace">Thay</button>
         <button type="button" class="sf-button" data-dwe="replaceAll">Thay tất cả</button>
       </div>
-      <p class="dwe-hint">Bấm vào chữ để sửa trực tiếp. Enter tách đoạn · Backspace ở đầu đoạn trống để xóa đoạn · Tab chèn khoảng tab. Ảnh, bảng, kiểu chữ, đầu/chân trang giữ nguyên. <span data-dwe-limits hidden></span> <strong class="dwe-notice" data-dwe-notice hidden></strong></p>
+      <p class="dwe-hint">Bấm vào chữ để sửa trực tiếp; bôi đen chữ rồi dùng thanh định dạng (không bôi đen thì áp dụng cho cả đoạn). Ctrl+A hoặc Shift+bấm để chọn nhiều đoạn. Enter tách đoạn · Backspace ở đầu đoạn trống để xóa đoạn · Tab chèn khoảng tab. Ảnh, bảng, đầu/chân trang giữ nguyên. <span data-dwe-limits hidden></span> <strong class="dwe-notice" data-dwe-notice hidden></strong></p>
       <div class="dwe-surface"><iframe class="dwe-frame" title="Nội dung Word" sandbox="allow-same-origin"></iframe><div class="dwe-loading" data-dwe-loading><span class="drv-spinner" aria-hidden="true"></span> Đang mở tài liệu…</div></div>`;
     overlay.querySelector('[data-dwe-name]').textContent = file.name;
     if (options.notice) { const note = overlay.querySelector('[data-dwe-notice]'); note.textContent = options.notice; note.hidden = false; }
@@ -576,7 +875,7 @@ const DriveWordEditor = (() => {
     const state = current = {
       overlay, file, options, controller, bytes:null, doc:null, xml:'', zip:null, editable:[], locked:0, readonly:0,
       frame:q('.dwe-frame'), status:q('[data-dwe-status]'), saveButton:q('[data-dwe="save"]'), undoButton:q('[data-dwe="undo"]'), redoButton:q('[data-dwe="redo"]'),
-      findBar:q('[data-dwe-findbar]'), findInput:q('[data-dwe-find]'), replaceInput:q('[data-dwe-replace]'), caseBox:q('[data-dwe-case]'), count:q('[data-dwe-count]'), limits:q('[data-dwe-limits]'),
+      findBar:q('[data-dwe-findbar]'), findInput:q('[data-dwe-find]'), replaceInput:q('[data-dwe-replace]'), caseBox:q('[data-dwe-case]'), count:q('[data-dwe-count]'), limits:q('[data-dwe-limits]'), formatBar:q('[data-dwe-format]'), pickedNote:q('[data-dwe-picked]'), tupleCache:new Map(), decorCache:new Map(), infoByIdx:new Map(), picked:new Set(), lastP:null, lastRange:null,
       matches:[], index:0, findOpen:false, saving:false, signature:'', savedSignature:null, savedNote:'', timer:0,
       overflow:document.body.style.overflow, previousFocus:document.activeElement,
       toast:(message, type) => options.toast?.(message, type),
@@ -589,6 +888,7 @@ const DriveWordEditor = (() => {
     overlay.showModal();
     document.body.style.overflow = 'hidden';
 
+    setupFormatBar(state);
     q('[data-dwe="close"]').onclick = () => close();
     state.saveButton.onclick = () => openSave(state);
     const undoRedo = command => () => { state.frame.contentWindow.focus(); state.doc.execCommand(command); scheduleStatus(state); };

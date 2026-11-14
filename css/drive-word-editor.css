@@ -43,8 +43,26 @@
 .dwe-error svg { width:30px; height:30px; color:var(--sf-rose,#be123c); }
 .dwe-error p { margin:0 0 6px; color:var(--sf-muted); font-size:12px; line-height:1.65; }
 
+/* Thanh định dạng kiểu Word */
+.dwe-format { display:flex; align-items:center; flex-wrap:wrap; gap:4px; padding:6px 16px; border-bottom:1px solid var(--sf-line); background:var(--sf-paper); }
+.dwe-format[hidden] { display:none; }
+.dwe-select { height:32px; padding:0 8px; border:1px solid var(--sf-line); border-radius:8px; background:var(--sf-paper); color:var(--sf-ink); font:600 12px 'Plus Jakarta Sans',system-ui,sans-serif; cursor:pointer; }
+.dwe-font { width:156px; } .dwe-size { width:68px; }
+.dwe-sep { width:1px; height:22px; margin:0 6px; background:var(--sf-line); }
+.dwe-fmt { display:inline-grid; place-items:center; min-width:32px; height:32px; padding:0 8px; border:1px solid transparent; border-radius:8px; background:transparent; color:var(--sf-ink); font:700 13px Georgia,serif; cursor:pointer; position:relative; }
+.dwe-fmt:hover { background:var(--sf-soft); border-color:var(--sf-line); }
+.dwe-fmt.is-on { background:color-mix(in srgb,#2563eb 14%,var(--sf-paper)); border-color:color-mix(in srgb,#2563eb 45%,var(--sf-line)); color:#1d4ed8; }
+.dwe-fmt svg { width:16px; height:16px; }
+.dwe-wide { font:700 11.5px 'Plus Jakarta Sans',system-ui,sans-serif; }
+.dwe-color { overflow:hidden; }
+.dwe-color-a { font:800 14px 'Plus Jakarta Sans',system-ui,sans-serif; line-height:1; margin-top:-4px; }
+.dwe-color-bar { position:absolute; left:8px; right:8px; bottom:5px; height:3px; border-radius:2px; background:#000; }
+.dwe-color input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
+.dwe-picked-note { margin-left:6px; padding:3px 9px; border-radius:999px; background:color-mix(in srgb,#2563eb 12%,var(--sf-paper)); color:#1d4ed8; font-size:11.5px; font-weight:700; }
+.dwe-picked-note[hidden] { display:none; }
+
 /* Hộp thoại con */
-.dwe-dialog { width:min(520px,calc(100vw - 32px)); max-height:calc(100vh - 32px); overflow:auto; padding:22px; border:1px solid var(--sf-line); border-radius:18px; background:var(--sf-paper); color:var(--sf-ink); box-shadow:0 30px 80px rgba(0,0,0,.28); font-family:'Plus Jakarta Sans',system-ui,sans-serif; }
+.dwe-dialog { position:fixed; inset:0; margin:auto; height:fit-content; width:min(520px,calc(100vw - 32px)); max-height:calc(100vh - 32px); overflow:auto; padding:22px; border:1px solid var(--sf-line); border-radius:18px; background:var(--sf-paper); color:var(--sf-ink); box-shadow:0 30px 80px rgba(0,0,0,.28); font-family:'Plus Jakarta Sans',system-ui,sans-serif; }
 .dwe-dialog::backdrop { background:rgba(15,23,20,.5); }
 .dwe-dialog h2 { margin:0 0 8px; font-size:17px; font-weight:800; letter-spacing:-.01em; }
 .dwe-dialog p { margin:0 0 14px; color:var(--sf-muted); font-size:12.5px; line-height:1.6; overflow-wrap:anywhere; }

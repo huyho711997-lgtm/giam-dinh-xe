@@ -165,3 +165,96 @@ test('đoạn dài: diff vẫn nhanh và đúng', () => {
   assert.ok(Date.now() - start < 1500);
   assert.equal(ops.length, 1);
 });
+
+// ---- Định dạng: font, cỡ chữ, đậm/nghiêng…, căn lề ----------------------------------------------
+const idxOf = (xml, text) => P.listParagraphs(xml).find(p => p.text === text).idx;
+const paraXml = (xml, text) => { const p = P.listParagraphs(xml).find(item => item.text === text); return xml.slice(p.start, p.end); };
+
+test('đổi định dạng một đoạn chữ: tách run đúng chỗ, giữ nguyên chữ và định dạng cũ', () => {
+  const idx = idxOf(DOC, 'Số hồ sơ: HS-001 ngày 14/11/2026');
+  const out = P.build(DOC, {formats:{[idx]:{ranges:[{start:3, end:12, props:{u:true, sz:30, font:'Arial'}}]}}});
+  assert.deepEqual(texts(out), texts(DOC));
+  const xml = paraXml(out, 'Số hồ sơ: HS-001 ngày 14/11/2026');
+  assert.match(xml, /<w:t xml:space="preserve">Số <\/w:t>/);
+  assert.match(xml, /<w:rPr><w:rFonts w:ascii="Arial"[^>]*\/><w:sz w:val="30"\/><w:u w:val="single"\/><\/w:rPr><w:t xml:space="preserve">hồ sơ: <\/w:t>/);
+  // "HS-001" vốn đậm: vùng bị đổi phủ lên run đậm, nên phần còn lại của run đó vẫn đậm.
+  assert.match(xml, /<w:b\/><w:sz w:val="30"\/><w:u w:val="single"\/><\/w:rPr><w:t xml:space="preserve">HS<\/w:t>/);
+  assert.match(xml, /<w:rPr><w:b\/><\/w:rPr><w:t xml:space="preserve">-001<\/w:t>/);
+  assert.match(xml, /<w:rPr><w:i\/><\/w:rPr><w:t xml:space="preserve">14\/11\/2026<\/w:t>/);
+  // Các đoạn khác không bị đụng tới.
+  assert.equal(paraXml(out, 'BIÊN BẢN'), paraXml(DOC, 'BIÊN BẢN'));
+});
+
+test('bỏ đậm / bỏ nghiêng ghi rõ w:val="0" để ghi đè kiểu', () => {
+  const idx = idxOf(DOC, 'Số hồ sơ: HS-001 ngày 14/11/2026');
+  const out = P.build(DOC, {formats:{[idx]:{ranges:[{start:10, end:16, props:{b:false}}]}}});
+  assert.match(paraXml(out, 'Số hồ sơ: HS-001 ngày 14/11/2026'), /<w:rPr><w:b w:val="0"\/><\/w:rPr><w:t xml:space="preserve">HS-001<\/w:t>/);
+});
+
+test('phần tử trong rPr đúng thứ tự schema, thay thế thay vì trùng lặp', () => {
+  const rPr = P.mergeRPr('<w:rPr><w:rFonts w:asciiTheme="minorHAnsi"/><w:color w:val="000000"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="vi-VN"/></w:rPr>', {b:true, i:true, u:true, sz:28, color:'1e40af', font:'Tahoma'});
+  assert.equal(rPr, '<w:rPr><w:rFonts w:ascii="Tahoma" w:hAnsi="Tahoma" w:eastAsia="Tahoma" w:cs="Tahoma"/><w:b/><w:i/><w:color w:val="1E40AF"/><w:sz w:val="28"/><w:szCs w:val="28"/><w:u w:val="single"/><w:lang w:val="vi-VN"/></w:rPr>');
+  assert.equal(P.mergeRPr('', {b:true}), '<w:rPr><w:b/></w:rPr>');
+  assert.equal(P.mergeRPr('<w:rPr/>', {i:true}), '<w:rPr><w:i/></w:rPr>');
+  // Giá trị lạ bị bỏ qua, không sinh XML hỏng.
+  assert.equal(P.mergeRPr('<w:rPr><w:b/></w:rPr>', {color:'red', sz:-5, font:'  '}), '<w:rPr><w:b/></w:rPr>');
+  assert.match(P.mergeRPr('', {font:'A"B<C'}), /w:ascii="A&quot;B&lt;C"/);
+});
+
+test('định dạng trong run có tab, xuống dòng và ảnh: tách giữa token, không mất phần tử nào', () => {
+  const idx = idxOf(DOC, 'Cột A\tCột B\tCột C');
+  const out = P.build(DOC, {formats:{[idx]:{ranges:[{start:6, end:11, props:{b:true}}]}}});
+  const xml = paraXml(out, 'Cột A\tCột B\tCột C');
+  assert.equal((xml.match(/<w:tab\/>/g) || []).length, 2);
+  assert.deepEqual(texts(out), texts(DOC));
+  assert.match(xml, /<w:rPr><w:b\/><\/w:rPr><w:t>Cột B<\/w:t>/);
+  const img = idxOf(DOC, 'Ảnh:  hết.');
+  const withImage = P.build(DOC, {formats:{[img]:{ranges:[{start:0, end:5, props:{i:true}}]}}});
+  assert.match(paraXml(withImage, 'Ảnh:  hết.'), /<w:drawing>[\s\S]*<a:blip r:embed="rId11"\/>[\s\S]*<\/w:drawing>/);
+  const lines = idxOf(DOC, 'Dòng một\nDòng hai');
+  const br = P.build(DOC, {formats:{[lines]:{ranges:[{start:0, end:17, props:{sz:24}}]}}});
+  assert.equal((paraXml(br, 'Dòng một\nDòng hai').match(/<w:br\/>/g) || []).length, 1);
+});
+
+test('căn lề: chèn <w:jc> đúng chỗ trong pPr, tạo pPr khi chưa có, thay khi đã có', () => {
+  const idx = idxOf(DOC, 'BIÊN BẢN');
+  assert.match(paraXml(P.build(DOC, {formats:{[idx]:{align:'center'}}}), 'BIÊN BẢN'), /<w:pPr><w:pStyle w:val="Heading1"\/><w:jc w:val="center"\/><\/w:pPr>/);
+  const plainIdx = idxOf(DOC, 'Biển số');
+  assert.match(paraXml(P.build(DOC, {formats:{[plainIdx]:{align:'right'}}}), 'Biển số'), /^<w:p><w:pPr><w:jc w:val="right"\/><\/w:pPr><w:r>/);
+  assert.equal(P.applyFormat('<w:p><w:pPr><w:spacing w:after="0"/><w:jc w:val="left"/><w:rPr><w:b/></w:rPr></w:pPr><w:r><w:t>x</w:t></w:r></w:p>', {align:'both'}), '<w:p><w:pPr><w:spacing w:after="0"/><w:jc w:val="both"/><w:rPr><w:b/></w:rPr></w:pPr><w:r><w:t>x</w:t></w:r></w:p>');
+  assert.equal(P.applyFormat('<w:p><w:pPr><w:spacing w:after="0"/><w:rPr><w:b/></w:rPr></w:pPr><w:r><w:t>x</w:t></w:r></w:p>', {align:'center'}), '<w:p><w:pPr><w:spacing w:after="0"/><w:jc w:val="center"/><w:rPr><w:b/></w:rPr></w:pPr><w:r><w:t>x</w:t></w:r></w:p>');
+  assert.match(P.applyFormat('<w:p><w:pPr/><w:r><w:t>x</w:t></w:r></w:p>', {align:'center'}), /<w:pPr><w:jc w:val="center"\/><\/w:pPr>/);
+  assert.match(P.applyFormat('<w:p/>', {align:'center'}), /^<w:p><w:pPr><w:jc w:val="center"\/><\/w:pPr><\/w:p>$/);
+  assert.equal(P.applyFormat('<w:p><w:r><w:t>x</w:t></w:r></w:p>', {align:'lạ'}), '<w:p><w:r><w:t>x</w:t></w:r></w:p>');
+});
+
+test('sửa chữ và đổi định dạng cùng lúc (toạ độ theo chữ mới); đoạn mới tách ra cũng nhận định dạng', () => {
+  const idx = idxOf(DOC, 'Đoạn cuối: 12.500.000 đồng.');
+  const out = P.build(DOC, {
+    edits:{[idx]:'Đoạn cuối: 99 đồng.'},
+    formats:{[idx]:{ranges:[{start:11, end:13, props:{b:true, color:'ff0000'}}]}},
+    created:[{anchor:idx, cloneOf:idx, text:'Phần tách ra', ranges:[{start:0, end:5, props:{sz:36}}], align:'center'}]
+  });
+  assert.deepEqual(texts(out).slice(-2), ['Đoạn cuối: 99 đồng.', 'Phần tách ra']);
+  assert.match(paraXml(out, 'Đoạn cuối: 99 đồng.'), /<w:rPr><w:b\/><w:color w:val="FF0000"\/><\/w:rPr><w:t xml:space="preserve">99<\/w:t>/);
+  const created = paraXml(out, 'Phần tách ra');
+  assert.match(created, /<w:jc w:val="center"\/>/);
+  assert.match(created, /<w:sz w:val="36"\/><\/w:rPr><w:t xml:space="preserve">Phần <\/w:t>/);
+});
+
+test('định dạng: chặn đoạn bị khóa; vùng không hợp lệ bị bỏ qua; không đổi gì thì giữ nguyên chuỗi', () => {
+  const locked = idxOf(DOC, 'Trang 1');
+  assert.throws(() => P.build(DOC, {formats:{[locked]:{ranges:[{start:0, end:2, props:{b:true}}]}}}), /không thể đổi định dạng/);
+  const idx = idxOf(DOC, 'BIÊN BẢN');
+  assert.equal(P.build(DOC, {formats:{[idx]:{ranges:[{start:3, end:3, props:{b:true}}, {start:-1, end:2, props:{b:true}}, {start:0, end:999, props:{b:true}}]}}}), DOC);
+  assert.equal(P.build(DOC, {}), DOC);
+});
+
+test('sourceMap: ký tự mới thừa hưởng định dạng của ký tự bên trái, thay thế thừa hưởng ký tự bị thay', () => {
+  assert.deepEqual(plain(P.sourceMap('abc', 'abc')), [0, 1, 2]);
+  assert.deepEqual(plain(P.sourceMap('abc', 'abXYc')), [0, 1, 1, 1, 2]);
+  assert.deepEqual(plain(P.sourceMap('abc', 'aZc')), [0, 1, 2]);
+  assert.deepEqual(plain(P.sourceMap('abc', 'ac')), [0, 2]);
+  assert.deepEqual(plain(P.sourceMap('abc', 'Xabc')), [0, 0, 1, 2]);
+  assert.deepEqual(plain(P.sourceMap('', 'ab')), [-1, -1]);
+});

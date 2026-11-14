@@ -199,6 +199,179 @@ const DocxPatch = (() => {
     return out;
   }
 
+
+  // ==========================================================================
+  // ĐỊNH DẠNG: đổi font, cỡ chữ, đậm/nghiêng/gạch chân/gạch ngang, màu chữ cho từng đoạn ký tự và căn lề từng đoạn.
+  // Chỉ chạm vào run/pPr của đúng vùng bị đổi; tách run tại ranh giới ký tự và giữ nguyên mọi thuộc tính khác của run.
+  // ==========================================================================
+  const RPR_ORDER = ['rStyle','rFonts','b','bCs','i','iCs','caps','smallCaps','strike','dstrike','outline','shadow','emboss','imprint','noProof','snapToGrid','vanish','webHidden','color','spacing','w','kern','position','sz','szCs','highlight','u','effect','bdr','shd','fitText','vertAlign','rtl','cs','em','lang','eastAsianLayout','specVanish','oMath'];
+  const PPR_ORDER = ['pStyle','keepNext','keepLines','pageBreakBefore','framePr','widowControl','numPr','suppressLineNumbers','pBdr','shd','tabs','suppressAutoHyphens','kinsoku','wordWrap','overflowPunct','topLinePunct','autoSpaceDE','autoSpaceDN','bidi','adjustRightInd','snapToGrid','spacing','ind','contextualSpacing','mirrorIndents','suppressOverlap','jc','textDirection','textAlignment','textboxTightWrap','outlineLvl','divId','cnfStyle','rPr','sectPr','pPrChange'];
+  const ALIGN_VALUES = new Set(['left', 'center', 'right', 'both']);
+  const attr = value => String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+  // Tách phần bên trong <w:rPr>/<w:pPr> thành các phần tử con cấp một. Trả về null nếu cấu trúc lạ (khi đó không dám sửa).
+  function splitChildren(inner) {
+    const out = [];
+    let i = 0;
+    while (i < inner.length) {
+      if (/\s/.test(inner[i])) { i++; continue; }
+      const head = /^<([A-Za-z0-9]+):([A-Za-z0-9]+)((?:\s[^>]*?)?)(\/?)>/.exec(inner.slice(i, i + 4000));
+      if (!head) return null;
+      const name = head[2];
+      let end = i + head[0].length;
+      if (!head[4]) {
+        const close = '</' + head[1] + ':' + name + '>';
+        const at = inner.indexOf(close, end);
+        if (at < 0) return null;
+        end = at + close.length;
+      }
+      out.push({name, xml:inner.slice(i, end)});
+      i = end;
+    }
+    return out;
+  }
+  function setChild(children, name, xml, order) {
+    const rank = key => { const at = order.indexOf(key); return at < 0 ? 1000 : at; };
+    const at = children.findIndex(child => child.name === name);
+    if (at >= 0) { if (xml === null) children.splice(at, 1); else children[at] = {name, xml}; return; }
+    if (xml === null) return;
+    const next = children.findIndex(child => rank(child.name) > rank(name));
+    children.splice(next < 0 ? children.length : next, 0, {name, xml});
+  }
+  const toggleXml = (tag, on) => on ? '<w:' + tag + '/>' : '<w:' + tag + ' w:val="0"/>';
+  // props: {b,i,strike,u: boolean; sz: nửa điểm; font: tên; color: 'RRGGBB'}
+  function mergeRPr(rPr, props) {
+    let attrs = '', inner = '';
+    if (rPr) {
+      const match = /^<w:rPr((?:\s[^>]*?)?)(?:\/>|>([\s\S]*)<\/w:rPr>)$/.exec(rPr);
+      if (!match) return rPr;
+      attrs = match[1] || ''; inner = match[2] || '';
+    }
+    const children = splitChildren(inner);
+    if (!children) return rPr;
+    for (const key of ['b', 'i', 'strike']) if (typeof props[key] === 'boolean') setChild(children, key, toggleXml(key, props[key]), RPR_ORDER);
+    if (typeof props.u === 'boolean') setChild(children, 'u', '<w:u w:val="' + (props.u ? 'single' : 'none') + '"/>', RPR_ORDER);
+    if (Number.isFinite(props.sz) && props.sz >= 2 && props.sz <= 1638) {
+      const value = Math.round(props.sz);
+      setChild(children, 'sz', '<w:sz w:val="' + value + '"/>', RPR_ORDER);
+      if (children.some(child => child.name === 'szCs')) setChild(children, 'szCs', '<w:szCs w:val="' + value + '"/>', RPR_ORDER);
+    }
+    if (typeof props.font === 'string' && props.font.trim()) {
+      const font = attr(props.font.trim().slice(0, 80));
+      setChild(children, 'rFonts', '<w:rFonts w:ascii="' + font + '" w:hAnsi="' + font + '" w:eastAsia="' + font + '" w:cs="' + font + '"/>', RPR_ORDER);
+    }
+    if (typeof props.color === 'string' && /^[0-9a-f]{6}$/i.test(props.color)) setChild(children, 'color', '<w:color w:val="' + props.color.toUpperCase() + '"/>', RPR_ORDER);
+    if (!children.length) return rPr || '';
+    return '<w:rPr' + attrs + '>' + children.map(child => child.xml).join('') + '</w:rPr>';
+  }
+
+  // Thứ tự ký tự của từng token trong đoạn: tab/br = 1 ký tự, <w:t> = độ dài chữ (đơn vị UTF-16).
+  function formatRuns(pXml, ranges) {
+    const para = scanParagraphs(pXml)[0];
+    if (!para) return pXml;
+    const info = analyze(pXml, para, 0);
+    if (info.locked) throw new Error('Đoạn chứa trường tự động hoặc nội dung đặc biệt, không thể đổi định dạng.');
+    const starts = [];
+    let total = 0;
+    for (const token of info.tokens) { starts.push(total); total += token.text.length; }
+    const clean = ranges.filter(range => range && range.end > range.start && range.start >= 0 && range.end <= total && range.props);
+    if (!clean.length) return pXml;
+    const propsAt = position => {
+      const merged = {};
+      for (const range of clean) if (position >= range.start && position < range.end) Object.assign(merged, range.props);
+      return Object.keys(merged).length ? merged : null;
+    };
+    const cuts = new Set();
+    for (const range of clean) { cuts.add(range.start); cuts.add(range.end); }
+    const replacements = [];
+    const runRe = /<w:r(?=[\s>])[^>]*>[\s\S]*?<\/w:r>/g;
+    let run;
+    while ((run = runRe.exec(pXml))) {
+      const runStart = run.index, runEnd = run.index + run[0].length;
+      const open = /^<w:r(?:\s[^>]*)?>/.exec(run[0])[0];
+      const afterOpen = runStart + open.length, closeAt = runEnd - '</w:r>'.length;
+      const rPrMatch = /^<w:rPr(?:\s[^>]*)?(?:\/>|>[\s\S]*?<\/w:rPr>)/.exec(pXml.slice(afterOpen, closeAt));
+      const rPr = rPrMatch ? rPrMatch[0] : '';
+      const contentStart = afterOpen + rPr.length;
+      const tokens = [];
+      info.tokens.forEach((token, index) => { if (token.start >= contentStart && token.end <= closeAt) tokens.push({token, from:starts[index], to:starts[index] + token.text.length}); });
+      if (!tokens.length) continue;
+      const rs = tokens[0].from, re = tokens[tokens.length - 1].to;
+      if (re <= rs) continue;
+      const inside = [...cuts].filter(point => point > rs && point < re);
+      const bounds = [rs, ...inside.sort((a, b) => a - b), re];
+      const segments = [];
+      let any = false;
+      for (let k = 0; k + 1 < bounds.length; k++) {
+        const props = propsAt(bounds[k]);
+        if (props) any = true;
+        segments.push({a:bounds[k], b:bounds[k + 1], props});
+      }
+      if (!any) continue;
+      // Phần tử ngoài token (ảnh, dấu ngắt trang hiển thị…) đi kèm token đứng sau nó; phần cuối đi theo đoạn cuối.
+      const groups = [];
+      let cursor = contentStart;
+      for (const item of tokens) { groups.push({filler:pXml.slice(cursor, item.token.start), item}); cursor = item.token.end; }
+      const trailing = pXml.slice(cursor, closeAt);
+      const pieces = segments.map((segment, segIndex) => {
+        let content = '';
+        for (const group of groups) {
+          const { item } = group;
+          const lo = Math.max(segment.a, item.from), hi = Math.min(segment.b, item.to);
+          if (lo >= hi) continue;
+          content += group.filler;
+          if (item.token.kind === 't' && (lo > item.from || hi < item.to)) content += '<w:t xml:space="preserve">' + encode(item.token.text.slice(lo - item.from, hi - item.from)) + '</w:t>';
+          else content += pXml.slice(item.token.start, item.token.end);
+        }
+        if (segIndex === segments.length - 1) content += trailing;
+        return open + (segment.props ? mergeRPr(rPr, segment.props) : rPr) + content + '</w:r>';
+      });
+      replacements.push({start:runStart, end:runEnd, xml:pieces.join('')});
+    }
+    let out = pXml;
+    for (const item of replacements.reverse()) out = out.slice(0, item.start) + item.xml + out.slice(item.end);
+    return out;
+  }
+
+  function setAlignment(pXml, align) {
+    if (!ALIGN_VALUES.has(align)) return pXml;
+    const para = scanParagraphs(pXml)[0];
+    if (!para) return pXml;
+    const range = pPrRange(pXml, para);
+    const jc = '<w:jc w:val="' + align + '"/>';
+    if (!range) {
+      if (para.selfClosing) return pXml.replace(/\s*\/>$/, '><w:pPr>' + jc + '</w:pPr></w:p>');
+      return pXml.slice(0, para.openEnd) + '<w:pPr>' + jc + '</w:pPr>' + pXml.slice(para.openEnd);
+    }
+    const pPr = pXml.slice(range[0], range[1]);
+    const match = /^<w:pPr((?:\s[^>]*?)?)(?:\/>|>([\s\S]*)<\/w:pPr>)$/.exec(pPr);
+    if (!match) return pXml;
+    const children = splitChildren(match[2] || '');
+    if (!children) return pXml;
+    setChild(children, 'jc', jc, PPR_ORDER);
+    return pXml.slice(0, range[0]) + '<w:pPr' + (match[1] || '') + '>' + children.map(child => child.xml).join('') + '</w:pPr>' + pXml.slice(range[1]);
+  }
+  const applyFormat = (pXml, format) => {
+    let out = pXml;
+    if (format && format.ranges && format.ranges.length) out = formatRuns(out, format.ranges);
+    if (format && format.align) out = setAlignment(out, format.align);
+    return out;
+  };
+
+  // Ký tự mới gõ/thay thế được XML thừa hưởng định dạng từ ký tự nào của bản gốc (cùng quy tắc với patchParagraph).
+  function sourceMap(a, b) {
+    const out = new Array(b.length).fill(-1);
+    let ai = 0, bi = 0;
+    for (const op of diff(a, b)) {
+      while (ai < op.at) out[bi++] = ai++;
+      const source = !a.length ? -1 : op.del ? op.at : op.at > 0 ? op.at - 1 : 0;
+      for (let k = 0; k < op.ins.length; k++) out[bi++] = source;
+      ai = op.at + op.del;
+    }
+    while (ai < a.length) out[bi++] = ai++;
+    return out;
+  }
+
   const newParagraph = (xml, source, text) => {
     const pPr = source.pPr.replace(/<w:sectPr[\s\S]*?<\/w:sectPr>/g, '').replace(/<w:pPrChange[\s\S]*?<\/w:pPrChange>/g, '');
     const cleanPPr = /^<w:pPr[^>]*\/>$/.test(pPr) ? pPr : pPr;
@@ -220,6 +393,13 @@ const DocxPatch = (() => {
       const ops = diff(norm(para.text), target);
       if (ops.length) replace.set(para.idx, patchParagraph(xml, para, ops));
     }
+    const formats = plan.formats || {};
+    for (const key of Object.keys(formats)) {
+      const para = list[Number(key)];
+      if (!para || removed.has(para.idx)) continue;
+      if (para.locked) throw new Error('Đoạn chứa trường tự động hoặc nội dung đặc biệt, không thể đổi định dạng.');
+      replace.set(para.idx, applyFormat(replace.has(para.idx) ? replace.get(para.idx) : xml.slice(para.start, para.end), formats[key]));
+    }
     for (const idx of removed) {
       const para = list[idx];
       if (!para || !para.removable) throw new Error('Đoạn này không xóa được vì chứa ảnh, liên kết hoặc trường đặc biệt.');
@@ -230,7 +410,7 @@ const DocxPatch = (() => {
       const source = list[item.cloneOf], anchor = list[item.anchor];
       if (!source || !anchor) throw new Error('Không xác định được đoạn gốc để tạo đoạn mới.');
       if (!additions.has(anchor.idx)) additions.set(anchor.idx, []);
-      additions.get(anchor.idx).push(newParagraph(xml, source, norm(item.text || '')));
+      additions.get(anchor.idx).push(applyFormat(newParagraph(xml, source, norm(item.text || '')), item));
     }
     let out = '', cursor = 0;
     for (const para of list) {
@@ -277,5 +457,5 @@ const DocxPatch = (() => {
     return result;
   }
 
-  return {listParagraphs, diff, patchParagraph, build, align, emit, norm, decode, encode};
+  return {listParagraphs, diff, patchParagraph, build, align, emit, norm, decode, encode, mergeRPr, applyFormat, sourceMap};
 })();
