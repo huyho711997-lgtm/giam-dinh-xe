@@ -199,7 +199,10 @@ test('nhận diện loại tệp', () => {
   assert.equal(Api.kindOf({mimeType:'image/jpeg', name:'a.jpg'}), 'image');
   assert.equal(Api.typeLabel({mimeType:'application/vnd.google-apps.document', name:'x'}), 'Google Tài liệu');
   assert.equal(Api.canPreview({mimeType:'application/pdf', name:'a.pdf', size:100}), true);
-  assert.equal(Api.canPreview({mimeType:'application/vnd.ms-powerpoint', name:'a.ppt', size:100}), false);
+  assert.equal(Api.canPreview({mimeType:'application/vnd.ms-powerpoint', name:'a.ppt', size:100}), true);
+  assert.equal(Api.canPreview({mimeType:'application/vnd.oasis.opendocument.presentation', name:'a.odp', size:100}), false);
+  assert.equal(Api.needsConversion({mimeType:'application/msword', name:'a.doc'}), true);
+  assert.equal(Api.needsConversion({mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', name:'a.docx'}), false);
 });
 
 test('sắp xếp giữ thư mục lên đầu, tên theo kiểu tự nhiên', () => {
@@ -452,4 +455,19 @@ test('ghi đè .docx: chặn dữ liệu sai, tệp không phải Word, tệp kh
   const big = withDocx();
   assert.match(big.call({...base, data:Buffer.alloc(10 * 1024 * 1024 + 1, 1).toString('base64')}).error, /10 MB/);
   assert.equal(big.calls.update.length, 0);
+});
+
+test('xem trước .doc: máy chủ đổi sang PDF qua bản sao tạm rồi xóa bản tạm', () => {
+  const s = service();
+  s.db.docOldFile000001 = {id:'docOldFile000001', name:'Mau cu.doc', mimeType:'application/msword', parents:['folderAAAAAAAAAA'], size:'35000'};
+  s.db.copy000000000001 = {id:'copy000000000001', name:'tmp', mimeType:'application/vnd.google-apps.document', parents:['myDriveRootId001']};
+  const preview = s.call({action:'drive_download', fileId:'docOldFile000001', mode:'preview'});
+  assert.equal(preview.ok, true);
+  assert.equal(preview.mimeType, 'application/pdf');
+  assert.equal(preview.name, 'Mau cu.pdf');
+  assert.deepEqual(s.calls.remove, ['copy000000000001']);
+  // Tải về luôn trả đúng bản gốc, không chuyển đổi.
+  const original = s.call({action:'drive_download', fileId:'docOldFile000001', mode:'download'});
+  assert.equal(original.mimeType, 'application/msword');
+  assert.equal(s.calls.remove.length, 1);
 });

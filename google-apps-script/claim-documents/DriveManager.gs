@@ -346,6 +346,32 @@ function driveDisplayBlob_(meta) {
   } catch (_) { return null; }
 }
 
+// Tệp Office đời cũ (.doc, .ppt, .pptx) trình duyệt không dựng được → xem trước bằng PDF: Drive chuyển một bản sao tạm sang
+// định dạng Google, xuất PDF rồi xóa ngay bản tạm (không để lại gì trong Drive).
+const DRIVE_PREVIEW_CONVERT = {
+  'application/msword':'application/vnd.google-apps.document',
+  'application/vnd.ms-powerpoint':'application/vnd.google-apps.presentation',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation':'application/vnd.google-apps.presentation'
+};
+function driveConvertTarget_(meta) {
+  if (DRIVE_PREVIEW_CONVERT[meta.mimeType]) return DRIVE_PREVIEW_CONVERT[meta.mimeType];
+  if (/\.doc$/i.test(meta.name || '') && /^application\/(octet-stream|x-msword)$/i.test(meta.mimeType || '')) return 'application/vnd.google-apps.document';
+  if (/\.pptx?$/i.test(meta.name || '') && meta.mimeType === 'application/octet-stream') return 'application/vnd.google-apps.presentation';
+  return '';
+}
+function drivePreviewPdf_(id, meta, target) {
+  let tempId = '';
+  try {
+    const copy = driveService_().Files.copy({name:'~xem-truoc-' + id.slice(0, 8), mimeType:target}, id, {fields:'id', supportsAllDrives:true});
+    tempId = copy.id;
+    return DriveApp.getFileById(tempId).getAs('application/pdf');
+  } catch (error) {
+    throw new Error('Chưa chuyển được tệp này sang PDF để xem (tệp có thể bị hỏng hoặc quá phức tạp). Hãy tải về hoặc mở trên Google Drive.');
+  } finally {
+    if (tempId) { try { driveService_().Files.remove(tempId, {supportsAllDrives:true}); } catch (_) {} }
+  }
+}
+
 function driveDownload_(request) {
   const id = driveId_(request.fileId, false);
   const preview = request.mode === 'preview' || request.mode === 'display';
@@ -376,7 +402,12 @@ function driveDownload_(request) {
       }
     }
     if (original > DRIVE_DOWNLOAD_MAX) throw new Error('Tệp lớn hơn 20 MB, hãy mở trên Google Drive để tải.');
-    blob = DriveApp.getFileById(id).getBlob();
+    const convert = preview && request.mode === 'preview' ? driveConvertTarget_(meta) : '';
+    if (convert) {
+      blob = drivePreviewPdf_(id, meta, convert);
+      mimeType = 'application/pdf';
+      name = String(name).replace(/\.[^.]*$/, '') + '.pdf';
+    } else blob = DriveApp.getFileById(id).getBlob();
   }
   const bytes = blob.getBytes();
   if (bytes.length > DRIVE_DOWNLOAD_MAX) throw new Error('Tệp lớn hơn 20 MB, hãy mở trên Google Drive để tải.');

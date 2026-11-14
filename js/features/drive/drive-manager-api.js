@@ -97,7 +97,14 @@ const DriveManagerApi = (() => {
   function canPreview(file) {
     const mime = String(file && file.mimeType || '');
     if (['application/vnd.google-apps.document', 'application/vnd.google-apps.spreadsheet', 'application/vnd.google-apps.presentation', 'application/vnd.google-apps.drawing'].includes(mime)) return true;
-    return ['pdf', 'word', 'sheet', 'image', 'text', 'video', 'audio'].includes(kindOf(file)) && Number(file.size || 0) <= 20 * 1024 * 1024 && !/\.(doc|ppt|pptx)$/i.test(file.name || '');
+    if (Number(file.size || 0) > 20 * 1024 * 1024) return false;
+    // .doc / .ppt / .pptx được máy chủ đổi sang PDF để xem; chỉ nhận đúng các đuôi này cho nhóm trình chiếu (.odp… chưa hỗ trợ).
+    if (kindOf(file) === 'slide') return /\.(ppt|pptx)$/i.test(file.name || '') || /ms-powerpoint|presentationml/.test(mime);
+    return ['pdf', 'word', 'sheet', 'image', 'text', 'video', 'audio'].includes(kindOf(file));
+  }
+  // Tệp cần máy chủ đổi sang PDF mới xem được trong ứng dụng.
+  function needsConversion(file) {
+    return !isNative(file) && (/\.(doc|ppt|pptx)$/i.test(file && file.name || '') || /^application\/(msword|vnd\.ms-powerpoint|vnd\.openxmlformats-officedocument\.presentationml\.presentation)$/.test(String(file && file.mimeType || '')));
   }
   // Bộ xem dành cho từng loại tệp: 'image' | 'video' | 'audio' | 'sheet' | 'text' → DriveViewer;
   // 'document' (PDF, Word, tệp Google xuất PDF) → trình xem tài liệu có dàn trang và in; '' = không xem được trong ứng dụng.
@@ -261,5 +268,5 @@ const DriveManagerApi = (() => {
     clearStore
   };
 
-  return {...api, call, endpoint, storeKey, RETRY_ATTEMPTS, formatBytes, formatDate, formatDateTime, kindOf, typeLabel, canPreview, viewerKind, isNative, validateName, quotaSummary, sortFiles, requestId, FOLDER_MIME, UPLOAD_MAX, KIND_LABELS};
+  return {...api, call, endpoint, storeKey, RETRY_ATTEMPTS, formatBytes, formatDate, formatDateTime, kindOf, typeLabel, canPreview, needsConversion, viewerKind, isNative, validateName, quotaSummary, sortFiles, requestId, FOLDER_MIME, UPLOAD_MAX, KIND_LABELS};
 })();

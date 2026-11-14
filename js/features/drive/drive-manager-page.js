@@ -344,7 +344,22 @@ const DriveManager = (() => {
     }
     previewDocument(file);
   }
+  // .doc / .ppt / .pptx: máy chủ đổi sang PDF rồi mở bằng trình xem tài liệu của ứng dụng (không chuyển sang Google Docs).
+  async function previewConverted(file) {
+    toast('Đang chuyển “' + file.name + '” sang PDF để xem…');
+    try {
+      const result = await Api.download(file.id, 'preview');
+      if (result.mimeType !== 'application/pdf') throw new Error('stale-server');
+      const viewerFile = {...file, source:'drive', originalName:file.name.replace(/\.[^.]*$/, '') + '.pdf', mimeType:'application/pdf'};
+      SharedFormsViewer.open(viewerFile, null, {loadBytes:async () => result.bytes.buffer});
+    } catch (error) {
+      if (error.message === 'stale-server') toast('Máy chủ Apps Script chưa được Deploy lại nên chưa xem được tệp này trong ứng dụng. Đang mở trên Google Drive.', 'warning');
+      else toast(error.message, 'error');
+      if (error.message === 'stale-server' && file.webViewLink) window.open(file.webViewLink, '_blank', 'noopener,noreferrer');
+    }
+  }
   function previewDocument(file) {
+    if (Api.needsConversion(file)) { previewConverted(file); return; }
     const native = Api.isNative(file);
     const viewerFile = {...file, source:'drive', originalName:native ? file.name.replace(/\.pdf$/i, '') + '.pdf' : file.name, mimeType:file.mimeType};
     SharedFormsViewer.open(viewerFile, null, {
