@@ -27,6 +27,35 @@ const DriveManagerApi = (() => {
   const endpoint = () => typeof CONFIG === 'undefined' ? '' : String(CONFIG.CLAIM_DOCUMENTS_ENDPOINT || '').trim();
   const currentUser = () => typeof firebase !== 'undefined' ? firebase.auth().currentUser : null;
 
+  // ---- Bộ nhớ ảnh lâu dài (Cache Storage): mở lại ảnh / thư mục là có ngay, không gọi Apps Script ----------
+  const STORE_NAME = 'tasco-drive-media-v1', STORE_LIMIT = {img:80, thumb:600}, STORE_TTL = 7 * 24 * 3600 * 1000, STORE_MAX_BYTES = 12 * 1024 * 1024;
+  let storeWrites = 0;
+  const storeKey = (kind, file, variant) => 'https://drive-cache.invalid/' + kind + '/' + encodeURIComponent(file.id) + '/' + encodeURIComponent(file.modifiedTime || '') + (variant ? '/' + variant : '');
+  async function storeOpen() { try { return typeof caches !== 'undefined' && caches.open ? await caches.open(STORE_NAME) : null; } catch (_) { return null; } }
+  async function storeGet(key) {
+    const store = await storeOpen();
+    if (!store) return null;
+    try {
+      const hit = await store.match(key);
+      if (!hit) return null;
+      if (Date.now() - Number(hit.headers.get('X-Stored-At') || 0) > STORE_TTL) { store.delete(key); return null; }
+      return {bytes:new Uint8Array(await hit.arrayBuffer()), mimeType:hit.headers.get('Content-Type') || '', resized:hit.headers.get('X-Resized') === '1', originalSize:Number(hit.headers.get('X-Original-Size') || 0)};
+    } catch (_) { return null; }
+  }
+  // Ghi nền: lỗi hoặc hết dung lượng thì bỏ qua, không ảnh hưởng việc xem ảnh.
+  async function storePut(key, data, kind) {
+    try {
+      const store = await storeOpen();
+      if (!store || !data || !data.bytes || !data.bytes.byteLength || data.bytes.byteLength > STORE_MAX_BYTES) return;
+      await store.put(key, new Response(data.bytes, {headers:{'Content-Type':data.mimeType || 'image/jpeg', 'X-Stored-At':String(Date.now()), 'X-Resized':data.resized ? '1' : '0', 'X-Original-Size':String(data.originalSize || 0)}}));
+      if (++storeWrites % 8 === 0) {
+        const marker = '//drive-cache.invalid/' + kind + '/', keys = (await store.keys()).filter(request => request.url.includes(marker));
+        for (const request of keys.slice(0, Math.max(0, keys.length - STORE_LIMIT[kind]))) await store.delete(request);
+      }
+    } catch (_) {}
+  }
+  async function clearStore() { try { if (typeof caches !== 'undefined') await caches.delete(STORE_NAME); } catch (_) {} }
+
   // ---- Hàm thuần (không phụ thuộc DOM / mạng) ---------------------------------------------
   function formatBytes(value) {
     const size = Number(value) || 0;
@@ -202,11 +231,27 @@ const DriveManagerApi = (() => {
       return call('drive_upload', {parentId, name:file.name, mimeType:file.type || 'application/octet-stream', requestId:id || requestId(), data}, signal);
     },
     // Trả về {name, mimeType, bytes:Uint8Array}
+    // mode: 'download' (ảnh gốc) | 'preview' (gốc / PDF cho tài liệu) | 'display' (ảnh nặng → bản thu nhỏ để mở nhanh)
     async download(fileId, mode, signal) {
-      const result = await call('drive_download', {fileId, mode:mode === 'preview' ? 'preview' : 'download'}, signal);
-      return {name:result.name, mimeType:result.mimeType, bytes:decode(result.data)};
-    }
+      const result = await call('drive_download', {fileId, mode:mode === 'preview' || mode === 'display' ? mode : 'download'}, signal);
+      return {name:result.name, mimeType:result.mimeType, bytes:decode(result.data), resized:!!result.resized, originalSize:Number(result.originalSize || 0)};
+    },
+    // Ảnh xem nhanh: ưu tiên bộ nhớ trình duyệt (còn nguyên sau khi tải lại trang), chưa có mới hỏi máy chủ.
+    async previewImage(file, options = {}) {
+      const full = !!options.full, key = storeKey('img', file, full ? 'full' : 'fit');
+      const hit = await storeGet(key);
+      if (hit) return hit;
+      const result = await api.download(file.id, full ? 'preview' : 'display', options.signal);
+      storePut(key, result, 'img');
+      return result;
+    },
+    async cachedThumbnail(file) {
+      const hit = await storeGet(storeKey('thumb', file, ''));
+      return hit && hit.bytes.byteLength ? hit : null;
+    },
+    storeThumbnail: (file, data) => storePut(storeKey('thumb', file, ''), data, 'thumb'),
+    clearStore
   };
 
-  return {...api, call, endpoint, RETRY_ATTEMPTS, formatBytes, formatDate, formatDateTime, kindOf, typeLabel, canPreview, viewerKind, isNative, validateName, quotaSummary, sortFiles, requestId, FOLDER_MIME, UPLOAD_MAX, KIND_LABELS};
+  return {...api, call, endpoint, storeKey, RETRY_ATTEMPTS, formatBytes, formatDate, formatDateTime, kindOf, typeLabel, canPreview, viewerKind, isNative, validateName, quotaSummary, sortFiles, requestId, FOLDER_MIME, UPLOAD_MAX, KIND_LABELS};
 })();

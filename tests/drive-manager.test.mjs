@@ -9,7 +9,8 @@ const source = ['Code.gs', 'DriveManager.gs'].map(name => fs.readFileSync(new UR
 const FOLDER = 'application/vnd.google-apps.folder';
 
 function service({uid = 'manager', managers = 'manager', items = {}} = {}) {
-  const calls = {list:[], update:[], create:[], remove:[], get:0, emptyTrash:0, auth:0};
+  const calls = {list:[], update:[], create:[], remove:[], get:0, emptyTrash:0, auth:0, fetched:[], fetchAll:[]};
+  const web = {handler:null}, thumbs = {};
   const props = {FIREBASE_API_KEY:'k', FIREBASE_DATABASE_URL:'https://t.firebaseio.com', ALLOWED_UIDS:'someone', DRIVE_MANAGER_UIDS:managers, ROOT_FOLDER_ID:'claimsRootFolder01', FORMS_ROOT_FOLDER_ID:'formsRootFolder001'};
   const db = {
     myDriveRootId001:{id:'myDriveRootId001', name:'My Drive', mimeType:FOLDER, parents:[]},
@@ -35,8 +36,16 @@ function service({uid = 'manager', managers = 'manager', items = {}} = {}) {
   const context = vm.createContext({
     Drive,
     PropertiesService:{getScriptProperties:() => ({getProperty:key => props[key]})},
-    UrlFetchApp:{fetch:url => { calls.auth++; return {getResponseCode:() => 200, getContentText:() => JSON.stringify(url.includes('accounts:lookup') ? {users:[{localId:uid}]} : {})}; }},
-    DriveApp:{getFileById:() => ({getThumbnail:() => null, getBlob:() => ({getBytes:() => [1, 2, 3]}), getAs:() => ({getBytes:() => [9]})})},
+    ScriptApp:{getOAuthToken:() => 'oauth-token'},
+    UrlFetchApp:{
+      fetch:(url, options) => {
+        if (!String(url).includes('accounts:lookup') && web.handler) { calls.fetched.push({url, options}); return web.handler(url, options); }
+        calls.auth++;
+        return {getResponseCode:() => 200, getContentText:() => JSON.stringify(String(url).includes('accounts:lookup') ? {users:[{localId:uid}]} : {})};
+      },
+      fetchAll:requests => { calls.fetchAll.push(requests.map(request => request.url)); return requests.map(request => { calls.fetched.push(request); return web.handler(request.url, request); }); }
+    },
+    DriveApp:{getFileById:id => ({getThumbnail:() => (thumbs[id] ? {getContentType:() => 'image/jpeg', getBytes:() => thumbs[id]} : null), getBlob:() => ({getBytes:() => [1, 2, 3]}), getAs:() => ({getBytes:() => [9]})})},
     LockService:{getScriptLock:() => ({tryLock:() => true, releaseLock:() => {}})},
     Utilities:{DigestAlgorithm:{SHA_256:'sha256'}, computeDigest:(_, value) => [...crypto.createHash('sha256').update(value).digest()], base64Decode:value => [...Buffer.from(value, 'base64')], base64Encode:value => Buffer.from(value).toString('base64'), newBlob:(bytes, mime, name) => ({bytes, mime, name})},
     ContentService:{MimeType:{JSON:'json'}, createTextOutput:body => ({setMimeType:() => body})}
@@ -44,7 +53,7 @@ function service({uid = 'manager', managers = 'manager', items = {}} = {}) {
   vm.runInContext(source, context);
   return {
     call:request => JSON.parse(context.doPost({postData:{contents:JSON.stringify({token:'tok', ...request})}})),
-    calls, db, setList:fn => { listResult = fn; }
+    calls, db, setList:fn => { listResult = fn; }, setWeb:fn => { web.handler = fn; }, thumbs
   };
 }
 
@@ -324,4 +333,82 @@ test('kéo vượt biên bị níu lại (đàn hồi), trong biên giữ nguyê
   assert.equal(Viewer.rubber(200, -100, 100), 135);
   assert.equal(Viewer.rubber(-300, -100, 100), -170);
   assert.equal(Viewer.rubber(200, -100, 100, 0), 100);
+});
+
+
+// ---------------- Tốc độ xem ảnh: bản thu nhỏ + ảnh nhỏ song song ----------------
+const reply = (body, type = 'application/json', code = 200) => ({getResponseCode:() => code, getContentText:() => typeof body === 'string' ? body : JSON.stringify(body), getBlob:() => ({getContentType:() => type, getBytes:() => [...Buffer.from(typeof body === 'string' ? body : 'x')]})});
+const BIG = 'photoBIGBIGBIG01', TINY = 'photoTINYTINY01', HEIC = 'photoHEICHEIC01';
+const photos = {
+  [BIG]:{id:BIG, name:'big.jpg', mimeType:'image/jpeg', size:String(5 * 1024 * 1024), thumbnailLink:'https://lh3.googleusercontent.com/drive-storage/abc=s220', parents:[]},
+  [TINY]:{id:TINY, name:'tiny.jpg', mimeType:'image/jpeg', size:'20000', thumbnailLink:'https://lh3.googleusercontent.com/drive-storage/def=s220', parents:[]},
+  [HEIC]:{id:HEIC, name:'a.heic', mimeType:'image/heic', size:'900', thumbnailLink:'https://lh3.googleusercontent.com/drive-storage/ghi=s220', parents:[]}
+};
+
+test('xem nhanh ảnh nặng: lấy bản thu nhỏ 2048px qua thumbnailLink, kèm token và cờ resized', () => {
+  const s = service({items:photos});
+  s.setWeb(() => reply('SMALLJPEG', 'image/jpeg'));
+  const result = s.call({action:'drive_download', fileId:BIG, mode:'display'});
+  assert.equal(result.ok, true);
+  assert.equal(result.resized, true);
+  assert.equal(result.mimeType, 'image/jpeg');
+  assert.equal(Buffer.from(result.data, 'base64').toString(), 'SMALLJPEG');
+  assert.equal(result.originalSize, 5 * 1024 * 1024);
+  assert.equal(s.calls.fetched[0].url, 'https://lh3.googleusercontent.com/drive-storage/abc=s2048');
+  assert.equal(s.calls.fetched[0].options.headers.Authorization, 'Bearer oauth-token');
+});
+
+test('xem nhanh: ảnh nhỏ gửi nguyên bản; chế độ preview/download luôn là ảnh gốc', () => {
+  const s = service({items:photos});
+  s.setWeb(() => reply('SMALLJPEG', 'image/jpeg'));
+  const tiny = s.call({action:'drive_download', fileId:TINY, mode:'display'});
+  assert.equal(tiny.ok, true);
+  assert.equal(tiny.resized, undefined);
+  assert.deepEqual([...Buffer.from(tiny.data, 'base64')], [1, 2, 3]);
+  const full = s.call({action:'drive_download', fileId:BIG, mode:'preview'});
+  assert.equal(full.resized, undefined);
+  assert.deepEqual([...Buffer.from(full.data, 'base64')], [1, 2, 3]);
+  assert.equal(s.calls.fetched.length, 0);
+});
+
+test('xem nhanh: thumbnailLink lỗi hoặc trả không phải ảnh → quay về ảnh gốc', () => {
+  const s = service({items:photos});
+  s.setWeb(() => reply('nope', 'text/html', 403));
+  assert.deepEqual([...Buffer.from(s.call({action:'drive_download', fileId:BIG, mode:'display'}).data, 'base64')], [1, 2, 3]);
+  s.setWeb(() => reply('<html>', 'text/html'));
+  const again = s.call({action:'drive_download', fileId:BIG, mode:'display'});
+  assert.equal(again.resized, undefined);
+  s.setWeb(() => { throw new Error('boom'); });
+  assert.equal(s.call({action:'drive_download', fileId:BIG, mode:'display'}).ok, true);
+});
+
+test('xem nhanh: ảnh HEIC (trình duyệt không hiển thị) luôn đi qua bản thu nhỏ JPEG', () => {
+  const s = service({items:photos});
+  s.setWeb(() => reply('JPEGFROMHEIC', 'image/jpeg'));
+  const result = s.call({action:'drive_download', fileId:HEIC, mode:'display'});
+  assert.equal(result.resized, true);
+  assert.equal(Buffer.from(result.data, 'base64').toString(), 'JPEGFROMHEIC');
+});
+
+test('ảnh nhỏ: tải song song bằng fetchAll (2 lượt), tệp lỗi quay về getThumbnail', () => {
+  const s = service({items:photos});
+  s.thumbs[TINY] = [7, 7];
+  s.setWeb((url) => url.includes('/drive/v3/files/') ? reply({thumbnailLink:url.includes(BIG) ? 'https://lh3.googleusercontent.com/x/big=s220' : ''}) : reply('THUMB', 'image/jpeg'));
+  const result = s.call({action:'drive_thumbnails', fileIds:[BIG, TINY]});
+  assert.equal(result.ok, true);
+  assert.equal(s.calls.fetchAll.length, 2);
+  assert.equal(s.calls.fetchAll[1].length, 1);
+  assert.match(s.calls.fetchAll[1][0], /big=s320$/);
+  assert.equal(Buffer.from(result.items[0].data, 'base64').toString(), 'THUMB');
+  assert.deepEqual([...Buffer.from(result.items[1].data, 'base64')], [7, 7]);
+});
+
+test('ảnh nhỏ: fetchAll hỏng hẳn vẫn trả kết quả bằng cách cũ', () => {
+  const s = service({items:photos});
+  s.thumbs[BIG] = [5];
+  s.setWeb(() => { throw new Error('quota'); });
+  const result = s.call({action:'drive_thumbnails', fileIds:[BIG, 'notFoundFile0001']});
+  assert.equal(result.ok, true);
+  assert.deepEqual([...Buffer.from(result.items[0].data, 'base64')], [5]);
+  assert.equal(result.items[1].ok, false);
 });

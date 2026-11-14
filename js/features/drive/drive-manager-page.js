@@ -10,7 +10,7 @@ const DriveManager = (() => {
   const SORT_KEY = 'drive-manager-sort';
   const PAGE_SIZE_KEY = 'drive-manager-page-size';
   const PAGE_SIZES = [20, 50, 100];
-  const THUMB_BATCH = 6, EMPTY_PAGE_HOPS = 5, THUMB_CACHE_LIMIT = 400, UPLOAD_WORKERS = 2;
+  const THUMB_BATCH = 8, THUMB_WORKERS = 2, EMPTY_PAGE_HOPS = 5, THUMB_CACHE_LIMIT = 400, UPLOAD_WORKERS = 2;
   const VIEWS = {
     folder: {label:'Drive của tôi', icon:'drive', empty:'Thư mục này chưa có tệp nào', hint:'Kéo thả tệp vào đây hoặc bấm “Mới” để tải lên.'},
     recent: {label:'Gần đây', icon:'clock', empty:'Chưa có tệp mở gần đây', hint:'Các tệp bạn vừa xem hoặc chỉnh sửa sẽ xuất hiện ở đây.'},
@@ -326,7 +326,12 @@ const DriveManager = (() => {
       DriveViewer.open(file, {
         files:shown.filter(item => !isFolder(item) && Api.viewerKind(item) && Api.viewerKind(item) !== 'document'),
         kindOf:Api.viewerKind,
-        load:async (item, signal) => { const result = await Api.download(item.id, 'preview', signal); return {bytes:result.bytes, mimeType:result.mimeType}; },
+        load:async (item, signal, opts) => {
+          // Ảnh: bản xem nhanh (hoặc bản gốc khi bấm "Bản gốc"); loại khác: tải như cũ.
+          if (Api.viewerKind(item) === 'image') return Api.previewImage(item, {full:!!(opts && opts.full), signal});
+          const result = await Api.download(item.id, 'preview', signal);
+          return {bytes:result.bytes, mimeType:result.mimeType};
+        },
         thumb:item => thumbs.get(item.id),
         fetchThumbs:ids => requestThumbs(ids),
         details:item => [['Tên', item.name], ['Loại', Api.typeLabel(item)], ['Dung lượng', Api.formatBytes(item.size)], ['Sửa đổi', item.modifiedTime ? Api.formatDateTime(item.modifiedTime) : ''], ['Ngày tạo', item.createdTime ? Api.formatDateTime(item.createdTime) : ''], ['Chủ sở hữu', item.owner], ['Người sửa cuối', item.lastModifiedBy]],
@@ -1069,29 +1074,49 @@ const DriveManager = (() => {
     }, {rootMargin:'240px'});
     nodes.forEach(node => observer.observe(node));
   }
+  function rememberThumb(id, data) {
+    const blob = new Blob([data.bytes], {type:data.mimeType || 'image/jpeg'});
+    thumbs.set(id, URL.createObjectURL(blob));
+    if (thumbs.size > THUMB_CACHE_LIMIT) { const [oldest, url] = thumbs.entries().next().value; URL.revokeObjectURL(url); thumbs.delete(oldest); }
+  }
+  // Ảnh nhỏ: bộ nhớ trình duyệt trước (mở lại thư mục là có ngay), phần còn thiếu hỏi máy chủ theo lô, 2 lô chạy song song.
   async function requestThumbs(ids) {
     const wanted = [...new Set(ids)].filter(id => !thumbs.has(id) && !thumbPending.has(id) && !thumbFailed.has(id));
-    for (let i = 0; i < wanted.length; i += THUMB_BATCH) {
-      const batch = wanted.slice(i, i + THUMB_BATCH);
-      batch.forEach(id => thumbPending.add(id));
-      const own = generation;
-      try {
-        const result = await Api.thumbnails(batch);
-        (result.items || []).forEach(item => {
-          if (!item.ok || !item.data) { thumbFailed.add(item.id); return; }
-          const blob = new Blob([Uint8Array.from(atob(item.data), ch => ch.charCodeAt(0))], {type:item.mimeType || 'image/jpeg'});
-          thumbs.set(item.id, URL.createObjectURL(blob));
-          if (thumbs.size > THUMB_CACHE_LIMIT) { const [oldest, url] = thumbs.entries().next().value; URL.revokeObjectURL(url); thumbs.delete(oldest); }
-        });
-      } catch (_) {
-        // Lỗi tạm thời (mạng / quá tải): cho thử lại MỘT lần sau ít giây, không đánh dấu hỏng vĩnh viễn ngay.
-        const again = batch.filter(id => !thumbRetried.has(id));
-        batch.forEach(id => { if (thumbRetried.has(id)) thumbFailed.add(id); else thumbRetried.add(id); });
-        if (again.length && own === generation) setTimeout(() => { if (host && own === generation) requestThumbs(again); }, 2500);
-      }
-      finally { batch.forEach(id => thumbPending.delete(id)); }
-      if (own === generation && host) applyThumbs(batch);
-    }
+    if (!wanted.length) return;
+    const own = generation;
+    wanted.forEach(id => thumbPending.add(id));
+    const cold = [];
+    try {
+      await Promise.all(wanted.map(async id => {
+        const file = byId(id), hit = file && await Api.cachedThumbnail(file).catch(() => null);
+        if (hit) rememberThumb(id, hit); else cold.push(id);
+      }));
+      if (own === generation && host) applyThumbs(wanted.filter(id => thumbs.has(id)));
+      const queue = [];
+      for (let i = 0; i < cold.length; i += THUMB_BATCH) queue.push(cold.slice(i, i + THUMB_BATCH));
+      const worker = async () => {
+        for (let batch = queue.shift(); batch; batch = queue.shift()) {
+          try {
+            const result = await Api.thumbnails(batch);
+            (result.items || []).forEach(item => {
+              if (!item.ok || !item.data) { thumbFailed.add(item.id); return; }
+              const data = {bytes:Uint8Array.from(atob(item.data), ch => ch.charCodeAt(0)), mimeType:item.mimeType || 'image/jpeg'};
+              rememberThumb(item.id, data);
+              const file = byId(item.id);
+              if (file) Api.storeThumbnail(file, data);
+            });
+          } catch (_) {
+            // Lỗi tạm thời (mạng / quá tải): cho thử lại MỘT lần sau ít giây, không đánh dấu hỏng vĩnh viễn ngay.
+            const again = batch.filter(id => !thumbRetried.has(id));
+            batch.forEach(id => { if (thumbRetried.has(id)) thumbFailed.add(id); else thumbRetried.add(id); });
+            if (again.length && own === generation) setTimeout(() => { if (host && own === generation) requestThumbs(again); }, 2500);
+          }
+          batch.forEach(id => thumbPending.delete(id));
+          if (own === generation && host) applyThumbs(batch);
+        }
+      };
+      await Promise.all(Array.from({length:Math.min(THUMB_WORKERS, queue.length)}, worker));
+    } finally { wanted.forEach(id => thumbPending.delete(id)); }
   }
   // Chèn ảnh vào đúng phần tử (không vẽ lại cả danh sách để giữ vị trí cuộn / focus).
   function applyThumbs(ids) {

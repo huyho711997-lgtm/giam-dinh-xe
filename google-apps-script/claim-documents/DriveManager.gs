@@ -11,6 +11,9 @@ const DRIVE_UPLOAD_MAX = 10 * 1024 * 1024;     // giới hạn mỗi tệp tải
 const DRIVE_DOWNLOAD_MAX = 20 * 1024 * 1024;   // giới hạn tải về / xem trước qua dịch vụ
 const DRIVE_BULK_LIMIT = 100;
 const DRIVE_THUMB_LIMIT = 24;
+const DRIVE_DISPLAY_EDGE = 2048;               // cạnh dài của ảnh xem nhanh (ảnh gốc vẫn tải được ở chế độ 'preview')
+const DRIVE_DISPLAY_MIN_BYTES = 600 * 1024;    // ảnh nhỏ hơn mức này gửi nguyên bản, không cần thu nhỏ
+const DRIVE_THUMB_EDGE = 320;
 const DRIVE_ID_PATTERN = /^[\w-]{10,120}$/;
 const DRIVE_FILE_FIELDS = 'id,name,mimeType,size,quotaBytesUsed,modifiedTime,createdTime,viewedByMeTime,starred,trashed,parents,webViewLink,hasThumbnail,shared,ownedByMe,description,owners(displayName,emailAddress),lastModifyingUser(displayName),capabilities(canEdit,canRename,canTrash,canDelete,canAddChildren,canDownload,canMoveItemWithinDrive,canUntrash)';
 // Định dạng xuất khi TẢI VỀ tệp Google gốc (Docs/Sheets/Slides/Drawings). Xem trước luôn xuất PDF.
@@ -297,10 +300,30 @@ function driveUpload_(request, props, auth) {
   } finally { lock.releaseLock(); }
 }
 
+// Đổi cạnh dài của thumbnailLink (dạng ...=s220) sang kích thước mong muốn.
+function driveSizedLink_(link, edge) {
+  const text = String(link || '');
+  return /=[sw]\d+[^\/]*$/i.test(text) ? text.replace(/=[sw]\d+[^\/]*$/i, '=s' + edge) : '';
+}
+
+function driveAuthHeaders_() { return {Authorization:'Bearer ' + ScriptApp.getOAuthToken()}; }
+
+// Bản thu nhỏ do Google dựng sẵn: nhẹ hơn ảnh gốc nhiều lần nên tải nhanh. Lỗi → null để quay về ảnh gốc.
+function driveDisplayBlob_(meta) {
+  try {
+    const url = driveSizedLink_(meta.thumbnailLink, DRIVE_DISPLAY_EDGE);
+    if (!url) return null;
+    const response = UrlFetchApp.fetch(url, {headers:driveAuthHeaders_(), muteHttpExceptions:true});
+    if (response.getResponseCode() !== 200) return null;
+    const blob = response.getBlob();
+    return /^image\//i.test(String(blob.getContentType())) ? blob : null;
+  } catch (_) { return null; }
+}
+
 function driveDownload_(request) {
   const id = driveId_(request.fileId, false);
-  const preview = request.mode === 'preview';
-  const meta = driveService_().Files.get(id, {fields:'id,name,mimeType,size,trashed', supportsAllDrives:true});
+  const preview = request.mode === 'preview' || request.mode === 'display';
+  const meta = driveService_().Files.get(id, {fields:'id,name,mimeType,size,trashed,thumbnailLink', supportsAllDrives:true});
   if (meta.mimeType === DRIVE_FOLDER_MIME) throw new Error('Không thể tải trực tiếp một thư mục.');
   const native = String(meta.mimeType).indexOf('application/vnd.google-apps.') === 0;
   let blob, name = meta.name, mimeType = meta.mimeType;
@@ -316,7 +339,17 @@ function driveDownload_(request) {
     mimeType = target.mime;
     if (!new RegExp('\\.' + target.ext + '$', 'i').test(name)) name += '.' + target.ext;
   } else {
-    if (Number(meta.size || 0) > DRIVE_DOWNLOAD_MAX) throw new Error('Tệp lớn hơn 20 MB, hãy mở trên Google Drive để tải.');
+    const original = Number(meta.size || 0);
+    // Chế độ xem nhanh cho ảnh: ảnh nặng (hoặc định dạng trình duyệt không hiển thị như HEIC) → bản thu nhỏ.
+    const plain = /^image\/(jpeg|png|webp|gif)$/i.test(String(meta.mimeType));
+    if (request.mode === 'display' && /^image\//i.test(String(meta.mimeType)) && (original > DRIVE_DISPLAY_MIN_BYTES || !plain)) {
+      const small = driveDisplayBlob_(meta);
+      if (small) {
+        const smallBytes = small.getBytes();
+        if (smallBytes.length < original || !plain) return {ok:true, name, mimeType:small.getContentType(), size:smallBytes.length, originalSize:original, resized:true, data:Utilities.base64Encode(smallBytes)};
+      }
+    }
+    if (original > DRIVE_DOWNLOAD_MAX) throw new Error('Tệp lớn hơn 20 MB, hãy mở trên Google Drive để tải.');
     blob = DriveApp.getFileById(id).getBlob();
   }
   const bytes = blob.getBytes();
@@ -324,10 +357,30 @@ function driveDownload_(request) {
   return {ok:true, name, mimeType, size:bytes.length, data:Utilities.base64Encode(bytes)};
 }
 
+// Ảnh nhỏ: hỏi thumbnailLink và tải ảnh SONG SONG (fetchAll) thay vì từng tệp một; tệp nào lỗi thì quay về getThumbnail.
 function driveThumbnails_(request) {
   const ids = Array.isArray(request.fileIds) ? request.fileIds.slice(0, DRIVE_THUMB_LIMIT) : [];
   if (!ids.length || !ids.every(id => typeof id === 'string' && DRIVE_ID_PATTERN.test(id))) throw new Error('Tệp không hợp lệ.');
+  const headers = driveAuthHeaders_(), found = {};
+  try {
+    const metas = UrlFetchApp.fetchAll(ids.map(id => ({url:'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(id) + '?supportsAllDrives=true&fields=thumbnailLink', headers, muteHttpExceptions:true})));
+    const wanted = [];
+    metas.forEach((response, index) => {
+      try {
+        const url = response.getResponseCode() === 200 ? driveSizedLink_(JSON.parse(response.getContentText()).thumbnailLink, DRIVE_THUMB_EDGE) : '';
+        if (url) wanted.push({id:ids[index], url});
+      } catch (_) {}
+    });
+    if (wanted.length) UrlFetchApp.fetchAll(wanted.map(item => ({url:item.url, headers, muteHttpExceptions:true}))).forEach((response, index) => {
+      try {
+        if (response.getResponseCode() !== 200) return;
+        const blob = response.getBlob();
+        if (/^image\//i.test(String(blob.getContentType()))) found[wanted[index].id] = {id:wanted[index].id, ok:true, mimeType:blob.getContentType(), data:Utilities.base64Encode(blob.getBytes())};
+      } catch (_) {}
+    });
+  } catch (_) { /* chuyển sang cách cũ bên dưới */ }
   return {ok:true, items:ids.map(id => {
+    if (found[id]) return found[id];
     try {
       const thumbnail = DriveApp.getFileById(id).getThumbnail();
       if (!thumbnail) return {id, ok:false};

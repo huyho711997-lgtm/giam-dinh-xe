@@ -74,6 +74,8 @@
 
 
     function executeLogoutFlow() {
+      // Xóa ảnh Google Drive lưu tạm trong trình duyệt để không còn lại trên máy dùng chung.
+      if (typeof DriveManagerApi !== 'undefined') DriveManagerApi.clearStore();
       firebase.auth().signOut().then(() => {
         triggerToast('Đã đóng phiên kết nối bảo mật.', 'warning');
       }).catch((err) => {

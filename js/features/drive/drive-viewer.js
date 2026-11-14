@@ -92,10 +92,12 @@ const DriveViewer = (() => {
   let current = null, hintShown = false;
   const cache = new Map(); // id → Promise<{bytes, mimeType}>
 
-  function fetchBytes(state, file, signal) {
-    if (cache.has(file.id)) { const hit = cache.get(file.id); cache.delete(file.id); cache.set(file.id, hit); return hit; }
-    const pending = Promise.resolve().then(() => state.options.load(file, signal)).catch(error => { cache.delete(file.id); throw error; });
-    cache.set(file.id, pending);
+  // full = true: ảnh gốc độ phân giải đầy đủ (mặc định là bản xem nhanh, nhẹ hơn nhiều).
+  function fetchBytes(state, file, signal, full) {
+    const key = file.id + (full ? '#full' : '');
+    if (cache.has(key)) { const hit = cache.get(key); cache.delete(key); cache.set(key, hit); return hit; }
+    const pending = Promise.resolve().then(() => state.options.load(file, signal, {full:!!full})).catch(error => { cache.delete(key); throw error; });
+    cache.set(key, pending);
     while (cache.size > CACHE_LIMIT) cache.delete(cache.keys().next().value);
     return pending;
   }
@@ -275,6 +277,7 @@ const DriveViewer = (() => {
             <button type="button" data-v-act="rotateLeft" aria-label="Xoay trái" title="Xoay trái (Shift+R)">${icon('rotateLeft')}</button>
             <button type="button" data-v-act="rotate" aria-label="Xoay phải" title="Xoay phải (R)">${icon('rotate')}</button>
             <button type="button" data-v-act="fit" aria-label="Vừa khung" title="Vừa khung (0)">${icon('fit')}</button>
+            <button type="button" class="drv-v-full" data-v-act="full" hidden title="Tải ảnh gốc độ phân giải đầy đủ để phóng to xem chi tiết">${icon('image')} Bản gốc</button>
             <span class="drv-v-sep"></span>
             <button type="button" data-v-act="info" aria-label="Thông tin" aria-pressed="false" title="Thông tin (I)">${icon('info')}</button>
             <button type="button" data-v-act="fullscreen" aria-label="Toàn màn hình" title="Toàn màn hình (F)">${icon('fullscreen')}</button>
@@ -284,8 +287,8 @@ const DriveViewer = (() => {
       </div>
       <footer class="drv-v-foot" data-v-foot hidden></footer>`;
     const q = selector => overlay.querySelector(selector);
-    const state = current = {overlay, options, files, index:files.findIndex(item => item.id === file.id), urls:[], dir:0, overflow:document.body.style.overflow, previousFocus:document.activeElement,
-      stage:q('[data-v-stage]'), tools:q('[data-v-tools]'), foot:q('[data-v-foot]'), strip:q('[data-v-strip]'), info:q('[data-v-info]'), hint:q('[data-v-hint]'), status:q('[data-v-status]'), pct:q('.drv-v-pct')};
+    const state = current = {overlay, options, files, index:files.findIndex(item => item.id === file.id), urls:[], full:new Set(), dir:0, overflow:document.body.style.overflow, previousFocus:document.activeElement,
+      stage:q('[data-v-stage]'), tools:q('[data-v-tools]'), foot:q('[data-v-foot]'), strip:q('[data-v-strip]'), info:q('[data-v-info]'), hint:q('[data-v-hint]'), status:q('[data-v-status]'), pct:q('.drv-v-pct'), fullButton:q('.drv-v-full')};
     q('[data-v-close]').onclick = close;
     q('[data-v-prev]').onclick = () => step(state, -1);
     q('[data-v-next]').onclick = () => step(state, 1);
@@ -294,7 +297,8 @@ const DriveViewer = (() => {
       const button = event.target.closest('[data-v-act]');
       if (!button) return;
       const act = button.dataset.vAct;
-      if (act === 'info') toggleInfo(state);
+      if (act === 'full') { state.full.add(state.files[state.index].id); show(state); }
+      else if (act === 'info') toggleInfo(state);
       else if (act === 'fullscreen') toggleFullscreen(state);
       else state.view?.[act]?.();
     };
@@ -362,8 +366,10 @@ const DriveViewer = (() => {
       stage.className = 'drv-v-stage is-image';
       if (!stage.querySelector('.drv-v-img-wrap')) stage.replaceChildren();
       placePreview(state, file);
-      setStatus(state, 'Đang tải ảnh…');
+      setStatus(state, state.full.has(file.id) ? 'Đang tải ảnh gốc…' : 'Đang tải ảnh…');
+      state.fullButton.hidden = true;
       refreshStrip(state);
+      wantThumbs(state); // dải ảnh nhỏ không phải chờ ảnh chính tải xong
       if (state.info.classList.contains('is-open')) renderInfo(state);
     } else {
       purgeWraps(state);
@@ -373,12 +379,14 @@ const DriveViewer = (() => {
     }
     wake(state);
     try {
-      const data = await fetchBytes(state, file, controller.signal);
+      const full = state.full.has(file.id);
+      const data = await fetchBytes(state, file, controller.signal, full);
       if (current !== state || state.controller !== controller) return;
       await RENDER[kind](state, file, data);
       if (current !== state || state.controller !== controller) return;
       setStatus(state, '');
       if (kind === 'image') {
+        state.fullButton.hidden = !(data.resized && !full);
         showHint(state);
         wantThumbs(state);
         // Nạp sẵn ảnh kế tiếp và ảnh trước để bấm → là có ngay.
@@ -398,7 +406,7 @@ const DriveViewer = (() => {
     state.tools.innerHTML = '';
     state.stage.className = 'drv-v-stage';
     state.stage.innerHTML = `<div class="drv-v-message"><span class="drv-v-message-art">${icon('alert')}</span><strong>Chưa mở được tệp này</strong><p>${esc(message)}</p><div class="drv-v-message-actions"><button type="button" class="sf-button sf-primary" data-v-retry>${icon('refresh')} Thử lại</button>${file.webViewLink ? `<a class="sf-button" href="${esc(file.webViewLink)}" target="_blank" rel="noopener noreferrer">${icon('external')} Mở trên Google Drive</a>` : ''}</div></div>`;
-    state.stage.querySelector('[data-v-retry]').onclick = () => { cache.delete(file.id); show(state); };
+    state.stage.querySelector('[data-v-retry]').onclick = () => { cache.delete(file.id); cache.delete(file.id + '#full'); show(state); };
   }
   function tool(state, name, label, title, handler, text) {
     const button = document.createElement('button');
@@ -433,7 +441,7 @@ const DriveViewer = (() => {
       wrap.appendChild(img);
       stage.appendChild(wrap);
       state.dims = [nw, nh];
-      setMeta(state, [nw + ' × ' + nh + ' px']);
+      setMeta(state, [nw + ' × ' + nh + ' px' + (data.resized ? ' (bản xem nhanh)' : '')]);
       if (state.info.classList.contains('is-open')) renderInfo(state);
 
       const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
