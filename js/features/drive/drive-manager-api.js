@@ -246,9 +246,9 @@ const DriveManagerApi = (() => {
       return call('drive_update_content', {fileId, expectedModifiedTime:expectedModifiedTime || '', data}, signal);
     },
     // Trả về {name, mimeType, bytes:Uint8Array}
-    // mode: 'download' (ảnh gốc) | 'preview' (gốc / PDF cho tài liệu) | 'display' (ảnh nặng → bản thu nhỏ để mở nhanh)
+    // mode: 'docx' (.doc → .docx để chỉnh sửa) | 'download' (ảnh gốc) | 'preview' (gốc / PDF cho tài liệu) | 'display' (ảnh nặng → bản thu nhỏ để mở nhanh)
     async download(fileId, mode, signal) {
-      const result = await call('drive_download', {fileId, mode:mode === 'preview' || mode === 'display' ? mode : 'download'}, signal);
+      const result = await call('drive_download', {fileId, mode:mode === 'preview' || mode === 'display' || mode === 'docx' ? mode : 'download'}, signal);
       return {name:result.name, mimeType:result.mimeType, originalMimeType:result.originalMimeType || '', serverVersion:result.serverVersion || '', bytes:decode(result.data), resized:!!result.resized, originalSize:Number(result.originalSize || 0)};
     },
     // Ảnh xem nhanh: ưu tiên bộ nhớ trình duyệt (còn nguyên sau khi tải lại trang), chưa có mới hỏi máy chủ.

@@ -471,3 +471,18 @@ test('xem trước .doc: máy chủ đổi sang PDF qua bản sao tạm rồi x�
   assert.equal(original.mimeType, 'application/msword');
   assert.equal(s.calls.remove.length, 1);
 });
+
+test('chuyển .doc sang .docx để chỉnh sửa: xuất qua bản tạm, xóa bản tạm; chỉ áp dụng cho .doc', () => {
+  const s = service();
+  s.db.docOldFile000001 = {id:'docOldFile000001', name:'Mau cu.doc', mimeType:'application/msword', parents:['folderAAAAAAAAAA'], size:'35000'};
+  s.db.copy000000000001 = {id:'copy000000000001', name:'tmp', mimeType:'application/vnd.google-apps.document'};
+  s.setWeb(url => ({getResponseCode:() => 200, getBlob:() => ({getBytes:() => [0x50, 0x4b, 3, 4]})}));
+  const result = s.call({action:'drive_download', fileId:'docOldFile000001', mode:'docx'});
+  assert.equal(result.ok, true);
+  assert.equal(result.name, 'Mau cu.docx');
+  assert.equal(result.mimeType, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  assert.match(s.calls.fetched[0].url, /copy000000000001\/export\?mimeType=application%2Fvnd\.openxmlformats/);
+  assert.deepEqual(s.calls.remove, ['copy000000000001']);
+  // Tệp PDF không được phép đi qua đường chuyển đổi này.
+  assert.equal(s.call({action:'drive_download', fileId:'fileCCCCCCCCCCCC', mode:'docx'}).ok, false);
+});

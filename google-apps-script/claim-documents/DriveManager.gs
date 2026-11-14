@@ -361,17 +361,29 @@ function driveConvertTarget_(meta) {
   if (/\.pptx?$/i.test(meta.name || '') && meta.mimeType === 'application/octet-stream') return 'application/vnd.google-apps.presentation';
   return '';
 }
-function drivePreviewPdf_(id, meta, target) {
+// Tạo bản sao tạm định dạng Google, chạy read(tempId) để lấy dữ liệu, rồi luôn xóa bản tạm.
+function driveWithTemp_(id, target, read) {
   let tempId = '';
   try {
     const copy = driveService_().Files.copy({name:'~xem-truoc-' + id.slice(0, 8), mimeType:target}, id, {fields:'id', supportsAllDrives:true});
     tempId = copy.id;
-    return DriveApp.getFileById(tempId).getAs('application/pdf');
+    return read(tempId);
   } catch (error) {
-    throw new Error('Chưa chuyển được tệp này sang PDF để xem (tệp có thể bị hỏng hoặc quá phức tạp). Hãy tải về hoặc mở trên Google Drive.');
+    throw new Error('Chưa chuyển được tệp này (tệp có thể bị hỏng hoặc quá phức tạp). Hãy tải về hoặc mở trên Google Drive.');
   } finally {
     if (tempId) { try { driveService_().Files.remove(tempId, {supportsAllDrives:true}); } catch (_) {} }
   }
+}
+function drivePreviewPdf_(id, meta, target) {
+  return driveWithTemp_(id, target, tempId => DriveApp.getFileById(tempId).getAs('application/pdf'));
+}
+// .doc → .docx (qua Google Docs) để chỉnh sửa trong ứng dụng; bố cục có thể lệch nhẹ so với bản gốc.
+function driveDocxFromDoc_(id) {
+  return driveWithTemp_(id, 'application/vnd.google-apps.document', tempId => {
+    const response = UrlFetchApp.fetch('https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(tempId) + '/export?mimeType=' + encodeURIComponent(DRIVE_DOCX_MIME), {headers:driveAuthHeaders_(), muteHttpExceptions:true});
+    if (response.getResponseCode() !== 200) throw new Error('export failed');
+    return response.getBlob();
+  });
 }
 
 function driveDownload_(request) {
@@ -404,8 +416,13 @@ function driveDownload_(request) {
       }
     }
     if (original > DRIVE_DOWNLOAD_MAX) throw new Error('Tệp lớn hơn 20 MB, hãy mở trên Google Drive để tải.');
-    const convert = preview && request.mode === 'preview' ? driveConvertTarget_(meta) : '';
-    if (convert) {
+    const convert = request.mode === 'preview' || request.mode === 'docx' ? driveConvertTarget_(meta) : '';
+    if (request.mode === 'docx') {
+      if (convert !== 'application/vnd.google-apps.document') throw new Error('Chỉ chuyển được tệp Word đời cũ (.doc) sang .docx.');
+      blob = driveDocxFromDoc_(id);
+      mimeType = DRIVE_DOCX_MIME;
+      name = String(name).replace(/\.[^.]*$/, '') + '.docx';
+    } else if (convert) {
       blob = drivePreviewPdf_(id, meta, convert);
       mimeType = 'application/pdf';
       name = String(name).replace(/\.[^.]*$/, '') + '.pdf';

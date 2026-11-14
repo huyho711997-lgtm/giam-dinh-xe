@@ -351,7 +351,7 @@ const DriveManager = (() => {
       const result = await Api.download(file.id, 'preview');
       if (result.mimeType !== 'application/pdf') throw new Error(result.serverVersion ? 'Máy chủ chưa đổi được tệp này sang PDF (loại tệp trên Drive: ' + (result.originalMimeType || 'không rõ') + '). Hãy tải về hoặc mở trên Google Drive.' : 'stale-server');
       const viewerFile = {...file, source:'drive', originalName:file.name.replace(/\.[^.]*$/, '') + '.pdf', mimeType:'application/pdf'};
-      SharedFormsViewer.open(viewerFile, null, {loadBytes:async () => result.bytes.buffer});
+      SharedFormsViewer.open(viewerFile, null, {loadBytes:async () => result.bytes.buffer, onEdit:wordEditKind(file) ? () => editWord(file) : null});
     } catch (error) {
       if (error.message === 'stale-server') toast('Địa chỉ Apps Script mà ứng dụng đang gọi vẫn chạy mã cũ (chưa có bản chuyển PDF). Hãy kiểm tra bản triển khai đã chọn “Phiên bản mới” và đúng URL /exec. Đang mở trên Google Drive.', 'warning');
       else toast(error.message, 'error');
@@ -364,23 +364,32 @@ const DriveManager = (() => {
     const viewerFile = {...file, source:'drive', originalName:native ? file.name.replace(/\.pdf$/i, '') + '.pdf' : file.name, mimeType:file.mimeType};
     SharedFormsViewer.open(viewerFile, null, {
       loadBytes:async signal => (await Api.download(file.id, 'preview', signal)).bytes.buffer,
-      onEdit:canEditWord(file) ? () => editWord(file) : null
+      onEdit:wordEditKind(file) ? () => editWord(file) : null
     });
   }
 
   // ---- Chỉnh sửa trực tiếp tệp Word (.docx) --------------------------------------------------
   const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-  function canEditWord(file) {
-    return !!file && typeof DriveWordEditor !== 'undefined' && typeof DocxPatch !== 'undefined' && typeof JSZip !== 'undefined'
-      && !isFolder(file) && !file.trashed && view !== 'trash' && !Api.isNative(file)
-      && (file.mimeType === DOCX_MIME || /\.docx$/i.test(file.name || '')) && Number(file.size || 0) <= Api.UPLOAD_MAX;
+  // 'docx' sửa trực tiếp; 'doc' (Word đời cũ) được máy chủ đổi sang .docx trước, chỉ lưu thành bản sao/tải về.
+  function wordEditKind(file) {
+    if (!file || typeof DriveWordEditor === 'undefined' || typeof DocxPatch === 'undefined' || typeof JSZip === 'undefined') return '';
+    if (isFolder(file) || file.trashed || view === 'trash' || Api.isNative(file) || Number(file.size || 0) > Api.UPLOAD_MAX) return '';
+    if (file.mimeType === DOCX_MIME || /\.docx$/i.test(file.name || '')) return 'docx';
+    if (file.mimeType === 'application/msword' || /\.doc$/i.test(file.name || '')) return 'doc';
+    return '';
   }
-  function editWord(file) {
+  const canEditWord = file => !!wordEditKind(file);
+  function editWord(sourceFile) {
+    const kind = wordEditKind(sourceFile);
+    if (!kind) return;
     if (typeof SharedFormsViewer !== 'undefined') SharedFormsViewer.close?.();
-    if (Number(file.size || 0) > Api.UPLOAD_MAX) { toast('Tệp lớn hơn 10 MB nên chưa chỉnh sửa trực tiếp được.', 'warning'); return; }
+    const legacy = kind === 'doc';
+    // Tệp .doc: sửa trên bản .docx chuyển từ bản gốc, không bao giờ ghi đè tệp .doc.
+    const file = legacy ? {...sourceFile, name:sourceFile.name.replace(/\.[^.]*$/, '') + '.docx', modifiedTime:''} : sourceFile;
     DriveWordEditor.open(file, {
-      canOverwrite:file.can?.edit !== false && !file.system,
-      load:async signal => (await Api.download(file.id, 'download', signal)).bytes.buffer,
+      canOverwrite:!legacy && file.can?.edit !== false && !file.system,
+      notice:legacy ? 'Tệp .doc được chuyển sang .docx để sửa nên bố cục có thể lệch nhẹ so với bản gốc. Khi lưu sẽ tạo tệp .docx mới, tệp .doc gốc không bị thay đổi.' : '',
+      load:async signal => (await Api.download(sourceFile.id, legacy ? 'docx' : 'download', signal)).bytes.buffer,
       save:async ({mode, name, bytes, expectedModifiedTime}) => {
         if (mode === 'overwrite') return Api.updateContent(file.id, bytes, expectedModifiedTime);
         const copy = new File([bytes], name, {type:DOCX_MIME});

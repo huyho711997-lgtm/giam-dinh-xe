@@ -473,13 +473,13 @@ const DriveWordEditor = (() => {
     if (parsed.getElementsByTagName('parsererror').length) throw new Error('Tài liệu sau khi sửa không hợp lệ nên chưa ghi.');
     return {bytes, xml, plan};
   }
-  const copyName = name => name.replace(/(\.docx)?$/i, ' (đã sửa).docx');
+  const copyName = name => name.replace(/\.(docx?|)$/i, '') + ' (đã sửa).docx';
   function openSave(state) {
     if (!state.dirty() || state.saving) return;
     const canOverwrite = state.options.canOverwrite !== false;
     const box = dialog(state, `<h2>Lưu thay đổi</h2><p>Bạn muốn lưu “${esc(state.file.name)}” thế nào?</p>
       <div class="dwe-choices">
-        <button type="button" class="dwe-choice" data-mode="overwrite" ${canOverwrite ? '' : 'disabled'}><span class="dwe-choice-icon">${icon('cloud')}</span><span><strong>Ghi đè bản gốc trên Drive</strong><small>${canOverwrite ? 'Thay nội dung tệp hiện tại. Google Drive vẫn giữ các phiên bản trước nên có thể khôi phục.' : 'Bạn không có quyền sửa tệp này.'}</small></span></button>
+        <button type="button" class="dwe-choice" data-mode="overwrite" ${canOverwrite ? '' : 'disabled'}><span class="dwe-choice-icon">${icon('cloud')}</span><span><strong>Ghi đè bản gốc trên Drive</strong><small>${canOverwrite ? 'Thay nội dung tệp hiện tại. Google Drive vẫn giữ các phiên bản trước nên có thể khôi phục.' : (state.options.notice ? 'Không áp dụng: bạn đang sửa bản .docx chuyển từ tệp .doc.' : 'Bạn không có quyền sửa tệp này.')}</small></span></button>
         <button type="button" class="dwe-choice" data-mode="copy"><span class="dwe-choice-icon">${icon('copy')}</span><span><strong>Lưu thành bản sao</strong><small>Giữ nguyên bản gốc, tạo tệp mới cùng thư mục.</small><input type="text" class="dwe-name" value="${esc(copyName(state.file.name))}" maxlength="200" aria-label="Tên bản sao"></span></button>
         <button type="button" class="dwe-choice" data-mode="download"><span class="dwe-choice-icon">${icon('download')}</span><span><strong>Tải về máy</strong><small>Không đụng tới Google Drive.</small></span></button>
       </div>
@@ -567,9 +567,10 @@ const DriveWordEditor = (() => {
         <button type="button" class="sf-button" data-dwe="replace">Thay</button>
         <button type="button" class="sf-button" data-dwe="replaceAll">Thay tất cả</button>
       </div>
-      <p class="dwe-hint">Bấm vào chữ để sửa trực tiếp. Enter tách đoạn · Backspace ở đầu đoạn trống để xóa đoạn · Tab chèn khoảng tab. Ảnh, bảng, kiểu chữ, đầu/chân trang giữ nguyên. <span data-dwe-limits hidden></span></p>
+      <p class="dwe-hint">Bấm vào chữ để sửa trực tiếp. Enter tách đoạn · Backspace ở đầu đoạn trống để xóa đoạn · Tab chèn khoảng tab. Ảnh, bảng, kiểu chữ, đầu/chân trang giữ nguyên. <span data-dwe-limits hidden></span> <strong class="dwe-notice" data-dwe-notice hidden></strong></p>
       <div class="dwe-surface"><iframe class="dwe-frame" title="Nội dung Word" sandbox="allow-same-origin"></iframe><div class="dwe-loading" data-dwe-loading><span class="drv-spinner" aria-hidden="true"></span> Đang mở tài liệu…</div></div>`;
     overlay.querySelector('[data-dwe-name]').textContent = file.name;
+    if (options.notice) { const note = overlay.querySelector('[data-dwe-notice]'); note.textContent = options.notice; note.hidden = false; }
     const q = selector => overlay.querySelector(selector);
     const controller = new AbortController();
     const state = current = {
