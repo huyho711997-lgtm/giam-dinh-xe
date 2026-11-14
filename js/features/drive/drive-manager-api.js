@@ -249,7 +249,7 @@ const DriveManagerApi = (() => {
     // mode: 'download' (ảnh gốc) | 'preview' (gốc / PDF cho tài liệu) | 'display' (ảnh nặng → bản thu nhỏ để mở nhanh)
     async download(fileId, mode, signal) {
       const result = await call('drive_download', {fileId, mode:mode === 'preview' || mode === 'display' ? mode : 'download'}, signal);
-      return {name:result.name, mimeType:result.mimeType, bytes:decode(result.data), resized:!!result.resized, originalSize:Number(result.originalSize || 0)};
+      return {name:result.name, mimeType:result.mimeType, originalMimeType:result.originalMimeType || '', serverVersion:result.serverVersion || '', bytes:decode(result.data), resized:!!result.resized, originalSize:Number(result.originalSize || 0)};
     },
     // Ảnh xem nhanh: ưu tiên bộ nhớ trình duyệt (còn nguyên sau khi tải lại trang), chưa có mới hỏi máy chủ.
     async previewImage(file, options = {}) {

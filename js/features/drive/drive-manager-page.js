@@ -349,11 +349,11 @@ const DriveManager = (() => {
     toast('Đang chuyển “' + file.name + '” sang PDF để xem…');
     try {
       const result = await Api.download(file.id, 'preview');
-      if (result.mimeType !== 'application/pdf') throw new Error('stale-server');
+      if (result.mimeType !== 'application/pdf') throw new Error(result.serverVersion ? 'Máy chủ chưa đổi được tệp này sang PDF (loại tệp trên Drive: ' + (result.originalMimeType || 'không rõ') + '). Hãy tải về hoặc mở trên Google Drive.' : 'stale-server');
       const viewerFile = {...file, source:'drive', originalName:file.name.replace(/\.[^.]*$/, '') + '.pdf', mimeType:'application/pdf'};
       SharedFormsViewer.open(viewerFile, null, {loadBytes:async () => result.bytes.buffer});
     } catch (error) {
-      if (error.message === 'stale-server') toast('Máy chủ Apps Script chưa được Deploy lại nên chưa xem được tệp này trong ứng dụng. Đang mở trên Google Drive.', 'warning');
+      if (error.message === 'stale-server') toast('Địa chỉ Apps Script mà ứng dụng đang gọi vẫn chạy mã cũ (chưa có bản chuyển PDF). Hãy kiểm tra bản triển khai đã chọn “Phiên bản mới” và đúng URL /exec. Đang mở trên Google Drive.', 'warning');
       else toast(error.message, 'error');
       if (error.message === 'stale-server' && file.webViewLink) window.open(file.webViewLink, '_blank', 'noopener,noreferrer');
     }

@@ -348,6 +348,8 @@ function driveDisplayBlob_(meta) {
 
 // Tệp Office đời cũ (.doc, .ppt, .pptx) trình duyệt không dựng được → xem trước bằng PDF: Drive chuyển một bản sao tạm sang
 // định dạng Google, xuất PDF rồi xóa ngay bản tạm (không để lại gì trong Drive).
+// Dấu phiên bản để trình duyệt biết Apps Script đang chạy đã được Deploy bản mới chưa.
+const DRIVE_SERVER_VERSION = '2026-11-14-convert-1';
 const DRIVE_PREVIEW_CONVERT = {
   'application/msword':'application/vnd.google-apps.document',
   'application/vnd.ms-powerpoint':'application/vnd.google-apps.presentation',
@@ -411,7 +413,7 @@ function driveDownload_(request) {
   }
   const bytes = blob.getBytes();
   if (bytes.length > DRIVE_DOWNLOAD_MAX) throw new Error('Tệp lớn hơn 20 MB, hãy mở trên Google Drive để tải.');
-  return {ok:true, name, mimeType, size:bytes.length, data:Utilities.base64Encode(bytes)};
+  return {ok:true, name, mimeType, originalMimeType:meta.mimeType, serverVersion:DRIVE_SERVER_VERSION, size:bytes.length, data:Utilities.base64Encode(bytes)};
 }
 
 // Ảnh nhỏ: hỏi thumbnailLink và tải ảnh SONG SONG (fetchAll) thay vì từng tệp một; tệp nào lỗi thì quay về getThumbnail.
