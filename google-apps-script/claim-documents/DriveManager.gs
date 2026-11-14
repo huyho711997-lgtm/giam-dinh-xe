@@ -40,7 +40,7 @@ const DRIVE_SORTS = {
   modified_desc: 'folder,modifiedTime desc', modified_asc: 'folder,modifiedTime',
   size_desc: 'quotaBytesUsed desc'
 };
-const DRIVE_ACTIONS = ['drive_about','drive_list','drive_folders','drive_create_folder','drive_rename','drive_move','drive_copy','drive_star','drive_trash','drive_restore','drive_delete','drive_empty_trash','drive_upload','drive_download','drive_thumbnails'];
+const DRIVE_ACTIONS = ['drive_about','drive_list','drive_folders','drive_create_folder','drive_rename','drive_move','drive_copy','drive_star','drive_trash','drive_restore','drive_delete','drive_empty_trash','drive_upload','drive_update_content','drive_download','drive_thumbnails'];
 
 // ---- Xác thực: Firebase ID token + UID nằm trong DRIVE_MANAGER_UIDS -----------------------------
 function authorizeDriveManager_(request, props) {
@@ -300,6 +300,32 @@ function driveUpload_(request, props, auth) {
   } finally { lock.releaseLock(); }
 }
 
+// Ghi đè nội dung một tệp Word (.docx) đã có (trình chỉnh sửa Word). Chỉ nhận .docx hợp lệ, tối đa 10 MB;
+// so sánh expectedModifiedTime để không đè lên bản người khác vừa sửa. Drive tự giữ phiên bản cũ.
+const DRIVE_DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+function driveUpdateContent_(request, props, auth) {
+  const id = driveId_(request.fileId, false);
+  driveAssertMutable_(id, props);
+  if (typeof request.data !== 'string' || !/^[A-Za-z0-9+/]*={0,2}$/.test(request.data)) throw new Error('Dữ liệu tệp không hợp lệ.');
+  const bytes = Utilities.base64Decode(request.data);
+  if (!bytes.length) throw new Error('Tệp đang trống.');
+  if (bytes.length > DRIVE_UPLOAD_MAX) throw new Error('Tệp sau khi sửa lớn hơn 10 MB nên không ghi đè được.');
+  if (bytes.length < 4 || bytes[0] !== 0x50 || bytes[1] !== 0x4b) throw new Error('Nội dung gửi lên không phải tệp Word (.docx) hợp lệ.');
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(30000)) throw new Error('Drive đang bận. Vui lòng thử lại.');
+  try {
+    const meta = driveService_().Files.get(id, {fields:'id,name,mimeType,modifiedTime,trashed,capabilities(canEdit)', supportsAllDrives:true});
+    if (meta.trashed) throw new Error('Tệp đang nằm trong thùng rác.');
+    if (meta.capabilities && meta.capabilities.canEdit === false) throw new Error('Bạn không có quyền sửa tệp này.');
+    if (meta.mimeType !== DRIVE_DOCX_MIME && !/\.docx$/i.test(meta.name || '')) throw new Error('Chỉ ghi đè được tệp Word (.docx).');
+    if (request.expectedModifiedTime && meta.modifiedTime && String(request.expectedModifiedTime) !== String(meta.modifiedTime)) {
+      throw new Error('Tệp đã được thay đổi trên Drive sau khi bạn mở (' + meta.modifiedTime + '). Hãy lưu thành bản sao hoặc tải về máy để không mất thay đổi, rồi mở lại tệp.');
+    }
+    const updated = driveService_().Files.update({}, id, Utilities.newBlob(bytes, DRIVE_DOCX_MIME, meta.name), {fields:DRIVE_FILE_FIELDS, supportsAllDrives:true});
+    return {ok:true, file:driveRecord_(updated, driveProtectedIds_(props))};
+  } finally { lock.releaseLock(); }
+}
+
 // Đổi cạnh dài của thumbnailLink (dạng ...=s220) sang kích thước mong muốn.
 function driveSizedLink_(link, edge) {
   const text = String(link || '');
@@ -407,6 +433,7 @@ function driveManager_(request, props) {
     case 'drive_delete': return driveDelete_(request, props);
     case 'drive_empty_trash': return driveEmptyTrash_(request);
     case 'drive_upload': return driveUpload_(request, props, auth);
+    case 'drive_update_content': return driveUpdateContent_(request, props, auth);
     case 'drive_download': return driveDownload_(request);
     case 'drive_thumbnails': return driveThumbnails_(request);
   }

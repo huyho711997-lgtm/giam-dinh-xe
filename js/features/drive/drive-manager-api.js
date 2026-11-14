@@ -6,7 +6,7 @@
 const DriveManagerApi = (() => {
   const FOLDER_MIME = 'application/vnd.google-apps.folder';
   const UPLOAD_MAX = 10 * 1024 * 1024;
-  const TIMEOUTS = {drive_about:30000, drive_list:45000, drive_folders:45000, drive_upload:180000, drive_download:180000, drive_thumbnails:60000, drive_move:120000, drive_trash:120000, drive_restore:120000, drive_delete:120000, drive_empty_trash:120000};
+  const TIMEOUTS = {drive_about:30000, drive_list:45000, drive_folders:45000, drive_upload:180000, drive_update_content:180000, drive_download:180000, drive_thumbnails:60000, drive_move:120000, drive_trash:120000, drive_restore:120000, drive_delete:120000, drive_empty_trash:120000};
   const OUTDATED = 'Thao tác không hợp lệ.';
   // Thao tác CHỈ ĐỌC tự thử lại khi gặp lỗi tạm thời (Apps Script khởi động nguội, quá tải, mạng chập).
   // Thao tác ghi (tải lên, di chuyển, xóa…) KHÔNG thử lại để tránh làm trùng hoặc thao tác hai lần.
@@ -229,6 +229,14 @@ const DriveManagerApi = (() => {
       if (file.size > UPLOAD_MAX) throw new Error('"' + file.name + '" vượt 10 MB. Hãy tải trực tiếp lên Google Drive.');
       const data = await base64(file);
       return call('drive_upload', {parentId, name:file.name, mimeType:file.type || 'application/octet-stream', requestId:id || requestId(), data}, signal);
+    },
+    // Ghi đè nội dung tệp .docx đã có. Không tự thử lại (ghi nhiều lần có thể trùng/đè); expectedModifiedTime để máy chủ phát hiện xung đột.
+    async updateContent(fileId, bytes, expectedModifiedTime, signal) {
+      const size = bytes && (bytes.byteLength ?? bytes.size) || 0;
+      if (!size) throw new Error('Tệp đang trống.');
+      if (size > UPLOAD_MAX) throw new Error('Tệp sau khi sửa lớn hơn 10 MB nên không ghi đè được.');
+      const data = await base64(bytes instanceof Blob ? bytes : new File([bytes], 'edited.docx'));
+      return call('drive_update_content', {fileId, expectedModifiedTime:expectedModifiedTime || '', data}, signal);
     },
     // Trả về {name, mimeType, bytes:Uint8Array}
     // mode: 'download' (ảnh gốc) | 'preview' (gốc / PDF cho tài liệu) | 'display' (ảnh nặng → bản thu nhỏ để mở nhanh)

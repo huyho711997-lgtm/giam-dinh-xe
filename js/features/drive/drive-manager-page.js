@@ -347,7 +347,44 @@ const DriveManager = (() => {
   function previewDocument(file) {
     const native = Api.isNative(file);
     const viewerFile = {...file, source:'drive', originalName:native ? file.name.replace(/\.pdf$/i, '') + '.pdf' : file.name, mimeType:file.mimeType};
-    SharedFormsViewer.open(viewerFile, null, {loadBytes:async signal => (await Api.download(file.id, 'preview', signal)).bytes.buffer});
+    SharedFormsViewer.open(viewerFile, null, {
+      loadBytes:async signal => (await Api.download(file.id, 'preview', signal)).bytes.buffer,
+      onEdit:canEditWord(file) ? () => editWord(file) : null
+    });
+  }
+
+  // ---- Chỉnh sửa trực tiếp tệp Word (.docx) --------------------------------------------------
+  const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  function canEditWord(file) {
+    return !!file && typeof DriveWordEditor !== 'undefined' && typeof DocxPatch !== 'undefined' && typeof JSZip !== 'undefined'
+      && !isFolder(file) && !file.trashed && view !== 'trash' && !Api.isNative(file)
+      && (file.mimeType === DOCX_MIME || /\.docx$/i.test(file.name || '')) && Number(file.size || 0) <= Api.UPLOAD_MAX;
+  }
+  function editWord(file) {
+    if (typeof SharedFormsViewer !== 'undefined') SharedFormsViewer.close?.();
+    if (Number(file.size || 0) > Api.UPLOAD_MAX) { toast('Tệp lớn hơn 10 MB nên chưa chỉnh sửa trực tiếp được.', 'warning'); return; }
+    DriveWordEditor.open(file, {
+      canOverwrite:file.can?.edit !== false && !file.system,
+      load:async signal => (await Api.download(file.id, 'download', signal)).bytes.buffer,
+      save:async ({mode, name, bytes, expectedModifiedTime}) => {
+        if (mode === 'overwrite') return Api.updateContent(file.id, bytes, expectedModifiedTime);
+        const copy = new File([bytes], name, {type:DOCX_MIME});
+        return Api.upload(copy, (file.parents && file.parents[0]) || (view === 'folder' ? folderId : 'root'));
+      },
+      onSaved:(saved, mode) => {
+        if (mode === 'overwrite' && saved) {
+          const index = files.findIndex(item => item.id === saved.id);
+          if (index >= 0) { files[index] = {...files[index], ...saved}; paintContent(); }
+          loadAbout();
+          audit('Chỉnh sửa và ghi đè tệp Word trên Google Drive: ' + saved.name, {fileId:saved.id});
+        } else if (mode === 'copy') {
+          if (view === 'folder' && !query) load();
+          loadAbout();
+          audit('Lưu bản sao tệp Word đã chỉnh sửa trên Google Drive: ' + (saved?.name || file.name), {fileId:saved?.id || file.id});
+        }
+      },
+      toast
+    });
   }
 
   // ---- Tải dữ liệu -----------------------------------------------------------------------
@@ -760,6 +797,7 @@ const DriveManager = (() => {
       '-',
       single ? {key:'rename', icon:'edit', label:'Đổi tên', hint:'F2', disabled:single.system || single.can.rename === false, run:() => runAction('rename', chosen)} : null,
       {key:'move', icon:'move', label:'Di chuyển tới…', disabled:anySystem, run:() => runAction('move', chosen)},
+      canEditWord(single) ? {key:'edit-word', icon:'edit', label:'Chỉnh sửa Word', run:() => editWord(single)} : null,
       single && !isFolder(single) ? {key:'copy', icon:'copy', label:'Tạo bản sao', run:() => runAction('copy', chosen)} : null,
       {key:'star', icon:'star', label:allStarred ? 'Bỏ gắn dấu sao' : 'Gắn dấu sao', run:() => runAction(allStarred ? 'unstar' : 'star', chosen)},
       single && single.webViewLink ? {key:'link', icon:'link', label:'Sao chép liên kết', run:() => runAction('link', chosen)} : null,

@@ -1,0 +1,70 @@
+/* ==========================================================================
+   Trình chỉnh sửa Word trong trang Google Drive – js/features/drive/drive-word-editor.js
+   Dùng khung toàn màn hình .sf-viewer (token --sf-*). Nội dung tài liệu nằm trong iframe nên
+   kiểu của chính tài liệu không ảnh hưởng giao diện ứng dụng.
+   ========================================================================== */
+.dwe-editor { font-family:'Plus Jakarta Sans',system-ui,sans-serif; color:var(--sf-ink); }
+.dwe-head { display:flex; align-items:center; gap:12px; min-height:64px; padding:10px 16px; border-bottom:1px solid var(--sf-line); background:var(--sf-paper); }
+.dwe-badge { display:grid; place-items:center; flex:0 0 40px; width:40px; height:40px; border-radius:12px; background:color-mix(in srgb,#2563eb 12%,var(--sf-paper)); color:#2563eb; }
+.dwe-badge svg { width:20px; height:20px; }
+.dwe-title { display:flex; flex-direction:column; gap:2px; min-width:0; flex:1 1 auto; }
+.dwe-title .sf-eyebrow { font-size:9.5px; letter-spacing:.14em; }
+.dwe-title strong { font-size:14px; font-weight:800; letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dwe-title small { color:var(--sf-muted); font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dwe-title small.is-dirty { color:#b45309; font-weight:700; }
+.dwe-tools, .dwe-actions { display:flex; align-items:center; gap:6px; flex:0 0 auto; }
+.dwe-tools { padding:4px; border:1px solid var(--sf-line); border-radius:12px; background:var(--sf-soft); }
+.dwe-editor .sf-button { min-height:36px; height:36px; padding:0 12px; border-radius:9px; font-size:12px; }
+.dwe-editor .sf-icon-button { width:36px; height:36px; min-width:36px; min-height:36px; border-radius:9px; color:var(--sf-ink); }
+.dwe-editor :is(.sf-button,.sf-icon-button) svg { width:16px; height:16px; }
+.dwe-tools .sf-icon-button { border-color:transparent; background:transparent; box-shadow:none; }
+.dwe-tools .sf-icon-button:hover, .dwe-tools .sf-icon-button.is-on { background:var(--sf-paper); border-color:var(--sf-line); }
+.dwe-tools .sf-icon-button.is-on { color:#2563eb; }
+.dwe-zoom { height:32px; padding:0 6px; border:1px solid var(--sf-line); border-radius:8px; background:var(--sf-paper); color:var(--sf-ink); font:700 11.5px 'Plus Jakarta Sans',system-ui,sans-serif; }
+.dwe-actions .sf-button svg { margin-right:6px; }
+.dwe-actions .sf-button:disabled { opacity:.5; cursor:not-allowed; }
+
+.dwe-findbar { display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:8px 16px; border-bottom:1px solid var(--sf-line); background:var(--sf-soft); }
+.dwe-findbar[hidden] { display:none; }
+.dwe-findbar input[type="search"], .dwe-findbar input[type="text"] { height:34px; min-width:160px; flex:1 1 180px; max-width:280px; padding:0 10px; border:1px solid var(--sf-line); border-radius:9px; background:var(--sf-paper); color:var(--sf-ink); font:600 12.5px 'Plus Jakarta Sans',system-ui,sans-serif; }
+.dwe-check { display:inline-flex; align-items:center; gap:6px; color:var(--sf-muted); font-size:12px; font-weight:650; white-space:nowrap; }
+.dwe-count { min-width:62px; color:var(--sf-muted); font-size:12px; font-weight:700; font-variant-numeric:tabular-nums; }
+
+.dwe-hint { margin:0; padding:7px 16px; border-bottom:1px solid var(--sf-line); background:color-mix(in srgb,#2563eb 5%,var(--sf-paper)); color:var(--sf-muted); font-size:11.5px; line-height:1.5; }
+.dwe-hint [hidden] { display:none; }
+.dwe-hint span { display:inline-block; margin-left:6px; color:#b45309; font-weight:700; }
+
+.dwe-surface { position:relative; flex:1 1 auto; min-height:0; display:flex; background:#e9edf2; }
+.dwe-frame { flex:1 1 auto; width:100%; height:100%; border:0; background:#e9edf2; }
+.dwe-loading { position:absolute; inset:0; display:grid; place-content:center; justify-items:center; gap:10px; background:color-mix(in srgb,var(--sf-paper) 86%,transparent); color:var(--sf-muted); font-size:13px; font-weight:650; text-align:center; }
+.dwe-loading[hidden] { display:none; }
+.dwe-error { display:flex; flex-direction:column; align-items:center; gap:8px; max-width:440px; padding:28px 24px; border:1px solid var(--sf-line); border-radius:18px; background:var(--sf-paper); color:var(--sf-ink); }
+.dwe-error svg { width:30px; height:30px; color:var(--sf-rose,#be123c); }
+.dwe-error p { margin:0 0 6px; color:var(--sf-muted); font-size:12px; line-height:1.65; }
+
+/* Hộp thoại con */
+.dwe-dialog { width:min(520px,calc(100vw - 32px)); max-height:calc(100vh - 32px); overflow:auto; padding:22px; border:1px solid var(--sf-line); border-radius:18px; background:var(--sf-paper); color:var(--sf-ink); box-shadow:0 30px 80px rgba(0,0,0,.28); font-family:'Plus Jakarta Sans',system-ui,sans-serif; }
+.dwe-dialog::backdrop { background:rgba(15,23,20,.5); }
+.dwe-dialog h2 { margin:0 0 8px; font-size:17px; font-weight:800; letter-spacing:-.01em; }
+.dwe-dialog p { margin:0 0 14px; color:var(--sf-muted); font-size:12.5px; line-height:1.6; overflow-wrap:anywhere; }
+.dwe-dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:6px; }
+.dwe-dialog-error { margin:12px 0 0 !important; padding:9px 12px; border-radius:10px; background:color-mix(in srgb,var(--sf-rose,#be123c) 10%,var(--sf-paper)); color:var(--sf-rose,#be123c) !important; font-weight:650; }
+.dwe-dialog-error[hidden] { display:none; }
+.dwe-danger { border-color:var(--sf-rose,#be123c) !important; color:var(--sf-rose,#be123c) !important; }
+.dwe-choices { display:flex; flex-direction:column; gap:8px; }
+.dwe-choice { display:flex; align-items:flex-start; gap:12px; width:100%; padding:12px 14px; border:1px solid var(--sf-line); border-radius:14px; background:var(--sf-paper); color:var(--sf-ink); text-align:left; cursor:pointer; font:inherit; transition:border-color .12s,background .12s; }
+.dwe-choice:hover:not(:disabled), .dwe-choice:focus-visible { border-color:#2563eb; background:color-mix(in srgb,#2563eb 5%,var(--sf-paper)); outline:none; }
+.dwe-choice:disabled { opacity:.5; cursor:not-allowed; }
+.dwe-choice-icon { display:grid; place-items:center; flex:0 0 36px; width:36px; height:36px; border-radius:10px; background:var(--sf-soft); color:#2563eb; }
+.dwe-choice-icon svg { width:18px; height:18px; }
+.dwe-choice > span:last-child { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
+.dwe-choice strong { font-size:13px; font-weight:800; }
+.dwe-choice small { color:var(--sf-muted); font-size:11.5px; line-height:1.5; }
+.dwe-name { margin-top:6px; width:100%; height:34px; padding:0 10px; border:1px solid var(--sf-line); border-radius:9px; background:var(--sf-paper); color:var(--sf-ink); font:600 12.5px 'Plus Jakarta Sans',system-ui,sans-serif; }
+
+@media (max-width:860px) {
+  .dwe-head { flex-wrap:wrap; }
+  .dwe-title { flex-basis:calc(100% - 60px); }
+  .dwe-tools { order:3; }
+}
+@media (prefers-reduced-motion:reduce) { .dwe-choice { transition:none; } }

@@ -27,7 +27,7 @@ function service({uid = 'manager', managers = 'manager', items = {}} = {}) {
       get:(id) => { calls.get++; const key = id === 'root' ? 'myDriveRootId001' : id; if (!db[key]) throw Error('not found'); return db[key]; },
       list:args => { calls.list.push(args); return listResult(args); },
       create:(resource, blob, args) => { calls.create.push({resource, blob, args}); return {id:'newFile000000001', name:resource.name, mimeType:resource.mimeType || 'text/plain', parents:resource.parents}; },
-      update:(resource, id, blob, args) => { calls.update.push({resource, id, args}); return {...db[id], ...resource}; },
+      update:(resource, id, blob, args) => { calls.update.push({resource, id, args, blob}); return {...db[id], ...resource}; },
       copy:(resource, id) => ({...db[id], id:'copy000000000001', name:resource.name}),
       remove:id => { calls.remove.push(id); },
       emptyTrash:() => { calls.emptyTrash++; }
@@ -411,4 +411,45 @@ test('ảnh nhỏ: fetchAll hỏng hẳn vẫn trả kết quả bằng cách c�
   assert.equal(result.ok, true);
   assert.deepEqual([...Buffer.from(result.items[0].data, 'base64')], [5]);
   assert.equal(result.items[1].ok, false);
+});
+
+const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const docxData = (head = [0x50, 0x4b, 3, 4]) => Buffer.from([...head, 1, 2, 3, 4]).toString('base64');
+function withDocx(extra = {}) {
+  const s = service();
+  s.db.docxFile0000001 = {id:'docxFile0000001', name:'bao-cao.docx', mimeType:DOCX, parents:['folderAAAAAAAAAA'], size:'900', modifiedTime:'2026-11-01T00:00:00.000Z', capabilities:{canEdit:true}, ...extra};
+  return s;
+}
+
+test('ghi đè nội dung .docx: kiểm tra xung đột thời gian sửa, gửi đúng mime, trả về bản ghi mới', () => {
+  const s = withDocx();
+  const result = s.call({action:'drive_update_content', fileId:'docxFile0000001', expectedModifiedTime:'2026-11-01T00:00:00.000Z', data:docxData()});
+  assert.equal(result.ok, true);
+  assert.equal(result.file.id, 'docxFile0000001');
+  assert.equal(s.calls.update.length, 1);
+  assert.equal(s.calls.update[0].id, 'docxFile0000001');
+  assert.equal(s.calls.update[0].blob.mime, DOCX);
+  assert.deepEqual(s.calls.update[0].blob.bytes.slice(0, 2), [0x50, 0x4b]);
+});
+
+test('ghi đè .docx: từ chối khi tệp đã bị người khác sửa trên Drive', () => {
+  const s = withDocx({modifiedTime:'2026-11-02T00:00:00.000Z'});
+  const result = s.call({action:'drive_update_content', fileId:'docxFile0000001', expectedModifiedTime:'2026-11-01T00:00:00.000Z', data:docxData()});
+  assert.equal(result.ok, false);
+  assert.match(result.error, /đã được thay đổi/);
+  assert.equal(s.calls.update.length, 0);
+});
+
+test('ghi đè .docx: chặn dữ liệu sai, tệp không phải Word, tệp không có quyền sửa, thùng rác, thư mục hệ thống', () => {
+  const base = {action:'drive_update_content', fileId:'docxFile0000001', data:docxData()};
+  assert.match(withDocx().call({...base, data:docxData([0x25, 0x50, 0x44, 0x46])}).error, /không phải tệp Word/);
+  assert.match(withDocx().call({...base, data:'***'}).error, /Dữ liệu tệp không hợp lệ/);
+  assert.match(withDocx().call({...base, data:''}).error, /đang trống/);
+  assert.match(withDocx({mimeType:'application/pdf', name:'a.pdf'}).call(base).error, /Chỉ ghi đè được tệp Word/);
+  assert.match(withDocx({capabilities:{canEdit:false}}).call(base).error, /không có quyền sửa/);
+  assert.match(withDocx({trashed:true}).call(base).error, /thùng rác/);
+  assert.equal(withDocx().call({...base, fileId:'formsRootFolder001'}).ok, false);
+  const big = withDocx();
+  assert.match(big.call({...base, data:Buffer.alloc(10 * 1024 * 1024 + 1, 1).toString('base64')}).error, /10 MB/);
+  assert.equal(big.calls.update.length, 0);
 });

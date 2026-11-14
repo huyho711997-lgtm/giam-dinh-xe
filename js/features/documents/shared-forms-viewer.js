@@ -240,6 +240,7 @@ const SharedFormsViewer = (() => {
         <button class="sf-button sf-primary" data-sf-print type="button" title="In tài liệu (Ctrl+P)" disabled>${icon('print')} In tài liệu</button>
         <button class="sf-button" data-sf-download type="button">${icon('download')} Tải về</button>
         <button class="sf-button" data-sf-drive-preview type="button" hidden>Xem bằng Drive</button>
+        ${options.onEdit ? `<button class="sf-button" data-sf-edit type="button" title="Chỉnh sửa trực tiếp tài liệu Word">${icon('edit')} Chỉnh sửa</button>` : ''}
       </div>
       <p class="sf-viewer-status" role="status" aria-live="polite"></p>
       <div class="sf-document-surface"><iframe class="sf-viewer-frame" title="Nội dung biểu mẫu" sandbox="allow-same-origin allow-modals"></iframe><span class="sf-provider-mask" data-sf-provider-mask aria-hidden="true" hidden></span></div>`;
@@ -266,6 +267,8 @@ const SharedFormsViewer = (() => {
         await SharedFormsPrint.print(state.frame,file.name,() => current === state);
       } catch { state.status.textContent = 'Trình duyệt chưa mở được hộp thoại in. Hãy tải file về để in.'; }
     };
+    const editButton = overlay.querySelector('[data-sf-edit]');
+    if (editButton) editButton.onclick = () => options.onEdit();
     const fallback = overlay.querySelector('[data-sf-drive-preview]');
     if (file.source === 'drive' && config?.apiKey) { fallback.hidden = false; fallback.onclick = () => { state.controller.abort(); state.print.disabled = true; basicViewer(state); }; }
     overlay.addEventListener('cancel',event => { event.preventDefault(); close(); });

@@ -2,6 +2,7 @@ const SharedFormsControls = (() => {
   const widgets = new WeakMap();
   let active = null, sequence = 0, frame = null;
   const paths = {
+    edit:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
     folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10H3z"/>',
     file:'<path d="M14 3H6v18h12V7zM14 3v5h5M9 12h6M9 16h6"/>',
     search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/>',
