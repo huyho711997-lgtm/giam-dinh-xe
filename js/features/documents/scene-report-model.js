@@ -314,8 +314,9 @@ function buildSceneReportHtml(data, opts) {
 * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 html, body { margin: 0; padding: 0; background: #fff; color: #000; }
 body { font: 12pt/1.38 "Times New Roman", Times, serif; }
-.hd { height: 17mm; margin: 0 0 3mm -4mm; overflow: hidden; }
-.hd img { height: 26mm; margin-top: -4.5mm; display: block; }
+/* Logo: ảnh đã cắt sát nội dung (tasco-logo-clean.png) nên không cần dịch âm/cắt bằng overflow — cách cũ làm máy in cắt mất nét chữ T. */
+.hd { margin: 0 0 4mm; }
+.hd img { height: 13mm; width: auto; display: block; }
 h1 { margin: 0 0 4mm; text-align: center; font-size: 14pt; line-height: 1.3; font-weight: 700; text-transform: uppercase; }
 p { margin: 0 0 1.2mm; text-align: justify; }
 h2 { margin: 3mm 0 1.2mm; font-size: 12pt; font-weight: 700; padding-left: 6mm; break-after: avoid; }

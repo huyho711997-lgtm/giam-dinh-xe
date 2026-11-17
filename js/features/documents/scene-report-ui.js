@@ -138,6 +138,7 @@ const SCENE_REPORT_ICONS = {
   lightbulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/>',
   map: '<polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/>',
   sparkles: '<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   check: '<path d="m5 12 5 5L20 7"/>'
 };
@@ -482,6 +483,7 @@ function sceneReportRenderForm(data) {
         `<span id="sceneReportAutoStatus" class="sr-status"></span>` +
         `<div class="sr-actions">` +
           sceneReportActionBtn('Xem trước', 'preview', { compact: true, icon: 'preview' }) +
+          sceneReportActionBtn('Tải Word', 'word', { compact: true, icon: 'download' }) +
           sceneReportActionBtn('In / Lưu PDF', 'print', { primary: true, compact: true, icon: 'print' }) +
         `</div>` +
       `</div>` +
@@ -512,6 +514,7 @@ function sceneReportRenderForm(data) {
       `</div>` +
       `<div class="sr-actions">` +
         sceneReportActionBtn('Xem trước', 'preview', { icon: 'preview' }) +
+        sceneReportActionBtn('Tải Word', 'word', { icon: 'download' }) +
         sceneReportActionBtn('In / Lưu PDF', 'print', { primary: true, icon: 'print' }) +
       `</div>` +
     `</div>`;
@@ -682,7 +685,7 @@ function sceneReportBuildHtml() {
   const plate = collectionGuideValue('modalPendingBienSo');
   return buildSceneReportHtml(data, {
     diagramUrl: sceneReportDiagramUrl(),
-    logoUrl: typeof TascoAssets !== 'undefined' ? TascoAssets.url('assets/images/tasco-letterhead.png') : 'assets/images/tasco-letterhead.png',
+    logoUrl: typeof TascoAssets !== 'undefined' ? TascoAssets.url('assets/images/tasco-logo-clean.png') : 'assets/images/tasco-logo-clean.png',
     title: 'Biên bản giám định hiện trường' + (plate ? ' - ' + plate : '')
   });
 }
@@ -727,6 +730,7 @@ function previewSceneReport() {
           `</div>` +
         `</div>` +
         `<div class="sr-preview-actions">` +
+          sceneReportActionBtn('Tải Word', 'word', { icon: 'download' }) +
           sceneReportActionBtn('In / Lưu PDF', 'print', { primary: true, icon: 'print' }) +
           `<span class="sr-preview-divider" aria-hidden="true"></span>` +
           sceneReportActionBtn('Đóng', 'close', { extraClass: 'sr-preview-close', icon: 'close' }) +
@@ -761,6 +765,42 @@ function previewSceneReport() {
 function printSceneReport() {
   const html = sceneReportBuildHtml();
   return printCollectionDocumentHtml(html, 'Biên bản giám định hiện trường');
+}
+
+// Tên tệp Word: bỏ dấu, chỉ giữ chữ-số-dấu gạch để mở được trên mọi hệ điều hành.
+function sceneReportDocxFileName(plate) {
+  const slug = String(plate || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').replace(/[^A-Za-z0-9.-]+/g, '').slice(0, 30);
+  return 'Bien-ban-giam-dinh-hien-truong' + (slug ? '-' + slug : '') + '.docx';
+}
+
+let sceneReportWordBusy = false;
+async function downloadSceneReportWord() {
+  if (sceneReportWordBusy) return;
+  sceneReportWordBusy = true;
+  const toast = (msg, type) => { if (typeof triggerToast === 'function') triggerToast(msg, type); };
+  try {
+    const plate = String(collectionGuideValue('modalPendingBienSo') || '').trim();
+    toast('Đang tạo file Word…', 'info');
+    const blob = await buildSceneReportDocx(sceneReportState(), {
+      logoUrl: typeof TascoAssets !== 'undefined' ? TascoAssets.url('assets/images/tasco-logo-clean.png') : 'assets/images/tasco-logo-clean.png',
+      diagramUrl: sceneReportDiagramUrl(),
+      title: 'Biên bản giám định hiện trường' + (plate ? ' - ' + plate : '')
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = sceneReportDocxFileName(plate);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    toast('Đã tải file Word biên bản.', 'success');
+  } catch (error) {
+    console.error('Tải Word biên bản thất bại', error);
+    toast('Không tạo được file Word: ' + (error && error.message ? error.message : 'lỗi không xác định'), 'error');
+  } finally {
+    sceneReportWordBusy = false;
+  }
 }
 
 function sceneReportSyncChoiceGroup(root, group, value) {
@@ -824,6 +864,7 @@ document.addEventListener('click', event => {
     if (name === 'preview') previewSceneReport();
     else if (name === 'close') closeSceneReportPreview();
     else if (name === 'print') printSceneReport();
+    else if (name === 'word') downloadSceneReportWord();
     else if (name === 'draw-diagram') {
       if (typeof openSceneDrawingModal === 'function') openSceneDrawingModal();
       else if (typeof triggerToast === 'function') triggerToast('Vui lòng dùng nút "Vẽ sơ đồ hiện trường" trên thanh đầu hồ sơ.', 'info');
