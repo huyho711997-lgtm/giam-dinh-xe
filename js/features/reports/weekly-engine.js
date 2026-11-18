@@ -386,5 +386,67 @@ const WeeklyReportEngine = (() => {
     return { rows, totals };
   }
 
-  return { compute, summarize, makePeriod, presets, mergeRules, DEFAULT_RULES, STATUS_LABEL };
+  // ---- Báo cáo năm theo GĐV: hồ sơ phát sinh theo tháng, tách VCX / TNDS (giống getAnnualGdvClaimsData của webapp) ----
+  function claimGdvName(c) {
+    if (!c || typeof c !== 'object') return '';
+    const candidates = [c.gdvTiepNhan, c.canBoXuLy, c.toTrinhNguoiDuyet, c['Tờ trình BT - Người duyệt'], c['Tờ trình BT – Người duyệt'], c.pascNguoiDuyet,
+      c['PASC - Người duyệt'], c['PASC – Người duyệt'], c.gdvHo, c.canBoBoiThuong, c.gdvName, c.createdByName];
+    for (const cand of candidates) {
+      if (cand && typeof cand === 'string') {
+        const clean = cand.trim();
+        if (clean && clean !== '—' && clean !== '-' && clean !== 'Chưa phân công' && clean !== 'Hệ thống Excel') return clean;
+      }
+    }
+    return (c.gdvTiepNhan || c.canBoXuLy || c.toTrinhNguoiDuyet || c.gdvHo || '').trim();
+  }
+  function allGdvNames(claims, users) {
+    const set = new Set(['Hồ Quang Huy', 'Huỳnh Văn Phúc', 'Nguyễn Quang Huy_DL']);
+    Object.values(users || {}).forEach(u => {
+      const name = ((u && (u.profile?.displayName || u.displayName || u.name)) || '').trim();
+      if (name) set.add(name);
+    });
+    Object.values(claims || {}).forEach(c => {
+      const name = claimGdvName(c);
+      if (name && name !== 'Chưa phân công' && name !== 'Hệ thống Excel') set.add(name);
+    });
+    return Array.from(set).sort();
+  }
+  function annual({ claims, users, rules: rawRules, year, gdvNames }) {
+    const r = mergeRules(rawRules);
+    const dateField = r.phatSinhDateField || 'ngayMoHs';
+    const selected = new Set((gdvNames || []).map(n => String(n).trim().toLocaleLowerCase('vi')));
+    const rowsByName = new Map();
+    const mk = () => ({ months: Array(12).fill(0), total: 0, activeMonths: 0 });
+    const ensureRow = name => {
+      const nm = String(name || 'Chưa phân công').trim() || 'Chưa phân công';
+      const key = nm.toLocaleLowerCase('vi');
+      if (!rowsByName.has(key)) rowsByName.set(key, { name: nm, months: Array(12).fill(0), total: 0, types: { VCX: mk(), TNDS: mk() } });
+      return rowsByName.get(key);
+    };
+    allGdvNames(claims, users).forEach(name => { if (!selected.size || selected.has(String(name).trim().toLocaleLowerCase('vi'))) ensureRow(name); });
+    Object.values(claims || {}).forEach(claim => {
+      if (!isPhatSinh(claim, r)) return;
+      const ms = getClaimDateMs(claim, dateField);
+      if (!(ms > 0)) return;
+      const date = new Date(ms);
+      if (date.getFullYear() !== year) return;
+      const gdvName = (claim.gdvTiepNhan || claim.canBoXuLy || claim.gdvHo || claim.canBoBoiThuong || claim.gdvName || claim.createdByName || 'Chưa phân công').trim();
+      if (selected.size && !selected.has(gdvName.toLocaleLowerCase('vi'))) return;
+      const row = ensureRow(gdvName), mi = date.getMonth(), tk = isTndsClaim(claim, r) ? 'TNDS' : 'VCX';
+      row.months[mi]++; row.total++; row.types[tk].months[mi]++; row.types[tk].total++;
+    });
+    const rows = Array.from(rowsByName.values()).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'vi'));
+    const totals = Array(12).fill(0);
+    rows.forEach(row => row.months.forEach((n, i) => { totals[i] += n; }));
+    rows.forEach(row => ['VCX', 'TNDS'].forEach(t => {
+      row.types[t].activeMonths = row.types[t].months.filter(n => n > 0).length;
+      row.types[t].average = row.types[t].activeMonths ? row.types[t].total / row.types[t].activeMonths : 0;
+    }));
+    const typeTotals = { VCX: { total: 0, activeMonths: 0 }, TNDS: { total: 0, activeMonths: 0 } };
+    rows.forEach(row => ['VCX', 'TNDS'].forEach(t => { typeTotals[t].total += row.types[t].total; typeTotals[t].activeMonths += row.types[t].activeMonths; }));
+    ['VCX', 'TNDS'].forEach(t => { typeTotals[t].average = typeTotals[t].activeMonths ? typeTotals[t].total / typeTotals[t].activeMonths : 0; });
+    return { year, rows, totals, total: totals.reduce((a, b) => a + b, 0), typeTotals };
+  }
+
+  return { compute, summarize, makePeriod, presets, mergeRules, annual, allGdvNames, DEFAULT_RULES, STATUS_LABEL };
 })();

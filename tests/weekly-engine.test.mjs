@@ -23,7 +23,7 @@ const app = vm.createContext({});
 vm.runInContext(['var window = globalThis;', statusMap, 'let cachedReportRules, cachedPendingClaimsPayload, cachedUsersPayload, cachedAccountingTransfersPayload, activeSelectedGdvNames = [];',
   ...['parseDateParts', 'getClaimToTrinhDuyetDate'].map(n => fnSource(excel, n)),
   ...['getRuleArray', 'isPhatSinh', 'isChuyenDntt', 'isTndsClaim', 'isUnpaidClaim', 'isDuyetHsbtApproved', 'isOnlyDaDuyetHsbt', 'isHsDuPhongOver50M'].map(n => fnSource(filters, n)),
-  ...['getClaimDateMs', 'getClaimTimestamp', 'getWeeklyZoneReportData'].map(n => fnSource(weekly, n))].join('\n'), app);
+  ...['getClaimDateMs', 'getClaimTimestamp', 'getWeeklyZoneReportData', 'getAllAvailableGdvNames', 'getAnnualGdvClaimsData'].map(n => fnSource(weekly, n)), fnSource(excel, 'getClaimGdvName')].join('\n'), app);
 
 // ---- engine
 const eng = vm.createContext({});
@@ -82,4 +82,19 @@ test('kỳ & tóm tắt: tuần Thứ Bảy→Thứ Sáu, kỳ sai bị từ ch�
   assert.equal(E.makePeriod('2026-11-13', '2026-11-07'), null); assert.equal(E.makePeriod('x', '2026-11-07'), null); assert.equal(E.makePeriod('2026-02-30', '2026-03-05').startStr, '02/03/2026');
   const s = plain(E.summarize([{gdvName: 'A', phatSinh: 12, daDuyetHsb: 5, chuaDuyetPasc: 0, sumAmtUnder10M: 9000000, countUnder10M: 3}, {gdvName: 'B', phatSinh: 4, daDuyetHsb: 4, sumAmtUnder10M: 3000000, countUnder10M: 1}]));
   assert.equal(s.rows[0].cd, 7); assert.equal(s.totals.ps, 16); assert.equal(s.totals.avg, 3000000);
+});
+
+test('báo cáo năm theo GĐV: engine khớp webapp (getAnnualGdvClaimsData) trên 2.000 hồ sơ, có/không lọc GĐV', () => {
+  const claims = Object.fromEntries(Array.from({length: 2000}, (_, i) => ['-A' + i, rndClaim()]));
+  const users = {u1: {profile: {displayName: 'Huỳnh Văn Phúc'}}, u2: {displayName: 'Không có hồ sơ nào'}, u3: {name: ' Hồ Quang Huy '}, u4: {}};
+  for (const raw of [{}, {phatSinhDateField: 'toTrinhNgayDuyet', tndsKeywords: 'tnds,dân sự'}, {phatSinhExcludes: 'moi,tu_choi'}])
+    for (const names of [[], ['Huỳnh Văn Phúc', 'Người lạ'], ['hồ quang huy']]) for (const year of [2026, 2025]) {
+      const rules = WeeklyReportEngine.mergeRules(raw);
+      app.__claims = claims; app.__users = users; app.__rules = rules; app.__names = names; app.__y = year;
+      const expected = plain(vm.runInContext(`(() => { cachedReportRules = __rules; cachedPendingClaimsPayload = JSON.parse(JSON.stringify(__claims)); cachedUsersPayload = __users;
+        activeAnnualClaimsYear = __y; activeSelectedGdvNames = __names; return getAnnualGdvClaimsData(); })()`, app));
+      const got = plain(WeeklyReportEngine.annual({claims, users, rules: raw, year, gdvNames: names}));
+      assert.deepEqual(got, expected);
+      if (year === 2026 && !names.length) assert.ok(got.total > 0);
+    }
 });

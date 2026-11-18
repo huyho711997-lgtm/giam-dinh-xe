@@ -11,6 +11,19 @@ const KpiZonePage = (() => {
   const loadZoneMap = () => { try { const v = JSON.parse(localStorage.getItem(ZONE_KEY) || '{}'); return v && typeof v === 'object' ? v : {}; } catch (_) { return {}; } };
   const saveZoneMap = () => { try { localStorage.setItem(ZONE_KEY, JSON.stringify(zoneMap)); } catch (_) { /* trình duyệt chặn lưu: vẫn dùng được trong phiên */ } };
   let zoneMap = loadZoneMap();
+  // Đưa cấu hình (Zone BT map + GĐV đã chọn) lên Firebase để app điện thoại tính KPI ra cùng kết quả. Khoá zone có thể chứa ký tự Firebase cấm
+  // nên lưu dạng mảng. Lỗi mạng/quyền không ảnh hưởng trang.
+  let publishTimer = 0;
+  function publishSettings() {
+    clearTimeout(publishTimer);
+    publishTimer = setTimeout(() => {
+      try {
+        if (typeof dbNodeInstance === 'undefined' || !dbNodeInstance || !selected || !selected.length) return;
+        const zones = Object.entries(zoneMap).filter(([, v]) => v === 'in' || v === 'out').map(([k, v]) => ({k, v}));
+        dbNodeInstance.ref('settings/kpiZone').set({zones, gdvs: selected.slice(), at: Date.now()}).catch(() => {});
+      } catch (_) { /* bỏ qua */ }
+    }, 800);
+  }
 
   const esc = text => String(text ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const now = new Date();
@@ -338,6 +351,7 @@ const KpiZonePage = (() => {
     }
     const warn = warningText(prep.warnings);
     message(warn ? esc(warn) : '', warn ? 'warn' : '');
+    publishSettings();
   }
 
   // ----- Xuất Excel -----
@@ -388,12 +402,12 @@ const KpiZonePage = (() => {
       const el = event.target;
       if (el.matches('[data-kz-zone]')) {
         if (el.value) zoneMap[el.dataset.kzZone] = el.value; else delete zoneMap[el.dataset.kzZone];
-        saveZoneMap(); recalc();
+        saveZoneMap(); recalc(); publishSettings();
       } else if (el.matches('[data-kz-month]')) { monthValue = el.value || defaultMonth(); monthTouched = true; recalc(); }
       else if (el.matches('[data-kz-gdv]')) {
         selected = [...host.querySelectorAll('[data-kz-gdv]:checked')].map(x => x.value);
         if (!selected.length) { el.checked = true; selected = [el.value]; message('Cần chọn ít nhất một GĐV.', 'warn'); }
-        recalc();
+        recalc(); publishSettings();
       } else if (el.matches('[data-kz-fgdv],[data-kz-fstatus],[data-kz-fsort]')) {
         listFilter = {gdv: host.querySelector('[data-kz-fgdv]').value, status: host.querySelector('[data-kz-fstatus]').value, sort: host.querySelector('[data-kz-fsort]').value};
         if (report) host.querySelector('[data-kz-list]').innerHTML = table(LIST_HEADS, filteredUnapproved(report.current).map(listRow).join('') || '<tr><td colspan="6" class="kz-none">Không có hồ sơ</td></tr>');
@@ -421,6 +435,7 @@ const KpiZonePage = (() => {
     document.addEventListener('click', outsideDd, true); window.addEventListener('resize', closeDdSoft); window.addEventListener('scroll', closeDdSoft, true);
     container.replaceChildren(host);
     refresh();
+    publishSettings();
   }
 
 
