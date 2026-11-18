@@ -126,7 +126,6 @@
         } else {
           cachedReportRules = { ...defaultRules };
         }
-        if (typeof scheduleWeeklyReportPhoneSync === 'function') scheduleWeeklyReportPhoneSync();
         
         if (activeDashboardTab === 'gdv_report') {
           renderGdvMonthlyReportPage();
@@ -140,7 +139,6 @@
         if (typeof ClaimsMirror !== 'undefined') ClaimsMirror.schedule(val); // bản rút gọn sang Supabase cho trang Tasco DLK (một chiều)
         const currentUser = firebase.auth().currentUser;
         cachedPendingClaimsPayload = filterPendingClaimsByUserPrivileges(val, currentUser);
-        if (typeof scheduleWeeklyReportPhoneSync === 'function') scheduleWeeklyReportPhoneSync(); // báo cáo tuần → điện thoại (real time)
         if (window.AppRoute?.onPendingClaimsLoaded) AppRoute.onPendingClaimsLoaded(); // URL #/ho-so-boi-thuong/<mã> → mở lại hồ sơ
         if (typeof refreshHomeDashboard === 'function') refreshHomeDashboard(); // số liệu trang chủ
         if (activeDashboardTab === 'pending') {

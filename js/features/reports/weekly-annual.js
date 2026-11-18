@@ -7,7 +7,6 @@
     
     function renderWeeklyZoneReportTableHtml() {
       const { period, list } = getWeeklyZoneReportData();
-      if (typeof WeeklyReportPush !== 'undefined') setTimeout(() => paintWeeklyLivePill(WeeklyReportPush.state), 50);   // pill trạng thái đồng bộ vừa được vẽ
       let sumPhatSinh = 0, sumDaDuyet = 0, sumChuaDuyet = 0, sumTonHoaDon = 0, sumChuyenDntt = 0, sumCarpla = 0, sumTndsTon = 0;
       let sumHsTonOver30 = 0, sumHsDuPhongOver50M = 0, totalSumAmtUnder10M = 0, totalCountUnder10M = 0, sumCarplaCumulativeRev = 0;
 
@@ -131,9 +130,6 @@
           </div>
 
           <div class="hide-on-screenshot weekly-report-export-action" style="position: absolute; right: 26px; top: 22px; z-index: 10; display: flex; gap: 8px; align-items: center;">
-            <button type="button" id="weeklyLiveSyncPill" class="hide-on-screenshot" onclick="WeeklyReportPush.syncNow()" title="Báo cáo tự động đồng bộ sang app điện thoại. Bấm để đồng bộ lại ngay." style="padding: 8px 12px; border-radius: 11px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-muted); font-size: 12px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;">
-              <span data-live-dot style="width: 8px; height: 8px; border-radius: 50%; background: #94a3b8;"></span><span data-live-text>Điện thoại: đang kiểm tra…</span>
-            </button>
             <button type="button" class="weekly-report-image-export" onclick="downloadWeeklyZoneReportImage('png')" style="padding: 8px 16px; border-radius: 11px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Tải ảnh báo cáo tuần (PNG/JPG)">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
               <span>Xuất ảnh</span>
@@ -1173,41 +1169,6 @@
 
       return { period, list };
     }
-
-
-    // ===== Đồng bộ real time sang điện thoại =====
-    // Kỳ cần có trên điện thoại: tuần hiện tại, tuần qua và kỳ đang xem. Luôn đầy đủ GĐV (không theo bộ lọc giao diện).
-    function buildWeeklySnapshotsForPhone() {
-      const mkPeriod = (start) => {
-        const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23, 59, 59, 999);
-        const f = d => String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear();
-        return { startDate: start, endDate: end, startStr: f(start), endStr: f(end), label: `Từ ngày ${f(start)} đến ${f(end)}` };
-      };
-      const cur = getGdvReportDefaultDates().start;
-      const prev = new Date(cur); prev.setDate(cur.getDate() - 7);
-      const periods = [mkPeriod(cur), mkPeriod(prev)];
-      const sel = getWeeklyZoneReportPeriod();
-      if (!periods.some(p => reportDateToYmd(p.startDate) === reportDateToYmd(sel.startDate) && reportDateToYmd(p.endDate) === reportDateToYmd(sel.endDate))) periods.push(sel);
-      const fb = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
-      const who = fb ? (fb.displayName || fb.email || '') : '';
-      const savedCarpla = window._currentCarplaClaimsData;   // getWeeklyZoneReportData ghi đè biến này; trả lại để không ảnh hưởng giao diện
-      try {
-        return periods.map(period => WeeklyReportPush.buildSnapshot(period, getWeeklyZoneReportData({ period, all: true }).list, cachedReportRules, who));
-      } finally { window._currentCarplaClaimsData = savedCarpla; }
-    }
-    function scheduleWeeklyReportPhoneSync() {
-      if (typeof WeeklyReportPush === 'undefined') return;
-      if (!cachedReportRules || !cachedPendingClaimsPayload || !Object.keys(cachedPendingClaimsPayload).length) return;   // chưa tải xong / rỗng: không ghi đè bằng số 0
-      WeeklyReportPush.schedule(buildWeeklySnapshotsForPhone);
-    }
-    function paintWeeklyLivePill(state) {
-      const pill = document.getElementById('weeklyLiveSyncPill'); if (!pill) return;
-      const map = { ok: ['#10b981', 'Điện thoại: đã đồng bộ'], syncing: ['#f59e0b', 'Điện thoại: đang đồng bộ…'], signedout: ['#ef4444', 'Điện thoại: chưa đăng nhập Supabase'], denied: ['#ef4444', 'Điện thoại: tài khoản không phải Admin'], error: ['#ef4444', 'Điện thoại: lỗi đồng bộ, bấm để thử lại'], idle: ['#94a3b8', 'Điện thoại: chờ dữ liệu…'] };
-      const [color, text] = map[state.status] || map.idle;
-      const dot = pill.querySelector('[data-live-dot]'), label = pill.querySelector('[data-live-text]');
-      if (dot) dot.style.background = color; if (label) label.textContent = text;
-    }
-    if (typeof WeeklyReportPush !== 'undefined') WeeklyReportPush.onStatus(paintWeeklyLivePill);
 
     async function downloadWeeklyZoneReportImage(format) {
       const cardEl = document.getElementById('weeklyZoneReportCardContainer');
