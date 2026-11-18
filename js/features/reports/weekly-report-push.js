@@ -1,5 +1,5 @@
-/* Đẩy BẢN CHỤP báo cáo tuần Zone (đúng số liệu đang hiển thị) sang Supabase để xem trên điện thoại (trang Tasco DLK mobile).
- * Mỗi kỳ báo cáo = 1 hàng (id = "YYYY-MM-DD_YYYY-MM-DD"); đẩy lại cùng kỳ thì ghi đè. Chỉ Admin được ghi/đọc (RLS).
+/* Đồng bộ TỰ ĐỘNG (real time) báo cáo tuần Zone sang Supabase để xem trên điện thoại (trang Tasco DLK mobile).
+ * Mỗi kỳ báo cáo = 1 hàng (id = "YYYY-MM-DD_YYYY-MM-DD"); số liệu đổi thì ghi đè, không đổi thì bỏ qua. Chỉ Admin được ghi/đọc (RLS).
  * Dùng chung phiên đăng nhập Supabase với tab Gara cứu hộ / Danh bạ (RescueGarages.getClient). */
 const WeeklyReportPush = (() => {
   const T = 'tasco_weekly_reports', TIMEOUT_MS = 15000;
@@ -49,5 +49,37 @@ const WeeklyReportPush = (() => {
       return {ok: false, reason: denied ? 'denied' : missing ? 'missing' : error && error.name === 'AbortError' ? 'timeout' : 'error', message: error && error.message || ''};
     } finally { clearTimeout(timer); }
   }
-  return {buildSnapshot, push, pure: {buildSnapshot, ymd, num}};
+  // ----- Đồng bộ TỰ ĐỘNG (real time): webapp đổi dữ liệu → dựng lại các kỳ cần thiết → chỉ ghi kỳ nào có số liệu thay đổi.
+  const DELAY_MS = 5000, pushedFp = new Map();
+  let timer = 0, builder = null, running = false, blocked = false, state = {status: 'idle', at: 0, message: ''}, listeners = [];
+  const fingerprint = snap => JSON.stringify(snap.payload) + '|' + snap.label;
+  const setState = (status, message) => { state = {status, at: Date.now(), message: message || ''}; listeners.slice().forEach(cb => { try { cb(state); } catch (e) { console.error(e); } }); };
+  const onStatus = cb => { listeners.push(cb); try { cb(state); } catch (e) { console.error(e); } return () => { listeners = listeners.filter(x => x !== cb); }; };
+  // Chọn các bản chụp thật sự cần ghi (khác lần ghi trước).
+  const changed = snaps => snaps.filter(snap => pushedFp.get(snap.id) !== fingerprint(snap));
+  async function run(force) {
+    if (running || !builder || (blocked && !force)) return state;
+    running = true;
+    try {
+      const snaps = changed(builder());
+      if (!snaps.length) { if (state.status !== 'ok') setState('ok'); return state; }
+      setState('syncing');
+      for (const snap of snaps) {
+        const res = await push(snap);
+        if (!res.ok) {
+          if (res.reason === 'denied') blocked = true;
+          setState(res.reason === 'signedout' ? 'signedout' : res.reason === 'denied' ? 'denied' : 'error', res.message);
+          return state;
+        }
+        pushedFp.set(snap.id, fingerprint(snap));
+      }
+      blocked = false; setState('ok');
+    } catch (error) { setState('error', error && error.message); }
+    finally { running = false; }
+    return state;
+  }
+  // build: () => mảng bản chụp (gọi lúc đã gom nhịp để lấy dữ liệu mới nhất).
+  function schedule(build) { builder = build || builder; clearTimeout(timer); timer = setTimeout(() => { run(false); }, DELAY_MS); }
+  async function syncNow() { blocked = false; clearTimeout(timer); return run(true); }
+  return {buildSnapshot, push, schedule, syncNow, onStatus, get state() { return state; }, pure: {buildSnapshot, ymd, num, fingerprint, changed: snaps => changed(snaps)}, _reset: () => { pushedFp.clear(); blocked = false; running = false; clearTimeout(timer); builder = null; }};
 })();

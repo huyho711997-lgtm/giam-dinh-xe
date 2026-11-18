@@ -43,3 +43,24 @@ test('đẩy: chưa đăng nhập / chưa nạp module / bị từ chối quyề
   assert.equal((await mk('{}', '{error: {code: "PGRST205"}}').push(snap)).reason, 'missing');
   const ok = await mk('{}', '{error: null}').push(snap); assert.equal(ok.ok, true); assert.equal(ok.id, '2026-11-07_2026-11-13');
 });
+
+test('tự động đồng bộ: chỉ ghi kỳ có số liệu đổi, gom nhịp, dừng khi không phải Admin', async () => {
+  const writes = [];
+  vm.runInContext(`var RescueGarages = {getClient: async () => ({auth: {getSession: async () => ({data: {session: {}}})}, from: () => ({upsert: row => ({abortSignal: async () => { __writes.push(row.id + ':' + row.payload.totals.ps); return globalThis.__result; }})})})}`, ctx);
+  ctx.__writes = writes; ctx.__result = {error: null};
+  WeeklyReportPush._reset();
+  const mk = ps => WeeklyReportPush.buildSnapshot(period, [{gdvName: 'A', phatSinh: ps}], rules, '');
+  let calls = 0, cur = 5;
+  WeeklyReportPush.schedule(() => { calls++; return [mk(cur)]; });
+  const first = await WeeklyReportPush.syncNow();
+  assert.equal(first.status, 'ok'); assert.deepEqual(plain(writes), ['2026-11-07_2026-11-13:5']);
+  await WeeklyReportPush.syncNow(); assert.equal(writes.length, 1);          // số liệu không đổi → không ghi lại
+  cur = 7; await WeeklyReportPush.syncNow(); assert.deepEqual(plain(writes), ['2026-11-07_2026-11-13:5', '2026-11-07_2026-11-13:7']);
+  ctx.__result = {error: {code: '42501'}}; cur = 9;
+  const denied = await WeeklyReportPush.syncNow(); assert.equal(denied.status, 'denied');
+  const n = writes.length; ctx.__result = {error: null};
+  WeeklyReportPush.schedule(); await new Promise(r => setTimeout(r, 5200));   // bị chặn: lịch tự động không thử lại
+  assert.equal(writes.length, n);
+  assert.equal((await WeeklyReportPush.syncNow()).status, 'ok');             // bấm đồng bộ thủ công thì thử lại được
+  WeeklyReportPush._reset();
+});
