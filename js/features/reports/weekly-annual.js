@@ -129,7 +129,11 @@
             </div>
           </div>
 
-          <div class="hide-on-screenshot weekly-report-export-action" style="position: absolute; right: 26px; top: 22px; z-index: 10;">
+          <div class="hide-on-screenshot weekly-report-export-action" style="position: absolute; right: 26px; top: 22px; z-index: 10; display: flex; gap: 8px; align-items: center;">
+            <button type="button" class="weekly-report-image-export" onclick="pushWeeklyZoneReportToPhone(this)" style="padding: 8px 16px; border-radius: 11px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Lưu bản chụp báo cáo kỳ này để xem trên app điện thoại (Tasco DLK)">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"></rect><path d="M12 18h.01"></path></svg>
+              <span>Gửi lên điện thoại</span>
+            </button>
             <button type="button" class="weekly-report-image-export" onclick="downloadWeeklyZoneReportImage('png')" style="padding: 8px 16px; border-radius: 11px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12.5px; font-weight: 850; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--shadow-xs); transition: all 0.2s ease;" title="Tải ảnh báo cáo tuần (PNG/JPG)">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
               <span>Xuất ảnh</span>
@@ -1169,6 +1173,34 @@
       return { period, list };
     }
 
+
+    // Lưu bản chụp báo cáo tuần đang hiển thị lên Supabase → xem được trong app điện thoại (chỉ Admin).
+    async function pushWeeklyZoneReportToPhone(btn) {
+      if (typeof WeeklyReportPush === 'undefined') { triggerToast('Chưa nạp được module gửi báo cáo.', 'error'); return; }
+      if (btn && btn.dataset.busy) return;
+      const label = btn && btn.querySelector('span');
+      const restore = label ? label.textContent : '';
+      try {
+        if (btn) btn.dataset.busy = '1';
+        if (label) label.textContent = 'Đang gửi…';
+        const { period, list } = getWeeklyZoneReportData();
+        const fbUser = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth().currentUser : null;
+        const who = fbUser ? (fbUser.displayName || fbUser.email || '') : '';
+        const snapshot = WeeklyReportPush.buildSnapshot(period, list, cachedReportRules, who);
+        const res = await WeeklyReportPush.push(snapshot);
+        if (res.ok) triggerToast('Đã gửi báo cáo ' + period.startStr + ' – ' + period.endStr + ' lên điện thoại.', 'success');
+        else if (res.reason === 'signedout') triggerToast('Chưa đăng nhập Supabase. Vào tab Danh bạ → đăng nhập tài khoản Admin rồi gửi lại.', 'warning');
+        else if (res.reason === 'denied') triggerToast('Chỉ tài khoản Admin (Supabase) được gửi báo cáo.', 'error');
+        else if (res.reason === 'missing') triggerToast('Chưa có bảng báo cáo tuần trên Supabase.', 'error');
+        else if (res.reason === 'timeout') triggerToast('Kết nối quá thời gian. Kiểm tra mạng rồi thử lại.', 'error');
+        else triggerToast('Không gửi được báo cáo. Thử lại sau.', 'error');
+      } catch (error) {
+        triggerToast(error && error.message ? error.message : 'Không gửi được báo cáo.', 'error');
+      } finally {
+        if (btn) delete btn.dataset.busy;
+        if (label) label.textContent = restore;
+      }
+    }
 
     async function downloadWeeklyZoneReportImage(format) {
       const cardEl = document.getElementById('weeklyZoneReportCardContainer');
