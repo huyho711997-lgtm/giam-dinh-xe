@@ -90,7 +90,7 @@ const RescueGarages = (() => {
     const {error} = await api.auth.signInWithPassword({email:String(email).trim(),password:String(password)});
     if (error) throw new Error(/invalid/i.test(error.message || '') ? 'Email hoặc mật khẩu không đúng.' : /rate|too many/i.test(error.message || '') ? 'Thử quá nhiều lần. Vui lòng đợi một lát.' : 'Không đăng nhập được: ' + (error.message || 'lỗi không xác định'));
   }
-  async function signOut() { const api = await getClient(); await api.auth.signOut(); }
+  async function signOut() { const api = await getClient(); await api.auth.signOut({scope:'local'}); }  // chỉ máy này; không thu hồi phiên ở thiết bị khác
   const find = id => items.find(item => item.id === id) || null;
   const active = () => items.filter(item => item.active);
   const userEmail = () => session?.user?.email || '';
@@ -234,5 +234,5 @@ const RescueGarages = (() => {
   }
   function unmountManager() { unsubscribe?.(); unsubscribe = null; managerHost = null; closeDialog(); }
 
-  return {subscribe,start,stop,find,list:() => items,active,canManage,save,remove,signIn,signOut,userEmail,reload:load,mountManager,unmountManager,get status() { return status; },get message() { return message; }};
+  return {subscribe,start,stop,find,list:() => items,active,canManage,save,remove,signIn,signOut,userEmail,reload:load,getClient,mountManager,unmountManager,get status() { return status; },get message() { return message; }};
 })();

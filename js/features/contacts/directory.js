@@ -8,7 +8,7 @@ const ContactDirectoryPage = (() => {
   const SORTS = [{key: 'name', label: 'Tên A → Z'}, {key: 'unit', label: 'Phòng ban'}, {key: 'code', label: 'Mã nhân viên'}, {key: 'title', label: 'Chức danh'}];
   const XLSX_SRC = 'js/vendor/xlsx-js-style-1.2.0.bundle.js?v=20261031-kpi-4';
   const state = {q: '', nhom: 'all', phong: 'all', chucDanh: 'all', noiLamViec: 'all', donVi: 'all', quick: 'all', sort: 'name', view: window.innerWidth < 900 ? 'cards' : 'table', page: 1, per: 24};
-  let host = null, records = [], loaded = false, loadError = '', listening = false, modal = null, searchTimer = 0, xlsxPromise = null, importState = null, confirmResolve = null;
+  let host = null, records = [], loaded = false, loadError = '', storeStatus = 'idle', listening = false, modal = null, searchTimer = 0, xlsxPromise = null, importState = null, confirmResolve = null;
 
   const I = {
     book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><circle cx="13" cy="9" r="2.4"/><path d="M8.6 15.2c.6-1.6 2.2-2.5 4.4-2.5s3.8.9 4.4 2.5"/>',
@@ -43,14 +43,16 @@ const ContactDirectoryPage = (() => {
 
   // ----- Dữ liệu (realtime) -----
   function ensureListener() {
-    if (listening || typeof dbNodeInstance === 'undefined' || !dbNodeInstance) return;
+    if (listening) return;
     listening = true;
-    dbNodeInstance.ref('contact_directory').on('value', snap => {
-      const value = snap.val() || {};
-      records = Object.entries(value).filter(([, r]) => r && typeof r === 'object' && r.hoTen).map(([key, r]) => { const rec = {key, ...r}; rec._s = C().searchText(rec); return rec; });
-      loaded = true; loadError = '';
+    // Dữ liệu danh bạ nằm ở Supabase (dùng chung với trang Tasco DLK); xem contact-store.js.
+    ContactStore.subscribe(snap => {
+      storeStatus = snap.status;
+      records = snap.records.map(rec => ({...rec, _s: C().searchText(rec)}));
+      if (snap.status === 'ready' || snap.status === 'error' || snap.status === 'signedout') loaded = true;
+      loadError = snap.status === 'error' ? snap.message : '';
       if (host && host.isConnected) paint();
-    }, error => { listening = false; loaded = true; loadError = (error && error.message) || 'Không đọc được danh bạ'; if (host && host.isConnected) paint(); });
+    });
   }
   const missing = r => !r.sdt || !r.email;
   const quickTest = {all: () => true, missing};
@@ -167,7 +169,7 @@ const ContactDirectoryPage = (() => {
     host.querySelector('[data-ct-reset]').disabled = !filtered;
     host.querySelector('#ctCount').innerHTML = `<strong>${total.toLocaleString('vi-VN')}</strong> / ${records.length.toLocaleString('vi-VN')} liên hệ`;
     host.querySelectorAll('[data-ct-view]').forEach(b => { const on = b.dataset.ctView === state.view; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
-    const empty = !loaded ? `<div class="pn-empty"><b>Đang tải danh bạ…</b></div>` : loadError ? `<div class="pn-empty">${svg('alert', 28)}<b>Không đọc được danh bạ</b><span>${esc(loadError)}</span></div>`
+    const empty = storeStatus === 'signedout' ? loginHtml() : !loaded ? `<div class="pn-empty"><b>Đang tải danh bạ…</b></div>` : loadError ? `<div class="pn-empty">${svg('alert', 28)}<b>Không đọc được danh bạ</b><span>${esc(loadError)}</span></div>`
       : `<div class="pn-empty">${svg('search', 28)}<b>${records.length ? 'Không có liên hệ phù hợp' : 'Danh bạ chưa có dữ liệu'}</b><span>${records.length ? 'Thử bỏ bớt bộ lọc hoặc đổi từ khóa tìm kiếm.' : canManage() ? 'Bấm “Nhập Excel” để nạp danh sách nhân sự từ file Excel.' : 'Quản trị viên chưa nạp danh bạ.'}</span>${records.length && filtered ? '<button type="button" class="pending-action-btn" data-ct-reset><span>Xóa bộ lọc</span></button>' : ''}${!records.length && loaded && !loadError && canManage() ? '<button type="button" class="pending-action-btn pending-action-btn--import" data-ct-import><span>Nhập Excel</span></button>' : ''}</div>`;
     const body = host.querySelector('#ctBody');
     if (!pageRows.length) body.innerHTML = empty;
@@ -177,6 +179,34 @@ const ContactDirectoryPage = (() => {
     registerMenus();
     if (typeof enhancePendingRegisterDropdowns === 'function') enhancePendingRegisterDropdowns();
     if (keepOpen && host.querySelector(`[data-ct-dd="${keepOpen}"]`)) openDd(keepOpen);
+  }
+
+  // ----- Đăng nhập Supabase (danh bạ dùng chung; chỉ phải đăng nhập một lần / thiết bị) -----
+  function loginHtml() {
+    return `<form class="rc-garage-login ct-login" data-ct-login><div><strong>Đăng nhập để dùng danh bạ dùng chung</strong><p>Danh bạ lưu trên hệ thống Tasco DLK (Supabase), cùng dữ liệu với trang Tasco DLK trên điện thoại. Dùng email và mật khẩu của trang đó.</p></div>
+      <label class="sf-field"><span class="sf-field-label">Email</span><input type="email" name="email" autocomplete="username" required></label><label class="sf-field"><span class="sf-field-label">Mật khẩu</span><input type="password" name="password" autocomplete="current-password" required></label>
+      <p class="sf-feedback" role="status" aria-live="polite" data-ct-login-msg></p><button type="submit" class="sf-button sf-primary">${svg('check', 16)}<span>Đăng nhập</span></button></form>`;
+  }
+  async function onSubmit(event) {
+    const form = event.target.closest('[data-ct-login]'); if (!form) return;
+    event.preventDefault();
+    const msg = form.querySelector('[data-ct-login-msg]'), button = form.querySelector('button[type=submit]'); msg.textContent = ''; button.disabled = true;
+    try { await ContactStore.signIn(form.elements.email.value, form.elements.password.value); }
+    catch (error) { msg.textContent = error && error.message || 'Không đăng nhập được.'; button.disabled = false; }
+  }
+  // ----- Đồng bộ sang Supabase (Admin): chuyển danh bạ Firebase cũ + đẩy bản rút gọn hồ sơ -----
+  async function syncShared(button) {
+    if (!await askConfirm('Đẩy dữ liệu sang Supabase?', 'Sẽ <b>chép danh bạ từ Firebase</b> sang kho dùng chung (ghi đè theo Mã NV, không xóa gì ở Firebase) và <b>đẩy bản rút gọn hồ sơ bồi thường</b> (không có số tiền, SĐT) cho trang Tasco DLK.', 'Đồng ý đẩy', false)) return;
+    const label = button.querySelector('span:last-child'), old = label.textContent; button.disabled = true;
+    try {
+      const moved = await ContactStore.migrateFromFirebase({by: me().slice(0, 120), onProgress: (done, total) => { label.textContent = `Đang chép… ${done}/${total}`; }});
+      label.textContent = 'Đang đẩy hồ sơ…';
+      const claims = await ClaimsMirror.syncNow();
+      const claimNote = claims && claims.ok ? `; hồ sơ: ghi ${claims.written}, xóa ${claims.removed}` : '; hồ sơ: chưa đẩy được (cần đăng nhập Supabase bằng tài khoản Admin)';
+      toast(`Đã chép ${moved.written} liên hệ${moved.skipped ? ` (bỏ qua ${moved.skipped} bản ghi lỗi)` : ''}${claimNote}`, claims && claims.ok ? 'success' : 'warning');
+      if (typeof logUserActivity === 'function') logUserActivity('SYSTEM_SETTING', `Đẩy danh bạ + hồ sơ sang Supabase: ${moved.written} liên hệ`);
+    } catch (error) { toast('Không đẩy được: ' + (error && error.message || 'lỗi không xác định'), 'error'); }
+    finally { label.textContent = old; button.disabled = false; }
   }
 
   // ----- Sao chép / vCard / Excel -----
@@ -279,9 +309,7 @@ const ContactDirectoryPage = (() => {
     try {
       const out = {...rec, updatedAt: Date.now(), updatedBy: me().slice(0, 120)};
       if (out.namSinh === null) delete out.namSinh;
-      const updates = {['contact_directory/' + key]: out};
-      if (oldKey && oldKey !== key) updates['contact_directory/' + oldKey] = null;
-      await dbNodeInstance.ref().update(updates);
+      await ContactStore.upsertMany([{...out, key}], {removeKeys: oldKey && oldKey !== key ? [oldKey] : [], by: me()});
       if (typeof logUserActivity === 'function') logUserActivity('SYSTEM_SETTING', (oldKey ? 'Sửa' : 'Thêm') + ' liên hệ danh bạ: ' + rec.hoTen + ' (' + rec.maNv + ')');
       toast(oldKey ? 'Đã cập nhật liên hệ' : 'Đã thêm liên hệ', 'success'); closeModal();
     } catch (error) { fail('Không lưu được: ' + (error && error.message || 'lỗi không xác định')); save.disabled = false; }
@@ -299,7 +327,7 @@ const ContactDirectoryPage = (() => {
     if (!can('delete')) return void toast('Bạn không có quyền xóa liên hệ trong Danh bạ nội bộ.', 'warning');
     if (!await askConfirm('Xóa liên hệ?', `<b>${esc(r.hoTen)}</b> (${esc(r.maNv || '—')}) sẽ bị xóa khỏi danh bạ cho mọi người dùng. Không thể hoàn tác.`, 'Xóa liên hệ', true)) return;
     try {
-      await dbNodeInstance.ref('contact_directory/' + key).remove();
+      await ContactStore.remove(key);
       if (typeof logUserActivity === 'function') logUserActivity('SYSTEM_SETTING', 'Xóa liên hệ danh bạ: ' + r.hoTen + ' (' + r.maNv + ')');
       toast('Đã xóa liên hệ', 'success'); closeModal();
     } catch (error) { toast('Không xóa được: ' + (error && error.message || 'lỗi không xác định'), 'error'); }
@@ -350,14 +378,12 @@ const ContactDirectoryPage = (() => {
     if (s.mode === 'replace' && d.removed.length && !await askConfirm('Thay thế toàn bộ danh bạ?', `Sẽ <b>xóa ${d.removed.length}</b> liên hệ không có trong file, thêm ${d.added.length} và cập nhật ${d.updated.length}. Không thể hoàn tác.`, 'Đồng ý thay thế', true)) return;
     go.disabled = true; go.querySelector('span:last-child').textContent = 'Đang ghi…';
     try {
-      const now = Date.now(), by = me().slice(0, 120), updates = {};
-      for (const r of [...d.added, ...d.updated]) { const {key, _s, ...rest} = r; const out = {...rest, updatedAt: now, updatedBy: by}; if (out.namSinh === null) delete out.namSinh; updates['contact_directory/' + key] = out; }
-      for (const key of d.removed) updates['contact_directory/' + key] = null;
-      const keys = Object.keys(updates);
-      for (let i = 0; i < keys.length; i += 300) { await dbNodeInstance.ref().update(Object.fromEntries(keys.slice(i, i + 300).map(k => [k, updates[k]]))); go.querySelector('span:last-child').textContent = `Đang ghi… ${Math.min(i + 300, keys.length)}/${keys.length}`; }
+      const by = me().slice(0, 120), label = go.querySelector('span:last-child');
+      const list = [...d.added, ...d.updated].map(r => { const {_s, ...rest} = r; return rest; });
+      await ContactStore.upsertMany(list, {removeKeys: d.removed, by, onProgress: (done, total) => { label.textContent = `Đang ghi… ${done}/${total}`; }});
       if (typeof logUserActivity === 'function') logUserActivity('SYSTEM_SETTING', `Nhập danh bạ nội bộ từ Excel: +${d.added.length}, cập nhật ${d.updated.length}, xóa ${d.removed.length} (${s.fileName})`);
       toast(`Đã nhập danh bạ: thêm ${d.added.length}, cập nhật ${d.updated.length}${d.removed.length ? ', xóa ' + d.removed.length : ''}`, 'success'); closeModal();
-    } catch (error) { toast('Không nhập được: ' + (error && error.message || 'lỗi không xác định') + '. Kiểm tra quyền ghi trong Firebase rules.', 'error'); go.disabled = false; go.querySelector('span:last-child').textContent = 'Thử lại'; }
+    } catch (error) { toast('Không nhập được: ' + (error && error.message || 'lỗi không xác định') + '. Chỉ Admin được ghi danh bạ dùng chung.', 'error'); go.disabled = false; go.querySelector('span:last-child').textContent = 'Thử lại'; }
   }
 
   // ----- Khung trang & sự kiện -----
@@ -365,7 +391,7 @@ const ContactDirectoryPage = (() => {
     const admin = canManage(), top = (attrs, icon, text, cls) => `<button type="button" class="pending-action-btn${cls ? ' ' + cls : ''}" ${attrs}><span class="pending-action-btn__icon" aria-hidden="true">${svg(icon, 15)}</span><span>${text}</span></button>`;
     return `<div class="workspace-grid single-col"><section class="pending-workspace pending-workspace--v2 pn-workspace ct-workspace" id="ctRoot" aria-label="Danh bạ nội bộ">
       <header class="pw-page-head"><div class="pw-page-title"><div class="pw-page-emblem" aria-hidden="true">${svg('book', 22)}</div><div><span class="pw-eyebrow">Danh bạ nội bộ</span><h1>Tra cứu liên hệ</h1><p>Tìm nhanh nhân sự theo tên, mã nhân viên, số điện thoại, email, chức danh hoặc phòng ban — gọi, gửi email hay sao chép chỉ một chạm.</p></div></div>
-      <div class="pending-action-group" role="group" aria-label="Thao tác">${top('data-ct-export', 'xls', 'Xuất Excel', admin ? '' : 'pending-action-btn--import')}${can('add') ? top('data-ct-add', 'plus', 'Thêm liên hệ') : ''}${can('add') || can('edit') ? top('data-ct-import', 'upload', 'Nhập Excel', 'pending-action-btn--import') : ''}</div></header>
+      <div class="pending-action-group" role="group" aria-label="Thao tác">${top('data-ct-export', 'xls', 'Xuất Excel', admin ? '' : 'pending-action-btn--import')}${can('add') ? top('data-ct-add', 'plus', 'Thêm liên hệ') : ''}${can('add') && can('edit') && can('delete') ? top('data-ct-sync', 'upload', 'Đẩy sang Supabase') : ''}${can('add') || can('edit') ? top('data-ct-import', 'upload', 'Nhập Excel', 'pending-action-btn--import') : ''}</div></header>
       <div class="claims-metrics-grid pn-metrics ct-metrics" id="ctSummary" aria-label="Tổng quan danh bạ"></div>
       <div class="pending-register-panel pn-list"><div class="pending-register-topbar"><div class="pending-register-header"><h3>Danh bạ nhân sự</h3><div class="pending-filter-summary" aria-live="polite"><span class="pending-filter-result-count" id="ctCount"></span></div></div>
       <div class="ct-topright"><div class="ct-viewtoggle" role="group" aria-label="Kiểu hiển thị"><button type="button" data-ct-view="table" title="Dạng bảng" aria-label="Dạng bảng">${svg('list', 15)}</button><button type="button" data-ct-view="cards" title="Dạng thẻ" aria-label="Dạng thẻ">${svg('grid', 15)}</button></div><div class="pending-pagination" id="ctPager"></div></div></div>
@@ -400,6 +426,7 @@ const ContactDirectoryPage = (() => {
     if (t.closest('[data-ct-reset]')) { Object.assign(state, {q: '', nhom: 'all', phong: 'all', chucDanh: 'all', noiLamViec: 'all', donVi: 'all', quick: 'all', page: 1}); host.querySelector('#ctSearch').value = ''; return void paint(); }
     if (t.closest('[data-ct-export]')) return void exportExcel(t.closest('[data-ct-export]'));
     if (t.closest('[data-ct-add]')) return void openEdit(null);
+    if (t.closest('[data-ct-sync]')) return void syncShared(t.closest('[data-ct-sync]'));
     if (t.closest('[data-ct-import]') || t.closest('[data-ct-import-again]')) { if (t.closest('[data-ct-import-again]')) { importState = null; dialogEl().innerHTML = importHtml(); } else openImport(); return; }
     if (t.closest('[data-ct-import-go]')) return void runImport();
     const drop = t.closest('#ctDrop'); if (drop && !t.closest('input')) return void drop.querySelector('input').click();
@@ -440,7 +467,7 @@ const ContactDirectoryPage = (() => {
       closeModal();
       target.innerHTML = skeleton();
       host = target.querySelector('#ctRoot');
-      host.addEventListener('click', onClick); host.addEventListener('keydown', onKey); host.addEventListener('input', onInput); host.addEventListener('change', onChange);
+      host.addEventListener('click', onClick); host.addEventListener('keydown', onKey); host.addEventListener('input', onInput); host.addEventListener('change', onChange); host.addEventListener('submit', onSubmit);
       const drop = host.querySelector('#ctModal');
       drop.addEventListener('dragover', e => { if (e.target.closest('#ctDrop')) { e.preventDefault(); e.target.closest('#ctDrop').classList.add('is-over'); } });
       drop.addEventListener('dragleave', e => e.target.closest('#ctDrop')?.classList.remove('is-over'));

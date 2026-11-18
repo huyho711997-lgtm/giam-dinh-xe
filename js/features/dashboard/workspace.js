@@ -136,6 +136,7 @@
       dbNodeInstance.ref('pending_claims').on('value', (snapshot) => {
         const val = snapshot.val() || {};
         rawPendingClaimsPayload = val;
+        if (typeof ClaimsMirror !== 'undefined') ClaimsMirror.schedule(val); // bản rút gọn sang Supabase cho trang Tasco DLK (một chiều)
         const currentUser = firebase.auth().currentUser;
         cachedPendingClaimsPayload = filterPendingClaimsByUserPrivileges(val, currentUser);
         if (window.AppRoute?.onPendingClaimsLoaded) AppRoute.onPendingClaimsLoaded(); // URL #/ho-so-boi-thuong/<mã> → mở lại hồ sơ
