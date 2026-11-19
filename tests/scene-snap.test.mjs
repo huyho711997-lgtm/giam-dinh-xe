@@ -67,3 +67,17 @@ test('vẫn dính khi mép vật áp sát nét từ bên ngoài', () => {
   const r = run(`computeSmartSnapping(b, o, 0, ${gap - 3}, false, false)`);
   assert.ok(Math.abs(run('bottom') + r.dy - 300) < 0.01, JSON.stringify(r));
 });
+
+test('giữ lựa chọn: bấm chỗ có nét đè vẫn kéo đúng vật đang chọn', () => {
+  const run = load();
+  run(`sceneShapes = [{ id: 'B', type: 'goods_damaged', startX: 200, startY: 200, angle: 0, objectW: 120, objectH: 60, color: '#000', width: 1.5, sizeScale: 1 },
+                      { id: 'L', type: 'line', x1: 260, y1: 100, x2: 260, y2: 300, color: '#000', width: 1.5 }];
+       selectedShapeIds = ['B'];`);
+  const keep = run(`pickSceneStickySelectionCandidate([{ shape: sceneShapes[1], priority: 9, area: 1 }, { shape: sceneShapes[0], priority: 1, area: 999 }], { x: 260, y: 200 })`);
+  assert.equal(keep.shape.id, 'B');
+  run(`selectedShapeIds = ['L']`);
+  const near = run(`getSceneSelectedShapeNearPointer({ x: 266, y: 150 }, [])`);
+  assert.equal(near.shape.id, 'L', 'bấm lệch vài px khỏi nét mảnh đang chọn vẫn bắt trúng');
+  assert.equal(run(`getSceneSelectedShapeNearPointer({ x: 300, y: 150 }, [])`), null);
+  assert.match(read('objects.js'), /if \(e\.altKey && !e\.ctrlKey && !e\.metaKey && lastHitCandidates/);
+});

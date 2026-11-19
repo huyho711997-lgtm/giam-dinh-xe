@@ -470,6 +470,9 @@ function onCanvasMouseDown(e) {
         candidates.push({ shape, index: i, ...info });
       }
     }
+    // Đối tượng đang chọn nhưng bấm hơi lệch khỏi nét mảnh: vẫn tính là bấm trúng nó.
+    const stickyNear = getSceneSelectedShapeNearPointer(pos, candidates);
+    if (stickyNear) candidates.push(stickyNear);
     lastHitCandidates = candidates;
 
     if (candidates.length > 0) {
@@ -481,6 +484,12 @@ function onCanvasMouseDown(e) {
 
       let chosenCandidate = candidates[0];
       const isMultiKey = e.ctrlKey || e.metaKey;
+      // Giữ đối tượng đang chọn: bấm lại lên nó (kể cả chỗ có nét khác đè lên) thì tiếp tục kéo chính nó,
+      // không nhảy sang nét/vật nằm chồng. Muốn chọn vật bên dưới: bấm chỗ trống rồi chọn lại, hoặc nhấn Tab (Đổi hình).
+      if (!isMultiKey) {
+        const keep = pickSceneStickySelectionCandidate(candidates, pos);
+        if (keep) chosenCandidate = keep;
+      }
 
       if (isMultiKey) {
         // Multi-select toggle: hold Ctrl to select/unselect
@@ -1220,7 +1229,9 @@ function onCanvasMouseUp(e) {
       if (hasMovedDuringDrag) {
         saveDrawingState();
       } else {
-        if (!e.ctrlKey && !e.metaKey && lastHitCandidates && lastHitCandidates.length > 1 && priorMouseDownSelectedId === selectedShapeId) {
+        // Bấm lại (không kéo) lên đối tượng đang chọn KHÔNG còn tự nhảy sang nét chồng bên dưới
+        // (gây "tuột" khi vừa bấm vừa định kéo). Muốn đổi sang vật bên dưới: Alt + bấm, hoặc Tab / nút "Đổi hình".
+        if (e.altKey && !e.ctrlKey && !e.metaKey && lastHitCandidates && lastHitCandidates.length > 1 && priorMouseDownSelectedId === selectedShapeId) {
           const curIndex = lastHitCandidates.findIndex(c => c.shape.id === selectedShapeId);
           if (curIndex !== -1) {
             const nextCandidate = lastHitCandidates[(curIndex + 1) % lastHitCandidates.length];
@@ -1662,6 +1673,39 @@ function applyShapeGroupRotation(shape, origData, cx, cy, dTheta) {
     shape.angle = normalizeAngle((origData.angle || 0) + dTheta);
   }
 }
+
+// ---- Giữ lựa chọn khi kéo (không "tuột" sang nét đè lên) ----
+function pickSceneStickySelectionCandidate(candidates, pos) {
+  if (!Array.isArray(selectedShapeIds) || !selectedShapeIds.length) return null;
+  return candidates.find(candidate => selectedShapeIds.includes(candidate.shape.id)) || null;
+}
+
+// Khoảng cách từ con trỏ tới nét của đối tượng (đoạn thẳng/đường cong/nét tự do) hoặc khung của vật.
+function getScenePointerDistanceToShape(shape, pos) {
+  const segments = typeof getShapeSnapSegments === 'function' ? getShapeSnapSegments(shape) : [];
+  if (segments.length) {
+    return segments.reduce((best, segment) => {
+      const q = getSnapClosestPointOnSegment(pos, segment.start, segment.end);
+      return Math.min(best, Math.hypot(q.x - pos.x, q.y - pos.y));
+    }, Infinity);
+  }
+  const box = typeof getShapeBoundingBox === 'function' ? getShapeBoundingBox(shape) : null;
+  if (!box) return Infinity;
+  const dx = Math.max(box.minX - pos.x, 0, pos.x - box.maxX), dy = Math.max(box.minY - pos.y, 0, pos.y - box.maxY);
+  return Math.hypot(dx, dy);
+}
+
+function getSceneSelectedShapeNearPointer(pos, candidates) {
+  if (!Array.isArray(selectedShapeIds) || selectedShapeIds.length !== 1) return null;
+  if (candidates.some(candidate => candidate.shape.id === selectedShapeIds[0])) return null;
+  const index = sceneShapes.findIndex(shape => shape.id === selectedShapeIds[0]);
+  if (index < 0) return null;
+  const shape = sceneShapes[index];
+  const tolerance = typeof getSceneSnapDistance === 'function' ? getSceneSnapDistance(10) : 10;
+  if (getScenePointerDistanceToShape(shape, pos) > tolerance) return null;
+  return { shape, index, priority: 0, area: Infinity };
+}
+
 
 function findSnapPoint(pos, excludeShapeId = null, threshold = 12) {
   if (!sceneShapes) return null;
