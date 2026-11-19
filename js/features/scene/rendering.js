@@ -670,6 +670,7 @@ function getShapeDisplayName(shape) {
     case 'toll_station': return 'Trạm thu phí';
     case 'forest': return 'Rừng cây';
     case 'rock_field': return 'Bãi đá';
+    case 'house': return 'Nhà';
     case 'goods_display': return 'Hàng hóa trưng bày';
     case 'goods_damaged': return 'Hàng hóa đổ vỡ';
     case 'hill': return 'Đồi núi';

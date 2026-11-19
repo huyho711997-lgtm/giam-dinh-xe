@@ -1141,6 +1141,10 @@ function onCanvasMouseMove(e) {
       sceneCtx.rotate(angle);
       drawFallenBike(sceneCtx, fallenBikeW / 2, 0, color, width, fallenBikeW, fallenBikeW * 0.48);
       sceneCtx.restore();
+    } else if (currentDrawTool === 'house') {
+      // Nhà: kéo chéo như hình chữ nhật (building-assets.js)
+      const r = getSceneHouseRectFromDrag(startX, startY, currentX, currentY);
+      drawSceneHouse(sceneCtx, r.startX + r.objectW / 2, r.startY, color, width, r.objectW, r.objectH, null);
     } else if (isSceneryAssetType(currentDrawTool)) {
       const angle = Math.atan2(currentY - startY, currentX - startX);
       const dist = Math.hypot(currentY - startY, currentX - startX);
@@ -1410,6 +1414,9 @@ function onCanvasMouseUp(e) {
       width: width,
       sizeScale: 1
     };
+  } else if (currentDrawTool === 'house') {
+    const r = getSceneHouseRectFromDrag(startX, startY, currentX, currentY);
+    newShape = { id: genShapeId(), type: 'house', startX: r.startX, startY: r.startY, angle: 0, objectW: r.objectW, objectH: r.objectH, color: color, width: width, sizeScale: 1 };
   } else if (isSceneryAssetType(currentDrawTool)) {
     const angle = Math.atan2(currentY - startY, currentX - startX);
     const dist = Math.hypot(currentY - startY, currentX - startX);
