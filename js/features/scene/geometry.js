@@ -506,6 +506,13 @@ function setupDrawingToolListeners() {
         openTrafficSignEditor(sceneShapes[i]);
         return;
       }
+      if (sceneShapes[i].type === 'direction_label' && hitTestShape(sceneShapes[i], pos.x, pos.y)) {
+        setSelectedShapes([sceneShapes[i].id]);
+        updateSelectionBadge();
+        redrawSceneCanvas(true);
+        openSceneDirectionEditor(sceneShapes[i], false);
+        return;
+      }
       if ((sceneShapes[i].type === 'text' || sceneShapes[i].type === 'number_note') && hitTestShape(sceneShapes[i], pos.x, pos.y)) {
         setSelectedShapes([sceneShapes[i].id]);
         updateSelectionBadge();
@@ -1072,6 +1079,8 @@ function renderShape(ctx, shape) {
     drawArrowLine(ctx, shape.x1, shape.y1, shape.x2, shape.y2, color, width, false);
   } else if (shape.type === 'dashed_line') {
     drawArrowLine(ctx, shape.x1, shape.y1, shape.x2, shape.y2, color, width, true);
+  } else if (shape.type === 'direction_label') {
+    drawSceneDirectionLabel(ctx, shape, color, width);
   } else if (shape.type === 'rect') {
     ctx.save();
     const cx = shape.x + shape.w / 2;

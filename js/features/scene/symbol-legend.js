@@ -6,7 +6,7 @@
 // Vùng bảng ký hiệu trên canvas lần vẽ gần nhất (null nếu đang ẩn/không có ký hiệu).
 var sceneSymbolLegendHitRect = null;
 
-const SCENE_SYMBOL_LEGEND_SKIP_TYPES = ['text', 'number_note', 'pen', 'eraser'];
+const SCENE_SYMBOL_LEGEND_SKIP_TYPES = ['text', 'number_note', 'pen', 'eraser', 'direction_label'];
 const SCENE_SYMBOL_LEGEND_HEADER_HEIGHT = 26;
 const SCENE_SYMBOL_LEGEND_ICON_W = 36;
 const SCENE_SYMBOL_LEGEND_ICON_H = 18;

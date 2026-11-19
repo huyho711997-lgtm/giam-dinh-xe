@@ -1032,6 +1032,7 @@ function isLinearResizableShape(shape) {
   if (!shape) return false;
   return shape.type === 'line' ||
     shape.type === 'dashed_line' ||
+    shape.type === 'direction_label' ||
     shape.type === 'road_line' ||
     shape.type === 'road_dashed' ||
     shape.type === 'road_edge' ||
@@ -1469,6 +1470,7 @@ function getLinearShapeHalfBand(shape) {
   if (!shape) return 8;
   const sizeScale = Math.max(0.5, Math.min(3, shape.sizeScale || 1));
   if (shape.type === 'crosswalk') return 24 * sizeScale;
+  if (shape.type === 'direction_label' && typeof getSceneDirectionHalfBand === 'function') return getSceneDirectionHalfBand(shape);
   if (shape.type === 'traffic_light') return 12 * sizeScale;
   if (shape.type === 'median' || shape.type === 'median_blocks') return 14 * sizeScale;
   if (shape.type === 'road_edge') {
@@ -2125,7 +2127,7 @@ function hitTestShapeDetails(shape, px, py) {
   }
 
   let priority = 6;
-  if (isVehicleShape(shape) || shape.type === 'person' || shape.type === 'text' || shape.type === 'xmark' || shape.type === 'number_note' || shape.type === 'crosswalk' || shape.type === 'traffic_light' || shape.type === 'median' || shape.type === 'median_blocks') {
+  if (isVehicleShape(shape) || shape.type === 'person' || shape.type === 'text' || shape.type === 'direction_label' || shape.type === 'xmark' || shape.type === 'number_note' || shape.type === 'crosswalk' || shape.type === 'traffic_light' || shape.type === 'median' || shape.type === 'median_blocks') {
     priority = 10;
   } else if (shape.type === 'line' || shape.type === 'dashed_line' || shape.type === 'road_line' || shape.type === 'road_dashed' || shape.type === 'road_edge' || shape.type === 'curve' || shape.type === 'curve_dashed' || shape.type === 'measure') {
     priority = 7;

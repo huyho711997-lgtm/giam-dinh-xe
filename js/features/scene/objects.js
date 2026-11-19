@@ -1096,6 +1096,8 @@ function onCanvasMouseMove(e) {
       drawArrowLine(sceneCtx, startX, startY, currentX, currentY, color, width, false);
     } else if (currentDrawTool === 'dashed_line') {
       drawArrowLine(sceneCtx, startX, startY, currentX, currentY, color, width, true);
+    } else if (currentDrawTool === 'direction_label') {
+      drawSceneDirectionLabelRaw(sceneCtx, startX, startY, currentX, currentY, color, width, SCENE_DIRECTION_DEFAULT_PREFIX, '', 16, false);
     } else if (currentDrawTool === 'rect') {
       sceneCtx.save();
       sceneCtx.strokeStyle = color;
@@ -1314,6 +1316,10 @@ function onCanvasMouseUp(e) {
       };
       if (currentDrawTool === 'road_edge') newShape.sizeScale = 1;
     }
+  } else if (currentDrawTool === 'direction_label') {
+    // Bấm 1 cái (không kéo) thì tạo sẵn mũi tên dài 120 hướng sang phải.
+    const dragged = Math.hypot(currentX - startX, currentY - startY) > 12;
+    newShape = createSceneDirectionLabel(startX, startY, dragged ? currentX : startX + 120, dragged ? currentY : startY, color, width);
   } else if (currentDrawTool === 'crosswalk' || currentDrawTool === 'traffic_light' || currentDrawTool === 'median' || currentDrawTool === 'median_blocks') {
     const rawLength = Math.hypot(currentX - startX, currentY - startY);
     if (rawLength > 3) {
@@ -1469,6 +1475,13 @@ function onCanvasMouseUp(e) {
     sceneShapes.push(newShape);
     setSelectedShapes([newShape.id]);
     saveDrawingState();
+    if (isSceneDirectionLabel(newShape)) {
+      setActiveDrawTool('select');
+      updateSelectionBadge();
+      redrawSceneCanvas(true);
+      setTimeout(function() { openSceneDirectionEditor(newShape, true); }, 0);
+      return;
+    }
     if (isInfrastructureAssetShape(newShape) || isVehicleShape(newShape)) {
       setActiveDrawTool('select');
       updateSelectionBadge();

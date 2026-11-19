@@ -482,3 +482,28 @@ body:not(.light-mode) #sceneDrawingModalOverlay #strokeWidthPopover { box-shadow
 #sceneDrawingModalOverlay #selectedShapeLayerText:hover,
 #sceneDrawingModalOverlay #selectedShapeLayerText:focus-visible { background: color-mix(in srgb,var(--se-gold) 18%,transparent); outline: none; }
 #sceneDrawingModalOverlay .scene-layer-input { width: 3.4ch; padding: 0 2px; margin: 0; border: 0; border-bottom: 1.5px solid var(--se-gold); border-radius: 0; background: transparent; color: inherit; font: inherit; text-align: right; outline: none; }
+
+/* ---- Hộp nhập "Hướng về …" (direction-label.js) ---- */
+.scene-direction-modal { position: fixed; inset: 0; z-index: 100060; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(15,23,42,.55); backdrop-filter: blur(8px); }
+.scene-direction-modal.open { display: flex; }
+.scene-direction-modal .sdm-card { width: min(500px, 100%); padding: 20px 22px 18px; border: 1px solid var(--border, #e2e8f0); border-radius: 16px; background: var(--surface, #fff); color: var(--text-main, #0f172a); box-shadow: 0 24px 60px rgba(0,0,0,.28); }
+.scene-direction-modal .sdm-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.scene-direction-modal h3 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -.02em; }
+.scene-direction-modal .sdm-x { width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: var(--text-muted, #64748b); font-size: 20px; cursor: pointer; }
+.scene-direction-modal .sdm-x:hover { background: var(--surface-strong, #f1f5f9); }
+.scene-direction-modal .sdm-preview { display: block; width: 100%; height: auto; margin-bottom: 14px; border: 1px solid var(--border, #e2e8f0); border-radius: 10px; background: #fff; }
+.scene-direction-modal .sdm-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 6px; }
+.scene-direction-modal .sdm-field > span { font-size: 11.5px; font-weight: 700; color: var(--text-muted, #64748b); }
+.scene-direction-modal .sdm-field input:not([type="range"]) { padding: 9px 11px; border: 1px solid var(--border, #e2e8f0); border-radius: 9px; background: var(--surface-strong, #fff); color: inherit; font: inherit; font-size: 14px; }
+.scene-direction-modal .sdm-field input:focus-visible { outline: 2px solid var(--se-gold, #c9a050); outline-offset: 1px; }
+.scene-direction-modal .sdm-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 12px; }
+.scene-direction-modal .sdm-chip { padding: 4px 10px; border: 1px dashed color-mix(in srgb, var(--se-gold, #c9a050) 55%, transparent); border-radius: 999px; background: transparent; color: var(--text-soft, #334155); font: inherit; font-size: 12px; cursor: pointer; }
+.scene-direction-modal .sdm-chip:hover { border-style: solid; color: var(--se-gold, #b08a3e); }
+.scene-direction-modal .sdm-row { display: flex; align-items: flex-end; gap: 14px; margin: 4px 0 16px; }
+.scene-direction-modal .sdm-size { flex: 1; margin: 0; }
+.scene-direction-modal .sdm-size input { accent-color: var(--se-gold, #c9a050); }
+.scene-direction-modal .sdm-check { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; white-space: nowrap; padding-bottom: 4px; }
+.scene-direction-modal .sdm-foot { display: flex; justify-content: flex-end; gap: 10px; }
+.scene-direction-modal .sdm-btn { padding: 8px 16px; border: 1px solid var(--border, #e2e8f0); border-radius: 9px; background: transparent; color: inherit; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.scene-direction-modal .sdm-ghost:hover { background: var(--surface-strong, #f1f5f9); }
+.scene-direction-modal .sdm-primary { border-color: transparent; background: linear-gradient(135deg, #e6c887, #c9a050); color: #2b1d08; }

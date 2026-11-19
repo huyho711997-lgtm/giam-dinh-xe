@@ -158,6 +158,7 @@ const TOOL_ICONS_MAP = {
   road_intersection: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 2v6H2M16 2v6h6M2 16h6v6M22 16h-6v6"></path><path d="M12 2v5M12 17v5M2 12h5M17 12h5" stroke-width="1.3" stroke-dasharray="2 2"></path></svg>',
   curve: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 19C4 9 9 4 19 4"></path></svg>',
   curve_dashed: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="3 3"><path d="M4 19C4 9 9 4 19 4"></path></svg>',
+  direction_label: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4"></path><path d="M8 8l-4 4 4 4"></path><path d="M9 5h8M10 20h6"></path></svg>',
   line: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>',
   dashed_line: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line stroke-dasharray="4 4" x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>',
   truck: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="13" height="12" rx="1"></rect><line x1="6.5" y1="8" x2="6.5" y2="16"></line><line x1="10.5" y1="8" x2="10.5" y2="16"></line><rect x="16" y="7" width="6" height="10" rx="1"></rect><path d="M18.5 7l3.5 5-3.5 5"></path></svg>',
@@ -222,7 +223,8 @@ const TOOL_GROUPS_CONFIG = {
     defaultTool: 'line',
     tools: [
       { id: 'line', name: 'Mũi tên nét liền', desc: 'Hướng di chuyển chính của xe' },
-      { id: 'dashed_line', name: 'Mũi tên nét đứt', desc: 'Đường đi dự kiến của xe' }
+      { id: 'dashed_line', name: 'Mũi tên nét đứt', desc: 'Đường đi dự kiến của xe' },
+      { id: 'direction_label', name: 'Hướng về… (mũi tên + chữ)', desc: 'Kéo theo hướng đi, nhập tên nơi đến (VD: Hướng về Buôn Hồ)' }
     ]
   },
   shape_symbols: {

@@ -675,6 +675,7 @@ function getShapeDisplayName(shape) {
     case 'hill': return 'Đồi núi';
     case 'line': return 'Mũi tên di chuyển (nét liền)';
     case 'dashed_line': return 'Mũi tên di chuyển (nét đứt)';
+    case 'direction_label': return `Hướng: ${[shape.prefix, shape.text].filter(Boolean).join(' ').substring(0, 24) || 'chưa nhập'}`;
     case 'rect': return 'Khối hộp / Vật cản';
     case 'person': return 'Người / Nạn nhân';
     case 'measure': return 'Đo khoảng cách';
