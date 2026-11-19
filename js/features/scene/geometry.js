@@ -567,7 +567,7 @@ function setupDrawingToolListeners() {
     isDrawing || isDraggingShape || isRotatingShape ||
     isDraggingCurveControl || isDraggingCurveStart || isDraggingCurveEnd ||
     isResizingLinearStart || isResizingLinearEnd || isResizingInfraBand || isResizingNumberNote || isResizingVehicle ||
-    !!roadIntersectionResizeState
+    !!roadIntersectionResizeState || !!sceneGroupResizeState
   );
   window.addEventListener('mousemove', (e) => {
     if (e.target !== sceneCanvas && hasActiveSceneGesture()) onCanvasMouseMove(e);

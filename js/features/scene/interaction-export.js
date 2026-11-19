@@ -1769,7 +1769,12 @@ function cancelSceneCanvasInteraction() {
   const hadActiveAction = currentDrawTool !== 'select' || isDrawing || isDraggingShape || isRotatingShape ||
     isDraggingCurveControl || isDraggingCurveStart || isDraggingCurveEnd ||
     isResizingLinearStart || isResizingLinearEnd || isResizingInfraBand ||
-    isResizingNumberNote || isResizingVehicle || !!roadIntersectionResizeState || !!curvePendingStart || !!tireTrackPendingStart;
+    isResizingNumberNote || isResizingVehicle || !!roadIntersectionResizeState || !!sceneGroupResizeState || !!curvePendingStart || !!tireTrackPendingStart;
+
+  if (sceneGroupResizeState) {
+    restoreSceneGroupResize(sceneGroupResizeState);
+    sceneGroupResizeState = null;
+  }
 
   if (roadIntersectionResizeState) {
     roadIntersectionResizeState.originals.forEach(({ shape, data }) => {

@@ -95,6 +95,7 @@ let hasResizedDuringDrag = false;
 let resizeOriginalShapeData = null;
 
 let roadIntersectionResizeState = null;
+let sceneGroupResizeState = null;
 
 
 // Zoom & Pan State

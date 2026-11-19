@@ -361,6 +361,15 @@ function onCanvasMouseDown(e) {
           e.preventDefault();
           return;
         }
+        // Kéo giãn cả nhóm / nhiều đối tượng thường (nhà, hàng hoá, xe, nét…)
+        const groupHandle = hitTestSceneGroupResizeHandle(pos.x, pos.y);
+        if (groupHandle) {
+          sceneGroupResizeState = beginSceneGroupResize(groupHandle, pos);
+          hasResizedDuringDrag = false;
+          sceneCanvas.style.cursor = getSceneGroupResizeCursor(groupHandle);
+          e.preventDefault();
+          return;
+        }
       } else if (selShapes.length === 1) {
         const activeShape = selShapes[0];
         if (activeShape && hitTestRotationHandle(activeShape, pos.x, pos.y)) {
@@ -649,6 +658,13 @@ function onCanvasMouseMove(e) {
   }
 
   if (currentDrawTool === 'select') {
+    if (sceneGroupResizeState) {
+      hasResizedDuringDrag = resizeSceneGroupFromPointer(sceneGroupResizeState, pos.x, pos.y, e.shiftKey);
+      sceneCanvas.style.cursor = getSceneGroupResizeCursor(sceneGroupResizeState.handle);
+      updateSelectionBadge();
+      redrawSceneCanvas(true);
+      return;
+    }
     if (roadIntersectionResizeState) {
       resizeSceneRoadIntersectionFromPointer(pos.x, pos.y, e.shiftKey);
       sceneCanvas.style.cursor = getSceneRoadIntersectionResizeCursor(roadIntersectionResizeState.handle);
@@ -868,6 +884,11 @@ function onCanvasMouseMove(e) {
       const resizeHandle = hitTestSceneRoadIntersectionResizeHandle(pos.x, pos.y);
       if (resizeHandle) {
         sceneCanvas.style.cursor = getSceneRoadIntersectionResizeCursor(resizeHandle);
+        return;
+      }
+      const groupHoverHandle = hitTestSceneGroupResizeHandle(pos.x, pos.y);
+      if (groupHoverHandle) {
+        sceneCanvas.style.cursor = getSceneGroupResizeCursor(groupHoverHandle);
         return;
       }
       for (let i = 0; i < selShapes.length; i++) {
@@ -1178,6 +1199,17 @@ function onCanvasMouseUp(e) {
   const pos = getMousePos(sceneCanvas, e);
 
   if (currentDrawTool === 'select') {
+    if (sceneGroupResizeState) {
+      // Lấy vị trí nhả chuột thật (kể cả khi nhả ngoài canvas) rồi chốt kích thước.
+      resizeSceneGroupFromPointer(sceneGroupResizeState, pos.x, pos.y, e.shiftKey);
+      sceneGroupResizeState = null;
+      if (hasResizedDuringDrag) saveDrawingState();
+      hasResizedDuringDrag = false;
+      sceneCanvas.style.cursor = 'default';
+      updateSelectionBadge();
+      redrawSceneCanvas(true);
+      return;
+    }
     if (roadIntersectionResizeState) {
       // Read the actual release position, including releases outside the canvas.
       resizeSceneRoadIntersectionFromPointer(pos.x, pos.y, e.shiftKey);
