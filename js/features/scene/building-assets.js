@@ -27,8 +27,7 @@ function drawSceneHouse(ctx, x, y, color, width, w, h, shapeData) {
   ctx.lineJoin = 'miter';
   ctx.lineCap = 'round';
   ctx.setLineDash([]);
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(left, top, w, h);
+  // Chỉ là các đường nét (trong suốt): không tô nền nên không che xe, hàng hoá hay nét nằm bên dưới.
   ctx.strokeStyle = color;
   ctx.lineWidth = lineWidth;
   if (shapeData && shapeData.dashed) ctx.setLineDash([7, 4]); // nhà đã bị phá dỡ / dự kiến

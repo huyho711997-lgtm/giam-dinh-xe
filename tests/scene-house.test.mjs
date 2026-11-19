@@ -49,3 +49,12 @@ test('vẽ: khung + 5 nét mái, là vật cảnh quan có tên "Nhà"', () => {
   assert.match(read('objects.js'), /currentDrawTool === 'house'/);
   assert.match(fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8'), /scene\/building-assets\.js\?v=/);
 });
+
+
+test('nhà chỉ là các đường nét: không tô nền, không che vật bên dưới', () => {
+  const { log, run } = load();
+  run("drawSceneryAsset(ctx, 'house', 200, 100, '#000', 1.5, 200, 100, { id: 'h1', type: 'house' })");
+  assert.equal(log.filter(c => c[0] === 'fillRect' || c[0] === 'fill').length, 0);
+  assert.ok(log.some(c => c[0] === 'strokeRect'));
+  assert.equal(run("typeof getSceneShapesInRenderOrder"), 'undefined');
+});
