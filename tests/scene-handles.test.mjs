@@ -16,18 +16,24 @@ function load(zoom = 1) {
   const log = [];
   context.ctx = new Proxy({ measureText: t => ({ width: String(t).length * 6 }) }, {
     get(t, p) { return p in t ? t[p] : (...a) => { log.push([p, ...a]); }; },
-    set(t, p, v) { t[p] = v; if (p === 'fillStyle' || p === 'strokeStyle' || p === 'shadowBlur') log.push(['set:' + p, v]); return true; }
+    set(t, p, v) { t[p] = v; if (['fillStyle', 'strokeStyle', 'shadowBlur', 'globalAlpha'].includes(p)) log.push(['set:' + p, v]); return true; }
   });
   return { log, run: code => vm.runInContext(code, context) };
 }
 
-test('tay nắm có viền trắng bao quanh + bóng, rồi mới tới thân màu (không lẫn vào nét đen)', () => {
+test('tay nắm rỗng ruột: ruột chỉ phủ màu rất nhạt, chỉ vẽ viền (vòng trắng + viền sẫm) nên không che vật bên dưới', () => {
   const { log, run } = load();
   run("drawSceneSelectionHandle(ctx, 100, 100, { size: 10 })");
-  const fills = log.filter(c => c[0] === 'set:fillStyle').map(c => c[1]);
-  assert.equal(fills[0], '#ffffff', 'lớp ngoài cùng phải là viền trắng');
-  assert.ok(fills.includes('#f4cf85'), 'thân tay nắm có màu riêng');
-  assert.ok(log.some(c => c[0] === 'set:shadowBlur' && c[1] > 0), 'có bóng đổ');
+  const alphaSets = log.filter(c => c[0] === 'set:globalAlpha').map(c => c[1]);
+  assert.ok(alphaSets.length && alphaSets[0] <= 0.2, 'ruột gần như trong suốt');
+  const strokes = log.filter(c => c[0] === 'set:strokeStyle').map(c => c[1]);
+  assert.equal(strokes[0], '#ffffff', 'vòng trắng ngoài tách khỏi nét đen');
+  assert.equal(strokes.length, 2, 'rồi tới viền sẫm');
+  // Không có lệnh tô đặc nào ở độ mờ 100% (nền trắng cũ đã bị bỏ).
+  const fillIdx = log.findIndex(c => c[0] === 'fill');
+  const opaqueBefore = log.slice(0, fillIdx).some(c => c[0] === 'set:globalAlpha' && c[1] === 1);
+  assert.equal(opaqueBefore, false);
+  assert.ok(log.some(c => c[0] === 'set:shadowBlur' && c[1] > 0), 'có bóng nhẹ cho vòng trắng');
 });
 
 test('thu nhỏ sơ đồ thì tay nắm tự to lên để trên màn hình luôn đủ lớn', () => {

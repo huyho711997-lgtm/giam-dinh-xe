@@ -168,11 +168,11 @@ function moveShapeBy(shape, dx, dy) {
 // SELECTION UI, ROTATION HANDLE & BADGE
 // ------------------------------------------
 // ------------------------------------------
-// TAY NẮM CHỌN: luôn nổi bật trên mọi nét vẽ
+// TAY NẮM CHỌN: nổi bật trên nét vẽ nhưng KHÔNG che vật bên dưới
 // ------------------------------------------
-// Tay nắm cũ nền trắng viền mảnh nên lẫn vào nét đen của đường/đối tượng (nhất là khi nét dày hoặc đè nhiều nét),
-// người dùng không thấy chấm để kéo. Tay nắm mới: viền trắng bao quanh + viền sẫm + ruột màu + bóng đổ,
-// và tự to lên khi thu nhỏ sơ đồ để trên màn hình luôn đủ lớn.
+// Tay nắm đặc che mất đầu nét / điểm giao nằm ngay dưới nó; tay nắm nền trắng viền mảnh thì lẫn vào nét đen.
+// Giải pháp: tay nắm RỖNG RUỘT — chỉ có viền (vòng trắng ngoài + viền sẫm trong), ruột gần như trong suốt —
+// nên vẫn thấy rõ đầu nét và điểm giao bên dưới, mà viền vẫn tách được khỏi nét đen. Tự to lên khi thu nhỏ sơ đồ.
 function getSceneHandleSize(base) {
   const zoom = (typeof currentSceneZoom === 'number' && currentSceneZoom > 0) ? currentSceneZoom : 1;
   return Math.min(base * 2.2, base / Math.min(1, zoom));
@@ -184,35 +184,35 @@ function drawSceneSelectionHandle(ctx, x, y, options) {
   const size = getSceneHandleSize(opts.size || 9);
   const half = size / 2;
   const circle = opts.shape === 'circle';
-  const fill = opts.fill || '#f4cf85';
+  const tint = opts.fill || '#f4cf85';
   const stroke = opts.stroke || '#7a5412';
-  const trace = (grow) => {
+  const trace = () => {
     ctx.beginPath();
-    if (circle) ctx.arc(x, y, half + grow, 0, Math.PI * 2);
-    else ctx.rect(x - half - grow, y - half - grow, size + grow * 2, size + grow * 2);
+    if (circle) ctx.arc(x, y, half, 0, Math.PI * 2);
+    else ctx.rect(x - half, y - half, size, size);
   };
   ctx.save();
   ctx.setLineDash([]);
-  // 1) Viền trắng + bóng: tách tay nắm khỏi nét đen nằm dưới.
-  ctx.shadowColor = 'rgba(15, 23, 42, .45)';
-  ctx.shadowBlur = 5;
-  ctx.fillStyle = '#ffffff';
-  trace(2.6);
+  // 1) Ruột: chỉ phủ một lớp màu rất nhạt để biết là tay nắm, vẫn nhìn xuyên xuống nét bên dưới.
+  ctx.globalAlpha = 0.14;
+  ctx.fillStyle = tint;
+  trace();
   ctx.fill();
+  ctx.globalAlpha = 1;
+  // 2) Vòng trắng ngoài (kèm bóng nhẹ): tách viền khỏi nét đen nằm dưới.
+  ctx.shadowColor = 'rgba(15, 23, 42, .3)';
+  ctx.shadowBlur = 3;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 4;
+  trace();
+  ctx.stroke();
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
-  // 2) Thân tay nắm: ruột màu + viền sẫm.
-  ctx.fillStyle = fill;
+  // 3) Viền sẫm bên trong vòng trắng.
   ctx.strokeStyle = stroke;
   ctx.lineWidth = 1.8;
-  trace(0);
-  ctx.fill();
+  trace();
   ctx.stroke();
-  // 3) Chấm giữa chỉ rõ điểm bấm.
-  ctx.beginPath();
-  ctx.fillStyle = stroke;
-  ctx.arc(x, y, Math.max(1.1, size * 0.13), 0, Math.PI * 2);
-  ctx.fill();
   ctx.restore();
 }
 
@@ -353,8 +353,8 @@ function drawShapeSelectionBox(ctx, shape) {
     [
       { x: source.x1, y: source.y1 },
       { x: source.x2, y: source.y2 }
-    ].forEach(point => drawSceneSelectionHandle(ctx, point.x, point.y, { size: 12, shape: 'circle', fill: '#93c5fd', stroke: '#1d4ed8' }));
-    drawSceneSelectionHandle(ctx, source.cx, source.cy, { size: 16, shape: 'circle', fill: '#f4cf85' });
+    ].forEach(point => drawSceneSelectionHandle(ctx, point.x, point.y, { size: 10, shape: 'circle', fill: '#93c5fd', stroke: '#1d4ed8' }));
+    drawSceneSelectionHandle(ctx, source.cx, source.cy, { size: 13, shape: 'circle', fill: '#f4cf85' });
 
     if (rotPos) {
       ctx.beginPath();
@@ -384,11 +384,11 @@ function drawShapeSelectionBox(ctx, shape) {
 
     // 2. Control Point handle (Curvature handle at cx, cy)
     ctx.setLineDash([]);
-    drawSceneSelectionHandle(ctx, shape.cx, shape.cy, { size: 16, shape: 'circle', fill: '#f4cf85' });
+    drawSceneSelectionHandle(ctx, shape.cx, shape.cy, { size: 13, shape: 'circle', fill: '#f4cf85' });
 
     // 3-4. Hai điểm đầu/cuối: tay nắm nổi (viền trắng + bóng) để không lẫn vào nét cong.
-    drawSceneSelectionHandle(ctx, shape.x1, shape.y1, { size: 12, shape: 'circle', fill: '#93c5fd', stroke: '#1d4ed8' });
-    drawSceneSelectionHandle(ctx, shape.x2, shape.y2, { size: 12, shape: 'circle', fill: '#93c5fd', stroke: '#1d4ed8' });
+    drawSceneSelectionHandle(ctx, shape.x1, shape.y1, { size: 10, shape: 'circle', fill: '#93c5fd', stroke: '#1d4ed8' });
+    drawSceneSelectionHandle(ctx, shape.x2, shape.y2, { size: 10, shape: 'circle', fill: '#93c5fd', stroke: '#1d4ed8' });
 
     // 5. Rotation handle above center
     const rotPos = getShapeRotationHandlePos(shape);
@@ -446,7 +446,7 @@ if (isLinearResizableShape(shape)) {
 
     // Hai tay nắm đầu nét: kéo để rút ngắn / kéo dài. Vẽ nổi (viền trắng + bóng) để không lẫn vào chính nét đó.
     ctx.setLineDash([]);
-    [startPoint, endPoint].forEach(point => drawSceneSelectionHandle(ctx, point.x, point.y, { size: 11 }));
+    [startPoint, endPoint].forEach(point => drawSceneSelectionHandle(ctx, point.x, point.y, { size: 9 }));
 
     if (isInfrastructureAssetShape(shape)) {
       const center = getShapeCenter(shape);
@@ -454,7 +454,7 @@ if (isLinearResizableShape(shape)) {
         { x: center.x + nx * halfBand, y: center.y + ny * halfBand },
         { x: center.x - nx * halfBand, y: center.y - ny * halfBand }
       ];
-      bandHandles.forEach(point => drawSceneSelectionHandle(ctx, point.x, point.y, { size: 11, shape: 'circle', fill: '#e9b44c' }));
+      bandHandles.forEach(point => drawSceneSelectionHandle(ctx, point.x, point.y, { size: 9, shape: 'circle', fill: '#e9b44c' }));
     }
 
     if (rotPos) {
@@ -570,7 +570,7 @@ function drawMultiSelectionBox(ctx, shapes) {
   ctx.strokeStyle = themeColor;
   ctx.lineWidth = 1.5;
   const corners = getSceneMultiResizeHandles(cBox);
-  corners.forEach(c => drawSceneSelectionHandle(ctx, c.x, c.y, { size: 10, fill: isGroup ? '#93c5fd' : '#f4cf85', stroke: isGroup ? '#1d4ed8' : '#7a5412' }));
+  corners.forEach(c => drawSceneSelectionHandle(ctx, c.x, c.y, { size: 8, fill: isGroup ? '#93c5fd' : '#f4cf85', stroke: isGroup ? '#1d4ed8' : '#7a5412' }));
 
   // Label tag at top-left
   ctx.fillStyle = themeColor;
