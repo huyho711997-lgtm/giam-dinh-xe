@@ -185,6 +185,8 @@ const TOOL_ICONS_MAP = {
   sign_triangle_post: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M9 2l6 10H3z"></path><path d="M9 12v10M6 22h6"></path></svg>',
   tree: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="8"></circle><circle cx="9" cy="9" r="4"></circle><circle cx="15" cy="9" r="4"></circle><path d="M12 12v9M9 21h6"></path></svg>',
   median_tree: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="5"></rect><circle cx="7" cy="10" r="3"></circle><circle cx="12" cy="9" r="3"></circle><circle cx="17" cy="10" r="3"></circle><path d="M7 12v3M12 11v4M17 12v3"></path></svg>',
+  goods_display: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="1.5"></rect><rect x="5" y="7" width="5" height="4"></rect><path d="M7.5 7v4"></path><circle cx="16" cy="9" r="2.4"></circle><circle cx="7.5" cy="16" r="2"></circle><rect x="13.5" y="14" width="5" height="4"></rect></svg>',
+  goods_damaged: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="1.5" stroke-dasharray="3 2"></rect><path d="M5 10l4-3 3 4-4 3z"></path><circle cx="16" cy="10" r="2.3"></circle><path d="M7 17l2-1 1 2M14 16l3 1-1 2"></path></svg>',
   rock_field: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19l3-6 4 1 2-5 4 3 5-1-2 8z"></path><path d="M10 14l2 5M12 9l4 3"></path></svg>',
   hill: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20c3-1 4-8 8-11 3-2 5 2 7 4s4 5 5 7"></path><path d="M6 20c2-1 3-5 5-7 2-1 3 1 4 3s2 3 3 4"></path><path d="M11 20c1-1 2-3 3-3"></path></svg>',
   rice_field: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"></rect><path d="M5 7c4-2 10-2 14 0M5 12c4-2 10-2 14 0M5 17c4-2 10-2 14 0"></path><path d="M8 6v12M16 6v12"></path></svg>',
@@ -248,7 +250,9 @@ const TOOL_GROUPS_CONFIG = {
       { id: 'fallen_bike', name: 'Xe máy nằm ngã', desc: 'Xe máy đổ nghiêng, nằm trên mặt đường' },
       { id: 'person', name: 'Người / Nạn nhân', desc: 'Vị trí người đi bộ, nạn nhân' },
       { id: 'xmark', name: 'Điểm va chạm (X)', desc: 'Vị trí va chạm, xung đột' },
-      { id: 'rect', name: 'Khối hộp / Vật cản', desc: 'Khung chữ nhật rỗng cho vật cản; hộ lan dùng công cụ Hộ lan tôn sóng' }
+      { id: 'rect', name: 'Khối hộp / Vật cản', desc: 'Khung chữ nhật rỗng cho vật cản; hộ lan dùng công cụ Hộ lan tôn sóng' },
+      { id: 'goods_display', name: 'Hàng hóa trưng bày', desc: 'Bàn/kệ hàng hóa (thùng, nồi, ấm...); kéo rộng để thêm hàng' },
+      { id: 'goods_damaged', name: 'Hàng hóa đổ vỡ', desc: 'Vùng gạch chéo có hàng đổ nghiêng, mảnh vỡ; dùng cho tài sản bị thiệt hại' }
     ]
   },
   road_assets: {
