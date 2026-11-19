@@ -2140,8 +2140,7 @@ function createSceneDrawingExportDataUrl() {
   drawTemplate(expCtx, 1000, 700);
   expCtx.save();
   applySceneDrawingAreaClip(expCtx);
-  const exportShapes = typeof getSceneShapesInRenderOrder === 'function' ? getSceneShapesInRenderOrder(sceneShapes) : sceneShapes;
-  for (let i = 0; i < exportShapes.length; i++) renderShape(expCtx, exportShapes[i]);
+  for (let i = 0; i < sceneShapes.length; i++) renderShape(expCtx, sceneShapes[i]);
   expCtx.restore();
 
   const dataURL = exportCanvas.toDataURL('image/png');

@@ -2129,12 +2129,7 @@ function hitTestShapeDetails(shape, px, py) {
   }
 
   let priority = 6;
-  // Thứ tự nổi từ trên xuống: chữ/nhãn > mái nhà (che phủ) > xe, người, hạ tầng > nét. Khớp thứ tự vẽ.
-  if (shape.type === 'house') {
-    priority = 10.3;
-  } else if (shape.type === 'text' || shape.type === 'direction_label' || shape.type === 'xmark' || shape.type === 'number_note') {
-    priority = 10.6;
-  } else if (isVehicleShape(shape) || shape.type === 'person' || shape.type === 'text' || shape.type === 'direction_label' || shape.type === 'xmark' || shape.type === 'number_note' || shape.type === 'crosswalk' || shape.type === 'traffic_light' || shape.type === 'median' || shape.type === 'median_blocks') {
+  if (isVehicleShape(shape) || shape.type === 'person' || shape.type === 'text' || shape.type === 'direction_label' || shape.type === 'xmark' || shape.type === 'number_note' || shape.type === 'crosswalk' || shape.type === 'traffic_light' || shape.type === 'median' || shape.type === 'median_blocks') {
     priority = 10;
   } else if (shape.type === 'line' || shape.type === 'dashed_line' || shape.type === 'road_line' || shape.type === 'road_dashed' || shape.type === 'road_edge' || shape.type === 'curve' || shape.type === 'curve_dashed' || shape.type === 'measure') {
     priority = 7;
