@@ -167,6 +167,56 @@ function moveShapeBy(shape, dx, dy) {
 // ------------------------------------------
 // SELECTION UI, ROTATION HANDLE & BADGE
 // ------------------------------------------
+// ------------------------------------------
+// TAY NẮM CHỌN: luôn nổi bật trên mọi nét vẽ
+// ------------------------------------------
+// Tay nắm cũ nền trắng viền mảnh nên lẫn vào nét đen của đường/đối tượng (nhất là khi nét dày hoặc đè nhiều nét),
+// người dùng không thấy chấm để kéo. Tay nắm mới: viền trắng bao quanh + viền sẫm + ruột màu + bóng đổ,
+// và tự to lên khi thu nhỏ sơ đồ để trên màn hình luôn đủ lớn.
+function getSceneHandleSize(base) {
+  const zoom = (typeof currentSceneZoom === 'number' && currentSceneZoom > 0) ? currentSceneZoom : 1;
+  return Math.min(base * 2.2, base / Math.min(1, zoom));
+}
+
+
+function drawSceneSelectionHandle(ctx, x, y, options) {
+  const opts = options || {};
+  const size = getSceneHandleSize(opts.size || 9);
+  const half = size / 2;
+  const circle = opts.shape === 'circle';
+  const fill = opts.fill || '#f4cf85';
+  const stroke = opts.stroke || '#7a5412';
+  const trace = (grow) => {
+    ctx.beginPath();
+    if (circle) ctx.arc(x, y, half + grow, 0, Math.PI * 2);
+    else ctx.rect(x - half - grow, y - half - grow, size + grow * 2, size + grow * 2);
+  };
+  ctx.save();
+  ctx.setLineDash([]);
+  // 1) Viền trắng + bóng: tách tay nắm khỏi nét đen nằm dưới.
+  ctx.shadowColor = 'rgba(15, 23, 42, .45)';
+  ctx.shadowBlur = 5;
+  ctx.fillStyle = '#ffffff';
+  trace(2.6);
+  ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  // 2) Thân tay nắm: ruột màu + viền sẫm.
+  ctx.fillStyle = fill;
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 1.8;
+  trace(0);
+  ctx.fill();
+  ctx.stroke();
+  // 3) Chấm giữa chỉ rõ điểm bấm.
+  ctx.beginPath();
+  ctx.fillStyle = stroke;
+  ctx.arc(x, y, Math.max(1.1, size * 0.13), 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+
 function drawShapeSelectionBox(ctx, shape) {
   if (!shape) return;
   const pad = 6;
@@ -207,10 +257,7 @@ function drawShapeSelectionBox(ctx, shape) {
       { x: -pad, y: 0 },
       { x: w + pad, y: 0 }
     ];
-    handles.forEach(pt => {
-      ctx.fillRect(pt.x - hs/2, pt.y - hs/2, hs, hs);
-      ctx.strokeRect(pt.x - hs/2, pt.y - hs/2, hs, hs);
-    });
+    handles.forEach(pt => drawSceneSelectionHandle(ctx, pt.x, pt.y, { size: hs }));
 
     // 4. Rotation Handle Stem
     const rotY = -h/2 - pad - stemLen;
@@ -259,7 +306,6 @@ function drawShapeSelectionBox(ctx, shape) {
     ctx.fillStyle = '#ffffff';
     ctx.strokeStyle = '#92691d';
     ctx.lineWidth = 1.5;
-    const hs = 6;
     const handles = [
       { x: -w/2 - pad, y: -h/2 - pad },
       { x: w/2 + pad, y: -h/2 - pad },
@@ -270,10 +316,7 @@ function drawShapeSelectionBox(ctx, shape) {
       { x: -w/2 - pad, y: 0 },
       { x: w/2 + pad, y: 0 }
     ];
-    handles.forEach(pt => {
-      ctx.fillRect(pt.x - hs/2, pt.y - hs/2, hs, hs);
-      ctx.strokeRect(pt.x - hs/2, pt.y - hs/2, hs, hs);
-    });
+    handles.forEach(pt => drawSceneSelectionHandle(ctx, pt.x, pt.y, { size: 8 }));
 
     // 4. Rotation Handle Stem
     const rotY = -h/2 - pad - stemLen;
@@ -310,27 +353,8 @@ function drawShapeSelectionBox(ctx, shape) {
     [
       { x: source.x1, y: source.y1 },
       { x: source.x2, y: source.y2 }
-    ].forEach(point => {
-      ctx.beginPath();
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#3b82f6';
-      ctx.lineWidth = 2.2;
-      ctx.rect(point.x - 5.5, point.y - 5.5, 11, 11);
-      ctx.fill();
-      ctx.stroke();
-    });
-
-    ctx.beginPath();
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#d8b46d';
-    ctx.lineWidth = 2.5;
-    ctx.arc(source.cx, source.cy, 9, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.fillStyle = '#d8b46d';
-    ctx.arc(source.cx, source.cy, 4, 0, Math.PI * 2);
-    ctx.fill();
+    ].forEach(point => drawSceneSelectionHandle(ctx, point.x, point.y, { size: 12, shape: 'circle', fill: '#93c5fd', stroke: '#1d4ed8' }));
+    drawSceneSelectionHandle(ctx, source.cx, source.cy, { size: 16, shape: 'circle', fill: '#f4cf85' });
 
     if (rotPos) {
       ctx.beginPath();
@@ -360,36 +384,11 @@ function drawShapeSelectionBox(ctx, shape) {
 
     // 2. Control Point handle (Curvature handle at cx, cy)
     ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#d8b46d';
-    ctx.lineWidth = 2.2;
-    ctx.arc(shape.cx, shape.cy, 8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    drawSceneSelectionHandle(ctx, shape.cx, shape.cy, { size: 16, shape: 'circle', fill: '#f4cf85' });
 
-    ctx.beginPath();
-    ctx.fillStyle = '#d8b46d';
-    ctx.arc(shape.cx, shape.cy, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 3. Start Point handle (x1, y1)
-    ctx.beginPath();
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#3b82f6';
-    ctx.lineWidth = 2;
-    ctx.arc(shape.x1, shape.y1, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // 4. End Point handle (x2, y2)
-    ctx.beginPath();
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = '#3b82f6';
-    ctx.lineWidth = 2;
-    ctx.arc(shape.x2, shape.y2, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    // 3-4. Hai điểm đầu/cuối: tay nắm nổi (viền trắng + bóng) để không lẫn vào nét cong.
+    drawSceneSelectionHandle(ctx, shape.x1, shape.y1, { size: 12, shape: 'circle', fill: '#93c5fd', stroke: '#1d4ed8' });
+    drawSceneSelectionHandle(ctx, shape.x2, shape.y2, { size: 12, shape: 'circle', fill: '#93c5fd', stroke: '#1d4ed8' });
 
     // 5. Rotation handle above center
     const rotPos = getShapeRotationHandlePos(shape);
@@ -445,23 +444,9 @@ if (isLinearResizableShape(shape)) {
     ctx.setLineDash([5, 4]);
     ctx.stroke();
 
-    // Clear endpoint handles: drag either square to shorten or extend the object.
+    // Hai tay nắm đầu nét: kéo để rút ngắn / kéo dài. Vẽ nổi (viền trắng + bóng) để không lẫn vào chính nét đó.
     ctx.setLineDash([]);
-    const handleSize = 9;
-  [
-    startPoint,
-    endPoint
-  ].forEach(point => {
-      ctx.shadowColor = 'rgba(216, 180, 109, .28)';
-      ctx.shadowBlur = 6;
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#a77822';
-      ctx.lineWidth = 2;
-      ctx.fillRect(point.x - handleSize / 2, point.y - handleSize / 2, handleSize, handleSize);
-      ctx.strokeRect(point.x - handleSize / 2, point.y - handleSize / 2, handleSize, handleSize);
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
-    });
+    [startPoint, endPoint].forEach(point => drawSceneSelectionHandle(ctx, point.x, point.y, { size: 11 }));
 
     if (isInfrastructureAssetShape(shape)) {
       const center = getShapeCenter(shape);
@@ -469,15 +454,7 @@ if (isLinearResizableShape(shape)) {
         { x: center.x + nx * halfBand, y: center.y + ny * halfBand },
         { x: center.x - nx * halfBand, y: center.y - ny * halfBand }
       ];
-      bandHandles.forEach(point => {
-        ctx.beginPath();
-        ctx.fillStyle = '#d8b46d';
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.8;
-        ctx.arc(point.x, point.y, 5.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      });
+      bandHandles.forEach(point => drawSceneSelectionHandle(ctx, point.x, point.y, { size: 11, shape: 'circle', fill: '#e9b44c' }));
     }
 
     if (rotPos) {
@@ -516,7 +493,6 @@ if (isLinearResizableShape(shape)) {
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = '#92691d';
   ctx.lineWidth = 1.5;
-  const hs = 6;
   const corners = [
     { x: box.minX, y: box.minY },
     { x: box.maxX, y: box.minY },
@@ -527,10 +503,7 @@ if (isLinearResizableShape(shape)) {
     { x: box.minX, y: (box.minY + box.maxY)/2 },
     { x: box.maxX, y: (box.minY + box.maxY)/2 }
   ];
-  corners.forEach(c => {
-    ctx.fillRect(c.x - hs/2, c.y - hs/2, hs, hs);
-    ctx.strokeRect(c.x - hs/2, c.y - hs/2, hs, hs);
-  });
+  corners.forEach(c => drawSceneSelectionHandle(ctx, c.x, c.y, { size: 8 }));
 
   // Rotation Handle Stem & Icon
   if (rotPos) {
@@ -596,12 +569,8 @@ function drawMultiSelectionBox(ctx, shapes) {
   ctx.fillStyle = '#ffffff';
   ctx.strokeStyle = themeColor;
   ctx.lineWidth = 1.5;
-  const hs = 7;
   const corners = getSceneMultiResizeHandles(cBox);
-  corners.forEach(c => {
-    ctx.fillRect(c.x - hs / 2, c.y - hs / 2, hs, hs);
-    ctx.strokeRect(c.x - hs / 2, c.y - hs / 2, hs, hs);
-  });
+  corners.forEach(c => drawSceneSelectionHandle(ctx, c.x, c.y, { size: 10, fill: isGroup ? '#93c5fd' : '#f4cf85', stroke: isGroup ? '#1d4ed8' : '#7a5412' }));
 
   // Label tag at top-left
   ctx.fillStyle = themeColor;
