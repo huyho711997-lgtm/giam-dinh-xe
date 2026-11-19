@@ -65,7 +65,8 @@ function drawSceneGoodsItem(ctx, kind, cx, cy, size, angle, color, lineWidth, fi
 
 // Lưới vị trí đặt hàng trong vùng: bỏ ô trùng nhãn, ô ngoài ranh giới tự vẽ; trả về danh sách {cx, cy, row, col}.
 function getSceneGoodsSlots(area, left, top, w, h, step, label, minEdge) {
-  const margin = step * 0.62;
+  // Vùng nhỏ: lề thu theo cạnh ngắn để vẫn còn chỗ đặt hàng (lề cố định 0.62×step làm vùng 45px không còn ô nào).
+  const margin = Math.min(step * 0.62, Math.max(2, Math.min(w, h) * 0.2));
   const rows = Math.max(1, Math.floor((h - margin * 2) / step) + 1);
   const cols = Math.max(1, Math.floor((w - margin * 2) / step) + 1);
   const offX = (w - margin * 2 - (cols - 1) * step) / 2;
@@ -81,6 +82,29 @@ function getSceneGoodsSlots(area, left, top, w, h, step, label, minEdge) {
     }
   }
   return slots;
+}
+
+
+// Chọn cỡ ô, nhãn và danh sách ô đặt hàng theo kích thước vùng, để vùng nhỏ vẫn hiện chi tiết từng món:
+//  - cạnh ngắn < 64px: thu bước lưới (tối thiểu 9px) để vẫn xếp được ≥ 2 hàng món hàng;
+//  - nhãn MẶC ĐỊNH nằm giữa vùng, nếu chiếm quá 40% số ô thì bỏ nhãn (tên đã có trong bảng ký hiệu) nhường chỗ cho hàng.
+//    Nhãn do người dùng tự đặt (areaLabel) luôn được giữ.
+function resolveSceneGoodsLayout(ctx, area, left, top, w, h, baseStep, labelAt, shapeData, defaultText, minEdgeFactor) {
+  const minSide = Math.min(w, h);
+  let step = baseStep;
+  if (minSide < 64) step = Math.max(9, Math.min(baseStep, minSide * 0.3));
+  const minEdge = minEdgeFactor ? step * minEdgeFactor : undefined;
+  const customText = shapeData && String(shapeData.areaLabel || '').trim();
+  let label = getSceneryAreaLabelLayout(ctx, customText || defaultText, labelAt.x, labelAt.y, w, h);
+  let slots = getSceneGoodsSlots(area, left, top, w, h, step, label, minEdge);
+  if (label && !customText) {
+    const full = getSceneGoodsSlots(area, left, top, w, h, step, null, minEdge);
+    if (slots.length < Math.max(3, full.length * 0.6)) {
+      label = null;
+      slots = full;
+    }
+  }
+  return { step, label, slots };
 }
 
 
@@ -107,12 +131,11 @@ function drawSceneGoodsDisplay(ctx, x, y, color, width, w, h, shapeData) {
   }
 
   const labelAt = area.custom && typeof getSceneryAreaLabelAnchor === 'function' ? getSceneryAreaLabelAnchor(area.poly, left, top, w, h) : { x, y };
-  const label = getSceneryAreaLabelLayout(ctx, (shapeData && shapeData.areaLabel) || 'HÀNG HÓA', labelAt.x, labelAt.y, w, h);
-
-  const step = Math.max(13, Math.min(22, h * 0.2));
+  const layout = resolveSceneGoodsLayout(ctx, area, left, top, w, h, Math.max(13, Math.min(22, h * 0.2)), labelAt, shapeData, 'HÀNG HÓA');
+  const { step, label } = layout;
   const lineWidth = Math.max(0.65, width * 0.5);
   const fills = ['rgba(214,190,150,.55)', 'rgba(226,232,240,.9)', 'rgba(203,213,225,.7)'];
-  getSceneGoodsSlots(area, left, top, w, h, step, label).forEach(({ cx, cy, row, col }) => {
+  layout.slots.forEach(({ cx, cy, row, col }) => {
     const kind = Math.floor(rand(row + 3, col + 7) * 3) % 3;
     drawSceneGoodsItem(ctx, kind, cx, cy, step * 0.72, 0, color, lineWidth, fills[kind]);
   });
@@ -155,12 +178,11 @@ function drawSceneGoodsDamaged(ctx, x, y, color, width, w, h, shapeData) {
   ctx.restore();
 
   const labelAt = area.custom && typeof getSceneryAreaLabelAnchor === 'function' ? getSceneryAreaLabelAnchor(area.poly, left, top, w, h) : { x, y };
-  const label = getSceneryAreaLabelLayout(ctx, (shapeData && shapeData.areaLabel) || 'HÀNG HÓA ĐỔ VỠ', labelAt.x, labelAt.y, w, h);
-
-  const step = Math.max(14, Math.min(24, h * 0.22));
+  const layout = resolveSceneGoodsLayout(ctx, area, left, top, w, h, Math.max(14, Math.min(24, h * 0.22)), labelAt, shapeData, 'HÀNG HÓA ĐỔ VỠ', 0.55);
+  const { step, label } = layout;
   const lineWidth = Math.max(0.65, width * 0.5);
   const fills = ['rgba(214,190,150,.7)', 'rgba(241,245,249,.95)', 'rgba(226,232,240,.95)'];
-  getSceneGoodsSlots(area, left, top, w, h, step, label, step * 0.55).forEach(({ cx, cy, row, col }) => {
+  layout.slots.forEach(({ cx, cy, row, col }) => {
     const pick = rand(row + 13, col + 2);
     const jx = (rand(row + 4, col + 9) - 0.5) * step * 0.5, jy = (rand(col + 6, row + 1) - 0.5) * step * 0.5;
     if (pick < 0.22) {

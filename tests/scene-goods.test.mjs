@@ -56,3 +56,32 @@ test('ranh giới tự vẽ: hàng nằm trong vùng, không ném lỗi', () => 
   const outline = [[0.05, 0.5], [0.4, 0.05], [0.95, 0.3], [0.8, 0.95], [0.2, 0.9]].map(([x, y]) => ({ x, y }));
   run(`drawSceneryAsset(ctx, 'goods_damaged', 120, 60, '#000', 1.5, 220, 100, ${shape('goods_damaged', { areaShape: 'custom', areaOutline: outline })})`);
 });
+
+test('vùng nhỏ vẫn hiện chi tiết từng món (bước lưới thu theo cạnh ngắn, nhãn mặc định nhường chỗ)', () => {
+  const { run } = load();
+  const layout = (w, h, extra = '{}') => run(`(function () {
+    var s = Object.assign({ id: 'g1', type: 'goods_damaged' }, ${extra});
+    var left = -${w} / 2, top = -${h} / 2;
+    var area = getSceneTerrainPolygon(s, left, top, ${w}, ${h});
+    return resolveSceneGoodsLayout(ctx, area, left, top, ${w}, ${h}, Math.max(14, Math.min(24, ${h} * 0.22)), { x: 0, y: 0 }, s, 'HÀNG HÓA ĐỔ VỠ', 0.55);
+  })()`);
+  for (const [w, h] of [[130, 40], [110, 30], [90, 24], [70, 70], [60, 36]]) {
+    const r = layout(w, h);
+    assert.ok(r.slots.length >= 6, `${w}x${h} chỉ có ${r.slots.length} món`);
+    assert.ok(r.step >= 9);
+  }
+  // Vùng rất nhỏ: nhãn mặc định bị bỏ để nhường chỗ cho hàng.
+  assert.equal(layout(110, 30).label, null);
+  // Vùng lớn: giữ nhãn và cỡ ô như cũ.
+  const big = layout(220, 100);
+  assert.ok(big.label);
+  assert.ok(big.step >= 20);
+  // Nhãn do người dùng đặt luôn được giữ.
+  assert.ok(layout(130, 56, "{ areaLabel: 'KHO A' }").label);
+});
+
+test('vùng nhỏ vẽ ra có nhiều nét món hàng, không chỉ gạch chéo', () => {
+  const { log, run } = load();
+  run(`drawSceneryAsset(ctx, 'goods_damaged', 200, 100, '#000', 1.5, 110, 30, { id: 'g1', type: 'goods_damaged' })`);
+  assert.ok(log.filter(c => c[0] === 'arc').length >= 6, 'phải có các món hình tròn');
+});
