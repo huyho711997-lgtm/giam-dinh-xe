@@ -277,6 +277,8 @@ body:not(.light-mode) #sceneDrawingModalOverlay #sceneSelectedBadge.scene-select
 #sceneDrawingModalOverlay #sceneCanvasViewport.is-panning,
 #sceneDrawingModalOverlay #sceneCanvasViewport.is-panning #sceneDrawingCanvas { cursor: grabbing !important; }
 #sceneDrawingModalOverlay #sceneCanvasViewport.is-panning { user-select: none; }
+#sceneDrawingModalOverlay #sceneZoomControls > #sceneSnapToggle[aria-pressed="false"] { opacity: .45; }
+#sceneDrawingModalOverlay #sceneZoomControls > #sceneSnapToggle[aria-pressed="true"],
 #sceneDrawingModalOverlay #sceneZoomControls > #sceneHandToggle[aria-pressed="true"] {
   background: color-mix(in srgb,var(--se-gold) 16%,transparent) !important; color: var(--se-gold) !important;
   box-shadow: inset 0 0 0 1px color-mix(in srgb,var(--se-gold) 40%,transparent) !important;

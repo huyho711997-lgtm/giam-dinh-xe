@@ -411,6 +411,60 @@ function getShapeSnapSegments(shape) {
 }
 
 
+// ---- Hít dính (snap) ----
+// Bật/tắt bằng nút nam châm ở thanh zoom (nhớ theo trình duyệt); giữ Alt khi kéo để tạm tắt.
+// Ngưỡng hít tính theo PIXEL MÀN HÌNH: phóng to thì vùng hít trên giấy nhỏ lại, đặt chính xác được.
+const SCENE_SNAP_PREF_KEY = 'tasco.scene.snap.v1';
+var sceneSnapEnabled = (function () {
+  try { return localStorage.getItem(SCENE_SNAP_PREF_KEY) !== 'off'; } catch (error) { return true; }
+})();
+
+function getSceneSnapDistance(screenPx) {
+  const zoom = typeof currentSceneZoom === 'number' && currentSceneZoom > 0 ? currentSceneZoom : 1;
+  return screenPx / Math.max(0.5, zoom);
+}
+
+function setSceneSnapEnabled(enabled) {
+  sceneSnapEnabled = !!enabled;
+  try { localStorage.setItem(SCENE_SNAP_PREF_KEY, sceneSnapEnabled ? 'on' : 'off'); } catch (error) { /* chỉ là tiện ích */ }
+  const button = typeof document !== 'undefined' && document.getElementById ? document.getElementById('sceneSnapToggle') : null;
+  if (button) {
+    button.setAttribute('aria-pressed', String(sceneSnapEnabled));
+    button.title = sceneSnapEnabled ? 'Hít dính: BẬT – bấm để tắt (giữ Alt khi kéo để tạm tắt)' : 'Hít dính: TẮT – bấm để bật';
+  }
+  if (!sceneSnapEnabled && typeof activeSnapGuides !== 'undefined') activeSnapGuides = [];
+  return sceneSnapEnabled;
+}
+
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+  document.addEventListener('DOMContentLoaded', () => setSceneSnapEnabled(sceneSnapEnabled));
+}
+
+function toggleSceneSnap() {
+  const on = setSceneSnapEnabled(!sceneSnapEnabled);
+  if (typeof triggerToast === 'function') triggerToast(on ? 'Đã bật hít dính' : 'Đã tắt hít dính – kéo thả tự do', 'info');
+  if (typeof redrawSceneCanvas === 'function') redrawSceneCanvas(true);
+}
+
+
+// Đoạn thẳng có đi vào phần lõi khung (khung đã co vào `inset`) không — Liang–Barsky.
+function sceneSegmentCrossesBoxInterior(segment, box, inset) {
+  if (!box || !segment) return false;
+  const minX = box.minX + inset, maxX = box.maxX - inset, minY = box.minY + inset, maxY = box.maxY - inset;
+  if (minX >= maxX || minY >= maxY) return false;
+  const x0 = segment.start.x, y0 = segment.start.y, dx = segment.end.x - x0, dy = segment.end.y - y0;
+  let t0 = 0, t1 = 1;
+  const clip = (p, q) => {
+    if (Math.abs(p) < 1e-9) return q >= 0;
+    const r = q / p;
+    if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; }
+    else { if (r < t0) return false; if (r < t1) t1 = r; }
+    return true;
+  };
+  return clip(-dx, x0 - minX) && clip(dx, maxX - x0) && clip(-dy, y0 - minY) && clip(dy, maxY - y0) && t0 <= t1;
+}
+
+
 function computeSmartSnapping(shape, orig, rawDx, rawDy, isShiftPressed, disableSnap = false) {
   let dx = rawDx;
   let dy = rawDy;
@@ -423,12 +477,12 @@ function computeSmartSnapping(shape, orig, rawDx, rawDy, isShiftPressed, disable
     }
   }
 
-  if (disableSnap || !sceneShapes || sceneShapes.length <= 1) {
+  if (disableSnap || !sceneSnapEnabled || !sceneShapes || sceneShapes.length <= 1) {
     return { dx, dy, guides: [] };
   }
 
-  const SNAP_DIST = 10;
-  const JUNCTION_DIST = 12;
+  const SNAP_DIST = getSceneSnapDistance(6);
+  const JUNCTION_DIST = getSceneSnapDistance(9);
   const guides = [];
   // Every selected vector moves together. Snapping against another member of
   // that same group makes presets stick to themselves and drift from the mouse.
@@ -495,13 +549,15 @@ function computeSmartSnapping(shape, orig, rawDx, rawDy, isShiftPressed, disable
 
   // 2. Magnetic edge-to-stroke snapping. Unlike bounding-box alignment,
   // this attaches the actual visual edge/corner to the existing stroke.
-  const strokeAnchors = getShapeSnapAnchorsWithOffset(orig, dx, dy);
+  const strokeAnchors = getShapeSnapAnchorsWithOffset(orig, dx, dy).filter(anchor => anchor.role !== 'center');
   let bestStrokeSnap = null;
   let bestStrokeDistance = SNAP_DIST;
   for (let i = 0; i < sceneShapes.length; i++) {
     const other = sceneShapes[i];
     if (!other || movingIds.has(other.id)) continue;
-    const targetSegments = getShapeSnapSegments(other);
+    // Nét cắt XUYÊN qua thân vật không phải là "mép để dính": bỏ qua, nếu không vật sẽ bị
+    // kéo cho trung điểm cạnh nằm lên nét = cảm giác tự căn giữa vào đường.
+    const targetSegments = getShapeSnapSegments(other).filter(segment => !sceneSegmentCrossesBoxInterior(segment, curBox, SNAP_DIST * 1.5));
     for (let anchorIndex = 0; anchorIndex < strokeAnchors.length; anchorIndex++) {
       const anchor = strokeAnchors[anchorIndex];
       for (let segmentIndex = 0; segmentIndex < targetSegments.length; segmentIndex++) {

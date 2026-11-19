@@ -1116,6 +1116,10 @@
 
             <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.2); margin: 0 2px;"></span>
 
+            <!-- Hít dính: bật/tắt nam châm khi kéo thả (traffic-signs.js) -->
+            <button type="button" id="sceneSnapToggle" onclick="toggleSceneSnap()" aria-pressed="true" title="Hít dính: BẬT – bấm để tắt (giữ Alt khi kéo để tạm tắt)" aria-label="Bật/tắt hít dính khi kéo thả">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v8a6 6 0 0 0 12 0V3"/><path d="M6 3h4v8a2 2 0 0 0 4 0V3h4"/><path d="M6 7h4M14 7h4"/></svg>
+            </button>
             <!-- Bàn tay: bật để nắm chuột kéo vùng nhìn (scene-editor-ui.js) -->
             <button type="button" id="sceneHandToggle" onclick="toggleSceneHandMode()" aria-pressed="false" title="Bàn tay – nắm chuột kéo để di chuyển vùng nhìn (hoặc giữ Space + kéo, kéo vùng nền, cuộn chuột)" aria-label="Bàn tay: kéo để di chuyển vùng nhìn">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-4 0v5"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
@@ -1128,7 +1132,7 @@
           </div>
 
           <link rel="stylesheet" href="css/scene-selection.css">
-          <link rel="stylesheet" href="css/scene-editor.css?v=20261111-layer-1">
+          <link rel="stylesheet" href="css/scene-editor.css?v=20261119-snap-1">
           <link rel="stylesheet" href="css/scene-legend-editor.css?v=20261111-legend-3">
 
           <!-- Floating Selection Inspector with Rotation Controls -->
@@ -1962,8 +1966,8 @@
 <link rel="stylesheet" href="css/authority-request.css">
 <link rel="stylesheet" href="css/scene-report.css?v=20261113-sr-3">
 <script src="js/features/scene/geometry.js?v=20261111-legend-3"></script>
-  <script src="js/features/scene/objects.js?v=20261111-terrain-1"></script>
-  <script src="js/features/scene/traffic-signs.js?v=20261119-goods-1"></script>
+  <script src="js/features/scene/objects.js?v=20261119-snap-1"></script>
+  <script src="js/features/scene/traffic-signs.js?v=20261119-snap-1"></script>
   <script src="js/features/scene/rendering.js?v=20261119-goods-1"></script>
   <script src="js/features/scene/symbol-legend.js?v=20261111-legend-3"></script>
   <script src="js/features/scene/interaction-export.js?v=20261119-goods-1"></script>

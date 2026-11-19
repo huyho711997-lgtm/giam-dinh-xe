@@ -1663,10 +1663,11 @@ function applyShapeGroupRotation(shape, origData, cx, cy, dTheta) {
   }
 }
 
-function findSnapPoint(pos, excludeShapeId = null, threshold = 18) {
+function findSnapPoint(pos, excludeShapeId = null, threshold = 12) {
   if (!sceneShapes) return null;
+  if (typeof sceneSnapEnabled !== 'undefined' && !sceneSnapEnabled) return null;
   let closest = null;
-  let minDist = threshold;
+  let minDist = typeof getSceneSnapDistance === 'function' ? getSceneSnapDistance(threshold) : threshold;
 
   for (let i = 0; i < sceneShapes.length; i++) {
     const s = sceneShapes[i];
