@@ -507,3 +507,8 @@ body:not(.light-mode) #sceneDrawingModalOverlay #strokeWidthPopover { box-shadow
 .scene-direction-modal .sdm-btn { padding: 8px 16px; border: 1px solid var(--border, #e2e8f0); border-radius: 9px; background: transparent; color: inherit; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .scene-direction-modal .sdm-ghost:hover { background: var(--surface-strong, #f1f5f9); }
 .scene-direction-modal .sdm-primary { border-color: transparent; background: linear-gradient(135deg, #e6c887, #c9a050); color: #2b1d08; }
+
+/* Ô nhập tên nhà / vùng trên thanh chọn */
+#sceneDrawingModalOverlay .scene-area-label { align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; }
+#sceneDrawingModalOverlay .scene-area-label input { width: 150px; padding: 3px 8px; border: 1px solid var(--se-line); border-radius: 8px; background: color-mix(in srgb,var(--se-paper) 60%,transparent); color: inherit; font-size: 12px; }
+#sceneDrawingModalOverlay .scene-area-label input:focus { outline: 2px solid var(--se-gold); outline-offset: 1px; }

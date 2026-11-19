@@ -1132,7 +1132,7 @@
           </div>
 
           <link rel="stylesheet" href="css/scene-selection.css">
-          <link rel="stylesheet" href="css/scene-editor.css?v=20261119-dir-1">
+          <link rel="stylesheet" href="css/scene-editor.css?v=20261119-label-1">
           <link rel="stylesheet" href="css/scene-legend-editor.css?v=20261111-legend-3">
 
           <!-- Floating Selection Inspector with Rotation Controls -->
@@ -1183,6 +1183,16 @@
               </div>
               <small id="selectedAreaShapeHint">Vẽ ranh giới: nhấp từng điểm dọc mép vùng, Enter để xong. Sau đó kéo các điểm tròn để nắn; nhấp đúp để thêm/xoá điểm.</small>
             </div>
+
+            <!-- Tên nhà / vùng (scene-editor-ui.js): gõ tên hiển thị trên sơ đồ; để trống = nhãn mặc định -->
+            <label id="selectedAreaLabelGroup" class="scene-area-label" style="display: none;">
+              <span>Tên</span>
+              <input type="text" id="selectedAreaLabelInput" maxlength="30" autocomplete="off" spellcheck="false"
+                     placeholder="Nhập tên hiển thị" aria-label="Tên hiển thị trên sơ đồ"
+                     oninput="setSelectedShapeAreaLabel(this.value, false)"
+                     onchange="setSelectedShapeAreaLabel(this.value, true)"
+                     onkeydown="if(event.key==='Enter'||event.key==='Escape'){event.stopPropagation();this.blur();}">
+            </label>
 
             <!-- Quick Rotate Buttons Group -->
             <div style="display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.06); padding: 2px 5px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
@@ -1968,7 +1978,7 @@
 <script src="js/features/scene/geometry.js?v=20261119-gresize-1"></script>
   <script src="js/features/scene/objects.js?v=20261119-gresize-1"></script>
   <script src="js/features/scene/traffic-signs.js?v=20261119-house-1"></script>
-  <script src="js/features/scene/rendering.js?v=20261119-handle-2"></script>
+  <script src="js/features/scene/rendering.js?v=20261119-paste-1"></script>
   <script src="js/features/scene/symbol-legend.js?v=20261119-dir-1"></script>
   <script src="js/features/scene/interaction-export.js?v=20261119-gresize-1"></script>
   <script src="js/features/scene/terrain-assets.js?v=20261111-terrain-1"></script>
@@ -1993,6 +2003,6 @@
   <script src="js/core/chart-ready.js?v=20261024-1"></script>
   <script src="js/core/route-sync.js?v=20261113-gd-1"></script>
   <script src="js/features/scene/layer-order.js?v=20261111-layer-1"></script>
-  <script src="js/features/scene/scene-editor-ui.js?v=20261119-goods-1"></script>
+  <script src="js/features/scene/scene-editor-ui.js?v=20261119-label-1"></script>
 </body>
 </html>

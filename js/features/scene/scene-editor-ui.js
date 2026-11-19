@@ -243,6 +243,30 @@ function setSelectedSceneryAreaShape(kind) {
   if (typeof saveDrawingState === 'function') saveDrawingState();
 }
 
+// ---- Tên nhà / vùng (areaLabel) ----
+// Trước đây areaLabel được vẽ nhưng không có chỗ nhập → người dùng không đặt được tên.
+const SCENE_AREA_LABEL_DEFAULTS = {
+  house: '', forest: 'RỪNG CÂY', rice_field: 'ĐỒNG LÚA', rock_field: 'BÃI ĐÁ',
+  hill: 'ĐỒI NÚI', goods_display: 'HÀNG HÓA', goods_damaged: 'HÀNG HÓA ĐỔ VỠ'
+};
+function getSelectedAreaLabelTarget() {
+  if (typeof sceneShapes === 'undefined' || !selectedShapeId) return null;
+  const ids = (typeof selectedShapeIds !== 'undefined' && Array.isArray(selectedShapeIds)) ? selectedShapeIds : [];
+  if (ids.length > 1) return null;
+  const shape = sceneShapes.find(s => s.id === selectedShapeId);
+  return shape && Object.prototype.hasOwnProperty.call(SCENE_AREA_LABEL_DEFAULTS, shape.type) ? shape : null;
+}
+// commit=false: đang gõ (vẽ lại ngay, chưa ghi lịch sử); commit=true: xong (ghi 1 bước hoàn tác).
+function setSelectedShapeAreaLabel(value, commit) {
+  const shape = getSelectedAreaLabelTarget();
+  if (!shape) return;
+  const text = String(value == null ? '' : value).replace(/\s+/g, ' ').trim().slice(0, 30);
+  const before = shape.areaLabel || '';
+  if (text) shape.areaLabel = text; else delete shape.areaLabel;
+  if (typeof redrawSceneCanvas === 'function') redrawSceneCanvas(true);
+  if (commit && text !== before && typeof saveDrawingState === 'function') saveDrawingState();
+}
+
 // ---- Ranh giới tự vẽ ----
 // Hai cách vẽ trong cùng một chế độ:
 //  • Nhấp từng điểm dọc mép vùng (khuyên dùng): đường cong mượt đi qua các điểm; nhấp đúp / Enter / nhấp lại điểm đầu để xong.
@@ -462,6 +486,17 @@ window.addEventListener('dblclick', e => {
   if (typeof original !== 'function' || original.__areaShape) return;
   const wrapped = function (...args) {
     const result = original.apply(this, args);
+    const labelGroup = document.getElementById('selectedAreaLabelGroup');
+    if (labelGroup) {
+      const named = getSelectedAreaLabelTarget();
+      const showName = !!named && currentDrawTool === 'select';
+      labelGroup.style.display = showName ? 'inline-flex' : 'none';
+      const input = document.getElementById('selectedAreaLabelInput');
+      if (showName && input && document.activeElement !== input) {
+        input.value = named.areaLabel || '';
+        input.placeholder = SCENE_AREA_LABEL_DEFAULTS[named.type] || 'Nhập tên hiển thị';
+      }
+    }
     const group = document.getElementById('selectedAreaShapeGroup');
     if (!group) return result;
     const shape = getSelectedAreaShapeTarget();

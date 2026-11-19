@@ -1180,8 +1180,20 @@ function pasteCopiedShape() {
     }
   }
 
-  const isGrp = sceneClipboardShapes.length > 1 && sceneClipboardShapes[0].groupId;
-  const newGroupId = isGrp ? 'grp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6) : null;
+  // Mỗi nhóm gốc trong clipboard → đúng MỘT nhóm mới (không gộp các nhóm khác nhau,
+  // không để bản dán dính vào nhóm cũ). Nhóm chỉ còn 1 thành viên thì bỏ nhóm.
+  const groupMemberCount = {};
+  sceneClipboardShapes.forEach(s => {
+    if (s.groupId) groupMemberCount[s.groupId] = (groupMemberCount[s.groupId] || 0) + 1;
+  });
+  const groupIdMap = {};
+  const mapPastedGroupId = (oldId) => {
+    if (!oldId || groupMemberCount[oldId] < 2) return null;
+    if (!groupIdMap[oldId]) {
+      groupIdMap[oldId] = 'grp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    }
+    return groupIdMap[oldId];
+  };
   const newShapes = [];
   const offset = 22;
 
@@ -1189,11 +1201,7 @@ function pasteCopiedShape() {
     const orig = sceneClipboardShapes[i];
     const clone = JSON.parse(JSON.stringify(orig));
     clone.id = genShapeId();
-    if (newGroupId) {
-      clone.groupId = newGroupId;
-    } else if (!orig.groupId) {
-      clone.groupId = null;
-    }
+    clone.groupId = mapPastedGroupId(orig.groupId);
     if (clone.type === 'number_note') clone.noteNumber = getNextSceneNoteNumber();
     moveShapeBy(clone, offset, offset);
     sceneShapes.push(clone);
