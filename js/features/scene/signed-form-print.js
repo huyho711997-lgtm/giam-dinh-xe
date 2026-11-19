@@ -36,7 +36,8 @@ const SceneSignedForm = (() => {
       drawSceneLegendColumn(ctx,GRID.legendX,GRID.y,GRID.sceneW - 20 - GRID.legendX,GRID.h);
     }
     ctx.save(); applySceneDrawingAreaClip(ctx);
-    for (let i = 0; i < sceneShapes.length; i++) renderShape(ctx,sceneShapes[i]);
+    const orderedShapes = typeof getSceneShapesInRenderOrder === 'function' ? getSceneShapesInRenderOrder(sceneShapes) : sceneShapes;
+    for (let i = 0; i < orderedShapes.length; i++) renderShape(ctx,orderedShapes[i]);
     ctx.restore(); ctx.restore();
   }
   function drawPreprinted(ctx) {

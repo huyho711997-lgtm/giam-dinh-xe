@@ -809,8 +809,9 @@ function redrawSceneCanvas(includeSelectionUI = true) {
   sceneCtx.save();
   applySceneDrawingAreaClip(sceneCtx);
 
-  for (let i = 0; i < sceneShapes.length; i++) {
-    renderShape(sceneCtx, sceneShapes[i]);
+  const orderedShapes = typeof getSceneShapesInRenderOrder === 'function' ? getSceneShapesInRenderOrder(sceneShapes) : sceneShapes;
+  for (let i = 0; i < orderedShapes.length; i++) {
+    renderShape(sceneCtx, orderedShapes[i]);
   }
 
   if (currentDrawTool === 'road_intersection' && roadIntersectionHoverPos && !isPanning) {
