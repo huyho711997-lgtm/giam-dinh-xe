@@ -554,14 +554,16 @@ function onCanvasMouseDown(e) {
         redrawSceneCanvas(true);
       }
     } else {
-      // Clicked on empty canvas
-      if (!e.ctrlKey && !e.metaKey) {
+      // Clicked on empty canvas: bỏ chọn (trừ khi giữ Ctrl/Shift) và bắt đầu kéo khung chọn nhiều.
+      const additive = e.ctrlKey || e.metaKey || e.shiftKey;
+      if (!additive) {
         clearSelection();
         isDraggingShape = false;
         dragOriginals = [];
         updateSelectionBadge();
         redrawSceneCanvas(false);
       }
+      if (typeof beginSceneMarquee === 'function') beginSceneMarquee(pos, additive);
     }
     return;
   }
@@ -658,6 +660,13 @@ function onCanvasMouseMove(e) {
   }
 
   if (currentDrawTool === 'select') {
+    if (sceneMarqueeState) {
+      updateSceneMarquee(pos);
+      sceneCanvas.style.cursor = 'crosshair';
+      updateSelectionBadge();
+      redrawSceneCanvas(true);
+      return;
+    }
     if (sceneGroupResizeState) {
       hasResizedDuringDrag = resizeSceneGroupFromPointer(sceneGroupResizeState, pos.x, pos.y, e.shiftKey);
       sceneCanvas.style.cursor = getSceneGroupResizeCursor(sceneGroupResizeState.handle);
@@ -1199,6 +1208,13 @@ function onCanvasMouseUp(e) {
   const pos = getMousePos(sceneCanvas, e);
 
   if (currentDrawTool === 'select') {
+    if (sceneMarqueeState) {
+      finishSceneMarquee(pos);
+      sceneCanvas.style.cursor = 'default';
+      updateSelectionBadge();
+      redrawSceneCanvas(true);
+      return;
+    }
     if (sceneGroupResizeState) {
       // Lấy vị trí nhả chuột thật (kể cả khi nhả ngoài canvas) rồi chốt kích thước.
       resizeSceneGroupFromPointer(sceneGroupResizeState, pos.x, pos.y, e.shiftKey);

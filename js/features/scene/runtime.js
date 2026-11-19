@@ -442,6 +442,13 @@ document.addEventListener('keydown', function(e) {
     }
   }
 
+  // Chọn tất cả: Ctrl + A
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 'a' || e.key === 'A')) {
+    e.preventDefault();
+    selectAllSceneShapes();
+    return;
+  }
+
   // Group: Ctrl + G, Ungroup: Ctrl + Shift + G
   if ((e.ctrlKey || e.metaKey) && (e.key === 'g' || e.key === 'G')) {
     e.preventDefault();

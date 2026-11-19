@@ -1769,7 +1769,9 @@ function cancelSceneCanvasInteraction() {
   const hadActiveAction = currentDrawTool !== 'select' || isDrawing || isDraggingShape || isRotatingShape ||
     isDraggingCurveControl || isDraggingCurveStart || isDraggingCurveEnd ||
     isResizingLinearStart || isResizingLinearEnd || isResizingInfraBand ||
-    isResizingNumberNote || isResizingVehicle || !!roadIntersectionResizeState || !!sceneGroupResizeState || !!curvePendingStart || !!tireTrackPendingStart;
+    isResizingNumberNote || isResizingVehicle || !!roadIntersectionResizeState || !!sceneGroupResizeState || !!sceneMarqueeState || !!curvePendingStart || !!tireTrackPendingStart;
+
+  if (typeof cancelSceneMarquee === 'function') cancelSceneMarquee();
 
   if (sceneGroupResizeState) {
     restoreSceneGroupResize(sceneGroupResizeState);

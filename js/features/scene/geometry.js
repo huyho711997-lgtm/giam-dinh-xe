@@ -567,7 +567,7 @@ function setupDrawingToolListeners() {
     isDrawing || isDraggingShape || isRotatingShape ||
     isDraggingCurveControl || isDraggingCurveStart || isDraggingCurveEnd ||
     isResizingLinearStart || isResizingLinearEnd || isResizingInfraBand || isResizingNumberNote || isResizingVehicle ||
-    !!roadIntersectionResizeState || !!sceneGroupResizeState
+    !!roadIntersectionResizeState || !!sceneGroupResizeState || !!sceneMarqueeState
   );
   window.addEventListener('mousemove', (e) => {
     if (e.target !== sceneCanvas && hasActiveSceneGesture()) onCanvasMouseMove(e);
@@ -844,6 +844,8 @@ function redrawSceneCanvas(includeSelectionUI = true) {
       drawShapeSelectionBox(sceneCtx, sel);
     }
   }
+
+  if (typeof drawSceneMarquee === 'function') drawSceneMarquee(sceneCtx);
 
   // Khung vuông của cục tẩy luôn nằm trên cùng để người dùng thấy chính xác
   // đối tượng đang được nhắm tới trước khi nhấp xóa.
