@@ -120,7 +120,9 @@ for (const page of ['index.html', 'so-do-hien-truong.html']) {
         assert.equal(icon[1].replace(/\s+/g, ' '), cfg.TOOL_ICONS_MAP[tool].replace(/\s+/g, ' '), `${id}: icon ban đầu ≠ icon công cụ mặc định`);
       }
     }
-    const labels = [...rail.matchAll(/scene-tool-section-label">([^<]+)</g)].map(m => m[1].replace(/&amp;/g, '&'));
-    assert.deepEqual(labels.slice(0, 6), ['Thao tác', 'Vẽ nét', 'Hình & ký hiệu', 'Hiện trường', 'Hạ tầng & cảnh quan', 'Ghi chú']);
+    const labels = [...rail.matchAll(/scene-tool-section-label"[^>]*>([^<]+)</g)].map(m => m[1].replace(/&amp;/g, '&'));
+    assert.deepEqual(labels.slice(0, 7), ['Thao tác', 'Dùng gần đây', 'Vẽ nét', 'Hình & ký hiệu', 'Hiện trường', 'Hạ tầng & cảnh quan', 'Ghi chú']);
+    assert.match(rail, /id="toolBtnSearch"/, 'thiếu nút tìm công cụ');
+    assert.match(rail, /id="sceneRecentTools"/, 'thiếu vùng dùng gần đây');
   });
 }

@@ -393,6 +393,7 @@ function selectSubmenuTool(groupKey, toolId) {
   groupActiveTools[groupKey] = toolId;
   setActiveDrawTool(toolId);
   closeAllToolSubmenus();
+  if (typeof SceneToolbarUI !== 'undefined' && SceneToolbarUI.recordTool) SceneToolbarUI.recordTool(toolId);
 }
 
 

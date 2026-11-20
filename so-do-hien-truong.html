@@ -56,6 +56,7 @@
                 <div><dt><kbd>J</kbd><kbd>Y</kbd></dt><dd>Nút giao &amp; đường sắt · Lề đường &amp; thoát nước</dd></div>
                 <div><dt><kbd>H</kbd><kbd>G</kbd></dt><dd>Hạ tầng đường bộ · Cảnh quan &amp; địa hình</dd></div>
                 <div><dt><kbd>M</kbd><kbd>T</kbd><kbd>N</kbd><kbd>E</kbd></dt><dd>Đo · Chữ · Chú thích số · Tẩy</dd></div>
+                <div><dt><kbd>/</kbd></dt><dd>Tìm công cụ theo tên (gõ không dấu cũng được)</dd></div>
                 <div><dt><kbd>I</kbd></dt><dd>Ký hiệu bản vẽ: hướng Bắc · thước tỷ lệ</dd></div>
                 <div><dt>Nhấn lại</dt><dd>Phím nhóm dùng lại công cụ gần nhất của nhóm đó</dd></div>
               </dl>
@@ -119,6 +120,14 @@
               <path d="M13 13l6 6"></path>
             </svg>
           <span class="tool-rail-label">Chọn & di chuyển</span></button>
+
+          <!-- Tìm công cụ nhanh (phím /) -->
+          <button class="draw-tool-btn" id="toolBtnSearch" data-shortcut="/" aria-keyshortcuts="/" title="Tìm công cụ — phím /" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--primary); background: rgba(216,180,109,0.15); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); transition: all 0.2s;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+          <span class="tool-rail-label">Tìm công cụ (/)</span></button>
+
+          <div class="scene-tool-section-label" id="sceneRecentLabel" hidden>Dùng gần đây</div>
+          <div id="sceneRecentTools" class="scene-recent-tools" hidden></div>
 
           <div class="scene-tool-separator" aria-hidden="true"></div>
 
@@ -788,12 +797,12 @@
   <!-- SCENE-EDITOR:END -->
 
   <!-- Các module vẽ (đúng thứ tự như index.html) + bộ chuyển đổi trang độc lập -->
-  <script src="js/features/scene/geometry.js?v=20261119-gresize-1"></script>
+  <script src="js/features/scene/geometry.js?v=20261120-search-1"></script>
   <script src="js/features/scene/objects.js?v=20261120-signs-1"></script>
   <script src="js/features/scene/traffic-signs.js?v=20261120-road-1"></script>
   <script src="js/features/scene/rendering.js?v=20261120-road-1"></script>
   <script src="js/features/scene/symbol-legend.js?v=20261120-marks-1"></script>
-  <script src="js/features/scene/interaction-export.js?v=20261120-road-1"></script>
+  <script src="js/features/scene/interaction-export.js?v=20261120-search-1"></script>
   <script src="js/features/scene/terrain-assets.js?v=20261111-terrain-1"></script>
   <script src="js/features/scene/goods-assets.js?v=20261119-goods-2"></script>
   <script src="js/features/scene/direction-label.js?v=20261119-dir-1"></script>
@@ -806,10 +815,10 @@
   <script src="js/features/scene/signed-form-print.js?v=20261120-margin-1"></script>
   <script src="js/features/scene/text-editor.js?v=20261120-dir-1"></script>
   <script src="js/features/admin/select-controls.js"></script>
-  <script src="js/features/scene/runtime.js?v=20261120-marks-1"></script>
+  <script src="js/features/scene/runtime.js?v=20261120-search-1"></script>
   <script src="js/features/scene/layer-order.js?v=20261111-layer-1"></script>
   <script src="js/features/scene/scene-editor-ui.js?v=20261120-marks-1"></script>
-  <script src="js/features/scene/toolbar-ui.js?v=20261120-toolbar-1"></script>
+  <script src="js/features/scene/toolbar-ui.js?v=20261120-search-2"></script>
   <script src="js/features/scene/standalone.js?v=20261120-standalone-3"></script>
 </body>
 </html>

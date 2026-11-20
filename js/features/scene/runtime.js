@@ -744,6 +744,10 @@ document.addEventListener('keydown', function(e) {
       e.preventDefault();
       return;
     }
+    if (e.key === '/' && !e.repeat && typeof SceneToolbarUI !== 'undefined' && SceneToolbarUI.openSearch()) {
+      e.preventDefault();   // mở ô tìm công cụ
+      return;
+    }
     if (!e.repeat && activateSceneToolShortcut(e.key)) {
       e.preventDefault();
       return;

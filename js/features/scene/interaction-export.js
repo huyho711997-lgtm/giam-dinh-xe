@@ -1887,6 +1887,7 @@ function activateSceneToolShortcut(key) {
   if (!toolName) return false;
   closeAllToolSubmenus();
   setActiveDrawTool(toolName);
+  if (shortcut.group && typeof SceneToolbarUI !== 'undefined' && SceneToolbarUI.recordTool) SceneToolbarUI.recordTool(toolName);
   return true;
 }
 
