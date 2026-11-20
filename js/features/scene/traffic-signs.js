@@ -1379,7 +1379,7 @@ function getSceneryMinimumLength(type) {
   if (type === 'geo_triangle' || type === 'geo_round_triangle') return 28;
   if (type === 'sign_circle_post' || type === 'sign_triangle_post') return 42;
   if (type === 'utility_pole') return 32;
-  if (type === 'road_boundary_marker') return 46;
+  if (type === 'road_boundary_marker') return 30;   // cỡ mặc định khi bấm/kéo ngắn; thu nhỏ hơn nữa bằng tay nắm hoặc nút −
   if (type === 'pothole') return 30;
   if (type === 'median_tree') return 55;
   if (type === 'rice_field') return 60;
@@ -1391,6 +1391,19 @@ function getSceneryMinimumLength(type) {
   if (type === 'truck') return 60;
   if (type === 'toll_station') return 90;
   return 24;
+}
+
+
+// Giới hạn khi người dùng thu nhỏ vật đã vẽ (tay nắm, nút −, đổi cỡ nhóm). Cột mốc lộ giới là vật nhỏ trên sơ đồ nên cho thu rất nhỏ;
+// các loại khác giữ nguyên giới hạn cũ (= cỡ tối thiểu khi vẽ).
+function getSceneryResizeMinLength(type) {
+  return type === 'road_boundary_marker' ? 12 : getSceneryMinimumLength(type);
+}
+
+
+function getSceneryResizeMinHeight(type) {
+  const floor = type === 'road_boundary_marker' ? 4 : 12;
+  return Math.max(floor, getSceneryResizeMinLength(type) * getSceneryAspectRatio(type) * 0.35);
 }
 
 
@@ -1458,7 +1471,7 @@ function getMinimumVehicleLength(shape) {
   if (shape.type === 'container') return 40;
   if (shape.type === 'car') return 15;
   if (shape.type === 'fallen_bike') return 34;
-  if (isSceneryAssetShape(shape)) return getSceneryMinimumLength(shape.type);
+  if (isSceneryAssetShape(shape)) return getSceneryResizeMinLength(shape.type);
   return 28;
 }
 
@@ -1686,7 +1699,7 @@ function resizeVehicleFromPointer(shape, original, handle, px, py) {
 
     nextWidth = Math.max(getMinimumVehicleLength(original), Math.min(900, nextWidth));
     const minimumHeight = isScenery
-      ? Math.max(12, getSceneryMinimumLength(original.type) * getSceneryAspectRatio(original.type) * 0.35)
+      ? getSceneryResizeMinHeight(original.type)
       : Math.max(6, getMinimumVehicleLength(original) * getDefaultVehicleAspect(original) * 0.5);
     nextHeight = Math.max(minimumHeight, Math.min(600, nextHeight));
     const oldDimensions = getVehicleDimensions(shape);
@@ -1809,7 +1822,7 @@ function scaleSelectedInfrastructure(factor) {
     shape.startY = center.y - Math.sin(angle) * nextLength / 2;
     setVehicleLength(shape, nextLength);
     if (isSceneryAssetShape(shape)) {
-      shape.objectH = Math.max(12, Math.min(600, dimensions.h * appliedFactor));
+      shape.objectH = Math.max(getSceneryResizeMinHeight(shape.type), Math.min(600, dimensions.h * appliedFactor));
     } else if (Number.isFinite(shape.vehicleH)) {
       shape.vehicleH = Math.max(6, Math.min(600, dimensions.h * appliedFactor)); // giữ tỷ lệ đã chỉnh
     }

@@ -105,7 +105,7 @@ function scaleSceneShapeAbout(shape, orig, ax, ay, sx, sy) {
     const isScenery = isSceneryAssetShape(orig);
     const nextW = sceneGroupClamp(w * fx, getMinimumVehicleLength(orig), 900);
     const minH = isScenery
-      ? Math.max(12, getSceneryMinimumLength(orig.type) * getSceneryAspectRatio(orig.type) * 0.35)
+      ? getSceneryResizeMinHeight(orig.type)
       : Math.max(6, getMinimumVehicleLength(orig) * getDefaultVehicleAspect(orig) * 0.5);
     const nextH = sceneGroupClamp(h * fy, minH, 600);
     const cx = px(c0.x), cy = py(c0.y);
