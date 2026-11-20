@@ -1056,7 +1056,7 @@ function isSceneryAssetType(type) {
     type === 'sign_circle_post' || type === 'sign_triangle_post' ||
     type === 'tree' || type === 'median_tree' || type === 'rice_field' || type === 'forest' ||
     type === 'rock_field' || type === 'hill' || type === 'goods_display' || type === 'goods_damaged' || type === 'house' ||
-    type === 'truck' || type === 'toll_station';
+    type === 'truck' || type === 'toll_station' || type === 'bridge';
 }
 
 
@@ -1368,6 +1368,7 @@ function getSceneryAspectRatio(type) {
   if (type === 'hill') return 0.7;
   if (type === 'truck') return 0.4;
   if (type === 'toll_station') return 0.62;
+  if (type === 'bridge') return 0.22;   // bề rộng mặt cầu / chiều dài (bridge-assets.js)
   return 0.5;
 }
 
@@ -1390,6 +1391,7 @@ function getSceneryMinimumLength(type) {
   if (type === 'hill') return 70;
   if (type === 'truck') return 60;
   if (type === 'toll_station') return 90;
+  if (type === 'bridge') return 140;    // bấm / kéo ngắn vẫn ra một cây cầu đủ rõ; thu nhỏ tay được tới 50
   return 24;
 }
 
@@ -1397,7 +1399,9 @@ function getSceneryMinimumLength(type) {
 // Giới hạn khi người dùng thu nhỏ vật đã vẽ (tay nắm, nút −, đổi cỡ nhóm). Cột mốc lộ giới là vật nhỏ trên sơ đồ nên cho thu rất nhỏ;
 // các loại khác giữ nguyên giới hạn cũ (= cỡ tối thiểu khi vẽ).
 function getSceneryResizeMinLength(type) {
-  return type === 'road_boundary_marker' ? 12 : getSceneryMinimumLength(type);
+  if (type === 'road_boundary_marker') return 12;
+  if (type === 'bridge') return 50;
+  return getSceneryMinimumLength(type);
 }
 
 

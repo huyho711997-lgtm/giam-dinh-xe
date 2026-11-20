@@ -246,7 +246,7 @@ function setSelectedSceneryAreaShape(kind) {
 // ---- Tên nhà / vùng (areaLabel) ----
 // Trước đây areaLabel được vẽ nhưng không có chỗ nhập → người dùng không đặt được tên.
 const SCENE_AREA_LABEL_DEFAULTS = {
-  house: '', forest: 'RỪNG CÂY', rice_field: 'ĐỒNG LÚA', rock_field: 'BÃI ĐÁ',
+  house: '', bridge: 'CẦU', forest: 'RỪNG CÂY', rice_field: 'ĐỒNG LÚA', rock_field: 'BÃI ĐÁ',
   hill: 'ĐỒI NÚI', goods_display: 'HÀNG HÓA', goods_damaged: 'HÀNG HÓA ĐỔ VỠ'
 };
 function getSelectedAreaLabelTarget() {
