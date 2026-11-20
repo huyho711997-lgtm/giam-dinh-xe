@@ -18,7 +18,8 @@ const SceneSignedForm = (() => {
     frame:{x:123 * F,y:167.5 * F,w:(1395 - 123) * F,h:(828.5 - 167.5) * F},
     legendX:1151 * F, headEnd:256 * F, rowPitch:(661 / 15) * F, colPitch:(1151 - 154) / 27 * F, firstCol:154 * F,
     legendRows:13, legendRowPitch:(828.5 - 256) / 13 * F,              // cột Chú thích: 13 hàng kẻ từ dưới đầu cột tới đáy khung
-    inset:3                                                              // chừa ~0,7 mm sát vạch kẻ để nét in không đè lên khung
+    inset:3,                                                             // chừa ~0,7 mm sát vạch kẻ để nét in không đè lên khung (cột Chú thích)
+    drawInset:10                                                         // lề trong của HÌNH VẼ (~2,4 mm): mỗi tờ/lần nạp giấy lệch vài px nên cần chừa rộng hơn để nét vẽ không đè lên viền khung
   };
   const SCENE_AREA = {x:20,y:85,w:800,h:475};                            // vùng vẽ (không gồm cột chú thích) trong hệ toạ độ trình vẽ
   const NOTE_ROW_UNITS = 27;                                             // chiều cao tối thiểu 1 dòng chú thích số (rendering.js) → khớp đúng 1 hàng ô li
@@ -69,7 +70,8 @@ const SceneSignedForm = (() => {
   // xếp vào cột Chú thích bên phải, mỗi chú thích một dòng đúng một hàng ô li. Không in khung/tiêu đề cột vì tờ đã in sẵn.
   function getGridLayout() {
     const G = GRID_FORM, right = G.frame.x + G.frame.w, bottom = G.frame.y + G.frame.h;
-    const box = {x:G.frame.x + G.inset,y:G.frame.y + G.inset,w:G.legendX - G.frame.x - 2 * G.inset,h:G.frame.h - 2 * G.inset};
+    const m = G.drawInset;
+    const box = {x:G.frame.x + m,y:G.frame.y + m,w:G.legendX - G.frame.x - 2 * m,h:G.frame.h - 2 * m};
     const k = Math.min(box.w / SCENE_AREA.w,box.h / SCENE_AREA.h);
     const legendScale = G.legendRowPitch / NOTE_ROW_UNITS;
     return {

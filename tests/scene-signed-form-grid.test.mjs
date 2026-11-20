@@ -27,6 +27,11 @@ test('tờ ô li: vùng hình vẽ và cột chú thích nằm gọn trong khung
   // Hình vẽ (800×475 đơn vị) co đều, nằm trọn bên trái vạch cột Chú thích, không chạm viền.
   assert.ok(L.x0 > frame.x && L.x0 + 800 * L.k < legendX);
   assert.ok(L.y0 > frame.y && L.y0 + 475 * L.k < frame.y + frame.h);
+  // Chừa lề ≥ drawInset (~2 mm) sát viền trái và vạch cột Chú thích để lệch giấy vài px vẫn không đè lên vạch.
+  const m = api.GRID_FORM.drawInset;
+  assert.ok(m >= 8);
+  assert.ok(L.x0 - frame.x >= m - 1e-9 && legendX - (L.x0 + 800 * L.k) >= m - 1e-9);
+  assert.ok(L.y0 - frame.y >= m - 1e-9 && frame.y + frame.h - (L.y0 + 475 * L.k) >= m - 1e-9);
   // Một hàng chú thích (27 đơn vị) = đúng một hàng ô li; cột chú thích đúng 13 hàng, từ dưới đầu cột tới đáy khung.
   assert.ok(Math.abs(27 * L.legend.scale - legendRowPitch) < 1e-9);
   assert.equal(legendRows, 13);
