@@ -69,6 +69,7 @@
       transfer:'<path d="M4 7h13l-3-3M20 17H7l3 3"/>',
       field:'<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
       forms:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+      scene:'<path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/>',
       rescue:'<path d="M3 16V8h11v8M14 11h4l3 3v2h-7M3 16h18"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/>',
       drive:'<path d="M8.5 3h7l6 10.5-3.5 6H6L2.5 13.5Z"/><path d="m8.5 3 6 10.5H21M15.5 3l-9.5 16.5M2.5 13.5h12"/>',
       system:'<path d="M12 3 4 6v6c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/>',
@@ -101,6 +102,8 @@
         { label: 'Nghiệp vụ', items: [
           { tab: 'field_reimbursements', title: 'Hiện trường', icon: 'field', show: hasUserPermission('field_reimb', 'view') },
           { tab: 'rescue_cost', title: 'Chi phí cứu hộ', icon: 'rescue', show: hasUserPermission('rescue_cost', 'view') },
+          // Trang vẽ sơ đồ độc lập (không cần mở hồ sơ): mở ở thẻ mới để không rời phiên làm việc hiện tại.
+          { tab: 'scene_standalone', title: 'Vẽ sơ đồ hiện trường', icon: 'scene', show: showList || showPending, href: 'so-do-hien-truong.html' },
           { tab: 'contacts', title: 'Danh bạ nội bộ', icon: 'contacts', show: hasUserPermission('contacts', 'view') },
           { tab: 'shared_forms', title: 'Biểu mẫu dùng chung', icon: 'forms', show: hasUserPermission('shared_forms', 'view') }
         ]},
@@ -183,7 +186,8 @@
               <div class="app-sidebar-group-label" aria-hidden="true">${group.label}</div>
               ${group.items.map(item => {
                 const active = isAppSidebarItemActive(item);
-                return `<button type="button" class="app-sidebar-link${active ? ' is-active' : ''}" data-tab="${item.tab}" onclick="navigateHeaderTab('${item.tab}')" title="${item.title}" ${active ? 'aria-current="page"' : ''}>
+                const action = item.href ? `window.open('${item.href}','_blank','noopener')` : `navigateHeaderTab('${item.tab}')`;
+                return `<button type="button" class="app-sidebar-link${active ? ' is-active' : ''}" data-tab="${item.tab}" onclick="${action}" title="${item.title}${item.href ? ' (mở ở thẻ mới)' : ''}" ${active ? 'aria-current="page"' : ''}>
                   <span class="app-sidebar-ico">${appSidebarIcon(item.icon)}</span>
                   <span class="app-sidebar-link-text">${item.title}</span>
                   ${item.badge ? `<span class="app-sidebar-badge">${item.badge}</span>` : ''}

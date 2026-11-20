@@ -17,10 +17,13 @@ function visit(directory){
   }
 }
 visit(path.join(root,'js'));
-for(const match of html.matchAll(/<(?:script|link|img)\b[^>]*?\b(?:src|href)="([^"]+)"/gi)){
-  const url=match[1];
-  if(/^(?:https?:|data:|#|\/\/)/i.test(url))continue;
-  if(!fs.existsSync(path.resolve(root,url.split(/[?#]/)[0])))failures.push('Missing asset: '+url);else assets++;
+for(const page of ['index.html','so-do-hien-truong.html']){
+  const source=page==='index.html'?html:fs.readFileSync(path.join(root,page),'utf8');
+  for(const match of source.matchAll(/<(?:script|link|img)\b[^>]*?\b(?:src|href)="([^"]+)"/gi)){
+    const url=match[1];
+    if(/^(?:https?:|data:|#|\/\/)/i.test(url))continue;
+    if(!fs.existsSync(path.resolve(root,url.split(/[?#]/)[0])))failures.push(`Missing asset in ${page}: `+url);else assets++;
+  }
 }
 if(failures.length){console.error(failures.join('\n'));process.exitCode=1;}
 else console.log(`OK: ${scripts} JavaScript files compile; ${assets} local HTML references exist.`);

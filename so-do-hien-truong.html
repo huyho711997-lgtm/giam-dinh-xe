@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="description" content="Vẽ sơ đồ hiện trường vụ tai nạn — trang độc lập, không cần mở hồ sơ." />
+  <title>Vẽ sơ đồ hiện trường | TASCO DLK</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css?v=20261028-print-1">
+  <link rel="stylesheet" href="css/scene-toolbar.css">
+</head>
+<body>
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- KHỐI TRÌNH VẼ: sao y nguyên từ index.html (tests/scene-standalone.test.mjs kiểm tra hai bản luôn trùng nhau).
+       Nếu sửa giao diện trình vẽ trong index.html, hãy chạy: npm run sync:scene-page -->
+  <!-- SCENE-EDITOR:BEGIN (không sửa tay — sinh từ index.html bằng: npm run sync:scene-page) -->
+  <!-- Modal Vẽ sơ đồ hiện trường -->
+  <div id="sceneDrawingModalOverlay" class="p-modal-overlay" style="display: none; z-index: 99999; padding: 0;">
+    <section class="profile-modal-panel" role="dialog" aria-modal="true" style="max-width: 100%; width: 100%; height: 100%; max-height: 100%; border-radius: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column; margin: 0; box-sizing: border-box;">
+      <!-- Header trình vẽ: gọn 64px; Lưu chuyển lên đây (bỏ chân trang để vùng vẽ rộng hơn). css/scene-editor.css -->
+      <header class="scene-head">
+        <div class="scene-head-title">
+          <span class="scene-head-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg></span>
+          <div class="scene-head-copy">
+            <h2>Sơ đồ hiện trường</h2>
+            <p id="sceneHeaderMeta">Vẽ và in sơ đồ hiện trường vụ tai nạn</p>
+          </div>
+          <div class="scene-head-help">
+            <button type="button" class="scene-head-help-btn" aria-describedby="sceneShortcutCard">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
+              <span>Phím tắt</span>
+            </button>
+            <div id="sceneShortcutCard" class="scene-head-help-card" role="tooltip">
+              <strong>Phím tắt</strong>
+              <dl>
+                <div><dt><kbd>V</kbd></dt><dd>Chọn &amp; di chuyển</dd></div>
+                <div><dt><kbd>Esc</kbd></dt><dd>Thoát thao tác / bỏ chọn</dd></div>
+                <div><dt><kbd>R</kbd></dt><dd>Xoay đối tượng</dd></div>
+                <div><dt><kbd>Del</kbd></dt><dd>Xóa đối tượng</dd></div>
+                <div><dt><kbd>Ctrl</kbd><kbd>Z</kbd></dt><dd>Hoàn tác</dd></div>
+                <div><dt><kbd>Ctrl</kbd><kbd>Y</kbd></dt><dd>Tiến tới</dd></div>
+                <div><dt><kbd>+</kbd><kbd>−</kbd><kbd>0</kbd></dt><dd>Phóng to / thu nhỏ / 100%</dd></div>
+                <div><dt><kbd>Ctrl</kbd>+cuộn</dt><dd>Phóng to / thu nhỏ tại con trỏ</dd></div>
+              </dl>
+              <strong class="scene-head-help-sub">Di chuyển vùng nhìn</strong>
+              <dl>
+                <div><dt>Nút ✋</dt><dd>Bàn tay: nắm chuột kéo ở bất kỳ đâu</dd></div>
+                <div><dt><kbd>Space</kbd>+kéo</dt><dd>Kéo tạm thời khi đang vẽ</dd></div>
+                <div><dt>Kéo nền</dt><dd>Kéo vùng ngoài tờ giấy</dd></div>
+                <div><dt>Cuộn</dt><dd>Lên/xuống · <kbd>Shift</kbd>+cuộn: sang ngang</dd></div>
+              </dl>
+              <strong class="scene-head-help-sub">Khi đang chọn đối tượng</strong>
+              <dl>
+                <div><dt><kbd>Ctrl</kbd><kbd>D</kbd></dt><dd>Nhân bản</dd></div>
+                <div><dt><kbd>Ctrl</kbd><kbd>C</kbd>/<kbd>V</kbd></dt><dd>Sao chép / dán</dd></div>
+                <div><dt><kbd>Ctrl</kbd><kbd>G</kbd></dt><dd>Nhóm (Shift để rã nhóm)</dd></div>
+                <div><dt><kbd>Ctrl</kbd>+click</dt><dd>Chọn nhiều đối tượng</dd></div>
+                <div><dt><kbd>Tab</kbd></dt><dd>Đổi sang hình nằm chồng</dd></div>
+                <div><dt><kbd>Alt</kbd></dt><dd>Tạm tắt căn dính khi kéo</dd></div>
+              </dl>
+              <small>Mỗi công cụ hiển thị phím chọn nhanh riêng khi mở rộng thanh công cụ.</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="scene-head-actions">
+          <div class="scene-head-history" role="group" aria-label="Lịch sử thao tác">
+            <button id="btnHeaderUndo" type="button" onclick="undoSceneDrawing()" title="Hoàn tác thao tác trước (Ctrl+Z)" aria-label="Hoàn tác" disabled class="scene-head-icon-btn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg></button>
+            <button id="btnHeaderRedo" type="button" onclick="redoSceneDrawing()" title="Tiến tới thao tác vừa hủy (Ctrl+Y)" aria-label="Tiến tới" disabled class="scene-head-icon-btn"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
+          </div>
+          <span class="scene-head-divider" aria-hidden="true"></span>
+          <span id="sceneDocumentAutoStatus" class="claim-document-autosave scene-head-status" role="status"></span>
+          <button id="btnPrintSceneDrawing" type="button" class="scene-head-btn" onclick="printSceneDrawing()" title="In sơ đồ hiện trường khổ A4 ngang"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect><circle cx="18" cy="12" r="1" fill="currentColor" stroke="none"></circle></svg><span>In sơ đồ</span></button>
+          <button id="btnPrintSignedForm" type="button" class="scene-head-btn" onclick="SceneSignedForm.open()" title="In sơ đồ lên tờ biểu mẫu đã in sẵn (giấy có sẵn khung ô li hoặc giấy ký sẵn chưa có khung)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 15c1.5-2 2.5 1 4 0s2-1.5 3-.5"/></svg><span>In giấy ký sẵn</span></button>
+          <button id="btnSaveSceneDrawing" type="button" class="scene-head-btn scene-head-btn--primary" onclick="saveSceneDrawing()">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            <span>Lưu sơ đồ</span>
+          </button>
+          <button type="button" class="scene-head-icon-btn scene-head-close" onclick="closeSceneDrawingModal()" aria-label="Đóng trình vẽ" title="Đóng (không lưu thay đổi chưa lưu)">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      </header>
+
+      <div style="display: flex; flex: 1; min-height: 500px; position: relative;">
+        <!-- Toolbar -->
+        <div id="sceneToolRail" class="scene-tool-rail" data-state="collapsed" role="toolbar" aria-orientation="vertical" aria-label="Thanh công cụ vẽ hiện trường — đang thu gọn" style="width: 70px; border-right: 1px solid var(--border); background: var(--surface-soft); display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 10px; overflow-y: auto;">
+          <!-- Rail Top Header & Quick Toggle -->
+          <div id="sceneToolRailHeader" class="scene-tool-rail-header">
+            <div class="rail-header-title-box">
+              <span class="rail-header-brand-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg></span>
+              <span>CÔNG CỤ HIỆN TRƯỜNG</span>
+            </div>
+          </div>
+          <div class="scene-tool-separator" style="margin: 0; width: 44px;"></div>
+
+          <div class="scene-tool-section-label">Thao tác</div>
+                    <!-- 1. Select -->
+          <button class="draw-tool-btn active" data-tool="select" data-shortcut="V" aria-keyshortcuts="V" id="toolBtnSelect" title="Chọn & di chuyển đối tượng — phím V (Del để xóa, Esc để bỏ chọn)" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--primary); background: rgba(216,180,109,0.15); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); transition: all 0.2s;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path>
+              <path d="M13 13l6 6"></path>
+            </svg>
+          <span class="tool-rail-label">Chọn & di chuyển</span></button>
+
+          <div class="scene-tool-separator" aria-hidden="true"></div>
+
+          <div class="scene-tool-section-label">Vẽ & hình</div>
+
+          <!-- 2. Freehand Pen -->
+          <button class="draw-tool-btn" data-tool="pen" data-shortcut="P" aria-keyshortcuts="P" title="Bút vẽ tự do — phím P (Giữ Shift để kẻ ngang/dọc)" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); transition: all 0.2s;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+          <span class="tool-rail-label">Bút vẽ tự do</span></button>
+
+          <!-- 3. Group: Vạch kẻ đường (Đường thẳng) -->
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_road_line" data-group="road_line" data-tool="road_line" data-shortcut="L" aria-keyshortcuts="L" title="Đường và lề đường — phím L (Nhấp để đổi loại nét)" onclick="toggleToolSubmenu(event, 'road_line')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+            <span class="group-tool-icon" id="groupIcon_road_line" style="display: grid; place-items: center; pointer-events: none;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line></svg>
+            </span>
+            <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
+              <polygon points="10,0 10,10 0,10"></polygon>
+            </svg>
+          <span class="tool-rail-label">Đường & lề đường</span></button>
+
+          <!-- 4. Group: Đường cong -->
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_curve" data-group="curve" data-tool="curve" data-shortcut="C" aria-keyshortcuts="C" title="Đường cong — phím C (Nhấp để đổi nét liền / đứt)" onclick="toggleToolSubmenu(event, 'curve')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+            <span class="group-tool-icon" id="groupIcon_curve" style="display: grid; place-items: center; pointer-events: none;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 19C4 9 9 4 19 4"></path></svg>
+            </span>
+            <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
+              <polygon points="10,0 10,10 0,10"></polygon>
+            </svg>
+          <span class="tool-rail-label">Đường cong</span></button>
+
+          <!-- 5. Group: Mũi tên di chuyển -->
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_arrow" data-group="arrow" data-tool="line" data-shortcut="A" aria-keyshortcuts="A" title="Mũi tên hướng đi — phím A (Nhấp để đổi nét liền / đứt)" onclick="toggleToolSubmenu(event, 'arrow')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+            <span class="group-tool-icon" id="groupIcon_arrow" style="display: grid; place-items: center; pointer-events: none;">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </span>
+            <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
+              <polygon points="10,0 10,10 0,10"></polygon>
+            </svg>
+          <span class="tool-rail-label">Mũi tên hướng đi</span></button>
+
+          <!-- Group: Hình học & Biển báo -->
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_shape_symbols" data-group="shape_symbols" data-tool="geo_circle" data-shortcut="S" aria-keyshortcuts="S" title="Hình học & biển báo — phím S (Nhấp để chọn hình hoặc loại biển)" onclick="toggleToolSubmenu(event, 'shape_symbols')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+            <span class="group-tool-icon" id="groupIcon_shape_symbols" style="display: grid; place-items: center; pointer-events: none;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="4.5"></circle><path d="M15.5 18.5l4-7 4 7z" transform="translate(-2 0)"></path></svg>
+            </span>
+            <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
+              <polygon points="10,0 10,10 0,10"></polygon>
+            </svg>
+          <span class="tool-rail-label">Hình học & biển báo</span></button>
+
+          <div class="scene-tool-separator" aria-hidden="true"></div>
+
+          <div class="scene-tool-section-label">Đối tượng</div>
+
+          <!-- 6. Group: Phương tiện & Hiện trường -->
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_scene_object" data-group="scene_object" data-tool="car" data-shortcut="O" aria-keyshortcuts="O" title="Phương tiện & hiện trường — phím O (Ô tô, xe máy, người, va chạm...)" onclick="toggleToolSubmenu(event, 'scene_object')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+            <span class="group-tool-icon" id="groupIcon_scene_object" style="display: grid; place-items: center; pointer-events: none;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="1" ry="1"></rect><line x1="16" y1="6" x2="16" y2="18"></line><line x1="16" y1="6" x2="21" y2="12"></line><line x1="16" y1="18" x2="21" y2="12"></line></svg>
+            </span>
+            <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
+              <polygon points="10,0 10,10 0,10"></polygon>
+            </svg>
+          <span class="tool-rail-label">Phương tiện & hiện trường</span></button>
+
+          <!-- 7. Group: Hạ tầng & cảnh quan -->
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_road_assets" data-group="road_assets" data-tool="crosswalk" data-shortcut="H" aria-keyshortcuts="H" title="Hạ tầng & cảnh quan — phím H (Vệt bánh xe, lề đường, đèn, trụ điện...)" onclick="toggleToolSubmenu(event, 'road_assets')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+            <span class="group-tool-icon" id="groupIcon_road_assets" style="display: grid; place-items: center; pointer-events: none;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="7" y1="7" x2="7" y2="17"></line><line x1="12" y1="7" x2="12" y2="17"></line><line x1="17" y1="7" x2="17" y2="17"></line></svg>
+            </span>
+            <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
+              <polygon points="10,0 10,10 0,10"></polygon>
+            </svg>
+          <span class="tool-rail-label">Hạ tầng & cảnh quan</span></button>
+
+          <div class="scene-tool-separator" aria-hidden="true"></div>
+
+          <div class="scene-tool-section-label">Ghi chú</div>
+
+          <!-- 8. Measure -->
+          <button class="draw-tool-btn" data-tool="measure" data-shortcut="M" aria-keyshortcuts="M" title="Đo khoảng cách — phím M (Giữ Shift để vẽ ngang/dọc)" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); transition: all 0.2s;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="9" x2="4" y2="15"></line><line x1="20" y1="9" x2="20" y2="15"></line></svg>
+          <span class="tool-rail-label">Đo khoảng cách</span></button>
+
+          <!-- 9. Text -->
+          <button class="draw-tool-btn" data-tool="text" data-shortcut="T" aria-keyshortcuts="T" title="Chèn chữ — phím T" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); transition: all 0.2s;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+          <span class="tool-rail-label">Chèn chữ</span></button>
+
+          <!-- 10. Numbered annotation linked to the legend -->
+          <button class="draw-tool-btn" data-tool="number_note" data-shortcut="N" aria-keyshortcuts="N" title="Đánh số và thêm nội dung chú thích — phím N" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); transition: all 0.2s;">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="12" r="5"></circle><path d="M7 10h1v4"></path><path d="M6.8 14h2.4"></path><line x1="15" y1="8" x2="22" y2="8"></line><line x1="15" y1="12" x2="22" y2="12"></line><line x1="15" y1="16" x2="20" y2="16"></line></svg>
+          <span class="tool-rail-label">Chú thích đánh số</span></button>
+
+          <!-- 11. Eraser -->
+          <button class="draw-tool-btn" data-tool="eraser" data-shortcut="E" aria-keyshortcuts="E" title="Tẩy đối tượng — phím E (Đưa khung vuông lên nét rồi nhấp)" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); transition: all 0.2s;">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 14.5l10-10a2 2 0 0 1 2.8 0l4.2 4.2a2 2 0 0 1 0 2.8l-10 10A2 2 0 0 1 7.5 22H2v-5.5a2 2 0 0 1 .5-2z"></path><path d="M12 22v-5l-5-5"></path></svg>
+          <span class="tool-rail-label">Cục tẩy</span></button>
+          <!-- Divider -->
+          <div class="scene-tool-separator" aria-hidden="true"></div>
+
+          <div class="scene-tool-section-label">Nét vẽ</div>
+
+          <!-- Luxury Color Swatch Circle -->
+          <div id="colorSwatchWrap" class="color-swatch-wrap" role="button" tabindex="0" aria-label="Chọn màu nét vẽ" title="Chọn màu nét vẽ" onclick="if (event.target.id !== 'drawColorPicker') document.getElementById('drawColorPicker').click()" onkeydown="if (event.target === this && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); this.click(); }" style="position: relative; display: flex; flex-direction: column; align-items: center; margin: 2px 0;">
+            <div id="drawColorSwatch" style="width: 28px; height: 28px; border-radius: 50%; background: #000000; border: 2.5px solid #d8b46d; box-shadow: 0 2px 8px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'"></div><span class="tool-rail-label">Màu sắc</span>
+            <input type="color" id="drawColorPicker" value="#000000" style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;" onchange="onColorPickerChange(this.value)" />
+          </div>
+
+          <!-- Luxury Stroke Width Controller Button -->
+          <div id="strokeWidthWrap" class="stroke-width-wrap" role="button" tabindex="0" aria-label="Điều chỉnh độ dày nét vẽ" aria-haspopup="dialog" aria-expanded="false" title="Điều chỉnh độ dày nét vẽ" onclick="toggleStrokeWidthPopover(event)" onkeydown="if (event.target === this && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); this.click(); }" style="position: relative; display: flex; flex-direction: column; align-items: center; margin: 2px 0;">
+            <button id="btnStrokeWidthToggle" type="button" tabindex="-1" aria-hidden="true" style="width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; color: var(--text-main); transition: all 0.2s; padding: 2px 0; flex-shrink: 0;" onmouseover="this.style.borderColor='var(--primary)'; this.style.background='rgba(216,180,109,0.1)'" onmouseout="if(typeof isStrokePopoverOpen !== 'undefined' && !isStrokePopoverOpen) { this.style.borderColor='var(--border)'; this.style.background='var(--surface)'; }">
+              <span id="toolbarStrokePreviewDot" style="width: 5px; height: 5px; border-radius: 50%; background: #000000; transition: all 0.2s;"></span>
+              <span id="toolbarStrokeText" style="font-size: 10px; font-weight: 850; color: #d8b46d; font-family: monospace; line-height: 1;">1.5</span>
+            </button>
+            <input type="range" id="drawStrokeWidth" min="1" max="10" step="0.5" value="1.5" style="display: none;" /><span class="tool-rail-label" style="margin-left: 2px;">Độ dày</span></div>
+
+          <div style="flex: 1; min-height: 10px;"></div>
+          <div style="width: 24px; height: 1px; background: var(--border); margin: 2px 0; flex-shrink: 0;"></div>
+          <button type="button" onclick="clearDrawingCanvas()" title="Xóa toàn bộ" class="draw-tool-btn" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid rgba(255,107,122,0.3); background: rgba(255,107,122,0.1); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: #ff6b7a;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          <span class="tool-rail-label" style="color: #ff6b7a;">Xóa toàn bộ</span></button>
+                  
+        </div>
+
+        <button id="btnRailToggle" type="button" class="scene-rail-floating-toggle" onclick="toggleToolRail()" aria-controls="sceneToolRail" aria-expanded="false" aria-label="Mở rộng sidebar công cụ" title="Mở rộng sidebar công cụ">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+            <polyline id="railToggleChevron" points="13 9 16 12 13 15"></polyline>
+          </svg>
+        </button>
+
+        <div id="sceneRailScrollbar" class="scene-rail-scrollbar" aria-hidden="true">
+          <div id="sceneRailScrollbarThumb" class="scene-rail-scrollbar-thumb"></div>
+        </div>
+
+        <!-- Floating Stroke Width Luxury Popover Panel -->
+        <div id="strokeWidthPopover" style="position: absolute; left: 76px; top: 220px; width: 250px; background: rgba(20, 24, 33, 0.98); backdrop-filter: blur(16px); border: 1px solid rgba(216, 180, 109, 0.45); border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.65); padding: 14px; z-index: 1000; display: none; flex-direction: column; gap: 12px; color: #fff;">
+          <!-- Title & Number Badge -->
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; font-weight: 750; color: #d8b46d; display: inline-flex; align-items: center; gap: 6px;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path></svg>
+              Độ dày nét vẽ
+            </span>
+            <span id="popoverWidthValue" style="font-size: 12px; font-weight: 850; color: #fff; background: rgba(216, 180, 109, 0.2); border: 1px solid rgba(216, 180, 109, 0.4); padding: 1px 8px; border-radius: 8px; font-family: monospace;">1.5 px</span>
+          </div>
+
+          <!-- Live Sample Line Preview Box -->
+          <div style="width: 100%; height: 38px; background: #ffffff; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); box-shadow: inset 0 2px 4px rgba(0,0,0,0.06);">
+            <div id="popoverLiveSample" style="width: 82%; height: 1.5px; background: #000000; border-radius: 4px; transition: height 0.15s ease, background 0.15s ease;"></div>
+          </div>
+
+          <!-- 4 Quick Preset Buttons with Visual Lines -->
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+            <button type="button" class="stroke-preset-btn active" onclick="setStrokeWidthValue(1.5)" title="1.5px: Nét mảnh (Đo đạc, kích thước)" style="padding: 6px 0; border-radius: 8px; border: 1px solid var(--primary); background: rgba(216, 180, 109, 0.2); color: #d8b46d; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: all 0.2s;">
+              <span style="width: 16px; height: 1.5px; background: currentColor; border-radius: 1px;"></span>
+              <span>1.5</span>
+            </button>
+            <button type="button" class="stroke-preset-btn" onclick="setStrokeWidthValue(2.5)" title="2.5px: Tiêu chuẩn (Vẽ xe, mũi tên)" style="padding: 6px 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: all 0.2s;">
+              <span style="width: 16px; height: 2.5px; background: currentColor; border-radius: 1px;"></span>
+              <span>2.5</span>
+            </button>
+            <button type="button" class="stroke-preset-btn" onclick="setStrokeWidthValue(4.5)" title="4.5px: Nét đậm (Va chạm, đường đi chính)" style="padding: 6px 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: all 0.2s;">
+              <span style="width: 16px; height: 4.5px; background: currentColor; border-radius: 2px;"></span>
+              <span>4.5</span>
+            </button>
+            <button type="button" class="stroke-preset-btn" onclick="setStrokeWidthValue(7)" title="7.0px: Rất đậm (Hộ lan, biên lề đường)" style="padding: 6px 0; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: all 0.2s;">
+              <span style="width: 16px; height: 7px; background: currentColor; border-radius: 2px;"></span>
+              <span>7.0</span>
+            </button>
+          </div>
+
+          <!-- Smooth Horizontal Range Slider -->
+          <div style="display: flex; flex-direction: column; gap: 5px; margin-top: 2px;">
+            <input type="range" id="popoverSlider" min="1" max="10" step="0.5" value="1.5" style="width: 100%; accent-color: #d8b46d; cursor: pointer; height: 6px;" oninput="onStrokeSliderInput(this.value)" />
+            <div style="display: flex; justify-content: space-between; font-size: 9.5px; color: #718096; font-weight: 700;">
+              <span>1 px</span>
+              <span>3 px</span>
+              <span>6 px</span>
+              <span>10 px</span>
+            </div>
+          </div>
+
+          <!-- Color Quick Swatches -->
+          <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 9px; display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 11px; color: #a0aec0; font-weight: 600;">Màu nét:</span>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <div onclick="setStrokeColor('#000000')" title="Mực đen (Tiêu chuẩn)" style="width: 18px; height: 18px; border-radius: 50%; background: #000000; border: 1.5px solid #fff; cursor: pointer; transition: transform 0.15s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>
+              <div onclick="setStrokeColor('#005A9C')" title="Xanh Tasco" style="width: 18px; height: 18px; border-radius: 50%; background: #005A9C; border: 1.5px solid #fff; cursor: pointer; transition: transform 0.15s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>
+              <div onclick="setStrokeColor('#dc2626')" title="Đỏ điểm va chạm" style="width: 18px; height: 18px; border-radius: 50%; background: #dc2626; border: 1.5px solid #fff; cursor: pointer; transition: transform 0.15s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>
+              <div onclick="setStrokeColor('#d8b46d')" title="Vàng Tasco Gold" style="width: 18px; height: 18px; border-radius: 50%; background: #d8b46d; border: 1.5px solid #fff; cursor: pointer; transition: transform 0.15s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>
+              <div onclick="document.getElementById('drawColorPicker').click()" title="Tùy chọn bảng màu..." style="width: 18px; height: 18px; border-radius: 50%; background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); border: 1.5px solid #fff; cursor: pointer; transition: transform 0.15s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shared Flyout Submenu Popover Container & Styling -->
+        <link rel="stylesheet" href="css/scene-shortcuts.css">
+        <div id="toolSubmenuPopover">
+          <div id="toolSubmenuHeader" style="display: flex; justify-content: space-between; align-items: center; padding: 2px 6px 6px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 2px;">
+            <span id="toolSubmenuTitle" style="font-size: 10.5px; font-weight: 850; color: #d8b46d; text-transform: uppercase; letter-spacing: 0.8px;"></span>
+            <span id="toolSubmenuHint" style="font-size: 10px; color: #718096; font-weight: 600;">Click để chọn</span>
+          </div>
+          <div id="toolSubmenuItems" style="display: flex; flex-direction: column; gap: 3px; max-height: calc(100vh - 140px); overflow-y: auto; padding-right: 2px;"></div>
+        </div>
+
+        <!-- Canvas area (Zoom & Pan Viewport) -->
+        <div id="sceneCanvasViewport" style="flex: 1; background: var(--bg); position: relative; display: flex; align-items: center; justify-content: center; padding: 15px; min-width: 0; min-height: 0; overflow: hidden; user-select: none;">
+          <div id="sceneCanvasWrapper" style="transform-origin: center center; display: inline-flex; position: relative;">
+            <canvas id="sceneDrawingCanvas" width="1000" height="700" style="background: #ffffff; border-radius: 2px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); cursor: crosshair; width: 1000px; height: 700px; display: block; flex-shrink: 0;"></canvas>
+          </div>
+
+          <!-- Floating Zoom Controls Widget -->
+          <div id="sceneZoomControls" style="position: absolute; bottom: 25px; right: 25px; background: rgba(20, 24, 33, 0.94); backdrop-filter: blur(12px); border: 1px solid rgba(216, 180, 109, 0.45); box-shadow: 0 8px 24px rgba(0,0,0,0.5); border-radius: 24px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; z-index: 20; color: #fff; font-size: 12px; user-select: none;">
+            <!-- Zoom Out -->
+            <button type="button" onclick="zoomSceneCanvas(-0.15)" title="Thu nhỏ (Ctrl + Cuộn chuột xuống / Phím -)" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid transparent; background: transparent; color: #fff; display: grid; place-items: center; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+
+            <!-- Zoom % Label / Reset Button -->
+            <button type="button" id="sceneZoomLabel" onclick="resetSceneZoom()" title="Click để trở về 100% (Phím 0)" style="min-width: 52px; padding: 2px 6px; border-radius: 12px; border: 1px solid rgba(216, 180, 109, 0.3); background: rgba(216, 180, 109, 0.1); color: #d8b46d; font-weight: 750; font-size: 11.5px; cursor: pointer; text-align: center;">
+              100%
+            </button>
+
+            <!-- Zoom In -->
+            <button type="button" onclick="zoomSceneCanvas(0.15)" title="Phóng to (Ctrl + Cuộn chuột lên / Phím +)" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid transparent; background: transparent; color: #fff; display: grid; place-items: center; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+
+            <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.2); margin: 0 2px;"></span>
+
+            <!-- Hít dính: bật/tắt nam châm khi kéo thả (traffic-signs.js) -->
+            <button type="button" id="sceneSnapToggle" onclick="toggleSceneSnap()" aria-pressed="true" title="Hít dính: BẬT – bấm để tắt (giữ Alt khi kéo để tạm tắt)" aria-label="Bật/tắt hít dính khi kéo thả">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v8a6 6 0 0 0 12 0V3"/><path d="M6 3h4v8a2 2 0 0 0 4 0V3h4"/><path d="M6 7h4M14 7h4"/></svg>
+            </button>
+            <!-- Bàn tay: bật để nắm chuột kéo vùng nhìn (scene-editor-ui.js) -->
+            <button type="button" id="sceneHandToggle" onclick="toggleSceneHandMode()" aria-pressed="false" title="Bàn tay – nắm chuột kéo để di chuyển vùng nhìn (hoặc giữ Space + kéo, kéo vùng nền, cuộn chuột)" aria-label="Bàn tay: kéo để di chuyển vùng nhìn">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 11V6a2 2 0 0 0-4 0v5"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+            </button>
+
+            <!-- Fit / Reset View -->
+            <button type="button" onclick="resetSceneZoom()" title="Căn vừa màn hình (100%)" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid transparent; background: transparent; color: #d8b46d; display: grid; place-items: center; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.background='rgba(216, 180, 109, 0.15)'" onmouseout="this.style.background='transparent'">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+            </button>
+          </div>
+
+          <link rel="stylesheet" href="css/scene-selection.css">
+          <link rel="stylesheet" href="css/scene-editor.css?v=20261120-grid-1">
+          <link rel="stylesheet" href="css/scene-legend-editor.css?v=20261111-legend-3">
+
+          <!-- Floating Selection Inspector with Rotation Controls -->
+          <div id="sceneSelectedBadge" class="scene-selection-panel" style="display: none;">
+            <!-- Shape Name -->
+            <span class="scene-selection-title" style="display: inline-flex; align-items: center; gap: 6px; color: #d8b46d; font-weight: 750;">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path><path d="M13 13l6 6"></path></svg>
+              <span id="selectedShapeName">Đã chọn: Xe ô tô</span>
+            </span>
+
+            <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.2);"></span>
+
+            <!-- Current Angle Badge -->
+            <span id="selectedShapeAngleBadge" style="background: rgba(216, 180, 109, 0.15); border: 1px solid rgba(216, 180, 109, 0.35); color: #d8b46d; padding: 2px 8px; border-radius: 12px; font-weight: 750; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              Góc: <span id="selectedShapeAngleText">0°</span>
+            </span>
+
+            <!-- Current Stroke Width Badge (Clickable to adjust) -->
+            <button type="button" id="selectedStrokeBadge" aria-expanded="false" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; padding: 2px 8px; border-radius: 12px; font-weight: 750; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" onclick="toggleStrokeWidthPopover(event)" onpointerdown="event.stopPropagation()" title="Click để chỉnh độ lớn nét vẽ cho đối tượng này">
+              Nét: <span id="selectedStrokeText" style="color: #d8b46d;">2.5px</span>
+            </button>
+
+            <!-- Overall size controls for road infrastructure objects -->
+            <div id="selectedSizeToolsGroup" style="display: none; align-items: center; gap: 6px; background: rgba(216,180,109,0.08); padding: 6px; border-radius: 14px; border: 1px solid rgba(216,180,109,0.22);">
+              <span id="selectedSizeLabel" style="color: #a0aec0; font-size: 11px; font-weight: 700; padding: 0 3px;">Kích thước</span>
+              <button type="button" id="btnDecreaseSelectedSize" onclick="scaleSelectedInfrastructure(0.9)" title="Thu nhỏ 10%" style="width: 30px; padding: 0 !important; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #f8fafc; font-size: 16px; font-weight: 850; cursor: pointer; display: grid; place-items: center;">−</button>
+              <span id="selectedSizeText" style="min-width: 42px; color: #d8b46d; font-size: 11px; font-weight: 850; text-align: center;">100%</span>
+              <button type="button" id="btnIncreaseSelectedSize" onclick="scaleSelectedInfrastructure(1.1)" title="Phóng to 10%" style="width: 30px; padding: 0 !important; background: rgba(216,180,109,.16); border: 1px solid rgba(216,180,109,.34); color: #d8b46d; font-size: 16px; font-weight: 850; cursor: pointer; display: grid; place-items: center;">+</button>
+            </div>
+
+            <!-- Số làn xe của trạm thu phí (scene-editor-ui.js hiện khi chọn trạm thu phí) -->
+            <div id="selectedTollLanesGroup" class="scene-toll-lanes" style="display: none;" role="group" aria-label="Số làn xe trạm thu phí">
+              <span>Số làn xe</span>
+              <button type="button" id="btnTollLanesMinus" onclick="changeSelectedTollLanes(-1)" title="Bớt một làn" aria-label="Bớt một làn">−</button>
+              <output id="selectedTollLanesText" aria-live="polite">4</output>
+              <button type="button" id="btnTollLanesPlus" onclick="changeSelectedTollLanes(1)" title="Thêm một làn" aria-label="Thêm một làn">+</button>
+              <button type="button" id="btnTollLanesAuto" onclick="changeSelectedTollLanes(0)" title="Tự tính số làn theo bề rộng trạm">Tự động</button>
+            </div>
+
+            <!-- Hình dạng vùng rừng/đồi cây/đồng lúa (scene-editor-ui.js hiện khi chọn Rừng cây hoặc Đồng lúa) -->
+            <div id="selectedAreaShapeGroup" class="scene-area-shape" style="display: none;" role="group" aria-label="Hình dạng vùng">
+              <span>Hình dạng vùng</span>
+              <div class="scene-area-shape-seg">
+                <button type="button" data-area-shape="rect" onclick="setSelectedSceneryAreaShape('rect')" title="Khung chữ nhật bo góc">Chữ nhật</button>
+                <button type="button" data-area-shape="natural" onclick="setSelectedSceneryAreaShape('natural')" title="Viền tự nhiên, lượn sóng">Tự nhiên</button>
+                <button type="button" data-area-shape="custom" onclick="startSceneryOutlineDraw()" title="Nhấp từng điểm dọc mép đường, sườn đồi (hoặc giữ chuột rê một vòng)">Vẽ ranh giới</button>
+              </div>
+              <small id="selectedAreaShapeHint">Vẽ ranh giới: nhấp từng điểm dọc mép vùng, Enter để xong. Sau đó kéo các điểm tròn để nắn; nhấp đúp để thêm/xoá điểm.</small>
+            </div>
+
+            <!-- Tên nhà / vùng (scene-editor-ui.js): gõ tên hiển thị trên sơ đồ; để trống = nhãn mặc định -->
+            <label id="selectedAreaLabelGroup" class="scene-area-label" style="display: none;">
+              <span>Tên</span>
+              <input type="text" id="selectedAreaLabelInput" maxlength="30" autocomplete="off" spellcheck="false"
+                     placeholder="Nhập tên hiển thị" aria-label="Tên hiển thị trên sơ đồ"
+                     oninput="setSelectedShapeAreaLabel(this.value, false)"
+                     onchange="setSelectedShapeAreaLabel(this.value, true)"
+                     onkeydown="if(event.key==='Enter'||event.key==='Escape'){event.stopPropagation();this.blur();}">
+            </label>
+
+            <!-- Quick Rotate Buttons Group -->
+            <div style="display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.06); padding: 2px 5px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+              <button type="button" onclick="rotateSelectedShape(-45)" title="Xoay ngược chiều kim đồng hồ 45° (Shift+R)" style="background: transparent; border: none; color: #e2e8f0; border-radius: 10px; padding: 2px 7px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                -45°
+              </button>
+              <button type="button" onclick="rotateSelectedShape(45)" title="Xoay theo chiều kim đồng hồ 45° (Phím R)" style="background: transparent; border: none; color: #e2e8f0; border-radius: 10px; padding: 2px 7px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">
+                +45°
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+              </button>
+              <button type="button" onclick="rotateSelectedShape(90)" title="Xoay vuông góc 90°" style="background: rgba(216, 180, 109, 0.2); border: 1px solid rgba(216, 180, 109, 0.4); color: #d8b46d; border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='rgba(216, 180, 109, 0.35)'" onmouseout="this.style.background='rgba(216, 180, 109, 0.2)'">
+                ⟳ 90°
+              </button>
+            </div>
+
+            <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.2);"></span>
+
+            <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.2);"></span>
+
+            <!-- Group & Ungroup Controls -->
+            <div id="selectedGroupToolsGroup" style="display: none; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; background: rgba(59, 130, 246, 0.15); padding: 2px 6px; border-radius: 16px; border: 1px solid rgba(59, 130, 246, 0.35);">
+              <button type="button" id="btnAlignShapeCenters" onclick="alignSelectedShapeCenters()" title="Đưa tâm của các đối tượng đang chọn về cùng một vị trí" style="background: rgba(216, 180, 109, 0.22); border: 1px solid rgba(216, 180, 109, 0.5); color: #f4d28f; border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='rgba(216, 180, 109, 0.38)'" onmouseout="this.style.background='rgba(216, 180, 109, 0.22)'">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="9" height="9" rx="1"/><rect x="12" y="9" width="9" height="9" rx="1"/><path d="M12 3v18M8 12h8"/></svg>
+                Căn giữa
+              </button>
+              <button type="button" id="btnAlignShapeHorizontal" onclick="alignSelectedShapesHorizontal()" title="Căn các đối tượng đang chọn về cùng một hàng ngang (giữ nguyên vị trí theo chiều ngang)" style="background: rgba(216, 180, 109, 0.22); border: 1px solid rgba(216, 180, 109, 0.5); color: #f4d28f; border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='rgba(216, 180, 109, 0.38)'" onmouseout="this.style.background='rgba(216, 180, 109, 0.22)'">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="7" height="10" rx="1"/><rect x="14" y="9" width="7" height="6" rx="1"/><path d="M1 12h22"/></svg>
+                Căn ngang
+              </button>
+              <button type="button" id="btnGroupShapes" onclick="groupSelectedShapes()" title="Nhóm các đối tượng đang chọn lại với nhau (Ctrl + G)" style="background: rgba(59, 130, 246, 0.25); border: 1px solid rgba(59, 130, 246, 0.5); color: #93c5fd; border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 0.4)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.25)'">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                Nhóm (Ctrl+G)
+              </button>
+              <button type="button" id="btnUngroupShapes" onclick="ungroupSelectedShapes()" title="Rã nhóm các đối tượng (Ctrl + Shift + G)" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.35)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.2)'">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 11V7a5 5 0 0 1 10 0v4"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg>
+                Rã nhóm (Ctrl+Shift+G)
+              </button>
+            </div>
+
+            <!-- Layer Ordering & Overlap Switch Group -->
+            <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+              <span style="color: #a0aec0; font-size: 11px; font-weight: 600; padding-left: 2px;">Lớp: <span id="selectedShapeLayerText" tabindex="0" role="button" title="Nhấp để nhập nhanh số lớp (1 = dưới cùng)" style="color: #d8b46d; font-weight: 750;">1/1</span></span>
+              <button type="button" onclick="bringShapeForward()" title="Chuyển hình này lên 1 lớp (Ctrl + ] hoặc PageUp)" style="background: transparent; border: none; color: #e2e8f0; border-radius: 8px; padding: 2px 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                Lên
+              </button>
+              <button type="button" onclick="sendShapeBackward()" title="Chuyển hình này xuống 1 lớp (Ctrl + [ hoặc PageDown)" style="background: transparent; border: none; color: #e2e8f0; border-radius: 8px; padding: 2px 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                Xuống
+              </button>
+              <button type="button" onclick="cycleOverlappingSelection()" id="btnCycleOverlap" title="Chuyển chọn hình khác đang lồng nhau tại vị trí này (Phím Tab)" style="background: rgba(216, 180, 109, 0.2); border: 1px solid rgba(216, 180, 109, 0.4); color: #d8b46d; border-radius: 8px; padding: 2px 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='rgba(216, 180, 109, 0.35)'" onmouseout="this.style.background='rgba(216, 180, 109, 0.2)'">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                Đổi hình (Tab)
+              </button>
+            </div>
+
+            <!-- Curve Controls (Bend Adjust & Flip) -->
+            <div id="selectedCurveToolsGroup" style="display: none; align-items: center; gap: 4px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+              <span style="color: #a0aec0; font-size: 11px; font-weight: 600; padding-left: 2px;">Uốn cong:</span>
+              <button type="button" onclick="adjustSelectedCurveBend(1.2)" title="Tăng độ uốn cong (bầu hơn)" style="background: transparent; border: none; color: #e2e8f0; border-radius: 8px; padding: 2px 7px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">
+                Cong +
+              </button>
+              <button type="button" onclick="adjustSelectedCurveBend(0.8)" title="Giảm độ uốn cong (thẳng hơn)" style="background: transparent; border: none; color: #e2e8f0; border-radius: 8px; padding: 2px 7px; font-size: 11px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">
+                Cong -
+              </button>
+              <button type="button" onclick="flipSelectedCurveBend()" title="Lật chiều uốn cong sang hướng ngược lại" style="background: rgba(216, 180, 109, 0.2); border: 1px solid rgba(216, 180, 109, 0.4); color: #d8b46d; border-radius: 8px; padding: 2px 7px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='rgba(216, 180, 109, 0.35)'" onmouseout="this.style.background='rgba(216, 180, 109, 0.2)'">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="7 16 12 21 17 16"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+                Lật cong
+              </button>
+            </div>
+
+            <!-- Line Controls (Arrowhead & Dash Toggle) -->
+            <div id="selectedLineToolsGroup" style="display: none; align-items: center; gap: 4px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+              <button type="button" id="btnToggleLineArrow" onclick="toggleSelectedLineArrow()" title="Bật / Tắt đầu mũi tên chỉ hướng" style="background: transparent; border: none; color: #e2e8f0; border-radius: 8px; padding: 2px 7px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="12 5 19 12 12 19"/></svg>
+                Mũi tên
+              </button>
+              <button type="button" id="btnToggleLineDash" onclick="toggleSelectedLineDash()" title="Chuyển đổi giữa Nét liền và Nét đứt" style="background: transparent; border: none; color: #e2e8f0; border-radius: 8px; padding: 2px 7px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;">
+                Nét đứt/liền
+              </button>
+            </div>
+
+            <!-- Copy, Paste & Duplicate Controls -->
+            <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+              <button type="button" onclick="duplicateSelectedShape()" title="Nhân bản đối tượng này (Ctrl + D hoặc Ctrl + C / Ctrl + V)" style="background: rgba(216, 180, 109, 0.2); border: 1px solid rgba(216, 180, 109, 0.4); color: #d8b46d; border-radius: 8px; padding: 2px 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='rgba(216, 180, 109, 0.35)'" onmouseout="this.style.background='rgba(216, 180, 109, 0.2)'">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Nhân bản (Ctrl+D)
+              </button>
+              <button type="button" onclick="copySelectedShape()" title="Sao chép nét vẽ này vào bộ nhớ tạm (Ctrl + C)" style="background: transparent; border: none; color: #e2e8f0; border-radius: 8px; padding: 2px 7px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Copy
+              </button>
+              <button type="button" onclick="pasteCopiedShape()" id="btnPasteShapeBadge" title="Dán nét vẽ từ bộ nhớ tạm (Ctrl + V)" style="background: transparent; border: none; color: #e2e8f0; border-radius: 8px; padding: 2px 7px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='transparent'">
+                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                Dán
+              </button>
+            </div>
+
+            <span style="width: 1px; height: 14px; background: rgba(255,255,255,0.2);"></span>
+
+            <!-- Helper tips -->
+            <span class="scene-selection-helper" style="color: #a0aec0; font-size: 11px; display: inline-flex; align-items: center; gap: 4px;">
+              <span id="sceneSelectionResizeHint">Cạnh trái/phải: kéo ngang • Cạnh trên/dưới: kéo dọc • Góc: giữ tỷ lệ</span>
+              <span style="color: #718096;">•</span>
+              <kbd style="background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px; font-size: 10px;">Ctrl+C: Copy</kbd>
+              <kbd style="background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px; font-size: 10px;">Ctrl+V: Dán</kbd>
+              <span style="color: #718096;">•</span>
+              <kbd style="background: rgba(59,130,246,0.25); color: #93c5fd; padding: 1px 4px; border-radius: 3px; font-size: 10px;">Ctrl+G: Nhóm</kbd>
+              <kbd style="background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px; font-size: 10px;">Ctrl+Click: Chọn nhiều</kbd>
+              <kbd style="background: rgba(216,180,109,0.16); color: #e5c77f; padding: 1px 4px; border-radius: 3px; font-size: 10px;">Alt: Tắt căn dính</kbd>
+              <kbd style="background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px; font-size: 10px;">Esc: Bỏ chọn</kbd>
+            </span>
+
+            <!-- Edit Text Button (Visible when selected shape is text) -->
+            <button id="btnEditTextShape" type="button" onclick="editSelectedTextShape()" title="Sửa nội dung hoặc định dạng chữ" style="display: none; background: rgba(216, 180, 109, 0.2); border: 1px solid rgba(216, 180, 109, 0.45); color: #d8b46d; border-radius: 12px; padding: 3px 10px; font-size: 11px; font-weight: 750; cursor: pointer; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='rgba(216, 180, 109, 0.35)'" onmouseout="this.style.background='rgba(216, 180, 109, 0.2)'">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              <span id="btnEditShapeLabel">Sửa chữ</span>
+            </button>
+
+            <button id="btnEditTrafficSign" type="button" onclick="openSelectedTrafficSignEditor()" title="Chọn nội dung hiển thị trên mặt biển báo" style="display: none; background: rgba(59,130,246,.16); border: 1px solid rgba(59,130,246,.4); color: #93c5fd; border-radius: 12px; padding: 3px 10px; font-size: 11px; font-weight: 750; cursor: pointer; align-items: center; gap: 4px; transition: all .2s;">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"></circle><path d="M12 13v9"></path></svg>
+              Chọn loại biển
+            </button>
+
+            <!-- Delete Button -->
+            <button class="scene-selection-delete" type="button" onclick="deleteSelectedShape()" title="Xóa đối tượng này (Phím Delete)" style="background: rgba(255,107,122,0.15); border: 1px solid rgba(255,107,122,0.4); color: #ff6b7a; border-radius: 14px; padding: 3px 10px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,107,122,0.3)'" onmouseout="this.style.background='rgba(255,107,122,0.15)'">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              Xóa nét
+            </button>
+          </div>
+        </div>
+      </div>
+      
+    </section>
+
+    <!-- Modal Chèn / Chỉnh sửa Văn bản Hiện trường Cao cấp (Nằm ngay trong Drawing Modal, z-index 100050 tuyệt đối, đồng bộ màu nền Theme) -->
+    <div id="sceneTextModalOverlay" class="p-modal-overlay" onclick="if(event.target === this) closeSceneTextModal();" style="display: none; position: fixed; inset: 0; z-index: 100050; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(8px); padding: 16px;">
+      <div style="width: 480px; max-width: 95vw; background: var(--surface-strong); border: 1.5px solid var(--border-strong); border-radius: 20px; box-shadow: 0 25px 65px rgba(0,0,0,0.3), 0 0 1px var(--primary); padding: 22px 24px; display: flex; flex-direction: column; gap: 15px; color: var(--text-main); animation: fadeInModal 0.2s ease;">
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--primary-gradient); color: #080b11; display: grid; place-items: center; font-weight: 900; font-size: 16px; box-shadow: 0 4px 12px rgba(216,180,109,0.3); flex-shrink: 0;">
+              T
+            </div>
+            <div>
+              <h3 id="sceneTextModalTitle" style="font-size: 16px; font-weight: 850; color: var(--text-main); margin: 0;">Chèn Chú Thích Bản Vẽ</h3>
+              <p style="font-size: 11.5px; color: var(--text-muted); margin: 2px 0 0 0;">Tùy chỉnh nội dung, cỡ chữ và kiểu chữ</p>
+            </div>
+          </div>
+          <button type="button" onclick="closeSceneTextModal()" aria-label="Đóng" style="width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-muted); cursor: pointer; display: grid; place-items: center; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='var(--surface-hover)'; this.style.color='var(--text-main)';" onmouseout="this.style.background='var(--surface-soft)'; this.style.color='var(--text-muted)';">✕</button>
+        </div>
+
+        <!-- Text Input Area -->
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="font-size: 12px; font-weight: 750; color: var(--text-main);">Nội dung văn bản chú thích:</label>
+          <textarea id="sceneTextInput" rows="2" placeholder="Ví dụ: Xe ô tô 29A-123.45, Vệt phanh 15.2m, Hướng đi..." style="width: 100%; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg-soft, #ffffff); color: var(--text-main); padding: 10px 12px; font-size: 13.5px; font-family: inherit; resize: vertical; outline: none; transition: all 0.2s; box-sizing: border-box;" oninput="updateTextLivePreview()" onkeydown="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); applySceneTextModal(); } else if(event.key==='Escape') { closeSceneTextModal(); }" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 3px rgba(216,180,109,0.18)';" onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none';"></textarea>
+        </div>
+
+        <!-- Controls Row 1: Font Family & Font Size -->
+        <div style="display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 12px;">
+          <!-- Font Family -->
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-size: 11.5px; font-weight: 750; color: var(--text-main);">Kiểu chữ (Phông):</label>
+            <select id="sceneTextFontFamily" onchange="updateTextLivePreview()" style="width: 100%; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg-soft, #ffffff); color: var(--text-main); padding: 7px 10px; font-size: 12.5px; outline: none; cursor: pointer; transition: all 0.2s;">
+              <option value="Arial" selected>Arial (Chuẩn kỹ thuật)</option>
+              <option value="'Times New Roman'">Times New Roman (Báo cáo)</option>
+              <option value="'Montserrat'">Montserrat (Hiện đại Tasco)</option>
+              <option value="'Courier New'">Courier New (Biển số xe)</option>
+              <option value="'Segoe UI'">Segoe UI (Giao diện)</option>
+            </select>
+          </div>
+
+          <!-- Font Size Slider & Number Badge -->
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label style="font-size: 11.5px; font-weight: 750; color: var(--text-main);">Cỡ chữ:</label>
+              <span id="sceneTextSizeBadge" style="font-size: 11.5px; font-weight: 800; color: #92691d; font-family: monospace; background: rgba(216, 180, 109, 0.16); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(216, 180, 109, 0.35);">16 px</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; padding-top: 4px;">
+              <input type="range" id="sceneTextSizeSlider" min="10" max="42" step="1" value="16" oninput="onTextSizeSlider(this.value)" style="flex: 1; accent-color: var(--primary, #d8b46d); cursor: pointer; height: 6px;" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls Row 2: Formatting Buttons (B, I, U) & Quick Font Size Chips -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <!-- Formatting toggles -->
+          <div style="display: flex; align-items: center; gap: 4px; background: var(--surface-soft); padding: 3px 6px; border-radius: 8px; border: 1px solid var(--border);">
+            <button type="button" id="btnTextBold" onclick="toggleTextFormat('bold')" title="In đậm (Bold)" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: var(--text-main); font-weight: 900; font-size: 13px; cursor: pointer; display: grid; place-items: center; transition: all 0.2s;">B</button>
+            <button type="button" id="btnTextItalic" onclick="toggleTextFormat('italic')" title="In nghiêng (Italic)" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: var(--text-main); font-style: italic; font-weight: 700; font-size: 13px; cursor: pointer; display: grid; place-items: center; transition: all 0.2s;">I</button>
+            <button type="button" id="btnTextUnderline" onclick="toggleTextFormat('underline')" title="Gạch chân (Underline)" style="width: 28px; height: 28px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: var(--text-main); text-decoration: underline; font-weight: 700; font-size: 13px; cursor: pointer; display: grid; place-items: center; transition: all 0.2s;">U</button>
+          </div>
+
+          <!-- Quick size presets -->
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="font-size: 11px; color: var(--text-muted); margin-right: 2px;">Cỡ:</span>
+            <button type="button" class="btn-text-size-chip" onclick="setTextSize(12)" style="padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-soft); font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s;">12</button>
+            <button type="button" class="btn-text-size-chip active" onclick="setTextSize(16)" style="padding: 3px 8px; border-radius: 6px; border: 1.5px solid var(--primary); background: rgba(216,180,109,0.22); color: #92691d; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.15s;">16</button>
+            <button type="button" class="btn-text-size-chip" onclick="setTextSize(20)" style="padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-soft); font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s;">20</button>
+            <button type="button" class="btn-text-size-chip" onclick="setTextSize(26)" style="padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-soft); font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s;">26</button>
+          </div>
+        </div>
+
+        <!-- Controls Row 3: Text Color -->
+        <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 10px;">
+          <span style="font-size: 11.5px; font-weight: 750; color: var(--text-main);">Màu chữ:</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div onclick="setTextColor('#000000')" title="Màu đen (Tiêu chuẩn)" style="width: 22px; height: 22px; border-radius: 50%; background: #000000; border: 2px solid var(--border-strong); cursor: pointer; transition: transform 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>
+            <div onclick="setTextColor('#005A9C')" title="Xanh Tasco" style="width: 22px; height: 22px; border-radius: 50%; background: #005A9C; border: 2px solid var(--border-strong); cursor: pointer; transition: transform 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>
+            <div onclick="setTextColor('#dc2626')" title="Đỏ cảnh báo" style="width: 22px; height: 22px; border-radius: 50%; background: #dc2626; border: 2px solid var(--border-strong); cursor: pointer; transition: transform 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>
+            <div onclick="setTextColor('#d8b46d')" title="Vàng Gold" style="width: 22px; height: 22px; border-radius: 50%; background: #d8b46d; border: 2px solid var(--border-strong); cursor: pointer; transition: transform 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'"></div>
+            <input type="color" id="sceneTextColorPicker" value="#000000" style="width: 26px; height: 26px; border: none; background: transparent; cursor: pointer; padding: 0;" title="Bảng màu khác..." onchange="setTextColor(this.value)" />
+          </div>
+        </div>
+
+        <!-- Live Preview Box -->
+        <div style="display: flex; flex-direction: column; gap: 5px;">
+          <span style="font-size: 11.5px; color: var(--text-muted); font-weight: 600;">Xem trước hiển thị trên sơ đồ:</span>
+          <div style="width: 100%; min-height: 52px; max-height: 85px; overflow-y: auto; background: #ffffff; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; justify-content: center; border: 1.5px dashed var(--primary, #d8b46d); box-shadow: inset 0 2px 5px rgba(0,0,0,0.04); box-sizing: border-box;">
+            <div id="sceneTextLivePreview" style="color: #000000; font-family: Arial, sans-serif; font-size: 16px; word-break: break-word; text-align: center;">Văn bản mẫu chú thích</div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; border-top: 1px solid var(--border); padding-top: 14px;">
+          <button type="button" class="btn-secondary" onclick="closeSceneTextModal()" style="padding: 9px 20px; border-radius: 10px; font-weight: 700; font-size: 13px; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-soft); cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='var(--surface-hover)';" onmouseout="this.style.background='var(--surface-soft)';">Hủy bỏ</button>
+          <button type="button" class="btn-premium" onclick="applySceneTextModal()" style="padding: 9px 22px; border-radius: 10px; font-weight: 800; font-size: 13px; width: auto; min-height: unset; box-shadow: 0 4px 14px rgba(216,180,109,0.3); cursor: pointer;">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 6px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span id="btnApplyTextLabel">Chèn văn bản</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal đánh số và giải thích ký hiệu trên sơ đồ -->
+    <div id="sceneNumberNoteModalOverlay" class="p-modal-overlay" style="display: none; position: fixed; inset: 0; z-index: 100060; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.58); backdrop-filter: blur(9px); padding: 16px;">
+      <div style="width: 480px; max-width: 95vw; overflow: hidden; color: var(--text-main); border: 1px solid transparent; border-radius: 22px; background: linear-gradient(var(--surface-strong), var(--surface-strong)) padding-box, linear-gradient(145deg, rgba(245,220,156,.9), rgba(216,180,109,.2), rgba(59,130,246,.3)) border-box; box-shadow: 0 28px 75px rgba(0,0,0,.38); animation: fadeInModal .2s ease;">
+        <div style="padding: 20px 22px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div id="sceneNumberNoteBadge" style="width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; color: #111827; background: linear-gradient(145deg,#f8e8bd,#d8b46d); border: 2px solid #fff; outline: 1px solid #9a712b; box-shadow: 0 5px 16px rgba(216,180,109,.32); font-size: 17px; font-weight: 900;">1</div>
+            <div>
+              <h3 id="sceneNumberNoteTitle" style="font-size: 16px; font-weight: 850; margin: 0;">Thêm chú thích số 1</h3>
+              <p style="font-size: 11.5px; color: var(--text-muted); margin: 3px 0 0;">Số được đặt trên sơ đồ và giải thích tự động xuất hiện bên phải</p>
+            </div>
+          </div>
+          <button type="button" onclick="closeSceneNumberNoteModal()" aria-label="Đóng" style="width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-soft); color: var(--text-muted); cursor: pointer; display: grid; place-items: center;">✕</button>
+        </div>
+
+        <div style="padding: 20px 22px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="display: flex; flex-direction: column; gap: 7px;">
+            <label for="sceneNumberNoteInput" style="font-size: 12px; font-weight: 800;">Số này có ý nghĩa gì?</label>
+            <textarea id="sceneNumberNoteInput" rows="4" maxlength="180" placeholder="Ví dụ: Điểm va chạm đầu tiên; Vết phanh dài 12 m; Vị trí xe container sau tai nạn..." onkeydown="if(event.key==='Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); applySceneNumberNoteModal(); } else if(event.key==='Escape') { closeSceneNumberNoteModal(); }" style="width: 100%; box-sizing: border-box; resize: vertical; min-height: 96px; max-height: 160px; padding: 12px 14px; color: var(--text-main); background: var(--bg-soft,#fff); border: 1.5px solid var(--border); border-radius: 12px; outline: none; font: 600 13px/1.5 inherit;" onfocus="this.style.borderColor='var(--primary)';this.style.boxShadow='0 0 0 3px rgba(216,180,109,.16)'" onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'"></textarea>
+          </div>
+
+          <div style="display: flex; gap: 10px; padding: 11px 12px; border-radius: 12px; border: 1px solid rgba(59,130,246,.2); background: rgba(59,130,246,.07); color: var(--text-muted); font-size: 11.5px; line-height: 1.45;">
+            <span style="font-size: 16px; color: #60a5fa;">ⓘ</span>
+            <span>Nhấn đúp vào vòng tròn số để sửa nội dung. Khi xóa một mục, các số còn lại sẽ được sắp xếp lại liên tục.</span>
+          </div>
+        </div>
+
+        <div style="padding: 14px 22px 18px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border);">
+          <button type="button" class="btn-secondary" onclick="closeSceneNumberNoteModal()" style="padding: 9px 18px; border-radius: 10px; font-weight: 700;">Hủy bỏ</button>
+          <button type="button" class="btn-premium" onclick="applySceneNumberNoteModal()" style="width: auto; min-height: unset; padding: 9px 20px; border-radius: 10px; font-weight: 850;">
+            <span id="sceneNumberNoteApplyLabel">Thêm chú thích</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- SCENE-EDITOR:END -->
+
+  <!-- Các module vẽ (đúng thứ tự như index.html) + bộ chuyển đổi trang độc lập -->
+  <script src="js/features/scene/geometry.js?v=20261119-gresize-1"></script>
+  <script src="js/features/scene/objects.js?v=20261119-gresize-1"></script>
+  <script src="js/features/scene/traffic-signs.js?v=20261120-marker-1"></script>
+  <script src="js/features/scene/rendering.js?v=20261120-ruled-2"></script>
+  <script src="js/features/scene/symbol-legend.js?v=20261120-ruled-2"></script>
+  <script src="js/features/scene/interaction-export.js?v=20261119-gresize-1"></script>
+  <script src="js/features/scene/terrain-assets.js?v=20261111-terrain-1"></script>
+  <script src="js/features/scene/goods-assets.js?v=20261119-goods-2"></script>
+  <script src="js/features/scene/direction-label.js?v=20261119-dir-1"></script>
+  <script src="js/features/scene/building-assets.js?v=20261119-lines-1"></script>
+  <script src="js/features/scene/group-resize.js?v=20261120-marker-1"></script>
+  <script src="js/features/scene/selection-marquee.js?v=20261119-marquee-1"></script>
+  <script src="js/features/scene/signed-form-print.js?v=20261120-margin-1"></script>
+  <script src="js/features/scene/text-editor.js?v=20261120-dir-1"></script>
+  <script src="js/features/admin/select-controls.js"></script>
+  <script src="js/features/scene/runtime.js?v=20261119-gresize-1"></script>
+  <script src="js/features/scene/layer-order.js?v=20261111-layer-1"></script>
+  <script src="js/features/scene/scene-editor-ui.js?v=20261119-label-1"></script>
+  <script src="js/features/scene/standalone.js?v=20261120-standalone-3"></script>
+</body>
+</html>

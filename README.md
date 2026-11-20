@@ -101,6 +101,13 @@ Nhấn biểu mẫu để mở trình xem toàn màn hình, không có chế đ�
 
 Danh mục Drive không có API key là bản chụp metadata tại thời điểm đồng bộ, không phải dữ liệu mẫu. Nhấn Làm mới đọc lại danh mục đã được triển khai; thêm API key để đọc trực tiếp thay đổi mới trên Drive. Có thể chạy `node scripts/sync-shared-forms-drive.mjs` rồi triển khai lại `js/data/shared-forms-drive.json` để cập nhật danh mục công khai. Script chỉ lấy tên, ID, định dạng và ngày sửa của các file/thư mục được chia sẻ; không tải hay sao chép nội dung tài liệu.
 
+## Trang vẽ sơ đồ hiện trường độc lập
+
+`so-do-hien-truong.html` (menu bên → Nghiệp vụ → "Vẽ sơ đồ hiện trường", mở ở thẻ mới) cho phép vẽ, in và in lên giấy ký sẵn mà không cần mở hồ sơ, không cần đăng nhập. Dùng lại đúng các module trong `js/features/scene/`; `js/features/scene/standalone.js` thay phần lưu theo hồ sơ bằng: tự lưu nháp trong localStorage (khoá `sceneStandalone.v1`, chỉ nằm trên máy/trình duyệt đang dùng), "Lưu file"/"Mở file" (`.json`) và "Xuất ảnh" PNG.
+
+- Giao diện trình vẽ nằm giữa hai dấu `SCENE-EDITOR:BEGIN/END` trong `index.html` và được sao sang trang này. Sau khi sửa khối đó hoặc đổi `?v=` của file vẽ trong `index.html`, chạy `npm run sync:scene-page` (test `tests/scene-standalone.test.mjs` báo lỗi nếu quên).
+- Sơ đồ vẽ ở trang này chưa gắn vào hồ sơ nào; muốn đưa vào hồ sơ, mở file `.json` trong trình vẽ của hồ sơ chưa được hỗ trợ — hiện chỉ dùng "Xuất ảnh"/in.
+
 ## Tự lưu sơ đồ và hướng dẫn theo số HSBT
 
 Sơ đồ hiện trường và hướng dẫn thu thập tự lưu ngay trong màn hình hồ sơ. Không cần mở trang lưu trữ hoặc bấm nút lưu giữ riêng.

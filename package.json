@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "check": "node scripts/check.mjs",
+    "sync:scene-page": "node scripts/sync-scene-page.mjs",
     "test": "node --test tests/*.test.mjs"
   },
   "engines": { "node": ">=20" }
