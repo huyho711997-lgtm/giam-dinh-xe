@@ -221,3 +221,32 @@ test('bấm trực tiếp vào bảng Ký hiệu mở trình chỉnh sửa; ẩn
   assert.equal(run('sceneSymbolLegendHitRect'), null);
   assert.equal(run('getSceneTemplateHotspot(900, 100)'), 'legend');
 });
+
+test('icon ký hiệu luôn thẳng: không theo góc xoay của vật mẫu; cột mốc dựng đứng; vật trên sơ đồ không bị sửa', () => {
+  const { context, run } = load();
+  context.car = mk({ type: 'car', startX: 300, startY: 300, angle: 0.8, carW: 60 });
+  context.marker = mk({ type: 'road_boundary_marker', startX: 200, startY: 300, angle: 0.9, objectW: 46, objectH: 21 });
+  context.tree = mk({ type: 'tree', startX: 50, startY: 60, angle: 2.1, objectW: 40, objectH: 40 });
+  context.line = mk({ type: 'road_line', x1: 0, y1: 0, x2: 100, y2: 40 });
+  assert.equal(run('makeSceneSymbolUprightSample(car).shape.angle'), 0);
+  assert.equal(run('makeSceneSymbolUprightSample(tree).shape.angle'), 0);
+  assert.equal(run('makeSceneSymbolUprightSample(marker).shape.angle'), Math.PI / 2);
+  assert.equal(run('makeSceneSymbolUprightSample(marker).upright'), true);
+  assert.equal(run('makeSceneSymbolUprightSample(car).upright'), false);
+  // vật gốc giữ nguyên góc; nét thẳng/đường không có góc thì trả nguyên bản.
+  assert.equal(run('car.angle'), 0.8);
+  assert.equal(run('marker.angle'), 0.9);
+  assert.equal(run('makeSceneSymbolUprightSample(line).shape === line'), true);
+  assert.equal(run('makeSceneSymbolUprightSample(null).shape'), null);
+});
+
+test('vẽ icon: xe nghiêng vẫn ra cùng lệnh vẽ như xe nằm ngang; cột mốc không bị xoay ngang lấp khung', () => {
+  const { context, ctx, log, run } = load();
+  const draw = shape => { log.length = 0; context.s = shape; context.c = ctx; run('drawSceneSymbolSample(c, s, 0, 0, 56, 18)'); return JSON.stringify(log); };
+  const tilted = draw(mk({ id: 1, type: 'car', startX: 300, startY: 300, angle: 1.2, carW: 60 }));
+  const flat = draw(mk({ id: 1, type: 'car', startX: 300, startY: 300, angle: 0, carW: 60 }));
+  assert.equal(tilted, flat);
+  const markerLog = draw(mk({ type: 'road_boundary_marker', startX: 200, startY: 300, angle: 0, objectW: 46, objectH: 21 }));
+  // Cột mốc dựng đứng (cao > rộng) không bị rotate(-π/2) của quy tắc "xoay ngang cho vừa khung".
+  assert.ok(!markerLog.includes(String(-Math.PI / 2)));
+});

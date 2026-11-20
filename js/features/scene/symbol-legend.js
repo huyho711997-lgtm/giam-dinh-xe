@@ -300,9 +300,27 @@ function makeSceneSymbolStraightSample(shape, maxLength) {
 }
 
 
+// Vật thể đứng: trên bảng ký hiệu luôn dựng thẳng (chóp lên trên) dù ngoài sơ đồ đang đặt theo hướng nào.
+const SCENE_SYMBOL_LEGEND_UPRIGHT_TYPES = ['road_boundary_marker'];
+
+
+// Ký hiệu phải THẲNG và không phụ thuộc chiều đặt của vật đầu tiên trên sơ đồ (trước đây xe/cột mốc xoay chéo
+// theo vật mẫu nên bảng ký hiệu nghiêng, người vẽ phải xoay vật ngoài sơ đồ cho thẳng). Xe và vật thể đặt theo
+// hướng kéo → vẽ ở góc 0 (nằm ngang); vật thể đứng → dựng đứng. Trả về bản sao, KHÔNG sửa vật trên sơ đồ.
+function makeSceneSymbolUprightSample(shape) {
+  if (!shape || typeof isVehicleShape !== 'function' || !isVehicleShape(shape)) return { shape, upright: false };
+  const upright = SCENE_SYMBOL_LEGEND_UPRIGHT_TYPES.indexOf(shape.type) !== -1;
+  const sample = Object.assign({}, shape);
+  sample.angle = upright ? Math.PI / 2 : 0;
+  return { shape: sample, upright };
+}
+
+
 // Vẽ hình mẫu của một vật thể thu gọn vào khung (x, y, w, h).
-function drawSceneSymbolSample(ctx, shape, x, y, w, h) {
+function drawSceneSymbolSample(ctx, sourceShape, x, y, w, h) {
   if (typeof getShapeBoundingBox !== 'function' || typeof renderShape !== 'function') return;
+  const normalized = makeSceneSymbolUprightSample(sourceShape);
+  const shape = normalized.shape;
   const straight = makeSceneSymbolStraightSample(shape, w - 6);
   if (straight) {
     ctx.save();
@@ -322,7 +340,7 @@ function drawSceneSymbolSample(ctx, shape, x, y, w, h) {
   const bh = box.maxY - box.minY;
   if (!(bw > 0.5) || !(bh > 0.5)) return;
   // Vật thể đứng (dọc) xoay ngang để lấp đầy khung icon rộng hơn cao.
-  const rotate = bh > bw * 1.5;
+  const rotate = !normalized.upright && bh > bw * 1.5;
   const fitW = rotate ? bh : bw;
   const fitH = rotate ? bw : bh;
   const scale = Math.min(w / fitW, h / fitH, 1.5);
