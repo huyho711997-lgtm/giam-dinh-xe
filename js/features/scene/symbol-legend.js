@@ -402,7 +402,8 @@ function drawSceneSymbolLegend(ctx, legendX, legendWidth, bottomY, layout) {
 // Điểm vào duy nhất cho cột Chú thích: chú thích số ở trên, bảng ký hiệu ở đáy.
 // Dùng chung cho màn hình, xuất ảnh và in lên giấy ký sẵn.
 function drawSceneLegendColumn(ctx, legendX, gridY, legendWidth, gridHeight, override) {
-  // override (chỉ dùng cho xem trước): { config, enabled, preview } thay cho cấu hình đang lưu.
+  // override (xem trước / in): { config, enabled, preview, separators } thay cho cấu hình đang lưu;
+  // preview=true không ghi đè vùng bấm sceneSymbolLegendHitRect của canvas đang chỉnh sửa.
   const isPreview = !!(override && override.preview);
   let layout = null;
   try {
@@ -421,6 +422,7 @@ function drawSceneLegendColumn(ctx, legendX, gridY, legendWidth, gridHeight, ove
   if (!isPreview) {
     sceneSymbolLegendHitRect = layout ? { x: legendX, y: bottomY - layout.height, w: legendWidth, h: layout.height } : null;
   }
-  drawSceneNumberLegend(ctx, legendX, gridY, legendWidth, gridHeight, layout ? layout.height + 6 : 0);
+  drawSceneNumberLegend(ctx, legendX, gridY, legendWidth, gridHeight, layout ? layout.height + 6 : 0,
+    { separators: !(override && override.separators === false) });
   if (layout) drawSceneSymbolLegend(ctx, legendX, legendWidth, bottomY, layout);
 }

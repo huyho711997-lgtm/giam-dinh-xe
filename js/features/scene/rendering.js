@@ -1480,7 +1480,9 @@ function wrapSceneLegendText(ctx, text, maxWidth, maxLines = 3) {
 }
 
 
-function drawSceneNumberLegend(ctx, legendX, gridY, legendWidth, gridHeight, reserveBottom = 0) {
+function drawSceneNumberLegend(ctx, legendX, gridY, legendWidth, gridHeight, reserveBottom = 0, options = {}) {
+  // options.separators === false: không kẻ vạch mờ giữa các dòng (in lên giấy đã có sẵn dòng kẻ ô li).
+  const drawSeparators = !(options && options.separators === false);
   const notes = getSortedSceneNumberNotes();
   if (notes.length === 0) return;
 
@@ -1526,12 +1528,14 @@ function drawSceneNumberLegend(ctx, legendX, gridY, legendWidth, gridHeight, res
     ctx.textBaseline = 'top';
     lines.forEach((line, lineIndex) => ctx.fillText(line, textX, cursorY + lineIndex * 13));
 
-    ctx.strokeStyle = 'rgba(17,24,39,.14)';
-    ctx.lineWidth = 0.7;
-    ctx.beginPath();
-    ctx.moveTo(left, cursorY + itemHeight - 3);
-    ctx.lineTo(legendX + legendWidth - 8, cursorY + itemHeight - 3);
-    ctx.stroke();
+    if (drawSeparators) {
+      ctx.strokeStyle = 'rgba(17,24,39,.14)';
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(left, cursorY + itemHeight - 3);
+      ctx.lineTo(legendX + legendWidth - 8, cursorY + itemHeight - 3);
+      ctx.stroke();
+    }
     cursorY += itemHeight;
   }
   ctx.restore();
