@@ -242,6 +242,37 @@ function strokeTrafficSignPostWithoutTop(ctx, x, top, width, height, bottomRadiu
 }
 
 
+// Bát giác đều (biển STOP): r = bán kính ngoại tiếp, cạnh trên nằm ngang.
+function drawTrafficSignOctagonPath(ctx, cx, cy, r) {
+  for (let i = 0; i < 8; i++) {
+    const a = Math.PI / 8 + i * Math.PI / 4;
+    const px = cx + Math.cos(a) * r;
+    const py = cy + Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
+
+
+// Hình mặt biển theo loại; scale < 1 dùng cho đường viền trong.
+function drawTrafficSignFacePath(ctx, type, cx, cy, faceSize, scale) {
+  const k = scale || 1;
+  if (type === 'sign_octagon_post') {
+    drawTrafficSignOctagonPath(ctx, cx, cy, faceSize * 0.52 * k);
+  } else if (type === 'sign_square_post') {
+    const side = faceSize * 0.86 * k;
+    drawRoundRectCompat(ctx, cx - side / 2, cy - side / 2, side, side, faceSize * 0.06 * k);
+  } else if (type === 'sign_rect_post') {
+    const fw = faceSize * 1.55 * k, fh = faceSize * 0.95 * k;
+    drawRoundRectCompat(ctx, cx - fw / 2, cy - fh / 2, fw, fh, faceSize * 0.06 * k);
+  } else if (type === 'sign_circle_post') {
+    ctx.arc(cx, cy, faceSize * 0.46 * k, 0, Math.PI * 2);
+  } else {
+    drawRoundedTriangleAssetPath(ctx, cx, cy, faceSize * k, faceSize * 0.88 * k, faceSize * 0.08 * k);
+  }
+}
+
+
 function drawTrafficSignDiamondPath(ctx, cx, cy, size) {
   const half = size / 2;
   ctx.moveTo(cx, cy - half);
@@ -255,7 +286,7 @@ function drawTrafficSignDiamondPath(ctx, cx, cy, size) {
 function drawTrafficSignMeaning(ctx, shape, cx, cy, size, color, lineWidth) {
   const kind = shape && shape.signKind
     ? shape.signKind
-    : (shape && shape.type === 'sign_triangle_post' ? 'intersection_non_priority' : 'speed_limit');
+    : getTrafficSignDefaultKind(shape && shape.type);
   const r = Math.max(5, size / 2);
   const ink = color || '#111827';
   ctx.save();
@@ -464,16 +495,19 @@ function drawTrafficSignMeaning(ctx, shape, cx, cy, size, color, lineWidth) {
     ctx.closePath();
     ctx.stroke();
   } else if (kind === 'stop') {
-    ctx.beginPath();
-    for (let i = 0; i < 8; i++) {
-      const a = Math.PI / 8 + i * Math.PI / 4;
-      const px = Math.cos(a) * r * 0.72;
-      const py = Math.sin(a) * r * 0.72;
-      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    const faceIsOctagon = !!shape && shape.type === 'sign_octagon_post';   // mặt biển đã là bát giác: chỉ ghi chữ
+    if (!faceIsOctagon) {
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = Math.PI / 8 + i * Math.PI / 4;
+        const px = Math.cos(a) * r * 0.72;
+        const py = Math.sin(a) * r * 0.72;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.stroke();
     }
-    ctx.closePath();
-    ctx.stroke();
-    ctx.font = `900 ${Math.max(5, r * 0.46)}px Arial, sans-serif`;
+    ctx.font = `900 ${Math.max(5, r * (faceIsOctagon ? 0.62 : 0.46))}px Arial, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('STOP', 0, 0);
@@ -518,7 +552,7 @@ function drawTrafficSignMeaning(ctx, shape, cx, cy, size, color, lineWidth) {
     ctx.moveTo(r * 0.26, -r * 0.42); ctx.lineTo(r * 0.45, r * 0.48);
     ctx.stroke();
   } else if (kind === 'custom') {
-    const label = String(shape.customLabel || '?').slice(0, 6);
+    const label = String(shape.customLabel || getTrafficSignDefaultLabel(shape.type) || '?').slice(0, 6);
     ctx.font = `900 ${Math.max(6, r * 0.72)}px Arial, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -737,15 +771,19 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
     ctx.strokeStyle = color;
     ctx.lineWidth = Math.max(1, width);
     ctx.stroke();
-  } else if (type === 'sign_circle_post' || type === 'sign_triangle_post') {
+  } else if (isTrafficSignPostType(type)) {
     const lineW = Math.max(1, width);
     const resolvedSignKind = shapeData && shapeData.signKind
       ? shapeData.signKind
-      : (type === 'sign_triangle_post' ? 'intersection_non_priority' : 'speed_limit');
+      : getTrafficSignDefaultKind(type);
     const isPriorityDiamond = resolvedSignKind === 'priority_road' || resolvedSignKind === 'end_priority';
     const faceCenterY = top + h * 0.31;
     const faceSize = Math.min(w * 0.55, h * 0.58);
-    const postTopY = faceCenterY + faceSize * 0.24;
+    // Mặt biển có chiều cao riêng (vuông/chữ nhật/bát giác) thì trụ bắt đầu sâu vào trong mặt biển tương ứng.
+    const faceHalfH = type === 'sign_rect_post' ? faceSize * 0.475
+      : type === 'sign_square_post' ? faceSize * 0.43
+      : type === 'sign_octagon_post' ? faceSize * 0.5 : null;
+    const postTopY = faceCenterY + (faceHalfH !== null ? faceHalfH * 0.55 : faceSize * 0.24);
     const postBottomY = y + h * 0.43;
     const postW = Math.max(2.5, w * 0.055);
     const postHeight = Math.max(1, postBottomY - postTopY);
@@ -764,10 +802,8 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
     ctx.beginPath();
     if (isPriorityDiamond) {
       drawTrafficSignDiamondPath(ctx, x, faceCenterY, faceSize * 0.86);
-    } else if (type === 'sign_circle_post') {
-      ctx.arc(x, faceCenterY, faceSize * 0.46, 0, Math.PI * 2);
     } else {
-      drawRoundedTriangleAssetPath(ctx, x, faceCenterY, faceSize, faceSize * 0.88, faceSize * 0.08);
+      drawTrafficSignFacePath(ctx, type, x, faceCenterY, faceSize, 1);
     }
     ctx.fillStyle = '#ffffff';
     ctx.fill();
@@ -779,10 +815,12 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
     ctx.beginPath();
     if (isPriorityDiamond) {
       drawTrafficSignDiamondPath(ctx, x, faceCenterY, faceSize * 0.65);
+    } else if (type === 'sign_triangle_post') {
+      drawRoundedTriangleAssetPath(ctx, x, faceCenterY + faceSize * 0.015, faceSize * 0.76, faceSize * 0.66, faceSize * 0.055);
     } else if (type === 'sign_circle_post') {
       ctx.arc(x, faceCenterY, faceSize * 0.35, 0, Math.PI * 2);
     } else {
-      drawRoundedTriangleAssetPath(ctx, x, faceCenterY + faceSize * 0.015, faceSize * 0.76, faceSize * 0.66, faceSize * 0.055);
+      drawTrafficSignFacePath(ctx, type, x, faceCenterY, faceSize, 0.76);
     }
     ctx.strokeStyle = 'rgba(71,85,105,.72)';
     ctx.lineWidth = Math.max(0.7, lineW * 0.58);
@@ -804,8 +842,9 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
       const meaningCenterY = type === 'sign_triangle_post'
         ? faceCenterY + faceSize * 0.085
         : faceCenterY;
-      const meaningSize = type === 'sign_triangle_post'
-        ? faceSize * 0.54
+      const meaningSize = type === 'sign_triangle_post' ? faceSize * 0.54
+        : type === 'sign_square_post' ? faceSize * 0.8
+        : type === 'sign_rect_post' ? (resolvedSignKind === 'custom' ? faceSize * 1.1 : faceSize * 0.74)
         : faceSize * 0.72;
       drawTrafficSignMeaning(ctx, shapeData || { type }, x, meaningCenterY, meaningSize, color, lineW);
     }

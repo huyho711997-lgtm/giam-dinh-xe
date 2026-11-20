@@ -632,6 +632,9 @@ function getShapeDisplayName(shape) {
     case 'geo_round_triangle': return 'Hình tam giác bo góc';
     case 'sign_circle_post': return 'Biển báo tròn có trụ';
     case 'sign_triangle_post': return 'Biển báo tam giác có trụ';
+    case 'sign_square_post': return 'Biển báo vuông có trụ';
+    case 'sign_rect_post': return 'Biển báo chữ nhật có trụ';
+    case 'sign_octagon_post': return 'Biển STOP bát giác có trụ';
     case 'tree': return 'Cây xanh';
     case 'median_tree': return 'Cây trên dải phân cách';
     case 'rice_field': return 'Đồng lúa';

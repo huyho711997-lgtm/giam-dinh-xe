@@ -189,6 +189,9 @@ const TOOL_ICONS_MAP = {
   geo_rect: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12"></rect></svg>',
   geo_triangle: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 17H3z"></path></svg>',
   geo_round_triangle: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M10.2 4.2a2 2 0 0 1 3.6 0l7 13.2A2 2 0 0 1 19 20H5a2 2 0 0 1-1.8-2.6z"></path></svg>',
+  sign_square_post: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="14" rx="1.5"></rect><line x1="12" y1="16.5" x2="12" y2="22"></line></svg>',
+  sign_rect_post: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="11" rx="1.5"></rect><line x1="12" y1="15" x2="12" y2="22"></line></svg>',
+  sign_octagon_post: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 2h7L20 6.5v6L15.5 17h-7L4 12.5v-6z"></path><line x1="12" y1="17" x2="12" y2="22"></line></svg>',
   sign_circle_post: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="5"></circle><path d="M9 12v10M6 22h6"></path></svg>',
   sign_triangle_post: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M9 2l6 10H3z"></path><path d="M9 12v10M6 22h6"></path></svg>',
   tree: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="11" r="8"></circle><circle cx="9" cy="9" r="4"></circle><circle cx="15" cy="9" r="4"></circle><path d="M12 12v9M9 21h6"></path></svg>',
@@ -260,6 +263,9 @@ const TOOL_GROUPS_CONFIG = {
     tools: [
       { id: 'sign_circle_post', name: 'Biển báo tròn có trụ', desc: 'Mặt biển tròn và trụ đỡ đơn sắc' },
       { id: 'sign_triangle_post', name: 'Biển báo tam giác có trụ', desc: 'Mặt biển tam giác và trụ đỡ đơn sắc' },
+      { id: 'sign_square_post', name: 'Biển báo vuông có trụ', desc: 'Mặt biển vuông (VD: biển chỉ dẫn P đỗ xe); nhấp đúp để đổi nội dung' },
+      { id: 'sign_rect_post', name: 'Biển báo chữ nhật có trụ', desc: 'Mặt biển chữ nhật ghi chữ (VD: QL14, Km12); nhấp đúp để đổi nội dung' },
+      { id: 'sign_octagon_post', name: 'Biển STOP bát giác có trụ', desc: 'Biển dừng lại hình bát giác có trụ' },
       { id: 'traffic_light', name: 'Đèn tín hiệu', desc: 'Đèn đỏ, vàng, xanh có thể xoay' }
     ]
   },

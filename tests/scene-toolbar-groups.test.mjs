@@ -28,7 +28,8 @@ const LEGACY_TOOLS = [
   'crosswalk', 'tire_track', 'guardrail', 'traffic_light', 'median', 'median_blocks', 'toll_station', 'bridge',
   'utility_pole', 'road_boundary_marker', 'pothole', 'tree', 'median_tree', 'rice_field', 'forest', 'rock_field', 'hill',
   // Thêm sau đợt chia nhóm:
-  'bus', 'pickup', 'ambulance', 'tow_truck', 'bicycle'
+  'bus', 'pickup', 'ambulance', 'tow_truck', 'bicycle',
+  'sign_square_post', 'sign_rect_post', 'sign_octagon_post'
 ];
 
 test('mỗi công cụ thuộc đúng một nhóm và không mất công cụ nào sau khi chia lại', () => {
@@ -57,6 +58,9 @@ test('các nhóm theo chức năng: đúng nơi đặt của những công cụ 
   const where = id => groups.find(g => g.tools.some(t => t.id === id)).id;
   assert.equal(where('crosswalk'), 'road_line');
   assert.equal(where('traffic_light'), 'traffic_signs');
+  assert.equal(where('sign_octagon_post'), 'traffic_signs');
+  assert.equal(where('sign_rect_post'), 'traffic_signs');
+  assert.equal(where('sign_square_post'), 'traffic_signs');
   assert.equal(where('sign_circle_post'), 'traffic_signs');
   assert.equal(where('geo_rect'), 'shape_symbols');
   assert.equal(where('bus'), 'scene_object');

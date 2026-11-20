@@ -1053,7 +1053,7 @@ function isInfrastructureAssetShape(shape) {
 function isSceneryAssetType(type) {
   return type === 'utility_pole' || type === 'road_boundary_marker' || type === 'pothole' ||
     type === 'geo_circle' || type === 'geo_rect' || type === 'geo_triangle' || type === 'geo_round_triangle' ||
-    type === 'sign_circle_post' || type === 'sign_triangle_post' ||
+    isTrafficSignPostType(type) ||
     type === 'tree' || type === 'median_tree' || type === 'rice_field' || type === 'forest' ||
     type === 'rock_field' || type === 'hill' || type === 'goods_display' || type === 'goods_damaged' || type === 'house' ||
     type === 'truck' || type === 'toll_station' || type === 'bridge' ||
@@ -1061,8 +1061,25 @@ function isSceneryAssetType(type) {
 }
 
 
+// Biển có trụ: cùng cách vẽ/sửa nội dung (signKind), chỉ khác hình mặt biển.
+const TRAFFIC_SIGN_POST_TYPES = ['sign_circle_post', 'sign_triangle_post', 'sign_square_post', 'sign_rect_post', 'sign_octagon_post'];
+
 function isTrafficSignPostType(type) {
-  return type === 'sign_circle_post' || type === 'sign_triangle_post';
+  return TRAFFIC_SIGN_POST_TYPES.indexOf(type) !== -1;
+}
+
+// Nội dung mặc định khi mới đặt biển (sau đó mở trình sửa để đổi).
+function getTrafficSignDefaultKind(type) {
+  if (type === 'sign_triangle_post') return 'intersection_non_priority';
+  if (type === 'sign_octagon_post') return 'stop';
+  if (type === 'sign_square_post' || type === 'sign_rect_post') return 'custom';
+  return 'speed_limit';
+}
+
+function getTrafficSignDefaultLabel(type) {
+  if (type === 'sign_square_post') return 'P';
+  if (type === 'sign_rect_post') return 'QL14';
+  return '';
 }
 
 
@@ -1300,7 +1317,7 @@ function openTrafficSignEditor(shape) {
   const kindSelect = document.getElementById('sceneTrafficSignKind');
   const speedInput = document.getElementById('sceneTrafficSignSpeed');
   const customInput = document.getElementById('sceneTrafficSignCustom');
-  if (kindSelect) kindSelect.value = shape.signKind || (shape.type === 'sign_triangle_post' ? 'intersection_non_priority' : 'speed_limit');
+  if (kindSelect) kindSelect.value = shape.signKind || getTrafficSignDefaultKind(shape.type);
   if (speedInput) speedInput.value = Math.max(5, Math.min(200, parseInt(shape.speedLimit, 10) || 50));
   if (customInput) customInput.value = shape.customLabel || '';
   syncTrafficSignKindControl();
@@ -1358,6 +1375,7 @@ function getSceneryAspectRatio(type) {
   if (type === 'geo_triangle' || type === 'geo_round_triangle') return 0.9;
   if (type === 'sign_circle_post') return 0.62;
   if (type === 'sign_triangle_post') return 0.68;
+  if (isTrafficSignPostType(type)) return 0.62;   // biển vuông, chữ nhật, bát giác
   if (type === 'tree') return 1;
   if (type === 'median_tree') return 0.38;
   if (type === 'rice_field') return 0.58;
@@ -1381,7 +1399,7 @@ function getSceneryMinimumLength(type) {
   if (type === 'geo_circle') return 24;
   if (type === 'geo_rect') return 30;
   if (type === 'geo_triangle' || type === 'geo_round_triangle') return 28;
-  if (type === 'sign_circle_post' || type === 'sign_triangle_post') return 42;
+  if (isTrafficSignPostType(type)) return 42;
   if (type === 'utility_pole') return 32;
   if (type === 'road_boundary_marker') return 30;   // cỡ mặc định khi bấm/kéo ngắn; thu nhỏ hơn nữa bằng tay nắm hoặc nút −
   if (type === 'pothole') return 30;
