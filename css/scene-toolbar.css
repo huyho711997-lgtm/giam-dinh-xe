@@ -983,3 +983,26 @@ body:not(.light-mode) select:is(.input-premium, .p-input) option {
   color: var(--text-main);
   background-color: var(--input-bg);
 }
+
+
+/* Mục thu gọn được: nhấp nhãn mục để ẩn/hiện các nút bên dưới (chỉ khi thanh công cụ đang mở rộng) */
+body .scene-tool-rail.expanded .scene-section-collapsed { display: none !important; }
+body .scene-tool-rail.expanded .scene-tool-section-label[data-collapsible] {
+  cursor: pointer;
+  border-radius: 6px;
+  outline: none;
+}
+body .scene-tool-rail.expanded .scene-tool-section-label[data-collapsible]::before {
+  content: '';
+  width: 0;
+  height: 0;
+  margin-right: 6px;
+  border-left: 3.5px solid transparent;
+  border-right: 3.5px solid transparent;
+  border-top: 5px solid currentColor;
+  opacity: .75;
+  transition: transform .15s ease;
+}
+body .scene-tool-rail.expanded .scene-tool-section-label[data-collapsible].is-collapsed::before { transform: rotate(-90deg); }
+body .scene-tool-rail.expanded .scene-tool-section-label[data-collapsible]:hover,
+body .scene-tool-rail.expanded .scene-tool-section-label[data-collapsible]:focus-visible { color: #b38c43; }
