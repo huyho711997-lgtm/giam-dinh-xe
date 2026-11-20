@@ -339,6 +339,7 @@
     const doc = root.document;
     if (!doc || !groupsConfig()) return false;
     if (typeof root.closeAllToolSubmenus === 'function') root.closeAllToolSubmenus();
+    if (root.SceneSamples && root.SceneSamples.closePanel) root.SceneSamples.closePanel();
     const panel = ensureSearchPanel();
     const rail = doc.getElementById('sceneToolRail');
     const rect = rail ? rail.getBoundingClientRect() : { right: 70, top: 80 };
