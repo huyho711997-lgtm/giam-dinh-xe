@@ -830,7 +830,8 @@
               <dl>
                 <div><dt><kbd>P</kbd><kbd>L</kbd><kbd>C</kbd><kbd>A</kbd></dt><dd>Bút · Đường &amp; vạch kẻ · Đường cong · Mũi tên</dd></div>
                 <div><dt><kbd>S</kbd><kbd>B</kbd></dt><dd>Hình học · Biển báo &amp; tín hiệu</dd></div>
-                <div><dt><kbd>O</kbd><kbd>D</kbd><kbd>K</kbd></dt><dd>Phương tiện · Dấu vết &amp; vật chứng · Nhà &amp; vật cản</dd></div>
+                <div><dt><kbd>O</kbd><kbd>X</kbd></dt><dd>Ô tô &amp; xe tải · Xe 2 bánh &amp; người</dd></div>
+                <div><dt><kbd>D</kbd><kbd>K</kbd></dt><dd>Dấu vết &amp; vật chứng · Nhà &amp; vật cản</dd></div>
                 <div><dt><kbd>H</kbd><kbd>G</kbd></dt><dd>Hạ tầng đường bộ · Cảnh quan &amp; địa hình</dd></div>
                 <div><dt><kbd>M</kbd><kbd>T</kbd><kbd>N</kbd><kbd>E</kbd></dt><dd>Đo · Chữ · Chú thích số · Tẩy</dd></div>
                 <div><dt>Nhấn lại</dt><dd>Phím nhóm dùng lại công cụ gần nhất của nhóm đó</dd></div>
@@ -963,15 +964,25 @@
 
           <div class="scene-tool-section-label">Hiện trường</div>
 
-          <!-- Nhóm: Phương tiện & người -->
-          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_scene_object" data-group="scene_object" data-tool="car" data-shortcut="O" aria-keyshortcuts="O" title="Phương tiện & người — phím O (Ô tô, xe tải, container, xe máy, người)" onclick="toggleToolSubmenu(event, 'scene_object')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+          <!-- Nhóm: Ô tô & xe tải -->
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_scene_object" data-group="scene_object" data-tool="car" data-shortcut="O" aria-keyshortcuts="O" title="Ô tô & xe tải — phím O (Ô tô, bán tải, xe tải, container, xe khách, cứu thương, cứu hộ)" onclick="toggleToolSubmenu(event, 'scene_object')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
             <span class="group-tool-icon" id="groupIcon_scene_object" style="display: grid; place-items: center; pointer-events: none;">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="1" ry="1"></rect><line x1="16" y1="6" x2="16" y2="18"></line><line x1="16" y1="6" x2="21" y2="12"></line><line x1="16" y1="18" x2="21" y2="12"></line></svg>
             </span>
             <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
               <polygon points="10,0 10,10 0,10"></polygon>
             </svg>
-          <span class="tool-rail-label">Phương tiện & người</span></button>
+          <span class="tool-rail-label">Ô tô & xe tải</span></button>
+
+          <!-- Nhóm: Xe 2 bánh & người -->
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_two_wheel" data-group="two_wheel" data-tool="bike" data-shortcut="X" aria-keyshortcuts="X" title="Xe 2 bánh & người — phím X (Xe máy, xe máy ngã, xe đạp, người / nạn nhân)" onclick="toggleToolSubmenu(event, 'two_wheel')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+            <span class="group-tool-icon" id="groupIcon_two_wheel" style="display: grid; place-items: center; pointer-events: none;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="10.2" y="1.5" width="3.6" height="5" rx="1.8" fill="currentColor"></rect><path d="M12 6.5l-3 3v6l3 2.5 3-2.5v-6z" fill="rgba(148,163,184,.3)"></path><rect x="9.2" y="9" width="5.6" height="6" rx="2.5" fill="currentColor" opacity=".75"></rect><path d="M7 8l5 2 5-2M6 7l2 2M18 7l-2 2"></path><circle cx="6" cy="6.5" r="1.4" fill="rgba(191,219,254,.8)"></circle><circle cx="18" cy="6.5" r="1.4" fill="rgba(191,219,254,.8)"></circle><rect x="10.2" y="17.5" width="3.6" height="5" rx="1.8" fill="currentColor"></rect></svg>
+            </span>
+            <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
+              <polygon points="10,0 10,10 0,10"></polygon>
+            </svg>
+          <span class="tool-rail-label">Xe 2 bánh & người</span></button>
 
           <!-- Nhóm: Dấu vết & vật chứng -->
           <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_evidence" data-group="evidence" data-tool="xmark" data-shortcut="D" aria-keyshortcuts="D" title="Dấu vết & vật chứng — phím D (Điểm va chạm, vệt bánh xe, hàng đổ vỡ, ổ gà)" onclick="toggleToolSubmenu(event, 'evidence')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
@@ -2036,15 +2047,16 @@
 <link rel="stylesheet" href="css/scene-report.css?v=20261113-sr-3">
 <script src="js/features/scene/geometry.js?v=20261119-gresize-1"></script>
   <script src="js/features/scene/objects.js?v=20261119-gresize-1"></script>
-  <script src="js/features/scene/traffic-signs.js?v=20261120-bridge-1"></script>
-  <script src="js/features/scene/rendering.js?v=20261120-bridge-1"></script>
+  <script src="js/features/scene/traffic-signs.js?v=20261120-vehicle-1"></script>
+  <script src="js/features/scene/rendering.js?v=20261120-vehicle-1"></script>
   <script src="js/features/scene/symbol-legend.js?v=20261120-ruled-2"></script>
-  <script src="js/features/scene/interaction-export.js?v=20261120-bridge-1"></script>
+  <script src="js/features/scene/interaction-export.js?v=20261120-vehicle-1"></script>
   <script src="js/features/scene/terrain-assets.js?v=20261111-terrain-1"></script>
   <script src="js/features/scene/goods-assets.js?v=20261119-goods-2"></script>
   <script src="js/features/scene/direction-label.js?v=20261119-dir-1"></script>
   <script src="js/features/scene/building-assets.js?v=20261119-lines-1"></script>
   <script src="js/features/scene/bridge-assets.js?v=20261120-bridge-1"></script>
+  <script src="js/features/scene/vehicle-assets.js?v=20261120-vehicle-1"></script>
   <script src="js/features/scene/group-resize.js?v=20261120-marker-1"></script>
   <script src="js/features/scene/selection-marquee.js?v=20261119-marquee-1"></script>
   <script src="js/features/scene/signed-form-print.js?v=20261120-margin-1"></script>
@@ -2056,7 +2068,7 @@
   <script src="js/features/claims/inspection-register.js"></script>
   <script src="js/features/workshop/presentation.js"></script>
   <script src="js/features/workshop/quick-actions.js?v=20261026-ws-3"></script>
-  <script src="js/features/scene/runtime.js?v=20261120-groups-1"></script>
+  <script src="js/features/scene/runtime.js?v=20261120-vehicle-1"></script>
   <script src="js/features/documents/hsbt.js"></script>
   <script src="js/features/documents/storage.js?v=20261024-1"></script>
   <script src="js/features/documents/autosave.js"></script>

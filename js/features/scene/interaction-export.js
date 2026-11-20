@@ -1361,6 +1361,9 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
   } else if (typeof isSceneTerrainType === 'function' && isSceneTerrainType(type)) {
     // Bãi đá / đồi núi: xem terrain-assets.js
     drawSceneryTerrain(ctx, type, x, y, color, width, w, h, shapeData);
+  } else if (typeof isSceneVehicleType === 'function' && isSceneVehicleType(type)) {
+    // Xe khách, bán tải, cứu thương, cứu hộ, xe đạp: xem vehicle-assets.js
+    drawSceneVehicle(ctx, type, x, y, color, width, w, h, shapeData);
   } else if (typeof isSceneBridgeType === 'function' && isSceneBridgeType(type)) {
     // Cầu nhìn từ trên xuống: xem bridge-assets.js
     drawSceneBridge(ctx, x, y, color, width, w, h, shapeData);

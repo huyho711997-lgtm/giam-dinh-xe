@@ -636,6 +636,11 @@ function getShapeDisplayName(shape) {
     case 'median_tree': return 'Cây trên dải phân cách';
     case 'rice_field': return 'Đồng lúa';
     case 'truck': return 'Xe tải';
+    case 'bus': return 'Xe khách / buýt';
+    case 'pickup': return 'Xe bán tải';
+    case 'ambulance': return 'Xe cứu thương';
+    case 'tow_truck': return 'Xe cứu hộ';
+    case 'bicycle': return 'Xe đạp';
     case 'toll_station': return 'Trạm thu phí';
     case 'bridge': return 'Cầu';
     case 'forest': return 'Rừng cây';
@@ -809,7 +814,7 @@ function updateSelectionBadge() {
   }
 
   const isLineType = isCurveType || shape.type === 'road_line' || shape.type === 'road_dashed' || shape.type === 'line' || shape.type === 'dashed_line';
-  const isVehicleDashType = isRoadVehicleShape(shape);
+  const isVehicleDashType = isRoadVehicleShape(shape) || (typeof isSceneDashableVehicleType === 'function' && isSceneDashableVehicleType(shape.type));
   if (lineToolsGroup) {
     lineToolsGroup.style.display = (isLineType || isVehicleDashType) ? 'inline-flex' : 'none';
   }
@@ -1426,7 +1431,7 @@ function toggleSelectedLineDash() {
     shape.type = 'dashed_line';
   } else if (shape.type === 'dashed_line') {
     shape.type = 'line';
-  } else if (isRoadVehicleShape(shape)) {
+  } else if (isRoadVehicleShape(shape) || (typeof isSceneDashableVehicleType === 'function' && isSceneDashableVehicleType(shape.type))) {
     shape.dashed = !shape.dashed;
   }
 

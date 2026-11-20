@@ -162,6 +162,11 @@ const TOOL_ICONS_MAP = {
   direction_label: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4"></path><path d="M8 8l-4 4 4 4"></path><path d="M9 5h8M10 20h6"></path></svg>',
   line: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>',
   dashed_line: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line stroke-dasharray="4 4" x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>',
+  bus: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="1.5"></rect><path d="M19 7l3 5-3 5"></path><line x1="6" y1="9.5" x2="6" y2="14.5"></line><line x1="10" y1="9.5" x2="10" y2="14.5"></line><line x1="14" y1="9.5" x2="14" y2="14.5"></line></svg>',
+  pickup: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="1"></rect><line x1="11" y1="7" x2="11" y2="17"></line><rect x="4" y="9" width="5" height="6" rx=".5"></rect><path d="M17.5 7l4.5 5-4.5 5"></path></svg>',
+  ambulance: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="1.5"></rect><path d="M17.5 7l4.5 5-4.5 5"></path><path d="M8.5 9v6M5.5 12h6"></path></svg>',
+  tow_truck: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="14" height="10" rx="1"></rect><line x1="4" y1="10" x2="14" y2="10"></line><line x1="4" y1="14" x2="14" y2="14"></line><rect x="17.5" y="8" width="4.5" height="8" rx="1"></rect></svg>',
+  bicycle: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"></line><rect x="2" y="10.5" width="5" height="3" rx="1.5"></rect><rect x="17" y="10.5" width="5" height="3" rx="1.5"></rect><line x1="15" y1="7" x2="15" y2="17"></line></svg>',
   truck: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="13" height="12" rx="1"></rect><line x1="6.5" y1="8" x2="6.5" y2="16"></line><line x1="10.5" y1="8" x2="10.5" y2="16"></line><rect x="16" y="7" width="6" height="10" rx="1"></rect><path d="M18.5 7l3.5 5-3.5 5"></path></svg>',
   bridge: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5h20M2 15.5h20"></path><path d="M2 6v12M22 6v12" stroke-width="2.2"></path><path d="M6.5 8.5v7M11 8.5v7M13 8.5v7M17.5 8.5v7" stroke-width="1.1"></path><rect x="9.2" y="10.2" width="5.6" height="3.6" stroke-dasharray="1.6 1.4" stroke-width="1.1"></rect></svg>',
   toll_station: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="1" stroke-dasharray="2.5 2"></rect><rect x="3" y="4" width="2.2" height="16" rx="1"></rect><rect x="10.9" y="4" width="2.2" height="16" rx="1"></rect><rect x="18.8" y="4" width="2.2" height="16" rx="1"></rect><path d="M5.5 9h4M13.4 9h4"></path><path d="M8 19v-4M7 16l1-1 1 1M15.9 19v-4M14.9 16l1-1 1 1"></path></svg>',
@@ -203,7 +208,7 @@ const TOOL_ICONS_MAP = {
 // Thứ tự khai báo = thứ tự nút trên thanh công cụ:
 //   Vẽ nét      : road_line, curve, arrow
 //   Hình & ký hiệu : shape_symbols, traffic_signs
-//   Hiện trường : scene_object, evidence, structures
+//   Hiện trường : scene_object, two_wheel, evidence, structures
 //   Hạ tầng & cảnh quan : road_assets, landscape
 const TOOL_GROUPS_CONFIG = {
   road_line: {
@@ -260,14 +265,26 @@ const TOOL_GROUPS_CONFIG = {
   },
   scene_object: {
     id: 'scene_object',
-    name: 'Phương tiện & người',
+    name: 'Ô tô & xe tải',
     defaultTool: 'car',
     tools: [
       { id: 'car', name: 'Xe ô tô', desc: 'Ký hiệu ô tô con hiện trường' },
+      { id: 'pickup', name: 'Xe bán tải', desc: 'Cabin phía trước, thùng hở phía sau' },
       { id: 'truck', name: 'Xe tải', desc: 'Thùng hàng, cabin và cầu sau đôi nhìn từ trên' },
       { id: 'container', name: 'Xe container', desc: 'Đầu kéo và thùng container nhìn từ trên' },
+      { id: 'bus', name: 'Xe khách / buýt', desc: 'Thân dài có dãy cửa sổ; kéo dọc theo chiều xe' },
+      { id: 'ambulance', name: 'Xe cứu thương', desc: 'Xe van có dấu thập ở khoang cứu thương' },
+      { id: 'tow_truck', name: 'Xe cứu hộ', desc: 'Sàn nâng chở xe có ray và mặt dốc phía sau' }
+    ]
+  },
+  two_wheel: {
+    id: 'two_wheel',
+    name: 'Xe 2 bánh & người',
+    defaultTool: 'bike',
+    tools: [
       { id: 'bike', name: 'Xe máy', desc: 'Mô tô, xe gắn máy 2 bánh' },
       { id: 'fallen_bike', name: 'Xe máy nằm ngã', desc: 'Xe máy đổ nghiêng, nằm trên mặt đường' },
+      { id: 'bicycle', name: 'Xe đạp', desc: 'Xe đạp, xe đạp điện nhìn từ trên; kéo theo hướng đi' },
       { id: 'person', name: 'Người / Nạn nhân', desc: 'Vị trí người đi bộ, nạn nhân' }
     ]
   },
@@ -330,6 +347,7 @@ const groupActiveTools = {
   shape_symbols: 'geo_circle',
   traffic_signs: 'sign_circle_post',
   scene_object: 'car',
+  two_wheel: 'bike',
   evidence: 'xmark',
   structures: 'house',
   road_assets: 'guardrail',
@@ -424,6 +442,7 @@ const SCENE_TOOL_SHORTCUTS = Object.freeze({
   s: { group: 'shape_symbols' },
   b: { group: 'traffic_signs' },
   o: { group: 'scene_object' },
+  x: { group: 'two_wheel' },
   d: { group: 'evidence' },
   k: { group: 'structures' },
   h: { group: 'road_assets' },
@@ -435,7 +454,7 @@ const SCENE_TOOL_SHORTCUTS = Object.freeze({
 });
 
 
-// Keyboard shortcuts: V/P/L/C/A/S/B/O/D/K/H/G/M/T/N/E (tools), R / Shift+R
+// Keyboard shortcuts: V/P/L/C/A/S/B/O/X/D/K/H/G/M/T/N/E (tools), R / Shift+R
 // (rotate), Esc (cancel), Delete/Backspace (delete), arrows (nudge).
 document.addEventListener('keydown', function(e) {
   const modal = document.getElementById('sceneDrawingModalOverlay');
