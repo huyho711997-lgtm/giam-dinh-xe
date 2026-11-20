@@ -37,9 +37,9 @@ test('Kích thước mặc định, tối thiểu và chiều rộng/dài độc
   assert.equal(run("getShapeDisplayName({type:'geo_rect'})"), 'Hình chữ nhật');
 });
 
-test('Có trong bảng công cụ nhóm Hình học & Biển báo, ngay sau hình tròn', () => {
+test('Có trong bảng công cụ nhóm Hình học, ngay sau hình tròn', () => {
   const source = read('js/features/scene/runtime.js');
-  const group = source.slice(source.indexOf('shape_symbols: {'), source.indexOf('scene_object: {'));
+  const group = source.slice(source.indexOf('shape_symbols: {'), source.indexOf('traffic_signs: {'));
   const order = [...group.matchAll(/id: '(geo_\w+)'/g)].map(m => m[1]);
   assert.deepEqual(order.slice(0, 3), ['geo_circle', 'geo_rect', 'geo_triangle']);
   assert.match(source, /geo_rect: '<svg/);

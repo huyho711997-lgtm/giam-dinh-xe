@@ -84,9 +84,9 @@ test('bảng Ký hiệu có dòng "Cầu" (gộp nhiều cầu thành một dòn
   assert.equal(bridgeEntry.count, 2);
 });
 
-test('công cụ "Cầu" nằm trong nhóm Hạ tầng & cảnh quan, có biểu tượng, và trang độc lập nạp bridge-assets.js', () => {
+test('công cụ "Cầu" nằm trong nhóm Hạ tầng đường bộ, có biểu tượng, và trang độc lập nạp bridge-assets.js', () => {
   const runtime = read('runtime.js');
-  const group = runtime.slice(runtime.indexOf('road_assets: {'));
+  const group = runtime.slice(runtime.indexOf('road_assets: {'), runtime.indexOf('landscape: {'));
   assert.match(group, /\{ id: 'bridge', name: 'Cầu'/);
   assert.match(runtime, /^\s+bridge: '<svg/m);
   for (const page of ['index.html', 'so-do-hien-truong.html']) {

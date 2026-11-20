@@ -199,16 +199,23 @@ const TOOL_ICONS_MAP = {
 };
 
 
+// Bảng công cụ chia theo CHỨC NĂNG (id công cụ giữ nguyên để bản vẽ đã lưu vẫn dùng được).
+// Thứ tự khai báo = thứ tự nút trên thanh công cụ:
+//   Vẽ nét      : road_line, curve, arrow
+//   Hình & ký hiệu : shape_symbols, traffic_signs
+//   Hiện trường : scene_object, evidence, structures
+//   Hạ tầng & cảnh quan : road_assets, landscape
 const TOOL_GROUPS_CONFIG = {
   road_line: {
     id: 'road_line',
-    name: 'Đường và lề đường',
+    name: 'Đường & vạch kẻ',
     defaultTool: 'road_line',
     tools: [
       { id: 'road_line', name: 'Vạch kẻ nét liền', desc: 'Vạch tim đường, vạch giới hạn phần xe chạy' },
       { id: 'road_dashed', name: 'Vạch kẻ nét đứt', desc: 'Vạch phân chia làn đường đứt' },
       { id: 'road_edge', name: 'Lề đường', desc: 'Hai mép song song có vạch nối, dùng thể hiện lề hoặc bó vỉa' },
-      { id: 'road_intersection', name: 'Ngã tư đường', desc: 'Mẫu 4 nhánh có mép đường và vạch tim; nhấp để đặt' }
+      { id: 'road_intersection', name: 'Ngã tư đường', desc: 'Mẫu 4 nhánh có mép đường và vạch tim; nhấp để đặt' },
+      { id: 'crosswalk', name: 'Vạch người đi bộ', desc: 'Kéo để tạo cụm vạch sang đường' }
     ]
   },
   curve: {
@@ -232,20 +239,28 @@ const TOOL_GROUPS_CONFIG = {
   },
   shape_symbols: {
     id: 'shape_symbols',
-    name: 'Hình học & Biển báo',
+    name: 'Hình học',
     defaultTool: 'geo_circle',
     tools: [
       { id: 'geo_circle', name: 'Hình tròn', desc: 'Kéo để vẽ đường tròn rỗng' },
       { id: 'geo_rect', name: 'Hình chữ nhật', desc: 'Kéo để vẽ; kéo cạnh để đổi dài/rộng, kéo góc để phóng to theo tỷ lệ' },
       { id: 'geo_triangle', name: 'Hình tam giác', desc: 'Tam giác cạnh thẳng' },
-      { id: 'geo_round_triangle', name: 'Tam giác bo góc', desc: 'Tam giác được bo mềm tại ba đỉnh' },
+      { id: 'geo_round_triangle', name: 'Tam giác bo góc', desc: 'Tam giác được bo mềm tại ba đỉnh' }
+    ]
+  },
+  traffic_signs: {
+    id: 'traffic_signs',
+    name: 'Biển báo & tín hiệu',
+    defaultTool: 'sign_circle_post',
+    tools: [
       { id: 'sign_circle_post', name: 'Biển báo tròn có trụ', desc: 'Mặt biển tròn và trụ đỡ đơn sắc' },
-      { id: 'sign_triangle_post', name: 'Biển báo tam giác có trụ', desc: 'Mặt biển tam giác và trụ đỡ đơn sắc' }
+      { id: 'sign_triangle_post', name: 'Biển báo tam giác có trụ', desc: 'Mặt biển tam giác và trụ đỡ đơn sắc' },
+      { id: 'traffic_light', name: 'Đèn tín hiệu', desc: 'Đèn đỏ, vàng, xanh có thể xoay' }
     ]
   },
   scene_object: {
     id: 'scene_object',
-    name: 'Phương tiện & Hiện trường',
+    name: 'Phương tiện & người',
     defaultTool: 'car',
     tools: [
       { id: 'car', name: 'Xe ô tô', desc: 'Ký hiệu ô tô con hiện trường' },
@@ -253,30 +268,49 @@ const TOOL_GROUPS_CONFIG = {
       { id: 'container', name: 'Xe container', desc: 'Đầu kéo và thùng container nhìn từ trên' },
       { id: 'bike', name: 'Xe máy', desc: 'Mô tô, xe gắn máy 2 bánh' },
       { id: 'fallen_bike', name: 'Xe máy nằm ngã', desc: 'Xe máy đổ nghiêng, nằm trên mặt đường' },
-      { id: 'person', name: 'Người / Nạn nhân', desc: 'Vị trí người đi bộ, nạn nhân' },
+      { id: 'person', name: 'Người / Nạn nhân', desc: 'Vị trí người đi bộ, nạn nhân' }
+    ]
+  },
+  evidence: {
+    id: 'evidence',
+    name: 'Dấu vết & vật chứng',
+    defaultTool: 'xmark',
+    tools: [
       { id: 'xmark', name: 'Điểm va chạm (X)', desc: 'Vị trí va chạm, xung đột' },
-      { id: 'rect', name: 'Khối hộp / Vật cản', desc: 'Khung chữ nhật rỗng cho vật cản; hộ lan dùng công cụ Hộ lan tôn sóng' },
+      { id: 'tire_track', name: 'Vệt bánh xe cong', desc: 'Nhấp điểm đầu, xem trước đường cong rồi nhấp điểm cuối' },
+      { id: 'goods_damaged', name: 'Hàng hóa đổ vỡ', desc: 'Vùng gạch chéo có hàng đổ nghiêng, mảnh vỡ; dùng cho tài sản bị thiệt hại' },
+      { id: 'pothole', name: 'Ổ gà', desc: 'Hố mặt đường bất quy tắc có các vết nứt xung quanh' }
+    ]
+  },
+  structures: {
+    id: 'structures',
+    name: 'Nhà & vật cản',
+    defaultTool: 'house',
+    tools: [
       { id: 'house', name: 'Nhà (mái 4 mái)', desc: 'Kéo chéo góc → góc như vẽ hình chữ nhật; bấm 1 cái tạo nhà mặc định' },
       { id: 'goods_display', name: 'Hàng hóa trưng bày', desc: 'Bàn/kệ hàng hóa (thùng, nồi, ấm...); kéo rộng để thêm hàng' },
-      { id: 'goods_damaged', name: 'Hàng hóa đổ vỡ', desc: 'Vùng gạch chéo có hàng đổ nghiêng, mảnh vỡ; dùng cho tài sản bị thiệt hại' }
+      { id: 'rect', name: 'Khối hộp / Vật cản', desc: 'Khung chữ nhật rỗng cho vật cản; hộ lan dùng công cụ Hộ lan tôn sóng' }
     ]
   },
   road_assets: {
     id: 'road_assets',
-    name: 'Hạ tầng & cảnh quan',
-    defaultTool: 'crosswalk',
+    name: 'Hạ tầng đường bộ',
+    defaultTool: 'guardrail',
     tools: [
-      { id: 'crosswalk', name: 'Vạch người đi bộ', desc: 'Kéo để tạo cụm vạch sang đường' },
-      { id: 'tire_track', name: 'Vệt bánh xe cong', desc: 'Nhấp điểm đầu, xem trước đường cong rồi nhấp điểm cuối' },
       { id: 'guardrail', name: 'Hộ lan tôn sóng', desc: 'Nhấp điểm đầu và điểm cuối; kéo chấm giữa để uốn cong theo đường' },
-      { id: 'traffic_light', name: 'Đèn tín hiệu', desc: 'Đèn đỏ, vàng, xanh có thể xoay' },
       { id: 'median', name: 'Dải phân cách cứng', desc: 'Dải bê tông liền khối có gạch chéo' },
       { id: 'median_blocks', name: 'Dải phân cách ghép khối', desc: 'Các mô-đun bê tông ghép nối, có khe phân khối rõ ràng' },
       { id: 'toll_station', name: 'Trạm thu phí', desc: 'Mái che, buồng thu phí, đảo phân làn và barie; kéo rộng để thêm làn' },
       { id: 'bridge', name: 'Cầu', desc: 'Kéo dọc theo chiều cầu; chọn cầu để đặt tên, kéo tay nắm đổi dài/rộng' },
       { id: 'utility_pole', name: 'Trụ điện', desc: 'Trụ, xà ngang và sứ điện nhìn trên sơ đồ' },
-      { id: 'road_boundary_marker', name: 'Cột mốc lộ giới', desc: 'Mốc bê tông đơn sắc dùng trên sơ đồ' },
-      { id: 'pothole', name: 'Ổ gà', desc: 'Hố mặt đường bất quy tắc có các vết nứt xung quanh' },
+      { id: 'road_boundary_marker', name: 'Cột mốc lộ giới', desc: 'Mốc bê tông đơn sắc dùng trên sơ đồ' }
+    ]
+  },
+  landscape: {
+    id: 'landscape',
+    name: 'Cảnh quan & địa hình',
+    defaultTool: 'tree',
+    tools: [
       { id: 'tree', name: 'Cây xanh', desc: 'Tán cây nhìn từ trên xuống' },
       { id: 'median_tree', name: 'Cây trên dải phân cách', desc: 'Dải phân cách trồng nhiều cây xanh' },
       { id: 'rice_field', name: 'Đồng lúa', desc: 'Khoảnh ruộng có luống và biểu tượng cây lúa' },
@@ -288,13 +322,18 @@ const TOOL_GROUPS_CONFIG = {
 };
 
 
+// Công cụ đang chọn gần nhất của từng nhóm (nút nhóm hiện icon và phím tắt kích hoạt công cụ này).
 const groupActiveTools = {
   road_line: 'road_line',
   curve: 'curve',
   arrow: 'line',
   shape_symbols: 'geo_circle',
+  traffic_signs: 'sign_circle_post',
   scene_object: 'car',
-  road_assets: 'crosswalk'
+  evidence: 'xmark',
+  structures: 'house',
+  road_assets: 'guardrail',
+  landscape: 'tree'
 };
 
 
@@ -375,7 +414,7 @@ document.addEventListener('click', function(e) {
 
 
 // Quick tool selection. Group shortcuts reactivate the most recently used item
-// in that group, so L/C/A/S/O/H stay useful after the user customizes a tool.
+// in that group, so the letter keys stay useful after the user customizes a tool.
 const SCENE_TOOL_SHORTCUTS = Object.freeze({
   v: { tool: 'select' },
   p: { tool: 'pen' },
@@ -383,8 +422,12 @@ const SCENE_TOOL_SHORTCUTS = Object.freeze({
   c: { group: 'curve' },
   a: { group: 'arrow' },
   s: { group: 'shape_symbols' },
+  b: { group: 'traffic_signs' },
   o: { group: 'scene_object' },
+  d: { group: 'evidence' },
+  k: { group: 'structures' },
   h: { group: 'road_assets' },
+  g: { group: 'landscape' },
   m: { tool: 'measure' },
   t: { tool: 'text' },
   n: { tool: 'number_note' },
@@ -392,7 +435,7 @@ const SCENE_TOOL_SHORTCUTS = Object.freeze({
 });
 
 
-// Keyboard shortcuts: V/P/L/C/A/S/O/H/M/T/N/E (tools), R / Shift+R
+// Keyboard shortcuts: V/P/L/C/A/S/B/O/D/K/H/G/M/T/N/E (tools), R / Shift+R
 // (rotate), Esc (cancel), Delete/Backspace (delete), arrows (nudge).
 document.addEventListener('keydown', function(e) {
   const modal = document.getElementById('sceneDrawingModalOverlay');
