@@ -245,30 +245,32 @@ function isSceneSymbolLegendEnabled() {
 
 
 // Tính bố cục: rows (đã ngắt dòng), số dòng bị ẩn do hết chỗ, tổng chiều cao.
-function layoutSceneSymbolLegend(ctx, entries, width, maxHeight) {
+// rowUnits (tùy chọn): in lên giấy có sẵn dòng kẻ ô li → tiêu đề, mỗi ký hiệu và dòng "+ n ký hiệu khác" đều chiếm đúng
+// MỘT hàng ô li (rowUnits đơn vị) để chữ nằm giữa các vạch kẻ in sẵn.
+function layoutSceneSymbolLegend(ctx, entries, width, maxHeight, rowUnits) {
   if (!Array.isArray(entries) || entries.length === 0) return null;
   const textWidth = Math.max(40, width - SCENE_SYMBOL_LEGEND_ICON_W - 24);
-  const moreHeight = 16;
+  const moreHeight = rowUnits || 16;
   const rows = [];
-  let used = SCENE_SYMBOL_LEGEND_HEADER_HEIGHT;
+  let used = rowUnits || SCENE_SYMBOL_LEGEND_HEADER_HEIGHT;
   ctx.save();
-  ctx.font = '10.5px Arial';
+  ctx.font = rowUnits ? '10px Arial' : '10.5px Arial';
   for (let i = 0; i < entries.length; i++) {
     const lines = wrapSceneLegendText(ctx, entries[i].label, textWidth, 2);
-    const h = Math.max(22, lines.length * 12 + 8);
+    const h = rowUnits || Math.max(22, lines.length * 12 + 8);
     const remaining = entries.length - i - 1;
     // Chừa chỗ cho dòng "+ n ký hiệu khác" nếu sau dòng này vẫn còn mục.
     const needed = used + h + (remaining > 0 ? moreHeight : 0);
     if (needed > maxHeight) {
       if (rows.length === 0) { ctx.restore(); return null; }
       ctx.restore();
-      return { rows, hidden: entries.length - i, height: used + moreHeight };
+      return { rows, hidden: entries.length - i, height: used + moreHeight, rowUnits };
     }
     rows.push({ entry: entries[i], lines, h });
     used += h;
   }
   ctx.restore();
-  return { rows, hidden: 0, height: used };
+  return { rows, hidden: 0, height: used, rowUnits };
 }
 
 
@@ -374,19 +376,21 @@ function drawSceneSymbolLegend(ctx, legendX, legendWidth, bottomY, layout) {
   ctx.lineTo(legendX + legendWidth, top);
   ctx.stroke();
 
+  const ruled = layout.rowUnits || 0;      // >0: giấy có sẵn dòng kẻ → mỗi mục đúng một hàng, không kẻ vạch phụ
+  const headerH = ruled || SCENE_SYMBOL_LEGEND_HEADER_HEIGHT;
   ctx.fillStyle = '#000000';
   ctx.font = 'bold 12px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('Ký hiệu', legendX + legendWidth / 2, top + SCENE_SYMBOL_LEGEND_HEADER_HEIGHT / 2 + 1);
+  ctx.fillText('Ký hiệu', legendX + legendWidth / 2, top + headerH / 2 + 1);
 
-  let cursorY = top + SCENE_SYMBOL_LEGEND_HEADER_HEIGHT;
+  let cursorY = top + headerH;
   layout.rows.forEach((row, index) => {
     const iconY = cursorY + (row.h - SCENE_SYMBOL_LEGEND_ICON_H) / 2;
     drawSceneSymbolSample(ctx, row.entry.sample, left, iconY, SCENE_SYMBOL_LEGEND_ICON_W, SCENE_SYMBOL_LEGEND_ICON_H);
 
     ctx.fillStyle = '#111827';
-    ctx.font = '10.5px Arial';
+    ctx.font = ruled ? '10px Arial' : '10.5px Arial';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const textX = left + SCENE_SYMBOL_LEGEND_ICON_W + 8;
@@ -395,7 +399,7 @@ function drawSceneSymbolLegend(ctx, legendX, legendWidth, bottomY, layout) {
       ctx.fillText(line, textX, cursorY + (row.h - blockH) / 2 + i * 12 + 6);
     });
 
-    if (index < layout.rows.length - 1 || layout.hidden > 0) {
+    if (!ruled && (index < layout.rows.length - 1 || layout.hidden > 0)) {
       ctx.strokeStyle = 'rgba(17,24,39,.14)';
       ctx.lineWidth = 0.7;
       ctx.beginPath();
@@ -411,7 +415,7 @@ function drawSceneSymbolLegend(ctx, legendX, legendWidth, bottomY, layout) {
     ctx.font = 'italic 10px Arial';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`+ ${layout.hidden} ký hiệu khác`, left, cursorY + 8);
+    ctx.fillText(`+ ${layout.hidden} ký hiệu khác`, left, cursorY + (ruled ? ruled / 2 : 8));
   }
   ctx.restore();
 }
@@ -420,8 +424,10 @@ function drawSceneSymbolLegend(ctx, legendX, legendWidth, bottomY, layout) {
 // Điểm vào duy nhất cho cột Chú thích: chú thích số ở trên, bảng ký hiệu ở đáy.
 // Dùng chung cho màn hình, xuất ảnh và in lên giấy ký sẵn.
 function drawSceneLegendColumn(ctx, legendX, gridY, legendWidth, gridHeight, override) {
-  // override (xem trước / in): { config, enabled, preview, separators } thay cho cấu hình đang lưu;
+  // override (xem trước / in): { config, enabled, preview, separators, rowUnits } thay cho cấu hình đang lưu;
   // preview=true không ghi đè vùng bấm sceneSymbolLegendHitRect của canvas đang chỉnh sửa.
+  // rowUnits: in lên giấy có sẵn dòng kẻ ô li (xem drawSceneLegendColumnRuled).
+  if (override && override.rowUnits > 0) return drawSceneLegendColumnRuled(ctx, legendX, gridY, legendWidth, gridHeight, override);
   const isPreview = !!(override && override.preview);
   let layout = null;
   try {
@@ -443,4 +449,37 @@ function drawSceneLegendColumn(ctx, legendX, gridY, legendWidth, gridHeight, ove
   drawSceneNumberLegend(ctx, legendX, gridY, legendWidth, gridHeight, layout ? layout.height + 6 : 0,
     { separators: !(override && override.separators === false) });
   if (layout) drawSceneSymbolLegend(ctx, legendX, legendWidth, bottomY, layout);
+}
+
+
+// Cột Chú thích in lên giấy CÓ SẴN dòng kẻ ô li. Cột gồm R hàng (mỗi hàng rowUnits đơn vị, bắt đầu từ gridY + 73 như bản thường):
+// chú thích số xếp từ trên xuống, bảng "Ký hiệu" (tiêu đề + mỗi ký hiệu một hàng) neo ở đáy; chữ luôn nằm giữa các vạch kẻ.
+// Ưu tiên chú thích số: bảng ký hiệu chỉ lấy phần hàng còn thừa, nhưng luôn giữ tối thiểu 3 hàng (tiêu đề + 2 ký hiệu) nếu cần.
+function drawSceneLegendColumnRuled(ctx, legendX, gridY, legendWidth, gridHeight, override) {
+  const rowUnits = override.rowUnits;
+  const topY = gridY + 73;
+  const totalRows = Math.max(1, Math.floor((gridY + gridHeight - topY) / rowUnits + 0.05));
+  const notes = typeof getSortedSceneNumberNotes === 'function' ? getSortedSceneNumberNotes() : [];
+  const items = layoutSceneNumberLegendRuled(ctx, notes, legendWidth);
+  const noteRows = items.reduce((sum, item) => sum + item.rows, 0);
+
+  let entries = [];
+  try {
+    const enabled = typeof override.enabled === 'boolean' ? override.enabled : isSceneSymbolLegendEnabled();
+    if (enabled && typeof sceneShapes !== 'undefined') {
+      const config = override.config ? override.config : getSceneSymbolLegendConfig();
+      entries = buildSceneSymbolLegendEntries(sceneShapes, getShapeDisplayName, config);
+    }
+  } catch (_) { entries = []; /* lỗi bảng ký hiệu không được chặn chú thích số */ }
+
+  let layout = null;
+  if (entries.length) {
+    const desired = 1 + entries.length;
+    const free = totalRows - noteRows;
+    const tableRows = free >= desired ? desired : Math.max(Math.min(desired, 3), free);
+    layout = layoutSceneSymbolLegend(ctx, entries, legendWidth, Math.min(tableRows, totalRows) * rowUnits, rowUnits);
+  }
+  const tableRowCount = layout ? Math.round(layout.height / rowUnits) : 0;
+  drawSceneNumberLegendRuled(ctx, legendX, topY, legendWidth, Math.max(0, totalRows - tableRowCount), rowUnits, items);
+  if (layout) drawSceneSymbolLegend(ctx, legendX, legendWidth, topY + totalRows * rowUnits, layout);
 }

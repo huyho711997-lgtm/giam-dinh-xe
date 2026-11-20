@@ -17,6 +17,7 @@ const SceneSignedForm = (() => {
   const GRID_FORM = {
     frame:{x:123 * F,y:167.5 * F,w:(1395 - 123) * F,h:(828.5 - 167.5) * F},
     legendX:1151 * F, headEnd:256 * F, rowPitch:(661 / 15) * F, colPitch:(1151 - 154) / 27 * F, firstCol:154 * F,
+    legendRows:13, legendRowPitch:(828.5 - 256) / 13 * F,              // cột Chú thích: 13 hàng kẻ từ dưới đầu cột tới đáy khung
     inset:3                                                              // chừa ~0,7 mm sát vạch kẻ để nét in không đè lên khung
   };
   const SCENE_AREA = {x:20,y:85,w:800,h:475};                            // vùng vẽ (không gồm cột chú thích) trong hệ toạ độ trình vẽ
@@ -70,10 +71,10 @@ const SceneSignedForm = (() => {
     const G = GRID_FORM, right = G.frame.x + G.frame.w, bottom = G.frame.y + G.frame.h;
     const box = {x:G.frame.x + G.inset,y:G.frame.y + G.inset,w:G.legendX - G.frame.x - 2 * G.inset,h:G.frame.h - 2 * G.inset};
     const k = Math.min(box.w / SCENE_AREA.w,box.h / SCENE_AREA.h);
-    const legendScale = G.rowPitch / NOTE_ROW_UNITS;
+    const legendScale = G.legendRowPitch / NOTE_ROW_UNITS;
     return {
       k, x0:box.x + (box.w - SCENE_AREA.w * k) / 2, y0:box.y + (box.h - SCENE_AREA.h * k) / 2,
-      legend:{x:G.legendX + G.inset,top:G.headEnd,bottom:bottom - G.inset,w:right - G.legendX - 2 * G.inset,scale:legendScale}
+      legend:{x:G.legendX + G.inset,top:G.headEnd,bottom,w:right - G.legendX - 2 * G.inset,scale:legendScale}
     };
   }
   function drawGridDiagram(ctx) {
@@ -82,9 +83,10 @@ const SceneSignedForm = (() => {
     ctx.save(); applySceneDrawingAreaClip(ctx);
     for (let i = 0; i < sceneShapes.length; i++) renderShape(ctx,sceneShapes[i]);
     ctx.restore(); ctx.restore();
-    const g = L.legend, gy = -69;     // -69: chữ + số thứ tự nằm giữa hàng ô li (mục đầu bắt đầu sau gy + 73 = 4 đơn vị kể từ vạch kẻ)
+    // Cột Chú thích xếp theo hàng ô li: gy = -73 để hàng đầu bắt đầu đúng vạch kẻ ngay dưới "(Dấu vết, vật chứng…)"; mỗi hàng 27 đơn vị.
+    const g = L.legend, gy = -73;
     ctx.save(); ctx.translate(g.x,g.top); ctx.scale(g.scale,g.scale);
-    drawSceneLegendColumn(ctx,0,gy,g.w / g.scale,(g.bottom - g.top) / g.scale - gy,{preview:true,separators:false});
+    drawSceneLegendColumn(ctx,0,gy,g.w / g.scale,(g.bottom - g.top) / g.scale - gy,{preview:true,separators:false,rowUnits:NOTE_ROW_UNITS});
     ctx.restore();
   }
   // Nền mờ ô li của tờ 'grid' — chỉ để xem trước, KHÔNG in ra.

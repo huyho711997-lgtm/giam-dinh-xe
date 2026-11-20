@@ -22,14 +22,16 @@ function load(saved) {
 
 test('tờ ô li: vùng hình vẽ và cột chú thích nằm gọn trong khung đo từ bản quét', () => {
   const { api } = load();
-  const { frame, legendX, rowPitch } = api.GRID_FORM, L = api.getGridLayout();
+  const { frame, legendX, legendRowPitch, legendRows, headEnd } = api.GRID_FORM, L = api.getGridLayout();
   assert.ok(legendX > frame.x && legendX < frame.x + frame.w);
   // Hình vẽ (800×475 đơn vị) co đều, nằm trọn bên trái vạch cột Chú thích, không chạm viền.
   assert.ok(L.x0 > frame.x && L.x0 + 800 * L.k < legendX);
   assert.ok(L.y0 > frame.y && L.y0 + 475 * L.k < frame.y + frame.h);
-  // Một dòng chú thích (27 đơn vị) = đúng một hàng ô li; cột chú thích nằm dưới đầu cột "Chú thích" và trong khung.
-  assert.ok(Math.abs(27 * L.legend.scale - rowPitch) < 1e-9);
-  assert.ok(L.legend.top > frame.y + rowPitch && L.legend.bottom < frame.y + frame.h);
+  // Một hàng chú thích (27 đơn vị) = đúng một hàng ô li; cột chú thích đúng 13 hàng, từ dưới đầu cột tới đáy khung.
+  assert.ok(Math.abs(27 * L.legend.scale - legendRowPitch) < 1e-9);
+  assert.equal(legendRows, 13);
+  assert.ok(Math.abs(L.legend.top + legendRows * legendRowPitch - (frame.y + frame.h)) < 1e-6);
+  assert.ok(L.legend.top > frame.y + legendRowPitch && L.legend.bottom <= frame.y + frame.h + 1e-6);
   assert.ok(L.legend.x > legendX && L.legend.x + L.legend.w < frame.x + frame.w);
 });
 
@@ -42,6 +44,7 @@ test('tờ ô li: KHÔNG in khung/tiêu đề cột; chú thích không kẻ v�
   const override = legendCalls[0][5];
   assert.equal(override.preview, true);
   assert.equal(override.separators, false);
+  assert.equal(override.rowUnits, 27);   // chú thích xếp theo hàng ô li
 });
 
 test('tờ chưa có khung (mặc định cũ): vẫn in khung + tiêu đề "Chú thích" và cũng không ghi đè vùng bấm', () => {
