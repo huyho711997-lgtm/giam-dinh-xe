@@ -1483,12 +1483,14 @@ function wrapSceneLegendText(ctx, text, maxWidth, maxLines = 3) {
 
 
 // ---- Chú thích số khi in lên giấy CÓ SẴN dòng kẻ ô li (signed-form-print.js, tờ 'grid') ----
-// Mỗi "hàng" (rowUnits đơn vị = đúng một hàng ô li trên giấy) chứa 2 dòng chữ nằm giữa các vạch kẻ; chú thích dài chiếm 2, 3… hàng.
-// Không cắt cụt chữ (trừ khi một chú thích dài hơn 6 dòng) và không để vạch kẻ in sẵn cắt ngang chữ.
+// Mỗi hàng ô li (rowUnits đơn vị) chứa đúng 2 "ô dòng" chữ; các dòng chữ xếp LIỀN NHAU, cách đều nhau (rowUnits / 2) từ chú thích này
+// sang chú thích kế tiếp — không chừa khoảng trống, không căn giữa hàng. Vạch kẻ in sẵn luôn rơi vào khe giữa hai dòng chữ nên
+// không bao giờ cắt ngang chữ. Không cắt cụt chữ (trừ khi một chú thích dài hơn 6 dòng).
 const SCENE_LEGEND_RULED_FONT = 10;
 const SCENE_LEGEND_RULED_MAX_LINES = 6;
 const SCENE_LEGEND_RULED_TEXT_LEFT = 30;
 const SCENE_LEGEND_RULED_RIGHT_PAD = 6;
+const SCENE_LEGEND_RULED_MARKER_R = 6.3;      // nhỏ hơn bản thường (7,5) để vòng số lọt trong một ô dòng, không chạm vạch kẻ
 
 
 function layoutSceneNumberLegendRuled(ctx, notes, legendWidth) {
@@ -1497,69 +1499,62 @@ function layoutSceneNumberLegendRuled(ctx, notes, legendWidth) {
   const maxTextWidth = Math.max(30, legendWidth - SCENE_LEGEND_RULED_TEXT_LEFT - SCENE_LEGEND_RULED_RIGHT_PAD);
   const items = (notes || []).map(note => {
     const lines = wrapSceneLegendText(ctx, note.note, maxTextWidth, SCENE_LEGEND_RULED_MAX_LINES);
-    return { note, lines, rows: Math.max(1, Math.ceil(lines.length / 2)), maxTextWidth };
+    return { note, lines, slots: lines.length, maxTextWidth };
   });
   ctx.restore();
   return items;
 }
 
 
-// Tâm dòng chữ thứ j trong khối `rows` hàng: 2 dòng/hàng; dòng lẻ đứng một mình ở hàng cuối thì căn giữa hàng.
-function getSceneLegendRuledLineCenter(j, lineCount, rowUnits) {
-  const row = Math.floor(j / 2);
-  const alone = j % 2 === 0 && j === lineCount - 1;
-  const slot = alone ? 0.5 : (j % 2 === 0 ? 0.26 : 0.74);
-  return (row + slot) * rowUnits;
-}
-
-
+// availableRows: số hàng ô li dành cho chú thích số; mỗi hàng có 2 ô dòng.
 function drawSceneNumberLegendRuled(ctx, legendX, topY, legendWidth, availableRows, rowUnits, items) {
-  if (!items.length || availableRows < 1) return;
+  const totalSlots = Math.max(0, Math.floor(availableRows)) * 2;
+  if (!items.length || totalSlots < 1) return;
+  const slotH = rowUnits / 2;
   ctx.save();
   const left = legendX + 8;
   const textX = legendX + SCENE_LEGEND_RULED_TEXT_LEFT;
-  let row = 0;
+  let slot = 0;
   for (let i = 0; i < items.length; i++) {
     let item = items[i];
     const remainingAfter = items.length - i - 1;
-    const reserve = remainingAfter > 0 ? 1 : 0;      // chừa một hàng cho dòng "+ n chú thích khác"
-    if (row + item.rows + reserve > availableRows) {
-      if (row === 0) {
+    const reserve = remainingAfter > 0 ? 1 : 0;      // chừa một ô dòng cho "+ n chú thích khác"
+    if (slot + item.slots + reserve > totalSlots) {
+      if (slot === 0) {
         // Chú thích đầu tiên dài hơn cả cột: vẫn phải hiện, rút gọn cho vừa chỗ.
-        const maxLines = Math.max(1, (availableRows - reserve) * 2);
+        const maxLines = Math.max(1, totalSlots - reserve);
         ctx.font = `${SCENE_LEGEND_RULED_FONT}px Arial`;
         const lines = wrapSceneLegendText(ctx, item.note.note, item.maxTextWidth, maxLines);
-        item = { note: item.note, lines, rows: Math.max(1, Math.ceil(lines.length / 2)), maxTextWidth: item.maxTextWidth };
+        item = { note: item.note, lines, slots: lines.length, maxTextWidth: item.maxTextWidth };
       } else {
         ctx.fillStyle = '#6b7280';
         ctx.font = `italic ${SCENE_LEGEND_RULED_FONT}px Arial`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`+ ${items.length - i} chú thích khác`, left, topY + row * rowUnits + rowUnits / 2);
+        ctx.fillText(`+ ${items.length - i} chú thích khác`, left, topY + (slot + 0.5) * slotH);
         break;
       }
     }
-    const y0 = topY + row * rowUnits;
-    const markerY = y0 + rowUnits / 2;
+    const markerY = topY + (slot + 0.5) * slotH;      // vòng số ngang dòng chữ đầu của chú thích
     ctx.beginPath();
     ctx.fillStyle = '#f7e7bd';
     ctx.strokeStyle = '#111827';
-    ctx.lineWidth = 1.25;
-    ctx.arc(left + 8, markerY, 7.5, 0, Math.PI * 2);
+    ctx.lineWidth = 1.1;
+    ctx.arc(left + 7, markerY, SCENE_LEGEND_RULED_MARKER_R, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = '#111827';
-    ctx.font = 'bold 9.5px Arial';
+    ctx.font = 'bold 8.5px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(String(item.note.noteNumber || i + 1), left + 8, markerY + 0.2);
+    ctx.fillText(String(item.note.noteNumber || i + 1), left + 7, markerY + 0.2);
 
     ctx.fillStyle = '#111827';
     ctx.font = `${SCENE_LEGEND_RULED_FONT}px Arial`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    item.lines.forEach((line, j) => ctx.fillText(line, textX, y0 + getSceneLegendRuledLineCenter(j, item.lines.length, rowUnits)));
-    row += item.rows;
+    item.lines.forEach((line, j) => ctx.fillText(line, textX, topY + (slot + j + 0.5) * slotH));
+    slot += item.slots;
   }
   ctx.restore();
 }

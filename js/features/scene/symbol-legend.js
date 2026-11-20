@@ -461,7 +461,7 @@ function drawSceneLegendColumnRuled(ctx, legendX, gridY, legendWidth, gridHeight
   const totalRows = Math.max(1, Math.floor((gridY + gridHeight - topY) / rowUnits + 0.05));
   const notes = typeof getSortedSceneNumberNotes === 'function' ? getSortedSceneNumberNotes() : [];
   const items = layoutSceneNumberLegendRuled(ctx, notes, legendWidth);
-  const noteRows = items.reduce((sum, item) => sum + item.rows, 0);
+  const noteRows = Math.ceil(items.reduce((sum, item) => sum + item.slots, 0) / 2);   // 2 dòng chữ / hàng ô li
 
   let entries = [];
   try {

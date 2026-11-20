@@ -31,18 +31,20 @@ const draw = (t, entriesOn = false) => {
 };
 const texts = log => log.filter(c => c[0] === 'fillText').map(c => ({ text: c[1], y: c[3] }));
 
-test('giấy kẻ ô li: 2 dòng chữ mỗi hàng, nằm giữa các vạch (không đè lên bội của 27)', () => {
+test('giấy kẻ ô li: các dòng chữ xếp liền nhau, cách đều nửa hàng (không chừa khoảng trống), nằm giữa các vạch', () => {
   const t = load();
-  t.context.sceneShapes = [note(1, 'Vị trí xe lúc xảy ra tai nạn gần cột mốc số 12 bên trái đường'), note(2, 'Ngắn')];
-  const rows = texts(draw(t)).filter(x => x.text !== '1' && x.text !== '2');
-  assert.ok(rows.length >= 3);
-  for (const { y } of rows) {
-    const within = y % ROW;
-    assert.ok(within > 3 && within < ROW - 3, `chữ ở y=${y} sát vạch kẻ`);
-  }
-  // Chú thích ngắn (1 dòng) căn giữa hàng; chú thích 2 dòng dùng 2 vị trí 0,26/0,74 của hàng.
-  const short = rows.find(x => x.text === 'Ngắn');
-  assert.ok(Math.abs(short.y % ROW - ROW / 2) < 1e-9);
+  t.context.sceneShapes = [note(1, 'Vị trí xe lúc xảy ra tai nạn gần cột mốc số 12 bên trái đường'), note(2, 'Ngắn'), note(3, 'Chú thích cuối')];
+  const rows = texts(draw(t)).filter(x => !['1', '2', '3'].includes(x.text));
+  assert.ok(rows.length >= 4);
+  rows.forEach((r, i) => {
+    // Dòng thứ i luôn ở giữa ô dòng thứ i → vạch kẻ (bội của 27) không bao giờ cắt ngang chữ.
+    assert.ok(Math.abs(r.y - (i + 0.5) * ROW / 2) < 1e-9, `dòng ${i} ở y=${r.y}`);
+    const within = r.y % ROW;
+    assert.ok(within > 3 && within < ROW - 3);
+  });
+  // Chú thích 1 dòng ("Ngắn") không bị căn giữa hàng: nó nằm sát ngay dưới dòng cuối của chú thích trước.
+  const idx = rows.findIndex(r => r.text === 'Ngắn');
+  assert.ok(Math.abs(rows[idx].y - rows[idx - 1].y - ROW / 2) < 1e-9);
 });
 
 test('giấy kẻ ô li: chú thích dài không bị cắt cụt "…" và chiếm nhiều hàng', () => {
