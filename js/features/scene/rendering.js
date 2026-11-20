@@ -767,11 +767,13 @@ function updateSelectionBadge() {
   }
 
   if (btnEdit) {
-    const canEditContent = shape.type === 'text' || shape.type === 'number_note';
+    const canEditContent = shape.type === 'text' || shape.type === 'number_note' || shape.type === 'direction_label';
     btnEdit.style.display = canEditContent ? 'inline-flex' : 'none';
-    btnEdit.title = shape.type === 'number_note' ? 'Sửa nội dung giải thích cho số này' : 'Sửa nội dung hoặc định dạng chữ';
+    btnEdit.title = shape.type === 'number_note' ? 'Sửa nội dung giải thích cho số này'
+      : shape.type === 'direction_label' ? 'Sửa tên nơi đến, cỡ chữ, nét đứt, đảo chiều mũi tên (hoặc nhấp đúp vào hướng đi)'
+      : 'Sửa nội dung hoặc định dạng chữ';
     const editLabel = document.getElementById('btnEditShapeLabel');
-    if (editLabel) editLabel.textContent = shape.type === 'number_note' ? 'Sửa giải thích' : 'Sửa chữ';
+    if (editLabel) editLabel.textContent = shape.type === 'number_note' ? 'Sửa giải thích' : shape.type === 'direction_label' ? 'Sửa hướng đi' : 'Sửa chữ';
   }
   if (btnEditTrafficSign) {
     btnEditTrafficSign.style.display = isTrafficSignPostType(shape.type) ? 'inline-flex' : 'none';

@@ -205,5 +205,7 @@ function editSelectedTextShape() {
     openSceneTextModal(shape);
   } else if (shape && shape.type === 'number_note') {
     openSceneNumberNoteModal(shape);
+  } else if (shape && shape.type === 'direction_label' && typeof openSceneDirectionEditor === 'function') {
+    openSceneDirectionEditor(shape, false);
   }
 }
