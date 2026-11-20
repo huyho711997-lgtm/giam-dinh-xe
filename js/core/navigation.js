@@ -102,7 +102,7 @@
         { label: 'Nghiệp vụ', items: [
           { tab: 'field_reimbursements', title: 'Hiện trường', icon: 'field', show: hasUserPermission('field_reimb', 'view') },
           { tab: 'rescue_cost', title: 'Chi phí cứu hộ', icon: 'rescue', show: hasUserPermission('rescue_cost', 'view') },
-          // Trang vẽ sơ đồ độc lập (không cần mở hồ sơ): mở ở thẻ mới để không rời phiên làm việc hiện tại.
+          // Trang vẽ sơ đồ độc lập (không cần mở hồ sơ): mở ngay trong thẻ hiện tại (nút X trên trang đó quay về app).
           { tab: 'scene_standalone', title: 'Vẽ sơ đồ hiện trường', icon: 'scene', show: showList || showPending, href: 'so-do-hien-truong.html' },
           { tab: 'contacts', title: 'Danh bạ nội bộ', icon: 'contacts', show: hasUserPermission('contacts', 'view') },
           { tab: 'shared_forms', title: 'Biểu mẫu dùng chung', icon: 'forms', show: hasUserPermission('shared_forms', 'view') }
@@ -186,8 +186,8 @@
               <div class="app-sidebar-group-label" aria-hidden="true">${group.label}</div>
               ${group.items.map(item => {
                 const active = isAppSidebarItemActive(item);
-                const action = item.href ? `window.open('${item.href}','_blank','noopener')` : `navigateHeaderTab('${item.tab}')`;
-                return `<button type="button" class="app-sidebar-link${active ? ' is-active' : ''}" data-tab="${item.tab}" onclick="${action}" title="${item.title}${item.href ? ' (mở ở thẻ mới)' : ''}" ${active ? 'aria-current="page"' : ''}>
+                const action = item.href ? `window.location.href='${item.href}'` : `navigateHeaderTab('${item.tab}')`;
+                return `<button type="button" class="app-sidebar-link${active ? ' is-active' : ''}" data-tab="${item.tab}" onclick="${action}" title="${item.title}" ${active ? 'aria-current="page"' : ''}>
                   <span class="app-sidebar-ico">${appSidebarIcon(item.icon)}</span>
                   <span class="app-sidebar-link-text">${item.title}</span>
                   ${item.badge ? `<span class="app-sidebar-badge">${item.badge}</span>` : ''}

@@ -103,7 +103,7 @@ Danh mục Drive không có API key là bản chụp metadata tại thời đi�
 
 ## Trang vẽ sơ đồ hiện trường độc lập
 
-`so-do-hien-truong.html` (menu bên → Nghiệp vụ → "Vẽ sơ đồ hiện trường", mở ở thẻ mới) cho phép vẽ, in và in lên giấy ký sẵn mà không cần mở hồ sơ, không cần đăng nhập. Dùng lại đúng các module trong `js/features/scene/`; `js/features/scene/standalone.js` thay phần lưu theo hồ sơ bằng: tự lưu nháp trong localStorage (khoá `sceneStandalone.v1`, chỉ nằm trên máy/trình duyệt đang dùng), "Lưu file"/"Mở file" (`.json`) và "Xuất ảnh" PNG.
+`so-do-hien-truong.html` (menu bên → Nghiệp vụ → "Vẽ sơ đồ hiện trường", mở ngay trong thẻ hiện tại; nút X trên trang đó quay về app) cho phép vẽ, in và in lên giấy ký sẵn mà không cần mở hồ sơ, không cần đăng nhập. Dùng lại đúng các module trong `js/features/scene/`; `js/features/scene/standalone.js` thay phần lưu theo hồ sơ bằng: tự lưu nháp trong localStorage (khoá `sceneStandalone.v1`, chỉ nằm trên máy/trình duyệt đang dùng), "Lưu file"/"Mở file" (`.json`) và "Xuất ảnh" PNG.
 
 - Giao diện trình vẽ nằm giữa hai dấu `SCENE-EDITOR:BEGIN/END` trong `index.html` và được sao sang trang này. Sau khi sửa khối đó hoặc đổi `?v=` của file vẽ trong `index.html`, chạy `npm run sync:scene-page` (test `tests/scene-standalone.test.mjs` báo lỗi nếu quên).
 - Sơ đồ vẽ ở trang này chưa gắn vào hồ sơ nào; muốn đưa vào hồ sơ, mở file `.json` trong trình vẽ của hồ sơ chưa được hỗ trợ — hiện chỉ dùng "Xuất ảnh"/in.

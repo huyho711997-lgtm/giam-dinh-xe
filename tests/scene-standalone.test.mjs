@@ -30,10 +30,11 @@ test('trang vẽ độc lập không kéo theo Firebase/đăng nhập', () => {
   assert.ok(!/firebase/i.test(pageHtml.replace(/<!-- SCENE-EDITOR:BEGIN[\s\S]*SCENE-EDITOR:END -->/, '')));
 });
 
-test('menu bên của app có lối vào trang vẽ độc lập (mở thẻ mới)', () => {
+test('menu bên của app có lối vào trang vẽ độc lập (mở ngay trong thẻ hiện tại)', () => {
   const nav = read('js/core/navigation.js');
   assert.match(nav, /tab: 'scene_standalone'[^}]*href: 'so-do-hien-truong\.html'/);
-  assert.match(nav, /window\.open\('\$\{item\.href\}','_blank','noopener'\)/);
+  assert.match(nav, /window\.location\.href='\$\{item\.href\}'/);
+  assert.ok(!/window\.open\('\$\{item\.href\}'/.test(nav), 'không mở thẻ mới');
 });
 
 // ---- Bộ chuyển đổi ----
