@@ -828,10 +828,11 @@
               </dl>
               <strong class="scene-head-help-sub">Chọn nhanh công cụ</strong>
               <dl>
-                <div><dt><kbd>P</kbd><kbd>L</kbd><kbd>C</kbd><kbd>A</kbd></dt><dd>Bút · Đường &amp; vạch kẻ · Đường cong · Mũi tên</dd></div>
+                <div><dt><kbd>P</kbd><kbd>L</kbd><kbd>C</kbd><kbd>A</kbd></dt><dd>Bút · Vạch kẻ &amp; mũi tên mặt đường · Đường cong · Mũi tên</dd></div>
                 <div><dt><kbd>S</kbd><kbd>B</kbd></dt><dd>Hình học · Biển báo &amp; tín hiệu</dd></div>
                 <div><dt><kbd>O</kbd><kbd>X</kbd></dt><dd>Ô tô &amp; xe tải · Xe 2 bánh &amp; người</dd></div>
                 <div><dt><kbd>D</kbd><kbd>K</kbd></dt><dd>Dấu vết &amp; vật chứng · Nhà &amp; vật cản</dd></div>
+                <div><dt><kbd>J</kbd><kbd>Y</kbd></dt><dd>Nút giao &amp; đường sắt · Lề đường &amp; thoát nước</dd></div>
                 <div><dt><kbd>H</kbd><kbd>G</kbd></dt><dd>Hạ tầng đường bộ · Cảnh quan &amp; địa hình</dd></div>
                 <div><dt><kbd>M</kbd><kbd>T</kbd><kbd>N</kbd><kbd>E</kbd></dt><dd>Đo · Chữ · Chú thích số · Tẩy</dd></div>
                 <div><dt>Nhấn lại</dt><dd>Phím nhóm dùng lại công cụ gần nhất của nhóm đó</dd></div>
@@ -907,14 +908,14 @@
           <span class="tool-rail-label">Bút vẽ tự do</span></button>
 
           <!-- Nhóm: Đường & vạch kẻ -->
-          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_road_line" data-group="road_line" data-tool="road_line" data-shortcut="L" aria-keyshortcuts="L" title="Đường & vạch kẻ — phím L (Vạch liền/đứt, lề đường, ngã tư, vạch người đi bộ)" onclick="toggleToolSubmenu(event, 'road_line')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_road_line" data-group="road_line" data-tool="road_line" data-shortcut="L" aria-keyshortcuts="L" title="Vạch kẻ & mũi tên mặt đường — phím L (Vạch liền/đứt, vạch người đi bộ, mũi tên thẳng/trái/phải/quay đầu)" onclick="toggleToolSubmenu(event, 'road_line')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
             <span class="group-tool-icon" id="groupIcon_road_line" style="display: grid; place-items: center; pointer-events: none;">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line></svg>
             </span>
             <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
               <polygon points="10,0 10,10 0,10"></polygon>
             </svg>
-          <span class="tool-rail-label">Đường & vạch kẻ</span></button>
+          <span class="tool-rail-label">Vạch kẻ & mũi tên đường</span></button>
 
           <!-- Nhóm: Đường cong -->
           <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_curve" data-group="curve" data-tool="curve" data-shortcut="C" aria-keyshortcuts="C" title="Đường cong — phím C (Nhấp để đổi nét liền / đứt)" onclick="toggleToolSubmenu(event, 'curve')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
@@ -1007,6 +1008,26 @@
           <div class="scene-tool-separator" aria-hidden="true"></div>
 
           <div class="scene-tool-section-label">Hạ tầng &amp; cảnh quan</div>
+
+          <!-- Nhóm: Nút giao & đường sắt -->
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_junction" data-group="junction" data-tool="road_intersection" data-shortcut="J" aria-keyshortcuts="J" title="Nút giao & đường sắt — phím J (Ngã tư, vòng xuyến, đảo giao thông, đường sắt, thanh chắn tàu)" onclick="toggleToolSubmenu(event, 'junction')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+            <span class="group-tool-icon" id="groupIcon_junction" style="display: grid; place-items: center; pointer-events: none;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 2v6H2M16 2v6h6M2 16h6v6M22 16h-6v6"></path><path d="M12 2v5M12 17v5M2 12h5M17 12h5" stroke-width="1.3" stroke-dasharray="2 2"></path></svg>
+            </span>
+            <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
+              <polygon points="10,0 10,10 0,10"></polygon>
+            </svg>
+          <span class="tool-rail-label">Nút giao & đường sắt</span></button>
+
+          <!-- Nhóm: Lề đường & thoát nước -->
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_roadside" data-group="roadside" data-tool="road_edge" data-shortcut="Y" aria-keyshortcuts="Y" title="Lề đường & thoát nước — phím Y (Lề đường, vỉa hè, mương, cống)" onclick="toggleToolSubmenu(event, 'roadside')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+            <span class="group-tool-icon" id="groupIcon_roadside" style="display: grid; place-items: center; pointer-events: none;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="3" y1="8" x2="21" y2="8"></line><line x1="3" y1="16" x2="21" y2="16"></line><path d="M5 8l4 8M11 8l4 8M17 8l4 8" stroke-width="1.2"></path></svg>
+            </span>
+            <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
+              <polygon points="10,0 10,10 0,10"></polygon>
+            </svg>
+          <span class="tool-rail-label">Lề đường & thoát nước</span></button>
 
           <!-- Nhóm: Hạ tầng đường bộ -->
           <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_road_assets" data-group="road_assets" data-tool="guardrail" data-shortcut="H" aria-keyshortcuts="H" title="Hạ tầng đường bộ — phím H (Hộ lan, dải phân cách, trạm thu phí, cầu, trụ điện)" onclick="toggleToolSubmenu(event, 'road_assets')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
@@ -2047,16 +2068,17 @@
 <link rel="stylesheet" href="css/scene-report.css?v=20261113-sr-3">
 <script src="js/features/scene/geometry.js?v=20261119-gresize-1"></script>
   <script src="js/features/scene/objects.js?v=20261120-signs-1"></script>
-  <script src="js/features/scene/traffic-signs.js?v=20261120-signs-1"></script>
-  <script src="js/features/scene/rendering.js?v=20261120-signs-1"></script>
+  <script src="js/features/scene/traffic-signs.js?v=20261120-road-1"></script>
+  <script src="js/features/scene/rendering.js?v=20261120-road-1"></script>
   <script src="js/features/scene/symbol-legend.js?v=20261120-ruled-2"></script>
-  <script src="js/features/scene/interaction-export.js?v=20261120-signs-1"></script>
+  <script src="js/features/scene/interaction-export.js?v=20261120-road-1"></script>
   <script src="js/features/scene/terrain-assets.js?v=20261111-terrain-1"></script>
   <script src="js/features/scene/goods-assets.js?v=20261119-goods-2"></script>
   <script src="js/features/scene/direction-label.js?v=20261119-dir-1"></script>
   <script src="js/features/scene/building-assets.js?v=20261119-lines-1"></script>
   <script src="js/features/scene/bridge-assets.js?v=20261120-bridge-1"></script>
   <script src="js/features/scene/vehicle-assets.js?v=20261120-vehicle-1"></script>
+  <script src="js/features/scene/road-assets.js?v=20261120-road-2"></script>
   <script src="js/features/scene/group-resize.js?v=20261120-marker-1"></script>
   <script src="js/features/scene/selection-marquee.js?v=20261119-marquee-1"></script>
   <script src="js/features/scene/signed-form-print.js?v=20261120-margin-1"></script>
@@ -2068,7 +2090,7 @@
   <script src="js/features/claims/inspection-register.js"></script>
   <script src="js/features/workshop/presentation.js"></script>
   <script src="js/features/workshop/quick-actions.js?v=20261026-ws-3"></script>
-  <script src="js/features/scene/runtime.js?v=20261120-signs-1"></script>
+  <script src="js/features/scene/runtime.js?v=20261120-road-1"></script>
   <script src="js/features/documents/hsbt.js"></script>
   <script src="js/features/documents/storage.js?v=20261024-1"></script>
   <script src="js/features/documents/autosave.js"></script>

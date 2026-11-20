@@ -1057,7 +1057,21 @@ function isSceneryAssetType(type) {
     type === 'tree' || type === 'median_tree' || type === 'rice_field' || type === 'forest' ||
     type === 'rock_field' || type === 'hill' || type === 'goods_display' || type === 'goods_damaged' || type === 'house' ||
     type === 'truck' || type === 'toll_station' || type === 'bridge' ||
-    (typeof isSceneVehicleType === 'function' && isSceneVehicleType(type));   // xe khách, bán tải, cứu thương, cứu hộ, xe đạp
+    getSceneExtraAssetSpec(type) !== null;   // xe mới (vehicle-assets.js) và ký hiệu đường bộ (road-assets.js)
+}
+
+
+// Tra cứu cỡ/tỉ lệ/tên của các vật cảnh quan khai báo ở module riêng (xe, ký hiệu đường bộ). Chưa nạp module thì trả null.
+function getSceneExtraAssetSpec(type) {
+  if (typeof getSceneVehicleSpec === 'function') {
+    const spec = getSceneVehicleSpec(type);
+    if (spec) return spec;
+  }
+  if (typeof getSceneRoadAssetSpec === 'function') {
+    const spec = getSceneRoadAssetSpec(type);
+    if (spec) return spec;
+  }
+  return null;
 }
 
 
@@ -1388,8 +1402,8 @@ function getSceneryAspectRatio(type) {
   if (type === 'truck') return 0.4;
   if (type === 'toll_station') return 0.62;
   if (type === 'bridge') return 0.22;   // bề rộng mặt cầu / chiều dài (bridge-assets.js)
-  const vehicleSpec = typeof getSceneVehicleSpec === 'function' ? getSceneVehicleSpec(type) : null;
-  if (vehicleSpec) return vehicleSpec.aspect;   // vehicle-assets.js
+  const extraSpec = getSceneExtraAssetSpec(type);
+  if (extraSpec) return extraSpec.aspect;   // vehicle-assets.js
   return 0.5;
 }
 
@@ -1413,8 +1427,8 @@ function getSceneryMinimumLength(type) {
   if (type === 'truck') return 60;
   if (type === 'toll_station') return 90;
   if (type === 'bridge') return 140;    // bấm / kéo ngắn vẫn ra một cây cầu đủ rõ; thu nhỏ tay được tới 50
-  const vehicleSpec = typeof getSceneVehicleSpec === 'function' ? getSceneVehicleSpec(type) : null;
-  if (vehicleSpec) return vehicleSpec.minLength;
+  const extraSpec = getSceneExtraAssetSpec(type);
+  if (extraSpec) return extraSpec.minLength;
   return 24;
 }
 
@@ -1424,8 +1438,8 @@ function getSceneryMinimumLength(type) {
 function getSceneryResizeMinLength(type) {
   if (type === 'road_boundary_marker') return 12;
   if (type === 'bridge') return 50;
-  const vehicleSpec = typeof getSceneVehicleSpec === 'function' ? getSceneVehicleSpec(type) : null;
-  if (vehicleSpec) return vehicleSpec.resizeMin;   // xe thu nhỏ tay được nhỏ hơn cỡ mặc định
+  const extraSpec = getSceneExtraAssetSpec(type);
+  if (extraSpec) return extraSpec.resizeMin;   // xe thu nhỏ tay được nhỏ hơn cỡ mặc định
   return getSceneryMinimumLength(type);
 }
 

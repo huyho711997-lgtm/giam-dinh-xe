@@ -1400,6 +1400,9 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
   } else if (typeof isSceneTerrainType === 'function' && isSceneTerrainType(type)) {
     // Bãi đá / đồi núi: xem terrain-assets.js
     drawSceneryTerrain(ctx, type, x, y, color, width, w, h, shapeData);
+  } else if (typeof isSceneRoadAssetType === 'function' && isSceneRoadAssetType(type)) {
+    // Mũi tên mặt đường, đảo giao thông, vòng xuyến, đường sắt, vỉa hè, mương, cống: xem road-assets.js
+    drawSceneRoadAsset(ctx, type, x, y, color, width, w, h, shapeData);
   } else if (typeof isSceneVehicleType === 'function' && isSceneVehicleType(type)) {
     // Xe khách, bán tải, cứu thương, cứu hộ, xe đạp: xem vehicle-assets.js
     drawSceneVehicle(ctx, type, x, y, color, width, w, h, shapeData);

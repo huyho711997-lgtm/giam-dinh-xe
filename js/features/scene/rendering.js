@@ -664,7 +664,10 @@ function getShapeDisplayName(shape) {
     case 'tire_track': return shape.railStyle === 'guardrail' ? 'Hộ lan tôn sóng' : 'Vệt bánh xe';
     case 'pen': return 'Nét vẽ tự do';
     case 'eraser': return 'Vết xóa';
-    default: return 'Đối tượng';
+    default: {
+      const extraSpec = typeof getSceneExtraAssetSpec === 'function' ? getSceneExtraAssetSpec(shape.type) : null;
+      return extraSpec ? extraSpec.name : 'Đối tượng';
+    }
   }
 }
 

@@ -167,6 +167,17 @@ const TOOL_ICONS_MAP = {
   ambulance: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="1.5"></rect><path d="M17.5 7l4.5 5-4.5 5"></path><path d="M8.5 9v6M5.5 12h6"></path></svg>',
   tow_truck: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="14" height="10" rx="1"></rect><line x1="4" y1="10" x2="14" y2="10"></line><line x1="4" y1="14" x2="14" y2="14"></line><rect x="17.5" y="8" width="4.5" height="8" rx="1"></rect></svg>',
   bicycle: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"></line><rect x="2" y="10.5" width="5" height="3" rx="1.5"></rect><rect x="17" y="10.5" width="5" height="3" rx="1.5"></rect><line x1="15" y1="7" x2="15" y2="17"></line></svg>',
+  road_arrow_straight: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="15" y2="12"></line><polygon points="14,7 21,12 14,17" fill="currentColor"></polygon></svg>',
+  road_arrow_left: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19h8V10"></path><polygon points="8.5,9.5 13,3 17.5,9.5" fill="currentColor"></polygon></svg>',
+  road_arrow_right: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h8v9"></path><polygon points="8.5,14.5 13,21 17.5,14.5" fill="currentColor"></polygon></svg>',
+  road_arrow_uturn: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20v-9a5 5 0 0 1 10 0v2"></path><polygon points="12.5,12.5 16,17.5 19.5,12.5" fill="currentColor"></polygon></svg>',
+  traffic_island: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="19" height="10" rx="5"></rect><path d="M8 16.5l4-9M12.5 16.5l4-9M4.5 14.5l2.5-5.5"></path></svg>',
+  roundabout: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="3.3"></circle><circle cx="12" cy="12" r="6.2" stroke-dasharray="2 2"></circle></svg>',
+  railway: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="9" x2="22" y2="9"></line><line x1="2" y1="15" x2="22" y2="15"></line><path d="M5 7v10M9 7v10M13 7v10M17 7v10M21 7v10"></path></svg>',
+  rail_barrier: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="5" height="8" rx="1"></rect><rect x="7" y="10.5" width="15" height="3"></rect><path d="M11 10.5v3M15 10.5v3M19 10.5v3"></path></svg>',
+  sidewalk: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="8" x2="22" y2="8"></line><line x1="2" y1="16" x2="22" y2="16"></line><path d="M7 8v8M12 8v8M17 8v8"></path></svg>',
+  ditch: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="7" x2="22" y2="7"></line><line x1="2" y1="17" x2="22" y2="17"></line><path d="M2 12c3-3 5 3 8 0s5 3 8 0 3-1.5 4 0"></path></svg>',
+  culvert: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="4" y2="18"></line><line x1="20" y1="6" x2="20" y2="18"></line><line x1="4" y1="8.5" x2="20" y2="8.5" stroke-dasharray="3 2"></line><line x1="4" y1="15.5" x2="20" y2="15.5" stroke-dasharray="3 2"></line></svg>',
   truck: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="13" height="12" rx="1"></rect><line x1="6.5" y1="8" x2="6.5" y2="16"></line><line x1="10.5" y1="8" x2="10.5" y2="16"></line><rect x="16" y="7" width="6" height="10" rx="1"></rect><path d="M18.5 7l3.5 5-3.5 5"></path></svg>',
   bridge: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5h20M2 15.5h20"></path><path d="M2 6v12M22 6v12" stroke-width="2.2"></path><path d="M6.5 8.5v7M11 8.5v7M13 8.5v7M17.5 8.5v7" stroke-width="1.1"></path><rect x="9.2" y="10.2" width="5.6" height="3.6" stroke-dasharray="1.6 1.4" stroke-width="1.1"></rect></svg>',
   toll_station: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="1" stroke-dasharray="2.5 2"></rect><rect x="3" y="4" width="2.2" height="16" rx="1"></rect><rect x="10.9" y="4" width="2.2" height="16" rx="1"></rect><rect x="18.8" y="4" width="2.2" height="16" rx="1"></rect><path d="M5.5 9h4M13.4 9h4"></path><path d="M8 19v-4M7 16l1-1 1 1M15.9 19v-4M14.9 16l1-1 1 1"></path></svg>',
@@ -212,18 +223,20 @@ const TOOL_ICONS_MAP = {
 //   Vẽ nét      : road_line, curve, arrow
 //   Hình & ký hiệu : shape_symbols, traffic_signs
 //   Hiện trường : scene_object, two_wheel, evidence, structures
-//   Hạ tầng & cảnh quan : road_assets, landscape
+//   Hạ tầng & cảnh quan : junction, roadside, road_assets, landscape
 const TOOL_GROUPS_CONFIG = {
   road_line: {
     id: 'road_line',
-    name: 'Đường & vạch kẻ',
+    name: 'Vạch kẻ & mũi tên mặt đường',
     defaultTool: 'road_line',
     tools: [
       { id: 'road_line', name: 'Vạch kẻ nét liền', desc: 'Vạch tim đường, vạch giới hạn phần xe chạy' },
       { id: 'road_dashed', name: 'Vạch kẻ nét đứt', desc: 'Vạch phân chia làn đường đứt' },
-      { id: 'road_edge', name: 'Lề đường', desc: 'Hai mép song song có vạch nối, dùng thể hiện lề hoặc bó vỉa' },
-      { id: 'road_intersection', name: 'Ngã tư đường', desc: 'Mẫu 4 nhánh có mép đường và vạch tim; nhấp để đặt' },
-      { id: 'crosswalk', name: 'Vạch người đi bộ', desc: 'Kéo để tạo cụm vạch sang đường' }
+      { id: 'crosswalk', name: 'Vạch người đi bộ', desc: 'Kéo để tạo cụm vạch sang đường' },
+      { id: 'road_arrow_straight', name: 'Mũi tên mặt đường — đi thẳng', desc: 'Kéo theo chiều xe chạy; mũi tên sơn trên mặt đường' },
+      { id: 'road_arrow_left', name: 'Mũi tên mặt đường — rẽ trái', desc: 'Kéo theo chiều xe chạy; nhánh rẽ về bên trái' },
+      { id: 'road_arrow_right', name: 'Mũi tên mặt đường — rẽ phải', desc: 'Kéo theo chiều xe chạy; nhánh rẽ về bên phải' },
+      { id: 'road_arrow_uturn', name: 'Mũi tên mặt đường — quay đầu', desc: 'Kéo theo chiều xe chạy; vòng ngược lại phía sau' }
     ]
   },
   curve: {
@@ -315,6 +328,29 @@ const TOOL_GROUPS_CONFIG = {
       { id: 'rect', name: 'Khối hộp / Vật cản', desc: 'Khung chữ nhật rỗng cho vật cản; hộ lan dùng công cụ Hộ lan tôn sóng' }
     ]
   },
+  junction: {
+    id: 'junction',
+    name: 'Nút giao & đường sắt',
+    defaultTool: 'road_intersection',
+    tools: [
+      { id: 'road_intersection', name: 'Ngã tư đường', desc: 'Mẫu 4 nhánh có mép đường và vạch tim; nhấp để đặt' },
+      { id: 'roundabout', name: 'Vòng xuyến', desc: 'Đảo tròn giữa, vạch tim đứt, mũi tên ngược chiều kim đồng hồ; kéo để đổi cỡ' },
+      { id: 'traffic_island', name: 'Đảo giao thông', desc: 'Đảo dẫn hướng có bó vỉa và gạch chéo; kéo theo chiều dài đảo' },
+      { id: 'railway', name: 'Đường sắt', desc: 'Hai ray song song có tà vẹt; kéo dọc theo tuyến' },
+      { id: 'rail_barrier', name: 'Thanh chắn tàu', desc: 'Hộp đế và cần chắn sọc; kéo theo chiều cần chắn' }
+    ]
+  },
+  roadside: {
+    id: 'roadside',
+    name: 'Lề đường & thoát nước',
+    defaultTool: 'road_edge',
+    tools: [
+      { id: 'road_edge', name: 'Lề đường', desc: 'Hai mép song song có vạch nối, dùng thể hiện lề hoặc bó vỉa' },
+      { id: 'sidewalk', name: 'Vỉa hè', desc: 'Hai bó vỉa và mạch gạch lát; kéo dọc theo vỉa hè' },
+      { id: 'ditch', name: 'Mương thoát nước', desc: 'Hai bờ mương và đường nước lượn sóng' },
+      { id: 'culvert', name: 'Cống ngang đường', desc: 'Ống nét đứt dưới mặt đường, hai đầu có tường đầu cống' }
+    ]
+  },
   road_assets: {
     id: 'road_assets',
     name: 'Hạ tầng đường bộ',
@@ -356,6 +392,8 @@ const groupActiveTools = {
   two_wheel: 'bike',
   evidence: 'xmark',
   structures: 'house',
+  junction: 'road_intersection',
+  roadside: 'road_edge',
   road_assets: 'guardrail',
   landscape: 'tree'
 };
@@ -451,6 +489,8 @@ const SCENE_TOOL_SHORTCUTS = Object.freeze({
   x: { group: 'two_wheel' },
   d: { group: 'evidence' },
   k: { group: 'structures' },
+  j: { group: 'junction' },
+  y: { group: 'roadside' },
   h: { group: 'road_assets' },
   g: { group: 'landscape' },
   m: { tool: 'measure' },
@@ -460,7 +500,7 @@ const SCENE_TOOL_SHORTCUTS = Object.freeze({
 });
 
 
-// Keyboard shortcuts: V/P/L/C/A/S/B/O/X/D/K/H/G/M/T/N/E (tools), R / Shift+R
+// Keyboard shortcuts: V/P/L/C/A/S/B/O/X/D/K/J/Y/H/G/M/T/N/E (tools), R / Shift+R
 // (rotate), Esc (cancel), Delete/Backspace (delete), arrows (nudge).
 document.addEventListener('keydown', function(e) {
   const modal = document.getElementById('sceneDrawingModalOverlay');

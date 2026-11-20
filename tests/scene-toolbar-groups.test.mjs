@@ -29,7 +29,9 @@ const LEGACY_TOOLS = [
   'utility_pole', 'road_boundary_marker', 'pothole', 'tree', 'median_tree', 'rice_field', 'forest', 'rock_field', 'hill',
   // Thêm sau đợt chia nhóm:
   'bus', 'pickup', 'ambulance', 'tow_truck', 'bicycle',
-  'sign_square_post', 'sign_rect_post', 'sign_octagon_post'
+  'sign_square_post', 'sign_rect_post', 'sign_octagon_post',
+  'road_arrow_straight', 'road_arrow_left', 'road_arrow_right', 'road_arrow_uturn', 'traffic_island', 'roundabout',
+  'railway', 'rail_barrier', 'sidewalk', 'ditch', 'culvert'
 ];
 
 test('mỗi công cụ thuộc đúng một nhóm và không mất công cụ nào sau khi chia lại', () => {
@@ -57,6 +59,13 @@ test('mỗi công cụ có biểu tượng; mỗi nhóm có công cụ mặc đ�
 test('các nhóm theo chức năng: đúng nơi đặt của những công cụ hay bị đặt nhầm', () => {
   const where = id => groups.find(g => g.tools.some(t => t.id === id)).id;
   assert.equal(where('crosswalk'), 'road_line');
+  assert.equal(where('road_arrow_left'), 'road_line');
+  assert.equal(where('road_intersection'), 'junction');
+  assert.equal(where('roundabout'), 'junction');
+  assert.equal(where('railway'), 'junction');
+  assert.equal(where('road_edge'), 'roadside');
+  assert.equal(where('sidewalk'), 'roadside');
+  assert.equal(where('culvert'), 'roadside');
   assert.equal(where('traffic_light'), 'traffic_signs');
   assert.equal(where('sign_octagon_post'), 'traffic_signs');
   assert.equal(where('sign_rect_post'), 'traffic_signs');
@@ -87,7 +96,7 @@ test('phím tắt: không trùng, mỗi nhóm có đúng một phím, giữ L/C/
   const byGroup = new Map();
   for (const [k, v] of Object.entries(sc)) if (v.group) byGroup.set(v.group, (byGroup.get(v.group) || []).concat(k));
   for (const g of groups) assert.equal((byGroup.get(g.id) || []).length, 1, `${g.id} cần đúng 1 phím`);
-  for (const [k, id] of Object.entries({ l: 'road_line', c: 'curve', a: 'arrow', s: 'shape_symbols', o: 'scene_object', h: 'road_assets', x: 'two_wheel' })) {
+  for (const [k, id] of Object.entries({ l: 'road_line', c: 'curve', a: 'arrow', s: 'shape_symbols', o: 'scene_object', h: 'road_assets', x: 'two_wheel', j: 'junction', y: 'roadside' })) {
     assert.equal(sc[k].group, id);
   }
 });
