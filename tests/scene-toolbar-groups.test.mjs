@@ -31,7 +31,7 @@ const LEGACY_TOOLS = [
   'bus', 'pickup', 'ambulance', 'tow_truck', 'bicycle',
   'sign_square_post', 'sign_rect_post', 'sign_octagon_post',
   'road_arrow_straight', 'road_arrow_left', 'road_arrow_right', 'road_arrow_uturn', 'traffic_island', 'roundabout',
-  'railway', 'rail_barrier', 'sidewalk', 'ditch', 'culvert'
+  'railway', 'rail_barrier', 'sidewalk', 'ditch', 'culvert', 'north_arrow', 'scale_bar'
 ];
 
 test('mỗi công cụ thuộc đúng một nhóm và không mất công cụ nào sau khi chia lại', () => {
@@ -66,6 +66,8 @@ test('các nhóm theo chức năng: đúng nơi đặt của những công cụ 
   assert.equal(where('road_edge'), 'roadside');
   assert.equal(where('sidewalk'), 'roadside');
   assert.equal(where('culvert'), 'roadside');
+  assert.equal(where('north_arrow'), 'annotation_marks');
+  assert.equal(where('scale_bar'), 'annotation_marks');
   assert.equal(where('traffic_light'), 'traffic_signs');
   assert.equal(where('sign_octagon_post'), 'traffic_signs');
   assert.equal(where('sign_rect_post'), 'traffic_signs');

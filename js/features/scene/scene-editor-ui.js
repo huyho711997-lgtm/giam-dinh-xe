@@ -247,7 +247,8 @@ function setSelectedSceneryAreaShape(kind) {
 // Trước đây areaLabel được vẽ nhưng không có chỗ nhập → người dùng không đặt được tên.
 const SCENE_AREA_LABEL_DEFAULTS = {
   house: '', bridge: 'CẦU', forest: 'RỪNG CÂY', rice_field: 'ĐỒNG LÚA', rock_field: 'BÃI ĐÁ',
-  hill: 'ĐỒI NÚI', goods_display: 'HÀNG HÓA', goods_damaged: 'HÀNG HÓA ĐỔ VỠ'
+  hill: 'ĐỒI NÚI', goods_display: 'HÀNG HÓA', goods_damaged: 'HÀNG HÓA ĐỔ VỠ',
+  scale_bar: '10 m'   // chiều dài thước tỷ lệ (road-assets.js)
 };
 function getSelectedAreaLabelTarget() {
   if (typeof sceneShapes === 'undefined' || !selectedShapeId) return null;

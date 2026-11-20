@@ -178,6 +178,8 @@ const TOOL_ICONS_MAP = {
   sidewalk: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="8" x2="22" y2="8"></line><line x1="2" y1="16" x2="22" y2="16"></line><path d="M7 8v8M12 8v8M17 8v8"></path></svg>',
   ditch: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="2" y1="7" x2="22" y2="7"></line><line x1="2" y1="17" x2="22" y2="17"></line><path d="M2 12c3-3 5 3 8 0s5 3 8 0 3-1.5 4 0"></path></svg>',
   culvert: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="4" y2="18"></line><line x1="20" y1="6" x2="20" y2="18"></line><line x1="4" y1="8.5" x2="20" y2="8.5" stroke-dasharray="3 2"></line><line x1="4" y1="15.5" x2="20" y2="15.5" stroke-dasharray="3 2"></line></svg>',
+  north_arrow: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="12" r="7"></circle><path d="M17 12L6 7l4 5-4 5z" fill="currentColor" fill-opacity=".25"></path><path d="M20 9v6M20 9l2 3" stroke-width="1.4"></path></svg>',
+  scale_bar: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="12" width="20" height="5" rx=".5"></rect><rect x="2" y="12" width="5" height="5" fill="currentColor"></rect><rect x="12" y="12" width="5" height="5" fill="currentColor"></rect><path d="M2 9V6M22 9V6"></path></svg>',
   truck: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="13" height="12" rx="1"></rect><line x1="6.5" y1="8" x2="6.5" y2="16"></line><line x1="10.5" y1="8" x2="10.5" y2="16"></line><rect x="16" y="7" width="6" height="10" rx="1"></rect><path d="M18.5 7l3.5 5-3.5 5"></path></svg>',
   bridge: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5h20M2 15.5h20"></path><path d="M2 6v12M22 6v12" stroke-width="2.2"></path><path d="M6.5 8.5v7M11 8.5v7M13 8.5v7M17.5 8.5v7" stroke-width="1.1"></path><rect x="9.2" y="10.2" width="5.6" height="3.6" stroke-dasharray="1.6 1.4" stroke-width="1.1"></rect></svg>',
   toll_station: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="1" stroke-dasharray="2.5 2"></rect><rect x="3" y="4" width="2.2" height="16" rx="1"></rect><rect x="10.9" y="4" width="2.2" height="16" rx="1"></rect><rect x="18.8" y="4" width="2.2" height="16" rx="1"></rect><path d="M5.5 9h4M13.4 9h4"></path><path d="M8 19v-4M7 16l1-1 1 1M15.9 19v-4M14.9 16l1-1 1 1"></path></svg>',
@@ -224,6 +226,7 @@ const TOOL_ICONS_MAP = {
 //   Hình & ký hiệu : shape_symbols, traffic_signs
 //   Hiện trường : scene_object, two_wheel, evidence, structures
 //   Hạ tầng & cảnh quan : junction, roadside, road_assets, landscape
+//   Ghi chú     : annotation_marks (+ đo, chữ, chú thích số, tẩy là công cụ lẻ)
 const TOOL_GROUPS_CONFIG = {
   road_line: {
     id: 'road_line',
@@ -377,6 +380,15 @@ const TOOL_GROUPS_CONFIG = {
       { id: 'rock_field', name: 'Bãi đá', desc: 'Khối đá góc cạnh; kéo rộng để thêm đá, chọn "Vẽ ranh giới" để bám theo sườn núi' },
       { id: 'hill', name: 'Đồi núi', desc: 'Đường đồng mức quanh đỉnh; chọn "Vẽ ranh giới" để bám theo địa hình thật' }
     ]
+  },
+  annotation_marks: {
+    id: 'annotation_marks',
+    name: 'Ký hiệu bản vẽ',
+    defaultTool: 'north_arrow',
+    tools: [
+      { id: 'north_arrow', name: 'Hướng Bắc', desc: 'Kéo từ gốc theo hướng Bắc thật của hiện trường; chữ N luôn đứng thẳng' },
+      { id: 'scale_bar', name: 'Thước tỷ lệ', desc: 'Kéo theo chiều dài; chọn thước rồi gõ chiều dài thật (VD: 20 m) ở thanh thuộc tính' }
+    ]
   }
 };
 
@@ -395,7 +407,8 @@ const groupActiveTools = {
   junction: 'road_intersection',
   roadside: 'road_edge',
   road_assets: 'guardrail',
-  landscape: 'tree'
+  landscape: 'tree',
+  annotation_marks: 'north_arrow'
 };
 
 
@@ -493,6 +506,7 @@ const SCENE_TOOL_SHORTCUTS = Object.freeze({
   y: { group: 'roadside' },
   h: { group: 'road_assets' },
   g: { group: 'landscape' },
+  i: { group: 'annotation_marks' },
   m: { tool: 'measure' },
   t: { tool: 'text' },
   n: { tool: 'number_note' },
@@ -500,7 +514,7 @@ const SCENE_TOOL_SHORTCUTS = Object.freeze({
 });
 
 
-// Keyboard shortcuts: V/P/L/C/A/S/B/O/X/D/K/J/Y/H/G/M/T/N/E (tools), R / Shift+R
+// Keyboard shortcuts: V/P/L/C/A/S/B/O/X/D/K/J/Y/H/G/I/M/T/N/E (tools), R / Shift+R
 // (rotate), Esc (cancel), Delete/Backspace (delete), arrows (nudge).
 document.addEventListener('keydown', function(e) {
   const modal = document.getElementById('sceneDrawingModalOverlay');

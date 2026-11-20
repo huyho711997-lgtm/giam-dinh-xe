@@ -56,6 +56,7 @@
                 <div><dt><kbd>J</kbd><kbd>Y</kbd></dt><dd>Nút giao &amp; đường sắt · Lề đường &amp; thoát nước</dd></div>
                 <div><dt><kbd>H</kbd><kbd>G</kbd></dt><dd>Hạ tầng đường bộ · Cảnh quan &amp; địa hình</dd></div>
                 <div><dt><kbd>M</kbd><kbd>T</kbd><kbd>N</kbd><kbd>E</kbd></dt><dd>Đo · Chữ · Chú thích số · Tẩy</dd></div>
+                <div><dt><kbd>I</kbd></dt><dd>Ký hiệu bản vẽ: hướng Bắc · thước tỷ lệ</dd></div>
                 <div><dt>Nhấn lại</dt><dd>Phím nhóm dùng lại công cụ gần nhất của nhóm đó</dd></div>
               </dl>
               <strong class="scene-head-help-sub">Di chuyển vùng nhìn</strong>
@@ -273,6 +274,16 @@
           <div class="scene-tool-separator" aria-hidden="true"></div>
 
           <div class="scene-tool-section-label">Ghi chú</div>
+
+          <!-- Nhóm: Ký hiệu bản vẽ (hướng Bắc, thước tỷ lệ) -->
+          <button class="draw-tool-btn draw-tool-group-btn" id="btnGroup_annotation_marks" data-group="annotation_marks" data-tool="north_arrow" data-shortcut="I" aria-keyshortcuts="I" title="Ký hiệu bản vẽ — phím I (Hướng Bắc, thước tỷ lệ)" onclick="toggleToolSubmenu(event, 'annotation_marks')" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); position: relative; transition: all 0.2s;">
+            <span class="group-tool-icon" id="groupIcon_annotation_marks" style="display: grid; place-items: center; pointer-events: none;">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="12" r="7"></circle><path d="M17 12L6 7l4 5-4 5z" fill="currentColor" fill-opacity=".25"></path><path d="M20 9v6M20 9l2 3" stroke-width="1.4"></path></svg>
+            </span>
+            <svg class="group-dropdown-caret" viewBox="0 0 10 10" width="7" height="7" fill="currentColor" style="position: absolute; bottom: 2px; right: 2px; color: #a0aec0; pointer-events: none; opacity: 0.85;">
+              <polygon points="10,0 10,10 0,10"></polygon>
+            </svg>
+          <span class="tool-rail-label">Hướng Bắc & tỷ lệ</span></button>
 
           <!-- 8. Measure -->
           <button class="draw-tool-btn" data-tool="measure" data-shortcut="M" aria-keyshortcuts="M" title="Đo khoảng cách — phím M (Giữ Shift để vẽ ngang/dọc)" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid transparent; background: transparent; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; color: var(--text-main); transition: all 0.2s;">
@@ -781,7 +792,7 @@
   <script src="js/features/scene/objects.js?v=20261120-signs-1"></script>
   <script src="js/features/scene/traffic-signs.js?v=20261120-road-1"></script>
   <script src="js/features/scene/rendering.js?v=20261120-road-1"></script>
-  <script src="js/features/scene/symbol-legend.js?v=20261120-ruled-2"></script>
+  <script src="js/features/scene/symbol-legend.js?v=20261120-marks-1"></script>
   <script src="js/features/scene/interaction-export.js?v=20261120-road-1"></script>
   <script src="js/features/scene/terrain-assets.js?v=20261111-terrain-1"></script>
   <script src="js/features/scene/goods-assets.js?v=20261119-goods-2"></script>
@@ -789,15 +800,15 @@
   <script src="js/features/scene/building-assets.js?v=20261119-lines-1"></script>
   <script src="js/features/scene/bridge-assets.js?v=20261120-bridge-1"></script>
   <script src="js/features/scene/vehicle-assets.js?v=20261120-vehicle-1"></script>
-  <script src="js/features/scene/road-assets.js?v=20261120-road-2"></script>
+  <script src="js/features/scene/road-assets.js?v=20261120-marks-1"></script>
   <script src="js/features/scene/group-resize.js?v=20261120-marker-1"></script>
   <script src="js/features/scene/selection-marquee.js?v=20261119-marquee-1"></script>
   <script src="js/features/scene/signed-form-print.js?v=20261120-margin-1"></script>
   <script src="js/features/scene/text-editor.js?v=20261120-dir-1"></script>
   <script src="js/features/admin/select-controls.js"></script>
-  <script src="js/features/scene/runtime.js?v=20261120-road-1"></script>
+  <script src="js/features/scene/runtime.js?v=20261120-marks-1"></script>
   <script src="js/features/scene/layer-order.js?v=20261111-layer-1"></script>
-  <script src="js/features/scene/scene-editor-ui.js?v=20261120-bridge-1"></script>
+  <script src="js/features/scene/scene-editor-ui.js?v=20261120-marks-1"></script>
   <script src="js/features/scene/toolbar-ui.js?v=20261120-toolbar-1"></script>
   <script src="js/features/scene/standalone.js?v=20261120-standalone-3"></script>
 </body>

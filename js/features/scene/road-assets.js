@@ -1,3 +1,4 @@
+// Hướng Bắc + thước tỷ lệ (ký hiệu bản vẽ) cũng khai báo ở đây.
 // Ký hiệu đường bộ nhìn từ trên xuống: mũi tên mặt đường, đảo giao thông, vòng xuyến, đường sắt, thanh chắn tàu,
 // vỉa hè, mương thoát nước, cống ngang. Là "vật cảnh quan": kéo để đặt (độ dài + hướng), dùng chung chọn/xoay/co giãn.
 // Hệ toạ độ cục bộ: (x, y) là TÂM, w = chiều dài theo hướng kéo, h = bề ngang; đầu mũi tên = +x.
@@ -13,8 +14,12 @@ const SCENE_ROAD_ASSET_SPECS = {
   rail_barrier:        { name: 'Thanh chắn tàu',               aspect: 0.14, minLength: 70,  resizeMin: 36 },
   sidewalk:            { name: 'Vỉa hè',                       aspect: 0.14, minLength: 100, resizeMin: 40 },
   ditch:               { name: 'Mương thoát nước',             aspect: 0.12, minLength: 100, resizeMin: 40 },
-  culvert:             { name: 'Cống ngang đường',             aspect: 0.22, minLength: 60,  resizeMin: 30 }
+  culvert:             { name: 'Cống ngang đường',             aspect: 0.22, minLength: 60,  resizeMin: 30 },
+  // Ký hiệu bản vẽ (không phải vật thể ngoài hiện trường nên không vào bảng Ký hiệu).
+  north_arrow:         { name: 'Hướng Bắc',                    aspect: 1,    minLength: 56,  resizeMin: 30 },
+  scale_bar:           { name: 'Thước tỷ lệ',                  aspect: 0.2,  minLength: 100, resizeMin: 50 }
 };
+const SCENE_SCALE_BAR_DEFAULT_LABEL = '10 m';
 
 function isSceneRoadAssetType(type) {
   return Object.prototype.hasOwnProperty.call(SCENE_ROAD_ASSET_SPECS, type);
@@ -235,6 +240,57 @@ function drawSceneRoadAsset(ctx, type, x, y, color, width, w, h, shapeData) {
     }
     ctx.stroke();
     ctx.restore();
+  } else if (type === 'north_arrow') {
+    // Hướng Bắc: vòng tròn, mũi tên nửa tô nửa rỗng chỉ về +x (hướng kéo), chữ N luôn đứng thẳng ở đầu mũi tên.
+    const D = Math.min(w, h);
+    const cx = x - D * 0.06;
+    ctx.beginPath();
+    ctx.arc(cx, y, D * 0.3, 0, Math.PI * 2);
+    ctx.lineWidth = thin;
+    ctx.stroke();
+    const tip = [cx + D * 0.24, y], notch = [cx - D * 0.07, y];
+    const wingU = [cx - D * 0.2, y - D * 0.13], wingD = [cx - D * 0.2, y + D * 0.13];
+    ctx.beginPath();
+    ctx.moveTo(tip[0], tip[1]); ctx.lineTo(wingU[0], wingU[1]); ctx.lineTo(notch[0], notch[1]);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(tip[0], tip[1]); ctx.lineTo(wingU[0], wingU[1]); ctx.lineTo(notch[0], notch[1]);
+    ctx.lineTo(wingD[0], wingD[1]);
+    ctx.closePath();
+    ctx.lineWidth = lineW;
+    ctx.stroke();
+    const angle = (shapeData && Number(shapeData.angle)) || 0;
+    ctx.save();
+    ctx.translate(x + D * 0.38, y);
+    ctx.rotate(-angle);   // chữ không xoay theo hướng Bắc
+    ctx.font = `900 ${Math.max(8, D * 0.22)}px Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('N', 0, 0);
+    ctx.restore();
+  } else if (type === 'scale_bar') {
+    // Thước tỷ lệ: thanh chia đoạn đen/trắng, "0" ở đầu trái, độ dài (người dùng đặt, mặc định "10 m") ở đầu phải.
+    const barH = Math.max(3, h * 0.3);
+    const barTop = bottom - barH;
+    const segments = 4;
+    const segW = w / segments;
+    for (let i = 0; i < segments; i++) {
+      if (i % 2 === 0) ctx.fillRect(left + i * segW, barTop, segW, barH);
+    }
+    ctx.strokeRect(left, barTop, w, barH);
+    ctx.beginPath();
+    ctx.moveTo(left, barTop - h * 0.14); ctx.lineTo(left, barTop);
+    ctx.moveTo(right, barTop - h * 0.14); ctx.lineTo(right, barTop);
+    ctx.lineWidth = thin;
+    ctx.stroke();
+    ctx.font = `700 ${Math.max(7, Math.min(13, h * 0.42))}px Arial, sans-serif`;
+    ctx.textBaseline = 'bottom';
+    ctx.textAlign = 'left';
+    ctx.fillText('0', left, barTop - 2);
+    const label = (shapeData && String(shapeData.areaLabel || '').trim()) || SCENE_SCALE_BAR_DEFAULT_LABEL;
+    ctx.textAlign = 'right';
+    ctx.fillText(label.slice(0, 14), right, barTop - 2);
   } else if (type === 'culvert') {
     // Cống ngang: ống nét đứt chạy dưới mặt đường, hai đầu có tường đầu cống.
     ctx.save();
