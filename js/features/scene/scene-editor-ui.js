@@ -338,20 +338,29 @@ function drawSceneAreaHandles(points, activeIndex) {
   });
   sceneCtx.restore();
 }
+// Rừng cây / đồng lúa / bãi đá / đồi núi: chọn công cụ là vào ngay chế độ bấm từng điểm (không còn kéo khung chữ nhật rồi mới vẽ ranh giới).
+const SCENE_AREA_POINT_TOOLS = ['forest', 'rice_field', 'rock_field', 'hill'];
 function stopSceneryOutlineDraw(silent) {
   if (!sceneOutlineDraw) return;
+  const wasCreating = !!sceneOutlineDraw.creating;
   ['mousedown', 'mousemove', 'mouseup', 'dblclick', 'keydown'].forEach(type => window.removeEventListener(type, sceneOutlineDraw[type], true));
   document.getElementById('sceneCanvasViewport')?.classList.remove('is-outline-drawing');
   sceneOutlineDraw = null;
+  if (wasCreating && !silent && typeof setActiveDrawTool === 'function') setActiveDrawTool('select');   // Esc: huỷ vùng đang vẽ, về công cụ Chọn
   redrawSceneCanvas(true);
   updateSelectionBadge();
-  if (!silent && typeof showToast === 'function') showToast('Đã thoát chế độ vẽ ranh giới.', 'info');
+  if (!silent && typeof showToast === 'function') showToast(wasCreating ? 'Đã huỷ vẽ vùng.' : 'Đã thoát chế độ vẽ ranh giới.', 'info');
 }
-function startSceneryOutlineDraw() {
-  const shape = getSelectedAreaShapeTarget();
-  if (!shape) return;
-  if (sceneOutlineDraw) return stopSceneryOutlineDraw();
-  const targetId = shape.id;
+// createType: tên công cụ vùng → tạo vùng MỚI từ các điểm bấm; bỏ trống → vẽ lại ranh giới của vùng đang chọn.
+function startSceneryOutlineDraw(createType) {
+  const creating = typeof createType === 'string' && SCENE_AREA_POINT_TOOLS.includes(createType) ? createType : null;
+  const shape = creating ? null : getSelectedAreaShapeTarget();
+  if (!creating && !shape) return;
+  if (sceneOutlineDraw) {
+    if (!creating) return stopSceneryOutlineDraw();
+    stopSceneryOutlineDraw(true);   // đổi sang công cụ vùng khác: bắt đầu lại từ đầu
+  }
+  const targetId = shape ? shape.id : null;
   const points = [];           // các điểm neo đã nhấp
   let press = null, stroke = null, cursor = null;
   const onCanvas = e => typeof sceneCanvas !== 'undefined' && e.target === sceneCanvas;
@@ -364,16 +373,28 @@ function startSceneryOutlineDraw() {
     drawSceneAreaHandles(points, points.length >= 3 && cursor && Math.hypot(cursor.x - points[0].x, cursor.y - points[0].y) < 9 / sceneAreaZoom() ? 0 : -1);
   };
   const finish = anchors => {
-    const target = sceneShapes.find(s => s.id === targetId);
+    const target = creating ? {} : sceneShapes.find(s => s.id === targetId);
     const xs = anchors.map(p => p.x), ys = anchors.map(p => p.y);
     if (!target || anchors.length < 3 || Math.max(...xs) - Math.min(...xs) < 30 || Math.max(...ys) - Math.min(...ys) < 20) {
       if (typeof showToast === 'function') showToast('Ranh giới cần ít nhất 3 điểm và đủ rộng. Hãy nhấp thêm điểm dọc mép vùng.', 'warning');
       return paint();
     }
-    applySceneAreaAnchors(target, anchors, true);
+    if (creating) {
+      const colorInput = document.getElementById('drawColorPicker'), widthInput = document.getElementById('drawStrokeWidth');
+      const created = { id: genShapeId(), type: creating, startX: 0, startY: 0, angle: 0, objectW: 1, objectH: 1,
+        color: (colorInput && colorInput.value) || '#000000', width: parseFloat(widthInput && widthInput.value) || 1.5, sizeScale: 1 };
+      applySceneAreaAnchors(created, anchors, true);
+      sceneShapes.push(created);
+      setSelectedShapes([created.id]);
+    } else {
+      applySceneAreaAnchors(target, anchors, true);
+    }
     if (typeof saveDrawingState === 'function') saveDrawingState();
     stopSceneryOutlineDraw(true);
-    if (typeof showToast === 'function') showToast('Đã vẽ ranh giới. Kéo các điểm tròn để nắn lại; nhấp đúp điểm để xoá, nhấp đúp lên viền để thêm điểm.', 'success');
+    if (creating && typeof setActiveDrawTool === 'function') setActiveDrawTool('select');
+    redrawSceneCanvas(true);
+    updateSelectionBadge();
+    if (typeof showToast === 'function') showToast('Đã vẽ vùng. Kéo các điểm tròn để nắn lại; nhấp đúp điểm để xoá, nhấp đúp lên viền để thêm điểm.', 'success');
   };
   const state = {
     mousedown(e) { if (!onCanvas(e) || e.button > 0) return; eat(e); press = getMousePos(sceneCanvas, e); stroke = null; },
@@ -382,7 +403,7 @@ function startSceneryOutlineDraw() {
       const p = getMousePos(sceneCanvas, e);
       if (press) {
         eat(e);
-        if (!stroke && Math.hypot(p.x - press.x, p.y - press.y) > 7 / sceneAreaZoom() && !points.length) stroke = [press];
+        if (!creating && !stroke && Math.hypot(p.x - press.x, p.y - press.y) > 7 / sceneAreaZoom() && !points.length) stroke = [press];   // rê tay chỉ khi vẽ lại ranh giới; tạo mới chỉ bấm điểm
         if (stroke) { const last = stroke[stroke.length - 1]; if (Math.hypot(p.x - last.x, p.y - last.y) >= 2) stroke.push(p); }
       } else { e.stopImmediatePropagation(); }
       cursor = p; paint();
@@ -401,14 +422,15 @@ function startSceneryOutlineDraw() {
     keydown(e) {
       if (e.key === 'Escape') { eat(e); stopSceneryOutlineDraw(); }
       else if (e.key === 'Enter') { eat(e); finish(points.slice()); }
-      else if (e.key === 'Backspace' || e.key === 'Delete') { eat(e); points.pop(); paint(); }
+      else if (e.key === 'Backspace' || e.key === 'Delete' || ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && points.length)) { eat(e); points.pop(); paint(); }
     }
   };
+  state.creating = creating;
   sceneOutlineDraw = state;
   ['mousedown', 'mousemove', 'mouseup', 'dblclick', 'keydown'].forEach(type => window.addEventListener(type, state[type], true));
   document.getElementById('sceneCanvasViewport')?.classList.add('is-outline-drawing');
   updateSelectionBadge();
-  if (typeof showToast === 'function') showToast('Nhấp từng điểm dọc mép vùng (Enter hoặc nhấp đúp để xong, Backspace bỏ điểm cuối, Esc huỷ). Cũng có thể giữ chuột rê một vòng.', 'info');
+  if (typeof showToast === 'function') showToast(creating ? 'Bấm từng điểm quanh vùng. Xong: nhấp đúp, Enter hoặc bấm lại điểm đầu · Backspace bỏ điểm cuối · Esc huỷ.' : 'Nhấp từng điểm dọc mép vùng (Enter hoặc nhấp đúp để xong, Backspace bỏ điểm cuối, Esc huỷ). Cũng có thể giữ chuột rê một vòng.', 'info');
 }
 
 // ---- Nắn ranh giới đã vẽ: điểm neo hiện khi chọn vùng "custom" ----
@@ -513,6 +535,19 @@ window.addEventListener('dblclick', e => {
   };
   wrapped.__areaShape = true;
   window.updateSelectionBadge = wrapped;
+})();
+// Chọn công cụ vùng (menu, phím tắt, tìm kiếm, "Dùng gần đây") → vào chế độ bấm điểm; đổi sang công cụ khác → thoát.
+(function () {
+  const original = window.setActiveDrawTool;
+  if (typeof original !== 'function' || original.__areaPoints) return;
+  const wrapped = function (toolName, ...rest) {
+    const result = original.call(this, toolName, ...rest);
+    if (SCENE_AREA_POINT_TOOLS.includes(toolName)) startSceneryOutlineDraw(toolName);
+    else if (sceneOutlineDraw && sceneOutlineDraw.creating) stopSceneryOutlineDraw(true);
+    return result;
+  };
+  wrapped.__areaPoints = true;
+  window.setActiveDrawTool = wrapped;
 })();
 (function () {
   const original = window.closeSceneDrawingModal;

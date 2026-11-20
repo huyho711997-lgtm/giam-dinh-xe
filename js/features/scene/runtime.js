@@ -375,10 +375,10 @@ const TOOL_GROUPS_CONFIG = {
     tools: [
       { id: 'tree', name: 'Cây xanh', desc: 'Tán cây nhìn từ trên xuống' },
       { id: 'median_tree', name: 'Cây trên dải phân cách', desc: 'Dải phân cách trồng nhiều cây xanh' },
-      { id: 'rice_field', name: 'Đồng lúa', desc: 'Khoảnh ruộng có luống và biểu tượng cây lúa' },
-      { id: 'forest', name: 'Rừng cây', desc: 'Khu rừng nhiều tán cây, kéo rộng để thêm cây' },
-      { id: 'rock_field', name: 'Bãi đá', desc: 'Khối đá góc cạnh; kéo rộng để thêm đá, chọn "Vẽ ranh giới" để bám theo sườn núi' },
-      { id: 'hill', name: 'Đồi núi', desc: 'Đường đồng mức quanh đỉnh; chọn "Vẽ ranh giới" để bám theo địa hình thật' }
+      { id: 'rice_field', name: 'Đồng lúa', desc: 'Bấm từng điểm quanh thửa ruộng; nhấp đúp hoặc Enter để xong' },
+      { id: 'forest', name: 'Rừng cây', desc: 'Bấm từng điểm quanh khu rừng; nhấp đúp hoặc Enter để xong' },
+      { id: 'rock_field', name: 'Bãi đá', desc: 'Bấm từng điểm quanh bãi đá; nhấp đúp hoặc Enter để xong' },
+      { id: 'hill', name: 'Đồi núi', desc: 'Bấm từng điểm quanh chân đồi; nhấp đúp hoặc Enter để xong' }
     ]
   },
   annotation_marks: {
