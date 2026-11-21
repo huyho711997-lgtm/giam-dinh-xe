@@ -2281,6 +2281,13 @@ const fullList = getCarBrandLossData();
       });
     }
 
+    // Tên gara của hồ sơ — cùng thứ tự ưu tiên với các báo cáo gara khác (tên viết tắt trước); rỗng/"—" → chưa xác định.
+    const MONTHLY_OPENED_NO_GARAGE = 'Chưa xác định gara';
+    function getMonthlyOpenedGarageName(c) {
+      const name = [c && c.tenGaraVietTat, c && c.tenGara, c && c.garaSuaChua, c && c.gara].map(v => String(v || '').trim()).find(v => v && v !== '—' && v !== '-');
+      return name || MONTHLY_OPENED_NO_GARAGE;
+    }
+
     // Danh sách hồ sơ của kỳ đang chọn, mới nhất trước (dùng cho xuất Excel — trang hiển thị bằng biểu đồ, không liệt kê).
     function getMonthlyOpenedClaimsSorted() {
       return getMonthlyOpenedClaimsData().sort((a, b) => (b._dateInfo?.timestamp || 0) - (a._dateInfo?.timestamp || 0));
@@ -2305,6 +2312,7 @@ const fullList = getCarBrandLossData();
       }
       const gdvMap = new Map();
       const statusMap = new Map();
+      const garaMap = new Map();
 
       claims.forEach(c => {
         const info = c._dateInfo || getClaimOpenDateInfo(c);
@@ -2318,6 +2326,10 @@ const fullList = getCarBrandLossData();
         const gdv = String(c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim() || 'Chưa phân công';
         if (!gdvMap.has(gdv)) gdvMap.set(gdv, { label: gdv, ...blank() });
         add(gdvMap.get(gdv), isTnds, reserve);
+
+        const gara = getMonthlyOpenedGarageName(c);
+        if (!garaMap.has(gara)) garaMap.set(gara, { label: gara, ...blank() });
+        add(garaMap.get(gara), isTnds, reserve);
 
         const st = String(c.trangThai || 'moi').trim() || 'moi';
         if (!statusMap.has(st)) statusMap.set(st, { key: st, label: (PENDING_STATUS_MAP[st] && PENDING_STATUS_MAP[st].label) || st, ...blank() });
@@ -2336,6 +2348,13 @@ const fullList = getCarBrandLossData();
         const rest = gdvRows.slice(10).reduce((acc, r) => { acc.count += r.count; acc.vcx += r.vcx; acc.tnds += r.tnds; acc.reserve += r.reserve; return acc; }, { label: 'Khác', ...blank() });
         gdvRows = gdvRows.slice(0, 10).concat(rest);
       }
+      // Gara: nhiều hồ sơ nhất trước (bằng nhau thì dự phòng cao hơn); quá 15 gara gộp thành "Khác"; "Chưa xác định gara" luôn cuối.
+      const sumRows = (rows, label) => rows.reduce((acc, r) => { acc.count += r.count; acc.vcx += r.vcx; acc.tnds += r.tnds; acc.reserve += r.reserve; return acc; }, { label, ...blank() });
+      const unassigned = garaMap.get(MONTHLY_OPENED_NO_GARAGE);
+      let garaRows = [...garaMap.values()].filter(r => r !== unassigned).sort((x, y) => y.count - x.count || y.reserve - x.reserve || x.label.localeCompare(y.label, 'vi'));
+      const garaNamedCount = garaRows.length;
+      if (garaRows.length > 15) garaRows = garaRows.slice(0, 15).concat(sumRows(garaRows.slice(15), 'Khác'));
+      if (unassigned) garaRows.push(unassigned);
       // Trạng thái: theo thứ tự quy trình trong PENDING_STATUS_MAP, trạng thái lạ xếp cuối.
       const statusOrder = Object.keys(PENDING_STATUS_MAP);
       const statusRows = [...statusMap.values()].sort((x, y) => {
@@ -2344,7 +2363,7 @@ const fullList = getCarBrandLossData();
       });
 
       return {
-        mode, total: claims.length, timeline: series(orderedTimeline), gdv: series(gdvRows), status: series(statusRows),
+        mode, total: claims.length, timeline: series(orderedTimeline), gdv: series(gdvRows), gara: series(garaRows), garaNamedCount, status: series(statusRows),
         totalReserve: claims.reduce((sum, c) => sum + (c._reserveVal || 0), 0)
       };
     }
@@ -2385,7 +2404,7 @@ const fullList = getCarBrandLossData();
             'Đơn vị cấp đơn': c.donViCapDon || c.chiNhanh || '',
             'Dự phòng bồi thường (VNĐ)': reserve,
             'Trạng thái hồ sơ': statusLabel,
-            'Gara sửa chữa': c.garaSuaChua || c.tenGara || ''
+            'Gara sửa chữa': getMonthlyOpenedGarageName(c) === MONTHLY_OPENED_NO_GARAGE ? '' : getMonthlyOpenedGarageName(c)
           };
         });
 
@@ -2410,6 +2429,22 @@ const fullList = getCarBrandLossData();
         const ws = XLSX.utils.json_to_sheet(rows);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'BC_Xe_Va_Du_Phong');
+
+        // Sheet tổng hợp theo gara: số hồ sơ (VCX/TNDS), tiền dự phòng, bình quân — đầy đủ, không gộp "Khác".
+        const garaTotals = new Map();
+        claims.forEach(c => {
+          const name = getMonthlyOpenedGarageName(c);
+          const row = garaTotals.get(name) || { 'Gara': name, 'Số hồ sơ': 0, 'VCX': 0, 'TNDS': 0, 'Dự phòng bồi thường (VNĐ)': 0 };
+          row['Số hồ sơ']++;
+          row[isTndsClaimMonthlyRecord(c) ? 'TNDS' : 'VCX']++;
+          row['Dự phòng bồi thường (VNĐ)'] += c._reserveVal || getClaimReserveAmountValue(c);
+          garaTotals.set(name, row);
+        });
+        const garaRows = [...garaTotals.values()].sort((x, y) => y['Số hồ sơ'] - x['Số hồ sơ'] || y['Dự phòng bồi thường (VNĐ)'] - x['Dự phòng bồi thường (VNĐ)'])
+          .map(row => ({ ...row, 'Dự phòng bình quân / hồ sơ (VNĐ)': row['Số hồ sơ'] ? Math.round(row['Dự phòng bồi thường (VNĐ)'] / row['Số hồ sơ']) : 0 }));
+        garaRows.push({ 'Gara': 'Tổng cộng', 'Số hồ sơ': claims.length, 'VCX': garaRows.reduce((n, r) => n + r['VCX'], 0), 'TNDS': garaRows.reduce((n, r) => n + r['TNDS'], 0),
+          'Dự phòng bồi thường (VNĐ)': totalReserve, 'Dự phòng bình quân / hồ sơ (VNĐ)': claims.length ? Math.round(totalReserve / claims.length) : 0 });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(garaRows), 'Theo_Gara');
 
         const mTag = selMonth === 'all' ? 'TatCaThang' : `T${selMonth}`;
         const yTag = selYear === 'all' ? 'TatCaNam' : `N${selYear}`;
@@ -2615,6 +2650,13 @@ const fullList = getCarBrandLossData();
               <div style="font-size: 12.5px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px;">${chartData.mode === 'day' ? 'Diễn biến theo ngày mở hồ sơ' : 'Diễn biến theo tháng mở hồ sơ'}</div>
               <div style="position: relative; height: 340px; width: 100%;"><canvas id="monthlyOpenedTimelineCanvas" role="img" aria-label="Số hồ sơ và tiền dự phòng theo thời gian"></canvas></div>
             </section>
+            <section aria-label="Theo gara" style="margin-bottom: 26px;">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                <div style="font-size: 12.5px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: .04em;">Theo gara — số hồ sơ &amp; tiền dự phòng từng gara</div>
+                <span style="font-size: 12px; font-weight: 700; color: var(--text-soft);">${chartData.garaNamedCount} gara${chartData.gara.labels.includes('Khác') ? ' (15 gara nhiều hồ sơ nhất, còn lại gộp "Khác")' : ''} • đầy đủ từng gara trong file Excel (sheet Theo_Gara)</span>
+              </div>
+              <div style="position: relative; height: 380px; width: 100%;"><canvas id="monthlyOpenedGaraCanvas" role="img" aria-label="Số hồ sơ và tiền dự phòng theo từng gara"></canvas></div>
+            </section>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px;">
               <section aria-label="Theo giám định viên">
                 <div style="font-size: 12.5px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px;">Theo giám định viên</div>
@@ -2650,7 +2692,7 @@ const fullList = getCarBrandLossData();
       const fmtVnd = value => Math.round(value || 0).toLocaleString('vi-VN') + ' đ';
       const fmtMillion = value => (value / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' tr';
 
-      const build = (canvasId, series) => {
+      const build = (canvasId, series, view = {}) => {
         const canvas = document.getElementById(canvasId);
         if (!canvas || !series.labels.length) return;
         const claimSet = (key, label, color) => ({
@@ -2683,7 +2725,7 @@ const fullList = getCarBrandLossData();
               }
             },
             scales: {
-              x: { stacked: !isLine, grid: { display: false }, border: { display: false }, ticks: { color: muted, maxRotation: 0, autoSkip: true, font: { family: font, size: 10, weight: '600' } } },
+              x: { stacked: !isLine, grid: { display: false }, border: { display: false }, ticks: { color: muted, maxRotation: view.rotate || 0, minRotation: view.rotate || 0, autoSkip: !view.rotate, font: { family: font, size: 10, weight: '600' } } },
               y: { stacked: !isLine, beginAtZero: true, grid: { color: line }, border: { display: false }, ticks: { precision: 0, color: muted, font: { family: font, size: 10 } }, title: { display: true, text: 'Số hồ sơ', color: muted, font: { family: font, size: 10, weight: '700' } } },
               y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, border: { display: false }, ticks: { color: '#b88935', callback: fmtMillion, font: { family: font, size: 10 } }, title: { display: true, text: 'Dự phòng (triệu đồng)', color: '#b88935', font: { family: font, size: 10, weight: '700' } } }
             }
@@ -2692,6 +2734,7 @@ const fullList = getCarBrandLossData();
         monthlyOpenedChartInstances.push(chart);
       };
       build('monthlyOpenedTimelineCanvas', data.timeline);
+      build('monthlyOpenedGaraCanvas', data.gara, { rotate: 35 });
       build('monthlyOpenedGdvCanvas', data.gdv);
       build('monthlyOpenedStatusCanvas', data.status);
     }

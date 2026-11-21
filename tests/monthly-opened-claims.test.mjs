@@ -52,6 +52,8 @@ vm.runInContext([
   extractFunction(reservesSrc, 'getClaimReserveAmountValue'),
   extractFunction(reservesSrc, 'isTndsClaimMonthlyRecord'),
   extractFunction(reservesSrc, 'getMonthlyOpenedClaimsData'),
+  "const MONTHLY_OPENED_NO_GARAGE = 'Chưa xác định gara';",
+  extractFunction(reservesSrc, 'getMonthlyOpenedGarageName'),
   extractFunction(reservesSrc, 'getMonthlyOpenedClaimsSorted'),
   extractFunction(reservesSrc, 'getMonthlyOpenedChartData'),
   extractFunction(reservesSrc, 'renderMonthlyOpenedClaimsReportHtml')
@@ -155,7 +157,7 @@ test('getMonthlyOpenedClaimsData lọc chính xác hồ sơ mở trong tháng v�
   assert.ok(html.includes('3'), 'HTML phải hiển thị tổng số 3 hồ sơ');
   assert.ok(!html.includes('<table'), 'Trang hiển thị bằng biểu đồ, không còn bảng danh sách');
   assert.ok(!html.includes('51F-123.45'), 'Không liệt kê từng biển số trên trang');
-  for (const id of ['monthlyOpenedTimelineCanvas', 'monthlyOpenedGdvCanvas', 'monthlyOpenedStatusCanvas']) assert.ok(html.includes('id="' + id + '"'), 'Thiếu biểu đồ ' + id);
+  for (const id of ['monthlyOpenedTimelineCanvas', 'monthlyOpenedGaraCanvas', 'monthlyOpenedGdvCanvas', 'monthlyOpenedStatusCanvas']) assert.ok(html.includes('id="' + id + '"'), 'Thiếu biểu đồ ' + id);
   assert.ok(html.includes('initMonthlyOpenedClaimsCharts'), 'Phải kích hoạt vẽ biểu đồ sau khi render');
 });
 
@@ -217,4 +219,40 @@ test('getMonthlyOpenedChartData: cả năm → 12 tháng; nhiều năm → theo 
   d = JSON.parse(JSON.stringify(ctx.getMonthlyOpenedChartData()));
   assert.equal(d.total, 0); assert.equal(d.gdv.labels.length, 0);
   assert.ok(ctx.renderMonthlyOpenedClaimsReportHtml().includes('Không có hồ sơ nào mở'));
+});
+
+test('Theo gara: số hồ sơ và dự phòng từng gara, gộp "Khác", "Chưa xác định gara" luôn cuối', () => {
+  assert.equal(ctx.getMonthlyOpenedGarageName({ tenGaraVietTat: ' Tiên Phong ', tenGara: 'Gara khác' }), 'Tiên Phong', 'ưu tiên tên viết tắt');
+  assert.equal(ctx.getMonthlyOpenedGarageName({ tenGara: 'Gara A' }), 'Gara A');
+  assert.equal(ctx.getMonthlyOpenedGarageName({ garaSuaChua: 'Gara B' }), 'Gara B');
+  assert.equal(ctx.getMonthlyOpenedGarageName({ tenGara: '—' }), 'Chưa xác định gara');
+  assert.equal(ctx.getMonthlyOpenedGarageName({}), 'Chưa xác định gara');
+
+  ctx.activeGdvReportMonth = '11'; ctx.activeGdvReportYear = '2026'; ctx.activeReportClaimType = 'all';
+  ctx.cachedPendingClaimsPayload = {
+    a: { bienSo: '1', ngayMoHs: '01/11/2026', duPhongBoiThuong: '10.000.000', tenGaraVietTat: 'Tiên Phong', loaiHoSo: 'Vật chất xe' },
+    b: { bienSo: '2', ngayMoHs: '02/11/2026', duPhongBoiThuong: '20.000.000', tenGaraVietTat: 'Tiên Phong', loaiHoSo: 'TNDS' },
+    c: { bienSo: '3', ngayMoHs: '03/11/2026', duPhongBoiThuong: '50.000.000', tenGara: 'Ford Buôn Ma Thuột' },
+    d: { bienSo: '4', ngayMoHs: '04/11/2026', duPhongBoiThuong: '7.000.000' }
+  };
+  let d = JSON.parse(JSON.stringify(ctx.getMonthlyOpenedChartData()));
+  assert.deepEqual(d.gara.labels, ['Tiên Phong', 'Ford Buôn Ma Thuột', 'Chưa xác định gara']);
+  assert.deepEqual(d.gara.count, [2, 1, 1]);
+  assert.deepEqual(d.gara.reserve, [30000000, 50000000, 7000000]);
+  assert.deepEqual(d.gara.vcx, [1, 1, 1]);
+  assert.deepEqual(d.gara.tnds, [1, 0, 0]);
+  assert.equal(d.garaNamedCount, 2);
+  assert.equal(d.gara.reserve.reduce((a, b) => a + b, 0), d.totalReserve, 'tổng theo gara khớp tổng dự phòng');
+
+  // 17 gara có tên → 15 gara đầu + "Khác", "Chưa xác định gara" vẫn cuối
+  const many = { z: { bienSo: 'Z', ngayMoHs: '05/11/2026', duPhongBoiThuong: '1.000.000' } };
+  for (let i = 1; i <= 17; i++) many['g' + i] = { bienSo: 'B' + i, ngayMoHs: '05/11/2026', duPhongBoiThuong: String(i * 1000000), tenGara: 'Gara ' + String(i).padStart(2, '0') };
+  ctx.cachedPendingClaimsPayload = many;
+  d = JSON.parse(JSON.stringify(ctx.getMonthlyOpenedChartData()));
+  assert.equal(d.gara.labels.length, 17, '15 gara + Khác + Chưa xác định');
+  assert.equal(d.gara.labels[15], 'Khác');
+  assert.equal(d.gara.labels[16], 'Chưa xác định gara');
+  assert.equal(d.gara.count[15], 2);
+  assert.equal(d.garaNamedCount, 17);
+  ctx.cachedPendingClaimsPayload = {};
 });
