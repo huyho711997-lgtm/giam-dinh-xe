@@ -77,6 +77,8 @@ Thêm mẫu mới: thêm một phần tử vào `OFFICIAL_LETTER_TEMPLATES` tron
 - **Làm việc:** tóm tắt yêu cầu (Sửa yêu cầu / Công văn mới) · thanh tiến độ một đường thẳng với 3 nút bước (đọc hồ sơ → căn cứ → soạn), tô dần theo tiến độ · tờ công văn lớn sửa trực tiếp (Ngày, Tải Word, In, Sao chép) · cột ghi chú hẹp (chỗ "……", căn cứ ✓/⚠, chọn nhanh, giả định, nên kiểm tra, lưu ý hồ sơ) · ô **Nhờ AI sửa** ghim cố định ở đáy (nội dung phía trên cuộn riêng, chiều cao tự khớp cửa sổ).
 - **Chi tiết** (thông tin, dàn ý, căn cứ, hồ sơ) nằm trong ngăn trượt bên phải, nút "Soạn lại theo chi tiết này".
 - **Lịch sử** (khung trái, thu gọn được; trên màn hẹp là ngăn trượt): mọi công văn soạn xong tự lưu (`OfficialLetterHistory`) — kể cả khi sửa trên tờ, đổi ngày, tải Word; nhóm Hôm nay / Hôm qua / 7 ngày / 30 ngày / Cũ hơn, tìm theo trích yếu/hồ sơ, bấm để mở lại nguyên trạng (tờ, ghi chú, chi tiết), xoá từng bản.
+- **Sửa đoạn và duyệt thay đổi:** bôi đen một phần hoặc nhiều đoạn trên tờ, rồi nhập yêu cầu ở ô **Nhờ AI sửa**. AI chỉ được thay phần bôi đen; bỏ chọn đoạn để sửa toàn công văn. Màn so sánh đánh dấu chữ thêm/bỏ, cho chọn từng thay đổi trước khi **Áp dụng** hoặc **Bỏ đề xuất**; xuất Word luôn dùng bản đã áp dụng.
+- **Phiên bản:** nút **Phiên bản** trên thanh công cụ mở các bản lưu trước/sau khi AI sửa và các lần khôi phục. Xem nội dung rồi chọn **Khôi phục phiên bản này**; bản hiện tại được giữ để quay lại. Giữ tối đa 12 phiên bản mới nhất trong giới hạn 150.000 ký tự của lịch sử hiện có; chỉ lưu nội dung công văn, không nhân đôi tệp đính kèm. Công văn cũ vẫn mở được.
 
 ### Đọc sâu hồ sơ (`official-letter-dossier.js`)
 Khi chọn hồ sơ, AI không nhận bản ghi thô nữa mà nhận "hồ sơ đọc được" do `OfficialLetterDossier` dựng:

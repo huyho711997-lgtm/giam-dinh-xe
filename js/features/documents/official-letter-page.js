@@ -9,6 +9,7 @@ const OfficialLetterPage = (() => {
   const MAX_FILES = 4, MAX_EDGE = 1600, MAX_PDF = 6 * 1024 * 1024, MAX_RESULTS = 30;
   const DEFAULT_TEMPLATE = 'tu_do';
   const Core = () => OfficialLetterCore;
+  const Revisions = () => OfficialLetterRevisions;
   const esc = value => Core().escapeHtml(value);
   const svg = path => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>';
   const ICON = {
@@ -37,7 +38,8 @@ const OfficialLetterPage = (() => {
     insights: [], keyFacts: [], legalQueries: [], assumptions: [], sources: [], legalError: '', legalLoaded: false,
     letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
     pop: '', drawer: '', editing: false, steps: null,
-    historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser'
+    historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser',
+    versions: [], selection: [], pending: null, versionId: ''
   };
 
   // ---- Tiện ích chung ----
@@ -206,8 +208,11 @@ const OfficialLetterPage = (() => {
 
   // Bấm "Soạn công văn": đọc hồ sơ + yêu cầu → tìm căn cứ → soạn. Không dừng hỏi; AI tự giả định và ghi lại.
   async function run() {
-    if (st.busy) return;
+    if (st.busy || st.pending) return;
     collectAll();
+    const before = st.letter ? Revisions().clone(st.letter) : null;
+    if (before) checkpoint('Trước khi soạn lại');
+    const saved = before ? saveHistory() : Promise.resolve();
     st.brief = ($('[data-ol-brief]') || {value: st.brief}).value.trim();
     loadRecords();
     if (!st.recordKey) {
@@ -226,6 +231,8 @@ const OfficialLetterPage = (() => {
     const my = generation, tpl = template();
     setBusy('Đang đọc hồ sơ và yêu cầu…');
     try {
+      await saved;
+      if (my !== generation) return;
       try {
         const current = startValues();
         const files = [];
@@ -260,14 +267,25 @@ const OfficialLetterPage = (() => {
       if (my !== generation) return;
       step('legal', st.legalError ? 'err' : activeSources().length ? 'done' : 'skip', st.legalError ? 'Không đọc được thư viện' : activeSources().length ? activeSources().length + ' đoạn liên quan' : 'Không cần viện dẫn');
       setStatus('Đang soạn công văn…'); step('write', 'run', 'Đang viết');
-      await composeCore('');
+      const letter = await composeCore('');
+      if (my !== generation) return;
+      if (before) {
+        const changes = Revisions().changes(before, letter);
+        st.pending = changes.length ? {before, changes, instruction:'Soạn lại theo yêu cầu mới', scoped:false} : null;
+      } else { st.letter = letter; checkpoint('Bản soạn của AI'); }
+      st.selection = [];
       step('write', 'done', 'Xong');
-      saveHistory();
+      await saveHistory();
     } catch (error) {
       if (my !== generation || error.name === 'AbortError') return;
       notice(error.message || 'Không soạn được công văn.', 'error');
       if (st.steps) for (const name of ['read', 'legal', 'write']) if (st.steps[name] && st.steps[name].state === 'run') st.steps[name] = {state: 'err', text: 'Lỗi'};
-    } finally { if (my === generation) { st.busy = ''; st.status = ''; renderAll(); } }
+    } finally {
+      if (my === generation) {
+        st.busy = ''; st.status = ''; renderAll();
+        if (st.pending) $('.ola-review')?.scrollIntoView({block:'nearest', behavior:'auto'});
+      }
+    }
   }
 
   async function composeCore(instruction) {
@@ -280,28 +298,99 @@ const OfficialLetterPage = (() => {
     const raw = await callAI(Core().buildComposeRequest(tpl, st.values, issuer, brief, previous, ctx));
     const parsed = Core().parseLetter(raw);
     const date = st.letter && st.letter.date, number = st.letter && st.letter.number;
-    st.letter = Core().assembleLetter(tpl, st.values, issuer, parsed, date);
-    if (number) st.letter.number = number;
-    if (!st.notice || st.notice.kind !== 'warn') notice('');
+    const candidate = Core().assembleLetter(tpl, st.values, issuer, parsed, date);
+    if (number) candidate.number = number;
+    // Khi chỉnh bản có sẵn, giữ phần thể thức người dùng đã sửa tay.
+    return instruction && st.letter ? {...st.letter, subject:candidate.subject, paragraphs:candidate.paragraphs, warnings:candidate.warnings} : candidate;
   }
 
   // Soạn lại (sau khi sửa chi tiết) hoặc chỉnh theo yêu cầu — không đọc lại hồ sơ.
   async function compose(instruction) {
-    if (st.busy) return;
+    if (st.busy || st.pending) return;
     if (!st.values) { run(); return; }
     collectAll(); syncLetter();
-    const my = generation;
+    const my = generation, before = st.letter ? Revisions().clone(st.letter) : null;
+    const targets = instruction && st.selection.length ? st.selection.map(item => ({...item})) : [];
+    checkpoint(instruction ? 'Trước khi AI chỉnh sửa' : 'Trước khi soạn lại');
     setBusy(instruction ? 'Đang chỉnh theo yêu cầu…' : 'Đang soạn lại…');
     try {
-      await composeCore(instruction || '');
+      await saveHistory();
       if (my !== generation) return;
-      toast(instruction ? 'Đã chỉnh công văn theo yêu cầu.' : 'Đã soạn lại công văn.', 'success');
-      saveHistory();
+      let candidate;
+      if (targets.length) {
+        const base = Core().buildComposeRequest(template(), st.values, loadIssuer(), st.brief, '', {dossier:dossierText(), legal:legalPrompt()});
+        const raw = await callAI(Revisions().buildRequest(base, before, targets, instruction));
+        if (my !== generation) return;
+        candidate = Revisions().parsePatch(raw, before, targets);
+      } else candidate = await composeCore(instruction || '');
+      if (my !== generation) return;
+      if (before) {
+        const changes = Revisions().changes(before, candidate);
+        st.pending = changes.length ? {before, changes, instruction:instruction || 'Soạn lại theo chi tiết', scoped:!!targets.length} : null;
+        if (!changes.length) toast('AI giữ nguyên nội dung đã chọn.', 'info');
+      } else { st.letter = candidate; checkpoint('Bản soạn của AI'); saveHistory(); }
     } catch (error) {
       if (my !== generation || error.name === 'AbortError') return;
       notice(error.message || 'Không soạn được công văn.', 'error');
-    } finally { if (my === generation) { st.busy = ''; st.status = ''; renderAll(); } }
+    } finally {
+      if (my === generation) {
+        st.busy = ''; st.status = ''; renderAll();
+        if (st.pending) $('.ola-review')?.scrollIntoView({block:'nearest', behavior:'auto'});
+      }
+    }
   }
+
+  function checkpoint(title) { st.versions = Revisions().checkpoint(st.versions, st.letter, title); }
+  function acceptChanges() {
+    if (!st.pending || st.busy) return;
+    try {
+      syncLetter();
+      const selected = st.pending.changes.filter(item => item.on).length;
+      if (!selected) { toast('Chọn ít nhất một thay đổi để áp dụng.', 'info'); return; }
+      st.letter = Revisions().applyChanges(st.letter, st.pending);
+      checkpoint(st.pending.scoped ? 'AI sửa đoạn được chọn' : 'AI chỉnh công văn');
+      st.pending = null; st.selection = []; notice('');
+      renderAll(); saveHistory(); toast('Đã áp dụng ' + selected + ' thay đổi.', 'success');
+    } catch (error) { toast(error.message, 'warning'); }
+  }
+  function discardChanges() { st.pending = null; renderAll(); toast('Đã bỏ đề xuất; bản thảo được giữ nguyên.', 'info'); }
+  function restoreVersion(id) {
+    if (st.busy || st.pending) return;
+    const version = st.versions.find(item => item.id === id);
+    if (!version) return;
+    syncLetter(); checkpoint('Trước khi khôi phục phiên bản');
+    st.letter = Revisions().clone(version.letter);
+    checkpoint('Khôi phục: ' + version.title);
+    st.selection = []; st.versionId = ''; st.drawer = '';
+    renderAll(); saveHistory(); toast('Đã khôi phục phiên bản công văn.', 'success');
+  }
+
+  // Ghi lại phạm vi trước khi ô nhập/nút làm mất vùng bôi đen. Không lưu tham chiếu DOM.
+  function captureSelection() {
+    if (!host || !st.letter || st.busy || st.pending) return;
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+    const range = selection.getRangeAt(0), paper = $('.ola-doc .ol-paper');
+    if (!paper || !paper.contains(range.startContainer) || !paper.contains(range.endContainer)) return;
+    if (range.collapsed) { if (st.selection.length) { st.selection = []; updateSelectionScope(); } return; }
+    const blocks = [...paper.querySelectorAll('[data-lt]')].filter(node => range.intersectsNode(node));
+    const picked = [];
+    for (const node of blocks) {
+      const full = node.innerText, selectedRange = range.cloneRange();
+      selectedRange.selectNodeContents(node);
+      if (node.contains(range.startContainer)) selectedRange.setStart(range.startContainer, range.startOffset);
+      if (node.contains(range.endContainer)) selectedRange.setEnd(range.endContainer, range.endOffset);
+      const prefix = document.createRange(); prefix.selectNodeContents(node); prefix.setEnd(selectedRange.startContainer, selectedRange.startOffset);
+      const start = prefix.toString().length, end = start + selectedRange.toString().length;
+      if (end > start) picked.push({path:node.dataset.lt, start, end, before:full});
+    }
+    try { st.selection = Revisions().validateTargets(st.letter = readLetter(), picked); } catch (_) { st.selection = []; }
+    updateSelectionScope();
+  }
+  function selectionScopeHtml() {
+    return st.selection.length ? '<span>Chỉ sửa phần đã chọn: “' + esc(st.selection.map(item => item.text).join(' ').slice(0, 140)) + '”</span><button type="button" class="ol-link" data-ol-act="clear-selection">Bỏ chọn đoạn</button>' : '<span>Bôi đen nội dung trên công văn để AI chỉ sửa phần đó; hoặc nhập yêu cầu cho toàn công văn.</span>';
+  }
+  function updateSelectionScope() { const node = $('[data-ol-selection]'); if (node) { node.innerHTML = selectionScopeHtml(); node.classList.toggle('is-scoped', !!st.selection.length); } }
 
   // ---- Đọc lại phần người dùng đã sửa trên trang ----
   function collectValues() {
@@ -382,13 +471,15 @@ const OfficialLetterPage = (() => {
   function snapshot() {
     syncLetter();
     const found = chosenRecord();
-    return {
-      v: 1, brief: st.brief, recordKey: st.recordKey, recordLabel: found ? recordLabel(found.info) : st.savedRecordLabel, templateId: st.templateId,
+    const result = Revisions().fitSnapshot({
+      v: 2, versions:st.versions, brief: st.brief, recordKey: st.recordKey, recordLabel: found ? recordLabel(found.info) : st.savedRecordLabel, templateId: st.templateId,
       fileNames: st.files.map(item => item.file.name), letter: st.letter, values: st.values, filledByAI: st.filledByAI, questions: st.questions, extras: st.extras,
       outline: st.outline, outlineEdited: st.outlineEdited, understanding: st.understanding, notes: st.notes, insights: st.insights, keyFacts: st.keyFacts,
       legalQueries: st.legalQueries, assumptions: st.assumptions, legalError: st.legalError, legalLoaded: st.legalLoaded, analyzedKey: st.analyzedKey,
       sources: st.sources.slice(0, 12).map(source => ({...source, text: String(source.text || '').slice(0, 2000)})), steps: st.steps
-    };
+    });
+    st.versions = result.versions;
+    return result;
   }
   function restore(data) {
     reset();
@@ -403,26 +494,32 @@ const OfficialLetterPage = (() => {
       steps: data.steps && typeof data.steps === 'object' ? data.steps : null
     });
     if (st.letter && data.letter && data.letter.warnings) st.letter.warnings = list(data.letter.warnings);
+    st.versions = Revisions().restoreVersions(data.versions, Core().sanitizeLetter);
+    if (!st.versions.length && st.letter) checkpoint('Bản lưu trước đây');
   }
-  let saveTimer = 0, session = 0;   // session tăng mỗi khi đổi sang công văn khác → lệnh lưu chạy nền của bản cũ không gắn nhầm id vào bản mới
+  let saveTimer = 0, session = 0, saveQueue = Promise.resolve();   // tuần tự hóa các bản lưu để phản hồi chậm không ghi đè phiên bản mới
   // Lưu phiên hiện tại vào lịch sử (tự động sau khi soạn/chỉnh, và khi sửa trên tờ — có hoãn).
-  async function saveHistory() {
+  function saveHistory() {
     clearTimeout(saveTimer);
     const H = History();
     if (!H || !st.letter) return;
-    const mine = session;
-    try {
-      const data = snapshot(), tpl = template();
-      const result = await H.save(st.historyId, {title: (st.letter.subject ? 'V/v ' + st.letter.subject : st.brief) || 'Công văn', sub: [data.recordLabel, tpl.id === DEFAULT_TEMPLATE ? '' : tpl.name].filter(Boolean).join(' · '), data});
-      if (mine === session) st.historyId = result.id;
-      st.histScope = result.scope; st.history = H.list();
-      updateHistory();
-    } catch (error) { toast('Chưa lưu được vào lịch sử: ' + (error.message || error), 'warning'); }
+    const mine = session, data = Revisions().clone(snapshot()), tpl = template();
+    if (!st.historyId) st.historyId = H.newId ? H.newId() : Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const id = st.historyId;
+    const entry = {title:(st.letter.subject ? 'V/v ' + st.letter.subject : st.brief) || 'Công văn', sub:[data.recordLabel, tpl.id === DEFAULT_TEMPLATE ? '' : tpl.name].filter(Boolean).join(' · '), data};
+    saveQueue = saveQueue.catch(() => {}).then(async () => {
+      try {
+        const result = await H.save(id, entry);
+        if (mine !== session) return;
+        st.historyId = result.id; st.histScope = result.scope; st.history = H.list(); updateHistory();
+      } catch (error) { toast('Chưa lưu được vào lịch sử: ' + (error.message || error), 'warning'); }
+    });
+    return saveQueue;
   }
   const saveSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveHistory, 1500); };
   async function openHistory(id) {
     const H = History();
-    if (!H || st.busy || id === st.historyId) return;
+    if (!H || st.busy || st.pending || id === st.historyId) return;
     clearTimeout(saveTimer);
     if (st.letter && st.historyId) await saveHistory();   // giữ chỉnh sửa của công văn đang mở
     const data = await H.get(id);
@@ -568,22 +665,33 @@ const OfficialLetterPage = (() => {
   }
   function documentHtml() {
     if (!st.letter) return '<div class="ola-doc is-pending"><div class="olp-skeleton" aria-hidden="true">' + '<i></i>'.repeat(10) + '</div><div class="olp-busy" role="status"><span class="olp-spinner"></span><span data-ol-status>' + esc(st.status || 'Đang soạn…') + '</span></div></div>';
-    return '<div class="ola-doc' + (st.busy ? ' is-busy' : '') + '"><div class="ola-doc-bar"><label class="ol-datepick">Ngày <input type="date" data-ol-date value="' + esc(st.letter.date) + '"></label>'
+    const locked = !!(st.busy || st.pending);
+    const paper = Core().letterToHtml(st.letter);
+    return '<div class="ola-doc' + (st.busy ? ' is-busy' : '') + '"><div class="ola-doc-bar"><label class="ol-datepick">Ngày <input type="date" data-ol-date value="' + esc(st.letter.date) + '"' + (locked ? ' disabled' : '') + '></label>'
+      + '<button type="button" class="olp-tool" data-ol-drawer="versions"' + (locked ? ' disabled' : '') + '>' + svg(ICON.history) + 'Phiên bản (' + st.versions.length + ')</button>'
       + '<button type="button" class="olp-tool is-primary" data-ol-act="docx">' + svg(ICON.word) + 'Tải Word</button><button type="button" class="olp-tool" data-ol-act="print" title="In">' + svg(ICON.print) + '</button><button type="button" class="olp-tool" data-ol-act="copy" title="Sao chép nội dung">' + svg(ICON.copy) + '</button></div>'
       + (st.busy ? '<div class="olp-busy" role="status"><span class="olp-spinner"></span><span data-ol-status>' + esc(st.status) + '</span></div>' : '')
-      + '<div class="ol-paper-wrap">' + Core().letterToHtml(st.letter) + '</div></div>';
+      + '<div class="ol-paper-wrap">' + (locked ? paper.replace(/contenteditable="true"/g, 'contenteditable="false"') : paper) + '</div></div>';
+  }
+  function reviewHtml() {
+    if (!st.pending) return '';
+    const diffHtml = item => Revisions().diff(item.before, item.after).map(part => part.kind === 'same' ? esc(part.text) : '<' + part.kind + '>' + esc(part.text) + '</' + part.kind + '>').join('');
+    return '<section class="ola-review" aria-label="So sánh chỉnh sửa của AI"><header><div><h2>Đề xuất chỉnh sửa</h2><p>' + esc(st.pending.scoped ? 'Chỉ phần đã bôi đen được thay đổi.' : st.pending.instruction) + '</p></div><span><del>Bỏ</del> <ins>Thêm</ins></span></header>'
+      + '<div class="ola-review-list">' + st.pending.changes.map((item, i) => '<article><label><input type="checkbox" data-ol-change="' + i + '"' + (item.on ? ' checked' : '') + '>Dùng thay đổi: ' + esc(item.label) + '</label><p>' + diffHtml(item) + '</p></article>').join('') + '</div>'
+      + '<footer><span>Bản thảo bên dưới đang giữ nội dung hiện tại.</span><button type="button" class="olp-tool" data-ol-act="reject-changes">Bỏ đề xuất</button><button type="button" class="olp-tool is-primary" data-ol-act="accept-changes">Áp dụng thay đổi</button></footer></section>';
   }
   const REFINES = ['Viết ngắn gọn hơn', 'Giọng trang trọng hơn', 'Thêm hạn phản hồi 07 ngày làm việc'];
   function refineHtml() {
     if (!st.letter) return '';
-    return '<div class="ola-refine"><div class="tasco-ai-suggest">' + REFINES.map(text => '<button type="button" class="tasco-ai-suggest__chip" data-ol-refine="' + esc(text) + '"' + (st.busy ? ' disabled' : '') + '>' + esc(text) + '</button>').join('') + '</div>'
+    if (st.pending) return '<div class="ola-refine ola-review-hint" role="status">Xem đề xuất ở phía trên và chọn Áp dụng thay đổi hoặc Bỏ đề xuất để tiếp tục.</div>';
+    return '<div class="ola-refine"><div class="ola-selection' + (st.selection.length ? ' is-scoped' : '') + '" data-ol-selection role="status">' + selectionScopeHtml() + '</div><div class="tasco-ai-suggest">' + REFINES.map(text => '<button type="button" class="tasco-ai-suggest__chip" data-ol-refine="' + esc(text) + '"' + (st.busy ? ' disabled' : '') + '>' + esc(text) + '</button>').join('') + '</div>'
       + '<div class="tasco-ai-composer ola-refine-box"><span class="ola-refine-icon" aria-hidden="true">' + svg(ICON.spark) + '</span><input class="tasco-ai-input" data-ol-refine-input maxlength="600" placeholder="Nhờ AI sửa: “gửi Phòng CSGT tỉnh”, “nêu thêm ngày tổn thất”…" aria-label="Yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>'
       + '<button type="button" class="tasco-ai-send" data-ol-act="refine" aria-label="Gửi yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div></div>';
   }
   function workHtml() {
     // Vùng nội dung cuộn riêng; ô "Nhờ AI sửa" ghim cố định ở đáy, không trôi theo và không đè tờ công văn.
     return '<div class="ola-work"><div class="ola-scroll" data-ol-scroll><div class="ola-scroll-inner">' + requestHtml() + stepsHtml() + noticeHtml()
-      + '<div class="ola-stage">' + documentHtml() + notesRail() + '</div></div></div>' + refineHtml() + '</div>';
+      + reviewHtml() + '<div class="ola-stage">' + documentHtml() + notesRail() + '</div></div></div>' + refineHtml() + '</div>';
   }
 
   // ---- Ngăn chi tiết ----
@@ -630,13 +738,20 @@ const OfficialLetterPage = (() => {
       + dossier.sections.map(section => '<div class="ol-dos-sec"><h5>' + esc(section.title) + '</h5><dl>' + section.rows.map(([label, value]) => '<dt>' + esc(label) + '</dt><dd>' + esc(value) + '</dd>').join('') + '</dl></div>').join('');
   }
   function drawerHtml() {
-    if (!st.drawer || !st.values) return '';
-    const tabs = [['fields', 'Thông tin'], ['outline', 'Dàn ý'], ['legal', 'Căn cứ'], ['dossier', 'Hồ sơ']].filter(([name]) => name !== 'legal' || Legal());
-    const body = {fields: fieldsBody, outline: outlineBody, legal: legalBody, dossier: dossierBody}[st.drawer] || fieldsBody;
+    if (!st.drawer || (!st.values && st.drawer !== 'versions')) return '';
+    const tabs = [['fields', 'Thông tin'], ['outline', 'Dàn ý'], ['legal', 'Căn cứ'], ['dossier', 'Hồ sơ'], ['versions', 'Phiên bản']].filter(([name]) => name !== 'legal' || Legal());
+    const body = {fields: fieldsBody, outline: outlineBody, legal: legalBody, dossier: dossierBody, versions:versionsBody}[st.drawer] || fieldsBody;
     return '<div class="ola-drawer-backdrop" data-ol-drawer-close></div><aside class="ola-drawer" role="dialog" aria-label="Chi tiết công văn"><header><div class="ola-tabs" role="tablist">'
       + tabs.map(([name, label]) => '<button type="button" role="tab" aria-selected="' + (st.drawer === name) + '" data-ol-drawer="' + name + '">' + label + '</button>').join('')
       + '</div><button type="button" class="ol-x" data-ol-drawer-close aria-label="Đóng">' + svg(ICON.close) + '</button></header><div class="ola-drawer-body">' + body() + '</div>'
-      + (st.drawer === 'dossier' ? '' : '<footer><button type="button" class="olp-tool is-primary" data-ol-act="compose"' + (st.busy ? ' disabled' : '') + '>Soạn lại theo chi tiết này</button></footer>') + '</aside>';
+      + (['dossier', 'versions'].includes(st.drawer) ? '' : '<footer><button type="button" class="olp-tool is-primary" data-ol-act="compose"' + (st.busy ? ' disabled' : '') + '>Soạn lại theo chi tiết này</button></footer>') + '</aside>';
+  }
+  function versionsBody() {
+    const picked = st.versions.find(item => item.id === st.versionId);
+    const time = at => new Date(at).toLocaleString('vi-VN');
+    return '<p class="ola-version-intro">Giữ tối đa ' + Revisions().MAX_VERSIONS + ' phiên bản gần nhất trong dung lượng lịch sử của công văn. Khôi phục sẽ giữ lại bản hiện tại để bạn có thể quay lại.</p>'
+      + '<div class="ola-versions">' + st.versions.slice().reverse().map(item => '<button type="button" class="ola-version' + (item.id === st.versionId ? ' is-active' : '') + '" data-ol-version="' + esc(item.id) + '"><strong>' + esc(item.title) + '</strong><small>' + esc(time(item.at)) + '</small></button>').join('') + '</div>'
+      + (picked ? '<section class="ola-version-preview"><h3>' + esc(picked.letter.subject) + '</h3>' + picked.letter.paragraphs.map(p => '<p>' + esc(p.text) + '</p>').join('') + '<button type="button" class="olp-tool is-primary" data-ol-restore="' + esc(picked.id) + '">Khôi phục phiên bản này</button></section>' : '<p>Chọn một phiên bản để xem nội dung trước khi khôi phục.</p>');
   }
 
   // ---- Thanh lịch sử bên trái ----
@@ -684,6 +799,9 @@ const OfficialLetterPage = (() => {
     const brief = $('[data-ol-brief]'); if (brief) autoGrow(brief);
     if (st.pop === 'record') { updateRecList(); $('[data-ol-rec-q]')?.focus(); }
     else if (focusSel) $(focusSel)?.focus();
+    if (st.busy || st.pending) {
+      host.querySelectorAll('[data-ol-act="new"], [data-ol-act="edit"], [data-ol-hist-open], [data-ol-hist-del], [data-ol-drawer], [data-ol-act="compose"]').forEach(node => { node.disabled = true; });
+    }
   }
   // Màn làm việc chiếm đúng phần còn lại của cửa sổ (từ mép trên trang tới đáy) để ô chỉnh sửa ghim ở đáy.
   function fitHeight() {
@@ -737,7 +855,7 @@ const OfficialLetterPage = (() => {
     generation++; controller?.abort(); controller = null;
     resetAnalysis();
     releaseFiles(st.files);
-    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, historyId: '', savedRecordLabel: ''});
+    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, versionId:''});
   }
   const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Bỏ công văn đang soạn để bắt đầu công văn mới?');
 
@@ -745,6 +863,10 @@ const OfficialLetterPage = (() => {
   function closePop() { if (!st.pop) return; collectAll(); st.pop = ''; st.recQuery = ''; renderAll(); }
   function onClick(event) {
     const target = event.target;
+    const version = target.closest('[data-ol-version]');
+    if (version && !st.busy && !st.pending) { collectAll(); st.versionId = version.dataset.olVersion; renderAll(); return; }
+    const restore = target.closest('[data-ol-restore]');
+    if (restore) { restoreVersion(restore.dataset.olRestore); return; }
     const histDel = target.closest('[data-ol-hist-del]');
     if (histDel) { event.stopPropagation(); deleteHistory(histDel.dataset.olHistDel); return; }
     const histOpen = target.closest('[data-ol-hist-open]');
@@ -786,6 +908,9 @@ const OfficialLetterPage = (() => {
       case 'run': run(); break;
       case 'compose': st.drawer = ''; compose(''); break;
       case 'refine': sendRefine(); break;
+      case 'accept-changes': acceptChanges(); break;
+      case 'reject-changes': discardChanges(); break;
+      case 'clear-selection': st.selection = []; window.getSelection()?.removeAllRanges(); updateSelectionScope(); break;
       case 'edit': st.editing = true; renderAll(); $('[data-ol-brief]')?.focus(); break;
       case 'cancel-edit': collectAll(); st.editing = false; st.pop = ''; renderAll(); break;
       case 'docx': downloadDocx(); break;
@@ -810,10 +935,11 @@ const OfficialLetterPage = (() => {
     else if (target.matches('[data-ol-brief]')) { st.brief = target.value; autoGrow(target); }
     else if (target.matches('[data-ol-field]')) updateMissingLive();
     else if (target.matches('[data-ol-outline-text]')) st.outlineEdited = true;
-    else if (target.closest && target.closest('.ol-paper')) { refreshCitations(); saveSoon(); }
+    else if (target.closest && target.closest('.ol-paper')) { st.selection = []; updateSelectionScope(); refreshCitations(); saveSoon(); }
   }
   function onChange(event) {
     const target = event.target;
+    if (target.matches('[data-ol-change]') && st.pending) { const change = st.pending.changes[Number(target.dataset.olChange)]; if (change) change.on = target.checked; return; }
     if (target.matches('[data-ol-files]')) { addFiles(target.files); target.value = ''; }
     else if (target.matches('[data-ol-outline-on]')) st.outlineEdited = true;
     else if (target.matches('[data-ol-src-on]')) { const source = st.sources[Number(target.dataset.olSrcOn)]; if (source) { source.on = target.checked; target.closest('.ol-src').classList.toggle('is-off', !target.checked); } }
@@ -860,6 +986,7 @@ const OfficialLetterPage = (() => {
     host.innerHTML = '<div class="ola" data-ol-root></div>';
     HANDLERS.forEach(([name, fn]) => host.addEventListener(name, fn));
     document.addEventListener('mousedown', onOutside, true);
+    document.addEventListener('selectionchange', captureSelection);
     window.addEventListener('resize', fitHeight);
     try { const saved = localStorage.getItem(HIST_PANEL_KEY); st.histOpen = saved === null ? window.innerWidth >= 1000 : saved === '1'; } catch (_) { /* bỏ qua */ }
     renderAll();
@@ -874,6 +1001,8 @@ const OfficialLetterPage = (() => {
     st.busy = ''; st.status = ''; st.pop = '';
     if (host) HANDLERS.forEach(([name, fn]) => host.removeEventListener(name, fn));
     document.removeEventListener('mousedown', onOutside, true);
+    document.removeEventListener('selectionchange', captureSelection);
+    st.selection = [];
     window.removeEventListener('resize', fitHeight);
     host = null;
   }
