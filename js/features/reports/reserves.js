@@ -2551,6 +2551,31 @@ const fullList = getCarBrandLossData();
 
       const chartData = getMonthlyOpenedChartData();
 
+      // Khung biểu đồ: tiêu đề + chip tổng số hồ sơ / tiền dự phòng / mục cao nhất, để đọc nhanh không cần rê chuột.
+      const sumOf = list => list.reduce((n, v) => n + (v || 0), 0);
+      const moMoney = value => value >= 1e9 ? (value / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' Tỷ' : value >= 1e6 ? (value / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' Tr' : Math.round(value).toLocaleString('vi-VN') + ' đ';
+      const moChip = (label, value, color) => `<span style="display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 11px; border-radius: 999px; background: ${color}1a; border: 1px solid ${color}40; font-size: 11.5px; font-weight: 750; color: var(--text-soft); white-space: nowrap;">${label} <strong style="font-size: 13px; font-weight: 900; color: ${color};">${value}</strong></span>`;
+      const moPanel = (title, series, canvasId, height, aria, extraStyle = '', note = '') => {
+        const top = series.count.reduce((best, v, i) => (v > (series.count[best] || 0) || (v === series.count[best] && series.reserve[i] > series.reserve[best])) ? i : best, 0);
+        const topReserve = series.reserve.reduce((best, v, i) => v > series.reserve[best] ? i : best, 0);
+        return `
+        <section aria-label="${escapeAttributeData(title)}" style="${extraStyle} padding: 18px 20px 14px; border-radius: 16px; border: 1px solid var(--border-strong); background: linear-gradient(180deg, rgba(216,180,109,0.06), transparent 38%), var(--surface); box-shadow: var(--shadow-sm); min-width: 0;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
+            <div style="min-width: 0;">
+              <div style="font-size: 13px; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: .05em;">${escapeHtmlOutput(title)}</div>
+              ${note ? `<div style="font-size: 11.5px; font-weight: 650; color: var(--text-soft); margin-top: 3px;">${escapeHtmlOutput(note)}</div>` : ''}
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              ${moChip('Tổng', sumOf(series.count).toLocaleString('vi-VN') + ' hồ sơ', '#3b82f6')}
+              ${moChip('Dự phòng', moMoney(sumOf(series.reserve)), '#b88935')}
+              ${series.labels.length > 1 ? moChip('Nhiều nhất', escapeHtmlOutput(series.labels[top]) + ' · ' + series.count[top], '#10b981') : ''}
+              ${series.labels.length > 1 && topReserve !== top ? moChip('Dự phòng cao nhất', escapeHtmlOutput(series.labels[topReserve]) + ' · ' + moMoney(series.reserve[topReserve]), '#a855f7') : ''}
+            </div>
+          </div>
+          <div style="position: relative; height: ${height}px; width: 100%;"><canvas id="${canvasId}" role="img" aria-label="${escapeAttributeData(aria)}"></canvas></div>
+        </section>`;
+      };
+
       return `
         <!-- 4 EXECUTIVE KPI SUMMARY CARDS -->
         <div class="rp-summary-strip rp-summary-strip--monthly-opened" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
@@ -2624,7 +2649,7 @@ const fullList = getCarBrandLossData();
                 <span>Biểu đồ hồ sơ mở &amp; dự phòng bồi thường · ${escapeHtmlOutput(monthLabel)}</span>
               </h2>
               <div style="font-size: 12.5px; color: var(--text-soft); margin-top: 4px; font-weight: 650;">
-                Xanh dương: hồ sơ VCX • Tím: hồ sơ TNDS • Đường vàng nét đứt: tiền dự phòng (triệu đồng, trục phải) • Tổng: <strong style="color: #10b981; font-weight: 850;">${formatCurrencyInputNumber(totalReserve)} đ</strong> • Bình quân: <strong style="color: #3b82f6; font-weight: 850;">${formatCurrencyInputNumber(avgReservePerVehicle)} đ/hồ sơ</strong>
+                Cột xanh dương: hồ sơ VCX • Cột tím: hồ sơ TNDS (số trong cột, tổng trên đỉnh) • Đường vàng: tiền dự phòng (ghi tại từng điểm) • Tổng: <strong style="color: #10b981; font-weight: 850;">${formatCurrencyInputNumber(totalReserve)} đ</strong> • Bình quân: <strong style="color: #3b82f6; font-weight: 850;">${formatCurrencyInputNumber(avgReservePerVehicle)} đ/hồ sơ</strong>
               </div>
             </div>
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;" class="hide-on-screenshot">
@@ -2646,26 +2671,11 @@ const fullList = getCarBrandLossData();
           ${totalClaims === 0 ? `
             <div role="status" style="padding: 56px 16px; text-align: center; color: var(--text-soft); font-weight: 700;">Không có hồ sơ nào mở trong ${escapeHtmlOutput(monthLabel)} theo bộ lọc hiện tại.</div>
           ` : `
-            <section aria-label="Diễn biến theo thời gian" style="margin-bottom: 26px;">
-              <div style="font-size: 12.5px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px;">${chartData.mode === 'day' ? 'Diễn biến theo ngày mở hồ sơ' : 'Diễn biến theo tháng mở hồ sơ'}</div>
-              <div style="position: relative; height: 340px; width: 100%;"><canvas id="monthlyOpenedTimelineCanvas" role="img" aria-label="Số hồ sơ và tiền dự phòng theo thời gian"></canvas></div>
-            </section>
-            <section aria-label="Theo gara" style="margin-bottom: 26px;">
-              <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
-                <div style="font-size: 12.5px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: .04em;">Theo gara — số hồ sơ &amp; tiền dự phòng từng gara</div>
-                <span style="font-size: 12px; font-weight: 700; color: var(--text-soft);">${chartData.garaNamedCount} gara${chartData.gara.labels.includes('Khác') ? ' (15 gara nhiều hồ sơ nhất, còn lại gộp "Khác")' : ''} • đầy đủ từng gara trong file Excel (sheet Theo_Gara)</span>
-              </div>
-              <div style="position: relative; height: 380px; width: 100%;"><canvas id="monthlyOpenedGaraCanvas" role="img" aria-label="Số hồ sơ và tiền dự phòng theo từng gara"></canvas></div>
-            </section>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px;">
-              <section aria-label="Theo giám định viên">
-                <div style="font-size: 12.5px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px;">Theo giám định viên</div>
-                <div style="position: relative; height: 320px; width: 100%;"><canvas id="monthlyOpenedGdvCanvas" role="img" aria-label="Số hồ sơ và tiền dự phòng theo giám định viên"></canvas></div>
-              </section>
-              <section aria-label="Theo trạng thái hồ sơ">
-                <div style="font-size: 12.5px; font-weight: 850; color: var(--text-main); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px;">Theo trạng thái hồ sơ</div>
-                <div style="position: relative; height: 320px; width: 100%;"><canvas id="monthlyOpenedStatusCanvas" role="img" aria-label="Số hồ sơ và tiền dự phòng theo trạng thái"></canvas></div>
-              </section>
+            ${moPanel('Diễn biến theo ' + (chartData.mode === 'day' ? 'ngày' : 'tháng') + ' mở hồ sơ', chartData.timeline, 'monthlyOpenedTimelineCanvas', 360, 'Số hồ sơ và tiền dự phòng theo thời gian', 'margin-bottom: 20px;')}
+            ${moPanel('Theo gara — số hồ sơ & tiền dự phòng từng gara', chartData.gara, 'monthlyOpenedGaraCanvas', 420, 'Số hồ sơ và tiền dự phòng theo từng gara', 'margin-bottom: 20px;', `${chartData.garaNamedCount} gara${chartData.gara.labels.includes('Khác') ? ' · 15 gara nhiều hồ sơ nhất, còn lại gộp "Khác"' : ''} · đầy đủ từng gara trong Excel (sheet Theo_Gara)`)}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 20px;">
+              ${moPanel('Theo giám định viên', chartData.gdv, 'monthlyOpenedGdvCanvas', 340, 'Số hồ sơ và tiền dự phòng theo giám định viên')}
+              ${moPanel('Theo trạng thái hồ sơ', chartData.status, 'monthlyOpenedStatusCanvas', 340, 'Số hồ sơ và tiền dự phòng theo trạng thái')}
             </div>
             <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onload="if(window.initMonthlyOpenedClaimsCharts) setTimeout(window.initMonthlyOpenedClaimsCharts, 50); this.remove();" style="display:none;" alt="" />
           `}
@@ -2673,8 +2683,18 @@ const fullList = getCarBrandLossData();
       `;
     }
 
-    // Vẽ 3 biểu đồ kết hợp (cột/đường = số hồ sơ, đường vàng trục phải = tiền dự phòng).
+    // Vẽ 4 biểu đồ kết hợp (cột/đường = số hồ sơ VCX/TNDS, đường vàng trục phải = tiền dự phòng) có ghi nhãn số liệu
+    // ngay trên biểu đồ: số hồ sơ trong từng cột + tổng trên đỉnh cột, tiền dự phòng ("298 Tr", "1,2 Tỷ") tại từng điểm.
     let monthlyOpenedChartInstances = [];
+    function formatMonthlyOpenedMoney(value) {
+      const v = Number(value) || 0;
+      if (v >= 1e9) return (v / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' Tỷ';
+      if (v >= 1e7) return Math.round(v / 1e6).toLocaleString('vi-VN') + ' Tr';
+      if (v >= 1e6) return (v / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' Tr';
+      if (v >= 1e3) return Math.round(v / 1e3).toLocaleString('vi-VN') + ' K';
+      return String(Math.round(v));
+    }
+
     function initMonthlyOpenedClaimsCharts() {
       if (typeof Chart === 'undefined') return;
       monthlyOpenedChartInstances.forEach(chart => { try { chart.destroy(); } catch (_) { /* đã huỷ */ } });
@@ -2682,59 +2702,156 @@ const fullList = getCarBrandLossData();
       const root = document.getElementById('monthlyOpenedClaimsReportCardContainer');
       if (!root) return;
       const data = getMonthlyOpenedChartData();
+      const isDark = !document.body.classList.contains('light-mode');
       const style = getComputedStyle(root.closest('.gdv-report-premium-shell') || root);
-      const muted = style.getPropertyValue('--ton-muted').trim() || '#76817e';
-      const line = style.getPropertyValue('--ton-line').trim() || '#e5e8e0';
-      const ink = style.getPropertyValue('--ton-ink').trim() || '#283b36';
-      const paper = style.getPropertyValue('--ton-paper').trim() || '#fffefb';
-      const font = style.fontFamily;
+      const ink = style.getPropertyValue('--ton-ink').trim() || (isDark ? '#f0f2eb' : '#283b36');
+      const grid = style.getPropertyValue('--ton-line').trim() || (isDark ? '#2a3840' : '#e5e8e0');
+      const paper = style.getPropertyValue('--ton-paper').trim() || (isDark ? '#121e27' : '#fffefb');
+      const FONT = "'Plus Jakarta Sans', sans-serif";
+      const GOLD = isDark ? '#e6b85c' : '#b07d1f';
       const isLine = activeMonthlyOpenedChartType === 'line';
+      const COLORS = { vcx: '#2563eb', tnds: '#8b5cf6' };
       const fmtVnd = value => Math.round(value || 0).toLocaleString('vi-VN') + ' đ';
-      const fmtMillion = value => (value / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' tr';
+
+      // Cột có dải màu đứng (đậm ở đỉnh) + bo góc trên, giống biểu đồ gara.
+      const gradient = color => context => {
+        const area = context.chart.chartArea;
+        if (!area) return color;
+        const fill = context.chart.ctx.createLinearGradient(0, area.bottom, 0, area.top);
+        fill.addColorStop(0, color + 'b3'); fill.addColorStop(1, color);
+        return fill;
+      };
+
+      const roundRect = (ctx, x, y, w, h, r) => {
+        if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); return; }
+        ctx.beginPath(); ctx.rect(x, y, w, h);
+      };
+
+      const labelsPlugin = {
+        id: 'monthlyOpenedLabels',
+        beforeDraw(chart) { // nền đặc để xuất ảnh không bị trong suốt
+          const { ctx } = chart; ctx.save(); ctx.globalCompositeOperation = 'destination-over'; ctx.fillStyle = paper; ctx.fillRect(0, 0, chart.width, chart.height); ctx.restore();
+        },
+        afterDatasetsDraw(chart) {
+          const { ctx, chartArea } = chart;
+          const datasets = chart.data.datasets;
+          const countSets = datasets.map((dataset, index) => ({ dataset, index })).filter(item => item.dataset.yAxisID === 'y');
+          const reserveIndex = datasets.findIndex(dataset => dataset.yAxisID === 'y1');
+          const taken = [];
+          const free = rect => rect.y1 >= chartArea.top - 14 && !taken.some(t => rect.x1 < t.x2 && rect.x2 > t.x1 && rect.y1 < t.y2 && rect.y2 > t.y1);
+          ctx.save();
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+
+          const countText = (text, x, y, color, size) => {
+            ctx.font = `900 ${size}px ${FONT}`;
+            const w = ctx.measureText(text).width, rect = { x1: x - w / 2 - 2, x2: x + w / 2 + 2, y1: y - size / 2 - 1, y2: y + size / 2 + 1 };
+            if (!free(rect)) return false;
+            ctx.fillStyle = color; ctx.fillText(text, x, y); taken.push(rect); return true;
+          };
+
+          // 1) số hồ sơ
+          const n = chart.data.labels.length;
+          for (let i = 0; i < n; i++) {
+            if (!isLine) {
+              let total = 0, top = null;
+              countSets.forEach(({ dataset, index }) => {
+                const value = dataset.data[i] || 0;
+                const element = chart.getDatasetMeta(index).data[i];
+                if (!value || !element) return;
+                total += value;
+                if (!top || element.y < top.y) top = element;
+                if (Math.abs(element.base - element.y) >= 17 && (element.width || 0) >= 14) countText(String(value), element.x, (element.y + element.base) / 2, '#ffffff', 11);
+              });
+              if (total && top) countText(String(total), top.x, top.y - 10, ink, 12.5);
+            } else {
+              countSets.forEach(({ dataset, index }) => {
+                const value = dataset.data[i] || 0;
+                const element = chart.getDatasetMeta(index).data[i];
+                if (value && element) countText(String(value), element.x, element.y - 12, dataset.borderColor, 11.5);
+              });
+            }
+          }
+
+          // 2) tiền dự phòng: viên thuốc màu vàng phía trên điểm, tránh đè nhãn khác
+          if (reserveIndex >= 0) {
+            const meta = chart.getDatasetMeta(reserveIndex);
+            meta.data.forEach((element, i) => {
+              const value = datasets[reserveIndex].data[i];
+              if (!value || !element || element.skip) return;
+              const text = formatMonthlyOpenedMoney(value);
+              ctx.font = `800 10.5px ${FONT}`;
+              const w = ctx.measureText(text).width + 12, h = 17;
+              for (const offset of [-17, -37, 19, 39]) {
+                const rect = { x1: element.x - w / 2, x2: element.x + w / 2, y1: element.y + offset - h / 2, y2: element.y + offset + h / 2 };
+                if (rect.y2 > chartArea.bottom + 2 || !free(rect)) continue;
+                ctx.fillStyle = isDark ? 'rgba(230,184,92,0.18)' : 'rgba(184,137,53,0.14)';
+                roundRect(ctx, rect.x1, rect.y1, w, h, 8); ctx.fill();
+                ctx.strokeStyle = GOLD + '88'; ctx.lineWidth = 1; ctx.stroke();
+                ctx.fillStyle = GOLD; ctx.fillText(text, element.x, element.y + offset + 0.5);
+                taken.push(rect);
+                break;
+              }
+            });
+          }
+          ctx.restore();
+        }
+      };
 
       const build = (canvasId, series, view = {}) => {
         const canvas = document.getElementById(canvasId);
         if (!canvas || !series.labels.length) return;
-        const claimSet = (key, label, color) => ({
+        const compact = canvas.clientWidth < 560;
+        // Tách hai vùng để nhãn không đè nhau: cột/đường hồ sơ ở nửa dưới (~55% chiều cao), đường dự phòng ở vùng phía trên.
+        const peakCount = Math.max(1, ...series.labels.map((_, i) => isLine ? Math.max(series.vcx[i], series.tnds[i]) : series.vcx[i] + series.tnds[i]));
+        const peakReserve = Math.max(1, ...series.reserve.map((value, i) => series.count[i] ? value : 0));
+        const countMax = Math.ceil(peakCount * 1.9);
+        const claimSet = (key, label) => ({
           type: isLine ? 'line' : 'bar', label, data: series[key], yAxisID: 'y',
-          borderColor: color, backgroundColor: isLine ? color : color + 'cc', borderWidth: isLine ? 2.5 : 1,
-          borderRadius: isLine ? 0 : 5, maxBarThickness: 34, stack: isLine ? undefined : 'claims',
-          pointRadius: isLine ? 3.5 : 0, pointHoverRadius: 5, tension: .34, fill: false
+          borderColor: COLORS[key], backgroundColor: isLine ? COLORS[key] : gradient(COLORS[key]), borderWidth: isLine ? 3 : 0,
+          borderRadius: isLine ? 0 : { topLeft: 7, topRight: 7, bottomLeft: 0, bottomRight: 0 }, maxBarThickness: 46, stack: isLine ? undefined : 'claims',
+          pointRadius: isLine ? 4 : 0, pointHoverRadius: 6, pointBackgroundColor: paper, pointBorderColor: COLORS[key], pointBorderWidth: 2.5, tension: .3, fill: false
         });
         const chart = new Chart(canvas.getContext('2d'), {
           type: isLine ? 'line' : 'bar',
           data: {
             labels: series.labels,
             datasets: [
-              claimSet('vcx', 'VCX (hồ sơ)', '#3b82f6'),
-              claimSet('tnds', 'TNDS (hồ sơ)', '#a855f7'),
+              claimSet('vcx', 'VCX (hồ sơ)'),
+              claimSet('tnds', 'TNDS (hồ sơ)'),
               {
                 type: 'line', label: 'Dự phòng (đ)', data: series.reserve.map((value, i) => series.count[i] ? value : null), spanGaps: true, yAxisID: 'y1', order: -1,
-                borderColor: '#b88935', backgroundColor: paper, borderWidth: 3, borderDash: [8, 5], pointRadius: 4.5, pointHoverRadius: 6,
-                pointBorderWidth: 2, pointBackgroundColor: paper, pointBorderColor: '#b88935', tension: .34, fill: false
+                borderColor: GOLD, backgroundColor: GOLD, borderWidth: 3.5, pointRadius: 5, pointHoverRadius: 7, pointBackgroundColor: paper, pointBorderColor: GOLD, pointBorderWidth: 3, tension: .3, fill: false
               }
             ]
           },
           options: {
             responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+            layout: { padding: { top: 10, right: 30 } },
+            animation: { duration: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450, easing: 'easeOutQuart' },
             plugins: {
-              legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, boxHeight: 8, padding: 18, color: ink, font: { family: font, size: 11, weight: '600' } } },
+              legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 9, boxHeight: 9, padding: 18, color: ink, font: { family: FONT, size: 12, weight: '800' } } },
               tooltip: {
-                backgroundColor: ink, titleColor: paper, bodyColor: paper, padding: 12, cornerRadius: 10,
-                callbacks: { label: ctx => ctx.dataset.yAxisID === 'y1' ? ctx.dataset.label.replace(' (đ)', '') + ': ' + fmtVnd(ctx.parsed.y) : ctx.dataset.label.replace(' (hồ sơ)', '') + ': ' + ctx.parsed.y + ' hồ sơ' }
+                backgroundColor: isDark ? 'rgba(15,23,42,0.96)' : 'rgba(255,255,255,0.97)', titleColor: isDark ? '#ffffff' : '#0f172a', bodyColor: isDark ? '#cbd5e1' : '#475569',
+                borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', borderWidth: 1, padding: 14, cornerRadius: 12, usePointStyle: true, boxPadding: 6,
+                titleFont: { family: FONT, size: 13, weight: '800' }, bodyFont: { family: FONT, size: 13, weight: '700' },
+                callbacks: {
+                  label: context => context.dataset.yAxisID === 'y1' ? context.dataset.label.replace(' (đ)', '') + ': ' + fmtVnd(context.parsed.y) : context.dataset.label.replace(' (hồ sơ)', '') + ': ' + context.parsed.y + ' hồ sơ',
+                  footer: items => { const total = items.filter(item => item.dataset.yAxisID === 'y').reduce((sum, item) => sum + (item.parsed.y || 0), 0); return total ? 'Tổng: ' + total + ' hồ sơ' : ''; }
+                }
               }
             },
             scales: {
-              x: { stacked: !isLine, grid: { display: false }, border: { display: false }, ticks: { color: muted, maxRotation: view.rotate || 0, minRotation: view.rotate || 0, autoSkip: !view.rotate, font: { family: font, size: 10, weight: '600' } } },
-              y: { stacked: !isLine, beginAtZero: true, grid: { color: line }, border: { display: false }, ticks: { precision: 0, color: muted, font: { family: font, size: 10 } }, title: { display: true, text: 'Số hồ sơ', color: muted, font: { family: font, size: 10, weight: '700' } } },
-              y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, border: { display: false }, ticks: { color: '#b88935', callback: fmtMillion, font: { family: font, size: 10 } }, title: { display: true, text: 'Dự phòng (triệu đồng)', color: '#b88935', font: { family: font, size: 10, weight: '700' } } }
+              x: { stacked: !isLine, grid: { display: false }, border: { display: false }, ticks: { color: ink, padding: 8, maxRotation: view.rotate || 0, minRotation: view.rotate || 0, autoSkip: !view.rotate, font: { family: FONT, size: compact ? 10 : 11, weight: '800' } } },
+              y: { stacked: !isLine, min: 0, max: countMax, grid: { color: grid, borderDash: [5, 5] }, border: { display: false }, ticks: { precision: 0, color: ink, padding: 8, font: { family: FONT, size: 11, weight: '700' }, callback: v => v <= peakCount * 1.2 ? v + ' hs' : '' } },
+              y1: { position: 'right', min: -peakReserve * 1.8, max: peakReserve * 1.08, grid: { drawOnChartArea: false }, border: { display: false }, ticks: { display: false } }
             }
-          }
+          },
+          plugins: [labelsPlugin]
         });
         monthlyOpenedChartInstances.push(chart);
       };
       build('monthlyOpenedTimelineCanvas', data.timeline);
-      build('monthlyOpenedGaraCanvas', data.gara, { rotate: 35 });
+      build('monthlyOpenedGaraCanvas', data.gara, { rotate: 30 });
       build('monthlyOpenedGdvCanvas', data.gdv);
       build('monthlyOpenedStatusCanvas', data.status);
     }
