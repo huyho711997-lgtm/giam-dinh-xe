@@ -1,0 +1,25 @@
+/* Hộp thoại "Mở sơ đồ" của trang vẽ độc lập (js/features/scene-cloud + standalone.js). Dùng biến màu của base.css (tự theo sáng/tối). */
+.sc-overlay { position: fixed; inset: 0; z-index: 100070; display: grid; place-items: center; padding: 16px; background: rgba(15,23,42,.55); backdrop-filter: blur(8px); }
+.sc-dialog { width: min(580px, 100%); max-height: min(680px, calc(100vh - 32px)); display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 16px; background: var(--surface-strong); color: var(--text-main); box-shadow: 0 24px 60px rgba(0,0,0,.32); font-family: inherit; overflow: hidden; }
+.sc-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.sc-head h3 { margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -.02em; }
+.sc-x { width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: var(--text-muted); font-size: 18px; line-height: 1; cursor: pointer; }
+.sc-x:hover { background: color-mix(in srgb, var(--text-main) 8%, transparent); color: var(--text-main); }
+.sc-body { display: grid; gap: 16px; padding: 14px 16px 16px; overflow: auto; }
+.sc-sec h4 { margin: 0 0 8px; color: var(--text-muted); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.sc-list { display: grid; gap: 6px; max-height: 230px; overflow: auto; }
+.sc-row { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid var(--border); border-radius: 10px; }
+.sc-row.is-current { border-color: color-mix(in srgb, var(--primary) 55%, var(--border)); background: color-mix(in srgb, var(--primary) 8%, transparent); }
+.sc-name { overflow: hidden; font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.sc-meta { margin-top: 2px; color: var(--text-muted); font-size: 11.5px; }
+.sc-acts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.sc-btn { min-height: 30px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text-main); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.sc-btn:hover:not(:disabled) { border-color: color-mix(in srgb, var(--primary) 50%, var(--border)); color: var(--primary); }
+.sc-btn.is-primary { border-color: transparent; background: var(--primary); color: #1a1405; }
+.sc-btn:disabled { opacity: .55; cursor: default; }
+.sc-empty { padding: 14px 10px; border: 1px dashed var(--border); border-radius: 10px; color: var(--text-muted); font-size: 12.5px; text-align: center; }
+.sc-line { display: flex; gap: 8px; }
+.sc-input { flex: 1; min-width: 0; min-height: 34px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text-main); font: inherit; font-size: 12.5px; }
+.sc-input:focus { border-color: var(--primary); outline: none; }
+.sc-note { margin: 0; color: var(--text-muted); font-size: 11.5px; line-height: 1.5; }
+@media (max-width: 520px) { .sc-row { grid-template-columns: 1fr; } .sc-acts { justify-content: flex-start; } }
