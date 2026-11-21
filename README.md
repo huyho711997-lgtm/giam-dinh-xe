@@ -74,7 +74,7 @@ Thêm mẫu mới: thêm một phần tử vào `OFFICIAL_LETTER_TEMPLATES` tron
 
 ### Giao diện: AI agent dạng trang
 - **Mở đầu:** "Hôm nay cần soạn công văn gì?" + một ô yêu cầu lớn. Trong ô có nút **Đính kèm**, **Hồ sơ** (ô tìm nổi), **Loại** (menu, mặc định Tự do) và nút gửi (Enter; Shift+Enter xuống dòng); 4 gợi ý mẫu bên dưới. Gõ số HSBT/biển số trong yêu cầu là tự nhận hồ sơ (`detectRecord`, chỉ khi xác định duy nhất; không thấy thì báo).
-- **Làm việc:** tóm tắt yêu cầu (Sửa yêu cầu / Công văn mới) · 3 bước AI (đọc hồ sơ → căn cứ → soạn, có trạng thái) · tờ công văn lớn sửa trực tiếp (Ngày, Tải Word, In, Sao chép) · cột ghi chú hẹp (chỗ "……", căn cứ ✓/⚠, chọn nhanh, giả định, nên kiểm tra, lưu ý hồ sơ) · ô **Nhờ AI sửa** nổi cuối trang.
+- **Làm việc:** tóm tắt yêu cầu (Sửa yêu cầu / Công văn mới) · thanh tiến độ một đường thẳng với 3 nút bước (đọc hồ sơ → căn cứ → soạn), tô dần theo tiến độ · tờ công văn lớn sửa trực tiếp (Ngày, Tải Word, In, Sao chép) · cột ghi chú hẹp (chỗ "……", căn cứ ✓/⚠, chọn nhanh, giả định, nên kiểm tra, lưu ý hồ sơ) · ô **Nhờ AI sửa** ghim cố định ở đáy (nội dung phía trên cuộn riêng, chiều cao tự khớp cửa sổ).
 - **Chi tiết** (thông tin, dàn ý, căn cứ, hồ sơ) nằm trong ngăn trượt bên phải, nút "Soạn lại theo chi tiết này".
 
 ### Đọc sâu hồ sơ (`official-letter-dossier.js`)

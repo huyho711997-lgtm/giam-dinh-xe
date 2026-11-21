@@ -192,7 +192,7 @@ const OfficialLetterPage = (() => {
   // ---- Luồng chính ----
   function setBusy(status) { st.busy = 'run'; st.status = status; renderAll(); }
   // Trạng thái 3 bước hiển thị kiểu agent: idle | run | done | skip | err, kèm mô tả ngắn.
-  function step(name, state, text) { if (!st.steps) st.steps = {}; st.steps[name] = {state, text: text || ''}; const node = $('[data-ol-steps]'); if (node) node.outerHTML = stepsHtml(); }
+  function step(name, state, text) { if (!st.steps) st.steps = {}; st.steps[name] = {state, text: text || ''}; updateSteps(); }
   function setStatus(status) { st.status = status; const node = $('[data-ol-status]'); if (node) node.textContent = status; }
   // Đổi hồ sơ hoặc loại công văn → bỏ kết quả phân tích cũ (giữ bản thảo đang có cho tới khi soạn xong bản mới).
   function resetAnalysis() {
@@ -426,11 +426,33 @@ const OfficialLetterPage = (() => {
   }
 
   // ---- Màn làm việc ----
-  function stepsHtml() {
+  // Thanh tiến độ: một đường thẳng, 3 nút bước nằm trên đường; phần đã xong tô màu, đoạn đang chạy có hiệu ứng.
+  const STEP_NAMES = ['read', 'legal', 'write'];
+  const STEP_LABEL = {read: 'Đọc hồ sơ & yêu cầu', legal: 'Căn cứ pháp lý', write: 'Soạn công văn'};
+  function stepState() {
     const steps = st.steps || {read: {state: 'done', text: ''}, legal: {state: 'done', text: ''}, write: {state: 'done', text: ''}};
-    const label = {read: 'Đọc hồ sơ & yêu cầu', legal: 'Căn cứ pháp lý', write: 'Soạn công văn'};
+    const list = STEP_NAMES.map(name => ({name, ...(steps[name] || {state: 'idle', text: ''})}));
+    const current = list.findIndex(item => item.state === 'run' || item.state === 'idle');
+    // Tỷ lệ đường đã tô: tới nút đang chạy (giữa các nút = 0%, 50%, 100%); xong hết = 100%.
+    const progress = current < 0 ? 100 : current * 50;
+    return {list, progress, running: list.some(item => item.state === 'run')};
+  }
+  function stepsInner(list) {
     const mark = state => state === 'run' ? '<span class="olp-spinner"></span>' : state === 'done' ? '✓' : state === 'skip' ? '–' : state === 'err' ? '!' : '';
-    return '<ol class="ola-steps" data-ol-steps>' + ['read', 'legal', 'write'].map(name => { const item = steps[name] || {state: 'idle'}; return '<li class="is-' + item.state + '"><span class="ola-step-mark">' + mark(item.state) + '</span><span><b>' + label[name] + '</b>' + (item.text ? '<small>' + esc(item.text) + '</small>' : '') + '</span></li>'; }).join('') + '</ol>';
+    return list.map(item => '<li class="is-' + item.state + '"><span class="ola-step-mark">' + mark(item.state) + '</span><b>' + STEP_LABEL[item.name] + '</b>' + (item.text ? '<small>' + esc(item.text) + '</small>' : '') + '</li>').join('');
+  }
+  function stepsHtml() {
+    const {list, progress, running} = stepState();
+    return '<div class="ola-progress' + (running ? ' is-running' : '') + '" data-ol-steps style="--p:' + progress + '%" role="group" aria-label="Tiến độ soạn công văn"><div class="ola-track" aria-hidden="true"><span class="ola-fill"></span></div><ol>' + stepsInner(list) + '</ol></div>';
+  }
+  // Cập nhật tại chỗ để đường tiến độ chạy mượt (không dựng lại phần tử).
+  function updateSteps() {
+    const node = $('[data-ol-steps]');
+    if (!node) return;
+    const {list, progress, running} = stepState();
+    node.style.setProperty('--p', progress + '%');
+    node.classList.toggle('is-running', running);
+    node.querySelector('ol').innerHTML = stepsInner(list);
   }
   function noticeHtml() { return st.notice ? '<div class="olp-notice olp-notice--' + esc(st.notice.kind) + '" role="' + (st.notice.kind === 'error' ? 'alert' : 'status') + '">' + esc(st.notice.text) + '</div>' : ''; }
   function requestHtml() {
@@ -484,8 +506,9 @@ const OfficialLetterPage = (() => {
       + '<button type="button" class="tasco-ai-send" data-ol-act="refine" aria-label="Gửi yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div></div>';
   }
   function workHtml() {
-    return '<div class="ola-work">' + requestHtml() + stepsHtml() + noticeHtml()
-      + '<div class="ola-stage">' + documentHtml() + notesRail() + '</div>' + refineHtml() + '</div>';
+    // Vùng nội dung cuộn riêng; ô "Nhờ AI sửa" ghim cố định ở đáy, không trôi theo và không đè tờ công văn.
+    return '<div class="ola-work"><div class="ola-scroll" data-ol-scroll><div class="ola-scroll-inner">' + requestHtml() + stepsHtml() + noticeHtml()
+      + '<div class="ola-stage">' + documentHtml() + notesRail() + '</div></div></div>' + refineHtml() + '</div>';
   }
 
   // ---- Ngăn chi tiết ----
@@ -546,12 +569,28 @@ const OfficialLetterPage = (() => {
     const root = $('[data-ol-root]');
     const active = document.activeElement, focusSel = active && host.contains(active) ? (active.matches('[data-ol-rec-q]') ? '[data-ol-rec-q]' : active.matches('[data-ol-brief]') ? '[data-ol-brief]' : '') : '';
     const working = !!(st.letter || (st.busy && st.steps));
+    const scrollBox = $('[data-ol-scroll]'), scrollTop = scrollBox ? scrollBox.scrollTop : 0;
     root.innerHTML = (working ? workHtml() : heroHtml()) + drawerHtml()
       + '<button type="button" class="ola-gear" data-ol-act="settings" title="Thông tin đơn vị ban hành" aria-label="Thông tin đơn vị ban hành">' + svg(ICON.gear) + '</button>';
     root.classList.toggle('is-working', working);
+    fitHeight();
+    const nextScroll = $('[data-ol-scroll]'); if (nextScroll) nextScroll.scrollTop = scrollTop;
     const brief = $('[data-ol-brief]'); if (brief) autoGrow(brief);
     if (st.pop === 'record') { updateRecList(); $('[data-ol-rec-q]')?.focus(); }
     else if (focusSel) $(focusSel)?.focus();
+  }
+  // Màn làm việc chiếm đúng phần còn lại của cửa sổ (từ mép trên trang tới đáy) để ô chỉnh sửa ghim ở đáy.
+  function fitHeight() {
+    const root = $('[data-ol-root]');
+    if (!root) return;
+    const top = root.getBoundingClientRect().top + (window.scrollY || 0);
+    root.style.setProperty('--ola-top', Math.max(0, Math.round(top)) + 'px');
+    root.style.setProperty('--ola-gap', '14px');
+    if (!root.classList.contains('is-working')) return;
+    // Khung app có phần đệm dưới → trừ thêm đúng phần làm trang bị cuộn, để chỉ vùng nội dung cuộn.
+    const page = document.scrollingElement || document.documentElement;
+    const extra = page.scrollHeight - window.innerHeight;
+    if (extra > 0) root.style.setProperty('--ola-gap', (14 + extra) + 'px');
   }
   function autoGrow(area) { area.style.height = 'auto'; area.style.height = Math.min(area.scrollHeight, 260) + 'px'; }
   function updateMissingLive() {
@@ -708,6 +747,7 @@ const OfficialLetterPage = (() => {
     host.innerHTML = '<div class="ola" data-ol-root></div>';
     HANDLERS.forEach(([name, fn]) => host.addEventListener(name, fn));
     document.addEventListener('mousedown', onOutside, true);
+    window.addEventListener('resize', fitHeight);
     renderAll();
   }
 
@@ -717,6 +757,7 @@ const OfficialLetterPage = (() => {
     st.busy = ''; st.status = ''; st.pop = '';
     if (host) HANDLERS.forEach(([name, fn]) => host.removeEventListener(name, fn));
     document.removeEventListener('mousedown', onOutside, true);
+    window.removeEventListener('resize', fitHeight);
     host = null;
   }
 
