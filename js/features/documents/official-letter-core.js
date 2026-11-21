@@ -161,6 +161,15 @@ const OfficialLetterCore = (() => {
     + '(5) Dùng đúng dàn ý được cung cấp (có thể gộp ý quá ngắn); mỗi đoạn là một ý trọn vẹn, đoạn liệt kê dùng loại "li". Thông tin người dùng đã làm rõ có hiệu lực cao hơn dữ liệu cũ. '
     + 'Chỉ trả về JSON: {"subject":"<trích yếu, bắt đầu bằng chữ thường sau V/v, không quá 200 ký tự>","paragraphs":[{"type":"p|h|li","text":"..."}],"warnings":["<điều cần người dùng kiểm tra lại>"],"basis":[{"code":"C1","cite":"<cách đã viện dẫn>"}]}.';
 
+  // Công văn mẫu thật (đã ẩn thông tin cá nhân) của mẫu — AI học cấu trúc, trình tự lập luận, giọng văn; không được chép dữ kiện/điều khoản từ đây.
+  function sampleBlock(template) {
+    const lines = (Array.isArray(template.sample) ? template.sample : []).map(line => single(line, 900)).filter(Boolean).slice(0, 30);
+    if (!lines.length) return '';
+    return '\n\nCÔNG VĂN MẪU THAM KHẢO (công văn thật đã ban hành, thông tin cá nhân đã thay bằng [..]). Chỉ học cấu trúc, trình tự lập luận và giọng văn; '
+      + 'TUYỆT ĐỐI không chép dữ kiện, số liệu, tên, ngày tháng, số hiệu văn bản hay điều khoản từ mẫu này — mọi dữ kiện lấy từ THÔNG TIN ĐÃ XÁC NHẬN và HỒ SƠ; '
+      + 'điều khoản/điều luật chỉ được nêu khi có nguyên văn trong CĂN CỨ TỪ THƯ VIỆN hoặc trong thông tin đã xác nhận:\n' + lines.map(line => '| ' + line).join('\n');
+  }
+
   // ctx (tuỳ chọn): {outline:[chuỗi], extras:[{label,value}], answers:[{question,answer}], understanding}
   // — dàn ý đã được người dùng duyệt thay cho dàn ý mặc định của mẫu; extras/answers là thông tin đã xác nhận thêm.
   function buildComposeRequest(template, values, issuer, brief, previous, ctx) {
@@ -174,6 +183,7 @@ const OfficialLetterCore = (() => {
     const answers = (extra.answers || []).filter(item => item && item.question && item.answer).map(item => ({hoi: single(item.question, 300), dap: single(item.answer, 400)}));
     const text = 'LOẠI CÔNG VĂN: ' + template.name + '\nMỤC ĐÍCH VÀ YÊU CẦU: ' + template.purpose
       + (extra.understanding ? '\nCÁCH HIỂU YÊU CẦU (đã được người dùng xem): ' + single(extra.understanding, 700) : '')
+      + sampleBlock(template)
       + '\n\nĐƠN VỊ BAN HÀNH: ' + cfg.parent + (cfg.unit ? ' – ' + cfg.unit : '') + ' (gọi tắt: ' + cfg.shortName + ')'
       + '\n\nDÀN Ý CÁC ĐOẠN' + (outline.length ? ' (người dùng đã duyệt — viết đúng theo, không thêm bớt đoạn)' : '') + ':\n' + lines.map((line, index) => (index + 1) + '. ' + line).join('\n')
       + '\n\nTHÔNG TIN ĐÃ XÁC NHẬN:\n' + JSON.stringify(facts)
@@ -223,7 +233,7 @@ const OfficialLetterCore = (() => {
     const body = (parsed.paragraphs || []).map(normalizeParagraph);
     const closing = (template.closing || []).map(line => ({type: 'p', text: fillClosing(line, values)}));
     return {
-      templateId: template.id, parent: cfg.parent, unit: cfg.unit, number: '', place: cfg.place,
+      templateId: template.id, parent: cfg.parent, unit: cfg.unit, number: template.numberKey ? single(values[template.numberKey], 60) : '', place: cfg.place,
       date: /^\d{4}-\d{2}-\d{2}$/.test(dateIso || '') ? dateIso : todayIso(),
       subject: single(parsed.subject, MAX_SUBJECT),
       recipients: recipientLines(values.recipient),

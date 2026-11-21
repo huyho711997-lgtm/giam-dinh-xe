@@ -16,7 +16,7 @@ const OfficialLetterLegal = (() => {
 
   // Chỉ các loại công văn mang tính kết luận/giải quyết mới TỰ tìm căn cứ; công văn đề nghị, thông báo bổ sung, gửi gara
   // thông thường không cần viện dẫn điều luật (dẫn vào chỉ gượng ép). Loại khác chỉ tìm khi người dùng nhắc tới căn cứ/luật.
-  const NEEDS_BASIS = new Set(['thong_bao_ket_qua_giam_dinh', 'giai_trinh_tra_loi']);
+  const NEEDS_BASIS = new Set(['thong_bao_ket_qua_giam_dinh', 'giai_trinh_tra_loi', 'tu_choi_thong_so_lop']);
   const LEGAL_WORDS = /căn cứ|điều luật|\bluật\b|nghị định|thông tư|quy tắc|điều khoản|giảm trừ|chế tài|từ chối|loại trừ|khiếu nại|pháp lý/i;
   const needsBasis = (template, brief) => !!template && (NEEDS_BASIS.has(template.id) || LEGAL_WORDS.test(String(brief || '')));
   // Chủ đề căn cứ thường cần theo loại công văn (mã mẫu trong official-letter-templates.js).
@@ -26,6 +26,7 @@ const OfficialLetterLegal = (() => {
     de_nghi_gara_cung_cap: ['giám định tổn thất phương án sửa chữa thay thế', 'chi phí sửa chữa hợp lý báo giá', 'hồ sơ sửa chữa hoá đơn chứng từ'],
     thong_bao_ket_qua_giam_dinh: ['thời hạn giải quyết bồi thường', 'số tiền bồi thường mức khấu trừ', 'giảm trừ số tiền bồi thường', 'loại trừ trách nhiệm bảo hiểm', 'từ chối bồi thường thông báo bằng văn bản nêu rõ lý do'],
     giai_trinh_tra_loi: ['trách nhiệm bồi thường của doanh nghiệp bảo hiểm', 'loại trừ trách nhiệm bảo hiểm', 'giảm trừ số tiền bồi thường', 'thời hạn giải quyết bồi thường'],
+    tu_choi_thong_so_lop: ['điểm loại trừ chung thay đổi thông số lốp la-zăng thông số kỹ thuật khuyến cáo nhà sản xuất', 'xe không có giấy chứng nhận kiểm định an toàn kỹ thuật hợp lệ loại trừ', 'từ chối bồi thường các trường hợp loại trừ trách nhiệm bảo hiểm'],
     tu_do: []
   };
 

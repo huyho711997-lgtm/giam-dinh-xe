@@ -173,3 +173,10 @@ test('prompt soạn: mặc định không viện dẫn, không mở đầu "Căn
   assert.match(sys, /tối đa 2 căn cứ/);
   assert.match(context.C.buildAnalyzeRequest(context.C.findTemplate('tu_do'), {}).system_instruction.parts[0].text, /ngược lại để \[\]/);
 });
+
+test('mẫu từ chối thông số lốp: tự tìm căn cứ trong Thư viện (loại trừ lốp/kiểm định)', () => {
+  const { L } = load();
+  assert.ok(L.needsBasis({ id: 'tu_choi_thong_so_lop' }, ''));
+  const q = plain(L.buildQueries({ id: 'tu_choi_thong_so_lop' }, null, []));
+  assert.ok(q.some(x => /thông số lốp/.test(x)) && q.some(x => /kiểm định/.test(x)));
+});

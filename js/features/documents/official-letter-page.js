@@ -449,7 +449,8 @@ const OfficialLetterPage = (() => {
     de_nghi_cung_cap_ho_so: 'Đề nghị Công an huyện cung cấp biên bản tai nạn cho hồ sơ ',
     thong_bao_bo_sung_ho_so: 'Nhắc khách hàng bổ sung giấy tờ còn thiếu cho hồ sơ ',
     de_nghi_gara_cung_cap: 'Đề nghị gara gửi báo giá sửa chữa cho xe ',
-    thong_bao_ket_qua_giam_dinh: 'Thông báo kết quả giám định và hướng giải quyết cho hồ sơ '
+    thong_bao_ket_qua_giam_dinh: 'Thông báo kết quả giám định và hướng giải quyết cho hồ sơ ',
+    tu_choi_thong_so_lop: 'Từ chối bồi thường vì lốp lắp khác thông số tiêu chuẩn cho hồ sơ '
   };
 
   // ---- Ô yêu cầu kiểu agent ----
