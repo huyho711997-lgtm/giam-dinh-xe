@@ -206,3 +206,17 @@ test('contact_directory: mọi tài khoản có hồ sơ được đọc, chỉ 
   assert.equal(canWrite(asUser('admin1'), 'contact_directory/TIC2125', {...rec, extra: 'x'}, DB), false);        // trường lạ
   assert.equal(canWrite(asUser('admin1'), 'contact_directory/TIC2125', {...rec, hoTen: 'a'.repeat(121)}, DB), false);
 });
+
+test('user_letters: lịch sử Công văn AI chỉ chính chủ đọc/ghi, đúng cấu trúc và giới hạn kích thước', () => {
+  const me = asUser('gdv1'), other = asUser('gdv2');
+  const index = {title: 'V/v đề nghị cung cấp hồ sơ', sub: '47A-123.45', updatedAt: 1};
+  assert.equal(canWrite(me, 'user_letters/gdv1/index/abc123def', index, DB), true);
+  assert.equal(canWrite(me, 'user_letters/gdv1/items/abc123def', {data: '{}', updatedAt: 1}, DB), true);
+  assert.equal(canRead(me, 'user_letters/gdv1/index', DB), true);
+  assert.equal(canRead(other, 'user_letters/gdv1/index', DB), false);
+  assert.equal(canWrite(other, 'user_letters/gdv1/index/abc123def', index, DB), false);
+  assert.equal(canWrite(me, 'user_letters/gdv1/index/ABC', index, DB), false, 'khoá sai định dạng');
+  assert.equal(canWrite(me, 'user_letters/gdv1/index/abc123def', {...index, hack: 1}, DB), false);
+  assert.equal(canWrite(me, 'user_letters/gdv1/items/abc123def', {data: 'x'.repeat(150001), updatedAt: 1}, DB), false);
+  assert.equal(canWrite(me, 'user_letters/gdv1/other', {a: 1}, DB), false);
+});

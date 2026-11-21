@@ -298,6 +298,30 @@
           ".validate": false
         }
       }
+    },
+    "user_letters": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "index": {
+          "$id": {
+            ".validate": "$id.matches(/^[a-z0-9]{6,32}$/) && newData.hasChildren(['title', 'updatedAt'])",
+            "title": { ".validate": "newData.isString() && newData.val().length <= 300" },
+            "sub": { ".validate": "newData.isString() && newData.val().length <= 300" },
+            "updatedAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "items": {
+          "$id": {
+            ".validate": "$id.matches(/^[a-z0-9]{6,32}$/) && newData.hasChildren(['data', 'updatedAt'])",
+            "data": { ".validate": "newData.isString() && newData.val().length <= 150000" },
+            "updatedAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "$other": { ".validate": false }
+      }
     }
   }
 }

@@ -24,6 +24,9 @@ const OfficialLetterPage = (() => {
     print: '<path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/>',
     folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
     chevron: '<path d="m6 9 6 6 6-6"/>',
+    history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+    trash: '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
+    panel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>'
   };
 
@@ -33,7 +36,8 @@ const OfficialLetterPage = (() => {
     values: null, filledByAI: [], questions: [], extras: [], outline: [], outlineEdited: false, understanding: '', notes: '',
     insights: [], keyFacts: [], legalQueries: [], assumptions: [], sources: [], legalError: '', legalLoaded: false,
     letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
-    pop: '', drawer: '', editing: false, steps: null
+    pop: '', drawer: '', editing: false, steps: null,
+    historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser'
   };
 
   // ---- Tiện ích chung ----
@@ -258,6 +262,7 @@ const OfficialLetterPage = (() => {
       setStatus('Đang soạn công văn…'); step('write', 'run', 'Đang viết');
       await composeCore('');
       step('write', 'done', 'Xong');
+      saveHistory();
     } catch (error) {
       if (my !== generation || error.name === 'AbortError') return;
       notice(error.message || 'Không soạn được công văn.', 'error');
@@ -291,6 +296,7 @@ const OfficialLetterPage = (() => {
       await composeCore(instruction || '');
       if (my !== generation) return;
       toast(instruction ? 'Đã chỉnh công văn theo yêu cầu.' : 'Đã soạn lại công văn.', 'success');
+      saveHistory();
     } catch (error) {
       if (my !== generation || error.name === 'AbortError') return;
       notice(error.message || 'Không soạn được công văn.', 'error');
@@ -348,6 +354,7 @@ const OfficialLetterPage = (() => {
       SharedFormsAI.saveBlob(blob, Core().fileBaseName(st.letter, st.values) + '.docx');
       const gaps = Core().countGaps(st.letter);
       toast(gaps ? 'Đã tải Word. Còn ' + gaps + ' chỗ "……" cần điền tay.' : 'Đã tải file Word.', gaps ? 'warning' : 'success');
+      saveHistory();
     } catch (error) { toast('Không tạo được file Word: ' + (error.message || error), 'error'); }
   }
   function printLetter() {
@@ -367,6 +374,74 @@ const OfficialLetterPage = (() => {
     syncLetter();
     try { await navigator.clipboard.writeText(Core().letterToText(st.letter)); toast('Đã sao chép nội dung công văn.', 'success'); }
     catch (_) { toast('Không sao chép được. Hãy bôi đen nội dung rồi nhấn Ctrl+C.', 'warning'); }
+  }
+
+  // ---- Lịch sử (OfficialLetterHistory: Firebase user_letters/{uid}, dự phòng trình duyệt) ----
+  const History = () => (typeof OfficialLetterHistory !== 'undefined' ? OfficialLetterHistory : null);
+  const HIST_PANEL_KEY = 'officialLetter.historyPanel.v1';
+  function snapshot() {
+    syncLetter();
+    const found = chosenRecord();
+    return {
+      v: 1, brief: st.brief, recordKey: st.recordKey, recordLabel: found ? recordLabel(found.info) : st.savedRecordLabel, templateId: st.templateId,
+      fileNames: st.files.map(item => item.file.name), letter: st.letter, values: st.values, filledByAI: st.filledByAI, questions: st.questions, extras: st.extras,
+      outline: st.outline, outlineEdited: st.outlineEdited, understanding: st.understanding, notes: st.notes, insights: st.insights, keyFacts: st.keyFacts,
+      legalQueries: st.legalQueries, assumptions: st.assumptions, legalError: st.legalError, legalLoaded: st.legalLoaded, analyzedKey: st.analyzedKey,
+      sources: st.sources.slice(0, 12).map(source => ({...source, text: String(source.text || '').slice(0, 2000)})), steps: st.steps
+    };
+  }
+  function restore(data) {
+    reset();
+    const list = value => Array.isArray(value) ? value : [];
+    Object.assign(st, {
+      brief: String(data.brief || ''), recordKey: index.some(item => item.row.key === data.recordKey) ? data.recordKey : '', savedRecordLabel: String(data.recordLabel || ''),
+      templateId: Core().findTemplate(data.templateId) ? data.templateId : '', letter: data.letter ? Core().sanitizeLetter(data.letter) : null,
+      values: data.values && typeof data.values === 'object' ? data.values : null, filledByAI: list(data.filledByAI), questions: list(data.questions), extras: list(data.extras),
+      outline: list(data.outline), outlineEdited: !!data.outlineEdited, understanding: String(data.understanding || ''), notes: String(data.notes || ''),
+      insights: list(data.insights), keyFacts: list(data.keyFacts), legalQueries: list(data.legalQueries), assumptions: list(data.assumptions),
+      legalError: String(data.legalError || ''), legalLoaded: !!data.legalLoaded, analyzedKey: String(data.analyzedKey || ''), sources: list(data.sources),
+      steps: data.steps && typeof data.steps === 'object' ? data.steps : null
+    });
+    if (st.letter && data.letter && data.letter.warnings) st.letter.warnings = list(data.letter.warnings);
+  }
+  let saveTimer = 0, session = 0;   // session tăng mỗi khi đổi sang công văn khác → lệnh lưu chạy nền của bản cũ không gắn nhầm id vào bản mới
+  // Lưu phiên hiện tại vào lịch sử (tự động sau khi soạn/chỉnh, và khi sửa trên tờ — có hoãn).
+  async function saveHistory() {
+    clearTimeout(saveTimer);
+    const H = History();
+    if (!H || !st.letter) return;
+    const mine = session;
+    try {
+      const data = snapshot(), tpl = template();
+      const result = await H.save(st.historyId, {title: (st.letter.subject ? 'V/v ' + st.letter.subject : st.brief) || 'Công văn', sub: [data.recordLabel, tpl.id === DEFAULT_TEMPLATE ? '' : tpl.name].filter(Boolean).join(' · '), data});
+      if (mine === session) st.historyId = result.id;
+      st.histScope = result.scope; st.history = H.list();
+      updateHistory();
+    } catch (error) { toast('Chưa lưu được vào lịch sử: ' + (error.message || error), 'warning'); }
+  }
+  const saveSoon = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveHistory, 1500); };
+  async function openHistory(id) {
+    const H = History();
+    if (!H || st.busy || id === st.historyId) return;
+    clearTimeout(saveTimer);
+    if (st.letter && st.historyId) await saveHistory();   // giữ chỉnh sửa của công văn đang mở
+    const data = await H.get(id);
+    if (!data) { toast('Không mở được công văn này (có thể đã bị xoá).', 'warning'); return; }
+    loadRecords();
+    restore(data);
+    st.historyId = id;
+    if (window.innerWidth < 1000) st.histOpen = false;
+    renderAll();
+  }
+  async function deleteHistory(id) {
+    const H = History();
+    if (!H) return;
+    const item = st.history.find(entry => entry.id === id);
+    if (!window.confirm('Xoá "' + (item ? item.title : 'công văn này') + '" khỏi lịch sử?')) return;
+    await H.remove(id);
+    st.history = H.list();
+    if (id === st.historyId) st.historyId = '';
+    updateHistory();
   }
 
   // ================= HIỂN THỊ =================
@@ -564,15 +639,46 @@ const OfficialLetterPage = (() => {
       + (st.drawer === 'dossier' ? '' : '<footer><button type="button" class="olp-tool is-primary" data-ol-act="compose"' + (st.busy ? ' disabled' : '') + '>Soạn lại theo chi tiết này</button></footer>') + '</aside>';
   }
 
+  // ---- Thanh lịch sử bên trái ----
+  function historyItemsHtml() {
+    const H = History();
+    if (!H) return '';
+    const query = fold(st.histQuery).trim();
+    const items = st.history.filter(item => !query || fold(item.title + ' ' + item.sub).includes(query));
+    if (!items.length) return '<p class="ola-hist-empty">' + (query ? 'Không có công văn khớp “' + esc(st.histQuery) + '”.' : 'Chưa có công văn nào. Công văn soạn xong sẽ tự lưu ở đây.') + '</p>';
+    const time = ms => { const d = new Date(ms), now = new Date(); const p = n => String(n).padStart(2, '0'); return d.toDateString() === now.toDateString() ? p(d.getHours()) + ':' + p(d.getMinutes()) : p(d.getDate()) + '/' + p(d.getMonth() + 1); };
+    return H.groups(items).map(group => '<div class="ola-hist-group"><h4>' + esc(group.label) + '</h4>' + group.items.map(item => '<div class="ola-hist-item' + (item.id === st.historyId ? ' is-active' : '') + '"><button type="button" data-ol-hist-open="' + esc(item.id) + '" title="' + esc(item.title) + '"><b>' + esc(item.title) + '</b><small>' + esc([item.sub, time(item.updatedAt)].filter(Boolean).join(' · ')) + '</small></button>'
+      + '<button type="button" class="ola-hist-del" data-ol-hist-del="' + esc(item.id) + '" aria-label="Xoá khỏi lịch sử" title="Xoá">' + svg(ICON.trash) + '</button></div>').join('') + '</div>').join('');
+  }
+  function historyHtml() {
+    if (!History() || !st.histOpen) return '';
+    return '<div class="ola-hist-backdrop" data-ol-hist-backdrop></div><aside class="ola-hist" aria-label="Lịch sử công văn"><header><b>' + svg(ICON.history) + 'Lịch sử</b><span>'
+      + '<button type="button" class="ola-hist-btn" data-ol-act="new" title="Công văn mới" aria-label="Công văn mới"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>'
+      + '<button type="button" class="ola-hist-btn" data-ol-act="hist-toggle" title="Thu gọn" aria-label="Thu gọn lịch sử">' + svg(ICON.panel) + '</button></span></header>'
+      + '<label class="ola-hist-search">' + svg(ICON.search) + '<input type="search" data-ol-hist-q placeholder="Tìm công văn…" value="' + esc(st.histQuery) + '" aria-label="Tìm trong lịch sử"></label>'
+      + '<div class="ola-hist-list" data-ol-hist-list>' + historyItemsHtml() + '</div>'
+      + '<footer>' + (st.histScope === 'account' ? 'Lưu theo tài khoản' : 'Lưu trên trình duyệt này') + '</footer></aside>';
+  }
+  function updateHistory(listOnly) {
+    const box = $('[data-ol-hist-list]');
+    if (!box) return;
+    box.innerHTML = historyItemsHtml();
+    if (!listOnly) { const foot = $('.ola-hist footer'); if (foot) foot.textContent = st.histScope === 'account' ? 'Lưu theo tài khoản' : 'Lưu trên trình duyệt này'; }
+  }
+
   function renderAll() {
     if (!host) return;
     const root = $('[data-ol-root]');
     const active = document.activeElement, focusSel = active && host.contains(active) ? (active.matches('[data-ol-rec-q]') ? '[data-ol-rec-q]' : active.matches('[data-ol-brief]') ? '[data-ol-brief]' : '') : '';
     const working = !!(st.letter || (st.busy && st.steps));
     const scrollBox = $('[data-ol-scroll]'), scrollTop = scrollBox ? scrollBox.scrollTop : 0;
-    root.innerHTML = (working ? workHtml() : heroHtml()) + drawerHtml()
-      + '<button type="button" class="ola-gear" data-ol-act="settings" title="Thông tin đơn vị ban hành" aria-label="Thông tin đơn vị ban hành">' + svg(ICON.gear) + '</button>';
+    const histScroll = $('[data-ol-hist-list]'), histTop = histScroll ? histScroll.scrollTop : 0;
+    root.innerHTML = historyHtml() + '<div class="ola-main' + (working ? ' is-working' : '') + '">' + (st.histOpen ? '' : '<button type="button" class="ola-hist-open" data-ol-act="hist-toggle" title="Mở lịch sử" aria-label="Mở lịch sử">' + svg(ICON.history) + '<span>Lịch sử</span></button>')
+      + (working ? workHtml() : heroHtml())
+      + '<button type="button" class="ola-gear" data-ol-act="settings" title="Thông tin đơn vị ban hành" aria-label="Thông tin đơn vị ban hành">' + svg(ICON.gear) + '</button></div>' + drawerHtml();
+    const nextHist = $('[data-ol-hist-list]'); if (nextHist) nextHist.scrollTop = histTop;
     root.classList.toggle('is-working', working);
+    root.classList.toggle('has-history', st.histOpen);
     fitHeight();
     const nextScroll = $('[data-ol-scroll]'); if (nextScroll) nextScroll.scrollTop = scrollTop;
     const brief = $('[data-ol-brief]'); if (brief) autoGrow(brief);
@@ -586,7 +692,6 @@ const OfficialLetterPage = (() => {
     const top = root.getBoundingClientRect().top + (window.scrollY || 0);
     root.style.setProperty('--ola-top', Math.max(0, Math.round(top)) + 'px');
     root.style.setProperty('--ola-gap', '14px');
-    if (!root.classList.contains('is-working')) return;
     // Khung app có phần đệm dưới → trừ thêm đúng phần làm trang bị cuộn, để chỉ vùng nội dung cuộn.
     const page = document.scrollingElement || document.documentElement;
     const extra = page.scrollHeight - window.innerHeight;
@@ -628,10 +733,11 @@ const OfficialLetterPage = (() => {
   }
 
   function reset() {
+    session++;
     generation++; controller?.abort(); controller = null;
     resetAnalysis();
     releaseFiles(st.files);
-    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null});
+    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, historyId: '', savedRecordLabel: ''});
   }
   const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Bỏ công văn đang soạn để bắt đầu công văn mới?');
 
@@ -639,6 +745,11 @@ const OfficialLetterPage = (() => {
   function closePop() { if (!st.pop) return; collectAll(); st.pop = ''; st.recQuery = ''; renderAll(); }
   function onClick(event) {
     const target = event.target;
+    const histDel = target.closest('[data-ol-hist-del]');
+    if (histDel) { event.stopPropagation(); deleteHistory(histDel.dataset.olHistDel); return; }
+    const histOpen = target.closest('[data-ol-hist-open]');
+    if (histOpen) { openHistory(histOpen.dataset.olHistOpen); return; }
+    if (target.closest('[data-ol-hist-backdrop]')) { st.histOpen = false; renderAll(); return; }
     const popButton = target.closest('[data-ol-pop]');
     if (popButton) { collectAll(); const name = popButton.dataset.olPop; st.pop = st.pop === name ? '' : name; st.recQuery = ''; st.recActive = 0; if (st.pop === 'record' && !index.length) loadRecords(); renderAll(); return; }
     const pick = target.closest('[data-ol-pick]');
@@ -683,7 +794,8 @@ const OfficialLetterPage = (() => {
       case 'settings': openSettings(); break;
       case 'legal-search': searchMoreLegal(); break;
       case 'open-library': TascoLibrary.open(); break;
-      case 'new': if (confirmDiscard()) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } break;
+      case 'new': if (st.letter) { clearTimeout(saveTimer); if (st.historyId) saveHistory(); reset(); renderAll(); $('[data-ol-brief]')?.focus(); } else if (confirmDiscard()) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } break;
+      case 'hist-toggle': st.histOpen = !st.histOpen; try { localStorage.setItem(HIST_PANEL_KEY, st.histOpen ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); break;
       case 'add-extra': collectAll(); st.extras.push({label: '', value: ''}); renderAll(); host.querySelector('[data-ol-extra-row]:last-of-type [data-ol-extra-label]')?.focus(); break;
       case 'remove-extra': { collectAll(); const rows = [...host.querySelectorAll('[data-ol-extra-row]')]; st.extras.splice(rows.indexOf(act.closest('[data-ol-extra-row]')), 1); renderAll(); break; }
       case 'add-outline': collectAll(); st.outline.push({text: '', on: true}); st.outlineEdited = true; renderAll(); host.querySelector('[data-ol-outline-row]:last-of-type [data-ol-outline-text]')?.focus(); break;
@@ -694,17 +806,18 @@ const OfficialLetterPage = (() => {
   function onInput(event) {
     const target = event.target;
     if (target.matches('[data-ol-rec-q]')) { st.recQuery = target.value; st.recActive = 0; updateRecList(); }
+    else if (target.matches('[data-ol-hist-q]')) { st.histQuery = target.value; updateHistory(true); }
     else if (target.matches('[data-ol-brief]')) { st.brief = target.value; autoGrow(target); }
     else if (target.matches('[data-ol-field]')) updateMissingLive();
     else if (target.matches('[data-ol-outline-text]')) st.outlineEdited = true;
-    else if (target.closest && target.closest('.ol-paper')) refreshCitations();
+    else if (target.closest && target.closest('.ol-paper')) { refreshCitations(); saveSoon(); }
   }
   function onChange(event) {
     const target = event.target;
     if (target.matches('[data-ol-files]')) { addFiles(target.files); target.value = ''; }
     else if (target.matches('[data-ol-outline-on]')) st.outlineEdited = true;
     else if (target.matches('[data-ol-src-on]')) { const source = st.sources[Number(target.dataset.olSrcOn)]; if (source) { source.on = target.checked; target.closest('.ol-src').classList.toggle('is-off', !target.checked); } }
-    else if (target.matches('[data-ol-date]') && /^\d{4}-\d{2}-\d{2}$/.test(target.value)) { syncLetter(); st.letter.date = target.value; renderAll(); }
+    else if (target.matches('[data-ol-date]') && /^\d{4}-\d{2}-\d{2}$/.test(target.value)) { syncLetter(); st.letter.date = target.value; renderAll(); saveSoon(); }
   }
   function onKeydown(event) {
     const target = event.target;
@@ -748,10 +861,14 @@ const OfficialLetterPage = (() => {
     HANDLERS.forEach(([name, fn]) => host.addEventListener(name, fn));
     document.addEventListener('mousedown', onOutside, true);
     window.addEventListener('resize', fitHeight);
+    try { const saved = localStorage.getItem(HIST_PANEL_KEY); st.histOpen = saved === null ? window.innerWidth >= 1000 : saved === '1'; } catch (_) { /* bỏ qua */ }
     renderAll();
+    const H = History();
+    if (H) H.load().then(list => { st.history = list; st.histScope = H.scope(); if (host) updateHistory(); }).catch(() => { /* lịch sử là phụ */ });
   }
 
   function leave() {
+    if (saveTimer && st.letter) { clearTimeout(saveTimer); saveHistory(); }
     generation++;
     controller?.abort(); controller = null;
     st.busy = ''; st.status = ''; st.pop = '';
