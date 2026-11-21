@@ -151,7 +151,7 @@ const OfficialLetterCore = (() => {
   // ---- Gemini: soạn công văn ----
   const COMPOSE_SYSTEM = 'Bạn là chuyên viên soạn thảo văn bản hành chính của công ty bảo hiểm tại Việt Nam, am hiểu thể thức văn bản theo Nghị định 30/2020/NĐ-CP. '
     + 'Hãy soạn PHẦN NỘI DUNG của một công văn bằng tiếng Việt trang trọng, súc tích, đúng chính tả. Quy tắc bắt buộc: '
-    + '(1) Chỉ dùng thông tin trong "THÔNG TIN ĐÃ XÁC NHẬN", "DỮ KIỆN CẦN NÊU" và "HỒ SƠ"; viết CỤ THỂ theo hồ sơ (nêu đúng ngày, số hồ sơ, biển số, diễn biến, số tiền, mốc xử lý khi liên quan) thay vì câu chung chung, nhưng chỉ chọn dữ kiện phục vụ mục đích công văn, không liệt kê tràn lan; TUYỆT ĐỐI không bịa số liệu, số tiền, ngày tháng, số văn bản, tên người, điều luật. '
+    + '(1) Chỉ dùng thông tin trong "THÔNG TIN ĐÃ XÁC NHẬN", "DỮ KIỆN CẦN NÊU", "HỒ SƠ" và các TỆP ĐÍNH KÈM của người dùng (nếu có — tệp do người dùng cung cấp nên được phép lấy dữ kiện từ đó); viết CỤ THỂ theo hồ sơ (nêu đúng ngày, số hồ sơ, biển số, diễn biến, số tiền, mốc xử lý khi liên quan) thay vì câu chung chung, nhưng chỉ chọn dữ kiện phục vụ mục đích công văn, không liệt kê tràn lan; TUYỆT ĐỐI không bịa số liệu, số tiền, ngày tháng, số văn bản, tên người, điều luật. '
     + '(2) Thông tin cần mà chưa có thì viết chỗ trống "……" tại đúng vị trí, không đoán. '
     + '(3) Không viết lại phần mở đầu (quốc hiệu, tiêu ngữ, số, ngày, kính gửi) và không viết lời kết/ký tên: hệ thống tự thêm. '
     + '(4) Không dùng markdown, không đánh dấu ** hay #. Xưng hô: đơn vị gửi là "Bảo hiểm Tasco" (nếu cần nhắc), người nhận theo mẫu. '
@@ -170,7 +170,7 @@ const OfficialLetterCore = (() => {
       + 'điều khoản/điều luật chỉ được nêu khi có nguyên văn trong CĂN CỨ TỪ THƯ VIỆN hoặc trong thông tin đã xác nhận:\n' + lines.map(line => '| ' + line).join('\n');
   }
 
-  // ctx (tuỳ chọn): {outline:[chuỗi], extras:[{label,value}], answers:[{question,answer}], understanding}
+  // ctx (tuỳ chọn): {outline:[chuỗi], extras:[{label,value}], answers:[{question,answer}], understanding, files:[{name,mimeType,data(base64)}]}
   // — dàn ý đã được người dùng duyệt thay cho dàn ý mặc định của mẫu; extras/answers là thông tin đã xác nhận thêm.
   function buildComposeRequest(template, values, issuer, brief, previous, ctx) {
     const cfg = normalizeIssuer(issuer);
@@ -181,6 +181,7 @@ const OfficialLetterCore = (() => {
     const outline = (extra.outline || []).map(line => single(line, 300)).filter(Boolean);
     const lines = outline.length ? outline : template.outline;
     const answers = (extra.answers || []).filter(item => item && item.question && item.answer).map(item => ({hoi: single(item.question, 300), dap: single(item.answer, 400)}));
+    const files = (extra.files || []).filter(file => file && file.data && file.mimeType).slice(0, 6);
     const text = 'LOẠI CÔNG VĂN: ' + template.name + '\nMỤC ĐÍCH VÀ YÊU CẦU: ' + template.purpose
       + (extra.understanding ? '\nCÁCH HIỂU YÊU CẦU (đã được người dùng xem): ' + single(extra.understanding, 700) : '')
       + sampleBlock(template)
@@ -194,9 +195,12 @@ const OfficialLetterCore = (() => {
       + ((extra.insights || []).length ? '\n\nNHẬN ĐỊNH NGHIỆP VỤ (dùng để chọn lập luận, không chép nguyên văn nếu không cần):\n' + extra.insights.map(item => '- ' + single(item && item.text, 300)).join('\n') : '')
       + (extra.legal ? '\n\nCĂN CỨ TỪ THƯ VIỆN (nguyên văn — chỉ dùng nếu đúng vấn đề, không bắt buộc dùng):\n' + multi(extra.legal, 16000) : '\n\nCĂN CỨ TỪ THƯ VIỆN: (không có — không viện dẫn điều luật cụ thể)')
       + (extra.dossier ? '\n\nHỒ SƠ (tra cứu khi cần; thông tin người dùng đã xác nhận ở trên có hiệu lực cao hơn):\n' + multi(extra.dossier, 12000) : '')
+      + (files.length ? '\n\nTỆP ĐÍNH KÈM CỦA NGƯỜI DÙNG (' + files.length + ' tệp, đặt ngay sau văn bản này): đọc kỹ; lấy dữ kiện cần thiết từ đó theo yêu cầu chỉnh sửa mới nhất. Dữ kiện đọc được từ tệp có hiệu lực cao hơn hồ sơ cũ nếu mâu thuẫn; chỗ nào chữ mờ/không chắc thì để "……" và ghi vào "warnings".' : '')
       + '\n\nGHI CHÚ / Ý CHÍNH THÊM CỦA NGƯỜI DÙNG:\n' + (single(brief, 3000) || '(không có)')
       + (previous ? '\n\nBẢN NHÁP TRƯỚC (chỉ để chỉnh theo yêu cầu mới nhất ở phần ghi chú; vẫn không được thêm thông tin ngoài phần đã xác nhận):\n' + multi(previous, 6000) : '');
-    return {system_instruction: {parts: [{text: COMPOSE_SYSTEM}]}, contents: [{role: 'user', parts: [{text}]}], generationConfig: {responseMimeType: 'application/json', temperature: 0.3}};
+    const parts = [{text}];
+    files.forEach((file, index) => { parts.push({text: 'Tệp đính kèm ' + (index + 1) + ': ' + single(file.name, 80)}); parts.push({inlineData: {mimeType: file.mimeType, data: file.data}}); });
+    return {system_instruction: {parts: [{text: COMPOSE_SYSTEM}]}, contents: [{role: 'user', parts}], generationConfig: {responseMimeType: 'application/json', temperature: 0.3}};
   }
 
   function parseLetter(raw) {

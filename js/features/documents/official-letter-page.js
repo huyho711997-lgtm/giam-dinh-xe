@@ -32,7 +32,7 @@ const OfficialLetterPage = (() => {
 
   let host = null, controller = null, generation = 0, records = [], index = [];
   const st = {
-    templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [],
+    templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [],
     values: null, filledByAI: [], questions: [], extras: [], outline: [], outlineEdited: false, understanding: '', notes: '',
     insights: [], keyFacts: [], legalQueries: [], assumptions: [], sources: [], legalError: '', legalLoaded: false,
     letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
@@ -123,12 +123,14 @@ const OfficialLetterPage = (() => {
       return {name: file.name, mimeType: 'image/jpeg', data: canvas.toDataURL('image/jpeg', 0.85).split(',')[1]};
     } finally { URL.revokeObjectURL(url); }
   }
-  function addFiles(list) {
+  // which: 'files' (ô soạn đầu trang — AI đọc ở bước phân tích) hoặc 'refineFiles' (ô "Nhờ AI sửa" — AI đọc khi chỉnh bản hiện tại).
+  function addFiles(list, which) {
+    const bucket = which === 'refineFiles' ? 'refineFiles' : 'files';
     const picked = [...list].filter(file => /^image\//.test(file.type) || file.type === 'application/pdf' || /\.pdf$/i.test(file.name));
     if (!picked.length) return;
     for (const file of picked) {
-      if (st.files.length >= MAX_FILES) { toast('Chỉ nhận tối đa ' + MAX_FILES + ' tệp.', 'info'); break; }
-      st.files.push({file, url: /^image\//.test(file.type) ? URL.createObjectURL(file) : ''});
+      if (st[bucket].length >= MAX_FILES) { toast('Chỉ nhận tối đa ' + MAX_FILES + ' tệp.', 'info'); break; }
+      st[bucket].push({file, url: /^image\//.test(file.type) ? URL.createObjectURL(file) : ''});
     }
     updateFiles();
   }
@@ -270,13 +272,13 @@ const OfficialLetterPage = (() => {
     } finally { if (my === generation) { st.busy = ''; st.status = ''; renderAll(); } }
   }
 
-  async function composeCore(instruction) {
+  async function composeCore(instruction, attachments) {
     const tpl = template();
     const issuer = loadIssuer();
     const previous = instruction && st.letter ? st.letter.paragraphs.map(p => p.text).join('\n') : '';
     const brief = st.brief + (instruction ? '\nYÊU CẦU CHỈNH SỬA MỚI NHẤT: ' + instruction : '');
     const ctx = {outline: st.outline.filter(item => item.on).map(item => item.text).filter(text => Core().single(text, 1)), extras: st.extras, answers: answeredList(), understanding: st.understanding,
-      keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText(), legal: legalPrompt(), assumptions: st.assumptions, openQuestions: openQuestions()};
+      keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText(), legal: legalPrompt(), assumptions: st.assumptions, openQuestions: openQuestions(), files: attachments || []};
     const raw = await callAI(Core().buildComposeRequest(tpl, st.values, issuer, brief, previous, ctx));
     const parsed = Core().parseLetter(raw);
     const date = st.letter && st.letter.date, number = st.letter && st.letter.number;
@@ -292,8 +294,13 @@ const OfficialLetterPage = (() => {
     collectAll(); syncLetter();
     const my = generation;
     setBusy(instruction ? 'Đang chỉnh theo yêu cầu…' : 'Đang soạn lại…');
+    const sent = instruction ? st.refineFiles.slice() : [];
     try {
-      await composeCore(instruction || '');
+      // Tệp kèm theo yêu cầu sửa: đọc/nén trước khi gửi; chỉ dùng cho lần sửa này.
+      const attachments = [];
+      for (const item of sent) attachments.push(await prepareFile(item.file));
+      await composeCore(instruction || '', attachments);
+      if (sent.length) { st.refineFiles = st.refineFiles.filter(item => !sent.includes(item)); releaseFiles(sent); }
       if (my !== generation) return;
       toast(instruction ? 'Đã chỉnh công văn theo yêu cầu.' : 'Đã soạn lại công văn.', 'success');
       saveHistory();
@@ -334,7 +341,8 @@ const OfficialLetterPage = (() => {
   function sendRefine() {
     const input = $('[data-ol-refine-input]');
     if (!input || st.busy) return;
-    const text = input.value.trim();
+    // Chỉ đính kèm mà chưa gõ gì: mặc định nhờ AI đọc tài liệu rồi chỉnh công văn cho khớp.
+    const text = input.value.trim() || (st.refineFiles.length ? 'Đọc tài liệu đính kèm và chỉnh công văn cho đúng với nội dung tài liệu.' : '');
     if (!text) { input.focus(); return; }
     input.value = '';
     compose(text);
@@ -487,10 +495,17 @@ const OfficialLetterPage = (() => {
       + '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div>'
       + popoverHtml() + '</div>';
   }
-  function filesHtml() {
-    return st.files.map((item, i) => '<span class="tasco-ai-attach" title="' + esc(item.file.name) + '">' + (item.url ? '<img alt="" src="' + esc(item.url) + '">' : '<em>PDF</em>') + '<button type="button" data-ol-remove-file="' + i + '" aria-label="Bỏ tệp ' + esc(item.file.name) + '">×</button></span>').join('');
+  function filesHtml(which) {
+    const bucket = which === 'refineFiles' ? 'refineFiles' : 'files';
+    return st[bucket].map((item, i) => '<span class="tasco-ai-attach" title="' + esc(item.file.name) + '">' + (item.url ? '<img alt="" src="' + esc(item.url) + '">' : '<em>PDF</em>') + '<button type="button" data-ol-remove-file="' + i + '"' + (bucket === 'refineFiles' ? ' data-ol-bucket="refineFiles"' : '') + ' aria-label="Bỏ tệp ' + esc(item.file.name) + '">×</button></span>').join('');
   }
-  function updateFiles() { const box = $('[data-ol-file-list]'); if (box) { box.innerHTML = filesHtml(); box.hidden = !st.files.length; } }
+  function updateFiles() {
+    if (!host) return;
+    host.querySelectorAll('[data-ol-file-list]').forEach(box => {
+      const bucket = box.dataset.olFileList === 'refine' ? 'refineFiles' : 'files';
+      box.innerHTML = filesHtml(bucket); box.hidden = !st[bucket].length;
+    });
+  }
 
   function heroHtml() {
     const ideas = Core().templates().filter(item => TEMPLATE_HINTS[item.id]);
@@ -577,8 +592,9 @@ const OfficialLetterPage = (() => {
   const REFINES = ['Viết ngắn gọn hơn', 'Giọng trang trọng hơn', 'Thêm hạn phản hồi 07 ngày làm việc'];
   function refineHtml() {
     if (!st.letter) return '';
-    return '<div class="ola-refine"><div class="tasco-ai-suggest">' + REFINES.map(text => '<button type="button" class="tasco-ai-suggest__chip" data-ol-refine="' + esc(text) + '"' + (st.busy ? ' disabled' : '') + '>' + esc(text) + '</button>').join('') + '</div>'
-      + '<div class="tasco-ai-composer ola-refine-box"><span class="ola-refine-icon" aria-hidden="true">' + svg(ICON.spark) + '</span><input class="tasco-ai-input" data-ol-refine-input maxlength="600" placeholder="Nhờ AI sửa: “gửi Phòng CSGT tỉnh”, “nêu thêm ngày tổn thất”…" aria-label="Yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>'
+    return '<div class="ola-refine"><div class="tasco-ai-attachments ola-files" data-ol-file-list="refine"' + (st.refineFiles.length ? '' : ' hidden') + '>' + filesHtml('refineFiles') + '</div>'
+      + '<div class="tasco-ai-suggest">' + REFINES.map(text => '<button type="button" class="tasco-ai-suggest__chip" data-ol-refine="' + esc(text) + '"' + (st.busy ? ' disabled' : '') + '>' + esc(text) + '</button>').join('') + '</div>'
+      + '<div class="tasco-ai-composer ola-refine-box"><label class="ola-icon-btn' + (st.busy ? ' is-disabled' : '') + '" title="Đính kèm ảnh/PDF để AI đọc khi sửa"><input type="file" data-ol-files="refine" accept="image/*,application/pdf" multiple hidden' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label><input class="tasco-ai-input" data-ol-refine-input maxlength="600" placeholder="Nhờ AI sửa: “gửi Phòng CSGT tỉnh”, “nêu thêm ngày tổn thất”… (có thể đính kèm tài liệu)" aria-label="Yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>'
       + '<button type="button" class="tasco-ai-send" data-ol-act="refine" aria-label="Gửi yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div></div>';
   }
   function workHtml() {
@@ -737,8 +753,8 @@ const OfficialLetterPage = (() => {
     session++;
     generation++; controller?.abort(); controller = null;
     resetAnalysis();
-    releaseFiles(st.files);
-    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, historyId: '', savedRecordLabel: ''});
+    releaseFiles(st.files); releaseFiles(st.refineFiles);
+    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, historyId: '', savedRecordLabel: ''});
   }
   const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Bỏ công văn đang soạn để bắt đầu công văn mới?');
 
@@ -769,7 +785,7 @@ const OfficialLetterPage = (() => {
       return;
     }
     const removeFile = target.closest('[data-ol-remove-file]');
-    if (removeFile) { const [gone] = st.files.splice(Number(removeFile.dataset.olRemoveFile), 1); if (gone) releaseFiles([gone]); updateFiles(); return; }
+    if (removeFile) { const [gone] = st[removeFile.dataset.olBucket === 'refineFiles' ? 'refineFiles' : 'files'].splice(Number(removeFile.dataset.olRemoveFile), 1); if (gone) releaseFiles([gone]); updateFiles(); return; }
     const refine = target.closest('[data-ol-refine]');
     if (refine) { compose(refine.dataset.olRefine); return; }
     const fix = target.closest('[data-ol-fix]');
@@ -815,7 +831,7 @@ const OfficialLetterPage = (() => {
   }
   function onChange(event) {
     const target = event.target;
-    if (target.matches('[data-ol-files]')) { addFiles(target.files); target.value = ''; }
+    if (target.matches('[data-ol-files]')) { addFiles(target.files, target.dataset.olFiles === 'refine' ? 'refineFiles' : 'files'); target.value = ''; }
     else if (target.matches('[data-ol-outline-on]')) st.outlineEdited = true;
     else if (target.matches('[data-ol-src-on]')) { const source = st.sources[Number(target.dataset.olSrcOn)]; if (source) { source.on = target.checked; target.closest('.ol-src').classList.toggle('is-off', !target.checked); } }
     else if (target.matches('[data-ol-date]') && /^\d{4}-\d{2}-\d{2}$/.test(target.value)) { syncLetter(); st.letter.date = target.value; renderAll(); saveSoon(); }
@@ -846,9 +862,10 @@ const OfficialLetterPage = (() => {
       event.preventDefault();
       document.execCommand('insertText', false, (event.clipboardData || window.clipboardData).getData('text').replace(/\s+/g, ' '));
     } else if (target.matches('[data-ol-brief]') && event.clipboardData && event.clipboardData.files.length) { event.preventDefault(); addFiles(event.clipboardData.files); }
+    else if (target.matches('[data-ol-refine-input]') && event.clipboardData && event.clipboardData.files.length) { event.preventDefault(); addFiles(event.clipboardData.files, 'refineFiles'); }
   }
-  function onDragOver(event) { if (event.dataTransfer && [...event.dataTransfer.types].includes('Files') && event.target.closest && event.target.closest('.ola-composer')) event.preventDefault(); }
-  function onDrop(event) { if (event.dataTransfer && event.dataTransfer.files.length && event.target.closest && event.target.closest('.ola-composer')) { event.preventDefault(); addFiles(event.dataTransfer.files); } }
+  function onDragOver(event) { if (event.dataTransfer && [...event.dataTransfer.types].includes('Files') && event.target.closest && event.target.closest('.ola-composer, .ola-refine')) event.preventDefault(); }
+  function onDrop(event) { if (event.dataTransfer && event.dataTransfer.files.length && event.target.closest && event.target.closest('.ola-composer, .ola-refine')) { event.preventDefault(); addFiles(event.dataTransfer.files, event.target.closest('.ola-refine') ? 'refineFiles' : 'files'); } }
   // Bấm ra ngoài ô chọn (hồ sơ / loại) thì đóng.
   function onOutside(event) { if (st.pop && host && !(event.target.closest && (event.target.closest('.ola-pop') || event.target.closest('[data-ol-pop]')))) closePop(); }
 

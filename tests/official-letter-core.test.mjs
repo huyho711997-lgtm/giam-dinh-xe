@@ -174,3 +174,17 @@ test('công văn mẫu tham khảo: đưa vào yêu cầu soạn kèm cấm ché
   const plain = tpl('de_nghi_cung_cap_ho_so');
   assert.ok(!/CÔNG VĂN MẪU THAM KHẢO/.test(Core.buildComposeRequest(plain, Core.prefillValues(plain, {}, {}), {}, '').contents[0].parts[0].text));
 });
+
+test('sửa công văn: tệp đính kèm đi kèm yêu cầu chỉnh dưới dạng inlineData, không có tệp thì chỉ văn bản', () => {
+  const t = tpl('tu_choi_thong_so_lop');
+  const none = Core.buildComposeRequest(t, {}, {}, 'sửa', 'bản nháp', {});
+  assert.equal(none.contents[0].parts.length, 1);
+  assert.ok(!/TỆP ĐÍNH KÈM CỦA NGƯỜI DÙNG/.test(none.contents[0].parts[0].text));
+  const req = Core.buildComposeRequest(t, {}, {}, 'sửa', 'bản nháp', {files: [{name: 'giay-to.pdf', mimeType: 'application/pdf', data: 'QUJD'}, {name: 'anh.jpg', mimeType: 'image/jpeg', data: 'REVG'}, {name: 'hong', mimeType: '', data: ''}]});
+  const parts = req.contents[0].parts;
+  assert.equal(parts.length, 5); // văn bản + 2×(nhãn + dữ liệu); tệp rỗng bị bỏ
+  assert.ok(/TỆP ĐÍNH KÈM CỦA NGƯỜI DÙNG \(2 tệp/.test(parts[0].text));
+  assert.equal(parts[2].inlineData.mimeType, 'application/pdf'); assert.equal(parts[2].inlineData.data, 'QUJD');
+  assert.ok(/giay-to\.pdf/.test(parts[1].text) && /anh\.jpg/.test(parts[3].text));
+  assert.equal(parts[4].inlineData.mimeType, 'image/jpeg'); assert.equal(parts[4].inlineData.data, 'REVG');
+});

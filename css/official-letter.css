@@ -148,8 +148,9 @@ span.ola-chip button { display:inline-flex; align-items:center; gap:6px; height:
 .ola-more:hover { border-color:var(--primary); color:var(--primary); }
 .ola-refine { flex:none; display:grid; gap:8px; max-width:860px; width:100%; box-sizing:border-box; margin:8px auto 0; padding:10px; border:1px solid var(--border); border-radius:20px; background:var(--surface-strong); box-shadow:0 -6px 24px rgba(15,23,42,.06), 0 10px 26px rgba(15,23,42,.08); }
 .ola-refine .tasco-ai-suggest { display:flex; flex-wrap:wrap; gap:6px; }
-.ola-refine-box { grid-template-columns:36px minmax(0,1fr) 43px; background:var(--surface-soft); }
-.ola-refine-icon { display:grid; place-items:center; color:#a07733; } .ola-refine-icon svg { width:17px; height:17px; }
+.ola-refine-box { grid-template-columns:34px minmax(0,1fr) 43px; background:var(--surface-soft); }
+.ola-refine .ola-files { padding:0 2px; }
+.ola-icon-btn.is-disabled { opacity:.45; pointer-events:none; }
 .ola-refine .tasco-ai-input { font-size:13px; }
 
 /* Ngăn chi tiết */
