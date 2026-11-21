@@ -453,6 +453,13 @@
           icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3.5 2.8 19.5h18.4z"></path><path d="M12 10v4.2M12 17v.01"></path></svg>`
         },
         {
+          id: 'monthly_opened_claims',
+          title: 'BC xe & bồi thường theo tháng',
+          badge: 'Mở trong tháng',
+          desc: 'Số lượng xe & số tiền bồi thường (dự phòng) có ngày mở trong tháng',
+          icon: `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>`
+        },
+        {
           id: 'annual_claims_gdv',
           title: 'Phát sinh theo năm',
           badge: 'Năm & GĐV',
@@ -521,6 +528,11 @@
       } else if (activeGdvReportView === 'backlog_watch') {
         heroReportTitle = "Hồ sơ tồn cần xử lý";
         heroReportSubtitle = "Cảnh báo hồ sơ tồn quá hạn và sắp quá hạn, danh sách việc cần xử lý hôm nay theo từng GĐV. Hồ sơ tồn chiếm 10% KPI.";
+      } else if (activeGdvReportView === 'monthly_opened_claims') {
+        const mLabel = activeGdvReportMonth === 'all' ? 'tất cả các tháng' : `Tháng ${activeGdvReportMonth}`;
+        const yLabel = activeGdvReportYear === 'all' ? '' : `/ ${activeGdvReportYear}`;
+        heroReportTitle = "Báo cáo số lượng xe & bồi thường mở trong tháng";
+        heroReportSubtitle = `Thống kê số lượng xe và số tiền bồi thường (lấy theo số tiền dự phòng) của các hồ sơ có ngày mở hồ sơ trong <strong style="color: var(--primary);">${mLabel}${yLabel}</strong>.`;
       } else if (activeGdvReportView === 'weekly_zone') {
         heroReportTitle = "Báo cáo tiến độ tuần/tháng";
         heroReportSubtitle = `Thống kê phân bổ hồ sơ bồi thường theo Vùng và Giám định viên trong kỳ (<strong style="color: var(--primary);">${timeLabelText}</strong>).`;
@@ -1676,7 +1688,7 @@
           .report-filter-utility-slot #accReportFavFiltersWrapper > button:hover { border-color: rgba(201,154,67,.36) !important; background: rgba(201,154,67,.075) !important; }
         
 </style>
-        <div class="${['table', 'garage', 'daklak_reserve', 'tnds_ton', 'car_brand_loss'].includes(activeGdvReportView) ? 'gdv-report-premium-shell report-pending-premium' : 'gdv-report-premium-shell'}" style="padding: 16px 0 32px 0; width: 100%; max-width: 100%; margin: 0 auto;">
+        <div class="${['table', 'garage', 'daklak_reserve', 'tnds_ton', 'car_brand_loss', 'monthly_opened_claims'].includes(activeGdvReportView) ? 'gdv-report-premium-shell report-pending-premium' : 'gdv-report-premium-shell'}" style="padding: 16px 0 32px 0; width: 100%; max-width: 100%; margin: 0 auto;">
 
           <section class="gdv-report-command-center" aria-label="Trung tâm điều khiển báo cáo">
           
@@ -1728,6 +1740,12 @@
                         <span>Báo cáo Tuần (.xlsx)</span>
                       </div>
                       ${activeGdvReportView === 'annual_claims_gdv' ? `<div class="custom-select-item" onclick="exportAnnualGdvClaimsReportExcel(); closeAllCustomDropdowns();" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 800; color: var(--text-main); cursor: pointer; border-top: 1px dashed var(--border);">Báo cáo phát sinh năm (.xlsx)</div>` : ''}
+                      ${activeGdvReportView === 'monthly_opened_claims' ? `
+                      <div class="custom-select-item" onclick="exportMonthlyOpenedClaimsReportExcel(); closeAllCustomDropdowns();" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; border-top: 1px dashed var(--border); transition: background 0.15s ease;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#10b981" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        <span style="color: #10b981; font-weight: 850;">BC Xe & Dự phòng (.xlsx)</span>
+                      </div>
+                      ` : ''}
                       <div class="custom-select-item" onclick="exportCarBrandLossReportExcel(); closeAllCustomDropdowns();" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s ease;">
                         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#d8b46d" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                         <span>Báo cáo Hãng xe (.xlsx)</span>
@@ -2239,7 +2257,7 @@
 
           </section>
 
-          ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone' && activeGdvReportView !== 'kpi_zone' && activeGdvReportView !== 'backlog_watch' && activeGdvReportView !== 'annual_claims_gdv' && activeGdvReportView !== 'daklak_reserve' && activeGdvReportView !== 'ton_chua_hoa_don' && activeGdvReportView !== 'car_brand_loss' && activeGdvReportView !== 'tnds_ton') ? `
+          ${(activeGdvReportView !== 'garage' && activeGdvReportView !== 'weekly_zone' && activeGdvReportView !== 'kpi_zone' && activeGdvReportView !== 'backlog_watch' && activeGdvReportView !== 'annual_claims_gdv' && activeGdvReportView !== 'daklak_reserve' && activeGdvReportView !== 'ton_chua_hoa_don' && activeGdvReportView !== 'car_brand_loss' && activeGdvReportView !== 'tnds_ton' && activeGdvReportView !== 'monthly_opened_claims') ? `
           <!-- EXECUTIVE KPI METRIC CARDS (4 CARDS) -->
           <div class="${activeGdvReportView === 'chart' ? 'kpi-summary-strip' : activeGdvReportView === 'table' ? 'rp-summary-strip' : ''}" aria-label="Tổng quan hiệu suất" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
             <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216,180,109,0.35); background: var(--surface); box-shadow: var(--shadow-sm);">
@@ -2279,7 +2297,7 @@
           ` : ''}
 
           <!-- CONDITIONAL RENDERING BASED ON activeGdvReportView -->
-          ${activeGdvReportView === 'kpi_zone' ? '<div id="kpiZoneHost"></div>' : activeGdvReportView === 'backlog_watch' ? '<div id="backlogWatchHost"></div>' : activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'annual_claims_gdv' ? renderAnnualGdvClaimsReportHtml() : activeGdvReportView === 'tnds_ton' ? renderTndsTonReportTableHtml() : activeGdvReportView === 'car_brand_loss' ? renderCarBrandLossReportTableHtml() : activeGdvReportView === 'daklak_reserve' ? renderDakLakReserveReportTableHtml() : activeGdvReportView === 'ton_chua_hoa_don' ? renderTonChuaHoaDonReportTableHtml() : activeGdvReportView === 'garage' ? `
+          ${activeGdvReportView === 'kpi_zone' ? '<div id="kpiZoneHost"></div>' : activeGdvReportView === 'backlog_watch' ? '<div id="backlogWatchHost"></div>' : activeGdvReportView === 'weekly_zone' ? renderWeeklyZoneReportTableHtml() : activeGdvReportView === 'annual_claims_gdv' ? renderAnnualGdvClaimsReportHtml() : activeGdvReportView === 'monthly_opened_claims' ? renderMonthlyOpenedClaimsReportHtml() : activeGdvReportView === 'tnds_ton' ? renderTndsTonReportTableHtml() : activeGdvReportView === 'car_brand_loss' ? renderCarBrandLossReportTableHtml() : activeGdvReportView === 'daklak_reserve' ? renderDakLakReserveReportTableHtml() : activeGdvReportView === 'ton_chua_hoa_don' ? renderTonChuaHoaDonReportTableHtml() : activeGdvReportView === 'garage' ? `
             
             <!-- EXECUTIVE GARAGE REPORT DASHBOARD -->
             <div class="rp-summary-strip rp-summary-strip--garage" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">

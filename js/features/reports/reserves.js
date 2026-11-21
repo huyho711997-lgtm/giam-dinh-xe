@@ -2161,3 +2161,781 @@ const fullList = getCarBrandLossData();
         triggerToast('Có lỗi xảy ra khi xuất ảnh báo cáo!', 'error');
       });
     }
+
+
+    /* =========================================================================
+       BÁO CÁO SỐ LƯỢNG XE & TIỀN BỒI THƯỜNG DỰ PHÒNG CÓ NGÀY MỞ TRONG THÁNG
+       ========================================================================= */
+
+    function getClaimOpenDateInfo(c) {
+      if (!c) return null;
+      const rawDate = c.ngayMoHs || c['Ngày mở hồ sơ'] || c['Ngày mở HS'] || c.ngayMo || '';
+      if (!rawDate || rawDate === '—' || rawDate === '-') return null;
+
+      if (typeof parseDateParts === 'function') {
+        const dp = parseDateParts(rawDate);
+        if (dp && dp.month && dp.year) {
+          const dt = new Date(dp.year, dp.month - 1, dp.day || 1, dp.hours || 0, dp.minutes || 0);
+          return {
+            day: dp.day || 1,
+            month: dp.month,
+            year: dp.year,
+            timestamp: !isNaN(dt.getTime()) ? dt.getTime() : 0,
+            display: `${String(dp.day || 1).padStart(2, '0')}/${String(dp.month).padStart(2, '0')}/${dp.year}`
+          };
+        }
+      }
+
+      const str = String(rawDate).trim();
+      const dmy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (dmy) {
+        const d = parseInt(dmy[1], 10);
+        const m = parseInt(dmy[2], 10);
+        const y = parseInt(dmy[3], 10);
+        const dt = new Date(y, m - 1, d);
+        return {
+          day: d,
+          month: m,
+          year: y,
+          timestamp: !isNaN(dt.getTime()) ? dt.getTime() : 0,
+          display: `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`
+        };
+      }
+
+      const ymd = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+      if (ymd) {
+        const y = parseInt(ymd[1], 10);
+        const m = parseInt(ymd[2], 10);
+        const d = parseInt(ymd[3], 10);
+        const dt = new Date(y, m - 1, d);
+        return {
+          day: d,
+          month: m,
+          year: y,
+          timestamp: !isNaN(dt.getTime()) ? dt.getTime() : 0,
+          display: `${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}/${y}`
+        };
+      }
+
+      return null;
+    }
+
+    function getClaimReserveAmountValue(c) {
+      if (!c) return 0;
+      const raw = c.duPhongBoiThuong || c.soTienDuPhong || c.duPhong || c.duPhongGiaTri || c['Dự phòng bồi thường'] || c['Số tiền dự phòng'] || '0';
+      const clean = String(raw).replace(/\D/g, '');
+      return parseInt(clean, 10) || 0;
+    }
+
+    function isTndsClaimMonthlyRecord(c) {
+      if (!c) return false;
+      if (typeof isTndsClaim === 'function') {
+        const res = isTndsClaim(c);
+        if (res) return true;
+      }
+      const text = String(c.loaiHoSo || c.nhomBoiThuong || c.tnds || c.maSpNghiepVu || c.loaiHinhBaoHiem || c.nghiepVu || c.tenHoSo || '').toLowerCase();
+      return text.includes('tnds') || text.includes('trách nhiệm dân sự') || text.includes('bat buoc') || text.includes('bắt buộc');
+    }
+
+    function getMonthlyOpenedClaimsData() {
+      const claimsList = Object.entries(cachedPendingClaimsPayload || {}).map(([k, v]) => ({
+        ...v,
+        id: v.id || k,
+        _claimKey: k
+      }));
+
+      const selMonth = (typeof activeGdvReportMonth !== 'undefined') ? activeGdvReportMonth : String(new Date().getMonth() + 1);
+      const selYear = (typeof activeGdvReportYear !== 'undefined') ? activeGdvReportYear : String(new Date().getFullYear());
+
+      return claimsList.filter(c => {
+        const dateInfo = getClaimOpenDateInfo(c);
+        if (!dateInfo) return false;
+
+        // Lọc theo Tháng & Năm của Ngày mở hồ sơ
+        if (selYear !== 'all' && dateInfo.year !== parseInt(selYear, 10)) return false;
+        if (selMonth !== 'all' && dateInfo.month !== parseInt(selMonth, 10)) return false;
+
+        // Lọc theo Nghiệp vụ (VCX / TNDS)
+        if (typeof activeReportClaimType !== 'undefined' && activeReportClaimType !== 'all') {
+          const isTnds = isTndsClaimMonthlyRecord(c);
+          if (activeReportClaimType === 'VCX' && isTnds) return false;
+          if (activeReportClaimType === 'TNDS' && !isTnds) return false;
+        }
+
+        // Lọc theo Giám định viên
+        if (typeof activeSelectedGdvNames !== 'undefined' && activeSelectedGdvNames && activeSelectedGdvNames.length > 0) {
+          const gdv = String(c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim().toLowerCase();
+          const matchGdv = activeSelectedGdvNames.some(s => s.trim().toLowerCase() === gdv);
+          if (!matchGdv) return false;
+        }
+
+        // Lọc theo Chi nhánh cấp đơn
+        if (typeof activeGdvReportBranch !== 'undefined' && activeGdvReportBranch !== 'all') {
+          const b = String(c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '').toLowerCase();
+          if (!b.includes(activeGdvReportBranch.toLowerCase())) return false;
+        }
+
+        c._dateInfo = dateInfo;
+        c._reserveVal = getClaimReserveAmountValue(c);
+        return true;
+      });
+    }
+
+    function getFilteredMonthlyOpenedClaims() {
+      const claims = getMonthlyOpenedClaimsData();
+
+      const filtered = claims.filter(c => {
+        // Lọc trạng thái
+        if (activeMonthlyOpenedStatus && activeMonthlyOpenedStatus !== 'all') {
+          const st = String(c.trangThai || 'moi').trim();
+          if (st !== activeMonthlyOpenedStatus) return false;
+        }
+
+        // Tìm kiếm từ khoá
+        if (activeMonthlyOpenedSearch && activeMonthlyOpenedSearch.trim()) {
+          const q = activeMonthlyOpenedSearch.trim().toLowerCase();
+          const bsx = String(c.bienSo || '').toLowerCase();
+          const hsbt = String(c.soHoSoBoiThuong || c.soHsbt || '').toLowerCase();
+          const owner = String(c.chuXe || c.hoTen || c.khachHang || '').toLowerCase();
+          const gdv = String(c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || '').toLowerCase();
+          const brand = String(c.hangXe || '').toLowerCase();
+          const model = String(c.hieuXe || '').toLowerCase();
+          const branch = String(c.donViCapDon || c.chiNhanh || '').toLowerCase();
+          const gara = String(c.garaSuaChua || c.tenGara || '').toLowerCase();
+
+          const match = bsx.includes(q) || hsbt.includes(q) || owner.includes(q) || gdv.includes(q) || brand.includes(q) || model.includes(q) || branch.includes(q) || gara.includes(q);
+          if (!match) return false;
+        }
+
+        return true;
+      });
+
+      // Sắp xếp
+      filtered.sort((a, b) => {
+        const timeA = a._dateInfo?.timestamp || 0;
+        const timeB = b._dateInfo?.timestamp || 0;
+        const resA = a._reserveVal || 0;
+        const resB = b._reserveVal || 0;
+
+        switch (activeMonthlyOpenedSort) {
+          case 'date_asc':
+            return timeA - timeB;
+          case 'reserve_desc':
+            return resB - resA;
+          case 'reserve_asc':
+            return resA - resB;
+          case 'plate_asc':
+            return String(a.bienSo || '').localeCompare(String(b.bienSo || ''));
+          case 'date_desc':
+          default:
+            return timeB - timeA;
+        }
+      });
+
+      return filtered;
+    }
+
+    function changeMonthlyOpenedSearch(txt) {
+      activeMonthlyOpenedSearch = (txt || '').trim();
+      activeMonthlyOpenedPage = 1;
+      renderGdvReportPage();
+    }
+
+    function changeMonthlyOpenedStatus(st) {
+      activeMonthlyOpenedStatus = st || 'all';
+      activeMonthlyOpenedPage = 1;
+      renderGdvReportPage();
+    }
+
+    function changeMonthlyOpenedSort(sortVal) {
+      activeMonthlyOpenedSort = sortVal || 'date_desc';
+      renderGdvReportPage();
+    }
+
+    function changeMonthlyOpenedPage(page) {
+      activeMonthlyOpenedPage = parseInt(page, 10) || 1;
+      renderGdvReportPage();
+    }
+
+    function changeMonthlyOpenedPageSize(sz) {
+      activeMonthlyOpenedPageSize = sz === 'all' ? 'all' : (parseInt(sz, 10) || 25);
+      activeMonthlyOpenedPage = 1;
+      renderGdvReportPage();
+    }
+
+    function exportMonthlyOpenedClaimsReportExcel() {
+      if (typeof XLSX === 'undefined') {
+        triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại sau giây lát.', 'error');
+        return;
+      }
+
+      const claims = getFilteredMonthlyOpenedClaims();
+      if (!claims || claims.length === 0) {
+        triggerToast('Không có dữ liệu để xuất file Excel!', 'warning');
+        return;
+      }
+
+      try {
+        const selMonth = (typeof activeGdvReportMonth !== 'undefined') ? activeGdvReportMonth : String(new Date().getMonth() + 1);
+        const selYear = (typeof activeGdvReportYear !== 'undefined') ? activeGdvReportYear : String(new Date().getFullYear());
+
+        const rows = claims.map((c, idx) => {
+          const statusConfig = PENDING_STATUS_MAP[c.trangThai] || PENDING_STATUS_MAP['moi'];
+          const statusLabel = statusConfig ? statusConfig.label : (c.trangThai || 'Mới');
+          const isTnds = isTndsClaimMonthlyRecord(c);
+          const openDate = c._dateInfo?.display || formatDateDisplay(c.ngayMoHs);
+          const reserve = c._reserveVal || getClaimReserveAmountValue(c);
+
+          return {
+            'STT': idx + 1,
+            'Biển số xe': c.bienSo || '',
+            'Số HSBT': c.soHoSoBoiThuong || c.soHsbt || '',
+            'Tên chủ xe': c.chuXe || c.hoTen || c.khachHang || '',
+            'Hãng xe': c.hangXe || '',
+            'Hiệu xe': c.hieuXe || '',
+            'Nghiệp vụ': isTnds ? 'TNDS' : 'VCX',
+            'Ngày mở HS': openDate,
+            'Giám định viên': c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công',
+            'Đơn vị cấp đơn': c.donViCapDon || c.chiNhanh || '',
+            'Dự phòng bồi thường (VNĐ)': reserve,
+            'Trạng thái hồ sơ': statusLabel,
+            'Gara sửa chữa': c.garaSuaChua || c.tenGara || ''
+          };
+        });
+
+        // Hàng tổng cộng
+        const totalReserve = claims.reduce((sum, c) => sum + (c._reserveVal || getClaimReserveAmountValue(c)), 0);
+        rows.push({
+          'STT': 'Tổng cộng',
+          'Biển số xe': `${claims.length} hồ sơ`,
+          'Số HSBT': '',
+          'Tên chủ xe': '',
+          'Hãng xe': '',
+          'Hiệu xe': '',
+          'Nghiệp vụ': '',
+          'Ngày mở HS': '',
+          'Giám định viên': '',
+          'Đơn vị cấp đơn': '',
+          'Dự phòng bồi thường (VNĐ)': totalReserve,
+          'Trạng thái hồ sơ': '',
+          'Gara sửa chữa': ''
+        });
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'BC_Xe_Va_Du_Phong');
+
+        const mTag = selMonth === 'all' ? 'TatCaThang' : `T${selMonth}`;
+        const yTag = selYear === 'all' ? 'TatCaNam' : `N${selYear}`;
+        XLSX.writeFile(wb, `Bao_Cao_Xe_Va_Du_Phong_Boi_Thuong_${mTag}_${yTag}.xlsx`);
+        triggerToast('Đã xuất file Excel Báo cáo xe & dự phòng thành công!', 'success');
+      } catch (err) {
+        console.error('Lỗi xuất Excel:', err);
+        triggerToast('Có lỗi xảy ra khi xuất file Excel: ' + err.message, 'error');
+      }
+    }
+
+    function downloadMonthlyOpenedClaimsReportImage() {
+      const cardEl = document.getElementById('monthlyOpenedClaimsReportCardContainer');
+      if (!cardEl) {
+        triggerToast('Không tìm thấy khung báo cáo để xuất ảnh!', 'error');
+        return;
+      }
+      if (typeof html2canvas === 'undefined') {
+        triggerToast('Thư viện tạo ảnh đang tải, vui lòng thử lại sau...', 'warning');
+        return;
+      }
+
+      triggerToast('Đang xuất ảnh Báo cáo xe & dự phòng Ultra HD (4K)...', 'info');
+      const exportWidth = Math.ceil(Math.max(cardEl.offsetWidth, cardEl.querySelector('table')?.scrollWidth || 0));
+
+      html2canvas(cardEl, {
+        scale: Math.max(1, Math.min(3.5, 4096 / exportWidth)),
+        width: exportWidth,
+        windowWidth: Math.max(document.documentElement.clientWidth, exportWidth + 64),
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: function(clonedDoc) {
+          const target = clonedDoc.getElementById('monthlyOpenedClaimsReportCardContainer');
+          if (target) {
+            target.style.boxShadow = 'none';
+            target.style.transform = 'none';
+            target.style.backgroundColor = '#ffffff';
+            if (typeof prepareRemainingReportImageClone === 'function') prepareRemainingReportImageClone(target, exportWidth);
+          }
+        },
+        ignoreElements: function(el) {
+          return el.classList && el.classList.contains('hide-on-screenshot');
+        }
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Bao_Cao_Xe_Va_Du_Phong_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+        triggerToast('Đã tải ảnh báo cáo sắc nét thành công!', 'success');
+      }).catch(err => {
+        console.error(err);
+        triggerToast('Có lỗi xảy ra khi xuất ảnh báo cáo!', 'error');
+      });
+    }
+
+    function renderMonthlyOpenedClaimsReportHtml() {
+      const allMonthlyClaims = getMonthlyOpenedClaimsData();
+      const filteredClaims = getFilteredMonthlyOpenedClaims();
+
+      const selMonth = (typeof activeGdvReportMonth !== 'undefined') ? activeGdvReportMonth : String(new Date().getMonth() + 1);
+      const selYear = (typeof activeGdvReportYear !== 'undefined') ? activeGdvReportYear : String(new Date().getFullYear());
+      const monthLabel = selMonth === 'all' ? (selYear === 'all' ? 'Tất cả các kỳ' : `Năm ${selYear}`) : `Tháng ${selMonth}/${selYear}`;
+
+      // Thống kê tổng quan trên allMonthlyClaims
+      const totalClaims = allMonthlyClaims.length;
+
+      const uniquePlatesSet = new Set();
+      allMonthlyClaims.forEach(c => {
+        const plate = String(c.bienSo || '').trim().toUpperCase();
+        if (plate && plate !== '—' && plate !== '-') uniquePlatesSet.add(plate);
+      });
+      const totalUniqueVehicles = uniquePlatesSet.size;
+
+      let totalReserve = 0;
+      let claimsWithReserveCount = 0;
+      let vcxCount = 0;
+      let vcxReserve = 0;
+      let tndsCount = 0;
+      let tndsReserve = 0;
+      const gdvStatsMap = {};
+
+      allMonthlyClaims.forEach(c => {
+        const r = c._reserveVal || getClaimReserveAmountValue(c);
+        totalReserve += r;
+        if (r > 0) claimsWithReserveCount++;
+
+        const isTnds = typeof isTndsClaim === 'function' ? isTndsClaim(c) : false;
+        if (isTnds) {
+          tndsCount++;
+          tndsReserve += r;
+        } else {
+          vcxCount++;
+          vcxReserve += r;
+        }
+
+        const gdv = (c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim();
+        if (!gdvStatsMap[gdv]) {
+          gdvStatsMap[gdv] = { gdvName: gdv, count: 0, reserve: 0 };
+        }
+        gdvStatsMap[gdv].count++;
+        gdvStatsMap[gdv].reserve += r;
+      });
+
+      const avgReservePerVehicle = totalClaims > 0 ? Math.round(totalReserve / totalClaims) : 0;
+      const reserveCoveragePct = totalClaims > 0 ? Math.round((claimsWithReserveCount / totalClaims) * 100) : 0;
+
+      // Danh sách GĐV tiêu biểu
+      const topGdvs = Object.values(gdvStatsMap).sort((a, b) => b.reserve - a.reserve);
+
+      // Phân trang
+      const pageSize = activeMonthlyOpenedPageSize === 'all' ? filteredClaims.length : (parseInt(activeMonthlyOpenedPageSize, 10) || 25);
+      const totalPages = Math.max(1, Math.ceil(filteredClaims.length / (pageSize || 1)));
+      const currentPage = Math.min(Math.max(1, activeMonthlyOpenedPage || 1), totalPages);
+      const startIndex = (currentPage - 1) * pageSize;
+      const pagedRows = activeMonthlyOpenedPageSize === 'all' ? filteredClaims : filteredClaims.slice(startIndex, startIndex + pageSize);
+
+      // Thống kê trên tập filtered
+      const filteredTotalReserve = filteredClaims.reduce((sum, c) => sum + (c._reserveVal || getClaimReserveAmountValue(c)), 0);
+      const filteredUniquePlates = new Set();
+      filteredClaims.forEach(c => {
+        const p = String(c.bienSo || '').trim().toUpperCase();
+        if (p && p !== '—' && p !== '-') filteredUniquePlates.add(p);
+      });
+      const filteredAvgReserve = filteredClaims.length > 0 ? Math.round(filteredTotalReserve / filteredClaims.length) : 0;
+
+      return `
+        <!-- 4 EXECUTIVE KPI SUMMARY CARDS -->
+        <div class="rp-summary-strip rp-summary-strip--monthly-opened" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
+          
+          <!-- Card 1: Số lượng xe / hồ sơ mở trong tháng -->
+          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216, 180, 109, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <span style="font-size: 12.5px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Số lượng xe / Hồ sơ mở</span>
+              <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(216, 180, 109, 0.15); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <div style="font-size: 32px; font-weight: 900; color: var(--primary); line-height: 1.1;">${totalClaims.toLocaleString('vi-VN')}</div>
+              <span style="font-size: 13.5px; font-weight: 800; color: var(--text-soft);">hồ sơ (${totalUniqueVehicles} xe)</span>
+            </div>
+            <div style="font-size: 12px; color: var(--text-soft); margin-top: 8px; font-weight: 700;">Ngày mở hồ sơ trong ${monthLabel}</div>
+          </div>
+
+          <!-- Card 2: Tổng số tiền bồi thường (lấy theo dự phòng) -->
+          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(16, 185, 129, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <span style="font-size: 12.5px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Tổng tiền dự phòng bồi thường</span>
+              <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(16, 185, 129, 0.12); display: flex; align-items: center; justify-content: center; color: #10b981;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+              </div>
+            </div>
+            <div style="font-size: 28px; font-weight: 900; color: #10b981; line-height: 1.1;">${formatCurrencyInputNumber(totalReserve)} <span style="font-size: 15px; font-weight: 750;">đ</span></div>
+            <div style="font-size: 12px; color: var(--text-soft); margin-top: 8px; font-weight: 700;">Lấy theo số tiền dự phòng tổn thất</div>
+          </div>
+
+          <!-- Card 3: Dự phòng bình quân / xe -->
+          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <span style="font-size: 12.5px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Dự phòng bình quân / xe</span>
+              <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(59, 130, 246, 0.12); display: flex; align-items: center; justify-content: center; color: #3b82f6;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+              </div>
+            </div>
+            <div style="font-size: 28px; font-weight: 900; color: #3b82f6; line-height: 1.1;">${formatCurrencyInputNumber(avgReservePerVehicle)} <span style="font-size: 15px; font-weight: 750;">đ/xe</span></div>
+            <div style="font-size: 12px; color: var(--text-soft); margin-top: 8px; font-weight: 700;">Ước tính tổn thất trung bình mỗi xe</div>
+          </div>
+
+          <!-- Card 4: Tỷ lệ có dự phòng & Nghiệp vụ -->
+          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(168, 85, 247, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <span style="font-size: 12.5px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Hồ sơ có dự phòng & Nghiệp vụ</span>
+              <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(168, 85, 247, 0.12); display: flex; align-items: center; justify-content: center; color: #a855f7;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              </div>
+            </div>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <div style="font-size: 28px; font-weight: 900; color: #a855f7; line-height: 1.1;">${claimsWithReserveCount}<span style="font-size: 16px; color: var(--text-soft); font-weight: 750;">/${totalClaims}</span></div>
+              <span style="font-size: 12px; font-weight: 850; padding: 2px 8px; border-radius: 6px; background: rgba(168, 85, 247, 0.15); color: #a855f7;">${reserveCoveragePct}%</span>
+            </div>
+            <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 8px; font-weight: 700; display: flex; gap: 10px; flex-wrap: wrap;">
+              <span>VCX: <strong style="color: #3b82f6;">${vcxCount} xe</strong> (${formatCurrencyInputNumber(vcxReserve)} đ)</span>
+              <span>TNDS: <strong style="color: #a855f7;">${tndsCount} xe</strong> (${formatCurrencyInputNumber(tndsReserve)} đ)</span>
+            </div>
+          </div>
+
+        </div>
+
+        ${topGdvs.length > 0 ? `
+        <!-- TOP GĐV QUICK BREAKDOWN STRIP -->
+        <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--surface); padding: 12px 18px; border-radius: 14px; border: 1px solid var(--border);">
+          <div style="font-size: 12px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; display: flex; align-items: center; gap: 6px;">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>Phân bổ GĐV:</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1;">
+            ${topGdvs.slice(0, 6).map(g => `
+              <div onclick="changeMonthlyOpenedSearch('${escapeAttributeData(g.gdvName)}')" style="cursor: pointer; padding: 4px 10px; border-radius: 8px; background: var(--bg-soft); border: 1px solid var(--border); font-size: 12px; font-weight: 750; color: var(--text-main); display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease;" onmouseover="this.style.borderColor='var(--primary)'; this.style.transform='translateY(-1px)';" onmouseout="this.style.borderColor='var(--border)'; this.style.transform='none';" title="Nhấp để lọc hồ sơ của ${escapeAttributeData(g.gdvName)}">
+                <span>${escapeHtmlOutput(g.gdvName)}</span>
+                <span style="font-size: 11px; font-weight: 850; padding: 1px 6px; border-radius: 4px; background: rgba(216,180,109,0.18); color: var(--primary);">${g.count} xe</span>
+                <span style="font-size: 11px; color: #10b981; font-weight: 800;">${formatCurrencyInputNumber(g.reserve)} đ</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        ` : ''}
+
+        <!-- MAIN DATA CARD CONTAINER -->
+        <div class="p-card rp-data-card" id="monthlyOpenedClaimsReportCardContainer" style="padding: 24px 28px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface); min-height: 420px; display: flex; flex-direction: column;">
+          
+          <!-- CARD HEADER & ACTIONS -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed var(--border); flex-wrap: wrap; gap: 14px;">
+            <div>
+              <h2 style="font-size: 18px; font-weight: 850; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2.3"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>
+                <span>Danh sách xe mở hồ sơ trong ${escapeHtmlOutput(monthLabel)}</span>
+                <span style="font-size: 12px; font-weight: 850; padding: 2px 10px; border-radius: 99px; background: rgba(216,180,109,0.15); color: var(--primary); border: 1px solid rgba(216,180,109,0.3);">${filteredClaims.length} hồ sơ (${filteredUniquePlates.size} xe)</span>
+              </h2>
+              <div style="font-size: 12.5px; color: var(--text-soft); margin-top: 4px; font-weight: 650;">
+                Tổng tiền dự phòng: <strong style="color: #10b981; font-weight: 850;">${formatCurrencyInputNumber(filteredTotalReserve)} đ</strong> • Bình quân: <strong style="color: #3b82f6; font-weight: 850;">${formatCurrencyInputNumber(filteredAvgReserve)} đ/xe</strong>
+              </div>
+            </div>
+
+            <!-- Header Action Buttons -->
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;" class="hide-on-screenshot">
+              <button type="button" class="btn-premium" onclick="exportMonthlyOpenedClaimsReportExcel()" style="padding: 0 16px; height: 38px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.25); transition: all 0.2s ease;">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Tải Excel (.xlsx)</span>
+              </button>
+
+              <button type="button" class="btn-premium" onclick="downloadMonthlyOpenedClaimsReportImage()" style="padding: 0 14px; height: 38px; border-radius: 10px; font-size: 12.5px; font-weight: 850; background: var(--bg-soft); color: var(--text-main); border: 1px solid var(--border-strong); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s ease;">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>Xuất ảnh (4K)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TABLE TOOLBAR: SEARCH & INLINE FILTERS -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 12px; flex-wrap: wrap;" class="hide-on-screenshot">
+            <!-- Search Input Box -->
+            <div style="position: relative; flex: 1; min-width: 260px; max-width: 420px;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--text-soft)" stroke-width="2.5" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input 
+                type="text" 
+                placeholder="Tìm biển số, số HSBT, chủ xe, hiệu xe, GĐV..." 
+                value="${escapeAttributeData(activeMonthlyOpenedSearch)}"
+                oninput="changeMonthlyOpenedSearch(this.value)"
+                style="width: 100%; height: 40px; padding: 0 36px 0 38px; border-radius: 11px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 13px; font-weight: 600; outline: none; transition: border-color 0.2s ease;"
+                onfocus="this.style.borderColor='var(--primary)';"
+                onblur="this.style.borderColor='var(--border-strong)';"
+              />
+              ${activeMonthlyOpenedSearch ? `
+                <button type="button" onclick="changeMonthlyOpenedSearch('')" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); border: none; background: transparent; cursor: pointer; color: var(--text-soft); padding: 4px;" title="Xóa tìm kiếm">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              ` : ''}
+            </div>
+
+            <!-- Dropdown Filters Group -->
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <!-- Status Select -->
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 12px; font-weight: 800; color: var(--text-soft); white-space: nowrap;">Trạng thái:</span>
+                <select 
+                  onchange="changeMonthlyOpenedStatus(this.value)"
+                  style="height: 38px; padding: 0 10px; border-radius: 10px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12.5px; font-weight: 750; cursor: pointer; outline: none;"
+                >
+                  <option value="all" ${activeMonthlyOpenedStatus === 'all' ? 'selected' : ''}>Tất cả trạng thái (${allMonthlyClaims.length})</option>
+                  ${Object.entries(PENDING_STATUS_MAP).map(([sKey, sVal]) => {
+                    const countInStatus = allMonthlyClaims.filter(c => (c.trangThai || 'moi') === sKey).length;
+                    return `<option value="${sKey}" ${activeMonthlyOpenedStatus === sKey ? 'selected' : ''}>${escapeHtmlOutput(sVal.label)} (${countInStatus})</option>`;
+                  }).join('')}
+                </select>
+              </div>
+
+              <!-- Sort Select -->
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 12px; font-weight: 800; color: var(--text-soft); white-space: nowrap;">Sắp xếp:</span>
+                <select 
+                  onchange="changeMonthlyOpenedSort(this.value)"
+                  style="height: 38px; padding: 0 10px; border-radius: 10px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12.5px; font-weight: 750; cursor: pointer; outline: none;"
+                >
+                  <option value="date_desc" ${activeMonthlyOpenedSort === 'date_desc' ? 'selected' : ''}>Ngày mở: Mới nhất</option>
+                  <option value="date_asc" ${activeMonthlyOpenedSort === 'date_asc' ? 'selected' : ''}>Ngày mở: Cũ nhất</option>
+                  <option value="reserve_desc" ${activeMonthlyOpenedSort === 'reserve_desc' ? 'selected' : ''}>Dự phòng: Cao nhất</option>
+                  <option value="reserve_asc" ${activeMonthlyOpenedSort === 'reserve_asc' ? 'selected' : ''}>Dự phòng: Thấp nhất</option>
+                  <option value="plate_asc" ${activeMonthlyOpenedSort === 'plate_asc' ? 'selected' : ''}>Biển số: A → Z</option>
+                </select>
+              </div>
+
+              <!-- Page Size Select -->
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 12px; font-weight: 800; color: var(--text-soft); white-space: nowrap;">Hiển thị:</span>
+                <select 
+                  onchange="changeMonthlyOpenedPageSize(this.value)"
+                  style="height: 38px; padding: 0 10px; border-radius: 10px; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main); font-size: 12.5px; font-weight: 750; cursor: pointer; outline: none;"
+                >
+                  <option value="25" ${String(activeMonthlyOpenedPageSize) === '25' ? 'selected' : ''}>25 / trang</option>
+                  <option value="50" ${String(activeMonthlyOpenedPageSize) === '50' ? 'selected' : ''}>50 / trang</option>
+                  <option value="100" ${String(activeMonthlyOpenedPageSize) === '100' ? 'selected' : ''}>100 / trang</option>
+                  <option value="all" ${activeMonthlyOpenedPageSize === 'all' ? 'selected' : ''}>Tất cả</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- TABLE WRAPPER -->
+          <div style="flex: 1; overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--surface);">
+            <table style="width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1100px;">
+              <thead>
+                <tr style="background: var(--bg-soft); border-bottom: 2px solid var(--border-strong); font-size: 12px; font-weight: 850; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+                  <th style="padding: 14px 10px; text-align: center; width: 44px; border-bottom: 2px solid var(--border-strong);">#</th>
+                  <th style="padding: 14px 10px; text-align: center; width: 130px; border-bottom: 2px solid var(--border-strong);">Trạng thái</th>
+                  <th style="padding: 14px 12px; text-align: left; width: 135px; border-bottom: 2px solid var(--border-strong);">Biển số xe</th>
+                  <th style="padding: 14px 12px; text-align: left; width: 150px; border-bottom: 2px solid var(--border-strong);">Số HSBT</th>
+                  <th style="padding: 14px 12px; text-align: left; min-width: 160px; border-bottom: 2px solid var(--border-strong);">Chủ xe / Khách hàng</th>
+                  <th style="padding: 14px 12px; text-align: left; min-width: 160px; border-bottom: 2px solid var(--border-strong);">Hãng & Hiệu xe</th>
+                  <th style="padding: 14px 10px; text-align: center; width: 90px; border-bottom: 2px solid var(--border-strong);">Nghiệp vụ</th>
+                  <th style="padding: 14px 12px; text-align: center; width: 115px; border-bottom: 2px solid var(--border-strong);">Ngày mở HS</th>
+                  <th style="padding: 14px 12px; text-align: left; min-width: 140px; border-bottom: 2px solid var(--border-strong);">Giám định viên</th>
+                  <th style="padding: 14px 12px; text-align: left; min-width: 140px; border-bottom: 2px solid var(--border-strong);">Đơn vị cấp đơn</th>
+                  <th style="padding: 14px 14px; text-align: right; width: 160px; border-bottom: 2px solid var(--border-strong);">Dự phòng BT (VNĐ)</th>
+                  <th style="padding: 14px 10px; text-align: center; width: 85px; border-bottom: 2px solid var(--border-strong);" class="hide-on-screenshot">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${pagedRows.length === 0 ? `
+                  <tr>
+                    <td colspan="12" style="padding: 48px 20px; text-align: center; color: var(--text-soft);">
+                      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;">
+                        <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="var(--border-strong)" stroke-width="1.8"><circle cx="12" cy="12" r="10"></circle><path d="M16 16s-1.5-2-4-2-4 2-4 2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                        <div style="font-size: 15px; font-weight: 800; color: var(--text-main);">Không tìm thấy hồ sơ xe nào</div>
+                        <div style="font-size: 13px; max-width: 480px;">Không có hồ sơ nào có ngày mở trong ${escapeHtmlOutput(monthLabel)} phù hợp với điều kiện lọc hiện tại.</div>
+                      </div>
+                    </td>
+                  </tr>
+                ` : pagedRows.map((c, idx) => {
+                  const globalIdx = startIndex + idx + 1;
+                  const bsx = c.bienSo || '—';
+                  const hsbt = c.soHoSoBoiThuong || c.soHsbt || '—';
+                  const owner = c.chuXe || c.hoTen || c.khachHang || '—';
+                  const carBrand = [c.hangXe, c.hieuXe].filter(Boolean).join(' ') || '—';
+                  const isTnds = isTndsClaimMonthlyRecord(c);
+                  const openDate = c._dateInfo?.display || formatDateDisplay(c.ngayMoHs);
+                  const gdv = c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công';
+                  const branch = c.donViCapDon || c.chiNhanh || '—';
+                  const reserve = c._reserveVal || getClaimReserveAmountValue(c);
+
+                  const statusConfig = PENDING_STATUS_MAP[c.trangThai] || PENDING_STATUS_MAP['moi'];
+                  const statusLabel = statusConfig ? statusConfig.label : (c.trangThai || 'Mới');
+                  const statusColor = statusConfig ? statusConfig.color : '#3b82f6';
+                  const statusBg = statusConfig ? statusConfig.bg : 'rgba(59,130,246,0.08)';
+
+                  return `
+                    <tr style="border-bottom: 1px solid var(--border); font-size: 13px; transition: background 0.15s ease;" onmouseover="this.style.background='var(--bg-soft)'" onmouseout="this.style.background='transparent'">
+                      <!-- # STT -->
+                      <td style="padding: 12px 10px; text-align: center; font-weight: 750; color: var(--text-muted);">${globalIdx}</td>
+                      
+                      <!-- TRẠNG THÁI -->
+                      <td style="padding: 12px 10px; text-align: center;">
+                        <span style="display: inline-block; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 850; background: ${statusBg}; color: ${statusColor}; border: 1px solid ${statusColor}; white-space: nowrap;">
+                          ${escapeHtmlOutput(statusLabel)}
+                        </span>
+                      </td>
+
+                      <!-- BIỂN SỐ XE -->
+                      <td style="padding: 12px 12px; font-weight: 850; color: var(--primary); font-size: 13px; white-space: nowrap;">
+                        <a href="javascript:void(0)" onclick="openEditPendingClaimModal('${c.id}', 'General')" style="color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;" title="Xem & chỉnh sửa hồ sơ">
+                          <span>${escapeHtmlOutput(bsx)}</span>
+                          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" style="opacity: 0.6;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                        </a>
+                      </td>
+
+                      <!-- SỐ HSBT -->
+                      <td style="padding: 12px 12px; font-weight: 700; color: var(--text-main); font-size: 12.5px; white-space: nowrap;">
+                        <div style="display: inline-flex; align-items: center; gap: 6px;">
+                          <span>${escapeHtmlOutput(hsbt)}</span>
+                          ${(hsbt && hsbt !== '—') ? `
+                            <button type="button" onclick="copyHsbtToClipboard(this, '${escapeAttributeData(hsbt)}', event)" title="Sao chép nhanh số HSBT" style="border: none; background: rgba(59,130,246,0.1); color: #3b82f6; padding: 0; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: 20px; width: 20px; flex-shrink: 0; transition: all 0.15s ease;" onmouseover="this.style.background='rgba(59,130,246,0.2)'; this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(59,130,246,0.1)'; this.style.transform='scale(1)'">
+                              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                          ` : ''}
+                        </div>
+                      </td>
+
+                      <!-- CHỦ XE / KHÁCH HÀNG -->
+                      <td style="padding: 12px 12px; font-weight: 700; color: var(--text-main); font-size: 13px;" title="${escapeAttributeData(owner)}">
+                        ${escapeHtmlOutput(owner)}
+                      </td>
+
+                      <!-- HÃNG & HIỆU XE -->
+                      <td style="padding: 12px 12px; font-weight: 750; color: var(--text-main); font-size: 12.5px;" title="${escapeAttributeData(carBrand)}">
+                        ${escapeHtmlOutput(carBrand)}
+                      </td>
+
+                      <!-- NGHIỆP VỤ -->
+                      <td style="padding: 12px 10px; text-align: center;">
+                        <span style="display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 850; background: ${isTnds ? 'rgba(168,85,247,0.12)' : 'rgba(59,130,246,0.12)'}; color: ${isTnds ? '#a855f7' : '#3b82f6'}; border: 1px solid ${isTnds ? 'rgba(168,85,247,0.3)' : 'rgba(59,130,246,0.3)'};">
+                          ${isTnds ? 'TNDS' : 'VCX'}
+                        </span>
+                      </td>
+
+                      <!-- NGÀY MỞ HỒ SƠ -->
+                      <td style="padding: 12px 12px; text-align: center; font-weight: 750; color: var(--text-main); font-size: 12.5px; white-space: nowrap;">
+                        ${escapeHtmlOutput(openDate)}
+                      </td>
+
+                      <!-- GIÁM ĐỊNH VIÊN -->
+                      <td style="padding: 12px 12px; text-align: left; font-weight: 700; color: var(--text-main); font-size: 12.5px;">
+                        ${escapeHtmlOutput(gdv)}
+                      </td>
+
+                      <!-- ĐƠN VỊ CẤP ĐƠN -->
+                      <td style="padding: 12px 12px; text-align: left; font-weight: 650; color: var(--text-soft); font-size: 12px;" title="${escapeAttributeData(branch)}">
+                        ${escapeHtmlOutput(branch)}
+                      </td>
+
+                      <!-- DỰ PHÒNG BỒI THƯỜNG -->
+                      <td style="padding: 12px 14px; text-align: right; font-weight: 850; font-size: 13.5px; color: ${reserve > 0 ? '#10b981' : 'var(--text-muted)'}; white-space: nowrap;">
+                        ${reserve > 0 ? `${formatCurrencyInputNumber(reserve)} đ` : '0 đ'}
+                      </td>
+
+                      <!-- THAO TÁC -->
+                      <td style="padding: 12px 10px; text-align: center;" class="hide-on-screenshot">
+                        <button type="button" onclick="openEditPendingClaimModal('${c.id}', 'Financial')" title="Xem chi tiết & dự phòng hồ sơ" style="border: 1px solid var(--border-strong); background: var(--bg-soft); color: var(--text-main); padding: 5px 9px; border-radius: 8px; cursor: pointer; font-size: 11.5px; font-weight: 750; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s ease;" onmouseover="this.style.borderColor='var(--primary)'; this.style.color='var(--primary)';" onmouseout="this.style.borderColor='var(--border-strong)'; this.style.color='var(--text-main)';">
+                          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                          <span>Xem</span>
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+
+              <!-- TABLE FOOTER: GRAND TOTAL -->
+              ${pagedRows.length > 0 ? `
+              <tfoot>
+                <tr style="background: var(--bg-soft); border-top: 2px solid var(--border-strong); font-size: 13px; font-weight: 850; color: var(--text-main);">
+                  <td style="padding: 14px 10px; text-align: center;">∑</td>
+                  <td style="padding: 14px 10px; text-align: center;">Tổng cộng</td>
+                  <td colspan="2" style="padding: 14px 12px; color: var(--primary);">
+                    ${filteredClaims.length} hồ sơ (${filteredUniquePlates.size} xe)
+                  </td>
+                  <td colspan="6" style="padding: 14px 12px; color: var(--text-soft); font-size: 12px; text-align: right;">
+                    Dự phòng bình quân / xe: <strong style="color: #3b82f6;">${formatCurrencyInputNumber(filteredAvgReserve)} đ</strong>
+                  </td>
+                  <td style="padding: 14px 14px; text-align: right; color: #10b981; font-size: 14px; font-weight: 900; white-space: nowrap;">
+                    ${formatCurrencyInputNumber(filteredTotalReserve)} đ
+                  </td>
+                  <td style="padding: 14px 10px;" class="hide-on-screenshot"></td>
+                </tr>
+              </tfoot>
+              ` : ''}
+            </table>
+          </div>
+
+          <!-- PAGINATION FOOTER -->
+          ${totalPages > 1 ? `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--border); flex-wrap: wrap; gap: 10px;" class="hide-on-screenshot">
+            <div style="font-size: 12.5px; color: var(--text-soft); font-weight: 700;">
+              Hiển thị <strong>${startIndex + 1} - ${Math.min(startIndex + pageSize, filteredClaims.length)}</strong> trong tổng số <strong>${filteredClaims.length}</strong> hồ sơ
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button 
+                type="button" 
+                onclick="changeMonthlyOpenedPage(${currentPage - 1})"
+                ${currentPage <= 1 ? 'disabled style="opacity: 0.4; cursor: not-allowed;"' : 'style="cursor: pointer;"'}
+                class="btn-premium"
+                style="padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main);"
+              >
+                ← Trước
+              </button>
+
+              ${Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+                .reduce((acc, p, i, arr) => {
+                  if (i > 0 && p - arr[i - 1] > 1) acc.push('...');
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map(p => {
+                  if (p === '...') return `<span style="padding: 0 4px; color: var(--text-soft); font-size: 12px;">...</span>`;
+                  const isCur = p === currentPage;
+                  return `
+                    <button 
+                      type="button" 
+                      onclick="changeMonthlyOpenedPage(${p})"
+                      style="min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; font-size: 12px; font-weight: 850; border: 1px solid ${isCur ? 'var(--primary)' : 'var(--border)'}; background: ${isCur ? 'linear-gradient(135deg, #d8b46d 0%, #b8934a 100%)' : 'var(--bg-soft)'}; color: ${isCur ? '#000000' : 'var(--text-main)'}; cursor: pointer; transition: all 0.15s ease;"
+                    >
+                      ${p}
+                    </button>
+                  `;
+                }).join('')}
+
+              <button 
+                type="button" 
+                onclick="changeMonthlyOpenedPage(${currentPage + 1})"
+                ${currentPage >= totalPages ? 'disabled style="opacity: 0.4; cursor: not-allowed;"' : 'style="cursor: pointer;"'}
+                class="btn-premium"
+                style="padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; background: var(--bg-soft); border: 1px solid var(--border-strong); color: var(--text-main);"
+              >
+                Sau →
+              </button>
+            </div>
+          </div>
+          ` : ''}
+
+        </div>
+      `;
+    }

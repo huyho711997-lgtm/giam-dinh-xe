@@ -559,6 +559,16 @@ document.getElementById('customCameraVideo')?.addEventListener('loadedmetadata',
  // 'all' | 'has_note' | 'no_note'
     let activeTndsStatusFilter = 'all';
 
+    let activeMonthlyOpenedSearch = '';
+
+    let activeMonthlyOpenedStatus = 'all';
+
+    let activeMonthlyOpenedSort = 'date_desc';
+
+    let activeMonthlyOpenedPage = 1;
+
+    let activeMonthlyOpenedPageSize = 25;
+
     let activeOpenDropdownId = null;
 
     const DEFAULT_WEEKLY_REPORT_COLS = ['PHAT_SINH', 'DA_DUYET', 'CHUA_DUYET', 'CHUYEN_DNTT', 'LGN_CARPLA', 'TNDS_TON', 'HS_TON_30', 'HS_DPBT_50', 'AVG_10', 'REV_CARPLA'];
