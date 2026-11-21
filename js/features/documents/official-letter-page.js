@@ -139,6 +139,7 @@ const OfficialLetterPage = (() => {
   const releaseFiles = list => list.forEach(item => { if (item.url) { try { URL.revokeObjectURL(item.url); } catch (_) { /* bỏ qua */ } } });
 
   // ---- Gọi Gemini ----
+  const QUOTA_ERROR = /hết hạn mức/, QUOTA_WAITS = [20, 40];   // giây chờ trước mỗi lần thử lại khi Gemini báo 429
   async function callAI(request) {
     if (typeof GeminiKeyStore === 'undefined' || typeof SharedFormsAI === 'undefined') throw new Error('Chưa tải được mô-đun AI. Hãy tải lại trang.');
     const apiKey = await GeminiKeyStore.get();
@@ -147,7 +148,19 @@ const OfficialLetterPage = (() => {
     try { model = localStorage.getItem('gemini_form_model') || model; } catch (_) { /* bỏ qua */ }
     controller?.abort();
     controller = new AbortController();
-    return SharedFormsAI.callGemini(request, apiKey, model, controller.signal);
+    const signal = controller.signal;
+    // Gói miễn phí hay chạm giới hạn theo phút (một công văn gọi AI 2–3 lần, thêm tệp đính kèm càng nặng):
+    // tự chờ rồi thử lại thay vì dừng ngay, có đếm ngược cho người dùng thấy.
+    for (let attempt = 0; ; attempt++) {
+      try { return await SharedFormsAI.callGemini(request, apiKey, model, signal); }
+      catch (error) {
+        if (!QUOTA_ERROR.test(error && error.message || '') || attempt >= QUOTA_WAITS.length) throw error;
+        for (let left = QUOTA_WAITS[attempt]; left > 0; left--) {
+          setStatus('Gemini đang giới hạn lưu lượng — tự thử lại sau ' + left + ' giây…');
+          await new Promise((resolve, reject) => { const timer = setTimeout(resolve, 1000); signal.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('Đã huỷ', 'AbortError')); }, {once: true}); });
+        }
+      }
+    }
   }
 
   function startValues() {
