@@ -23,6 +23,7 @@
     accounting_transfer: 'chuyen-ho-so',
     field_reimbursements: 'hien-truong',
     shared_forms: 'bieu-mau',
+    official_letters: 'cong-van-ai',
     contacts: 'danh-ba',
     rescue_cost: 'chi-phi-cuu-ho',
     drive_manager: 'google-drive',
@@ -38,7 +39,7 @@
     const can = (m, a) => typeof hasUserPermission === 'function' && hasUserPermission(m, a);
     switch (tab) {
       case 'home': return true;
-      case 'shared_forms': return can('shared_forms', 'view');
+      case 'shared_forms': case 'official_letters': return can('shared_forms', 'view');
       case 'rescue_cost': return can('rescue_cost', 'view');
       case 'contacts': return can('contacts', 'view');
       case 'drive_manager': return can('users', 'admin');

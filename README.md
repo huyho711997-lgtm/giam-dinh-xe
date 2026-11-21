@@ -66,6 +66,12 @@ Thư viện Firebase, JSZip, XLSX, html2canvas, Chart.js và Google Fonts tiếp
 
 `index.html` giảm từ 3.557.000 byte xuống khoảng 215 KB. Tổng dữ liệu dự án vẫn chủ yếu là mã nghiệp vụ và mẫu biểu; việc chia nhỏ giúp bảo trì, lưu bộ nhớ đệm từng tài nguyên và tránh tải mẫu Word trước khi cần. Đây là bước tổ chức lại mã, chưa phải chuyển toàn bộ giao diện sang cơ chế tải theo nhu cầu.
 
+## Công văn AI
+
+Mở **Công văn AI** (nhóm Nghiệp vụ, đường dẫn `#cong-van-ai`; dùng chung quyền xem với Biểu mẫu dùng chung). Chọn mẫu công văn → đưa thông tin đầu vào (chọn hồ sơ, gõ ý chính, đính kèm tối đa 4 ảnh/PDF) → **Phân tích bằng AI** (Gemini trích thông tin, điền vào các trường, hỏi lại chỗ còn thiếu; giá trị lấy từ hồ sơ luôn được ưu tiên) → **Soạn công văn** → sửa trực tiếp trên bản xem trước → tải Word (.docx, thể thức theo Nghị định 30/2020/NĐ-CP), in hoặc sao chép. Chỗ chưa có thông tin được để “……” và tô vàng, AI không tự bịa số liệu.
+
+Thêm mẫu mới: thêm một phần tử vào `OFFICIAL_LETTER_TEMPLATES` trong `js/data/official-letter-templates.js` (trường nhập, dàn ý, lời kết); không cần sửa mã khác. Sáu mẫu hiện có là mẫu khởi đầu, nên thay bằng công văn thật của đơn vị. Thông tin đơn vị ban hành (tên, người ký, địa chỉ…) chỉnh ở nút **Đơn vị ban hành**, lưu trên máy.
+
 ## Biểu mẫu dùng chung
 
 Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở trang chủ. Trang hỗ trợ tìm kiếm không dấu, lọc loại file, phân loại, sắp xếp, phân trang, tải nhiều file, sửa tên/phân loại/ghi chú và xóa khỏi thư viện. Hai mẫu Word có sẵn của dự án luôn hiển thị. Người đã đăng nhập được xem và tải lên; người tải quản lý file của mình, người có quyền `users.admin` quản lý toàn bộ.

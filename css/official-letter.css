@@ -1,0 +1,77 @@
+/* Trang "Công văn AI" (js/features/documents/official-letter-page.js). Cùng bảng màu với Biểu mẫu dùng chung. */
+:is(.ol-page,.ol-dialog) {
+  --ol-paper:#fffefb; --ol-ink:#30332f; --ol-muted:#77776d; --ol-line:#e7e3d9; --ol-soft:#f7f4ed;
+  --ol-gold:#ad761d; --ol-gold-bg:#fff3d9; --ol-green:#168052; --ol-rose:#b34c48; --ol-action:#8a6a32; --ol-action-text:#fffaf0;
+  color:var(--ol-ink); font-family:'Plus Jakarta Sans',system-ui,sans-serif; font-size:13px;
+}
+body:not(.light-mode) :is(.ol-page,.ol-dialog) {
+  --ol-paper:#121e27; --ol-ink:#f0f2eb; --ol-muted:#a2afaf; --ol-line:#2a3840; --ol-soft:#172730;
+  --ol-gold:#d0ae76; --ol-gold-bg:#28291f; --ol-green:#80c4a6; --ol-rose:#e3a095; --ol-action:#d0ae76; --ol-action-text:#1b1710;
+}
+.ol-page { width:100%; padding:6px 0 32px; }
+.ol-top { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px 24px; margin:8px 0 18px; }
+.ol-top small { color:var(--ol-gold); font-weight:800; letter-spacing:.08em; font-size:11px; }
+.ol-top h1 { margin:4px 0 2px; font-size:clamp(22px,2.2vw,27px); font-weight:800; letter-spacing:-.03em; }
+.ol-top p { margin:0; color:var(--ol-muted); font-size:12px; line-height:1.6; max-width:680px; }
+.ol-layout { display:grid; grid-template-columns:minmax(320px,460px) minmax(0,1fr); gap:18px; align-items:start; }
+.ol-col { display:grid; gap:16px; min-width:0; }
+.ol-col-preview { position:sticky; top:12px; }
+.ol-card { background:var(--ol-paper); border:1px solid var(--ol-line); border-radius:14px; padding:16px 18px; box-shadow:0 8px 30px rgba(62,51,31,.04); }
+.ol-card[hidden] { display:none; }
+.ol-card h2 { display:flex; align-items:center; gap:10px; margin:0 0 12px; font-size:15px; font-weight:800; }
+.ol-step { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; background:var(--ol-gold-bg); color:var(--ol-gold); font-size:12px; font-weight:800; }
+.ol-group h3 { margin:12px 0 6px; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ol-muted); }
+.ol-tpl-grid { display:grid; gap:8px; }
+.ol-tpl { display:grid; gap:3px; text-align:left; padding:10px 12px; border:1px solid var(--ol-line); border-radius:10px; background:var(--ol-paper); color:inherit; cursor:pointer; font:inherit; }
+.ol-tpl strong { font-size:13px; } .ol-tpl span { color:var(--ol-muted); font-size:12px; line-height:1.45; }
+.ol-tpl em { font-style:normal; font-size:10.5px; color:var(--ol-gold); font-weight:700; }
+.ol-tpl:hover { border-color:color-mix(in srgb,var(--ol-gold) 55%,var(--ol-line)); background:var(--ol-soft); }
+.ol-tpl.is-active { border-color:var(--ol-gold); background:var(--ol-gold-bg); box-shadow:inset 0 0 0 1px var(--ol-gold); }
+.ol-field { display:grid; gap:5px; margin:0 0 12px; }
+.ol-field > span { font-size:12px; font-weight:700; } .ol-field > span em { font-weight:500; font-style:normal; color:var(--ol-muted); }
+.ol-field small { color:var(--ol-muted); font-size:11px; }
+.ol-field :is(input,textarea,select) { width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid var(--ol-line); border-radius:8px; background:var(--ol-paper); color:var(--ol-ink); font:inherit; }
+.ol-field :is(input,textarea,select):focus { outline:2px solid color-mix(in srgb,var(--ol-gold) 45%,transparent); border-color:var(--ol-gold); }
+.ol-field.is-missing :is(input,textarea) { border-color:var(--ol-rose); background:color-mix(in srgb,var(--ol-rose) 7%,var(--ol-paper)); }
+.ol-field b { color:var(--ol-rose); }
+.ol-ai-tag,.ol-miss-tag { font-size:10px !important; font-weight:800 !important; padding:1px 6px; border-radius:99px; }
+.ol-ai-tag { background:var(--ol-gold-bg); color:var(--ol-gold) !important; } .ol-miss-tag { background:color-mix(in srgb,var(--ol-rose) 14%,transparent); color:var(--ol-rose) !important; }
+.ol-upload { display:inline-block; padding:8px 12px; border:1px dashed var(--ol-line); border-radius:8px; cursor:pointer; color:var(--ol-muted); }
+.ol-upload:hover { border-color:var(--ol-gold); color:var(--ol-ink); }
+.ol-files { list-style:none; margin:8px 0 0; padding:0; display:grid; gap:4px; }
+.ol-files li { display:flex; justify-content:space-between; gap:8px; padding:5px 8px; border-radius:6px; background:var(--ol-soft); font-size:12px; }
+.ol-files button { border:0; background:none; color:var(--ol-muted); cursor:pointer; font-size:16px; line-height:1; }
+.ol-hint,.ol-privacy { margin:0 0 10px; color:var(--ol-muted); font-size:11.5px; line-height:1.55; }
+.ol-error,.ol-warn,.ol-ok,.ol-note,.ol-questions { margin:0 0 10px; padding:8px 10px; border-radius:8px; font-size:12px; line-height:1.5; }
+.ol-error { background:color-mix(in srgb,var(--ol-rose) 12%,transparent); color:var(--ol-rose); }
+.ol-warn { background:var(--ol-gold-bg); color:var(--ol-ink); } .ol-warn ul,.ol-questions ul { margin:4px 0 0; padding-left:18px; }
+.ol-ok { background:color-mix(in srgb,var(--ol-green) 12%,transparent); color:var(--ol-green); }
+.ol-note { background:var(--ol-soft); color:var(--ol-muted); }
+.ol-questions { background:var(--ol-soft); border:1px solid var(--ol-line); }
+.ol-questions .ol-field { margin:8px 0; }
+.ol-actions,.ol-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.ol-toolbar { margin-bottom:10px; } .ol-datepick { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ol-muted); margin-right:auto; }
+.ol-datepick input { padding:5px 8px; border:1px solid var(--ol-line); border-radius:8px; background:var(--ol-paper); color:var(--ol-ink); font:inherit; }
+.ol-btn { padding:8px 14px; border:1px solid var(--ol-line); border-radius:9px; background:var(--ol-paper); color:var(--ol-ink); font:inherit; font-weight:700; cursor:pointer; }
+.ol-btn:hover:not(:disabled) { border-color:var(--ol-gold); background:var(--ol-soft); }
+.ol-btn:disabled { opacity:.55; cursor:progress; }
+.ol-btn-primary { background:var(--ol-action); border-color:var(--ol-action); color:var(--ol-action-text); }
+.ol-btn-primary:hover:not(:disabled) { background:var(--ol-action); filter:brightness(1.08); }
+.ol-empty { padding:48px 16px; text-align:center; color:var(--ol-muted); border:1px dashed var(--ol-line); border-radius:10px; }
+/* Tờ A4 xem trước: luôn nền trắng chữ đen như bản in */
+.ol-paper-wrap { overflow:auto; max-height:calc(100vh - 220px); padding:12px; background:var(--ol-soft); border-radius:10px; }
+.ol-paper { box-sizing:border-box; width:100%; max-width:794px; min-height:560px; margin:0 auto; padding:44px 38px 48px 66px; background:#fff; color:#000; box-shadow:0 2px 14px rgba(0,0,0,.18); font:13pt/1.3 'Times New Roman',Times,serif; }
+.ol-head { display:flex; gap:8px; } .ol-head-left { width:42%; text-align:center; font-size:12pt; } .ol-head-right { width:58%; text-align:center; }
+.ol-parent { font-size:11.5pt; } .ol-unit { font-weight:700; } .ol-nation { font-weight:700; font-size:12pt; } .ol-motto { font-weight:700; font-size:13pt; }
+.ol-rule { width:40%; border:0; border-top:1px solid #000; margin:2px auto 6px; }
+.ol-number { margin-top:6px; } .ol-date i { font-size:13pt; }
+.ol-subject { margin:6px 0 4px; width:42%; text-align:center; font-size:12pt; }
+.ol-to { text-align:center; margin:14px 0 10px; }
+.ol-p { margin:0 0 7pt; text-align:justify; text-indent:1.27cm; } .ol-p-li { text-indent:0; padding-left:1.4cm; } .ol-p-h { font-weight:700; }
+.ol-foot { display:flex; margin-top:14px; gap:8px; } .ol-noinhan { width:55%; font-size:11pt; } .ol-sign { width:45%; text-align:center; } .ol-sign-space { height:74px; }
+.ol-edit { outline:none; border-radius:3px; } .ol-edit:hover { background:rgba(173,118,29,.1); } .ol-edit:focus { background:rgba(173,118,29,.16); box-shadow:0 0 0 2px rgba(173,118,29,.4); }
+.ol-number-input:empty::before { content:'……/……'; color:#888; }
+mark.ol-gap { background:#ffe58a; color:#000; padding:0 2px; border-radius:2px; }
+.ol-dialog { width:min(520px,94vw); padding:20px 22px; border:1px solid var(--ol-line); border-radius:14px; background:var(--ol-paper); }
+.ol-dialog::backdrop { background:rgba(10,14,12,.5); } .ol-dialog h2 { margin:0 0 4px; font-size:17px; }
+@media (max-width:980px) { .ol-layout { grid-template-columns:1fr; } .ol-col-preview { position:static; } .ol-paper { padding:28px 20px 32px 32px; } }

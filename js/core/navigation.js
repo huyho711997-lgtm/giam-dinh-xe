@@ -68,6 +68,7 @@
       payment:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/>',
       transfer:'<path d="M4 7h13l-3-3M20 17H7l3 3"/>',
       field:'<path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
+      letter:'<path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/>',
       forms:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
       scene:'<path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/>',
       rescue:'<path d="M3 16V8h11v8M14 11h4l3 3v2h-7M3 16h18"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/>',
@@ -105,7 +106,9 @@
           // Trang vẽ sơ đồ độc lập (không cần mở hồ sơ): mở ngay trong thẻ hiện tại (nút X trên trang đó quay về app).
           { tab: 'scene_standalone', title: 'Vẽ sơ đồ hiện trường', icon: 'scene', show: showList || showPending, href: 'so-do-hien-truong.html' },
           { tab: 'contacts', title: 'Danh bạ nội bộ', icon: 'contacts', show: hasUserPermission('contacts', 'view') },
-          { tab: 'shared_forms', title: 'Biểu mẫu dùng chung', icon: 'forms', show: hasUserPermission('shared_forms', 'view') }
+          { tab: 'shared_forms', title: 'Biểu mẫu dùng chung', icon: 'forms', show: hasUserPermission('shared_forms', 'view') },
+          // Soạn công văn bằng AI từ mẫu có sẵn; dùng chung quyền xem với Biểu mẫu dùng chung.
+          { tab: 'official_letters', title: 'Công văn AI', icon: 'letter', show: hasUserPermission('shared_forms', 'view') }
         ]},
         { label: 'Hệ thống', items: [
           { tab: 'users', title: 'Quản trị hệ thống', icon: 'system', show: hasUserPermission('users', 'view'), also: ['system'] },

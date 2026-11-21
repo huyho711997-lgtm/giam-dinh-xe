@@ -342,5 +342,5 @@ const SharedFormsAI = (() => {
     composer.focus();
   }
 
-  return {open, createComposer, draft, buildFile, saveBlob, escapeHtml, readParagraphs, applyEdits, describeRecord, buildRequest, parseResponse};
+  return {open, createComposer, draft, buildFile, saveBlob, callGemini, listRecords, escapeHtml, readParagraphs, applyEdits, describeRecord, buildRequest, parseResponse};
 })();

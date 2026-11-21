@@ -254,6 +254,11 @@
         if (activeDashboardTab === 'shared_forms') activeDashboardTab = 'home';
         return;
       }
+      if (tabName === 'official_letters' && !hasUserPermission('shared_forms', 'view')) {
+        triggerToast('Bạn không có quyền dùng Công văn AI.', 'warning');
+        if (activeDashboardTab === 'official_letters') activeDashboardTab = 'home';
+        return;
+      }
       if (tabName === 'drive_manager' && !hasUserPermission('users', 'admin')) {
         triggerToast('Trang Google Drive dành riêng cho quản trị viên hệ thống.', 'warning');
         if (activeDashboardTab === 'drive_manager') activeDashboardTab = 'home';
@@ -299,11 +304,17 @@
       if (!container) return;
       SharedForms.leave();
       RescuePage.leave();
+      if (typeof OfficialLetterPage !== 'undefined') OfficialLetterPage.leave();
       if (typeof DriveManager !== 'undefined') DriveManager.leave();
       if (typeof HomeSeasonal !== 'undefined') { HomeSeasonal.stop(); HomeSeasonal.syncButton(); } // nút tuyết trên thanh trên chỉ có ở Trang chủ
 
       if (activeDashboardTab === 'shared_forms') {
         SharedForms.mount(container);
+        return;
+      }
+
+      if (activeDashboardTab === 'official_letters') {
+        if (typeof OfficialLetterPage !== 'undefined') OfficialLetterPage.mount(container);
         return;
       }
 
