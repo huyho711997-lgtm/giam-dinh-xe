@@ -6,12 +6,19 @@
 //     một nguồn đã cấp; không khớp → cảnh báo "chưa kiểm chứng".
 // Phần thuần (không DOM, không mạng) có unit test: tests/official-letter-legal.test.mjs.
 const OfficialLetterLegal = (() => {
-  const MAX_SOURCES = 8, MAX_QUERIES = 12, PER_QUERY = 4, SNIPPET = 1800;
+  const MAX_SOURCES = 5, MAX_QUERIES = 10, PER_QUERY = 4, SNIPPET = 1800;
+  // Lọc độ liên quan: đoạn phải chứa ≥60% từ có nghĩa của truy vấn và đạt ≥40% điểm của đoạn tốt nhất.
+  const MIN_COVERAGE = 0.6, MIN_RELATIVE = 0.4;
   const fold = value => String(value ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
   const key = value => fold(value).replace(/[^a-z0-9]+/g, '');
   const words = value => fold(value).replace(/[^a-z0-9]+/g, ' ').trim();
   const clip = (value, max) => { const text = String(value ?? '').replace(/\s+/g, ' ').trim(); return text.length > max ? text.slice(0, max - 1) + '…' : text; };
 
+  // Chỉ các loại công văn mang tính kết luận/giải quyết mới TỰ tìm căn cứ; công văn đề nghị, thông báo bổ sung, gửi gara
+  // thông thường không cần viện dẫn điều luật (dẫn vào chỉ gượng ép). Loại khác chỉ tìm khi người dùng nhắc tới căn cứ/luật.
+  const NEEDS_BASIS = new Set(['thong_bao_ket_qua_giam_dinh', 'giai_trinh_tra_loi']);
+  const LEGAL_WORDS = /căn cứ|điều luật|\bluật\b|nghị định|thông tư|quy tắc|điều khoản|giảm trừ|chế tài|từ chối|loại trừ|khiếu nại|pháp lý/i;
+  const needsBasis = (template, brief) => !!template && (NEEDS_BASIS.has(template.id) || LEGAL_WORDS.test(String(brief || '')));
   // Chủ đề căn cứ thường cần theo loại công văn (mã mẫu trong official-letter-templates.js).
   const TOPICS = {
     de_nghi_cung_cap_ho_so: ['quyền yêu cầu cơ quan có thẩm quyền cung cấp tài liệu liên quan vụ tai nạn', 'giám định tổn thất xác định nguyên nhân', 'hồ sơ bồi thường biên bản tai nạn của cơ quan công an'],
@@ -35,9 +42,11 @@ const OfficialLetterLegal = (() => {
     [/Chưa ghi nhận ngày nhận đủ hồ sơ/i, ['hồ sơ yêu cầu bồi thường đầy đủ']]
   ];
 
-  // template: mẫu; dossier: kết quả OfficialLetterDossier.build (hoặc null); extra: [chuỗi] — gợi ý của AI / người dùng.
-  function buildQueries(template, dossier, extra) {
+  // template: mẫu; dossier: kết quả OfficialLetterDossier.build (hoặc null); extra: [chuỗi] — gợi ý của AI;
+  // brief: ý chính người dùng. Công văn không cần căn cứ → [] (không tìm, AI không viện dẫn).
+  function buildQueries(template, dossier, extra, brief) {
     const out = [];
+    if (!needsBasis(template, brief)) return out;
     const push = text => { const clean = clip(text, 160); if (clean && !out.some(item => key(item) === key(clean))) out.push(clean); };
     (extra || []).forEach(push);
     if (dossier) {
@@ -53,11 +62,22 @@ const OfficialLetterLegal = (() => {
 
   // Gộp kết quả nhiều truy vấn: điểm = điểm cao nhất + 15% mỗi lần trúng thêm; bỏ trùng; giữ tối đa MAX_SOURCES.
   // searchFn(query) → [{docId, index, doc:{meta}, chunk:{t,x}, score}] (định dạng của TascoLibSearch.search).
+  // Tỷ lệ từ có nghĩa của truy vấn xuất hiện trong đoạn (tiêu đề + nội dung), không dấu.
+  const STOP = new Set(['va', 'cua', 'la', 'co', 'duoc', 'cho', 'cac', 'nhung', 'mot', 'trong', 'khi', 'thi', 'de', 'voi', 'theo', 'tai', 've', 'do', 'nay', 'ke', 'tu', 'gom', 'ra', 'vao', 'se', 'da', 'bi']);
+  const terms = text => [...new Set(words(text).split(' ').filter(word => word.length > 1 && !STOP.has(word)))];
+  function coverage(query, chunk) {
+    const wanted = terms(query);
+    if (!wanted.length) return 0;
+    const have = new Set(words(chunk.t + ' ' + chunk.x).split(' '));
+    return wanted.filter(word => have.has(word)).length / wanted.length;
+  }
   function rank(searchFn, queries, limit) {
     const pool = new Map();
     for (const query of queries || []) {
-      for (const row of searchFn(query) || []) {
-        if (!row || !row.chunk || !row.doc) continue;
+      const rows = (searchFn(query) || []).filter(row => row && row.chunk && row.doc);
+      const top = rows.reduce((max, row) => Math.max(max, row.score || 0), 0);
+      for (const row of rows) {
+        if ((row.score || 0) < top * MIN_RELATIVE || coverage(query, row.chunk) < MIN_COVERAGE) continue;   // trùng vài từ chung chung → bỏ
         const id = row.docId + ':' + row.index, seen = pool.get(id);
         if (seen) { seen.score = Math.max(seen.score, row.score); seen.hits++; if (!seen.queries.includes(query)) seen.queries.push(query); }
         else pool.set(id, {row, score: row.score, hits: 1, queries: [query]});
@@ -158,5 +178,5 @@ const OfficialLetterLegal = (() => {
 
   const letterText = letter => letter ? [letter.subject, ...(letter.paragraphs || []).map(p => p.text)].join('\n') : '';
 
-  return {TOPICS, buildQueries, rank, toSource, renumber, retrieve, promptBlock, sourceLabel, verify, letterText, MAX_SOURCES};
+  return {TOPICS, NEEDS_BASIS, needsBasis, coverage, buildQueries, rank, toSource, renumber, retrieve, promptBlock, sourceLabel, verify, letterText, MAX_SOURCES};
 })();

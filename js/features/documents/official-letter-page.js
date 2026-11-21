@@ -152,8 +152,8 @@ const OfficialLetterPage = (() => {
   async function findLegal(extraQueries, options = {}) {
     const L = Legal(), tpl = template();
     if (!L || !tpl) return;
-    const queries = L.buildQueries(tpl, dossierFor(), extraQueries);
-    if (!queries.length) { st.legalLoaded = true; st.legalError = ''; return; }
+    const queries = L.buildQueries(tpl, dossierFor(), extraQueries, st.brief);
+    if (!queries.length) { st.legalLoaded = true; st.legalError = ''; st.sources = st.sources.filter(source => source.manual); return; }
     const result = await L.retrieve(queries, {force: !!options.force});
     st.legalLoaded = true; st.legalError = result.error;
     if (options.append) {
@@ -164,7 +164,9 @@ const OfficialLetterPage = (() => {
     }
     // Giữ lựa chọn bật/tắt của người dùng với nguồn cũ còn xuất hiện.
     const offBefore = new Set(st.sources.filter(source => source.on === false).map(source => source.id));
-    st.sources = result.sources.map(source => ({...source, on: !offBefore.has(source.id)}));
+    const found = result.sources.map(source => ({...source, on: !offBefore.has(source.id)}));
+    const manual = st.sources.filter(source => source.manual && !found.some(item => item.id === source.id));   // đoạn người dùng tự tìm thì giữ
+    st.sources = L.renumber(found.concat(manual));
     return st.sources.length;
   }
   async function searchMoreLegal() {
@@ -179,7 +181,7 @@ const OfficialLetterPage = (() => {
       const result = L ? await L.retrieve([query], {limit: 4}) : {sources: [], error: 'Thư viện tài liệu chưa sẵn sàng.'};
       if (my !== generation) return;
       const known = new Set(st.sources.map(source => source.id));
-      const added = result.sources.filter(source => !known.has(source.id));
+      const added = result.sources.filter(source => !known.has(source.id)).map(source => ({...source, manual: true}));
       st.sources = L ? L.renumber(st.sources.concat(added).slice(0, 12)) : st.sources;
       st.legalLoaded = true; if (result.error) st.legalError = result.error;
       toast(result.error || (added.length ? 'Đã thêm ' + added.length + ' đoạn căn cứ.' : 'Không tìm thấy đoạn mới cho "' + query + '".'), result.error ? 'warning' : added.length ? 'success' : 'info');
@@ -469,9 +471,10 @@ const OfficialLetterPage = (() => {
       + '<details class="ol-src-text"><summary>Xem nguyên văn</summary><p>' + esc(String(source.text).slice(0, 1800)) + '</p>' + (source.link ? '<a href="' + esc(source.link) + '" target="_blank" rel="noopener noreferrer">Mở văn bản gốc</a>' : '') + '</details></div>').join('');
     const status = !st.legalLoaded ? '<p class="ol-muted">Đang chờ tìm căn cứ…</p>'
       : st.legalError ? '<p class="ol-warn">' + esc(st.legalError) + ' AI sẽ không viện dẫn điều luật cụ thể. ' + lib + '</p>'
-      : !st.sources.length ? '<p class="ol-muted">Không tìm thấy đoạn phù hợp trong thư viện — AI sẽ không viện dẫn điều luật cụ thể. Có thể tìm thêm bên dưới. ' + lib + '</p>' : '';
+      : !st.sources.length ? (Legal().needsBasis(template(), st.brief) ? '<p class="ol-muted">Không có đoạn nào trong thư viện khớp đúng vấn đề — AI sẽ không viện dẫn điều luật cụ thể. Có thể tìm thêm bên dưới. ' + lib + '</p>'
+        : '<p class="ol-muted">Loại công văn này không cần viện dẫn điều luật nên AI sẽ không dẫn căn cứ. Nếu bạn muốn có căn cứ, tìm đúng nội dung cần dẫn ở ô bên dưới.</p>') : '';
     return '<div class="msg-bubble msg-ai ol-wide ol-legal" data-ol-block="legal"><p><b>Căn cứ pháp lý từ Thư viện tài liệu</b>' + (st.sources.length ? ' <span class="ol-q-count">' + activeSources().length + '/' + st.sources.length + ' đoạn được dùng</span>' : '') + '</p>'
-      + '<p class="ol-muted">AI chỉ được viện dẫn các đoạn đang tick dưới đây (văn bản đang hiệu lực); không tự nhớ điều luật. Bỏ tick đoạn không liên quan.</p>'
+      + '<p class="ol-muted">AI chỉ viện dẫn khi đoạn đang tick quy định đúng vấn đề công văn nêu (tối đa 2), không tự nhớ điều luật. Bỏ tick đoạn không liên quan.</p>'
       + status + (rows ? '<div class="ol-srcs">' + rows + '</div>' : '')
       + '<div class="ol-legal-search"><input data-ol-legal-q maxlength="160" placeholder="Tìm thêm căn cứ, VD: thời hạn giải quyết bồi thường" aria-label="Tìm thêm căn cứ"><button type="button" class="tasco-ai-btn-ghost" data-ol-act="legal-search">Tìm</button></div></div>';
   }

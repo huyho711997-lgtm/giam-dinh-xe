@@ -115,7 +115,8 @@ test('prompt: phân tích xin legalQueries; soạn kèm CĂN CỨ TỪ THƯ VI�
   assert.deepEqual(parsed.legalQueries, ['thời hạn thông báo tổn thất', 'giảm trừ']);
   const withLegal = C.buildComposeRequest(tpl, {}, {}, '', '', { legal: '[C1] Luật KDBH – Điều 22\nNội dung' });
   assert.match(withLegal.contents[0].parts[0].text, /CĂN CỨ TỪ THƯ VIỆN \(nguyên văn[^\n]*\n\[C1\] Luật KDBH – Điều 22/);
-  assert.match(withLegal.system_instruction.parts[0].text, /chỉ được viện dẫn văn bản\/điều\/khoản có trong phần "CĂN CỨ TỪ THƯ VIỆN"/);
+  assert.match(withLegal.system_instruction.parts[0].text, /có đoạn trong "CĂN CỨ TỪ THƯ VIỆN" quy định ĐÚNG vấn đề đó/);
+  assert.match(withLegal.system_instruction.parts[0].text, /tuyệt đối không dẫn văn bản\/điều nào khác theo trí nhớ/);
   assert.match(C.buildComposeRequest(tpl, {}, {}, '', '', {}).contents[0].parts[0].text, /CĂN CỨ TỪ THƯ VIỆN: \(không có — không viện dẫn điều luật cụ thể\)/);
   const letter = plain(C.parseLetter(JSON.stringify({ subject: 's', paragraphs: ['a'], basis: [{ code: 'c1', cite: 'Điều 22' }, { code: 'X9', cite: 'bịa' }, { code: 'C2' }] })));
   assert.deepEqual(letter.basis, [{ code: 'C1', cite: 'Điều 22' }, { code: 'C2', cite: '' }]);
@@ -141,4 +142,34 @@ test('chế độ soạn ngay: prompt phân tích hạn chế hỏi + xin giả 
   const text = C.buildComposeRequest(tpl, {}, {}, '', '', { assumptions: ['Gửi Công an huyện Krông Pắc'], openQuestions: ['Có cần nhắc vụ việc đang điều tra?'] }).contents[0].parts[0].text;
   assert.match(text, /GIẢ ĐỊNH ĐÃ DÙNG[^\n]*\n- Gửi Công an huyện Krông Pắc/);
   assert.match(text, /ĐIỂM CHƯA RÕ[^\n]*\n- Có cần nhắc vụ việc đang điều tra\?/);
+});
+
+test('chỉ tìm căn cứ khi công văn cần: đề nghị/bổ sung/gara thì không, trừ khi người dùng nhắc căn cứ/giảm trừ/từ chối', () => {
+  const { L, D } = load();
+  const dossier = D.build({ ngayTonThat: '05/03/2025', ngayThongBao: '15/03/2025', trangThai: 'cho_duyet_pasc' }, { today: '2025-04-01' });
+  for (const id of ['de_nghi_cung_cap_ho_so', 'thong_bao_bo_sung_ho_so', 'de_nghi_gara_cung_cap', 'tu_do'])
+    assert.deepEqual(plain(L.buildQueries({ id }, dossier, ['quyền yêu cầu cung cấp tài liệu'], 'Xin Công an sao lục biên bản')), [], id);
+  assert.ok(L.buildQueries({ id: 'thong_bao_bo_sung_ho_so' }, dossier, [], 'Nêu căn cứ thời hạn bổ sung hồ sơ').length > 0);
+  assert.ok(L.buildQueries({ id: 'tu_do' }, dossier, [], 'Thông báo giảm trừ 10% do báo trễ').length > 0);
+  assert.ok(L.buildQueries({ id: 'giai_trinh_tra_loi' }, dossier, [], '').length > 0);
+});
+
+test('lọc độ liên quan: đoạn chỉ trùng vài từ chung chung bị loại; tối đa 5 đoạn', () => {
+  const { L, S } = load();
+  const index = S.build([LUAT, ND]);
+  assert.deepEqual(plain(L.rank(q => S.search(index, q, { limit: 4 }), ['bảo hiểm sức khoẻ người lao động nước ngoài'])), []);
+  const hit = plain(L.rank(q => S.search(index, q, { limit: 4 }), ['thời hạn thông báo tổn thất']));
+  assert.deepEqual(hit.map(s => s.title), ['Chương IV › Điều 22. Thông báo tổn thất']);
+  assert.ok(L.coverage('thông báo tổn thất', { t: 'Điều 22', x: 'thông báo tổn thất' }) === 1);
+  assert.ok(L.coverage('thông báo tổn thất', { t: 'Điều 1', x: 'thông tin chung' }) < 0.6);
+});
+
+test('prompt soạn: mặc định không viện dẫn, không mở đầu "Căn cứ…", tối đa 2 căn cứ đúng vấn đề', () => {
+  const context = vm.createContext({ Math, Number, String, Object, Array, JSON, Date, Set, Map });
+  vm.runInContext(read('js/data/official-letter-templates.js') + '\n' + read('js/features/documents/official-letter-core.js') + '\nthis.C = OfficialLetterCore;', context);
+  const sys = context.C.buildComposeRequest(context.C.findTemplate('de_nghi_cung_cap_ho_so'), {}, {}, '', '', {}).system_instruction.parts[0].text;
+  assert.match(sys, /mặc định KHÔNG viện dẫn điều luật/);
+  assert.match(sys, /không mở đầu bằng "Căn cứ…"/);
+  assert.match(sys, /tối đa 2 căn cứ/);
+  assert.match(context.C.buildAnalyzeRequest(context.C.findTemplate('tu_do'), {}).system_instruction.parts[0].text, /ngược lại để \[\]/);
 });
