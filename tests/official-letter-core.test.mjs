@@ -112,3 +112,34 @@ test('sanitizeLetter + letterToText + fileBaseName', () => {
   assert.ok(text.includes('Nơi nhận:') && text.includes('Kính gửi:'));
   assert.match(Core.fileBaseName(letter, values), /^Cong-van-[A-Za-z0-9-]+$/);
 });
+
+test('phân tích thông minh: hiểu yêu cầu, thông tin bổ sung, dàn ý riêng, câu hỏi có phương án', () => {
+  const t = tpl('de_nghi_cung_cap_ho_so');
+  const a = Core.parseAnalysis(JSON.stringify({
+    understanding: 'Xin sao lục biên bản vụ tai nạn ngày 12/11.',
+    fields: {plate: '47A-1'},
+    extras: [{label: 'Thời hạn phản hồi', value: '07 ngày'}, {label: '', value: 'x'}, {label: 'Rỗng', value: ''}],
+    outline: ['1. Mở đầu **cảm ơn**', 'Nêu sự việc', '', 'Đề nghị cấp biên bản'],
+    questions: [{key: 'recipient', question: 'Gửi cơ quan nào?', options: ['Công an cấp huyện', 'Công an cấp huyện', 'Phòng CSGT', 5, 'a', 'b']}, {key: 'khong_co', question: 'Câu 2?'}, {question: ''}]
+  }), t);
+  assert.equal(a.understanding, 'Xin sao lục biên bản vụ tai nạn ngày 12/11.');
+  assert.deepEqual(JSON.parse(JSON.stringify(a.extras)), [{label: 'Thời hạn phản hồi', value: '07 ngày'}]);
+  assert.deepEqual(Array.from(a.outline), ['Mở đầu cảm ơn', 'Nêu sự việc', 'Đề nghị cấp biên bản']);
+  assert.deepEqual(Array.from(a.questions[0].options), ['Công an cấp huyện', 'Phòng CSGT', 'a', 'b']);
+  assert.equal(a.questions[0].key, 'recipient'); assert.equal(a.questions[1].key, ''); assert.equal(a.questions.length, 2);
+  const req = Core.buildAnalyzeRequest(t, {record: {}, current: {}, brief: 'x', files: [], answered: [{question: 'Gửi ai?', answer: 'CSGT'}], extras: [{label: 'A', value: 'B'}], outline: ['Ý đã duyệt']});
+  const text = req.contents[0].parts[0].text;
+  assert.ok(text.includes('ĐÃ LÀM RÕ') && text.includes('CSGT') && text.includes('Ý đã duyệt') && text.includes('DÀN Ý MẶC ĐỊNH'));
+  assert.match(req.system_instruction.parts[0].text, /không hỏi điều đã có/);
+});
+
+test('soạn theo dàn ý người dùng duyệt + thông tin làm rõ, không dùng dàn ý mặc định', () => {
+  const t = tpl('de_nghi_cung_cap_ho_so');
+  const req = Core.buildComposeRequest(t, {plate: '47A-1'}, {}, 'ý chính', '', {outline: ['Chỉ viết đoạn riêng này'], extras: [{label: 'Thời hạn', value: '07 ngày'}], answers: [{question: 'Gửi ai?', answer: 'CSGT'}], understanding: 'Hiểu thế này'});
+  const text = req.contents[0].parts[0].text;
+  assert.ok(text.includes('Chỉ viết đoạn riêng này') && !text.includes(t.outline[0]));
+  assert.ok(text.includes('Thời hạn') && text.includes('07 ngày') && text.includes('NGƯỜI DÙNG ĐÃ LÀM RÕ') && text.includes('CSGT') && text.includes('Hiểu thế này'));
+  assert.ok(text.includes('đã duyệt'));
+  const fallback = Core.buildComposeRequest(t, {}, {}, '', '', {outline: []}).contents[0].parts[0].text;
+  assert.ok(fallback.includes(t.outline[0]));
+});

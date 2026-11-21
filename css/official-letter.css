@@ -97,3 +97,22 @@ mark.ol-gap { background:#ffe58a; color:#000; padding:0 2px; border-radius:2px; 
 .ol-dialog .ol-field { margin-top:10px; }
 .ol-dialog .ol-actions { justify-content:flex-end; margin-top:14px; }
 @media (max-width:760px) { .ol-chat { height:calc(100dvh - 96px); border-radius:16px; } .ol-form { grid-template-columns:1fr; } .ol-chat .msg-bubble { max-width:94%; } .ol-paper { padding:28px 20px 32px 32px; } .ol-rec-item { grid-template-columns:auto minmax(0,1fr); } .ol-rec-tag { display:none; } .ol-chat .tasco-ai-header, .ol-chat .tasco-ai-body, .ol-chat .tasco-ai-footer { padding-inline:12px; } }
+
+/* Câu hỏi làm rõ, thông tin bổ sung, dàn ý */
+.ol-q-count { margin-left:6px; padding:2px 9px; border-radius:99px; background:color-mix(in srgb,var(--primary) 14%,transparent); color:var(--primary); font-size:11px; font-weight:800; }
+.ol-q { display:grid; gap:7px; margin:10px 0 0; padding:11px 12px; border:1px solid var(--border); border-radius:13px; background:var(--surface-soft); }
+.ol-q-text { margin:0 !important; font-size:13px; font-weight:750; line-height:1.5; }
+.ol-q .tasco-ai-chiprow { margin-top:0; }
+.ol-q-input, .ol-extra-row input, .ol-outline-text { width:100%; box-sizing:border-box; min-height:38px; padding:8px 11px; border:1px solid var(--border); border-radius:10px; background:var(--surface-strong); color:var(--text-main); font:inherit; font-size:12.5px; }
+.ol-q-input:focus-visible, .ol-extra-row input:focus-visible, .ol-outline-text:focus-visible { outline:2px solid var(--primary); outline-offset:1px; }
+.ol-extras { display:grid; gap:7px; margin-top:12px; }
+.ol-extras > small { color:var(--text-muted); font-size:11px; line-height:1.5; }
+.ol-extra-row { display:grid; grid-template-columns:minmax(120px,.7fr) minmax(0,1.6fr) 28px; gap:8px; align-items:center; }
+.ol-outline { display:grid; gap:7px; margin-top:8px; }
+.ol-outline-row { display:grid; grid-template-columns:20px minmax(0,1fr) 28px; gap:9px; align-items:center; }
+.ol-outline-row input[type=checkbox] { width:16px; height:16px; accent-color:var(--primary); }
+.ol-outline-row:has(input[type=checkbox]:not(:checked)) .ol-outline-text { opacity:.5; text-decoration:line-through; }
+.ol-add { justify-self:start; margin-top:4px; padding:6px 12px; border:1px dashed color-mix(in srgb,var(--primary) 50%,var(--border)); border-radius:10px; background:transparent; color:var(--primary); font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
+.ol-add:hover { background:color-mix(in srgb,var(--primary) 10%,transparent); }
+.ol-warn[hidden] { display:none; }
+@media (max-width:760px) { .ol-extra-row { grid-template-columns:1fr 28px; } .ol-extra-row [data-ol-extra-value] { grid-column:1; } }

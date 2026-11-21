@@ -19,7 +19,7 @@ const OfficialLetterPage = (() => {
   };
 
   let host = null, controller = null, generation = 0, records = [], index = [];
-  const st = {templateId: '', recordKey: '', recQuery: '', recActive: 0, brief: '', files: [], values: null, filledByAI: [], questions: [], notes: '', letter: null, history: [], recordShown: '', busy: '', status: ''};
+  const st = {templateId: '', recordKey: '', recQuery: '', recActive: 0, brief: '', files: [], values: null, filledByAI: [], questions: [], extras: [], outline: [], outlineEdited: false, understanding: '', notes: '', letter: null, history: [], recordShown: '', busy: '', status: ''};
 
   // ---- Đơn vị ban hành (nhớ trên máy) ----
   const loadIssuer = () => { try { return Core().normalizeIssuer(JSON.parse(localStorage.getItem(ISSUER_KEY) || '{}')); } catch (_) { return Core().normalizeIssuer({}); } };
@@ -123,34 +123,50 @@ const OfficialLetterPage = (() => {
   }
   const say = (role, text, extra) => st.history.push({role, text, ...(extra || {})});
 
+  const answeredList = () => st.questions.filter(item => item.answer).map(item => ({question: item.question, answer: item.answer}));
+  const defaultOutline = () => (template() ? template().outline : []).map(text => ({text, on: true}));
+
   async function analyze(newFiles) {
     const tpl = template();
     if (!tpl) return;
     const my = generation;
+    collectAll();
     st.busy = 'analyze'; st.status = 'Đang phân tích…'; renderAll('end');
     try {
       const current = startValues();
       const files = [];
       for (const item of newFiles) files.push(await prepareFile(item.file));
-      const raw = await callAI(Core().buildAnalyzeRequest(tpl, {record: currentRecord() ? SharedFormsAI.describeRecord(currentRecord()) : {}, current, brief: st.brief, files}));
+      const raw = await callAI(Core().buildAnalyzeRequest(tpl, {
+        record: currentRecord() ? SharedFormsAI.describeRecord(currentRecord()) : {}, current, brief: st.brief, files,
+        answered: answeredList(), extras: st.extras, outline: st.outlineEdited ? st.outline.filter(item => item.on).map(item => item.text) : undefined
+      }));
       if (my !== generation) return;
       const analysis = Core().parseAnalysis(raw, tpl);
       const merged = Core().mergeAnalysis(tpl, current, analysis);
       st.values = merged.values; st.filledByAI = Array.from(new Set(st.filledByAI.concat(merged.filledByAI)));
-      st.questions = analysis.questions; st.notes = analysis.notes;
+      // Câu hỏi đã trả lời được giữ lại; câu mới của AI nối thêm (bỏ câu trùng).
+      const kept = st.questions.filter(item => item.answer);
+      const seen = new Set(kept.map(item => fold(item.question)));
+      st.questions = kept.concat(analysis.questions.filter(item => !seen.has(fold(item.question))).map(item => ({...item, answer: ''})));
+      const labels = new Set(st.extras.map(item => fold(item.label)));
+      st.extras = st.extras.concat(analysis.extras.filter(item => !labels.has(fold(item.label))));
+      if (!st.outlineEdited) st.outline = (analysis.outline.length ? analysis.outline.map(text => ({text, on: true})) : defaultOutline());
+      st.understanding = analysis.understanding; st.notes = analysis.notes;
       const missing = Core().missingFields(tpl, st.values);
-      say('ai', 'Đã đọc xong thông tin.' + (merged.filledByAI.length ? ' AI điền thêm ' + merged.filledByAI.length + ' mục.' : '')
-        + (missing.length ? ' Còn thiếu ' + missing.length + ' mục bắt buộc (đánh dấu đỏ) — bạn trả lời ở khung chat hoặc điền thẳng vào ô.' : ' Đã đủ thông tin bắt buộc, có thể soạn công văn.'));
+      const open = st.questions.filter(item => !item.answer).length;
+      say('ai', (analysis.understanding ? 'Tôi hiểu yêu cầu của bạn như sau: ' + analysis.understanding : 'Đã đọc xong thông tin.')
+        + (open ? ' Tôi cần bạn làm rõ ' + open + ' điểm bên dưới để công văn đúng ý.' : '')
+        + (missing.length ? ' Còn thiếu ' + missing.length + ' mục bắt buộc (đánh dấu đỏ).' : (open ? '' : ' Thông tin đã đủ — bạn xem dàn ý rồi bấm Soạn công văn.')));
     } catch (error) {
       if (my !== generation || error.name === 'AbortError') return;
       say('ai', (error.message || 'Không phân tích được.') + ' Bạn vẫn có thể nhập thông tin vào các ô bên dưới.', {error: true});
-      if (!st.values) st.values = startValues();
-    } finally { if (my === generation) { st.busy = ''; st.status = ''; renderAll('fields'); } }
+      if (!st.values) { st.values = startValues(); if (!st.outline.length) st.outline = defaultOutline(); }
+    } finally { if (my === generation) { st.busy = ''; st.status = ''; renderAll(st.questions.some(item => !item.answer) ? 'questions' : 'fields'); } }
   }
 
   function manual() {
     if (!template() || st.busy) return;
-    st.values = startValues(); st.questions = []; st.notes = '';
+    st.values = startValues(); st.questions = []; st.notes = ''; if (!st.outline.length) st.outline = defaultOutline();
     say('ai', 'Được rồi, bạn nhập thông tin vào các ô bên dưới rồi bấm Soạn công văn.');
     renderAll('fields');
   }
@@ -158,7 +174,7 @@ const OfficialLetterPage = (() => {
   async function compose(instruction) {
     const tpl = template();
     if (!tpl || st.busy || !st.values) return;
-    collectValues(); syncLetter();
+    collectAll(); syncLetter();
     if (instruction) say('user', instruction, {stage: 'b'});
     const my = generation;
     st.busy = 'compose'; st.status = 'Đang soạn công văn…'; renderAll('end');
@@ -166,7 +182,8 @@ const OfficialLetterPage = (() => {
       const issuer = loadIssuer();
       const previous = instruction && st.letter ? st.letter.paragraphs.map(p => p.text).join('\n') : '';
       const brief = st.brief + (instruction ? '\nYÊU CẦU CHỈNH SỬA MỚI NHẤT: ' + instruction : '');
-      const raw = await callAI(Core().buildComposeRequest(tpl, st.values, issuer, brief, previous));
+      const ctx = {outline: st.outline.filter(item => item.on).map(item => item.text).filter(text => Core().single(text, 1)), extras: st.extras, answers: answeredList(), understanding: st.understanding};
+      const raw = await callAI(Core().buildComposeRequest(tpl, st.values, issuer, brief, previous, ctx));
       if (my !== generation) return;
       const parsed = Core().parseLetter(raw);
       const date = st.letter && st.letter.date, number = st.letter && st.letter.number;
@@ -182,6 +199,17 @@ const OfficialLetterPage = (() => {
   function collectValues() {
     if (!host || !st.values) return;
     host.querySelectorAll('[data-ol-field]').forEach(input => { st.values[input.dataset.olField] = input.value; });
+  }
+  // Đọc lại mọi chỗ người dùng đã nhập trong khung (trường, thông tin bổ sung, dàn ý, câu trả lời) trước khi vẽ lại.
+  function collectAll() {
+    if (!host) return;
+    collectValues();
+    const rows = host.querySelectorAll('[data-ol-extra-row]');
+    if (rows.length || host.querySelector('[data-ol-block="fields"]')) st.extras = [...rows].map(row => ({label: row.querySelector('[data-ol-extra-label]').value, value: row.querySelector('[data-ol-extra-value]').value}));
+    const outlineRows = host.querySelectorAll('[data-ol-outline-row]');
+    if (outlineRows.length) st.outline = [...outlineRows].map(row => ({text: row.querySelector('[data-ol-outline-text]').value, on: row.querySelector('[data-ol-outline-on]').checked}));
+    host.querySelectorAll('[data-ol-q-answer]').forEach(input => { const item = st.questions[Number(input.dataset.olQAnswer)]; if (item) item.answer = input.value.trim(); });
+    syncLetter();
   }
 
   // Đọc lại bản thảo người dùng đã sửa trực tiếp trên khung xem trước.
@@ -286,20 +314,41 @@ const OfficialLetterPage = (() => {
     return field.type === 'textarea' ? '<textarea' + common + ' rows="3">' + esc(value) + '</textarea>' : '<input' + common + ' value="' + esc(value) + '"' + (field.type === 'date' ? ' placeholder="dd/mm/yyyy"' : '') + '>';
   }
 
+  function questionsBlock() {
+    if (!template() || !st.values || !st.questions.length) return '';
+    const open = st.questions.filter(item => !item.answer).length;
+    return '<div class="msg-bubble msg-ai ol-wide" data-ol-block="questions"><p><b>Tôi cần bạn làm rõ</b> <span class="ol-q-count" data-ol-q-count>' + esc(open ? 'còn ' + open + '/' + st.questions.length + ' câu chưa trả lời' : 'đã trả lời đủ') + '</span></p>'
+      + st.questions.map((item, i) => '<div class="ol-q" data-ol-q="' + i + '"><p class="ol-q-text">' + (i + 1) + '. ' + esc(item.question) + '</p>'
+        + (item.options.length ? '<div class="tasco-ai-chiprow">' + item.options.map((option, j) => '<button type="button" class="tasco-ai-chip" data-ol-q-opt="' + i + '|' + j + '" aria-pressed="' + (item.answer === option) + '">' + esc(option) + '</button>').join('') + '</div>' : '')
+        + '<input class="ol-q-input" data-ol-q-answer="' + i + '" maxlength="400" placeholder="' + (item.options.length ? 'Hoặc gõ câu trả lời khác…' : 'Gõ câu trả lời…') + '" value="' + esc(item.answer) + '" aria-label="Trả lời câu ' + (i + 1) + '"></div>').join('')
+      + '<p class="ol-muted">Câu nào bỏ trống, AI sẽ viết chung hoặc để “……”. Có thể trả lời tự do ở khung chat bên dưới để AI hiểu lại.</p></div>';
+  }
+
   function fieldsBlock() {
     const tpl = template();
     if (!tpl || !st.values) return '';
     const missing = Core().missingFields(tpl, st.values);
     return '<div class="msg-bubble msg-ai ol-wide ol-fields-bubble" data-ol-block="fields"><p><b>Thông tin công văn</b> — kiểm tra và sửa nếu cần.</p>'
       + (st.notes ? '<p class="ol-note">' + esc(st.notes) + '</p>' : '')
-      + (st.questions.length ? '<div class="ol-questions"><b>AI cần hỏi thêm</b><ul>' + st.questions.map(item => '<li>' + esc(item.question) + '</li>').join('') + '</ul><small>Trả lời ở khung chat bên dưới, hoặc điền thẳng vào ô tương ứng.</small></div>' : '')
       + '<div class="ol-form">' + tpl.fields.map(field => {
         const flag = field.required && !Core().single(st.values[field.key], 1);
         return '<label class="ol-field' + (flag ? ' is-missing' : '') + (field.type === 'textarea' ? ' is-wide' : '') + '" data-ol-wrap="' + esc(field.key) + '"><span>' + esc(field.label) + (field.required ? ' <b title="Bắt buộc">*</b>' : '')
           + (st.filledByAI.includes(field.key) ? ' <em class="ol-ai-tag">AI điền</em>' : '') + (flag ? ' <em class="ol-miss-tag">Thiếu</em>' : '') + '</span>'
           + fieldInput(field, st.values[field.key]) + (field.hint ? '<small>' + esc(field.hint) + '</small>' : '') + '</label>';
       }).join('') + '</div>'
-      + '<p class="' + (missing.length ? 'ol-warn' : 'ol-ok') + '" data-ol-missing>' + esc(missingText(missing)) + '</p>'
+      + '<div class="ol-extras"><b>Thông tin bổ sung theo yêu cầu của bạn</b><small>Những ý AI ghi nhận được mà mẫu chưa có ô riêng (thời hạn, lý do, tình tiết…). Sửa, xóa hoặc thêm tùy ý.</small>'
+      + st.extras.map(item => extraRowHtml(item)).join('') + '<button type="button" class="ol-add" data-ol-act="add-extra">+ Thêm thông tin</button></div>'
+      + '<p class="' + (missing.length ? 'ol-warn' : 'ol-ok') + '" data-ol-missing>' + esc(missingText(missing)) + '</p></div>';
+  }
+  const extraRowHtml = item => '<div class="ol-extra-row" data-ol-extra-row><input data-ol-extra-label maxlength="80" placeholder="Tên thông tin" value="' + esc(item.label) + '" aria-label="Tên thông tin"><input data-ol-extra-value maxlength="400" placeholder="Nội dung" value="' + esc(item.value) + '" aria-label="Nội dung"><button type="button" class="ol-x" data-ol-act="remove-extra" aria-label="Xóa dòng" title="Xóa dòng">' + svg(ICON.close) + '</button></div>';
+
+  function outlineBlock() {
+    if (!template() || !st.values) return '';
+    const open = st.questions.filter(item => !item.answer).length;
+    return '<div class="msg-bubble msg-ai ol-wide ol-outline-bubble" data-ol-block="outline"><p><b>Dự kiến nội dung công văn</b> — mỗi dòng là một ý AI sẽ viết. Bỏ tick ý không cần, sửa chữ để chỉ đạo AI viết đúng ý bạn, thêm ý mới nếu muốn.</p>'
+      + '<div class="ol-outline">' + st.outline.map(item => '<div class="ol-outline-row" data-ol-outline-row><input type="checkbox" data-ol-outline-on' + (item.on ? ' checked' : '') + ' aria-label="Dùng ý này"><input class="ol-outline-text" data-ol-outline-text maxlength="300" value="' + esc(item.text) + '" aria-label="Nội dung ý"><button type="button" class="ol-x" data-ol-act="remove-outline" aria-label="Xóa ý" title="Xóa ý">' + svg(ICON.close) + '</button></div>').join('')
+      + '</div><button type="button" class="ol-add" data-ol-act="add-outline">+ Thêm ý</button>'
+      + (open ? '<p class="ol-warn" data-ol-open-q>Còn ' + open + ' câu hỏi chưa trả lời — AI sẽ viết chung hoặc để “……”.</p>' : '')
       + '<div class="ol-actions"><button type="button" class="tasco-ai-btn-primary ol-primary" data-ol-act="compose"' + (st.busy ? ' disabled' : '') + '>' + (st.letter ? 'Soạn lại công văn' : 'Soạn công văn') + '</button></div></div>';
   }
   const missingText = missing => missing.length ? 'Còn thiếu ' + missing.length + ' mục bắt buộc: ' + missing.map(item => item.label).join(', ') + '. Vẫn có thể soạn, chỗ thiếu sẽ để “……”.' : 'Đã đủ thông tin bắt buộc.';
@@ -319,7 +368,8 @@ const OfficialLetterPage = (() => {
 
   function bodyHtml() {
     const stage = name => st.history.filter(item => (item.stage || 'a') === name).map(messageHtml).join('');
-    return templateBlock() + inputBlock() + stage('a') + fieldsBlock() + stage('b') + letterBlock() + typingHtml();
+    const lock = html => st.busy ? html.replace('<div class="msg-bubble', '<div inert class="msg-bubble') : html; // đang chạy AI: khóa chỉnh sửa để không bị ghi đè khi vẽ lại
+    return templateBlock() + inputBlock() + stage('a') + lock(questionsBlock()) + lock(fieldsBlock()) + lock(outlineBlock()) + stage('b') + lock(letterBlock()) + typingHtml();
   }
 
   function renderHeader() {
@@ -329,7 +379,6 @@ const OfficialLetterPage = (() => {
 
   function renderAll(target) {
     if (!host) return;
-    syncLetter();
     const body = $('#olBody');
     const previous = body.scrollTop;
     body.innerHTML = bodyHtml();
@@ -337,7 +386,7 @@ const OfficialLetterPage = (() => {
     renderHeader();
     syncComposer();
     if (target === 'end') body.scrollTop = body.scrollHeight;
-    else if (target === 'fields' || target === 'letter') { const block = body.querySelector('[data-ol-block="' + target + '"]'); body.scrollTop = block ? Math.max(0, block.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 14) : body.scrollHeight; }
+    else if (target === 'fields' || target === 'letter' || target === 'questions' || target === 'outline') { const block = body.querySelector('[data-ol-block="' + target + '"]'); body.scrollTop = block ? Math.max(0, block.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 14) : body.scrollHeight; }
     else body.scrollTop = previous;
   }
 
@@ -398,10 +447,36 @@ const OfficialLetterPage = (() => {
   // ---- Đặt lại ----
   function reset(keepRecordAndFiles) {
     generation++; controller?.abort(); controller = null;
-    st.templateId = ''; st.values = null; st.filledByAI = []; st.questions = []; st.notes = ''; st.letter = null; st.history = []; st.brief = ''; st.busy = ''; st.status = ''; st.recordShown = ''; st.recQuery = ''; st.recActive = 0;
+    st.templateId = ''; st.values = null; st.filledByAI = []; st.questions = []; st.extras = []; st.outline = []; st.outlineEdited = false; st.understanding = ''; st.notes = ''; st.letter = null; st.history = []; st.brief = ''; st.busy = ''; st.status = ''; st.recordShown = ''; st.recQuery = ''; st.recActive = 0;
     if (!keepRecordAndFiles) { st.recordKey = ''; releaseFiles(st.files); st.files = []; }
   }
   const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Thao tác này sẽ bỏ nội dung đang soạn. Tiếp tục?');
+
+  // ---- Câu hỏi làm rõ: chọn phương án / gõ trả lời → ghi vào câu hỏi và (nếu hỏi về một trường) điền thẳng vào trường ----
+  function applyAnswer(i, answer) {
+    const item = st.questions[i];
+    if (!item) return;
+    item.answer = answer;
+    if (item.key && st.values && answer) {
+      st.values[item.key] = answer;
+      const input = host.querySelector('[data-ol-field="' + item.key + '"]');
+      if (input) input.value = answer;
+      updateMissingLive();
+    }
+    const open = st.questions.filter(q => !q.answer).length;
+    const count = $('[data-ol-q-count]'); if (count) count.textContent = open ? 'còn ' + open + '/' + st.questions.length + ' câu chưa trả lời' : 'đã trả lời đủ';
+    const line = $('[data-ol-open-q]'); if (line) { line.hidden = !open; line.textContent = 'Còn ' + open + ' câu hỏi chưa trả lời — AI sẽ viết chung hoặc để “……”.'; }
+  }
+  function chooseOption(button) {
+    const [i, j] = button.dataset.olQOpt.split('|').map(Number);
+    const item = st.questions[i];
+    if (!item) return;
+    const answer = item.answer === item.options[j] ? '' : item.options[j];
+    applyAnswer(i, answer);
+    const card = button.closest('.ol-q');
+    card.querySelectorAll('[data-ol-q-opt]').forEach(chip => chip.setAttribute('aria-pressed', String(chip === button && !!answer)));
+    card.querySelector('[data-ol-q-answer]').value = answer;
+  }
 
   // ---- Sự kiện ----
   function onClick(event) {
@@ -413,6 +488,8 @@ const OfficialLetterPage = (() => {
     if (target.closest('[data-ol-rec-clear]')) { st.recordKey = ''; renderAll('end'); return; }
     const removeFile = target.closest('[data-ol-remove-file]');
     if (removeFile) { const [gone] = st.files.splice(Number(removeFile.dataset.olRemoveFile), 1); if (gone) releaseFiles([gone]); syncComposer(); return; }
+    const opt = target.closest('[data-ol-q-opt]');
+    if (opt) { chooseOption(opt); return; }
     const refine = target.closest('[data-ol-refine]');
     if (refine) { compose(refine.dataset.olRefine); return; }
     const act = target.closest('[data-ol-act]');
@@ -425,6 +502,10 @@ const OfficialLetterPage = (() => {
       case 'print': printLetter(); break;
       case 'copy': copyText(); break;
       case 'settings': openSettings(); break;
+      case 'add-extra': collectAll(); st.extras.push({label: '', value: ''}); renderAll(); host.querySelector('[data-ol-extra-row]:last-of-type [data-ol-extra-label]')?.focus(); break;
+      case 'remove-extra': { collectAll(); const rows = [...host.querySelectorAll('[data-ol-extra-row]')]; st.extras.splice(rows.indexOf(act.closest('[data-ol-extra-row]')), 1); renderAll(); break; }
+      case 'add-outline': collectAll(); st.outline.push({text: '', on: true}); st.outlineEdited = true; renderAll(); host.querySelector('[data-ol-outline-row]:last-of-type [data-ol-outline-text]')?.focus(); break;
+      case 'remove-outline': { collectAll(); const rows = [...host.querySelectorAll('[data-ol-outline-row]')]; st.outline.splice(rows.indexOf(act.closest('[data-ol-outline-row]')), 1); st.outlineEdited = true; renderAll(); break; }
       case 'new-chat': if (confirmDiscard()) { reset(false); renderAll('end'); } break;
       case 'change-template': if (confirmDiscard()) { reset(true); renderAll('end'); } break;
       default: break;
@@ -434,10 +515,16 @@ const OfficialLetterPage = (() => {
     const target = event.target;
     if (target.matches('[data-ol-rec-q]')) { st.recQuery = target.value; st.recActive = 0; updateRecList(); }
     else if (target.matches('[data-ol-field]')) updateMissingLive();
+    else if (target.matches('[data-ol-q-answer]')) {
+      const i = Number(target.dataset.olQAnswer);
+      applyAnswer(i, target.value.trim());
+      target.closest('.ol-q').querySelectorAll('[data-ol-q-opt]').forEach(chip => chip.setAttribute('aria-pressed', String(chip.textContent === target.value.trim())));
+    } else if (target.matches('[data-ol-outline-text]')) st.outlineEdited = true;
   }
   function onChange(event) {
     const target = event.target;
     if (target.matches('[data-ol-files]')) { addFiles(target.files); target.value = ''; }
+    else if (target.matches('[data-ol-outline-on]')) st.outlineEdited = true;
     else if (target.matches('[data-ol-date]') && /^\d{4}-\d{2}-\d{2}$/.test(target.value)) { syncLetter(); st.letter.date = target.value; renderAll(); }
   }
   function onKeydown(event) {
