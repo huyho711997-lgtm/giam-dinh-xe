@@ -468,7 +468,7 @@
           </div>
 
           <link rel="stylesheet" href="css/scene-selection.css">
-          <link rel="stylesheet" href="css/scene-editor.css?v=20261120-grid-1">
+          <link rel="stylesheet" href="css/scene-editor.css?v=20261121-edge-1">
           <link rel="stylesheet" href="css/scene-legend-editor.css?v=20261111-legend-3">
 
           <!-- Floating Selection Inspector with Rotation Controls -->
@@ -517,7 +517,11 @@
                 <button type="button" data-area-shape="natural" onclick="setSelectedSceneryAreaShape('natural')" title="Viền tự nhiên, lượn sóng">Tự nhiên</button>
                 <button type="button" data-area-shape="custom" onclick="startSceneryOutlineDraw()" title="Nhấp từng điểm dọc mép đường, sườn đồi (hoặc giữ chuột rê một vòng)">Vẽ ranh giới</button>
               </div>
-              <small id="selectedAreaShapeHint">Vẽ ranh giới: nhấp từng điểm dọc mép vùng, Enter để xong. Sau đó kéo các điểm tròn để nắn; nhấp đúp để thêm/xoá điểm.</small>
+              <div class="scene-area-shape-seg" data-area-edge-seg style="display: none;" role="group" aria-label="Kiểu cạnh ranh giới">
+                <button type="button" data-area-edge="straight" onclick="setSelectedSceneryAreaEdge('straight')" title="Cạnh thẳng giữa các điểm đã bấm">Cạnh thẳng</button>
+                <button type="button" data-area-edge="curve" onclick="setSelectedSceneryAreaEdge('curve')" title="Đường cong mượt đi qua các điểm">Cạnh cong</button>
+              </div>
+              <small id="selectedAreaShapeHint">Vẽ ranh giới: nhấp từng điểm dọc mép vùng (cạnh thẳng), Enter để xong. Sau đó kéo các điểm tròn để nắn; nhấp đúp để thêm/xoá điểm. Muốn viền cong, chọn "Cạnh cong".</small>
             </div>
 
             <!-- Tên nhà / vùng (scene-editor-ui.js): gõ tên hiển thị trên sơ đồ; để trống = nhãn mặc định -->
@@ -807,8 +811,8 @@
   <script src="js/features/scene/traffic-signs.js?v=20261120-road-1"></script>
   <script src="js/features/scene/rendering.js?v=20261120-road-1"></script>
   <script src="js/features/scene/symbol-legend.js?v=20261120-marks-1"></script>
-  <script src="js/features/scene/interaction-export.js?v=20261120-search-1"></script>
-  <script src="js/features/scene/terrain-assets.js?v=20261111-terrain-1"></script>
+  <script src="js/features/scene/interaction-export.js?v=20261121-edge-1"></script>
+  <script src="js/features/scene/terrain-assets.js?v=20261121-edge-1"></script>
   <script src="js/features/scene/goods-assets.js?v=20261119-goods-2"></script>
   <script src="js/features/scene/direction-label.js?v=20261119-dir-1"></script>
   <script src="js/features/scene/building-assets.js?v=20261119-lines-1"></script>
@@ -822,7 +826,7 @@
   <script src="js/features/admin/select-controls.js"></script>
   <script src="js/features/scene/runtime.js?v=20261120-areapts-1"></script>
   <script src="js/features/scene/layer-order.js?v=20261111-layer-1"></script>
-  <script src="js/features/scene/scene-editor-ui.js?v=20261120-areapts-1"></script>
+  <script src="js/features/scene/scene-editor-ui.js?v=20261121-edge-1"></script>
   <script src="js/features/scene/toolbar-ui.js?v=20261120-search-3"></script>
   <script src="js/features/scene/scene-samples.js?v=20261120-samples-1"></script>
   <script src="js/features/scene/standalone.js?v=20261120-standalone-3"></script>

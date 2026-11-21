@@ -1423,6 +1423,7 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
 // ---- Vùng cảnh quan có đường viền tuỳ biến (rừng cây / đồi cây) ----
 // shape.areaShape: 'rect' (mặc định) | 'natural' (viền tự nhiên, lượn sóng) | 'custom' (người dùng tự vẽ ranh giới).
 // shape.areaOutline: [[u, v], ...] toạ độ chuẩn hoá 0..1 theo khung đối tượng → kéo giãn / xoay vẫn giữ đúng hình.
+// shape.areaEdge (chỉ với 'custom'): 'straight' (mặc định, cạnh thẳng giữa các điểm) | 'curve' (đường cong mượt đi qua các điểm).
 function getSceneryNaturalOutlineUV(seedText) {
   let seed = 0;
   String(seedText || 'forest').split('').forEach(ch => { seed = (seed * 31 + ch.charCodeAt(0)) >>> 0; });
@@ -1443,7 +1444,13 @@ function getSceneryAreaOutline(shapeData, left, top, w, h) {
   if (!uv) return null;
   const pts = uv.map(p => ({ x: left + Number(p[0]) * w, y: top + Number(p[1]) * h })).filter(p => Number.isFinite(p.x) && Number.isFinite(p.y));
   if (pts.length < 3) return null;
-  return shapeData.areaShape === 'custom' ? sampleSceneClosedSpline(pts, 10) : sampleSceneClosedMidpointCurve(pts, 8);
+  // Ranh giới tự vẽ: mặc định cạnh THẲNG nối các điểm (đúng như bấm); chỉ làm cong khi areaEdge === 'curve' (nét rê tay / người dùng chọn).
+  if (shapeData.areaShape === 'custom') return shapeData.areaEdge === 'curve' ? sampleSceneClosedSpline(pts, 10) : pts;
+  return sampleSceneClosedMidpointCurve(pts, 8);
+}
+// Viền có cần làm mượt thêm (vd. các nấc đường đồng mức bên trong đồi) không: không nếu là ranh giới tự vẽ với cạnh thẳng.
+function sceneAreaEdgeIsSmooth(shapeData) {
+  return !(shapeData && shapeData.areaShape === 'custom' && shapeData.areaEdge !== 'curve');
 }
 // Viền "tự nhiên": nối trung điểm các cạnh bằng đường cong bậc hai (bo tròn mềm, không cần đi qua điểm).
 function sampleSceneClosedMidpointCurve(pts, steps) {

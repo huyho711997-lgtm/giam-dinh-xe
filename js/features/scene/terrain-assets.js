@@ -24,8 +24,8 @@ function makeSceneTerrainRandom(seedText) {
 // Đa giác biên của vùng: viền tự nhiên/tự vẽ nếu có, ngược lại là 4 góc khung chữ nhật.
 function getSceneTerrainPolygon(shapeData, left, top, w, h) {
   const outline = typeof getSceneryAreaOutline === 'function' ? getSceneryAreaOutline(shapeData, left, top, w, h) : null;
-  if (outline && outline.length >= 3) return { poly: outline, custom: true };
-  return { poly: [{ x: left, y: top }, { x: left + w, y: top }, { x: left + w, y: top + h }, { x: left, y: top + h }], custom: false };
+  if (outline && outline.length >= 3) return { poly: outline, custom: true, smooth: typeof sceneAreaEdgeIsSmooth === 'function' ? sceneAreaEdgeIsSmooth(shapeData) : true };
+  return { poly: [{ x: left, y: top }, { x: left + w, y: top }, { x: left + w, y: top + h }, { x: left, y: top + h }], custom: false, smooth: false };
 }
 
 
@@ -147,8 +147,8 @@ function drawSceneHill(ctx, x, y, color, width, w, h, shapeData) {
       const wobble = 1 + a2 * Math.sin(2 * theta + p2) + a3 * Math.sin(3 * theta + p3);
       return { x: peak.x + (p.x - peak.x) * s * wobble, y: peak.y + (p.y - peak.y) * s * wobble };
     });
-    // Khung chữ nhật chỉ có 4 góc: làm mượt sẽ tràn ra ngoài viền nên giữ nguyên đa giác.
-    const smooth = area.custom && typeof sampleSceneClosedSpline === 'function' ? sampleSceneClosedSpline(ring, 4) : ring;
+    // Khung chữ nhật chỉ có 4 góc (và ranh giới cạnh thẳng): làm mượt sẽ bo tròn/tràn ra ngoài viền nên giữ nguyên đa giác.
+    const smooth = area.custom && area.smooth !== false && typeof sampleSceneClosedSpline === 'function' ? sampleSceneClosedSpline(ring, 4) : ring;
     ctx.beginPath();
     smooth.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
     ctx.closePath();

@@ -480,6 +480,7 @@ body:not(.light-mode) #sceneDrawingModalOverlay #strokeWidthPopover { box-shadow
 #sceneDrawingModalOverlay .scene-area-shape-seg { padding: 3px; border: 1px solid var(--se-line); border-radius: 10px; background: color-mix(in srgb,var(--se-paper) 60%,transparent); }
 #sceneDrawingModalOverlay .scene-area-shape-seg { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 4px; }
 #sceneDrawingModalOverlay .scene-area-shape-seg button { justify-content: center; font-size: 11.5px !important; font-weight: 700 !important; }
+#sceneDrawingModalOverlay .scene-area-shape-seg[data-area-edge-seg] { grid-template-columns: repeat(2, minmax(0,1fr)); margin-top: 6px; }
 #sceneDrawingModalOverlay #sceneSelectedBadge > div .scene-area-shape-seg button[aria-pressed="true"] { background: color-mix(in srgb,var(--se-gold) 16%,transparent) !important; border-color: color-mix(in srgb,var(--se-gold) 42%,transparent) !important; color: var(--se-gold) !important; }
 #sceneDrawingModalOverlay #selectedAreaShapeGroup > small { padding: 0 2px; color: var(--se-muted, #a0aec0); font-size: 10.5px; line-height: 1.45; }
 #sceneDrawingModalOverlay #sceneCanvasViewport.is-outline-drawing, #sceneDrawingModalOverlay #sceneCanvasViewport.is-outline-drawing canvas { cursor: crosshair !important; }

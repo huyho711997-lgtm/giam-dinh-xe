@@ -268,6 +268,22 @@ function setSelectedShapeAreaLabel(value, commit) {
   if (commit && text !== before && typeof saveDrawingState === 'function') saveDrawingState();
 }
 
+// Chuyển kiểu cạnh của ranh giới tự vẽ: 'straight' (thẳng) | 'curve' (cong mượt qua các điểm).
+function setSelectedSceneryAreaEdge(kind) {
+  const shape = getSelectedAreaShapeTarget();
+  if (!shape || shape.areaShape !== 'custom' || (kind !== 'straight' && kind !== 'curve')) return;
+  shape.areaEdge = kind;
+  redrawSceneCanvas(true);
+  updateSelectionBadge();
+  if (typeof saveDrawingState === 'function') saveDrawingState();
+}
+// Khoảng cách từ điểm p tới đoạn a-b.
+function sceneAreaSegmentDistance(p, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y, len2 = dx * dx + dy * dy;
+  const t = len2 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2)) : 0;
+  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+
 // ---- Ranh giới tự vẽ ----
 // Hai cách vẽ trong cùng một chế độ:
 //  • Nhấp từng điểm dọc mép vùng (khuyên dùng): đường cong mượt đi qua các điểm; nhấp đúp / Enter / nhấp lại điểm đầu để xong.
@@ -283,7 +299,7 @@ function sceneAreaAnchors(shape) {
   return (shape.areaOutline || []).map(p => sceneAreaToWorld(shape, Number(p[0]), Number(p[1])));
 }
 // Gán các điểm neo (toạ độ sơ đồ) cho vùng: tính lại khung bao theo hướng xoay hiện tại rồi chuẩn hoá về 0..1.
-function applySceneAreaAnchors(shape, worldPoints, resetAngle) {
+function applySceneAreaAnchors(shape, worldPoints, resetAngle, edge) {
   if (resetAngle) shape.angle = 0;
   const a = shape.angle || 0, cos = Math.cos(a), sin = Math.sin(a);
   const local = worldPoints.map(p => { const dx = p.x - shape.startX, dy = p.y - shape.startY; return { x: dx * cos + dy * sin, y: -dx * sin + dy * cos }; });
@@ -294,6 +310,7 @@ function applySceneAreaAnchors(shape, worldPoints, resetAngle) {
   shape.startY += minX * sin + midY * cos;
   shape.objectW = W; shape.objectH = H;
   shape.areaShape = 'custom';
+  if (edge === 'straight' || edge === 'curve') shape.areaEdge = edge;   // không truyền → giữ kiểu cạnh hiện có (khi kéo điểm neo)
   shape.areaOutline = local.map(p => [Number(((p.x - minX) / W).toFixed(4)), Number(((p.y - minY) / H).toFixed(4))]);
 }
 // Làm mượt nét rê tay: trung bình trượt để khử rung, rồi rải lại điểm cách đều theo chiều dài nét.
@@ -316,9 +333,9 @@ function smoothSceneFreehand(raw) {
   }
   return out;
 }
-function strokeSceneAreaPreview(points, closed) {
+function strokeSceneAreaPreview(points, closed, smooth) {
   if (!sceneCtx || !points.length) return;
-  const z = sceneAreaZoom(), curve = points.length >= 3 ? sampleSceneClosedSpline(points, 10) : points;
+  const z = sceneAreaZoom(), curve = smooth && points.length >= 3 ? sampleSceneClosedSpline(points, 10) : points;   // bấm điểm: cạnh thẳng; rê tay: cong mượt
   sceneCtx.save();
   sceneCtx.beginPath();
   curve.forEach((p, i) => (i ? sceneCtx.lineTo(p.x, p.y) : sceneCtx.moveTo(p.x, p.y)));
@@ -367,12 +384,12 @@ function startSceneryOutlineDraw(createType) {
   const eat = e => { e.preventDefault(); e.stopImmediatePropagation(); };
   const paint = () => {
     redrawSceneCanvas(false);
-    if (stroke) return strokeSceneAreaPreview(stroke.length >= 3 ? smoothSceneFreehand(stroke) : stroke, false);
+    if (stroke) return strokeSceneAreaPreview(stroke.length >= 3 ? smoothSceneFreehand(stroke) : stroke, false, true);
     const live = cursor && points.length ? points.concat([cursor]) : points;
-    strokeSceneAreaPreview(live, false);
+    strokeSceneAreaPreview(live, false, false);
     drawSceneAreaHandles(points, points.length >= 3 && cursor && Math.hypot(cursor.x - points[0].x, cursor.y - points[0].y) < 9 / sceneAreaZoom() ? 0 : -1);
   };
-  const finish = anchors => {
+  const finish = (anchors, edge) => {
     const target = creating ? {} : sceneShapes.find(s => s.id === targetId);
     const xs = anchors.map(p => p.x), ys = anchors.map(p => p.y);
     if (!target || anchors.length < 3 || Math.max(...xs) - Math.min(...xs) < 30 || Math.max(...ys) - Math.min(...ys) < 20) {
@@ -383,18 +400,18 @@ function startSceneryOutlineDraw(createType) {
       const colorInput = document.getElementById('drawColorPicker'), widthInput = document.getElementById('drawStrokeWidth');
       const created = { id: genShapeId(), type: creating, startX: 0, startY: 0, angle: 0, objectW: 1, objectH: 1,
         color: (colorInput && colorInput.value) || '#000000', width: parseFloat(widthInput && widthInput.value) || 1.5, sizeScale: 1 };
-      applySceneAreaAnchors(created, anchors, true);
+      applySceneAreaAnchors(created, anchors, true, edge);
       sceneShapes.push(created);
       setSelectedShapes([created.id]);
     } else {
-      applySceneAreaAnchors(target, anchors, true);
+      applySceneAreaAnchors(target, anchors, true, edge);
     }
     if (typeof saveDrawingState === 'function') saveDrawingState();
     stopSceneryOutlineDraw(true);
     if (creating && typeof setActiveDrawTool === 'function') setActiveDrawTool('select');
     redrawSceneCanvas(true);
     updateSelectionBadge();
-    if (typeof showToast === 'function') showToast('Đã vẽ vùng. Kéo các điểm tròn để nắn lại; nhấp đúp điểm để xoá, nhấp đúp lên viền để thêm điểm.', 'success');
+    if (typeof showToast === 'function') showToast('Đã vẽ vùng. Kéo các điểm tròn để nắn lại; nhấp đúp điểm để xoá, nhấp đúp lên viền để thêm điểm. Muốn viền cong: chọn Cạnh “Cong”.', 'success');
   };
   const state = {
     mousedown(e) { if (!onCanvas(e) || e.button > 0) return; eat(e); press = getMousePos(sceneCanvas, e); stroke = null; },
@@ -412,16 +429,16 @@ function startSceneryOutlineDraw(createType) {
       if (!press) return;
       eat(e);
       const at = press, drawn = stroke; press = null; stroke = null;
-      if (drawn && drawn.length >= 12) return finish(smoothSceneFreehand(drawn));
-      if (points.length >= 3 && Math.hypot(at.x - points[0].x, at.y - points[0].y) < 9 / sceneAreaZoom()) return finish(points.slice());
+      if (drawn && drawn.length >= 12) return finish(smoothSceneFreehand(drawn), 'curve');
+      if (points.length >= 3 && Math.hypot(at.x - points[0].x, at.y - points[0].y) < 9 / sceneAreaZoom()) return finish(points.slice(), 'straight');
       const last = points[points.length - 1];
       if (!last || Math.hypot(at.x - last.x, at.y - last.y) > 4 / sceneAreaZoom()) points.push(at);
       paint();
     },
-    dblclick(e) { if (!onCanvas(e)) return; eat(e); finish(points.slice()); },
+    dblclick(e) { if (!onCanvas(e)) return; eat(e); finish(points.slice(), 'straight'); },
     keydown(e) {
       if (e.key === 'Escape') { eat(e); stopSceneryOutlineDraw(); }
-      else if (e.key === 'Enter') { eat(e); finish(points.slice()); }
+      else if (e.key === 'Enter') { eat(e); finish(points.slice(), 'straight'); }
       else if (e.key === 'Backspace' || e.key === 'Delete' || ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && points.length)) { eat(e); points.pop(); paint(); }
     }
   };
@@ -492,11 +509,16 @@ window.addEventListener('dblclick', e => {
     anchors.splice(hit.index, 1);
   } else {
     // tìm đoạn viền (giữa hai điểm neo liên tiếp) gần vị trí nhấp nhất
-    const curve = sampleSceneClosedSpline(anchors, 10);
-    let best = -1, bestD = 7 / sceneAreaZoom();
-    curve.forEach((p, i) => { const d = Math.hypot(p.x - pos.x, p.y - pos.y); if (d < bestD) { bestD = d; best = i; } });
-    if (best < 0) return;
-    anchors.splice(Math.floor(best / 10) + 1, 0, pos);
+    let best = -1, bestD = 7 / sceneAreaZoom(), at = -1;
+    if (shape.areaEdge === 'curve') {
+      sampleSceneClosedSpline(anchors, 10).forEach((p, i) => { const d = Math.hypot(p.x - pos.x, p.y - pos.y); if (d < bestD) { bestD = d; best = i; } });
+      at = best < 0 ? -1 : Math.floor(best / 10) + 1;
+    } else {
+      anchors.forEach((a, i) => { const d = sceneAreaSegmentDistance(pos, a, anchors[(i + 1) % anchors.length]); if (d < bestD) { bestD = d; best = i; } });
+      at = best < 0 ? -1 : best + 1;
+    }
+    if (at < 0) return;
+    anchors.splice(at, 0, pos);
   }
   e.preventDefault(); e.stopImmediatePropagation();
   applySceneAreaAnchors(shape, anchors, false);
@@ -529,6 +551,11 @@ window.addEventListener('dblclick', e => {
       const kind = sceneOutlineDraw ? 'custom' : (shape.areaShape === 'custom' || shape.areaShape === 'natural' ? shape.areaShape : 'rect');
       group.querySelectorAll('[data-area-shape]').forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.areaShape === kind)));
       const drawBtn = group.querySelector('[data-area-shape="custom"]');
+      const edgeSeg = group.querySelector('[data-area-edge-seg]');
+      if (edgeSeg) {
+        edgeSeg.style.display = shape.areaShape === 'custom' && !sceneOutlineDraw ? 'grid' : 'none';
+        edgeSeg.querySelectorAll('[data-area-edge]').forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.areaEdge === (shape.areaEdge === 'curve' ? 'curve' : 'straight'))));
+      }
       if (drawBtn) drawBtn.textContent = sceneOutlineDraw ? 'Đang vẽ… (Esc)' : (shape.areaShape === 'custom' ? 'Vẽ lại' : 'Vẽ ranh giới');
     }
     return result;
