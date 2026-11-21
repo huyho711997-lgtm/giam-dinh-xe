@@ -301,6 +301,9 @@ mark.ol-gap { background:#ffe58a; color:#000; padding:0 2px; border-radius:2px; 
 .ol-src-text summary { cursor:pointer; color:var(--primary); font-size:11.5px; font-weight:700; }
 .ol-src-text p { margin:6px 0; white-space:pre-wrap; font-size:12px; line-height:1.55; max-height:220px; overflow:auto; }
 .ol-src-text a { font-size:11.5px; color:var(--primary); }
+.ol-legal-doc { display:grid; gap:4px; margin-bottom:10px; font-size:12px; font-weight:700; color:var(--text-muted); }
+.ol-legal-doc select { min-height:34px; padding:0 8px; border:1px solid var(--border); border-radius:9px; background:var(--surface-strong); color:var(--text-main); font:inherit; font-size:12.5px; font-weight:500; }
+.ola-note-block h3 .ol-link { margin-left:6px; font-size:11.5px; font-weight:700; }
 .ol-legal-search { display:flex; gap:8px; margin-top:10px; }
 .ol-legal-search input { flex:1; min-width:0; min-height:34px; padding:0 10px; border:1px solid var(--border); border-radius:9px; background:transparent; color:var(--text-main); font:inherit; font-size:12.5px; }
 .ol-cites { margin:10px 0; padding:10px 12px; border:1px solid color-mix(in srgb,#10b981 40%,var(--border)); border-radius:10px; background:color-mix(in srgb,#10b981 6%,transparent); font-size:12.5px; }
