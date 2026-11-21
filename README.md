@@ -72,10 +72,10 @@ Mở **Công văn AI** (nhóm Nghiệp vụ, đường dẫn `#cong-van-ai`; dù
 
 Thêm mẫu mới: thêm một phần tử vào `OFFICIAL_LETTER_TEMPLATES` trong `js/data/official-letter-templates.js` (trường nhập, dàn ý, lời kết); không cần sửa mã khác. Sáu mẫu hiện có là mẫu khởi đầu, nên thay bằng công văn thật của đơn vị. Thông tin đơn vị ban hành (tên, người ký, địa chỉ…) chỉnh ở nút ⚙️ trên đầu khung, lưu trên máy.
 
-### Giao diện trang (không phải khung chat)
-- **Cột trái – phiếu yêu cầu:** (1) Hồ sơ — ô tìm (biển số, số HSBT, chủ xe, GCN), danh sách chỉ hiện khi bấm vào ô; *không bắt buộc*: gõ số HSBT hoặc biển số ngay trong ô "Cần viết gì" là hệ thống tự nhận hồ sơ (`detectRecord`, ưu tiên số HSBT, chỉ nhận khi xác định duy nhất; không thấy thì báo rõ). (2) Loại công văn — ô chọn dùng chung của app, mặc định "Tự do". (3) Cần viết gì + đính kèm ảnh/PDF. Nút **Soạn công văn** (Ctrl+Enter) = đọc hồ sơ → tìm căn cứ (nếu cần) → soạn, không dừng hỏi.
-- Sau khi soạn: thẻ **AI đã tự giả định** (+ chọn nhanh tối đa 2 điểm, lưu ý từ hồ sơ) và các mục thu gọn **Thông tin công văn / Dàn ý / Căn cứ pháp lý / Phân tích hồ sơ**, nút **Soạn lại theo thông tin đã sửa** (không đọc lại hồ sơ).
-- **Cột phải – tờ công văn A4:** ngày ban hành, Tải Word, In, Sao chép; ô **Chỉnh sửa** + gợi ý nhanh; cảnh báo chỗ "……", kiểm chứng căn cứ; sửa trực tiếp trên tờ.
+### Giao diện: AI agent dạng trang
+- **Mở đầu:** "Hôm nay cần soạn công văn gì?" + một ô yêu cầu lớn. Trong ô có nút **Đính kèm**, **Hồ sơ** (ô tìm nổi), **Loại** (menu, mặc định Tự do) và nút gửi (Enter; Shift+Enter xuống dòng); 4 gợi ý mẫu bên dưới. Gõ số HSBT/biển số trong yêu cầu là tự nhận hồ sơ (`detectRecord`, chỉ khi xác định duy nhất; không thấy thì báo).
+- **Làm việc:** tóm tắt yêu cầu (Sửa yêu cầu / Công văn mới) · 3 bước AI (đọc hồ sơ → căn cứ → soạn, có trạng thái) · tờ công văn lớn sửa trực tiếp (Ngày, Tải Word, In, Sao chép) · cột ghi chú hẹp (chỗ "……", căn cứ ✓/⚠, chọn nhanh, giả định, nên kiểm tra, lưu ý hồ sơ) · ô **Nhờ AI sửa** nổi cuối trang.
+- **Chi tiết** (thông tin, dàn ý, căn cứ, hồ sơ) nằm trong ngăn trượt bên phải, nút "Soạn lại theo chi tiết này".
 
 ### Đọc sâu hồ sơ (`official-letter-dossier.js`)
 Khi chọn hồ sơ, AI không nhận bản ghi thô nữa mà nhận "hồ sơ đọc được" do `OfficialLetterDossier` dựng:

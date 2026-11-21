@@ -1,10 +1,9 @@
-// Trang "Công văn AI" — bố cục trang làm việc (không phải khung chat):
-//   cột trái  = phiếu yêu cầu: hồ sơ (tìm hoặc tự nhận từ số HSBT/biển số gõ trong yêu cầu) · loại công văn · cần viết gì · đính kèm
-//               → nút "Soạn công văn"; sau khi soạn: điểm AI đã giả định / cần xác nhận + các mục chi tiết thu gọn
-//               (thông tin, dàn ý, căn cứ pháp lý, phân tích hồ sơ);
-//   cột phải  = tờ công văn A4 sửa trực tiếp, thanh công cụ (ngày, Word, In, Sao chép), kiểm chứng căn cứ, ô yêu cầu chỉnh sửa.
-// Một lần bấm "Soạn công văn" = đọc hồ sơ + yêu cầu (Gemini) → tìm căn cứ trong Thư viện (nếu cần) → soạn (Gemini).
-// Phụ thuộc: OfficialLetterCore, OfficialLetterDossier, OfficialLetterLegal, SharedFormsAI, SharedFormsControls, GeminiKeyStore, JSZip.
+// Trang "Công văn AI" — kiểu AI agent dạng trang (không phải khung chat, không phải phiếu điền):
+//   mở đầu: một ô yêu cầu lớn ở giữa trang, trong ô có nút Đính kèm · Hồ sơ · Loại công văn + gợi ý mẫu;
+//   sau khi gửi: tóm tắt yêu cầu, 3 bước AI (đọc hồ sơ → căn cứ → soạn), tờ công văn lớn sửa trực tiếp,
+//   cột ghi chú hẹp (giả định, chọn nhanh, chỗ cần kiểm tra), ô chỉnh sửa cuối trang; chi tiết nằm trong ngăn trượt.
+// Gõ số HSBT/biển số trong yêu cầu là tự nhận hồ sơ. Một lần gửi = đọc (Gemini) → tìm căn cứ trong Thư viện (nếu cần) → soạn (Gemini).
+// Phụ thuộc: OfficialLetterCore, OfficialLetterDossier, OfficialLetterLegal, SharedFormsAI, GeminiKeyStore, JSZip.
 const OfficialLetterPage = (() => {
   const ISSUER_KEY = 'officialLetter.issuer.v1';
   const MAX_FILES = 4, MAX_EDGE = 1600, MAX_PDF = 6 * 1024 * 1024, MAX_RESULTS = 30;
@@ -23,6 +22,8 @@ const OfficialLetterPage = (() => {
     spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>',
     word: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13l1.5 5 1.5-4 1.5 4 1.5-5"/>',
     print: '<path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/>',
+    folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+    chevron: '<path d="m6 9 6 6 6-6"/>',
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>'
   };
 
@@ -31,7 +32,8 @@ const OfficialLetterPage = (() => {
     templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [],
     values: null, filledByAI: [], questions: [], extras: [], outline: [], outlineEdited: false, understanding: '', notes: '',
     insights: [], keyFacts: [], legalQueries: [], assumptions: [], sources: [], legalError: '', legalLoaded: false,
-    letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}
+    letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
+    pop: '', drawer: '', editing: false, steps: null
   };
 
   // ---- Tiện ích chung ----
@@ -189,6 +191,8 @@ const OfficialLetterPage = (() => {
 
   // ---- Luồng chính ----
   function setBusy(status) { st.busy = 'run'; st.status = status; renderAll(); }
+  // Trạng thái 3 bước hiển thị kiểu agent: idle | run | done | skip | err, kèm mô tả ngắn.
+  function step(name, state, text) { if (!st.steps) st.steps = {}; st.steps[name] = {state, text: text || ''}; const node = $('[data-ol-steps]'); if (node) node.outerHTML = stepsHtml(); }
   function setStatus(status) { st.status = status; const node = $('[data-ol-status]'); if (node) node.textContent = status; }
   // Đổi hồ sơ hoặc loại công văn → bỏ kết quả phân tích cũ (giữ bản thảo đang có cho tới khi soạn xong bản mới).
   function resetAnalysis() {
@@ -211,7 +215,10 @@ const OfficialLetterPage = (() => {
     const key = st.recordKey + '|' + templateId();
     if (key !== st.analyzedKey) resetAnalysis();
     st.analyzedKey = key;
-    notice(missingRecord ? 'Không tìm thấy hồ sơ khớp với số trong yêu cầu trên máy này (dữ liệu hồ sơ chưa tải hoặc số chưa đúng) — AI chỉ dựa vào nội dung bạn gõ. Có thể tìm và chọn hồ sơ ở mục 1.' : '', 'warn');
+    notice(missingRecord ? 'Không tìm thấy hồ sơ khớp số trong yêu cầu trên máy này — AI chỉ dựa vào nội dung bạn gõ. Bấm nút Hồ sơ để chọn.' : '', 'warn');
+    const found = chosenRecord();
+    st.editing = false; st.pop = '';
+    st.steps = {read: {state: 'run', text: found ? recordLabel(found.info) : 'Không có hồ sơ'}, legal: {state: 'idle', text: ''}, write: {state: 'idle', text: ''}};
     const my = generation, tpl = template();
     setBusy('Đang đọc hồ sơ và yêu cầu…');
     try {
@@ -241,15 +248,20 @@ const OfficialLetterPage = (() => {
         if (!st.values) st.values = startValues();
         if (!st.outline.length) st.outline = defaultOutline();
         notice('Bước đọc yêu cầu gặp lỗi (' + (error.message || 'không rõ') + '), vẫn soạn từ dữ liệu hồ sơ.', 'warn');
+        step('read', 'err', 'Lỗi đọc — dùng dữ liệu sẵn có');
       }
-      setStatus('Đang tìm căn cứ trong thư viện…');
+      if (st.steps.read.state === 'run') step('read', 'done', st.steps.read.text);
+      setStatus('Đang tìm căn cứ…'); step('legal', 'run', 'Đang tìm trong thư viện');
       await findLegal(st.legalQueries);
       if (my !== generation) return;
-      setStatus('Đang soạn công văn…');
+      step('legal', st.legalError ? 'err' : activeSources().length ? 'done' : 'skip', st.legalError ? 'Không đọc được thư viện' : activeSources().length ? activeSources().length + ' đoạn liên quan' : 'Không cần viện dẫn');
+      setStatus('Đang soạn công văn…'); step('write', 'run', 'Đang viết');
       await composeCore('');
+      step('write', 'done', 'Xong');
     } catch (error) {
       if (my !== generation || error.name === 'AbortError') return;
       notice(error.message || 'Không soạn được công văn.', 'error');
+      if (st.steps) for (const name of ['read', 'legal', 'write']) if (st.steps[name] && st.steps[name].state === 'run') st.steps[name] = {state: 'err', text: 'Lỗi'};
     } finally { if (my === generation) { st.busy = ''; st.status = ''; renderAll(); } }
   }
 
@@ -358,7 +370,14 @@ const OfficialLetterPage = (() => {
   }
 
   // ================= HIỂN THỊ =================
-  // ---- Cột trái: phiếu yêu cầu ----
+  const TEMPLATE_HINTS = {
+    de_nghi_cung_cap_ho_so: 'Đề nghị Công an huyện cung cấp biên bản tai nạn cho hồ sơ ',
+    thong_bao_bo_sung_ho_so: 'Nhắc khách hàng bổ sung giấy tờ còn thiếu cho hồ sơ ',
+    de_nghi_gara_cung_cap: 'Đề nghị gara gửi báo giá sửa chữa cho xe ',
+    thong_bao_ket_qua_giam_dinh: 'Thông báo kết quả giám định và hướng giải quyết cho hồ sơ '
+  };
+
+  // ---- Ô yêu cầu kiểu agent ----
   function recordItemHtml(item, active) {
     const {info, row} = item;
     return '<button type="button" class="ol-rec-item' + (active ? ' is-active' : '') + '" role="option" data-ol-pick="' + esc(row.key) + '"><span class="ol-rec-plate">' + esc(info.plate || '—') + '</span>'
@@ -367,82 +386,128 @@ const OfficialLetterPage = (() => {
   function updateRecList() {
     const list = $('[data-ol-rec-list]');
     if (!list) return;
-    const show = st.recOpen || !!st.recQuery.trim();
-    list.hidden = !show;
-    if (!show) return;
     const found = searchRecords(st.recQuery);
     const shown = found.slice(0, MAX_RESULTS);
     st.recActive = Math.max(0, Math.min(st.recActive, shown.length - 1));
-    list.innerHTML = (shown.length ? shown.map((item, i) => recordItemHtml(item, i === st.recActive)).join('')
-      : '<p class="ol-rec-empty">' + (index.length ? 'Không tìm thấy hồ sơ nào khớp “' + esc(st.recQuery) + '”.' : 'Chưa có dữ liệu hồ sơ trên máy — mở trang Hồ sơ bồi thường một lần để tải.') + '</p>')
-      + (st.recQuery.trim() && found.length > MAX_RESULTS ? '<p class="ol-rec-empty">' + found.length + ' kết quả, hiện ' + MAX_RESULTS + ' đầu — gõ cụ thể hơn.</p>' : '');
+    list.innerHTML = shown.length ? shown.map((item, i) => recordItemHtml(item, i === st.recActive)).join('')
+      : '<p class="ol-rec-empty">' + (index.length ? 'Không có hồ sơ khớp “' + esc(st.recQuery) + '”.' : 'Chưa có dữ liệu hồ sơ trên máy — mở trang Hồ sơ bồi thường một lần để tải.') + '</p>';
   }
-  function recordSection() {
-    const found = chosenRecord();
-    if (found) return '<div class="ol-rec-chosen"><span class="ol-rec-plate">' + esc(found.info.plate || '—') + '</span><span class="ol-rec-main"><b>' + esc(found.info.owner || 'Chưa có tên chủ xe') + '</b><small>' + esc([found.info.code && 'HS ' + found.info.code, found.info.tag].filter(Boolean).join(' · ')) + '</small></span><button type="button" class="ol-x" data-ol-rec-clear aria-label="Bỏ chọn hồ sơ" title="Bỏ chọn hồ sơ">' + svg(ICON.close) + '</button></div>';
-    return '<div class="ol-rec"><label class="ol-rec-search">' + svg(ICON.search) + '<input type="search" data-ol-rec-q autocomplete="off" spellcheck="false" placeholder="Biển số, số HSBT, tên chủ xe, số GCN…" value="' + esc(st.recQuery) + '" aria-label="Tìm hồ sơ"></label>'
-      + '<div class="ol-rec-list" data-ol-rec-list role="listbox" aria-label="Kết quả tìm hồ sơ" hidden></div>'
-      + '<small class="olp-hint">Không bắt buộc. Gõ số HSBT hoặc biển số trong ô “Cần viết gì” cũng được — hệ thống tự nhận hồ sơ.</small></div>';
+  function popoverHtml() {
+    if (st.pop === 'record') return '<div class="ola-pop" role="dialog" aria-label="Chọn hồ sơ"><label class="ol-rec-search">' + svg(ICON.search) + '<input type="search" data-ol-rec-q autocomplete="off" spellcheck="false" placeholder="Biển số, số HSBT, chủ xe…" value="' + esc(st.recQuery) + '" aria-label="Tìm hồ sơ"></label><div class="ol-rec-list" data-ol-rec-list role="listbox" aria-label="Hồ sơ"></div></div>';
+    if (st.pop === 'type') return '<div class="ola-pop ola-pop--menu" role="menu" aria-label="Loại công văn">' + Core().templates().map(item => '<button type="button" role="menuitemradio" aria-checked="' + (item.id === templateId()) + '" data-ol-type="' + esc(item.id) + '"><b>' + esc(item.id === DEFAULT_TEMPLATE ? 'Tự do' : item.name) + '</b><small>' + esc(item.id === DEFAULT_TEMPLATE ? 'AI tự viết theo yêu cầu của bạn' : item.group) + '</small></button>').join('') + '</div>';
+    return '';
   }
-  function templateSelect() {
-    const groups = [];
-    Core().templates().forEach(item => { let group = groups.find(entry => entry.name === item.group); if (!group) groups.push(group = {name: item.group, items: []}); group.items.push(item); });
-    return '<select data-ol-template data-sf-select data-sf-label="Loại công văn" data-sf-description="Chọn loại gần nhất; không chắc thì để Tự do" data-sf-icon="file" aria-label="Loại công văn">'
-      + groups.map(group => group.items.map(item => '<option value="' + esc(item.id) + '"' + (item.id === templateId() ? ' selected' : '') + '>' + esc(item.id === DEFAULT_TEMPLATE ? 'Tự do — AI viết theo yêu cầu của bạn' : item.name) + '</option>').join('')).join('') + '</select>';
+  function composerHtml(big) {
+    const found = chosenRecord(), tpl = template();
+    const recordChip = found
+      ? '<span class="ola-chip is-set"><button type="button" data-ol-pop="record" title="Đổi hồ sơ">' + svg(ICON.folder) + esc(found.info.plate || found.info.code || 'Hồ sơ') + '</button><button type="button" class="ola-chip-x" data-ol-rec-clear aria-label="Bỏ hồ sơ">×</button></span>'
+      : '<button type="button" class="ola-chip" data-ol-pop="record">' + svg(ICON.folder) + 'Hồ sơ</button>';
+    const typeChip = '<button type="button" class="ola-chip' + (tpl.id !== DEFAULT_TEMPLATE ? ' is-set' : '') + '" data-ol-pop="type">' + svg(ICON.letter) + esc(tpl.id === DEFAULT_TEMPLATE ? 'Loại: Tự do' : tpl.name) + svg(ICON.chevron) + '</button>';
+    return '<div class="ola-composer' + (big ? ' is-big' : '') + '">'
+      + '<textarea data-ol-brief rows="' + (big ? 3 : 2) + '" maxlength="3000" placeholder="Mô tả công văn cần soạn… (gõ số HSBT hoặc biển số để AI tự lấy hồ sơ)" aria-label="Yêu cầu soạn công văn">' + esc(st.brief) + '</textarea>'
+      + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (st.files.length ? '' : ' hidden') + '>' + filesHtml() + '</div>'
+      + '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm ảnh/PDF"><input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>' + svg(ICON.attach) + '</label>'
+      + recordChip + typeChip + '<span class="ola-spacer"></span>'
+      + '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div>'
+      + popoverHtml() + '</div>';
   }
   function filesHtml() {
     return st.files.map((item, i) => '<span class="tasco-ai-attach" title="' + esc(item.file.name) + '">' + (item.url ? '<img alt="" src="' + esc(item.url) + '">' : '<em>PDF</em>') + '<button type="button" data-ol-remove-file="' + i + '" aria-label="Bỏ tệp ' + esc(item.file.name) + '">×</button></span>').join('');
   }
   function updateFiles() { const box = $('[data-ol-file-list]'); if (box) { box.innerHTML = filesHtml(); box.hidden = !st.files.length; } }
 
-  function requestCard() {
-    const tpl = template();
-    return '<section class="olp-card olp-request" aria-label="Yêu cầu soạn công văn">'
-      + '<div class="olp-step"><h2><span>1</span>Hồ sơ</h2>' + recordSection() + '</div>'
-      + '<div class="olp-step"><h2><span>2</span>Loại công văn</h2>' + templateSelect() + (tpl && tpl.id !== DEFAULT_TEMPLATE ? '<small class="olp-hint">' + esc(tpl.summary) + '</small>' : '') + '</div>'
-      + '<div class="olp-step"><h2><span>3</span>Cần viết gì</h2><textarea class="olp-brief" data-ol-brief rows="4" maxlength="3000" placeholder="VD: Đề nghị Công an huyện Krông Pắc cung cấp biên bản tai nạn hồ sơ HSBT/XCG/2026/0031188, hạn trả lời 07 ngày.">' + esc(st.brief) + '</textarea>'
-      + '<div class="olp-attach"><label class="olp-attach-btn" title="Ảnh biên bản, giấy tờ, công văn nhận được (tối đa ' + MAX_FILES + ' tệp)"><input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>' + svg(ICON.attach) + 'Đính kèm ảnh/PDF</label>'
-      + '<div class="tasco-ai-attachments olp-files" data-ol-file-list' + (st.files.length ? '' : ' hidden') + '>' + filesHtml() + '</div></div></div>'
-      + '<button type="button" class="olp-run" data-ol-act="run"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.spark) + (st.busy === 'run' && !st.letter ? 'Đang soạn…' : st.letter ? 'Soạn lại từ đầu' : 'Soạn công văn') + '</button>'
-      + '<p class="olp-privacy">Nội dung hồ sơ, yêu cầu và tệp đính kèm được gửi tới Google Gemini để soạn.</p></section>';
+  function heroHtml() {
+    const ideas = Core().templates().filter(item => TEMPLATE_HINTS[item.id]);
+    return '<section class="ola-hero">'
+      + '<span class="ola-avatar" aria-hidden="true">' + svg(ICON.spark) + '</span><h1>Hôm nay cần soạn công văn gì?</h1>'
+      + (st.notice ? noticeHtml() : '')
+      + composerHtml(true)
+      + '<div class="ola-ideas">' + ideas.map(item => '<button type="button" class="tasco-ai-choice" data-ol-idea="' + esc(item.id) + '"><strong>' + esc(item.name) + '</strong><small>' + esc(item.group) + '</small></button>').join('') + '</div></section>';
   }
 
-  // Sau khi soạn: AI đã giả định gì, chọn nhanh điểm chưa rõ, lưu ý quan trọng từ hồ sơ.
-  function reviewCard() {
+  // ---- Màn làm việc ----
+  function stepsHtml() {
+    const steps = st.steps || {read: {state: 'done', text: ''}, legal: {state: 'done', text: ''}, write: {state: 'done', text: ''}};
+    const label = {read: 'Đọc hồ sơ & yêu cầu', legal: 'Căn cứ pháp lý', write: 'Soạn công văn'};
+    const mark = state => state === 'run' ? '<span class="olp-spinner"></span>' : state === 'done' ? '✓' : state === 'skip' ? '–' : state === 'err' ? '!' : '';
+    return '<ol class="ola-steps" data-ol-steps>' + ['read', 'legal', 'write'].map(name => { const item = steps[name] || {state: 'idle'}; return '<li class="is-' + item.state + '"><span class="ola-step-mark">' + mark(item.state) + '</span><span><b>' + label[name] + '</b>' + (item.text ? '<small>' + esc(item.text) + '</small>' : '') + '</span></li>'; }).join('') + '</ol>';
+  }
+  function noticeHtml() { return st.notice ? '<div class="olp-notice olp-notice--' + esc(st.notice.kind) + '" role="' + (st.notice.kind === 'error' ? 'alert' : 'status') + '">' + esc(st.notice.text) + '</div>' : ''; }
+  function requestHtml() {
+    const found = chosenRecord(), tpl = template();
+    if (st.editing) return '<section class="ola-request is-editing">' + composerHtml(false) + '<button type="button" class="ol-link" data-ol-act="cancel-edit">Huỷ</button></section>';
+    return '<section class="ola-request"><div class="ola-ask"><p>' + esc(st.brief || 'Soạn công văn từ hồ sơ') + '</p><div class="ola-tags">'
+      + (found ? '<span>' + svg(ICON.folder) + esc(recordLabel(found.info)) + '</span>' : '') + '<span>' + svg(ICON.letter) + esc(tpl.id === DEFAULT_TEMPLATE ? 'Tự do' : tpl.name) + '</span>' + (st.files.length ? '<span>' + svg(ICON.attach) + st.files.length + ' tệp</span>' : '') + '</div></div>'
+      + '<div class="ola-request-acts"><button type="button" class="olp-tool" data-ol-act="edit"' + (st.busy ? ' disabled' : '') + '>Sửa yêu cầu</button><button type="button" class="olp-tool" data-ol-act="new"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + 'Công văn mới</button></div></section>';
+  }
+
+  // Cột ghi chú: ngắn, chỉ những gì cần người dùng để ý.
+  function citationsHtml() {
+    if (!st.letter || !Legal()) return '';
+    const checks = citationChecks(), byCode = new Map(st.sources.map(source => [source.code, source]));
+    if (!checks.length) return '';
+    return '<div class="ola-note-block"><h3>Căn cứ trong công văn</h3><ul class="ola-cites">' + checks.map(item => item.ok
+      ? '<li class="is-ok" title="' + esc(item.codes.map(code => byCode.get(code)).filter(Boolean).map(source => source.doc + ' – ' + source.title).join('; ')) + '">✓ ' + esc(item.mention) + '</li>'
+      : '<li class="is-bad" title="Không có trong căn cứ đã chọn từ thư viện">⚠ ' + esc(item.mention) + '<small>Không có trong thư viện — kiểm tra lại</small></li>').join('') + '</ul></div>';
+  }
+  let citeTimer = 0;
+  function refreshCitations() {
+    clearTimeout(citeTimer);
+    citeTimer = setTimeout(() => { const box = $('[data-ol-citations]'); if (!box || !st.letter) return; syncLetter(); box.innerHTML = citationsHtml(); const gap = $('[data-ol-gaps]'); if (gap) gap.innerHTML = gapsHtml(); }, 400);
+  }
+  function gapsHtml() { const gaps = st.letter ? Core().countGaps(st.letter) : 0; return gaps ? '<div class="ola-note-block is-warn"><h3>Còn ' + gaps + ' chỗ “……”</h3><p>Phần tô vàng trên tờ — nhấp để điền.</p></div>' : ''; }
+  function notesRail() {
     if (!st.letter) return '';
     const dossier = dossierFor();
     const warns = (dossier ? dossier.facts : []).filter(fact => fact.level === 'warn').slice(0, 3);
     const open = st.questions.map((item, i) => ({item, i})).filter(({item}) => !item.answer && item.options.length);
-    if (!st.assumptions.length && !warns.length && !open.length) return '';
-    return '<section class="olp-card olp-review" aria-label="Điểm cần xem lại">'
-      + (st.assumptions.length ? '<h3>AI đã tự giả định</h3><ul class="ol-keyfacts">' + st.assumptions.map(text => '<li>' + esc(text) + '</li>').join('') + '</ul>' : '')
-      + (open.length ? '<h3>Chọn nhanh nếu cần (không bắt buộc)</h3>' + open.map(({item, i}) => '<div class="ol-q"><p class="ol-q-text">' + esc(item.question) + '</p><div class="tasco-ai-chiprow">' + item.options.map((option, j) => '<button type="button" class="tasco-ai-chip" data-ol-fix="' + i + '|' + j + '">' + esc(option) + '</button>').join('') + '</div></div>').join('') : '')
-      + (warns.length ? '<h3>Lưu ý từ hồ sơ</h3><ul class="ol-facts">' + warns.map(fact => '<li class="ol-fact ol-fact--warn">' + esc(fact.text) + '</li>').join('') + '</ul>' : '')
-      + '<p class="olp-hint">Giả định sai? Ghi yêu cầu ở ô “Chỉnh sửa” phía trên tờ công văn.</p></section>';
+    return '<aside class="ola-rail" aria-label="Ghi chú của AI">'
+      + '<div data-ol-gaps>' + gapsHtml() + '</div><div data-ol-citations>' + citationsHtml() + '</div>'
+      + (open.length ? '<div class="ola-note-block"><h3>Chọn nhanh</h3>' + open.map(({item, i}) => '<p class="ola-q">' + esc(item.question) + '</p><div class="tasco-ai-chiprow">' + item.options.map((option, j) => '<button type="button" class="tasco-ai-chip" data-ol-fix="' + i + '|' + j + '"' + (st.busy ? ' disabled' : '') + '>' + esc(option) + '</button>').join('') + '</div>').join('') + '</div>' : '')
+      + (st.assumptions.length ? '<div class="ola-note-block"><h3>AI đã giả định</h3><ul>' + st.assumptions.map(text => '<li>' + esc(text) + '</li>').join('') + '</ul></div>' : '')
+      + (st.letter.warnings.length ? '<div class="ola-note-block"><h3>Nên kiểm tra</h3><ul>' + st.letter.warnings.map(text => '<li>' + esc(text) + '</li>').join('') + '</ul></div>' : '')
+      + (warns.length ? '<div class="ola-note-block is-warn"><h3>Lưu ý từ hồ sơ</h3><ul>' + warns.map(fact => '<li>' + esc(fact.text) + '</li>').join('') + '</ul></div>' : '')
+      + '<button type="button" class="ola-more" data-ol-drawer="fields">Xem chi tiết: thông tin, dàn ý, căn cứ, hồ sơ →</button></aside>';
+  }
+  function documentHtml() {
+    if (!st.letter) return '<div class="ola-doc is-pending"><div class="olp-skeleton" aria-hidden="true">' + '<i></i>'.repeat(10) + '</div><div class="olp-busy" role="status"><span class="olp-spinner"></span><span data-ol-status>' + esc(st.status || 'Đang soạn…') + '</span></div></div>';
+    return '<div class="ola-doc' + (st.busy ? ' is-busy' : '') + '"><div class="ola-doc-bar"><label class="ol-datepick">Ngày <input type="date" data-ol-date value="' + esc(st.letter.date) + '"></label>'
+      + '<button type="button" class="olp-tool is-primary" data-ol-act="docx">' + svg(ICON.word) + 'Tải Word</button><button type="button" class="olp-tool" data-ol-act="print" title="In">' + svg(ICON.print) + '</button><button type="button" class="olp-tool" data-ol-act="copy" title="Sao chép nội dung">' + svg(ICON.copy) + '</button></div>'
+      + (st.busy ? '<div class="olp-busy" role="status"><span class="olp-spinner"></span><span data-ol-status>' + esc(st.status) + '</span></div>' : '')
+      + '<div class="ol-paper-wrap">' + Core().letterToHtml(st.letter) + '</div></div>';
+  }
+  const REFINES = ['Viết ngắn gọn hơn', 'Giọng trang trọng hơn', 'Thêm hạn phản hồi 07 ngày làm việc'];
+  function refineHtml() {
+    if (!st.letter) return '';
+    return '<div class="ola-refine"><div class="tasco-ai-suggest">' + REFINES.map(text => '<button type="button" class="tasco-ai-suggest__chip" data-ol-refine="' + esc(text) + '"' + (st.busy ? ' disabled' : '') + '>' + esc(text) + '</button>').join('') + '</div>'
+      + '<div class="tasco-ai-composer ola-refine-box"><span class="ola-refine-icon" aria-hidden="true">' + svg(ICON.spark) + '</span><input class="tasco-ai-input" data-ol-refine-input maxlength="600" placeholder="Nhờ AI sửa: “gửi Phòng CSGT tỉnh”, “nêu thêm ngày tổn thất”…" aria-label="Yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>'
+      + '<button type="button" class="tasco-ai-send" data-ol-act="refine" aria-label="Gửi yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div></div>';
+  }
+  function workHtml() {
+    return '<div class="ola-work">' + requestHtml() + stepsHtml() + noticeHtml()
+      + '<div class="ola-stage">' + documentHtml() + notesRail() + '</div>' + refineHtml() + '</div>';
   }
 
-  // ---- Các mục chi tiết (thu gọn) ----
+  // ---- Ngăn chi tiết ----
   function fieldInput(field, value) {
     const common = ' data-ol-field="' + esc(field.key) + '" maxlength="' + (field.max || 500) + '"';
     return field.type === 'textarea' ? '<textarea' + common + ' rows="3">' + esc(value) + '</textarea>' : '<input' + common + ' value="' + esc(value) + '"' + (field.type === 'date' ? ' placeholder="dd/mm/yyyy"' : '') + '>';
   }
-  const missingText = missing => missing.length ? 'Còn trống ' + missing.length + ' mục: ' + missing.map(item => item.label).join(', ') + ' — công văn sẽ để “……”.' : 'Đã đủ thông tin bắt buộc.';
+  const missingText = missing => missing.length ? 'Còn trống: ' + missing.map(item => item.label).join(', ') + ' — công văn để “……”.' : 'Đã đủ thông tin bắt buộc.';
   const extraRowHtml = item => '<div class="ol-extra-row" data-ol-extra-row><input data-ol-extra-label maxlength="80" placeholder="Tên thông tin" value="' + esc(item.label) + '" aria-label="Tên thông tin"><input data-ol-extra-value maxlength="400" placeholder="Nội dung" value="' + esc(item.value) + '" aria-label="Nội dung"><button type="button" class="ol-x" data-ol-act="remove-extra" aria-label="Xóa dòng" title="Xóa dòng">' + svg(ICON.close) + '</button></div>';
   function fieldsBody() {
     const tpl = template();
     const missing = Core().missingFields(tpl, st.values);
-    return '<div data-ol-block="fields">' + (st.notes ? '<p class="ol-note">' + esc(st.notes) + '</p>' : '')
-      + '<div class="ol-form">' + tpl.fields.map(field => {
+    return '<div data-ol-block="fields"><div class="ol-form">' + tpl.fields.map(field => {
         const flag = field.required && !Core().single(st.values[field.key], 1);
-        return '<label class="ol-field' + (flag ? ' is-missing' : '') + ' is-wide" data-ol-wrap="' + esc(field.key) + '"><span>' + esc(field.label) + (field.required ? ' <b title="Bắt buộc">*</b>' : '')
-          + (st.filledByAI.includes(field.key) ? ' <em class="ol-ai-tag">AI điền</em>' : '') + '</span>' + fieldInput(field, st.values[field.key]) + (field.hint ? '<small>' + esc(field.hint) + '</small>' : '') + '</label>';
+        return '<label class="ol-field is-wide' + (flag ? ' is-missing' : '') + '" data-ol-wrap="' + esc(field.key) + '"><span>' + esc(field.label) + (field.required ? ' <b title="Bắt buộc">*</b>' : '')
+          + (st.filledByAI.includes(field.key) ? ' <em class="ol-ai-tag">AI điền</em>' : '') + '</span>' + fieldInput(field, st.values[field.key]) + '</label>';
       }).join('') + '</div>'
-      + '<div class="ol-extras"><b>Thông tin bổ sung</b><small>Ý AI ghi nhận từ yêu cầu mà mẫu chưa có ô riêng (thời hạn, lý do, tình tiết…).</small>'
-      + st.extras.map(item => extraRowHtml(item)).join('') + '<button type="button" class="ol-add" data-ol-act="add-extra">+ Thêm thông tin</button></div>'
+      + '<div class="ol-extras"><b>Thông tin bổ sung</b>' + st.extras.map(item => extraRowHtml(item)).join('') + '<button type="button" class="ol-add" data-ol-act="add-extra">+ Thêm</button></div>'
       + '<p class="' + (missing.length ? 'ol-warn' : 'ol-ok') + '" data-ol-missing>' + esc(missingText(missing)) + '</p></div>';
   }
   function outlineBody() {
-    return '<p class="olp-hint">Mỗi dòng là một ý AI sẽ viết. Bỏ tick ý không cần, sửa chữ để chỉ đạo AI.</p><div class="ol-outline">' + st.outline.map(item => '<div class="ol-outline-row" data-ol-outline-row><input type="checkbox" data-ol-outline-on' + (item.on ? ' checked' : '') + ' aria-label="Dùng ý này"><input class="ol-outline-text" data-ol-outline-text maxlength="300" value="' + esc(item.text) + '" aria-label="Nội dung ý"><button type="button" class="ol-x" data-ol-act="remove-outline" aria-label="Xóa ý" title="Xóa ý">' + svg(ICON.close) + '</button></div>').join('')
+    return '<div class="ol-outline">' + st.outline.map(item => '<div class="ol-outline-row" data-ol-outline-row><input type="checkbox" data-ol-outline-on' + (item.on ? ' checked' : '') + ' aria-label="Dùng ý này"><input class="ol-outline-text" data-ol-outline-text maxlength="300" value="' + esc(item.text) + '" aria-label="Nội dung ý"><button type="button" class="ol-x" data-ol-act="remove-outline" aria-label="Xóa ý" title="Xóa ý">' + svg(ICON.close) + '</button></div>').join('')
       + '</div><button type="button" class="ol-add" data-ol-act="add-outline">+ Thêm ý</button>';
   }
   function legalBody() {
@@ -450,85 +515,45 @@ const OfficialLetterPage = (() => {
     const lib = typeof TascoLibrary !== 'undefined' && TascoLibrary.open ? ' <button type="button" class="ol-link" data-ol-act="open-library">Mở Thư viện tài liệu</button>' : '';
     const rows = st.sources.map((source, i) => '<div class="ol-src' + (source.on === false ? ' is-off' : '') + '"><label class="ol-src-head"><input type="checkbox" data-ol-src-on="' + i + '"' + (source.on === false ? '' : ' checked') + ' aria-label="Dùng căn cứ ' + esc(source.code) + '">'
       + '<span class="ol-src-code">' + esc(source.code) + '</span><span class="ol-src-main"><b>' + esc(source.doc) + (source.soHieu && !fold(source.doc).includes(fold(source.soHieu)) ? ' <small>(' + esc(source.soHieu) + ')</small>' : '') + '</b><small>' + esc(source.title) + '</small></span></label>'
-      + '<details class="ol-src-text"><summary>Xem nguyên văn</summary><p>' + esc(String(source.text).slice(0, 1800)) + '</p>' + (source.link ? '<a href="' + esc(source.link) + '" target="_blank" rel="noopener noreferrer">Mở văn bản gốc</a>' : '') + '</details></div>').join('');
-    const status = st.legalError ? '<p class="ol-warn">' + esc(st.legalError) + ' AI sẽ không viện dẫn điều luật cụ thể.' + lib + '</p>'
-      : !st.sources.length ? (L.needsBasis(template(), st.brief) ? '<p class="olp-hint">Không có đoạn nào trong thư viện khớp đúng vấn đề — AI không viện dẫn điều luật cụ thể.' + lib + '</p>'
-        : '<p class="olp-hint">Loại công văn này không cần viện dẫn điều luật nên AI không dẫn căn cứ. Muốn có, tìm đúng nội dung cần dẫn bên dưới.</p>') : '';
-    return '<p class="olp-hint">AI chỉ viện dẫn đoạn đang tick khi đoạn đó quy định đúng vấn đề (tối đa 2), không tự nhớ điều luật.</p>' + status + (rows ? '<div class="ol-srcs">' + rows + '</div>' : '')
-      + '<div class="ol-legal-search"><input data-ol-legal-q maxlength="160" placeholder="Tìm căn cứ, VD: thời hạn giải quyết bồi thường" aria-label="Tìm căn cứ"><button type="button" class="tasco-ai-btn-ghost" data-ol-act="legal-search">Tìm</button></div>';
+      + '<details class="ol-src-text"><summary>Nguyên văn</summary><p>' + esc(String(source.text).slice(0, 1800)) + '</p>' + (source.link ? '<a href="' + esc(source.link) + '" target="_blank" rel="noopener noreferrer">Mở văn bản gốc</a>' : '') + '</details></div>').join('');
+    const status = st.legalError ? '<p class="ol-warn">' + esc(st.legalError) + lib + '</p>'
+      : !st.sources.length ? '<p class="olp-hint">' + (L.needsBasis(template(), st.brief) ? 'Không có đoạn nào trong thư viện khớp đúng vấn đề.' : 'Loại công văn này không cần viện dẫn điều luật.') + lib + '</p>' : '';
+    return status + (rows ? '<div class="ol-srcs">' + rows + '</div>' : '')
+      + '<div class="ol-legal-search"><input data-ol-legal-q maxlength="160" placeholder="Tìm căn cứ, VD: thời hạn giải quyết bồi thường" aria-label="Tìm căn cứ"><button type="button" class="olp-tool" data-ol-act="legal-search">Tìm</button></div>';
   }
-  function dossierBody(dossier) {
+  function dossierBody() {
+    const dossier = dossierFor();
+    if (!dossier) return '<p class="olp-hint">Chưa có hồ sơ — AI chỉ dựa vào yêu cầu và tệp đính kèm.</p>';
     const warnFirst = list => list.filter(item => item.level === 'warn').concat(list.filter(item => item.level !== 'warn'));
     const li = item => '<li class="ol-fact ol-fact--' + (item.level === 'warn' ? 'warn' : 'info') + '">' + esc(item.text) + '</li>';
-    const rows = dossier ? dossier.sections.map(section => '<div class="ol-dos-sec"><h5>' + esc(section.title) + '</h5><dl>' + section.rows.map(([label, value]) => '<dt>' + esc(label) + '</dt><dd>' + esc(value) + '</dd>').join('') + '</dl></div>').join('') : '';
-    return (st.understanding ? '<p class="ol-note"><b>AI hiểu yêu cầu:</b> ' + esc(st.understanding) + '</p>' : '')
-      + (dossier && dossier.facts.length ? '<p class="ol-dos-h">Hệ thống tính từ dữ liệu</p><ul class="ol-facts">' + warnFirst(dossier.facts).map(li).join('') + '</ul>' : '')
-      + (st.insights.length ? '<p class="ol-dos-h">AI nhận định cho công văn này</p><ul class="ol-facts">' + warnFirst(st.insights).map(li).join('') + '</ul>' : '')
-      + (st.keyFacts.length ? '<p class="ol-dos-h">Dữ kiện nêu trong công văn</p><ul class="ol-keyfacts">' + st.keyFacts.map(text => '<li>' + esc(text) + '</li>').join('') + '</ul>' : '')
-      + (dossier && dossier.gaps.length ? '<p class="olp-hint">Hồ sơ còn trống: ' + esc(dossier.gaps.join(', ')) + '.</p>' : '')
-      + (rows ? '<details class="ol-dos-detail"><summary>Xem toàn bộ hồ sơ AI đã đọc</summary>' + rows + '</details>' : '')
-      + (!dossier ? '<p class="olp-hint">Chưa chọn hồ sơ — AI chỉ dựa vào nội dung bạn gõ và tệp đính kèm.</p>' : '');
+    return (st.understanding ? '<p class="ol-note">' + esc(st.understanding) + '</p>' : '')
+      + (dossier.facts.length ? '<ul class="ol-facts">' + warnFirst(dossier.facts).map(li).join('') + '</ul>' : '')
+      + (st.insights.length ? '<p class="ol-dos-h">AI nhận định</p><ul class="ol-facts">' + warnFirst(st.insights).map(li).join('') + '</ul>' : '')
+      + dossier.sections.map(section => '<div class="ol-dos-sec"><h5>' + esc(section.title) + '</h5><dl>' + section.rows.map(([label, value]) => '<dt>' + esc(label) + '</dt><dd>' + esc(value) + '</dd>').join('') + '</dl></div>').join('');
   }
-  function detailCards() {
-    if (!st.values) return '';
-    const tpl = template(), dossier = dossierFor();
-    const missing = Core().missingFields(tpl, st.values).length;
-    const section = (name, title, meta, body) => '<details class="olp-card olp-detail" data-ol-section="' + name + '"' + (st.open[name] ? ' open' : '') + '><summary><span>' + esc(title) + '</span>' + (meta ? '<em>' + esc(meta) + '</em>' : '') + '</summary><div class="olp-detail-body">' + body + '</div></details>';
-    return section('fields', 'Thông tin công văn', missing ? missing + ' mục còn trống' : 'đủ', fieldsBody())
-      + section('outline', 'Dàn ý nội dung', st.outline.filter(item => item.on).length + ' ý', outlineBody())
-      + (Legal() ? section('legal', 'Căn cứ pháp lý', st.sources.length ? activeSources().length + '/' + st.sources.length + ' đoạn' : 'không dùng', legalBody()) : '')
-      + section('dossier', 'Phân tích hồ sơ', dossier ? dossier.facts.filter(fact => fact.level === 'warn').length + ' lưu ý' : 'chưa chọn hồ sơ', dossierBody(dossier))
-      + '<button type="button" class="tasco-ai-btn-ghost olp-recompose" data-ol-act="compose"' + (st.busy ? ' disabled' : '') + '>Soạn lại theo thông tin đã sửa</button>';
-  }
-
-  // ---- Cột phải: tờ công văn ----
-  function citationsHtml() {
-    if (!st.letter || !Legal()) return '';
-    const checks = citationChecks(), byCode = new Map(st.sources.map(source => [source.code, source]));
-    if (!checks.length) return '';
-    const bad = checks.filter(item => !item.ok).length;
-    return '<div class="ol-cites' + (bad ? ' has-bad' : '') + '"><b>Căn cứ pháp lý trong công văn</b>' + (bad ? ' <span class="ol-cite-bad-count">' + bad + ' chưa kiểm chứng</span>' : ' <span class="ol-cite-ok-count">đã đối chiếu thư viện</span>') + '<ul>'
-      + checks.map(item => item.ok
-        ? '<li class="ol-cite is-ok"><span>✓ ' + esc(item.mention) + '</span><small>' + item.codes.map(code => byCode.get(code)).filter(Boolean).map(source => esc(source.code + ' · ' + source.doc + ' – ' + source.title)).join('; ') + '</small></li>'
-        : '<li class="ol-cite is-bad"><span>⚠ ' + esc(item.mention) + '</span><small>Không có trong căn cứ đã chọn từ thư viện — kiểm tra lại, sửa hoặc xoá trước khi ký.</small></li>').join('') + '</ul></div>';
-  }
-  let citeTimer = 0;
-  function refreshCitations() {
-    clearTimeout(citeTimer);
-    citeTimer = setTimeout(() => { const box = $('[data-ol-citations]'); if (!box || !st.letter) return; syncLetter(); box.innerHTML = citationsHtml(); }, 400);
-  }
-  const REFINES = ['Viết ngắn gọn hơn', 'Giọng trang trọng hơn', 'Thêm hạn phản hồi 07 ngày làm việc'];
-  function previewPane() {
-    const noticeHtml = st.notice ? '<div class="olp-notice olp-notice--' + esc(st.notice.kind) + '" role="' + (st.notice.kind === 'error' ? 'alert' : 'status') + '">' + esc(st.notice.text) + '</div>' : '';
-    const busy = st.busy ? '<div class="olp-busy" role="status"><span class="olp-spinner" aria-hidden="true"></span><span data-ol-status>' + esc(st.status || 'Đang xử lý…') + '</span></div>' : '';
-    if (!st.letter) {
-      return noticeHtml + '<div class="olp-sheet olp-empty' + (st.busy ? ' is-busy' : '') + '">' + (busy || '<div class="olp-empty-inner">' + svg(ICON.letter) + '<h3>Công văn sẽ hiện ở đây</h3><ol><li>Chọn hồ sơ (hoặc gõ số HSBT/biển số trong yêu cầu)</li><li>Ghi ngắn gọn cần viết gì</li><li>Bấm <b>Soạn công văn</b> — sửa trực tiếp trên tờ, tải Word khi xong</li></ol></div>')
-        + '<div class="olp-skeleton" aria-hidden="true">' + '<i></i>'.repeat(9) + '</div></div>';
-    }
-    const gaps = Core().countGaps(st.letter);
-    return '<div class="olp-toolbar"><label class="ol-datepick">Ngày ban hành <input type="date" data-ol-date value="' + esc(st.letter.date) + '"></label>'
-      + '<button type="button" class="olp-tool is-primary" data-ol-act="docx">' + svg(ICON.word) + 'Tải Word</button><button type="button" class="olp-tool" data-ol-act="print">' + svg(ICON.print) + 'In</button><button type="button" class="olp-tool" data-ol-act="copy">' + svg(ICON.copy) + 'Sao chép</button></div>'
-      + '<div class="olp-refine"><input data-ol-refine-input maxlength="600" placeholder="Chỉnh sửa: VD “gửi Phòng CSGT tỉnh”, “nêu thêm ngày tổn thất”…" aria-label="Yêu cầu chỉnh sửa công văn"' + (st.busy ? ' disabled' : '') + '><button type="button" class="olp-tool is-primary" data-ol-act="refine"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + 'Chỉnh</button>'
-      + '<div class="tasco-ai-chiprow">' + REFINES.map(text => '<button type="button" class="tasco-ai-chip" data-ol-refine="' + esc(text) + '"' + (st.busy ? ' disabled' : '') + '>' + esc(text) + '</button>').join('') + '</div></div>'
-      + noticeHtml
-      + (st.letter.warnings.length ? '<div class="ol-warn"><b>AI lưu ý cần kiểm tra</b><ul>' + st.letter.warnings.map(item => '<li>' + esc(item) + '</li>').join('') + '</ul></div>' : '')
-      + (gaps ? '<p class="ol-warn">Còn ' + gaps + ' chỗ “……” (tô vàng) cần điền trước khi gửi — nhấp vào tờ để điền.</p>' : '')
-      + '<div data-ol-citations>' + citationsHtml() + '</div>'
-      + '<div class="olp-sheet' + (st.busy ? ' is-busy' : '') + '">' + busy + '<div class="ol-paper-wrap">' + Core().letterToHtml(st.letter) + '</div></div>'
-      + '<p class="olp-hint">Nhấp vào chữ trên tờ để sửa trực tiếp. Số công văn để trống nếu chưa vào sổ.</p>';
+  function drawerHtml() {
+    if (!st.drawer || !st.values) return '';
+    const tabs = [['fields', 'Thông tin'], ['outline', 'Dàn ý'], ['legal', 'Căn cứ'], ['dossier', 'Hồ sơ']].filter(([name]) => name !== 'legal' || Legal());
+    const body = {fields: fieldsBody, outline: outlineBody, legal: legalBody, dossier: dossierBody}[st.drawer] || fieldsBody;
+    return '<div class="ola-drawer-backdrop" data-ol-drawer-close></div><aside class="ola-drawer" role="dialog" aria-label="Chi tiết công văn"><header><div class="ola-tabs" role="tablist">'
+      + tabs.map(([name, label]) => '<button type="button" role="tab" aria-selected="' + (st.drawer === name) + '" data-ol-drawer="' + name + '">' + label + '</button>').join('')
+      + '</div><button type="button" class="ol-x" data-ol-drawer-close aria-label="Đóng">' + svg(ICON.close) + '</button></header><div class="ola-drawer-body">' + body() + '</div>'
+      + (st.drawer === 'dossier' ? '' : '<footer><button type="button" class="olp-tool is-primary" data-ol-act="compose"' + (st.busy ? ' disabled' : '') + '>Soạn lại theo chi tiết này</button></footer>') + '</aside>';
   }
 
   function renderAll() {
     if (!host) return;
-    const side = $('[data-ol-side]'), main = $('[data-ol-main]');
-    const sideScroll = side ? side.scrollTop : 0;
-    side.innerHTML = requestCard() + reviewCard() + detailCards();
-    main.innerHTML = previewPane();
-    side.toggleAttribute('inert', !!st.busy);
-    side.scrollTop = sideScroll;
-    if (typeof SharedFormsControls !== 'undefined' && SharedFormsControls.enhance) SharedFormsControls.enhance(side);
-    updateRecList();
+    const root = $('[data-ol-root]');
+    const active = document.activeElement, focusSel = active && host.contains(active) ? (active.matches('[data-ol-rec-q]') ? '[data-ol-rec-q]' : active.matches('[data-ol-brief]') ? '[data-ol-brief]' : '') : '';
+    const working = !!(st.letter || (st.busy && st.steps));
+    root.innerHTML = (working ? workHtml() : heroHtml()) + drawerHtml()
+      + '<button type="button" class="ola-gear" data-ol-act="settings" title="Thông tin đơn vị ban hành" aria-label="Thông tin đơn vị ban hành">' + svg(ICON.gear) + '</button>';
+    root.classList.toggle('is-working', working);
+    const brief = $('[data-ol-brief]'); if (brief) autoGrow(brief);
+    if (st.pop === 'record') { updateRecList(); $('[data-ol-rec-q]')?.focus(); }
+    else if (focusSel) $(focusSel)?.focus();
   }
+  function autoGrow(area) { area.style.height = 'auto'; area.style.height = Math.min(area.scrollHeight, 260) + 'px'; }
   function updateMissingLive() {
     const tpl = template();
     if (!tpl || !st.values) return;
@@ -567,16 +592,31 @@ const OfficialLetterPage = (() => {
     generation++; controller?.abort(); controller = null;
     resetAnalysis();
     releaseFiles(st.files);
-    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}});
+    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null});
   }
   const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Bỏ công văn đang soạn để bắt đầu công văn mới?');
 
   // ---- Sự kiện ----
+  function closePop() { if (!st.pop) return; collectAll(); st.pop = ''; st.recQuery = ''; renderAll(); }
   function onClick(event) {
     const target = event.target;
+    const popButton = target.closest('[data-ol-pop]');
+    if (popButton) { collectAll(); const name = popButton.dataset.olPop; st.pop = st.pop === name ? '' : name; st.recQuery = ''; st.recActive = 0; if (st.pop === 'record' && !index.length) loadRecords(); renderAll(); return; }
     const pick = target.closest('[data-ol-pick]');
-    if (pick) { collectAll(); st.recordKey = pick.dataset.olPick; st.recQuery = ''; st.recOpen = false; renderAll(); $('[data-ol-brief]')?.focus(); return; }
-    if (target.closest('[data-ol-rec-clear]')) { collectAll(); st.recordKey = ''; renderAll(); $('[data-ol-rec-q]')?.focus(); return; }
+    if (pick) { collectAll(); st.recordKey = pick.dataset.olPick; st.pop = ''; st.recQuery = ''; renderAll(); $('[data-ol-brief]')?.focus(); return; }
+    const type = target.closest('[data-ol-type]');
+    if (type) { collectAll(); st.templateId = type.dataset.olType; st.pop = ''; renderAll(); $('[data-ol-brief]')?.focus(); return; }
+    if (target.closest('[data-ol-rec-clear]')) { collectAll(); st.recordKey = ''; renderAll(); return; }
+    if (st.pop && !target.closest('.ola-pop')) { closePop(); }
+    const idea = target.closest('[data-ol-idea]');
+    if (idea) {
+      collectAll(); st.templateId = idea.dataset.olIdea;
+      const found = chosenRecord(), hint = TEMPLATE_HINTS[st.templateId] || '';
+      if (!st.brief.trim()) st.brief = hint + (found ? (found.info.code || found.info.plate) : '');
+      renderAll();
+      const area = $('[data-ol-brief]'); if (area) { area.focus(); area.setSelectionRange(area.value.length, area.value.length); }
+      return;
+    }
     const removeFile = target.closest('[data-ol-remove-file]');
     if (removeFile) { const [gone] = st.files.splice(Number(removeFile.dataset.olRemoveFile), 1); if (gone) releaseFiles([gone]); updateFiles(); return; }
     const refine = target.closest('[data-ol-refine]');
@@ -587,24 +627,27 @@ const OfficialLetterPage = (() => {
       if (item && item.options[j]) { item.answer = item.options[j]; if (item.key && st.values) st.values[item.key] = item.options[j]; compose(item.question + ' → ' + item.options[j]); }
       return;
     }
-    const summary = target.closest('[data-ol-section] > summary');
-    if (summary) { const box = summary.parentElement; st.open[box.dataset.olSection] = !box.open; return; }
+    const drawerTab = target.closest('[data-ol-drawer]');
+    if (drawerTab) { collectAll(); st.drawer = drawerTab.dataset.olDrawer; renderAll(); return; }
+    if (target.closest('[data-ol-drawer-close]')) { collectAll(); st.drawer = ''; renderAll(); return; }
     const act = target.closest('[data-ol-act]');
     if (!act) return;
     switch (act.dataset.olAct) {
       case 'run': run(); break;
-      case 'compose': compose(''); break;
+      case 'compose': st.drawer = ''; compose(''); break;
       case 'refine': sendRefine(); break;
+      case 'edit': st.editing = true; renderAll(); $('[data-ol-brief]')?.focus(); break;
+      case 'cancel-edit': collectAll(); st.editing = false; st.pop = ''; renderAll(); break;
       case 'docx': downloadDocx(); break;
       case 'print': printLetter(); break;
       case 'copy': copyText(); break;
       case 'settings': openSettings(); break;
       case 'legal-search': searchMoreLegal(); break;
       case 'open-library': TascoLibrary.open(); break;
-      case 'new': if (confirmDiscard()) { reset(); renderAll(); } break;
-      case 'add-extra': collectAll(); st.extras.push({label: '', value: ''}); st.open.fields = true; renderAll(); host.querySelector('[data-ol-extra-row]:last-of-type [data-ol-extra-label]')?.focus(); break;
+      case 'new': if (confirmDiscard()) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } break;
+      case 'add-extra': collectAll(); st.extras.push({label: '', value: ''}); renderAll(); host.querySelector('[data-ol-extra-row]:last-of-type [data-ol-extra-label]')?.focus(); break;
       case 'remove-extra': { collectAll(); const rows = [...host.querySelectorAll('[data-ol-extra-row]')]; st.extras.splice(rows.indexOf(act.closest('[data-ol-extra-row]')), 1); renderAll(); break; }
-      case 'add-outline': collectAll(); st.outline.push({text: '', on: true}); st.outlineEdited = true; st.open.outline = true; renderAll(); host.querySelector('[data-ol-outline-row]:last-of-type [data-ol-outline-text]')?.focus(); break;
+      case 'add-outline': collectAll(); st.outline.push({text: '', on: true}); st.outlineEdited = true; renderAll(); host.querySelector('[data-ol-outline-row]:last-of-type [data-ol-outline-text]')?.focus(); break;
       case 'remove-outline': { collectAll(); const rows = [...host.querySelectorAll('[data-ol-outline-row]')]; st.outline.splice(rows.indexOf(act.closest('[data-ol-outline-row]')), 1); st.outlineEdited = true; renderAll(); break; }
       default: break;
     }
@@ -612,7 +655,7 @@ const OfficialLetterPage = (() => {
   function onInput(event) {
     const target = event.target;
     if (target.matches('[data-ol-rec-q]')) { st.recQuery = target.value; st.recActive = 0; updateRecList(); }
-    else if (target.matches('[data-ol-brief]')) st.brief = target.value;
+    else if (target.matches('[data-ol-brief]')) { st.brief = target.value; autoGrow(target); }
     else if (target.matches('[data-ol-field]')) updateMissingLive();
     else if (target.matches('[data-ol-outline-text]')) st.outlineEdited = true;
     else if (target.closest && target.closest('.ol-paper')) refreshCitations();
@@ -620,23 +663,16 @@ const OfficialLetterPage = (() => {
   function onChange(event) {
     const target = event.target;
     if (target.matches('[data-ol-files]')) { addFiles(target.files); target.value = ''; }
-    else if (target.matches('[data-ol-template]')) { collectAll(); st.templateId = target.value; renderAll(); }
     else if (target.matches('[data-ol-outline-on]')) st.outlineEdited = true;
     else if (target.matches('[data-ol-src-on]')) { const source = st.sources[Number(target.dataset.olSrcOn)]; if (source) { source.on = target.checked; target.closest('.ol-src').classList.toggle('is-off', !target.checked); } }
     else if (target.matches('[data-ol-date]') && /^\d{4}-\d{2}-\d{2}$/.test(target.value)) { syncLetter(); st.letter.date = target.value; renderAll(); }
   }
-  function onFocusIn(event) {
-    if (event.target.matches && event.target.matches('[data-ol-rec-q]')) { if (!index.length) loadRecords(); st.recOpen = true; updateRecList(); }
-  }
-  function onFocusOut(event) {
-    if (!event.target.matches || !event.target.matches('[data-ol-rec-q]')) return;
-    setTimeout(() => { if (!host || (document.activeElement && document.activeElement.closest && document.activeElement.closest('.ol-rec'))) return; st.recOpen = false; updateRecList(); }, 150);
-  }
   function onKeydown(event) {
     const target = event.target;
     if (!target.matches) return;
+    if (event.key === 'Escape') { if (st.pop) { event.preventDefault(); closePop(); return; } if (st.drawer) { collectAll(); st.drawer = ''; renderAll(); return; } }
     if (target.matches('.ol-edit') && event.key === 'Enter') { event.preventDefault(); return; } // mỗi khối là một dòng/đoạn
-    if (target.matches('[data-ol-brief]') && event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); run(); return; }
+    if (target.matches('[data-ol-brief]') && event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); run(); return; }
     if (target.matches('[data-ol-refine-input]') && event.key === 'Enter' && !event.isComposing) { event.preventDefault(); sendRefine(); return; }
     if (target.matches('[data-ol-legal-q]') && event.key === 'Enter' && !event.isComposing) { event.preventDefault(); searchMoreLegal(); return; }
     if (target.matches('[data-ol-rec-q]')) {
@@ -648,7 +684,6 @@ const OfficialLetterPage = (() => {
         items.forEach((node, i) => node.classList.toggle('is-active', i === st.recActive));
         items[st.recActive].scrollIntoView({block: 'nearest'});
       } else if (event.key === 'Enter') { event.preventDefault(); items[st.recActive]?.click(); }
-      else if (event.key === 'Escape') { st.recOpen = false; updateRecList(); }
     }
   }
   function onPaste(event) {
@@ -659,29 +694,29 @@ const OfficialLetterPage = (() => {
       document.execCommand('insertText', false, (event.clipboardData || window.clipboardData).getData('text').replace(/\s+/g, ' '));
     } else if (target.matches('[data-ol-brief]') && event.clipboardData && event.clipboardData.files.length) { event.preventDefault(); addFiles(event.clipboardData.files); }
   }
-  function onDragOver(event) { if (event.dataTransfer && [...event.dataTransfer.types].includes('Files') && event.target.closest && event.target.closest('.olp-request')) event.preventDefault(); }
-  function onDrop(event) { if (event.dataTransfer && event.dataTransfer.files.length && event.target.closest && event.target.closest('.olp-request')) { event.preventDefault(); addFiles(event.dataTransfer.files); } }
+  function onDragOver(event) { if (event.dataTransfer && [...event.dataTransfer.types].includes('Files') && event.target.closest && event.target.closest('.ola-composer')) event.preventDefault(); }
+  function onDrop(event) { if (event.dataTransfer && event.dataTransfer.files.length && event.target.closest && event.target.closest('.ola-composer')) { event.preventDefault(); addFiles(event.dataTransfer.files); } }
+  // Bấm ra ngoài ô chọn (hồ sơ / loại) thì đóng.
+  function onOutside(event) { if (st.pop && host && !(event.target.closest && (event.target.closest('.ola-pop') || event.target.closest('[data-ol-pop]')))) closePop(); }
 
-  const HANDLERS = [['click', onClick], ['input', onInput], ['change', onChange], ['focusin', onFocusIn], ['focusout', onFocusOut], ['keydown', onKeydown], ['paste', onPaste], ['dragover', onDragOver], ['drop', onDrop]];
+  const HANDLERS = [['click', onClick], ['input', onInput], ['change', onChange], ['keydown', onKeydown], ['paste', onPaste], ['dragover', onDragOver], ['drop', onDrop]];
 
   function mount(container) {
     leave();
     host = container;
     loadRecords();
-    host.innerHTML = '<div class="olp">'
-      + '<header class="olp-head"><div class="olp-title"><span class="olp-emblem" aria-hidden="true">' + svg(ICON.letter) + '</span><div><span class="olp-eyebrow">Nghiệp vụ</span><h1>Công văn AI</h1>'
-      + '<p>Chọn hồ sơ, ghi cần viết gì — AI đọc hồ sơ và soạn công văn đúng thể thức, sửa trực tiếp rồi tải Word.</p></div></div>'
-      + '<div class="olp-actions"><button type="button" class="olp-tool" data-ol-act="new">' + svg(ICON.plus) + 'Công văn mới</button><button type="button" class="olp-tool" data-ol-act="settings">' + svg(ICON.gear) + 'Đơn vị ban hành</button></div></header>'
-      + '<div class="olp-grid"><aside class="olp-side" data-ol-side></aside><main class="olp-main" data-ol-main></main></div></div>';
+    host.innerHTML = '<div class="ola" data-ol-root></div>';
     HANDLERS.forEach(([name, fn]) => host.addEventListener(name, fn));
+    document.addEventListener('mousedown', onOutside, true);
     renderAll();
   }
 
   function leave() {
     generation++;
     controller?.abort(); controller = null;
-    st.busy = ''; st.status = '';
+    st.busy = ''; st.status = ''; st.pop = '';
     if (host) HANDLERS.forEach(([name, fn]) => host.removeEventListener(name, fn));
+    document.removeEventListener('mousedown', onOutside, true);
     host = null;
   }
 
