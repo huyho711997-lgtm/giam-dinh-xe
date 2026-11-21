@@ -100,13 +100,35 @@ const OfficialLetterLegal = (() => {
   // Đánh lại mã C1..Cn theo thứ tự hiện có (sau khi thêm/bớt nguồn).
   const renumber = sources => (sources || []).map((source, i) => ({...source, code: 'C' + (i + 1)}));
 
-  // Tìm trong thư viện thật. Trả {sources, total, error}.
+  // Văn bản người dùng nhắc tên trong yêu cầu ("dùng Quy tắc Tasco", "theo Nghị định 67") → id các văn bản trong thư viện.
+  // Chỉ xét từ ĐẶC TRƯNG của tên/số hiệu (chỉ xuất hiện ở dưới nửa số văn bản) nên "quy tắc", "bảo hiểm" không chọn nhầm cả kho.
+  function matchDocs(docs, hint) {
+    const list = (docs || []).filter(doc => doc && doc.id), total = list.length, wanted0 = words(hint);
+    if (!total || !wanted0) return [];
+    const names = list.map(doc => new Set(words(((doc.meta && doc.meta.ten) || '') + ' ' + ((doc.meta && doc.meta.soHieu) || '')).split(' ').filter(Boolean)));
+    const df = new Map();
+    names.forEach(set => set.forEach(word => df.set(word, (df.get(word) || 0) + 1)));
+    const wanted = [...new Set(wanted0.split(' '))].filter(word => !/^\d{4}$/.test(word) && (word.length > 1 || /\d/.test(word)) && df.has(word) && df.get(word) <= Math.max(1, Math.floor((total - 1) / 2)));
+    if (!wanted.length) return [];
+    const scored = list.map((doc, i) => ({id: doc.id, score: wanted.reduce((sum, word) => sum + (names[i].has(word) ? Math.log(1 + total / df.get(word)) : 0), 0)})).filter(item => item.score > 0);
+    const best = scored.reduce((max, item) => Math.max(max, item.score), 0);
+    return scored.filter(item => item.score >= best - 1e-9).map(item => item.id);
+  }
+  // Danh sách văn bản đang có trong thư viện (cho ô chọn căn cứ).
+  async function listDocs() {
+    if (typeof TascoLibStore === 'undefined') return [];
+    try { return (await TascoLibStore.list()).map(doc => ({id: doc.id, name: clip((doc.meta && doc.meta.ten) || 'Tài liệu', 120), soHieu: clip(doc.meta && doc.meta.soHieu, 60), active: ((doc.meta && doc.meta.trangThai) || 'dang_hieu_luc') === 'dang_hieu_luc'})); }
+    catch (_) { return []; }
+  }
+
+  // Tìm trong thư viện thật. Trả {sources, total, error}. options: {limit, force, docIds: chỉ tìm trong các văn bản này}.
   async function retrieve(queries, options = {}) {
     if (typeof TascoLibStore === 'undefined' || typeof TascoLibSearch === 'undefined') return {sources: [], total: 0, error: 'Thư viện tài liệu chưa sẵn sàng trên trang này.'};
     try {
       const docs = await TascoLibStore.list(!!options.force);
       if (!docs.length) return {sources: [], total: 0, error: 'Thư viện tài liệu đang trống — cần nạp Luật KDBH, Nghị định 67/2023, quy tắc bảo hiểm xe… trước.'};
-      const index = await TascoLibStore.index();
+      const only = Array.isArray(options.docIds) && options.docIds.length ? new Set(options.docIds) : null;
+      const index = only ? TascoLibSearch.build(docs.filter(doc => only.has(doc.id))) : await TascoLibStore.index();
       return {sources: rank(query => TascoLibSearch.search(index, query, {limit: PER_QUERY}), queries, options.limit), total: docs.length, error: ''};
     } catch (error) {
       return {sources: [], total: 0, error: 'Không đọc được thư viện tài liệu: ' + (error && error.message || 'lỗi không rõ')};
@@ -179,5 +201,5 @@ const OfficialLetterLegal = (() => {
 
   const letterText = letter => letter ? [letter.subject, ...(letter.paragraphs || []).map(p => p.text)].join('\n') : '';
 
-  return {TOPICS, NEEDS_BASIS, needsBasis, coverage, buildQueries, rank, toSource, renumber, retrieve, promptBlock, sourceLabel, verify, letterText, MAX_SOURCES};
+  return {TOPICS, NEEDS_BASIS, needsBasis, coverage, LEGAL_WORDS, matchDocs, listDocs, buildQueries, rank, toSource, renumber, retrieve, promptBlock, sourceLabel, verify, letterText, MAX_SOURCES};
 })();

@@ -180,3 +180,33 @@ test('mẫu từ chối thông số lốp: tự tìm căn cứ trong Thư viện
   const q = plain(L.buildQueries({ id: 'tu_choi_thong_so_lop' }, null, []));
   assert.ok(q.some(x => /thông số lốp/.test(x)) && q.some(x => /kiểm định/.test(x)));
 });
+
+const TASCO = { id: 'tasco', meta: { ten: 'Quy tắc bảo hiểm xe cơ giới Tasco', trangThai: 'dang_hieu_luc' }, chunks: [
+  { t: 'Điều 10. Loại trừ bảo hiểm', x: 'Không bảo hiểm khi xe thay đổi thông số lốp la-zăng khác khuyến cáo của nhà sản xuất.' }] };
+const OCAR = { id: 'ocar', meta: { ten: 'Quy tắc bảo hiểm xe cơ giới Ocar 360', trangThai: 'dang_hieu_luc' }, chunks: [
+  { t: 'Điều 12. Loại trừ bảo hiểm', x: 'Không bảo hiểm khi xe thay đổi thông số lốp la-zăng khác khuyến cáo của nhà sản xuất.' }] };
+
+test('matchDocs: khớp theo từ đặc trưng của tên/số hiệu, không chọn nhầm cả kho vì "quy tắc", "bảo hiểm"', () => {
+  const { L } = load();
+  const docs = [LUAT, ND, TASCO, OCAR];
+  assert.deepEqual(plain(L.matchDocs(docs, 'đổi sang dùng Quy tắc bảo hiểm Tasco')), ['tasco']);
+  assert.deepEqual(plain(L.matchDocs(docs, 'dẫn theo quy tắc Ocar 360')), ['ocar']);
+  assert.deepEqual(plain(L.matchDocs(docs, 'căn cứ Nghị định 67/2023')), ['nd']);
+  assert.deepEqual(plain(L.matchDocs(docs, 'viết ngắn gọn hơn, trang trọng hơn')), []);
+  assert.deepEqual(plain(L.matchDocs(docs, 'dùng quy tắc bảo hiểm')), [], 'chỉ có từ chung chung → không chọn');
+  assert.deepEqual(plain(L.matchDocs([], 'Tasco')), []);
+  assert.ok(L.LEGAL_WORDS.test('thêm căn cứ về thời hạn'));
+});
+
+test('retrieve({docIds}): chỉ tìm trong văn bản được chọn (Tasco, không lẫn Ocar 360)', async () => {
+  const ok = load();
+  ok.TascoLibStore = { list: async () => [TASCO, OCAR], index: async () => ok.S.build([TASCO, OCAR]) };
+  vm.runInContext('globalThis.TascoLibStore = this.TascoLibStore;', ok);
+  const q = ['thay đổi thông số lốp la-zăng khuyến cáo nhà sản xuất'];
+  const all = plain(await ok.L.retrieve(q));
+  assert.ok(all.sources.some(s => s.doc.includes('Ocar')) && all.sources.some(s => s.doc.includes('Tasco')));
+  const only = plain(await ok.L.retrieve(q, { docIds: ['tasco'] }));
+  assert.ok(only.sources.length && only.sources.every(s => s.doc.includes('Tasco')));
+  const docs = plain(await ok.L.listDocs());
+  assert.deepEqual(docs.map(d => d.id), ['tasco', 'ocar']);
+});

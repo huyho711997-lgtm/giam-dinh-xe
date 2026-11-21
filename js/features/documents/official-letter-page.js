@@ -32,7 +32,7 @@ const OfficialLetterPage = (() => {
 
   let host = null, controller = null, generation = 0, records = [], index = [];
   const st = {
-    templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [],
+    templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null,
     values: null, filledByAI: [], questions: [], extras: [], outline: [], outlineEdited: false, understanding: '', notes: '',
     insights: [], keyFacts: [], legalQueries: [], assumptions: [], sources: [], legalError: '', legalLoaded: false,
     letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
@@ -157,17 +157,60 @@ const OfficialLetterPage = (() => {
   // ---- Căn cứ pháp lý từ Thư viện tài liệu ----
   const Legal = () => (typeof OfficialLetterLegal !== 'undefined' ? OfficialLetterLegal : null);
   const activeSources = () => st.sources.filter(source => source.on !== false);
-  async function findLegal(extraQueries) {
+  const docOf = source => String(source.id || '').slice(0, String(source.id || '').lastIndexOf(':'));
+  const pinNames = () => { const names = (st.libDocs || []).filter(doc => st.legalPin.includes(doc.id)).map(doc => doc.name); return names.length ? names.join(', ') : 'văn bản đã chọn'; };
+  // hint: yêu cầu chỉnh sửa mới nhất (nếu có) — được tính là ý nhắc tới căn cứ; st.legalPin: văn bản người dùng đã chọn/nhắc tên → chỉ tìm trong đó.
+  async function findLegal(extraQueries, hint) {
     const L = Legal(), tpl = template();
     if (!L || !tpl) return;
-    const queries = L.buildQueries(tpl, dossierFor(), extraQueries, st.brief);
+    const queries = L.buildQueries(tpl, dossierFor(), (extraQueries || []).concat(hint ? [hint] : []), st.brief + (hint ? ' ' + hint : ''));
     if (!queries.length) { st.legalLoaded = true; st.legalError = ''; st.sources = st.sources.filter(source => source.manual); return; }
-    const result = await L.retrieve(queries);
+    const pinned = st.legalPin.length > 0;
+    const result = await L.retrieve(queries, pinned ? {docIds: st.legalPin} : {});
     st.legalLoaded = true; st.legalError = result.error;
+    if (pinned && !result.error && !result.sources.length) {
+      // Văn bản được chọn không có đoạn khớp: giữ nguyên căn cứ cũ, báo rõ thay vì xoá mất.
+      const names = pinNames(); st.legalPin = [];
+      notice('Thư viện không có đoạn nào khớp trong "' + names + '" — giữ nguyên căn cứ cũ. Hãy kiểm tra văn bản đã được nạp đủ chưa (Mở Thư viện tài liệu).', 'warn');
+      return;
+    }
     const offBefore = new Set(st.sources.filter(source => source.on === false).map(source => source.id));
-    const found = result.sources.map(source => ({...source, on: !offBefore.has(source.id)}));
+    const found = result.sources.map(source => ({...source, on: pinned || !offBefore.has(source.id)}));   // đã chọn văn bản → luôn bật (các đoạn bị tắt trước đó là do đổi văn bản)
     const manual = st.sources.filter(source => source.manual && !found.some(item => item.id === source.id));   // đoạn người dùng tự tìm thì giữ
-    st.sources = L.renumber(found.concat(manual));
+    // Đã chọn văn bản: các đoạn của văn bản khác tắt đi (vẫn giữ để người dùng bật lại nếu muốn).
+    const others = pinned ? st.sources.filter(source => !source.manual && !found.some(item => item.id === source.id) && !st.legalPin.includes(docOf(source))).map(source => ({...source, on: false})) : [];
+    st.sources = L.renumber(found.concat(manual, others));
+  }
+  async function loadLibDocs(force) {
+    const L = Legal();
+    if (!L || (st.libDocs && !force)) return;
+    st.libDocs = await L.listDocs();
+  }
+  // "Nhờ AI sửa" có nhắc căn cứ / tên văn bản → tra lại Thư viện (trước đây chỉ dùng lại căn cứ cũ nên AI không đổi được).
+  async function refineLegal(instruction) {
+    const L = Legal();
+    if (!L || !instruction) return;
+    await loadLibDocs();
+    const docs = typeof TascoLibStore !== 'undefined' ? await TascoLibStore.list().catch(() => []) : [];
+    const ids = L.matchDocs(docs, instruction);
+    if (!ids.length && !L.LEGAL_WORDS.test(instruction)) return;
+    if (ids.length) st.legalPin = ids;
+    setStatus('Đang tìm căn cứ…');
+    await findLegal(st.legalQueries, instruction);
+  }
+  // Chọn văn bản làm căn cứ: tra lại chỉ trong văn bản đó rồi để người dùng bấm "Soạn lại theo chi tiết này".
+  async function pickLegalDoc(id) {
+    if (st.busy) return;
+    collectAll();
+    st.legalPin = id ? [id] : [];
+    const my = generation;
+    setBusy('Đang tìm căn cứ…');
+    try {
+      await findLegal(st.legalQueries);
+      if (my !== generation) return;
+      if (!st.notice || st.notice.kind !== 'warn') toast(id ? 'Đã chọn căn cứ từ "' + pinNames() + '". Bấm "Soạn lại theo chi tiết này" để áp dụng.' : 'Đã bỏ chọn — căn cứ tự động theo vấn đề.', 'success');
+    } catch (error) { notice(error.message || 'Không tìm được căn cứ.', 'error'); }
+    finally { if (my === generation) { st.busy = ''; st.status = ''; renderAll(); } }
   }
   async function searchMoreLegal() {
     const input = $('[data-ol-legal-q]');
@@ -178,7 +221,7 @@ const OfficialLetterPage = (() => {
     const my = generation;
     setBusy('Đang tìm căn cứ…');
     try {
-      const result = await L.retrieve([query], {limit: 4});
+      const result = await L.retrieve([query], {limit: 4, docIds: st.legalPin});
       if (my !== generation) return;
       const known = new Set(st.sources.map(source => source.id));
       const added = result.sources.filter(source => !known.has(source.id)).map(source => ({...source, manual: true}));
@@ -299,6 +342,8 @@ const OfficialLetterPage = (() => {
       // Tệp kèm theo yêu cầu sửa: đọc/nén trước khi gửi; chỉ dùng cho lần sửa này.
       const attachments = [];
       for (const item of sent) attachments.push(await prepareFile(item.file));
+      if (instruction) await refineLegal(instruction);
+      if (my !== generation) return;
       await composeCore(instruction || '', attachments);
       if (sent.length) { st.refineFiles = st.refineFiles.filter(item => !sent.includes(item)); releaseFiles(sent); }
       if (my !== generation) return;
@@ -559,7 +604,7 @@ const OfficialLetterPage = (() => {
     if (!st.letter || !Legal()) return '';
     const checks = citationChecks(), byCode = new Map(st.sources.map(source => [source.code, source]));
     if (!checks.length) return '';
-    return '<div class="ola-note-block"><h3>Căn cứ trong công văn</h3><ul class="ola-cites">' + checks.map(item => item.ok
+    return '<div class="ola-note-block"><h3>Căn cứ trong công văn <button type="button" class="ol-link" data-ol-drawer="legal">Đổi căn cứ</button></h3><ul class="ola-cites">' + checks.map(item => item.ok
       ? '<li class="is-ok" title="' + esc(item.codes.map(code => byCode.get(code)).filter(Boolean).map(source => source.doc + ' – ' + source.title).join('; ')) + '">✓ ' + esc(item.mention) + '</li>'
       : '<li class="is-bad" title="Không có trong căn cứ đã chọn từ thư viện">⚠ ' + esc(item.mention) + '<small>Không có trong thư viện — kiểm tra lại</small></li>').join('') + '</ul></div>';
   }
@@ -633,7 +678,11 @@ const OfficialLetterPage = (() => {
       + '<details class="ol-src-text"><summary>Nguyên văn</summary><p>' + esc(String(source.text).slice(0, 1800)) + '</p>' + (source.link ? '<a href="' + esc(source.link) + '" target="_blank" rel="noopener noreferrer">Mở văn bản gốc</a>' : '') + '</details></div>').join('');
     const status = st.legalError ? '<p class="ol-warn">' + esc(st.legalError) + lib + '</p>'
       : !st.sources.length ? '<p class="olp-hint">' + (L.needsBasis(template(), st.brief) ? 'Không có đoạn nào trong thư viện khớp đúng vấn đề.' : 'Loại công văn này không cần viện dẫn điều luật.') + lib + '</p>' : '';
-    return status + (rows ? '<div class="ol-srcs">' + rows + '</div>' : '')
+    const docs = st.libDocs || [];
+    const picker = docs.length ? '<label class="ol-legal-doc"><span>Chọn căn cứ từ văn bản</span><select data-ol-legal-doc aria-label="Chọn văn bản làm căn cứ"><option value="">Tự động — tất cả văn bản</option>'
+      + docs.map(doc => '<option value="' + esc(doc.id) + '"' + (st.legalPin[0] === doc.id ? ' selected' : '') + (doc.active ? '' : ' disabled') + '>' + esc(doc.name + (doc.soHieu && !fold(doc.name).includes(fold(doc.soHieu)) ? ' (' + doc.soHieu + ')' : '') + (doc.active ? '' : ' — hết hiệu lực')) + '</option>').join('')
+      + '</select></label>' : '';
+    return picker + status + (rows ? '<div class="ol-srcs">' + rows + '</div>' : '')
       + '<div class="ol-legal-search"><input data-ol-legal-q maxlength="160" placeholder="Tìm căn cứ, VD: thời hạn giải quyết bồi thường" aria-label="Tìm căn cứ"><button type="button" class="olp-tool" data-ol-act="legal-search">Tìm</button></div>';
   }
   function dossierBody() {
@@ -754,7 +803,7 @@ const OfficialLetterPage = (() => {
     generation++; controller?.abort(); controller = null;
     resetAnalysis();
     releaseFiles(st.files); releaseFiles(st.refineFiles);
-    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, historyId: '', savedRecordLabel: ''});
+    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, historyId: '', savedRecordLabel: ''});
   }
   const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Bỏ công văn đang soạn để bắt đầu công văn mới?');
 
@@ -795,7 +844,7 @@ const OfficialLetterPage = (() => {
       return;
     }
     const drawerTab = target.closest('[data-ol-drawer]');
-    if (drawerTab) { collectAll(); st.drawer = drawerTab.dataset.olDrawer; renderAll(); return; }
+    if (drawerTab) { collectAll(); st.drawer = drawerTab.dataset.olDrawer; renderAll(); if (st.drawer === 'legal' && !st.libDocs) loadLibDocs().then(() => { if (st.drawer === 'legal') renderAll(); }); return; }
     if (target.closest('[data-ol-drawer-close]')) { collectAll(); st.drawer = ''; renderAll(); return; }
     const act = target.closest('[data-ol-act]');
     if (!act) return;
@@ -831,6 +880,7 @@ const OfficialLetterPage = (() => {
   }
   function onChange(event) {
     const target = event.target;
+    if (target.matches('[data-ol-legal-doc]')) { pickLegalDoc(target.value); return; }
     if (target.matches('[data-ol-files]')) { addFiles(target.files, target.dataset.olFiles === 'refine' ? 'refineFiles' : 'files'); target.value = ''; }
     else if (target.matches('[data-ol-outline-on]')) st.outlineEdited = true;
     else if (target.matches('[data-ol-src-on]')) { const source = st.sources[Number(target.dataset.olSrcOn)]; if (source) { source.on = target.checked; target.closest('.ol-src').classList.toggle('is-off', !target.checked); } }

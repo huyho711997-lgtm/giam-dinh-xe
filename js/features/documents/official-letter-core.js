@@ -158,6 +158,7 @@ const OfficialLetterCore = (() => {
     + '(6) CĂN CỨ PHÁP LÝ: mặc định KHÔNG viện dẫn điều luật — công văn đề nghị, thông báo, nhắc bổ sung thông thường không cần và không mở đầu bằng "Căn cứ…". '
     + 'Chỉ viện dẫn khi công văn đưa ra kết luận/yêu cầu cần cơ sở pháp lý (giảm trừ, từ chối, kết quả bồi thường, giải trình) VÀ có đoạn trong "CĂN CỨ TỪ THƯ VIỆN" quy định ĐÚNG vấn đề đó; đoạn chỉ liên quan gián tiếp thì bỏ qua; nghi ngờ thì không viện dẫn. '
     + 'Khi viện dẫn: tối đa 2 căn cứ, đặt ngay tại câu cần căn cứ (không gom thành đoạn "Căn cứ…" ở đầu), ghi đúng tên văn bản, số hiệu, số điều/khoản như đoạn trích, không suy rộng nội dung; tuyệt đối không dẫn văn bản/điều nào khác theo trí nhớ; không ghi mã [C1] vào nội dung. Liệt kê mã đã dùng trong "basis" (không dùng thì []). '
+    + '(7) Khi "YÊU CẦU CHỈNH SỬA MỚI NHẤT" chỉ định văn bản/điều khoản cần viện dẫn (VD "dùng Quy tắc Tasco"): viện dẫn ĐÚNG văn bản đó từ "CĂN CỨ TỪ THƯ VIỆN" và THAY căn cứ cũ trong bản nháp nếu khác; nếu văn bản đó không có trong phần căn cứ thì KHÔNG tự dẫn theo trí nhớ — để "……" và ghi rõ vào "warnings". '
     + '(5) Dùng đúng dàn ý được cung cấp (có thể gộp ý quá ngắn); mỗi đoạn là một ý trọn vẹn, đoạn liệt kê dùng loại "li". Thông tin người dùng đã làm rõ có hiệu lực cao hơn dữ liệu cũ. '
     + 'Chỉ trả về JSON: {"subject":"<trích yếu, bắt đầu bằng chữ thường sau V/v, không quá 200 ký tự>","paragraphs":[{"type":"p|h|li","text":"..."}],"warnings":["<điều cần người dùng kiểm tra lại>"],"basis":[{"code":"C1","cite":"<cách đã viện dẫn>"}]}.';
 
