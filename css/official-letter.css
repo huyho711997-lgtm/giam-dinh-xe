@@ -116,3 +116,20 @@ mark.ol-gap { background:#ffe58a; color:#000; padding:0 2px; border-radius:2px; 
 .ol-add:hover { background:color-mix(in srgb,var(--primary) 10%,transparent); }
 .ol-warn[hidden] { display:none; }
 @media (max-width:760px) { .ol-extra-row { grid-template-columns:1fr 28px; } .ol-extra-row [data-ol-extra-value] { grid-column:1; } }
+
+/* Khối "Phân tích hồ sơ": nhận định quy tắc + AI, dữ kiện sẽ nêu, chi tiết hồ sơ thu gọn */
+.ol-dossier .ol-dos-h { margin:12px 0 6px; color:var(--text-muted); font-size:11px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+.ol-facts, .ol-keyfacts { margin:0; padding:0; list-style:none; display:grid; gap:5px; }
+.ol-fact { position:relative; padding:7px 10px 7px 26px; border:1px solid var(--border); border-radius:9px; font-size:12.5px; line-height:1.5; }
+.ol-fact::before { content:""; position:absolute; left:10px; top:13px; width:7px; height:7px; border-radius:50%; background:var(--text-muted); }
+.ol-fact--warn { border-color:color-mix(in srgb,#f59e0b 45%,var(--border)); background:color-mix(in srgb,#f59e0b 8%,transparent); }
+.ol-fact--warn::before { background:#f59e0b; }
+.ol-keyfacts li { padding-left:16px; position:relative; font-size:12.5px; line-height:1.5; }
+.ol-keyfacts li::before { content:"✓"; position:absolute; left:0; color:var(--primary); font-weight:800; }
+.ol-dos-detail { margin-top:10px; border-top:1px dashed var(--border); padding-top:8px; }
+.ol-dos-detail summary { cursor:pointer; color:var(--primary); font-size:12px; font-weight:700; }
+.ol-dos-sec h5 { margin:10px 0 4px; font-size:12px; font-weight:800; }
+.ol-dos-sec dl { display:grid; grid-template-columns:minmax(120px,34%) 1fr; gap:3px 10px; margin:0; font-size:12px; }
+.ol-dos-sec dt { color:var(--text-muted); }
+.ol-dos-sec dd { margin:0; word-break:break-word; }
+@media (max-width:560px) { .ol-dos-sec dl { grid-template-columns:1fr; } .ol-dos-sec dd { margin-bottom:4px; } }

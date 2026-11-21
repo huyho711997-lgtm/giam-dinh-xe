@@ -72,6 +72,12 @@ Mở **Công văn AI** (nhóm Nghiệp vụ, đường dẫn `#cong-van-ai`; dù
 
 Thêm mẫu mới: thêm một phần tử vào `OFFICIAL_LETTER_TEMPLATES` trong `js/data/official-letter-templates.js` (trường nhập, dàn ý, lời kết); không cần sửa mã khác. Sáu mẫu hiện có là mẫu khởi đầu, nên thay bằng công văn thật của đơn vị. Thông tin đơn vị ban hành (tên, người ký, địa chỉ…) chỉnh ở nút ⚙️ trên đầu khung, lưu trên máy.
 
+### Đọc sâu hồ sơ (`official-letter-dossier.js`)
+Khi chọn hồ sơ, AI không nhận bản ghi thô nữa mà nhận "hồ sơ đọc được" do `OfficialLetterDossier` dựng:
+- Nhóm theo nghiệp vụ, nhãn tiếng Việt (định danh, khách hàng, xe, hợp đồng, vụ tổn thất, giám định & xử lý, mốc thời gian, tài chính, ghi chú); ngày dạng dd/mm/yyyy, tiền dạng `1.234.567 đ`; giữ diễn biến/mô tả dài (tới 1.500 ký tự); có hạng mục tổn thất/báo giá/yêu cầu ảnh, thông tin giảm trừ (`thongBaoGiamTru`), 8 ghi chú tiến độ mới nhất (`pending_notes`) và tối đa 6 hồ sơ khác cùng biển số. Bỏ CCCD/CMND/GPLX, ảnh, đường dẫn, mã kỹ thuật.
+- **Nhận định tính sẵn** (quy tắc, không do AI đoán): ngày tổn thất trong/ngoài thời hạn BH, tổn thất sát ngày hiệu lực/hết hạn, phí đóng sau ngày tổn thất, số ngày báo tổn thất (quá 5 ngày → lưu ý), số ngày hồ sơ đã mở, đã/chưa nhận đủ hồ sơ, giai đoạn & bước kế tiếp, PASC so với ước thiệt hại, đã thanh toán/còn lại, thiệt hại ≥75% số tiền BH, đồng bảo hiểm, giảm trừ, từ chối, mục quan trọng còn trống.
+- Bước phân tích trả thêm `insights` (nhận định của AI cho đúng công văn này) và `keyFacts` (dữ kiện cụ thể sẽ nêu); bước soạn nhận cả hồ sơ, nhận định và dữ kiện nên viết cụ thể theo vụ việc thay vì câu chung chung. Tất cả hiện ở khối **Phân tích hồ sơ** (lưu ý màu cam lên đầu, mở "Xem toàn bộ hồ sơ AI đã đọc" để đối chiếu).
+
 ## Biểu mẫu dùng chung
 
 Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở trang chủ. Trang hỗ trợ tìm kiếm không dấu, lọc loại file, phân loại, sắp xếp, phân trang, tải nhiều file, sửa tên/phân loại/ghi chú và xóa khỏi thư viện. Hai mẫu Word có sẵn của dự án luôn hiển thị. Người đã đăng nhập được xem và tải lên; người tải quản lý file của mình, người có quyền `users.admin` quản lý toàn bộ.

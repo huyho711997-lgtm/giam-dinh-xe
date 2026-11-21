@@ -19,7 +19,7 @@ const OfficialLetterPage = (() => {
   };
 
   let host = null, controller = null, generation = 0, records = [], index = [];
-  const st = {templateId: '', recordKey: '', recQuery: '', recActive: 0, brief: '', files: [], values: null, filledByAI: [], questions: [], extras: [], outline: [], outlineEdited: false, understanding: '', notes: '', letter: null, history: [], recordShown: '', busy: '', status: ''};
+  const st = {templateId: '', recordKey: '', recQuery: '', recActive: 0, brief: '', files: [], values: null, filledByAI: [], questions: [], extras: [], outline: [], outlineEdited: false, understanding: '', notes: '', insights: [], keyFacts: [], letter: null, history: [], recordShown: '', busy: '', status: ''};
 
   // ---- Đơn vị ban hành (nhớ trên máy) ----
   const loadIssuer = () => { try { return Core().normalizeIssuer(JSON.parse(localStorage.getItem(ISSUER_KEY) || '{}')); } catch (_) { return Core().normalizeIssuer({}); } };
@@ -55,6 +55,20 @@ const OfficialLetterPage = (() => {
   }
   const chosenRecord = () => index.find(item => item.row.key === st.recordKey) || null;
   const currentRecord = () => { const found = chosenRecord(); return found ? found.row.record : null; };
+  // Hồ sơ đọc được cho AI: nhóm có nhãn + nhận định tính sẵn + ghi chú tiến độ + hồ sơ khác cùng biển số.
+  function dossierFor() {
+    const found = chosenRecord();
+    if (!found || typeof OfficialLetterDossier === 'undefined') return null;
+    const D = OfficialLetterDossier, record = found.row.record || {}, id = found.row.key.split(':').slice(1).join(':');
+    const notesStore = typeof cachedPendingNotesPayload !== 'undefined' && cachedPendingNotesPayload ? cachedPendingNotesPayload : {};
+    const notes = Object.values((notesStore[D.notesKey(record, id)] || {}).history || {}).filter(note => note && typeof note === 'object');
+    const plate = D.plateKey(record.bienSo);
+    // Cùng biển số nhưng là vụ khác (khác số HS/mã VTT/ngày tổn thất); bản ghi giám định của chính vụ này không tính.
+    const sameCase = other => ['soHoSoBoiThuong', 'maVuTonThat'].some(key => record[key] && other[key] && String(record[key]).trim() === String(other[key]).trim())
+      || (D.dayNumber(record.ngayTonThat || record.ngayVTT) && D.dayNumber(record.ngayTonThat || record.ngayVTT) === D.dayNumber(other.ngayTonThat || other.ngayVTT));
+    const related = plate ? records.filter(row => row.key !== found.row.key && row.group === 'Hồ sơ tồn' && D.plateKey(row.record && row.record.bienSo) === plate && !sameCase(row.record)).map(row => row.record) : [];
+    return D.build(record, {group: found.row.group, notes, related});
+  }
   const recordLabel = info => [info.plate, info.owner, info.code && 'HS ' + info.code].filter(Boolean).join(' · ') || 'Hồ sơ đã chọn';
 
   function recordItemHtml(item, active) {
@@ -123,6 +137,7 @@ const OfficialLetterPage = (() => {
   }
   const say = (role, text, extra) => st.history.push({role, text, ...(extra || {})});
 
+  const dossierText = () => { const dossier = dossierFor(); return dossier && typeof OfficialLetterDossier !== 'undefined' ? OfficialLetterDossier.toText(dossier) : ''; };
   const answeredList = () => st.questions.filter(item => item.answer).map(item => ({question: item.question, answer: item.answer}));
   const defaultOutline = () => (template() ? template().outline : []).map(text => ({text, on: true}));
 
@@ -137,7 +152,7 @@ const OfficialLetterPage = (() => {
       const files = [];
       for (const item of newFiles) files.push(await prepareFile(item.file));
       const raw = await callAI(Core().buildAnalyzeRequest(tpl, {
-        record: currentRecord() ? SharedFormsAI.describeRecord(currentRecord()) : {}, current, brief: st.brief, files,
+        record: currentRecord() ? SharedFormsAI.describeRecord(currentRecord()) : {}, dossier: dossierText(), current, brief: st.brief, files,
         answered: answeredList(), extras: st.extras, outline: st.outlineEdited ? st.outline.filter(item => item.on).map(item => item.text) : undefined
       }));
       if (my !== generation) return;
@@ -152,6 +167,8 @@ const OfficialLetterPage = (() => {
       st.extras = st.extras.concat(analysis.extras.filter(item => !labels.has(fold(item.label))));
       if (!st.outlineEdited) st.outline = (analysis.outline.length ? analysis.outline.map(text => ({text, on: true})) : defaultOutline());
       st.understanding = analysis.understanding; st.notes = analysis.notes;
+      if (analysis.insights.length) st.insights = analysis.insights;
+      if (analysis.keyFacts.length) st.keyFacts = analysis.keyFacts;
       const missing = Core().missingFields(tpl, st.values);
       const open = st.questions.filter(item => !item.answer).length;
       say('ai', (analysis.understanding ? 'Tôi hiểu yêu cầu của bạn như sau: ' + analysis.understanding : 'Đã đọc xong thông tin.')
@@ -182,7 +199,7 @@ const OfficialLetterPage = (() => {
       const issuer = loadIssuer();
       const previous = instruction && st.letter ? st.letter.paragraphs.map(p => p.text).join('\n') : '';
       const brief = st.brief + (instruction ? '\nYÊU CẦU CHỈNH SỬA MỚI NHẤT: ' + instruction : '');
-      const ctx = {outline: st.outline.filter(item => item.on).map(item => item.text).filter(text => Core().single(text, 1)), extras: st.extras, answers: answeredList(), understanding: st.understanding};
+      const ctx = {outline: st.outline.filter(item => item.on).map(item => item.text).filter(text => Core().single(text, 1)), extras: st.extras, answers: answeredList(), understanding: st.understanding, keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText()};
       const raw = await callAI(Core().buildComposeRequest(tpl, st.values, issuer, brief, previous, ctx));
       if (my !== generation) return;
       const parsed = Core().parseLetter(raw);
@@ -296,7 +313,7 @@ const OfficialLetterPage = (() => {
       : (index.length ? '<div class="ol-rec"><label class="ol-rec-search">' + svg(ICON.search) + '<input type="search" data-ol-rec-q autocomplete="off" spellcheck="false" placeholder="Tìm hồ sơ: biển số, số hồ sơ, tên chủ xe, số GCN…" value="' + esc(st.recQuery) + '" aria-label="Tìm hồ sơ"></label>'
         + '<div class="ol-rec-list" data-ol-rec-list role="listbox" aria-label="Kết quả tìm hồ sơ"></div><small class="ol-rec-count" data-ol-rec-count></small></div>'
         : '<p class="ol-muted">Chưa có dữ liệu hồ sơ trên trang này — bạn vẫn có thể gõ ý chính hoặc đính kèm ảnh/PDF.</p>');
-    return '<div class="msg-bubble msg-ai ol-wide"><p>Đưa cho tôi thông tin đầu vào — dùng một hoặc nhiều cách:</p><ol class="ol-ways"><li><b>Tìm và chọn hồ sơ</b> để lấy sẵn biển số, chủ xe, ngày và địa điểm tổn thất…</li><li><b>Gõ ý chính</b> cần viết ở khung chat bên dưới.</li><li><b>Đính kèm ảnh/PDF</b> (biên bản, giấy tờ, công văn nhận được) bằng nút ghim.</li></ol>'
+    return '<div class="msg-bubble msg-ai ol-wide"><p>Đưa cho tôi thông tin đầu vào — dùng một hoặc nhiều cách:</p><ol class="ol-ways"><li><b>Tìm và chọn hồ sơ</b> — AI đọc toàn bộ hồ sơ: diễn biến, mốc xử lý, tài chính, giảm trừ, ghi chú tiến độ, hồ sơ cùng biển số…</li><li><b>Gõ ý chính</b> cần viết ở khung chat bên dưới.</li><li><b>Đính kèm ảnh/PDF</b> (biên bản, giấy tờ, công văn nhận được) bằng nút ghim.</li></ol>'
       + picker + '<p class="ol-muted">Xong thì bấm Gửi. Nội dung hồ sơ, ý chính và tệp đính kèm được gửi tới Google Gemini để phân tích.</p></div>';
   }
 
@@ -307,6 +324,24 @@ const OfficialLetterPage = (() => {
       return '<div class="msg-bubble msg-user">' + thumbs + record + (message.text ? esc(message.text) : (message.files && message.files.length ? '<i>Đã gửi ' + message.files.length + ' tệp</i>' : (message.record ? '<i>Dùng thông tin từ hồ sơ</i>' : ''))) + '</div>';
     }
     return '<div class="msg-bubble msg-ai' + (message.error ? ' ol-error' : '') + '" role="' + (message.error ? 'alert' : 'status') + '"><p>' + esc(message.text) + '</p></div>';
+  }
+
+  // Khối "Hồ sơ AI đã đọc": nhận định (quy tắc + AI), dữ kiện sẽ nêu, chi tiết hồ sơ thu gọn.
+  function dossierBlock() {
+    if (!st.values) return '';
+    const dossier = dossierFor();
+    if (!dossier && !st.insights.length && !st.keyFacts.length) return '';
+    const warnFirst = list => list.filter(item => item.level === 'warn').concat(list.filter(item => item.level !== 'warn'));
+    const facts = dossier ? warnFirst(dossier.facts) : [];
+    const li = item => '<li class="ol-fact ol-fact--' + (item.level === 'warn' ? 'warn' : 'info') + '">' + esc(item.text) + '</li>';
+    const rows = dossier ? dossier.sections.map(section => '<div class="ol-dos-sec"><h5>' + esc(section.title) + '</h5><dl>' + section.rows.map(([label, value]) => '<dt>' + esc(label) + '</dt><dd>' + esc(value) + '</dd>').join('') + '</dl></div>').join('') : '';
+    const count = dossier ? dossier.sections.reduce((sum, section) => sum + section.rows.length, 0) : 0;
+    return '<div class="msg-bubble msg-ai ol-wide ol-dossier" data-ol-block="dossier"><p><b>Phân tích hồ sơ</b>' + (dossier ? ' <span class="ol-q-count">' + count + ' thông tin · ' + facts.filter(f => f.level === 'warn').length + ' lưu ý</span>' : '') + '</p>'
+      + (facts.length ? '<p class="ol-dos-h">Hệ thống tính từ dữ liệu</p><ul class="ol-facts">' + facts.map(li).join('') + '</ul>' : '')
+      + (st.insights.length ? '<p class="ol-dos-h">AI nhận định cho công văn này</p><ul class="ol-facts">' + warnFirst(st.insights).map(li).join('') + '</ul>' : '')
+      + (st.keyFacts.length ? '<p class="ol-dos-h">Dữ kiện sẽ nêu trong công văn</p><ul class="ol-keyfacts">' + st.keyFacts.map(text => '<li>' + esc(text) + '</li>').join('') + '</ul>' : '')
+      + (dossier && dossier.gaps.length ? '<p class="ol-muted">Hồ sơ còn trống: ' + esc(dossier.gaps.join(', ')) + '.</p>' : '')
+      + (rows ? '<details class="ol-dos-detail"><summary>Xem toàn bộ hồ sơ AI đã đọc</summary>' + rows + '</details>' : '') + '</div>';
   }
 
   function fieldInput(field, value) {
@@ -369,7 +404,7 @@ const OfficialLetterPage = (() => {
   function bodyHtml() {
     const stage = name => st.history.filter(item => (item.stage || 'a') === name).map(messageHtml).join('');
     const lock = html => st.busy ? html.replace('<div class="msg-bubble', '<div inert class="msg-bubble') : html; // đang chạy AI: khóa chỉnh sửa để không bị ghi đè khi vẽ lại
-    return templateBlock() + inputBlock() + stage('a') + lock(questionsBlock()) + lock(fieldsBlock()) + lock(outlineBlock()) + stage('b') + lock(letterBlock()) + typingHtml();
+    return templateBlock() + inputBlock() + stage('a') + dossierBlock() + lock(questionsBlock()) + lock(fieldsBlock()) + lock(outlineBlock()) + stage('b') + lock(letterBlock()) + typingHtml();
   }
 
   function renderHeader() {
@@ -447,7 +482,7 @@ const OfficialLetterPage = (() => {
   // ---- Đặt lại ----
   function reset(keepRecordAndFiles) {
     generation++; controller?.abort(); controller = null;
-    st.templateId = ''; st.values = null; st.filledByAI = []; st.questions = []; st.extras = []; st.outline = []; st.outlineEdited = false; st.understanding = ''; st.notes = ''; st.letter = null; st.history = []; st.brief = ''; st.busy = ''; st.status = ''; st.recordShown = ''; st.recQuery = ''; st.recActive = 0;
+    st.templateId = ''; st.values = null; st.filledByAI = []; st.questions = []; st.extras = []; st.outline = []; st.outlineEdited = false; st.understanding = ''; st.notes = ''; st.insights = []; st.keyFacts = []; st.letter = null; st.history = []; st.brief = ''; st.busy = ''; st.status = ''; st.recordShown = ''; st.recQuery = ''; st.recActive = 0;
     if (!keepRecordAndFiles) { st.recordKey = ''; releaseFiles(st.files); st.files = []; }
   }
   const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Thao tác này sẽ bỏ nội dung đang soạn. Tiếp tục?');
@@ -484,8 +519,8 @@ const OfficialLetterPage = (() => {
     const tplButton = target.closest('[data-ol-template]');
     if (tplButton) { st.templateId = tplButton.dataset.olTemplate; renderAll('end'); return; }
     const pick = target.closest('[data-ol-pick]');
-    if (pick) { st.recordKey = pick.dataset.olPick; st.recQuery = ''; renderAll('end'); $('[data-ol-input]')?.focus(); return; }
-    if (target.closest('[data-ol-rec-clear]')) { st.recordKey = ''; renderAll('end'); return; }
+    if (pick) { st.recordKey = pick.dataset.olPick; st.insights = []; st.keyFacts = []; st.recQuery = ''; renderAll('end'); $('[data-ol-input]')?.focus(); return; }
+    if (target.closest('[data-ol-rec-clear]')) { st.recordKey = ''; st.insights = []; st.keyFacts = []; renderAll('end'); return; }
     const removeFile = target.closest('[data-ol-remove-file]');
     if (removeFile) { const [gone] = st.files.splice(Number(removeFile.dataset.olRemoveFile), 1); if (gone) releaseFiles([gone]); syncComposer(); return; }
     const opt = target.closest('[data-ol-q-opt]');
