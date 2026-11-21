@@ -143,3 +143,48 @@ test('soạn theo dàn ý người dùng duyệt + thông tin làm rõ, không d
   const fallback = Core.buildComposeRequest(t, {}, {}, '', '', {outline: []}).contents[0].parts[0].text;
   assert.ok(fallback.includes(t.outline[0]));
 });
+
+test('mẫu "từ chối – thông số lốp": có trong danh sách, trường then chốt, prefill từ hồ sơ, số công văn = số hồ sơ', () => {
+  const t = tpl('tu_choi_thong_so_lop');
+  assert.ok(t, 'thiếu mẫu từ chối thông số lốp');
+  assert.equal(Templates.at(-1).id, 'tu_do', 'mẫu tự do luôn đứng cuối');
+  const required = t.fields.filter(f => f.required).map(f => f.key);
+  for (const key of ['recipient', 'claimNo', 'plate', 'lossTime', 'standardTyre', 'fittedTyre']) assert.ok(required.includes(key), key + ' phải bắt buộc');
+  const v = Core.prefillValues(t, {bienSo: '47A-570.85', soHoSoBoiThuong: 'HSBT/XCG/2026/0105661', khachHang: 'NGUYỄN NGỌC DŨNG', soGcn: 'VCX2603/473789', ngayVTT: '10/11/2026'}, {phone: '19001562', address: 'Hà Nội'});
+  assert.equal(v.claimNo, 'HSBT/XCG/2026/0105661'); assert.equal(v.plate, '47A-570.85'); assert.equal(v.certificate, 'VCX2603/473789'); assert.equal(v.phone, '19001562');
+  assert.equal(v.fittedTyre, '', 'thông số lốp đang lắp không được tự đoán');
+  const parsed = Core.parseLetter(JSON.stringify({subject: 'thông báo kết quả giải quyết bồi thường', paragraphs: [{type: 'p', text: 'Lời đầu tiên…'}]}));
+  const letter = Core.assembleLetter(t, v, {}, parsed, '2026-11-13');
+  assert.equal(letter.number, 'HSBT/XCG/2026/0105661');
+  assert.equal(Core.numberLine(letter), 'Số: HSBT/XCG/2026/0105661');
+  const tail = letter.paragraphs.map(p => p.text);
+  assert.ok(tail.includes('Công ty TNHH Bảo Hiểm Tasco – Điện thoại: 19001562') && tail.includes('Địa chỉ: Hà Nội') && tail.at(-1) === 'Trân trọng kính chào!');
+  // mẫu khác không có numberKey → số để trống như cũ
+  const other = tpl('de_nghi_cung_cap_ho_so');
+  assert.equal(Core.assembleLetter(other, Core.prefillValues(other, {}, {}), {}, parsed, '2026-11-13').number, '');
+});
+
+test('công văn mẫu tham khảo: đưa vào yêu cầu soạn kèm cấm chép dữ kiện; mẫu không có sample thì không thêm', () => {
+  const t = tpl('tu_choi_thong_so_lop');
+  const text = Core.buildComposeRequest(t, Core.prefillValues(t, {bienSo: '47A-1'}, {}), {}, '').contents[0].parts[0].text;
+  assert.match(text, /CÔNG VĂN MẪU THAM KHẢO/);
+  assert.match(text, /không chép dữ kiện/);
+  assert.ok(text.includes('| Trích') && text.includes('| Kết thúc trích'));
+  assert.ok(!/47A-570\.85|NGUYỄN NGỌC|VA-1769601|0105661/.test(JSON.stringify(t.sample)), 'mẫu tham khảo phải ẩn thông tin cá nhân');
+  const plain = tpl('de_nghi_cung_cap_ho_so');
+  assert.ok(!/CÔNG VĂN MẪU THAM KHẢO/.test(Core.buildComposeRequest(plain, Core.prefillValues(plain, {}, {}), {}, '').contents[0].parts[0].text));
+});
+
+test('sửa công văn: tệp đính kèm đi kèm yêu cầu chỉnh dưới dạng inlineData, không có tệp thì chỉ văn bản', () => {
+  const t = tpl('tu_choi_thong_so_lop');
+  const none = Core.buildComposeRequest(t, {}, {}, 'sửa', 'bản nháp', {});
+  assert.equal(none.contents[0].parts.length, 1);
+  assert.ok(!/TỆP ĐÍNH KÈM CỦA NGƯỜI DÙNG/.test(none.contents[0].parts[0].text));
+  const req = Core.buildComposeRequest(t, {}, {}, 'sửa', 'bản nháp', {files: [{name: 'giay-to.pdf', mimeType: 'application/pdf', data: 'QUJD'}, {name: 'anh.jpg', mimeType: 'image/jpeg', data: 'REVG'}, {name: 'hong', mimeType: '', data: ''}]});
+  const parts = req.contents[0].parts;
+  assert.equal(parts.length, 5); // văn bản + 2×(nhãn + dữ liệu); tệp rỗng bị bỏ
+  assert.ok(/TỆP ĐÍNH KÈM CỦA NGƯỜI DÙNG \(2 tệp/.test(parts[0].text));
+  assert.equal(parts[2].inlineData.mimeType, 'application/pdf'); assert.equal(parts[2].inlineData.data, 'QUJD');
+  assert.ok(/giay-to\.pdf/.test(parts[1].text) && /anh\.jpg/.test(parts[3].text));
+  assert.equal(parts[4].inlineData.mimeType, 'image/jpeg'); assert.equal(parts[4].inlineData.data, 'REVG');
+});

@@ -7,6 +7,8 @@
 //                                     record: khoá có thể lấy thẳng từ hồ sơ (ưu tiên hơn AI); setting: lấy từ "Thông tin đơn vị ban hành"
 //   outline[]                       : dàn ý các đoạn AI cần viết (theo thứ tự)
 //   closing[]                       : đoạn kết cố định, ghép sau phần AI viết; {key} được thay bằng giá trị trường (trống → "……")
+//   sample[]  (tuỳ chọn)            : công văn thật đã ban hành, ĐÃ ẨN thông tin cá nhân — đưa cho AI học cấu trúc/giọng văn (không chép dữ kiện)
+//   numberKey (tuỳ chọn)            : khoá trường dùng làm "Số:" của công văn (VD số hồ sơ bồi thường)
 // Đây là các MẪU KHỞI ĐẦU theo nghiệp vụ giám định/bồi thường; thay bằng mẫu công văn thật của đơn vị khi có.
 const OFFICIAL_LETTER_TEMPLATES = [
   {
@@ -126,6 +128,70 @@ const OFFICIAL_LETTER_TEMPLATES = [
       'Đoạn kiến nghị/đề xuất (nếu người dùng nêu).'
     ],
     closing: ['Bảo hiểm Tasco xin thông tin để Quý cơ quan được biết. Mọi thông tin xin liên hệ {contactPerson}, điện thoại {phone}.', 'Trân trọng!']
+  },
+  {
+    id: 'tu_choi_thong_so_lop', name: 'Từ chối bồi thường – sai thông số lốp', group: 'Từ chối bồi thường',
+    summary: 'Thông báo từ chối khi xe lắp lốp có thông số khác GCN kiểm định / tem nhà sản xuất (điểm loại trừ chung, Quy tắc bảo hiểm xe cơ giới).',
+    audience: 'Chủ xe / khách hàng',
+    purpose: 'Công văn của Bảo hiểm Tasco THÔNG BÁO KẾT QUẢ GIẢI QUYẾT BỒI THƯỜNG theo hướng TỪ CHỐI vì tại thời điểm tổn thất xe đang lắp lốp có thông số khác với thông số tiêu chuẩn '
+      + '(ghi trên Giấy chứng nhận kiểm định an toàn kỹ thuật và bảo vệ môi trường, tem thông số của nhà sản xuất), làm thay đổi chiều cao hông/kết cấu lốp so với thiết kế — thuộc điểm loại trừ chung của Quy tắc bảo hiểm. '
+      + 'Giọng văn lịch sự, khách quan, tiếc nuối nhưng rõ ràng; không quy kết lỗi cá nhân, không hứa hẹn bồi thường. Viết nguyên dạng các thông số (VD 195/60R16), số giấy tờ, ngày giờ như dữ liệu đã có. '
+      + 'Thông số lốp ĐANG LẮP chỉ nêu khi người dùng/hồ sơ đã cung cấp (đọc từ ảnh giám định); chưa có thì để "……", không đoán. '
+      + 'Phần trích điều khoản loại trừ chỉ dùng nguyên văn do trường "Nguyên văn điều khoản loại trừ" hoặc CĂN CỨ TỪ THƯ VIỆN cung cấp; không có thì viết chung "theo quy định của Quy tắc bảo hiểm" và ghi vào warnings. '
+      + 'Hãy bám cấu trúc của CÔNG VĂN MẪU THAM KHẢO nhưng chỉ dùng dữ kiện của vụ việc này.',
+    numberKey: 'claimNo',
+    fields: [
+      { key: 'recipient', label: 'Kính gửi (khách hàng)', type: 'text', required: true, record: ['khachHang', 'chuXe', 'tenChuXe'], hint: 'VD: Ông NGUYỄN VĂN A – Chủ xe ô tô mang BKS 47A-123.45', max: 250 },
+      { key: 'claimNo', label: 'Số hồ sơ bồi thường (làm số công văn)', type: 'text', required: true, record: ['soHoSoBoiThuong', 'soHSBT', 'soHoSo'], hint: 'VD: HSBT/XCG/2026/0105661', max: 100 },
+      { key: 'plate', label: 'Biển số xe', type: 'text', required: true, record: ['bienSo'], max: 60 },
+      { key: 'driver', label: 'Người điều khiển xe lúc tổn thất', type: 'text', record: ['laiXe'], max: 150 },
+      { key: 'noticeDate', label: 'Ngày nhận thông báo tổn thất', type: 'text', record: ['ngayThongBao'], hint: 'VD: 11/11/2026', max: 60 },
+      { key: 'lossTime', label: 'Thời điểm xảy ra tổn thất', type: 'text', required: true, record: ['ngayVTT', 'ngayTonThat'], hint: 'VD: 19h00 ngày 10/11/2026', max: 80 },
+      { key: 'certificate', label: 'Số hợp đồng bảo hiểm / GCNBH', type: 'text', record: ['soGcn', 'soGCN', 'soHd'], max: 150 },
+      { key: 'policyPeriod', label: 'Thời hạn bảo hiểm', type: 'text', hint: 'VD: từ 10:30:37 ngày 31/03/2026 đến 10:30:37 ngày 31/03/2027', max: 200 },
+      { key: 'lossDescription', label: 'Diễn biến tổn thất theo thông báo của khách hàng', type: 'textarea', record: ['dienBienTonThat', 'moTaTonThat'], max: 900 },
+      { key: 'inspectionNo', label: 'Số GCN kiểm định an toàn kỹ thuật & bảo vệ môi trường', type: 'text', hint: 'VD: VA-1769601', max: 80 },
+      { key: 'standardTyre', label: 'Thông số lốp tiêu chuẩn của xe', type: 'text', required: true, hint: 'Theo GCN kiểm định / tem nhà sản xuất. VD: 195/60R16', max: 60 },
+      { key: 'fittedTyre', label: 'Thông số lốp đang lắp lúc tổn thất', type: 'text', required: true, hint: 'Đọc trên hông lốp ở ảnh giám định. VD: 205/55R16', max: 60 },
+      { key: 'evidence', label: 'Căn cứ xác định thông số lốp', type: 'textarea', hint: 'Mỗi ý một dòng. VD: ảnh giám định chi tiết; tem thông số nhà sản xuất dán trên xe; kiểm tra thực tế phương tiện', max: 500 },
+      { key: 'ruleQuote', label: 'Nguyên văn điều khoản loại trừ', type: 'textarea', hint: 'Dán nguyên văn kèm tên văn bản, số điều/mục. Để trống nếu muốn lấy từ Thư viện tài liệu', max: 1500 },
+      { key: 'phone', label: 'Số điện thoại tiếp nhận (hiện ở cuối công văn)', type: 'text', setting: 'phone', max: 60 },
+      { key: 'address', label: 'Địa chỉ nhận văn bản khiếu nại', type: 'textarea', setting: 'address', max: 300 }
+    ],
+    outline: [
+      'Đoạn mở: lời chào trân trọng của Bảo hiểm Tasco gửi Quý khách hàng.',
+      'Đoạn tiếp nhận: ngày nhận thông báo tổn thất; xe, biển số, thời điểm tổn thất; số hợp đồng/GCNBH và thời hạn hiệu lực.',
+      'Đoạn diễn biến: nguyên văn/tóm lược diễn biến, nguyên nhân tổn thất theo thông báo của khách hàng (đặt trong ngoặc kép); nêu Biên bản xác định thiệt hại đã được khách hàng phối hợp với giám định viên xác nhận.',
+      'Đoạn phát hiện: qua hình ảnh giám định, xe đang lắp lốp thông số nào, trong khi thông số trên GCN kiểm định (nêu số) là gì.',
+      'Đoạn ghi nhận (liệt kê "li"): thông số lốp tiêu chuẩn theo GCN kiểm định; tem thông số kỹ thuật của nhà sản xuất trên xe; lốp đang lắp làm thay đổi chiều cao hông/kết cấu lốp so với thiết kế tiêu chuẩn.',
+      'Đoạn căn cứ: nêu đúng mục/điều và tên văn bản chứa điểm loại trừ; trích nguyên văn giữa "Trích" và "Kết thúc trích" (kể cả ngoại lệ về thay đổi thông số lốp phù hợp khuyến cáo nhà sản xuất) — chỉ khi có nguyên văn được cung cấp.',
+      'Đoạn kết luận: việc dùng lốp khác kích thước tiêu chuẩn không phù hợp thông số nhà sản xuất nên thuộc trường hợp loại trừ; Bảo hiểm Tasco rất tiếc không có cơ sở bồi thường và thông báo để khách hàng được biết, chủ động sửa chữa khắc phục tổn thất.'
+    ],
+    sample: [
+      'Lời đầu tiên, Công ty TNHH Bảo hiểm TASCO (Bảo hiểm Tasco) xin gửi tới Quý khách hàng lời chào trân trọng.',
+      'Ngày [ngày nhận], Bảo hiểm Tasco nhận được thông báo tổn thất của Quý khách hàng đối với xe ô tô mang biển kiểm soát [BKS], tổn thất được thông báo xảy ra vào lúc [giờ] ngày [ngày], thuộc Hợp đồng bảo hiểm/GCNBH số [số], có hiệu lực từ [thời điểm] đến [thời điểm].',
+      'Theo thông báo tai nạn và yêu cầu bồi thường của Quý khách hàng, diễn biến và nguyên nhân tổn thất như sau:',
+      '“[Diễn biến tổn thất nguyên văn theo thông báo của khách hàng].”',
+      'Căn cứ Biên bản xác định thiệt hại của xe ô tô mang BKS [BKS] trong vụ việc nêu trên đã được Quý khách hàng phối hợp với giám định viên của Bảo hiểm Tasco xác nhận.',
+      'Căn cứ các hình ảnh giám định chi tiết đối với phương tiện liên quan tới thời điểm xảy ra sự cố, xe [BKS] đang sử dụng lốp có thông số [lốp đang lắp], trong khi thông số lốp ghi nhận trên Giấy chứng nhận kiểm định an toàn kỹ thuật và bảo vệ môi trường số [số GCN kiểm định] của phương tiện là [lốp tiêu chuẩn].',
+      'Qua kiểm tra thực tế phương tiện, đối chiếu hồ sơ kỹ thuật của nhà sản xuất và thông số kỹ thuật ghi nhận trên phương tiện, Bảo hiểm Tasco ghi nhận:',
+      '- Thông số lốp tiêu chuẩn của xe theo Giấy chứng nhận kiểm định số [số] là [lốp tiêu chuẩn].',
+      '- Tem thông số kỹ thuật của nhà sản xuất dán trên phương tiện cũng thể hiện kích thước lốp tiêu chuẩn [lốp tiêu chuẩn].',
+      '- Tại thời điểm xảy ra tổn thất, xe đang lắp đặt lốp [lốp đang lắp], làm thay đổi chiều cao hông/kết cấu lốp so với thiết kế tiêu chuẩn của nhà sản xuất.',
+      'Căn cứ [mục/điều] trên [tên Quy tắc bảo hiểm, số quyết định, ngày ban hành], quy định:',
+      'Trích',
+      '“[Nguyên văn điều khoản loại trừ và ngoại lệ (nếu có)].”',
+      'Kết thúc trích',
+      'Đối chiếu các căn cứ nêu trên, việc xe [BKS] sử dụng lốp [lốp đang lắp] thay cho kích thước tiêu chuẩn [lốp tiêu chuẩn] là không phù hợp với thông số kỹ thuật của nhà sản xuất, do đó thuộc trường hợp loại trừ trách nhiệm bảo hiểm theo quy định của Quy tắc bảo hiểm.',
+      'Vì vậy, Bảo hiểm Tasco rất tiếc không có cơ sở để xem xét bồi thường đối với tổn thất của xe ô tô mang BKS [BKS] trong vụ việc nêu trên. Bảo hiểm Tasco trân trọng thông báo tới Quý Khách được biết và chủ động sửa chữa khắc phục tổn thất xe trên.'
+    ],
+    closing: [
+      'Chúng tôi xin trân trọng cảm ơn sự hợp tác của Quý khách hàng trong thời gian qua và mong muốn tiếp tục đồng hành cùng Quý Khách trong thời gian tới.',
+      'Mọi góp ý/thắc mắc/khiếu nại vui lòng liên hệ giám định viên của chúng tôi để được giải đáp hoặc gửi văn bản cho chúng tôi theo địa chỉ:',
+      'Công ty TNHH Bảo Hiểm Tasco – Điện thoại: {phone}',
+      'Địa chỉ: {address}',
+      'Trân trọng kính chào!'
+    ]
   },
   {
     id: 'tu_do', name: 'Công văn tự do (theo ý chính)', group: 'Khác', starter: true,

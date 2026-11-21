@@ -88,7 +88,7 @@ test('giới hạn dung lượng lịch sử chỉ bỏ bản cũ, giữ nguyên
 function setupPage(reply) {
   const saves = [], messages = [];
   const host = {querySelector:() => null, querySelectorAll:() => [], removeEventListener() {}};
-  const ctx = vm.createContext({setTimeout, clearTimeout, AbortController,
+  const ctx = vm.createContext({setTimeout, clearTimeout, AbortController, btoa:text => Buffer.from(text, 'binary').toString('base64'),
     document:{removeEventListener() {}}, window:{removeEventListener() {}}, localStorage:{getItem:() => null},
     triggerToast:(...args) => messages.push(args),
     OfficialLetterHistory:{save:async (id, entry) => { saves.push(plain(entry.data)); return {id:id || 'history123', scope:'browser'}; }, list:() => []},
@@ -170,4 +170,19 @@ test('soạn lại theo yêu cầu mới cũng cần duyệt trước khi thay t
   assert.equal(calls, 2); assert.ok(h.state().pending);
   assert.deepEqual(plain(h.state().letter), before);
   h.page.discardChanges(); assert.deepEqual(plain(h.state().letter), before);
+});
+
+test('sửa vùng bôi đen vẫn gửi tệp đính kèm và không gọi AI hai lần sau khi ghép remote', async () => {
+  let calls = 0;
+  const h = setupPage(async request => {
+    calls++;
+    const files = request.contents[0].parts.filter(part => part.inlineData);
+    assert.equal(files.length, 1); assert.equal(files[0].inlineData.mimeType, 'application/pdf');
+    return '{"replacements":[{"path":"para:0","text":"Nội dung theo tài liệu."}]}';
+  });
+  const before = plain(h.state().letter);
+  h.page.set({selection:[target(before)], refineFiles:[{url:'', file:{name:'ho-so.pdf', type:'application/pdf', size:3, arrayBuffer:async () => new Uint8Array([1,2,3]).buffer}}]});
+  await h.page.compose('Sửa theo tệp đính kèm');
+  assert.equal(calls, 1); assert.ok(h.state().pending); assert.equal(h.state().refineFiles.length, 0);
+  assert.deepEqual(plain(h.state().letter), before);
 });
