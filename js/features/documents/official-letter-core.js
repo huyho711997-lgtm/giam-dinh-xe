@@ -132,7 +132,7 @@ const OfficialLetterCore = (() => {
     + '(5) Dùng đúng dàn ý được cung cấp; mỗi đoạn là một ý trọn vẹn, đoạn liệt kê dùng loại "li". '
     + 'Chỉ trả về JSON: {"subject":"<trích yếu, bắt đầu bằng chữ thường sau V/v, không quá 200 ký tự>","paragraphs":[{"type":"p|h|li","text":"..."}],"warnings":["<điều cần người dùng kiểm tra lại>"]}.';
 
-  function buildComposeRequest(template, values, issuer, brief) {
+  function buildComposeRequest(template, values, issuer, brief, previous) {
     const cfg = normalizeIssuer(issuer);
     const facts = {};
     for (const field of template.fields) { const value = single(values[field.key], 1) ? cleanValue(field, values[field.key]) : ''; if (value) facts[field.label] = value; }
@@ -140,7 +140,8 @@ const OfficialLetterCore = (() => {
       + '\n\nĐƠN VỊ BAN HÀNH: ' + cfg.parent + (cfg.unit ? ' – ' + cfg.unit : '') + ' (gọi tắt: ' + cfg.shortName + ')'
       + '\n\nDÀN Ý CÁC ĐOẠN:\n' + template.outline.map((line, index) => (index + 1) + '. ' + line).join('\n')
       + '\n\nTHÔNG TIN ĐÃ XÁC NHẬN:\n' + JSON.stringify(facts)
-      + '\n\nGHI CHÚ / Ý CHÍNH THÊM CỦA NGƯỜI DÙNG:\n' + (single(brief, 3000) || '(không có)');
+      + '\n\nGHI CHÚ / Ý CHÍNH THÊM CỦA NGƯỜI DÙNG:\n' + (single(brief, 3000) || '(không có)')
+      + (previous ? '\n\nBẢN NHÁP TRƯỚC (chỉ để chỉnh theo yêu cầu mới nhất ở phần ghi chú; vẫn không được thêm thông tin ngoài phần đã xác nhận):\n' + multi(previous, 6000) : '');
     return {system_instruction: {parts: [{text: COMPOSE_SYSTEM}]}, contents: [{role: 'user', parts: [{text}]}], generationConfig: {responseMimeType: 'application/json', temperature: 0.3}};
   }
 

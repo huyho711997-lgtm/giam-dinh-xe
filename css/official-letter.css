@@ -1,68 +1,87 @@
-/* Trang "Công văn AI" (js/features/documents/official-letter-page.js). Cùng bảng màu với Biểu mẫu dùng chung. */
-:is(.ol-page,.ol-dialog) {
-  --ol-paper:#fffefb; --ol-ink:#30332f; --ol-muted:#77776d; --ol-line:#e7e3d9; --ol-soft:#f7f4ed;
-  --ol-gold:#ad761d; --ol-gold-bg:#fff3d9; --ol-green:#168052; --ol-rose:#b34c48; --ol-action:#8a6a32; --ol-action-text:#fffaf0;
-  color:var(--ol-ink); font-family:'Plus Jakarta Sans',system-ui,sans-serif; font-size:13px;
-}
-body:not(.light-mode) :is(.ol-page,.ol-dialog) {
-  --ol-paper:#121e27; --ol-ink:#f0f2eb; --ol-muted:#a2afaf; --ol-line:#2a3840; --ol-soft:#172730;
-  --ol-gold:#d0ae76; --ol-gold-bg:#28291f; --ol-green:#80c4a6; --ol-rose:#e3a095; --ol-action:#d0ae76; --ol-action-text:#1b1710;
-}
-.ol-page { width:100%; padding:6px 0 32px; }
-.ol-top { display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px 24px; margin:8px 0 18px; }
-.ol-top small { color:var(--ol-gold); font-weight:800; letter-spacing:.08em; font-size:11px; }
-.ol-top h1 { margin:4px 0 2px; font-size:clamp(22px,2.2vw,27px); font-weight:800; letter-spacing:-.03em; }
-.ol-top p { margin:0; color:var(--ol-muted); font-size:12px; line-height:1.6; max-width:680px; }
-.ol-layout { display:grid; grid-template-columns:minmax(320px,460px) minmax(0,1fr); gap:18px; align-items:start; }
-.ol-col { display:grid; gap:16px; min-width:0; }
-.ol-col-preview { position:sticky; top:12px; }
-.ol-card { background:var(--ol-paper); border:1px solid var(--ol-line); border-radius:14px; padding:16px 18px; box-shadow:0 8px 30px rgba(62,51,31,.04); }
-.ol-card[hidden] { display:none; }
-.ol-card h2 { display:flex; align-items:center; gap:10px; margin:0 0 12px; font-size:15px; font-weight:800; }
-.ol-step { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; background:var(--ol-gold-bg); color:var(--ol-gold); font-size:12px; font-weight:800; }
-.ol-group h3 { margin:12px 0 6px; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ol-muted); }
-.ol-tpl-grid { display:grid; gap:8px; }
-.ol-tpl { display:grid; gap:3px; text-align:left; padding:10px 12px; border:1px solid var(--ol-line); border-radius:10px; background:var(--ol-paper); color:inherit; cursor:pointer; font:inherit; }
-.ol-tpl strong { font-size:13px; } .ol-tpl span { color:var(--ol-muted); font-size:12px; line-height:1.45; }
-.ol-tpl em { font-style:normal; font-size:10.5px; color:var(--ol-gold); font-weight:700; }
-.ol-tpl:hover { border-color:color-mix(in srgb,var(--ol-gold) 55%,var(--ol-line)); background:var(--ol-soft); }
-.ol-tpl.is-active { border-color:var(--ol-gold); background:var(--ol-gold-bg); box-shadow:inset 0 0 0 1px var(--ol-gold); }
-.ol-field { display:grid; gap:5px; margin:0 0 12px; }
-.ol-field > span { font-size:12px; font-weight:700; } .ol-field > span em { font-weight:500; font-style:normal; color:var(--ol-muted); }
-.ol-field small { color:var(--ol-muted); font-size:11px; }
-.ol-field :is(input,textarea,select) { width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid var(--ol-line); border-radius:8px; background:var(--ol-paper); color:var(--ol-ink); font:inherit; }
-.ol-field :is(input,textarea,select):focus { outline:2px solid color-mix(in srgb,var(--ol-gold) 45%,transparent); border-color:var(--ol-gold); }
-.ol-field.is-missing :is(input,textarea) { border-color:var(--ol-rose); background:color-mix(in srgb,var(--ol-rose) 7%,var(--ol-paper)); }
-.ol-field b { color:var(--ol-rose); }
-.ol-ai-tag,.ol-miss-tag { font-size:10px !important; font-weight:800 !important; padding:1px 6px; border-radius:99px; }
-.ol-ai-tag { background:var(--ol-gold-bg); color:var(--ol-gold) !important; } .ol-miss-tag { background:color-mix(in srgb,var(--ol-rose) 14%,transparent); color:var(--ol-rose) !important; }
-.ol-upload { display:inline-block; padding:8px 12px; border:1px dashed var(--ol-line); border-radius:8px; cursor:pointer; color:var(--ol-muted); }
-.ol-upload:hover { border-color:var(--ol-gold); color:var(--ol-ink); }
-.ol-files { list-style:none; margin:8px 0 0; padding:0; display:grid; gap:4px; }
-.ol-files li { display:flex; justify-content:space-between; gap:8px; padding:5px 8px; border-radius:6px; background:var(--ol-soft); font-size:12px; }
-.ol-files button { border:0; background:none; color:var(--ol-muted); cursor:pointer; font-size:16px; line-height:1; }
-.ol-hint,.ol-privacy { margin:0 0 10px; color:var(--ol-muted); font-size:11.5px; line-height:1.55; }
-.ol-error,.ol-warn,.ol-ok,.ol-note,.ol-questions { margin:0 0 10px; padding:8px 10px; border-radius:8px; font-size:12px; line-height:1.5; }
-.ol-error { background:color-mix(in srgb,var(--ol-rose) 12%,transparent); color:var(--ol-rose); }
-.ol-warn { background:var(--ol-gold-bg); color:var(--ol-ink); } .ol-warn ul,.ol-questions ul { margin:4px 0 0; padding-left:18px; }
-.ol-ok { background:color-mix(in srgb,var(--ol-green) 12%,transparent); color:var(--ol-green); }
-.ol-note { background:var(--ol-soft); color:var(--ol-muted); }
-.ol-questions { background:var(--ol-soft); border:1px solid var(--ol-line); }
-.ol-questions .ol-field { margin:8px 0; }
-.ol-actions,.ol-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
-.ol-toolbar { margin-bottom:10px; } .ol-datepick { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ol-muted); margin-right:auto; }
-.ol-datepick input { padding:5px 8px; border:1px solid var(--ol-line); border-radius:8px; background:var(--ol-paper); color:var(--ol-ink); font:inherit; }
-.ol-btn { padding:8px 14px; border:1px solid var(--ol-line); border-radius:9px; background:var(--ol-paper); color:var(--ol-ink); font:inherit; font-weight:700; cursor:pointer; }
-.ol-btn:hover:not(:disabled) { border-color:var(--ol-gold); background:var(--ol-soft); }
-.ol-btn:disabled { opacity:.55; cursor:progress; }
-.ol-btn-primary { background:var(--ol-action); border-color:var(--ol-action); color:var(--ol-action-text); }
-.ol-btn-primary:hover:not(:disabled) { background:var(--ol-action); filter:brightness(1.08); }
-.ol-empty { padding:48px 16px; text-align:center; color:var(--ol-muted); border:1px dashed var(--ol-line); border-radius:10px; }
+/* Trang "Công văn AI": giao diện hội thoại dùng lại các lớp .tasco-ai-* / .msg-* của TASCO AI (css/ai-assistant.css). */
+.ol-chat { display:flex; flex-direction:column; width:100%; height:calc(100dvh - 112px); min-height:540px; overflow:hidden; background:var(--surface-strong); border:1px solid color-mix(in srgb,var(--primary) 22%,var(--border)); border-radius:22px; box-shadow:0 18px 50px rgba(15,23,42,.1); }
+.ol-chat .tasco-ai-header { min-height:58px; padding:9px 16px; gap:8px; }
+.ol-chat .tasco-ai-brand__mark { width:34px; height:34px; flex-basis:34px; border-radius:11px; }
+.ol-chat .tasco-ai-brand__mark svg { width:19px; height:19px; }
+.ol-chat .tasco-ai-brand__title { font-size:14px; white-space:nowrap; gap:6px; }
+.ol-chat .tasco-ai-brand__subtitle { margin-top:1px; font-size:8.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ol-chat .tasco-ai-header__btn { width:30px; height:30px; border-radius:9px; }
+.ol-chat .tasco-ai-header__btn svg { width:15px; height:15px; }
+.ol-chat .tasco-ai-header, .ol-chat .tasco-ai-body, .ol-chat .tasco-ai-footer { padding-inline:max(16px, calc((100% - 1040px) / 2)); }
+.ol-chat .tasco-ai-body { padding-block:22px; }
+.ol-chat .tasco-ai-footer { padding-block:10px 11px; }
+.ol-chat .msg-bubble { max-width:82%; font-size:13px; line-height:1.62; }
+.ol-chat .msg-bubble.ol-wide { max-width:100%; width:100%; box-sizing:border-box; }
+.ol-chat .msg-ai::before { content:'Công văn AI'; }
+.ol-chat .msg-ai.ol-error { border-color:color-mix(in srgb,#dc2626 45%,var(--border)); }
+.ol-chat .msg-ai.ol-error::before { content:'Có lỗi'; color:#dc2626; }
+.ol-chat .tasco-ai-input { height:42px; font-size:13px; }
+.ol-chat .tasco-ai-composer { grid-template-columns:36px minmax(0,1fr) 43px; }
+.ol-chat .tasco-ai-attach-btn[hidden] { display:none; }
+.ol-chat .tasco-ai-composer.ol-no-attach { grid-template-columns:minmax(0,1fr) 43px; padding-left:8px; }
+.ol-pick-bubble { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.ol-link { padding:0; border:0; background:none; color:rgba(23,18,10,.78); font:inherit; font-size:11.5px; font-weight:800; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+.ol-group h4 { margin:12px 0 0; font-size:10.5px; font-weight:900; letter-spacing:.07em; text-transform:uppercase; color:var(--text-muted); }
+.ol-chat .tasco-ai-choices { grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); }
+.ol-muted { margin:8px 0 0; color:var(--text-muted); font-size:11.5px; line-height:1.55; }
+.ol-ways { margin:2px 0 10px; padding-left:20px; color:var(--text-soft); font-size:12.5px; line-height:1.6; }
+.ol-sent-record { margin-bottom:5px; font-size:11.5px; font-weight:800; opacity:.82; }
+
+/* Ô tìm hồ sơ (thay cho dropdown gốc) */
+.ol-rec { display:grid; gap:7px; margin-top:4px; }
+.ol-rec-search { display:flex; align-items:center; gap:9px; padding:0 12px; min-height:42px; border:1px solid var(--border-strong); border-radius:12px; background:var(--surface-soft); color:var(--text-muted); }
+.ol-rec-search:focus-within { border-color:rgba(179,140,67,.55); box-shadow:0 0 0 3px rgba(216,180,109,.14); color:var(--primary); }
+.ol-rec-search svg { width:17px; height:17px; flex:none; }
+.ol-rec-search input { flex:1; min-width:0; height:40px; border:0; outline:0; background:transparent; color:var(--text-main); font:inherit; font-size:13px; font-weight:600; box-shadow:none; }
+.ol-rec-list { display:grid; max-height:264px; overflow-y:auto; border:1px solid var(--border); border-radius:12px; background:var(--surface-strong); }
+.ol-rec-item { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:12px; width:100%; padding:9px 12px; border:0; border-bottom:1px solid var(--border); background:transparent; color:var(--text-main); font:inherit; text-align:left; cursor:pointer; }
+.ol-rec-item:last-child { border-bottom:0; }
+.ol-rec-item:hover, .ol-rec-item.is-active { background:color-mix(in srgb,var(--primary) 10%,transparent); }
+.ol-rec-plate { min-width:92px; padding:4px 9px; border:1px solid color-mix(in srgb,var(--primary) 35%,var(--border)); border-radius:8px; background:color-mix(in srgb,var(--primary) 9%,var(--surface-soft)); color:var(--text-main); font-size:12px; font-weight:900; letter-spacing:.02em; text-align:center; }
+.ol-rec-main { display:grid; gap:1px; min-width:0; }
+.ol-rec-main b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12.5px; font-weight:750; }
+.ol-rec-main small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-muted); font-size:11px; }
+.ol-rec-tag { padding:2px 8px; border-radius:99px; background:var(--surface-soft); color:var(--text-muted); font-size:10px; font-style:normal; font-weight:800; white-space:nowrap; }
+.ol-rec-empty { margin:0; padding:16px; color:var(--text-muted); font-size:12px; text-align:center; }
+.ol-rec-count { color:var(--text-muted); font-size:11px; }
+.ol-rec-chosen { display:flex; align-items:center; gap:12px; margin-top:4px; padding:8px 10px; border:1px solid color-mix(in srgb,var(--primary) 40%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--primary) 8%,var(--surface-soft)); }
+.ol-rec-chosen .ol-rec-main { flex:1; }
+.ol-x { display:grid; place-items:center; width:28px; height:28px; padding:0; border:1px solid var(--border); border-radius:8px; background:transparent; color:var(--text-muted); cursor:pointer; }
+.ol-x:hover { color:#dc2626; border-color:#dc2626; }
+.ol-x svg { width:14px; height:14px; }
+
+/* Biểu mẫu các trường */
+.ol-fields-bubble > p { margin:0 0 8px; }
+.ol-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 14px; margin-top:6px; }
+.ol-field { display:grid; gap:5px; margin:0 0 10px; align-content:start; }
+.ol-field.is-wide { grid-column:1 / -1; }
+.ol-field > span { color:var(--text-soft); font-size:11.5px; font-weight:750; }
+.ol-field small { color:var(--text-muted); font-size:11px; }
+.ol-field :is(input,textarea) { width:100%; box-sizing:border-box; min-height:40px; padding:9px 12px; border:1px solid var(--border); border-radius:10px; background:var(--surface-soft); color:var(--text-main); font:inherit; font-size:13px; }
+.ol-field textarea { resize:vertical; line-height:1.5; }
+.ol-field :is(input,textarea):focus-visible { outline:2px solid var(--primary); outline-offset:1px; }
+.ol-field.is-missing :is(input,textarea) { border-color:#dc2626; background:color-mix(in srgb,#dc2626 6%,var(--surface-soft)); }
+.ol-field b { color:#dc2626; }
+.ol-ai-tag, .ol-miss-tag { padding:1px 7px; border-radius:99px; font-size:9.5px; font-style:normal; font-weight:900; }
+.ol-ai-tag { background:color-mix(in srgb,var(--primary) 16%,transparent); color:var(--primary); }
+.ol-miss-tag { background:color-mix(in srgb,#dc2626 14%,transparent); color:#dc2626; }
+.ol-note, .ol-questions, .ol-warn, .ol-ok { margin:6px 0; padding:9px 12px; border-radius:11px; font-size:12px; line-height:1.55; }
+.ol-note { background:var(--surface-soft); color:var(--text-muted); }
+.ol-questions { background:color-mix(in srgb,var(--primary) 9%,var(--surface-soft)); border:1px solid color-mix(in srgb,var(--primary) 28%,var(--border)); }
+.ol-questions ul, .ol-warn ul { margin:4px 0; padding-left:18px; } .ol-questions small { color:var(--text-muted); }
+.ol-warn { background:color-mix(in srgb,#d97706 12%,var(--surface-soft)); color:var(--text-main); }
+.ol-ok { background:color-mix(in srgb,#15803d 12%,var(--surface-soft)); color:#15803d; }
+.ol-actions, .ol-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px; }
+.ol-primary { flex:0 0 auto; min-height:38px; }
+.ol-toolbar { margin:0 0 10px; }
+.ol-datepick { display:flex; align-items:center; gap:7px; margin-right:auto; color:var(--text-muted); font-size:12px; }
+.ol-datepick input { min-height:34px; padding:4px 9px; border:1px solid var(--border); border-radius:9px; background:var(--surface-soft); color:var(--text-main); font:inherit; }
+
 /* Tờ A4 xem trước: luôn nền trắng chữ đen như bản in */
-.ol-paper-wrap { overflow:auto; max-height:calc(100vh - 220px); padding:12px; background:var(--ol-soft); border-radius:10px; }
-.ol-paper { box-sizing:border-box; width:100%; max-width:794px; min-height:560px; margin:0 auto; padding:44px 38px 48px 66px; background:#fff; color:#000; box-shadow:0 2px 14px rgba(0,0,0,.18); font:13pt/1.3 'Times New Roman',Times,serif; }
+.ol-paper-wrap { overflow:auto; max-height:70vh; padding:14px; border-radius:12px; background:color-mix(in srgb,var(--text-muted) 12%,var(--surface-soft)); }
+.ol-paper { box-sizing:border-box; width:100%; max-width:794px; min-height:560px; margin:0 auto; padding:44px 38px 48px 66px; background:#fff; color:#000; box-shadow:0 2px 14px rgba(0,0,0,.2); font:13pt/1.3 'Times New Roman',Times,serif; }
 .ol-head { display:flex; gap:8px; } .ol-head-left { width:42%; text-align:center; font-size:12pt; } .ol-head-right { width:58%; text-align:center; }
-.ol-parent { font-size:11.5pt; } .ol-unit { font-weight:700; } .ol-nation { font-weight:700; font-size:12pt; } .ol-motto { font-weight:700; font-size:13pt; }
+.ol-parent { font-size:11pt; } .ol-unit { font-weight:700; } .ol-nation { font-weight:700; font-size:12pt; } .ol-motto { font-weight:700; font-size:13pt; }
 .ol-rule { width:40%; border:0; border-top:1px solid #000; margin:2px auto 6px; }
 .ol-number { margin-top:6px; } .ol-date i { font-size:13pt; }
 .ol-subject { margin:6px 0 4px; width:42%; text-align:center; font-size:12pt; }
@@ -72,6 +91,9 @@ body:not(.light-mode) :is(.ol-page,.ol-dialog) {
 .ol-edit { outline:none; border-radius:3px; } .ol-edit:hover { background:rgba(173,118,29,.1); } .ol-edit:focus { background:rgba(173,118,29,.16); box-shadow:0 0 0 2px rgba(173,118,29,.4); }
 .ol-number-input:empty::before { content:'……/……'; color:#888; }
 mark.ol-gap { background:#ffe58a; color:#000; padding:0 2px; border-radius:2px; }
-.ol-dialog { width:min(520px,94vw); padding:20px 22px; border:1px solid var(--ol-line); border-radius:14px; background:var(--ol-paper); }
+
+.ol-dialog { width:min(520px,94vw); padding:20px 22px; border:1px solid var(--border); border-radius:16px; background:var(--surface-strong); color:var(--text-main); }
 .ol-dialog::backdrop { background:rgba(10,14,12,.5); } .ol-dialog h2 { margin:0 0 4px; font-size:17px; }
-@media (max-width:980px) { .ol-layout { grid-template-columns:1fr; } .ol-col-preview { position:static; } .ol-paper { padding:28px 20px 32px 32px; } }
+.ol-dialog .ol-field { margin-top:10px; }
+.ol-dialog .ol-actions { justify-content:flex-end; margin-top:14px; }
+@media (max-width:760px) { .ol-chat { height:calc(100dvh - 96px); border-radius:16px; } .ol-form { grid-template-columns:1fr; } .ol-chat .msg-bubble { max-width:94%; } .ol-paper { padding:28px 20px 32px 32px; } .ol-rec-item { grid-template-columns:auto minmax(0,1fr); } .ol-rec-tag { display:none; } .ol-chat .tasco-ai-header, .ol-chat .tasco-ai-body, .ol-chat .tasco-ai-footer { padding-inline:12px; } }

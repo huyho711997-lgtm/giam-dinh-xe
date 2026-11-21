@@ -68,9 +68,9 @@ Thư viện Firebase, JSZip, XLSX, html2canvas, Chart.js và Google Fonts tiếp
 
 ## Công văn AI
 
-Mở **Công văn AI** (nhóm Nghiệp vụ, đường dẫn `#cong-van-ai`; dùng chung quyền xem với Biểu mẫu dùng chung). Chọn mẫu công văn → đưa thông tin đầu vào (chọn hồ sơ, gõ ý chính, đính kèm tối đa 4 ảnh/PDF) → **Phân tích bằng AI** (Gemini trích thông tin, điền vào các trường, hỏi lại chỗ còn thiếu; giá trị lấy từ hồ sơ luôn được ưu tiên) → **Soạn công văn** → sửa trực tiếp trên bản xem trước → tải Word (.docx, thể thức theo Nghị định 30/2020/NĐ-CP), in hoặc sao chép. Chỗ chưa có thông tin được để “……” và tô vàng, AI không tự bịa số liệu.
+Mở **Công văn AI** (nhóm Nghiệp vụ, đường dẫn `#cong-van-ai`; dùng chung quyền xem với Biểu mẫu dùng chung). Giao diện hội thoại giống TASCO AI: chọn mẫu công văn → **tìm và chọn hồ sơ** (gõ biển số, số hồ sơ, tên chủ xe, số GCN… không cần dấu) và/hoặc gõ ý chính, đính kèm tối đa 4 ảnh/PDF ở khung chat → AI phân tích, điền các trường và hỏi lại chỗ thiếu (trả lời ngay ở khung chat) → **Soạn công văn** → sửa trực tiếp trên bản xem trước hoặc nhắn AI chỉnh lại (“viết ngắn gọn hơn”…) → tải Word (.docx, thể thức theo Nghị định 30/2020/NĐ-CP), in hoặc sao chép. Chưa chọn mẫu mà gõ thẳng ý chính thì AI soạn công văn tự do. Giá trị lấy từ hồ sơ luôn được ưu tiên; chỗ chưa có thông tin để “……” và tô vàng, AI không tự bịa số liệu.
 
-Thêm mẫu mới: thêm một phần tử vào `OFFICIAL_LETTER_TEMPLATES` trong `js/data/official-letter-templates.js` (trường nhập, dàn ý, lời kết); không cần sửa mã khác. Sáu mẫu hiện có là mẫu khởi đầu, nên thay bằng công văn thật của đơn vị. Thông tin đơn vị ban hành (tên, người ký, địa chỉ…) chỉnh ở nút **Đơn vị ban hành**, lưu trên máy.
+Thêm mẫu mới: thêm một phần tử vào `OFFICIAL_LETTER_TEMPLATES` trong `js/data/official-letter-templates.js` (trường nhập, dàn ý, lời kết); không cần sửa mã khác. Sáu mẫu hiện có là mẫu khởi đầu, nên thay bằng công văn thật của đơn vị. Thông tin đơn vị ban hành (tên, người ký, địa chỉ…) chỉnh ở nút ⚙️ trên đầu khung, lưu trên máy.
 
 ## Biểu mẫu dùng chung
 
