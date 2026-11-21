@@ -14,7 +14,7 @@ const OFFICIAL_LETTER_TEMPLATES = [
     summary: 'Gửi Công an / CSGT / UBND để xin bản sao biên bản, kết luận điều tra, giấy tờ liên quan vụ tai nạn.',
     audience: 'Công an / Cảnh sát giao thông nơi xảy ra tai nạn',
     purpose: 'Công văn của Bảo hiểm Tasco đề nghị cơ quan chức năng hỗ trợ cung cấp hồ sơ, tài liệu liên quan vụ tai nạn giao thông để xác định nguyên nhân, lỗi của các bên và giải quyết bồi thường đúng quy định. '
-      + 'Giọng văn trang trọng, lịch sự, nêu rõ căn cứ (phương tiện được bảo hiểm, giấy chứng nhận bảo hiểm) và danh mục tài liệu đề nghị cung cấp. Không viết điều luật cụ thể nếu không được cung cấp.',
+      + 'Giọng văn trang trọng, lịch sự, nêu rõ căn cứ (phương tiện được bảo hiểm, giấy chứng nhận bảo hiểm) và danh mục tài liệu đề nghị cung cấp. Chỉ viện dẫn điều luật có trong căn cứ từ thư viện; không có thì không nêu điều luật cụ thể.',
     fields: [
       { key: 'recipient', label: 'Kính gửi', type: 'textarea', required: true, hint: 'Mỗi cơ quan một dòng', max: 400 },
       { key: 'plate', label: 'Biển số xe', type: 'text', required: true, record: ['bienSo'], max: 60 },
@@ -87,7 +87,7 @@ const OFFICIAL_LETTER_TEMPLATES = [
     id: 'thong_bao_ket_qua_giam_dinh', name: 'Thông báo kết quả giám định / giải quyết bồi thường', group: 'Gửi khách hàng', starter: true,
     summary: 'Thông báo cho khách hàng kết quả giám định và hướng giải quyết (chỉ dùng thông tin bạn cung cấp).',
     audience: 'Khách hàng / chủ xe',
-    purpose: 'Công văn thông báo cho khách hàng kết quả giám định và hướng giải quyết hồ sơ bồi thường. Chỉ trình bày đúng nội dung kết quả do người dùng cung cấp; TUYỆT ĐỐI không tự đặt số tiền, tỷ lệ, điều khoản hay kết luận trách nhiệm. '
+    purpose: 'Công văn thông báo cho khách hàng kết quả giám định và hướng giải quyết hồ sơ bồi thường. Chỉ trình bày đúng nội dung kết quả do người dùng cung cấp; TUYỆT ĐỐI không tự đặt số tiền, tỷ lệ hay kết luận trách nhiệm; điều khoản chỉ dẫn từ căn cứ thư viện được cung cấp. '
       + 'Giọng văn lịch sự, rõ ràng, đồng cảm với khách hàng.',
     fields: [
       { key: 'recipient', label: 'Kính gửi (khách hàng)', type: 'text', required: true, record: ['khachHang', 'chuXe', 'tenChuXe'], max: 200 },
@@ -110,7 +110,7 @@ const OFFICIAL_LETTER_TEMPLATES = [
     id: 'giai_trinh_tra_loi', name: 'Công văn giải trình / trả lời văn bản', group: 'Giải trình – phúc đáp', starter: true,
     summary: 'Trả lời hoặc giải trình theo công văn, yêu cầu của cơ quan / đơn vị khác.',
     audience: 'Cơ quan / đơn vị đã gửi văn bản',
-    purpose: 'Công văn phúc đáp, giải trình theo văn bản của cơ quan/đơn vị nhận. Trả lời từng ý được yêu cầu, bám đúng căn cứ do người dùng cung cấp, không bịa số liệu, ngày tháng hay điều luật. Giọng văn trang trọng, khách quan.',
+    purpose: 'Công văn phúc đáp, giải trình theo văn bản của cơ quan/đơn vị nhận. Trả lời từng ý được yêu cầu, bám đúng căn cứ do người dùng cung cấp, không bịa số liệu, ngày tháng; điều luật chỉ dẫn từ căn cứ thư viện được cung cấp. Giọng văn trang trọng, khách quan.',
     fields: [
       { key: 'recipient', label: 'Kính gửi', type: 'textarea', required: true, hint: 'Mỗi nơi một dòng', max: 400 },
       { key: 'refDocument', label: 'Văn bản được trả lời', type: 'text', required: true, hint: 'VD: Công văn số 123/… ngày … của …', max: 300 },

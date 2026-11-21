@@ -78,6 +78,14 @@ Khi chọn hồ sơ, AI không nhận bản ghi thô nữa mà nhận "hồ sơ 
 - **Nhận định tính sẵn** (quy tắc, không do AI đoán): ngày tổn thất trong/ngoài thời hạn BH, tổn thất sát ngày hiệu lực/hết hạn, phí đóng sau ngày tổn thất, số ngày báo tổn thất (quá 5 ngày → lưu ý), số ngày hồ sơ đã mở, đã/chưa nhận đủ hồ sơ, giai đoạn & bước kế tiếp, PASC so với ước thiệt hại, đã thanh toán/còn lại, thiệt hại ≥75% số tiền BH, đồng bảo hiểm, giảm trừ, từ chối, mục quan trọng còn trống.
 - Bước phân tích trả thêm `insights` (nhận định của AI cho đúng công văn này) và `keyFacts` (dữ kiện cụ thể sẽ nêu); bước soạn nhận cả hồ sơ, nhận định và dữ kiện nên viết cụ thể theo vụ việc thay vì câu chung chung. Tất cả hiện ở khối **Phân tích hồ sơ** (lưu ý màu cam lên đầu, mở "Xem toàn bộ hồ sơ AI đã đọc" để đối chiếu).
 
+### Căn cứ pháp lý từ Thư viện tài liệu (`official-letter-legal.js`)
+AI không được tự nhớ điều luật; căn cứ lấy từ **Thư viện tài liệu** (`doc_library`, cùng kho TASCO AI dùng, tìm BM25 ngay trên máy):
+- Truy vấn tự dựng từ loại công văn (`TOPICS`), tình huống hồ sơ (báo trễ, giảm trừ kèm tên vi phạm, từ chối, ngoài thời hạn BH, phí đóng sau tổn thất, tổn thất toàn bộ, đồng BH…) và `legalQueries` AI gợi ý ở bước phân tích. Chỉ lấy văn bản **đang hiệu lực**, tối đa 8 đoạn, mã `[C1]…`.
+- Khối **Căn cứ pháp lý từ Thư viện tài liệu** (trước khi soạn): tick/bỏ tick từng đoạn, xem nguyên văn, mở văn bản gốc, ô **Tìm thêm căn cứ**. Thư viện trống/lỗi → báo rõ, nút mở Thư viện, AI không nêu điều luật cụ thể.
+- Bước soạn chỉ được viện dẫn các đoạn đang tick, đúng tên/số hiệu/số điều như nguyên văn; không có căn cứ phù hợp thì viết chung "theo quy định của pháp luật và Quy tắc bảo hiểm".
+- **Kiểm chứng tự động** trên bản thảo (cả khi sửa tay): mọi "khoản/điểm … Điều N <văn bản>", "Luật/Nghị định/Thông tư/Quy tắc …", số hiệu `xx/yyyy/…` đều được đối chiếu với các đoạn đã chọn — ✓ kèm mã nguồn hoặc ⚠ "chưa kiểm chứng" (đúng số điều nhưng sai văn bản cũng bị bắt). Tải Word khi còn ⚠ sẽ có cảnh báo.
+- Chất lượng phụ thuộc thư viện: cần nạp Luật Kinh doanh bảo hiểm 08/2022/QH15, Nghị định 67/2023/NĐ-CP, Quy tắc bảo hiểm xe cơ giới Tasco… (mỗi Điều thành một mục để tìm trúng).
+
 ## Biểu mẫu dùng chung
 
 Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở trang chủ. Trang hỗ trợ tìm kiếm không dấu, lọc loại file, phân loại, sắp xếp, phân trang, tải nhiều file, sửa tên/phân loại/ghi chú và xóa khỏi thư viện. Hai mẫu Word có sẵn của dự án luôn hiển thị. Người đã đăng nhập được xem và tải lên; người tải quản lý file của mình, người có quyền `users.admin` quản lý toàn bộ.
