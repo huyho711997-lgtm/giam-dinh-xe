@@ -72,6 +72,10 @@ Mở **Công văn AI** (nhóm Nghiệp vụ, đường dẫn `#cong-van-ai`; dù
 
 Thêm mẫu mới: thêm một phần tử vào `OFFICIAL_LETTER_TEMPLATES` trong `js/data/official-letter-templates.js` (trường nhập, dàn ý, lời kết); không cần sửa mã khác. Sáu mẫu hiện có là mẫu khởi đầu, nên thay bằng công văn thật của đơn vị. Thông tin đơn vị ban hành (tên, người ký, địa chỉ…) chỉnh ở nút ⚙️ trên đầu khung, lưu trên máy.
 
+### Cách soạn: "Soạn ngay" (mặc định) / "Hỏi kỹ trước"
+- **Soạn ngay**: chọn mẫu + hồ sơ, gõ một câu, bấm Gửi → AI phân tích, tìm căn cứ rồi soạn luôn (2 lượt gọi Gemini), không dừng hỏi. AI tự suy luận hợp lý từ hồ sơ và ghi rõ trong khối **Tôi đã tự giả định**; tối đa 2 điểm thật sự quan trọng thành nút **chọn nhanh** (bấm là soạn lại theo lựa chọn, không bắt buộc). Không hỏi tên cán bộ/số điện thoại/địa chỉ — để "……". Thông tin, dàn ý, căn cứ, phân tích hồ sơ gom vào mục thu gọn **Tuỳ chỉnh chi tiết**. Soạn lỗi thì các khối hiện đủ để sửa tay.
+- **Hỏi kỹ trước**: như cũ — trả lời câu hỏi, duyệt dàn ý, chọn căn cứ rồi mới soạn. Lựa chọn lưu ở `officialLetter.mode.v1`.
+
 ### Đọc sâu hồ sơ (`official-letter-dossier.js`)
 Khi chọn hồ sơ, AI không nhận bản ghi thô nữa mà nhận "hồ sơ đọc được" do `OfficialLetterDossier` dựng:
 - Nhóm theo nghiệp vụ, nhãn tiếng Việt (định danh, khách hàng, xe, hợp đồng, vụ tổn thất, giám định & xử lý, mốc thời gian, tài chính, ghi chú); ngày dạng dd/mm/yyyy, tiền dạng `1.234.567 đ`; giữ diễn biến/mô tả dài (tới 1.500 ký tự); có hạng mục tổn thất/báo giá/yêu cầu ảnh, thông tin giảm trừ (`thongBaoGiamTru`), 8 ghi chú tiến độ mới nhất (`pending_notes`) và tối đa 6 hồ sơ khác cùng biển số. Bỏ CCCD/CMND/GPLX, ảnh, đường dẫn, mã kỹ thuật.

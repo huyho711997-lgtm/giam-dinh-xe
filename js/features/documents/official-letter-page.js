@@ -19,7 +19,7 @@ const OfficialLetterPage = (() => {
   };
 
   let host = null, controller = null, generation = 0, records = [], index = [];
-  const st = {templateId: '', recordKey: '', recQuery: '', recActive: 0, brief: '', files: [], values: null, filledByAI: [], questions: [], extras: [], outline: [], outlineEdited: false, understanding: '', notes: '', insights: [], keyFacts: [], legalQueries: [], sources: [], legalError: '', legalLoaded: false, letter: null, history: [], recordShown: '', busy: '', status: ''};
+  const st = {templateId: '', recordKey: '', recQuery: '', recActive: 0, brief: '', files: [], values: null, filledByAI: [], questions: [], extras: [], outline: [], outlineEdited: false, understanding: '', notes: '', insights: [], keyFacts: [], legalQueries: [], assumptions: [], mode: '', sources: [], legalError: '', legalLoaded: false, letter: null, history: [], recordShown: '', busy: '', status: ''};
 
   // ---- Đơn vị ban hành (nhớ trên máy) ----
   const loadIssuer = () => { try { return Core().normalizeIssuer(JSON.parse(localStorage.getItem(ISSUER_KEY) || '{}')); } catch (_) { return Core().normalizeIssuer({}); } };
@@ -138,6 +138,13 @@ const OfficialLetterPage = (() => {
   const say = (role, text, extra) => st.history.push({role, text, ...(extra || {})});
 
   const dossierText = () => { const dossier = dossierFor(); return dossier && typeof OfficialLetterDossier !== 'undefined' ? OfficialLetterDossier.toText(dossier) : ''; };
+  // ---- Chế độ: 'fast' = soạn ngay (mặc định, AI tự giả định), 'ask' = hỏi kỹ trước khi soạn ----
+  const MODE_KEY = 'officialLetter.mode.v1';
+  const mode = () => { if (!st.mode) { try { st.mode = localStorage.getItem(MODE_KEY) === 'ask' ? 'ask' : 'fast'; } catch (_) { st.mode = 'fast'; } } return st.mode; };
+  const fast = () => mode() === 'fast';
+  function setMode(value) { st.mode = value === 'ask' ? 'ask' : 'fast'; try { localStorage.setItem(MODE_KEY, st.mode); } catch (_) { /* bỏ qua */ } }
+  const openQuestions = () => st.questions.filter(item => !item.answer).map(item => item.question + (item.options.length ? ' (phương án: ' + item.options.join(' / ') + ')' : ''));
+
   // ---- Căn cứ pháp lý từ Thư viện tài liệu ----
   const Legal = () => (typeof OfficialLetterLegal !== 'undefined' ? OfficialLetterLegal : null);
   const activeSources = () => st.sources.filter(source => source.on !== false);
@@ -186,7 +193,7 @@ const OfficialLetterPage = (() => {
 
   async function analyze(newFiles) {
     const tpl = template();
-    if (!tpl) return;
+    if (!tpl) return false;
     const my = generation;
     collectAll();
     st.busy = 'analyze'; st.status = 'Đang phân tích…'; renderAll('end');
@@ -196,9 +203,9 @@ const OfficialLetterPage = (() => {
       for (const item of newFiles) files.push(await prepareFile(item.file));
       const raw = await callAI(Core().buildAnalyzeRequest(tpl, {
         record: currentRecord() ? SharedFormsAI.describeRecord(currentRecord()) : {}, dossier: dossierText(), current, brief: st.brief, files,
-        answered: answeredList(), extras: st.extras, outline: st.outlineEdited ? st.outline.filter(item => item.on).map(item => item.text) : undefined
+        answered: answeredList(), mode: mode(), extras: st.extras, outline: st.outlineEdited ? st.outline.filter(item => item.on).map(item => item.text) : undefined
       }));
-      if (my !== generation) return;
+      if (my !== generation) return false;
       const analysis = Core().parseAnalysis(raw, tpl);
       const merged = Core().mergeAnalysis(tpl, current, analysis);
       st.values = merged.values; st.filledByAI = Array.from(new Set(st.filledByAI.concat(merged.filledByAI)));
@@ -213,18 +220,22 @@ const OfficialLetterPage = (() => {
       if (analysis.insights.length) st.insights = analysis.insights;
       if (analysis.keyFacts.length) st.keyFacts = analysis.keyFacts;
       if (analysis.legalQueries.length) st.legalQueries = analysis.legalQueries;
+      st.assumptions = analysis.assumptions;
       st.status = 'Đang tìm căn cứ pháp lý trong thư viện…'; renderHeader();
       await findLegal(st.legalQueries);
-      if (my !== generation) return;
+      if (my !== generation) return false;
       const missing = Core().missingFields(tpl, st.values);
       const open = st.questions.filter(item => !item.answer).length;
-      say('ai', (analysis.understanding ? 'Tôi hiểu yêu cầu của bạn như sau: ' + analysis.understanding : 'Đã đọc xong thông tin.')
+      if (fast()) say('ai', (analysis.understanding ? 'Tôi hiểu: ' + analysis.understanding + ' ' : '') + 'Đang soạn ngay từ hồ sơ…');
+      else say('ai', (analysis.understanding ? 'Tôi hiểu yêu cầu của bạn như sau: ' + analysis.understanding : 'Đã đọc xong thông tin.')
         + (open ? ' Tôi cần bạn làm rõ ' + open + ' điểm bên dưới để công văn đúng ý.' : '')
         + (missing.length ? ' Còn thiếu ' + missing.length + ' mục bắt buộc (đánh dấu đỏ).' : (open ? '' : ' Thông tin đã đủ — bạn xem dàn ý rồi bấm Soạn công văn.')));
+      return true;
     } catch (error) {
-      if (my !== generation || error.name === 'AbortError') return;
+      if (my !== generation || error.name === 'AbortError') return false;
       say('ai', (error.message || 'Không phân tích được.') + ' Bạn vẫn có thể nhập thông tin vào các ô bên dưới.', {error: true});
       if (!st.values) { st.values = startValues(); if (!st.outline.length) st.outline = defaultOutline(); }
+      return false;
     } finally { if (my === generation) { st.busy = ''; st.status = ''; renderAll(st.questions.some(item => !item.answer) ? 'questions' : 'fields'); } }
   }
 
@@ -248,7 +259,7 @@ const OfficialLetterPage = (() => {
       const issuer = loadIssuer();
       const previous = instruction && st.letter ? st.letter.paragraphs.map(p => p.text).join('\n') : '';
       const brief = st.brief + (instruction ? '\nYÊU CẦU CHỈNH SỬA MỚI NHẤT: ' + instruction : '');
-      const ctx = {outline: st.outline.filter(item => item.on).map(item => item.text).filter(text => Core().single(text, 1)), extras: st.extras, answers: answeredList(), understanding: st.understanding, keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText(), legal: legalPrompt()};
+      const ctx = {outline: st.outline.filter(item => item.on).map(item => item.text).filter(text => Core().single(text, 1)), extras: st.extras, answers: answeredList(), understanding: st.understanding, keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText(), legal: legalPrompt(), assumptions: st.assumptions, openQuestions: openQuestions()};
       const raw = await callAI(Core().buildComposeRequest(tpl, st.values, issuer, brief, previous, ctx));
       if (my !== generation) return;
       const parsed = Core().parseLetter(raw);
@@ -256,7 +267,7 @@ const OfficialLetterPage = (() => {
       st.letter = Core().assembleLetter(tpl, st.values, issuer, parsed, date);
       if (number) st.letter.number = number;
       const unverified = citationChecks().filter(item => !item.ok).length;
-      say('ai', (instruction ? 'Đã chỉnh lại công văn theo yêu cầu.' : 'Đã soạn xong. Nhấp vào chữ để sửa trực tiếp, hoặc nhắn yêu cầu chỉnh sửa ở khung chat.')
+      say('ai', (instruction ? 'Đã chỉnh lại công văn theo yêu cầu.' : fast() ? 'Bản thảo đã xong. Sai chỗ nào cứ nhắn (VD "gửi Phòng CSGT tỉnh", "thêm hạn 05 ngày"), hoặc nhấp vào chữ để sửa trực tiếp.' : 'Đã soạn xong. Nhấp vào chữ để sửa trực tiếp, hoặc nhắn yêu cầu chỉnh sửa ở khung chat.')
         + (unverified ? ' Có ' + unverified + ' căn cứ KHÔNG tìm thấy trong thư viện — xem mục "Căn cứ pháp lý" bên dưới.' : ''), {stage: 'b'});
     } catch (error) {
       if (my !== generation || error.name === 'AbortError') return;
@@ -309,7 +320,15 @@ const OfficialLetterPage = (() => {
     st.recordShown = st.recordKey;
     if (text) st.brief = [st.brief, text].filter(Boolean).join('\n');
     input.value = ''; st.files = [];
-    analyze(newFiles);
+    runAnalyze(newFiles);
+  }
+  // Soạn ngay: phân tích xong (kể cả lỗi phân tích, vẫn còn hồ sơ + ý chính) thì soạn luôn, không chờ người dùng.
+  async function runAnalyze(newFiles) {
+    const my = generation;
+    const ok = await analyze(newFiles);
+    if (my !== generation || !fast() || st.letter || !st.values) return;
+    if (!ok && !st.recordKey && !st.brief) return;
+    await compose('');
   }
 
   async function downloadDocx() {
@@ -368,7 +387,8 @@ const OfficialLetterPage = (() => {
         + '<div class="ol-rec-list" data-ol-rec-list role="listbox" aria-label="Kết quả tìm hồ sơ"></div><small class="ol-rec-count" data-ol-rec-count></small></div>'
         : '<p class="ol-muted">Chưa có dữ liệu hồ sơ trên trang này — bạn vẫn có thể gõ ý chính hoặc đính kèm ảnh/PDF.</p>');
     return '<div class="msg-bubble msg-ai ol-wide"><p>Đưa cho tôi thông tin đầu vào — dùng một hoặc nhiều cách:</p><ol class="ol-ways"><li><b>Tìm và chọn hồ sơ</b> — AI đọc toàn bộ hồ sơ: diễn biến, mốc xử lý, tài chính, giảm trừ, ghi chú tiến độ, hồ sơ cùng biển số…</li><li><b>Gõ ý chính</b> cần viết ở khung chat bên dưới.</li><li><b>Đính kèm ảnh/PDF</b> (biên bản, giấy tờ, công văn nhận được) bằng nút ghim.</li></ol>'
-      + picker + '<p class="ol-muted">Xong thì bấm Gửi. Nội dung hồ sơ, ý chính và tệp đính kèm được gửi tới Google Gemini để phân tích.</p></div>';
+      + picker + '<div class="ol-mode" role="group" aria-label="Cách soạn"><span>Cách soạn:</span><button type="button" data-ol-mode="fast" aria-pressed="' + fast() + '">Soạn ngay</button><button type="button" data-ol-mode="ask" aria-pressed="' + !fast() + '">Hỏi kỹ trước</button><small>' + (fast() ? 'AI tự suy ra từ hồ sơ, đưa bản thảo luôn; sai đâu nhắn sửa.' : 'AI hỏi lại các điểm chưa rõ, bạn duyệt dàn ý rồi mới soạn.') + '</small></div>'
+      + '<p class="ol-muted">Xong thì bấm Gửi. Nội dung hồ sơ, ý chính và tệp đính kèm được gửi tới Google Gemini để phân tích.</p></div>';
   }
 
   function messageHtml(message) {
@@ -487,10 +507,29 @@ const OfficialLetterPage = (() => {
 
   const typingHtml = () => st.busy ? '<div class="typing-indicator" role="status"><span></span><span></span><span></span><em class="tasco-ai-status-text">' + esc(st.status) + '</em></div>' : '';
 
+  // Sau bản thảo (chế độ soạn ngay): AI đã giả định gì, lưu ý quan trọng từ hồ sơ, điểm chưa rõ trả lời bằng 1 cú bấm.
+  function assumptionsBlock() {
+    if (!st.letter || !fast()) return '';
+    const dossier = dossierFor();
+    const warns = (dossier ? dossier.facts : []).filter(fact => fact.level === 'warn').slice(0, 3);
+    const open = st.questions.map((item, i) => ({item, i})).filter(({item}) => !item.answer && item.options.length);
+    if (!st.assumptions.length && !warns.length && !open.length) return '';
+    return '<div class="msg-bubble msg-ai ol-wide ol-assume" data-ol-block="assume">'
+      + (st.assumptions.length ? '<p><b>Tôi đã tự giả định</b> — sai thì nhắn để sửa:</p><ul class="ol-keyfacts">' + st.assumptions.map(text => '<li>' + esc(text) + '</li>').join('') + '</ul>' : '')
+      + (open.length ? '<p class="ol-dos-h">Chọn nhanh nếu muốn chính xác hơn (không bắt buộc)</p>' + open.map(({item, i}) => '<div class="ol-q"><p class="ol-q-text">' + esc(item.question) + '</p><div class="tasco-ai-chiprow">' + item.options.map((option, j) => '<button type="button" class="tasco-ai-chip" data-ol-fix="' + i + '|' + j + '">' + esc(option) + '</button>').join('') + '</div></div>').join('') : '')
+      + (warns.length ? '<p class="ol-dos-h">Lưu ý từ hồ sơ</p><ul class="ol-facts">' + warns.map(fact => '<li class="ol-fact ol-fact--warn">' + esc(fact.text) + '</li>').join('') + '</ul>' : '')
+      + '</div>';
+  }
+
   function bodyHtml() {
     const stage = name => st.history.filter(item => (item.stage || 'a') === name).map(messageHtml).join('');
     const lock = html => st.busy ? html.replace('<div class="msg-bubble', '<div inert class="msg-bubble') : html; // đang chạy AI: khóa chỉnh sửa để không bị ghi đè khi vẽ lại
-    return templateBlock() + inputBlock() + stage('a') + dossierBlock() + lock(questionsBlock()) + lock(fieldsBlock()) + lock(outlineBlock()) + lock(legalBlock()) + stage('b') + lock(letterBlock()) + typingHtml();
+    const detail = dossierBlock() + lock(questionsBlock()) + lock(fieldsBlock()) + lock(outlineBlock()) + lock(legalBlock());
+    // Soạn ngay: đang chạy → ẩn các khối chi tiết; có bản thảo → gom vào mục thu gọn. Soạn lỗi (không có bản thảo) → hiện đủ để sửa tay.
+    const tucked = !fast() || !st.values ? detail
+      : st.letter ? (detail ? '<details class="ol-tune"' + (st.tuneOpen ? ' open' : '') + '><summary>Tuỳ chỉnh chi tiết: thông tin, dàn ý, căn cứ pháp lý, phân tích hồ sơ</summary>' + detail + '</details>' : '')
+      : st.busy ? '' : detail;
+    return templateBlock() + inputBlock() + stage('a') + tucked + stage('b') + lock(assumptionsBlock()) + lock(letterBlock()) + typingHtml();
   }
 
   function renderHeader() {
@@ -568,7 +607,7 @@ const OfficialLetterPage = (() => {
   // ---- Đặt lại ----
   function reset(keepRecordAndFiles) {
     generation++; controller?.abort(); controller = null;
-    st.templateId = ''; st.values = null; st.filledByAI = []; st.questions = []; st.extras = []; st.outline = []; st.outlineEdited = false; st.understanding = ''; st.notes = ''; st.insights = []; st.keyFacts = []; st.legalQueries = []; st.sources = []; st.legalError = ''; st.legalLoaded = false; st.letter = null; st.history = []; st.brief = ''; st.busy = ''; st.status = ''; st.recordShown = ''; st.recQuery = ''; st.recActive = 0;
+    st.templateId = ''; st.values = null; st.filledByAI = []; st.questions = []; st.extras = []; st.outline = []; st.outlineEdited = false; st.understanding = ''; st.notes = ''; st.insights = []; st.keyFacts = []; st.legalQueries = []; st.assumptions = []; st.sources = []; st.legalError = ''; st.legalLoaded = false; st.letter = null; st.history = []; st.brief = ''; st.busy = ''; st.status = ''; st.recordShown = ''; st.recQuery = ''; st.recActive = 0;
     if (!keepRecordAndFiles) { st.recordKey = ''; releaseFiles(st.files); st.files = []; }
   }
   const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Thao tác này sẽ bỏ nội dung đang soạn. Tiếp tục?');
@@ -613,6 +652,16 @@ const OfficialLetterPage = (() => {
     if (opt) { chooseOption(opt); return; }
     const refine = target.closest('[data-ol-refine]');
     if (refine) { compose(refine.dataset.olRefine); return; }
+    const modeButton = target.closest('[data-ol-mode]');
+    if (modeButton) { setMode(modeButton.dataset.olMode); renderAll(); return; }
+    const fix = target.closest('[data-ol-fix]');
+    if (fix && !st.busy) {
+      const [i, j] = fix.dataset.olFix.split('|').map(Number), item = st.questions[i];
+      if (item && item.options[j]) { item.answer = item.options[j]; compose(item.question + ' → ' + item.options[j]); }
+      return;
+    }
+    const tune = target.closest('.ol-tune > summary');
+    if (tune) { st.tuneOpen = !tune.parentElement.open; return; }
     const act = target.closest('[data-ol-act]');
     if (!act) return;
     switch (act.dataset.olAct) {

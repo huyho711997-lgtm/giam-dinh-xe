@@ -127,3 +127,18 @@ test('index.html nạp official-letter-legal.js sau dossier, trước page', () 
   const at = name => html.indexOf('js/features/documents/official-letter-' + name + '.js');
   assert.ok(at('dossier') < at('legal') && at('legal') < at('page') && at('dossier') > 0);
 });
+
+test('chế độ soạn ngay: prompt phân tích hạn chế hỏi + xin giả định; soạn nhận giả định và điểm chưa rõ', () => {
+  const context = vm.createContext({ Math, Number, String, Object, Array, JSON, Date, Set, Map });
+  vm.runInContext(read('js/data/official-letter-templates.js') + '\n' + read('js/features/documents/official-letter-core.js') + '\nthis.C = OfficialLetterCore;', context);
+  const { C } = context;
+  const tpl = C.findTemplate('de_nghi_cung_cap_ho_so');
+  const fastText = C.buildAnalyzeRequest(tpl, { mode: 'fast' }).contents[0].parts[0].text;
+  assert.match(fastText, /CHẾ ĐỘ SOẠN NGAY/);
+  assert.match(fastText, /tối đa 2 điểm/);
+  assert.doesNotMatch(C.buildAnalyzeRequest(tpl, { mode: 'ask' }).contents[0].parts[0].text, /CHẾ ĐỘ SOẠN NGAY/);
+  assert.deepEqual(plain(C.parseAnalysis(JSON.stringify({ assumptions: ['Gửi Công an huyện Krông Pắc', 3, '', '**Hạn 07 ngày**'] }), tpl).assumptions), ['Gửi Công an huyện Krông Pắc', 'Hạn 07 ngày']);
+  const text = C.buildComposeRequest(tpl, {}, {}, '', '', { assumptions: ['Gửi Công an huyện Krông Pắc'], openQuestions: ['Có cần nhắc vụ việc đang điều tra?'] }).contents[0].parts[0].text;
+  assert.match(text, /GIẢ ĐỊNH ĐÃ DÙNG[^\n]*\n- Gửi Công an huyện Krông Pắc/);
+  assert.match(text, /ĐIỂM CHƯA RÕ[^\n]*\n- Có cần nhắc vụ việc đang điều tra\?/);
+});
