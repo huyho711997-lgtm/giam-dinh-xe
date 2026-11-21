@@ -2,8 +2,8 @@
 //   mở đầu: một ô yêu cầu lớn ở giữa trang, trong ô có nút Đính kèm · Hồ sơ · Loại công văn + gợi ý mẫu;
 //   sau khi gửi: tóm tắt yêu cầu, 3 bước AI (đọc hồ sơ → căn cứ → soạn), tờ công văn lớn sửa trực tiếp,
 //   cột ghi chú hẹp (giả định, chọn nhanh, chỗ cần kiểm tra), ô chỉnh sửa cuối trang; chi tiết nằm trong ngăn trượt.
-// Gõ số HSBT/biển số trong yêu cầu là tự nhận hồ sơ. Một lần gửi = đọc (Gemini) → tìm căn cứ trong Thư viện (nếu cần) → soạn (Gemini).
-// Phụ thuộc: OfficialLetterCore, OfficialLetterDossier, OfficialLetterLegal, SharedFormsAI, GeminiKeyStore, JSZip.
+// Gõ số HSBT/biển số trong yêu cầu là tự nhận hồ sơ. Một lần gửi = đọc (DeepSeek) → tìm căn cứ trong Thư viện (nếu cần) → soạn (DeepSeek).
+// Phụ thuộc: OfficialLetterCore, OfficialLetterDossier, OfficialLetterLegal, SharedFormsAI, OfficialLetterAI, DeepSeekKeyStore, JSZip.
 const OfficialLetterPage = (() => {
   const ISSUER_KEY = 'officialLetter.issuer.v1';
   const MAX_FILES = 4, MAX_EDGE = 1600, MAX_PDF = 6 * 1024 * 1024, MAX_RESULTS = 30;
@@ -108,11 +108,10 @@ const OfficialLetterPage = (() => {
   const dossierText = () => { const dossier = dossierFor(); return dossier && typeof OfficialLetterDossier !== 'undefined' ? OfficialLetterDossier.toText(dossier) : ''; };
 
   // ---- Tệp đính kèm ----
-  const toBase64 = buffer => { let out = ''; const bytes = new Uint8Array(buffer); for (let i = 0; i < bytes.length; i += 0x8000) out += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(out); };
   async function prepareFile(file) {
     if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
       if (file.size > MAX_PDF) throw new Error('"' + file.name + '" quá lớn (tối đa 6 MB cho PDF).');
-      return {name: file.name, mimeType: 'application/pdf', data: toBase64(await file.arrayBuffer())};
+      return OfficialLetterAI.pdfToAttachments(file.name, await file.arrayBuffer());   // DeepSeek không nhận PDF: đọc chữ (hoặc chụp trang nếu là bản scan)
     }
     if (!/^image\//.test(file.type)) throw new Error('"' + file.name + '" không phải ảnh hoặc PDF.');
     const url = URL.createObjectURL(file);
@@ -122,7 +121,7 @@ const OfficialLetterPage = (() => {
       const canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
       canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-      return {name: file.name, mimeType: 'image/jpeg', data: canvas.toDataURL('image/jpeg', 0.85).split(',')[1]};
+      return [{name: file.name, mimeType: 'image/jpeg', data: canvas.toDataURL('image/jpeg', 0.85).split(',')[1]}];
     } finally { URL.revokeObjectURL(url); }
   }
   // which: 'files' (ô soạn đầu trang — AI đọc ở bước phân tích) hoặc 'refineFiles' (ô "Nhờ AI sửa" — AI đọc khi chỉnh bản hiện tại).
@@ -138,25 +137,25 @@ const OfficialLetterPage = (() => {
   }
   const releaseFiles = list => list.forEach(item => { if (item.url) { try { URL.revokeObjectURL(item.url); } catch (_) { /* bỏ qua */ } } });
 
-  // ---- Gọi Gemini ----
-  const QUOTA_ERROR = /hết hạn mức/, QUOTA_WAITS = [20, 40];   // giây chờ trước mỗi lần thử lại khi Gemini báo 429
+  // ---- Gọi DeepSeek ----
+  const RETRY_WAITS = [8, 20];   // giây chờ trước mỗi lần thử lại khi DeepSeek báo 429/quá tải
+  const NO_KEY = 'Chưa có khoá DeepSeek API. Bấm biểu tượng ⚙ ở góc phải để nhập khoá (lấy tại platform.deepseek.com).';
   async function callAI(request) {
-    if (typeof GeminiKeyStore === 'undefined' || typeof SharedFormsAI === 'undefined') throw new Error('Chưa tải được mô-đun AI. Hãy tải lại trang.');
-    const apiKey = await GeminiKeyStore.get();
-    if (!apiKey) throw new Error('Chưa có khoá Gemini API. Vào Quản trị hệ thống → Gemini API (hoặc nút ⚙️ của TASCO AI) để thêm khoá.');
-    let model = 'gemini-2.5-flash';
-    try { model = localStorage.getItem('gemini_form_model') || model; } catch (_) { /* bỏ qua */ }
+    if (typeof DeepSeekKeyStore === 'undefined' || typeof OfficialLetterAI === 'undefined') throw new Error('Chưa tải được mô-đun AI. Hãy tải lại trang.');
+    const apiKey = await DeepSeekKeyStore.get();
+    if (!apiKey) throw new Error(NO_KEY);
+    let model = OfficialLetterAI.DEFAULT_MODEL;
+    try { model = localStorage.getItem('deepseek_letter_model') || model; } catch (_) { /* bỏ qua */ }
     controller?.abort();
     controller = new AbortController();
     const signal = controller.signal;
-    // Gói miễn phí hay chạm giới hạn theo phút (một công văn gọi AI 2–3 lần, thêm tệp đính kèm càng nặng):
-    // tự chờ rồi thử lại thay vì dừng ngay, có đếm ngược cho người dùng thấy.
+    // Một công văn gọi AI 2–3 lần: khi bị giới hạn lưu lượng/quá tải thì tự chờ rồi thử lại, có đếm ngược cho người dùng thấy.
     for (let attempt = 0; ; attempt++) {
-      try { return await SharedFormsAI.callGemini(request, apiKey, model, signal); }
+      try { return await OfficialLetterAI.call(request, {apiKey, model, signal}); }
       catch (error) {
-        if (!QUOTA_ERROR.test(error && error.message || '') || attempt >= QUOTA_WAITS.length) throw error;
-        for (let left = QUOTA_WAITS[attempt]; left > 0; left--) {
-          setStatus('Gemini đang giới hạn lưu lượng — tự thử lại sau ' + left + ' giây…');
+        if (!(error && error.retryable) || attempt >= RETRY_WAITS.length) throw error;
+        for (let left = RETRY_WAITS[attempt]; left > 0; left--) {
+          setStatus('DeepSeek đang bận — tự thử lại sau ' + left + ' giây…');
           await new Promise((resolve, reject) => { const timer = setTimeout(resolve, 1000); signal.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('Đã huỷ', 'AbortError')); }, {once: true}); });
         }
       }
@@ -294,7 +293,7 @@ const OfficialLetterPage = (() => {
       try {
         const current = startValues();
         const files = [];
-        for (const item of st.files) files.push(await prepareFile(item.file));
+        for (const item of st.files) files.push(...await prepareFile(item.file));
         const raw = await callAI(Core().buildAnalyzeRequest(tpl, {
           record: currentRecord() ? SharedFormsAI.describeRecord(currentRecord()) : {}, dossier: dossierText(), current, brief: st.brief, files,
           answered: answeredList(), mode: 'fast', extras: st.extras, outline: st.outlineEdited ? st.outline.filter(item => item.on).map(item => item.text) : undefined
@@ -375,7 +374,7 @@ const OfficialLetterPage = (() => {
     try {
       await saveHistory();
       const attachments = [];
-      for (const item of sent) attachments.push(await prepareFile(item.file));
+      for (const item of sent) attachments.push(...await prepareFile(item.file));
       if (my !== generation) return;
       if (instruction) await refineLegal(instruction);
       if (my !== generation) return;
@@ -867,7 +866,7 @@ const OfficialLetterPage = (() => {
     const histScroll = $('[data-ol-hist-list]'), histTop = histScroll ? histScroll.scrollTop : 0;
     root.innerHTML = historyHtml() + '<div class="ola-main' + (working ? ' is-working' : '') + '">' + (st.histOpen ? '' : '<button type="button" class="ola-hist-open" data-ol-act="hist-toggle" title="Mở lịch sử" aria-label="Mở lịch sử">' + svg(ICON.history) + '<span>Lịch sử</span></button>')
       + (working ? workHtml() : heroHtml())
-      + '<button type="button" class="ola-gear" data-ol-act="settings" title="Thông tin đơn vị ban hành" aria-label="Thông tin đơn vị ban hành">' + svg(ICON.gear) + '</button></div>' + drawerHtml();
+      + '<button type="button" class="ola-gear" data-ol-act="settings" title="Cài đặt: đơn vị ban hành &amp; khoá DeepSeek" aria-label="Cài đặt: đơn vị ban hành và khoá DeepSeek">' + svg(ICON.gear) + '</button></div>' + drawerHtml();
     const nextHist = $('[data-ol-hist-list]'); if (nextHist) nextHist.scrollTop = histTop;
     root.classList.toggle('is-working', working);
     root.classList.toggle('has-history', st.histOpen);
@@ -914,13 +913,29 @@ const OfficialLetterPage = (() => {
     const rows = [['parent', 'Tên công ty'], ['unit', 'Chi nhánh / đơn vị'], ['shortName', 'Tên gọi tắt'], ['place', 'Địa danh ghi ở ngày tháng'], ['signerTitle', 'Chức danh người ký'], ['signerName', 'Họ tên người ký (có thể để trống)'], ['contactPerson', 'Cán bộ liên hệ mặc định'], ['phone', 'Số điện thoại liên hệ'], ['address', 'Địa chỉ nhận hồ sơ']];
     dialog.innerHTML = '<form method="dialog"><h2>Thông tin đơn vị ban hành</h2><p class="olp-hint">Lưu trên máy này, dùng cho mọi công văn.</p>'
       + rows.map(([key, label]) => '<label class="ol-field"><span>' + esc(label) + '</span><input name="' + key + '" maxlength="300" value="' + esc(issuer[key]) + '"></label>').join('')
-      + '<div class="ol-actions"><button type="button" class="tasco-ai-btn-ghost" data-cancel>Hủy</button><button type="submit" class="tasco-ai-btn-primary">Lưu</button></div></form>';
+      + '<h2 class="ol-dialog-sub">Khoá DeepSeek API</h2><p class="olp-hint" data-ds-state>Đang kiểm tra khoá…</p>'
+      + '<label class="ol-field"><span>Nhập khoá mới (bắt đầu bằng sk-…, để trống nếu giữ nguyên)</span><input name="deepseekKey" type="password" autocomplete="off" spellcheck="false" maxlength="200" placeholder="sk-..."></label>'
+      + '<div class="ol-actions"><button type="button" class="tasco-ai-btn-ghost" data-ds-clear hidden>Xoá khoá</button><button type="button" class="tasco-ai-btn-ghost" data-cancel>Hủy</button><button type="submit" class="tasco-ai-btn-primary">Lưu</button></div></form>';
     document.body.appendChild(dialog);
     const close = () => { dialog.close(); dialog.remove(); };
     dialog.querySelector('[data-cancel]').onclick = close;
-    dialog.querySelector('form').onsubmit = event => {
+    const stateNode = dialog.querySelector('[data-ds-state]'), clearBtn = dialog.querySelector('[data-ds-clear]');
+    if (typeof DeepSeekKeyStore === 'undefined') stateNode.textContent = 'Chưa tải được mô-đun lưu khoá. Hãy tải lại trang.';
+    else DeepSeekKeyStore.get().then(key => {
+      stateNode.textContent = key ? 'Đã có khoá (…' + key.slice(-4) + '). Công văn AI đang dùng DeepSeek.' : 'Chưa có khoá — cần nhập để dùng Công văn AI (lấy tại platform.deepseek.com).';
+      clearBtn.hidden = !key;
+    });
+    clearBtn.onclick = async () => { await DeepSeekKeyStore.clear(); stateNode.textContent = 'Đã xoá khoá.'; clearBtn.hidden = true; toast('Đã xoá khoá DeepSeek.', 'info'); };
+    dialog.querySelector('form').onsubmit = async event => {
       event.preventDefault();
       const next = {}; rows.forEach(([key]) => { next[key] = dialog.querySelector('[name="' + key + '"]').value; });
+      const keyValue = dialog.querySelector('[name="deepseekKey"]').value.trim();
+      if (keyValue) {
+        try {
+          const saved = await DeepSeekKeyStore.set(keyValue);
+          toast(saved.scope === 'account' ? 'Đã lưu khoá DeepSeek vào tài khoản.' : 'Đã lưu khoá DeepSeek trên trình duyệt này (tài khoản chưa cho phép lưu).', 'success');
+        } catch (error) { toast(error.message, 'warning'); return; }
+      }
       saveIssuer(Core().normalizeIssuer(next)); close(); toast('Đã lưu thông tin đơn vị.', 'success');
     };
     dialog.addEventListener('cancel', close);

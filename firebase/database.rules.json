@@ -205,6 +205,9 @@
         "geminiApiKey": {
           ".validate": "newData.isString() && newData.val().length <= 200"
         },
+        "deepseekApiKey": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        },
         "$other": {
           ".validate": false
         }

@@ -91,6 +91,7 @@ function setupPage(reply) {
   const ctx = vm.createContext({setTimeout, clearTimeout, AbortController, btoa:text => Buffer.from(text, 'binary').toString('base64'),
     document:{removeEventListener() {}}, window:{removeEventListener() {}}, localStorage:{getItem:() => null},
     triggerToast:(...args) => messages.push(args),
+    OfficialLetterAI:{pdfToAttachments:async name => [{name, mimeType:'text/plain', data:'Zm9v'}]},   // DeepSeek không nhận PDF → PDF được đọc thành văn bản trước khi gửi
     OfficialLetterHistory:{save:async (id, entry) => { saves.push(plain(entry.data)); return {id:id || 'history123', scope:'browser'}; }, list:() => []},
     testReply:reply, testHost:host
   });
@@ -177,7 +178,7 @@ test('sửa vùng bôi đen vẫn gửi tệp đính kèm và không gọi AI ha
   const h = setupPage(async request => {
     calls++;
     const files = request.contents[0].parts.filter(part => part.inlineData);
-    assert.equal(files.length, 1); assert.equal(files[0].inlineData.mimeType, 'application/pdf');
+    assert.equal(files.length, 1); assert.equal(files[0].inlineData.mimeType, 'text/plain');
     return '{"replacements":[{"path":"para:0","text":"Nội dung theo tài liệu."}]}';
   });
   const before = plain(h.state().letter);
