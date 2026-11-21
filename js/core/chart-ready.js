@@ -20,5 +20,5 @@
     wrapped.__chartReady = true;
     owner[name] = wrapped;
   }
-  ['initCarBrandChart', 'initGdvKpiChart', 'initGarageLossChart', 'initAnnualClaimsChart'].forEach(name => wrap(window, name));
+  ['initCarBrandChart', 'initGdvKpiChart', 'initGarageLossChart', 'initAnnualClaimsChart', 'initMonthlyOpenedClaimsCharts'].forEach(name => wrap(window, name));
 })();

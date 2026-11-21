@@ -40,11 +40,7 @@ vm.runInContext([
   'var activeReportClaimType = "all";',
   'var activeSelectedGdvNames = [];',
   'var activeGdvReportBranch = "all";',
-  'var activeMonthlyOpenedSearch = "";',
-  'var activeMonthlyOpenedStatus = "all";',
-  'var activeMonthlyOpenedSort = "date_desc";',
-  'var activeMonthlyOpenedPage = 1;',
-  'var activeMonthlyOpenedPageSize = 25;',
+  'var activeMonthlyOpenedChartType = "bar";',
   'function formatCurrencyInputNumber(n) { return (parseInt(String(n || 0).replace(/\\D/g, ""), 10) || 0).toLocaleString("vi-VN"); }',
   'function formatDateDisplay(d) { return d || ""; }',
   'function escapeHtmlOutput(s) { return String(s || ""); }',
@@ -56,7 +52,8 @@ vm.runInContext([
   extractFunction(reservesSrc, 'getClaimReserveAmountValue'),
   extractFunction(reservesSrc, 'isTndsClaimMonthlyRecord'),
   extractFunction(reservesSrc, 'getMonthlyOpenedClaimsData'),
-  extractFunction(reservesSrc, 'getFilteredMonthlyOpenedClaims'),
+  extractFunction(reservesSrc, 'getMonthlyOpenedClaimsSorted'),
+  extractFunction(reservesSrc, 'getMonthlyOpenedChartData'),
   extractFunction(reservesSrc, 'renderMonthlyOpenedClaimsReportHtml')
 ].join('\n'), ctx);
 
@@ -156,42 +153,68 @@ test('getMonthlyOpenedClaimsData lọc chính xác hồ sơ mở trong tháng v�
   const html = ctx.renderMonthlyOpenedClaimsReportHtml();
   assert.ok(html.includes('40.000.000'), 'HTML phải hiển thị tổng dự phòng 40.000.000 đ');
   assert.ok(html.includes('3'), 'HTML phải hiển thị tổng số 3 hồ sơ');
-  assert.ok(html.includes('51F-123.45'), 'HTML phải chứa biển số xe 51F-123.45');
-  assert.ok(html.includes('47C-888.88'), 'HTML phải chứa biển số xe 47C-888.88');
+  assert.ok(!html.includes('<table'), 'Trang hiển thị bằng biểu đồ, không còn bảng danh sách');
+  assert.ok(!html.includes('51F-123.45'), 'Không liệt kê từng biển số trên trang');
+  for (const id of ['monthlyOpenedTimelineCanvas', 'monthlyOpenedGdvCanvas', 'monthlyOpenedStatusCanvas']) assert.ok(html.includes('id="' + id + '"'), 'Thiếu biểu đồ ' + id);
+  assert.ok(html.includes('initMonthlyOpenedClaimsCharts'), 'Phải kích hoạt vẽ biểu đồ sau khi render');
 });
 
-test('Bộ lọc nghiệp vụ và tìm kiếm hoạt động chuẩn xác', () => {
+test('Bộ lọc nghiệp vụ vẫn áp dụng cho dữ liệu báo cáo', () => {
   ctx.activeReportClaimType = 'TNDS';
   const tndsClaims = ctx.getMonthlyOpenedClaimsData();
   assert.equal(tndsClaims.length, 1, 'Chỉ có 1 hồ sơ TNDS trong tháng 11/2026');
   assert.equal(tndsClaims[0].soHoSoBoiThuong, 'HSBT-003');
-
   ctx.activeReportClaimType = 'all';
-  ctx.activeMonthlyOpenedSearch = 'Hồ Quang Huy';
-  const huyClaims = ctx.getFilteredMonthlyOpenedClaims();
-  assert.equal(huyClaims.length, 2, 'Có 2 hồ sơ của GĐV Hồ Quang Huy');
-
-  ctx.activeMonthlyOpenedSearch = '51F-123';
-  const plateFiltered = ctx.getFilteredMonthlyOpenedClaims();
-  assert.equal(plateFiltered.length, 1, 'Lọc biển số 51F-123 ra đúng 1 ca');
 });
 
-test('Sắp xếp theo số tiền dự phòng và ngày mở', () => {
-  ctx.activeMonthlyOpenedSearch = '';
-  ctx.activeMonthlyOpenedStatus = 'all';
-  ctx.activeReportClaimType = 'all';
-
-  ctx.activeMonthlyOpenedSort = 'reserve_desc';
-  const sortedByReserveDesc = ctx.getFilteredMonthlyOpenedClaims();
-  assert.equal(sortedByReserveDesc[0].soHoSoBoiThuong, 'HSBT-002', 'Dự phòng cao nhất là 25.000.000 (HSBT-002)');
-  assert.equal(sortedByReserveDesc[2].soHoSoBoiThuong, 'HSBT-003', 'Dự phòng thấp nhất là 5.000.000 (HSBT-003)');
-
-  ctx.activeMonthlyOpenedSort = 'reserve_asc';
-  const sortedByReserveAsc = ctx.getFilteredMonthlyOpenedClaims();
-  assert.equal(sortedByReserveAsc[0].soHoSoBoiThuong, 'HSBT-003', 'Dự phòng thấp nhất lên đầu (HSBT-003)');
-
-  ctx.activeMonthlyOpenedSort = 'date_asc';
-  const sortedByDateAsc = ctx.getFilteredMonthlyOpenedClaims();
-  assert.equal(sortedByDateAsc[0].soHoSoBoiThuong, 'HSBT-001', 'Ngày mở sớm nhất là 02/11 (HSBT-001)');
+test('getMonthlyOpenedClaimsSorted: mới nhất trước (dùng cho xuất Excel)', () => {
+  const sorted = ctx.getMonthlyOpenedClaimsSorted();
+  assert.deepEqual(JSON.parse(JSON.stringify(sorted.map(c => c.soHoSoBoiThuong))), ['HSBT-003', 'HSBT-002', 'HSBT-001']);
 });
 
+test('getMonthlyOpenedChartData: theo ngày trong tháng, theo GĐV, theo trạng thái; khớp tổng', () => {
+  ctx.activeGdvReportMonth = '11'; ctx.activeGdvReportYear = '2026'; ctx.activeReportClaimType = 'all';
+  const d = JSON.parse(JSON.stringify(ctx.getMonthlyOpenedChartData()));
+  assert.equal(d.mode, 'day');
+  assert.equal(d.timeline.labels.length, 30, 'Tháng 11 có 30 ngày');
+  assert.equal(d.timeline.count[1], 1, 'Ngày 02: 1 hồ sơ');
+  assert.equal(d.timeline.count[14], 1, 'Ngày 15: 1 hồ sơ');
+  assert.equal(d.timeline.reserve[27], 5000000, 'Ngày 28: dự phòng 5.000.000');
+  assert.equal(d.timeline.tnds[27], 1);
+  assert.equal(d.timeline.vcx[27], 0);
+  assert.equal(d.timeline.count.reduce((a, b) => a + b, 0), 3);
+  assert.equal(d.timeline.reserve.reduce((a, b) => a + b, 0), 40000000);
+  assert.equal(d.total, 3);
+  assert.equal(d.totalReserve, 40000000);
+  assert.deepEqual(d.gdv.labels, ['Hồ Quang Huy', 'Huỳnh Văn Phúc'], 'GĐV nhiều hồ sơ nhất trước');
+  assert.deepEqual(d.gdv.count, [2, 1]);
+  assert.deepEqual(d.gdv.reserve, [30000000, 10000000]);
+  assert.deepEqual(d.status.labels, ['Mới'], 'Hồ sơ không có trạng thái tính là "Mới"');
+  assert.deepEqual(d.status.count, [3]);
+});
+
+test('getMonthlyOpenedChartData: cả năm → 12 tháng; nhiều năm → theo tháng/năm; gộp GĐV thừa thành "Khác"', () => {
+  ctx.activeGdvReportMonth = 'all'; ctx.activeGdvReportYear = '2026';
+  let d = JSON.parse(JSON.stringify(ctx.getMonthlyOpenedChartData()));
+  assert.equal(d.mode, 'month');
+  assert.equal(d.timeline.labels.length, 12);
+  assert.equal(d.timeline.count[9], 1, 'Tháng 10: 1 hồ sơ');
+  assert.equal(d.timeline.count[10], 3, 'Tháng 11: 3 hồ sơ');
+  ctx.activeGdvReportYear = 'all';
+  d = JSON.parse(JSON.stringify(ctx.getMonthlyOpenedChartData()));
+  assert.equal(d.mode, 'period');
+  assert.deepEqual(d.timeline.labels, ['11/2025', '10/2026', '11/2026']);
+  // 12 GĐV → 10 người + "Khác"
+  const many = {};
+  for (let i = 1; i <= 12; i++) many['x' + i] = { bienSo: 'B' + i, ngayMoHs: '03/11/2026', duPhongBoiThuong: String(i * 1000000), gdvTiepNhan: 'GĐV ' + i };
+  ctx.cachedPendingClaimsPayload = many; ctx.activeGdvReportMonth = '11'; ctx.activeGdvReportYear = '2026';
+  d = JSON.parse(JSON.stringify(ctx.getMonthlyOpenedChartData()));
+  assert.equal(d.gdv.labels.length, 11);
+  assert.equal(d.gdv.labels[10], 'Khác');
+  assert.equal(d.gdv.count[10], 2);
+  // không có dữ liệu → các mảng rỗng, không lỗi
+  ctx.cachedPendingClaimsPayload = {};
+  d = JSON.parse(JSON.stringify(ctx.getMonthlyOpenedChartData()));
+  assert.equal(d.total, 0); assert.equal(d.gdv.labels.length, 0);
+  assert.ok(ctx.renderMonthlyOpenedClaimsReportHtml().includes('Không có hồ sơ nào mở'));
+});

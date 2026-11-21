@@ -559,15 +559,8 @@ document.getElementById('customCameraVideo')?.addEventListener('loadedmetadata',
  // 'all' | 'has_note' | 'no_note'
     let activeTndsStatusFilter = 'all';
 
-    let activeMonthlyOpenedSearch = '';
-
-    let activeMonthlyOpenedStatus = 'all';
-
-    let activeMonthlyOpenedSort = 'date_desc';
-
-    let activeMonthlyOpenedPage = 1;
-
-    let activeMonthlyOpenedPageSize = 25;
+    // 'bar' | 'line' — kiểu biểu đồ báo cáo xe & bồi thường mở trong tháng
+    let activeMonthlyOpenedChartType = 'bar';
 
     let activeOpenDropdownId = null;
 
