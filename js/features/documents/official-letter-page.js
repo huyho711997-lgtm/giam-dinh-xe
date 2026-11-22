@@ -1320,7 +1320,7 @@ const OfficialLetterPage = (() => {
   function fieldsBody() {
     const tpl = template();
     const missing = Core().missingFields(tpl, st.values);
-    const compact = new Set(['plate', 'noticeDate', 'lossTime', 'standardTyre', 'fittedTyre']);
+    const compact = new Set(['plate', 'driver', 'noticeDate', 'lossTime', 'standardTyre', 'fittedTyre']);
     return '<div data-ol-block="fields"><div class="ola-fields-intro"><div><h3>Thông tin công văn</h3><p>Kiểm tra và chỉnh sửa thông tin trước khi soạn lại.</p></div><span>' + tpl.fields.length + ' mục</span></div>'
       + '<p class="' + (missing.length ? 'ol-warn' : 'ol-ok') + ' ola-fields-status" data-ol-missing>' + esc(missingText(missing)) + '</p><div class="ol-form">' + tpl.fields.map(field => {
         const flag = field.required && !Core().single(st.values[field.key], 1);
