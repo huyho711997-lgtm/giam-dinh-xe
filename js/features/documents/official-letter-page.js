@@ -1210,7 +1210,7 @@ const OfficialLetterPage = (() => {
   function recordChipHtml() {
     const found = chosenRecord();
     return found
-      ? '<span class="ola-chip is-set"><button type="button" data-ol-pop="record" title="Đổi hồ sơ">' + svg(ICON.folder) + esc(found.info.plate || found.info.code || 'Hồ sơ') + '</button><button type="button" class="ola-chip-x" data-ol-rec-clear aria-label="Bỏ hồ sơ">×</button></span>'
+      ? '<span class="ola-chip is-set"><button type="button" data-ol-pop="record" title="Đổi hồ sơ">' + svg(ICON.folder) + '<span class="ola-chip-record">' + esc(found.info.plate || found.info.code || 'Hồ sơ') + '</span></button><button type="button" class="ola-chip-x" data-ol-rec-clear aria-label="Bỏ hồ sơ">×</button></span>'
       : '<button type="button" class="ola-chip" data-ol-pop="record">' + svg(ICON.folder) + 'Hồ sơ</button>';
   }
   function rulesChipHtml(title) {
