@@ -671,7 +671,7 @@ const OfficialLetterPage = (() => {
     const H = History();
     if (!H) return;
     const item = st.history.find(entry => entry.id === id);
-    if (!window.confirm('Xoá "' + (item ? item.title : 'công văn này') + '" khỏi lịch sử?')) return;
+    if (!await askConfirm({eyebrow: 'LỊCH SỬ CÔNG VĂN', title: 'Xoá công văn khỏi lịch sử?', message: '"' + (item ? item.title : 'Công văn này') + '" sẽ bị xoá khỏi lịch sử và không khôi phục được.', confirmText: 'Xoá công văn'})) return;
     await H.remove(id);
     st.history = H.list();
     if (id === st.historyId) st.historyId = '';
@@ -1061,7 +1061,12 @@ const OfficialLetterPage = (() => {
     releaseFiles(st.files); releaseFiles(st.refineFiles);
     Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, versionId:'', usage: null, questionDrafts: Object.create(null)});
   }
-  const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Bỏ công văn đang soạn để bắt đầu công văn mới?');
+  // Hộp xác nhận dùng chung của app (showPremiumConfirmModal) — không dùng hộp thoại hệ thống của trình duyệt.
+  function askConfirm(options) {
+    if (typeof showPremiumConfirmModal === 'function') return showPremiumConfirmModal(options);
+    return Promise.resolve(window.confirm(options.title + '\n' + (options.message || '')));
+  }
+  const confirmDiscard = () => (st.values || st.letter) ? askConfirm({eyebrow: 'CÔNG VĂN AI', title: 'Bỏ bản đang soạn?', message: 'Nội dung đang nhập sẽ bị bỏ để bắt đầu công văn mới.', confirmText: 'Bỏ và soạn mới'}) : Promise.resolve(true);
 
   // ---- Sự kiện ----
   function closePop() { if (!st.pop) return; collectAll(); st.pop = ''; st.recQuery = ''; renderAll(); }
@@ -1140,7 +1145,7 @@ const OfficialLetterPage = (() => {
       case 'settings': openSettings(); break;
       case 'legal-search': searchMoreLegal(); break;
       case 'open-library': TascoLibrary.open(); break;
-      case 'new': if (st.letter) { clearTimeout(saveTimer); if (st.historyId) saveHistory(); reset(); renderAll(); $('[data-ol-brief]')?.focus(); } else if (confirmDiscard()) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } break;
+      case 'new': if (st.letter) { clearTimeout(saveTimer); if (st.historyId) saveHistory(); reset(); renderAll(); $('[data-ol-brief]')?.focus(); } else confirmDiscard().then(ok => { if (ok) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } }); break;
       case 'hist-toggle': st.histOpen = !st.histOpen; try { localStorage.setItem(HIST_PANEL_KEY, st.histOpen ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); break;
       case 'add-extra': collectAll(); st.extras.push({label: '', value: ''}); renderAll(); host.querySelector('[data-ol-extra-row]:last-of-type [data-ol-extra-label]')?.focus(); break;
       case 'remove-extra': { collectAll(); const rows = [...host.querySelectorAll('[data-ol-extra-row]')]; st.extras.splice(rows.indexOf(act.closest('[data-ol-extra-row]')), 1); renderAll(); break; }
