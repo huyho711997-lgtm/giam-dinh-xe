@@ -1933,13 +1933,32 @@ body:not(.light-mode) .sr-ai-photo.is-sample .sr-ai-kind { background: #164a33; 
 @media (prefers-reduced-motion: reduce) { .sr-ai-busy i { animation: none; } }
 
 /* chọn mô hình AI ảnh hiện trường */
-.sr-ai-modelrow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
-.sr-ai-model { display: inline-flex; align-items: center; gap: 8px; color: var(--ce-muted); font-size: 12px; font-weight: 700; }
-.sr-ai-model select { height: 32px; max-width: 260px; padding: 0 28px 0 10px; border: 1px solid var(--ce-line); border-radius: 9px; background-color: var(--ce-paper); color: var(--ce-ink); font: 650 12.5px 'Plus Jakarta Sans', system-ui, sans-serif; }
-.sr-ai-model select:focus-visible { outline: 2px solid var(--ce-gold); outline-offset: 2px; }
-.sr-ai-deep { display: inline-flex; align-items: center; gap: 8px; color: var(--ce-ink); font-size: 12px; font-weight: 700; cursor: pointer; }
-.sr-ai-deep input { position: absolute; opacity: 0; pointer-events: none; }
-.sr-ai-deep input:focus-visible + .sr-check-box { outline: 2px solid var(--ce-gold); outline-offset: 2px; }
+.sr-ai-modelrow { display: flex; align-items: end; flex-wrap: wrap; gap: 10px; }
+.sr-ai-model { display: grid; gap: 5px; min-width: 0; color: var(--ce-muted); font-size: 11px; font-weight: 750; }
+.sr-ai-model-label { padding-left: 2px; }
+.sr-ai-model-menu { position: relative; width: min(100%, 300px); }
+.sr-ai-model-menu summary { display: flex; align-items: center; gap: 9px; box-sizing: border-box; width: min(255px, 100%); min-height: 40px; padding: 5px 10px 5px 6px; border: 1px solid var(--ce-line); border-radius: 11px; background: var(--ce-paper); color: var(--ce-ink); font-size: 12px; cursor: pointer; list-style: none; }
+.sr-ai-model-menu summary::-webkit-details-marker { display: none; }
+.sr-ai-model-menu summary:hover, .sr-ai-model-menu[open] summary { border-color: var(--ce-gold); }
+.sr-ai-model-menu summary:focus-visible, .sr-ai-model-options button:focus-visible, .sr-ai-deep input:focus-visible + .sr-ai-deep-content { outline: 2px solid var(--ce-gold); outline-offset: 2px; }
+.sr-ai-model-menu summary[aria-disabled="true"] { opacity: .55; cursor: default; }
+.sr-ai-model-icon { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 8px; background: var(--ce-gold-soft); color: var(--ce-action); }
+.sr-ai-model-icon svg, .sr-ai-deep-content svg { width: 15px; height: 15px; }
+.sr-ai-model-current { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-ai-chevron { color: var(--ce-muted); font-size: 17px; line-height: 1; }
+.sr-ai-model-options { position: absolute; z-index: 20; left: 0; bottom: calc(100% + 6px); box-sizing: border-box; width: max(100%, 300px); max-width: min(360px, 85vw); max-height: 230px; overflow-y: auto; padding: 6px; border: 1px solid var(--ce-line); border-radius: 12px; background: var(--ce-paper); box-shadow: 0 12px 30px rgba(40, 32, 18, .16); }
+.sr-ai-model-options button { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 10px; border: 0; border-radius: 8px; background: transparent; color: var(--ce-ink); font: 650 12px 'Plus Jakarta Sans', system-ui, sans-serif; text-align: left; cursor: pointer; }
+.sr-ai-model-options button:hover, .sr-ai-model-options button[aria-pressed="true"] { background: var(--ce-gold-soft); }
+.sr-ai-model-options button[aria-pressed="true"] > span:last-child { color: var(--ce-action); }
+.sr-ai-deep { position: relative; cursor: pointer; }
+.sr-ai-deep input { position: absolute; opacity: 0; }
+.sr-ai-deep-content { display: inline-flex; align-items: center; gap: 8px; box-sizing: border-box; min-height: 40px; padding: 0 11px; border: 1px solid var(--ce-line); border-radius: 11px; background: var(--ce-paper); color: var(--ce-muted); font-size: 12px; font-weight: 700; }
+.sr-ai-deep input:checked + .sr-ai-deep-content { border-color: var(--sr-gold-line); background: var(--ce-gold-soft); color: var(--ce-action); }
+.sr-ai-deep input:disabled + .sr-ai-deep-content { opacity: .55; cursor: default; }
+.sr-ai-switch { width: 26px; height: 15px; padding: 2px; box-sizing: border-box; border-radius: 999px; background: var(--ce-line); }
+.sr-ai-switch::after { content: ''; display: block; width: 11px; height: 11px; border-radius: 50%; background: #fff; transition: transform .15s ease; }
+.sr-ai-deep input:checked + .sr-ai-deep-content .sr-ai-switch { background: var(--ce-action); }
+.sr-ai-deep input:checked + .sr-ai-deep-content .sr-ai-switch::after { transform: translateX(11px); }
 .sr-ai-local { flex-basis: 100%; margin: 0; color: var(--ce-muted); font-size: 11.5px; line-height: 1.5; }
 
 /* AI ảnh hiện trường — các mục khác [3][4][5][12][13][14] */

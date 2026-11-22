@@ -86,11 +86,12 @@ function sceneReportAiModelHtml(locked) {
   const E = sceneReportEsc, model = sceneReportAiModelState();
   if (!model) return '';
   const text = option => (option.local ? 'Antigravity · ' + option.model : option.label) + (option.free ? ' · miễn phí' : '');
-  const select = '<label class="sr-ai-model"><span>Mô hình</span><select data-sr-ai-model aria-label="Mô hình AI đọc ảnh"' + (locked ? ' disabled' : '') + '>'
-    + model.options.map(option => '<option value="' + E(option.id) + '"' + (option.id === model.id ? ' selected' : '') + '>' + E(text(option)) + '</option>').join('') + '</select></label>';
+  const select = '<div class="sr-ai-model"><span class="sr-ai-model-label">Mô hình AI</span><details class="sr-ai-model-menu">'
+    + '<summary aria-label="Chọn mô hình AI đọc ảnh"' + (locked ? ' aria-disabled="true"' : '') + '><span class="sr-ai-model-icon">' + sceneReportIcon('sparkles') + '</span><span class="sr-ai-model-current">' + E(text(model.current)) + '</span><span class="sr-ai-chevron" aria-hidden="true">⌄</span></summary>'
+    + '<div class="sr-ai-model-options" aria-label="Chọn mô hình AI">' + model.options.map(option => '<button type="button" data-sr-ai-model-option="' + E(option.id) + '" aria-pressed="' + (option.id === model.id) + '"' + (locked ? ' disabled' : '') + '><span>' + E(text(option)) + '</span>' + (option.id === model.id ? '<span aria-hidden="true">✓</span>' : '') + '</button>').join('') + '</div></details></div>';
   const deep = model.current.reasoning
-    ? '<label class="sr-ai-deep" title="AI suy nghĩ kỹ hơn trước khi viết; chậm hơn và tốn hạn mức hơn"><input type="checkbox" data-sr-ai-deep' + (sceneReportAiDeepOn(model) ? ' checked' : '') + (locked ? ' disabled' : '') + '><span class="sr-check-box" aria-hidden="true"></span><span>Suy luận sâu</span></label>' : '';
-  const note = model.current.local ? '<p class="sr-ai-local">Antigravity chạy qua công cụ trung gian trên chính máy này (127.0.0.1) — cần bật công cụ đó và đăng nhập website. Suy luận sâu có thể mất 1–3 phút.</p>' : '';
+    ? '<label class="sr-ai-deep" title="AI suy nghĩ kỹ hơn trước khi viết; chậm hơn và tốn hạn mức hơn"><input type="checkbox" data-sr-ai-deep' + (sceneReportAiDeepOn(model) ? ' checked' : '') + (locked ? ' disabled' : '') + '><span class="sr-ai-deep-content">' + sceneReportIcon('sparkles') + '<span>Suy luận sâu</span><span class="sr-ai-switch" aria-hidden="true"></span></span></label>' : '';
+  const note = model.current.local ? '<p class="sr-ai-local">Antigravity cần công cụ kết nối trên máy này. Suy luận sâu có thể mất 1–3 phút.</p>' : '';
   return select + deep + note;
 }
 
@@ -301,7 +302,6 @@ document.addEventListener('change', event => {
   const target = event.target;
   if (!target.closest?.('#sceneReportRoot [data-sr-ai]')) return;
   if (target.matches('[data-sr-ai-file]')) { const files = [...target.files]; target.value = ''; sceneReportAiAddFiles(files); return; }
-  if (target.matches('[data-sr-ai-model]')) { sceneReportAi.model = target.value; sceneReportAiLs.set(SCENE_REPORT_AI_MODEL_KEY, target.value); sceneReportAi.error = ''; sceneReportAiRepaint(); return; }
   if (target.matches('[data-sr-ai-deep]')) { sceneReportAi.deep = target.checked; sceneReportAiLs.set(SCENE_REPORT_AI_DEEP_KEY, target.checked ? '1' : '0'); return; }
   if (target.matches('[data-sr-ai-x-pick]')) { sceneReportAi.pickX[target.dataset.srAiXPick] = target.checked; sceneReportAiSyncApply(target); return; }
   if (target.matches('[data-sr-ai-x-prop]') && sceneReportAi.extra) { sceneReportAi.extra.property[target.dataset.srAiXProp] = target.checked; sceneReportAiSyncApply(target); return; }
@@ -325,8 +325,12 @@ document.addEventListener('input', event => {
 });
 document.addEventListener('click', event => {
   const target = event.target;
+  if (!target.closest?.('.sr-ai-model-menu')) document.querySelectorAll('#sceneReportRoot .sr-ai-model-menu[open]').forEach(menu => { menu.open = false; });
   if (!target.closest?.('#sceneReportRoot [data-sr-ai]')) return;
   const st = sceneReportAi;
+  if (target.closest('.sr-ai-model-menu summary[aria-disabled="true"]')) { event.preventDefault(); return; }
+  const modelOption = target.closest('[data-sr-ai-model-option]');
+  if (modelOption && !st.busy && !st.preparing) { st.model = modelOption.dataset.srAiModelOption; sceneReportAiLs.set(SCENE_REPORT_AI_MODEL_KEY, st.model); st.error = ''; sceneReportAiRepaint(); return; }
   const kind = target.closest('[data-sr-ai-kind]'), del = target.closest('[data-sr-ai-del]');
   if (kind) { const photo = st.photos[Number(kind.dataset.srAiKind)]; if (photo && !st.busy) { photo.kind = SceneReportAI.nextKind(photo.kind); sceneReportAiRepaint(); } return; }
   if (del) { if (!st.busy) { st.photos.splice(Number(del.dataset.srAiDel), 1); st.result = null; st.applied = ''; sceneReportAiRepaint(); } return; }
@@ -334,6 +338,11 @@ document.addEventListener('click', event => {
   if (target.closest('[data-sr-ai-stop]')) { st.stopped = true; try { st.controller?.abort(); } catch (_) { /* bỏ qua */ } return; }
   if (target.closest('[data-sr-ai-apply]')) { sceneReportAiApply(); return; }
   if (target.closest('[data-sr-ai-dismiss]')) { st.result = null; sceneReportAiRepaint(); }
+});
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  const menu = event.target.closest?.('#sceneReportRoot .sr-ai-model-menu[open]');
+  if (menu) { menu.open = false; menu.querySelector('summary')?.focus(); event.stopPropagation(); }
 });
 // Kéo thả ảnh vào khối AI.
 document.addEventListener('dragover', event => { const box = event.target.closest?.('#sceneReportRoot [data-sr-ai]'); if (box && event.dataTransfer?.types?.includes('Files')) { event.preventDefault(); box.classList.add('is-drop'); } });
