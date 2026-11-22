@@ -95,6 +95,9 @@ Khi chọn hồ sơ, AI không nhận bản ghi thô nữa mà nhận "hồ sơ 
 - **Kiểm chứng tự động** trên bản thảo (cả khi sửa tay): mọi "khoản/điểm … Điều N <văn bản>", "Luật/Nghị định/Thông tư/Quy tắc …", số hiệu `xx/yyyy/…` đều được đối chiếu với các đoạn đã chọn — ✓ kèm mã nguồn hoặc ⚠ "chưa kiểm chứng" (đúng số điều nhưng sai văn bản cũng bị bắt). Tải Word khi còn ⚠ sẽ có cảnh báo.
 - Chất lượng phụ thuộc thư viện: cần nạp Luật Kinh doanh bảo hiểm 08/2022/QH15, Nghị định 67/2023/NĐ-CP, Quy tắc bảo hiểm xe cơ giới Tasco… (mỗi Điều thành một mục để tìm trúng).
 
+### Duyệt đề xuất chỉnh sửa của AI (`official-letter-page.js` · `reviewHtml`)
+Khi nhờ AI sửa công văn, các thay đổi hiện thành **thẻ riêng từng mục** (Trích yếu, Đoạn 1…) với công tắc **Áp dụng / Bỏ qua** (bấm cả hàng tiêu đề), số từ thêm/bớt, ô **chọn tất cả** kèm bộ đếm, và thanh **Áp dụng N thay đổi** ghim ở đáy vùng cuộn. Hai kiểu xem: **Gộp** (gạch xanh/đỏ theo từ) và **Trước / Sau** (hai cột). Đoạn bị viết lại gần hết (ít từ giữ nguyên) được hiện thành hai khối Hiện tại / Đề xuất thay vì gạch xen kẽ khó đọc. Bản thảo chỉ đổi khi bấm Áp dụng.
+
 ### Hỏi nghiệp vụ trong Công văn AI (`official-letter-qa.js`)
 Nút chuyển **Soạn công văn ⇄ Hỏi nghiệp vụ** ở đầu trang Công văn AI. Chế độ hỏi đáp chạy 3 bước rồi trả lời **chỉ dựa trên các đoạn tra được**:
 1. **Lập kế hoạch tra cứu** (1 lệnh DeepSeek JSON, rẻ): AI viết lại câu hỏi đời thường thành 3–8 cụm tìm kiếm theo từ ngữ điều khoản (vd. "vỏ pin" → "tổn thất riêng pin xe điện", "loại trừ bảo hiểm"), cộng thêm bộ từ điển thuật ngữ cố định (pin/ắc quy, ngập nước, phạm vi/loại trừ, khấu hao…) để vẫn tra được khi bước này lỗi.
