@@ -157,7 +157,7 @@
         </div>
         
         <div class="print-page">
-          <div class="header-logo"><img src="${TascoAssets.url('assets/images/tasco-letterhead.png')}" style="height: 65px; width: auto; max-width: 200px; object-fit: contain;" alt="TASCO INSURANCE"></div>
+          <div class="header-logo"><img src="${TascoAssets.url('assets/images/tpax-logo.png')}" style="height: 60px; width: auto; max-width: 210px; object-fit: contain;" alt="TPAX"></div>
           <div class="title">GIẤY ĐỀ NGHỊ THANH TOÁN</div>
           <div class="subtitle">Payment requisition</div>
           
@@ -257,7 +257,72 @@
 
     
 
-    function exportFieldReimbursementToExcel(batchId) {
+    // Chèn logo TPAX vào file .xlsx vừa tạo. Thư viện XLSX bản community không ghi được ảnh,
+    // nên mở gói bằng JSZip, thêm ảnh + drawing + quan hệ rồi đóng gói lại.
+    async function addLogoToXlsxWorkbook(buffer, options = {}) {
+      if (typeof JSZip === 'undefined' || typeof TascoAssets === 'undefined') return null;
+      const zip = await JSZip.loadAsync(buffer);
+      const response = await fetch(TascoAssets.url('assets/images/tpax-logo.png'));
+      if (!response.ok) return null;
+      const png = await response.arrayBuffer();
+
+      const EMU_PER_PX = 9525;
+      const col = Number(options.col) || 0, row = Number(options.row) || 0;
+      const cx = Math.round((Number(options.widthPx) || 140) * EMU_PER_PX);
+      const cy = Math.round((Number(options.heightPx) || 44) * EMU_PER_PX);
+
+      zip.file('xl/media/image1.png', png);
+      zip.file('xl/drawings/drawing1.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        + '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        + '<xdr:oneCellAnchor><xdr:from><xdr:col>' + col + '</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>' + row + '</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>'
+        + '<xdr:ext cx="' + cx + '" cy="' + cy + '"/>'
+        + '<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="2" name="TPAX"/><xdr:cNvPicPr/></xdr:nvPicPr>'
+        + '<xdr:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'
+        + '<xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/>'
+        + '</xdr:oneCellAnchor></xdr:wsDr>');
+      zip.file('xl/drawings/_rels/drawing1.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image1.png"/>'
+        + '</Relationships>');
+
+      // Quan hệ từ sheet 1 tới drawing (giữ nguyên các quan hệ sẵn có nếu có).
+      const sheetRelsPath = 'xl/worksheets/_rels/sheet1.xml.rels';
+      const drawingRelation = (id) => '<Relationship Id="' + id + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>';
+      const existingRels = zip.file(sheetRelsPath) ? await zip.file(sheetRelsPath).async('string') : '';
+      let drawingRelId = 'rId1';
+      if (existingRels) {
+        const ids = Array.from(existingRels.matchAll(/Id="rId(\d+)"/g), match => Number(match[1]));
+        drawingRelId = 'rId' + ((ids.length ? Math.max.apply(null, ids) : 0) + 1);
+        zip.file(sheetRelsPath, existingRels.replace('</Relationships>', drawingRelation(drawingRelId) + '</Relationships>'));
+      } else {
+        zip.file(sheetRelsPath, '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+          + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + drawingRelation(drawingRelId) + '</Relationships>');
+      }
+
+      // Khai báo kiểu nội dung cho ảnh PNG và drawing.
+      let contentTypes = await zip.file('[Content_Types].xml').async('string');
+      if (!/Extension="png"/i.test(contentTypes)) contentTypes = contentTypes.replace('</Types>', '<Default Extension="png" ContentType="image/png"/></Types>');
+      if (!/drawing1\.xml/.test(contentTypes)) contentTypes = contentTypes.replace('</Types>', '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/></Types>');
+      zip.file('[Content_Types].xml', contentTypes);
+
+      // Gắn thẻ drawing vào sheet (sau các phần khác của worksheet).
+      let sheetXml = await zip.file('xl/worksheets/sheet1.xml').async('string');
+      if (!/\sxmlns:r=/.test(sheetXml)) sheetXml = sheetXml.replace('<worksheet', '<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"');
+      sheetXml = sheetXml.replace('</worksheet>', '<drawing r:id="' + drawingRelId + '"/></worksheet>');
+      zip.file('xl/worksheets/sheet1.xml', sheetXml);
+
+      return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    }
+
+    function downloadBlobFile(blob, fileName) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url; link.download = fileName;
+      document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+
+    async function exportFieldReimbursementToExcel(batchId) {
       if (!window.XLSX) {
         triggerToast('Thư viện XLSX chưa tải xong, vui lòng thử lại.', 'error');
         return;
@@ -414,5 +479,14 @@
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'BangKe_ChiPhiHT');
-      XLSX.writeFile(wb, `BangKe_ChiPhi_HienTruong_${batchId}.xlsx`);
+      const fileName = `BangKe_ChiPhi_HienTruong_${batchId}.xlsx`;
+
+      try {
+        const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = await addLogoToXlsxWorkbook(buffer, { col: 0, row: 0, widthPx: 140, heightPx: 44 });
+        if (blob) { downloadBlobFile(blob, fileName); return; }
+      } catch (error) {
+        console.warn('Không chèn được logo vào bảng kê, xuất file không kèm logo.', error);
+      }
+      XLSX.writeFile(wb, fileName);
     }
