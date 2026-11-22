@@ -93,7 +93,13 @@ const OfficialLetterModels = (() => {
   }
   async function getKey(providerId) {
     try {
-      if (providerId === 'antigravity') return typeof firebase !== 'undefined' && firebase.auth().currentUser ? await firebase.auth().currentUser.getIdToken() : '';
+      if (providerId === 'antigravity') {
+        const user = typeof firebase !== 'undefined' ? firebase.auth().currentUser : null;
+        if (!user) return '';
+        let timer;
+        try { return await Promise.race([user.getIdToken(), new Promise(resolve => { timer = setTimeout(() => resolve(''), 10000); })]); }
+        finally { clearTimeout(timer); }
+      }
       const s = store(providerId); return s ? clean(await s.get()) : '';
     } catch (_) { return ''; }
   }
@@ -103,6 +109,7 @@ const OfficialLetterModels = (() => {
     return out;
   }
   function noKeyMessage(providerId, cfg) {
+    if (providerId === 'antigravity') return 'Không xác minh được tài khoản website. Kiểm tra kết nối mạng và đăng nhập lại rồi thử Antigravity.';
     const p = PROVIDERS[providerId];
     return 'Chưa có khoá ' + providerLabel(providerId, cfg) + '. Bấm biểu tượng ⚙ ở góc phải để nhập khoá' + (p.keyUrl ? ' (lấy tại ' + p.keyUrl.replace(/^https:\/\//, '') + ')' : '') + ', hoặc chọn mô hình khác ở nút Mô hình.';
   }

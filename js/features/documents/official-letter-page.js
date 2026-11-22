@@ -209,13 +209,15 @@ const OfficialLetterPage = (() => {
     const thinking = !!extra.thinking && (!active || active.profile.reasoning !== 'none');
     controller?.abort();
     controller = new AbortController();
-    const signal = controller.signal;
+    const signal = active && active.provider === 'antigravity' && typeof AbortSignal.timeout === 'function' && typeof AbortSignal.any === 'function'
+      ? AbortSignal.any([controller.signal, AbortSignal.timeout(45000)]) : controller.signal;
     const taskStatus = extra.onWait ? (extra.resumeText || '') : st.status, wait = extra.onWait || setStatus;
     const countUsage = extra.onUsage || (usage => { st.usage = OfficialLetterAI.addUsage(st.usage, usage); paintUsage(); });
     // Một công văn gọi AI 2–3 lần: khi bị giới hạn lưu lượng/quá tải thì tự chờ rồi thử lại, có đếm ngược cho người dùng thấy.
     for (let attempt = 0; ; attempt++) {
       try { return await OfficialLetterAI.call(request, {apiKey, model, signal, onUsage: countUsage, thinking, effort: extra.effort, maxTokens: thinking ? 16000 : undefined, endpoint: active ? active.endpoint : undefined, label, profile: active ? active.profile : undefined}); }
       catch (error) {
+        if (active && active.provider === 'antigravity' && signal.aborted && !controller.signal.aborted) throw new Error('Kết nối Antigravity trên máy không phản hồi. Kiểm tra công cụ trung gian và quyền truy cập mạng cục bộ của trình duyệt.');
         if (!(error && error.retryable) || attempt >= RETRY_WAITS.length) throw error;
         for (let left = RETRY_WAITS[attempt]; left > 0; left--) {
           wait(label + ' đang bận — tự thử lại sau ' + left + ' giây…');
