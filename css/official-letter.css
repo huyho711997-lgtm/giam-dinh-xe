@@ -217,8 +217,9 @@ span.ola-chip button { display:inline-flex; align-items:center; gap:6px; height:
 .ola-refine .ola-agent.is-ready .ola-agent-copy p { font-size:11.5px; font-weight:700; }
 .ola-refine .ola-agent-toggle { min-height:27px; padding:0 5px; }
 .ola-refine .ola-agent-details { padding:6px 8px 8px; }
-.ola-refine-box { grid-template-columns:34px 34px minmax(0,1fr) 40px; min-width:0; padding:4px 5px; border:1px solid var(--border); border-radius:12px; background:var(--surface-soft); box-shadow:none; }
-.ola-refine-box:focus-within { border-color:color-mix(in srgb,var(--primary) 65%,var(--border)); box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 10%,transparent); }
+/* Ghi đè .tasco-ai-composer (css/ai-assistant.css, nạp SAU file này, 3 cột) — tăng độ ưu tiên để ô chat luôn đủ 4 cột: đính kèm · suy luận sâu · ô nhập · gửi. */
+.ola-refine .ola-refine-box { grid-template-columns:34px 34px minmax(0,1fr) 40px; gap:6px; min-width:0; padding:4px 5px; border:1px solid var(--border); border-radius:12px; background:var(--surface-soft); box-shadow:none; }
+.ola-refine .ola-refine-box:focus-within { border-color:color-mix(in srgb,var(--primary) 65%,var(--border)); box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 10%,transparent); }
 .ola-refine-box .ola-icon-btn { width:32px; height:32px; border-radius:8px; }
 .ola-refine-box .tasco-ai-send { width:36px; height:36px; min-width:36px; border-radius:10px; }
 .ola-refine .ola-files { padding:0 2px; }
