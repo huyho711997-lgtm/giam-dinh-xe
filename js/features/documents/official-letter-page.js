@@ -40,7 +40,7 @@ const OfficialLetterPage = (() => {
     letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
     pop: '', drawer: '', editing: false, steps: null, agentOpen: false, agentTask: 'draft',
     historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser',
-    versions: [], selection: [], pending: null, versionId: '', usage: null
+    versions: [], selection: [], pending: null, versionId: '', usage: null, questionDrafts: {}
   };
 
   // ---- Tiện ích chung ----
@@ -397,7 +397,7 @@ const OfficialLetterPage = (() => {
   }
 
   // Soạn lại (sau khi sửa chi tiết) hoặc chỉnh theo yêu cầu — không đọc lại hồ sơ.
-  async function compose(instruction) {
+  async function compose(instruction, questionAnswer) {
     if (st.busy || st.pending) return;
     if (!st.values) { run(); return; }
     collectAll(); syncLetter();
@@ -431,7 +431,7 @@ const OfficialLetterPage = (() => {
       if (sent.length) { st.refineFiles = st.refineFiles.filter(item => !sent.includes(item)); releaseFiles(sent); }
       if (before) {
         const changes = Revisions().changes(before, candidate);
-        st.pending = changes.length ? {before, changes, instruction:instruction || 'Soạn lại theo chi tiết', scoped:!!targets.length} : null;
+        st.pending = changes.length ? {before, changes, instruction:instruction || 'Soạn lại theo chi tiết', scoped:!!targets.length, questionAnswer: questionAnswer || null} : null;
         if (!changes.length) toast('AI giữ nguyên nội dung đã chọn.', 'info');
       } else { st.letter = candidate; checkpoint('Bản soạn của AI'); saveHistory(); }
       step('write', 'done', st.pending ? st.pending.changes.length + ' thay đổi chờ duyệt' : 'Đã xử lý xong');
@@ -455,12 +455,23 @@ const OfficialLetterPage = (() => {
       const selected = st.pending.changes.filter(item => item.on).length;
       if (!selected) { toast('Chọn ít nhất một thay đổi để áp dụng.', 'info'); return; }
       st.letter = Revisions().applyChanges(st.letter, st.pending);
+      const response = st.pending.questionAnswer, question = response && st.questions[response.index];
+      if (question && question.question === response.question) {
+        question.answer = response.answer; delete st.questionDrafts[response.index];
+        if (question.key && st.values) st.values[question.key] = response.answer;
+      }
       checkpoint(st.pending.scoped ? 'AI sửa đoạn được chọn' : 'AI chỉnh công văn');
       st.pending = null; st.selection = []; notice('');
       renderAll(); saveHistory(); toast('Đã áp dụng ' + selected + ' thay đổi.', 'success');
     } catch (error) { toast(error.message, 'warning'); }
   }
   function discardChanges() { st.pending = null; renderAll(); toast('Đã bỏ đề xuất; bản thảo được giữ nguyên.', 'info'); }
+  function answerQuestion(index, answer) {
+    const item = st.questions[index], text = String(answer || '').trim();
+    if (!item || item.answer || !text || st.busy || st.pending) return;
+    st.selection = [];
+    return compose(item.question + ' → ' + text, {index, question:item.question, answer:text});
+  }
   function restoreVersion(id) {
     if (st.busy || st.pending) return;
     const version = st.versions.find(item => item.id === id);
@@ -792,11 +803,12 @@ const OfficialLetterPage = (() => {
     if (!st.letter) return '';
     const dossier = dossierFor();
     const warns = (dossier ? dossier.facts : []).filter(fact => fact.level === 'warn').slice(0, 3);
-    const open = st.questions.map((item, i) => ({item, i})).filter(({item}) => !item.answer && item.options.length);
+    const open = st.questions.map((item, i) => ({item, i})).filter(({item}) => !item.answer && item.question);
+    const locked = !!(st.busy || st.pending);
     return '<aside class="ola-rail" aria-label="Ghi chú của AI">'
       + '<div data-ol-gaps>' + gapsHtml() + '</div><div data-ol-citations>' + citationsHtml() + '</div>'
-      + (open.length ? '<div class="ola-note-block"><h3>Chọn nhanh</h3>' + open.map(({item, i}) => '<p class="ola-q">' + esc(item.question) + '</p><div class="tasco-ai-chiprow">' + item.options.map((option, j) => '<button type="button" class="tasco-ai-chip" data-ol-fix="' + i + '|' + j + '"' + (st.busy ? ' disabled' : '') + '>' + esc(option) + '</button>').join('') + '</div>').join('') + '</div>' : '')
-      + (st.assumptions.length ? '<div class="ola-note-block"><h3>AI đã giả định</h3><ul>' + st.assumptions.map(text => '<li>' + esc(text) + '</li>').join('') + '</ul></div>' : '')
+      + (open.length ? '<section class="ola-rail-card ola-questions"><div class="ola-rail-heading"><div><span class="ola-rail-eyebrow">TRỢ LÝ CÔNG VĂN</span><h3>Cần bạn xác nhận</h3></div><span class="ola-rail-count">' + open.length + '</span></div><p class="ola-rail-intro">Chọn hoặc nhập câu trả lời để AI đề xuất sửa bản thảo.</p>' + open.map(({item, i}, position) => '<details class="ola-question"' + (position === 0 ? ' open' : '') + '><summary><span class="ola-question-number">' + String(position + 1).padStart(2, '0') + '</span><span>' + esc(item.question) + '</span>' + svg(ICON.chevron) + '</summary><div class="ola-question-body"><div class="ola-options">' + (Array.isArray(item.options) ? item.options : []).map((option, j) => '<button type="button" data-ol-option="' + i + '|' + j + '"' + (locked ? ' disabled' : '') + '>' + esc(option) + '</button>').join('') + '</div><label for="ol-answer-' + i + '">Câu trả lời của bạn</label><textarea id="ol-answer-' + i + '" data-ol-quick-answer="' + i + '" rows="2" maxlength="1000" placeholder="Nhập hoặc chọn câu trả lời…"' + (locked ? ' disabled' : '') + '>' + esc(st.questionDrafts[i] || '') + '</textarea><button type="button" class="ola-answer-submit" data-ol-answer-submit="' + i + '"' + (locked ? ' disabled' : '') + '>' + svg(ICON.spark) + 'Tạo đề xuất chỉnh sửa</button></div></details>').join('') + '</section>' : '')
+      + (st.assumptions.length ? '<details class="ola-rail-card ola-assumptions"><summary><span><span class="ola-rail-eyebrow">CẦN ĐỐI CHIẾU</span><strong>Giả định của AI</strong></span><span class="ola-rail-count">' + st.assumptions.length + '</span>' + svg(ICON.chevron) + '</summary><p class="ola-rail-intro">Kiểm tra với hồ sơ trước khi sử dụng.</p><ul>' + st.assumptions.map((text, i) => '<li><span>' + esc(text) + '</span><button type="button" data-ol-assumption="' + i + '"' + (locked ? ' disabled' : '') + '>Yêu cầu chỉnh</button></li>').join('') + '</ul></details>' : '')
       + (st.letter.warnings.length ? '<div class="ola-note-block"><h3>Nên kiểm tra</h3><ul>' + st.letter.warnings.map(text => '<li>' + esc(text) + '</li>').join('') + '</ul></div>' : '')
       + (warns.length ? '<div class="ola-note-block is-warn"><h3>Lưu ý từ hồ sơ</h3><ul>' + warns.map(fact => '<li>' + esc(fact.text) + '</li>').join('') + '</ul></div>' : '')
       + '<button type="button" class="ola-more" data-ol-drawer="fields">Xem chi tiết: thông tin, dàn ý, căn cứ, hồ sơ →</button></aside>';
@@ -1030,7 +1042,7 @@ const OfficialLetterPage = (() => {
     generation++; controller?.abort(); controller = null;
     resetAnalysis();
     releaseFiles(st.files); releaseFiles(st.refineFiles);
-    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, versionId:'', usage: null});
+    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, versionId:'', usage: null, questionDrafts: {}});
   }
   const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Bỏ công văn đang soạn để bắt đầu công văn mới?');
 
@@ -1070,10 +1082,23 @@ const OfficialLetterPage = (() => {
     if (removeFile) { const [gone] = st[removeFile.dataset.olBucket === 'refineFiles' ? 'refineFiles' : 'files'].splice(Number(removeFile.dataset.olRemoveFile), 1); if (gone) releaseFiles([gone]); updateFiles(); return; }
     const refine = target.closest('[data-ol-refine]');
     if (refine) { compose(refine.dataset.olRefine); return; }
-    const fix = target.closest('[data-ol-fix]');
-    if (fix && !st.busy) {
-      const [i, j] = fix.dataset.olFix.split('|').map(Number), item = st.questions[i];
-      if (item && item.options[j]) { item.answer = item.options[j]; if (item.key && st.values) st.values[item.key] = item.options[j]; compose(item.question + ' → ' + item.options[j]); }
+    const option = target.closest('[data-ol-option]');
+    if (option && !st.busy && !st.pending) {
+      const [i, j] = option.dataset.olOption.split('|').map(Number), item = st.questions[i], input = host.querySelector('[data-ol-quick-answer="' + i + '"]');
+      if (item && item.options && item.options[j] && input) { input.value = item.options[j]; st.questionDrafts[i] = input.value; input.focus(); }
+      return;
+    }
+    const answer = target.closest('[data-ol-answer-submit]');
+    if (answer && !st.busy && !st.pending) {
+      const i = Number(answer.dataset.olAnswerSubmit), input = host.querySelector('[data-ol-quick-answer="' + i + '"]');
+      if (input && input.value.trim()) answerQuestion(i, input.value);
+      else if (input) { input.focus(); toast('Hãy chọn hoặc nhập câu trả lời.', 'info'); }
+      return;
+    }
+    const assumption = target.closest('[data-ol-assumption]');
+    if (assumption && !st.busy && !st.pending) {
+      const text = st.assumptions[Number(assumption.dataset.olAssumption)], input = $('[data-ol-refine-input]');
+      if (text && input) { st.selection = []; updateSelectionScope(); input.value = 'Điều chỉnh giả định sau: ' + text + '. Yêu cầu: '; input.focus(); }
       return;
     }
     const drawerTab = target.closest('[data-ol-drawer]');
@@ -1112,6 +1137,7 @@ const OfficialLetterPage = (() => {
     if (target.matches('[data-ol-rec-q]')) { st.recQuery = target.value; st.recActive = 0; updateRecList(); }
     else if (target.matches('[data-ol-hist-q]')) { st.histQuery = target.value; updateHistory(true); }
     else if (target.matches('[data-ol-brief]')) { st.brief = target.value; autoGrow(target); }
+    else if (target.matches('[data-ol-quick-answer]')) st.questionDrafts[target.dataset.olQuickAnswer] = target.value;
     else if (target.matches('[data-ol-field]')) updateMissingLive();
     else if (target.matches('[data-ol-outline-text]')) st.outlineEdited = true;
     else if (target.closest && target.closest('.ol-paper')) { st.selection = []; updateSelectionScope(); refreshCitations(); saveSoon(); }

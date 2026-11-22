@@ -18,7 +18,7 @@ function setup(reply, options = {}) {
     ...(options.legal ? {OfficialLetterLegal:options.legal} : {})});
   const expose = `host=testHost; renderAll=() => {}; updateHistory=() => {};
     ${options.realCall ? '' : 'callAI=testReply;'}
-    return {run, compose, leave, restore, snapshot, stepState, stepsHtml, workHtml, refineHtml, startAgent, step, setStatus,
+    return {run, compose, answerQuestion, acceptChanges, discardChanges, notesRail, leave, restore, snapshot, stepState, stepsHtml, workHtml, refineHtml, startAgent, step, setStatus,
       set:values => Object.assign(st, values), state:() => st};`;
   vm.runInContext(read('data/official-letter-templates.js') + read('features/documents/official-letter-core.js') + read('features/documents/official-letter-revisions.js')
     + read('features/documents/official-letter-page.js').replace('return {mount, leave};', expose) + '\nthis.page=OfficialLetterPage;this.core=OfficialLetterCore;', ctx);
@@ -64,6 +64,25 @@ test('sửa đoạn khởi tạo tác vụ mới và chỉ báo chờ duyệt sa
   assert.ok(page.state().pending); assert.match(page.stepsHtml(), /is-review/);
   assert.match(page.stepsHtml(), /đang chờ bạn duyệt/); assert.deepEqual(plain(page.state().letter), plain(letter));
   assert.match(page.refineHtml(), /data-ol-act="review"/);
+});
+
+test('câu trả lời chỉ được lưu khi duyệt thay đổi; bỏ hoặc lỗi vẫn có thể trả lời lại', async () => {
+  let broken = false;
+  const {page, core} = setup(async () => { if (broken) throw Error('Mất mạng'); return '{"subject":"Thông báo kết quả","paragraphs":[{"type":"p","text":"Nội dung đã cập nhật."}]}'; });
+  const letter = core.assembleLetter(core.findTemplate('tu_do'), {recipient:'A'}, {}, JSON.parse(draft));
+  page.set({letter:plain(letter), values:{recipient:'A'}, questions:[{question:'Hướng xử lý?', options:['Từ chối'], answer:'', key:'decision'}]});
+  assert.match(page.notesRail(), /Cần bạn xác nhận/);
+  await page.answerQuestion(0, 'Từ chối');
+  assert.equal(page.state().questions[0].answer, '');
+  page.discardChanges();
+  assert.equal(page.state().questions[0].answer, '');
+  broken = true; await page.answerQuestion(0, 'Từ chối');
+  assert.equal(page.state().questions[0].answer, '');
+  broken = false; await page.answerQuestion(0, 'Từ chối');
+  page.acceptChanges();
+  assert.equal(page.state().questions[0].answer, 'Từ chối');
+  assert.equal(page.state().values.decision, 'Từ chối');
+  assert.doesNotMatch(page.notesRail(), /Cần bạn xác nhận/);
 });
 
 test('lỗi xử lý không biến thành hoàn tất; lần thử tiếp theo bỏ trạng thái lỗi cũ', async () => {

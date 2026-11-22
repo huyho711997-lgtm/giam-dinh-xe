@@ -168,6 +168,36 @@ span.ola-chip button { display:inline-flex; align-items:center; gap:6px; height:
 .ola-doc.is-pending { min-height:560px; padding:22px; border-radius:16px; background:color-mix(in srgb,var(--text-muted) 12%,var(--surface-soft)); }
 .ola-doc.is-pending .olp-skeleton i { animation:olp-pulse 1.2s ease-in-out infinite; }
 .ola-rail { position:sticky; top:0; display:grid; gap:10px; }
+.ola-rail-card { min-width:0; padding:16px; border:1px solid color-mix(in srgb,var(--primary) 16%,var(--border)); border-radius:16px; background:var(--surface-strong); box-shadow:0 6px 20px rgba(35,31,20,.035); }
+.ola-rail-heading, .ola-assumptions > summary { display:flex; align-items:center; gap:10px; }
+.ola-rail-heading > div, .ola-assumptions > summary > span:first-child { flex:1; min-width:0; }
+.ola-rail-eyebrow { display:block; margin-bottom:4px; color:var(--primary); font-size:9px; font-weight:800; letter-spacing:.09em; }
+.ola-rail-heading h3, .ola-assumptions strong { display:block; margin:0; color:var(--text-main); font-size:14px; font-weight:750; }
+.ola-rail-count { display:grid; flex:none; place-items:center; min-width:26px; height:26px; padding:0 4px; box-sizing:border-box; border-radius:9px; background:color-mix(in srgb,var(--primary) 11%,var(--surface-strong)); color:var(--primary); font-size:11px; font-weight:800; }
+.ola-rail-intro { margin:8px 0 12px; color:var(--text-muted); font-size:11.5px; line-height:1.5; }
+.ola-question { border-top:1px solid var(--border); }
+.ola-question > summary, .ola-assumptions > summary { cursor:pointer; list-style:none; }
+.ola-question > summary::-webkit-details-marker, .ola-assumptions > summary::-webkit-details-marker { display:none; }
+.ola-question > summary { display:flex; align-items:flex-start; gap:9px; padding:12px 0; color:var(--text-main); font-size:12px; font-weight:700; line-height:1.5; }
+.ola-question > summary > span:nth-child(2) { flex:1; min-width:0; }
+.ola-question > summary svg, .ola-assumptions > summary svg { flex:none; width:14px; height:14px; margin-top:2px; color:var(--text-muted); transition:transform .2s; }
+.ola-question[open] > summary svg, .ola-assumptions[open] > summary svg { transform:rotate(180deg); }
+.ola-question-number { color:var(--primary); font-size:10px; font-weight:800; }
+.ola-question-body { display:grid; gap:7px; padding:0 0 14px 21px; }
+.ola-options { display:grid; gap:5px; }
+.ola-options button { padding:8px 10px; border:1px solid var(--border); border-radius:9px; background:var(--surface-soft); color:var(--text-main); font:inherit; font-size:11.5px; line-height:1.4; text-align:left; cursor:pointer; }
+.ola-options button:hover, .ola-options button:focus-visible { border-color:var(--primary); background:color-mix(in srgb,var(--primary) 7%,var(--surface-strong)); }
+.ola-question-body label { margin-top:3px; color:var(--text-muted); font-size:10.5px; font-weight:700; }
+.ola-question-body textarea { width:100%; min-height:58px; box-sizing:border-box; resize:vertical; padding:9px 10px; border:1px solid var(--border); border-radius:9px; background:var(--surface-strong); color:var(--text-main); font:inherit; font-size:12px; line-height:1.4; }
+.ola-question-body textarea:focus { outline:2px solid color-mix(in srgb,var(--primary) 20%,transparent); border-color:var(--primary); }
+.ola-answer-submit { display:flex; justify-content:center; align-items:center; gap:7px; min-height:36px; border:0; border-radius:9px; background:var(--primary); color:#fff; font:inherit; font-size:11.5px; font-weight:750; cursor:pointer; }
+.ola-answer-submit svg { width:14px; height:14px; }
+.ola-answer-submit:hover { filter:brightness(.93); }
+.ola-options button:disabled, .ola-answer-submit:disabled, .ola-assumptions button:disabled { opacity:.5; cursor:not-allowed; }
+.ola-assumptions > summary { align-items:center; }
+.ola-assumptions ul { display:grid; gap:0; margin:0; padding:0; list-style:none; }
+.ola-assumptions li { display:grid; gap:5px; padding:10px 0; border-top:1px solid var(--border); color:var(--text-main); font-size:12px; line-height:1.5; }
+.ola-assumptions li button { justify-self:start; padding:0; border:0; background:none; color:var(--primary); font:inherit; font-size:11px; font-weight:750; cursor:pointer; }
 .ola-note-block { padding:12px 14px; border:1px solid var(--border); border-radius:14px; background:var(--surface-strong); font-size:12.5px; line-height:1.55; }
 .ola-note-block.is-warn { border-color:color-mix(in srgb,#f59e0b 40%,var(--border)); background:color-mix(in srgb,#f59e0b 7%,var(--surface-strong)); }
 .ola-note-block h3 { margin:0 0 6px; font-size:12px; font-weight:800; }
