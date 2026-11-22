@@ -208,6 +208,10 @@ const OfficialLetterPage = (() => {
     }
   }
 
+  // Suy luận sâu dùng chung cho Soạn công văn và Hỏi nghiệp vụ (một công tắc, nhớ trên máy).
+  const deepOpts = () => (qa.deep ? {thinking: true, effort: 'high'} : {});
+  const deepNote = text => (qa.deep ? text + ' (suy luận sâu, có thể mất 30–90 giây)' : text);
+
   function startValues() {
     const base = Core().prefillValues(template(), currentRecord(), loadIssuer());
     if (st.values) for (const [key, value] of Object.entries(st.values)) if (Core().single(value, 1)) base[key] = value; // giữ phần người dùng đã nhập
@@ -383,7 +387,7 @@ const OfficialLetterPage = (() => {
           legal: legalPrompt(), legalPinned: pinnedLabel(), docCounts: docCounts(),
           record: currentRecord() ? SharedFormsAI.describeRecord(currentRecord()) : {}, dossier: dossierText(), current, brief: st.brief, files,
           answered: answeredList(), mode: 'fast', extras: st.extras, outline: st.outlineEdited ? st.outline.filter(item => item.on).map(item => item.text) : undefined
-        }));
+        }), deepOpts());
         if (my !== generation) return;
         const analysis = Core().parseAnalysis(raw, tpl);
         const merged = Core().mergeAnalysis(tpl, current, analysis);
@@ -410,7 +414,7 @@ const OfficialLetterPage = (() => {
       if (my !== generation) return;
       dropStaleLegalNotes();
       step('legal', st.legalError ? 'err' : activeSources().length ? 'done' : 'skip', st.legalError ? 'Không đọc được thư viện' : activeSources().length ? activeSources().length + ' đoạn liên quan' : 'Không cần viện dẫn');
-      setStatus('Đang soạn công văn…'); step('write', 'run', 'Đang viết');
+      setStatus(deepNote('Đang soạn công văn…')); step('write', 'run', qa.deep ? 'Đang suy luận & viết' : 'Đang viết');
       const letter = await composeCore('');
       if (my !== generation) return;
       if (before) {
@@ -439,7 +443,7 @@ const OfficialLetterPage = (() => {
     const brief = st.brief + (instruction ? '\nYÊU CẦU CHỈNH SỬA MỚI NHẤT: ' + instruction : '');
     const ctx = {outline: st.outline.filter(item => item.on).map(item => item.text).filter(text => Core().single(text, 1)), extras: st.extras, answers: answeredList(), understanding: st.understanding,
       keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText(), legal: legalPrompt(), legalPinned: pinnedLabel(), assumptions: st.assumptions, openQuestions: openQuestions(), files: attachments || []};
-    const raw = await callAI(Core().buildComposeRequest(tpl, st.values, issuer, brief, previous, ctx));
+    const raw = await callAI(Core().buildComposeRequest(tpl, st.values, issuer, brief, previous, ctx), deepOpts());
     const parsed = Core().parseLetter(raw);
     const date = st.letter && st.letter.date, number = st.letter && st.letter.number;
     const candidate = Core().assembleLetter(tpl, st.values, issuer, parsed, date);
@@ -470,12 +474,12 @@ const OfficialLetterPage = (() => {
       if (instruction) await refineLegal(instruction);
       if (my !== generation) return;
       step('legal', st.legalError ? 'err' : activeSources().length ? 'done' : 'skip', st.legalError || (activeSources().length ? activeSources().length + ' đoạn căn cứ' : 'Không có căn cứ cần viện dẫn'));
-      setStatus(instruction ? 'Đang chỉnh công văn theo yêu cầu…' : 'Đang soạn lại công văn…');
+      setStatus(deepNote(instruction ? 'Đang chỉnh công văn theo yêu cầu…' : 'Đang soạn lại công văn…'));
       step('write', 'run', targets.length ? 'Chỉ chỉnh phần được chọn' : 'Đang viết nội dung');
       let candidate;
       if (targets.length) {
         const base = Core().buildComposeRequest(template(), st.values, loadIssuer(), st.brief, '', {dossier:dossierText(), legal:legalPrompt(), legalPinned:pinnedLabel(), files:attachments});
-        const raw = await callAI(Revisions().buildRequest(base, before, targets, instruction));
+        const raw = await callAI(Revisions().buildRequest(base, before, targets, instruction), deepOpts());
         if (my !== generation) return;
         candidate = Revisions().parsePatch(raw, before, targets);
       } else candidate = await composeCore(instruction || '', attachments);
@@ -821,7 +825,7 @@ const OfficialLetterPage = (() => {
     return '<div class="ola-composer ola-qa-composer' + (big ? ' is-big' : ' is-up') + '">'
       + '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="1500" placeholder="Hỏi về quy định, điều khoản, quy trình… (VD: thông báo tổn thất chậm thì bị giảm trừ thế nào?)" aria-label="Câu hỏi nghiệp vụ">' + esc(qa.draft) + '</textarea>'
       + '<div class="ola-bar">' + recordChipHtml() + rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)')
-      + '<button type="button" class="ola-chip' + (qa.deep ? ' is-set' : '') + '" data-ol-act="qa-deep" aria-pressed="' + qa.deep + '" title="' + (qa.deep ? 'Đang bật: AI suy luận kỹ hơn (kết hợp nhiều điều khoản, chậm hơn và tốn token hơn). Bấm để tắt.' : 'Đang tắt: trả lời nhanh, ít tốn token. Bấm để bật suy luận sâu.') + '"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.spark) + '<span class="ola-chip-t">Suy luận sâu</span></button><span class="ola-spacer"></span>'
+      + deepChipHtml() + '<span class="ola-spacer"></span>'
       + (qa.busy ? '<button type="button" class="tasco-ai-send is-stop" data-ol-act="qa-stop" title="Dừng" aria-label="Dừng">' + svg(ICON.close) + '</button>'
         : '<button type="button" class="tasco-ai-send" data-ol-act="qa-send" title="Gửi câu hỏi (Enter)" aria-label="Gửi câu hỏi">' + svg(ICON.send) + '</button>') + '</div>'
       + popoverHtml() + '</div>';
@@ -977,6 +981,12 @@ const OfficialLetterPage = (() => {
     const ruleLabel = st.legalPin.length ? (pinnedDoc ? pinnedDoc.name : 'Đã chọn quy tắc') : 'Quy tắc: Tự động';
     return '<button type="button" class="ola-chip' + (st.legalPin.length ? ' is-set' : '') + '" data-ol-pop="rules" title="' + esc(title || 'Chọn văn bản/quy tắc làm căn cứ cho AI') + '">' + svg(ICON.book) + '<span class="ola-chip-t">' + esc(ruleLabel) + '</span>' + svg(ICON.chevron) + '</button>';
   }
+  function deepChipHtml(compact) {
+    const title = qa.deep ? 'Đang bật: AI suy luận kỹ hơn (chậm hơn, tốn token hơn). Bấm để tắt.' : 'Đang tắt: trả lời nhanh, ít tốn token. Bấm để bật suy luận sâu.';
+    const disabled = (qa.busy || st.busy) ? ' disabled' : '';
+    if (compact) return '<button type="button" class="ola-icon-btn ola-deep-btn' + (qa.deep ? ' is-set' : '') + '" data-ol-act="qa-deep" aria-pressed="' + qa.deep + '" title="Suy luận sâu — ' + esc(title) + '" aria-label="Suy luận sâu"' + disabled + '>' + svg(ICON.spark) + '</button>';
+    return '<button type="button" class="ola-chip' + (qa.deep ? ' is-set' : '') + '" data-ol-act="qa-deep" aria-pressed="' + qa.deep + '" title="' + esc(title) + '"' + disabled + '>' + svg(ICON.spark) + '<span class="ola-chip-t">Suy luận sâu</span></button>';
+  }
   function composerHtml(big) {
     const tpl = template();
     const recordChip = recordChipHtml();
@@ -987,7 +997,7 @@ const OfficialLetterPage = (() => {
       + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (filesHtml() ? '' : ' hidden') + '>' + filesHtml() + '</div>'
       + '<div class="ola-docs" data-ol-docs' + (docList().length ? '' : ' hidden') + '>' + docsHtml() + '</div>'
       + '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm ảnh/PDF"><input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>' + svg(ICON.attach) + '</label>'
-      + recordChip + typeChip + rulesChip + '<span class="ola-spacer"></span>'
+      + recordChip + typeChip + rulesChip + deepChipHtml() + '<span class="ola-spacer"></span>'
       + '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div>'
       + popoverHtml() + '</div>';
   }
@@ -1113,7 +1123,7 @@ const OfficialLetterPage = (() => {
     if (!st.letter) return '<div class="ola-refine is-processing">' + agent + '</div>';
     if (st.pending) return '<div class="ola-refine">' + agent + '<div class="ola-review-hint"><span>Chọn những thay đổi bạn muốn áp dụng vào bản thảo.</span><button type="button" class="olp-tool" data-ol-act="review">Xem đề xuất</button></div></div>';
     return '<div class="ola-refine' + (st.busy ? ' is-processing' : '') + '">' + agent + '<div class="ola-selection' + (st.selection.length ? ' is-scoped' : '') + '" data-ol-selection role="status">' + selectionScopeHtml() + '</div><div class="tasco-ai-attachments ola-files" data-ol-file-list="refine"' + (st.refineFiles.length ? '' : ' hidden') + '>' + filesHtml('refineFiles') + '</div>'
-      + '<div class="tasco-ai-composer ola-refine-box"><label class="ola-icon-btn' + (st.busy ? ' is-disabled' : '') + '" title="Đính kèm ảnh/PDF để AI đọc khi sửa"><input type="file" data-ol-files="refine" accept="image/*,application/pdf" multiple hidden' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label><input class="tasco-ai-input" data-ol-refine-input maxlength="600" placeholder="Nhờ AI chỉnh sửa công văn hoặc đoạn đã chọn…" title="Bôi đen một đoạn trong công văn để chỉ sửa đoạn đó" aria-label="Yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>'
+      + '<div class="tasco-ai-composer ola-refine-box"><label class="ola-icon-btn' + (st.busy ? ' is-disabled' : '') + '" title="Đính kèm ảnh/PDF để AI đọc khi sửa"><input type="file" data-ol-files="refine" accept="image/*,application/pdf" multiple hidden' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label>' + deepChipHtml(true) + '<input class="tasco-ai-input" data-ol-refine-input maxlength="600" placeholder="Nhờ AI chỉnh sửa công văn hoặc đoạn đã chọn…" title="Bôi đen một đoạn trong công văn để chỉ sửa đoạn đó" aria-label="Yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>'
       + '<button type="button" class="tasco-ai-send" data-ol-act="refine" aria-label="Gửi yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div><div class="ola-suggest-line"><span>Gợi ý</span><div class="tasco-ai-suggest">' + REFINES.map(text => '<button type="button" class="tasco-ai-suggest__chip" data-ol-refine="' + esc(text) + '"' + (st.busy ? ' disabled' : '') + '>' + esc(text) + '</button>').join('') + '</div></div></div>';
   }
   function workHtml() {
@@ -1414,7 +1424,7 @@ const OfficialLetterPage = (() => {
       case 'run': run(); break;
       case 'qa-send': askQuestion(); break;
       case 'qa-stop': controller?.abort(); break;
-      case 'qa-deep': qa.deep = !qa.deep; try { localStorage.setItem(DEEP_KEY, qa.deep ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); focusMain(); break;
+      case 'qa-deep': if (qa.busy || st.busy) break; collectAll(); qa.deep = !qa.deep; try { localStorage.setItem(DEEP_KEY, qa.deep ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); focusMain(); break;
       case 'qa-clear': clearQa(); break;
       case 'compose': st.drawer = ''; compose(''); break;
       case 'refine': sendRefine(); break;

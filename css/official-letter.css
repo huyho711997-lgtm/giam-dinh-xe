@@ -217,7 +217,7 @@ span.ola-chip button { display:inline-flex; align-items:center; gap:6px; height:
 .ola-refine .ola-agent.is-ready .ola-agent-copy p { font-size:11.5px; font-weight:700; }
 .ola-refine .ola-agent-toggle { min-height:27px; padding:0 5px; }
 .ola-refine .ola-agent-details { padding:6px 8px 8px; }
-.ola-refine-box { grid-template-columns:34px minmax(0,1fr) 40px; min-width:0; padding:4px 5px; border:1px solid var(--border); border-radius:12px; background:var(--surface-soft); box-shadow:none; }
+.ola-refine-box { grid-template-columns:34px 34px minmax(0,1fr) 40px; min-width:0; padding:4px 5px; border:1px solid var(--border); border-radius:12px; background:var(--surface-soft); box-shadow:none; }
 .ola-refine-box:focus-within { border-color:color-mix(in srgb,var(--primary) 65%,var(--border)); box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 10%,transparent); }
 .ola-refine-box .ola-icon-btn { width:32px; height:32px; border-radius:8px; }
 .ola-refine-box .tasco-ai-send { width:36px; height:36px; min-width:36px; border-radius:10px; }
@@ -606,3 +606,6 @@ body:not(.light-mode) .ola-review ins { color:#95e4ba; }
 .ola-composer .tasco-ai-send.is-stop { background:var(--surface-soft); border:1px solid var(--border); color:var(--text-main); box-shadow:none; }
 .ola-qa-via { flex:none; padding:1px 7px; border-radius:999px; background:var(--surface-soft); color:var(--text-muted); font-size:10px; font-style:normal; font-weight:750; }
 .ola-qa-queries { margin:0; color:var(--text-muted); font-size:11.5px; line-height:1.5; }
+
+.ola-icon-btn.ola-deep-btn.is-set { background:color-mix(in srgb,var(--primary) 14%,transparent); color:var(--primary); }
+.ola-icon-btn.ola-deep-btn:disabled { opacity:.45; cursor:default; }
