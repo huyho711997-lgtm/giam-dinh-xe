@@ -2829,8 +2829,8 @@ const fullList = getCarBrandLossData();
           ${chartData.gara.labels.length > 0 ? `
             ${moStandaloneCard('monthlyOpenedGaraCard', 'Bieu_Do_Theo_Gara', 'Theo gara — hồ sơ mở, dự phòng & duyệt HSBT', chartData.gara, 'monthlyOpenedGaraCanvas', 410, 'Số hồ sơ mở, dự phòng và tiền duyệt HSBT theo từng gara', `Dự phòng theo ngày mở; duyệt HSBT theo ngày duyệt, gồm hồ sơ mở trước kỳ · ${chartData.garaNamedCount} gara${chartData.gara.labels.includes('Khác') ? ' · 15 gara nhiều hồ sơ nhất, còn lại gộp "Khác"' : ''} · đầy đủ từng gara trong Excel (sheet Theo_Gara)`)}
             <div class="mo-secondary-grid">
-              ${moStandaloneCard('monthlyOpenedGdvCard', 'Bieu_Do_Theo_GDV', 'Theo giám định viên', chartData.gdv, 'monthlyOpenedGdvCanvas', 340, 'Số hồ sơ và tiền dự phòng theo giám định viên')}
-              ${moStandaloneCard('monthlyOpenedStatusCard', 'Bieu_Do_Theo_Trang_Thai', 'Theo trạng thái hồ sơ', chartData.status, 'monthlyOpenedStatusCanvas', 340, 'Số hồ sơ và tiền dự phòng theo trạng thái')}
+              ${moStandaloneCard('monthlyOpenedGdvCard', 'Bieu_Do_Theo_GDV', 'Theo giám định viên', chartData.gdv, 'monthlyOpenedGdvCanvas', 380, 'Số hồ sơ và tiền dự phòng theo giám định viên')}
+              ${moStandaloneCard('monthlyOpenedStatusCard', 'Bieu_Do_Theo_Trang_Thai', 'Theo trạng thái hồ sơ', chartData.status, 'monthlyOpenedStatusCanvas', 380, 'Số hồ sơ và tiền dự phòng theo trạng thái')}
             </div>
             <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onload="if(window.initMonthlyOpenedClaimsCharts) setTimeout(window.initMonthlyOpenedClaimsCharts, 50); this.remove();" style="display:none;" alt="" />
           ` : ''}
@@ -3114,7 +3114,7 @@ const fullList = getCarBrandLossData();
                   padding: 8,
                   maxRotation: view.rotate || 0,
                   minRotation: view.rotate || 0,
-                  autoSkip: !view.rotate,
+                  autoSkip: view.noAutoSkip ? false : !view.rotate,
                   font: { family: FONT, size: compact ? 10 : 11, weight: '750' },
                   callback: function(value) {
                     const lbl = this.getLabelForValue(value) || '';
@@ -3152,7 +3152,7 @@ const fullList = getCarBrandLossData();
         monthlyOpenedChartInstances.push(chart);
       };
       build('monthlyOpenedTimelineCanvas', data.timeline);
-      build('monthlyOpenedGaraCanvas', data.gara, { rotate: 28, truncate: 18, approved: true });
-      build('monthlyOpenedGdvCanvas', data.gdv);
-      build('monthlyOpenedStatusCanvas', data.status, { truncate: 16 });
+      build('monthlyOpenedGaraCanvas', data.gara, { rotate: 28, truncate: 18, approved: true, noAutoSkip: true });
+      build('monthlyOpenedGdvCanvas', data.gdv, { rotate: data.gdv.labels.length > 5 ? 24 : 0, truncate: 18, noAutoSkip: true });
+      build('monthlyOpenedStatusCanvas', data.status, { rotate: 30, truncate: 18, noAutoSkip: true });
     }

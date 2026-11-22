@@ -208,6 +208,10 @@ const OfficialLetterPage = (() => {
     }
   }
 
+  // Suy luận sâu dùng chung cho Soạn công văn và Hỏi nghiệp vụ (một công tắc, nhớ trên máy).
+  const deepOpts = () => (qa.deep ? {thinking: true, effort: 'high'} : {});
+  const deepNote = text => (qa.deep ? text + ' (suy luận sâu, có thể mất 30–90 giây)' : text);
+
   function startValues() {
     const base = Core().prefillValues(template(), currentRecord(), loadIssuer());
     if (st.values) for (const [key, value] of Object.entries(st.values)) if (Core().single(value, 1)) base[key] = value; // giữ phần người dùng đã nhập
@@ -383,7 +387,7 @@ const OfficialLetterPage = (() => {
           legal: legalPrompt(), legalPinned: pinnedLabel(), docCounts: docCounts(),
           record: currentRecord() ? SharedFormsAI.describeRecord(currentRecord()) : {}, dossier: dossierText(), current, brief: st.brief, files,
           answered: answeredList(), mode: 'fast', extras: st.extras, outline: st.outlineEdited ? st.outline.filter(item => item.on).map(item => item.text) : undefined
-        }));
+        }), deepOpts());
         if (my !== generation) return;
         const analysis = Core().parseAnalysis(raw, tpl);
         const merged = Core().mergeAnalysis(tpl, current, analysis);
@@ -410,7 +414,7 @@ const OfficialLetterPage = (() => {
       if (my !== generation) return;
       dropStaleLegalNotes();
       step('legal', st.legalError ? 'err' : activeSources().length ? 'done' : 'skip', st.legalError ? 'Không đọc được thư viện' : activeSources().length ? activeSources().length + ' đoạn liên quan' : 'Không cần viện dẫn');
-      setStatus('Đang soạn công văn…'); step('write', 'run', 'Đang viết');
+      setStatus(deepNote('Đang soạn công văn…')); step('write', 'run', qa.deep ? 'Đang suy luận & viết' : 'Đang viết');
       const letter = await composeCore('');
       if (my !== generation) return;
       if (before) {
@@ -439,7 +443,7 @@ const OfficialLetterPage = (() => {
     const brief = st.brief + (instruction ? '\nYÊU CẦU CHỈNH SỬA MỚI NHẤT: ' + instruction : '');
     const ctx = {outline: st.outline.filter(item => item.on).map(item => item.text).filter(text => Core().single(text, 1)), extras: st.extras, answers: answeredList(), understanding: st.understanding,
       keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText(), legal: legalPrompt(), legalPinned: pinnedLabel(), assumptions: st.assumptions, openQuestions: openQuestions(), files: attachments || []};
-    const raw = await callAI(Core().buildComposeRequest(tpl, st.values, issuer, brief, previous, ctx));
+    const raw = await callAI(Core().buildComposeRequest(tpl, st.values, issuer, brief, previous, ctx), deepOpts());
     const parsed = Core().parseLetter(raw);
     const date = st.letter && st.letter.date, number = st.letter && st.letter.number;
     const candidate = Core().assembleLetter(tpl, st.values, issuer, parsed, date);
@@ -470,12 +474,12 @@ const OfficialLetterPage = (() => {
       if (instruction) await refineLegal(instruction);
       if (my !== generation) return;
       step('legal', st.legalError ? 'err' : activeSources().length ? 'done' : 'skip', st.legalError || (activeSources().length ? activeSources().length + ' đoạn căn cứ' : 'Không có căn cứ cần viện dẫn'));
-      setStatus(instruction ? 'Đang chỉnh công văn theo yêu cầu…' : 'Đang soạn lại công văn…');
+      setStatus(deepNote(instruction ? 'Đang chỉnh công văn theo yêu cầu…' : 'Đang soạn lại công văn…'));
       step('write', 'run', targets.length ? 'Chỉ chỉnh phần được chọn' : 'Đang viết nội dung');
       let candidate;
       if (targets.length) {
         const base = Core().buildComposeRequest(template(), st.values, loadIssuer(), st.brief, '', {dossier:dossierText(), legal:legalPrompt(), legalPinned:pinnedLabel(), files:attachments});
-        const raw = await callAI(Revisions().buildRequest(base, before, targets, instruction));
+        const raw = await callAI(Revisions().buildRequest(base, before, targets, instruction), deepOpts());
         if (my !== generation) return;
         candidate = Revisions().parsePatch(raw, before, targets);
       } else candidate = await composeCore(instruction || '', attachments);
@@ -639,25 +643,90 @@ const OfficialLetterPage = (() => {
   // ================= HỎI NGHIỆP VỤ =================
   // Hỏi đáp trên Thư viện tài liệu: tìm đoạn khớp (BM25) → DeepSeek trả lời CHỈ dựa trên các đoạn đó, dẫn mã [C#]; bấm mã để xem nguyên văn.
   // Hội thoại lưu trên máy (localStorage), tách hẳn khỏi phiên soạn công văn; dùng chung khoá DeepSeek, hồ sơ đang chọn và ô "Quy tắc".
-  const QA_KEY = 'officialLetter.qa.v1', MODE_KEY = 'officialLetter.mode.v1';
-  const qa = {messages: [], draft: '', busy: false, status: '', usage: null, open: Object.create(null), loaded: false, deep: true};
+  const QA_KEY = 'officialLetter.qa.v1', QA_CHATS_KEY = 'officialLetter.qaChats.v1', QA_MAX_CHATS = 30, MODE_KEY = 'officialLetter.mode.v1';
+  const qa = {messages: [], draft: '', busy: false, status: '', usage: null, open: Object.create(null), loaded: false, deep: true, chats: [], activeId: ''};
   const DEEP_KEY = 'officialLetter.qaDeep.v1';
+  // Nhiều cuộc trò chuyện: qa.messages/qa.usage là cuộc đang mở; qa.chats là toàn bộ danh sách lưu trên máy (v2), tự chuyển từ bản v1 một cuộc.
   function loadQa() {
     if (qa.loaded) return;
     qa.loaded = true;
-    try { if (QA()) qa.messages = QA().normalizeStore(JSON.parse(localStorage.getItem(QA_KEY) || 'null')); } catch (_) { /* bỏ qua */ }
+    const Q = QA();
+    try {
+      if (Q) {
+        const raw = JSON.parse(localStorage.getItem(QA_CHATS_KEY) || 'null');
+        if (raw && Array.isArray(raw.chats)) {
+          qa.chats = raw.chats.map(chat => ({id: String(chat.id || Q.newId()), title: String(chat.title || '').slice(0, 90), at: Number(chat.at) || 0, usage: chat.usage || null, messages: Q.normalizeStore({messages: chat.messages})})).filter(chat => chat.messages.length).slice(0, QA_MAX_CHATS);
+          const active = qa.chats.find(chat => chat.id === raw.active);
+          if (active) { qa.activeId = active.id; qa.messages = active.messages; qa.usage = active.usage; }
+        } else {
+          const old = Q.normalizeStore(JSON.parse(localStorage.getItem(QA_KEY) || 'null'));
+          if (old.length) { qa.messages = old; qa.activeId = Q.newId(); qaSyncActive(); }
+        }
+      }
+    } catch (_) { /* bỏ qua */ }
     try { const mode = localStorage.getItem(MODE_KEY); if (mode === 'ask' && QA()) st.mode = 'ask'; qa.deep = localStorage.getItem(DEEP_KEY) !== '0'; } catch (_) { /* bỏ qua */ }
   }
+  function qaTitleOf(messages) {
+    const first = messages.find(item => item.role === 'user');
+    const text = String(first ? first.text : 'Cuộc trò chuyện').replace(/\s+/g, ' ').trim();
+    return text.length > 70 ? text.slice(0, 69) + '…' : text;
+  }
+  // Ghi cuộc đang mở vào danh sách (cuộc mới được tạo khi có tin nhắn đầu tiên).
+  function qaSyncActive() {
+    if (!qa.messages.length) return;
+    if (!qa.activeId) qa.activeId = QA().newId();
+    let chat = qa.chats.find(item => item.id === qa.activeId);
+    if (!chat) { chat = {id: qa.activeId, title: '', at: 0, usage: null, messages: []}; qa.chats.unshift(chat); }
+    chat.messages = qa.messages; chat.usage = qa.usage; chat.title = qaTitleOf(qa.messages); chat.at = Date.now();
+    qa.chats.sort((a, b) => b.at - a.at);
+    if (qa.chats.length > QA_MAX_CHATS) qa.chats.length = QA_MAX_CHATS;
+  }
   function saveQa() {
-    const list = qa.messages.slice(-24);
-    try { localStorage.setItem(QA_KEY, JSON.stringify({messages: list})); }
-    catch (_) { try { localStorage.setItem(QA_KEY, JSON.stringify({messages: list.slice(-6).map(item => ({...item, sources: []}))})); } catch (__) { /* hết chỗ lưu: giữ trong phiên */ } }
+    qaSyncActive();
+    const pack = (keepSources) => JSON.stringify({active: qa.activeId, chats: qa.chats.map(chat => ({id: chat.id, title: chat.title, at: chat.at, usage: chat.usage, messages: chat.messages.slice(-24).map(item => (keepSources || chat.id === qa.activeId) ? item : {...item, sources: []})}))});
+    // Hết chỗ lưu thì bỏ nguồn của các cuộc cũ, rồi bỏ bớt cuộc cũ nhất; cuộc đang mở luôn được giữ.
+    try { localStorage.setItem(QA_CHATS_KEY, pack(true)); }
+    catch (_) {
+      try { localStorage.setItem(QA_CHATS_KEY, pack(false)); }
+      catch (__) {
+        try { while (qa.chats.length > 1) { qa.chats.pop(); try { localStorage.setItem(QA_CHATS_KEY, pack(false)); break; } catch (___) { /* thử tiếp */ } } } catch (____) { /* giữ trong phiên */ }
+      }
+    }
+    if (host && st.histOpen && st.mode === 'ask') updateHistory(true);
+  }
+  function resetQaView() { qa.messages = []; qa.usage = null; qa.open = Object.create(null); qa.draft = ''; qa.status = ''; }
+  function newQaChat() {
+    if (qa.busy) return;
+    if (!qa.messages.length) { focusMain(); return; }
+    saveQa();
+    qa.activeId = ''; resetQaView();
+    renderAll(); focusMain();
+  }
+  function openQaChat(id) {
+    if (qa.busy || id === qa.activeId) return;
+    const chat = qa.chats.find(item => item.id === id);
+    if (!chat) return;
+    saveQa();
+    qa.activeId = chat.id; qa.messages = chat.messages; qa.usage = chat.usage; qa.open = Object.create(null); qa.draft = '';
+    saveQa();
+    renderAll(); scrollQa(); focusMain();
+  }
+  async function deleteQaChat(id) {
+    if (qa.busy) return;
+    const chat = qa.chats.find(item => item.id === id);
+    if (!chat && id !== qa.activeId) return;
+    if (!await askConfirm({eyebrow: 'HỎI NGHIỆP VỤ', title: 'Xoá cuộc trò chuyện?', message: '"' + (chat ? chat.title : 'Cuộc trò chuyện này') + '" sẽ bị xoá khỏi máy này và không khôi phục được.', confirmText: 'Xoá'})) return;
+    qa.chats = qa.chats.filter(item => item.id !== id);
+    if (id === qa.activeId) { qa.activeId = ''; resetQaView(); }
+    saveQa();
+    if (!qa.chats.length) try { localStorage.removeItem(QA_CHATS_KEY); } catch (_) { /* bỏ qua */ }
+    renderAll(); focusMain();
   }
   const qaLocked = () => !!(st.busy || st.pending || qa.busy);
   function setMode(mode) {
     if (mode === st.mode || (mode === 'ask' && !QA()) || qaLocked()) return;
     collectAll();
-    st.mode = mode; st.pop = ''; st.recQuery = '';
+    st.mode = mode; st.pop = ''; st.recQuery = ''; st.histQuery = '';
     try { localStorage.setItem(MODE_KEY, mode); } catch (_) { /* bỏ qua */ }
     renderAll();
     focusMain();
@@ -754,21 +823,26 @@ const OfficialLetterPage = (() => {
     qa.messages.splice(at - 1, 2);
     askQuestion(question);
   }
-  async function clearQa() {
-    if (qa.busy) return;
-    if (!await askConfirm({eyebrow: 'HỎI NGHIỆP VỤ', title: 'Xoá cuộc hội thoại?', message: 'Toàn bộ câu hỏi và câu trả lời sẽ bị xoá khỏi máy này.', confirmText: 'Xoá hội thoại'})) return;
-    qa.messages = []; qa.usage = null; qa.open = Object.create(null);
-    saveQa(); renderAll(); focusMain();
-  }
+  const clearQa = () => deleteQaChat(qa.activeId);
   function openCite(msgId, code) {
     const key = msgId + ':' + code;
     qa.open[key] = true;
+    setSourcesOpen(msgId, true);
     const box = [...host.querySelectorAll('[data-ol-qa-srcbox]')].find(node => node.dataset.olQaSrcbox === key);
     if (!box) return;
     box.classList.add('is-open');
     box.querySelector('.ola-qa-src-head')?.setAttribute('aria-expanded', 'true');
     const body = box.querySelector('.ola-qa-src-body'); if (body) body.hidden = false;
     box.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+  }
+  // Cả nhóm "Nguồn đã tra" mặc định thu gọn; người dùng bấm tiêu đề để mở.
+  function setSourcesOpen(msgId, open) {
+    qa.open[msgId + ':*'] = open;
+    const group = [...host.querySelectorAll('[data-ol-qa-srcs]')].find(node => node.dataset.olQaSrcs === msgId);
+    if (!group) return;
+    group.classList.toggle('is-open', open);
+    group.querySelector('.ola-qa-srcs-head')?.setAttribute('aria-expanded', String(open));
+    const body = group.querySelector('.ola-qa-srcs-body'); if (body) body.hidden = !open;
   }
   function toggleSource(key) {
     qa.open[key] = !qa.open[key];
@@ -797,7 +871,11 @@ const OfficialLetterPage = (() => {
     const body = msg.error ? '<div class="olp-notice olp-notice--error"><span>' + esc(msg.text) + '</span></div>'
       : msg.empty ? '<div class="olp-notice olp-notice--warn"><span>' + esc(msg.text) + '</span></div>'
       : '<div class="ola-qa-text">' + Q.answerHtml(msg.text, sources) + '</div>';
-    const srcs = sources.length ? '<div class="ola-qa-srcs"><h5>Nguồn đã tra trong Thư viện (' + sources.length + ')</h5>' + (msg.queries && msg.queries.length ? '<p class="ola-qa-queries" title="Các cụm từ đã dùng để tìm trong Thư viện">Đã tra: ' + msg.queries.map(esc).join(' · ') + '</p>' : '') + sources.map(source => qaSourceHtml(msg, source, cited.includes(source.code))).join('') + '</div>' : '';
+    const groupOpen = !!qa.open[msg.id + ':*'];
+    const srcs = sources.length ? '<div class="ola-qa-srcs' + (groupOpen ? ' is-open' : '') + '" data-ol-qa-srcs="' + esc(msg.id) + '">'
+      + '<button type="button" class="ola-qa-srcs-head" data-ol-qa-srcs-toggle="' + esc(msg.id) + '" aria-expanded="' + groupOpen + '"><span>Nguồn đã tra trong Thư viện (' + sources.length + ')</span>'
+      + (cited.length ? '<em>Đã dẫn: ' + esc(cited.filter(code => sources.some(src => src.code === code)).join(', ')) + '</em>' : '') + svg(ICON.chevron) + '</button>'
+      + '<div class="ola-qa-srcs-body"' + (groupOpen ? '' : ' hidden') + '>' + (msg.queries && msg.queries.length ? '<p class="ola-qa-queries" title="Các cụm từ đã dùng để tìm trong Thư viện">Đã tra: ' + msg.queries.map(esc).join(' · ') + '</p>' : '') + sources.map(source => qaSourceHtml(msg, source, cited.includes(source.code))).join('') + '</div></div>' : '';
     const acts = msg.error ? '<button type="button" class="ola-qa-act" data-ol-qa-retry="' + esc(msg.id) + '"' + (qa.busy ? ' disabled' : '') + '>Thử lại</button>'
       : msg.empty ? '' : '<button type="button" class="ola-qa-act" data-ol-qa-copy="' + esc(msg.id) + '">' + svg(ICON.copy) + 'Sao chép</button>'
         + '<button type="button" class="ola-qa-act is-main" data-ol-qa-compose="' + esc(msg.id) + '"' + (qaLocked() ? ' disabled' : '') + ' title="Chuyển sang Soạn công văn, điền sẵn kết luận này vào yêu cầu">' + svg(ICON.letter) + 'Soạn công văn từ câu trả lời</button>';
@@ -807,7 +885,7 @@ const OfficialLetterPage = (() => {
     return '<div class="ola-composer ola-qa-composer' + (big ? ' is-big' : ' is-up') + '">'
       + '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="1500" placeholder="Hỏi về quy định, điều khoản, quy trình… (VD: thông báo tổn thất chậm thì bị giảm trừ thế nào?)" aria-label="Câu hỏi nghiệp vụ">' + esc(qa.draft) + '</textarea>'
       + '<div class="ola-bar">' + recordChipHtml() + rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)')
-      + '<button type="button" class="ola-chip' + (qa.deep ? ' is-set' : '') + '" data-ol-act="qa-deep" aria-pressed="' + qa.deep + '" title="' + (qa.deep ? 'Đang bật: AI suy luận kỹ hơn (kết hợp nhiều điều khoản, chậm hơn và tốn token hơn). Bấm để tắt.' : 'Đang tắt: trả lời nhanh, ít tốn token. Bấm để bật suy luận sâu.') + '"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.spark) + '<span class="ola-chip-t">Suy luận sâu</span></button><span class="ola-spacer"></span>'
+      + deepChipHtml() + '<span class="ola-spacer"></span>'
       + (qa.busy ? '<button type="button" class="tasco-ai-send is-stop" data-ol-act="qa-stop" title="Dừng" aria-label="Dừng">' + svg(ICON.close) + '</button>'
         : '<button type="button" class="tasco-ai-send" data-ol-act="qa-send" title="Gửi câu hỏi (Enter)" aria-label="Gửi câu hỏi">' + svg(ICON.send) + '</button>') + '</div>'
       + popoverHtml() + '</div>';
@@ -831,7 +909,8 @@ const OfficialLetterPage = (() => {
       '<button type="button" role="tab" aria-selected="' + (st.mode === id) + '" class="ola-mode-btn' + (st.mode === id ? ' is-on' : '') + '" data-ol-mode="' + id + '"' + (locked && st.mode !== id ? ' disabled' : '') + '>' + svg(icon) + '<span>' + label + '</span></button>').join('') + '</div>' : '<span></span>';
     const right = st.mode === 'ask'
       ? '<span class="ola-top-acts"><span class="olp-usage" data-ol-qa-usage' + (usageText(qa.usage) ? '' : ' hidden') + ' title="' + esc(usageTitle(qa.usage)) + '">' + esc(usageText(qa.usage)) + '</span>'
-        + (qa.messages.length ? '<button type="button" class="ola-hist-btn" data-ol-act="qa-clear" title="Xoá cuộc hội thoại" aria-label="Xoá cuộc hội thoại"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.trash) + '</button>' : '')
+        + (qa.messages.length ? '<button type="button" class="ola-hist-btn ola-hist-new" data-ol-act="qa-new" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>' : '')
+        + (qa.messages.length ? '<button type="button" class="ola-hist-btn" data-ol-act="qa-clear" title="Xoá cuộc trò chuyện này" aria-label="Xoá cuộc trò chuyện này"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.trash) + '</button>' : '')
         + '<button type="button" class="ola-hist-btn" data-ol-act="settings" title="Cài đặt: khoá DeepSeek &amp; đơn vị ban hành" aria-label="Cài đặt">' + svg(ICON.gear) + '</button></span>'
       : '<span></span>';
     return '<div class="ola-top">' + histBtn + mode + right + '</div>';
@@ -963,6 +1042,12 @@ const OfficialLetterPage = (() => {
     const ruleLabel = st.legalPin.length ? (pinnedDoc ? pinnedDoc.name : 'Đã chọn quy tắc') : 'Quy tắc: Tự động';
     return '<button type="button" class="ola-chip' + (st.legalPin.length ? ' is-set' : '') + '" data-ol-pop="rules" title="' + esc(title || 'Chọn văn bản/quy tắc làm căn cứ cho AI') + '">' + svg(ICON.book) + '<span class="ola-chip-t">' + esc(ruleLabel) + '</span>' + svg(ICON.chevron) + '</button>';
   }
+  function deepChipHtml(compact) {
+    const title = qa.deep ? 'Đang bật: AI suy luận kỹ hơn (chậm hơn, tốn token hơn). Bấm để tắt.' : 'Đang tắt: trả lời nhanh, ít tốn token. Bấm để bật suy luận sâu.';
+    const disabled = (qa.busy || st.busy) ? ' disabled' : '';
+    if (compact) return '<button type="button" class="ola-icon-btn ola-deep-btn' + (qa.deep ? ' is-set' : '') + '" data-ol-act="qa-deep" aria-pressed="' + qa.deep + '" title="Suy luận sâu — ' + esc(title) + '" aria-label="Suy luận sâu"' + disabled + '>' + svg(ICON.spark) + '</button>';
+    return '<button type="button" class="ola-chip' + (qa.deep ? ' is-set' : '') + '" data-ol-act="qa-deep" aria-pressed="' + qa.deep + '" title="' + esc(title) + '"' + disabled + '>' + svg(ICON.spark) + '<span class="ola-chip-t">Suy luận sâu</span></button>';
+  }
   function composerHtml(big) {
     const tpl = template();
     const recordChip = recordChipHtml();
@@ -973,7 +1058,7 @@ const OfficialLetterPage = (() => {
       + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (filesHtml() ? '' : ' hidden') + '>' + filesHtml() + '</div>'
       + '<div class="ola-docs" data-ol-docs' + (docList().length ? '' : ' hidden') + '>' + docsHtml() + '</div>'
       + '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm ảnh/PDF"><input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>' + svg(ICON.attach) + '</label>'
-      + recordChip + typeChip + rulesChip + '<span class="ola-spacer"></span>'
+      + recordChip + typeChip + rulesChip + deepChipHtml() + '<span class="ola-spacer"></span>'
       + '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div>'
       + popoverHtml() + '</div>';
   }
@@ -1099,7 +1184,7 @@ const OfficialLetterPage = (() => {
     if (!st.letter) return '<div class="ola-refine is-processing">' + agent + '</div>';
     if (st.pending) return '<div class="ola-refine">' + agent + '<div class="ola-review-hint"><span>Chọn những thay đổi bạn muốn áp dụng vào bản thảo.</span><button type="button" class="olp-tool" data-ol-act="review">Xem đề xuất</button></div></div>';
     return '<div class="ola-refine' + (st.busy ? ' is-processing' : '') + '">' + agent + '<div class="ola-selection' + (st.selection.length ? ' is-scoped' : '') + '" data-ol-selection role="status">' + selectionScopeHtml() + '</div><div class="tasco-ai-attachments ola-files" data-ol-file-list="refine"' + (st.refineFiles.length ? '' : ' hidden') + '>' + filesHtml('refineFiles') + '</div>'
-      + '<div class="tasco-ai-composer ola-refine-box"><label class="ola-icon-btn' + (st.busy ? ' is-disabled' : '') + '" title="Đính kèm ảnh/PDF để AI đọc khi sửa"><input type="file" data-ol-files="refine" accept="image/*,application/pdf" multiple hidden' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label><input class="tasco-ai-input" data-ol-refine-input maxlength="600" placeholder="Nhờ AI chỉnh sửa công văn hoặc đoạn đã chọn…" title="Bôi đen một đoạn trong công văn để chỉ sửa đoạn đó" aria-label="Yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>'
+      + '<div class="tasco-ai-composer ola-refine-box"><label class="ola-icon-btn' + (st.busy ? ' is-disabled' : '') + '" title="Đính kèm ảnh/PDF để AI đọc khi sửa"><input type="file" data-ol-files="refine" accept="image/*,application/pdf" multiple hidden' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label>' + deepChipHtml(true) + '<input class="tasco-ai-input" data-ol-refine-input maxlength="600" placeholder="Nhờ AI chỉnh sửa công văn hoặc đoạn đã chọn…" title="Bôi đen một đoạn trong công văn để chỉ sửa đoạn đó" aria-label="Yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>'
       + '<button type="button" class="tasco-ai-send" data-ol-act="refine" aria-label="Gửi yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div><div class="ola-suggest-line"><span>Gợi ý</span><div class="tasco-ai-suggest">' + REFINES.map(text => '<button type="button" class="tasco-ai-suggest__chip" data-ol-refine="' + esc(text) + '"' + (st.busy ? ' disabled' : '') + '>' + esc(text) + '</button>').join('') + '</div></div></div>';
   }
   function workHtml() {
@@ -1173,9 +1258,20 @@ const OfficialLetterPage = (() => {
   }
 
   // ---- Thanh lịch sử bên trái ----
+  const askSide = () => st.mode === 'ask' && !!QA();
+  function qaChatsHtml() {
+    const H = History();
+    const query = fold(st.histQuery).trim();
+    const items = qa.chats.map(chat => ({id: chat.id, title: chat.title, sub: Math.ceil(chat.messages.length / 2) + ' câu hỏi', updatedAt: chat.at})).filter(item => !query || fold(item.title).includes(query));
+    if (!items.length) return '<p class="ola-hist-empty">' + (query ? 'Không có cuộc trò chuyện khớp “' + esc(st.histQuery) + '”.' : 'Chưa có cuộc trò chuyện nào. Câu hỏi đầu tiên sẽ tự được lưu ở đây.') + '</p>';
+    const time = ms => { const d = new Date(ms), now = new Date(); const p = n => String(n).padStart(2, '0'); return d.toDateString() === now.toDateString() ? p(d.getHours()) + ':' + p(d.getMinutes()) : p(d.getDate()) + '/' + p(d.getMonth() + 1); };
+    return H.groups(items).map(group => '<div class="ola-hist-group"><h4>' + esc(group.label) + '</h4>' + group.items.map(item => '<div class="ola-hist-item' + (item.id === qa.activeId ? ' is-active' : '') + '"><button type="button" data-ol-qa-open="' + esc(item.id) + '" title="' + esc(item.title) + '"><b>' + esc(item.title) + '</b><small>' + esc([item.sub, time(item.updatedAt)].join(' · ')) + '</small></button>'
+      + '<button type="button" class="ola-hist-del" data-ol-qa-del="' + esc(item.id) + '" aria-label="Xoá cuộc trò chuyện" title="Xoá">' + svg(ICON.trash) + '</button></div>').join('') + '</div>').join('');
+  }
   function historyItemsHtml() {
     const H = History();
     if (!H) return '';
+    if (askSide()) return qaChatsHtml();
     const query = fold(st.histQuery).trim();
     const items = st.history.filter(item => !query || fold(item.title + ' ' + item.sub).includes(query));
     if (!items.length) return '<p class="ola-hist-empty">' + (query ? 'Không có công văn khớp “' + esc(st.histQuery) + '”.' : 'Chưa có công văn nào. Công văn soạn xong sẽ tự lưu ở đây.') + '</p>';
@@ -1185,18 +1281,20 @@ const OfficialLetterPage = (() => {
   }
   function historyHtml() {
     if (!History() || !st.histOpen) return '';
-    return '<div class="ola-hist-backdrop" data-ol-hist-backdrop></div><aside class="ola-hist" aria-label="Lịch sử công văn"><header><b>' + svg(ICON.history) + 'Lịch sử</b><span>'
-      + '<button type="button" class="ola-hist-btn" data-ol-act="new" title="Công văn mới" aria-label="Công văn mới"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>'
+    const ask = askSide();
+    return '<div class="ola-hist-backdrop" data-ol-hist-backdrop></div><aside class="ola-hist" aria-label="' + (ask ? 'Lịch sử hỏi nghiệp vụ' : 'Lịch sử công văn') + '"><header><b>' + svg(ICON.history) + 'Lịch sử</b><span>'
+      + (ask ? '<button type="button" class="ola-hist-btn" data-ol-act="qa-new" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>'
+        : '<button type="button" class="ola-hist-btn" data-ol-act="new" title="Công văn mới" aria-label="Công văn mới"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>')
       + '<button type="button" class="ola-hist-btn" data-ol-act="hist-toggle" title="Thu gọn" aria-label="Thu gọn lịch sử">' + svg(ICON.panel) + '</button></span></header>'
-      + '<label class="ola-hist-search">' + svg(ICON.search) + '<input type="search" data-ol-hist-q placeholder="Tìm công văn…" value="' + esc(st.histQuery) + '" aria-label="Tìm trong lịch sử"></label>'
+      + '<label class="ola-hist-search">' + svg(ICON.search) + '<input type="search" data-ol-hist-q placeholder="' + (ask ? 'Tìm cuộc trò chuyện…' : 'Tìm công văn…') + '" value="' + esc(st.histQuery) + '" aria-label="Tìm trong lịch sử"></label>'
       + '<div class="ola-hist-list" data-ol-hist-list>' + historyItemsHtml() + '</div>'
-      + '<footer>' + (st.histScope === 'account' ? 'Lưu theo tài khoản' : 'Lưu trên trình duyệt này') + '</footer></aside>';
+      + '<footer>' + (!ask && st.histScope === 'account' ? 'Lưu theo tài khoản' : 'Lưu trên trình duyệt này') + '</footer></aside>';
   }
   function updateHistory(listOnly) {
     const box = $('[data-ol-hist-list]');
     if (!box) return;
     box.innerHTML = historyItemsHtml();
-    if (!listOnly) { const foot = $('.ola-hist footer'); if (foot) foot.textContent = st.histScope === 'account' ? 'Lưu theo tài khoản' : 'Lưu trên trình duyệt này'; }
+    if (!listOnly) { const foot = $('.ola-hist footer'); if (foot) foot.textContent = !askSide() && st.histScope === 'account' ? 'Lưu theo tài khoản' : 'Lưu trên trình duyệt này'; }
   }
 
   function renderAll() {
@@ -1326,6 +1424,8 @@ const OfficialLetterPage = (() => {
     if (modeBtn) { setMode(modeBtn.dataset.olMode); return; }
     const cite = target.closest('[data-ol-qa-cite]');
     if (cite) { const holder = cite.closest('[data-ol-qa-msg]'); if (holder) openCite(holder.dataset.olQaMsg, cite.dataset.olQaCite); return; }
+    const srcsToggle = target.closest('[data-ol-qa-srcs-toggle]');
+    if (srcsToggle) { const id = srcsToggle.dataset.olQaSrcsToggle; setSourcesOpen(id, !qa.open[id + ':*']); return; }
     const srcHead = target.closest('[data-ol-qa-src]');
     if (srcHead) { toggleSource(srcHead.dataset.olQaSrc); return; }
     const qaIdea = target.closest('[data-ol-qa-idea]');
@@ -1340,6 +1440,10 @@ const OfficialLetterPage = (() => {
     if (version && !st.busy && !st.pending) { collectAll(); st.versionId = version.dataset.olVersion; renderAll(); return; }
     const restore = target.closest('[data-ol-restore]');
     if (restore) { restoreVersion(restore.dataset.olRestore); return; }
+    const qaDel = target.closest('[data-ol-qa-del]');
+    if (qaDel) { event.stopPropagation(); deleteQaChat(qaDel.dataset.olQaDel); return; }
+    const qaOpen = target.closest('[data-ol-qa-open]');
+    if (qaOpen) { openQaChat(qaOpen.dataset.olQaOpen); return; }
     const histDel = target.closest('[data-ol-hist-del]');
     if (histDel) { event.stopPropagation(); deleteHistory(histDel.dataset.olHistDel); return; }
     const histOpen = target.closest('[data-ol-hist-open]');
@@ -1397,8 +1501,9 @@ const OfficialLetterPage = (() => {
       case 'review': $('.ola-review')?.scrollIntoView({block:'start', behavior:'auto'}); break;
       case 'run': run(); break;
       case 'qa-send': askQuestion(); break;
+      case 'qa-new': newQaChat(); break;
       case 'qa-stop': controller?.abort(); break;
-      case 'qa-deep': qa.deep = !qa.deep; try { localStorage.setItem(DEEP_KEY, qa.deep ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); focusMain(); break;
+      case 'qa-deep': if (qa.busy || st.busy) break; collectAll(); qa.deep = !qa.deep; try { localStorage.setItem(DEEP_KEY, qa.deep ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); focusMain(); break;
       case 'qa-clear': clearQa(); break;
       case 'compose': st.drawer = ''; compose(''); break;
       case 'refine': sendRefine(); break;
