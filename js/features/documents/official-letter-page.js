@@ -481,7 +481,7 @@ const OfficialLetterPage = (() => {
     updateSelectionScope();
   }
   function selectionScopeHtml() {
-    return st.selection.length ? '<span>Chỉ sửa phần đã chọn: “' + esc(st.selection.map(item => item.text).join(' ').slice(0, 140)) + '”</span><button type="button" class="ol-link" data-ol-act="clear-selection">Bỏ chọn đoạn</button>' : '<span>Bôi đen nội dung trên công văn để AI chỉ sửa phần đó; hoặc nhập yêu cầu cho toàn công văn.</span>';
+    return st.selection.length ? '<span>Đang sửa đoạn đã chọn: “' + esc(st.selection.map(item => item.text).join(' ').slice(0, 140)) + '”</span><button type="button" class="ol-link" data-ol-act="clear-selection">Bỏ chọn</button>' : '';
   }
   function updateSelectionScope() { const node = $('[data-ol-selection]'); if (node) { node.innerHTML = selectionScopeHtml(); node.classList.toggle('is-scoped', !!st.selection.length); } }
 
@@ -808,9 +808,9 @@ const OfficialLetterPage = (() => {
     const agent = stepsHtml();
     if (!st.letter) return '<div class="ola-refine is-processing">' + agent + '</div>';
     if (st.pending) return '<div class="ola-refine">' + agent + '<div class="ola-review-hint"><span>Chọn những thay đổi bạn muốn áp dụng vào bản thảo.</span><button type="button" class="olp-tool" data-ol-act="review">Xem đề xuất</button></div></div>';
-    return '<div class="ola-refine' + (st.busy ? ' is-processing' : '') + '">' + agent + '<div class="ola-selection' + (st.selection.length ? ' is-scoped' : '') + '" data-ol-selection role="status">' + selectionScopeHtml() + '</div><div class="tasco-ai-attachments ola-files" data-ol-file-list="refine"' + (st.refineFiles.length ? '' : ' hidden') + '>' + filesHtml('refineFiles') + '</div><div class="tasco-ai-suggest">' + REFINES.map(text => '<button type="button" class="tasco-ai-suggest__chip" data-ol-refine="' + esc(text) + '"' + (st.busy ? ' disabled' : '') + '>' + esc(text) + '</button>').join('') + '</div>'
-      + '<div class="tasco-ai-composer ola-refine-box"><label class="ola-icon-btn' + (st.busy ? ' is-disabled' : '') + '" title="Đính kèm ảnh/PDF để AI đọc khi sửa"><input type="file" data-ol-files="refine" accept="image/*,application/pdf" multiple hidden' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label><input class="tasco-ai-input" data-ol-refine-input maxlength="600" placeholder="Nhờ AI sửa: “gửi Phòng CSGT tỉnh”, “nêu thêm ngày tổn thất”… (có thể đính kèm tài liệu)" aria-label="Yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>'
-      + '<button type="button" class="tasco-ai-send" data-ol-act="refine" aria-label="Gửi yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div></div>';
+    return '<div class="ola-refine' + (st.busy ? ' is-processing' : '') + '">' + agent + '<div class="ola-selection' + (st.selection.length ? ' is-scoped' : '') + '" data-ol-selection role="status">' + selectionScopeHtml() + '</div><div class="tasco-ai-attachments ola-files" data-ol-file-list="refine"' + (st.refineFiles.length ? '' : ' hidden') + '>' + filesHtml('refineFiles') + '</div>'
+      + '<div class="tasco-ai-composer ola-refine-box"><label class="ola-icon-btn' + (st.busy ? ' is-disabled' : '') + '" title="Đính kèm ảnh/PDF để AI đọc khi sửa"><input type="file" data-ol-files="refine" accept="image/*,application/pdf" multiple hidden' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label><input class="tasco-ai-input" data-ol-refine-input maxlength="600" placeholder="Nhờ AI chỉnh sửa công văn hoặc đoạn đã chọn…" title="Bôi đen một đoạn trong công văn để chỉ sửa đoạn đó" aria-label="Yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>'
+      + '<button type="button" class="tasco-ai-send" data-ol-act="refine" aria-label="Gửi yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div><div class="ola-suggest-line"><span>Gợi ý</span><div class="tasco-ai-suggest">' + REFINES.map(text => '<button type="button" class="tasco-ai-suggest__chip" data-ol-refine="' + esc(text) + '"' + (st.busy ? ' disabled' : '') + '>' + esc(text) + '</button>').join('') + '</div></div></div>';
   }
   function workHtml() {
     // Vùng nội dung cuộn riêng; ô "Nhờ AI sửa" ghim cố định ở đáy, không trôi theo và không đè tờ công văn.
