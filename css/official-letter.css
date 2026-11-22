@@ -181,10 +181,10 @@ span.ola-chip.is-set > button.ola-chip-x { display:grid; place-items:center; fle
 .ola-agent.is-ready .ola-agent-orb { width:27px; height:27px; }
 .ola-agent.is-ready .ola-agent-eyebrow, .ola-agent.is-ready .ola-agent-copy small { display:none; }
 .ola-agent.is-ready .ola-agent-copy p { margin:0; font-size:12px; }
-/* Hiệu ứng đang xử lý: vệt sáng RGB chạy quanh viền thẻ (thay cho vòng xoay ở biểu tượng).
-   --ola-rgb-angle đăng ký bằng @property để trình duyệt nội suy mượt; trình duyệt cũ
+/* Hiệu ứng đang xử lý: vệt sáng vàng nhạt chạy quanh viền thẻ (thay cho vòng xoay ở biểu tượng).
+   --ola-sweep-angle đăng ký bằng @property để trình duyệt nội suy mượt; trình duyệt cũ
    vẫn thấy viền gradient tĩnh, không vỡ giao diện. */
-@property --ola-rgb-angle { syntax:'<angle>'; inherits:false; initial-value:0deg; }
+@property --ola-sweep-angle { syntax:'<angle>'; inherits:false; initial-value:0deg; }
 
 .ola-agent.is-running::before,
 .ola-agent.is-running::after,
@@ -195,41 +195,38 @@ span.ola-chip.is-set > button.ola-chip-x { display:grid; place-items:center; fle
   inset:0;
   z-index:3;
   box-sizing:border-box;
-  padding:3px;
+  padding:1.5px;
   border-radius:inherit;
-  background:conic-gradient(from var(--ola-rgb-angle),
-    rgba(0,0,0,0) 0deg 128deg,
-    rgba(0,200,255,.20) 168deg,
-    rgba(0,200,255,.80) 205deg,
-    #22e6c8 232deg,
-    #7dff5a 256deg,
-    #ffe23d 280deg,
-    #ffa13a 300deg,
-    #ff4f7a 318deg,
-    #ff3ddb 334deg,
-    #b45cff 348deg,
-    rgba(180,92,255,.25) 356deg,
+  background:conic-gradient(from var(--ola-sweep-angle),
+    rgba(0,0,0,0) 0deg 150deg,
+    rgba(216,180,109,.28) 194deg,
+    rgba(216,180,109,.68) 228deg,
+    rgba(224,193,134,.92) 256deg,
+    #d3ab5f 280deg,
+    #f0dcab 304deg,
+    #fff8e4 328deg,
+    rgba(240,220,175,.50) 348deg,
     rgba(0,0,0,0) 360deg);
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;
   mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   mask-composite:exclude;
   pointer-events:none;
-  animation:ola-rgb-sweep 3.4s linear infinite;
+  animation:ola-sweep 3.4s linear infinite;
 }
 /* Quầng sáng mềm chạy cùng góc với vệt chính để viền có độ toả. */
 .ola-agent.is-running::after,
 .ola-refine.is-processing::after {
-  inset:-3px;
+  inset:-2px;
   z-index:2;
-  padding:7px;
-  opacity:.55;
-  filter:blur(7px);
+  padding:4px;
+  opacity:.38;
+  filter:blur(5px);
 }
-/* Trong thẻ "Nhờ AI sửa", viền RGB nằm ở thẻ ngoài (.ola-refine) nên lõi agent bên trong để trơn. */
+/* Trong thẻ "Nhờ AI sửa", viền nằm ở thẻ ngoài (.ola-refine) nên lõi agent bên trong để trơn. */
 .ola-refine .ola-agent.is-running::before,
 .ola-refine .ola-agent.is-running::after { content:none; }
-@keyframes ola-rgb-sweep { from { --ola-rgb-angle:0deg; } to { --ola-rgb-angle:360deg; } }
+@keyframes ola-sweep { from { --ola-sweep-angle:0deg; } to { --ola-sweep-angle:360deg; } }
 @keyframes ola-agent-pulse { 50% { transform:scale(.9); opacity:.72; } }
 @keyframes ola-agent-wave { from { transform:scaleY(.25); } to { transform:scaleY(1); } }
 .ola-stage { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:16px; align-items:start; }
