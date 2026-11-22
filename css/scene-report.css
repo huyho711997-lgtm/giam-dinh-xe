@@ -1941,3 +1941,26 @@ body:not(.light-mode) .sr-ai-photo.is-sample .sr-ai-kind { background: #164a33; 
 .sr-ai-deep input { position: absolute; opacity: 0; pointer-events: none; }
 .sr-ai-deep input:focus-visible + .sr-check-box { outline: 2px solid var(--ce-gold); outline-offset: 2px; }
 .sr-ai-local { flex-basis: 100%; margin: 0; color: var(--ce-muted); font-size: 11.5px; line-height: 1.5; }
+
+/* AI ảnh hiện trường — các mục khác [3][4][5][12][13][14] */
+.sr-ai-extra { gap: 0; padding: 4px 12px 8px; }
+.sr-ai-extra > .sr-ai-card-head { padding: 8px 0 6px; border-bottom: 1px solid var(--ce-line); }
+.sr-ai-extra > .sr-ai-card-head > strong { color: var(--ce-ink); font-size: 12.5px; font-weight: 750; }
+.sr-ai-x-hint { color: var(--ce-muted); font-size: 11.5px; }
+.sr-ai-xrow { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); align-items: start; gap: 6px 12px; padding: 9px 0; border-bottom: 1px dashed var(--ce-line); }
+.sr-ai-xrow:last-child { border-bottom: 0; }
+.sr-ai-xrow > .sr-ai-pick { grid-column: 1; align-self: center; flex-wrap: wrap; }
+.sr-ai-xrow > .sr-ai-x-now { grid-column: 1; margin-top: -4px; padding-left: 26px; color: var(--ce-muted); font-size: 11px; line-height: 1.35; }
+.sr-ai-xrow > :is(.sr-ai-x-input, .sr-ai-text, .sr-ai-x-select, .sr-ai-x-damage, .sr-ai-x-prop) { grid-column: 2; grid-row: 1 / span 2; min-width: 0; }
+.sr-ai-xrow:not(.is-on) > :is(.sr-ai-x-input, .sr-ai-text, .sr-ai-x-select, .sr-ai-x-damage, .sr-ai-x-prop) { opacity: .72; }
+.sr-ai-x-select { height: 34px; max-width: 280px; }
+.sr-ai-x-damage { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 8px; }
+.sr-ai-x-spot { display: grid; gap: 2px; }
+.sr-ai-x-spot > span { color: var(--ce-muted); font-size: 11px; font-weight: 700; }
+.sr-ai-x-prop { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.sr-ai-x-propitem { display: inline-flex; align-items: center; gap: 6px; color: var(--ce-ink); font-size: 12.5px; }
+@media (max-width: 640px) {
+  .sr-ai-xrow { grid-template-columns: minmax(0, 1fr); }
+  .sr-ai-xrow > :is(.sr-ai-x-input, .sr-ai-text, .sr-ai-x-select, .sr-ai-x-damage, .sr-ai-x-prop) { grid-column: 1; grid-row: auto; }
+  .sr-ai-x-damage { grid-template-columns: minmax(0, 1fr); }
+}

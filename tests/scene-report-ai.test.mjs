@@ -43,6 +43,29 @@ test('parseResult báo lỗi dễ hiểu khi AI không rút ra được gì ho�
   assert.equal(AI.parseResult('Đây là kết quả: ' + JSON.stringify({traces: '1. Mảnh vỡ.'})).traces, '1. Mảnh vỡ.');
 });
 
+test('parseResult đọc thêm [3][4][5][12][13][14]: chỉ nhận enum hợp lệ, cắt theo giới hạn ô và vẫn thành công khi chỉ có mục khác', () => {
+  const raw = JSON.stringify({scene: '', terrain: 'Nhựa thẳng', ground: 'HARD', weather: 'tuyết', light: 'night', damage: {front: 'Cản trước vỡ', body: 'x'.repeat(300), rear: '', under: ''}, damage_eval: 'Mức trung bình', parts: 'Cản trước, đèn pha', property: {insured: true, third_party: 'true'}});
+  const result = plain(AI.parseResult(raw));
+  assert.equal(result.hasExtra, true);
+  assert.deepEqual(result.extra.terrain, 'Nhựa thẳng');
+  assert.equal(result.extra.ground, 'hard');
+  assert.equal(result.extra.weather, '');
+  assert.equal(result.extra.light, 'night');
+  assert.equal(result.extra.damage.front, 'Cản trước vỡ');
+  assert.equal(result.extra.damage.body.length, 120);
+  assert.deepEqual(result.extra.property, {insured: true, thirdParty: false});
+  assert.equal(result.extra.parts, 'Cản trước, đèn pha');
+  assert.equal(plain(AI.parseResult(JSON.stringify({scene: 'a'}))).hasExtra, false);
+});
+
+test('prompt yêu cầu các mục khác và loại trừ mục ảnh không chứng minh được; ngữ cảnh gửi kèm nội dung [3][13][14] đã có', () => {
+  const prompt = AI.buildPrompt({existing: {terrain: 'Đường quốc lộ', damageEval: 'Nhẹ', parts: 'Cản trước'}}, [{kind: 'scene'}]);
+  for (const key of ['"terrain"', '"ground"', '"weather"', '"light"', '"damage"', '"damage_eval"', '"parts"', '"property"']) assert.ok(prompt.includes(key), key);
+  assert.match(prompt, /KHÔNG suy ra từ ảnh[\s\S]*nhiệt độ động cơ[\s\S]*hơi thở[\s\S]*lời khai/);
+  assert.match(prompt, /Đã có sẵn ở mục \[3\][\s\S]*Đường quốc lộ/);
+  assert.match(prompt, /Đã có sẵn ở mục \[13\][\s\S]*Nhẹ/);
+});
+
 test('mergeText: ô trống thì điền, ô có chữ thì nối dòng mới hoặc thay, và cắt theo giới hạn', () => {
   assert.deepEqual(plain(AI.mergeText('', '1. A', 'append', 100)), {text: '1. A', truncated: false});
   assert.equal(AI.mergeText('Đã có.  \n', '1. A', 'append', 100).text, 'Đã có.\n1. A');

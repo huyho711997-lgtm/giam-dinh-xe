@@ -1,8 +1,65 @@
 // Giao diện khối "AI phân tích ảnh hiện trường" trong tab Biên bản hiện trường (đặt đầu phần II).
 // Ảnh chỉ giữ trong bộ nhớ trang (không lưu vào hồ sơ); kết quả AI là bản nháp, chỉ ghi vào mục [9][10][11] khi bấm "Áp dụng".
 // Phụ thuộc (gọi lúc chạy): SceneReportAI, sceneReportState/sceneReportCommit/sceneReportEsc/sceneReportIcon (scene-report-ui.js), GeminiKeyStore.
-const sceneReportAi = {claim: '', photos: [], note: '', busy: false, preparing: false, controller: null, stopped: false, result: null, error: '', applied: '', pick: {}, mode: {}, draft: {}, deep: null, model: ''};
+const sceneReportAi = {claim: '', photos: [], note: '', busy: false, preparing: false, controller: null, stopped: false, result: null, error: '', applied: '', pick: {}, mode: {}, draft: {}, extra: null, pickX: {}, deep: null, model: ''};
 const SCENE_REPORT_AI_FIELDS = [['scene', '[9]', 'Mô tả hiện trường, vị trí phương tiện'], ['traces', '[10]', 'Dấu vết tại hiện trường'], ['samples', '[11]', 'Mẫu vật thu được']];
+
+// Các mục còn lại AI có thể điền từ ảnh: [3][4][5][12][13][14]. Không đoán [1][2][6][7][8][15][16] vì ảnh không chứng minh được.
+const SCENE_REPORT_AI_EXTRA = [
+  {key: 'terrain', tag: '[3]', title: 'Địa hình, vật liệu nền', kind: 'line'},
+  {key: 'ground', tag: '[4]', title: 'Tính chất nền', kind: 'choice'},
+  {key: 'weather', tag: '[5]', title: 'Thời tiết', kind: 'choice'},
+  {key: 'light', tag: '[5]', title: 'Ánh sáng', kind: 'choice'},
+  {key: 'damage', tag: '[12]', title: 'Vị trí tổn thất trên xe', kind: 'damage'},
+  {key: 'damageEval', tag: '[13]', title: 'Đánh giá thiệt hại sơ bộ', kind: 'area'},
+  {key: 'parts', tag: '[14]', title: 'Vật tư, phụ tùng thiệt hại', kind: 'line'},
+  {key: 'property', tag: '[14]', title: 'Tài sản bị thiệt hại', kind: 'prop'}
+];
+const SCENE_REPORT_AI_PROP_LABELS = {insured: 'Xe bảo hiểm vật chất Tasco', thirdParty: 'Tài sản bên thứ ba'};
+
+function sceneReportAiExtraHas(key, extra) {
+  if (!extra) return false;
+  if (key === 'damage') return SceneReportAI.SPOTS.some(spot => String(extra.damage?.[spot] || '').trim());
+  if (key === 'property') return !!(extra.property?.insured || extra.property?.thirdParty);
+  return !!String(extra[key] || '').trim();
+}
+// Giá trị đang có trong biên bản (để so sánh, và để mặc định KHÔNG ghi đè mục đã nhập).
+function sceneReportAiExtraCurrent(key, data) {
+  if (key === 'damage') return SceneReportAI.SPOTS.filter(spot => data.damage?.[spot]?.on || String(data.damage?.[spot]?.text || '').trim()).length ? 'đã nhập' : '';
+  if (key === 'property') return data.property?.insured || data.property?.thirdParty ? 'đã chọn' : '';
+  return String(data[key] || '').trim();
+}
+function sceneReportAiExtraPicked() {
+  const st = sceneReportAi;
+  return SCENE_REPORT_AI_EXTRA.filter(row => st.pickX[row.key] && sceneReportAiExtraHas(row.key, st.extra)).length;
+}
+function sceneReportAiPickedCount() {
+  const st = sceneReportAi;
+  return SCENE_REPORT_AI_FIELDS.filter(([key]) => st.pick[key] && String(st.draft[key] || '').trim()).length + sceneReportAiExtraPicked();
+}
+function sceneReportAiExtraHtml() {
+  const E = sceneReportEsc, st = sceneReportAi, data = sceneReportState(), extra = st.extra;
+  if (!extra || !SCENE_REPORT_AI_EXTRA.some(row => sceneReportAiExtraHas(row.key, extra))) return '';
+  const labels = SCENE_REPORT_CHOICE_LABELS;
+  const rows = SCENE_REPORT_AI_EXTRA.filter(row => sceneReportAiExtraHas(row.key, extra)).map(row => {
+    const key = row.key, current = sceneReportAiExtraCurrent(key, data);
+    let control = '';
+    if (row.kind === 'line') control = '<input class="sr-input sr-ai-x-input" type="text" data-sr-ai-x="' + key + '" maxlength="' + SceneReportAI.LIMITS[key] + '" value="' + E(extra[key]) + '" aria-label="Đề xuất cho ' + E(row.tag) + '">';
+    else if (row.kind === 'area') control = '<textarea class="sr-input sr-area sr-ai-text" data-sr-ai-x="' + key + '" rows="3" maxlength="' + SceneReportAI.LIMITS[key] + '" aria-label="Đề xuất cho ' + E(row.tag) + '">' + E(extra[key]) + '</textarea>';
+    else if (row.kind === 'choice') control = '<select class="sr-ai-mode sr-ai-x-select" data-sr-ai-x="' + key + '" aria-label="Đề xuất cho ' + E(row.title) + '">'
+      + Object.keys(labels[key]).map(value => '<option value="' + value + '"' + (extra[key] === value ? ' selected' : '') + '>' + E(labels[key][value]) + '</option>').join('') + '</select>';
+    else if (row.kind === 'damage') control = '<div class="sr-ai-x-damage">' + SCENE_REPORT_DAMAGE_SPOTS.map(([spot, label]) =>
+      '<label class="sr-ai-x-spot"><span>' + E(label) + '</span><input class="sr-input" type="text" data-sr-ai-x-damage="' + spot + '" maxlength="' + SceneReportAI.LIMITS.damageText + '" value="' + E(extra.damage[spot]) + '" placeholder="Không thấy hư hại"></label>').join('') + '</div>';
+    else control = '<div class="sr-ai-x-prop">' + Object.keys(SCENE_REPORT_AI_PROP_LABELS).map(prop =>
+      '<label class="sr-ai-x-propitem"><input type="checkbox" data-sr-ai-x-prop="' + prop + '"' + (extra.property[prop] ? ' checked' : '') + '><span>' + E(SCENE_REPORT_AI_PROP_LABELS[prop]) + '</span></label>').join('') + '</div>';
+    const now = current && row.kind === 'choice' ? labels[key][current] : current;
+    return '<div class="sr-ai-xrow' + (st.pickX[key] ? ' is-on' : '') + '">'
+      + '<label class="sr-ai-pick"><input type="checkbox" data-sr-ai-x-pick="' + key + '"' + (st.pickX[key] ? ' checked' : '') + '><span class="sr-check-box" aria-hidden="true"></span><span class="sr-item-tag">' + E(row.tag) + '</span><strong>' + E(row.title) + '</strong></label>'
+      + (now ? '<span class="sr-ai-x-now" title="Biên bản đang có nội dung ở mục này; tick chọn sẽ ghi đè">Đang có: ' + E(String(now).slice(0, 60)) + '</span>' : '')
+      + control + '</div>';
+  }).join('');
+  return '<div class="sr-ai-card sr-ai-extra"><div class="sr-ai-card-head"><strong>Các mục khác đọc được từ ảnh</strong><span class="sr-ai-x-hint">Mục đã có nội dung mặc định không tick, tránh ghi đè</span></div>' + rows + '</div>';
+}
 
 // ---- Chọn mô hình (dùng chung danh sách mô hình/khoá với Công văn AI) ----
 const SCENE_REPORT_AI_MODEL_KEY = 'sceneReport.aiModel.v1', SCENE_REPORT_AI_DEEP_KEY = 'sceneReport.aiDeep.v1';
@@ -63,9 +120,9 @@ function sceneReportAiResultHtml() {
   const evidence = result.evidence.length ? '<details class="sr-ai-more"><summary>Căn cứ AI nhìn thấy trong ảnh (' + result.evidence.length + ')</summary><ul>' + result.evidence.map(item => '<li>' + (item.photo ? '<b>Ảnh ' + item.photo + ':</b> ' : '') + E(item.saw) + (item.conclusion ? ' <em>→ ' + E(item.conclusion) + '</em>' : '') + '</li>').join('') + '</ul></details>' : '';
   const verify = result.verify.length ? '<div class="sr-ai-verify"><strong>' + sceneReportIcon('alert-triangle') + ' Cần xác minh/đo trực tiếp tại hiện trường</strong><ul>' + result.verify.map(item => '<li>' + E(item) + '</li>').join('') + '</ul></div>' : '';
   const unusable = result.unusable.length ? '<p class="sr-ai-warn">' + result.unusable.map(item => 'Ảnh ' + item.photo + (item.reason ? ' (' + E(item.reason) + ')' : '')).join(', ') + ' chưa dùng được — chụp lại nếu cần.</p>' : '';
-  const picked = SCENE_REPORT_AI_FIELDS.filter(([key]) => st.pick[key] && String(st.draft[key] || '').trim()).length;
-  return '<div class="sr-ai-result"><div class="sr-ai-result-head"><strong>' + sceneReportIcon('sparkles') + ' Đề xuất của AI</strong><span>Sửa trực tiếp trong ô nếu cần, rồi chọn mục muốn ghi vào biên bản</span></div>'
-    + cards + unusable + verify + evidence
+  const picked = sceneReportAiPickedCount();
+  return '<div class="sr-ai-result"><div class="sr-ai-result-head"><strong>' + sceneReportIcon('sparkles') + ' Đề xuất của AI</strong><span>Sửa trực tiếp trong ô nếu cần, rồi chọn mục muốn ghi vào biên bản. Các mục [1][2][6][7][8][15][16] ảnh không chứng minh được nên để bạn tự nhập</span></div>'
+    + cards + sceneReportAiExtraHtml() + unusable + verify + evidence
     + '<div class="sr-ai-foot"><button type="button" class="sr-btn sr-btn--primary sr-btn--compact" data-sr-ai-apply' + (picked ? '' : ' disabled') + '><span class="sr-btn-icon">' + sceneReportIcon('check') + '</span><span>Áp dụng ' + picked + ' mục đã chọn</span></button><button type="button" class="sr-btn sr-btn--compact" data-sr-ai-dismiss><span>Bỏ đề xuất</span></button></div></div>';
 }
 
@@ -131,7 +188,7 @@ async function sceneReportAiAddFiles(list) {
 function sceneReportAiContext() {
   const data = sceneReportState();
   return {plate: data.plate, location: data.accidentLocation, when: [data.accidentTime, data.accidentDate].filter(Boolean).join(' '), withParty: data.withParty, note: sceneReportAi.note,
-    existing: {scene: data.scene, traces: data.traces, samples: data.samples}};
+    existing: {scene: data.scene, traces: data.traces, samples: data.samples, terrain: data.terrain, damageEval: data.damageEval, parts: data.parts}};
 }
 
 async function sceneReportAiRun() {
@@ -163,6 +220,11 @@ async function sceneReportAiRun() {
     if (st.claim !== claim) return;
     st.result = result; st.pick = {}; st.mode = {}; st.draft = {};
     SCENE_REPORT_AI_FIELDS.forEach(([key]) => { st.draft[key] = result[key]; st.pick[key] = !!result[key]; });
+    // Các mục khác: bản nháp sửa được; chỉ tick sẵn khi biên bản chưa có nội dung ở mục đó.
+    const dataNow = sceneReportState();
+    st.extra = JSON.parse(JSON.stringify(result.extra || {}));
+    st.pickX = {};
+    SCENE_REPORT_AI_EXTRA.forEach(row => { st.pickX[row.key] = sceneReportAiExtraHas(row.key, st.extra) && !sceneReportAiExtraCurrent(row.key, dataNow); });
   } catch (error) {
     if (st.claim !== claim) return;
     if (error?.name === 'AbortError') {
@@ -187,12 +249,52 @@ function sceneReportAiApply() {
     if (area) area.value = merged.text;
     done.push(tag); if (merged.truncated) cut.push(tag);
   }
+  // Các mục khác: ghi thẳng vào dữ liệu (đã được AI/giám định viên chỉnh), rồi vẽ lại biểu mẫu để ô, nút chọn, đếm mục cùng cập nhật.
+  const extra = st.extra || {};
+  let extraDone = 0;
+  const mark = tag => { if (!done.includes(tag)) done.push(tag); extraDone++; };
+  for (const row of SCENE_REPORT_AI_EXTRA) {
+    if (!st.pickX[row.key] || !sceneReportAiExtraHas(row.key, extra)) continue;
+    if (row.kind === 'line' || row.kind === 'area') {
+      const text = String(extra[row.key]).trim().slice(0, SCENE_REPORT_TEXT_FIELDS[row.key] || SceneReportAI.LIMITS[row.key]);
+      if (!text) continue;
+      data[row.key] = text; mark(row.tag);
+    } else if (row.kind === 'choice') {
+      const value = String(extra[row.key] || '');
+      if (!SceneReportAI.ENUMS[row.key].includes(value)) continue;
+      data[row.key] = value; mark(row.tag);
+    } else if (row.kind === 'damage') {
+      let any = false;
+      for (const spot of SceneReportAI.SPOTS) {
+        const text = String(extra.damage?.[spot] || '').trim().slice(0, SceneReportAI.LIMITS.damageText);
+        if (!text) continue;
+        data.damage[spot] = {on: true, text}; any = true;
+      }
+      if (any) mark(row.tag);
+    } else if (row.kind === 'prop') {
+      if (extra.property?.insured) data.property.insured = true;
+      if (extra.property?.thirdParty) data.property.thirdParty = true;
+      mark(row.tag);
+    }
+  }
   if (!done.length) return;
-  sceneReportCommit();
-  st.result = null; st.error = '';
+  st.result = null; st.extra = null; st.pickX = {}; st.error = '';
   st.applied = 'Đã ghi vào ' + done.join(', ') + '. Hãy đọc lại, điền số đo còn "…" rồi kiểm tra tại hiện trường.' + (cut.length ? ' Một phần nội dung ' + cut.join(', ') + ' bị cắt vì quá dài.' : '');
-  sceneReportAiRepaint();
+  if (extraDone) sceneReportRefresh(); else sceneReportAiRepaint();
+  sceneReportCommit();
   if (typeof triggerToast === 'function') triggerToast('Đã áp dụng đề xuất AI vào ' + done.join(', ') + '.', 'success');
+}
+
+// Cập nhật nút "Áp dụng N mục" mà không vẽ lại (giữ con trỏ khi đang gõ).
+function sceneReportAiSyncApply(from) {
+  const apply = from.closest('[data-sr-ai]')?.querySelector('[data-sr-ai-apply]');
+  if (!apply) return;
+  const n = sceneReportAiPickedCount();
+  apply.disabled = !n;
+  const label = apply.querySelector('span:last-child');
+  if (label) label.textContent = 'Áp dụng ' + n + ' mục đã chọn';
+  const row = from.closest('.sr-ai-xrow');
+  if (row) row.classList.toggle('is-on', !!sceneReportAi.pickX[row.querySelector('[data-sr-ai-x-pick]')?.dataset.srAiXPick]);
 }
 
 document.addEventListener('change', event => {
@@ -201,6 +303,9 @@ document.addEventListener('change', event => {
   if (target.matches('[data-sr-ai-file]')) { const files = [...target.files]; target.value = ''; sceneReportAiAddFiles(files); return; }
   if (target.matches('[data-sr-ai-model]')) { sceneReportAi.model = target.value; sceneReportAiLs.set(SCENE_REPORT_AI_MODEL_KEY, target.value); sceneReportAi.error = ''; sceneReportAiRepaint(); return; }
   if (target.matches('[data-sr-ai-deep]')) { sceneReportAi.deep = target.checked; sceneReportAiLs.set(SCENE_REPORT_AI_DEEP_KEY, target.checked ? '1' : '0'); return; }
+  if (target.matches('[data-sr-ai-x-pick]')) { sceneReportAi.pickX[target.dataset.srAiXPick] = target.checked; sceneReportAiSyncApply(target); return; }
+  if (target.matches('[data-sr-ai-x-prop]') && sceneReportAi.extra) { sceneReportAi.extra.property[target.dataset.srAiXProp] = target.checked; sceneReportAiSyncApply(target); return; }
+  if (target.matches('select[data-sr-ai-x]') && sceneReportAi.extra) { sceneReportAi.extra[target.dataset.srAiX] = target.value; return; }
   if (target.matches('[data-sr-ai-pick]')) { sceneReportAi.pick[target.dataset.srAiPick] = target.checked; sceneReportAiRepaint(); return; }
   if (target.matches('[data-sr-ai-mode]')) sceneReportAi.mode[target.dataset.srAiMode] = target.value === 'replace' ? 'replace' : 'append';
 });
@@ -208,12 +313,14 @@ document.addEventListener('input', event => {
   const target = event.target;
   if (!target.closest?.('#sceneReportRoot [data-sr-ai]')) return;
   if (target.matches('[data-sr-ai-note]')) sceneReportAi.note = String(target.value).slice(0, SceneReportAI.MAX_NOTE);
+  else if (target.matches('[data-sr-ai-x-damage]') && sceneReportAi.extra) { sceneReportAi.extra.damage[target.dataset.srAiXDamage] = String(target.value); sceneReportAiSyncApply(target); }
+  else if (target.matches('input[data-sr-ai-x], textarea[data-sr-ai-x]') && sceneReportAi.extra) { sceneReportAi.extra[target.dataset.srAiX] = String(target.value); sceneReportAiSyncApply(target); }
   else if (target.matches('[data-sr-ai-text]')) {
     sceneReportAi.draft[target.dataset.srAiText] = String(target.value);
     const empty = !String(target.value).trim();
     sceneReportAi.pick[target.dataset.srAiText] = !empty && sceneReportAi.pick[target.dataset.srAiText] !== false;
     const apply = target.closest('[data-sr-ai]')?.querySelector('[data-sr-ai-apply]');
-    if (apply) { const n = SCENE_REPORT_AI_FIELDS.filter(([key]) => sceneReportAi.pick[key] && String(sceneReportAi.draft[key] || '').trim()).length; apply.disabled = !n; const label = apply.querySelector('span'); if (label) label.textContent = 'Áp dụng ' + n + ' mục đã chọn'; }
+    if (apply) { const n = sceneReportAiPickedCount(); apply.disabled = !n; const label = apply.querySelector('span'); if (label) label.textContent = 'Áp dụng ' + n + ' mục đã chọn'; }
   }
 });
 document.addEventListener('click', event => {

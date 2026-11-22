@@ -5,7 +5,10 @@ const SceneReportAI = (() => {
   const MAX_PHOTOS = 20, MAX_EDGE = 1280, MAX_RAW = 4 * 1024 * 1024, MAX_NOTE = 600;
   // Mỗi ảnh gửi đi tối đa ~450 KB (base64) để 20 ảnh vẫn dưới ~9 MB: cầu nối Antigravity nhận tối đa 12 MB mỗi yêu cầu, Gemini 20 MB.
   const MAX_TOTAL_B64 = 9 * 1024 * 1024, MAX_PHOTO_B64 = 450 * 1024, STEPS = [[MAX_EDGE, 0.82], [1100, 0.76], [960, 0.7], [800, 0.64]];
-  const LIMITS = {scene: 3000, traces: 3000, samples: 2000};
+  // Giới hạn khớp ô nhập của biên bản (scene-report-model.js).
+  const LIMITS = {scene: 3000, traces: 3000, samples: 2000, terrain: 300, damageEval: 2000, parts: 2000, damageText: 120};
+  const ENUMS = {ground: ['hard', 'soft', 'flooded'], weather: ['sunny', 'rain', 'cloudy'], light: ['day', 'night']};
+  const SPOTS = ['front', 'body', 'rear', 'under'];
   // Loại ảnh người dùng gắn cho từng ảnh để AI biết cần đọc gì ở ảnh đó.
   const KINDS = {scene: 'Hiện trường', trace: 'Dấu vết', sample: 'Mẫu vật'};
   const KIND_ORDER = ['scene', 'trace', 'sample'];
@@ -32,9 +35,17 @@ const SceneReportAI = (() => {
     + 'YÊU CẦU TỪNG MỤC:\n'
     + '- "scene" = [9] Mô tả hiện trường tai nạn, vị trí phương tiện: đánh số 1., 2., 3. mỗi ý một dòng. Gồm vị trí từng xe so với phần đường/mép đường, hướng đầu xe, tư thế (đứng, nghiêng, lật), kết cấu đường (nhựa/bê tông/đất, thẳng/cong, dốc, taluy, hộ lan), vạch kẻ, vật cản xung quanh, thời tiết và ánh sáng nhìn thấy, hiện trường còn nguyên hay đã bị di dời/dọn dẹp nếu có dấu hiệu.\n'
     + '- "traces" = [10] Dấu vết tại hiện trường (xác định mối liên hệ giữa các dấu vết, vật chứng và điểm đâm va): viết VĂN XUÔI LIỀN MẠCH, mỗi đoạn một đối tượng, KHÔNG đánh số, KHÔNG gạch đầu dòng, các đoạn cách nhau một dòng. Thứ tự: (a) dấu vết trên xe được bảo hiểm: vị trí – bộ phận, kiểu hư hại (móp lõm, bể rách, cong gập, trầy xước, bong tróc), chiều tác động, chi tiết đi kèm (bánh xe lệch, túi khí bung, kính vỡ, nắp capo, xương ngang, chassis); vệt sơn/mảnh vật lạ dính trên xe và màu sắc của chúng; (b) xe còn lại (nếu có) theo cùng cách, bắt đầu bằng "Đối với xe …"; (c) đối chiếu chéo: vệt sơn/mảnh vỡ trên xe này có màu sắc, hình dạng, độ cao tương đồng hay phù hợp với xe kia; (d) dấu vết trên mặt đường/vật cản bắt đầu bằng "Trên mặt đường …": vệt chà, vệt phanh, vết cày, mảnh vỡ rơi vãi, dầu nhớt, vết va vào cột/hộ lan/taluy; nêu vị trí so với xe và chiều kéo dài từ điểm bắt đầu đến điểm dừng; (e) khi các dấu vết cùng chỉ về một vị trí thì nêu điểm đâm va. Chỉ viết cho xe và dấu vết thực sự có trong ảnh. Đoạn mở đầu thường là "Tại hiện trường ghi nhận xe … tại vị trí …".\n'
-    + '- "samples" = [11] Mẫu vật thu được tại hiện trường: mỗi mẫu vật một dòng ngắn, không đánh số, dạng "Một số mảnh vỡ của phần cản trước của xe …", "Mảnh nhựa vỡ của đèn pha bên tài xe …": nêu loại vật, bộ phận, thuộc xe nào (nếu nhận ra), số lượng nếu đếm được. Chỉ từ ảnh loại "Mẫu vật" hoặc vật rõ ràng bị thu giữ; không có thì để "".\n\n'
+    + '- "samples" = [11] Mẫu vật thu được tại hiện trường: mỗi mẫu vật một dòng ngắn, không đánh số, dạng "Một số mảnh vỡ của phần cản trước của xe …", "Mảnh nhựa vỡ của đèn pha bên tài xe …": nêu loại vật, bộ phận, thuộc xe nào (nếu nhận ra), số lượng nếu đếm được. Chỉ từ ảnh loại "Mẫu vật" hoặc vật rõ ràng bị thu giữ; không có thì để "".\n'
+    + '- "terrain" = [3] Địa hình, vật liệu nền: MỘT câu ngắn (tối đa 250 ký tự): loại mặt đường (nhựa/bê tông/đất/cấp phối), thẳng hay cong, dốc/đèo, taluy, tầm nhìn.\n'
+    + '- "ground" = [4] Tính chất nền: "hard" (nền cứng, không lún/sụt: nhựa, bê tông), "soft" (đất mềm, lún, sụt), "flooded" (ngập nước) hoặc "" nếu không rõ.\n'
+    + '- "weather" = [5] "sunny" (nắng), "rain" (mưa, mặt đường ướt do mưa), "cloudy" (râm mát) hoặc "". "light" = [5] "day" hoặc "night": ưu tiên thời gian tổn thất trong NGỮ CẢNH (06–18 giờ là day), nếu không có thì theo ánh sáng trong ảnh; "" nếu không rõ.\n'
+    + '- "damage" = [12] Vị trí tổn thất TRÊN XE ĐƯỢC BẢO HIỂM, mỗi vùng một đoạn rất ngắn (tối đa 100 ký tự, liệt kê chi tiết hư hại): "front" (đầu xe), "body" (thân xe: cửa, hông, kính, trụ), "rear" (đuôi xe), "under" (gầm/nóc). Vùng không thấy hư hại thì "".\n'
+    + '- "damage_eval" = [13] Đánh giá thiệt hại sơ bộ của xe được bảo hiểm: mức độ hư hại (nhẹ/trung bình/nặng), chi tiết nghi hư hỏng bên trong cần tháo kiểm tra (khung xương, két nước, hệ thống treo, túi khí…), hướng xử lý dự kiến (nắn gò – sơn, thay thế, giám định tháo rã). 2–4 câu, văn xuôi, KHÔNG nêu số tiền.\n'
+    + '- "parts" = [14] Liệt kê sơ bộ vật tư, phụ tùng thiệt hại của xe được bảo hiểm trên MỘT dòng, ngăn cách bằng dấu phẩy (vd "Cản trước, đèn pha phải, nắp capo, lưới tản nhiệt"). KHÔNG nêu giá.\n'
+    + '- "property" = [14] {"insured": true nếu xe được bảo hiểm có thiệt hại nhìn thấy, "third_party": true nếu có xe/tài sản của bên thứ ba bị va chạm hoặc hư hại nhìn thấy}; không chắc thì false.\n'
+    + '- KHÔNG suy ra từ ảnh và KHÔNG đưa vào JSON: nhiệt độ động cơ, hiện trường nguyên vẹn hay không, lái xe có mặt/sắc mặt/hơi thở, giấy tờ, thiệt hại về người, lời khai, mức ước tính bằng tiền. Những mục đó giám định viên tự nhập.\n\n'
     + 'VÍ DỤ VĂN PHONG CỦA MỤC [10] (chỉ để học cách viết; KHÔNG chép nội dung, biển số hay chi tiết vào kết quả, mỗi vụ mỗi khác):\n' + EXAMPLE + '\n\n'
-    + 'Trả về DUY NHẤT một JSON: {"scene":"","traces":"","samples":"",'
+    + 'Trả về DUY NHẤT một JSON: {"scene":"","traces":"","samples":"","terrain":"","ground":"","weather":"","light":"","damage":{"front":"","body":"","rear":"","under":""},"damage_eval":"","parts":"","property":{"insured":false,"third_party":false},'
     + '"suy_luan":[{"anh":1,"thay":"điều nhìn thấy trong ảnh","ket_luan":"điều suy ra cho biên bản"}],'
     + '"can_xac_minh":["việc giám định viên phải đo/xác nhận trực tiếp tại hiện trường, gồm cả kiểm tra biển số xe còn lại"],'
     + '"anh_khong_dung":[{"anh":2,"ly_do":"mờ/thiếu sáng/che khuất/không liên quan"}]}. '
@@ -52,6 +63,11 @@ const SceneReportAI = (() => {
     for (const [key, label] of [['scene', '[9]'], ['traces', '[10]'], ['samples', '[11]']]) {
       const text = block(existing[key], 600);
       if (text) rows.push('Đã có sẵn ở mục ' + label + ' (chỉ bổ sung, không chép lại):\n' + text);
+    }
+    const more = [['terrain', '[3] Địa hình'], ['damageEval', '[13] Đánh giá thiệt hại'], ['parts', '[14] Phụ tùng']];
+    for (const [key, label] of more) {
+      const text = block(existing[key], 300);
+      if (text) rows.push('Đã có sẵn ở mục ' + label + ' (chỉ bổ sung nếu ảnh cho thấy thêm, không chép lại):\n' + text);
     }
     rows.push('Số ảnh: ' + photos.length + ' (' + photos.map((photo, index) => (index + 1) + '=' + KINDS[kindOf(photo.kind)]).join(', ') + ')');
     return rows.join('\n');
@@ -77,7 +93,20 @@ const SceneReportAI = (() => {
       verify: strings(data.can_xac_minh, 240, 8),
       unusable: (Array.isArray(data.anh_khong_dung) ? data.anh_khong_dung : []).filter(item => item && typeof item === 'object').map(item => ({photo: inRange(item.anh), reason: line(item.ly_do, 160)})).filter(item => item.photo).slice(0, MAX_PHOTOS)
     };
-    if (!result.scene && !result.traces && !result.samples) {
+    // Các mục còn lại của biên bản: chỉ nhận giá trị hợp lệ (enum đúng, chuỗi cắt theo giới hạn ô nhập).
+    const pickEnum = (key) => { const v = String(data[key] ?? '').trim().toLowerCase(); return ENUMS[key].includes(v) ? v : ''; };
+    const rawDamage = data.damage && typeof data.damage === 'object' ? data.damage : {};
+    const damage = {};
+    for (const spot of SPOTS) damage[spot] = line(rawDamage[spot], LIMITS.damageText);
+    const rawProp = data.property && typeof data.property === 'object' ? data.property : {};
+    result.extra = {
+      terrain: line(data.terrain, LIMITS.terrain), ground: pickEnum('ground'), weather: pickEnum('weather'), light: pickEnum('light'),
+      damage, damageEval: block(data.damage_eval, LIMITS.damageEval), parts: line(data.parts, LIMITS.parts),
+      property: {insured: rawProp.insured === true, thirdParty: rawProp.third_party === true || rawProp.thirdParty === true}
+    };
+    const x = result.extra;
+    result.hasExtra = !!(x.terrain || x.ground || x.weather || x.light || SPOTS.some(k => x.damage[k]) || x.damageEval || x.parts || x.property.insured || x.property.thirdParty);
+    if (!result.scene && !result.traces && !result.samples && !result.hasExtra) {
       const why = result.unusable.length ? ' Ảnh ' + result.unusable.map(item => item.photo + (item.reason ? ' (' + item.reason + ')' : '')).join(', ') + ' chưa dùng được.' : '';
       throw new Error('AI chưa rút ra được nội dung nào từ ảnh.' + why + ' Hãy chụp rõ, đủ sáng và thêm ảnh toàn cảnh.');
     }
@@ -186,5 +215,5 @@ const SceneReportAI = (() => {
     return parseResult(raw, photos.length);
   }
 
-  return {MAX_PHOTOS, MAX_TOTAL_B64, MAX_NOTE, LIMITS, KINDS, KIND_ORDER, nextKind, kindOf, buildPrompt, buildContext, parseResult, mergeText, prepare, analyze, analyzeVia, modelOptions, pickModel};
+  return {MAX_PHOTOS, ENUMS, SPOTS, MAX_TOTAL_B64, MAX_NOTE, LIMITS, KINDS, KIND_ORDER, nextKind, kindOf, buildPrompt, buildContext, parseResult, mergeText, prepare, analyze, analyzeVia, modelOptions, pickModel};
 })();
