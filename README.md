@@ -152,6 +152,14 @@ Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở t
 
 `firebase/user-secrets.rules.json` (đã nằm trong `database.rules.json`): nhánh `user_secrets/{uid}` lưu khoá Gemini API riêng từng tài khoản, chỉ chính chủ đọc/ghi.
 
+### Trò chuyện AI (tab thứ 3 trong Công văn AI)
+Trang AI thông thường để hỏi mọi thứ (viết lại câu chữ, tính toán, Excel, dịch, giải thích…), tách hẳn khỏi Hỏi nghiệp vụ nhưng dùng chung khung chat, khoá/mô hình AI, chip **Hồ sơ** và **Suy luận sâu**.
+- Đính kèm tối đa 5 tệp mỗi câu hỏi bằng nút ghim, kéo-thả hoặc dán: ảnh (JPG/PNG/WebP/HEIC) gửi thẳng cho mô hình (cần mô hình có hỗ trợ ảnh), PDF/Word/Excel/CSV/TXT/MD được đọc thành chữ (`TascoLibParse.readText`, mỗi tệp ≤ 30.000 ký tự, tổng ≤ 60.000). Chữ của tệp được lưu cùng tin nhắn (≤ 12.000 ký tự/tệp) để các lượt sau vẫn hỏi tiếp được; **ảnh chỉ gửi ở lượt hiện tại**, không lưu.
+- Chip **Tra Thư viện: Bật/Tắt** (nhớ trên máy): bật thì tra Thư viện tài liệu như Hỏi nghiệp vụ và gửi các đoạn tìm được kèm mã [C#]; hiện thêm chip **Quy tắc** để chọn văn bản và danh sách "Nguồn đã tra". Tắt thì AI không được trả lời điều khoản bảo hiểm bằng trí nhớ mà gợi ý bật công tắc.
+- Câu trả lời hiển thị Markdown an toàn (tiêu đề, đậm/nghiêng, danh sách, khối mã, bảng, liên kết http/https; mọi chữ đều bị escape trước). Nút tải xuống trên thanh trên cùng xuất cuộc trò chuyện ra `.md`.
+- Lịch sử: cùng kho với Hỏi nghiệp vụ (`officialLetter.qaChats.v1`) nhưng mỗi cuộc có cờ `free`; danh sách lịch sử, tìm kiếm và xoá chỉ hiện đúng loại của tab đang mở. Khoá `officialLetter.mode.v1` nhớ tab (`compose|ask|chat`), `officialLetter.freeLib.v1` nhớ công tắc Thư viện.
+- Kiểm thử: `tests/official-letter-qa.test.mjs` (buildFreeRequest, limitFiles, chatHtml, exportMarkdown, normalizeMessage).
+
 ### Thư viện tài liệu nghiệp vụ (hỏi đáp có trích dẫn)
 Nút sách ở đầu khung Trợ lý AI mở **Thư viện tài liệu**. Quản trị viên nạp quy trình, điều khoản, bảng giá… (`.md`, `.txt`, `.docx`, `.pdf`, `.xlsx`, `.csv`, ảnh scan hoặc dán văn bản), xem trước các đoạn đã cắt rồi lưu vào `doc_library/{id}` (chỉ lưu chữ đã trích, không lưu file gốc; `nguon` là link bản gốc trên Drive/SharePoint). Chat AI dùng công cụ `tra_cuu_tai_lieu` (tìm BM25 ngay trong trình duyệt, không tốn quota) rồi trả lời kèm nút trích dẫn bấm để xem đoạn gốc; trích dẫn không khớp đoạn đã tra được đánh dấu "chưa xác minh". Chỉ tài liệu **đang hiệu lực** được tra mặc định. File Markdown nên mở đầu bằng khối `---` gồm `ten`, `so_hieu`, `hieu_luc_tu`, `trang_thai`, `thay_the`, `nguon` và dùng `## Điều …` cho từng mục. Bản scan/PDF không có lớp chữ được Gemini đọc (dùng khoá Gemini của người nạp). Cần publish `firebase/database.rules.json` để chỉ quản trị viên được ghi `doc_library`.
 

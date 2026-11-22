@@ -32,6 +32,7 @@ const OfficialLetterPage = (() => {
     trash: '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
     panel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
     chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.5-4.7A8 8 0 1 1 21 12Z"/><path d="M9 10h6M9 13.5h4"/>',
+    download: '<path d="M12 4v10M8 10.5l4 4 4-4M5 19h14"/>',
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
     checklist: '<path d="M10 6h11M10 12h11M10 18h11"/><path d="m3 6 1.8 1.8L7.5 5M3 12l1.8 1.8L7.5 11M3 18l1.8 1.8L7.5 17"/>',
     check: '<path d="m5 12 4.5 4.5L19 7"/>'
@@ -705,8 +706,8 @@ const OfficialLetterPage = (() => {
   // Hỏi đáp trên Thư viện tài liệu: tìm đoạn khớp (BM25) → DeepSeek trả lời CHỈ dựa trên các đoạn đó, dẫn mã [C#]; bấm mã để xem nguyên văn.
   // Hội thoại lưu trên máy (localStorage), tách hẳn khỏi phiên soạn công văn; dùng chung khoá DeepSeek, hồ sơ đang chọn và ô "Quy tắc".
   const QA_KEY = 'officialLetter.qa.v1', QA_CHATS_KEY = 'officialLetter.qaChats.v1', QA_MAX_CHATS = 30, MODE_KEY = 'officialLetter.mode.v1';
-  const qa = {messages: [], draft: '', importFile: null, busy: false, status: '', usage: null, open: Object.create(null), loaded: false, deep: true, chats: [], activeId: ''};
-  const DEEP_KEY = 'officialLetter.qaDeep.v1';
+  const qa = {messages: [], draft: '', importFile: null, busy: false, status: '', usage: null, open: Object.create(null), loaded: false, deep: true, chats: [], activeId: '', free: false, lib: false, attach: [], attaching: false};
+  const DEEP_KEY = 'officialLetter.qaDeep.v1', LIB_KEY = 'officialLetter.freeLib.v1';
   // Nhiều cuộc trò chuyện: qa.messages/qa.usage là cuộc đang mở; qa.chats là toàn bộ danh sách lưu trên máy (v2), tự chuyển từ bản v1 một cuộc.
   function loadQa() {
     if (qa.loaded) return;
@@ -716,16 +717,16 @@ const OfficialLetterPage = (() => {
       if (Q) {
         const raw = JSON.parse(localStorage.getItem(QA_CHATS_KEY) || 'null');
         if (raw && Array.isArray(raw.chats)) {
-          qa.chats = raw.chats.map(chat => ({id: String(chat.id || Q.newId()), title: String(chat.title || '').slice(0, 90), at: Number(chat.at) || 0, usage: chat.usage || null, messages: Q.normalizeStore({messages: chat.messages})})).filter(chat => chat.messages.length).slice(0, QA_MAX_CHATS);
+          qa.chats = raw.chats.map(chat => ({id: String(chat.id || Q.newId()), title: String(chat.title || '').slice(0, 90), at: Number(chat.at) || 0, usage: chat.usage || null, free: !!chat.free, messages: Q.normalizeStore({messages: chat.messages})})).filter(chat => chat.messages.length).slice(0, QA_MAX_CHATS);
           const active = qa.chats.find(chat => chat.id === raw.active);
-          if (active) { qa.activeId = active.id; qa.messages = active.messages; qa.usage = active.usage; }
+          if (active) { qa.activeId = active.id; qa.messages = active.messages; qa.usage = active.usage; qa.free = !!active.free; }
         } else {
           const old = Q.normalizeStore(JSON.parse(localStorage.getItem(QA_KEY) || 'null'));
           if (old.length) { qa.messages = old; qa.activeId = Q.newId(); qaSyncActive(); }
         }
       }
     } catch (_) { /* bỏ qua */ }
-    try { const mode = localStorage.getItem(MODE_KEY); if (mode === 'ask' && QA()) st.mode = 'ask'; qa.deep = localStorage.getItem(DEEP_KEY) !== '0'; } catch (_) { /* bỏ qua */ }
+    try { const mode = localStorage.getItem(MODE_KEY); if ((mode === 'ask' || mode === 'chat') && QA()) { st.mode = 'ask'; if ((mode === 'chat') !== qa.free) qaSwitchKind(mode === 'chat', true); } qa.deep = localStorage.getItem(DEEP_KEY) !== '0'; qa.lib = localStorage.getItem(LIB_KEY) === '1'; } catch (_) { /* bỏ qua */ }
   }
   function qaTitleOf(messages) {
     const first = messages.find(item => item.role === 'user');
@@ -737,14 +738,14 @@ const OfficialLetterPage = (() => {
     if (!qa.messages.length) return;
     if (!qa.activeId) qa.activeId = QA().newId();
     let chat = qa.chats.find(item => item.id === qa.activeId);
-    if (!chat) { chat = {id: qa.activeId, title: '', at: 0, usage: null, messages: []}; qa.chats.unshift(chat); }
+    if (!chat) { chat = {id: qa.activeId, title: '', at: 0, usage: null, free: qa.free, messages: []}; qa.chats.unshift(chat); }
     chat.messages = qa.messages; chat.usage = qa.usage; chat.title = qaTitleOf(qa.messages); chat.at = Date.now();
     qa.chats.sort((a, b) => b.at - a.at);
     if (qa.chats.length > QA_MAX_CHATS) qa.chats.length = QA_MAX_CHATS;
   }
   function saveQa() {
     qaSyncActive();
-    const pack = (keepSources) => JSON.stringify({active: qa.activeId, chats: qa.chats.map(chat => ({id: chat.id, title: chat.title, at: chat.at, usage: chat.usage, messages: chat.messages.slice(-24).map(item => (keepSources || chat.id === qa.activeId) ? item : {...item, sources: []})}))});
+    const pack = (keepSources) => JSON.stringify({active: qa.activeId, chats: qa.chats.map(chat => ({id: chat.id, title: chat.title, at: chat.at, usage: chat.usage, free: !!chat.free, messages: chat.messages.slice(-24).map(item => (keepSources || chat.id === qa.activeId) ? item : {...item, sources: []})}))});
     // Hết chỗ lưu thì bỏ nguồn của các cuộc cũ, rồi bỏ bớt cuộc cũ nhất; cuộc đang mở luôn được giữ.
     try { localStorage.setItem(QA_CHATS_KEY, pack(true)); }
     catch (_) {
@@ -755,7 +756,16 @@ const OfficialLetterPage = (() => {
     }
     if (host && st.histOpen && st.mode === 'ask') updateHistory(true);
   }
-  function resetQaView() { qa.messages = []; qa.usage = null; qa.open = Object.create(null); qa.draft = ''; qa.importFile = null; qa.status = ''; }
+  function resetQaView() { qa.messages = []; qa.usage = null; qa.open = Object.create(null); qa.draft = ''; qa.importFile = null; qa.attach = []; qa.status = ''; }
+  // Hai loại cuộc trò chuyện dùng chung kho lưu: Hỏi nghiệp vụ (free=false) và Trò chuyện AI (free=true). Đổi loại → mở cuộc gần nhất của loại đó.
+  const qaKindChats = free => qa.chats.filter(chat => !!chat.free === !!free);
+  function qaSwitchKind(free, quiet) {
+    if (!quiet) saveQa();
+    qa.free = !!free;
+    const pick = qaKindChats(free).find(chat => chat.id === qa.activeId) || qaKindChats(free)[0];
+    if (pick) { qa.activeId = pick.id; qa.messages = pick.messages; qa.usage = pick.usage; qa.open = Object.create(null); qa.draft = ''; qa.importFile = null; qa.attach = []; }
+    else { qa.activeId = ''; resetQaView(); }
+  }
   function newQaChat() {
     if (qa.busy) return;
     exitHistSelect();
@@ -769,7 +779,7 @@ const OfficialLetterPage = (() => {
     const chat = qa.chats.find(item => item.id === id);
     if (!chat) return;
     saveQa();
-    qa.activeId = chat.id; qa.messages = chat.messages; qa.usage = chat.usage; qa.open = Object.create(null); qa.draft = ''; qa.importFile = null;
+    qa.activeId = chat.id; qa.messages = chat.messages; qa.usage = chat.usage; qa.free = !!chat.free; qa.open = Object.create(null); qa.draft = ''; qa.importFile = null; qa.attach = [];
     saveQa();
     renderAll(); scrollQa(); focusMain();
   }
@@ -777,7 +787,7 @@ const OfficialLetterPage = (() => {
     if (qa.busy) return;
     const chat = qa.chats.find(item => item.id === id);
     if (!chat && id !== qa.activeId) return;
-    if (!await askConfirm({eyebrow: 'HỎI NGHIỆP VỤ', title: 'Xoá cuộc trò chuyện?', message: '"' + (chat ? chat.title : 'Cuộc trò chuyện này') + '" sẽ bị xoá khỏi máy này và không khôi phục được.', confirmText: 'Xoá'})) return;
+    if (!await askConfirm({eyebrow: qa.free ? 'TRÒ CHUYỆN AI' : 'HỎI NGHIỆP VỤ', title: 'Xoá cuộc trò chuyện?', message: '"' + (chat ? chat.title : 'Cuộc trò chuyện này') + '" sẽ bị xoá khỏi máy này và không khôi phục được.', confirmText: 'Xoá'})) return;
     qa.chats = qa.chats.filter(item => item.id !== id);
     if (id === qa.activeId) { qa.activeId = ''; resetQaView(); }
     saveQa();
@@ -785,15 +795,18 @@ const OfficialLetterPage = (() => {
     renderAll(); focusMain();
   }
   const qaLocked = () => !!(st.busy || st.pending || qa.busy);
+  // Ba chế độ: compose (Soạn công văn) · ask (Hỏi nghiệp vụ, tra Thư viện) · chat (Trò chuyện AI, hỏi mọi thứ). ask và chat cùng st.mode = 'ask', khác qa.free.
+  const modeId = () => st.mode === 'ask' ? (qa.free ? 'chat' : 'ask') : 'compose';
   function setMode(mode) {
-    if (mode === st.mode || (mode === 'ask' && !QA()) || qaLocked()) return;
+    if (mode === modeId() || ((mode === 'ask' || mode === 'chat') && !QA()) || qaLocked()) return;
     collectAll();
     exitHistSelect();
-    st.mode = mode; st.pop = ''; st.recQuery = ''; st.histQuery = '';
+    if (mode !== 'compose') qaSwitchKind(mode === 'chat');
+    st.mode = mode === 'compose' ? 'compose' : 'ask'; st.pop = ''; st.recQuery = ''; st.histQuery = '';
     try { localStorage.setItem(MODE_KEY, mode); } catch (_) { /* bỏ qua */ }
     renderAll();
     focusMain();
-    if (mode === 'ask') scrollQa();
+    if (mode !== 'compose') scrollQa();
   }
   const focusMain = (preventScroll = false) => ($('[data-ol-qa-input]') || $('[data-ol-brief]'))?.focus({preventScroll});
   function scrollQa() { const box = $('[data-ol-qa-scroll]'); if (box) box.scrollTop = box.scrollHeight; }
@@ -822,11 +835,99 @@ const OfficialLetterPage = (() => {
     } catch (error) { toast(error.message || 'Không đọc được tài liệu.', 'warning'); }
     finally { qa.busy = false; qa.status = ''; if (host && st.mode === 'ask') renderAll(); }
   }
+  // ---- Trò chuyện AI: đính kèm ảnh/tệp, tra Thư viện (tuỳ chọn) ----
+  const ATTACH_MAX = 5, IMAGE_EXT = /\.(jpe?g|png|webp|heic|heif)$/i;
+  async function addQaFiles(list) {
+    const files = [...(list || [])].filter(Boolean);
+    if (!files.length) return;
+    if (!qa.free) { qa.importFile = files[0]; renderAll(); return; }
+    if (qa.busy || qa.attaching) return;
+    const room = ATTACH_MAX - qa.attach.length;
+    if (room <= 0) { toast('Mỗi câu hỏi đính kèm tối đa ' + ATTACH_MAX + ' tệp.', 'warning'); return; }
+    if (files.length > room) toast('Chỉ nhận thêm ' + room + ' tệp (tối đa ' + ATTACH_MAX + ').', 'warning');
+    qa.attaching = true; renderAll();
+    const chatId = qa.activeId, errors = [];
+    for (const file of files.slice(0, room)) {
+      try {
+        const isImage = /^image\//i.test(file.type || '') || IMAGE_EXT.test(file.name);
+        if (isImage) {
+          if (typeof SceneReportAI === 'undefined' || !SceneReportAI.prepare) throw new Error('Chưa tải được mô-đun đọc ảnh. Hãy tải lại trang.');
+          const photo = await SceneReportAI.prepare(file.type ? file : new File([file], file.name, {type: 'image/jpeg'}));
+          qa.attach.push({kind: 'image', name: photo.name, mimeType: photo.mimeType, data: photo.data, preview: photo.preview});
+        } else {
+          if (typeof TascoLibParse === 'undefined' || !TascoLibParse.readText) throw new Error('Chưa tải được mô-đun đọc tệp. Hãy tải lại trang.');
+          let apiKey = '';
+          if (/\.pdf$/i.test(file.name)) { try { apiKey = await Models().getKey('gemini') || ''; } catch (_) { /* PDF có chữ vẫn đọc được */ } }
+          const read = await TascoLibParse.readText(file, {apiKey, signal: controller ? controller.signal : undefined});
+          if (!read.text) throw new Error('"' + file.name + '" không có chữ để đọc (tệp trống hoặc là ảnh quét).');
+          const Q = QA(), max = Q.FILE_CHARS;
+          qa.attach.push({kind: 'text', name: file.name, text: read.text.slice(0, max), truncated: read.text.length > max, note: read.note || ''});
+        }
+      } catch (error) { errors.push(error && error.message ? error.message : 'Không đọc được "' + file.name + '".'); }
+    }
+    qa.attaching = false;
+    if (errors.length) toast(errors[0] + (errors.length > 1 ? ' (+' + (errors.length - 1) + ' tệp lỗi khác)' : ''), 'warning');
+    if (host && st.mode === 'ask' && chatId === qa.activeId) renderAll();
+  }
+  async function askFree(question) {
+    const Q = QA(), L = Legal();
+    const input = $('[data-ol-qa-input]');
+    const attach = qa.attach.slice();
+    if (!question && !attach.length) { input?.focus(); return; }
+    const text = question || 'Hãy đọc và tóm tắt nội dung tệp/ảnh đính kèm.';
+    const history = qa.messages.slice();
+    const files = attach.filter(item => item.kind === 'text').map(item => ({name: item.name, text: item.text, truncated: item.truncated, note: item.note}));
+    const images = attach.filter(item => item.kind === 'image');
+    qa.messages.push({id: Q.newId(), role: 'user', text, files: attach.map(item => ({name: item.name, kind: item.kind, text: item.kind === 'text' ? item.text : '', truncated: item.truncated}))});
+    qa.draft = ''; qa.attach = []; qa.busy = true; qa.status = 'Đang soạn câu trả lời…'; st.pop = '';
+    const mine = generation;
+    renderAll(); scrollQa();
+    const reply = message => { if (mine !== generation || !host) return; qa.messages.push(Object.assign({id: Q.newId(), role: 'assistant', sources: [], question: text, free: true}, message)); };
+    const usage = {onUsage: u => { qa.usage = OfficialLetterAI.addUsage(qa.usage, u); paintQaUsage(); }, onWait: t => paintQaStatus(t), resumeText: qa.status};
+    try {
+      let sources = [], queries = [];
+      if (qa.lib && L) {
+        paintQaStatus('Đang tra Thư viện tài liệu…');
+        queries = Q.buildQueries(text, history, {issue: '', queries: []});
+        const found = await L.retrieve(queries, Object.assign({limit: Math.min(Q.SOURCE_LIMIT, modelCap('maxSources') || Q.SOURCE_LIMIT), minCoverage: Q.QA_COVERAGE, expand: true, maxSources: Math.min(Q.MAX_SOURCES, modelCap('maxSources') || Q.MAX_SOURCES), perArticle: 2}, st.legalPin.length ? {docIds: st.legalPin} : {}));
+        if (mine !== generation || !host) return;
+        sources = Q.carrySources(history, found.sources);
+        if (found.error && !sources.length) toast(found.error, 'warning');
+      }
+      if (images.length && activeModel() && !activeModel().profile.vision) toast('Mô hình đang chọn có thể không đọc được ảnh — hãy chọn mô hình có hỗ trợ ảnh (Gemini, GPT-4o…) nếu AI không thấy ảnh.', 'warning');
+      paintQaStatus(deepOn() ? 'Đang suy luận sâu (có thể mất 30–90 giây)…' : 'Đang soạn câu trả lời…');
+      usage.resumeText = qa.status;
+      const answer = await callAI(Q.buildFreeRequest({question: text, history, dossier: dossierText(), files, images, sources}), Object.assign({thinking: deepOn(), effort: 'high'}, usage));
+      reply({text: String(answer).trim(), sources, queries});
+    } catch (error) {
+      if (error && error.name === 'AbortError') {
+        qa.busy = false; qa.status = '';
+        if (mine === generation && host) { reply({text: 'Đã dừng theo yêu cầu của bạn.', empty: true}); saveQa(); if (st.mode === 'ask') { renderAll(); scrollQa(); } }
+        return;
+      }
+      reply({text: (error && error.message) || 'Không gọi được AI. Hãy thử lại.', error: true});
+    }
+    if (mine !== generation || !host) { qa.busy = false; return; }
+    qa.busy = false; qa.status = '';
+    saveQa();
+    if (st.mode === 'ask') { renderAll(); scrollQa(); }
+  }
+  function exportChat() {
+    const Q = QA();
+    if (!Q || !qa.messages.length) return;
+    const md = Q.exportMarkdown({title: qaTitleOf(qa.messages), messages: qa.messages});
+    const url = URL.createObjectURL(new Blob([md], {type: 'text/markdown;charset=utf-8'}));
+    const link = document.createElement('a');
+    link.href = url; link.download = 'tro-chuyen-ai-' + new Date().toISOString().slice(0, 10) + '.md';
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
   async function askQuestion(text) {
     const Q = QA(), L = Legal();
     if (!Q || qa.busy) return;
     const input = $('[data-ol-qa-input]');
     const question = String(text !== undefined ? text : (input ? input.value : qa.draft)).trim();
+    if (qa.free) { await askFree(question); return; }
     const request = Q.importRequest(question);
     if (qa.importFile || request.intent) { await importQaRule(question, request.content); return; }
     if (!question) { input?.focus(); return; }
@@ -962,13 +1063,15 @@ const OfficialLetterPage = (() => {
   }
   function qaMessageHtml(msg) {
     const Q = QA();
-    if (msg.role === 'user') return '<div class="ola-qa-msg is-user"><p>' + esc(msg.text) + '</p></div>';
+    if (msg.role === 'user') return '<div class="ola-qa-msg is-user"><p>' + esc(msg.text) + '</p>'
+      + (msg.files && msg.files.length ? '<div class="ola-qa-files">' + msg.files.map(file => '<span class="ola-qa-file">' + svg(ICON.attach) + esc(file.name) + '</span>').join('') + '</div>' : '') + '</div>';
     const sources = msg.sources || [], cited = Q.citedCodes(msg.text);
     const bad = Q.unknownCodes(msg.text, sources);
-    const warn = msg.error || msg.empty ? '' : bad.length ? '<p class="ola-qa-warn">AI dẫn mã nguồn không có trong các đoạn đã tra (' + esc(bad.join(', ')) + ') — đừng dùng phần đó khi chưa kiểm tra lại.</p>'
-      : (sources.length && !cited.length) ? '<p class="ola-qa-warn">Câu trả lời không dẫn nguồn nào — hãy đối chiếu với các đoạn bên dưới trước khi dùng.</p>' : '';
+    const warn = msg.error || msg.empty || (msg.free && !sources.length) ? '' : bad.length ? '<p class="ola-qa-warn">AI dẫn mã nguồn không có trong các đoạn đã tra (' + esc(bad.join(', ')) + ') — đừng dùng phần đó khi chưa kiểm tra lại.</p>'
+      : (sources.length && !cited.length && !msg.free) ? '<p class="ola-qa-warn">Câu trả lời không dẫn nguồn nào — hãy đối chiếu với các đoạn bên dưới trước khi dùng.</p>' : '';
     const body = msg.error ? '<div class="olp-notice olp-notice--error"><span>' + esc(msg.text) + '</span></div>'
       : msg.empty ? '<div class="olp-notice olp-notice--warn"><span>' + esc(msg.text) + '</span></div>'
+      : msg.free ? '<div class="ola-qa-text ola-md">' + (sources.length ? Q.chatHtml(msg.text).replace(/\[C(\d{1,2})\]/g, '<b class="ola-qa-cite">[C$1]</b>') : Q.chatHtml(msg.text)) + '</div>'
       : '<div class="ola-qa-text">' + Q.answerHtml(msg.text, sources) + '</div>';
     const groupOpen = !!qa.open[msg.id + ':*'];
     const srcs = sources.length ? '<div class="ola-qa-srcs' + (groupOpen ? ' is-open' : '') + '" data-ol-qa-srcs="' + esc(msg.id) + '">'
@@ -977,15 +1080,22 @@ const OfficialLetterPage = (() => {
       + '<div class="ola-qa-srcs-body"' + (groupOpen ? '' : ' hidden') + '>' + (msg.queries && msg.queries.length ? '<p class="ola-qa-queries" title="Các cụm từ đã dùng để tìm trong Thư viện">Đã tra: ' + msg.queries.map(esc).join(' · ') + '</p>' : '') + sources.map(source => qaSourceHtml(msg, source, cited.includes(source.code))).join('') + '</div></div>' : '';
     const acts = msg.error ? '<button type="button" class="ola-qa-act" data-ol-qa-retry="' + esc(msg.id) + '"' + (qa.busy ? ' disabled' : '') + '>Thử lại</button>'
       : msg.empty ? '' : '<button type="button" class="ola-qa-act" data-ol-qa-copy="' + esc(msg.id) + '">' + svg(ICON.copy) + 'Sao chép</button>'
-        + (msg.chat ? '' : '<button type="button" class="ola-qa-act is-main" data-ol-qa-compose="' + esc(msg.id) + '"' + (qaLocked() ? ' disabled' : '') + ' title="Chuyển sang Soạn công văn, điền sẵn kết luận này vào yêu cầu">' + svg(ICON.letter) + 'Soạn công văn từ câu trả lời</button>');
+        + (msg.chat || msg.free ? '' : '<button type="button" class="ola-qa-act is-main" data-ol-qa-compose="' + esc(msg.id) + '"' + (qaLocked() ? ' disabled' : '') + ' title="Chuyển sang Soạn công văn, điền sẵn kết luận này vào yêu cầu">' + svg(ICON.letter) + 'Soạn công văn từ câu trả lời</button>');
     return '<div class="ola-qa-msg is-ai" data-ol-qa-msg="' + esc(msg.id) + '"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body">' + body + warn + srcs + (acts ? '<div class="ola-qa-acts">' + acts + '</div>' : '') + '</div></div>';
+  }
+  function libChipHtml() {
+    return '<button type="button" class="ola-chip' + (qa.lib ? ' is-set' : '') + '" data-ol-act="qa-lib" aria-pressed="' + !!qa.lib + '" title="' + (qa.lib ? 'Đang tra Thư viện tài liệu: AI dùng các đoạn tìm được và dẫn mã [C#]. Bấm để tắt.' : 'Bật để AI tra Thư viện tài liệu (Luật, Nghị định, quy tắc bảo hiểm) trước khi trả lời.') + '">' + svg(ICON.book) + 'Tra Thư viện: ' + (qa.lib ? 'Bật' : 'Tắt') + '</button>';
   }
   function qaComposerHtml(big) {
     const busy = !!qa.busy;
     return '<div class="ola-composer ola-qa-composer' + (big ? ' is-big' : ' is-up') + (busy ? ' is-busy' : '') + '"' + (busy ? ' aria-busy="true"' : '') + '>'
-      + '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="200000" placeholder="Hỏi nghiệp vụ, hoặc dán quy tắc và yêu cầu thêm vào thư viện…" aria-label="Câu hỏi nghiệp vụ">' + esc(qa.draft) + '</textarea>'
-      + (qa.importFile ? '<div class="ola-qa-import-file"><span>' + svg(ICON.attach) + esc(qa.importFile.name) + '</span><button type="button" data-ol-act="qa-remove-file" aria-label="Bỏ tệp quy tắc"' + (busy ? ' disabled' : '') + '>×</button></div>' : '')
-      + '<div class="ola-bar"><label class="ola-icon-btn' + (busy ? ' is-disabled' : '') + '" title="Đính kèm quy tắc để thêm vào thư viện"><input type="file" data-ol-qa-file accept=".md,.markdown,.txt,.docx,.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp" hidden' + (busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label>' + recordChipHtml() + rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)')
+      + '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="200000" placeholder="' + (qa.free ? 'Hỏi bất cứ điều gì — có thể đính kèm ảnh, PDF, Word, Excel…' : 'Hỏi nghiệp vụ, hoặc dán quy tắc và yêu cầu thêm vào thư viện…') + '" aria-label="' + (qa.free ? 'Tin nhắn cho trợ lý AI' : 'Câu hỏi nghiệp vụ') + '">' + esc(qa.draft) + '</textarea>'
+      + (qa.free && (qa.attach.length || qa.attaching) ? '<div class="ola-qa-attach">' + qa.attach.map((item, at) => '<span class="ola-qa-file' + (item.kind === 'image' ? ' is-image' : '') + '">'
+        + (item.kind === 'image' && item.preview ? '<img src="' + esc(item.preview) + '" alt="">' : svg(ICON.attach)) + '<em title="' + esc(item.name + (item.truncated ? ' (đã cắt bớt vì quá dài)' : '')) + '">' + esc(item.name) + (item.truncated ? ' ✂' : '') + '</em>'
+        + '<button type="button" data-ol-act="qa-attach-remove" data-ol-idx="' + at + '" aria-label="Bỏ ' + esc(item.name) + '"' + (busy ? ' disabled' : '') + '>×</button></span>').join('')
+        + (qa.attaching ? '<span class="ola-qa-file is-loading"><i></i><i></i><i></i> Đang đọc tệp…</span>' : '') + '</div>' : '')
+      + (!qa.free && qa.importFile ? '<div class="ola-qa-import-file"><span>' + svg(ICON.attach) + esc(qa.importFile.name) + '</span><button type="button" data-ol-act="qa-remove-file" aria-label="Bỏ tệp quy tắc"' + (busy ? ' disabled' : '') + '>×</button></div>' : '')
+      + '<div class="ola-bar"><label class="ola-icon-btn' + (busy ? ' is-disabled' : '') + '" title="' + (qa.free ? 'Đính kèm ảnh / PDF / Word / Excel (tối đa ' + ATTACH_MAX + ' tệp)' : 'Đính kèm quy tắc để thêm vào thư viện') + '"><input type="file" data-ol-qa-file accept=".md,.markdown,.txt,.docx,.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp,.heic,.heif"' + (qa.free ? ' multiple' : '') + ' hidden' + (busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label>' + recordChipHtml() + (qa.free ? libChipHtml() + (qa.lib ? rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)') : '') : rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)'))
       + modelChipHtml() + deepChipHtml() + '<span class="ola-spacer"></span>'
       + (busy ? '<button type="button" class="tasco-ai-send is-stop" data-ol-act="qa-stop" title="Dừng" aria-label="Dừng">' + svg(ICON.close) + '</button>'
         : '<button type="button" class="tasco-ai-send" data-ol-act="qa-send" title="Gửi câu hỏi (Enter)" aria-label="Gửi câu hỏi">' + svg(ICON.send) + '</button>') + '</div>'
@@ -993,6 +1103,12 @@ const OfficialLetterPage = (() => {
   }
   function qaHtml() {
     const Q = QA();
+    if (!qa.messages.length && !qa.busy && qa.free) {
+      return '<section class="ola-hero ola-qa-hero ola-free-hero"><span class="ola-avatar" aria-hidden="true">' + svg(ICON.chat) + '</span><h1>Hôm nay bạn cần giúp gì?</h1>'
+        + '<p class="ola-qa-lead">Hỏi mọi thứ: viết lại câu chữ, tính toán, Excel, dịch, giải thích kiến thức… Đính kèm ảnh, PDF, Word, Excel để AI đọc cùng. Cần đúng điều khoản bảo hiểm thì bật “Tra Thư viện” hoặc dùng tab Hỏi nghiệp vụ.</p>'
+        + qaComposerHtml(true)
+        + '<div class="ola-ideas">' + Q.FREE_SUGGESTIONS.map(text => '<button type="button" class="tasco-ai-choice" data-ol-qa-idea="' + esc(text) + '"><strong>' + esc(text) + '</strong></button>').join('') + '</div></section>';
+    }
     if (!qa.messages.length && !qa.busy) {
       return '<section class="ola-hero ola-qa-hero"><span class="ola-avatar" aria-hidden="true">' + svg(ICON.book) + '</span><h1>Cần tra cứu nghiệp vụ gì?</h1>'
         + '<p class="ola-qa-lead">Hỏi về Luật, Nghị định, quy tắc bảo hiểm… đã nạp trong Thư viện tài liệu. Câu trả lời chỉ dựa trên văn bản trong thư viện và luôn dẫn nguồn nguyên văn để bạn đối chiếu.</p>'
@@ -1001,15 +1117,16 @@ const OfficialLetterPage = (() => {
     }
     const typing = qa.busy ? '<div class="ola-qa-msg is-ai is-typing"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body"><p class="ola-qa-status" role="status" aria-live="polite"><i></i><i></i><i></i><span data-ol-qa-status>' + esc(qa.status) + '</span></p></div></div>' : '';
     return '<div class="ola-qa"><div class="ola-qa-scroll" data-ol-qa-scroll><div class="ola-qa-inner">' + qa.messages.map(qaMessageHtml).join('') + typing + '</div></div>'
-      + '<div class="ola-qa-dock">' + qaComposerHtml(false) + '<p class="ola-qa-foot">AI có thể sai — luôn đối chiếu nguyên văn ở phần "Nguồn đã tra" trước khi dùng trong công văn hoặc trả lời khách hàng.</p></div></div>';
+      + '<div class="ola-qa-dock">' + qaComposerHtml(false) + '<p class="ola-qa-foot">' + (qa.free ? 'AI có thể sai — hãy kiểm tra lại số liệu và nội dung quan trọng. Với điều khoản bảo hiểm, bật “Tra Thư viện” để có nguồn đối chiếu.' : 'AI có thể sai — luôn đối chiếu nguyên văn ở phần "Nguồn đã tra" trước khi dùng trong công văn hoặc trả lời khách hàng.') + '</p></div></div>';
   }
   function topbarHtml() {
     const histBtn = st.histOpen ? '<span></span>' : '<button type="button" class="ola-hist-open" data-ol-act="hist-toggle" title="Mở lịch sử" aria-label="Mở lịch sử">' + svg(ICON.history) + '<span>Lịch sử</span></button>';
     const locked = qaLocked();
-    const mode = QA() ? '<div class="ola-mode" role="tablist" aria-label="Chế độ làm việc">' + [['compose', 'Soạn công văn', ICON.letter], ['ask', 'Hỏi nghiệp vụ', ICON.chat]].map(([id, label, icon]) =>
-      '<button type="button" role="tab" aria-selected="' + (st.mode === id) + '" class="ola-mode-btn' + (st.mode === id ? ' is-on' : '') + '" data-ol-mode="' + id + '"' + (locked && st.mode !== id ? ' disabled' : '') + '>' + svg(icon) + '<span>' + label + '</span></button>').join('') + '</div>' : '<span></span>';
+    const mode = QA() ? '<div class="ola-mode" role="tablist" aria-label="Chế độ làm việc">' + [['compose', 'Soạn công văn', ICON.letter], ['ask', 'Hỏi nghiệp vụ', ICON.book], ['chat', 'Trò chuyện AI', ICON.chat]].map(([id, label, icon]) =>
+      '<button type="button" role="tab" aria-selected="' + (modeId() === id) + '" class="ola-mode-btn' + (modeId() === id ? ' is-on' : '') + '" data-ol-mode="' + id + '"' + (locked && modeId() !== id ? ' disabled' : '') + '>' + svg(icon) + '<span>' + label + '</span></button>').join('') + '</div>' : '<span></span>';
     const right = st.mode === 'ask'
       ? '<span class="ola-top-acts"><span class="olp-usage" data-ol-qa-usage' + (usageText(qa.usage) ? '' : ' hidden') + ' title="' + esc(usageTitle(qa.usage)) + '">' + esc(usageText(qa.usage)) + '</span>'
+        + (qa.free && qa.messages.length ? '<button type="button" class="ola-hist-btn" data-ol-act="qa-export" title="Xuất cuộc trò chuyện (.md)" aria-label="Xuất cuộc trò chuyện">' + svg(ICON.download) + '</button>' : '')
         + (qa.messages.length ? '<button type="button" class="ola-hist-btn ola-hist-new" data-ol-act="qa-new" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>' : '')
         + (qa.messages.length ? '<button type="button" class="ola-hist-btn" data-ol-act="qa-clear" title="Xoá cuộc trò chuyện này" aria-label="Xoá cuộc trò chuyện này"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.trash) + '</button>' : '')
         + '<button type="button" class="ola-hist-btn" data-ol-act="settings" title="Cài đặt: khoá DeepSeek &amp; đơn vị ban hành" aria-label="Cài đặt">' + svg(ICON.gear) + '</button></span>'
@@ -1095,10 +1212,10 @@ const OfficialLetterPage = (() => {
     updateHistory();
   }
   const histLocked = () => askSide() ? !!qa.busy : !!(st.busy || st.pending);
-  const histAllIds = () => askSide() ? qa.chats.map(chat => chat.id) : st.history.map(item => item.id);
+  const histAllIds = () => askSide() ? qaKindChats(qa.free).map(chat => chat.id) : st.history.map(item => item.id);
   function qaVisibleItems() {
     const query = fold(st.histQuery).trim();
-    return qa.chats.map(chat => ({id: chat.id, title: chat.title, sub: Math.ceil(chat.messages.length / 2) + ' câu hỏi', updatedAt: chat.at})).filter(item => !query || fold(item.title).includes(query));
+    return qaKindChats(qa.free).map(chat => ({id: chat.id, title: chat.title, sub: Math.ceil(chat.messages.length / 2) + (qa.free ? ' lượt' : ' câu hỏi'), updatedAt: chat.at})).filter(item => !query || fold(item.title).includes(query));
   }
   function historyVisibleItems() {
     const query = fold(st.histQuery).trim();
@@ -1139,7 +1256,7 @@ const OfficialLetterPage = (() => {
     const ask = askSide(), count = ids.length;
     if (ask) {
       if (!await askConfirm({
-        eyebrow: 'HỎI NGHIỆP VỤ',
+        eyebrow: qa.free ? 'TRÒ CHUYỆN AI' : 'HỎI NGHIỆP VỤ',
         title: 'Xoá ' + count + ' cuộc trò chuyện?',
         message: count + ' cuộc trò chuyện đã chọn sẽ bị xoá khỏi máy này và không khôi phục được.',
         confirmText: 'Xoá ' + count + ' cuộc trò chuyện'
@@ -1879,6 +1996,9 @@ const OfficialLetterPage = (() => {
       case 'run': run(); break;
       case 'qa-send': askQuestion(); break;
       case 'qa-remove-file': qa.importFile = null; renderAll(); break;
+      case 'qa-attach-remove': if (!qa.busy) { collectAll(); qa.attach.splice(Number(act.dataset.olIdx), 1); renderAll(); focusMain(true); } break;
+      case 'qa-lib': if (qa.busy) break; collectAll(); qa.lib = !qa.lib; try { localStorage.setItem(LIB_KEY, qa.lib ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); focusMain(true); break;
+      case 'qa-export': exportChat(); break;
       case 'qa-new': newQaChat(); break;
       case 'qa-stop': controller?.abort(); break;
       case 'qa-deep': if (qa.busy || st.busy) break; collectAll(); qa.deep = !qa.deep; try { localStorage.setItem(DEEP_KEY, qa.deep ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); focusMain(); break;
@@ -1926,7 +2046,7 @@ const OfficialLetterPage = (() => {
     if (target.matches('[data-ol-change-all]') && st.pending) { st.pending.changes.forEach(item => { item.on = target.checked; }); host.querySelectorAll('[data-ol-change]').forEach(box => { box.checked = target.checked; }); updateReviewState(); return; }
     if (target.matches('[data-ol-legal-doc]')) { pickLegalDoc(target.value, target.type === 'checkbox', target.checked); return; }
     if (target.matches('[data-ol-slot]')) { addFiles(target.files, 'files', target.dataset.olSlot); target.value = ''; return; }
-    if (target.matches('[data-ol-qa-file]')) { qa.importFile = target.files[0] || null; target.value = ''; renderAll(); return; }
+    if (target.matches('[data-ol-qa-file]')) { collectAll(); const picked = [...target.files]; target.value = ''; addQaFiles(picked); return; }
     if (target.matches('[data-ol-files]')) { addFiles(target.files, target.dataset.olFiles === 'refine' ? 'refineFiles' : 'files'); target.value = ''; }
     else if (target.matches('[data-ol-outline-on]')) st.outlineEdited = true;
     else if (target.matches('[data-ol-src-on]')) { const source = st.sources[Number(target.dataset.olSrcOn)]; if (source) { source.on = target.checked; target.closest('.ol-src').classList.toggle('is-off', !target.checked); } }
@@ -1958,12 +2078,12 @@ const OfficialLetterPage = (() => {
     if (target.matches('.ol-edit')) { // dán chữ thuần để không kéo theo định dạng
       event.preventDefault();
       document.execCommand('insertText', false, (event.clipboardData || window.clipboardData).getData('text').replace(/\s+/g, ' '));
-    } else if (target.matches('[data-ol-qa-input]') && event.clipboardData && event.clipboardData.files.length) { event.preventDefault(); qa.importFile = event.clipboardData.files[0]; renderAll(); }
+    } else if (target.matches('[data-ol-qa-input]') && event.clipboardData && event.clipboardData.files.length) { event.preventDefault(); collectAll(); addQaFiles([...event.clipboardData.files]); }
     else if (target.matches('[data-ol-brief]') && event.clipboardData && event.clipboardData.files.length) { event.preventDefault(); addFiles(event.clipboardData.files); }
     else if (target.matches('[data-ol-refine-input]') && event.clipboardData && event.clipboardData.files.length) { event.preventDefault(); addFiles(event.clipboardData.files, 'refineFiles'); }
   }
   function onDragOver(event) { if (event.dataTransfer && [...event.dataTransfer.types].includes('Files') && event.target.closest && event.target.closest('.ola-composer, .ola-refine')) event.preventDefault(); }
-  function onDrop(event) { if (event.dataTransfer && event.dataTransfer.files.length && event.target.closest && event.target.closest('.ola-composer, .ola-refine')) { event.preventDefault(); if (event.target.closest('.ola-qa-composer')) { qa.importFile = event.dataTransfer.files[0]; renderAll(); } else addFiles(event.dataTransfer.files, event.target.closest('.ola-refine') ? 'refineFiles' : 'files'); } }
+  function onDrop(event) { if (event.dataTransfer && event.dataTransfer.files.length && event.target.closest && event.target.closest('.ola-composer, .ola-refine')) { event.preventDefault(); if (event.target.closest('.ola-qa-composer')) { collectAll(); addQaFiles([...event.dataTransfer.files]); } else addFiles(event.dataTransfer.files, event.target.closest('.ola-refine') ? 'refineFiles' : 'files'); } }
   // Bấm ra ngoài ô chọn (hồ sơ / loại) thì đóng.
   function onOutside(event) { if (st.pop && host && !(event.target.closest && (event.target.closest('.ola-pop') || event.target.closest('[data-ol-pop]')))) closePop(); }
 

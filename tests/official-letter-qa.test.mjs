@@ -320,3 +320,84 @@ test('buildPlanRequest: kèm tóm tắt câu trả lời trước (đã bỏ mã
   assert.match(text, /CÂU TRẢ LỜI TRƯỚC[^\n]*\n\*\*Có\*\* theo phạm vi\./);
   assert.ok(!/\[C4\]/.test(text));
 });
+
+// ---- Trò chuyện AI (chat tự do) ----
+test('buildFreeRequest: hồ sơ, tệp chữ, tên ảnh và ảnh inlineData chỉ ở lượt hiện tại; không tra thư viện thì không có khối thư viện', () => {
+  const { Q } = load();
+  const req = plain(Q.buildFreeRequest({
+    question: 'Tóm tắt giúp mình', history: [], dossier: 'Biển số 47A-123.45',
+    files: [{ name: 'bang-gia.xlsx', text: 'Cột A | Cột B' }], images: [{ name: 'anh1.jpg', mimeType: 'image/jpeg', data: 'QUJD' }]
+  }));
+  assert.match(req.system_instruction.parts[0].text, /trợ lý AI đa năng/);
+  const last = req.contents[req.contents.length - 1];
+  assert.equal(last.role, 'user');
+  const text = last.parts[0].text;
+  assert.match(text, /HỒ SƠ ĐANG CHỌN:\nBiển số 47A-123\.45/);
+  assert.match(text, /TỆP: bang-gia\.xlsx\nCột A \| Cột B/);
+  assert.match(text, /ẢNH ĐÍNH KÈM: anh1\.jpg/);
+  assert.match(text, /CÂU HỎI:\nTóm tắt giúp mình/);
+  assert.equal(last.parts[1].inlineData.data, 'QUJD');
+  assert.ok(!/THƯ VIỆN TÀI LIỆU/.test(text));
+});
+
+test('buildFreeRequest: bật tra thư viện thì thêm khối đoạn có mã [C#]; tệp của lượt trước được nhắc lại, ảnh thì không', () => {
+  const { Q } = load();
+  const req = plain(Q.buildFreeRequest({
+    question: 'Giảm trừ thế nào?', sources: SOURCES,
+    history: [{ role: 'user', text: 'đọc file này', files: [{ name: 'a.txt', text: 'nội dung tệp cũ' }] }, { role: 'assistant', text: 'Đã đọc [C9].', free: true }]
+  }));
+  const text = req.contents[req.contents.length - 1].parts[0].text;
+  assert.match(text, /ĐOẠN TRONG THƯ VIỆN TÀI LIỆU/);
+  assert.match(text, /\[C1\]/);
+  const first = req.contents[0].parts[0].text;
+  assert.match(first, /TỆP: a\.txt\nnội dung tệp cũ/);
+  assert.ok(!/\[C9\]/.test(req.contents[1].parts[0].text), 'mã nguồn cũ bị bỏ khỏi lịch sử');
+  assert.equal(req.contents.at(-1).parts.length, 1, 'không có ảnh thì chỉ một phần chữ');
+});
+
+test('limitFiles: cắt từng tệp và tổng chữ, đánh dấu truncated', () => {
+  const { Q } = load();
+  const big = 'x'.repeat(Q.FILE_CHARS + 500);
+  const out = plain(Q.limitFiles([{ name: 'a.txt', text: big }, { name: 'b.txt', text: big }, { name: 'c.txt', text: big }]));
+  assert.equal(out[0].text.length, Q.FILE_CHARS);
+  assert.equal(out[0].truncated, true);
+  assert.ok(out.reduce((sum, file) => sum + file.text.length, 0) <= 60000);
+  assert.equal(Q.limitFiles([{ name: 's.txt', text: 'ngắn' }])[0].truncated, false);
+});
+
+test('chatHtml: dựng markdown an toàn — escape HTML, đậm/nghiêng, danh sách, khối mã, bảng, liên kết http', () => {
+  const { Q } = load();
+  const html = Q.chatHtml('## Tiêu đề\n**đậm** và *nghiêng* với `mã` <script>alert(1)</script>\n- một\n- hai\n1. a\n2. b\n```js\nconst x = "<b>";\n```\n| A | B |\n|---|---|\n| 1 | 2 |\n[Trang](https://example.com) [xấu](javascript:alert(1))');
+  assert.match(html, /<h4>Tiêu đề<\/h4>/);
+  assert.match(html, /<b>đậm<\/b>/);
+  assert.match(html, /<i>nghiêng<\/i>/);
+  assert.match(html, /<code>mã<\/code>/);
+  assert.ok(!/<script/i.test(html) && /&lt;script&gt;/.test(html));
+  assert.match(html, /<ul><li>một<\/li><li>hai<\/li><\/ul>/);
+  assert.match(html, /<ol><li>a<\/li><li>b<\/li><\/ol>/);
+  assert.match(html, /<pre><code[^>]*>const x = &quot;&lt;b&gt;&quot;;/);
+  assert.match(html, /<div class="ola-md-table"><table>/);
+  assert.match(html, /<a href="https:\/\/example\.com" target="_blank" rel="noopener noreferrer">Trang<\/a>/);
+  assert.ok(!/href="javascript:/i.test(html));
+});
+
+test('exportMarkdown: xuất hội thoại, bỏ mã nguồn [C#], ghi tên tệp đính kèm', () => {
+  const { Q } = load();
+  const md = Q.exportMarkdown({ title: 'Thử xuất', messages: [
+    { role: 'user', text: 'Đọc giúp tệp', files: [{ name: 'hop-dong.pdf' }] },
+    { role: 'assistant', text: 'Theo điều 5 [C2] thì có.', free: true }
+  ] });
+  assert.match(md, /^# Thử xuất\n/);
+  assert.match(md, /## Bạn\n\nĐọc giúp tệp\n\n_Tệp đính kèm: hop-dong\.pdf_/);
+  assert.match(md, /## AI\n\nTheo điều 5/);
+  assert.ok(!/\[C2\]/.test(md));
+});
+
+test('normalizeMessage: giữ files (≤5, chữ ≤12000) trên tin người dùng và cờ free trên tin AI', () => {
+  const { Q } = load();
+  const user = plain(Q.normalizeMessage({ role: 'user', text: 'hỏi', files: Array.from({ length: 8 }, (_, i) => ({ name: 'f' + i, text: 'y'.repeat(20000) })) }));
+  assert.equal(user.files.length, 5);
+  assert.ok(user.files.every(file => file.text.length <= 12000));
+  const ai = plain(Q.normalizeMessage({ role: 'assistant', text: 'ok', free: true }));
+  assert.equal(ai.free, true);
+});

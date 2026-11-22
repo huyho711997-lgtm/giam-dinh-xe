@@ -207,6 +207,19 @@ const TascoLibParse = (() => {
     meta = {ten: stem(file.name), trangThai: 'dang_hieu_luc', ...meta};
     return {meta, ...limitChunks(chunks), note};
   }
+  // Chỉ lấy chữ của tệp (không cắt thành đoạn thư viện): dùng cho chế độ Trò chuyện AI đính kèm tệp. Ảnh do nơi gọi gửi thẳng cho mô hình.
+  async function readText(file, options = {}) {
+    const ext = (String(file.name).match(/\.([^.]+)$/)?.[1] || '').toLowerCase();
+    let text = '', note = '';
+    if (['md', 'markdown', 'txt'].includes(ext)) text = await file.text();
+    else if (ext === 'docx') text = await readDocx(file);
+    else if (ext === 'pdf') {
+      const result = await readPdf(file);
+      if (result.scanned) { note = 'PDF không có lớp chữ nên đã dùng Gemini đọc.'; text = await ocrWithGemini(file, options.apiKey, options.model, options.signal); } else text = result.text;
+    } else if (['xlsx', 'xls', 'csv'].includes(ext)) text = (await readSheets(file)).map(chunk => chunk.t + '\n' + chunk.x).join('\n\n');
+    else throw new Error('Định dạng .' + (ext || '?') + ' chưa đọc được (dùng .txt, .md, .docx, .pdf, .xlsx, .csv hoặc ảnh).');
+    return {text: String(text || '').trim(), note};
+  }
   // Văn bản dán trực tiếp.
   function fromText(text, name) {
     const parsed = parseFrontMatter(text);
@@ -214,5 +227,5 @@ const TascoLibParse = (() => {
     return {meta, ...limitChunks(chunkMarkdown(textToMarkdown(parsed.body), {docTitle: meta.ten})), note: ''};
   }
 
-  return {parseFrontMatter, chunkMarkdown, textToMarkdown, rowsToChunks, normalizeStatus, normalizeDate, limitChunks, fromFile, fromText, MAX_CHUNKS, MAX_CHARS};
+  return {parseFrontMatter, chunkMarkdown, textToMarkdown, rowsToChunks, normalizeStatus, normalizeDate, limitChunks, fromFile, readText, fromText, MAX_CHUNKS, MAX_CHARS};
 })();
