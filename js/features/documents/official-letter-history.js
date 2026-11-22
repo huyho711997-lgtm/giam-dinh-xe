@@ -91,6 +91,26 @@ const OfficialLetterHistory = (() => {
     if (local.index && local.index[id]) { delete local.index[id]; if (local.items) delete local.items[id]; writeLocal(state.uid, local); }
   }
 
+  async function removeMany(ids) {
+    const valid = [...new Set((Array.isArray(ids) ? ids : []).filter(validId))];
+    if (!valid.length) return 0;
+    const updates = {};
+    valid.forEach(id => {
+      delete state.index[id];
+      updates['index/' + id] = null;
+      updates['items/' + id] = null;
+    });
+    if (state.uid && hasDb()) { try { await ref('').update(updates); } catch (_) { /* bỏ qua */ } }
+    const local = readLocal(state.uid);
+    let localChanged = false;
+    valid.forEach(id => {
+      if (local.index && local.index[id]) { delete local.index[id]; localChanged = true; }
+      if (local.items && local.items[id] !== undefined) { delete local.items[id]; localChanged = true; }
+    });
+    if (localChanged) writeLocal(state.uid, local);
+    return valid.length;
+  }
+
   // Nhóm theo thời gian cho thanh lịch sử.
   function groups(items, now) {
     const start = new Date(now || Date.now()); start.setHours(0, 0, 0, 0);
@@ -106,5 +126,5 @@ const OfficialLetterHistory = (() => {
     return out;
   }
 
-  return {load, list, get, save, remove, groups, newId, scope: () => state.scope, MAX_ITEMS};
+  return {load, list, get, save, remove, removeMany, groups, newId, scope: () => state.scope, MAX_ITEMS};
 })();

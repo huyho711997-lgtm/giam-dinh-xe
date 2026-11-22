@@ -32,7 +32,9 @@ const OfficialLetterPage = (() => {
     trash: '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
     panel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
     chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.5-4.7A8 8 0 1 1 21 12Z"/><path d="M9 10h6M9 13.5h4"/>',
-    copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>'
+    copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
+    checklist: '<path d="M10 6h11M10 12h11M10 18h11"/><path d="m3 6 1.8 1.8L7.5 5M3 12l1.8 1.8L7.5 11M3 18l1.8 1.8L7.5 17"/>',
+    check: '<path d="m5 12 4.5 4.5L19 7"/>'
   };
 
   let host = null, controller = null, generation = 0, records = [], index = [];
@@ -42,7 +44,7 @@ const OfficialLetterPage = (() => {
     insights: [], keyFacts: [], legalQueries: [], assumptions: [], reasoning: null, sources: [], legalError: '', legalLoaded: false,
     letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
     pop: '', drawer: '', editing: false, steps: null, agentOpen: false, agentTask: 'draft',
-    historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser',
+    historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser', histSelect: false, histPicked: [],
     versions: [], selection: [], pending: null, reviewView: 'inline', versionId: '', usage: null, questionDrafts: Object.create(null),
     mode: 'compose'   // 'compose' = soạn công văn · 'ask' = hỏi nghiệp vụ (xem khối "Hỏi nghiệp vụ")
   };
@@ -740,7 +742,8 @@ const OfficialLetterPage = (() => {
   function resetQaView() { qa.messages = []; qa.usage = null; qa.open = Object.create(null); qa.draft = ''; qa.importFile = null; qa.status = ''; }
   function newQaChat() {
     if (qa.busy) return;
-    if (!qa.messages.length) { focusMain(); return; }
+    exitHistSelect();
+    if (!qa.messages.length) { renderAll(); focusMain(); return; }
     saveQa();
     qa.activeId = ''; resetQaView();
     renderAll(); focusMain();
@@ -769,6 +772,7 @@ const OfficialLetterPage = (() => {
   function setMode(mode) {
     if (mode === st.mode || (mode === 'ask' && !QA()) || qaLocked()) return;
     collectAll();
+    exitHistSelect();
     st.mode = mode; st.pop = ''; st.recQuery = ''; st.histQuery = '';
     try { localStorage.setItem(MODE_KEY, mode); } catch (_) { /* bỏ qua */ }
     renderAll();
@@ -1070,6 +1074,82 @@ const OfficialLetterPage = (() => {
     st.history = H.list();
     if (id === st.historyId) st.historyId = '';
     updateHistory();
+  }
+  const histLocked = () => askSide() ? !!qa.busy : !!(st.busy || st.pending);
+  const histAllIds = () => askSide() ? qa.chats.map(chat => chat.id) : st.history.map(item => item.id);
+  function qaVisibleItems() {
+    const query = fold(st.histQuery).trim();
+    return qa.chats.map(chat => ({id: chat.id, title: chat.title, sub: Math.ceil(chat.messages.length / 2) + ' câu hỏi', updatedAt: chat.at})).filter(item => !query || fold(item.title).includes(query));
+  }
+  function historyVisibleItems() {
+    const query = fold(st.histQuery).trim();
+    return st.history.filter(item => !query || fold(item.title + ' ' + item.sub).includes(query));
+  }
+  const histVisibleIds = () => (askSide() ? qaVisibleItems() : historyVisibleItems()).map(item => item.id);
+  const histPickedValid = () => { const valid = new Set(histAllIds()); return st.histPicked.filter(id => valid.has(id)); };
+  function exitHistSelect() { st.histSelect = false; st.histPicked = []; }
+  function toggleHistSelect(force) {
+    if (histLocked()) return;
+    const next = typeof force === 'boolean' ? force : !st.histSelect;
+    if (next && !histAllIds().length) return;
+    st.histSelect = next;
+    st.histPicked = [];
+    renderAll();
+  }
+  function toggleHistPick(id) {
+    if (!st.histSelect || histLocked() || !id) return;
+    const i = st.histPicked.indexOf(id);
+    if (i >= 0) st.histPicked.splice(i, 1); else st.histPicked.push(id);
+    updateHistory(true);
+  }
+  function toggleHistSelectAll() {
+    if (!st.histSelect || histLocked()) return;
+    const vis = histVisibleIds();
+    if (!vis.length) return;
+    const picked = new Set(histPickedValid());
+    const allOn = vis.every(id => picked.has(id));
+    if (allOn) vis.forEach(id => picked.delete(id));
+    else vis.forEach(id => picked.add(id));
+    st.histPicked = [...picked];
+    updateHistory(true);
+  }
+  async function deleteSelectedHistory() {
+    if (!st.histSelect || histLocked()) return;
+    const ids = histPickedValid();
+    if (!ids.length) return;
+    const ask = askSide(), count = ids.length;
+    if (ask) {
+      if (!await askConfirm({
+        eyebrow: 'HỎI NGHIỆP VỤ',
+        title: 'Xoá ' + count + ' cuộc trò chuyện?',
+        message: count + ' cuộc trò chuyện đã chọn sẽ bị xoá khỏi máy này và không khôi phục được.',
+        confirmText: 'Xoá ' + count + ' cuộc trò chuyện'
+      })) return;
+      const drop = new Set(ids);
+      qa.chats = qa.chats.filter(item => !drop.has(item.id));
+      if (qa.activeId && drop.has(qa.activeId)) { qa.activeId = ''; resetQaView(); }
+      exitHistSelect();
+      saveQa();
+      if (!qa.chats.length) try { localStorage.removeItem(QA_CHATS_KEY); } catch (_) { /* bỏ qua */ }
+      toast('Đã xoá ' + count + ' cuộc trò chuyện.', 'success');
+      renderAll(); focusMain();
+      return;
+    }
+    const H = History();
+    if (!H) return;
+    if (!await askConfirm({
+      eyebrow: 'LỊCH SỬ CÔNG VĂN',
+      title: 'Xoá ' + count + ' công văn khỏi lịch sử?',
+      message: count + ' công văn đã chọn sẽ bị xoá khỏi lịch sử và không khôi phục được.',
+      confirmText: 'Xoá ' + count + ' công văn'
+    })) return;
+    if (typeof H.removeMany === 'function') await H.removeMany(ids);
+    else { for (const id of ids) await H.remove(id); }
+    st.history = H.list();
+    if (st.historyId && ids.includes(st.historyId)) st.historyId = '';
+    exitHistSelect();
+    toast('Đã xoá ' + count + ' công văn khỏi lịch sử.', 'success');
+    renderAll();
   }
 
   // ================= HIỂN THỊ =================
@@ -1419,41 +1499,82 @@ const OfficialLetterPage = (() => {
 
   // ---- Thanh lịch sử bên trái ----
   const askSide = () => st.mode === 'ask' && !!QA();
+  function histRowHtml(item, activeId, openAttr, delAttr, delLabel, subText, picked) {
+    const isActive = item.id === activeId;
+    if (st.histSelect) {
+      const checked = picked.has(item.id);
+      return '<div class="ola-hist-item is-selecting' + (isActive ? ' is-active' : '') + (checked ? ' is-checked' : '') + '">'
+        + '<button type="button" class="ola-hist-pick" role="checkbox" aria-checked="' + (checked ? 'true' : 'false') + '" data-ol-hist-toggle="' + esc(item.id) + '" title="' + esc(item.title) + '"' + (histLocked() ? ' disabled' : '') + '>'
+        + '<span class="ola-hist-check" aria-hidden="true">' + (checked ? svg(ICON.check) : '') + '</span>'
+        + '<span class="ola-hist-meta"><b>' + esc(item.title) + '</b><small>' + esc(subText) + '</small></span>'
+        + '</button></div>';
+    }
+    return '<div class="ola-hist-item' + (isActive ? ' is-active' : '') + '"><button type="button" ' + openAttr + '="' + esc(item.id) + '" title="' + esc(item.title) + '"><b>' + esc(item.title) + '</b><small>' + esc(subText) + '</small></button>'
+      + '<button type="button" class="ola-hist-del" ' + delAttr + '="' + esc(item.id) + '" aria-label="' + delLabel + '" title="Xoá">' + svg(ICON.trash) + '</button></div>';
+  }
   function qaChatsHtml() {
     const H = History();
     const query = fold(st.histQuery).trim();
-    const items = qa.chats.map(chat => ({id: chat.id, title: chat.title, sub: Math.ceil(chat.messages.length / 2) + ' câu hỏi', updatedAt: chat.at})).filter(item => !query || fold(item.title).includes(query));
+    const items = qaVisibleItems();
     if (!items.length) return '<p class="ola-hist-empty">' + (query ? 'Không có cuộc trò chuyện khớp “' + esc(st.histQuery) + '”.' : 'Chưa có cuộc trò chuyện nào. Câu hỏi đầu tiên sẽ tự được lưu ở đây.') + '</p>';
     const time = ms => { const d = new Date(ms), now = new Date(); const p = n => String(n).padStart(2, '0'); return d.toDateString() === now.toDateString() ? p(d.getHours()) + ':' + p(d.getMinutes()) : p(d.getDate()) + '/' + p(d.getMonth() + 1); };
-    return H.groups(items).map(group => '<div class="ola-hist-group"><h4>' + esc(group.label) + '</h4>' + group.items.map(item => '<div class="ola-hist-item' + (item.id === qa.activeId ? ' is-active' : '') + '"><button type="button" data-ol-qa-open="' + esc(item.id) + '" title="' + esc(item.title) + '"><b>' + esc(item.title) + '</b><small>' + esc([item.sub, time(item.updatedAt)].join(' · ')) + '</small></button>'
-      + '<button type="button" class="ola-hist-del" data-ol-qa-del="' + esc(item.id) + '" aria-label="Xoá cuộc trò chuyện" title="Xoá">' + svg(ICON.trash) + '</button></div>').join('') + '</div>').join('');
+    const picked = new Set(st.histPicked);
+    return H.groups(items).map(group => '<div class="ola-hist-group"><h4>' + esc(group.label) + '</h4>'
+      + group.items.map(item => histRowHtml(item, qa.activeId, 'data-ol-qa-open', 'data-ol-qa-del', 'Xoá cuộc trò chuyện', [item.sub, time(item.updatedAt)].join(' · '), picked)).join('') + '</div>').join('');
   }
   function historyItemsHtml() {
     const H = History();
     if (!H) return '';
     if (askSide()) return qaChatsHtml();
     const query = fold(st.histQuery).trim();
-    const items = st.history.filter(item => !query || fold(item.title + ' ' + item.sub).includes(query));
+    const items = historyVisibleItems();
     if (!items.length) return '<p class="ola-hist-empty">' + (query ? 'Không có công văn khớp “' + esc(st.histQuery) + '”.' : 'Chưa có công văn nào. Công văn soạn xong sẽ tự lưu ở đây.') + '</p>';
     const time = ms => { const d = new Date(ms), now = new Date(); const p = n => String(n).padStart(2, '0'); return d.toDateString() === now.toDateString() ? p(d.getHours()) + ':' + p(d.getMinutes()) : p(d.getDate()) + '/' + p(d.getMonth() + 1); };
-    return H.groups(items).map(group => '<div class="ola-hist-group"><h4>' + esc(group.label) + '</h4>' + group.items.map(item => '<div class="ola-hist-item' + (item.id === st.historyId ? ' is-active' : '') + '"><button type="button" data-ol-hist-open="' + esc(item.id) + '" title="' + esc(item.title) + '"><b>' + esc(item.title) + '</b><small>' + esc([item.sub, time(item.updatedAt)].filter(Boolean).join(' · ')) + '</small></button>'
-      + '<button type="button" class="ola-hist-del" data-ol-hist-del="' + esc(item.id) + '" aria-label="Xoá khỏi lịch sử" title="Xoá">' + svg(ICON.trash) + '</button></div>').join('') + '</div>').join('');
+    const picked = new Set(st.histPicked);
+    return H.groups(items).map(group => '<div class="ola-hist-group"><h4>' + esc(group.label) + '</h4>'
+      + group.items.map(item => histRowHtml(item, st.historyId, 'data-ol-hist-open', 'data-ol-hist-del', 'Xoá khỏi lịch sử', [item.sub, time(item.updatedAt)].filter(Boolean).join(' · '), picked)).join('') + '</div>').join('');
+  }
+  function histBulkHtml() {
+    if (!st.histSelect) return '';
+    const vis = histVisibleIds();
+    const picked = new Set(histPickedValid());
+    const count = picked.size;
+    const allOn = vis.length > 0 && vis.every(id => picked.has(id));
+    const locked = histLocked();
+    const noun = askSide() ? 'cuộc trò chuyện' : 'công văn';
+    return '<div class="ola-hist-bulk-row">'
+      + '<button type="button" class="ola-hist-bulk-all' + (allOn ? ' is-on' : '') + '" data-ol-act="hist-select-all"' + (locked || !vis.length ? ' disabled' : '') + '>'
+      + '<span class="ola-hist-check" aria-hidden="true">' + (allOn ? svg(ICON.check) : '') + '</span>'
+      + '<span>' + (allOn ? 'Bỏ chọn tất cả' : 'Chọn tất cả') + '</span></button>'
+      + '<button type="button" class="ola-hist-bulk-cancel" data-ol-act="hist-select-cancel">Huỷ</button>'
+      + '</div>'
+      + '<button type="button" class="ola-hist-bulk-del" data-ol-act="hist-del-selected"' + (locked || !count ? ' disabled' : '') + '>'
+      + svg(ICON.trash) + '<span>' + (count ? 'Xoá ' + count + ' ' + noun : 'Chọn mục để xoá') + '</span></button>';
   }
   function historyHtml() {
     if (!History() || !st.histOpen) return '';
     const ask = askSide();
-    return '<div class="ola-hist-backdrop" data-ol-hist-backdrop></div><aside class="ola-hist" aria-label="' + (ask ? 'Lịch sử hỏi nghiệp vụ' : 'Lịch sử công văn') + '"><header><b>' + svg(ICON.history) + 'Lịch sử</b><span>'
+    const hasItems = histAllIds().length > 0;
+    const locked = histLocked();
+    return '<div class="ola-hist-backdrop" data-ol-hist-backdrop></div><aside class="ola-hist' + (st.histSelect ? ' is-selecting' : '') + '" aria-label="' + (ask ? 'Lịch sử hỏi nghiệp vụ' : 'Lịch sử công văn') + '"><header><b>' + svg(ICON.history) + 'Lịch sử</b><span>'
+      + '<button type="button" class="ola-hist-btn' + (st.histSelect ? ' is-active' : '') + '" data-ol-act="hist-select" title="' + (st.histSelect ? 'Thoát chế độ chọn nhiều' : 'Chọn nhiều để xoá') + '" aria-label="' + (st.histSelect ? 'Thoát chế độ chọn nhiều' : 'Chọn nhiều để xoá') + '" aria-pressed="' + (st.histSelect ? 'true' : 'false') + '"' + (locked || (!hasItems && !st.histSelect) ? ' disabled' : '') + '>' + svg(ICON.checklist) + '</button>'
       + (ask ? '<button type="button" class="ola-hist-btn" data-ol-act="qa-new" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>'
         : '<button type="button" class="ola-hist-btn" data-ol-act="new" title="Công văn mới" aria-label="Công văn mới"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>')
       + '<button type="button" class="ola-hist-btn" data-ol-act="hist-toggle" title="Thu gọn" aria-label="Thu gọn lịch sử">' + svg(ICON.panel) + '</button></span></header>'
       + '<label class="ola-hist-search">' + svg(ICON.search) + '<input type="search" data-ol-hist-q placeholder="' + (ask ? 'Tìm cuộc trò chuyện…' : 'Tìm công văn…') + '" value="' + esc(st.histQuery) + '" aria-label="Tìm trong lịch sử"></label>'
+      + (st.histSelect ? '<div class="ola-hist-bulk" data-ol-hist-bulk>' + histBulkHtml() + '</div>' : '')
       + '<div class="ola-hist-list" data-ol-hist-list>' + historyItemsHtml() + '</div>'
       + '<footer>' + (!ask && st.histScope === 'account' ? 'Lưu theo tài khoản' : 'Lưu trên trình duyệt này') + '</footer></aside>';
   }
   function updateHistory(listOnly) {
     const box = $('[data-ol-hist-list]');
     if (!box) return;
+    if (st.histSelect && !histAllIds().length) { exitHistSelect(); renderAll(); return; }
     box.innerHTML = historyItemsHtml();
+    const bulk = $('[data-ol-hist-bulk]');
+    if (bulk) bulk.innerHTML = histBulkHtml();
+    const selBtn = $('[data-ol-act="hist-select"]');
+    if (selBtn) selBtn.disabled = histLocked() || (!histAllIds().length && !st.histSelect);
     if (!listOnly) { const foot = $('.ola-hist footer'); if (foot) foot.textContent = !askSide() && st.histScope === 'account' ? 'Lưu theo tài khoản' : 'Lưu trên trình duyệt này'; }
   }
 
@@ -1482,7 +1603,7 @@ const OfficialLetterPage = (() => {
     else if (focusSel) $(focusSel)?.focus({preventScroll:true});
     const nextMain = $('.ola-main'); if (nextMain) nextMain.scrollTop = mainTop;
     if (st.busy || st.pending) {
-      host.querySelectorAll('[data-ol-act="new"], [data-ol-act="edit"], [data-ol-hist-open], [data-ol-hist-del], [data-ol-drawer], [data-ol-act="compose"]').forEach(node => { node.disabled = true; });
+      host.querySelectorAll('[data-ol-act="new"], [data-ol-act="edit"], [data-ol-hist-open], [data-ol-hist-del], [data-ol-hist-toggle], [data-ol-act="hist-select"], [data-ol-act="hist-select-all"], [data-ol-act="hist-del-selected"], [data-ol-drawer], [data-ol-act="compose"]').forEach(node => { node.disabled = true; });
     }
   }
   // Màn làm việc chiếm đúng phần còn lại của cửa sổ (từ mép trên trang tới đáy) để ô chỉnh sửa ghim ở đáy.
@@ -1657,6 +1778,8 @@ const OfficialLetterPage = (() => {
     if (version && !st.busy && !st.pending) { collectAll(); st.versionId = version.dataset.olVersion; renderAll(); return; }
     const restore = target.closest('[data-ol-restore]');
     if (restore) { restoreVersion(restore.dataset.olRestore); return; }
+    const histToggle = target.closest('[data-ol-hist-toggle]');
+    if (histToggle) { toggleHistPick(histToggle.dataset.olHistToggle); return; }
     const qaDel = target.closest('[data-ol-qa-del]');
     if (qaDel) { event.stopPropagation(); deleteQaChat(qaDel.dataset.olQaDel); return; }
     const qaOpen = target.closest('[data-ol-qa-open]');
@@ -1665,7 +1788,7 @@ const OfficialLetterPage = (() => {
     if (histDel) { event.stopPropagation(); deleteHistory(histDel.dataset.olHistDel); return; }
     const histOpen = target.closest('[data-ol-hist-open]');
     if (histOpen) { openHistory(histOpen.dataset.olHistOpen); return; }
-    if (target.closest('[data-ol-hist-backdrop]')) { st.histOpen = false; renderAll(); return; }
+    if (target.closest('[data-ol-hist-backdrop]')) { st.histOpen = false; exitHistSelect(); renderAll(); return; }
     const popButton = target.closest('[data-ol-pop]');
     if (popButton) { collectAll(); const name = popButton.dataset.olPop; st.pop = st.pop === name ? '' : name; st.recQuery = ''; st.recActive = 0; if (st.pop === 'record' && !index.length) loadRecords(); if (st.pop === 'rules' && st.libDocs === null) loadLibDocs().then(() => { if (st.pop === 'rules') renderAll(); }); renderAll(); return; }
     const pick = target.closest('[data-ol-pick]');
@@ -1739,8 +1862,12 @@ const OfficialLetterPage = (() => {
       case 'settings': st.pop = ''; openSettings(); break;
       case 'legal-search': searchMoreLegal(); break;
       case 'open-library': TascoLibrary.open(); break;
-      case 'new': st.mode = 'compose'; if (st.letter) { clearTimeout(saveTimer); if (st.historyId) saveHistory(); reset(); renderAll(); $('[data-ol-brief]')?.focus(); } else confirmDiscard().then(ok => { if (ok) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } }); break;
-      case 'hist-toggle': st.histOpen = !st.histOpen; try { localStorage.setItem(HIST_PANEL_KEY, st.histOpen ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); break;
+      case 'new': exitHistSelect(); st.mode = 'compose'; if (st.letter) { clearTimeout(saveTimer); if (st.historyId) saveHistory(); reset(); renderAll(); $('[data-ol-brief]')?.focus(); } else confirmDiscard().then(ok => { if (ok) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } }); break;
+      case 'hist-toggle': st.histOpen = !st.histOpen; if (!st.histOpen) exitHistSelect(); try { localStorage.setItem(HIST_PANEL_KEY, st.histOpen ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); break;
+      case 'hist-select': toggleHistSelect(); break;
+      case 'hist-select-cancel': toggleHistSelect(false); break;
+      case 'hist-select-all': toggleHistSelectAll(); break;
+      case 'hist-del-selected': deleteSelectedHistory(); break;
       case 'add-extra': collectAll(); st.extras.push({label: '', value: ''}); renderAll(); host.querySelector('[data-ol-extra-row]:last-of-type [data-ol-extra-label]')?.focus(); break;
       case 'remove-extra': { collectAll(); const rows = [...host.querySelectorAll('[data-ol-extra-row]')]; st.extras.splice(rows.indexOf(act.closest('[data-ol-extra-row]')), 1); renderAll(); break; }
       case 'add-outline': collectAll(); st.outline.push({text: '', on: true}); st.outlineEdited = true; renderAll(); host.querySelector('[data-ol-outline-row]:last-of-type [data-ol-outline-text]')?.focus(); break;
@@ -1774,7 +1901,7 @@ const OfficialLetterPage = (() => {
   function onKeydown(event) {
     const target = event.target;
     if (!target.matches) return;
-    if (event.key === 'Escape') { if (st.pop) { event.preventDefault(); closePop(); return; } if (st.drawer) { collectAll(); st.drawer = ''; renderAll(); return; } }
+    if (event.key === 'Escape') { if (st.pop) { event.preventDefault(); closePop(); return; } if (st.drawer) { collectAll(); st.drawer = ''; renderAll(); return; } if (st.histSelect) { event.preventDefault(); toggleHistSelect(false); return; } }
     if (target.matches('.ol-edit') && event.key === 'Enter') { event.preventDefault(); return; } // mỗi khối là một dòng/đoạn
     if (target.matches('[data-ol-brief]') && event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); run(); return; }
     if (target.matches('[data-ol-qa-input]') && event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); askQuestion(); return; }
@@ -1830,6 +1957,7 @@ const OfficialLetterPage = (() => {
     generation++;
     controller?.abort(); controller = null;
     st.busy = ''; st.status = ''; st.pop = '';
+    exitHistSelect();
     if (host) HANDLERS.forEach(([name, fn]) => host.removeEventListener(name, fn));
     document.removeEventListener('mousedown', onOutside, true);
     document.removeEventListener('selectionchange', captureSelection);
