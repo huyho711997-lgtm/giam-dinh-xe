@@ -349,7 +349,7 @@ const OfficialLetterPage = (() => {
   function startAgent(task, text) {
     st.agentTask = task; st.agentOpen = false;
     if (st.notice?.kind === 'error') notice('');
-    st.steps = {read: {state:'run', text:text || 'Đang đọc yêu cầu'}, legal: {state:'idle', text:''}, reason: {state:'skip', text:task === 'legal' ? '' : 'Dùng kế hoạch đã lập'}, write: {state:task === 'legal' ? 'skip' : 'idle', text:task === 'legal' ? 'Giữ nguyên bản thảo' : ''}};
+    st.steps = {read: {state:'run', text:text || 'Đang đọc yêu cầu'}, legal: {state:'idle', text:''}, reason: {state:'skip', text:task === 'legal' ? '' : 'Không chạy lại ở bước này'}, write: {state:task === 'legal' ? 'skip' : 'idle', text:task === 'legal' ? 'Giữ nguyên bản thảo' : ''}};
   }
   // Trạng thái 3 bước hiển thị kiểu agent: idle | run | done | skip | err, kèm mô tả ngắn.
   function step(name, state, text) { if (!st.steps) st.steps = {}; st.steps[name] = {state, text: text || ''}; updateSteps(); }
@@ -388,6 +388,7 @@ const OfficialLetterPage = (() => {
     const found = chosenRecord();
     st.editing = false; st.pop = '';
     startAgent('draft', found ? recordLabel(found.info) : 'Đọc yêu cầu và tài liệu đính kèm');
+    st.steps.reason = {state:'idle', text:''};   // chỉ lần soạn đầy đủ mới có bước suy luận nghiệp vụ
     const my = generation, tpl = template();
     setBusy('Đang đọc hồ sơ và yêu cầu…');
     try {

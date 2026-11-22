@@ -168,7 +168,7 @@ test('soạn lại theo yêu cầu mới cũng cần duyệt trước khi thay t
   const h = setupPage(async () => ++calls === 1 ? '{"fields":{"recipient":"A"},"outline":["Nội dung"]}' : '{"subject":"bản mới","paragraphs":[{"type":"p","text":"Công văn mới."}]}');
   const before = plain(h.state().letter);
   await h.page.run();
-  assert.equal(calls, 2); assert.ok(h.state().pending);
+  assert.equal(calls, 3); assert.ok(h.state().pending);   // phân tích + suy luận + soạn
   assert.deepEqual(plain(h.state().letter), before);
   h.page.discardChanges(); assert.deepEqual(plain(h.state().letter), before);
 });
