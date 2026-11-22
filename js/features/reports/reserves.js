@@ -2237,6 +2237,30 @@ const fullList = getCarBrandLossData();
       return text.includes('tnds') || text.includes('trách nhiệm dân sự') || text.includes('bat buoc') || text.includes('bắt buộc');
     }
 
+    function matchesMonthlyClaimFilters(c) {
+      // Các bộ lọc dùng chung cho hồ sơ mở và hồ sơ duyệt.
+      if (typeof activeReportClaimType !== 'undefined' && activeReportClaimType !== 'all') {
+        const isTnds = isTndsClaimMonthlyRecord(c);
+        if (activeReportClaimType === 'VCX' && isTnds) return false;
+        if (activeReportClaimType === 'TNDS' && !isTnds) return false;
+      }
+
+      // Lọc theo Giám định viên
+      if (typeof activeSelectedGdvNames !== 'undefined' && activeSelectedGdvNames && activeSelectedGdvNames.length > 0) {
+        const gdv = String(c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim().toLowerCase();
+        const matchGdv = activeSelectedGdvNames.some(s => s.trim().toLowerCase() === gdv);
+        if (!matchGdv) return false;
+      }
+
+      // Lọc theo Chi nhánh cấp đơn
+      if (typeof activeGdvReportBranch !== 'undefined' && activeGdvReportBranch !== 'all') {
+        const b = String(c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '').toLowerCase();
+        if (!b.includes(activeGdvReportBranch.toLowerCase())) return false;
+      }
+
+      return true;
+    }
+
     function getMonthlyOpenedClaimsData() {
       const claimsList = Object.entries(cachedPendingClaimsPayload || {}).map(([k, v]) => ({
         ...v,
@@ -2255,28 +2279,25 @@ const fullList = getCarBrandLossData();
         if (selYear !== 'all' && dateInfo.year !== parseInt(selYear, 10)) return false;
         if (selMonth !== 'all' && dateInfo.month !== parseInt(selMonth, 10)) return false;
 
-        // Lọc theo Nghiệp vụ (VCX / TNDS)
-        if (typeof activeReportClaimType !== 'undefined' && activeReportClaimType !== 'all') {
-          const isTnds = isTndsClaimMonthlyRecord(c);
-          if (activeReportClaimType === 'VCX' && isTnds) return false;
-          if (activeReportClaimType === 'TNDS' && !isTnds) return false;
-        }
-
-        // Lọc theo Giám định viên
-        if (typeof activeSelectedGdvNames !== 'undefined' && activeSelectedGdvNames && activeSelectedGdvNames.length > 0) {
-          const gdv = String(c.gdvTiepNhan || c.canBoXuLy || c.gdvHo || 'Chưa phân công').trim().toLowerCase();
-          const matchGdv = activeSelectedGdvNames.some(s => s.trim().toLowerCase() === gdv);
-          if (!matchGdv) return false;
-        }
-
-        // Lọc theo Chi nhánh cấp đơn
-        if (typeof activeGdvReportBranch !== 'undefined' && activeGdvReportBranch !== 'all') {
-          const b = String(c.donViCapDon || c.chiNhanh || c.chiNhanhXuly || '').toLowerCase();
-          if (!b.includes(activeGdvReportBranch.toLowerCase())) return false;
-        }
+        if (!matchesMonthlyClaimFilters(c)) return false;
 
         c._dateInfo = dateInfo;
         c._reserveVal = getClaimReserveAmountValue(c);
+        return true;
+      });
+    }
+
+    // Tiền duyệt lấy theo ngày duyệt tờ trình / HSBT, độc lập với ngày mở hồ sơ.
+    function getMonthlyApprovedClaimsData() {
+      const month = (typeof activeGdvReportMonth !== 'undefined') ? activeGdvReportMonth : String(new Date().getMonth() + 1);
+      const year = (typeof activeGdvReportYear !== 'undefined') ? activeGdvReportYear : String(new Date().getFullYear());
+      return Object.entries(cachedPendingClaimsPayload || {}).map(([key, value]) => ({ ...value, id: value.id || key, _claimKey: key })).filter(c => {
+        if (typeof isDuyetHsbtApproved !== 'function' || !isDuyetHsbtApproved(c) || !matchesMonthlyClaimFilters(c)) return false;
+        const raw = [c.toTrinhNgayDuyet, c.ngayDuyetHsbt].find(v => v && String(v).trim() && !['-', '—'].includes(String(v).trim()));
+        const date = getClaimOpenDateInfo({ ngayMoHs: raw });
+        if (!date || (year !== 'all' && date.year !== parseInt(year, 10)) || (month !== 'all' && date.month !== parseInt(month, 10))) return false;
+        c._approvalDate = date;
+        c._approvedVal = parseInt(String(c.ttbtTongSoTienBoiThuong || '0').replace(/\D/g, ''), 10) || 0;
         return true;
       });
     }
@@ -2297,10 +2318,11 @@ const fullList = getCarBrandLossData();
     // theo giám định viên và theo trạng thái hồ sơ. Mỗi nhóm có số hồ sơ (VCX/TNDS) và tiền dự phòng.
     function getMonthlyOpenedChartData() {
       const claims = getMonthlyOpenedClaimsData();
+      const approvedClaims = getMonthlyApprovedClaimsData();
       const selMonth = (typeof activeGdvReportMonth !== 'undefined') ? activeGdvReportMonth : String(new Date().getMonth() + 1);
       const selYear = (typeof activeGdvReportYear !== 'undefined') ? activeGdvReportYear : String(new Date().getFullYear());
       const mode = selYear !== 'all' && selMonth !== 'all' ? 'day' : selYear !== 'all' ? 'month' : 'period';
-      const blank = () => ({ count: 0, vcx: 0, tnds: 0, reserve: 0 });
+      const blank = () => ({ count: 0, vcx: 0, tnds: 0, reserve: 0, approved: 0, approvedCount: 0 });
       const add = (bucket, isTnds, reserve) => { bucket.count++; if (isTnds) bucket.tnds++; else bucket.vcx++; bucket.reserve += reserve; };
 
       const timeline = new Map();
@@ -2336,9 +2358,15 @@ const fullList = getCarBrandLossData();
         add(statusMap.get(st), isTnds, reserve);
       });
 
+      approvedClaims.forEach(c => {
+        const gara = getMonthlyOpenedGarageName(c);
+        if (!garaMap.has(gara)) garaMap.set(gara, { label: gara, ...blank() });
+        const row = garaMap.get(gara); row.approved += c._approvedVal; row.approvedCount++;
+      });
+
       const series = rows => ({
         labels: rows.map(r => r.label), count: rows.map(r => r.count), vcx: rows.map(r => r.vcx),
-        tnds: rows.map(r => r.tnds), reserve: rows.map(r => r.reserve)
+        tnds: rows.map(r => r.tnds), reserve: rows.map(r => r.reserve), approved: rows.map(r => r.approved), approvedCount: rows.map(r => r.approvedCount)
       });
       const orderedTimeline = [...timeline.entries()].sort((x, y) => x[0] - y[0]).map(entry => entry[1]);
 
@@ -2349,7 +2377,7 @@ const fullList = getCarBrandLossData();
         gdvRows = gdvRows.slice(0, 10).concat(rest);
       }
       // Gara: nhiều hồ sơ nhất trước (bằng nhau thì dự phòng cao hơn); quá 15 gara gộp thành "Khác"; "Chưa xác định gara" luôn cuối.
-      const sumRows = (rows, label) => rows.reduce((acc, r) => { acc.count += r.count; acc.vcx += r.vcx; acc.tnds += r.tnds; acc.reserve += r.reserve; return acc; }, { label, ...blank() });
+      const sumRows = (rows, label) => rows.reduce((acc, r) => { acc.count += r.count; acc.vcx += r.vcx; acc.tnds += r.tnds; acc.reserve += r.reserve; acc.approved += r.approved; acc.approvedCount += r.approvedCount; return acc; }, { label, ...blank() });
       const unassigned = garaMap.get(MONTHLY_OPENED_NO_GARAGE);
       let garaRows = [...garaMap.values()].filter(r => r !== unassigned).sort((x, y) => y.count - x.count || y.reserve - x.reserve || x.label.localeCompare(y.label, 'vi'));
       const garaNamedCount = garaRows.length;
@@ -2364,7 +2392,7 @@ const fullList = getCarBrandLossData();
 
       return {
         mode, total: claims.length, timeline: series(orderedTimeline), gdv: series(gdvRows), gara: series(garaRows), garaNamedCount, status: series(statusRows),
-        totalReserve: claims.reduce((sum, c) => sum + (c._reserveVal || 0), 0)
+        totalReserve: claims.reduce((sum, c) => sum + (c._reserveVal || 0), 0), totalApproved: approvedClaims.reduce((sum, c) => sum + c._approvedVal, 0)
       };
     }
 
@@ -2375,7 +2403,8 @@ const fullList = getCarBrandLossData();
       }
 
       const claims = getMonthlyOpenedClaimsSorted();
-      if (!claims || claims.length === 0) {
+      const approvedClaims = getMonthlyApprovedClaimsData();
+      if (!claims.length && !approvedClaims.length) {
         triggerToast('Không có dữ liệu để xuất file Excel!', 'warning');
         return;
       }
@@ -2440,11 +2469,23 @@ const fullList = getCarBrandLossData();
           row['Dự phòng bồi thường (VNĐ)'] += c._reserveVal || getClaimReserveAmountValue(c);
           garaTotals.set(name, row);
         });
+        approvedClaims.forEach(c => {
+          const name = getMonthlyOpenedGarageName(c);
+          const row = garaTotals.get(name) || { 'Gara': name, 'Số hồ sơ': 0, 'VCX': 0, 'TNDS': 0, 'Dự phòng bồi thường (VNĐ)': 0 };
+          row['Duyệt HSBT trong kỳ (VNĐ)'] = (row['Duyệt HSBT trong kỳ (VNĐ)'] || 0) + c._approvedVal;
+          garaTotals.set(name, row);
+        });
         const garaRows = [...garaTotals.values()].sort((x, y) => y['Số hồ sơ'] - x['Số hồ sơ'] || y['Dự phòng bồi thường (VNĐ)'] - x['Dự phòng bồi thường (VNĐ)'])
-          .map(row => ({ ...row, 'Dự phòng bình quân / hồ sơ (VNĐ)': row['Số hồ sơ'] ? Math.round(row['Dự phòng bồi thường (VNĐ)'] / row['Số hồ sơ']) : 0 }));
+          .map(row => ({ ...row, 'Duyệt HSBT trong kỳ (VNĐ)': row['Duyệt HSBT trong kỳ (VNĐ)'] || 0, 'Dự phòng bình quân / hồ sơ (VNĐ)': row['Số hồ sơ'] ? Math.round(row['Dự phòng bồi thường (VNĐ)'] / row['Số hồ sơ']) : 0 }));
         garaRows.push({ 'Gara': 'Tổng cộng', 'Số hồ sơ': claims.length, 'VCX': garaRows.reduce((n, r) => n + r['VCX'], 0), 'TNDS': garaRows.reduce((n, r) => n + r['TNDS'], 0),
-          'Dự phòng bồi thường (VNĐ)': totalReserve, 'Dự phòng bình quân / hồ sơ (VNĐ)': claims.length ? Math.round(totalReserve / claims.length) : 0 });
+          'Dự phòng bồi thường (VNĐ)': totalReserve, 'Duyệt HSBT trong kỳ (VNĐ)': approvedClaims.reduce((sum, c) => sum + c._approvedVal, 0), 'Dự phòng bình quân / hồ sơ (VNĐ)': claims.length ? Math.round(totalReserve / claims.length) : 0 });
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(garaRows), 'Theo_Gara');
+
+        if (approvedClaims.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(approvedClaims.map(c => ({
+          'Số HSBT': c.soHoSoBoiThuong || c.soHsbt || '', 'Biển số xe': c.bienSo || '', 'Gara': getMonthlyOpenedGarageName(c),
+          'Ngày mở HS': (getClaimOpenDateInfo(c) || {}).display || '', 'Ngày duyệt HSBT': c._approvalDate.display,
+          'Tiền duyệt HSBT (VNĐ)': c._approvedVal
+        }))), 'HSBT_Duyet_Trong_Ky');
 
         const mTag = selMonth === 'all' ? 'TatCaThang' : `T${selMonth}`;
         const yTag = selYear === 'all' ? 'TatCaNam' : `N${selYear}`;
@@ -2584,6 +2625,7 @@ const fullList = getCarBrandLossData();
               <div class="mo-panel-chips">
                 ${moChip('Tổng', sumOf(series.count).toLocaleString('vi-VN') + ' hồ sơ')}
                 ${moChip('Dự phòng', moMoney(sumOf(series.reserve)), 'gold')}
+                ${cardId === 'monthlyOpenedGaraCard' ? moChip('Duyệt HSBT', moMoney(sumOf(series.approved)), 'emerald') : ''}
                 ${series.labels.length > 1 ? moChip('Nhiều nhất', escapeHtmlOutput(series.labels[top]) + ' · ' + series.count[top], 'emerald') : ''}
                 ${series.labels.length > 1 && topReserve !== top ? moChip('DP cao nhất', escapeHtmlOutput(series.labels[topReserve]) + ' · ' + moMoney(series.reserve[topReserve]), 'gold') : ''}
               </div>
@@ -2699,8 +2741,8 @@ const fullList = getCarBrandLossData();
             `}
           </section>
 
-          ${totalClaims > 0 ? `
-            ${moStandaloneCard('monthlyOpenedGaraCard', 'Bieu_Do_Theo_Gara', 'Theo gara — số hồ sơ & tiền dự phòng từng gara', chartData.gara, 'monthlyOpenedGaraCanvas', 410, 'Số hồ sơ và tiền dự phòng theo từng gara', `${chartData.garaNamedCount} gara${chartData.gara.labels.includes('Khác') ? ' · 15 gara nhiều hồ sơ nhất, còn lại gộp "Khác"' : ''} · đầy đủ từng gara trong Excel (sheet Theo_Gara)`)}
+          ${chartData.gara.labels.length > 0 ? `
+            ${moStandaloneCard('monthlyOpenedGaraCard', 'Bieu_Do_Theo_Gara', 'Theo gara — hồ sơ mở, dự phòng & duyệt HSBT', chartData.gara, 'monthlyOpenedGaraCanvas', 410, 'Số hồ sơ mở, dự phòng và tiền duyệt HSBT theo từng gara', `Dự phòng theo ngày mở; duyệt HSBT theo ngày duyệt, gồm hồ sơ mở trước kỳ · ${chartData.garaNamedCount} gara${chartData.gara.labels.includes('Khác') ? ' · 15 gara nhiều hồ sơ nhất, còn lại gộp "Khác"' : ''} · đầy đủ từng gara trong Excel (sheet Theo_Gara)`)}
             <div class="mo-secondary-grid">
               ${moStandaloneCard('monthlyOpenedGdvCard', 'Bieu_Do_Theo_GDV', 'Theo giám định viên', chartData.gdv, 'monthlyOpenedGdvCanvas', 340, 'Số hồ sơ và tiền dự phòng theo giám định viên')}
               ${moStandaloneCard('monthlyOpenedStatusCard', 'Bieu_Do_Theo_Trang_Thai', 'Theo trạng thái hồ sơ', chartData.status, 'monthlyOpenedStatusCanvas', 340, 'Số hồ sơ và tiền dự phòng theo trạng thái')}
@@ -2738,6 +2780,7 @@ const fullList = getCarBrandLossData();
       const paper = style.getPropertyValue('--ton-paper').trim() || (isDark ? '#121e27' : '#ffffff');
       const FONT = "'Plus Jakarta Sans', sans-serif";
       const GOLD = isDark ? '#e6b85c' : '#a17c3b';
+      const APPROVED = isDark ? '#40cda5' : '#087f63';
       const isLine = activeMonthlyOpenedChartType === 'line';
       const COLORS = isDark ? { vcx: '#538df8', tnds: '#a78bfa' } : { vcx: '#2563eb', tnds: '#7c3aed' };
       const fmtVnd = value => Math.round(value || 0).toLocaleString('vi-VN') + ' đ';
@@ -2770,7 +2813,7 @@ const fullList = getCarBrandLossData();
           const { ctx, chartArea } = chart;
           const datasets = chart.data.datasets;
           const countSets = datasets.map((dataset, index) => ({ dataset, index })).filter(item => item.dataset.yAxisID === 'y');
-          const reserveIndex = datasets.findIndex(dataset => dataset.yAxisID === 'y1');
+          const moneyIndexes = datasets.map((dataset, index) => dataset.yAxisID === 'y1' && chart.isDatasetVisible(index) ? index : -1).filter(index => index >= 0);
           const taken = [];
           const overlaps = (a, b, pad = 3) => (a.x1 - pad) < b.x2 && (a.x2 + pad) > b.x1 && (a.y1 - 2) < b.y2 && (a.y2 + 2) > b.y1;
           const free = (rect, pad = 3) => rect.y1 >= chartArea.top - 8 && rect.x1 >= chartArea.left - 4 && rect.x2 <= chartArea.right + 4 && !taken.some(t => overlaps(rect, t, pad));
@@ -2816,10 +2859,11 @@ const fullList = getCarBrandLossData();
           }
 
           // 2) Nhãn tiền dự phòng: lót nền đặc (paper) che nét đường bên dưới + né va chạm thông minh
-          if (reserveIndex >= 0) {
-            const meta = chart.getDatasetMeta(reserveIndex);
-            const rawVals = datasets[reserveIndex].data;
-            const nodeBoxes = meta.data.map((el, idx) => (rawVals[idx] && el && !el.skip) ? { x1: el.x - 6, x2: el.x + 6, y1: el.y - 6, y2: el.y + 6, idx } : null);
+          for (const moneyIndex of moneyIndexes) {
+            const meta = chart.getDatasetMeta(moneyIndex);
+            const rawVals = datasets[moneyIndex].data;
+            const approvedLine = datasets[moneyIndex].approvalLine;
+            const nodeBoxes = moneyIndexes.flatMap(index => chart.getDatasetMeta(index).data.map((el, idx) => (datasets[index].data[idx] !== null && el && !el.skip) ? { x1: el.x - 6, x2: el.x + 6, y1: el.y - 6, y2: el.y + 6, idx } : null));
 
             meta.data.forEach((element, i) => {
               const value = rawVals[i];
@@ -2855,14 +2899,14 @@ const fullList = getCarBrandLossData();
                 ctx.fillStyle = paper;
                 roundRect(ctx, rect.x1, rect.y1, w, h, 8);
                 ctx.fill();
-                ctx.fillStyle = isDark ? 'rgba(230,184,92,0.16)' : 'rgba(161,124,59,0.12)';
+                ctx.fillStyle = approvedLine ? (isDark ? 'rgba(64,205,165,0.16)' : 'rgba(8,127,99,0.10)') : (isDark ? 'rgba(230,184,92,0.16)' : 'rgba(161,124,59,0.12)');
                 roundRect(ctx, rect.x1, rect.y1, w, h, 8);
                 ctx.fill();
-                ctx.strokeStyle = isDark ? 'rgba(230,184,92,0.48)' : 'rgba(161,124,59,0.38)';
+                ctx.strokeStyle = approvedLine ? (isDark ? 'rgba(64,205,165,0.48)' : 'rgba(8,127,99,0.35)') : (isDark ? 'rgba(230,184,92,0.48)' : 'rgba(161,124,59,0.38)');
                 ctx.lineWidth = 1;
                 ctx.stroke();
 
-                ctx.fillStyle = GOLD;
+                ctx.fillStyle = approvedLine ? APPROVED : GOLD;
                 ctx.fillText(text, cx, cy + 0.5);
                 taken.push(rect);
               }
@@ -2878,7 +2922,7 @@ const fullList = getCarBrandLossData();
         const compact = canvas.clientWidth < 560;
         // Tách hai vùng: cột/đường số hồ sơ nằm gọn nửa dưới (~42%), đường dự phòng nằm ở băng trên (~45%)
         const peakCount = Math.max(1, ...series.labels.map((_, i) => isLine ? Math.max(series.vcx[i], series.tnds[i]) : series.vcx[i] + series.tnds[i]));
-        const peakReserve = Math.max(1, ...series.reserve.map((value, i) => series.count[i] ? value : 0));
+        const peakReserve = Math.max(1, ...series.reserve.map((value, i) => series.count[i] ? value : 0), ...(view.approved ? series.approved : []));
         const countMax = Math.max(peakCount + 3, Math.ceil(peakCount * 2.25));
         const claimSet = (key, label) => ({
           type: isLine ? 'line' : 'bar',
@@ -2927,7 +2971,14 @@ const fullList = getCarBrandLossData();
                 pointBorderWidth: 2.5,
                 tension: 0.32,
                 fill: false
-              }
+              },
+              ...(view.approved ? [{
+                type: 'line', label: 'Duyệt HSBT (đ)', approvalLine: true,
+                data: series.approved.map((value, i) => series.approvedCount[i] ? value : null),
+                spanGaps: false, yAxisID: 'y1', order: -2, borderColor: APPROVED, backgroundColor: APPROVED,
+                borderWidth: 2.8, pointRadius: 4.2, pointHoverRadius: 6.5, pointBackgroundColor: paper,
+                pointBorderColor: APPROVED, pointBorderWidth: 2.5, tension: 0.32, fill: false
+              }] : [])
             ]
           },
           options: {
@@ -3016,7 +3067,7 @@ const fullList = getCarBrandLossData();
         monthlyOpenedChartInstances.push(chart);
       };
       build('monthlyOpenedTimelineCanvas', data.timeline);
-      build('monthlyOpenedGaraCanvas', data.gara, { rotate: 28, truncate: 18 });
+      build('monthlyOpenedGaraCanvas', data.gara, { rotate: 28, truncate: 18, approved: true });
       build('monthlyOpenedGdvCanvas', data.gdv);
       build('monthlyOpenedStatusCanvas', data.status, { truncate: 16 });
     }

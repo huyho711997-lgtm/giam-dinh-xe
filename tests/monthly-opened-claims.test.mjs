@@ -48,14 +48,18 @@ vm.runInContext([
   extractFunction(weeklyEngineSrc, 'parseDateParts'),
   extractFunction(filtersSrc, 'getRuleArray'),
   extractFunction(filtersSrc, 'isTndsClaim'),
+  extractFunction(filtersSrc, 'isDuyetHsbtApproved'),
   extractFunction(reservesSrc, 'getClaimOpenDateInfo'),
   extractFunction(reservesSrc, 'getClaimReserveAmountValue'),
   extractFunction(reservesSrc, 'isTndsClaimMonthlyRecord'),
+  extractFunction(reservesSrc, 'matchesMonthlyClaimFilters'),
   extractFunction(reservesSrc, 'getMonthlyOpenedClaimsData'),
+  extractFunction(reservesSrc, 'getMonthlyApprovedClaimsData'),
   "const MONTHLY_OPENED_NO_GARAGE = 'Chưa xác định gara';",
   extractFunction(reservesSrc, 'getMonthlyOpenedGarageName'),
   extractFunction(reservesSrc, 'getMonthlyOpenedClaimsSorted'),
   extractFunction(reservesSrc, 'getMonthlyOpenedChartData'),
+  extractFunction(reservesSrc, 'exportMonthlyOpenedClaimsReportExcel'),
   extractFunction(reservesSrc, 'renderMonthlyOpenedClaimsReportHtml')
 ].join('\n'), ctx);
 
@@ -259,5 +263,64 @@ test('Theo gara: số hồ sơ và dự phòng từng gara, gộp "Khác", "Chư
   assert.equal(d.gara.labels[16], 'Chưa xác định gara');
   assert.equal(d.gara.count[15], 2);
   assert.equal(d.garaNamedCount, 17);
+  ctx.cachedPendingClaimsPayload = {};
+});
+
+test('Duyệt HSBT theo gara dùng ngày duyệt trong kỳ, kể cả hồ sơ mở trước kỳ và đúng bộ lọc', () => {
+  ctx.activeGdvReportMonth = '11'; ctx.activeGdvReportYear = '2026'; ctx.activeReportClaimType = 'all';
+  ctx.activeSelectedGdvNames = []; ctx.activeGdvReportBranch = 'all';
+  ctx.cachedPendingClaimsPayload = {
+    open: { ngayMoHs:'02/11/2026', tenGara:'Gara A', duPhongBoiThuong:'20.000.000', trangThai:'da_duyet_hsbt', toTrinhNgayDuyet:'08/11/2026', ttbtTongSoTienBoiThuong:'12.000.000', gdvTiepNhan:'An' },
+    older: { ngayMoHs:'02/10/2026', tenGara:'Gara B', trangThai:'da_thanh_toan', ngayDuyetHsbt:'09/11/2026', ttbtTongSoTienBoiThuong:'30.000.000', gdvTiepNhan:'An' },
+    otherMonth: { ngayMoHs:'03/11/2026', tenGara:'Gara A', trangThai:'da_duyet_hsbt', toTrinhNgayDuyet:'09/10/2026', ttbtTongSoTienBoiThuong:'50.000.000', gdvTiepNhan:'An' },
+    pending: { ngayMoHs:'04/11/2026', tenGara:'Gara A', trangThai:'cho_duyet_hsbt', toTrinhNgayDuyet:'10/11/2026', ttbtTongSoTienBoiThuong:'80.000.000', gdvTiepNhan:'An' },
+    otherGdv: { ngayMoHs:'01/10/2026', tenGara:'Gara C', trangThai:'da_duyet_hsbt', toTrinhNgayDuyet:'10/11/2026', ttbtTongSoTienBoiThuong:'40.000.000', gdvTiepNhan:'Bình' },
+    missingDate: { tenGara:'Gara C', trangThai:'da_duyet_hsbt', pascNgayDuyet:'10/11/2026', ttbtTongSoTienBoiThuong:'90.000.000', gdvTiepNhan:'An' }
+  };
+  ctx.activeSelectedGdvNames = ['An'];
+  const d = JSON.parse(JSON.stringify(ctx.getMonthlyOpenedChartData()));
+  assert.equal(d.total, 3);
+  assert.deepEqual(d.gara.labels, ['Gara A', 'Gara B']);
+  assert.deepEqual(d.gara.count, [3, 0]);
+  assert.deepEqual(d.gara.approved, [12000000, 30000000]);
+  assert.deepEqual(d.gara.approvedCount, [1, 1]);
+  assert.equal(d.totalApproved, 42000000);
+  assert.match(ctx.renderMonthlyOpenedClaimsReportHtml(), /Dự phòng theo ngày mở; duyệt HSBT theo ngày duyệt/);
+  ctx.activeSelectedGdvNames = []; ctx.cachedPendingClaimsPayload = {};
+});
+
+test('Duyệt HSBT được cộng đúng khi gộp gara và có chi tiết trong Excel', () => {
+  ctx.activeGdvReportMonth = '11'; ctx.activeGdvReportYear = '2026'; ctx.activeReportClaimType = 'all';
+  ctx.activeSelectedGdvNames = []; ctx.activeGdvReportBranch = 'all';
+  const claims = {};
+  for (let i = 1; i <= 17; i++) claims['g' + i] = { tenGara:'Gara ' + String(i).padStart(2,'0'), ngayMoHs:'02/11/2026', duPhongBoiThuong:String(i * 1000000), trangThai:'da_duyet_hsbt', toTrinhNgayDuyet:'15/11/2026', ttbtTongSoTienBoiThuong:String(i * 100000) };
+  claims.older = { tenGara:'Chỉ duyệt', ngayMoHs:'01/10/2026', trangThai:'da_duyet_hsbt', toTrinhNgayDuyet:'15/11/2026', ttbtTongSoTienBoiThuong:'2.000.000' };
+  ctx.cachedPendingClaimsPayload = claims;
+  const d = JSON.parse(JSON.stringify(ctx.getMonthlyOpenedChartData()));
+  assert.equal(d.gara.labels[15], 'Khác');
+  assert.equal(d.gara.approved.reduce((a,b) => a+b, 0), d.totalApproved);
+  assert.equal(d.gara.approved[15], 2300000, 'hai gara ít dự phòng và gara chỉ có duyệt đều được gộp');
+  const sheets = {};
+  ctx.XLSX = {utils:{json_to_sheet:rows => rows, book_new:() => ({}), book_append_sheet:(_wb, sheet, name) => { sheets[name] = sheet; }}, writeFile() {}};
+  ctx.triggerToast = () => {};
+  ctx.exportMonthlyOpenedClaimsReportExcel();
+  assert.equal(sheets.Theo_Gara.find(row => row.Gara === 'Chỉ duyệt')['Duyệt HSBT trong kỳ (VNĐ)'], 2000000);
+  assert.equal(sheets.Theo_Gara.find(row => row.Gara === 'Tổng cộng')['Duyệt HSBT trong kỳ (VNĐ)'], d.totalApproved);
+  assert.equal(sheets.HSBT_Duyet_Trong_Ky.length, 18);
+  ctx.cachedPendingClaimsPayload = {};
+});
+
+test('Kỳ không có hồ sơ mở vẫn hiển thị và xuất được hồ sơ duyệt', () => {
+  ctx.activeGdvReportMonth = '11'; ctx.activeGdvReportYear = '2026'; ctx.activeReportClaimType = 'all';
+  ctx.activeSelectedGdvNames = []; ctx.activeGdvReportBranch = 'all';
+  ctx.cachedPendingClaimsPayload = { old: {tenGara:'Gara trước kỳ', ngayMoHs:'01/10/2026', trangThai:'da_duyet_hsbt', toTrinhNgayDuyet:'10/11/2026', ttbtTongSoTienBoiThuong:'4.000.000'} };
+  const data = ctx.getMonthlyOpenedChartData();
+  assert.equal(data.total, 0); assert.equal(data.totalApproved, 4000000);
+  assert.match(ctx.renderMonthlyOpenedClaimsReportHtml(), /id="monthlyOpenedGaraCanvas"/);
+  const sheets = {};
+  ctx.XLSX = {utils:{json_to_sheet:rows => rows, book_new:() => ({}), book_append_sheet:(_wb, sheet, name) => { sheets[name] = sheet; }}, writeFile() {}};
+  ctx.triggerToast = () => {};
+  ctx.exportMonthlyOpenedClaimsReportExcel();
+  assert.equal(sheets.HSBT_Duyet_Trong_Ky[0]['Tiền duyệt HSBT (VNĐ)'], 4000000);
   ctx.cachedPendingClaimsPayload = {};
 });
