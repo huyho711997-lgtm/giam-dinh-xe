@@ -73,9 +73,14 @@ const OfficialLetterModels = (() => {
   function profile(providerId, model) {
     if (providerId === 'deepseek') return {reasoning: 'deepseek', vision: true, maxOut: 0, maxSources: 0};
     if (providerId === 'gemini') return {reasoning: 'effort', effortOn: 'high', effortOff: 'low', vision: true, maxOut: 0, maxSources: 0};
+    // Antigravity (qua CLIProxyAPI): reasoning_effort được dịch sang thinkingLevel của Gemini 3 — "high" suy luận sâu hơn "low" nhiều lần.
+    if (providerId === 'antigravity') return {reasoning: 'effort', effortOn: 'high', effortOff: 'low', vision: true, maxOut: 0, maxSources: 0};
     if (providerId === 'groq') return {reasoning: /gpt-oss/i.test(model) ? 'effort' : 'none', effortOn: 'medium', effortOff: 'low', vision: /llama-4|scout|maverick|vision/i.test(model), maxOut: 4000, maxSources: 5};
     return {reasoning: 'none', vision: true, maxOut: 0, maxSources: 0};
   }
+  // Hạn chờ một lượt gọi (mili giây; 0 = không đặt thêm). Antigravity đi qua cầu nối cục bộ (tối đa 180 giây): lượt thường cắt sớm để báo lỗi kết nối,
+  // lượt suy luận sâu cần lâu hơn nhưng vẫn ngắn hơn hạn của cầu nối để người dùng nhận được thông báo rõ ràng.
+  const timeoutMs = (providerId, thinking) => providerId !== 'antigravity' ? 0 : thinking ? 170000 : 45000;
   // Trả về mô hình đang chọn (hoặc theo id) cùng mọi thứ cần để gọi API.
   function resolve(cfg, id) {
     const all = entries(cfg);
@@ -137,5 +142,5 @@ const OfficialLetterModels = (() => {
     return uniq(ids).filter(id => MODEL_RE.test(id)).sort();
   }
 
-  return {KEY, ORDER, PROVIDERS, defaults, normalize, load, save, entries, resolve, profile, endpointOf, baseOf, providerLabel, shortModel, parseModels, normalizeBase, getKey, keyStatus, noKeyMessage, listModels};
+  return {KEY, ORDER, PROVIDERS, defaults, normalize, load, save, entries, resolve, profile, endpointOf, baseOf, timeoutMs, providerLabel, shortModel, parseModels, normalizeBase, getKey, keyStatus, noKeyMessage, listModels};
 })();
