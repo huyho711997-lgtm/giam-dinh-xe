@@ -2223,8 +2223,7 @@ const fullList = getCarBrandLossData();
     function getClaimReserveAmountValue(c) {
       if (!c) return 0;
       const raw = c.duPhongBoiThuong || c.soTienDuPhong || c.duPhong || c.duPhongGiaTri || c['Dự phòng bồi thường'] || c['Số tiền dự phòng'] || '0';
-      const clean = String(raw).replace(/\D/g, '');
-      return parseInt(clean, 10) || 0;
+      return parseClaimMoneyValue(raw) ?? 0;
     }
 
     function isTndsClaimMonthlyRecord(c) {
@@ -2297,7 +2296,7 @@ const fullList = getCarBrandLossData();
         const date = getClaimOpenDateInfo({ ngayMoHs: raw });
         if (!date || (year !== 'all' && date.year !== parseInt(year, 10)) || (month !== 'all' && date.month !== parseInt(month, 10))) return false;
         c._approvalDate = date;
-        c._approvedVal = parseInt(String(c.ttbtTongSoTienBoiThuong || '0').replace(/\D/g, ''), 10) || 0;
+        c._approvedVal = parseClaimMoneyValue(c.ttbtTongSoTienBoiThuong) ?? 0;
         return true;
       });
     }

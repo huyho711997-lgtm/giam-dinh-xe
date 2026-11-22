@@ -21,6 +21,7 @@ const runtimeSrc = read('js/core/runtime.js');
 const reservesSrc = read('js/features/reports/reserves.js');
 const weeklyEngineSrc = read('js/features/reports/weekly-engine.js');
 const filtersSrc = read('js/features/reports/filters-settings.js');
+const pendingEditorSrc = read('js/features/claims/pending-editor.js');
 
 const statusMapStr = /const PENDING_STATUS_MAP = \{[\s\S]*?\n    \};/.exec(runtimeSrc)[0];
 
@@ -49,6 +50,7 @@ vm.runInContext([
   extractFunction(filtersSrc, 'getRuleArray'),
   extractFunction(filtersSrc, 'isTndsClaim'),
   extractFunction(filtersSrc, 'isDuyetHsbtApproved'),
+  extractFunction(pendingEditorSrc, 'parseClaimMoneyValue'),
   extractFunction(reservesSrc, 'getClaimOpenDateInfo'),
   extractFunction(reservesSrc, 'getClaimReserveAmountValue'),
   extractFunction(reservesSrc, 'isTndsClaimMonthlyRecord'),
@@ -95,6 +97,13 @@ test('getClaimReserveAmountValue lấy đúng số tiền dự phòng bồi thư
   assert.equal(ctx.getClaimReserveAmountValue({ 'Dự phòng bồi thường': '5.000.000' }), 5000000);
   assert.equal(ctx.getClaimReserveAmountValue({ duPhongBoiThuong: '' }), 0);
   assert.equal(ctx.getClaimReserveAmountValue({}), 0);
+  assert.equal(ctx.getClaimReserveAmountValue({duPhongBoiThuong:'43049479.99999999'}), 43049480);
+});
+
+test('đọc tiền Excel có sai số thập phân mà vẫn giữ định dạng hàng nghìn', () => {
+  for (const [value, expected] of [[43049479.99999999,43049480], ['43049479.99999999',43049480], ['60191003.00000001',60191003], ['51852344.99999999',51852345], ['1.234.567',1234567], ['1,234,567',1234567], ['1.234.567,75 đ',1234568], ['1,234,567.75 VND',1234568], ['1e+6',1000000], [0,0], ['',null]]) {
+    assert.equal(ctx.parseClaimMoneyValue(value), expected, String(value));
+  }
 });
 
 test('getMonthlyOpenedClaimsData lọc chính xác hồ sơ mở trong tháng và tính tổng xe & dự phòng', () => {
@@ -322,6 +331,16 @@ test('Kỳ không có hồ sơ mở vẫn hiển thị và xuất được hồ 
   ctx.triggerToast = () => {};
   ctx.exportMonthlyOpenedClaimsReportExcel();
   assert.equal(sheets.HSBT_Duyet_Trong_Ky[0]['Tiền duyệt HSBT (VNĐ)'], 4000000);
+  ctx.cachedPendingClaimsPayload = {};
+});
+
+test('tổng tiền duyệt và dự phòng không ghép các chữ số sau dấu thập phân', () => {
+  ctx.activeGdvReportMonth = '11'; ctx.activeGdvReportYear = '2026'; ctx.activeReportClaimType = 'all';
+  ctx.activeSelectedGdvNames = []; ctx.activeGdvReportBranch = 'all';
+  ctx.cachedPendingClaimsPayload = {sample:{tenGara:'Gara mẫu', ngayMoHs:'01/11/2026', trangThai:'da_duyet_hsbt', toTrinhNgayDuyet:'10/11/2026', duPhongBoiThuong:'43049479.99999999', ttbtTongSoTienBoiThuong:'60191003.00000001'}};
+  const data = ctx.getMonthlyOpenedChartData();
+  assert.equal(data.totalReserve,43049480); assert.equal(data.totalApproved,60191003);
+  assert.equal(data.gara.reserve[0],43049480); assert.equal(data.gara.approved[0],60191003);
   ctx.cachedPendingClaimsPayload = {};
 });
 

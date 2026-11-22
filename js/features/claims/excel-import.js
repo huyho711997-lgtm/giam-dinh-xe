@@ -478,6 +478,11 @@ function formatDateDisplay(val) {
       parsedExcelBatchRows = [];
 
       const getVal = (r, idx) => (idx !== undefined && idx !== -1) ? String(r[idx] || '').trim() : '';
+      // Tiền dạng số từ Excel được làm tròn về đồng trước khi lưu, tránh sai số nhị phân.
+      const getMoneyVal = (r, idx) => {
+        const raw = idx !== undefined && idx !== -1 ? r[idx] : '';
+        return typeof raw === 'number' && Number.isFinite(raw) && raw !== 0 ? String(Math.round(raw)) : getVal(r, idx);
+      };
 
       for (let i = headerIndex + 1; i < rows.length; i++) {
         const r = rows[i];
@@ -494,7 +499,7 @@ function formatDateDisplay(val) {
         const rawSoHsbt = getVal(r, colMap.soHsbt);
         const rawStatusStr = getVal(r, colMap.status);
         const rawGara = getVal(r, colMap.gara) || getVal(r, colMap.tenGaraVietTat);
-        const rawAmount = getVal(r, colMap.amount) || getVal(r, colMap.ttbtSoTienBoiThuong) || getVal(r, colMap.pascSoTienDuyet);
+        const rawAmount = getMoneyVal(r, colMap.amount) || getMoneyVal(r, colMap.ttbtSoTienBoiThuong) || getMoneyVal(r, colMap.pascSoTienDuyet);
 
         if (!rawBsx && !rawVtt && !rawSoHsbt) continue;
 
@@ -564,8 +569,8 @@ function formatDateDisplay(val) {
           phongBan: getVal(r, colMap.phongBan),
           soHd: getVal(r, colMap.soHd),
           nguoiCapDon: getVal(r, colMap.nguoiCapDon),
-          giaTriXe: getVal(r, colMap.giaTriXe),
-          soTienBh: getVal(r, colMap.soTienBh),
+          giaTriXe: getMoneyVal(r, colMap.giaTriXe),
+          soTienBh: getMoneyVal(r, colMap.soTienBh),
           soGcn: getVal(r, colMap.soGcn),
           ngayHieuLuc: formatCleanDateField(getVal(r, colMap.ngayHieuLuc)),
           ngayHetHan: formatCleanDateField(getVal(r, colMap.ngayHetHan)),
@@ -574,7 +579,7 @@ function formatDateDisplay(val) {
           maKhaiThac: getVal(r, colMap.maKhaiThac),
           hinhThucCapDon: getVal(r, colMap.hinhThucCapDon),
           ngayThanhToanPhi: formatCleanDateField(getVal(r, colMap.ngayThanhToanPhi)),
-          phiBh: getVal(r, colMap.phiBh),
+          phiBh: getMoneyVal(r, colMap.phiBh),
           khachHang: getVal(r, colMap.khachHang),
           loaiXe: getVal(r, colMap.loaiXe),
           loaiDongCo: getVal(r, colMap.loaiDongCo),
@@ -591,29 +596,29 @@ function formatDateDisplay(val) {
           nhomNguyenNhan: getVal(r, colMap.nhomNguyenNhan),
           maGara: getVal(r, colMap.maGara),
           gdvHo: getVal(r, colMap.gdvHo),
-          uocThietHai: getVal(r, colMap.uocThietHai),
+          uocThietHai: getMoneyVal(r, colMap.uocThietHai),
           pascNgayDuyet: formatCleanDateField(getVal(r, colMap.pascNgayDuyet)),
           pascNguoiDuyet: getVal(r, colMap.pascNguoiDuyet),
-          pascSoTienDuyet: getVal(r, colMap.pascSoTienDuyet),
+          pascSoTienDuyet: getMoneyVal(r, colMap.pascSoTienDuyet),
           toTrinhNgayDuyet: formatCleanDateField(getVal(r, colMap.toTrinhNgayDuyet)),
           toTrinhNguoiDuyet: getVal(r, colMap.toTrinhNguoiDuyet),
-          ttbtSoTienBoiThuong: getVal(r, colMap.ttbtSoTienBoiThuong),
-          ttbtTongSoTienBoiThuong: getVal(r, colMap.ttbtTongSoTienBoiThuong) || getVal(r, colMap.tongBoiThuongSauThue) || getVal(r, colMap.amount) || getVal(r, colMap.ttbtSoTienBoiThuong) || getVal(r, colMap.pascSoTienDuyet),
-          chiPhiGiamDinh: getVal(r, colMap.chiPhiGiamDinh),
-          chiPhiCuuHo: getVal(r, colMap.chiPhiCuuHo),
-          chiPhiKhac: getVal(r, colMap.chiPhiKhac),
-          duPhongBoiThuong: getVal(r, colMap.duPhongBoiThuong),
+          ttbtSoTienBoiThuong: getMoneyVal(r, colMap.ttbtSoTienBoiThuong),
+          ttbtTongSoTienBoiThuong: getMoneyVal(r, colMap.ttbtTongSoTienBoiThuong) || getMoneyVal(r, colMap.tongBoiThuongSauThue) || getMoneyVal(r, colMap.amount) || getMoneyVal(r, colMap.ttbtSoTienBoiThuong) || getMoneyVal(r, colMap.pascSoTienDuyet),
+          chiPhiGiamDinh: getMoneyVal(r, colMap.chiPhiGiamDinh),
+          chiPhiCuuHo: getMoneyVal(r, colMap.chiPhiCuuHo),
+          chiPhiKhac: getMoneyVal(r, colMap.chiPhiKhac),
+          duPhongBoiThuong: getMoneyVal(r, colMap.duPhongBoiThuong),
           thuDoiDongBhTyLe: getVal(r, colMap.thuDoiDongBhTyLe),
-          thuDoiDongBhSoTien: getVal(r, colMap.thuDoiDongBhSoTien),
+          thuDoiDongBhSoTien: getMoneyVal(r, colMap.thuDoiDongBhSoTien),
           dongBhFollowTyLe: getVal(r, colMap.dongBhFollowTyLe),
-          dongBhFollowSoTien: getVal(r, colMap.dongBhFollowSoTien),
-          tongBoiThuongSauThue: getVal(r, colMap.tongBoiThuongSauThue),
-          vat: getVal(r, colMap.vat),
+          dongBhFollowSoTien: getMoneyVal(r, colMap.dongBhFollowSoTien),
+          tongBoiThuongSauThue: getMoneyVal(r, colMap.tongBoiThuongSauThue),
+          vat: getMoneyVal(r, colMap.vat),
           ngayNhanDuHoSo: formatCleanDateField(getVal(r, colMap.ngayNhanDuHoSo)),
           ngayDuyetDnttDauTien: formatCleanDateField(getVal(r, colMap.ngayDuyetDnttDauTien)),
           ngayDuyetDnttCuoiCung: formatCleanDateField(getVal(r, colMap.ngayDuyetDnttCuoiCung)),
           ngayKtXacNhan: formatCleanDateField(getVal(r, colMap.ngayKtXacNhan)),
-          soTienDaThanhToan: getVal(r, colMap.soTienDaThanhToan),
+          soTienDaThanhToan: getMoneyVal(r, colMap.soTienDaThanhToan),
           ngayThanhToan: formatCleanDateField(getVal(r, colMap.ngayThanhToan)),
           ghiChu: getVal(r, colMap.ghiChu),
           lyDoHuy: getVal(r, colMap.lyDoHuy),

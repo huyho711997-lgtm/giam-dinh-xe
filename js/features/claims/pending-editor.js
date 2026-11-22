@@ -3,11 +3,36 @@
     /****************************************************
      * SMART PARSER ENGINE & PENDING CLAIMS SYSTEM
      ****************************************************/
+    // Ô số từ Excel có thể mang sai số dấu phẩy động, ví dụ 43049479.99999999.
+    // Không xóa dấu thập phân rồi nối các chữ số: số tiền tính theo đồng được làm tròn.
+    function parseClaimMoneyValue(value) {
+      if (value === null || value === undefined || value === '') return null;
+      if (typeof value === 'number') return Number.isFinite(value) ? Math.round(value) : null;
+      const text = String(value).trim().replace(/[\s\u00a0₫đ]/gi, '').replace(/vnd/gi, '');
+      if (!text || !/\d/.test(text)) return null;
+      if (/^[+-]?\d+(?:\.\d+)?e[+-]?\d+$/i.test(text)) {
+        const number = Number(text);
+        return Number.isFinite(number) ? Math.round(number) : null;
+      }
+      if (!/^[+-]?[\d.,]+$/.test(text)) return null;
+      let normalized = text;
+      if (/^[+-]?\d{1,3}(?:[.,]\d{3})+$/.test(text)) normalized = text.replace(/[.,]/g, '');
+      else {
+        const lastDot = text.lastIndexOf('.'), lastComma = text.lastIndexOf(',');
+        const separator = Math.max(lastDot, lastComma);
+        if (separator >= 0) {
+          const tail = text.slice(separator + 1);
+          const isDecimal = tail.length !== 3 && /^\d+$/.test(tail);
+          normalized = isDecimal ? text.slice(0, separator).replace(/[.,]/g, '') + '.' + tail : text.replace(/[.,]/g, '');
+        }
+      }
+      const number = Number(normalized);
+      return Number.isFinite(number) ? Math.round(number) : null;
+    }
+
     function formatCurrencyInputNumber(val) {
-      if (val === null || val === undefined || val === '') return '';
-      const numStr = String(val).replace(/\D/g, '');
-      if (!numStr) return '';
-      return Number(numStr).toLocaleString('vi-VN');
+      const amount = parseClaimMoneyValue(val);
+      return amount === null ? '' : amount.toLocaleString('vi-VN');
     }
 
 
