@@ -9,6 +9,10 @@
       const currentCalendarMonth = _nowPeriod.getMonth() + 1;
       const currentCalendarYear = _nowPeriod.getFullYear();
 
+      if (typeof isPendingClaimsLoaded !== 'undefined' && !isPendingClaimsLoaded && typeof schedulePendingClaimsFallbackSync === 'function') {
+        schedulePendingClaimsFallbackSync();
+      }
+
       const currentUser = firebase.auth().currentUser;
       if (currentUser && dbNodeInstance) {
         const uid = currentUser.uid;

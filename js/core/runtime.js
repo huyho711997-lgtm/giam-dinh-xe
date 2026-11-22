@@ -70,6 +70,10 @@ let cachedCasesPayload = null;
  
     let cachedPendingClaimsPayload = {};
 
+    let isPendingClaimsLoaded = false;
+
+    let lastPendingClaimsSyncAt = 0;
+
     let cachedPendingNotesPayload = {};
 
     let rawPendingClaimsPayload = {};

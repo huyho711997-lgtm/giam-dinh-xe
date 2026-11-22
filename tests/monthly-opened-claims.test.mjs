@@ -348,3 +348,21 @@ test('CSS báo cáo tháng không chứa hàm màu color-mix gây lỗi html2can
   const reportPagesCss = read('css/report-pages.css');
   assert.ok(!reportPagesCss.includes('color-mix('), 'css/report-pages.css không được dùng color-mix() để tránh crash html2canvas khi xuất ảnh');
 });
+
+test('Hiển thị trạng thái đang đồng bộ khi chưa tải xong pending_claims và tự cập nhật khi có dữ liệu', () => {
+  ctx.cachedPendingClaimsPayload = {};
+  ctx.isPendingClaimsLoaded = false;
+  const loadingHtml = ctx.renderMonthlyOpenedClaimsReportHtml();
+  assert.ok(loadingHtml.includes('mo-loading-state'), 'Phải hiển thị trạng thái đang tải khi isPendingClaimsLoaded = false');
+  assert.ok(!loadingHtml.includes('Không có hồ sơ nào mở'), 'Không được báo trống giả lúc đang tải dữ liệu');
+
+  ctx.isPendingClaimsLoaded = true;
+  const emptyHtml = ctx.renderMonthlyOpenedClaimsReportHtml();
+  assert.ok(emptyHtml.includes('Không có hồ sơ nào mở'), 'Sau khi đã tải xong mà không có hồ sơ thì mới báo trống');
+
+  // Kiểm tra workspace.js tự gọi scheduleGdvReportAutoRefresh khi pending_claims tải về
+  const workspaceSrc = read('js/features/dashboard/workspace.js');
+  assert.ok(workspaceSrc.includes('function applyPendingClaimsSnapshot('), 'workspace.js phải có applyPendingClaimsSnapshot');
+  assert.ok(workspaceSrc.includes('scheduleGdvReportAutoRefresh('), 'workspace.js phải tự cập nhật trang gdv_report khi pending_claims trả về');
+  assert.ok(workspaceSrc.includes('schedulePendingClaimsFallbackSync('), 'workspace.js phải có cơ chế chờ vài giây tự đồng bộ dự phòng từ database');
+});

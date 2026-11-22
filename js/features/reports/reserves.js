@@ -2731,6 +2731,8 @@ const fullList = getCarBrandLossData();
           </div>
         </section>`;
 
+      const isLoadingClaims = (typeof isPendingClaimsLoaded !== 'undefined' && !isPendingClaimsLoaded) && totalClaims === 0 && chartData.gara.labels.length === 0;
+
       return `
         <!-- 4 EXECUTIVE KPI SUMMARY CARDS (đồng bộ chuẩn Paper / Forest / Champagne) -->
         <div class="rp-summary-strip rp-summary-strip--monthly-opened">
@@ -2740,8 +2742,8 @@ const fullList = getCarBrandLossData();
               <span class="mo-kpi-label">Số lượng xe / Hồ sơ mở</span>
             </div>
             <div class="mo-kpi-value mo-kpi-value--gold">
-              <span>${totalClaims.toLocaleString('vi-VN')}</span>
-              <span class="mo-kpi-unit">hồ sơ (${totalUniqueVehicles} xe)</span>
+              <span>${isLoadingClaims ? '…' : totalClaims.toLocaleString('vi-VN')}</span>
+              <span class="mo-kpi-unit">${isLoadingClaims ? 'đang tải dữ liệu' : `hồ sơ (${totalUniqueVehicles} xe)`}</span>
             </div>
             <div class="mo-kpi-meta">Ngày mở hồ sơ trong ${escapeHtmlOutput(monthLabel)}</div>
           </div>
@@ -2752,8 +2754,8 @@ const fullList = getCarBrandLossData();
               <span class="mo-kpi-label">Tổng tiền dự phòng bồi thường</span>
             </div>
             <div class="mo-kpi-value mo-kpi-value--green">
-              <span>${formatCurrencyInputNumber(totalReserve)}</span>
-              <span class="mo-kpi-unit">đ</span>
+              <span>${isLoadingClaims ? '…' : formatCurrencyInputNumber(totalReserve)}</span>
+              <span class="mo-kpi-unit">${isLoadingClaims ? '' : 'đ'}</span>
             </div>
             <div class="mo-kpi-meta">Lấy theo số tiền dự phòng tổn thất</div>
           </div>
@@ -2764,8 +2766,8 @@ const fullList = getCarBrandLossData();
               <span class="mo-kpi-label">Dự phòng bình quân / xe</span>
             </div>
             <div class="mo-kpi-value mo-kpi-value--blue">
-              <span>${formatCurrencyInputNumber(avgReservePerVehicle)}</span>
-              <span class="mo-kpi-unit">đ/xe</span>
+              <span>${isLoadingClaims ? '…' : formatCurrencyInputNumber(avgReservePerVehicle)}</span>
+              <span class="mo-kpi-unit">${isLoadingClaims ? '' : 'đ/xe'}</span>
             </div>
             <div class="mo-kpi-meta">Ước tính tổn thất trung bình mỗi xe</div>
           </div>
@@ -2774,11 +2776,11 @@ const fullList = getCarBrandLossData();
           <div class="p-card stat-widget">
             <div class="mo-kpi-head">
               <span class="mo-kpi-label">Hồ sơ có dự phòng &amp; Nghiệp vụ</span>
-              <span class="mo-kpi-badge">${reserveCoveragePct}%</span>
+              <span class="mo-kpi-badge">${isLoadingClaims ? '…' : reserveCoveragePct + '%'}</span>
             </div>
             <div class="mo-kpi-value mo-kpi-value--violet">
-              <span>${claimsWithReserveCount}</span>
-              <span class="mo-kpi-unit">/${totalClaims} hồ sơ</span>
+              <span>${isLoadingClaims ? '…' : claimsWithReserveCount}</span>
+              <span class="mo-kpi-unit">${isLoadingClaims ? '' : `/${totalClaims} hồ sơ`}</span>
             </div>
             <div class="mo-kpi-meta">
               <span class="mo-kpi-split" title="Vật chất xe: ${formatCurrencyInputNumber(vcxReserve)} đ"><span class="mo-kpi-dot" style="background:#2563eb;"></span>VCX: <strong>${vcxCount}</strong> (${moMoney(vcxReserve)})</span>
@@ -2795,9 +2797,13 @@ const fullList = getCarBrandLossData();
                 <span class="mo-eyebrow">XE &amp; DỰ PHÒNG MỞ TRONG KỲ</span>
                 <h2 class="mo-chart-title">Biểu đồ hồ sơ mở &amp; dự phòng bồi thường · ${escapeHtmlOutput(monthLabel)}</h2>
                 <p class="mo-chart-subtitle">
-                  <span>Tổng dự phòng: <strong>${formatCurrencyInputNumber(totalReserve)} đ</strong></span>
-                  <span>Bình quân: <strong>${formatCurrencyInputNumber(avgReservePerVehicle)} đ/hồ sơ</strong></span>
-                  <span>Phân tách VCX, TNDS và dự phòng tổn thất theo ngày mở hồ sơ</span>
+                  ${isLoadingClaims ? `
+                    <span>Đang đồng bộ dữ liệu hồ sơ mới nhất từ cơ sở dữ liệu...</span>
+                  ` : `
+                    <span>Tổng dự phòng: <strong>${formatCurrencyInputNumber(totalReserve)} đ</strong></span>
+                    <span>Bình quân: <strong>${formatCurrencyInputNumber(avgReservePerVehicle)} đ/hồ sơ</strong></span>
+                    <span>Phân tách VCX, TNDS và dự phòng tổn thất theo ngày mở hồ sơ</span>
+                  `}
                 </p>
               </div>
               <div class="mo-chart-actions hide-on-screenshot">
@@ -2816,7 +2822,13 @@ const fullList = getCarBrandLossData();
               </div>
             </div>
 
-            ${totalClaims === 0 ? `
+            ${isLoadingClaims ? `
+              <div role="status" class="mo-loading-state">
+                <span class="mo-loading-spinner" aria-hidden="true"></span>
+                <div class="mo-loading-title">Đang đồng bộ dữ liệu hồ sơ từ cơ sở dữ liệu...</div>
+                <div class="mo-loading-sub">Hệ thống sẽ tự động cập nhật số liệu và biểu đồ sau vài giây.</div>
+              </div>
+            ` : totalClaims === 0 ? `
               <div role="status" class="mo-empty-state">Không có hồ sơ nào mở trong ${escapeHtmlOutput(monthLabel)} theo bộ lọc hiện tại.</div>
             ` : `
               ${buildPanelHead('Diễn biến theo ' + (chartData.mode === 'day' ? 'ngày' : 'tháng') + ' mở hồ sơ', chartData.timeline, '', 'monthlyOpenedTimelineCard', 'Bieu_Do_Dien_Bien_Mo_Ho_So')}

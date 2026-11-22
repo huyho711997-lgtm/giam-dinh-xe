@@ -66,6 +66,114 @@
     }
 
 
+    let gdvReportRefreshTimer = null;
+    let pendingClaimsFallbackTimers = [];
+
+    function clearPendingClaimsFallbackTimers() {
+      pendingClaimsFallbackTimers.forEach(t => clearTimeout(t));
+      pendingClaimsFallbackTimers = [];
+    }
+
+    function scheduleGdvReportAutoRefresh(forceImmediate = false) {
+      if (activeDashboardTab !== 'gdv_report') return;
+      if (gdvReportRefreshTimer) clearTimeout(gdvReportRefreshTimer);
+      gdvReportRefreshTimer = setTimeout(() => {
+        gdvReportRefreshTimer = null;
+        if (activeDashboardTab !== 'gdv_report') return;
+
+        if (activeGdvReportView === 'kpi_zone' && typeof KpiZonePage !== 'undefined') {
+          KpiZonePage.refresh();
+          return;
+        }
+        if (activeGdvReportView === 'backlog_watch' && typeof BacklogWatchPage !== 'undefined') {
+          BacklogWatchPage.refresh();
+          return;
+        }
+
+        const tabEl = document.getElementById('tabContentContainer');
+        const activeEl = document.activeElement;
+        const isTypingInsideReport = Boolean(
+          tabEl && activeEl && tabEl.contains(activeEl) &&
+          /^(INPUT|TEXTAREA|SELECT)$/i.test(activeEl.tagName)
+        );
+        const hasOpenDropdown = Boolean(tabEl && tabEl.querySelector('.ton-dropdown-host--open'));
+
+        if (!forceImmediate && (isTypingInsideReport || hasOpenDropdown)) {
+          gdvReportRefreshTimer = setTimeout(() => scheduleGdvReportAutoRefresh(false), 1200);
+          return;
+        }
+
+        if (typeof renderGdvMonthlyReportPage === 'function') {
+          renderGdvMonthlyReportPage();
+        }
+      }, forceImmediate ? 60 : 140);
+    }
+
+    function applyPendingClaimsSnapshot(val) {
+      const safeVal = val && typeof val === 'object' ? val : {};
+      const wasLoaded = Boolean(typeof isPendingClaimsLoaded !== 'undefined' && isPendingClaimsLoaded);
+      const hadClaims = Object.keys(cachedPendingClaimsPayload || {}).length > 0;
+
+      rawPendingClaimsPayload = safeVal;
+      if (typeof ClaimsMirror !== 'undefined') ClaimsMirror.schedule(safeVal); // bản rút gọn sang Supabase cho trang Tasco DLK (một chiều)
+      const currentUser = firebase.auth().currentUser;
+      cachedPendingClaimsPayload = filterPendingClaimsByUserPrivileges(safeVal, currentUser);
+      isPendingClaimsLoaded = true;
+      lastPendingClaimsSyncAt = Date.now();
+
+      const hasNowClaims = Object.keys(cachedPendingClaimsPayload || {}).length > 0;
+      if (hasNowClaims) clearPendingClaimsFallbackTimers();
+
+      if (window.AppRoute?.onPendingClaimsLoaded) AppRoute.onPendingClaimsLoaded(); // URL #/ho-so-boi-thuong/<mã> → mở lại hồ sơ
+      if (typeof refreshHomeDashboard === 'function') refreshHomeDashboard(); // số liệu trang chủ
+
+      if (activeDashboardTab === 'pending') {
+        // Dữ liệu (cachedPendingClaimsPayload) đã cập nhật đồng bộ ở trên; chỉ việc VẼ được gom nhịp.
+        if (typeof schedulePendingClaimsRender === 'function') schedulePendingClaimsRender(); else executeUIRenderPendingClaims();
+      }
+      if (activeDashboardTab === 'gdv_report') {
+        scheduleGdvReportAutoRefresh(!wasLoaded || !hadClaims);
+      }
+      if (activeDashboardTab === 'claim_cancellation' && typeof renderClaimCancellationPage === 'function') {
+        renderClaimCancellationPage();
+      }
+      if (activeDashboardTab === 'pending_notes_tracker' && typeof renderPendingNotesTrackerPage === 'function') {
+        const activeEl = document.activeElement;
+        if (!activeEl || !/^(INPUT|TEXTAREA|SELECT)$/i.test(activeEl.tagName)) {
+          renderPendingNotesTrackerPage();
+        }
+      }
+      if (activeDashboardTab === 'accounting_claims' && typeof renderAccountingClaimsPage === 'function') {
+        renderAccountingClaimsPage();
+      }
+    }
+
+    function refreshPendingClaimsFromDatabase() {
+      if (!dbNodeInstance) return Promise.resolve(false);
+      return dbNodeInstance.ref('pending_claims').once('value').then((snapshot) => {
+        applyPendingClaimsSnapshot(snapshot.val() || {});
+        return true;
+      }).catch((err) => {
+        console.warn('Không thể tự động đồng bộ lại pending_claims từ Firebase:', err);
+        return false;
+      });
+    }
+
+    function schedulePendingClaimsFallbackSync() {
+      clearPendingClaimsFallbackTimers();
+      // Nhịp 1 (sau 2.5s) và Nhịp 2 (sau 6s): nếu vừa mở trang mà dữ liệu chưa kịp về hoặc đang rỗng thì chủ động kéo lại từ database.
+      [2500, 6000].forEach((delayMs) => {
+        const timer = setTimeout(() => {
+          const count = Object.keys(cachedPendingClaimsPayload || {}).length;
+          if (!isPendingClaimsLoaded || count === 0) {
+            refreshPendingClaimsFromDatabase();
+          }
+        }, delayMs);
+        pendingClaimsFallbackTimers.push(timer);
+      });
+    }
+
+
     function renderManagerDashboardWorkspace() {
       rootContainer.innerHTML = `
         <div id="tabContentContainer"></div>
@@ -128,29 +236,17 @@
         }
         
         if (activeDashboardTab === 'gdv_report') {
-          renderGdvMonthlyReportPage();
+          scheduleGdvReportAutoRefresh(true);
         }
       });
 
       dbNodeInstance.ref('pending_claims').off();
       dbNodeInstance.ref('pending_claims').on('value', (snapshot) => {
-        const val = snapshot.val() || {};
-        rawPendingClaimsPayload = val;
-        if (typeof ClaimsMirror !== 'undefined') ClaimsMirror.schedule(val); // bản rút gọn sang Supabase cho trang Tasco DLK (một chiều)
-        const currentUser = firebase.auth().currentUser;
-        cachedPendingClaimsPayload = filterPendingClaimsByUserPrivileges(val, currentUser);
-        if (window.AppRoute?.onPendingClaimsLoaded) AppRoute.onPendingClaimsLoaded(); // URL #/ho-so-boi-thuong/<mã> → mở lại hồ sơ
-        if (typeof refreshHomeDashboard === 'function') refreshHomeDashboard(); // số liệu trang chủ
-        if (activeDashboardTab === 'pending') {
-          // Dữ liệu (cachedPendingClaimsPayload) đã cập nhật đồng bộ ở trên; chỉ việc VẼ được gom nhịp.
-          if (typeof schedulePendingClaimsRender === 'function') schedulePendingClaimsRender(); else executeUIRenderPendingClaims();
-        }
-        if (activeDashboardTab === 'gdv_report' && activeGdvReportView === 'kpi_zone' && typeof KpiZonePage !== 'undefined') KpiZonePage.refresh(); // KPI Zone theo hồ sơ mới nhất
-        if (activeDashboardTab === 'gdv_report' && activeGdvReportView === 'backlog_watch' && typeof BacklogWatchPage !== 'undefined') BacklogWatchPage.refresh(); // Hồ sơ tồn cần xử lý theo hồ sơ mới nhất
-        if (activeDashboardTab === 'claim_cancellation') {
-          renderClaimCancellationPage();
-        }
+        applyPendingClaimsSnapshot(snapshot.val() || {});
       });
+
+      // Chờ vài giây sau khi load trang để đảm bảo dữ liệu từ Firebase đã được tải & đồng bộ lên màn hình.
+      schedulePendingClaimsFallbackSync();
 
       dbNodeInstance.ref('pending_notes').on('value', (snapshot) => {
         cachedPendingNotesPayload = snapshot.val() || {};
