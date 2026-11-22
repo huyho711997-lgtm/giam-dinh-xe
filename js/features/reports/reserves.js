@@ -2864,8 +2864,12 @@ const fullList = getCarBrandLossData();
           borderColor: COLORS[key],
           backgroundColor: isLine ? COLORS[key] : gradient(COLORS[key]),
           borderWidth: isLine ? 2.8 : 0,
-          borderRadius: isLine ? 0 : { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
-          maxBarThickness: 42,
+          borderSkipped: false,
+          borderRadius: isLine ? 0 : (ctx) => {
+            const hasTndsAbove = key === 'vcx' && (series.tnds[ctx.dataIndex] || 0) > 0;
+            return hasTndsAbove ? 0 : { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 };
+          },
+          maxBarThickness: 44,
           stack: isLine ? undefined : 'claims',
           pointRadius: isLine ? 4 : 0,
           pointHoverRadius: 6,
