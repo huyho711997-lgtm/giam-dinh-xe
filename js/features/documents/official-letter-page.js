@@ -304,11 +304,12 @@ const OfficialLetterPage = (() => {
     setStatus('Đang tìm căn cứ…');
     await findLegal(st.legalQueries, instruction);
   }
-  // Chọn văn bản làm căn cứ: tra lại chỉ trong văn bản đó rồi để người dùng bấm "Soạn lại theo chi tiết này".
-  async function pickLegalDoc(id) {
+  // Chọn một hoặc nhiều văn bản làm căn cứ: tra lại trong phạm vi đã chọn.
+  async function pickLegalDoc(id, toggle, checked) {
     if (st.busy) return;
     collectAll();
-    st.legalPin = id ? [id] : [];
+    if (toggle && id) st.legalPin = checked ? [...new Set(st.legalPin.concat(id))] : st.legalPin.filter(item => item !== id);
+    else st.legalPin = id ? [id] : [];
     const my = generation;
     startAgent('legal', 'Giữ dữ liệu hồ sơ hiện tại');
     step('read', 'skip', 'Giữ dữ liệu hồ sơ hiện tại'); step('legal', 'run', 'Đang tìm trong thư viện');
@@ -318,7 +319,7 @@ const OfficialLetterPage = (() => {
       if (my !== generation) return;
       dropStaleLegalNotes();
       step('legal', st.legalError ? 'err' : 'done', st.legalError || activeSources().length + ' đoạn căn cứ');
-      if (!st.notice || st.notice.kind !== 'warn') toast(id ? 'Đã chọn căn cứ từ "' + pinNames() + '". Bấm "Soạn lại theo chi tiết này" để áp dụng.' : 'Đã bỏ chọn — căn cứ tự động theo vấn đề.', 'success');
+      if (!st.notice || st.notice.kind !== 'warn') toast(st.legalPin.length ? 'Đã chọn căn cứ: ' + pinNames() + '. Bấm "Soạn lại theo chi tiết này" để áp dụng.' : 'Đã bỏ chọn — căn cứ tự động theo vấn đề.', 'success');
     } catch (error) { if (my !== generation || error.name === 'AbortError') return; step('legal', 'err', 'Chưa tìm được căn cứ'); notice(error.message || 'Không tìm được căn cứ.', 'error'); }
     finally { if (my === generation) { st.busy = ''; st.status = ''; renderAll(); } }
   }
@@ -1198,12 +1199,12 @@ const OfficialLetterPage = (() => {
     if (st.pop === 'type') return '<div class="ola-pop ola-pop--menu" role="menu" aria-label="Loại công văn">' + Core().templates().map(item => '<button type="button" role="menuitemradio" aria-checked="' + (item.id === templateId()) + '" data-ol-type="' + esc(item.id) + '"><b>' + esc(item.id === DEFAULT_TEMPLATE ? 'Tự do' : item.name) + '</b><small>' + esc(item.id === DEFAULT_TEMPLATE ? 'AI tự viết theo yêu cầu của bạn' : item.group) + '</small></button>').join('') + '</div>';
     if (st.pop === 'model') return modelPopHtml();
     if (st.pop === 'rules') {
-      const docs = st.libDocs, pinned = st.legalPin[0] || '';
-      const auto = '<button type="button" role="menuitemradio" aria-checked="' + (!pinned) + '" data-ol-rule=""><b>Tự động</b><small>AI tự tìm căn cứ trong toàn bộ Thư viện tài liệu theo vấn đề</small></button>';
+      const docs = st.libDocs, pinned = st.legalPin;
+      const auto = '<button type="button" role="menuitemradio" aria-checked="' + (!pinned.length) + '" data-ol-rule=""><b>Tự động</b><small>AI tự tìm căn cứ trong toàn bộ Thư viện tài liệu theo vấn đề</small></button>';
       const items = docs === null ? '<p class="ol-rec-empty">Đang tải Thư viện tài liệu…</p>'
         : !docs.length ? '<p class="ol-rec-empty">Thư viện chưa có văn bản nào — mở Thư viện tài liệu để nạp Luật, Nghị định, quy tắc bảo hiểm…</p>'
-        : docs.map(doc => '<button type="button" role="menuitemradio" aria-checked="' + (pinned === doc.id) + '" data-ol-rule="' + esc(doc.id) + '"' + (doc.active ? '' : ' disabled') + '><b>' + esc(doc.name) + '</b><small>' + esc((doc.soHieu && !fold(doc.name).includes(fold(doc.soHieu)) ? doc.soHieu + ' · ' : '') + (doc.active ? 'Chỉ lấy căn cứ trong văn bản này' : 'Hết hiệu lực — không chọn được')) + '</small></button>').join('');
-      return '<div class="ola-pop ola-pop--menu" role="menu" aria-label="Quy tắc / căn cứ">' + auto + items + '</div>';
+        : docs.map(doc => '<button type="button" role="menuitemcheckbox" aria-checked="' + pinned.includes(doc.id) + '" data-ol-rule="' + esc(doc.id) + '"' + (doc.active ? '' : ' disabled') + '><b>' + esc(doc.name) + '</b><small>' + esc((doc.soHieu && !fold(doc.name).includes(fold(doc.soHieu)) ? doc.soHieu + ' · ' : '') + (doc.active ? 'Chọn để thêm căn cứ' : 'Hết hiệu lực — không chọn được')) + '<span class="ola-rule-check" aria-hidden="true">✓</span></button>').join('');
+      return '<div class="ola-pop ola-pop--menu" role="menu" aria-label="Quy tắc / căn cứ"><p class="ola-rule-hint">Có thể chọn nhiều quy tắc cùng lúc</p>' + auto + items + '</div>';
     }
     return '';
   }
@@ -1214,9 +1215,10 @@ const OfficialLetterPage = (() => {
       : '<button type="button" class="ola-chip" data-ol-pop="record">' + svg(ICON.folder) + 'Hồ sơ</button>';
   }
   function rulesChipHtml(title) {
-    const pinnedDoc = (st.libDocs || []).find(doc => doc.id === st.legalPin[0]);
-    const ruleLabel = st.legalPin.length ? (pinnedDoc ? pinnedDoc.name : 'Đã chọn quy tắc') : 'Quy tắc: Tự động';
-    return '<button type="button" class="ola-chip' + (st.legalPin.length ? ' is-set' : '') + '" data-ol-pop="rules" title="' + esc(title || 'Chọn văn bản/quy tắc làm căn cứ cho AI') + '">' + svg(ICON.book) + '<span class="ola-chip-t">' + esc(ruleLabel) + '</span>' + svg(ICON.chevron) + '</button>';
+    const pinnedDocs = (st.libDocs || []).filter(doc => st.legalPin.includes(doc.id));
+    const ruleLabel = st.legalPin.length > 1 ? st.legalPin.length + ' quy tắc đã chọn' : st.legalPin.length ? (pinnedDocs[0]?.name || 'Đã chọn quy tắc') : 'Quy tắc: Tự động';
+    const ruleTitle = title || (pinnedDocs.length ? 'Căn cứ đã chọn: ' + pinnedDocs.map(doc => doc.name).join(', ') : 'Chọn một hoặc nhiều văn bản/quy tắc làm căn cứ cho AI');
+    return '<button type="button" class="ola-chip' + (st.legalPin.length ? ' is-set' : '') + '" data-ol-pop="rules" title="' + esc(ruleTitle) + '">' + svg(ICON.book) + '<span class="ola-chip-t">' + esc(ruleLabel) + '</span>' + svg(ICON.chevron) + '</button>';
   }
   function deepChipHtml(compact) {
     const on = deepOn(), able = deepSupported();
@@ -1481,9 +1483,9 @@ const OfficialLetterPage = (() => {
     const status = st.legalError ? '<p class="ol-warn">' + esc(st.legalError) + lib + '</p>'
       : !st.sources.length ? '<p class="olp-hint">' + (L.needsBasis(template(), st.brief) ? 'Không có đoạn nào trong thư viện khớp đúng vấn đề.' : 'Loại công văn này không cần viện dẫn điều luật.') + lib + '</p>' : '';
     const docs = st.libDocs || [];
-    const picker = docs.length ? '<label class="ol-legal-doc"><span>Chọn căn cứ từ văn bản</span><select data-ol-legal-doc aria-label="Chọn văn bản làm căn cứ"><option value="">Tự động — tất cả văn bản</option>'
-      + docs.map(doc => '<option value="' + esc(doc.id) + '"' + (st.legalPin[0] === doc.id ? ' selected' : '') + (doc.active ? '' : ' disabled') + '>' + esc(doc.name + (doc.soHieu && !fold(doc.name).includes(fold(doc.soHieu)) ? ' (' + doc.soHieu + ')' : '') + (doc.active ? '' : ' — hết hiệu lực')) + '</option>').join('')
-      + '</select></label>' : '';
+    const picker = docs.length ? '<fieldset class="ol-legal-doc"><legend>Chọn nhiều căn cứ từ Thư viện</legend><small>Các đoạn trích sẽ chỉ lấy từ những văn bản đã tích.</small>'
+      + '<label class="ol-legal-auto"><input type="radio" name="ol-legal-pin" data-ol-legal-doc value=""' + (!st.legalPin.length ? ' checked' : '') + (st.busy ? ' disabled' : '') + '>Tự động — tìm trong tất cả văn bản</label>'
+      + '<div class="ol-legal-doc-list">' + docs.map(doc => '<label><input type="checkbox" name="ol-legal-pin" data-ol-legal-doc value="' + esc(doc.id) + '"' + (st.legalPin.includes(doc.id) ? ' checked' : '') + (doc.active && !st.busy ? '' : ' disabled') + '><span>' + esc(doc.name + (doc.soHieu && !fold(doc.name).includes(fold(doc.soHieu)) ? ' (' + doc.soHieu + ')' : '') + (doc.active ? '' : ' — hết hiệu lực')) + '</span></label>').join('') + '</div></fieldset>' : '';
     return picker + status + (rows ? '<div class="ol-srcs">' + rows + '</div>' : '')
       + '<div class="ol-legal-search"><input data-ol-legal-q maxlength="160" placeholder="Tìm căn cứ, VD: thời hạn giải quyết bồi thường" aria-label="Tìm căn cứ"><button type="button" class="olp-tool" data-ol-act="legal-search">Tìm</button></div>';
   }
@@ -1599,6 +1601,7 @@ const OfficialLetterPage = (() => {
     if (!host) return;
     const root = $('[data-ol-root]');
     const active = document.activeElement, focusSel = active && host.contains(active) ? (active.matches('[data-ol-rec-q]') ? '[data-ol-rec-q]' : active.matches('[data-ol-brief]') ? '[data-ol-brief]' : active.matches('[data-ol-qa-input]') ? '[data-ol-qa-input]' : '') : '';
+    const focusRule = active && host.contains(active) && active.matches('[data-ol-rule]') ? active.dataset.olRule : null;
     const asking = st.mode === 'ask' && !!QA();
     const working = asking ? !!(qa.messages.length || qa.busy) : !!(st.letter || (st.busy && st.steps));
     const qaBox = $('[data-ol-qa-scroll]'), qaTop = qaBox ? qaBox.scrollTop : 0;
@@ -1617,6 +1620,7 @@ const OfficialLetterPage = (() => {
     const brief = $('[data-ol-brief]'); if (brief) autoGrow(brief);
     const qaInput = $('[data-ol-qa-input]'); if (qaInput) autoGrow(qaInput);
     if (st.pop === 'record') { updateRecList(); $('[data-ol-rec-q]')?.focus({preventScroll:true}); }
+    else if (st.pop === 'rules' && focusRule !== null) [...host.querySelectorAll('[data-ol-rule]')].find(node => node.dataset.olRule === focusRule)?.focus({preventScroll:true});
     else if (focusSel) $(focusSel)?.focus({preventScroll:true});
     const nextMain = $('.ola-main'); if (nextMain) nextMain.scrollTop = mainTop;
     if (st.busy || st.pending) {
@@ -1813,7 +1817,18 @@ const OfficialLetterPage = (() => {
     const modelBtn = target.closest('[data-ol-model]');
     if (modelBtn) { collectAll(); const cfg = aiConfig(); cfg.selected = modelBtn.dataset.olModel; aiCfg = Models().save(cfg); st.pop = ''; renderAll(); focusMain(); return; }
     const rule = target.closest('[data-ol-rule]');
-    if (rule) { collectAll(); st.legalPin = rule.dataset.olRule ? [rule.dataset.olRule] : []; st.pop = ''; renderAll(); focusMain(true); return; }
+    if (rule) {
+      collectAll();
+      const id = rule.dataset.olRule;
+      if (!id) { st.legalPin = []; st.pop = ''; }
+      else {
+        st.legalPin = st.legalPin.includes(id) ? st.legalPin.filter(item => item !== id) : st.legalPin.concat(id);
+        st.pop = 'rules';
+      }
+      renderAll();
+      if (!id) focusMain(true);
+      return;
+    }
     const type = target.closest('[data-ol-type]');
     if (type) { collectAll(); st.templateId = type.dataset.olType; st.pop = ''; renderAll(); focusMain(); return; }
     if (target.closest('[data-ol-rec-clear]')) { collectAll(); st.recordKey = ''; renderAll(); return; }
@@ -1908,7 +1923,7 @@ const OfficialLetterPage = (() => {
     const target = event.target;
     if (target.matches('[data-ol-change]') && st.pending) { const change = st.pending.changes[Number(target.dataset.olChange)]; if (change) change.on = target.checked; updateReviewState(); return; }
     if (target.matches('[data-ol-change-all]') && st.pending) { st.pending.changes.forEach(item => { item.on = target.checked; }); host.querySelectorAll('[data-ol-change]').forEach(box => { box.checked = target.checked; }); updateReviewState(); return; }
-    if (target.matches('[data-ol-legal-doc]')) { pickLegalDoc(target.value); return; }
+    if (target.matches('[data-ol-legal-doc]')) { pickLegalDoc(target.value, target.type === 'checkbox', target.checked); return; }
     if (target.matches('[data-ol-slot]')) { addFiles(target.files, 'files', target.dataset.olSlot); target.value = ''; return; }
     if (target.matches('[data-ol-qa-file]')) { qa.importFile = target.files[0] || null; target.value = ''; renderAll(); return; }
     if (target.matches('[data-ol-files]')) { addFiles(target.files, target.dataset.olFiles === 'refine' ? 'refineFiles' : 'files'); target.value = ''; }

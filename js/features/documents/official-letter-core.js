@@ -99,10 +99,10 @@ const OfficialLetterCore = (() => {
     const pinned = single(input.legalPinned, 200);
     if (input.legal) {
       return '\n\nCĂN CỨ TỪ THƯ VIỆN ĐÃ TRA SẴN (nguyên văn; hệ thống sẽ đưa nguyên các đoạn này cho người viết ở bước soạn):\n' + multi(input.legal, 8000)
-        + (pinned ? '\nNGƯỜI DÙNG ĐÃ CHỦ ĐỘNG CHỌN văn bản "' + pinned + '" làm căn cứ: công văn phải viện dẫn và trích đúng điều khoản ở trên.' : '')
+        + (pinned ? '\nNGƯỜI DÙNG ĐÃ CHỦ ĐỘNG CHỌN các văn bản sau làm căn cứ: ' + pinned + '. Công văn phải viện dẫn và trích đúng điều khoản ở trên.' : '')
         + '\nVì đã có nguyên văn: KHÔNG hỏi người dùng "có nguyên văn điều khoản/quy tắc không", KHÔNG ghi giả định kiểu "chưa có nguyên văn / chỉ viện dẫn chung". Nếu thấy còn thiếu điều khoản nào thì ghi từ khoá đúng điều khoản đó vào "legalQueries".';
     }
-    return pinned ? '\n\nNGƯỜI DÙNG ĐÃ CHỦ ĐỘNG CHỌN văn bản "' + pinned + '" làm căn cứ: hãy ghi vào "legalQueries" 2–3 cụm từ khoá đúng điều khoản cần tìm trong văn bản đó (hệ thống tự tra nguyên văn, đừng hỏi người dùng nguyên văn).' : '';
+    return pinned ? '\n\nNGƯỜI DÙNG ĐÃ CHỦ ĐỘNG CHỌN các văn bản sau làm căn cứ: ' + pinned + '. Hãy ghi vào "legalQueries" 2–3 cụm từ khoá đúng điều khoản cần tìm trong các văn bản đó (hệ thống tự tra nguyên văn, đừng hỏi người dùng nguyên văn).' : '';
   }
 
   // Tài liệu cần có theo loại công văn (template.docs): chuẩn hoá, bỏ khoá trường không tồn tại.
@@ -306,7 +306,7 @@ const OfficialLetterCore = (() => {
       + (extra.reasoning ? reasoningBlock(extra.reasoning) : '')
       + (extra.legal
         ? (extra.legalPinned
-          ? '\n\nCĂN CỨ TỪ THƯ VIỆN — NGƯỜI DÙNG ĐÃ CHỌN văn bản "' + single(extra.legalPinned, 200) + '" làm căn cứ nên BẮT BUỘC viện dẫn đúng Điều/Khoản/Mục và trích nguyên văn điều khoản liên quan từ các đoạn dưới đây (chỉ bỏ đoạn nào không liên quan); không được viết chung chung "theo Quy tắc bảo hiểm":\n'
+          ? '\n\nCĂN CỨ TỪ THƯ VIỆN — NGƯỜI DÙNG ĐÃ CHỌN các văn bản sau làm căn cứ: ' + single(extra.legalPinned, 200) + '. BẮT BUỘC viện dẫn đúng Điều/Khoản/Mục và trích nguyên văn điều khoản liên quan từ các đoạn dưới đây (chỉ bỏ đoạn nào không liên quan); không được viết chung chung "theo Quy tắc bảo hiểm":\n'
           : '\n\nCĂN CỨ TỪ THƯ VIỆN (nguyên văn — chỉ dùng nếu đúng vấn đề, không bắt buộc dùng):\n') + multi(extra.legal, 16000)
           + '\n(Đã có nguyên văn căn cứ ở trên: nếu GIẢ ĐỊNH hoặc ĐIỂM CHƯA RÕ ở phần trước nói "chưa có nguyên văn điều khoản/quy tắc" thì coi là ĐÃ ĐƯỢC GIẢI QUYẾT — dùng nguyên văn này, không viện dẫn chung chung.)'
         : '\n\nCĂN CỨ TỪ THƯ VIỆN: (không có — không viện dẫn điều luật cụ thể)')
