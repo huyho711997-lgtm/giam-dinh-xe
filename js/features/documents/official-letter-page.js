@@ -24,6 +24,7 @@ const OfficialLetterPage = (() => {
     word: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13l1.5 5 1.5-4 1.5 4 1.5-5"/>',
     print: '<path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/>',
     folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+    book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5Z"/><path d="M4 21.5V5.5M8.5 7.5H16M8.5 11H14"/>',
     chevron: '<path d="m6 9 6 6 6-6"/>',
     history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
     trash: '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
@@ -632,6 +633,14 @@ const OfficialLetterPage = (() => {
   function popoverHtml() {
     if (st.pop === 'record') return '<div class="ola-pop" role="dialog" aria-label="Chọn hồ sơ"><label class="ol-rec-search">' + svg(ICON.search) + '<input type="search" data-ol-rec-q autocomplete="off" spellcheck="false" placeholder="Biển số, số HSBT, chủ xe…" value="' + esc(st.recQuery) + '" aria-label="Tìm hồ sơ"></label><div class="ol-rec-list" data-ol-rec-list role="listbox" aria-label="Hồ sơ"></div></div>';
     if (st.pop === 'type') return '<div class="ola-pop ola-pop--menu" role="menu" aria-label="Loại công văn">' + Core().templates().map(item => '<button type="button" role="menuitemradio" aria-checked="' + (item.id === templateId()) + '" data-ol-type="' + esc(item.id) + '"><b>' + esc(item.id === DEFAULT_TEMPLATE ? 'Tự do' : item.name) + '</b><small>' + esc(item.id === DEFAULT_TEMPLATE ? 'AI tự viết theo yêu cầu của bạn' : item.group) + '</small></button>').join('') + '</div>';
+    if (st.pop === 'rules') {
+      const docs = st.libDocs, pinned = st.legalPin[0] || '';
+      const auto = '<button type="button" role="menuitemradio" aria-checked="' + (!pinned) + '" data-ol-rule=""><b>Tự động</b><small>AI tự tìm căn cứ trong toàn bộ Thư viện tài liệu theo vấn đề</small></button>';
+      const items = docs === null ? '<p class="ol-rec-empty">Đang tải Thư viện tài liệu…</p>'
+        : !docs.length ? '<p class="ol-rec-empty">Thư viện chưa có văn bản nào — mở Thư viện tài liệu để nạp Luật, Nghị định, quy tắc bảo hiểm…</p>'
+        : docs.map(doc => '<button type="button" role="menuitemradio" aria-checked="' + (pinned === doc.id) + '" data-ol-rule="' + esc(doc.id) + '"' + (doc.active ? '' : ' disabled') + '><b>' + esc(doc.name) + '</b><small>' + esc((doc.soHieu && !fold(doc.name).includes(fold(doc.soHieu)) ? doc.soHieu + ' · ' : '') + (doc.active ? 'Chỉ lấy căn cứ trong văn bản này' : 'Hết hiệu lực — không chọn được')) + '</small></button>').join('');
+      return '<div class="ola-pop ola-pop--menu" role="menu" aria-label="Quy tắc / căn cứ">' + auto + items + '</div>';
+    }
     return '';
   }
   function composerHtml(big) {
@@ -640,11 +649,14 @@ const OfficialLetterPage = (() => {
       ? '<span class="ola-chip is-set"><button type="button" data-ol-pop="record" title="Đổi hồ sơ">' + svg(ICON.folder) + esc(found.info.plate || found.info.code || 'Hồ sơ') + '</button><button type="button" class="ola-chip-x" data-ol-rec-clear aria-label="Bỏ hồ sơ">×</button></span>'
       : '<button type="button" class="ola-chip" data-ol-pop="record">' + svg(ICON.folder) + 'Hồ sơ</button>';
     const typeChip = '<button type="button" class="ola-chip' + (tpl.id !== DEFAULT_TEMPLATE ? ' is-set' : '') + '" data-ol-pop="type">' + svg(ICON.letter) + esc(tpl.id === DEFAULT_TEMPLATE ? 'Loại: Tự do' : tpl.name) + svg(ICON.chevron) + '</button>';
+    const pinnedDoc = (st.libDocs || []).find(doc => doc.id === st.legalPin[0]);
+    const ruleLabel = st.legalPin.length ? (pinnedDoc ? pinnedDoc.name : 'Đã chọn quy tắc') : 'Quy tắc: Tự động';
+    const rulesChip = '<button type="button" class="ola-chip' + (st.legalPin.length ? ' is-set' : '') + '" data-ol-pop="rules" title="Chọn văn bản/quy tắc làm căn cứ cho AI">' + svg(ICON.book) + '<span class="ola-chip-t">' + esc(ruleLabel) + '</span>' + svg(ICON.chevron) + '</button>';
     return '<div class="ola-composer' + (big ? ' is-big' : '') + '">'
       + '<textarea data-ol-brief rows="' + (big ? 3 : 2) + '" maxlength="3000" placeholder="Mô tả công văn cần soạn… (gõ số HSBT hoặc biển số để AI tự lấy hồ sơ)" aria-label="Yêu cầu soạn công văn">' + esc(st.brief) + '</textarea>'
       + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (st.files.length ? '' : ' hidden') + '>' + filesHtml() + '</div>'
       + '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm ảnh/PDF"><input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>' + svg(ICON.attach) + '</label>'
-      + recordChip + typeChip + '<span class="ola-spacer"></span>'
+      + recordChip + typeChip + rulesChip + '<span class="ola-spacer"></span>'
       + '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div>'
       + popoverHtml() + '</div>';
   }
@@ -981,9 +993,11 @@ const OfficialLetterPage = (() => {
     if (histOpen) { openHistory(histOpen.dataset.olHistOpen); return; }
     if (target.closest('[data-ol-hist-backdrop]')) { st.histOpen = false; renderAll(); return; }
     const popButton = target.closest('[data-ol-pop]');
-    if (popButton) { collectAll(); const name = popButton.dataset.olPop; st.pop = st.pop === name ? '' : name; st.recQuery = ''; st.recActive = 0; if (st.pop === 'record' && !index.length) loadRecords(); renderAll(); return; }
+    if (popButton) { collectAll(); const name = popButton.dataset.olPop; st.pop = st.pop === name ? '' : name; st.recQuery = ''; st.recActive = 0; if (st.pop === 'record' && !index.length) loadRecords(); if (st.pop === 'rules' && st.libDocs === null) loadLibDocs().then(() => { if (st.pop === 'rules') renderAll(); }); renderAll(); return; }
     const pick = target.closest('[data-ol-pick]');
     if (pick) { collectAll(); st.recordKey = pick.dataset.olPick; st.pop = ''; st.recQuery = ''; renderAll(); $('[data-ol-brief]')?.focus(); return; }
+    const rule = target.closest('[data-ol-rule]');
+    if (rule) { collectAll(); st.legalPin = rule.dataset.olRule ? [rule.dataset.olRule] : []; st.pop = ''; renderAll(); $('[data-ol-brief]')?.focus(); return; }
     const type = target.closest('[data-ol-type]');
     if (type) { collectAll(); st.templateId = type.dataset.olType; st.pop = ''; renderAll(); $('[data-ol-brief]')?.focus(); return; }
     if (target.closest('[data-ol-rec-clear]')) { collectAll(); st.recordKey = ''; renderAll(); return; }
