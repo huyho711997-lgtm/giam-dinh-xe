@@ -123,8 +123,9 @@ span.ola-chip.is-set > button.ola-chip-x { display:grid; place-items:center; fle
 .ola-pop--menu button:hover, .ola-pop--menu button[aria-checked="true"] { background:color-mix(in srgb,var(--primary) 11%,transparent); }
 .ola-pop--menu b { font-size:12.5px; } .ola-pop--menu small { color:var(--text-muted); font-size:11px; }
 .ola-rule-hint { margin:2px 8px 6px; color:var(--text-muted); font-size:11px; }
-.ola-pop--menu button[data-ol-rule]:not([data-ol-rule=""]) { position:relative; padding-right:34px; }
-.ola-rule-check { position:absolute; top:50%; right:10px; display:grid; place-items:center; width:18px; height:18px; border:1px solid var(--border); border-radius:6px; color:transparent; font-size:12px; transform:translateY(-50%); }
+.ola-pop--menu button[data-ol-rule]:not([data-ol-rule=""]) { grid-template-columns:minmax(0,1fr) 18px; column-gap:12px; width:100%; box-sizing:border-box; }
+.ola-pop--menu button[data-ol-rule]:not([data-ol-rule=""]) > b, .ola-pop--menu button[data-ol-rule]:not([data-ol-rule=""]) > small { grid-column:1; min-width:0; overflow-wrap:anywhere; }
+.ola-rule-check { grid-column:2; grid-row:1 / span 2; align-self:center; display:grid; place-items:center; box-sizing:border-box; width:18px; height:18px; border:1px solid var(--border); border-radius:6px; color:transparent; font-size:12px; }
 .ola-pop--menu button[aria-checked="true"] .ola-rule-check { border-color:var(--primary); background:var(--primary); color:#fff; }
 
 /* Màn làm việc */

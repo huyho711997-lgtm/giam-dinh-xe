@@ -1204,7 +1204,7 @@ const OfficialLetterPage = (() => {
       const auto = '<button type="button" role="menuitemradio" aria-checked="' + (!pinned.length) + '" data-ol-rule=""><b>Tự động</b><small>AI tự tìm căn cứ trong toàn bộ Thư viện tài liệu theo vấn đề</small></button>';
       const items = docs === null ? '<p class="ol-rec-empty">Đang tải Thư viện tài liệu…</p>'
         : !docs.length ? '<p class="ol-rec-empty">Thư viện chưa có văn bản nào — mở Thư viện tài liệu để nạp Luật, Nghị định, quy tắc bảo hiểm…</p>'
-        : docs.map(doc => '<button type="button" role="menuitemcheckbox" aria-checked="' + pinned.includes(doc.id) + '" data-ol-rule="' + esc(doc.id) + '"' + (doc.active ? '' : ' disabled') + '><b>' + esc(doc.name) + '</b><small>' + esc((doc.soHieu && !fold(doc.name).includes(fold(doc.soHieu)) ? doc.soHieu + ' · ' : '') + (doc.active ? 'Chọn để thêm căn cứ' : 'Hết hiệu lực — không chọn được')) + '<span class="ola-rule-check" aria-hidden="true">✓</span></button>').join('');
+        : docs.map(doc => '<button type="button" role="menuitemcheckbox" aria-checked="' + pinned.includes(doc.id) + '" data-ol-rule="' + esc(doc.id) + '"' + (doc.active ? '' : ' disabled') + '><b>' + esc(doc.name) + '</b><small>' + esc((doc.soHieu && !fold(doc.name).includes(fold(doc.soHieu)) ? doc.soHieu + ' · ' : '') + (doc.active ? 'Chọn để thêm căn cứ' : 'Hết hiệu lực — không chọn được')) + '</small><span class="ola-rule-check" aria-hidden="true">✓</span></button>').join('');
       return '<div class="ola-pop ola-pop--menu" role="menu" aria-label="Quy tắc / căn cứ"><p class="ola-rule-hint">Có thể chọn nhiều quy tắc cùng lúc</p>' + auto + items + '</div>';
     }
     return '';
