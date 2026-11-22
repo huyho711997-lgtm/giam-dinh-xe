@@ -390,6 +390,7 @@ function sceneReportRenderForm(data) {
     `</div>`;
 
   const sceneBody =
+    `<section class="sr-ai" data-sr-ai>${typeof sceneReportAiHtml === 'function' ? sceneReportAiHtml() : ''}</section>` +
     `<div class="sr-choice-grid">` +
       sceneReportChoiceTile(data, 'sceneIntact', '[1]', 'Tình trạng hiện trường', { item: '1', icon: 'camera' }) +
       sceneReportChoiceTile(data, 'engineTemp', '[2]', 'Nhiệt độ động cơ', { item: '2', icon: 'thermometer' }) +
