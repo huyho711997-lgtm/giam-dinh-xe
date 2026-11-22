@@ -62,7 +62,7 @@ const OfficialLetterAI = (() => {
     if (!messages.some(message => message.role === 'user')) throw new Error('Yêu cầu gửi AI trống.');
     const body = {model: options.model || DEFAULT_MODEL, messages, max_tokens: options.maxTokens || MAX_TOKENS, stream: false};
     if (json) body.response_format = {type: 'json_object'};
-    if (options.thinking) body.thinking = {type: 'enabled'};
+    if (options.thinking) { body.thinking = {type: 'enabled'}; body.reasoning_effort = options.effort || 'high'; }   // suy luận sâu: DeepSeek bỏ qua temperature, tính cả token suy luận vào max_tokens
     else { body.thinking = {type: 'disabled'}; if (typeof config.temperature === 'number') body.temperature = config.temperature; }   // chế độ suy luận bỏ qua temperature
     return body;
   }

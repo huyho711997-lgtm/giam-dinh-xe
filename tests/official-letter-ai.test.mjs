@@ -28,6 +28,10 @@ test('JSON mode luôn có chữ "json" trong prompt; bật suy luận thì khôn
   assert.match(body.messages[0].content, /JSON/);
   assert.deepEqual(body.thinking, {type: 'enabled'});
   assert.equal('temperature' in body, false);
+  assert.equal(body.reasoning_effort, 'high');
+  assert.equal(plain(AI.toChatRequest(gemini({}), {thinking: true, effort: 'max', maxTokens: 16000})).reasoning_effort, 'max');
+  assert.equal(plain(AI.toChatRequest(gemini({}), {thinking: true, maxTokens: 16000})).max_tokens, 16000);
+  assert.equal('reasoning_effort' in plain(AI.toChatRequest(gemini({}))), false);
   const noJson = plain(AI.toChatRequest({contents: [{role: 'user', parts: [{text: 'a'}]}]}));
   assert.equal('response_format' in noJson, false);
   assert.equal(noJson.messages[0].role, 'user');

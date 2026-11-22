@@ -2517,10 +2517,43 @@ const fullList = getCarBrandLossData();
       const exportScale = Math.max(2, Math.min(3, 3840 / Math.max(exportWidth, 600), maxScaleByHeight));
       const targetId = targetEl.id;
 
-      // Lưu tham chiếu canvas gốc (đã vẽ ở 3x DPR) để chép nguyên pixel sang bản clone mà không bị mờ do upscale.
-      const origCanvases = new Map();
+      // Tạm nâng từng biểu đồ Chart.js lên độ phân giải 3x để chụp snapshot 4K sắc nét, sau đó trả lại DPR gốc của màn hình ngay lập tức.
+      const highResSnapshots = new Map();
+      const targetDpr = Math.max(window.devicePixelRatio || 1, exportScale, 3);
       targetEl.querySelectorAll('canvas').forEach(cv => {
-        if (cv.id && cv.width > 0 && cv.height > 0) origCanvases.set(cv.id, cv);
+        if (!cv.id || cv.width <= 0 || cv.height <= 0) return;
+        const chartInst = (typeof Chart !== 'undefined' && typeof Chart.getChart === 'function') ? Chart.getChart(cv) : null;
+        if (chartInst) {
+          const cssW = Math.round(cv.clientWidth || chartInst.width);
+          const cssH = Math.round(cv.clientHeight || chartInst.height);
+          const prevDpr = chartInst.options.devicePixelRatio;
+          const prevAnim = chartInst.options.animation;
+          try {
+            chartInst.options.devicePixelRatio = targetDpr;
+            chartInst.options.animation = false;
+            chartInst.resize(cssW, cssH);
+            if (cv.width < Math.floor(cssW * targetDpr * 0.95)) {
+              chartInst.resize(cssW + 1, cssH);
+              chartInst.resize(cssW, cssH);
+            }
+            chartInst.update('none');
+            const snap = document.createElement('canvas');
+            snap.width = cv.width;
+            snap.height = cv.height;
+            const sCtx = snap.getContext('2d');
+            if (sCtx) sCtx.drawImage(cv, 0, 0);
+            highResSnapshots.set(cv.id, snap);
+          } catch (_) {
+            highResSnapshots.set(cv.id, cv);
+          } finally {
+            chartInst.options.devicePixelRatio = prevDpr;
+            chartInst.options.animation = prevAnim;
+            chartInst.resize(cssW, cssH);
+            chartInst.update('none');
+          }
+        } else {
+          highResSnapshots.set(cv.id, cv);
+        }
       });
 
       html2canvas(targetEl, {
@@ -2563,14 +2596,14 @@ const fullList = getCarBrandLossData();
           target.style.transform = 'none';
           target.style.backgroundColor = paperBg;
 
-          // Chép nguyên buffer độ phân giải 3x từ canvas gốc sang canvas bản clone
-          origCanvases.forEach((origCv, cvId) => {
+          // Chép nguyên buffer độ phân giải 3x từ snapshot vào canvas bản clone
+          highResSnapshots.forEach((snapCv, cvId) => {
             const clonedCv = clonedDoc.getElementById(cvId);
             if (!clonedCv) return;
-            clonedCv.width = origCv.width;
-            clonedCv.height = origCv.height;
+            clonedCv.width = snapCv.width;
+            clonedCv.height = snapCv.height;
             const c2d = clonedCv.getContext('2d');
-            if (c2d) c2d.drawImage(origCv, 0, 0);
+            if (c2d) c2d.drawImage(snapCv, 0, 0);
           });
 
           // Khử các hàm màu CSS hiện đại (color-mix / color()) mà html2canvas 1.4.1 không parse được
@@ -3037,7 +3070,6 @@ const fullList = getCarBrandLossData();
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            devicePixelRatio: Math.max(window.devicePixelRatio || 1, 3),
             interaction: { mode: 'index', intersect: false },
             layout: { padding: { top: 6, right: 18, left: 4 } },
             animation: { duration: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 420, easing: 'easeOutQuart' },
