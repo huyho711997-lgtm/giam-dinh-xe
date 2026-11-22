@@ -19,6 +19,7 @@ const OfficialLetterQA = (() => {
   const QA_COVERAGE = 0.34;       // câu hỏi tự nhiên dài hơn truy vấn ngắn → ngưỡng phủ từ thấp hơn so với soạn công văn
   const STORE_MAX = 24;           // số tin nhắn lưu lại trên máy
   const SOURCE_STORE_CHARS = 1400;
+  const STORE_SOURCES = 40;       // số nguồn tối đa lưu theo một câu trả lời (chế độ đọc toàn văn chỉ lưu các đoạn được dẫn)
   const FILE_CHARS = 30000;       // chữ trích từ mỗi tệp đính kèm gửi cho AI (Trò chuyện AI)
   const FILE_STORE_CHARS = 12000; // phần lưu lại trên máy cho lượt hỏi tiếp
   const FILES_TOTAL = 60000;
@@ -26,7 +27,7 @@ const OfficialLetterQA = (() => {
   const clip = (value, max) => { const text = String(value ?? '').replace(/[ \t]+\n/g, '\n').trim(); return text.length > max ? text.slice(0, max - 1) + '…' : text; };
   const oneLine = (value, max) => clip(String(value ?? '').replace(/\s+/g, ' '), max);
   // Mã [C#] chỉ có nghĩa trong lượt trả lời sinh ra nó (được đánh lại mỗi lượt) → bỏ khỏi lịch sử gửi cho AI để khỏi trỏ nhầm nguồn.
-  const stripCodes = text => String(text ?? '').replace(/\s?\[C\d{1,2}\]/g, '');
+  const stripCodes = text => String(text ?? '').replace(/\s?\[C\d{1,3}\]/g, '');
   const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   function importRequest(value) {
     const text = String(value || '').trim();
@@ -65,6 +66,7 @@ const OfficialLetterQA = (() => {
     '- Nếu một đoạn bị cắt giữa chừng hoặc mục liền kề không có trong trích đoạn, nói rõ phần nào chưa đọc được.',
     '- Hai đoạn mâu thuẫn hoặc khác phạm vi áp dụng (luật chung với quy tắc bảo hiểm): nêu cả hai và chỉ ra điểm khác.',
     '- Có HỒ SƠ: áp dụng đúng hồ sơ đó, nêu dữ kiện hồ sơ đã dùng; thiếu dữ kiện nào thì nói rõ thiếu gì thay vì giả định.',
+    '- Khi được cấp TOÀN VĂN văn bản: nghĩa là bạn đã có đủ điều khoản, không còn lý do để nói "thư viện không có" trước khi rà hết. Hãy rà TOÀN BỘ văn bản theo trình tự: (1) định nghĩa/phạm vi, (2) điều kiện áp dụng, (3) loại trừ và ngoại lệ của loại trừ, (4) bảng/phụ lục/tỷ lệ/mức khấu trừ, (5) điều khoản bổ sung hoặc điều chỉnh, (6) điều được dẫn chiếu — rồi mới kết luận. Với bảng/tỷ lệ (VD tỷ lệ thương tật, mức khấu trừ) hãy tìm đúng dòng khớp tình huống và dẫn đúng mã đoạn; nếu có nhiều dòng gần giống thì nêu cả, nói rõ cần thêm dữ kiện nào. Chỉ khi đã rà hết mà vẫn không có điều khoản mới được nói không có căn cứ, và nêu rõ đã rà các điều nào.',
     '- Có TÀI LIỆU/ẢNH ĐÍNH KÈM của người dùng: đó là dữ kiện vụ việc (ảnh thương tích, biên bản, bảng kê…), không phải căn cứ pháp lý. Mô tả ngắn điều bạn thấy/đọc được trước khi áp quy tắc; không đọc được hoặc không rõ thì nói rõ và hỏi thêm, tuyệt đối không đoán. Không tự chẩn đoán y khoa từ ảnh: chỉ đối chiếu với tiêu chí trong đoạn [C#] và nêu cần giám định/giấy tờ y tế nào.',
     '- Văn bản trích có thể lỗi chính tả do quét (OCR): hiểu theo ngữ cảnh, không coi lỗi chính tả là nội dung khác.',
     '- Văn phong ngắn gọn, thực dụng, tiếng Việt. Chỉ dùng **chữ đậm** và danh sách bắt đầu "- " hoặc "1. "; luôn in đậm chính từ quyết định ở Kết luận và Điều kiện (**Có**, **Không**, **Không được bồi thường**, **Thuộc phạm vi**, **Bị loại trừ**, **Có điều kiện**); không dùng bảng, không dùng tiêu đề #.',
@@ -170,10 +172,20 @@ const OfficialLetterQA = (() => {
     return out.slice(0, MAX_QUERIES);
   }
 
-  const sourceBlock = sources => (sources || []).filter(source => source && source.on !== false).map(source => {
-    const head = '[' + source.code + '] ' + source.doc + (source.soHieu ? ' (số ' + source.soHieu + ')' : '') + ' – ' + source.title + (source.from ? ' (hiệu lực từ ' + source.from + ')' : '') + (source.carried ? ' [đã dẫn ở câu trả lời trước]' : source.via ? ' [đoạn bổ sung: ' + source.via + ']' : '');
-    return head + '\n' + String(source.text || '').replace(/\s+\n/g, '\n').slice(0, 1800);
-  }).join('\n\n');
+  // Nguồn "full" (đọc toàn văn): tiêu đề văn bản ghi một lần cho cả cụm đoạn liền nhau để tiết kiệm token; đoạn dài tới 6000 ký tự (bảng, điều khoản bổ sung).
+  const sourceBlock = sources => {
+    let lastDoc = '';
+    return (sources || []).filter(source => source && source.on !== false).map(source => {
+      if (source.full) {
+        const head = source.doc === lastDoc ? '' : '=== VĂN BẢN: ' + source.doc + (source.soHieu ? ' (số ' + source.soHieu + ')' : '') + (source.from ? ' — hiệu lực từ ' + source.from : '') + ' ===\n';
+        lastDoc = source.doc;
+        return head + '[' + source.code + '] ' + source.title + '\n' + String(source.text || '').replace(/\s+\n/g, '\n').slice(0, 6000);
+      }
+      lastDoc = '';
+      const head = '[' + source.code + '] ' + source.doc + (source.soHieu ? ' (số ' + source.soHieu + ')' : '') + ' – ' + source.title + (source.from ? ' (hiệu lực từ ' + source.from + ')' : '') + (source.carried ? ' [đã dẫn ở câu trả lời trước]' : source.via ? ' [đoạn bổ sung: ' + source.via + ']' : '');
+      return head + '\n' + String(source.text || '').replace(/\s+\n/g, '\n').slice(0, 1800);
+    }).join('\n\n');
+  };
 
   // Câu hỏi tiếp cần cùng căn cứ với câu trước: mang các đoạn câu trả lời gần nhất ĐÃ DẪN sang lượt này (không trùng), đánh lại mã C1…Cn.
   // Không có bước này, mã [C#] của lượt trước trỏ sai nguồn và AI không còn thấy điều khoản mình vừa dựa vào nên dễ tự mâu thuẫn.
@@ -204,7 +216,8 @@ const OfficialLetterQA = (() => {
     const sources = input.sources || [];
     const library = sourceBlock(sources);
     const attachText = [fileBlock(limitFiles(input.files)), (input.images || []).length ? 'ẢNH: ' + input.images.map(image => image.name).join(', ') + ' (xem ảnh đính kèm)' : ''].filter(Boolean).join('\n\n');
-    const text = (library ? 'TRÍCH ĐOẠN THƯ VIỆN (nguyên văn):\n' + library : 'TRÍCH ĐOẠN THƯ VIỆN: (không tìm thấy đoạn nào khớp câu hỏi' + (input.libraryError ? ' — ' + input.libraryError : '') + ')')
+    const read = input.read && input.read.included && input.read.included.length ? input.read : null;
+    const text = (library ? (read ? 'TOÀN VĂN CÁC VĂN BẢN TRONG THƯ VIỆN — đã cấp ĐỦ ' + read.included.map(doc => doc.name + ' (' + doc.chunks + ' đoạn)').join('; ') + (read.skipped && read.skipped.length ? '; CHƯA cấp (quá dài, chỉ có đoạn trích ở cuối): ' + read.skipped.map(doc => doc.name).join('; ') : '') + '. Mỗi đoạn có mã [C#]:\n' : 'TRÍCH ĐOẠN THƯ VIỆN (nguyên văn):\n') + library : 'TRÍCH ĐOẠN THƯ VIỆN: (không tìm thấy đoạn nào khớp câu hỏi' + (input.libraryError ? ' — ' + input.libraryError : '') + ')')
       + (input.dossier ? '\n\nHỒ SƠ ĐANG CHỌN:\n' + clip(input.dossier, DOSSIER_MAX) : '')
       + (input.issue ? '\n\nVẤN ĐỀ CẦN XÁC ĐỊNH (do bước phân tích câu hỏi đề xuất, tham khảo):\n' + clip(input.issue, 300) : '')
       + (attachText ? '\n\nTÀI LIỆU/ẢNH NGƯỜI DÙNG ĐÍNH KÈM (dữ kiện của vụ việc — KHÔNG phải căn cứ pháp lý; chỉ dùng để xác định sự việc, thương tật, hư hỏng…; kết luận về quy tắc vẫn chỉ dựa trên đoạn [C#]):\n' + attachText : '')
@@ -220,7 +233,7 @@ const OfficialLetterQA = (() => {
     return {system_instruction: {parts: [{text: SYSTEM}]}, contents, generationConfig: {temperature: 0.2}};
   }
 
-  const CITE = /\[(C\d{1,2})\]/g;
+  const CITE = /\[(C\d{1,3})\]/g;
   // Các mã nguồn được dẫn trong câu trả lời, theo thứ tự xuất hiện, không trùng.
   function citedCodes(text) {
     const out = [];
@@ -239,7 +252,7 @@ const OfficialLetterQA = (() => {
       const key = foldVi(inner);
       return (solo || (key.length <= 60 && SECTION.test(key))) ? '<b class="ola-h">' + inner + '</b>' : '<b>' + inner + '</b>';
     });
-    html = html.replace(/\[(C\d{1,2})\]/g, (_, code) => known.has(code)
+    html = html.replace(/\[(C\d{1,3})\]/g, (_, code) => known.has(code)
       ? '<button type="button" class="ola-cite" data-ol-qa-cite="' + code + '" title="Xem nguyên văn nguồn ' + code + '">' + code + '</button>'
       : '<span class="ola-cite is-bad" title="Mã nguồn này không nằm trong các đoạn thư viện đã tra — cần kiểm tra lại">' + code + '?</span>');
     return html;
@@ -314,7 +327,7 @@ const OfficialLetterQA = (() => {
     const textParts = [];
     if (input.dossier) textParts.push('HỒ SƠ ĐANG CHỌN:\n' + clip(input.dossier, DOSSIER_MAX));
     const library = sourceBlock(input.sources);
-    if (library) textParts.push('ĐOẠN TRONG THƯ VIỆN TÀI LIỆU (chỉ trích khi dùng, dẫn mã [C#]; nghiệp vụ bảo hiểm chỉ được kết luận dựa trên các đoạn này):\n' + library);
+    if (library) textParts.push((input.read && input.read.included && input.read.included.length ? 'TOÀN VĂN CÁC VĂN BẢN TRONG THƯ VIỆN TÀI LIỆU (' + input.read.included.map(doc => doc.name).join('; ') + ') — rà toàn bộ trước khi kết luận, dẫn mã [C#] khi dùng; nghiệp vụ bảo hiểm chỉ được kết luận dựa trên văn bản này:\n' : 'ĐOẠN TRONG THƯ VIỆN TÀI LIỆU (chỉ trích khi dùng, dẫn mã [C#]; nghiệp vụ bảo hiểm chỉ được kết luận dựa trên các đoạn này):\n') + library);
     const block = fileBlock(files);
     if (block) textParts.push('TỆP ĐÍNH KÈM:\n' + block);
     if ((input.images || []).length) textParts.push('ẢNH ĐÍNH KÈM: ' + input.images.map(image => image.name).join(', '));
@@ -403,7 +416,7 @@ const OfficialLetterQA = (() => {
   // ---- Lưu hội thoại trên máy ----
   const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   function normalizeSource(source) {
-    if (!source || typeof source !== 'object' || !/^C\d{1,2}$/.test(String(source.code || ''))) return null;
+    if (!source || typeof source !== 'object' || !/^C\d{1,3}$/.test(String(source.code || ''))) return null;
     return {code: source.code, id: String(source.id || ''), doc: oneLine(source.doc, 160), soHieu: oneLine(source.soHieu, 80), title: oneLine(source.title, 200), text: String(source.text || '').slice(0, SOURCE_STORE_CHARS), from: String(source.from || ''), link: String(source.link || ''), via: oneLine(source.via, 120), on: true};
   }
   function normalizeMessage(item) {
@@ -416,10 +429,14 @@ const OfficialLetterQA = (() => {
       if (files.length) message.files = files;
     }
     if (item.role === 'assistant') {
-      message.sources = (Array.isArray(item.sources) ? item.sources : []).map(normalizeSource).filter(Boolean).slice(0, MAX_SOURCES + CARRY_MAX);
+      message.sources = (Array.isArray(item.sources) ? item.sources : []).map(normalizeSource).filter(Boolean).slice(0, STORE_SOURCES);
       if (item.question) message.question = oneLine(item.question, 300);
       if (Array.isArray(item.queries)) message.queries = item.queries.map(query => oneLine(query, 120)).filter(Boolean).slice(0, MAX_QUERIES);
       if (item.issue) message.issue = oneLine(item.issue, 300);
+      if (item.read && Array.isArray(item.read.included)) message.read = {
+        included: item.read.included.slice(0, 12).map(doc => ({name: oneLine(doc && doc.name, 120), soHieu: oneLine(doc && doc.soHieu, 60), chunks: Number(doc && doc.chunks) || 0})).filter(doc => doc.name),
+        skipped: (Array.isArray(item.read.skipped) ? item.read.skipped : []).slice(0, 12).map(doc => ({name: oneLine(doc && doc.name, 120)})).filter(doc => doc.name)
+      };
       if (item.error) message.error = true;
       if (item.empty) message.empty = true;
       if (item.chat) message.chat = true;

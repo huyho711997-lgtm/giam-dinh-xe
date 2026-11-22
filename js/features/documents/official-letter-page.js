@@ -884,19 +884,21 @@ const OfficialLetterPage = (() => {
     const usage = {onUsage: u => { qa.usage = OfficialLetterAI.addUsage(qa.usage, u); paintQaUsage(); }, onWait: t => paintQaStatus(t), resumeText: qa.status};
     try {
       let sources = [], queries = [];
+      let read = null;
       if (qa.lib && L) {
-        paintQaStatus('Đang tra Thư viện tài liệu…');
+        paintQaStatus('Đang đọc Thư viện tài liệu…');
         queries = Q.buildQueries(text, history, {issue: '', queries: []});
-        const found = await L.retrieve(queries, Object.assign({limit: Math.min(Q.SOURCE_LIMIT, modelCap('maxSources') || Q.SOURCE_LIMIT), minCoverage: Q.QA_COVERAGE, expand: true, maxSources: Math.min(Q.MAX_SOURCES, modelCap('maxSources') || Q.MAX_SOURCES), perArticle: 2}, st.legalPin.length ? {docIds: st.legalPin} : {}));
+        const found = await gatherSources(queries, history);
         if (mine !== generation || !host) return;
-        sources = Q.carrySources(history, found.sources);
+        sources = found.sources; read = found.read;
         if (found.error && !sources.length) toast(found.error, 'warning');
       }
       if (images.length && activeModel() && !activeModel().profile.vision) toast('Mô hình đang chọn có thể không đọc được ảnh — hãy chọn mô hình có hỗ trợ ảnh (Gemini, GPT-4o…) nếu AI không thấy ảnh.', 'warning');
       paintQaStatus(deepOn() ? 'Đang suy luận sâu (có thể mất 30–90 giây)…' : 'Đang soạn câu trả lời…');
       usage.resumeText = qa.status;
-      const answer = await callAI(Q.buildFreeRequest({question: text, history, dossier: dossierText(), files, images, sources}), Object.assign({thinking: deepOn(), effort: 'high'}, usage));
-      reply({text: String(answer).trim(), sources, queries});
+      const answer = await callAI(Q.buildFreeRequest({question: text, history, dossier: dossierText(), files, images, sources, read}), Object.assign({thinking: deepOn(), effort: 'high'}, usage));
+      const answerText = String(answer).trim(), cited = Q.citedCodes(answerText);
+      reply({text: answerText, sources: read ? sources.filter(source => cited.includes(source.code)) : sources, queries, read: read || undefined});
     } catch (error) {
       if (error && error.name === 'AbortError') {
         qa.busy = false; qa.status = '';
@@ -919,6 +921,25 @@ const OfficialLetterPage = (() => {
     link.href = url; link.download = 'tro-chuyen-ai-' + new Date().toISOString().slice(0, 10) + '.md';
     document.body.appendChild(link); link.click(); link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  // Gom căn cứ cho một lượt hỏi. Ưu tiên cấp TOÀN VĂN văn bản (AI tự rà loại trừ/ngoại lệ/bảng như người đọc quy tắc); văn bản quá dài so với ngân sách của mô hình
+  // thì phần đó tra theo đoạn. Không đọc được toàn văn → quay về tra đoạn + mang nguồn của câu trả lời trước.
+  async function gatherSources(queries, history) {
+    const Q = QA(), L = Legal();
+    if (!L) return {sources: [], fresh: 0, error: 'Chưa tải được mô-đun thư viện. Hãy tải lại trang.', read: null};
+    const small = modelCap('maxSources');
+    const options = ids => Object.assign({limit: Math.min(Q.SOURCE_LIMIT, small || Q.SOURCE_LIMIT), minCoverage: Q.QA_COVERAGE, expand: true, maxSources: Math.min(Q.MAX_SOURCES, small || Q.MAX_SOURCES), perArticle: 2}, ids && ids.length ? {docIds: ids} : {});
+    const read = L.readFull ? await L.readFull(queries, {docIds: st.legalPin, budget: small ? 24000 : undefined}) : null;
+    if (read && read.sources.length) {
+      let sources = read.sources;
+      if (read.skipped.length) {
+        const extra = await L.retrieve(queries, options(read.skipped.map(doc => doc.id)));
+        sources = L.renumber(sources.concat(extra.sources.map(source => ({...source, via: source.via || 'trích đoạn từ văn bản quá dài để đọc toàn văn'}))));
+      }
+      return {sources, fresh: sources.length, error: '', read: {included: read.included, skipped: read.skipped}};
+    }
+    const found = await L.retrieve(queries, options(st.legalPin));
+    return {sources: Q.carrySources(history, found.sources), fresh: found.sources.length, error: found.error || (read && read.error) || '', read: null};
   }
   async function askQuestion(text) {
     const Q = QA(), L = Legal();
@@ -963,23 +984,24 @@ const OfficialLetterPage = (() => {
         if (st.mode === 'ask') { renderAll(); scrollQa(); }
         return;
       }
-      // Bước 2 — tra Thư viện theo mọi cụm, lấy thêm phần liền kề và điều được dẫn chiếu.
+      // Bước 2 — đọc TOÀN VĂN các văn bản trong Thư viện (BM25 chỉ còn xếp thứ tự khi quá dài); không vừa/không đọc được thì tra đoạn như cũ.
       const queries = Q.buildQueries(question, history, plan);
-      paintQaStatus('Đang tra Thư viện tài liệu (' + queries.length + ' cụm tìm kiếm)…');
-      const found = L ? await L.retrieve(queries, Object.assign({limit: Math.min(Q.SOURCE_LIMIT, modelCap('maxSources') || Q.SOURCE_LIMIT), minCoverage: Q.QA_COVERAGE, expand: true, maxSources: Math.min(Q.MAX_SOURCES, modelCap('maxSources') || Q.MAX_SOURCES), perArticle: 2}, st.legalPin.length ? {docIds: st.legalPin} : {}))
-        : {sources: [], total: 0, error: 'Chưa tải được mô-đun thư viện. Hãy tải lại trang.'};
+      paintQaStatus('Đang đọc Thư viện tài liệu…');
+      const found = await gatherSources(queries, history);
       if (mine !== generation || !host) return;
-      // Mang các đoạn câu trả lời trước đã dẫn sang lượt này: câu hỏi tiếp/phản biện vẫn thấy điều khoản mình vừa dựa vào.
-      const sources = Q.carrySources(history, found.sources);
+      const sources = found.sources;
       if (!sources.length && (found.error || (!history.some(item => item.role === 'assistant' && !item.chat && !item.empty && !item.error) && !dossier))) {
         // Không có căn cứ nào để trả lời → không gọi AI (tránh tốn token và tránh AI trả lời bằng trí nhớ).
         reply({text: found.error || NO_MATCH, empty: true, queries});
       } else {
-        // Bước 3 — suy luận trên nguyên văn các đoạn tìm được.
-        paintQaStatus((sources.length ? 'Tìm thấy ' + found.sources.length + ' đoạn liên quan' + (sources.length > found.sources.length ? ' (+' + (sources.length - found.sources.length) + ' đoạn đã dẫn ở câu trước)' : '') + ' — ' : 'Đang trả lời theo hội thoại — ') + (deepOn() ? 'đang suy luận sâu (có thể mất 30–90 giây)…' : 'đang soạn câu trả lời…'));
+        // Bước 3 — suy luận trên văn bản đã cấp.
+        paintQaStatus((found.read ? 'Đã đọc toàn văn ' + found.read.included.map(doc => doc.name).join(', ') + ' (' + found.read.included.reduce((sum, doc) => sum + doc.chunks, 0) + ' đoạn) — ' : sources.length ? 'Tìm thấy ' + found.fresh + ' đoạn liên quan' + (sources.length > found.fresh ? ' (+' + (sources.length - found.fresh) + ' đoạn đã dẫn ở câu trước)' : '') + ' — ' : 'Đang trả lời theo hội thoại — ') + (deepOn() ? 'đang suy luận sâu (có thể mất 30–90 giây)…' : 'đang soạn câu trả lời…'));
         usage.resumeText = qa.status;
-        const answer = await callAI(Q.buildRequest({question, history, sources, libraryError: found.error, dossier, issue: plan.issue, files: askFiles, images: askImages}), Object.assign({thinking: qa.deep, effort: 'high'}, usage));
-        reply({text: String(answer).trim(), sources, queries, issue: plan.issue});
+        const answer = await callAI(Q.buildRequest({question, history, sources, libraryError: found.error, dossier, issue: plan.issue, files: askFiles, images: askImages, read: found.read}), Object.assign({thinking: qa.deep, effort: 'high'}, usage));
+        const text = String(answer).trim();
+        // Đọc toàn văn có hàng trăm đoạn: chỉ lưu và hiển thị các đoạn AI thực sự dẫn.
+        const cited = Q.citedCodes(text);
+        reply({text, sources: found.read ? sources.filter(source => cited.includes(source.code)) : sources, queries, issue: plan.issue, read: found.read || undefined});
       }
     } catch (error) {
       if (error && error.name === 'AbortError') {
@@ -1005,7 +1027,7 @@ const OfficialLetterPage = (() => {
     const sources = msg.sources || [];
     const docs = [...new Set(Q.citedCodes(msg.text).map(code => sources.find(source => source.code === code)).filter(Boolean).map(docOf))];
     if (docs.length === 1) { st.legalPin = docs; loadLibDocs().then(() => { if (host && st.mode === 'compose' && !st.letter) renderAll(); }); }
-    const body = Q.plainText(msg.text).replace(/\s*\[C\d{1,2}\]/g, '').slice(0, 1500);
+    const body = Q.plainText(msg.text).replace(/\s*\[C\d{1,3}\]/g, '').slice(0, 1500);
     st.brief = 'Soạn công văn dựa trên kết luận nghiệp vụ sau (đã tra trong Thư viện tài liệu):\n' + body + '\n\nYêu cầu soạn: ';
     st.mode = 'compose';
     try { localStorage.setItem(MODE_KEY, 'compose'); } catch (_) { /* bỏ qua */ }
@@ -1073,13 +1095,14 @@ const OfficialLetterPage = (() => {
       : (sources.length && !cited.length && !msg.free) ? '<p class="ola-qa-warn">Câu trả lời không dẫn nguồn nào — hãy đối chiếu với các đoạn bên dưới trước khi dùng.</p>' : '';
     const body = msg.error ? '<div class="olp-notice olp-notice--error"><span>' + esc(msg.text) + '</span></div>'
       : msg.empty ? '<div class="olp-notice olp-notice--warn"><span>' + esc(msg.text) + '</span></div>'
-      : msg.free ? '<div class="ola-qa-text ola-md">' + (sources.length ? Q.chatHtml(msg.text).replace(/\[C(\d{1,2})\]/g, '<b class="ola-qa-cite">[C$1]</b>') : Q.chatHtml(msg.text)) + '</div>'
+      : msg.free ? '<div class="ola-qa-text ola-md">' + (sources.length ? Q.chatHtml(msg.text).replace(/\[C(\d{1,3})\]/g, '<b class="ola-qa-cite">[C$1]</b>') : Q.chatHtml(msg.text)) + '</div>'
       : '<div class="ola-qa-text">' + Q.answerHtml(msg.text, sources) + '</div>';
     const groupOpen = !!qa.open[msg.id + ':*'];
-    const srcs = sources.length ? '<div class="ola-qa-srcs' + (groupOpen ? ' is-open' : '') + '" data-ol-qa-srcs="' + esc(msg.id) + '">'
-      + '<button type="button" class="ola-qa-srcs-head" data-ol-qa-srcs-toggle="' + esc(msg.id) + '" aria-expanded="' + groupOpen + '"><span>Nguồn đã tra trong Thư viện (' + sources.length + ')</span>'
+    const readNote = msg.read && msg.read.included && msg.read.included.length ? '<p class="ola-qa-queries" title="AI được cấp nguyên văn các văn bản này, không phải chỉ vài đoạn trích">Đã đọc toàn văn: ' + msg.read.included.map(doc => esc(doc.name) + ' (' + doc.chunks + ' đoạn)').join(' · ') + (msg.read.skipped && msg.read.skipped.length ? ' — chỉ trích đoạn: ' + msg.read.skipped.map(doc => esc(doc.name)).join(' · ') : '') + '</p>' : '';
+    const srcs = (sources.length || readNote) ? '<div class="ola-qa-srcs' + (groupOpen ? ' is-open' : '') + '" data-ol-qa-srcs="' + esc(msg.id) + '">'
+      + '<button type="button" class="ola-qa-srcs-head" data-ol-qa-srcs-toggle="' + esc(msg.id) + '" aria-expanded="' + groupOpen + '"><span>' + (msg.read ? 'Đã đọc toàn văn Thư viện — đoạn được dẫn (' : 'Nguồn đã tra trong Thư viện (') + sources.length + ')</span>'
       + (cited.length ? '<em>Đã dẫn: ' + esc(cited.filter(code => sources.some(src => src.code === code)).join(', ')) + '</em>' : '') + svg(ICON.chevron) + '</button>'
-      + '<div class="ola-qa-srcs-body"' + (groupOpen ? '' : ' hidden') + '>' + (msg.queries && msg.queries.length ? '<p class="ola-qa-queries" title="Các cụm từ đã dùng để tìm trong Thư viện">Đã tra: ' + msg.queries.map(esc).join(' · ') + '</p>' : '') + sources.map(source => qaSourceHtml(msg, source, cited.includes(source.code))).join('') + '</div></div>' : '';
+      + '<div class="ola-qa-srcs-body"' + (groupOpen ? '' : ' hidden') + '>' + readNote + (msg.queries && msg.queries.length ? '<p class="ola-qa-queries" title="Các cụm từ đã dùng để tìm trong Thư viện">Đã tra: ' + msg.queries.map(esc).join(' · ') + '</p>' : '') + sources.map(source => qaSourceHtml(msg, source, cited.includes(source.code))).join('') + '</div></div>' : '';
     const acts = msg.error ? '<button type="button" class="ola-qa-act" data-ol-qa-retry="' + esc(msg.id) + '"' + (qa.busy ? ' disabled' : '') + '>Thử lại</button>'
       : msg.empty ? '' : '<button type="button" class="ola-qa-act" data-ol-qa-copy="' + esc(msg.id) + '">' + svg(ICON.copy) + 'Sao chép</button>'
         + (msg.chat || msg.free ? '' : '<button type="button" class="ola-qa-act is-main" data-ol-qa-compose="' + esc(msg.id) + '"' + (qaLocked() ? ' disabled' : '') + ' title="Chuyển sang Soạn công văn, điền sẵn kết luận này vào yêu cầu">' + svg(ICON.letter) + 'Soạn công văn từ câu trả lời</button>');

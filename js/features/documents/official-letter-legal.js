@@ -214,6 +214,46 @@ const OfficialLetterLegal = (() => {
     }
   }
 
+  // ---- Đọc TOÀN VĂN (Hỏi nghiệp vụ) ----
+  // Tra theo đoạn (BM25) bỏ lọt điều khoản dùng từ ngữ khác câu hỏi và không cho AI thấy mối quan hệ giữa các điều (loại trừ ↔ ngoại lệ ↔ định nghĩa ↔ bảng).
+  // Văn bản trong thư viện thường chỉ vài chục nghìn ký tự nên cấp NGUYÊN văn bản cho AI; BM25 chỉ còn để xếp thứ tự văn bản khi tổng chữ vượt ngân sách.
+  const FULL_BUDGET = 160000;
+  const docChars = doc => (doc.chunks || []).reduce((sum, chunk) => sum + String(chunk.t || '').length + Math.min(String(chunk.x || '').length, 6000), 0);
+  async function readFull(queries, options = {}) {
+    if (typeof TascoLibStore === 'undefined') return {sources: [], included: [], skipped: [], total: 0, error: 'Thư viện tài liệu chưa sẵn sàng trên trang này.'};
+    try {
+      const all = (await TascoLibStore.list(!!options.force)).filter(doc => doc && doc.id && Array.isArray(doc.chunks) && doc.chunks.length);
+      if (!all.length) return {sources: [], included: [], skipped: [], total: 0, error: 'Thư viện tài liệu đang trống — cần nạp Luật KDBH, Nghị định 67/2023, quy tắc bảo hiểm xe… trước.'};
+      const only = Array.isArray(options.docIds) && options.docIds.length ? new Set(options.docIds) : null;
+      // Người dùng chọn văn bản nào thì đọc đúng văn bản đó (kể cả đã hết hiệu lực); mặc định chỉ văn bản đang hiệu lực.
+      let docs = all.filter(doc => only ? only.has(doc.id) : ((doc.meta && doc.meta.trangThai) || 'dang_hieu_luc') === 'dang_hieu_luc');
+      const budget = options.budget > 0 ? options.budget : FULL_BUDGET;
+      const sizes = new Map(docs.map(doc => [doc.id, docChars(doc)]));
+      let skipped = [];
+      if (docs.reduce((sum, doc) => sum + sizes.get(doc.id), 0) > budget) {
+        // Quá ngân sách: văn bản có nhiều đoạn khớp câu hỏi nhất được đọc trước, văn bản không vừa thì để phần tra đoạn lo.
+        const score = new Map();
+        try {
+          const index = await TascoLibStore.index();
+          for (const query of queries || []) for (const row of TascoLibSearch.search(index, query, {limit: 10}) || []) score.set(row.docId, (score.get(row.docId) || 0) + (row.score || 0));
+        } catch (_) { /* không xếp hạng được thì giữ thứ tự thư viện */ }
+        const ordered = docs.map((doc, i) => ({doc, i, score: score.get(doc.id) || 0})).sort((a, b) => b.score - a.score || a.i - b.i).map(item => item.doc);
+        let left = budget; const keep = [];
+        for (const doc of ordered) { if (sizes.get(doc.id) <= left) { keep.push(doc); left -= sizes.get(doc.id); } else skipped.push(doc); }
+        docs = keep;
+      }
+      const sources = [], included = [];
+      for (const doc of docs) {
+        const meta = doc.meta || {};
+        doc.chunks.forEach((chunk, index) => { const source = toSource({docId: doc.id, index, chunk, doc}, sources.length + 1, []); source.full = true; sources.push(source); });
+        included.push({id: doc.id, name: clip(meta.ten || 'Tài liệu', 120), soHieu: clip(meta.soHieu, 60), chunks: doc.chunks.length, chars: sizes.get(doc.id)});
+      }
+      return {sources, included, skipped: skipped.map(doc => ({id: doc.id, name: clip((doc.meta && doc.meta.ten) || 'Tài liệu', 120), chars: sizes.get(doc.id)})), total: all.length, error: docs.length ? '' : 'Không có văn bản nào đang hiệu lực để đọc.'};
+    } catch (error) {
+      return {sources: [], included: [], skipped: [], total: 0, error: 'Không đọc được thư viện tài liệu: ' + (error && error.message || 'lỗi không rõ')};
+    }
+  }
+
   const sourceLabel = source => source.doc + (source.soHieu && !key(source.doc).includes(key(source.soHieu)) ? ' (số ' + source.soHieu + ')' : '') + ' – ' + source.title;
 
   function promptBlock(sources) {
@@ -280,5 +320,5 @@ const OfficialLetterLegal = (() => {
 
   const letterText = letter => letter ? [letter.subject, ...(letter.paragraphs || []).map(p => p.text)].join('\n') : '';
 
-  return {TOPICS, NEEDS_BASIS, needsBasis, coverage, LEGAL_WORDS, matchDocs, listDocs, buildQueries, rank, toSource, renumber, expandSources, retrieve, promptBlock, sourceLabel, verify, letterText, MAX_SOURCES};
+  return {TOPICS, NEEDS_BASIS, needsBasis, coverage, LEGAL_WORDS, matchDocs, listDocs, buildQueries, rank, toSource, renumber, expandSources, retrieve, readFull, FULL_BUDGET, promptBlock, sourceLabel, verify, letterText, MAX_SOURCES};
 })();
