@@ -94,14 +94,42 @@ test('docx: XML cân thẻ, A4 + lề chuẩn, không "undefined", thoát ký t�
   assert.deepEqual(Array.from(files.map(f => f.path)), ['[Content_Types].xml', '_rels/.rels', 'word/_rels/document.xml.rels', 'word/document.xml', 'word/styles.xml', 'docProps/core.xml']);
   const xml = files.find(f => f.path === 'word/document.xml').text;
   assert.ok(!xml.includes('undefined') && !xml.includes('null'));
-  assert.ok(xml.includes('w:w="11906" w:h="16838"') && xml.includes('w:left="1701"') && xml.includes('w:top="1134"'));
+  assert.ok(xml.includes('w:w="11906" w:h="16838"') && xml.includes('w:left="1418"') && xml.includes('w:top="1135"') && xml.includes('w:right="851"') && xml.includes('w:bottom="851"'));
   assert.ok(xml.includes('đề nghị cung cấp hồ sơ &amp; tài liệu &lt;tai nạn&gt;'));
-  assert.ok(xml.includes('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM') && xml.includes('Nơi nhận:') && xml.includes('Số: ……/……'));
+  assert.ok(xml.includes('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM') && xml.includes('Nơi nhận:') && xml.includes('Số: ……/……') && xml.includes('-----***-----'));
+  assert.ok(xml.includes('V/v ') && !xml.includes('<w:drawing>'), 'không logo → không có drawing');
   for (const f of files) {
     const open = (f.text.match(/<w:(p|tbl|tr|tc|r|t)[ >]/g) || []).length, close = (f.text.match(/<\/w:(p|tbl|tr|tc|r|t)>/g) || []).length;
     assert.equal(open, close, f.path + ' lệch thẻ');
     assert.ok(!/<w:[a-zA-Z]+\s*>[^<]*<(?!\/|w:|cp:|dc:|dcterms:)/.test(f.text));
   }
+});
+
+test('docx: nhúng logo, tiêu đề in hoa, bỏ V/v khi loại công văn có tiêu đề', () => {
+  const {letter} = sample();
+  const logoBytes = new Uint8Array([0x89, 0x50, 0x4E, 0x47, 1, 2, 3]);
+  const withTitle = {...letter, title: 'Thông báo kết quả giải quyết bồi thường'};
+  const files = Core.docxFiles(withTitle, 'x', {logo: {bytes: logoBytes, ext: 'png', width: 962, height: 259}});
+  const paths = Array.from(files.map(f => f.path));
+  assert.ok(paths.includes('word/media/logo.png'));
+  const byPath = path => files.find(f => f.path === path);
+  assert.ok(byPath('[Content_Types].xml').text.includes('Extension="png"'));
+  assert.ok(byPath('word/_rels/document.xml.rels').text.includes('Target="media/logo.png"'));
+  const xml = byPath('word/document.xml').text;
+  assert.ok(xml.includes('r:embed="rId2"') && xml.includes('<wp:inline'));
+  assert.ok(xml.includes('THÔNG BÁO KẾT QUẢ GIẢI QUYẾT BỒI THƯỜNG') && xml.includes('w:val="28"'));
+  assert.ok(!xml.includes('V/v '), 'có tiêu đề thì không in V/v dưới Số');
+  assert.equal((xml.match(/<w:drawing>/g) || []).length, 1);
+  for (const f of files.filter(item => item.text)) assert.equal((f.text.match(/<w:p[ >]/g) || []).length, (f.text.match(/<\/w:p>/g) || []).length, f.path);
+});
+
+test('bodyKinds: nhận diện tiêu đề, gạch đầu dòng, đoạn trích in nghiêng, câu kết', () => {
+  const kinds = Array.from(Core.bodyKinds([
+    {type: 'h', text: 'Căn cứ'}, {type: 'li', text: '- Điều 1'}, {type: 'p', text: 'Trích'}, {type: 'p', text: 'Nội dung điều khoản'},
+    {type: 'li', text: '- ý trong trích'}, {type: 'p', text: 'Kết thúc trích'}, {type: 'p', text: 'Nội dung thường'}, {type: 'p', text: 'Trân trọng kính chào!'}
+  ]));
+  assert.equal(kinds[0], 'h'); assert.equal(kinds[1], 'li'); assert.equal(kinds[3], 'q'); assert.equal(kinds[4], 'liq');
+  assert.equal(kinds[6], 'p'); assert.equal(kinds[7], 'end');
 });
 
 test('sanitizeLetter + letterToText + fileBaseName', () => {

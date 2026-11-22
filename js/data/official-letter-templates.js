@@ -131,6 +131,7 @@ const OFFICIAL_LETTER_TEMPLATES = [
   },
   {
     id: 'tu_choi_thong_so_lop', name: 'Từ chối bồi thường – sai thông số lốp', group: 'Từ chối bồi thường',
+    docTitle: 'THÔNG BÁO KẾT QUẢ GIẢI QUYẾT BỒI THƯỜNG',
     summary: 'Thông báo từ chối khi xe lắp lốp có thông số khác GCN kiểm định / tem nhà sản xuất (điểm loại trừ chung, Quy tắc bảo hiểm xe cơ giới).',
     audience: 'Chủ xe / khách hàng',
     purpose: 'Công văn của Bảo hiểm Tasco THÔNG BÁO KẾT QUẢ GIẢI QUYẾT BỒI THƯỜNG theo hướng TỪ CHỐI vì tại thời điểm tổn thất xe đang lắp lốp có thông số khác với thông số tiêu chuẩn '

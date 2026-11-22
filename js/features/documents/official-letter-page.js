@@ -479,7 +479,7 @@ const OfficialLetterPage = (() => {
     const all = prefix => [...paper.querySelectorAll('[data-lt^="' + prefix + ':"]')].map(node => node.innerText);
     const one = path => { const node = paper.querySelector('[data-lt="' + path + '"]'); return node ? node.innerText : ''; };
     const paragraphs = [...paper.querySelectorAll('[data-lt^="para:"]')].map(node => ({type: node.dataset.type || 'p', text: node.innerText}));
-    return Core().sanitizeLetter({...st.letter, parent: one('parent'), unit: one('unit'), number: one('number'), place: one('place'), subject: one('subject'),
+    return Core().sanitizeLetter({...st.letter, parent: one('parent'), unit: one('unit'), number: one('number'), place: one('place'), subject: one('subject'), title: paper.querySelector('[data-lt="title"]') ? one('title') : (st.letter.title || ''),
       recipients: all('recipient'), paragraphs, noiNhan: all('noiNhan'), signerTitle: one('signerTitle'), signerName: one('signerName')});
   }
   function syncLetter() { if (st.letter && $('.ol-paper')) st.letter = readLetter(); }
@@ -495,6 +495,25 @@ const OfficialLetterPage = (() => {
   }
 
   // ---- Xuất ----
+  function logoUrl() {
+    const rel = Core().LOGO_SRC;
+    const url = typeof TascoAssets !== 'undefined' && TascoAssets.url ? TascoAssets.url(rel) : rel;
+    try { return new URL(url, document.baseURI).href; } catch (_) { return url; }
+  }
+  // Logo nhúng vào Word: lỗi mạng thì bỏ logo (Word vẫn có tên công ty bằng chữ), không chặn việc tải file.
+  async function loadLogoBytes() {
+    try {
+      const res = await fetch(logoUrl());
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      const sig = [0x89, 0x50, 0x4E, 0x47];
+      if (bytes.length < 24 || sig.some((b, i) => bytes[i] !== b)) throw new Error('Logo không phải PNG');
+      const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      const width = view.getUint32(16), height = view.getUint32(20);
+      if (!width || !height) throw new Error('Không đọc được kích thước logo');
+      return {bytes, ext: 'png', width, height};
+    } catch (error) { console.warn('Không tải được logo cho file Word', error); return null; }
+  }
   async function downloadDocx() {
     if (!st.letter) return;
     if (typeof JSZip === 'undefined') { toast('Chưa tải được thư viện tạo Word. Kiểm tra mạng rồi thử lại.', 'warning'); return; }
@@ -503,8 +522,9 @@ const OfficialLetterPage = (() => {
       const unverified = citationChecks().filter(item => !item.ok).length;
       if (unverified) toast('Lưu ý: còn ' + unverified + ' căn cứ chưa kiểm chứng với thư viện — kiểm tra trước khi ký.', 'warning');
       const zip = new JSZip();
-      Core().docxFiles(st.letter, st.letter.subject).forEach(file => zip.file(file.path, file.text));
-      const blob = await zip.generateAsync({type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+      const logo = await loadLogoBytes();
+      Core().docxFiles(st.letter, st.letter.title || st.letter.subject, logo ? {logo} : null).forEach(file => zip.file(file.path, file.bytes || file.text, {createFolders: false}));
+      const blob = await zip.generateAsync({type: 'blob', compression: 'DEFLATE', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
       SharedFormsAI.saveBlob(blob, Core().fileBaseName(st.letter, st.values) + '.docx');
       const gaps = Core().countGaps(st.letter);
       toast(gaps ? 'Đã tải Word. Còn ' + gaps + ' chỗ "……" cần điền tay.' : 'Đã tải file Word.', gaps ? 'warning' : 'success');
@@ -516,9 +536,9 @@ const OfficialLetterPage = (() => {
     syncLetter();
     const win = window.open('', '_blank');
     if (!win) { toast('Trình duyệt chặn cửa sổ in. Hãy cho phép cửa sổ bật lên rồi thử lại.', 'warning'); return; }
-    const markup = Core().letterToHtml(st.letter).replace(/ contenteditable="true"/g, '').replace(/ spellcheck="true"/g, '');
+    const markup = Core().letterToHtml(st.letter, {logoUrl: logoUrl()}).replace(/ contenteditable="true"/g, '').replace(/ spellcheck="true"/g, '');
     win.document.open();
-    win.document.write('<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Công văn</title><style>@page{size:A4;margin:20mm 15mm 20mm 30mm}body{margin:0;font:13pt/1.3 "Times New Roman",serif;color:#000}.ol-head{display:flex}.ol-head-left{width:42%;text-align:center}.ol-head-right{width:58%;text-align:center}.ol-rule{width:40%;border:0;border-top:1px solid #000;margin:2px auto}.ol-subject{margin:8px 0;font-size:12pt}.ol-to{text-align:center;margin:12px 0}.ol-p{text-align:justify;text-indent:1.27cm;margin:0 0 6pt}.ol-p-li{text-indent:0;padding-left:1.5cm}.ol-foot{display:flex;margin-top:12px}.ol-noinhan{width:55%;font-size:11pt}.ol-sign{width:45%;text-align:center}.ol-sign-space{height:70px}mark{background:none}</style></head><body>' + markup + '</body></html>');
+    win.document.write('<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Công văn</title><style>' + Core().PRINT_CSS + '</style></head><body>' + markup + '</body></html>');
     win.document.close();
     win.focus();
     setTimeout(() => { try { win.print(); } catch (_) { /* người dùng tự in */ } }, 300);
@@ -750,7 +770,7 @@ const OfficialLetterPage = (() => {
   function documentHtml() {
     if (!st.letter) return '<div class="ola-doc is-pending"><div class="olp-skeleton" aria-hidden="true">' + '<i></i>'.repeat(10) + '</div><div class="olp-busy" role="status"><span class="olp-spinner"></span><span data-ol-status>' + esc(st.status || 'Đang soạn…') + '</span></div></div>';
     const locked = !!(st.busy || st.pending);
-    const paper = Core().letterToHtml(st.letter);
+    const paper = Core().letterToHtml(st.letter, {logoUrl: logoUrl()});
     return '<div class="ola-doc' + (st.busy ? ' is-busy' : '') + '"><div class="ola-doc-bar"><label class="ol-datepick">Ngày <input type="date" data-ol-date value="' + esc(st.letter.date) + '"' + (locked ? ' disabled' : '') + '></label>'
       + '<button type="button" class="olp-tool" data-ol-drawer="versions"' + (locked ? ' disabled' : '') + '>' + svg(ICON.history) + 'Phiên bản (' + st.versions.length + ')</button>'
       + '<button type="button" class="olp-tool is-primary" data-ol-act="docx">' + svg(ICON.word) + 'Tải Word</button><button type="button" class="olp-tool" data-ol-act="print" title="In">' + svg(ICON.print) + '</button><button type="button" class="olp-tool" data-ol-act="copy" title="Sao chép nội dung">' + svg(ICON.copy) + '</button></div>'

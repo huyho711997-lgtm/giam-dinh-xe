@@ -240,7 +240,7 @@ const OfficialLetterCore = (() => {
     return {
       templateId: template.id, parent: cfg.parent, unit: cfg.unit, number: template.numberKey ? single(values[template.numberKey], 60) : '', place: cfg.place,
       date: /^\d{4}-\d{2}-\d{2}$/.test(dateIso || '') ? dateIso : todayIso(),
-      subject: single(parsed.subject, MAX_SUBJECT),
+      subject: single(parsed.subject, MAX_SUBJECT), title: single(template.docTitle, 120),
       recipients: recipientLines(values.recipient),
       paragraphs: body.concat(closing),
       noiNhan: NOI_NHAN_DEFAULT.slice(),
@@ -271,7 +271,7 @@ const OfficialLetterCore = (() => {
     return {
       ...letter,
       parent: single(letter.parent, 120), unit: single(letter.unit, 120), number: single(letter.number, 60), place: single(letter.place, 80),
-      subject: single(String(letter.subject || '').replace(/^v\/v\s*:?\s*/i, ''), MAX_SUBJECT),
+      subject: single(String(letter.subject || '').replace(/^v\/v\s*:?\s*/i, ''), MAX_SUBJECT), title: single(letter.title, 120),
       recipients: (letter.recipients || []).map(line => single(line, 200)).filter(Boolean).slice(0, 8),
       paragraphs: (letter.paragraphs || []).map(p => ({type: ['p', 'h', 'li'].includes(p.type) ? p.type : 'p', text: single(p.text, MAX_PARAGRAPH_TEXT)})).filter(p => p.text).slice(0, MAX_PARAGRAPHS + 4),
       noiNhan: (letter.noiNhan || []).map(line => single(line, 200)).filter(Boolean).slice(0, 12),
@@ -294,25 +294,52 @@ const OfficialLetterCore = (() => {
     return '<' + tag + ' class="ol-edit' + (cls ? ' ' + cls : '') + '" contenteditable="true" spellcheck="true" data-lt="' + path + '"' + (extra || '') + '>' + gapHtml(text) + '</' + tag + '>';
   }
 
-  function letterToHtml(letter) {
+  // Phân loại từng đoạn để bản xem trước và file Word bố trí GIỐNG NHAU:
+  // "Trích" … "Kết thúc trích" → tiêu đề đậm + phần ở giữa in nghiêng; "Trân trọng…" → sát lề, cách đoạn trên/dưới.
+  function bodyKinds(paragraphs) {
+    let quoting = false;
+    return (paragraphs || []).map(p => {
+      const plain = String(p.text || '').trim().toLowerCase().replace(/[\s:.]+$/, '');
+      if (plain === 'trích') { quoting = true; return 'h'; }
+      if (plain === 'kết thúc trích') { quoting = false; return 'h'; }
+      if (p.type === 'h') return 'h';
+      if (p.type === 'li') return quoting ? 'liq' : 'li';
+      if (quoting) return 'q';
+      return /^trân trọng/i.test(String(p.text || '').trim()) ? 'end' : 'p';
+    });
+  }
+  const LOGO_SRC = 'assets/images/tasco-logo-clean.png';
+
+  function letterToHtml(letter, options) {
+    const logo = escapeHtml((options && options.logoUrl) || LOGO_SRC);
     const recipients = letter.recipients.length ? letter.recipients : [''];
     const recipientHtml = recipients.length === 1
       ? '<div class="ol-to"><span>Kính gửi: </span>' + editable('recipient:0', recipients[0], 'span') + '</div>'
-      : '<div class="ol-to"><span>Kính gửi:</span>' + recipients.map((line, i) => '<div>- ' + editable('recipient:' + i, line, 'span') + '</div>').join('') + '</div>';
-    const body = letter.paragraphs.map((p, i) => editable('para:' + i, p.text, 'p', 'ol-p ol-p-' + p.type, ' data-type="' + p.type + '"')).join('');
+      : '<div class="ol-to"><span>Kính gửi:</span>' + recipients.map((line, i) => '<div class="ol-to-li">- ' + editable('recipient:' + i, line, 'span') + '</div>').join('') + '</div>';
+    const kinds = bodyKinds(letter.paragraphs);
+    const body = letter.paragraphs.map((p, i) => editable('para:' + i, p.text, 'p', 'ol-p ol-p-' + kinds[i], ' data-type="' + p.type + '"')).join('');
     const noiNhan = letter.noiNhan.map((line, i) => '<div>- ' + editable('noiNhan:' + i, line, 'span') + '</div>').join('');
+    const title = letter.title ? '<div class="ol-title">' + editable('title', letter.title, 'span') + '</div>' : '';
     return '<article class="ol-paper">'
       + '<div class="ol-head">'
-      + '<div class="ol-head-left"><div class="ol-parent">' + editable('parent', letter.parent, 'span') + '</div><div class="ol-unit">' + editable('unit', letter.unit, 'span') + '</div><hr class="ol-rule">'
-      + '<div class="ol-number">Số: ' + editable('number', letter.number, 'span', 'ol-number-input') + '</div></div>'
-      + '<div class="ol-head-right"><div class="ol-nation">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div><div class="ol-motto">Độc lập – Tự do – Hạnh phúc</div><hr class="ol-rule">'
-      + '<div class="ol-date"><i>' + editable('place', letter.place, 'span') + ', ' + escapeHtml(dateLine({...letter, place: ''})) + '</i></div></div></div>'
-      + '<div class="ol-subject">V/v ' + editable('subject', letter.subject, 'span') + '</div>'
-      + recipientHtml + '<div class="ol-body">' + body + '</div>'
-      + '<div class="ol-foot"><div class="ol-noinhan"><b><i>Nơi nhận:</i></b>' + noiNhan + '</div>'
-      + '<div class="ol-sign"><b>' + editable('signerTitle', letter.signerTitle, 'span') + '</b><div class="ol-sign-space"></div><b>' + editable('signerName', letter.signerName, 'span') + '</b></div></div>'
+      + '<div class="ol-head-left"><img class="ol-logo" src="' + logo + '" alt="Tasco Insurance"><div class="ol-unit">' + editable('unit', letter.unit, 'span') + '</div></div>'
+      + '<div class="ol-head-right"><div class="ol-nation">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div><div class="ol-motto">Độc lập – Tự do – Hạnh phúc</div><div class="ol-stars">-----***-----</div></div></div>'
+      + '<div class="ol-head ol-head-2"><div class="ol-head-left"><div class="ol-number">Số: ' + editable('number', letter.number, 'span', 'ol-number-input') + '</div>'
+      + (letter.title ? '' : '<div class="ol-subject">V/v ' + editable('subject', letter.subject, 'span') + '</div>') + '</div>'
+      + '<div class="ol-head-right"><div class="ol-date"><i>' + editable('place', letter.place, 'span') + ', ' + escapeHtml(dateLine({...letter, place: ''})) + '</i></div></div></div>'
+      + title + recipientHtml + '<div class="ol-body">' + body + '</div>'
+      + '<div class="ol-foot"><div class="ol-noinhan"><b><u>Nơi nhận:</u></b>' + noiNhan + '</div>'
+      + '<div class="ol-sign"><b>' + editable('parent', letter.parent, 'span') + '</b><b>' + editable('signerTitle', letter.signerTitle, 'span') + '</b><div class="ol-sign-space"></div><b>' + editable('signerName', letter.signerName, 'span') + '</b></div></div>'
       + '</article>';
   }
+
+  // CSS của tờ giấy khi in (cửa sổ in riêng) — cùng số đo với file Word: lề trên 2 cm, trái 2,5 cm, phải/dưới 1,5 cm.
+  const PRINT_CSS = '@page{size:A4;margin:20mm 15mm 15mm 25mm}body{margin:0;font:12pt/1.25 "Times New Roman",serif;color:#000}'
+    + '.ol-head{display:flex;gap:8px}.ol-head-left{width:44%}.ol-head-right{width:56%;text-align:center;font-weight:700}.ol-logo{display:block;width:4.6cm;height:auto}.ol-unit{margin-top:2px;font-size:11pt;font-weight:700}'
+    + '.ol-head-2{margin-top:6px}.ol-head-2 .ol-head-right{font-weight:400}.ol-date{font-style:italic}.ol-subject{margin-top:4px;padding-right:8px}'
+    + '.ol-title{margin:12pt 0 6pt;text-align:center;font-size:14pt;font-weight:700}.ol-to{margin:12pt 0 12pt;font-weight:700;text-align:justify;text-indent:1.27cm}.ol-to-li{padding-left:1.27cm;text-indent:0}'
+    + '.ol-p{text-align:justify;text-indent:.75cm;margin:6pt 0 3pt}.ol-p-h{font-weight:700}.ol-p-q,.ol-p-liq{font-style:italic}.ol-p-li,.ol-p-liq{text-indent:-.5cm;margin-left:1.8cm}.ol-p-end{text-indent:0;margin:12pt 0}'
+    + '.ol-foot{display:flex;margin-top:14px}.ol-noinhan{width:48%;font-size:11pt}.ol-sign{width:52%;text-align:center}.ol-sign b{display:block}.ol-sign-space{height:70px}mark{background:none}';
 
   // Bản chữ thuần để sao chép dán sang email / Zalo.
   function letterToText(letter) {
@@ -325,15 +352,20 @@ const OfficialLetterCore = (() => {
   }
 
   // ---- DOCX ----
-  const W_NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  // Bố cục bám công văn mẫu của Tasco: A4, lề trên 2 cm / trái 2,5 cm / phải & dưới 1,5 cm, Times New Roman 12 pt;
+  // logo + quốc hiệu "-----***-----", Số bên trái – ngày bên phải, tiêu đề in hoa (nếu loại công văn có), thân văn bản căn đều.
+  const W_NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
   const FONT = 'Times New Roman';
-  const xmlText = value => String(value ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '').replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
+  const PAGE = {w: 11906, h: 16838, top: 1135, right: 851, bottom: 851, left: 1418};
+  const TEXT_W = PAGE.w - PAGE.left - PAGE.right;
+  const LOGO_REL = 'rId2', LOGO_H_EMU = 450000;
+  const xmlText = value => String(value ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]/g, '').replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
 
   function run(text, o) {
     const f = o || {};
     const pr = '<w:rFonts w:ascii="' + FONT + '" w:hAnsi="' + FONT + '" w:eastAsia="' + FONT + '" w:cs="' + FONT + '"/>'
-      + (f.b ? '<w:b/><w:bCs/>' : '') + (f.i ? '<w:i/><w:iCs/>' : '')
-      + '<w:sz w:val="' + (f.sz || 26) + '"/><w:szCs w:val="' + (f.sz || 26) + '"/>';
+      + (f.b ? '<w:b/><w:bCs/>' : '') + (f.i ? '<w:i/><w:iCs/>' : '') + (f.u ? '<w:u w:val="single"/>' : '')
+      + '<w:sz w:val="' + (f.sz || 24) + '"/><w:szCs w:val="' + (f.sz || 24) + '"/>';
     const lines = String(text ?? '').split('\n');
     return lines.map((line, index) => (index ? '<w:r><w:br/></w:r>' : '') + (line ? '<w:r><w:rPr>' + pr + '</w:rPr><w:t xml:space="preserve">' + xmlText(line) + '</w:t></w:r>' : '')).join('');
   }
@@ -343,7 +375,7 @@ const OfficialLetterCore = (() => {
     let pr = '';
     if (f.keepNext) pr += '<w:keepNext/>';
     if (f.rule) pr += '<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="000000"/></w:pBdr>';
-    pr += '<w:spacing w:before="' + (f.before || 0) + '" w:after="' + (f.after == null ? 120 : f.after) + '" w:line="' + (f.line || 312) + '" w:lineRule="auto"/>';
+    pr += '<w:spacing w:before="' + (f.before || 0) + '" w:after="' + (f.after || 0) + '" w:line="' + (f.line || 252) + '" w:lineRule="auto"/>';
     if (f.firstLine || f.left || f.right || f.hanging) {
       pr += '<w:ind' + (f.left ? ' w:left="' + f.left + '"' : '') + (f.right ? ' w:right="' + f.right + '"' : '') + (f.firstLine ? ' w:firstLine="' + f.firstLine + '"' : '') + (f.hanging ? ' w:hanging="' + f.hanging + '"' : '') + '/>';
     }
@@ -356,77 +388,95 @@ const OfficialLetterCore = (() => {
   }
   function table(widths, rows) {
     return '<w:tbl><w:tblPr><w:tblW w:w="' + widths.reduce((a, b) => a + b, 0) + '" w:type="dxa"/><w:tblLayout w:type="fixed"/>'
+      + '<w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></w:tblBorders>'
       + '<w:tblCellMar><w:left w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tblCellMar></w:tblPr>'
       + '<w:tblGrid>' + widths.map(w => '<w:gridCol w:w="' + w + '"/>').join('') + '</w:tblGrid>'
       + rows.map(cells => '<w:tr><w:trPr><w:cantSplit/></w:trPr>' + cells.join('') + '</w:tr>').join('') + '</w:tbl>';
   }
+  function logoRun(media) {
+    const logo = media && media.logo;
+    if (!logo || !logo.width || !logo.height) return '';
+    const cy = LOGO_H_EMU, cx = Math.round(cy * logo.width / logo.height);
+    return '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="' + cx + '" cy="' + cy + '"/>'
+      + '<wp:docPr id="1" name="Logo Tasco Insurance" descr="Tasco Insurance"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>'
+      + '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="1" name="logo"/><pic:cNvPicPr/></pic:nvPicPr>'
+      + '<pic:blipFill><a:blip r:embed="' + LOGO_REL + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
+      + '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
+  }
 
-  function documentXml(letter) {
-    const TEXT_W = 9354, LEFT_W = 3800, RIGHT_W = TEXT_W - LEFT_W;
-    const center = (text, o) => para(run(text, o), {jc: 'center', after: 0, line: 276, ...(o || {})});
-    const left = [
-      center(letter.parent.toLocaleUpperCase('vi'), {sz: 22}),
-      letter.unit ? center(letter.unit.toLocaleUpperCase('vi'), {b: 1, sz: 24, rule: true}) : '',
-      center('', {sz: 12, after: 40}),
-      center(numberLine(letter), {sz: 26, before: 60})
-    ].join('');
-    const right = [
-      center('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', {b: 1, sz: 26}),
-      center('Độc lập – Tự do – Hạnh phúc', {b: 1, sz: 28, rule: true, left: 700, right: 700}),
-      center('', {sz: 12, after: 40}),
-      center(dateLine(letter), {i: 1, sz: 28, before: 60})
-    ].join('');
-    const subjectRow = [cell(LEFT_W, para(run('V/v ' + (letter.subject || '……'), {sz: 24}), {jc: 'center', after: 0, line: 276})), cell(RIGHT_W, para(''))];
+  // media: {logo: {bytes, ext, width, height}} (tuỳ chọn). Không có logo → in tên công ty bằng chữ để đầu trang không bị trống.
+  function documentXml(letter, media) {
+    const LEFT_W = 4400, RIGHT_W = TEXT_W - LEFT_W;
+    const center = (text, o) => para(run(text, o), {jc: 'center', ...(o || {})});
+    const logo = logoRun(media);
+    const leftTop = (logo ? para(logo, {after: 40}) : para(run(letter.parent.toLocaleUpperCase('vi'), {b: 1, sz: 22}), {after: 40}))
+      + (letter.unit ? para(run(letter.unit.toLocaleUpperCase('vi'), {b: 1, sz: 22}), {after: 0}) : '');
+    const rightTop = center('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM', {b: 1}) + center('Độc lập – Tự do – Hạnh phúc', {b: 1}) + center('-----***-----', {b: 1});
+    const leftBottom = para(run(numberLine(letter)), {before: 120, after: 0})
+      + (letter.title ? '' : para(run('V/v ' + (letter.subject || '……'), {sz: 24}), {before: 60, after: 0, right: 200}));
+    const rightBottom = center(dateLine(letter), {i: 1, before: 120});
+    const title = letter.title ? para(run(letter.title.toLocaleUpperCase('vi'), {b: 1, sz: 28}), {jc: 'center', before: 280, after: 120, keepNext: true}) : '';
     const recipients = letter.recipients.length ? letter.recipients : ['……'];
     const toLines = recipients.length === 1
-      ? para(run('Kính gửi: ', {sz: 28}) + run(recipients[0], {sz: 28}), {jc: 'center', before: 240, after: 160})
-      : para(run('Kính gửi:', {sz: 28}), {jc: 'center', before: 240, after: 40, keepNext: true}) + recipients.map(line => para(run('- ' + line, {sz: 28}), {jc: 'center', after: 40})).join('');
-    const body = letter.paragraphs.map(p => {
-      if (p.type === 'h') return para(run(p.text, {b: 1}), {jc: 'both', firstLine: 720, keepNext: true});
-      if (p.type === 'li') return para(run(p.text), {jc: 'both', left: 1000, hanging: 280, after: 80});
-      return para(run(p.text), {jc: 'both', firstLine: 720});
+      ? para(run('Kính gửi: ' + recipients[0], {b: 1}), {jc: 'both', firstLine: 720, before: 240, after: 240, keepNext: true})
+      : para(run('Kính gửi:', {b: 1}), {firstLine: 720, before: 240, after: 40, keepNext: true}) + recipients.map(line => para(run('- ' + line, {b: 1}), {jc: 'both', left: 1000, hanging: 280, after: 40, keepNext: true})).join('');
+    const kinds = bodyKinds(letter.paragraphs);
+    const body = letter.paragraphs.map((p, i) => {
+      const kind = kinds[i], base = {jc: 'both', before: 120, after: 60};
+      if (kind === 'h') return para(run(p.text, {b: 1}), {...base, firstLine: 425, keepNext: true});
+      if (kind === 'li' || kind === 'liq') return para(run(p.text, {i: kind === 'liq'}), {...base, left: 1000, hanging: 283, before: 0});
+      if (kind === 'q') return para(run(p.text, {i: 1}), {...base, firstLine: 425});
+      if (kind === 'end') return para(run(p.text), {jc: 'left', before: 240, after: 240, keepNext: true});
+      return para(run(p.text), {...base, firstLine: 425});
     }).join('');
-    const noiNhan = para(run('Nơi nhận:', {b: 1, i: 1, sz: 24}), {after: 0, line: 252, keepNext: true})
-      + letter.noiNhan.map(line => para(run('- ' + line, {sz: 22}), {after: 0, line: 252})).join('');
-    const sign = para(run(letter.signerTitle.toLocaleUpperCase('vi'), {b: 1, sz: 28}), {jc: 'center', after: 0, keepNext: true})
-      + para('', {before: 1100, after: 0, keepNext: true}) + para(run(letter.signerName, {b: 1, sz: 28}), {jc: 'center', after: 0});
+    const noiNhan = para(run('Nơi nhận:', {b: 1, u: 1, sz: 22}), {after: 0, keepNext: true})
+      + letter.noiNhan.map(line => para(run('- ' + line, {sz: 22}), {after: 0})).join('');
+    const sign = center(letter.parent.toLocaleUpperCase('vi'), {b: 1, keepNext: true})
+      + (letter.signerTitle ? center(letter.signerTitle.toLocaleUpperCase('vi'), {b: 1, keepNext: true}) : '')
+      + para('', {before: 1000, after: 0, keepNext: true}) + (letter.signerName ? center(letter.signerName, {b: 1}) : '');
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ' + W_NS + '><w:body>'
-      + table([LEFT_W, RIGHT_W], [[cell(LEFT_W, left), cell(RIGHT_W, right)], subjectRow])
-      + toLines + body
-      + para('', {after: 120, keepNext: true})
-      + table([5200, TEXT_W - 5200], [[cell(5200, noiNhan), cell(TEXT_W - 5200, sign)]])
-      + '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="851" w:bottom="1134" w:left="1701" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr>'
+      + table([LEFT_W, RIGHT_W], [[cell(LEFT_W, leftTop), cell(RIGHT_W, rightTop)], [cell(LEFT_W, leftBottom), cell(RIGHT_W, rightBottom)]])
+      + title + toLines + body
+      + para('', {after: 60, keepNext: true})
+      + table([3300, 1900, TEXT_W - 5200], [[cell(3300, noiNhan), cell(1900, para('')), cell(TEXT_W - 5200, sign)]])
+      + '<w:sectPr><w:pgSz w:w="' + PAGE.w + '" w:h="' + PAGE.h + '"/><w:pgMar w:top="' + PAGE.top + '" w:right="' + PAGE.right + '" w:bottom="' + PAGE.bottom + '" w:left="' + PAGE.left + '" w:header="709" w:footer="709" w:gutter="0"/></w:sectPr>'
       + '</w:body></w:document>';
   }
 
   function stylesXml() {
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles ' + W_NS + '><w:docDefaults><w:rPrDefault><w:rPr>'
-      + '<w:rFonts w:ascii="' + FONT + '" w:hAnsi="' + FONT + '" w:eastAsia="' + FONT + '" w:cs="' + FONT + '"/><w:sz w:val="26"/><w:szCs w:val="26"/><w:lang w:val="vi-VN" w:eastAsia="vi-VN" w:bidi="ar-SA"/></w:rPr></w:rPrDefault>'
-      + '<w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="312" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'
+      + '<w:rFonts w:ascii="' + FONT + '" w:hAnsi="' + FONT + '" w:eastAsia="' + FONT + '" w:cs="' + FONT + '"/><w:sz w:val="24"/><w:szCs w:val="24"/><w:lang w:val="vi-VN" w:eastAsia="vi-VN" w:bidi="ar-SA"/></w:rPr></w:rPrDefault>'
+      + '<w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="252" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>'
       + '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>';
   }
 
-  function docxFiles(letter, title) {
+  function docxFiles(letter, title, media) {
     const now = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
     const head = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
-    return [
+    const logo = media && media.logo && media.logo.bytes ? media.logo : null;
+    const ext = logo ? (logo.ext === 'jpg' || logo.ext === 'jpeg' ? 'jpeg' : 'png') : '';
+    const files = [
       {path: '[Content_Types].xml', text: head + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>'
+        + (logo ? '<Default Extension="' + ext + '" ContentType="image/' + ext + '"/>' : '')
         + '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
         + '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'
         + '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>'},
       {path: '_rels/.rels', text: head + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
         + '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>'},
-      {path: 'word/_rels/document.xml.rels', text: head + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
-      {path: 'word/document.xml', text: documentXml(letter)},
+      {path: 'word/_rels/document.xml.rels', text: head + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+        + (logo ? '<Relationship Id="' + LOGO_REL + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.' + ext + '"/>' : '') + '</Relationships>'},
+      {path: 'word/document.xml', text: documentXml(letter, logo ? {logo} : null)},
       {path: 'word/styles.xml', text: stylesXml()},
       {path: 'docProps/core.xml', text: head + '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-        + '<dc:title>' + xmlText(title || letter.subject || 'Công văn') + '</dc:title><dc:creator>Tasco DLK</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">' + now + '</dcterms:created></cp:coreProperties>'}
+        + '<dc:title>' + xmlText(title || letter.subject || letter.title || 'Công văn') + '</dc:title><dc:creator>Tasco DLK</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">' + now + '</dcterms:created></cp:coreProperties>'}
     ];
+    if (logo) files.push({path: 'word/media/logo.' + ext, bytes: logo.bytes});
+    return files;
   }
 
   return {
     GAP, DEFAULT_ISSUER, NOI_NHAN_DEFAULT, templates, findTemplate, normalizeIssuer, prefillValues, mergeAnalysis, missingFields, cleanValue,
     buildAnalyzeRequest, parseAnalysis, buildComposeRequest, parseLetter, assembleLetter, sanitizeLetter, countGaps, dateLine, numberLine, todayIso,
-    fileBaseName, letterToHtml, letterToText, documentXml, docxFiles, escapeHtml, single, multi
+    fileBaseName, letterToHtml, letterToText, documentXml, docxFiles, bodyKinds, PRINT_CSS, LOGO_SRC, escapeHtml, single, multi
   };
 })();

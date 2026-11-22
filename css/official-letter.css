@@ -232,15 +232,15 @@ span.ola-chip button { display:inline-flex; align-items:center; gap:6px; height:
 
 /* Tờ A4 xem trước: luôn nền trắng chữ đen như bản in */
 .ol-paper-wrap { overflow:auto; max-height:70vh; padding:14px; border-radius:12px; background:color-mix(in srgb,var(--text-muted) 12%,var(--surface-soft)); }
-.ol-paper { box-sizing:border-box; width:100%; max-width:794px; min-height:560px; margin:0 auto; padding:44px 38px 48px 66px; background:#fff; color:#000; box-shadow:0 2px 14px rgba(0,0,0,.2); font:13pt/1.3 'Times New Roman',Times,serif; }
-.ol-head { display:flex; gap:8px; } .ol-head-left { width:42%; text-align:center; font-size:12pt; } .ol-head-right { width:58%; text-align:center; }
-.ol-parent { font-size:11pt; } .ol-unit { font-weight:700; } .ol-nation { font-weight:700; font-size:12pt; } .ol-motto { font-weight:700; font-size:13pt; }
-.ol-rule { width:40%; border:0; border-top:1px solid #000; margin:2px auto 6px; }
-.ol-number { margin-top:6px; } .ol-date i { font-size:13pt; }
-.ol-subject { margin:6px 0 4px; width:42%; text-align:center; font-size:12pt; }
-.ol-to { text-align:center; margin:14px 0 10px; }
-.ol-p { margin:0 0 7pt; text-align:justify; text-indent:1.27cm; } .ol-p-li { text-indent:0; padding-left:1.4cm; } .ol-p-h { font-weight:700; }
-.ol-foot { display:flex; margin-top:14px; gap:8px; } .ol-noinhan { width:55%; font-size:11pt; } .ol-sign { width:45%; text-align:center; } .ol-sign-space { height:74px; }
+.ol-paper { box-sizing:border-box; width:100%; max-width:794px; min-height:560px; margin:0 auto; padding:76px 57px 57px 94px; background:#fff; color:#000; box-shadow:0 2px 14px rgba(0,0,0,.2); font:12pt/1.25 'Times New Roman',Times,serif; }
+.ol-head { display:flex; gap:8px; } .ol-head-left { width:44%; } .ol-head-right { width:56%; text-align:center; font-weight:700; }
+.ol-logo { display:block; width:4.6cm; max-width:100%; height:auto; } .ol-unit { margin-top:2px; font-size:11pt; font-weight:700; text-transform:uppercase; }
+.ol-head-2 { margin-top:6px; } .ol-head-2 .ol-head-right { font-weight:400; } .ol-date { font-style:italic; } .ol-subject { margin-top:4px; padding-right:8px; }
+.ol-title { margin:14pt 0 6pt; text-align:center; font-size:14pt; font-weight:700; text-transform:uppercase; }
+.ol-to { margin:12pt 0; font-weight:700; text-align:justify; text-indent:1.27cm; } .ol-to-li { padding-left:1.27cm; text-indent:0; }
+.ol-p { margin:6pt 0 3pt; text-align:justify; text-indent:.75cm; } .ol-p-h { font-weight:700; } .ol-p-q, .ol-p-liq { font-style:italic; }
+.ol-p-li, .ol-p-liq { text-indent:-.5cm; margin-left:1.8cm; } .ol-p-end { text-indent:0; margin:12pt 0; }
+.ol-foot { display:flex; margin-top:14px; gap:8px; } .ol-noinhan { width:48%; font-size:11pt; } .ol-sign { width:52%; text-align:center; } .ol-sign b { display:block; } .ol-sign-space { height:70px; }
 .ol-edit { outline:none; border-radius:3px; } .ol-edit:hover { background:rgba(173,118,29,.1); } .ol-edit:focus { background:rgba(173,118,29,.16); box-shadow:0 0 0 2px rgba(173,118,29,.4); }
 .ol-number-input:empty::before { content:'……/……'; color:#888; }
 mark.ol-gap { background:#ffe58a; color:#000; padding:0 2px; border-radius:2px; }
@@ -295,7 +295,7 @@ mark.ol-gap { background:#ffe58a; color:#000; padding:0 2px; border-radius:2px; 
 .ol-set-foot .tasco-ai-btn-primary { flex:0 1 auto; min-width:170px; box-shadow:0 6px 16px rgba(194,142,53,.3); }
 .ol-set-foot .tasco-ai-btn-ghost { min-width:84px; }
 @media (max-width:560px) { .ol-set-grid { grid-template-columns:minmax(0,1fr); } .ol-set-head, .ol-set-body, .ol-set-foot { padding-left:14px; padding-right:14px; } .ol-set-foot .tasco-ai-btn-primary { flex:1; } }
-@media (max-width:760px) { .ol-form { grid-template-columns:1fr; } .ol-paper { padding:28px 20px 32px 32px; } .ol-rec-item { grid-template-columns:auto minmax(0,1fr); } .ol-rec-tag { display:none; } }
+@media (max-width:760px) { .ol-form { grid-template-columns:1fr; } .ol-paper { padding:32px 20px 32px 32px; } .ol-rec-item { grid-template-columns:auto minmax(0,1fr); } .ol-rec-tag { display:none; } }
 
 /* Câu hỏi làm rõ, thông tin bổ sung, dàn ý */
 .ol-q-count { margin-left:6px; padding:2px 9px; border-radius:99px; background:color-mix(in srgb,var(--primary) 14%,transparent); color:var(--primary); font-size:11px; font-weight:800; }
