@@ -709,6 +709,21 @@ const OfficialLetterPage = (() => {
   const qa = {messages: [], draft: '', importFile: null, busy: false, status: '', usage: null, open: Object.create(null), loaded: false, deep: true, chats: [], activeId: '', free: false, lib: false, attach: [], attaching: false};
   const DEEP_KEY = 'officialLetter.qaDeep.v1', LIB_KEY = 'officialLetter.freeLib.v1';
   // Nhiều cuộc trò chuyện: qa.messages/qa.usage là cuộc đang mở; qa.chats là toàn bộ danh sách lưu trên máy (v2), tự chuyển từ bản v1 một cuộc.
+  // Quy tắc (văn bản căn cứ) đã chọn thuộc về TỪNG cuộc trò chuyện: lưu cùng cuộc, mở lại cuộc nào thì chip Quy tắc về đúng lựa chọn của cuộc đó; cuộc mới bắt đầu ở "Tự động".
+  const pinList = value => (Array.isArray(value) ? value : []).map(String).filter(Boolean).slice(0, 20);
+  function qaApplyPin() {
+    const chat = qa.chats.find(item => item.id === qa.activeId);
+    st.legalPin = chat ? pinList(chat.pin) : [];
+    if (!st.legalPin.length) return;
+    // Tên văn bản chưa nạp (vừa mở trang) → nạp rồi chỉ vẽ lại chip, không vẽ lại cả trang để khỏi mất chữ đang gõ; bỏ id của văn bản đã bị xoá khỏi thư viện.
+    const mine = qa.activeId;
+    loadLibDocs().then(() => {
+      if (!host || st.mode !== 'ask' || mine !== qa.activeId || !st.libDocs) return;
+      if (st.libDocs.length) st.legalPin = st.legalPin.filter(id => st.libDocs.some(doc => doc.id === id));
+      const chip = $('[data-ol-pop="rules"]');
+      if (chip) { chip.classList.toggle('is-set', st.legalPin.length > 0); const text = chip.querySelector('.ola-chip-t'); if (text) text.textContent = ruleLabelText(); }
+    }).catch(() => {});
+  }
   function loadQa() {
     if (qa.loaded) return;
     qa.loaded = true;
@@ -717,7 +732,7 @@ const OfficialLetterPage = (() => {
       if (Q) {
         const raw = JSON.parse(localStorage.getItem(QA_CHATS_KEY) || 'null');
         if (raw && Array.isArray(raw.chats)) {
-          qa.chats = raw.chats.map(chat => ({id: String(chat.id || Q.newId()), title: String(chat.title || '').slice(0, 90), at: Number(chat.at) || 0, usage: chat.usage || null, free: !!chat.free, messages: Q.normalizeStore({messages: chat.messages})})).filter(chat => chat.messages.length).slice(0, QA_MAX_CHATS);
+          qa.chats = raw.chats.map(chat => ({id: String(chat.id || Q.newId()), title: String(chat.title || '').slice(0, 90), at: Number(chat.at) || 0, usage: chat.usage || null, free: !!chat.free, pin: pinList(chat.pin), messages: Q.normalizeStore({messages: chat.messages})})).filter(chat => chat.messages.length).slice(0, QA_MAX_CHATS);
           const active = qa.chats.find(chat => chat.id === raw.active);
           if (active) { qa.activeId = active.id; qa.messages = active.messages; qa.usage = active.usage; qa.free = !!active.free; }
         } else {
@@ -726,7 +741,7 @@ const OfficialLetterPage = (() => {
         }
       }
     } catch (_) { /* bỏ qua */ }
-    try { const mode = localStorage.getItem(MODE_KEY); if ((mode === 'ask' || mode === 'chat') && QA()) { st.mode = 'ask'; if ((mode === 'chat') !== qa.free) qaSwitchKind(mode === 'chat', true); } qa.deep = localStorage.getItem(DEEP_KEY) !== '0'; qa.lib = localStorage.getItem(LIB_KEY) === '1'; } catch (_) { /* bỏ qua */ }
+    try { const mode = localStorage.getItem(MODE_KEY); if ((mode === 'ask' || mode === 'chat') && QA()) { st.mode = 'ask'; if ((mode === 'chat') !== qa.free) qaSwitchKind(mode === 'chat', true); } qa.deep = localStorage.getItem(DEEP_KEY) !== '0'; qa.lib = localStorage.getItem(LIB_KEY) === '1'; if (st.mode === 'ask') qaApplyPin(); } catch (_) { /* bỏ qua */ }
   }
   function qaTitleOf(messages) {
     const first = messages.find(item => item.role === 'user');
@@ -740,12 +755,13 @@ const OfficialLetterPage = (() => {
     let chat = qa.chats.find(item => item.id === qa.activeId);
     if (!chat) { chat = {id: qa.activeId, title: '', at: 0, usage: null, free: qa.free, messages: []}; qa.chats.unshift(chat); }
     chat.messages = qa.messages; chat.usage = qa.usage; chat.title = qaTitleOf(qa.messages); chat.at = Date.now();
+    if (st.mode === 'ask') chat.pin = pinList(st.legalPin);   // ở Soạn công văn st.legalPin là của công văn, không ghi vào cuộc trò chuyện
     qa.chats.sort((a, b) => b.at - a.at);
     if (qa.chats.length > QA_MAX_CHATS) qa.chats.length = QA_MAX_CHATS;
   }
   function saveQa() {
     qaSyncActive();
-    const pack = (keepSources) => JSON.stringify({active: qa.activeId, chats: qa.chats.map(chat => ({id: chat.id, title: chat.title, at: chat.at, usage: chat.usage, free: !!chat.free, messages: chat.messages.slice(-24).map(item => (keepSources || chat.id === qa.activeId) ? item : {...item, sources: []})}))});
+    const pack = (keepSources) => JSON.stringify({active: qa.activeId, chats: qa.chats.map(chat => ({id: chat.id, title: chat.title, at: chat.at, usage: chat.usage, free: !!chat.free, pin: pinList(chat.pin), messages: chat.messages.slice(-24).map(item => (keepSources || chat.id === qa.activeId) ? item : {...item, sources: []})}))});
     // Hết chỗ lưu thì bỏ nguồn của các cuộc cũ, rồi bỏ bớt cuộc cũ nhất; cuộc đang mở luôn được giữ.
     try { localStorage.setItem(QA_CHATS_KEY, pack(true)); }
     catch (_) {
@@ -765,13 +781,14 @@ const OfficialLetterPage = (() => {
     const pick = qaKindChats(free).find(chat => chat.id === qa.activeId) || qaKindChats(free)[0];
     if (pick) { qa.activeId = pick.id; qa.messages = pick.messages; qa.usage = pick.usage; qa.open = Object.create(null); qa.draft = ''; qa.importFile = null; qa.attach = []; }
     else { qa.activeId = ''; resetQaView(); }
+    qaApplyPin();
   }
   function newQaChat() {
     if (qa.busy) return;
     exitHistSelect();
     if (!qa.messages.length) { renderAll(); focusMain(); return; }
     saveQa();
-    qa.activeId = ''; resetQaView();
+    qa.activeId = ''; resetQaView(); st.legalPin = [];
     renderAll(); focusMain();
   }
   function openQaChat(id) {
@@ -779,7 +796,7 @@ const OfficialLetterPage = (() => {
     const chat = qa.chats.find(item => item.id === id);
     if (!chat) return;
     saveQa();
-    qa.activeId = chat.id; qa.messages = chat.messages; qa.usage = chat.usage; qa.free = !!chat.free; qa.open = Object.create(null); qa.draft = ''; qa.importFile = null; qa.attach = [];
+    qa.activeId = chat.id; qa.messages = chat.messages; qa.usage = chat.usage; qa.free = !!chat.free; qa.open = Object.create(null); qa.draft = ''; qa.importFile = null; qa.attach = []; qaApplyPin();
     saveQa();
     renderAll(); scrollQa(); focusMain();
   }
@@ -801,7 +818,9 @@ const OfficialLetterPage = (() => {
     if (mode === modeId() || ((mode === 'ask' || mode === 'chat') && !QA()) || qaLocked()) return;
     collectAll();
     exitHistSelect();
+    if (st.mode === 'compose' && mode !== 'compose') st.composePin = st.legalPin.slice();   // quy tắc của Soạn công văn không bị lẫn với quy tắc của cuộc trò chuyện
     if (mode !== 'compose') qaSwitchKind(mode === 'chat');
+    else if (st.mode !== 'compose') st.legalPin = pinList(st.composePin);
     st.mode = mode === 'compose' ? 'compose' : 'ask'; st.pop = ''; st.recQuery = ''; st.histQuery = '';
     try { localStorage.setItem(MODE_KEY, mode); } catch (_) { /* bỏ qua */ }
     renderAll();
@@ -1356,9 +1375,13 @@ const OfficialLetterPage = (() => {
       ? '<span class="ola-chip is-set"><button type="button" data-ol-pop="record" title="Đổi hồ sơ">' + svg(ICON.folder) + '<span class="ola-chip-record">' + esc(found.info.plate || found.info.code || 'Hồ sơ') + '</span></button><button type="button" class="ola-chip-x" data-ol-rec-clear aria-label="Bỏ hồ sơ">×</button></span>'
       : '<button type="button" class="ola-chip" data-ol-pop="record">' + svg(ICON.folder) + 'Hồ sơ</button>';
   }
+  function ruleLabelText() {
+    const pinnedDocs = (st.libDocs || []).filter(doc => st.legalPin.includes(doc.id));
+    return st.legalPin.length > 1 ? st.legalPin.length + ' quy tắc đã chọn' : st.legalPin.length ? (pinnedDocs[0]?.name || 'Đã chọn quy tắc') : 'Quy tắc: Tự động';
+  }
   function rulesChipHtml(title) {
     const pinnedDocs = (st.libDocs || []).filter(doc => st.legalPin.includes(doc.id));
-    const ruleLabel = st.legalPin.length > 1 ? st.legalPin.length + ' quy tắc đã chọn' : st.legalPin.length ? (pinnedDocs[0]?.name || 'Đã chọn quy tắc') : 'Quy tắc: Tự động';
+    const ruleLabel = ruleLabelText();
     const ruleTitle = title || (pinnedDocs.length ? 'Căn cứ đã chọn: ' + pinnedDocs.map(doc => doc.name).join(', ') : 'Chọn một hoặc nhiều văn bản/quy tắc làm căn cứ cho AI');
     return '<button type="button" class="ola-chip' + (st.legalPin.length ? ' is-set' : '') + '" data-ol-pop="rules" title="' + esc(ruleTitle) + '">' + svg(ICON.book) + '<span class="ola-chip-t">' + esc(ruleLabel) + '</span>' + svg(ICON.chevron) + '</button>';
   }
@@ -1966,6 +1989,7 @@ const OfficialLetterPage = (() => {
         st.legalPin = st.legalPin.includes(id) ? st.legalPin.filter(item => item !== id) : st.legalPin.concat(id);
         st.pop = 'rules';
       }
+      if (st.mode === 'ask') saveQa();
       renderAll();
       if (!id) focusMain(true);
       return;

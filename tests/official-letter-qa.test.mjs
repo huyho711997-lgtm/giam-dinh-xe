@@ -461,3 +461,38 @@ test('answerHtml: mã nguồn đã hiện ở trên thì lần sau chỉ ghi "�
   assert.match(html, /is-repeat" data-ol-qa-cite="C2"[^>]*>…<\/button>/);
   assert.match(html, /<span class="ola-cite is-bad"[^>]*>C9\?<\/span>/);
 });
+
+test('quy tắc đã chọn lưu theo từng cuộc trò chuyện: lưu cùng cuộc, mở lại cuộc nào về đúng quy tắc của cuộc đó, cuộc mới là Tự động', () => {
+  const store = new Map();
+  const ctx = vm.createContext({
+    console, setTimeout, clearTimeout, Date, Math, Array, Object, Set, JSON, Promise, String, Number, Error,
+    window: { removeEventListener() {}, innerWidth: 1280 },
+    document: { removeEventListener() {} },
+    localStorage: { getItem: key => (store.has(key) ? store.get(key) : null), setItem: (key, value) => { store.set(key, String(value)); }, removeItem: key => { store.delete(key); } },
+    OfficialLetterQA: { newId: (() => { let n = 0; return () => 'id' + (++n); })(), normalizeStore: raw => raw.messages, SUGGESTIONS: [] },
+    testHost: { querySelector: () => null, querySelectorAll: () => [], removeEventListener() {} }
+  });
+  const expose = `host=testHost; renderAll=() => {}; updateHistory=() => {};
+    return { qa, st, saveQa, qaApplyPin, openQaChat, newQaChat, setMode: v => { st.mode = v; } };`;
+  vm.runInContext(
+    read('js/data/official-letter-templates.js') + read('js/features/documents/official-letter-core.js') + read('js/features/documents/official-letter-revisions.js')
+    + read('js/features/documents/official-letter-page.js').replace('return {mount, leave};', expose) + '\nthis.page = OfficialLetterPage;', ctx);
+  const page = ctx.page, { qa, st } = page;
+  const say = text => [{ id: 'u' + text, role: 'user', text }, { id: 'a' + text, role: 'assistant', text: 'ok', sources: [] }];
+  st.mode = 'ask';
+  qa.activeId = 'A'; qa.messages = say('câu A'); st.legalPin = ['luat'];
+  page.saveQa();
+  page.newQaChat();
+  assert.deepEqual(JSON.parse(JSON.stringify(st.legalPin)), [], 'cuộc mới bắt đầu ở Tự động');
+  qa.messages = say('câu B'); st.legalPin = ['qt', 'nd'];
+  page.saveQa();
+  const saved = JSON.parse(store.get('officialLetter.qaChats.v1'));
+  assert.deepEqual(saved.chats.map(chat => [chat.id.length > 0, chat.pin]).map(x => x[1]).sort(), [['luat'], ['qt', 'nd']].sort());
+  const idA = qa.chats.find(chat => chat.pin.length === 1).id;
+  page.openQaChat(idA);
+  assert.deepEqual(JSON.parse(JSON.stringify(st.legalPin)), ['luat'], 'mở lại cuộc A → quy tắc của A');
+  // Ở Soạn công văn st.legalPin là của công văn: lưu cuộc trò chuyện không được ghi đè pin của cuộc.
+  st.mode = 'compose'; st.legalPin = ['khac'];
+  page.saveQa();
+  assert.deepEqual(JSON.parse(JSON.stringify(qa.chats.find(chat => chat.id === idA).pin)), ['luat']);
+});
