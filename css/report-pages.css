@@ -546,6 +546,38 @@ body:not(.light-mode) .gdv-report-premium-shell.report-pending-premium:has(#gdvR
   flex-wrap: wrap;
   gap: 6px;
 }
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .mo-panel-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .mo-panel-export-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 29px;
+  padding: 0 11px;
+  border: 1px solid var(--ton-action);
+  border-radius: 8px;
+  background: var(--ton-action);
+  color: var(--ton-action-text);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color .16s ease, background-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.gdv-report-premium-shell:has(#gdvReportHeroBanner) .mo-panel-export-btn:is(:hover, :focus-visible) {
+  border-color: var(--ton-gold);
+  background: #1d342b;
+  color: #fffaf0;
+  box-shadow: 0 5px 14px rgba(29,52,43,.18), 0 0 0 3px rgba(161,124,59,.14);
+  outline: none;
+  transform: translateY(-1px);
+}
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) .mo-chip {
   display: inline-flex;
   align-items: baseline;

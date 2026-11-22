@@ -160,6 +160,9 @@ test('getMonthlyOpenedClaimsData lọc chính xác hồ sơ mở trong tháng v�
   for (const id of ['monthlyOpenedTimelineCanvas', 'monthlyOpenedGaraCanvas', 'monthlyOpenedGdvCanvas', 'monthlyOpenedStatusCanvas']) assert.ok(html.includes('id="' + id + '"'), 'Thiếu biểu đồ ' + id);
   assert.ok(html.includes('mo-chart-toggle') && html.includes('mo-chart-card'), 'HTML phải dùng layout .mo-chart-card và .mo-chart-toggle đồng bộ');
   assert.ok(!html.includes('rp-data-card'), 'Không dùng .rp-data-card để tránh ghi đè style segmented toggle');
+  for (const cid of ['monthlyOpenedTimelineCard', 'monthlyOpenedGaraCard', 'monthlyOpenedGdvCard', 'monthlyOpenedStatusCard']) {
+    assert.ok(html.includes(`downloadMonthlyOpenedPanelImage('${cid}'`), 'Thiếu nút xuất ảnh riêng cho biểu đồ ' + cid);
+  }
   assert.ok(html.includes('initMonthlyOpenedClaimsCharts'), 'Phải kích hoạt vẽ biểu đồ sau khi render');
 });
 

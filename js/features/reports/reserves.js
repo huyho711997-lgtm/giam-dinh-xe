@@ -2456,9 +2456,8 @@ const fullList = getCarBrandLossData();
       }
     }
 
-    function downloadMonthlyOpenedClaimsReportImage() {
-      const cardEl = document.getElementById('monthlyOpenedClaimsReportCardContainer');
-      if (!cardEl) {
+    function captureMonthlyOpenedElementAsImage(targetEl, filePrefix, toastMsg, periodLabel = '') {
+      if (!targetEl) {
         triggerToast('Không tìm thấy khung báo cáo để xuất ảnh!', 'error');
         return;
       }
@@ -2467,14 +2466,16 @@ const fullList = getCarBrandLossData();
         return;
       }
 
-      triggerToast('Đang xuất ảnh Báo cáo xe & dự phòng Ultra HD (4K)...', 'info');
+      triggerToast(toastMsg || 'Đang xuất ảnh báo cáo Ultra HD (4K)...', 'info');
       const isDark = !document.body.classList.contains('light-mode');
-      const shell = cardEl.closest('.gdv-report-premium-shell');
-      const paperBg = (shell && getComputedStyle(shell).getPropertyValue('--ton-soft').trim()) || (isDark ? '#121e27' : '#f6f7f2');
-      const exportWidth = Math.ceil(Math.max(cardEl.offsetWidth, 1200));
+      const shell = targetEl.closest('.gdv-report-premium-shell');
+      const isWholeReport = targetEl.id === 'monthlyOpenedClaimsReportCardContainer';
+      const paperBg = (shell && getComputedStyle(shell).getPropertyValue(isWholeReport ? '--ton-soft' : '--ton-paper').trim()) || (isDark ? '#121e27' : (isWholeReport ? '#f6f7f2' : '#ffffff'));
+      const exportWidth = Math.ceil(Math.max(targetEl.offsetWidth, isWholeReport ? 1200 : 880));
+      const targetId = targetEl.id;
 
-      html2canvas(cardEl, {
-        scale: Math.max(1, Math.min(3.5, 4096 / exportWidth)),
+      html2canvas(targetEl, {
+        scale: Math.max(1.5, Math.min(3.5, 4096 / exportWidth)),
         width: exportWidth,
         windowWidth: Math.max(document.documentElement.clientWidth, exportWidth + 64),
         useCORS: true,
@@ -2484,21 +2485,26 @@ const fullList = getCarBrandLossData();
         scrollX: 0,
         scrollY: 0,
         onclone: function(clonedDoc) {
-          const target = clonedDoc.getElementById('monthlyOpenedClaimsReportCardContainer');
-          if (target) {
-            target.classList.add('mo-report-shell--export');
-            target.style.boxShadow = 'none';
-            target.style.transform = 'none';
-            target.style.backgroundColor = paperBg;
-            if (typeof prepareRemainingReportImageClone === 'function') prepareRemainingReportImageClone(target, exportWidth);
+          const target = targetId ? clonedDoc.getElementById(targetId) : null;
+          if (!target) return;
+          if (isWholeReport) target.classList.add('mo-report-shell--export');
+          else if (periodLabel) {
+            const titleEl = target.querySelector('.mo-panel-title');
+            if (titleEl && !titleEl.textContent.includes(periodLabel)) {
+              titleEl.textContent = `${titleEl.textContent.trim()} · ${periodLabel}`;
+            }
           }
+          target.style.boxShadow = 'none';
+          target.style.transform = 'none';
+          target.style.backgroundColor = paperBg;
+          if (typeof prepareRemainingReportImageClone === 'function') prepareRemainingReportImageClone(target, exportWidth);
         },
         ignoreElements: function(el) {
           return el.classList && el.classList.contains('hide-on-screenshot');
         }
       }).then(canvas => {
         const link = document.createElement('a');
-        link.download = `Bao_Cao_Xe_Va_Du_Phong_${Date.now()}.png`;
+        link.download = `${filePrefix}_${Date.now()}.png`;
         link.href = canvas.toDataURL('image/png', 1.0);
         link.click();
         triggerToast('Đã tải ảnh báo cáo sắc nét thành công!', 'success');
@@ -2506,6 +2512,16 @@ const fullList = getCarBrandLossData();
         console.error(err);
         triggerToast('Có lỗi xảy ra khi xuất ảnh báo cáo!', 'error');
       });
+    }
+
+    function downloadMonthlyOpenedClaimsReportImage() {
+      const cardEl = document.getElementById('monthlyOpenedClaimsReportCardContainer');
+      captureMonthlyOpenedElementAsImage(cardEl, 'Bao_Cao_Xe_Va_Du_Phong', 'Đang xuất ảnh Báo cáo xe & dự phòng Ultra HD (4K)...');
+    }
+
+    function downloadMonthlyOpenedPanelImage(elementId, fileSlug, periodLabel = '') {
+      const panelEl = document.getElementById(elementId);
+      captureMonthlyOpenedElementAsImage(panelEl, fileSlug || 'Bieu_Do_Xe_Va_Du_Phong', 'Đang xuất ảnh biểu đồ Ultra HD (4K)...', periodLabel);
     }
 
     function renderMonthlyOpenedClaimsReportHtml() {
@@ -2555,7 +2571,7 @@ const fullList = getCarBrandLossData();
       const sumOf = list => list.reduce((n, v) => n + (v || 0), 0);
       const moMoney = value => value >= 1e9 ? (value / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' Tỷ' : value >= 1e6 ? (value / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' Tr' : Math.round(value).toLocaleString('vi-VN') + ' đ';
       const moChip = (label, value, variant = '') => `<span class="mo-chip ${variant ? 'mo-chip--' + variant : ''}">${label} <strong>${value}</strong></span>`;
-      const buildPanelHead = (title, series, note = '') => {
+      const buildPanelHead = (title, series, note = '', cardId = '', exportSlug = '') => {
         const top = series.count.reduce((best, v, i) => (v > (series.count[best] || 0) || (v === series.count[best] && series.reserve[i] > series.reserve[best])) ? i : best, 0);
         const topReserve = series.reserve.reduce((best, v, i) => v > series.reserve[best] ? i : best, 0);
         return `
@@ -2564,17 +2580,25 @@ const fullList = getCarBrandLossData();
               <div class="mo-panel-title">${escapeHtmlOutput(title)}</div>
               ${note ? `<div class="mo-panel-note">${escapeHtmlOutput(note)}</div>` : ''}
             </div>
-            <div class="mo-panel-chips">
-              ${moChip('Tổng', sumOf(series.count).toLocaleString('vi-VN') + ' hồ sơ')}
-              ${moChip('Dự phòng', moMoney(sumOf(series.reserve)), 'gold')}
-              ${series.labels.length > 1 ? moChip('Nhiều nhất', escapeHtmlOutput(series.labels[top]) + ' · ' + series.count[top], 'emerald') : ''}
-              ${series.labels.length > 1 && topReserve !== top ? moChip('DP cao nhất', escapeHtmlOutput(series.labels[topReserve]) + ' · ' + moMoney(series.reserve[topReserve]), 'gold') : ''}
+            <div class="mo-panel-right">
+              <div class="mo-panel-chips">
+                ${moChip('Tổng', sumOf(series.count).toLocaleString('vi-VN') + ' hồ sơ')}
+                ${moChip('Dự phòng', moMoney(sumOf(series.reserve)), 'gold')}
+                ${series.labels.length > 1 ? moChip('Nhiều nhất', escapeHtmlOutput(series.labels[top]) + ' · ' + series.count[top], 'emerald') : ''}
+                ${series.labels.length > 1 && topReserve !== top ? moChip('DP cao nhất', escapeHtmlOutput(series.labels[topReserve]) + ' · ' + moMoney(series.reserve[topReserve]), 'gold') : ''}
+              </div>
+              ${cardId ? `
+                <button type="button" class="mo-panel-export-btn hide-on-screenshot" onclick="downloadMonthlyOpenedPanelImage('${cardId}', '${exportSlug}', '${escapeAttributeData(monthLabel)}')" title="Xuất ảnh riêng biểu đồ này">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                  <span>Xuất ảnh</span>
+                </button>
+              ` : ''}
             </div>
           </div>`;
       };
-      const moStandaloneCard = (title, series, canvasId, height, aria, note = '') => `
-        <section class="mo-chart-card mo-chart-card--standalone" aria-label="${escapeAttributeData(title)}">
-          ${buildPanelHead(title, series, note)}
+      const moStandaloneCard = (cardId, exportSlug, title, series, canvasId, height, aria, note = '') => `
+        <section id="${cardId}" class="mo-chart-card mo-chart-card--standalone" aria-label="${escapeAttributeData(title)}">
+          ${buildPanelHead(title, series, note, cardId, exportSlug)}
           <div class="mo-canvas-wrap" style="height: ${height}px;">
             <canvas id="${canvasId}" role="img" aria-label="${escapeAttributeData(aria)}"></canvas>
           </div>
@@ -2638,7 +2662,7 @@ const fullList = getCarBrandLossData();
 
         <!-- BIỂU ĐỒ BÁO CÁO (cấu trúc card tách thoáng đồng bộ với Phát sinh theo năm & KPI Zone) -->
         <div id="monthlyOpenedClaimsReportCardContainer" class="mo-report-shell">
-          <section class="mo-chart-card" aria-label="Biểu đồ hồ sơ mở và dự phòng bồi thường">
+          <section id="monthlyOpenedTimelineCard" class="mo-chart-card" aria-label="Biểu đồ hồ sơ mở và dự phòng bồi thường">
             <div class="mo-chart-heading">
               <div class="mo-chart-heading__copy">
                 <span class="mo-eyebrow">XE &amp; DỰ PHÒNG MỞ TRONG KỲ</span>
@@ -2658,9 +2682,9 @@ const fullList = getCarBrandLossData();
                   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                   <span>Tải Excel (.xlsx)</span>
                 </button>
-                <button type="button" class="mo-chart-download" onclick="downloadMonthlyOpenedClaimsReportImage()">
+                <button type="button" class="mo-chart-download" onclick="downloadMonthlyOpenedClaimsReportImage()" title="Xuất ảnh toàn bộ các biểu đồ trong báo cáo">
                   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                  <span>Xuất ảnh (4K)</span>
+                  <span>Xuất toàn bộ (4K)</span>
                 </button>
               </div>
             </div>
@@ -2668,7 +2692,7 @@ const fullList = getCarBrandLossData();
             ${totalClaims === 0 ? `
               <div role="status" class="mo-empty-state">Không có hồ sơ nào mở trong ${escapeHtmlOutput(monthLabel)} theo bộ lọc hiện tại.</div>
             ` : `
-              ${buildPanelHead('Diễn biến theo ' + (chartData.mode === 'day' ? 'ngày' : 'tháng') + ' mở hồ sơ', chartData.timeline)}
+              ${buildPanelHead('Diễn biến theo ' + (chartData.mode === 'day' ? 'ngày' : 'tháng') + ' mở hồ sơ', chartData.timeline, '', 'monthlyOpenedTimelineCard', 'Bieu_Do_Dien_Bien_Mo_Ho_So')}
               <div class="mo-canvas-wrap" style="height: 390px;">
                 <canvas id="monthlyOpenedTimelineCanvas" role="img" aria-label="Số hồ sơ và tiền dự phòng theo thời gian"></canvas>
               </div>
@@ -2676,10 +2700,10 @@ const fullList = getCarBrandLossData();
           </section>
 
           ${totalClaims > 0 ? `
-            ${moStandaloneCard('Theo gara — số hồ sơ & tiền dự phòng từng gara', chartData.gara, 'monthlyOpenedGaraCanvas', 410, 'Số hồ sơ và tiền dự phòng theo từng gara', `${chartData.garaNamedCount} gara${chartData.gara.labels.includes('Khác') ? ' · 15 gara nhiều hồ sơ nhất, còn lại gộp "Khác"' : ''} · đầy đủ từng gara trong Excel (sheet Theo_Gara)`)}
+            ${moStandaloneCard('monthlyOpenedGaraCard', 'Bieu_Do_Theo_Gara', 'Theo gara — số hồ sơ & tiền dự phòng từng gara', chartData.gara, 'monthlyOpenedGaraCanvas', 410, 'Số hồ sơ và tiền dự phòng theo từng gara', `${chartData.garaNamedCount} gara${chartData.gara.labels.includes('Khác') ? ' · 15 gara nhiều hồ sơ nhất, còn lại gộp "Khác"' : ''} · đầy đủ từng gara trong Excel (sheet Theo_Gara)`)}
             <div class="mo-secondary-grid">
-              ${moStandaloneCard('Theo giám định viên', chartData.gdv, 'monthlyOpenedGdvCanvas', 340, 'Số hồ sơ và tiền dự phòng theo giám định viên')}
-              ${moStandaloneCard('Theo trạng thái hồ sơ', chartData.status, 'monthlyOpenedStatusCanvas', 340, 'Số hồ sơ và tiền dự phòng theo trạng thái')}
+              ${moStandaloneCard('monthlyOpenedGdvCard', 'Bieu_Do_Theo_GDV', 'Theo giám định viên', chartData.gdv, 'monthlyOpenedGdvCanvas', 340, 'Số hồ sơ và tiền dự phòng theo giám định viên')}
+              ${moStandaloneCard('monthlyOpenedStatusCard', 'Bieu_Do_Theo_Trang_Thai', 'Theo trạng thái hồ sơ', chartData.status, 'monthlyOpenedStatusCanvas', 340, 'Số hồ sơ và tiền dự phòng theo trạng thái')}
             </div>
             <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onload="if(window.initMonthlyOpenedClaimsCharts) setTimeout(window.initMonthlyOpenedClaimsCharts, 50); this.remove();" style="display:none;" alt="" />
           ` : ''}
