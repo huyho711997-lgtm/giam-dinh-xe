@@ -2,6 +2,7 @@
 // ĐỒNG BỘ TRANG ĐANG XEM ↔ ĐƯỜNG DẪN (hash routing)
 // Ví dụ: …/giam-dinh-xe/#/ho-so-boi-thuong, #/quan-tri/nhat-ky,
 //        #/ho-so-boi-thuong/<mã hồ sơ>  (đang mở form chỉnh sửa một hồ sơ bồi thường)
+//        #/bao-cao-gdv?bao-cao=monthly_opened_claims (loại báo cáo đang xem)
 // - Tải lại trang / mở link chia sẻ → mở đúng trang (kiểm tra quyền, không có quyền → Trang chủ).
 // - Mỗi lần chuyển trang → ghi vào lịch sử trình duyệt, nút Back/Forward hoạt động.
 // - Mở một hồ sơ bồi thường → đường dẫn mang theo mã hồ sơ; F5 / Back / Forward / chia sẻ link mở lại đúng hồ sơ.
@@ -31,6 +32,7 @@
   };
   const ADMIN_SUB_SLUGS = { users: 'tai-khoan', 'api-keys': 'gemini-api', cloudinary: 'cloudinary', 'audit-logs': 'nhat-ky', 'kpi-config': 'he-so-kpi', seasonal: 'hieu-ung-mua-le' };
   const ADMIN_ONLY_SUBS = ['api-keys', 'cloudinary', 'kpi-config', 'seasonal'];
+  const REPORT_VIEWS = new Set(['weekly_zone', 'kpi_zone', 'backlog_watch', 'monthly_opened_claims', 'annual_claims_gdv', 'tnds_ton', 'table', 'chart', 'garage', 'daklak_reserve', 'ton_chua_hoa_don', 'car_brand_loss']);
   const SLUG_TABS = Object.fromEntries(Object.entries(TAB_SLUGS).map(([tab, slug]) => [slug, tab]));
   const SLUG_SUBS = Object.fromEntries(Object.entries(ADMIN_SUB_SLUGS).map(([sub, slug]) => [slug, sub]));
 
@@ -67,14 +69,19 @@
   // Đọc trang từ hash; null nếu đường dẫn không mang thông tin trang.
   function readRoute() {
     // Đoạn thứ 2 giữ nguyên chữ hoa/thường (mã hồ sơ Firebase phân biệt hoa thường).
-    const match = String(location.hash || '').match(/^#\/([a-z0-9-]+)(?:\/([^/?#]+))?\/?$/i);
+    const match = String(location.hash || '').match(/^#\/([a-z0-9-]+)(?:\/([^/?#]+))?\/?(?:\?([^#]*))?$/i);
     if (!match) return null;
     const tab = SLUG_TABS[match[1].toLowerCase()];
     if (!tab) return { tab: 'home', sub: null, claimId: null, unknown: true };
+    if (match[3] && tab !== 'gdv_report') return null;
     const sub = tab === 'users' && match[2] ? (SLUG_SUBS[match[2].toLowerCase()] || null) : null;
     let claimId = null;
     if (tab === 'pending' && match[2]) {
       try { claimId = decodeURIComponent(match[2]); } catch (_) { claimId = null; }
+    }
+    if (tab === 'gdv_report') {
+      const requested = new URLSearchParams(match[3] || '').get('bao-cao');
+      return { tab, sub, claimId, report: REPORT_VIEWS.has(requested) ? requested : 'weekly_zone' };
     }
     return { tab, sub, claimId };
   }
@@ -85,6 +92,10 @@
     const normalized = tab === 'system' ? 'users' : tab;
     const slug = TAB_SLUGS[normalized];
     if (!slug) return null;
+    if (normalized === 'gdv_report') {
+      const report = typeof activeGdvReportView !== 'undefined' && REPORT_VIEWS.has(activeGdvReportView) ? activeGdvReportView : 'weekly_zone';
+      return `#/${slug}?bao-cao=${encodeURIComponent(report)}`;
+    }
     if (normalized === 'pending') {
       const id = (typeof editingPendingClaimId !== 'undefined' && editingPendingClaimId) || pendingResumeId;
       if (id) return `#/${slug}/${encodeURIComponent(id)}`;
@@ -110,7 +121,7 @@
     let tab = route.tab;
     if (!canAccessTab(tab)) tab = 'home';
     activeDashboardTab = tab;
-    if (tab === 'gdv_report') activeGdvReportView = 'weekly_zone';
+    if (tab === 'gdv_report') activeGdvReportView = route.report || 'weekly_zone';
     if (tab === 'create' && typeof editingCaseId !== 'undefined' && !editingCaseId) activeCreateFlowMode = 'select';
     if (tab === 'users' && typeof activeSystemAdminSubTab !== 'undefined') {
       let sub = route.sub || 'users';
@@ -224,6 +235,16 @@
     writeRoute('push');
     return result;
   });
+
+  // Chuyển loại báo cáo hoặc chọn bộ lọc yêu thích cũng cập nhật lịch sử trình duyệt.
+  for (const name of ['switchGdvReportView', 'applyFavoriteFilterSettings']) {
+    wrap(name, original => function (...args) {
+      const before = activeGdvReportView;
+      const result = original.apply(this, args);
+      if (activeDashboardTab === 'gdv_report') writeRoute(activeGdvReportView !== before ? 'push' : 'replace');
+      return result;
+    });
+  }
 
   // 5) Mở form hồ sơ bồi thường → ghi mã hồ sơ lên đường dẫn.
   wrap('openEditPendingClaimModal', original => async function (claimId, ...rest) {

@@ -48,7 +48,7 @@
             
             if (!hasAppliedDefaultFilter) {
               const def = userFavoriteFilters.find(f => f.isDefault && f.filters && f.filters.activeGdvReportView === 'weekly_zone');
-              if (def) {
+              if (def && activeGdvReportView === 'weekly_zone') {
                 const f = def.filters;
                 activeGdvReportView = 'weekly_zone';
                 if (f.activeSelectedGdvNames) activeSelectedGdvNames = f.activeSelectedGdvNames;

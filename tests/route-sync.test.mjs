@@ -29,6 +29,8 @@ function setup({ claims = { '-Nabc_Def': { id: '-Nabc_Def', soHoSoBoiThuong: 'HS
     renderManagerDashboardWorkspace() {},
     switchWorkspaceTab(tab) { sandbox.activeDashboardTab = tab; },
     switchSystemAdminSubTab() {},
+    switchGdvReportView(view) { sandbox.activeGdvReportView = view; },
+    applyFavoriteFilterSettings(fav) { if (fav?.filters?.activeGdvReportView) sandbox.activeGdvReportView = fav.filters.activeGdvReportView; },
     async openEditPendingClaimModal(claimId) { await Promise.resolve(); sandbox.editingPendingClaimId = claimId; },
     closeAddPendingClaimModal() { sandbox.editingPendingClaimId = null; }
   };
@@ -113,4 +115,41 @@ test('đóng form không đụng tới URL của trang khác', async () => {
   await env.sandbox.openEditPendingClaimModal('-Nabc_Def');
   env.sandbox.switchWorkspaceTab('home');
   assert.equal(env.hash, '#/trang-chu');
+});
+
+test('tải lại hoặc mở liên kết báo cáo giữ đúng loại báo cáo', () => {
+  for (const view of ['weekly_zone', 'kpi_zone', 'backlog_watch', 'monthly_opened_claims', 'annual_claims_gdv', 'tnds_ton', 'table', 'chart', 'garage', 'daklak_reserve', 'ton_chua_hoa_don', 'car_brand_loss']) {
+    const env = setup({hash:'#/bao-cao-gdv?bao-cao=' + view});
+    env.sandbox.evaluateViewRoutingState({uid:'u'});
+    env.sandbox.renderManagerDashboardWorkspace();
+    assert.equal(env.sandbox.activeDashboardTab, 'gdv_report');
+    assert.equal(env.sandbox.activeGdvReportView, view);
+    assert.equal(env.hash, '#/bao-cao-gdv?bao-cao=' + view);
+    assert.equal(env.stack.length, 1);
+  }
+});
+
+test('chọn báo cáo hoặc bộ lọc yêu thích cập nhật URL và Back/Forward khôi phục', () => {
+  const env = setup({hash:'#/bao-cao-gdv?bao-cao=weekly_zone'});
+  env.popstate();
+  env.sandbox.switchGdvReportView('monthly_opened_claims');
+  assert.equal(env.hash, '#/bao-cao-gdv?bao-cao=monthly_opened_claims');
+  env.sandbox.applyFavoriteFilterSettings({filters:{activeGdvReportView:'kpi_zone'}});
+  assert.equal(env.hash, '#/bao-cao-gdv?bao-cao=kpi_zone');
+  env.back(); assert.equal(env.sandbox.activeGdvReportView, 'monthly_opened_claims');
+  env.back(); assert.equal(env.sandbox.activeGdvReportView, 'weekly_zone');
+  env.forward(); assert.equal(env.sandbox.activeGdvReportView, 'monthly_opened_claims');
+});
+
+test('đường dẫn báo cáo cũ, tham số lạ và quyền truy cập được xử lý an toàn', () => {
+  for (const hash of ['#/bao-cao-gdv', '#/bao-cao-gdv?bao-cao=khong-hop-le', '#/bao-cao-gdv?bao-cao=%3Cscript%3E']) {
+    const env = setup({hash}); env.popstate(); env.sandbox.renderManagerDashboardWorkspace();
+    assert.equal(env.sandbox.activeGdvReportView, 'weekly_zone');
+    assert.equal(env.hash, '#/bao-cao-gdv?bao-cao=weekly_zone');
+  }
+  const restricted = setup({hash:'#/bao-cao-gdv?bao-cao=monthly_opened_claims'});
+  restricted.sandbox.hasUserPermission = () => false;
+  restricted.popstate(); restricted.sandbox.renderManagerDashboardWorkspace();
+  assert.equal(restricted.sandbox.activeDashboardTab, 'home');
+  assert.equal(restricted.hash, '#/trang-chu');
 });
