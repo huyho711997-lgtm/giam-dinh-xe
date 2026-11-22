@@ -2472,14 +2472,33 @@ const fullList = getCarBrandLossData();
       const isWholeReport = targetEl.id === 'monthlyOpenedClaimsReportCardContainer';
       const paperBg = (shell && getComputedStyle(shell).getPropertyValue(isWholeReport ? '--ton-soft' : '--ton-paper').trim()) || (isDark ? '#121e27' : (isWholeReport ? '#f6f7f2' : '#ffffff'));
       const exportWidth = Math.ceil(Math.max(targetEl.offsetWidth, isWholeReport ? 1200 : 880));
+      const maxScaleByHeight = targetEl.offsetHeight > 0 ? 7500 / targetEl.offsetHeight : 3;
+      const exportScale = Math.max(1.5, Math.min(3, 3840 / exportWidth, maxScaleByHeight));
       const targetId = targetEl.id;
 
+      // Chụp trước các canvas Chart.js sang ảnh PNG để bản clone của html2canvas luôn sắc nét, không bị trắng/lỗi context.
+      const canvasSnapshots = [];
+      targetEl.querySelectorAll('canvas').forEach(cv => {
+        try {
+          if (cv.width > 0 && cv.height > 0) {
+            const rect = cv.getBoundingClientRect();
+            canvasSnapshots.push({
+              id: cv.id,
+              src: cv.toDataURL('image/png', 1.0),
+              w: Math.round(rect.width || cv.clientWidth || cv.width),
+              h: Math.round(rect.height || cv.clientHeight || cv.height)
+            });
+          }
+        } catch (_) { /* bỏ qua canvas không đọc được */ }
+      });
+
       html2canvas(targetEl, {
-        scale: Math.max(1.5, Math.min(3.5, 4096 / exportWidth)),
+        scale: exportScale,
         width: exportWidth,
         windowWidth: Math.max(document.documentElement.clientWidth, exportWidth + 64),
         useCORS: true,
         allowTaint: true,
+        foreignObjectRendering: false,
         backgroundColor: paperBg,
         logging: false,
         scrollX: 0,
@@ -2487,6 +2506,21 @@ const fullList = getCarBrandLossData();
         onclone: function(clonedDoc) {
           const target = targetId ? clonedDoc.getElementById(targetId) : null;
           if (!target) return;
+
+          const safeStyle = clonedDoc.createElement('style');
+          safeStyle.textContent = `
+            #${targetId}, #${targetId} * {
+              animation: none !important;
+              transition: none !important;
+              backdrop-filter: none !important;
+              -webkit-backdrop-filter: none !important;
+            }
+            #${targetId} .mo-chip--gold {
+              border-color: ${isDark ? 'rgba(230, 184, 92, 0.36)' : 'rgba(161, 124, 59, 0.34)'} !important;
+            }
+          `;
+          clonedDoc.head.appendChild(safeStyle);
+
           if (isWholeReport) target.classList.add('mo-report-shell--export');
           else if (periodLabel) {
             const titleEl = target.querySelector('.mo-panel-title');
@@ -2497,6 +2531,40 @@ const fullList = getCarBrandLossData();
           target.style.boxShadow = 'none';
           target.style.transform = 'none';
           target.style.backgroundColor = paperBg;
+
+          // Thay <canvas> bản clone bằng ảnh chụp trực tiếp từ Chart.js
+          canvasSnapshots.forEach(snap => {
+            if (!snap.id) return;
+            const clonedCv = clonedDoc.getElementById(snap.id);
+            if (!clonedCv || !clonedCv.parentNode) return;
+            const img = clonedDoc.createElement('img');
+            img.src = snap.src;
+            img.alt = clonedCv.getAttribute('aria-label') || '';
+            img.style.display = 'block';
+            img.style.width = snap.w + 'px';
+            img.style.height = snap.h + 'px';
+            img.style.maxWidth = '100%';
+            clonedCv.parentNode.replaceChild(img, clonedCv);
+          });
+
+          // Khử các hàm màu CSS hiện đại (color-mix / color()) mà html2canvas 1.4.1 không parse được
+          const fallbackBorder = isDark ? '#2a3840' : '#e5e8e0';
+          const fallbackBg = isDark ? '#121e27' : '#ffffff';
+          const colorProps = ['color', 'backgroundColor', 'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor', 'outlineColor'];
+          const allNodes = [target, ...target.querySelectorAll('*')];
+          const win = clonedDoc.defaultView || window;
+          allNodes.forEach(el => {
+            try {
+              const cs = win.getComputedStyle(el);
+              colorProps.forEach(prop => {
+                const v = cs[prop];
+                if (v && (v.includes('color-mix') || v.includes('color(') || v.includes('oklch') || v.includes('oklab'))) {
+                  el.style[prop] = prop.includes('border') ? fallbackBorder : (prop === 'backgroundColor' ? fallbackBg : (isDark ? '#f0f2eb' : '#283b36'));
+                }
+              });
+            } catch (_) { /* bỏ qua phần tử không có style */ }
+          });
+
           if (typeof prepareRemainingReportImageClone === 'function') prepareRemainingReportImageClone(target, exportWidth);
         },
         ignoreElements: function(el) {
@@ -2509,7 +2577,7 @@ const fullList = getCarBrandLossData();
         link.click();
         triggerToast('Đã tải ảnh báo cáo sắc nét thành công!', 'success');
       }).catch(err => {
-        console.error(err);
+        console.error('Lỗi xuất ảnh báo cáo xe & dự phòng:', err);
         triggerToast('Có lỗi xảy ra khi xuất ảnh báo cáo!', 'error');
       });
     }

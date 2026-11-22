@@ -261,3 +261,8 @@ test('Theo gara: số hồ sơ và dự phòng từng gara, gộp "Khác", "Chư
   assert.equal(d.garaNamedCount, 17);
   ctx.cachedPendingClaimsPayload = {};
 });
+
+test('CSS báo cáo tháng không chứa hàm màu color-mix gây lỗi html2canvas 1.4.1', () => {
+  const reportPagesCss = read('css/report-pages.css');
+  assert.ok(!reportPagesCss.includes('color-mix('), 'css/report-pages.css không được dùng color-mix() để tránh crash html2canvas khi xuất ảnh');
+});

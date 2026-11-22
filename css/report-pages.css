@@ -549,8 +549,10 @@ body:not(.light-mode) .gdv-report-premium-shell.report-pending-premium:has(#gdvR
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) .mo-panel-right {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
+  margin-left: auto;
 }
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) .mo-panel-export-btn {
   display: inline-flex;
@@ -598,8 +600,11 @@ body:not(.light-mode) .gdv-report-premium-shell.report-pending-premium:has(#gdvR
   color: var(--ton-ink);
 }
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) .mo-chip--gold {
-  border-color: color-mix(in srgb, var(--ton-gold) 32%, var(--ton-line));
+  border-color: rgba(161, 124, 59, 0.34);
   background: var(--ton-gold-bg);
+}
+body:not(.light-mode) .gdv-report-premium-shell:has(#gdvReportHeroBanner) .mo-chip--gold {
+  border-color: rgba(230, 184, 92, 0.36);
 }
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) .mo-chip--gold strong { color: var(--ton-gold); }
 .gdv-report-premium-shell:has(#gdvReportHeroBanner) .mo-chip--emerald {
