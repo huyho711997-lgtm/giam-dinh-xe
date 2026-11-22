@@ -122,7 +122,77 @@ const OfficialLetterLegal = (() => {
     catch (_) { return []; }
   }
 
-  // Tìm trong thư viện thật. Trả {sources, total, error}. options: {limit, force, minCoverage, docIds: chỉ tìm trong các văn bản này}.
+  // Giữ thứ tự xếp hạng nhưng tối đa `per` đoạn cho mỗi Điều (cùng tài liệu, cùng tiêu đề bỏ "(phần n)").
+  function diversify(sources, per, limit) {
+    const count = new Map(), out = [];
+    for (const source of sources || []) {
+      const key = splitId(source.id)[0] + '|' + String(source.title || '').replace(/\s*\(phần\s*\d+\)\s*$/i, '');
+      if ((count.get(key) || 0) >= per) continue;
+      count.set(key, (count.get(key) || 0) + 1);
+      out.push(source);
+      if (out.length >= limit) break;
+    }
+    return renumber(out);
+  }
+
+  // ---- Mở rộng đoạn tìm được (chế độ Hỏi nghiệp vụ) ----
+  // Thư viện cắt mỗi Điều thành các đoạn ≤1800 ký tự ("… (phần 1)", "(phần 2)"), nên điều khoản then chốt (VD một mục loại trừ có "trừ trường hợp…")
+  // rất hay nằm ở đoạn LIỀN KỀ đoạn khớp từ khoá. Vì vậy: (1) lấy thêm phần liền kề cùng Điều; (2) lần theo dẫn chiếu "theo quy định tại Điều N"
+  // trong chính văn bản đó. Đoạn thêm vào có trường via cho người đọc biết vì sao nó xuất hiện.
+  const PART = /\s*\(phần\s*\d+\)\s*$/i;
+  const baseTitle = title => String(title || '').replace(PART, '');
+  const articleOf = title => { const all = [...String(title || '').matchAll(/Điều\s*(\d{1,3})\b/gi)]; return all.length ? Number(all[all.length - 1][1]) : 0; };
+  const splitId = id => { const text = String(id || ''), at = text.lastIndexOf(':'); return [text.slice(0, at), Number(text.slice(at + 1))]; };
+  function expandSources(docs, sources, options = {}) {
+    const max = options.max || 12, maxRefs = options.maxRefs === undefined ? 3 : options.maxRefs;
+    const byId = new Map((docs || []).map(doc => [doc.id, doc]));
+    const have = new Set((sources || []).map(source => source.id));
+    const entries = (sources || []).map((source, i) => ({source, order: [i, 1], extra: false}));
+    const extras = [];
+    // Mỗi Điều tối đa maxPerArticle đoạn (kể cả đoạn gốc) — Điều dài kiểu "điều khoản bổ sung" không được lấn hết chỗ.
+    const cap = options.maxPerArticle || 3, perArticle = new Map();
+    const articleKey = (docId, title) => docId + '|' + baseTitle(title);
+    (sources || []).forEach(source => { const key = splitId(source.id)[0] + '|' + baseTitle(source.title); perArticle.set(key, (perArticle.get(key) || 0) + 1); });
+    const add = (docId, index, order, via, rank) => {
+      const doc = byId.get(docId), chunk = doc && doc.chunks && doc.chunks[index];
+      const id = docId + ':' + index;
+      if (!chunk || have.has(id)) return false;
+      const key = articleKey(docId, chunk.t);
+      if (/^Phần liền kề/.test(via) && (perArticle.get(key) || 0) >= cap) return false;
+      perArticle.set(key, (perArticle.get(key) || 0) + 1);
+      have.add(id);
+      extras.push({source: {...toSource({docId, index, doc, chunk}, 0, []), via, on: true}, order, extra: true, rank});
+      return true;
+    };
+    // (1) phần liền kề: phần sau trước (điều khoản thường kéo dài xuống dưới), rồi phần trước
+    (sources || []).forEach((source, i) => {
+      if (i >= (options.siblingTop || 4)) return;   // chỉ các đoạn xếp hạng đầu mới đáng mở rộng; còn lại dễ là nhiễu
+      const [docId, index] = splitId(source.id), doc = byId.get(docId), chunk = doc && doc.chunks && doc.chunks[index];
+      if (!chunk || !PART.test(chunk.t)) return;
+      const base = baseTitle(chunk.t);
+      for (let step = 1; step <= 2; step++) { const next = doc.chunks[index + step]; if (!next || baseTitle(next.t) !== base) break; add(docId, index + step, [i, 1 + step], 'Phần liền kề (cùng ' + (base.split('›').pop().trim().slice(0, 60)) + ')', i); }
+      const prev = doc.chunks[index - 1];
+      if (prev && baseTitle(prev.t) === base) add(docId, index - 1, [i, 0], 'Phần liền kề (cùng ' + (base.split('›').pop().trim().slice(0, 60)) + ')', 20 + i);
+    });
+    // (2) dẫn chiếu "Điều N" trong văn bản của đoạn tìm được → đoạn đầu tiên của Điều N trong cùng tài liệu
+    let refs = 0;
+    for (let i = 0; i < (sources || []).length && refs < maxRefs; i++) {
+      const source = sources[i], [docId] = splitId(source.id), doc = byId.get(docId);
+      if (!doc || !doc.chunks) continue;
+      const own = articleOf(source.title), wanted = [];
+      String(source.text || '').replace(/[Đđ]iều\s*(\d{1,3})\b/g, (_, n) => { n = Number(n); if (n && n !== own && !wanted.includes(n)) wanted.push(n); return _; });
+      for (const n of wanted) {
+        if (refs >= maxRefs) break;
+        const at = doc.chunks.findIndex(chunk => articleOf(chunk.t) === n);
+        if (at >= 0 && add(docId, at, [i, 3], 'Được dẫn chiếu: Điều ' + n, 3.5 + refs)) refs++;
+      }
+    }
+    extras.sort((a, b) => a.rank - b.rank);
+    const keep = extras.slice(0, Math.max(0, max - entries.length));
+    return renumber(entries.concat(keep).sort((a, b) => a.order[0] - b.order[0] || a.order[1] - b.order[1]).map(entry => entry.source));
+  }
+
+  // Tìm trong thư viện thật. Trả {sources, total, error}. options: {limit, force, minCoverage, expand (kèm phần liền kề + điều được dẫn chiếu), maxSources, docIds: chỉ tìm trong các văn bản này}.
   async function retrieve(queries, options = {}) {
     if (typeof TascoLibStore === 'undefined' || typeof TascoLibSearch === 'undefined') return {sources: [], total: 0, error: 'Thư viện tài liệu chưa sẵn sàng trên trang này.'};
     try {
@@ -130,11 +200,14 @@ const OfficialLetterLegal = (() => {
       if (!docs.length) return {sources: [], total: 0, error: 'Thư viện tài liệu đang trống — cần nạp Luật KDBH, Nghị định 67/2023, quy tắc bảo hiểm xe… trước.'};
       const only = Array.isArray(options.docIds) && options.docIds.length ? new Set(options.docIds) : null;
       const index = only ? TascoLibSearch.build(docs.filter(doc => only.has(doc.id))) : await TascoLibStore.index();
-      const search = query => TascoLibSearch.search(index, query, {limit: PER_QUERY});
+      const search = query => TascoLibSearch.search(index, query, {limit: options.perArticle ? PER_QUERY * 3 : PER_QUERY});   // có giới hạn theo Điều thì cần nhiều ứng viên hơn để Điều khác lọt vào
       // options.minCoverage: câu hỏi tự nhiên (chế độ Hỏi nghiệp vụ) dài hơn truy vấn soạn công văn nên cần ngưỡng phủ từ thấp hơn.
-      let sources = rank(search, queries, options.limit, typeof options.minCoverage === 'number' ? {minCoverage: options.minCoverage} : undefined);
+      const rankOptions = typeof options.minCoverage === 'number' ? {minCoverage: options.minCoverage} : undefined;
+      // perArticle: một Điều dài (VD điều khoản bổ sung gồm hàng chục mục) không được chiếm hết chỗ → tối đa N đoạn mỗi Điều.
+      let sources = options.perArticle ? diversify(rank(search, queries, (options.limit || MAX_SOURCES) * 3, rankOptions), options.perArticle, options.limit || MAX_SOURCES) : rank(search, queries, options.limit, rankOptions);
       // Người dùng đã CHỌN văn bản làm căn cứ mà bộ lọc chặt không ra đoạn nào (điều khoản dùng từ ngữ khác truy vấn) → nới ngưỡng, lấy vài đoạn sát nhất trong chính văn bản đó.
       if (only && !sources.length) sources = rank(search, queries, Math.min(options.limit || MAX_SOURCES, 3), {minCoverage: RELAXED_COVERAGE});
+      if (options.expand && sources.length) sources = expandSources(only ? docs.filter(doc => only.has(doc.id)) : docs, sources, {max: options.maxSources});
       return {sources, total: docs.length, error: ''};
     } catch (error) {
       return {sources: [], total: 0, error: 'Không đọc được thư viện tài liệu: ' + (error && error.message || 'lỗi không rõ')};
@@ -207,5 +280,5 @@ const OfficialLetterLegal = (() => {
 
   const letterText = letter => letter ? [letter.subject, ...(letter.paragraphs || []).map(p => p.text)].join('\n') : '';
 
-  return {TOPICS, NEEDS_BASIS, needsBasis, coverage, LEGAL_WORDS, matchDocs, listDocs, buildQueries, rank, toSource, renumber, retrieve, promptBlock, sourceLabel, verify, letterText, MAX_SOURCES};
+  return {TOPICS, NEEDS_BASIS, needsBasis, coverage, LEGAL_WORDS, matchDocs, listDocs, buildQueries, rank, toSource, renumber, expandSources, retrieve, promptBlock, sourceLabel, verify, letterText, MAX_SOURCES};
 })();

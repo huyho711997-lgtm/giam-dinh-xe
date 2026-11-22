@@ -16,24 +16,56 @@ const SOURCES = [
   { code: 'C2', id: 'qt:4', doc: 'Quy tắc bảo hiểm xe', soHieu: '', title: 'Mục 4.1', text: 'Giảm trừ 10% nếu thông báo chậm.', from: '', on: true }
 ];
 
-test('buildQueries: câu hỏi dài dùng nguyên văn; câu hỏi tiếp ngắn được ghép với câu hỏi trước', () => {
+test('buildQueries: câu hỏi gốc đứng đầu, kế đến cụm AI lập, rồi từ điển nghiệp vụ; bỏ trùng; câu hỏi tiếp ngắn được ghép câu trước', () => {
   const { Q } = load();
-  assert.deepEqual(plain(Q.buildQueries('Thông báo tổn thất chậm quá hạn thì bị giảm trừ thế nào theo quy định?', [])), ['Thông báo tổn thất chậm quá hạn thì bị giảm trừ thế nào theo quy định?']);
+  const long = 'Thông báo tổn thất chậm quá hạn thì bị giảm trừ thế nào theo quy định?';
+  const base = plain(Q.buildQueries(long, []));
+  assert.equal(base[0], long);
+  assert.ok(base.includes('thời hạn thông báo tổn thất cho doanh nghiệp bảo hiểm'));        // từ điển: thông báo/chậm
+  const withPlan = plain(Q.buildQueries(long, [], { issue: 'giảm trừ', queries: ['giảm trừ bồi thường vi phạm nghĩa vụ của chủ xe', 'Điều khoản mới tra'] }));
+  assert.equal(withPlan[1], 'giảm trừ bồi thường vi phạm nghĩa vụ của chủ xe');
+  assert.equal(withPlan.filter(item => item === 'giảm trừ bồi thường vi phạm nghĩa vụ của chủ xe').length, 1);
+  assert.ok(withPlan.length <= 10);
   const q = plain(Q.buildQueries('còn xe chưa đóng phí?', [{ role: 'user', text: 'Giảm trừ khi thông báo chậm?' }, { role: 'assistant', text: 'x' }]));
-  assert.equal(q.length, 2);
   assert.equal(q[1], 'Giảm trừ khi thông báo chậm? còn xe chưa đóng phí?');
   assert.deepEqual(plain(Q.buildQueries('   ', [])), []);
+});
+
+test('glossaryQueries: khẩu ngữ → cụm theo ngôn ngữ quy tắc (vỏ pin → pin điện động cơ, tổn thất riêng, khấu hao)', () => {
+  const { Q } = load();
+  const g = plain(Q.glossaryQueries('tổn thất riêng phần vỏ pin có thuộc phạm vi không'));
+  assert.ok(g.includes('pin điện động cơ xe ô tô điện') && g.includes('tổn thất riêng pin loại trừ bảo hiểm'));
+  assert.ok(g.includes('các điểm loại trừ chung áp dụng cho các chương'));
+  assert.ok(g.length <= 6);
+  assert.deepEqual(plain(Q.glossaryQueries('xin chào')), []);
+});
+
+test('buildPlanRequest/parsePlan: JSON mode, nhận cả JSON bọc ```; lọc cụm ngắn/trùng, tối đa 8; lỗi → rỗng', () => {
+  const { Q } = load();
+  const req = plain(Q.buildPlanRequest('vỏ pin có được bồi thường không?', [{ role: 'user', text: 'câu trước' }]));
+  assert.equal(req.generationConfig.responseMimeType, 'application/json');
+  assert.match(req.contents[0].parts[0].text, /CÂU HỎI TRƯỚC[\s\S]*câu trước[\s\S]*CÂU HỎI CẦN TRA:\nvỏ pin/);
+  const raw = '```json\n' + JSON.stringify({ issue: 'Vỏ pin có bị loại trừ?', queries: ['loại trừ pin', 'Loại trừ  pin', 'x', 'điều khoản bổ sung pin ngập nước', 1, ...Array.from({ length: 12 }, (_, i) => 'cụm tìm kiếm số ' + i)] }) + '\n```';
+  const plan = plain(Q.parsePlan(raw));
+  assert.equal(plan.issue, 'Vỏ pin có bị loại trừ?');
+  assert.deepEqual(plan.queries.slice(0, 2), ['loại trừ pin', 'điều khoản bổ sung pin ngập nước']);
+  assert.equal(plan.queries.length, 8);
+  assert.deepEqual(plain(Q.parsePlan('không phải json')), { issue: '', queries: [] });
+  assert.deepEqual(plain(Q.parsePlan('Kết quả: {"issue":"a","queries":["hai từ"]} xong')), { issue: 'a', queries: ['hai từ'] });
 });
 
 test('buildRequest: nguyên văn đoạn trích [C#], hồ sơ, lịch sử gần nhất; không có đoạn thì nói rõ', () => {
   const { Q } = load();
   const history = [];
   for (let i = 0; i < 20; i++) history.push({ role: i % 2 ? 'assistant' : 'user', text: 'tin ' + i }, { role: 'assistant', text: 'lỗi', error: true });
-  const req = plain(Q.buildRequest({ question: 'Hạn thông báo?', sources: SOURCES, dossier: 'Biển số 47A-123', history }));
+  const viaSources = [SOURCES[0], { ...SOURCES[1], via: 'Được dẫn chiếu: Điều 11' }];
+  const req = plain(Q.buildRequest({ question: 'Hạn thông báo?', sources: viaSources, dossier: 'Biển số 47A-123', history, issue: 'Xác định hạn thông báo' }));
   const last = req.contents[req.contents.length - 1];
   assert.equal(last.role, 'user');
   assert.match(last.parts[0].text, /\[C1\] Luật Kinh doanh bảo hiểm \(số 08\/2022\/QH15\) – Điều 22\. Thông báo tổn thất \(hiệu lực từ 2023-01-01\)\nBên mua bảo hiểm thông báo tổn thất trong 05 ngày\./);
-  assert.match(last.parts[0].text, /\[C2\] Quy tắc bảo hiểm xe – Mục 4\.1/);
+  assert.match(last.parts[0].text, /\[C2\] Quy tắc bảo hiểm xe – Mục 4\.1 \[đoạn bổ sung: Được dẫn chiếu: Điều 11\]/);
+  assert.match(last.parts[0].text, /VẤN ĐỀ CẦN XÁC ĐỊNH[^\n]*\nXác định hạn thông báo/);
+  assert.match(req.system_instruction.parts[0].text, /NGOẠI LỆ[\s\S]*điều khoản bảo hiểm bổ sung/);
   assert.match(last.parts[0].text, /HỒ SƠ ĐANG CHỌN:\nBiển số 47A-123/);
   assert.match(last.parts[0].text, /CÂU HỎI:\nHạn thông báo\?$/);
   assert.equal(req.contents.length, Q.MAX_TURNS * 2 + 1);                       // chỉ giữ các lượt gần nhất, bỏ tin lỗi
@@ -78,6 +110,9 @@ test('plainText bỏ ký hiệu đậm; normalizeStore lọc tin nhắn hỏng, 
   assert.equal(withSrc.sources.length, 1);
   assert.equal(withSrc.sources[0].text.length, 1400);
   assert.deepEqual(plain(Q.normalizeStore(null)), []);
+  const kept = plain(Q.normalizeStore({ messages: [{ role: 'assistant', text: 'a', queries: ['q1', '', 'q2'], issue: 'i', sources: [{ ...SOURCES[0], via: 'Phần liền kề' }] }] }))[0];
+  assert.deepEqual(kept.queries, ['q1', 'q2']);
+  assert.equal(kept.sources[0].via, 'Phần liền kề');
 });
 
 test('retrieve nhận minCoverage: câu hỏi tự nhiên dài vẫn ra đoạn khớp khi hạ ngưỡng', async () => {
@@ -91,6 +126,41 @@ test('retrieve nhận minCoverage: câu hỏi tự nhiên dài vẫn ra đoạn 
   assert.equal(strict.sources.length, 0);
   assert.equal(loose.sources.length, 1);
   assert.equal(loose.sources[0].code, 'C1');
+});
+
+test('expandSources: thêm phần liền kề của đoạn xếp hạng đầu + Điều được dẫn chiếu; không trùng; giới hạn tổng; đánh lại mã', () => {
+  const { L } = load();
+  const docs = [{ id: 'qt', meta: { ten: 'Quy tắc' }, chunks: [
+    { t: 'CHƯƠNG II › Điều 11. Phạm vi bảo hiểm', x: 'Bảo hiểm tổn thất vật chất xe do tai nạn.' },
+    { t: 'CHƯƠNG II › Điều 13. Loại trừ (phần 1)', x: '1. Không thuộc phạm vi theo quy định tại Điều 11 quy tắc này. 6. Tổn thất pin khi ngập nước.' },
+    { t: 'CHƯƠNG II › Điều 13. Loại trừ (phần 2)', x: '7. Tổn thất riêng pin xe điện trừ trường hợp cùng một nguyên nhân với bộ phận khác.' },
+    { t: 'CHƯƠNG II › Điều 14. Khấu hao', x: 'Khấu hao pin.' }] }];
+  const base = L.rank(() => [{ docId: 'qt', index: 1, doc: docs[0], chunk: docs[0].chunks[1], score: 5 }], ['pin'], 5, { minCoverage: 0 });
+  const out = plain(L.expandSources(docs, base, { max: 12 }));
+  assert.deepEqual(out.map(source => source.id), ['qt:1', 'qt:2', 'qt:0']);
+  assert.deepEqual(out.map(source => source.code), ['C1', 'C2', 'C3']);
+  assert.match(out[1].via, /Phần liền kề/);
+  assert.equal(out[2].via, 'Được dẫn chiếu: Điều 11');
+  assert.match(out[1].text, /Tổn thất riêng pin xe điện trừ trường hợp/);
+  assert.equal(plain(L.expandSources(docs, base, { max: 1 })).length, 1);          // không vượt giới hạn; đoạn gốc luôn được giữ
+  assert.equal(plain(L.expandSources(docs, base, { maxRefs: 0 })).length, 2);
+  assert.deepEqual(plain(L.expandSources(docs, [], {})), []);
+});
+
+test('retrieve {expand, perArticle}: một Điều dài không chiếm hết chỗ; có kèm phần liền kề', async () => {
+  const { L, S } = load();
+  const bs = Array.from({ length: 6 }, (_, i) => ({ t: 'CHƯƠNG VI › Điều 31. Bổ sung (phần ' + (i + 1) + ')', x: 'Điều khoản bảo hiểm bổ sung pin loại trừ mục ' + i + ' bảo hiểm tổn thất' }));
+  const docs = [{ id: 'qt', meta: { ten: 'Quy tắc', trangThai: 'dang_hieu_luc' }, chunks: [{ t: 'CHƯƠNG II › Điều 13. Loại trừ (phần 1)', x: 'Loại trừ tổn thất riêng pin xe điện bảo hiểm' }, { t: 'CHƯƠNG II › Điều 13. Loại trừ (phần 2)', x: 'trừ trường hợp cùng một nguyên nhân' }, ...bs] }];
+  const context = vm.createContext({ TascoLibStore: { list: async () => docs, index: async () => S.build(docs) }, TascoLibSearch: S, Promise, Object, Array, String, Math, Set, Map, JSON, RegExp, Number });
+  vm.runInContext(read('js/features/documents/official-letter-legal.js') + '\nthis.L = OfficialLetterLegal;', context);
+  const query = 'pin loại trừ bảo hiểm tổn thất';
+  const plainRun = plain(await context.L.retrieve([query], { limit: 4, minCoverage: 0.3 }));
+  const capped = plain(await context.L.retrieve([query], { limit: 4, minCoverage: 0.3, perArticle: 2 }));
+  const art31 = result => result.sources.filter(source => /Điều 31/.test(source.title)).length;
+  assert.ok(art31(plainRun) > 2 && art31(capped) <= 2);
+  const expanded = plain(await context.L.retrieve([query], { limit: 4, minCoverage: 0.3, perArticle: 2, expand: true, maxSources: 12 }));
+  assert.ok(expanded.sources.some(source => /Điều 13/.test(source.title) && /phần 2/.test(source.title)));
+  assert.ok(expanded.sources.length <= 12 && expanded.sources.every((source, i) => source.code === 'C' + (i + 1)));
 });
 
 test('index.html nạp official-letter-qa.js sau ai, trước page', () => {
