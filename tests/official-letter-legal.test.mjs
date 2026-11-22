@@ -210,3 +210,18 @@ test('retrieve({docIds}): chỉ tìm trong văn bản được chọn (Tasco, kh
   const docs = plain(await ok.L.listDocs());
   assert.deepEqual(docs.map(d => d.id), ['tasco', 'ocar']);
 });
+
+test('retrieve: văn bản được CHỌN mà truy vấn dài không đủ 60% từ → nới ngưỡng, vẫn lấy đoạn sát nhất trong văn bản đó', async () => {
+  const QT = { id: 'qt', meta: { ten: 'Quy tắc bảo hiểm xe cơ giới Tasco', trangThai: 'dang_hieu_luc' }, chunks: [
+    { t: 'Điều 10. Các điểm loại trừ chung (phần 2)', x: '4.1 Thay đổi thông số lốp và/hoặc đường kính la-zăng của xe với điều kiện phù hợp với hồ sơ của nhà sản xuất.' },
+    { t: 'Điều 11. Giải quyết bồi thường', x: 'Thời hạn giải quyết bồi thường là 15 ngày.' }] };
+  const query = 'điểm loại trừ chung thay đổi thông số lốp la-zăng thông số kỹ thuật khuyến cáo nhà sản xuất hồ sơ đăng kiểm xe ô tô bảo hiểm vật chất thời hạn hiệu lực giấy chứng nhận';
+  const ctx = load();
+  ctx.TascoLibStore = { list: async () => [QT, LUAT], index: async () => ctx.S.build([QT, LUAT]) };
+  vm.runInContext('globalThis.TascoLibStore = this.TascoLibStore;', ctx);
+  const strict = plain(await ctx.L.retrieve([query]));                      // không chọn văn bản: giữ bộ lọc chặt
+  assert.equal(strict.sources.length, 0);
+  const pinned = plain(await ctx.L.retrieve([query], { docIds: ['qt'] }));  // đã chọn: nới ngưỡng
+  assert.equal(pinned.error, '');
+  assert.ok(pinned.sources.length >= 1 && pinned.sources[0].id === 'qt:0' && pinned.sources.length <= 3);
+});

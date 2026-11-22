@@ -8,7 +8,7 @@
 const OfficialLetterLegal = (() => {
   const MAX_SOURCES = 5, MAX_QUERIES = 10, PER_QUERY = 4, SNIPPET = 1800;
   // Lọc độ liên quan: đoạn phải chứa ≥60% từ có nghĩa của truy vấn và đạt ≥40% điểm của đoạn tốt nhất.
-  const MIN_COVERAGE = 0.6, MIN_RELATIVE = 0.4;
+  const MIN_COVERAGE = 0.6, MIN_RELATIVE = 0.4, RELAXED_COVERAGE = 0.3;
   const fold = value => String(value ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
   const key = value => fold(value).replace(/[^a-z0-9]+/g, '');
   const words = value => fold(value).replace(/[^a-z0-9]+/g, ' ').trim();
@@ -72,13 +72,14 @@ const OfficialLetterLegal = (() => {
     const have = new Set(words(chunk.t + ' ' + chunk.x).split(' '));
     return wanted.filter(word => have.has(word)).length / wanted.length;
   }
-  function rank(searchFn, queries, limit) {
+  function rank(searchFn, queries, limit, options) {
+    const minCoverage = options && typeof options.minCoverage === 'number' ? options.minCoverage : MIN_COVERAGE;
     const pool = new Map();
     for (const query of queries || []) {
       const rows = (searchFn(query) || []).filter(row => row && row.chunk && row.doc);
       const top = rows.reduce((max, row) => Math.max(max, row.score || 0), 0);
       for (const row of rows) {
-        if ((row.score || 0) < top * MIN_RELATIVE || coverage(query, row.chunk) < MIN_COVERAGE) continue;   // trùng vài từ chung chung → bỏ
+        if ((row.score || 0) < top * MIN_RELATIVE || coverage(query, row.chunk) < minCoverage) continue;   // trùng vài từ chung chung → bỏ
         const id = row.docId + ':' + row.index, seen = pool.get(id);
         if (seen) { seen.score = Math.max(seen.score, row.score); seen.hits++; if (!seen.queries.includes(query)) seen.queries.push(query); }
         else pool.set(id, {row, score: row.score, hits: 1, queries: [query]});
@@ -129,7 +130,11 @@ const OfficialLetterLegal = (() => {
       if (!docs.length) return {sources: [], total: 0, error: 'Thư viện tài liệu đang trống — cần nạp Luật KDBH, Nghị định 67/2023, quy tắc bảo hiểm xe… trước.'};
       const only = Array.isArray(options.docIds) && options.docIds.length ? new Set(options.docIds) : null;
       const index = only ? TascoLibSearch.build(docs.filter(doc => only.has(doc.id))) : await TascoLibStore.index();
-      return {sources: rank(query => TascoLibSearch.search(index, query, {limit: PER_QUERY}), queries, options.limit), total: docs.length, error: ''};
+      const search = query => TascoLibSearch.search(index, query, {limit: PER_QUERY});
+      let sources = rank(search, queries, options.limit);
+      // Người dùng đã CHỌN văn bản làm căn cứ mà bộ lọc chặt không ra đoạn nào (điều khoản dùng từ ngữ khác truy vấn) → nới ngưỡng, lấy vài đoạn sát nhất trong chính văn bản đó.
+      if (only && !sources.length) sources = rank(search, queries, Math.min(options.limit || MAX_SOURCES, 3), {minCoverage: RELAXED_COVERAGE});
+      return {sources, total: docs.length, error: ''};
     } catch (error) {
       return {sources: [], total: 0, error: 'Không đọc được thư viện tài liệu: ' + (error && error.message || 'lỗi không rõ')};
     }
