@@ -57,6 +57,7 @@
     // vì application.js, workspace.js, users.js, system.js đang gọi trực tiếp.
     // ==========================================================================
     const APP_SIDEBAR_COLLAPSE_KEY = 'app-sidebar-collapsed';
+    const APP_SIDEBAR_GROUPS_KEY = 'app-sidebar-closed-groups-v1';
     const APP_SIDEBAR_ICONS = {
       home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z"/>',
       list:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
@@ -76,6 +77,7 @@
       system:'<path d="M12 3 4 6v6c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V6Z"/><path d="m9 12 2 2 4-4"/>',
       pin:'<path d="M9 4h6l-1 6 3 3v2H7v-2l3-3Z"/><path d="M12 15v6"/>',
       menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+      chevron:'<path d="m7 10 5 5 5-5"/>',
       close:'<path d="m6 6 12 12M18 6 6 18"/>'
     };
     const appSidebarIcon = (name, cls = '') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${APP_SIDEBAR_ICONS[name] || ''}</svg>`;
@@ -86,21 +88,21 @@
       const showPending = hasUserPermission('pending', 'view');
       const showReport = hasUserPermission('report', 'view');
       return [
-        { label: 'Tổng quan', items: [
+        { id: 'overview', label: 'Tổng quan', items: [
           { tab: 'home', title: 'Trang chủ', icon: 'home', show: true }
         ]},
-        { label: 'Quản lý hồ sơ', items: [
+        { id: 'claims', label: 'Quản lý hồ sơ', items: [
           { tab: 'list', title: 'Hồ sơ giám định', icon: 'list', show: showList, also: ['create'] },
           { tab: 'pending', title: 'Hồ sơ bồi thường', icon: 'pending', show: showPending },
           { tab: 'pending_notes_tracker', title: 'Tiến độ hồ sơ tồn', icon: 'tracker', show: showPending },
           { tab: 'claim_cancellation', title: 'Đề xuất hủy hồ sơ', icon: 'cancel', show: showPending || showList },
           { tab: 'gdv_report', title: 'Báo cáo & thống kê GĐV', icon: 'report', show: showReport }
         ]},
-        { label: 'Kế toán', items: [
+        { id: 'accounting', label: 'Kế toán', items: [
           { tab: 'accounting_claims', title: 'Hồ sơ thanh toán', icon: 'payment', show: hasUserPermission('accounting', 'review') },
           { tab: 'accounting_transfer', title: 'Chuyển hồ sơ', icon: 'transfer', show: hasUserPermission('accounting', 'view') }
         ]},
-        { label: 'Nghiệp vụ', items: [
+        { id: 'operations', label: 'Nghiệp vụ', items: [
           { tab: 'field_reimbursements', title: 'Hiện trường', icon: 'field', show: hasUserPermission('field_reimb', 'view') },
           { tab: 'rescue_cost', title: 'Chi phí cứu hộ', icon: 'rescue', show: hasUserPermission('rescue_cost', 'view') },
           // Trang vẽ sơ đồ độc lập (không cần mở hồ sơ): mở ngay trong thẻ hiện tại (nút X trên trang đó quay về app).
@@ -110,7 +112,7 @@
           // Soạn công văn bằng AI từ mẫu có sẵn; dùng chung quyền xem với Biểu mẫu dùng chung.
           { tab: 'official_letters', title: 'Công văn AI', icon: 'letter', show: hasUserPermission('shared_forms', 'view') }
         ]},
-        { label: 'Hệ thống', items: [
+        { id: 'system', label: 'Hệ thống', items: [
           { tab: 'users', title: 'Quản trị hệ thống', icon: 'system', show: hasUserPermission('users', 'view'), also: ['system'] },
           // Quản lý toàn bộ Google Drive của chủ tài khoản: chỉ Admin hệ thống (máy chủ kiểm tra thêm DRIVE_MANAGER_UIDS).
           { tab: 'drive_manager', title: 'Google Drive', icon: 'drive', show: hasUserPermission('users', 'admin') }
@@ -120,6 +122,20 @@
 
     function isAppSidebarItemActive(item) {
       return activeDashboardTab === item.tab || (item.also || []).includes(activeDashboardTab);
+    }
+
+    function readAppSidebarClosedGroups() {
+      try { const value = JSON.parse(localStorage.getItem(APP_SIDEBAR_GROUPS_KEY) || '[]'); return new Set(Array.isArray(value) ? value : []); }
+      catch (_) { return new Set(); }
+    }
+    function toggleAppSidebarGroup(button) {
+      const group = button.closest('.app-sidebar-group');
+      if (!group) return;
+      const closed = group.classList.toggle('is-closed');
+      button.setAttribute('aria-expanded', String(!closed));
+      const saved = readAppSidebarClosedGroups();
+      if (closed) saved.add(group.dataset.group); else saved.delete(group.dataset.group);
+      try { localStorage.setItem(APP_SIDEBAR_GROUPS_KEY, JSON.stringify([...saved])); } catch (_) {}
     }
 
     // Mặc định: thu gọn + tự mở khi rê chuột. Chỉ khi người dùng bấm "Ghim" mới lưu '0' (luôn mở).
@@ -139,6 +155,8 @@
         btn.setAttribute('aria-pressed', String(!collapsed));
         btn.title = appSidebarPinLabel(!collapsed);
         btn.setAttribute('aria-label', btn.title);
+        const label = btn.querySelector('.app-sidebar-link-text');
+        if (label) label.textContent = collapsed ? 'Ghim thanh bên' : 'Thu gọn thanh bên';
       }
     }
 
@@ -175,6 +193,7 @@
 
     function renderAppSidebarMarkup(groups) {
       const collapsed = document.body.classList.contains('app-sidebar-collapsed');
+      const closedGroups = readAppSidebarClosedGroups();
       return `
         <div class="app-sidebar-brand">
           <button type="button" class="app-sidebar-logo" onclick="navigateHeaderTab('home')" title="Về trang chủ" aria-label="TASCO DLK – về trang chủ">
@@ -184,9 +203,13 @@
           <button type="button" class="app-sidebar-close" onclick="setAppSidebarOpen(false)" aria-label="Đóng menu">${appSidebarIcon('close')}</button>
         </div>
         <nav class="app-sidebar-nav" aria-label="Điều hướng chính">
-          ${groups.map(group => `
-            <div class="app-sidebar-group" role="group" aria-label="${group.label}">
-              <div class="app-sidebar-group-label" aria-hidden="true">${group.label}</div>
+          ${groups.map(group => {
+            const closed = closedGroups.has(group.id) && !group.items.some(isAppSidebarItemActive);
+            return `
+            <div class="app-sidebar-group${closed ? ' is-closed' : ''}" data-group="${group.id}" role="group" aria-label="${group.label}">
+              <button type="button" class="app-sidebar-group-label" onclick="toggleAppSidebarGroup(this)" aria-expanded="${!closed}" aria-controls="app-sidebar-group-${group.id}"><span>${group.label}</span>${appSidebarIcon('chevron')}</button>
+              <div class="app-sidebar-group-separator" aria-hidden="true"></div>
+              <div class="app-sidebar-group-items" id="app-sidebar-group-${group.id}">
               ${group.items.map(item => {
                 const active = isAppSidebarItemActive(item);
                 const action = item.href ? `window.location.href='${item.href}'` : `navigateHeaderTab('${item.tab}')`;
@@ -196,11 +219,13 @@
                   ${item.badge ? `<span class="app-sidebar-badge">${item.badge}</span>` : ''}
                 </button>`;
               }).join('')}
-            </div>`).join('')}
+              </div>
+            </div>`;
+          }).join('')}
         </nav>
         <div class="app-sidebar-foot">
           <button type="button" id="appSidebarCollapseBtn" class="app-sidebar-collapse" onclick="toggleAppSidebarCollapsed()" aria-pressed="${!collapsed}" title="${appSidebarPinLabel(!collapsed)}" aria-label="${appSidebarPinLabel(!collapsed)}">
-            <span class="app-sidebar-ico">${appSidebarIcon('pin')}</span><span class="app-sidebar-link-text">Ghim thanh bên</span><span class="app-sidebar-switch" aria-hidden="true"></span>
+            <span class="app-sidebar-ico">${appSidebarIcon('pin')}</span><span class="app-sidebar-link-text">${collapsed ? 'Ghim thanh bên' : 'Thu gọn thanh bên'}</span><span class="app-sidebar-switch" aria-hidden="true"></span>
           </button>
         </div>`;
     }

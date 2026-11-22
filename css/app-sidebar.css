@@ -18,12 +18,12 @@ body.has-app-sidebar {
   --sb-shadow: 0 1px 0 rgba(255,255,255,.04) inset;
 }
 body.has-app-sidebar.light-mode {
-  --sb-bg: linear-gradient(180deg,#fffdf8 0%,#f8f4eb 100%);
+  --sb-bg: linear-gradient(180deg,#fffdfa 0%,#f9f6ef 100%);
   --sb-ink: #2b2e2a; --sb-muted: #857f72; --sb-line: rgba(70,56,24,.09);
   --sb-hover: rgba(70,56,24,.045); --sb-chip: rgba(70,56,24,.05);
   --sb-gold: #9b7535; --sb-gold-soft: rgba(161,124,59,.1);
   --sb-gold-grad: linear-gradient(145deg,#d3ad66 0%,#a07733 100%); --sb-gold-ink: #fffaf0;
-  --sb-active-bg: linear-gradient(90deg,rgba(161,124,59,.13) 0%,rgba(161,124,59,.03) 100%);
+  --sb-active-bg: linear-gradient(90deg,rgba(161,124,59,.13) 0%,rgba(161,124,59,.045) 100%);
   --sb-shadow: 0 1px 0 rgba(255,255,255,.8) inset;
 }
 
@@ -48,20 +48,26 @@ body.has-app-sidebar.light-mode {
 .app-sidebar-close { display: none; }
 
 /* ---- Danh sách mục ---- */
-.app-sidebar-nav { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 14px 12px 16px; scrollbar-width: thin; scrollbar-color: color-mix(in srgb,var(--sb-gold) 28%,transparent) transparent; }
+.app-sidebar-nav { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 16px 12px 18px; scrollbar-width: thin; scrollbar-color: color-mix(in srgb,var(--sb-gold) 22%,transparent) transparent; }
 .app-sidebar-nav::-webkit-scrollbar { width: 4px; }
 .app-sidebar-nav::-webkit-scrollbar-thumb { border-radius: 4px; background: color-mix(in srgb,var(--sb-gold) 28%,transparent); }
-.app-sidebar-group + .app-sidebar-group { margin-top: 16px; }
+.app-sidebar-group + .app-sidebar-group { margin-top: 13px; }
 .app-sidebar-group-label {
-  display: flex; align-items: center; gap: 10px; padding: 0 8px 8px;
-  color: var(--sb-muted); font-size: 9.5px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; white-space: nowrap;
+  display: flex; align-items: center; gap: 9px; width:100%; min-height:30px; padding: 0 8px;
+  border:0; border-radius:8px; background:transparent; color: var(--sb-muted); font:inherit; font-size: 9.5px; font-weight: 800; letter-spacing: .12em; text-align:left; text-transform: uppercase; white-space: nowrap; cursor:pointer;
 }
-.app-sidebar-group-label::after { content: ''; flex: 1; height: 1px; background: var(--sb-line); }
+.app-sidebar-group-label span { flex:1; overflow:hidden; text-overflow:ellipsis; }
+.app-sidebar-group-label svg { width:14px; height:14px; flex:none; transition:transform .18s ease; }
+.app-sidebar-group-label:hover { color:var(--sb-ink); background:var(--sb-hover); }
+.app-sidebar-group-label:focus-visible { outline:2px solid var(--sb-gold); outline-offset:1px; }
+.app-sidebar-group.is-closed .app-sidebar-group-label svg { transform:rotate(-90deg); }
+.app-sidebar-group.is-closed .app-sidebar-group-items { display:none; }
+.app-sidebar-group-separator { display:none; }
 
 .app-sidebar-link, .app-sidebar-collapse {
-  position: relative; display: flex; align-items: center; gap: 11px; width: 100%; min-height: 42px; margin: 0 0 2px; padding: 0 6px;
+  position: relative; display: flex; align-items: center; gap: 11px; width: 100%; min-height: 40px; margin: 0 0 2px; padding: 0 6px;
   border: 0; border-radius: 11px; background: transparent;
-  color: var(--sb-muted); font: inherit; font-size: 13px; font-weight: 650; letter-spacing: -.005em; text-align: left; white-space: nowrap; cursor: pointer;
+  color: var(--sb-muted); font: inherit; font-size: 13px; font-weight: 600; letter-spacing: -.005em; text-align: left; white-space: nowrap; cursor: pointer;
   transition: background-color .16s ease, color .16s ease;
 }
 /* Ô icon */
@@ -75,12 +81,12 @@ body.has-app-sidebar.light-mode {
 .app-sidebar-link:hover .app-sidebar-ico, .app-sidebar-collapse:hover .app-sidebar-ico { background: var(--sb-chip); }
 .app-sidebar-link:focus-visible, .app-sidebar-collapse:focus-visible, .app-sidebar-logo:focus-visible, .app-topbar-menu:focus-visible { outline: 2px solid var(--sb-gold, var(--primary)); outline-offset: 2px; }
 
-/* Mục đang chọn: nền ngả vàng + ô icon vàng đặc + vạch sáng mép trái */
+/* Mục đang chọn: nền nhạt và nét nhấn vàng đồng. */
 .app-sidebar-link.is-active { background: var(--sb-active-bg); color: var(--sb-ink); font-weight: 750; }
-.app-sidebar-link.is-active .app-sidebar-ico { background: var(--sb-gold-grad); color: var(--sb-gold-ink); box-shadow: 0 6px 14px -6px rgba(161,124,59,.7), inset 0 1px 0 rgba(255,255,255,.3); }
+.app-sidebar-link.is-active .app-sidebar-ico { background: var(--sb-gold-soft); color: var(--sb-gold); box-shadow:none; }
 .app-sidebar-link.is-active::before {
   content: ''; position: absolute; left: -12px; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0;
-  background: var(--sb-gold); box-shadow: 0 0 10px color-mix(in srgb,var(--sb-gold) 70%,transparent);
+  background: var(--sb-gold);
 }
 .app-sidebar-badge {
   margin-left: auto; padding: 2px 7px; border: 1px solid color-mix(in srgb,var(--sb-gold) 30%,transparent); border-radius: 999px;
@@ -112,9 +118,10 @@ body.app-sidebar-collapsed .app-sidebar.is-peek { width: 256px; box-shadow: 24px
 body.light-mode.app-sidebar-collapsed .app-sidebar.is-peek { box-shadow: 24px 0 56px -14px rgba(60,45,15,.18); }
 body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-brand { justify-content: center; padding: 0; }
 body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-brand-copy, .app-sidebar-link-text, .app-sidebar-badge, .app-sidebar-switch) { display: none; }
-body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label { height: 1px; margin: 0 12px 12px; padding: 0; overflow: hidden; color: transparent; background: var(--sb-line); }
-body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label::after { display: none; }
-body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group:first-child .app-sidebar-group-label { display: none; }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label { display:none; }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-separator { display:block; height:1px; margin:0 12px 10px; background:var(--sb-line); }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group:first-child .app-sidebar-group-separator { display:none; }
+body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group.is-closed .app-sidebar-group-items { display:block; }
 body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-link, .app-sidebar-collapse) { justify-content: center; padding: 0; }
 body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-link.is-active { background: transparent; }
 body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group + .app-sidebar-group { margin-top: 12px; }
@@ -203,11 +210,12 @@ body.has-app-sidebar .nav-user-copy em { margin-top: 1px; font-size: 9.5px; lett
   body.app-sidebar-collapsed .app-sidebar.is-peek { width: var(--app-sidebar-w); box-shadow: none; }
   body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-brand { justify-content: flex-start; padding: 0 18px; }
   body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-brand-copy, .app-sidebar-link-text) { display: revert; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-brand-copy { display:flex; }
   body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-badge { display: inline-block; }
-  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label { display: flex; height: auto; margin: 0; padding: 0 8px 8px; color: var(--sb-muted); background: none; }
-  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label::after { display: block; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-label { display:flex; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group-separator { display:none; }
+  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group.is-closed .app-sidebar-group-items { display:none; }
   body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-link.is-active { background: var(--sb-active-bg); }
-  body.app-sidebar-collapsed .app-sidebar:not(.is-peek) .app-sidebar-group:first-child .app-sidebar-group-label { display: flex; }
   body.app-sidebar-collapsed .app-sidebar:not(.is-peek) :is(.app-sidebar-link, .app-sidebar-collapse) { justify-content: flex-start; padding: 0 6px; }
   body.app-sidebar-open.app-sidebar-collapsed .app-sidebar { box-shadow: 0 24px 60px rgba(0,0,0,.3); }
   .app-sidebar-close {
