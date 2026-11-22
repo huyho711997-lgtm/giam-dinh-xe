@@ -63,7 +63,7 @@ const OfficialLetterQA = (() => {
     '- Hai đoạn mâu thuẫn hoặc khác phạm vi áp dụng (luật chung với quy tắc bảo hiểm): nêu cả hai và chỉ ra điểm khác.',
     '- Có HỒ SƠ: áp dụng đúng hồ sơ đó, nêu dữ kiện hồ sơ đã dùng; thiếu dữ kiện nào thì nói rõ thiếu gì thay vì giả định.',
     '- Văn bản trích có thể lỗi chính tả do quét (OCR): hiểu theo ngữ cảnh, không coi lỗi chính tả là nội dung khác.',
-    '- Văn phong ngắn gọn, thực dụng, tiếng Việt. Chỉ dùng **chữ đậm** và danh sách bắt đầu "- " hoặc "1. "; luôn in đậm chính từ quyết định ở Kết luận và Điều kiện (**Có**, **Không**, **Không được bồi thường**, **Thuộc phạm vi**, **Bị loại trừ**, **Có điều kiện**) để giao diện tô xanh/đỏ; không dùng bảng, không dùng tiêu đề #.',
+    '- Văn phong ngắn gọn, thực dụng, tiếng Việt. Chỉ dùng **chữ đậm** và danh sách bắt đầu "- " hoặc "1. "; luôn in đậm chính từ quyết định ở Kết luận và Điều kiện (**Có**, **Không**, **Không được bồi thường**, **Thuộc phạm vi**, **Bị loại trừ**, **Có điều kiện**); không dùng bảng, không dùng tiêu đề #.',
     '- Chào hỏi hoặc câu không thuộc nghiệp vụ: trả lời ngắn, không cần dẫn nguồn.'
   ].join('\n');
 
@@ -218,40 +218,15 @@ const OfficialLetterQA = (() => {
   // Mã được dẫn nhưng KHÔNG có trong nguồn đã cấp → AI bịa mã.
   const unknownCodes = (text, sources) => citedCodes(text).filter(code => !(sources || []).some(source => source.code === code));
 
-  // Tô màu kết luận: xanh = có/được/thuộc phạm vi, đỏ = không/không được/loại trừ. Chỉ áp dụng cho chữ **đậm** mang nghĩa kết luận
-  // và một số cụm kết luận cố định (không tô từng chữ "không" lẻ để khỏi nhiễu).
   const foldVi = text => String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/\s+/g, ' ').trim();
-  const NEG_START = /^(khong|chua|bi loai tru|loai tru|bi tu choi|tu choi|bi tru|khong duoc|khong thuoc)(\s|$|[,.;:)])/;
-  const POS_START = /^(co|duoc|thuoc|dat|du dieu kien|chap nhan|duoc boi thuong|duoc bao hiem)(\s|$|[,.;:)])/;
-  function verdict(text) {
-    const key = foldVi(text);
-    if (!key || key.length > 60) return '';
-    if (NEG_START.test(key)) return 'no';
-    if (POS_START.test(key)) return 'yes';
-    return '';
-  }
-  const PHRASES = /(không thuộc phạm vi(?: bảo hiểm)?|không được bồi thường|không được bảo hiểm|không bồi thường|bị loại trừ|không được miễn(?: khấu hao)?|thuộc phạm vi(?: bảo hiểm)?|được bồi thường|được bảo hiểm|được miễn(?: khấu hao)?)/gi;
-  function colorPhrases(html) {
-    // Chỉ xử lý chữ nằm ngoài thẻ HTML và ngoài các đoạn <b> đã xử lý.
-    const parts = html.split(/(<b[^>]*>[\s\S]*?<\/b>|<[^>]+>)/);
-    return parts.map((part, i) => {
-      if (i % 2) return part;
-      // "**không** được miễn…": cụm khẳng định đứng ngay sau chữ đậm phủ định thì cũng là phủ định.
-      const afterNo = /class="ola-no">[^<]*<\/b>$/.test(parts[i - 1] || '');
-      return part.replace(PHRASES, (match, _g, offset) => '<span class="ola-' + ((afterNo && offset === part.search(/\S/)) ? 'no' : (verdict(match) || 'no')) + '">' + match + '</span>');
-    }).join('');
-  }
   // Đề mục của câu trả lời (Kết luận, Căn cứ, Điều kiện…): in đậm đứng riêng một dòng, hoặc nhãn đầu mục quen thuộc → gạch chân.
   const SECTION = /^(ket luan|can cu|dieu kien|ngoai le|can xac nhan|luu y|ket qua)(\s|$|[,.;:)])/;
   function inline(line, known) {
     const solo = /^\*\*[^*\n]+\*\*\s*:?$/.test(line.trim());
     let html = esc(line).replace(/\*\*([^*\n][^*\n]*?)\*\*/g, (_, inner) => {
-      const kind = verdict(inner);
-      if (kind) return '<b class="ola-' + kind + '">' + inner + '</b>';
       const key = foldVi(inner);
       return (solo || (key.length <= 60 && SECTION.test(key))) ? '<b class="ola-h">' + inner + '</b>' : '<b>' + inner + '</b>';
     });
-    html = colorPhrases(html);
     html = html.replace(/\[(C\d{1,2})\]/g, (_, code) => known.has(code)
       ? '<button type="button" class="ola-cite" data-ol-qa-cite="' + code + '" title="Xem nguyên văn nguồn ' + code + '">' + code + '</button>'
       : '<span class="ola-cite is-bad" title="Mã nguồn này không nằm trong các đoạn thư viện đã tra — cần kiểm tra lại">' + code + '?</span>');
