@@ -121,7 +121,7 @@
           .print-page { background: white; width: 210mm; min-height: 297mm; padding: 20mm; box-shadow: 0 30px 80px rgba(0,0,0,0.5); border-radius: 8px; margin: 0 auto 40px auto; font-family: 'Times New Roman', serif; font-size: 12.5px; color: #000; overflow: hidden; }
           .print-page .header-logo { color: #004b87; font-weight: bold; font-family: Arial, sans-serif; font-size: 20px; line-height: 1.2; }
           .print-page .header-logo span { color: #00a4e4; font-weight: normal; font-size: 16px; display: block; }
-          .print-page .title { text-align: center; font-weight: bold; font-size: 18px; margin-top: -20px; text-transform: uppercase; }
+          .print-page .title { text-align: center; font-weight: bold; font-size: 18px; margin-top: -33px; text-transform: uppercase; }
           .print-page .subtitle { text-align: center; font-style: italic; font-size: 14px; margin-bottom: 30px; }
           .print-page .info-line { margin-bottom: 8px; line-height: 1.5; }
           .print-page table { width: 100%; border-collapse: collapse; border-spacing: 0; margin-top: 20px; margin-bottom: 15px; }
@@ -157,7 +157,7 @@
         </div>
         
         <div class="print-page">
-          <div class="header-logo"><img src="${TascoAssets.url('assets/images/tpax-logo.png')}" style="height: 60px; width: auto; max-width: 210px; object-fit: contain;" alt="TPAX"></div>
+          <div class="header-logo"><img src="${TascoAssets.url('assets/images/tpax-logo.png')}" style="height: 46px; width: auto; max-width: 170px; object-fit: contain;" alt="TPAX"></div>
           <div class="title">GIẤY ĐỀ NGHỊ THANH TOÁN</div>
           <div class="subtitle">Payment requisition</div>
           
