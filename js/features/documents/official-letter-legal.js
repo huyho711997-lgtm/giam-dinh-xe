@@ -122,7 +122,7 @@ const OfficialLetterLegal = (() => {
     catch (_) { return []; }
   }
 
-  // Tìm trong thư viện thật. Trả {sources, total, error}. options: {limit, force, docIds: chỉ tìm trong các văn bản này}.
+  // Tìm trong thư viện thật. Trả {sources, total, error}. options: {limit, force, minCoverage, docIds: chỉ tìm trong các văn bản này}.
   async function retrieve(queries, options = {}) {
     if (typeof TascoLibStore === 'undefined' || typeof TascoLibSearch === 'undefined') return {sources: [], total: 0, error: 'Thư viện tài liệu chưa sẵn sàng trên trang này.'};
     try {
@@ -131,7 +131,8 @@ const OfficialLetterLegal = (() => {
       const only = Array.isArray(options.docIds) && options.docIds.length ? new Set(options.docIds) : null;
       const index = only ? TascoLibSearch.build(docs.filter(doc => only.has(doc.id))) : await TascoLibStore.index();
       const search = query => TascoLibSearch.search(index, query, {limit: PER_QUERY});
-      let sources = rank(search, queries, options.limit);
+      // options.minCoverage: câu hỏi tự nhiên (chế độ Hỏi nghiệp vụ) dài hơn truy vấn soạn công văn nên cần ngưỡng phủ từ thấp hơn.
+      let sources = rank(search, queries, options.limit, typeof options.minCoverage === 'number' ? {minCoverage: options.minCoverage} : undefined);
       // Người dùng đã CHỌN văn bản làm căn cứ mà bộ lọc chặt không ra đoạn nào (điều khoản dùng từ ngữ khác truy vấn) → nới ngưỡng, lấy vài đoạn sát nhất trong chính văn bản đó.
       if (only && !sources.length) sources = rank(search, queries, Math.min(options.limit || MAX_SOURCES, 3), {minCoverage: RELAXED_COVERAGE});
       return {sources, total: docs.length, error: ''};

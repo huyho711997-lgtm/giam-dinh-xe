@@ -95,6 +95,13 @@ Khi chọn hồ sơ, AI không nhận bản ghi thô nữa mà nhận "hồ sơ 
 - **Kiểm chứng tự động** trên bản thảo (cả khi sửa tay): mọi "khoản/điểm … Điều N <văn bản>", "Luật/Nghị định/Thông tư/Quy tắc …", số hiệu `xx/yyyy/…` đều được đối chiếu với các đoạn đã chọn — ✓ kèm mã nguồn hoặc ⚠ "chưa kiểm chứng" (đúng số điều nhưng sai văn bản cũng bị bắt). Tải Word khi còn ⚠ sẽ có cảnh báo.
 - Chất lượng phụ thuộc thư viện: cần nạp Luật Kinh doanh bảo hiểm 08/2022/QH15, Nghị định 67/2023/NĐ-CP, Quy tắc bảo hiểm xe cơ giới Tasco… (mỗi Điều thành một mục để tìm trúng).
 
+### Hỏi nghiệp vụ trong Công văn AI (`official-letter-qa.js`)
+Nút chuyển **Soạn công văn ⇄ Hỏi nghiệp vụ** ở đầu trang Công văn AI. Chế độ hỏi đáp tra Thư viện tài liệu (BM25, tối đa 6 đoạn, ngưỡng phủ từ thấp hơn khi soạn) rồi nhờ DeepSeek trả lời **chỉ dựa trên các đoạn đó**:
+- Câu trả lời dẫn mã `[C1]…`; bấm mã để xem nguyên văn đoạn thư viện. Mã không có trong nguồn đã tra bị đánh dấu đỏ và cảnh báo; câu trả lời không dẫn nguồn cũng có cảnh báo.
+- Không có đoạn nào khớp (và chưa có ngữ cảnh hội thoại/hồ sơ) thì **không gọi AI** — báo thư viện chưa có, tránh trả lời bằng trí nhớ.
+- Dùng chung khoá DeepSeek, chip **Hồ sơ** (AI áp dụng vào hồ sơ đó) và **Quy tắc** (chỉ tra trong văn bản đã chọn). Giữ 6 lượt gần nhất làm ngữ cảnh; hội thoại lưu trên máy (`officialLetter.qa.v1`), có đếm token riêng.
+- Nút **Soạn công văn từ câu trả lời** chuyển sang chế độ soạn, điền sẵn kết luận vào yêu cầu và ghim văn bản được dẫn làm căn cứ.
+
 ## Biểu mẫu dùng chung
 
 Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở trang chủ. Trang hỗ trợ tìm kiếm không dấu, lọc loại file, phân loại, sắp xếp, phân trang, tải nhiều file, sửa tên/phân loại/ghi chú và xóa khỏi thư viện. Hai mẫu Word có sẵn của dự án luôn hiển thị. Người đã đăng nhập được xem và tải lên; người tải quản lý file của mình, người có quyền `users.admin` quản lý toàn bộ.

@@ -3,7 +3,8 @@
 //   sau khi gửi: tóm tắt yêu cầu, tờ công văn lớn sửa trực tiếp, tiến trình AI trong ô chỉnh sửa ghim ở đáy,
 //   cột ghi chú hẹp (giả định, chọn nhanh, chỗ cần kiểm tra), ô chỉnh sửa cuối trang; chi tiết nằm trong ngăn trượt.
 // Gõ số HSBT/biển số trong yêu cầu là tự nhận hồ sơ. Một lần gửi = đọc (DeepSeek) → tìm căn cứ trong Thư viện (nếu cần) → soạn (DeepSeek).
-// Phụ thuộc: OfficialLetterCore, OfficialLetterDossier, OfficialLetterLegal, SharedFormsAI, OfficialLetterAI, DeepSeekKeyStore, JSZip.
+// Có nút chuyển chế độ: "Soạn công văn" (như trên) ⇄ "Hỏi nghiệp vụ" (hỏi đáp trên Thư viện tài liệu, trả lời có dẫn nguồn — OfficialLetterQA).
+// Phụ thuộc: OfficialLetterCore, OfficialLetterDossier, OfficialLetterLegal, OfficialLetterQA, SharedFormsAI, OfficialLetterAI, DeepSeekKeyStore, JSZip.
 const OfficialLetterPage = (() => {
   const ISSUER_KEY = 'officialLetter.issuer.v1';
   const MAX_FILES = 12, MAX_EDGE = 1600, MAX_PDF = 6 * 1024 * 1024, MAX_RESULTS = 30;
@@ -29,6 +30,7 @@ const OfficialLetterPage = (() => {
     history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
     trash: '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
     panel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
+    chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.5-4.7A8 8 0 1 1 21 12Z"/><path d="M9 10h6M9 13.5h4"/>',
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>'
   };
 
@@ -40,7 +42,8 @@ const OfficialLetterPage = (() => {
     letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
     pop: '', drawer: '', editing: false, steps: null, agentOpen: false, agentTask: 'draft',
     historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser',
-    versions: [], selection: [], pending: null, versionId: '', usage: null, questionDrafts: Object.create(null)
+    versions: [], selection: [], pending: null, versionId: '', usage: null, questionDrafts: Object.create(null),
+    mode: 'compose'   // 'compose' = soạn công văn · 'ask' = hỏi nghiệp vụ (xem khối "Hỏi nghiệp vụ")
   };
 
   // ---- Tiện ích chung ----
@@ -166,12 +169,12 @@ const OfficialLetterPage = (() => {
   const RETRY_WAITS = [8, 20];   // giây chờ trước mỗi lần thử lại khi DeepSeek báo 429/quá tải
   const NO_KEY = 'Chưa có khoá DeepSeek API. Bấm biểu tượng ⚙ ở góc phải để nhập khoá (lấy tại platform.deepseek.com).';
   // Token đã dùng trong phiên soạn hiện tại (công văn đang mở): cộng dồn từ mọi lần gọi AI, đặt lại khi bắt đầu công văn mới / mở lại từ lịch sử.
-  function usageText() {
-    const u = st.usage; if (!u || !u.calls) return '';
+  function usageText(u = st.usage) {
+    if (!u || !u.calls) return '';
     return OfficialLetterAI.formatTokens(u.total) + ' token';
   }
-  function usageTitle() {
-    const u = st.usage; if (!u || !u.calls) return '';
+  function usageTitle(u = st.usage) {
+    if (!u || !u.calls) return '';
     const n = value => value.toLocaleString('vi-VN');
     return 'Phiên này: ' + u.calls + ' lượt gọi DeepSeek · tổng ' + n(u.total) + ' token\nGửi đi: ' + n(u.prompt) + (u.hit ? ' (đã lưu đệm ' + n(u.hit) + ')' : '') + ' · Nhận về: ' + n(u.completion);
   }
@@ -179,7 +182,8 @@ const OfficialLetterPage = (() => {
     const node = $('[data-ol-usage]');
     if (node) { node.textContent = usageText(); node.title = usageTitle(); node.hidden = !usageText(); }
   }
-  async function callAI(request) {
+  // extra (tuỳ chọn): {onUsage, onWait, resumeText} — chế độ Hỏi nghiệp vụ dùng để đếm token/hiện trạng thái riêng, không đụng tới phiên soạn công văn.
+  async function callAI(request, extra = {}) {
     if (typeof DeepSeekKeyStore === 'undefined' || typeof OfficialLetterAI === 'undefined') throw new Error('Chưa tải được mô-đun AI. Hãy tải lại trang.');
     const apiKey = await DeepSeekKeyStore.get();
     if (!apiKey) throw new Error(NO_KEY);
@@ -188,17 +192,18 @@ const OfficialLetterPage = (() => {
     controller?.abort();
     controller = new AbortController();
     const signal = controller.signal;
-    const taskStatus = st.status;
+    const taskStatus = extra.onWait ? (extra.resumeText || '') : st.status, wait = extra.onWait || setStatus;
+    const countUsage = extra.onUsage || (usage => { st.usage = OfficialLetterAI.addUsage(st.usage, usage); paintUsage(); });
     // Một công văn gọi AI 2–3 lần: khi bị giới hạn lưu lượng/quá tải thì tự chờ rồi thử lại, có đếm ngược cho người dùng thấy.
     for (let attempt = 0; ; attempt++) {
-      try { return await OfficialLetterAI.call(request, {apiKey, model, signal, onUsage: usage => { st.usage = OfficialLetterAI.addUsage(st.usage, usage); paintUsage(); }}); }
+      try { return await OfficialLetterAI.call(request, {apiKey, model, signal, onUsage: countUsage}); }
       catch (error) {
         if (!(error && error.retryable) || attempt >= RETRY_WAITS.length) throw error;
         for (let left = RETRY_WAITS[attempt]; left > 0; left--) {
-          setStatus('DeepSeek đang bận — tự thử lại sau ' + left + ' giây…');
+          wait('DeepSeek đang bận — tự thử lại sau ' + left + ' giây…');
           await new Promise((resolve, reject) => { const timer = setTimeout(resolve, 1000); signal.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('Đã huỷ', 'AbortError')); }, {once: true}); });
         }
-        setStatus(taskStatus);
+        wait(taskStatus);
       }
     }
   }
@@ -211,6 +216,7 @@ const OfficialLetterPage = (() => {
 
   // ---- Căn cứ pháp lý từ Thư viện tài liệu ----
   const Legal = () => (typeof OfficialLetterLegal !== 'undefined' ? OfficialLetterLegal : null);
+  const QA = () => (typeof OfficialLetterQA !== 'undefined' ? OfficialLetterQA : null);
   const activeSources = () => st.sources.filter(source => source.on !== false);
   const docOf = source => String(source.id || '').slice(0, String(source.id || '').lastIndexOf(':'));
   const pinNames = () => { const names = (st.libDocs || []).filter(doc => st.legalPin.includes(doc.id)).map(doc => doc.name); return names.length ? names.join(', ') : 'văn bản đã chọn'; };
@@ -344,7 +350,7 @@ const OfficialLetterPage = (() => {
       const found = detectRecord(st.brief);
       if (found) { st.recordKey = found.row.key; toast('Đã tự nhận hồ sơ ' + recordLabel(found.info) + ' từ yêu cầu.', 'success'); }
     }
-    if (!st.brief && !st.recordKey && !st.files.length) { notice('Hãy chọn hồ sơ hoặc ghi cần viết gì trước khi soạn.', 'warn'); renderAll(); $('[data-ol-brief]')?.focus(); return; }
+    if (!st.brief && !st.recordKey && !st.files.length) { notice('Hãy chọn hồ sơ hoặc ghi cần viết gì trước khi soạn.', 'warn'); renderAll(); focusMain(); return; }
     const missingRecord = !st.recordKey && looksLikeRecordRef(st.brief);
     const key = st.recordKey + '|' + templateId();
     if (key !== st.analyzedKey) resetAnalysis();
@@ -630,6 +636,189 @@ const OfficialLetterPage = (() => {
     catch (_) { toast('Không sao chép được. Hãy bôi đen nội dung rồi nhấn Ctrl+C.', 'warning'); }
   }
 
+  // ================= HỎI NGHIỆP VỤ =================
+  // Hỏi đáp trên Thư viện tài liệu: tìm đoạn khớp (BM25) → DeepSeek trả lời CHỈ dựa trên các đoạn đó, dẫn mã [C#]; bấm mã để xem nguyên văn.
+  // Hội thoại lưu trên máy (localStorage), tách hẳn khỏi phiên soạn công văn; dùng chung khoá DeepSeek, hồ sơ đang chọn và ô "Quy tắc".
+  const QA_KEY = 'officialLetter.qa.v1', MODE_KEY = 'officialLetter.mode.v1';
+  const qa = {messages: [], draft: '', busy: false, status: '', usage: null, open: Object.create(null), loaded: false};
+  function loadQa() {
+    if (qa.loaded) return;
+    qa.loaded = true;
+    try { if (QA()) qa.messages = QA().normalizeStore(JSON.parse(localStorage.getItem(QA_KEY) || 'null')); } catch (_) { /* bỏ qua */ }
+    try { const mode = localStorage.getItem(MODE_KEY); if (mode === 'ask' && QA()) st.mode = 'ask'; } catch (_) { /* bỏ qua */ }
+  }
+  function saveQa() {
+    const list = qa.messages.slice(-24);
+    try { localStorage.setItem(QA_KEY, JSON.stringify({messages: list})); }
+    catch (_) { try { localStorage.setItem(QA_KEY, JSON.stringify({messages: list.slice(-6).map(item => ({...item, sources: []}))})); } catch (__) { /* hết chỗ lưu: giữ trong phiên */ } }
+  }
+  const qaLocked = () => !!(st.busy || st.pending || qa.busy);
+  function setMode(mode) {
+    if (mode === st.mode || (mode === 'ask' && !QA()) || qaLocked()) return;
+    collectAll();
+    st.mode = mode; st.pop = ''; st.recQuery = '';
+    try { localStorage.setItem(MODE_KEY, mode); } catch (_) { /* bỏ qua */ }
+    renderAll();
+    focusMain();
+    if (mode === 'ask') scrollQa();
+  }
+  const focusMain = () => ($('[data-ol-qa-input]') || $('[data-ol-brief]'))?.focus();
+  function scrollQa() { const box = $('[data-ol-qa-scroll]'); if (box) box.scrollTop = box.scrollHeight; }
+  function paintQaStatus(text) { if (text !== undefined) qa.status = text; host?.querySelectorAll('[data-ol-qa-status]').forEach(node => { node.textContent = qa.status; }); }
+  function paintQaUsage() {
+    const node = $('[data-ol-qa-usage]');
+    if (node) { node.textContent = usageText(qa.usage); node.title = usageTitle(qa.usage); node.hidden = !usageText(qa.usage); }
+  }
+  const NO_MATCH = 'Thư viện tài liệu chưa có đoạn nào khớp câu hỏi này. Hãy thử nêu bằng thuật ngữ trong văn bản (VD "giảm trừ", "loại trừ", "thời hạn"), chọn đúng văn bản ở nút Quy tắc, hoặc nạp thêm văn bản vào Thư viện tài liệu.';
+  async function askQuestion(text) {
+    const Q = QA(), L = Legal();
+    if (!Q || qa.busy) return;
+    const input = $('[data-ol-qa-input]');
+    const question = String(text !== undefined ? text : (input ? input.value : qa.draft)).trim();
+    if (!question) { input?.focus(); return; }
+    const history = qa.messages.slice();
+    qa.messages.push({id: Q.newId(), role: 'user', text: question});
+    qa.draft = ''; qa.busy = true; qa.status = 'Đang tra Thư viện tài liệu…'; st.pop = '';
+    const mine = generation;
+    renderAll(); scrollQa();
+    const reply = message => { if (mine !== generation || !host) return; qa.messages.push(Object.assign({id: Q.newId(), role: 'assistant', sources: [], question}, message)); };
+    try {
+      const dossier = dossierText();
+      const found = L ? await L.retrieve(Q.buildQueries(question, history), Object.assign({limit: Q.SOURCE_LIMIT, minCoverage: Q.QA_COVERAGE}, st.legalPin.length ? {docIds: st.legalPin} : {}))
+        : {sources: [], total: 0, error: 'Chưa tải được mô-đun thư viện. Hãy tải lại trang.'};
+      if (mine !== generation || !host) return;
+      if (!found.sources.length && (found.error || (!history.length && !dossier))) {
+        // Không có căn cứ nào để trả lời → không gọi AI (tránh tốn token và tránh AI trả lời bằng trí nhớ).
+        reply({text: found.error || NO_MATCH, empty: true});
+      } else {
+        paintQaStatus(found.sources.length ? 'Tìm thấy ' + found.sources.length + ' đoạn liên quan — đang soạn câu trả lời…' : 'Đang trả lời theo hội thoại…');
+        const answer = await callAI(Q.buildRequest({question, history, sources: found.sources, libraryError: found.error, dossier}), {
+          onUsage: usage => { qa.usage = OfficialLetterAI.addUsage(qa.usage, usage); paintQaUsage(); },
+          onWait: text => paintQaStatus(text), resumeText: qa.status
+        });
+        reply({text: String(answer).trim(), sources: found.sources});
+      }
+    } catch (error) {
+      if (error && error.name === 'AbortError') { qa.busy = false; return; }
+      reply({text: (error && error.message) || 'Không gọi được AI. Hãy thử lại.', error: true});
+    }
+    if (mine !== generation || !host) { qa.busy = false; return; }
+    qa.busy = false; qa.status = '';
+    saveQa();
+    if (st.mode === 'ask') { renderAll(); scrollQa(); }
+  }
+  async function composeFromAnswer(id) {
+    const Q = QA(), msg = qa.messages.find(item => item.id === id);
+    if (!Q || !msg || qaLocked()) return;
+    if (st.letter) { clearTimeout(saveTimer); if (st.historyId) saveHistory(); }
+    else if (st.values && !(await confirmDiscard())) return;
+    const recordKey = st.recordKey;
+    if (st.letter || st.values) reset();
+    st.recordKey = recordKey;
+    const sources = msg.sources || [];
+    const docs = [...new Set(Q.citedCodes(msg.text).map(code => sources.find(source => source.code === code)).filter(Boolean).map(docOf))];
+    if (docs.length === 1) { st.legalPin = docs; loadLibDocs().then(() => { if (host && st.mode === 'compose' && !st.letter) renderAll(); }); }
+    const body = Q.plainText(msg.text).replace(/\s*\[C\d{1,2}\]/g, '').slice(0, 1500);
+    st.brief = 'Soạn công văn dựa trên kết luận nghiệp vụ sau (đã tra trong Thư viện tài liệu):\n' + body + '\n\nYêu cầu soạn: ';
+    st.mode = 'compose';
+    try { localStorage.setItem(MODE_KEY, 'compose'); } catch (_) { /* bỏ qua */ }
+    renderAll();
+    const area = $('[data-ol-brief]'); if (area) { area.focus(); area.setSelectionRange(area.value.length, area.value.length); }
+  }
+  async function copyAnswer(id) {
+    const msg = qa.messages.find(item => item.id === id);
+    if (!msg) return;
+    try { await navigator.clipboard.writeText(QA().plainText(msg.text)); toast('Đã sao chép câu trả lời.', 'success'); }
+    catch (_) { toast('Không sao chép được. Hãy bôi đen nội dung rồi nhấn Ctrl+C.', 'warning'); }
+  }
+  function retryAnswer(id) {
+    const at = qa.messages.findIndex(item => item.id === id);
+    if (at < 1 || qa.busy) return;
+    const question = qa.messages[at - 1].text;
+    qa.messages.splice(at - 1, 2);
+    askQuestion(question);
+  }
+  async function clearQa() {
+    if (qa.busy) return;
+    if (!await askConfirm({eyebrow: 'HỎI NGHIỆP VỤ', title: 'Xoá cuộc hội thoại?', message: 'Toàn bộ câu hỏi và câu trả lời sẽ bị xoá khỏi máy này.', confirmText: 'Xoá hội thoại'})) return;
+    qa.messages = []; qa.usage = null; qa.open = Object.create(null);
+    saveQa(); renderAll(); focusMain();
+  }
+  function openCite(msgId, code) {
+    const key = msgId + ':' + code;
+    qa.open[key] = true;
+    const box = [...host.querySelectorAll('[data-ol-qa-srcbox]')].find(node => node.dataset.olQaSrcbox === key);
+    if (!box) return;
+    box.classList.add('is-open');
+    box.querySelector('.ola-qa-src-head')?.setAttribute('aria-expanded', 'true');
+    const body = box.querySelector('.ola-qa-src-body'); if (body) body.hidden = false;
+    box.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+  }
+  function toggleSource(key) {
+    qa.open[key] = !qa.open[key];
+    const box = [...host.querySelectorAll('[data-ol-qa-srcbox]')].find(node => node.dataset.olQaSrcbox === key);
+    if (!box) return;
+    box.classList.toggle('is-open', !!qa.open[key]);
+    box.querySelector('.ola-qa-src-head')?.setAttribute('aria-expanded', String(!!qa.open[key]));
+    const body = box.querySelector('.ola-qa-src-body'); if (body) body.hidden = !qa.open[key];
+  }
+
+  // ---- Giao diện hỏi nghiệp vụ ----
+  function qaSourceHtml(msg, source, cited) {
+    const key = msg.id + ':' + source.code, open = !!qa.open[key];
+    return '<div class="ola-qa-src' + (open ? ' is-open' : '') + (cited ? ' is-cited' : '') + '" data-ol-qa-srcbox="' + esc(key) + '">'
+      + '<button type="button" class="ola-qa-src-head" data-ol-qa-src="' + esc(key) + '" aria-expanded="' + open + '"><b>' + esc(source.code) + '</b><span>' + esc(source.doc + (source.title ? ' – ' + source.title : '')) + '</span>' + (cited ? '<em>được dẫn</em>' : '') + svg(ICON.chevron) + '</button>'
+      + '<div class="ola-qa-src-body"' + (open ? '' : ' hidden') + '><p>' + esc(source.text) + '</p>'
+      + '<small>' + esc([source.soHieu && 'Số hiệu ' + source.soHieu, source.from && 'Hiệu lực từ ' + source.from].filter(Boolean).join(' · ')) + '</small></div></div>';
+  }
+  function qaMessageHtml(msg) {
+    const Q = QA();
+    if (msg.role === 'user') return '<div class="ola-qa-msg is-user"><p>' + esc(msg.text) + '</p></div>';
+    const sources = msg.sources || [], cited = Q.citedCodes(msg.text);
+    const bad = Q.unknownCodes(msg.text, sources);
+    const warn = msg.error || msg.empty ? '' : bad.length ? '<p class="ola-qa-warn">AI dẫn mã nguồn không có trong các đoạn đã tra (' + esc(bad.join(', ')) + ') — đừng dùng phần đó khi chưa kiểm tra lại.</p>'
+      : (sources.length && !cited.length) ? '<p class="ola-qa-warn">Câu trả lời không dẫn nguồn nào — hãy đối chiếu với các đoạn bên dưới trước khi dùng.</p>' : '';
+    const body = msg.error ? '<div class="olp-notice olp-notice--error"><span>' + esc(msg.text) + '</span></div>'
+      : msg.empty ? '<div class="olp-notice olp-notice--warn"><span>' + esc(msg.text) + '</span></div>'
+      : '<div class="ola-qa-text">' + Q.answerHtml(msg.text, sources) + '</div>';
+    const srcs = sources.length ? '<div class="ola-qa-srcs"><h5>Nguồn đã tra trong Thư viện (' + sources.length + ')</h5>' + sources.map(source => qaSourceHtml(msg, source, cited.includes(source.code))).join('') + '</div>' : '';
+    const acts = msg.error ? '<button type="button" class="ola-qa-act" data-ol-qa-retry="' + esc(msg.id) + '"' + (qa.busy ? ' disabled' : '') + '>Thử lại</button>'
+      : msg.empty ? '' : '<button type="button" class="ola-qa-act" data-ol-qa-copy="' + esc(msg.id) + '">' + svg(ICON.copy) + 'Sao chép</button>'
+        + '<button type="button" class="ola-qa-act is-main" data-ol-qa-compose="' + esc(msg.id) + '"' + (qaLocked() ? ' disabled' : '') + ' title="Chuyển sang Soạn công văn, điền sẵn kết luận này vào yêu cầu">' + svg(ICON.letter) + 'Soạn công văn từ câu trả lời</button>';
+    return '<div class="ola-qa-msg is-ai" data-ol-qa-msg="' + esc(msg.id) + '"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body">' + body + warn + srcs + (acts ? '<div class="ola-qa-acts">' + acts + '</div>' : '') + '</div></div>';
+  }
+  function qaComposerHtml(big) {
+    return '<div class="ola-composer ola-qa-composer' + (big ? ' is-big' : ' is-up') + '">'
+      + '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="1500" placeholder="Hỏi về quy định, điều khoản, quy trình… (VD: thông báo tổn thất chậm thì bị giảm trừ thế nào?)" aria-label="Câu hỏi nghiệp vụ">' + esc(qa.draft) + '</textarea>'
+      + '<div class="ola-bar">' + recordChipHtml() + rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)') + '<span class="ola-spacer"></span>'
+      + '<button type="button" class="tasco-ai-send" data-ol-act="qa-send" title="Gửi câu hỏi (Enter)" aria-label="Gửi câu hỏi"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div>'
+      + popoverHtml() + '</div>';
+  }
+  function qaHtml() {
+    const Q = QA();
+    if (!qa.messages.length && !qa.busy) {
+      return '<section class="ola-hero ola-qa-hero"><span class="ola-avatar" aria-hidden="true">' + svg(ICON.book) + '</span><h1>Cần tra cứu nghiệp vụ gì?</h1>'
+        + '<p class="ola-qa-lead">Hỏi về Luật, Nghị định, quy tắc bảo hiểm… đã nạp trong Thư viện tài liệu. Câu trả lời chỉ dựa trên văn bản trong thư viện và luôn dẫn nguồn nguyên văn để bạn đối chiếu.</p>'
+        + qaComposerHtml(true)
+        + '<div class="ola-ideas">' + Q.SUGGESTIONS.map(text => '<button type="button" class="tasco-ai-choice" data-ol-qa-idea="' + esc(text) + '"><strong>' + esc(text) + '</strong></button>').join('') + '</div></section>';
+    }
+    const typing = qa.busy ? '<div class="ola-qa-msg is-ai is-typing"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body"><p class="ola-qa-status"><i></i><i></i><i></i><span data-ol-qa-status>' + esc(qa.status) + '</span></p></div></div>' : '';
+    return '<div class="ola-qa"><div class="ola-qa-scroll" data-ol-qa-scroll><div class="ola-qa-inner">' + qa.messages.map(qaMessageHtml).join('') + typing + '</div></div>'
+      + '<div class="ola-qa-dock">' + qaComposerHtml(false) + '<p class="ola-qa-foot">AI có thể sai — luôn đối chiếu nguyên văn ở phần "Nguồn đã tra" trước khi dùng trong công văn hoặc trả lời khách hàng.</p></div></div>';
+  }
+  function topbarHtml() {
+    const histBtn = st.histOpen ? '<span></span>' : '<button type="button" class="ola-hist-open" data-ol-act="hist-toggle" title="Mở lịch sử" aria-label="Mở lịch sử">' + svg(ICON.history) + '<span>Lịch sử</span></button>';
+    const locked = qaLocked();
+    const mode = QA() ? '<div class="ola-mode" role="tablist" aria-label="Chế độ làm việc">' + [['compose', 'Soạn công văn', ICON.letter], ['ask', 'Hỏi nghiệp vụ', ICON.chat]].map(([id, label, icon]) =>
+      '<button type="button" role="tab" aria-selected="' + (st.mode === id) + '" class="ola-mode-btn' + (st.mode === id ? ' is-on' : '') + '" data-ol-mode="' + id + '"' + (locked && st.mode !== id ? ' disabled' : '') + '>' + svg(icon) + '<span>' + label + '</span></button>').join('') + '</div>' : '<span></span>';
+    const right = st.mode === 'ask'
+      ? '<span class="ola-top-acts"><span class="olp-usage" data-ol-qa-usage' + (usageText(qa.usage) ? '' : ' hidden') + ' title="' + esc(usageTitle(qa.usage)) + '">' + esc(usageText(qa.usage)) + '</span>'
+        + (qa.messages.length ? '<button type="button" class="ola-hist-btn" data-ol-act="qa-clear" title="Xoá cuộc hội thoại" aria-label="Xoá cuộc hội thoại"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.trash) + '</button>' : '')
+        + '<button type="button" class="ola-hist-btn" data-ol-act="settings" title="Cài đặt: khoá DeepSeek &amp; đơn vị ban hành" aria-label="Cài đặt">' + svg(ICON.gear) + '</button></span>'
+      : '<span></span>';
+    return '<div class="ola-top">' + histBtn + mode + right + '</div>';
+  }
+
   // ---- Lịch sử (OfficialLetterHistory: Firebase user_letters/{uid}, dự phòng trình duyệt) ----
   const History = () => (typeof OfficialLetterHistory !== 'undefined' ? OfficialLetterHistory : null);
   const HIST_PANEL_KEY = 'officialLetter.historyPanel.v1';
@@ -692,6 +881,7 @@ const OfficialLetterPage = (() => {
     if (!data) { toast('Không mở được công văn này (có thể đã bị xoá).', 'warning'); return; }
     loadRecords();
     restore(data);
+    st.mode = 'compose';
     st.historyId = id;
     if (window.innerWidth < 1000) st.histOpen = false;
     renderAll();
@@ -744,15 +934,22 @@ const OfficialLetterPage = (() => {
     }
     return '';
   }
-  function composerHtml(big) {
-    const found = chosenRecord(), tpl = template();
-    const recordChip = found
+  function recordChipHtml() {
+    const found = chosenRecord();
+    return found
       ? '<span class="ola-chip is-set"><button type="button" data-ol-pop="record" title="Đổi hồ sơ">' + svg(ICON.folder) + esc(found.info.plate || found.info.code || 'Hồ sơ') + '</button><button type="button" class="ola-chip-x" data-ol-rec-clear aria-label="Bỏ hồ sơ">×</button></span>'
       : '<button type="button" class="ola-chip" data-ol-pop="record">' + svg(ICON.folder) + 'Hồ sơ</button>';
-    const typeChip = '<button type="button" class="ola-chip' + (tpl.id !== DEFAULT_TEMPLATE ? ' is-set' : '') + '" data-ol-pop="type" title="' + esc(tpl.name) + '">' + svg(ICON.letter) + '<span class="ola-chip-t ola-chip-type">' + esc(tpl.id === DEFAULT_TEMPLATE ? 'Loại: Tự do' : tpl.name) + '</span>' + svg(ICON.chevron) + '</button>';
+  }
+  function rulesChipHtml(title) {
     const pinnedDoc = (st.libDocs || []).find(doc => doc.id === st.legalPin[0]);
     const ruleLabel = st.legalPin.length ? (pinnedDoc ? pinnedDoc.name : 'Đã chọn quy tắc') : 'Quy tắc: Tự động';
-    const rulesChip = '<button type="button" class="ola-chip' + (st.legalPin.length ? ' is-set' : '') + '" data-ol-pop="rules" title="Chọn văn bản/quy tắc làm căn cứ cho AI">' + svg(ICON.book) + '<span class="ola-chip-t">' + esc(ruleLabel) + '</span>' + svg(ICON.chevron) + '</button>';
+    return '<button type="button" class="ola-chip' + (st.legalPin.length ? ' is-set' : '') + '" data-ol-pop="rules" title="' + esc(title || 'Chọn văn bản/quy tắc làm căn cứ cho AI') + '">' + svg(ICON.book) + '<span class="ola-chip-t">' + esc(ruleLabel) + '</span>' + svg(ICON.chevron) + '</button>';
+  }
+  function composerHtml(big) {
+    const tpl = template();
+    const recordChip = recordChipHtml();
+    const typeChip = '<button type="button" class="ola-chip' + (tpl.id !== DEFAULT_TEMPLATE ? ' is-set' : '') + '" data-ol-pop="type" title="' + esc(tpl.name) + '">' + svg(ICON.letter) + '<span class="ola-chip-t ola-chip-type">' + esc(tpl.id === DEFAULT_TEMPLATE ? 'Loại: Tự do' : tpl.name) + '</span>' + svg(ICON.chevron) + '</button>';
+    const rulesChip = rulesChipHtml();
     return '<div class="ola-composer' + (big ? ' is-big' : '') + '">'
       + '<textarea data-ol-brief rows="' + (big ? 3 : 2) + '" maxlength="3000" placeholder="Mô tả công văn cần soạn… (gõ số HSBT hoặc biển số để AI tự lấy hồ sơ)" aria-label="Yêu cầu soạn công văn">' + esc(st.brief) + '</textarea>'
       + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (filesHtml() ? '' : ' hidden') + '>' + filesHtml() + '</div>'
@@ -987,19 +1184,23 @@ const OfficialLetterPage = (() => {
   function renderAll() {
     if (!host) return;
     const root = $('[data-ol-root]');
-    const active = document.activeElement, focusSel = active && host.contains(active) ? (active.matches('[data-ol-rec-q]') ? '[data-ol-rec-q]' : active.matches('[data-ol-brief]') ? '[data-ol-brief]' : '') : '';
-    const working = !!(st.letter || (st.busy && st.steps));
+    const active = document.activeElement, focusSel = active && host.contains(active) ? (active.matches('[data-ol-rec-q]') ? '[data-ol-rec-q]' : active.matches('[data-ol-brief]') ? '[data-ol-brief]' : active.matches('[data-ol-qa-input]') ? '[data-ol-qa-input]' : '') : '';
+    const asking = st.mode === 'ask' && !!QA();
+    const working = asking ? !!(qa.messages.length || qa.busy) : !!(st.letter || (st.busy && st.steps));
+    const qaBox = $('[data-ol-qa-scroll]'), qaTop = qaBox ? qaBox.scrollTop : 0;
     const scrollBox = $('[data-ol-scroll]'), scrollTop = scrollBox ? scrollBox.scrollTop : 0;
     const histScroll = $('[data-ol-hist-list]'), histTop = histScroll ? histScroll.scrollTop : 0;
-    root.innerHTML = historyHtml() + '<div class="ola-main' + (working ? ' is-working' : '') + '">' + (st.histOpen ? '' : '<button type="button" class="ola-hist-open" data-ol-act="hist-toggle" title="Mở lịch sử" aria-label="Mở lịch sử">' + svg(ICON.history) + '<span>Lịch sử</span></button>')
-      + (working ? workHtml() : heroHtml())
+    root.innerHTML = historyHtml() + '<div class="ola-main' + (working ? ' is-working' : '') + (asking ? ' is-ask' : '') + '">' + topbarHtml()
+      + (asking ? qaHtml() : working ? workHtml() : heroHtml())
       + '<button type="button" class="ola-gear" data-ol-act="settings" title="Cài đặt: đơn vị ban hành &amp; khoá DeepSeek" aria-label="Cài đặt: đơn vị ban hành và khoá DeepSeek">' + svg(ICON.gear) + '</button></div>' + drawerHtml();
     const nextHist = $('[data-ol-hist-list]'); if (nextHist) nextHist.scrollTop = histTop;
     root.classList.toggle('is-working', working);
     root.classList.toggle('has-history', st.histOpen);
     fitHeight();
     const nextScroll = $('[data-ol-scroll]'); if (nextScroll) nextScroll.scrollTop = scrollTop;
+    const nextQa = $('[data-ol-qa-scroll]'); if (nextQa) nextQa.scrollTop = qaTop;
     const brief = $('[data-ol-brief]'); if (brief) autoGrow(brief);
+    const qaInput = $('[data-ol-qa-input]'); if (qaInput) autoGrow(qaInput);
     if (st.pop === 'record') { updateRecList(); $('[data-ol-rec-q]')?.focus(); }
     else if (focusSel) $(focusSel)?.focus();
     if (st.busy || st.pending) {
@@ -1103,6 +1304,20 @@ const OfficialLetterPage = (() => {
   function closePop() { if (!st.pop) return; collectAll(); st.pop = ''; st.recQuery = ''; renderAll(); }
   function onClick(event) {
     const target = event.target;
+    const modeBtn = target.closest('[data-ol-mode]');
+    if (modeBtn) { setMode(modeBtn.dataset.olMode); return; }
+    const cite = target.closest('[data-ol-qa-cite]');
+    if (cite) { const holder = cite.closest('[data-ol-qa-msg]'); if (holder) openCite(holder.dataset.olQaMsg, cite.dataset.olQaCite); return; }
+    const srcHead = target.closest('[data-ol-qa-src]');
+    if (srcHead) { toggleSource(srcHead.dataset.olQaSrc); return; }
+    const qaIdea = target.closest('[data-ol-qa-idea]');
+    if (qaIdea) { askQuestion(qaIdea.dataset.olQaIdea); return; }
+    const qaCopy = target.closest('[data-ol-qa-copy]');
+    if (qaCopy) { copyAnswer(qaCopy.dataset.olQaCopy); return; }
+    const qaCompose = target.closest('[data-ol-qa-compose]');
+    if (qaCompose) { composeFromAnswer(qaCompose.dataset.olQaCompose); return; }
+    const qaRetry = target.closest('[data-ol-qa-retry]');
+    if (qaRetry) { retryAnswer(qaRetry.dataset.olQaRetry); return; }
     const version = target.closest('[data-ol-version]');
     if (version && !st.busy && !st.pending) { collectAll(); st.versionId = version.dataset.olVersion; renderAll(); return; }
     const restore = target.closest('[data-ol-restore]');
@@ -1115,11 +1330,11 @@ const OfficialLetterPage = (() => {
     const popButton = target.closest('[data-ol-pop]');
     if (popButton) { collectAll(); const name = popButton.dataset.olPop; st.pop = st.pop === name ? '' : name; st.recQuery = ''; st.recActive = 0; if (st.pop === 'record' && !index.length) loadRecords(); if (st.pop === 'rules' && st.libDocs === null) loadLibDocs().then(() => { if (st.pop === 'rules') renderAll(); }); renderAll(); return; }
     const pick = target.closest('[data-ol-pick]');
-    if (pick) { collectAll(); st.recordKey = pick.dataset.olPick; st.pop = ''; st.recQuery = ''; renderAll(); $('[data-ol-brief]')?.focus(); return; }
+    if (pick) { collectAll(); st.recordKey = pick.dataset.olPick; st.pop = ''; st.recQuery = ''; renderAll(); focusMain(); return; }
     const rule = target.closest('[data-ol-rule]');
-    if (rule) { collectAll(); st.legalPin = rule.dataset.olRule ? [rule.dataset.olRule] : []; st.pop = ''; renderAll(); $('[data-ol-brief]')?.focus(); return; }
+    if (rule) { collectAll(); st.legalPin = rule.dataset.olRule ? [rule.dataset.olRule] : []; st.pop = ''; renderAll(); focusMain(); return; }
     const type = target.closest('[data-ol-type]');
-    if (type) { collectAll(); st.templateId = type.dataset.olType; st.pop = ''; renderAll(); $('[data-ol-brief]')?.focus(); return; }
+    if (type) { collectAll(); st.templateId = type.dataset.olType; st.pop = ''; renderAll(); focusMain(); return; }
     if (target.closest('[data-ol-rec-clear]')) { collectAll(); st.recordKey = ''; renderAll(); return; }
     if (st.pop && !target.closest('.ola-pop')) { closePop(); }
     const idea = target.closest('[data-ol-idea]');
@@ -1163,6 +1378,8 @@ const OfficialLetterPage = (() => {
       case 'agent-toggle': st.agentOpen = !st.agentOpen; updateSteps(); $('[data-ol-act="agent-toggle"]')?.focus(); break;
       case 'review': $('.ola-review')?.scrollIntoView({block:'start', behavior:'auto'}); break;
       case 'run': run(); break;
+      case 'qa-send': askQuestion(); break;
+      case 'qa-clear': clearQa(); break;
       case 'compose': st.drawer = ''; compose(''); break;
       case 'refine': sendRefine(); break;
       case 'accept-changes': acceptChanges(); break;
@@ -1176,7 +1393,7 @@ const OfficialLetterPage = (() => {
       case 'settings': openSettings(); break;
       case 'legal-search': searchMoreLegal(); break;
       case 'open-library': TascoLibrary.open(); break;
-      case 'new': if (st.letter) { clearTimeout(saveTimer); if (st.historyId) saveHistory(); reset(); renderAll(); $('[data-ol-brief]')?.focus(); } else confirmDiscard().then(ok => { if (ok) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } }); break;
+      case 'new': st.mode = 'compose'; if (st.letter) { clearTimeout(saveTimer); if (st.historyId) saveHistory(); reset(); renderAll(); $('[data-ol-brief]')?.focus(); } else confirmDiscard().then(ok => { if (ok) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } }); break;
       case 'hist-toggle': st.histOpen = !st.histOpen; try { localStorage.setItem(HIST_PANEL_KEY, st.histOpen ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); break;
       case 'add-extra': collectAll(); st.extras.push({label: '', value: ''}); renderAll(); host.querySelector('[data-ol-extra-row]:last-of-type [data-ol-extra-label]')?.focus(); break;
       case 'remove-extra': { collectAll(); const rows = [...host.querySelectorAll('[data-ol-extra-row]')]; st.extras.splice(rows.indexOf(act.closest('[data-ol-extra-row]')), 1); renderAll(); break; }
@@ -1190,6 +1407,7 @@ const OfficialLetterPage = (() => {
     if (target.matches('[data-ol-rec-q]')) { st.recQuery = target.value; st.recActive = 0; updateRecList(); }
     else if (target.matches('[data-ol-hist-q]')) { st.histQuery = target.value; updateHistory(true); }
     else if (target.matches('[data-ol-brief]')) { st.brief = target.value; autoGrow(target); }
+    else if (target.matches('[data-ol-qa-input]')) { qa.draft = target.value; autoGrow(target); }
     else if (target.matches('[data-ol-quick-answer]')) { const item = st.questions[Number(target.dataset.olQuickAnswer)]; if (item) st.questionDrafts[item.question] = target.value; }
     else if (target.matches('[data-ol-field]')) updateMissingLive();
     else if (target.matches('[data-ol-outline-text]')) st.outlineEdited = true;
@@ -1211,6 +1429,7 @@ const OfficialLetterPage = (() => {
     if (event.key === 'Escape') { if (st.pop) { event.preventDefault(); closePop(); return; } if (st.drawer) { collectAll(); st.drawer = ''; renderAll(); return; } }
     if (target.matches('.ol-edit') && event.key === 'Enter') { event.preventDefault(); return; } // mỗi khối là một dòng/đoạn
     if (target.matches('[data-ol-brief]') && event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); run(); return; }
+    if (target.matches('[data-ol-qa-input]') && event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); askQuestion(); return; }
     if (target.matches('[data-ol-refine-input]') && event.key === 'Enter' && !event.isComposing) { event.preventDefault(); sendRefine(); return; }
     if (target.matches('[data-ol-legal-q]') && event.key === 'Enter' && !event.isComposing) { event.preventDefault(); searchMoreLegal(); return; }
     if (target.matches('[data-ol-rec-q]')) {
@@ -1244,6 +1463,7 @@ const OfficialLetterPage = (() => {
     leave();
     host = container;
     loadRecords();
+    loadQa();
     host.innerHTML = '<div class="ola" data-ol-root></div>';
     HANDLERS.forEach(([name, fn]) => host.addEventListener(name, fn));
     document.addEventListener('mousedown', onOutside, true);

@@ -324,3 +324,8 @@ test('Kỳ không có hồ sơ mở vẫn hiển thị và xuất được hồ 
   assert.equal(sheets.HSBT_Duyet_Trong_Ky[0]['Tiền duyệt HSBT (VNĐ)'], 4000000);
   ctx.cachedPendingClaimsPayload = {};
 });
+
+test('CSS báo cáo tháng không chứa hàm màu color-mix gây lỗi html2canvas 1.4.1', () => {
+  const reportPagesCss = read('css/report-pages.css');
+  assert.ok(!reportPagesCss.includes('color-mix('), 'css/report-pages.css không được dùng color-mix() để tránh crash html2canvas khi xuất ảnh');
+});
