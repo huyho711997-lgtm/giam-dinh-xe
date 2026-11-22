@@ -67,6 +67,22 @@ const OfficialLetterAI = (() => {
     return body;
   }
 
+  // ---- Số token đã dùng (DeepSeek trả kèm trong mỗi phản hồi) ----
+  const count = value => { const n = Number(value); return Number.isFinite(n) && n > 0 ? Math.round(n) : 0; };
+  function parseUsage(data) {
+    const u = data && data.usage;
+    if (!u || typeof u !== 'object') return null;
+    const prompt = count(u.prompt_tokens), completion = count(u.completion_tokens);
+    return {prompt, completion, hit: count(u.prompt_cache_hit_tokens), miss: count(u.prompt_cache_miss_tokens), total: count(u.total_tokens) || prompt + completion};
+  }
+  const emptyUsage = () => ({calls: 0, prompt: 0, completion: 0, hit: 0, miss: 0, total: 0});
+  function addUsage(sum, usage) {
+    const base = sum || emptyUsage();
+    if (!usage) return base;
+    return {calls: base.calls + 1, prompt: base.prompt + usage.prompt, completion: base.completion + usage.completion, hit: base.hit + usage.hit, miss: base.miss + usage.miss, total: base.total + usage.total};
+  }
+  const formatTokens = n => n < 1000 ? String(n) : (n / 1000).toLocaleString('vi-VN', {maximumFractionDigits: 1}) + 'k';
+
   // ---- Đọc phản hồi ----
   function aiError(message, extra) { return Object.assign(new Error(message), extra || {}); }
   function parseChatResponse(data) {
@@ -105,6 +121,7 @@ const OfficialLetterAI = (() => {
       let data = null;
       try { data = await response.json(); } catch (_) { /* thân phản hồi không phải JSON */ }
       if (!response.ok) throw httpError(response.status, data);
+      if (options.onUsage) { const usage = parseUsage(data); if (usage) options.onUsage(usage); }   // lần gọi nào cũng bị tính tiền, kể cả khi phải thử lại vì nội dung rỗng
       try { return parseChatResponse(data); }
       catch (error) { if (!error.empty || attempt >= 1) throw error; }
     }
@@ -164,5 +181,5 @@ const OfficialLetterAI = (() => {
     return result.images.map((data, index) => ({name: name + ' (trang ' + (index + 1) + ')', mimeType: 'image/jpeg', data}));
   }
 
-  return {ENDPOINT, DEFAULT_MODEL, toChatRequest, parseChatResponse, httpError, call, readPdf, pdfToAttachments, utf8ToBase64, base64ToUtf8};
+  return {ENDPOINT, DEFAULT_MODEL, toChatRequest, parseChatResponse, parseUsage, emptyUsage, addUsage, formatTokens, httpError, call, readPdf, pdfToAttachments, utf8ToBase64, base64ToUtf8};
 })();

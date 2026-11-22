@@ -108,3 +108,18 @@ test('base64 ↔ UTF-8 giữ nguyên tiếng Việt', () => {
   const sample = 'Công văn số 12/TASCO — Đắk Lắk ✓';
   assert.equal(AI.base64ToUtf8(AI.utf8ToBase64(sample)), sample);
 });
+
+test('số token: đọc usage, cộng dồn nhiều lượt, gọi onUsage kể cả lượt phải thử lại', async () => {
+  assert.equal(AI.parseUsage({}), null);
+  assert.deepEqual(plain(AI.parseUsage({usage: {prompt_tokens: 1000, completion_tokens: 200, prompt_cache_hit_tokens: 600, prompt_cache_miss_tokens: 400, total_tokens: 1200}})), {prompt: 1000, completion: 200, hit: 600, miss: 400, total: 1200});
+  assert.deepEqual(plain(AI.parseUsage({usage: {prompt_tokens: 'x', completion_tokens: -5}})), {prompt: 0, completion: 0, hit: 0, miss: 0, total: 0});
+  const sum = [{prompt: 10, completion: 2, hit: 4, miss: 6, total: 12}, {prompt: 30, completion: 5, hit: 0, miss: 30, total: 35}].reduce((acc, u) => AI.addUsage(acc, u), null);
+  assert.deepEqual(plain(sum), {calls: 2, prompt: 40, completion: 7, hit: 4, miss: 36, total: 47});
+  assert.equal(plain(AI.addUsage(sum, null)).calls, 2);
+  assert.equal(AI.formatTokens(850), '850'); assert.match(AI.formatTokens(24100), /^24,1k$/);
+  const seen = [];
+  let n = 0;
+  const reply = {ok: true, status: 200, json: async () => ({choices: [{message: {content: n++ ? '{"x":1}' : '  '}, finish_reason: 'stop'}], usage: {prompt_tokens: 100, completion_tokens: 10, total_tokens: 110}})};
+  await AI.call(gemini(), {apiKey: 'k', fetchImpl: async () => reply, onUsage: usage => seen.push(plain(usage).total)});
+  assert.deepEqual(seen, [110, 110]);
+});

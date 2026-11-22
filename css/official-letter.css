@@ -160,6 +160,8 @@ span.ola-chip button { display:inline-flex; align-items:center; gap:6px; height:
 .ola-doc { position:relative; display:grid; min-width:0; gap:10px; }
 .ola-doc-bar { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:6px; }
 .ola-doc-bar .ol-datepick { margin-right:auto; }
+.olp-usage { display:inline-flex; align-items:center; height:34px; padding:0 4px; color:var(--text-muted); font-size:12px; font-weight:600; font-variant-numeric:tabular-nums; cursor:help; }
+.olp-usage[hidden] { display:none; }
 .ola-doc .ol-paper-wrap { max-height:none; padding:22px; border-radius:16px; }
 .ola-doc.is-busy .ol-paper-wrap { opacity:.45; pointer-events:none; }
 .ola-doc.is-pending .olp-skeleton { width:100%; }

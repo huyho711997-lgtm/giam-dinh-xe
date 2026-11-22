@@ -40,7 +40,7 @@ const OfficialLetterPage = (() => {
     letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
     pop: '', drawer: '', editing: false, steps: null, agentOpen: false, agentTask: 'draft',
     historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser',
-    versions: [], selection: [], pending: null, versionId: ''
+    versions: [], selection: [], pending: null, versionId: '', usage: null
   };
 
   // ---- Tiện ích chung ----
@@ -141,6 +141,20 @@ const OfficialLetterPage = (() => {
   // ---- Gọi DeepSeek ----
   const RETRY_WAITS = [8, 20];   // giây chờ trước mỗi lần thử lại khi DeepSeek báo 429/quá tải
   const NO_KEY = 'Chưa có khoá DeepSeek API. Bấm biểu tượng ⚙ ở góc phải để nhập khoá (lấy tại platform.deepseek.com).';
+  // Token đã dùng trong phiên soạn hiện tại (công văn đang mở): cộng dồn từ mọi lần gọi AI, đặt lại khi bắt đầu công văn mới / mở lại từ lịch sử.
+  function usageText() {
+    const u = st.usage; if (!u || !u.calls) return '';
+    return OfficialLetterAI.formatTokens(u.total) + ' token';
+  }
+  function usageTitle() {
+    const u = st.usage; if (!u || !u.calls) return '';
+    const n = value => value.toLocaleString('vi-VN');
+    return 'Phiên này: ' + u.calls + ' lượt gọi DeepSeek · tổng ' + n(u.total) + ' token\nGửi đi: ' + n(u.prompt) + (u.hit ? ' (đã lưu đệm ' + n(u.hit) + ')' : '') + ' · Nhận về: ' + n(u.completion);
+  }
+  function paintUsage() {
+    const node = $('[data-ol-usage]');
+    if (node) { node.textContent = usageText(); node.title = usageTitle(); node.hidden = !usageText(); }
+  }
   async function callAI(request) {
     if (typeof DeepSeekKeyStore === 'undefined' || typeof OfficialLetterAI === 'undefined') throw new Error('Chưa tải được mô-đun AI. Hãy tải lại trang.');
     const apiKey = await DeepSeekKeyStore.get();
@@ -153,7 +167,7 @@ const OfficialLetterPage = (() => {
     const taskStatus = st.status;
     // Một công văn gọi AI 2–3 lần: khi bị giới hạn lưu lượng/quá tải thì tự chờ rồi thử lại, có đếm ngược cho người dùng thấy.
     for (let attempt = 0; ; attempt++) {
-      try { return await OfficialLetterAI.call(request, {apiKey, model, signal}); }
+      try { return await OfficialLetterAI.call(request, {apiKey, model, signal, onUsage: usage => { st.usage = OfficialLetterAI.addUsage(st.usage, usage); paintUsage(); }}); }
       catch (error) {
         if (!(error && error.retryable) || attempt >= RETRY_WAITS.length) throw error;
         for (let left = RETRY_WAITS[attempt]; left > 0; left--) {
@@ -792,6 +806,7 @@ const OfficialLetterPage = (() => {
     const locked = !!(st.busy || st.pending);
     const paper = Core().letterToHtml(st.letter);
     return '<div class="ola-doc' + (st.busy ? ' is-busy' : '') + '"><div class="ola-doc-bar"><label class="ol-datepick">Ngày <input type="date" data-ol-date value="' + esc(st.letter.date) + '"' + (locked ? ' disabled' : '') + '></label>'
+      + '<span class="olp-usage" data-ol-usage title="' + esc(usageTitle()) + '"' + (usageText() ? '' : ' hidden') + '>' + esc(usageText()) + '</span>'
       + '<button type="button" class="olp-tool" data-ol-drawer="versions"' + (locked ? ' disabled' : '') + '>' + svg(ICON.history) + 'Phiên bản (' + st.versions.length + ')</button>'
       + '<button type="button" class="olp-tool is-primary" data-ol-act="docx">' + svg(ICON.word) + 'Tải Word</button><button type="button" class="olp-tool" data-ol-act="print" title="In">' + svg(ICON.print) + '</button><button type="button" class="olp-tool" data-ol-act="copy" title="Sao chép nội dung">' + svg(ICON.copy) + '</button></div>'
       + '<div class="ol-paper-wrap">' + (locked ? paper.replace(/contenteditable="true"/g, 'contenteditable="false"') : paper) + '</div></div>';
@@ -1015,7 +1030,7 @@ const OfficialLetterPage = (() => {
     generation++; controller?.abort(); controller = null;
     resetAnalysis();
     releaseFiles(st.files); releaseFiles(st.refineFiles);
-    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, versionId:''});
+    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, versionId:'', usage: null});
   }
   const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Bỏ công văn đang soạn để bắt đầu công văn mới?');
 
