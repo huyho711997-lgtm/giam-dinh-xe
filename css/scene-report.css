@@ -1931,3 +1931,13 @@ body:not(.light-mode) .sr-ai-photo.is-trace .sr-ai-kind { background: #5a3f10; c
 body:not(.light-mode) .sr-ai-photo.is-sample .sr-ai-kind { background: #164a33; color: #bff0d6; }
 @media (max-width: 640px) { .sr-ai { padding: 12px; } .sr-ai-photos { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .sr-ai-busy i { animation: none; } }
+
+/* chọn mô hình AI ảnh hiện trường */
+.sr-ai-modelrow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+.sr-ai-model { display: inline-flex; align-items: center; gap: 8px; color: var(--ce-muted); font-size: 12px; font-weight: 700; }
+.sr-ai-model select { height: 32px; max-width: 260px; padding: 0 28px 0 10px; border: 1px solid var(--ce-line); border-radius: 9px; background-color: var(--ce-paper); color: var(--ce-ink); font: 650 12.5px 'Plus Jakarta Sans', system-ui, sans-serif; }
+.sr-ai-model select:focus-visible { outline: 2px solid var(--ce-gold); outline-offset: 2px; }
+.sr-ai-deep { display: inline-flex; align-items: center; gap: 8px; color: var(--ce-ink); font-size: 12px; font-weight: 700; cursor: pointer; }
+.sr-ai-deep input { position: absolute; opacity: 0; pointer-events: none; }
+.sr-ai-deep input:focus-visible + .sr-check-box { outline: 2px solid var(--ce-gold); outline-offset: 2px; }
+.sr-ai-local { flex-basis: 100%; margin: 0; color: var(--ce-muted); font-size: 11.5px; line-height: 1.5; }

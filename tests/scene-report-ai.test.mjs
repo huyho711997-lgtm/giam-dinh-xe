@@ -4,9 +4,10 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const read = p => fs.readFileSync(new URL('../' + p, import.meta.url), 'utf8');
-const ctx = vm.createContext({String, Number, Object, Array, JSON, Math, Date, Error});
+const ctx = vm.createContext({String, Number, Object, Array, JSON, Math, Date, Error, atob, btoa, TextEncoder, TextDecoder, AbortController, DOMException, localStorage: {getItem: () => null, setItem() {}}});
 vm.runInContext(read('js/features/documents/scene-report-ai.js') + '\nthis.AI = SceneReportAI;', ctx);
-const AI = ctx.AI;
+vm.runInContext(read('js/features/documents/official-letter-ai.js') + read('js/features/documents/official-letter-models.js') + '\nthis.LAI = OfficialLetterAI; this.M = OfficialLetterModels;', ctx);
+const AI = ctx.AI, M = ctx.M, LAI = ctx.LAI;
 const plain = value => JSON.parse(JSON.stringify(value));
 
 test('buildPrompt đưa loại ảnh, hồ sơ và nội dung đã có vào ngữ cảnh', () => {
@@ -84,4 +85,44 @@ test('trang nạp module AI trước giao diện và form có khối AI ở đ�
   assert.ok(html.indexOf('scene-report-ai.js') < html.indexOf('scene-report-ui.js') && html.indexOf('scene-report-ui.js') < html.indexOf('scene-report-ai-ui.js'));
   const ui = read('js/features/documents/scene-report-ui.js');
   assert.ok(ui.indexOf('data-sr-ai') > 0 && ui.indexOf('data-sr-ai') < ui.indexOf('class="sr-choice-grid"'));
+});
+
+test('modelOptions chỉ giữ mô hình đọc được ảnh và có Antigravity; pickModel ưu tiên lựa chọn cũ rồi Gemini', () => {
+  const cfg = M.defaults();
+  const options = plain(AI.modelOptions(M, cfg));
+  const ids = options.map(option => option.id);
+  assert.ok(ids.includes('antigravity:gemini-3-flash') && ids.includes('gemini:gemini-3.8-flash') && ids.includes('deepseek:deepseek-flash'));
+  assert.ok(!ids.includes('groq:llama-3.3-70b-versatile') && !ids.includes('groq:openai/gpt-oss-120b'));   // Groq không đọc ảnh
+  const agy = options.find(option => option.provider === 'antigravity');
+  assert.deepEqual([agy.local, agy.reasoning, agy.free], [true, true, false]);
+  assert.equal(AI.pickModel(options, 'antigravity:gemini-3-flash', 'deepseek:deepseek-flash'), 'antigravity:gemini-3-flash');
+  assert.equal(AI.pickModel(options, 'groq:khong-co', 'deepseek:deepseek-flash'), 'gemini:gemini-3.8-flash');
+  assert.equal(AI.pickModel(options.filter(option => option.provider !== 'gemini'), '', 'deepseek:deepseek-flash'), 'deepseek:deepseek-flash');
+  assert.equal(AI.pickModel([], '', ''), '');
+  assert.deepEqual(plain(AI.modelOptions(null, cfg)), []);
+});
+
+test('analyzeVia gọi Antigravity qua cầu nối với ảnh, reasoning_effort high và token cao khi suy luận sâu', async () => {
+  const cfg = M.defaults(), active = M.resolve(cfg, 'antigravity:gemini-3-flash');
+  let call = null;
+  const fetchImpl = async (url, init) => { call = {url, init, body: JSON.parse(init.body)}; return {ok: true, status: 200, json: async () => ({choices: [{message: {content: JSON.stringify({scene: '1. Xe dừng bên phải.', traces: 'Tại hiện trường ghi nhận xe 47A12345 có vết móp.', samples: ''})}, finish_reason: 'stop'}]})}; };
+  const photos = [{name: 'a.jpg', kind: 'trace', mimeType: 'image/jpeg', data: 'AAA'}];
+  const result = plain(await AI.analyzeVia({photos, context: {plate: '47A12345'}, active, apiKey: 'fb-token', thinking: true, fetchImpl, ai: LAI}));
+  assert.equal(call.url, 'http://127.0.0.1:18318/v1/chat/completions');
+  assert.equal(call.init.headers.Authorization, 'Bearer fb-token');
+  assert.equal(call.body.model, 'gemini-3-flash'); assert.equal(call.body.reasoning_effort, 'high'); assert.equal(call.body.max_tokens, 16000); assert.equal(call.body.stream, false);
+  const content = call.body.messages.at(-1).content;
+  assert.ok(Array.isArray(content) && content.some(part => part.type === 'image_url' && part.image_url.url === 'data:image/jpeg;base64,AAA'));
+  assert.ok(content.some(part => part.type === 'text' && /Ảnh 1 — loại: Dấu vết/.test(part.text)));
+  assert.match(result.traces, /^Tại hiện trường ghi nhận xe 47A12345/);
+  await AI.analyzeVia({photos, context: {}, active, apiKey: 'fb-token', thinking: false, fetchImpl, ai: LAI});
+  assert.equal(call.body.reasoning_effort, 'low'); assert.ok(call.body.max_tokens < 16000);
+});
+
+test('analyzeVia báo lỗi rõ: thiếu khoá, ảnh HEIC, hết hạn mức (gợi ý đổi mô hình)', async () => {
+  const cfg = M.defaults(), gemini = M.resolve(cfg, 'gemini:gemini-3.8-flash');
+  const photos = [{name: 'a.jpg', kind: 'scene', mimeType: 'image/jpeg', data: 'A'}];
+  await assert.rejects(AI.analyzeVia({photos, active: gemini, apiKey: '', ai: LAI}), /Chưa có khoá cho Google Gemini/);
+  await assert.rejects(AI.analyzeVia({photos: [{...photos[0], mimeType: 'image/heic'}], active: gemini, apiKey: 'k', ai: LAI}), /HEIC/);
+  await assert.rejects(AI.analyzeVia({photos, active: gemini, apiKey: 'k', ai: LAI, fetchImpl: async () => ({ok: false, status: 429, json: async () => ({error: {message: 'quota'}})})}), /429[\s\S]*chọn mô hình khác/);
 });

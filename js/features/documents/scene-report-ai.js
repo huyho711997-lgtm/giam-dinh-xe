@@ -117,19 +117,24 @@ const SceneReportAI = (() => {
     } finally { URL.revokeObjectURL(url); }
   }
 
+  const buildParts = (photos, context) => {
+    const parts = [{text: buildPrompt(context, photos)}];
+    photos.forEach((photo, index) => { parts.push({text: 'Ảnh ' + (index + 1) + ' — loại: ' + KINDS[kindOf(photo.kind)] + ' — ' + line(photo.name, 80)}); parts.push({inlineData: {mimeType: photo.mimeType, data: photo.data}}); });
+    return parts;
+  };
+
+  // Đường dự phòng: gọi thẳng Gemini bằng khoá của Trợ lý AI (dùng khi chưa tải được bộ chọn mô hình).
   async function analyze({photos, context, apiKey, model, signal, fetchImpl}) {
     if (!photos || !photos.length) throw new Error('Chưa có ảnh để phân tích.');
     if (!apiKey) throw new Error('Chưa thiết lập khoá Gemini API.');
-    const parts = [{text: buildPrompt(context, photos)}];
-    photos.forEach((photo, index) => { parts.push({text: 'Ảnh ' + (index + 1) + ' — loại: ' + KINDS[kindOf(photo.kind)] + ' — ' + line(photo.name, 80)}); parts.push({inlineData: {mimeType: photo.mimeType, data: photo.data}}); });
     const response = await (fetchImpl || fetch)('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model || 'gemini-2.5-flash') + ':generateContent', {
       method: 'POST', signal, headers: {'Content-Type': 'application/json', 'x-goog-api-key': apiKey},
-      body: JSON.stringify({contents: [{role: 'user', parts}], generationConfig: {responseMimeType: 'application/json', temperature: 0.2}})
+      body: JSON.stringify({contents: [{role: 'user', parts: buildParts(photos, context)}], generationConfig: {responseMimeType: 'application/json', temperature: 0.2}})
     });
     let data = null;
     try { data = await response.json(); } catch (_) { /* không phải JSON */ }
     if (!response.ok || data?.error) {
-      if (response.status === 429) throw new Error('Gemini báo hết hạn mức miễn phí tạm thời. Đợi 1–2 phút rồi thử lại.');
+      if (response.status === 429) throw new Error('Gemini báo hết hạn mức miễn phí tạm thời. Đợi 1–2 phút rồi thử lại, hoặc chọn mô hình khác (như Antigravity).');
       if (response.status === 413) throw new Error('Ảnh quá nặng, hãy gửi ít ảnh hơn mỗi lần.');
       throw new Error('Gemini lỗi: ' + (data?.error?.message || 'HTTP ' + response.status));
     }
@@ -138,5 +143,37 @@ const SceneReportAI = (() => {
     return parseResult(raw, photos.length);
   }
 
-  return {MAX_PHOTOS, MAX_NOTE, LIMITS, KINDS, KIND_ORDER, nextKind, kindOf, buildPrompt, buildContext, parseResult, mergeText, prepare, analyze};
+  // ---- Chọn mô hình (dùng chung danh sách mô hình và khoá với Công văn AI: Gemini, DeepSeek, Antigravity…) ----
+  // Chỉ liệt kê mô hình đọc được ảnh. Trả về [{id, provider, model, label, free, local, reasoning}].
+  function modelOptions(Models, cfg) {
+    if (!Models || !cfg) return [];
+    return Models.entries(cfg).map(entry => ({entry, profile: Models.profile(entry.provider, entry.model)})).filter(item => item.profile.vision !== false).map(({entry, profile}) => ({
+      id: entry.id, provider: entry.provider, model: entry.model, label: entry.label, free: !!(Models.PROVIDERS[entry.provider] || {}).free, local: entry.provider === 'antigravity', reasoning: profile.reasoning !== 'none'
+    }));
+  }
+  // Mặc định: mô hình đã chọn lần trước → Gemini (đọc ảnh tốt, dùng chung khoá Trợ lý AI) → mô hình đang chọn ở Công văn AI → mô hình đầu tiên.
+  function pickModel(options, stored, selected) {
+    const has = id => options.some(option => option.id === id);
+    if (stored && has(stored)) return stored;
+    const gemini = options.find(option => option.provider === 'gemini');
+    if (gemini) return gemini.id;
+    if (selected && has(selected)) return selected;
+    return options[0] ? options[0].id : '';
+  }
+
+  // Gọi mô hình đã chọn qua OfficialLetterAI.call (API tương thích OpenAI). thinking: suy luận sâu nếu mô hình hỗ trợ.
+  async function analyzeVia({photos, context, active, apiKey, signal, thinking, fetchImpl, ai}) {
+    if (!photos || !photos.length) throw new Error('Chưa có ảnh để phân tích.');
+    const client = ai || (typeof OfficialLetterAI !== 'undefined' ? OfficialLetterAI : null);
+    if (!client) throw new Error('Chưa tải được mô-đun AI. Hãy tải lại trang.');
+    if (!active) throw new Error('Chưa chọn mô hình AI.');
+    if (!apiKey) throw new Error('Chưa có khoá cho ' + (active.providerLabel || 'mô hình đã chọn') + '.');
+    if (photos.some(photo => /heic|heif/i.test(photo.mimeType || ''))) throw new Error('Mô hình này chưa đọc được ảnh HEIC. Hãy chụp ở chế độ JPG hoặc dùng ảnh khác.');
+    const deep = !!thinking && active.profile && active.profile.reasoning !== 'none';
+    const raw = await client.call({contents: [{role: 'user', parts: buildParts(photos, context)}], generationConfig: {responseMimeType: 'application/json', temperature: 0.2}},
+      {apiKey, model: active.model, signal, thinking: deep, maxTokens: deep ? 16000 : undefined, endpoint: active.endpoint, label: active.providerLabel, profile: active.profile, fetchImpl});
+    return parseResult(raw, photos.length);
+  }
+
+  return {MAX_PHOTOS, MAX_NOTE, LIMITS, KINDS, KIND_ORDER, nextKind, kindOf, buildPrompt, buildContext, parseResult, mergeText, prepare, analyze, analyzeVia, modelOptions, pickModel};
 })();

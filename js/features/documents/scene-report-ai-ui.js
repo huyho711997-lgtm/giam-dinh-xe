@@ -1,8 +1,41 @@
 // Giao diện khối "AI phân tích ảnh hiện trường" trong tab Biên bản hiện trường (đặt đầu phần II).
 // Ảnh chỉ giữ trong bộ nhớ trang (không lưu vào hồ sơ); kết quả AI là bản nháp, chỉ ghi vào mục [9][10][11] khi bấm "Áp dụng".
 // Phụ thuộc (gọi lúc chạy): SceneReportAI, sceneReportState/sceneReportCommit/sceneReportEsc/sceneReportIcon (scene-report-ui.js), GeminiKeyStore.
-const sceneReportAi = {claim: '', photos: [], note: '', busy: false, preparing: false, controller: null, stopped: false, result: null, error: '', applied: '', pick: {}, mode: {}, draft: {}};
+const sceneReportAi = {claim: '', photos: [], note: '', busy: false, preparing: false, controller: null, stopped: false, result: null, error: '', applied: '', pick: {}, mode: {}, draft: {}, deep: null, model: ''};
 const SCENE_REPORT_AI_FIELDS = [['scene', '[9]', 'Mô tả hiện trường, vị trí phương tiện'], ['traces', '[10]', 'Dấu vết tại hiện trường'], ['samples', '[11]', 'Mẫu vật thu được']];
+
+// ---- Chọn mô hình (dùng chung danh sách mô hình/khoá với Công văn AI) ----
+const SCENE_REPORT_AI_MODEL_KEY = 'sceneReport.aiModel.v1', SCENE_REPORT_AI_DEEP_KEY = 'sceneReport.aiDeep.v1';
+const sceneReportAiLs = {
+  get(key) { try { return localStorage.getItem(key) || ''; } catch (_) { return ''; } },
+  set(key, value) { try { localStorage.setItem(key, value); } catch (_) { /* hết chỗ lưu: giữ trong phiên */ } }
+};
+const sceneReportAiModels = () => (typeof OfficialLetterModels !== 'undefined' && typeof OfficialLetterAI !== 'undefined' ? OfficialLetterModels : null);
+// Trả về {M, cfg, options, id, current} hoặc null nếu chưa có bộ chọn mô hình (khi đó dùng Gemini trực tiếp như trước).
+function sceneReportAiModelState() {
+  const M = sceneReportAiModels();
+  if (!M) return null;
+  const cfg = M.load(), options = SceneReportAI.modelOptions(M, cfg);
+  if (!options.length) return null;
+  const id = SceneReportAI.pickModel(options, sceneReportAi.model || sceneReportAiLs.get(SCENE_REPORT_AI_MODEL_KEY), cfg.selected);   // lựa chọn trong phiên giữ cả khi trình duyệt không cho lưu localStorage
+  return {M, cfg, options, id, current: options.find(option => option.id === id) || options[0]};
+}
+function sceneReportAiDeepOn(model) {
+  if (!model || !model.current.reasoning) return false;
+  if (sceneReportAi.deep === null) sceneReportAi.deep = sceneReportAiLs.get(SCENE_REPORT_AI_DEEP_KEY) !== '0';
+  return sceneReportAi.deep;
+}
+function sceneReportAiModelHtml(locked) {
+  const E = sceneReportEsc, model = sceneReportAiModelState();
+  if (!model) return '';
+  const text = option => (option.local ? 'Antigravity · ' + option.model : option.label) + (option.free ? ' · miễn phí' : '');
+  const select = '<label class="sr-ai-model"><span>Mô hình</span><select data-sr-ai-model aria-label="Mô hình AI đọc ảnh"' + (locked ? ' disabled' : '') + '>'
+    + model.options.map(option => '<option value="' + E(option.id) + '"' + (option.id === model.id ? ' selected' : '') + '>' + E(text(option)) + '</option>').join('') + '</select></label>';
+  const deep = model.current.reasoning
+    ? '<label class="sr-ai-deep" title="AI suy nghĩ kỹ hơn trước khi viết; chậm hơn và tốn hạn mức hơn"><input type="checkbox" data-sr-ai-deep' + (sceneReportAiDeepOn(model) ? ' checked' : '') + (locked ? ' disabled' : '') + '><span class="sr-check-box" aria-hidden="true"></span><span>Suy luận sâu</span></label>' : '';
+  const note = model.current.local ? '<p class="sr-ai-local">Antigravity chạy qua công cụ trung gian trên chính máy này (127.0.0.1) — cần bật công cụ đó và đăng nhập website. Suy luận sâu có thể mất 1–3 phút.</p>' : '';
+  return select + deep + note;
+}
 
 function sceneReportAiClaimKey() {
   const id = typeof editingPendingClaimId !== 'undefined' && editingPendingClaimId ? editingPendingClaimId : '';
@@ -47,6 +80,7 @@ function sceneReportAiHtml() {
   const add = '<label class="sr-ai-add' + (full || locked ? ' is-disabled' : '') + '">' + sceneReportIcon('plus') + '<span>' + (st.photos.length ? 'Thêm ảnh' : 'Chọn ảnh hiện trường') + '</span>'
     + '<small>' + (st.photos.length ? st.photos.length + '/' + SA.MAX_PHOTOS : 'hoặc kéo thả vào đây · tối đa ' + SA.MAX_PHOTOS) + '</small>'
     + '<input type="file" data-sr-ai-file accept="image/*" multiple hidden' + (full || locked ? ' disabled' : '') + '></label>';
+  const modelUi = sceneReportAiModelHtml(locked);
   const action = st.busy
     ? '<button type="button" class="sr-btn sr-btn--compact" data-sr-ai-stop><span>Dừng</span></button><span class="sr-ai-busy"><i aria-hidden="true"></i>AI đang đọc ' + st.photos.length + ' ảnh…</span>'
     : '<button type="button" class="sr-btn sr-btn--primary sr-btn--compact" data-sr-ai-run' + (!st.photos.length || st.preparing ? ' disabled' : '') + '><span class="sr-btn-icon">' + sceneReportIcon('sparkles') + '</span><span>' + (st.result ? 'Phân tích lại' : 'Phân tích ảnh') + '</span></button>'
@@ -55,6 +89,7 @@ function sceneReportAiHtml() {
     + '<p>Gửi ảnh để AI nháp mục <b>[9] mô tả hiện trường</b>, <b>[10] dấu vết</b> và <b>[11] mẫu vật</b>. Bấm nhãn trên ảnh để chọn loại: Hiện trường, Dấu vết hoặc Mẫu vật.</p></div></div>'
     + '<div class="sr-ai-photos">' + thumbs + add + '</div>'
     + '<textarea class="sr-input sr-area sr-ai-note" data-sr-ai-note rows="2" maxlength="' + SA.MAX_NOTE + '" placeholder="Ghi chú cho AI (tuỳ chọn): VD xe còn lại BKS 48H02661; ảnh 3 là mảnh cản nhặt gần xe…"' + (locked ? ' disabled' : '') + '>' + E(st.note) + '</textarea>'
+    + (modelUi ? '<div class="sr-ai-modelrow">' + modelUi + '</div>' : '')
     + '<div class="sr-ai-actions">' + action + '</div>'
     + (st.error ? '<p class="sr-ai-error" role="alert">' + E(st.error) + '</p>' : '')
     + (st.applied ? '<p class="sr-ai-ok">' + sceneReportIcon('check') + E(st.applied) + '</p>' : '')
@@ -101,23 +136,38 @@ function sceneReportAiContext() {
 async function sceneReportAiRun() {
   const st = sceneReportAi;
   if (st.busy || st.preparing || !st.photos.length) return;
-  if (typeof GeminiKeyStore === 'undefined') { st.error = 'Chưa tải được bộ AI. Hãy tải lại trang.'; sceneReportAiRepaint(); return; }
-  const apiKey = await GeminiKeyStore.get().catch(() => '');
-  if (!apiKey) { st.error = 'Chưa thiết lập khoá Gemini API. Mở Trợ lý AI → Thiết lập để nhập khoá rồi thử lại.'; sceneReportAiRepaint(); return; }
-  const claim = st.claim, controller = new AbortController(), timer = setTimeout(() => controller.abort(), 150000);
+  const chosen = sceneReportAiModelState();
+  let apiKey = '', active = null, model = 'gemini-2.5-flash', thinking = false;
+  if (chosen) {
+    active = chosen.M.resolve(chosen.cfg, chosen.id);
+    apiKey = await chosen.M.getKey(active.provider);
+    if (!apiKey) { st.error = chosen.M.noKeyMessage(active.provider, chosen.cfg); sceneReportAiRepaint(); return; }
+    thinking = sceneReportAiDeepOn(chosen);
+  } else {
+    if (typeof GeminiKeyStore === 'undefined') { st.error = 'Chưa tải được bộ AI. Hãy tải lại trang.'; sceneReportAiRepaint(); return; }
+    apiKey = await GeminiKeyStore.get().catch(() => '');
+    if (!apiKey) { st.error = 'Chưa thiết lập khoá Gemini API. Mở Trợ lý AI → Thiết lập để nhập khoá rồi thử lại.'; sceneReportAiRepaint(); return; }
+    try { model = localStorage.getItem('gemini_model_name') || model; } catch (_) { /* bỏ qua */ }
+  }
+  const limit = (chosen && chosen.M.timeoutMs(active.provider, thinking)) || (thinking ? 170000 : 150000);
+  const claim = st.claim, controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, limit);
   Object.assign(st, {busy: true, stopped: false, controller, error: '', applied: '', result: null});
   sceneReportAiRepaint();
-  let model = 'gemini-2.5-flash';
-  try { model = localStorage.getItem('gemini_model_name') || model; } catch (_) { /* bỏ qua */ }
   try {
-    const result = await SceneReportAI.analyze({photos: st.photos, context: sceneReportAiContext(), apiKey, model, signal: controller.signal});
+    const result = active
+      ? await SceneReportAI.analyzeVia({photos: st.photos, context: sceneReportAiContext(), active, apiKey, signal: controller.signal, thinking})
+      : await SceneReportAI.analyze({photos: st.photos, context: sceneReportAiContext(), apiKey, model, signal: controller.signal});
     if (st.claim !== claim) return;
     st.result = result; st.pick = {}; st.mode = {}; st.draft = {};
     SCENE_REPORT_AI_FIELDS.forEach(([key]) => { st.draft[key] = result[key]; st.pick[key] = !!result[key]; });
   } catch (error) {
     if (st.claim !== claim) return;
-    if (error?.name === 'AbortError') st.error = st.stopped ? '' : 'AI chưa trả kết quả sau 150 giây. Hãy gửi ít ảnh hơn hoặc thử lại.';
-    else st.error = error?.message || 'Không phân tích được ảnh.';
+    if (error?.name === 'AbortError') {
+      st.error = st.stopped && !timedOut ? '' : (active ? active.providerLabel : 'Gemini') + ' chưa trả kết quả sau ' + Math.round(limit / 1000) + ' giây. '
+        + (active && active.provider === 'antigravity' ? 'Hãy kiểm tra công cụ Antigravity trên máy, tắt Suy luận sâu hoặc gửi ít ảnh hơn rồi thử lại.' : 'Hãy gửi ít ảnh hơn hoặc thử lại.');
+    } else st.error = error?.message || 'Không phân tích được ảnh.';
   } finally {
     clearTimeout(timer);
     if (st.claim === claim) { st.busy = false; st.controller = null; sceneReportAiRepaint(); }
@@ -148,6 +198,8 @@ document.addEventListener('change', event => {
   const target = event.target;
   if (!target.closest?.('#sceneReportRoot [data-sr-ai]')) return;
   if (target.matches('[data-sr-ai-file]')) { const files = [...target.files]; target.value = ''; sceneReportAiAddFiles(files); return; }
+  if (target.matches('[data-sr-ai-model]')) { sceneReportAi.model = target.value; sceneReportAiLs.set(SCENE_REPORT_AI_MODEL_KEY, target.value); sceneReportAi.error = ''; sceneReportAiRepaint(); return; }
+  if (target.matches('[data-sr-ai-deep]')) { sceneReportAi.deep = target.checked; sceneReportAiLs.set(SCENE_REPORT_AI_DEEP_KEY, target.checked ? '1' : '0'); return; }
   if (target.matches('[data-sr-ai-pick]')) { sceneReportAi.pick[target.dataset.srAiPick] = target.checked; sceneReportAiRepaint(); return; }
   if (target.matches('[data-sr-ai-mode]')) sceneReportAi.mode[target.dataset.srAiMode] = target.value === 'replace' ? 'replace' : 'append';
 });
