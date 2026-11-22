@@ -6,7 +6,7 @@
 // Phụ thuộc: OfficialLetterCore, OfficialLetterDossier, OfficialLetterLegal, SharedFormsAI, OfficialLetterAI, DeepSeekKeyStore, JSZip.
 const OfficialLetterPage = (() => {
   const ISSUER_KEY = 'officialLetter.issuer.v1';
-  const MAX_FILES = 4, MAX_EDGE = 1600, MAX_PDF = 6 * 1024 * 1024, MAX_RESULTS = 30;
+  const MAX_FILES = 12, MAX_EDGE = 1600, MAX_PDF = 6 * 1024 * 1024, MAX_RESULTS = 30;
   const DEFAULT_TEMPLATE = 'tu_do';
   const Core = () => OfficialLetterCore;
   const Revisions = () => OfficialLetterRevisions;
@@ -126,15 +126,39 @@ const OfficialLetterPage = (() => {
     } finally { URL.revokeObjectURL(url); }
   }
   // which: 'files' (ô soạn đầu trang — AI đọc ở bước phân tích) hoặc 'refineFiles' (ô "Nhờ AI sửa" — AI đọc khi chỉnh bản hiện tại).
-  function addFiles(list, which) {
+  // slot (tuỳ chọn): khoá mục "Tài liệu cần có" của loại công văn đang chọn — AI biết tệp này là giấy tờ gì.
+  function addFiles(list, which, slot) {
     const bucket = which === 'refineFiles' ? 'refineFiles' : 'files';
     const picked = [...list].filter(file => /^image\//.test(file.type) || file.type === 'application/pdf' || /\.pdf$/i.test(file.name));
     if (!picked.length) return;
+    const doc = bucket === 'files' && slot ? docList().find(item => item.key === slot) : null;
     for (const file of picked) {
-      if (st[bucket].length >= MAX_FILES) { toast('Chỉ nhận tối đa ' + MAX_FILES + ' tệp.', 'info'); break; }
-      st[bucket].push({file, url: /^image\//.test(file.type) ? URL.createObjectURL(file) : ''});
+      if (st[bucket].length >= (bucket === 'files' ? MAX_FILES : 4)) { toast('Chỉ nhận tối đa ' + (bucket === 'files' ? MAX_FILES : 4) + ' tệp.', 'info'); break; }
+      if (doc && slotFiles(doc.key).length >= doc.max) { toast('Mục "' + doc.short + '" tối đa ' + doc.max + ' tệp.', 'info'); break; }
+      st[bucket].push({file, url: /^image\//.test(file.type) ? URL.createObjectURL(file) : '', slot: doc ? doc.key : ''});
     }
     updateFiles();
+  }
+  // ---- Tài liệu cần có theo loại công văn ----
+  const docList = () => Core().templateDocs(template());
+  const slotOf = item => (item.slot && docList().some(doc => doc.key === item.slot)) ? item.slot : '';   // đổi loại công văn → tệp của mục không còn thì thành tệp chung
+  const slotFiles = key => st.files.filter(item => slotOf(item) === key);
+  const docCounts = () => Object.fromEntries(docList().map(doc => [doc.key, slotFiles(doc.key).length]));
+  const docLabel = item => { const doc = docList().find(entry => entry.key === slotOf(item)); return doc ? doc.short : ''; };
+  function docsHtml() {
+    const docs = docList();
+    if (!docs.length) return '';
+    const status = Core().docsStatus(template(), docCounts());
+    const rows = status.docs.map(doc => {
+      const thumbs = st.files.map((item, i) => slotOf(item) === doc.key
+        ? '<span class="tasco-ai-attach" title="' + esc(item.file.name) + '">' + (item.url ? '<img alt="" src="' + esc(item.url) + '">' : '<em>PDF</em>') + '<button type="button" data-ol-remove-file="' + i + '" aria-label="Bỏ tệp ' + esc(item.file.name) + '">×</button></span>' : '').join('');
+      return '<div class="ola-doc-slot' + (doc.count ? ' is-done' : doc.required ? ' is-missing' : '') + '">'
+        + '<span class="ola-doc-state" aria-hidden="true">' + (doc.count ? '✓' : '') + '</span>'
+        + '<div class="ola-doc-main"><b>' + esc(doc.label) + '</b><em>' + (doc.required ? 'Bắt buộc' : 'Nếu có') + '</em><small>' + esc(doc.hint) + '</small>' + (thumbs ? '<div class="tasco-ai-attachments ola-doc-files">' + thumbs + '</div>' : '') + '</div>'
+        + '<label class="ola-doc-add' + (st.busy || doc.count >= doc.max ? ' is-disabled' : '') + '" title="Thêm ảnh/PDF cho mục này"><input type="file" data-ol-slot="' + esc(doc.key) + '" accept="image/*,application/pdf" multiple hidden' + (st.busy || doc.count >= doc.max ? ' disabled' : '') + '>' + svg(ICON.attach) + (doc.count ? 'Thêm' : 'Đính kèm') + '</label></div>';
+    }).join('');
+    const summary = status.totalRequired ? status.haveRequired + '/' + status.totalRequired + ' tài liệu bắt buộc' : 'Tuỳ chọn';
+    return '<div class="ola-docs-head"><b>Tài liệu để AI lấy thông tin</b><span class="' + (status.missingRequired.length ? 'is-warn' : 'is-ok') + '">' + summary + '</span></div>' + rows;
   }
   const releaseFiles = list => list.forEach(item => { if (item.url) { try { URL.revokeObjectURL(item.url); } catch (_) { /* bỏ qua */ } } });
 
@@ -325,7 +349,9 @@ const OfficialLetterPage = (() => {
     const key = st.recordKey + '|' + templateId();
     if (key !== st.analyzedKey) resetAnalysis();
     st.analyzedKey = key;
-    notice(missingRecord ? 'Không tìm thấy hồ sơ khớp số trong yêu cầu trên máy này — AI chỉ dựa vào nội dung bạn gõ. Bấm nút Hồ sơ để chọn.' : '', 'warn');
+    const lackDocs = Core().docsStatus(template(), docCounts()).missingRequired.map(doc => doc.short);
+    notice([missingRecord ? 'Không tìm thấy hồ sơ khớp số trong yêu cầu trên máy này — AI chỉ dựa vào nội dung bạn gõ. Bấm nút Hồ sơ để chọn.' : '',
+      lackDocs.length ? 'Chưa đính kèm: ' + lackDocs.join(', ') + ' — chỗ cần các tài liệu này AI sẽ để "……". Bạn có thể đính kèm thêm rồi bấm soạn lại.' : ''].filter(Boolean).join(' '), 'warn');
     const found = chosenRecord();
     st.editing = false; st.pop = '';
     startAgent('draft', found ? recordLabel(found.info) : 'Đọc yêu cầu và tài liệu đính kèm');
@@ -337,7 +363,10 @@ const OfficialLetterPage = (() => {
       try {
         const current = startValues();
         const files = [];
-        for (const item of st.files) files.push(...await prepareFile(item.file));
+        for (const item of st.files) {
+          const label = docLabel(item), prepared = await prepareFile(item.file);
+          files.push(...(label ? prepared.map(att => ({...att, name: '[' + label + '] ' + att.name})) : prepared));   // tên tệp mang nhãn mục để AI biết đây là giấy tờ gì
+        }
         // Khi đã chọn văn bản: tra căn cứ TRƯỚC khi phân tích (BM25 cục bộ, miễn phí) để AI phân tích biết đã có nguyên văn quy tắc nên không hỏi/giả định "chưa có điều khoản".
         if (st.legalPin.length) {   // chỉ khi người dùng đã chọn văn bản: bước phân tích cần biết nguyên văn đó
           await loadLibDocs();
@@ -345,7 +374,7 @@ const OfficialLetterPage = (() => {
           if (my !== generation) return;
         }
         const raw = await callAI(Core().buildAnalyzeRequest(tpl, {
-          legal: legalPrompt(), legalPinned: pinnedLabel(),
+          legal: legalPrompt(), legalPinned: pinnedLabel(), docCounts: docCounts(),
           record: currentRecord() ? SharedFormsAI.describeRecord(currentRecord()) : {}, dossier: dossierText(), current, brief: st.brief, files,
           answered: answeredList(), mode: 'fast', extras: st.extras, outline: st.outlineEdited ? st.outline.filter(item => item.on).map(item => item.text) : undefined
         }));
@@ -671,7 +700,7 @@ const OfficialLetterPage = (() => {
     const H = History();
     if (!H) return;
     const item = st.history.find(entry => entry.id === id);
-    if (!window.confirm('Xoá "' + (item ? item.title : 'công văn này') + '" khỏi lịch sử?')) return;
+    if (!await askConfirm({eyebrow: 'LỊCH SỬ CÔNG VĂN', title: 'Xoá công văn khỏi lịch sử?', message: '"' + (item ? item.title : 'Công văn này') + '" sẽ bị xoá khỏi lịch sử và không khôi phục được.', confirmText: 'Xoá công văn'})) return;
     await H.remove(id);
     st.history = H.list();
     if (id === st.historyId) st.historyId = '';
@@ -726,7 +755,8 @@ const OfficialLetterPage = (() => {
     const rulesChip = '<button type="button" class="ola-chip' + (st.legalPin.length ? ' is-set' : '') + '" data-ol-pop="rules" title="Chọn văn bản/quy tắc làm căn cứ cho AI">' + svg(ICON.book) + '<span class="ola-chip-t">' + esc(ruleLabel) + '</span>' + svg(ICON.chevron) + '</button>';
     return '<div class="ola-composer' + (big ? ' is-big' : '') + '">'
       + '<textarea data-ol-brief rows="' + (big ? 3 : 2) + '" maxlength="3000" placeholder="Mô tả công văn cần soạn… (gõ số HSBT hoặc biển số để AI tự lấy hồ sơ)" aria-label="Yêu cầu soạn công văn">' + esc(st.brief) + '</textarea>'
-      + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (st.files.length ? '' : ' hidden') + '>' + filesHtml() + '</div>'
+      + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (filesHtml() ? '' : ' hidden') + '>' + filesHtml() + '</div>'
+      + '<div class="ola-docs" data-ol-docs' + (docList().length ? '' : ' hidden') + '>' + docsHtml() + '</div>'
       + '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm ảnh/PDF"><input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>' + svg(ICON.attach) + '</label>'
       + recordChip + typeChip + rulesChip + '<span class="ola-spacer"></span>'
       + '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div>'
@@ -734,14 +764,15 @@ const OfficialLetterPage = (() => {
   }
   function filesHtml(which) {
     const bucket = which === 'refineFiles' ? 'refineFiles' : 'files';
-    return st[bucket].map((item, i) => '<span class="tasco-ai-attach" title="' + esc(item.file.name) + '">' + (item.url ? '<img alt="" src="' + esc(item.url) + '">' : '<em>PDF</em>') + '<button type="button" data-ol-remove-file="' + i + '"' + (bucket === 'refineFiles' ? ' data-ol-bucket="refineFiles"' : '') + ' aria-label="Bỏ tệp ' + esc(item.file.name) + '">×</button></span>').join('');
+    return st[bucket].map((item, i) => (bucket === 'files' && slotOf(item)) ? '' : '<span class="tasco-ai-attach" title="' + esc(item.file.name) + '">' + (item.url ? '<img alt="" src="' + esc(item.url) + '">' : '<em>PDF</em>') + '<button type="button" data-ol-remove-file="' + i + '"' + (bucket === 'refineFiles' ? ' data-ol-bucket="refineFiles"' : '') + ' aria-label="Bỏ tệp ' + esc(item.file.name) + '">×</button></span>').join('');
   }
   function updateFiles() {
     if (!host) return;
     host.querySelectorAll('[data-ol-file-list]').forEach(box => {
       const bucket = box.dataset.olFileList === 'refine' ? 'refineFiles' : 'files';
-      box.innerHTML = filesHtml(bucket); box.hidden = !st[bucket].length;
+      const html = filesHtml(bucket); box.innerHTML = html; box.hidden = !html;
     });
+    host.querySelectorAll('[data-ol-docs]').forEach(box => { box.innerHTML = docsHtml(); box.hidden = !docList().length; });
   }
 
   function heroHtml() {
@@ -1061,7 +1092,12 @@ const OfficialLetterPage = (() => {
     releaseFiles(st.files); releaseFiles(st.refineFiles);
     Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, versionId:'', usage: null, questionDrafts: Object.create(null)});
   }
-  const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Bỏ công văn đang soạn để bắt đầu công văn mới?');
+  // Hộp xác nhận dùng chung của app (showPremiumConfirmModal) — không dùng hộp thoại hệ thống của trình duyệt.
+  function askConfirm(options) {
+    if (typeof showPremiumConfirmModal === 'function') return showPremiumConfirmModal(options);
+    return Promise.resolve(window.confirm(options.title + '\n' + (options.message || '')));
+  }
+  const confirmDiscard = () => (st.values || st.letter) ? askConfirm({eyebrow: 'CÔNG VĂN AI', title: 'Bỏ bản đang soạn?', message: 'Nội dung đang nhập sẽ bị bỏ để bắt đầu công văn mới.', confirmText: 'Bỏ và soạn mới'}) : Promise.resolve(true);
 
   // ---- Sự kiện ----
   function closePop() { if (!st.pop) return; collectAll(); st.pop = ''; st.recQuery = ''; renderAll(); }
@@ -1140,7 +1176,7 @@ const OfficialLetterPage = (() => {
       case 'settings': openSettings(); break;
       case 'legal-search': searchMoreLegal(); break;
       case 'open-library': TascoLibrary.open(); break;
-      case 'new': if (st.letter) { clearTimeout(saveTimer); if (st.historyId) saveHistory(); reset(); renderAll(); $('[data-ol-brief]')?.focus(); } else if (confirmDiscard()) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } break;
+      case 'new': if (st.letter) { clearTimeout(saveTimer); if (st.historyId) saveHistory(); reset(); renderAll(); $('[data-ol-brief]')?.focus(); } else confirmDiscard().then(ok => { if (ok) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } }); break;
       case 'hist-toggle': st.histOpen = !st.histOpen; try { localStorage.setItem(HIST_PANEL_KEY, st.histOpen ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); break;
       case 'add-extra': collectAll(); st.extras.push({label: '', value: ''}); renderAll(); host.querySelector('[data-ol-extra-row]:last-of-type [data-ol-extra-label]')?.focus(); break;
       case 'remove-extra': { collectAll(); const rows = [...host.querySelectorAll('[data-ol-extra-row]')]; st.extras.splice(rows.indexOf(act.closest('[data-ol-extra-row]')), 1); renderAll(); break; }
@@ -1163,6 +1199,7 @@ const OfficialLetterPage = (() => {
     const target = event.target;
     if (target.matches('[data-ol-change]') && st.pending) { const change = st.pending.changes[Number(target.dataset.olChange)]; if (change) change.on = target.checked; return; }
     if (target.matches('[data-ol-legal-doc]')) { pickLegalDoc(target.value); return; }
+    if (target.matches('[data-ol-slot]')) { addFiles(target.files, 'files', target.dataset.olSlot); target.value = ''; return; }
     if (target.matches('[data-ol-files]')) { addFiles(target.files, target.dataset.olFiles === 'refine' ? 'refineFiles' : 'files'); target.value = ''; }
     else if (target.matches('[data-ol-outline-on]')) st.outlineEdited = true;
     else if (target.matches('[data-ol-src-on]')) { const source = st.sources[Number(target.dataset.olSrcOn)]; if (source) { source.on = target.checked; target.closest('.ol-src').classList.toggle('is-off', !target.checked); } }

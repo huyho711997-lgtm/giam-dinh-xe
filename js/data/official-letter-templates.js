@@ -9,7 +9,16 @@
 //   closing[]                       : đoạn kết cố định, ghép sau phần AI viết; {key} được thay bằng giá trị trường (trống → "……")
 //   sample[]  (tuỳ chọn)            : công văn thật đã ban hành, ĐÃ ẨN thông tin cá nhân — đưa cho AI học cấu trúc/giọng văn (không chép dữ kiện)
 //   numberKey (tuỳ chọn)            : khoá trường dùng làm "Số:" của công văn (VD số hồ sơ bồi thường)
+//   docs[]    (tuỳ chọn)            : TÀI LIỆU CẦN CÓ để AI đọc lấy thông tin (ảnh/PDF người dùng đính kèm theo từng mục).
+//                                     key | label | short (nhãn gắn vào tên tệp) | required | hint (hướng dẫn chụp/đính kèm) | read (AI cần đọc gì) | fills[] (khoá trường sẽ điền) | max (số tệp tối đa, mặc định 3)
 // Đây là các MẪU KHỞI ĐẦU theo nghiệp vụ giám định/bồi thường; thay bằng mẫu công văn thật của đơn vị khi có.
+const OL_DOC = {
+  gcnBh: {key: 'gcn_bh', label: 'Giấy chứng nhận bảo hiểm', short: 'GCN bảo hiểm', hint: 'Ảnh/PDF GCN bảo hiểm (trang có số GCN và thời hạn)', read: 'số GCN/hợp đồng bảo hiểm, thời hạn bảo hiểm (từ giờ ngày nào đến giờ ngày nào), chủ xe/người được bảo hiểm, biển số, số khung, số máy', fills: ['certificate', 'policyPeriod', 'insured']},
+  dangKy: {key: 'dang_ky', label: 'Giấy đăng ký xe', short: 'Đăng ký xe', hint: 'Ảnh mặt trước giấy đăng ký xe (cà vẹt)', read: 'tên chủ xe, địa chỉ, biển số, nhãn hiệu, số loại, số khung, số máy, ngày đăng ký', fills: ['insured', 'plate']},
+  bbGiamDinh: {key: 'bb_giam_dinh', label: 'Biên bản giám định / xác định thiệt hại', short: 'Biên bản giám định', hint: 'Ảnh/PDF biên bản có chữ ký của khách hàng', read: 'số hồ sơ, ngày giám định, địa điểm, nguyên nhân tổn thất, danh mục hạng mục hư hỏng, ý kiến của khách hàng, tên giám định viên', fills: ['claimNo', 'lossDate']},
+  anhTonThat: {key: 'anh_ton_that', label: 'Ảnh tổn thất của xe', short: 'Ảnh tổn thất', hint: 'Ảnh tổng thể và cận cảnh các hạng mục hư hỏng', read: 'vị trí và mức độ hư hỏng nhìn thấy, biển số trong ảnh; chỉ mô tả điều thấy rõ', fills: [], max: 4},
+  thongBaoTn: {key: 'thong_bao_tn', label: 'Thông báo / yêu cầu bồi thường của khách hàng', short: 'Thông báo tổn thất', hint: 'Ảnh/PDF giấy thông báo tổn thất, giấy yêu cầu bồi thường hoặc tin nhắn của khách', read: 'ngày thông báo, thời điểm và địa điểm xảy ra, diễn biến (chép đúng lời khách), người điều khiển xe, yêu cầu của khách', fills: ['lossDate', 'noticeDate', 'lossTime', 'lossDescription']}
+};
 const OFFICIAL_LETTER_TEMPLATES = [
   {
     id: 'de_nghi_cung_cap_ho_so', name: 'Đề nghị cơ quan chức năng cung cấp hồ sơ vụ tai nạn', group: 'Gửi cơ quan chức năng', starter: true,
@@ -17,6 +26,11 @@ const OFFICIAL_LETTER_TEMPLATES = [
     audience: 'Công an / Cảnh sát giao thông nơi xảy ra tai nạn',
     purpose: 'Công văn của Bảo hiểm Tasco đề nghị cơ quan chức năng hỗ trợ cung cấp hồ sơ, tài liệu liên quan vụ tai nạn giao thông để xác định nguyên nhân, lỗi của các bên và giải quyết bồi thường đúng quy định. '
       + 'Giọng văn trang trọng, lịch sự, nêu rõ căn cứ (phương tiện được bảo hiểm, giấy chứng nhận bảo hiểm) và danh mục tài liệu đề nghị cung cấp. Chỉ viện dẫn điều luật có trong căn cứ từ thư viện; không có thì không nêu điều luật cụ thể.',
+    docs: [
+      {...OL_DOC.thongBaoTn, required: true, hint: 'Thông báo tai nạn / giấy tờ về vụ việc — để lấy ngày, địa điểm, các bên liên quan', fills: ['lossDate', 'location', 'parties']},
+      {...OL_DOC.dangKy, fills: ['insured', 'plate']},
+      OL_DOC.gcnBh
+    ],
     fields: [
       { key: 'recipient', label: 'Kính gửi', type: 'textarea', required: true, hint: 'Mỗi cơ quan một dòng', max: 400 },
       { key: 'plate', label: 'Biển số xe', type: 'text', required: true, record: ['bienSo'], max: 60 },
@@ -43,6 +57,11 @@ const OFFICIAL_LETTER_TEMPLATES = [
     audience: 'Khách hàng / chủ xe',
     purpose: 'Công văn thông báo cho khách hàng về hồ sơ bồi thường đã tiếp nhận và đề nghị bổ sung các giấy tờ còn thiếu trong thời hạn nêu rõ để Bảo hiểm Tasco có cơ sở giải quyết. '
       + 'Giọng văn lịch sự, rõ ràng, dễ hiểu; liệt kê từng giấy tờ cần bổ sung; không kết luận về trách nhiệm bồi thường và không nêu số tiền.',
+    docs: [
+      {key: 'ho_so_da_nop', label: 'Hồ sơ khách đã nộp', short: 'Hồ sơ đã nộp', required: true, hint: 'Ảnh/PDF các giấy tờ khách đã nộp (có thể nhiều tệp)', read: 'liệt kê từng giấy tờ đã có và đọc được; đối chiếu bộ hồ sơ yêu cầu bồi thường xe cơ giới (GCN bảo hiểm, giấy đăng ký xe, GPLX, GCN kiểm định, thông báo/biên bản tai nạn, hoá đơn sửa chữa, giấy tờ chủ xe…) để chỉ ra giấy nào còn THIẾU hoặc mờ/không hợp lệ', fills: ['missingDocs'], max: 4},
+      {...OL_DOC.thongBaoTn, fills: ['lossDate', 'claimNo']},
+      OL_DOC.bbGiamDinh
+    ],
     fields: [
       { key: 'recipient', label: 'Kính gửi (khách hàng)', type: 'text', required: true, record: ['khachHang', 'chuXe', 'tenChuXe'], max: 200 },
       { key: 'claimNo', label: 'Số hồ sơ bồi thường', type: 'text', record: ['soHoSoBoiThuong', 'soHSBT', 'soHoSo'], max: 100 },
@@ -67,6 +86,11 @@ const OFFICIAL_LETTER_TEMPLATES = [
     audience: 'Gara / xưởng dịch vụ sửa chữa',
     purpose: 'Công văn đề nghị gara/đơn vị sửa chữa cung cấp báo giá chi tiết, hình ảnh trước – trong – sau sửa chữa, hóa đơn chứng từ và các hồ sơ liên quan đến xe đang giải quyết bồi thường. '
       + 'Giọng văn trao đổi nghiệp vụ, rõ ràng, đề nghị cụ thể; không cam kết mức bồi thường.',
+    docs: [
+      {...OL_DOC.bbGiamDinh, required: true, fills: ['claimNo', 'lossDate', 'plate', 'requestDocs']},
+      OL_DOC.anhTonThat,
+      {key: 'bao_gia', label: 'Báo giá / hồ sơ sửa chữa gara đã gửi', short: 'Báo giá gara', hint: 'Nếu gara đã gửi báo giá hoặc dự toán', read: 'số báo giá, ngày, hạng mục sửa chữa/thay thế, đơn giá, tổng tiền; hạng mục nào còn thiếu hoặc chưa rõ', fills: ['requestDocs']}
+    ],
     fields: [
       { key: 'recipient', label: 'Kính gửi (gara)', type: 'text', required: true, record: ['garaSuaChua', 'tenGara', 'gara'], max: 200 },
       { key: 'plate', label: 'Biển số xe', type: 'text', required: true, record: ['bienSo'], max: 60 },
@@ -91,6 +115,12 @@ const OFFICIAL_LETTER_TEMPLATES = [
     audience: 'Khách hàng / chủ xe',
     purpose: 'Công văn thông báo cho khách hàng kết quả giám định và hướng giải quyết hồ sơ bồi thường. Chỉ trình bày đúng nội dung kết quả do người dùng cung cấp; TUYỆT ĐỐI không tự đặt số tiền, tỷ lệ hay kết luận trách nhiệm; điều khoản chỉ dẫn từ căn cứ thư viện được cung cấp. '
       + 'Giọng văn lịch sự, rõ ràng, đồng cảm với khách hàng.',
+    docs: [
+      {...OL_DOC.bbGiamDinh, required: true, fills: ['claimNo', 'lossDate', 'plate', 'result']},
+      {key: 'bang_tinh', label: 'Bảng tính / đề xuất bồi thường', short: 'Bảng tính bồi thường', required: true, hint: 'Ảnh/PDF bảng tính hoặc phiếu duyệt bồi thường', read: 'tổng thiệt hại, mức khấu trừ, các khoản giảm trừ (lý do, tỷ lệ), số tiền bồi thường được duyệt, số hồ sơ', fills: ['result']},
+      OL_DOC.gcnBh,
+      OL_DOC.anhTonThat
+    ],
     fields: [
       { key: 'recipient', label: 'Kính gửi (khách hàng)', type: 'text', required: true, record: ['khachHang', 'chuXe', 'tenChuXe'], max: 200 },
       { key: 'claimNo', label: 'Số hồ sơ bồi thường', type: 'text', required: true, record: ['soHoSoBoiThuong', 'soHSBT', 'soHoSo'], max: 100 },
@@ -113,6 +143,11 @@ const OFFICIAL_LETTER_TEMPLATES = [
     summary: 'Trả lời hoặc giải trình theo công văn, yêu cầu của cơ quan / đơn vị khác.',
     audience: 'Cơ quan / đơn vị đã gửi văn bản',
     purpose: 'Công văn phúc đáp, giải trình theo văn bản của cơ quan/đơn vị nhận. Trả lời từng ý được yêu cầu, bám đúng căn cứ do người dùng cung cấp, không bịa số liệu, ngày tháng; điều luật chỉ dẫn từ căn cứ thư viện được cung cấp. Giọng văn trang trọng, khách quan.',
+    docs: [
+      {key: 'van_ban_hoi', label: 'Văn bản cần trả lời', short: 'Văn bản cần trả lời', required: true, hint: 'Ảnh/PDF văn bản khiếu nại, yêu cầu hoặc câu hỏi cần giải trình', read: 'cơ quan/người gửi, số và ngày văn bản, từng nội dung hỏi/khiếu nại/yêu cầu (đánh số theo thứ tự trong văn bản), thời hạn trả lời nếu có', fills: ['refDocument', 'points', 'recipient'], max: 4},
+      OL_DOC.bbGiamDinh,
+      OL_DOC.gcnBh
+    ],
     fields: [
       { key: 'recipient', label: 'Kính gửi', type: 'textarea', required: true, hint: 'Mỗi nơi một dòng', max: 400 },
       { key: 'refDocument', label: 'Văn bản được trả lời', type: 'text', required: true, hint: 'VD: Công văn số 123/… ngày … của …', max: 300 },
@@ -141,6 +176,13 @@ const OFFICIAL_LETTER_TEMPLATES = [
       + 'Phần trích điều khoản loại trừ chỉ dùng nguyên văn do trường "Nguyên văn điều khoản loại trừ" hoặc CĂN CỨ TỪ THƯ VIỆN cung cấp; không có thì viết chung "theo quy định của Quy tắc bảo hiểm" và ghi vào warnings. '
       + 'Hãy bám cấu trúc của CÔNG VĂN MẪU THAM KHẢO nhưng chỉ dùng dữ kiện của vụ việc này.',
     numberKey: 'claimNo',
+    docs: [
+      {key: 'dang_kiem', label: 'Giấy chứng nhận kiểm định (đăng kiểm)', short: 'Đăng kiểm', required: true, hint: 'Ảnh/PDF GCN kiểm định an toàn kỹ thuật & bảo vệ môi trường — trang có thông số lốp', read: 'số GCN kiểm định (VD VA-1769601), số tem, ngày cấp và hiệu lực, biển số, số khung, số máy, nhãn hiệu/số loại, THÔNG SỐ LỐP tiêu chuẩn (chép đúng từng ký tự, VD 255/65R18), đơn vị kiểm định', fills: ['inspectionNo', 'standardTyre']},
+      {key: 'anh_lop', label: 'Ảnh thông số lốp xe lúc giám định', short: 'Ảnh lốp giám định', required: true, hint: 'Chụp cận hông lốp đang lắp, thấy rõ chữ (VD 275/65R18); mỗi lốp lệch một ảnh', read: 'dãy thông số in trên hông lốp (bề rộng/tỷ lệ/đường kính, chỉ số tải, tốc độ), nhãn hiệu lốp, DOT/tuần sản xuất nếu thấy, vị trí lốp (trước/sau, trái/phải) nếu có trong ảnh, biển số xe trong ảnh', fills: ['fittedTyre', 'evidence'], max: 4},
+      {key: 'tem_cua', label: 'Ảnh tem thông số dán trên cánh cửa', short: 'Tem trên cửa', required: true, hint: 'Tem thông số dán khung/cánh cửa người lái (kích thước lốp, áp suất)', read: 'kích thước lốp tiêu chuẩn của nhà sản xuất (cả lốp trước và sau), áp suất lốp khuyến cáo, tải trọng, ngày/tháng sản xuất của xe, nhãn hiệu', fills: ['standardTyre', 'evidence']},
+      {...OL_DOC.gcnBh, fills: ['certificate', 'policyPeriod']},
+      {...OL_DOC.thongBaoTn, fills: ['noticeDate', 'lossTime', 'lossDescription', 'driver']}
+    ],
     fields: [
       { key: 'recipient', label: 'Kính gửi (khách hàng)', type: 'text', required: true, record: ['khachHang', 'chuXe', 'tenChuXe'], hint: 'VD: Ông NGUYỄN VĂN A – Chủ xe ô tô mang BKS 47A-123.45', max: 250 },
       { key: 'claimNo', label: 'Số hồ sơ bồi thường (làm số công văn)', type: 'text', required: true, record: ['soHoSoBoiThuong', 'soHSBT', 'soHoSo'], hint: 'VD: HSBT/XCG/2026/0105661', max: 100 },
