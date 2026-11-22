@@ -49,7 +49,7 @@ export function createBridge({email, upstreamKey, fetchImpl = fetch, verifyToken
       for await (const chunk of req) { size += chunk.length; if (size > 12 * 1024 * 1024) { res.writeHead(413).end(); return; } chunks.push(chunk); }
       const body = Buffer.concat(chunks);
       const parsed = JSON.parse(body.toString('utf8'));
-      if (parsed.model !== 'gemini-3-flash' || parsed.stream !== false) { res.writeHead(400).end(); return; }
+      if (!['gemini-3-flash', 'gemini-3.8-flash-tiered'].includes(parsed.model) || parsed.stream !== false) { res.writeHead(400).end(); return; }
       const upstream = await fetchImpl('http://127.0.0.1:18317/v1/chat/completions', {method: 'POST', headers: {'Content-Type':'application/json', Authorization: 'Bearer ' + upstreamKey}, body, signal: AbortSignal.timeout(180000)});
       res.writeHead(upstream.status, {'Content-Type':'application/json', 'Cache-Control':'no-store'});
       res.end(Buffer.from(await upstream.arrayBuffer()));

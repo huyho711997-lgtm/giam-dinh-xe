@@ -22,6 +22,9 @@ test('cầu nối chỉ nhận đúng website, tài khoản và mô hình, khôn
   assert.equal((await ok.json()).choices[0].message.content,'OK');
   assert.equal(forwarded.options.headers.Authorization,'Bearer private-key');
   assert.notEqual(ok.headers.get('authorization'),'Bearer private-key');
+  const upgraded = await fetch(url,{method:'POST',headers,body:JSON.stringify({model:'gemini-3.8-flash-tiered',stream:false,messages:[]})});
+  assert.equal(upgraded.status,200);
+  assert.equal(JSON.parse(forwarded.options.body).model,'gemini-3.8-flash-tiered');
 });
 
 test('từ chối JWT không hợp lệ trước khi truy vấn chứng chỉ', async () => {

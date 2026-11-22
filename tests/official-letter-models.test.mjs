@@ -57,6 +57,9 @@ test('Antigravity được chọn và lưu lại, địa chỉ chỉ trỏ về 
   assert.equal(item.provider,'antigravity');
   assert.equal(item.endpoint,'http://127.0.0.1:18318/v1/chat/completions');
   assert.equal(item.model,'gemini-3-flash');
+  const upgraded = M.resolve(M.normalize({selected:'antigravity:gemini-3.8-flash-tiered'}));
+  assert.equal(upgraded.model,'gemini-3.8-flash-tiered');
+  assert.equal(upgraded.provider,'antigravity');
   assert.equal(M.normalize(cfg).selected,item.id);
 });
 

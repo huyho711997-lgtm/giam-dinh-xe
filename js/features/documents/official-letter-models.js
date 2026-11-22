@@ -6,7 +6,7 @@ const OfficialLetterModels = (() => {
   const KEY = 'officialLetter.aiConfig.v1';
   const ORDER = ['deepseek', 'gemini', 'groq', 'custom'];
   const PROVIDERS = {
-    antigravity: {id: 'antigravity', label: 'Antigravity trên máy này', base: 'http://127.0.0.1:18318/v1', models: ['gemini-3-flash'], keyUrl: '', free: false},
+    antigravity: {id: 'antigravity', label: 'Antigravity trên máy này', base: 'http://127.0.0.1:18318/v1', models: ['gemini-3.8-flash-tiered', 'gemini-3-flash'], keyUrl: '', free: false},
     deepseek: {id: 'deepseek', label: 'DeepSeek', base: 'https://api.deepseek.com', models: ['deepseek-flash'], keyUrl: 'https://platform.deepseek.com/api_keys', keyHint: 'sk-••••••••••••••••', free: false,
       note: 'Trả phí theo token (rẻ). Có chế độ suy luận sâu, đọc tốt tiếng Việt.'},
     gemini: {id: 'gemini', label: 'Google Gemini', base: 'https://generativelanguage.googleapis.com/v1beta/openai', models: ['gemini-3.8-flash'], keyUrl: 'https://aistudio.google.com/apikey', keyHint: 'AIza••••••••••••', free: true,
@@ -63,7 +63,7 @@ const OfficialLetterModels = (() => {
   function entries(cfg) {
     const out = [];
     for (const id of ORDER) for (const model of cfg.providers[id].models) out.push({id: id + ':' + model, provider: id, model, label: providerLabel(id, cfg) + ' · ' + shortModel(model)});
-    out.push({id: 'antigravity:gemini-3-flash', provider: 'antigravity', model: 'gemini-3-flash', label: 'Antigravity trên máy này · gemini-3-flash'});
+    for (const model of PROVIDERS.antigravity.models) out.push({id: 'antigravity:' + model, provider: 'antigravity', model, label: 'Antigravity trên máy này · ' + model});
     return out;
   }
   function baseOf(id, cfg) { return id === 'custom' ? cfg.providers.custom.base : PROVIDERS[id].base; }
