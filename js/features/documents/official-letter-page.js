@@ -1,6 +1,6 @@
 // Trang "Công văn AI" — kiểu AI agent dạng trang (không phải khung chat, không phải phiếu điền):
 //   mở đầu: một ô yêu cầu lớn ở giữa trang, trong ô có nút Đính kèm · Hồ sơ · Loại công văn + gợi ý mẫu;
-//   sau khi gửi: tóm tắt yêu cầu, 3 bước AI (đọc hồ sơ → căn cứ → soạn), tờ công văn lớn sửa trực tiếp,
+//   sau khi gửi: tóm tắt yêu cầu, tờ công văn lớn sửa trực tiếp, tiến trình AI trong ô chỉnh sửa ghim ở đáy,
 //   cột ghi chú hẹp (giả định, chọn nhanh, chỗ cần kiểm tra), ô chỉnh sửa cuối trang; chi tiết nằm trong ngăn trượt.
 // Gõ số HSBT/biển số trong yêu cầu là tự nhận hồ sơ. Một lần gửi = đọc (DeepSeek) → tìm căn cứ trong Thư viện (nếu cần) → soạn (DeepSeek).
 // Phụ thuộc: OfficialLetterCore, OfficialLetterDossier, OfficialLetterLegal, SharedFormsAI, OfficialLetterAI, DeepSeekKeyStore, JSZip.
@@ -38,7 +38,7 @@ const OfficialLetterPage = (() => {
     values: null, filledByAI: [], questions: [], extras: [], outline: [], outlineEdited: false, understanding: '', notes: '',
     insights: [], keyFacts: [], legalQueries: [], assumptions: [], sources: [], legalError: '', legalLoaded: false,
     letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
-    pop: '', drawer: '', editing: false, steps: null,
+    pop: '', drawer: '', editing: false, steps: null, agentOpen: false, agentTask: 'draft',
     historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser',
     versions: [], selection: [], pending: null, versionId: ''
   };
@@ -150,6 +150,7 @@ const OfficialLetterPage = (() => {
     controller?.abort();
     controller = new AbortController();
     const signal = controller.signal;
+    const taskStatus = st.status;
     // Một công văn gọi AI 2–3 lần: khi bị giới hạn lưu lượng/quá tải thì tự chờ rồi thử lại, có đếm ngược cho người dùng thấy.
     for (let attempt = 0; ; attempt++) {
       try { return await OfficialLetterAI.call(request, {apiKey, model, signal}); }
@@ -159,6 +160,7 @@ const OfficialLetterPage = (() => {
           setStatus('DeepSeek đang bận — tự thử lại sau ' + left + ' giây…');
           await new Promise((resolve, reject) => { const timer = setTimeout(resolve, 1000); signal.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('Đã huỷ', 'AbortError')); }, {once: true}); });
         }
+        setStatus(taskStatus);
       }
     }
   }
@@ -219,12 +221,15 @@ const OfficialLetterPage = (() => {
     collectAll();
     st.legalPin = id ? [id] : [];
     const my = generation;
+    startAgent('legal', 'Giữ dữ liệu hồ sơ hiện tại');
+    step('read', 'skip', 'Giữ dữ liệu hồ sơ hiện tại'); step('legal', 'run', 'Đang tìm trong thư viện');
     setBusy('Đang tìm căn cứ…');
     try {
       await findLegal(st.legalQueries);
       if (my !== generation) return;
+      step('legal', st.legalError ? 'err' : 'done', st.legalError || activeSources().length + ' đoạn căn cứ');
       if (!st.notice || st.notice.kind !== 'warn') toast(id ? 'Đã chọn căn cứ từ "' + pinNames() + '". Bấm "Soạn lại theo chi tiết này" để áp dụng.' : 'Đã bỏ chọn — căn cứ tự động theo vấn đề.', 'success');
-    } catch (error) { notice(error.message || 'Không tìm được căn cứ.', 'error'); }
+    } catch (error) { if (my !== generation || error.name === 'AbortError') return; step('legal', 'err', 'Chưa tìm được căn cứ'); notice(error.message || 'Không tìm được căn cứ.', 'error'); }
     finally { if (my === generation) { st.busy = ''; st.status = ''; renderAll(); } }
   }
   async function searchMoreLegal() {
@@ -234,16 +239,22 @@ const OfficialLetterPage = (() => {
     if (!query || st.busy || !L) { if (input) input.focus(); return; }
     collectAll();
     const my = generation;
+    startAgent('legal', 'Giữ dữ liệu hồ sơ hiện tại');
+    step('read', 'skip', 'Giữ dữ liệu hồ sơ hiện tại'); step('legal', 'run', 'Đang tìm trong thư viện');
     setBusy('Đang tìm căn cứ…');
     try {
       const result = await L.retrieve([query], {limit: 4, docIds: st.legalPin});
       if (my !== generation) return;
+      step('legal', result.error ? 'err' : 'done', result.error || result.sources.length + ' đoạn phù hợp');
       const known = new Set(st.sources.map(source => source.id));
       const added = result.sources.filter(source => !known.has(source.id)).map(source => ({...source, manual: true}));
       st.sources = L.renumber(st.sources.concat(added).slice(0, 12));
       st.legalLoaded = true; if (result.error) st.legalError = result.error;
       st.open.legal = true;
       toast(result.error || (added.length ? 'Đã thêm ' + added.length + ' đoạn căn cứ.' : 'Không tìm thấy đoạn mới cho "' + query + '".'), result.error ? 'warning' : added.length ? 'success' : 'info');
+    } catch (error) {
+      if (my !== generation || error.name === 'AbortError') return;
+      step('legal', 'err', 'Chưa tìm được căn cứ'); notice(error.message || 'Không tìm được căn cứ.', 'error');
     } finally { if (my === generation) { st.busy = ''; st.status = ''; renderAll(); } }
   }
   const legalPrompt = () => { const L = Legal(); return L ? L.promptBlock(activeSources()) : ''; };
@@ -255,9 +266,18 @@ const OfficialLetterPage = (() => {
 
   // ---- Luồng chính ----
   function setBusy(status) { st.busy = 'run'; st.status = status; renderAll(); }
+  function startAgent(task, text) {
+    st.agentTask = task; st.agentOpen = false;
+    if (st.notice?.kind === 'error') notice('');
+    st.steps = {read: {state:'run', text:text || 'Đang đọc yêu cầu'}, legal: {state:'idle', text:''}, write: {state:task === 'legal' ? 'skip' : 'idle', text:task === 'legal' ? 'Giữ nguyên bản thảo' : ''}};
+  }
   // Trạng thái 3 bước hiển thị kiểu agent: idle | run | done | skip | err, kèm mô tả ngắn.
   function step(name, state, text) { if (!st.steps) st.steps = {}; st.steps[name] = {state, text: text || ''}; updateSteps(); }
-  function setStatus(status) { st.status = status; const node = $('[data-ol-status]'); if (node) node.textContent = status; }
+  function setStatus(status) {
+    st.status = status;
+    host?.querySelectorAll('[data-ol-status]').forEach(node => { node.textContent = status; });
+    $('[data-ol-steps]')?.classList.toggle('is-waiting', !!st.busy && /tự thử lại/.test(status));
+  }
   // Đổi hồ sơ hoặc loại công văn → bỏ kết quả phân tích cũ (giữ bản thảo đang có cho tới khi soạn xong bản mới).
   function resetAnalysis() {
     st.values = null; st.filledByAI = []; st.questions = []; st.extras = []; st.outline = []; st.outlineEdited = false; st.understanding = ''; st.notes = '';
@@ -285,7 +305,7 @@ const OfficialLetterPage = (() => {
     notice(missingRecord ? 'Không tìm thấy hồ sơ khớp số trong yêu cầu trên máy này — AI chỉ dựa vào nội dung bạn gõ. Bấm nút Hồ sơ để chọn.' : '', 'warn');
     const found = chosenRecord();
     st.editing = false; st.pop = '';
-    st.steps = {read: {state: 'run', text: found ? recordLabel(found.info) : 'Không có hồ sơ'}, legal: {state: 'idle', text: ''}, write: {state: 'idle', text: ''}};
+    startAgent('draft', found ? recordLabel(found.info) : 'Đọc yêu cầu và tài liệu đính kèm');
     const my = generation, tpl = template();
     setBusy('Đang đọc hồ sơ và yêu cầu…');
     try {
@@ -340,7 +360,7 @@ const OfficialLetterPage = (() => {
       if (st.steps) for (const name of ['read', 'legal', 'write']) if (st.steps[name] && st.steps[name].state === 'run') st.steps[name] = {state: 'err', text: 'Lỗi'};
     } finally {
       if (my === generation) {
-        st.busy = ''; st.status = ''; renderAll();
+        st.busy = ''; st.status = ''; st.agentOpen = false; renderAll();
         if (st.pending) $('.ola-review')?.scrollIntoView({block:'nearest', behavior:'auto'});
       }
     }
@@ -367,9 +387,11 @@ const OfficialLetterPage = (() => {
     if (st.busy || st.pending) return;
     if (!st.values) { run(); return; }
     collectAll(); syncLetter();
+    notice('');
     const my = generation, before = st.letter ? Revisions().clone(st.letter) : null;
     const targets = instruction && st.selection.length ? st.selection.map(item => ({...item})) : [];
     checkpoint(instruction ? 'Trước khi AI chỉnh sửa' : 'Trước khi soạn lại');
+    startAgent(instruction ? 'refine' : 'draft', targets.length ? 'Đọc phần được chọn và yêu cầu chỉnh sửa' : 'Đọc yêu cầu và tài liệu đính kèm');
     setBusy(instruction ? 'Đang chỉnh theo yêu cầu…' : 'Đang soạn lại…');
     const sent = instruction ? st.refineFiles.slice() : [];
     try {
@@ -377,8 +399,13 @@ const OfficialLetterPage = (() => {
       const attachments = [];
       for (const item of sent) attachments.push(...await prepareFile(item.file));
       if (my !== generation) return;
+      step('read', 'done', targets.length ? targets.length + ' phần được chọn' : sent.length ? 'Đã đọc yêu cầu và ' + sent.length + ' tệp đính kèm' : 'Đã đọc yêu cầu, giữ dữ liệu hồ sơ');
+      step('legal', 'run', 'Đang kiểm tra căn cứ hiện tại');
       if (instruction) await refineLegal(instruction);
       if (my !== generation) return;
+      step('legal', st.legalError ? 'err' : activeSources().length ? 'done' : 'skip', st.legalError || (activeSources().length ? activeSources().length + ' đoạn căn cứ' : 'Không có căn cứ cần viện dẫn'));
+      setStatus(instruction ? 'Đang chỉnh công văn theo yêu cầu…' : 'Đang soạn lại công văn…');
+      step('write', 'run', targets.length ? 'Chỉ chỉnh phần được chọn' : 'Đang viết nội dung');
       let candidate;
       if (targets.length) {
         const base = Core().buildComposeRequest(template(), st.values, loadIssuer(), st.brief, '', {dossier:dossierText(), legal:legalPrompt(), files:attachments});
@@ -393,12 +420,14 @@ const OfficialLetterPage = (() => {
         st.pending = changes.length ? {before, changes, instruction:instruction || 'Soạn lại theo chi tiết', scoped:!!targets.length} : null;
         if (!changes.length) toast('AI giữ nguyên nội dung đã chọn.', 'info');
       } else { st.letter = candidate; checkpoint('Bản soạn của AI'); saveHistory(); }
+      step('write', 'done', st.pending ? st.pending.changes.length + ' thay đổi chờ duyệt' : 'Đã xử lý xong');
     } catch (error) {
       if (my !== generation || error.name === 'AbortError') return;
       notice(error.message || 'Không soạn được công văn.', 'error');
+      for (const name of STEP_NAMES) if (st.steps?.[name]?.state === 'run') st.steps[name] = {state:'err', text:'Chưa hoàn tất'};
     } finally {
       if (my === generation) {
-        st.busy = ''; st.status = ''; renderAll();
+        st.busy = ''; st.status = ''; st.agentOpen = false; renderAll();
         if (st.pending) $('.ola-review')?.scrollIntoView({block:'nearest', behavior:'auto'});
       }
     }
@@ -561,7 +590,7 @@ const OfficialLetterPage = (() => {
       fileNames: st.files.map(item => item.file.name), letter: st.letter, values: st.values, filledByAI: st.filledByAI, questions: st.questions, extras: st.extras,
       outline: st.outline, outlineEdited: st.outlineEdited, understanding: st.understanding, notes: st.notes, insights: st.insights, keyFacts: st.keyFacts,
       legalQueries: st.legalQueries, assumptions: st.assumptions, legalError: st.legalError, legalLoaded: st.legalLoaded, analyzedKey: st.analyzedKey,
-      sources: st.sources.slice(0, 12).map(source => ({...source, text: String(source.text || '').slice(0, 2000)})), steps: st.steps
+      sources: st.sources.slice(0, 12).map(source => ({...source, text: String(source.text || '').slice(0, 2000)})), steps: st.steps, agentTask: st.agentTask
     });
     st.versions = result.versions;
     return result;
@@ -576,7 +605,8 @@ const OfficialLetterPage = (() => {
       outline: list(data.outline), outlineEdited: !!data.outlineEdited, understanding: String(data.understanding || ''), notes: String(data.notes || ''),
       insights: list(data.insights), keyFacts: list(data.keyFacts), legalQueries: list(data.legalQueries), assumptions: list(data.assumptions),
       legalError: String(data.legalError || ''), legalLoaded: !!data.legalLoaded, analyzedKey: String(data.analyzedKey || ''), sources: list(data.sources),
-      steps: data.steps && typeof data.steps === 'object' ? data.steps : null
+      steps: data.steps && typeof data.steps === 'object' ? data.steps : null,
+      agentTask: ['draft', 'refine', 'legal'].includes(data.agentTask) ? data.agentTask : 'draft'
     });
     if (st.letter && data.letter && data.letter.warnings) st.letter.warnings = list(data.letter.warnings);
     st.versions = Revisions().restoreVersions(data.versions, Core().sanitizeLetter);
@@ -698,37 +728,47 @@ const OfficialLetterPage = (() => {
       + '<span class="ola-avatar" aria-hidden="true">' + svg(ICON.spark) + '</span><h1>Hôm nay cần soạn công văn gì?</h1>'
       + (st.notice ? noticeHtml() : '')
       + composerHtml(true)
+      + (st.steps ? '<div class="ola-task-result">' + stepsHtml() + '</div>' : '')
       + '<div class="ola-ideas">' + ideas.map(item => '<button type="button" class="tasco-ai-choice" data-ol-idea="' + esc(item.id) + '"><strong>' + esc(item.name) + '</strong><small>' + esc(item.group) + '</small></button>').join('') + '</div></section>';
   }
 
   // ---- Màn làm việc ----
-  // Thanh tiến độ: một đường thẳng, 3 nút bước nằm trên đường; phần đã xong tô màu, đoạn đang chạy có hiệu ứng.
+  // Tiến trình nằm trong khung nhập; chỉ chuyển bước khi tác vụ tương ứng đã trả kết quả.
   const STEP_NAMES = ['read', 'legal', 'write'];
   const STEP_LABEL = {read: 'Đọc hồ sơ & yêu cầu', legal: 'Căn cứ pháp lý', write: 'Soạn công văn'};
   function stepState() {
     const steps = st.steps || {read: {state: 'done', text: ''}, legal: {state: 'done', text: ''}, write: {state: 'done', text: ''}};
-    const list = STEP_NAMES.map(name => ({name, ...(steps[name] || {state: 'idle', text: ''})}));
-    const current = list.findIndex(item => item.state === 'run' || item.state === 'idle');
-    // Tỷ lệ đường đã tô: tới nút đang chạy (giữa các nút = 0%, 50%, 100%); xong hết = 100%.
-    const progress = current < 0 ? 100 : current * 50;
-    return {list, progress, running: list.some(item => item.state === 'run')};
+    const list = STEP_NAMES.map(name => {
+      const item = steps[name] || {};
+      return {name, state:['idle', 'run', 'done', 'skip', 'err'].includes(item.state) ? item.state : 'idle', text:String(item.text || '')};
+    });
+    const current = list.findIndex(item => item.state === 'run');
+    const running = !!st.busy;
+    const interrupted = !running && list.some(item => item.state === 'run');
+    const failed = !running && (st.notice?.kind === 'error' || list.some(item => item.state === 'err') && steps.write?.state !== 'done');
+    const warning = list.some(item => item.state === 'err');
+    const title = running ? st.status || 'Đang xử lý yêu cầu…' : failed ? 'Chưa hoàn tất yêu cầu' : interrupted ? 'Phiên xử lý trước đã dừng' : st.pending ? 'Đề xuất chỉnh sửa đã sẵn sàng' : st.agentTask === 'legal' ? 'Đã kiểm tra căn cứ' : warning ? 'Đã soạn xong · có lưu ý' : 'Công văn đã sẵn sàng';
+    const detail = running ? (current < 0 ? 'Đang hoàn tất tác vụ' : 'Bước ' + (current + 1) + '/3 · ' + (list[current].text || STEP_LABEL[list[current].name])) : failed ? 'Kiểm tra thông báo lỗi rồi gửi lại yêu cầu.' : interrupted ? 'Bạn có thể gửi lại yêu cầu để tiếp tục.' : st.pending ? st.pending.changes.length + ' thay đổi đang chờ bạn duyệt.' : st.agentTask === 'legal' ? 'Bản thảo được giữ nguyên.' : 'Bạn có thể bôi đen một đoạn hoặc gửi yêu cầu mới.';
+    return {list, running, failed, interrupted, title, detail};
   }
   function stepsInner(list) {
-    const mark = state => state === 'run' ? '<span class="olp-spinner"></span>' : state === 'done' ? '✓' : state === 'skip' ? '–' : state === 'err' ? '!' : '';
-    return list.map(item => '<li class="is-' + item.state + '"><span class="ola-step-mark">' + mark(item.state) + '</span><b>' + STEP_LABEL[item.name] + '</b>' + (item.text ? '<small>' + esc(item.text) + '</small>' : '') + '</li>').join('');
+    const stateText = {idle:'Chưa bắt đầu', run:st.busy ? 'Đang xử lý' : 'Đã dừng', done:'Hoàn tất', skip:'Bỏ qua', err:'Cần kiểm tra'};
+    const mark = state => state === 'run' && st.busy ? '<span class="olp-spinner"></span>' : state === 'done' ? '✓' : state === 'err' ? '!' : '·';
+    return list.map(item => '<li class="is-' + (item.state === 'run' && !st.busy ? 'idle' : item.state) + '"' + (item.state === 'run' && st.busy ? ' aria-current="step"' : '') + '><span class="ola-step-mark" aria-hidden="true">' + mark(item.state) + '</span><div><b>' + (item.name === 'write' && st.agentTask === 'refine' ? 'Chỉnh sửa công văn' : STEP_LABEL[item.name]) + '</b><small>' + esc(item.text || stateText[item.state] || '') + '</small></div><span class="ola-step-state">' + stateText[item.state] + '</span></li>').join('');
   }
   function stepsHtml() {
-    const {list, progress, running} = stepState();
-    return '<div class="ola-progress' + (running ? ' is-running' : '') + '" data-ol-steps style="--p:' + progress + '%" role="group" aria-label="Tiến độ soạn công văn"><div class="ola-track" aria-hidden="true"><span class="ola-fill"></span></div><ol>' + stepsInner(list) + '</ol></div>';
+    const {list, running, failed, interrupted, title, detail} = stepState();
+    return '<section class="ola-agent' + (running ? ' is-running' : failed ? ' is-error' : interrupted ? ' is-paused' : st.pending ? ' is-review' : ' is-ready') + (running && /tự thử lại/.test(st.status) ? ' is-waiting' : '') + '" data-ol-steps aria-label="Tiến trình trợ lý công văn">'
+      + '<div class="ola-agent-head"><span class="ola-agent-orb" aria-hidden="true"><span class="ola-agent-orbit"></span>' + (running || st.pending ? svg(ICON.spark) : failed || interrupted ? '<b>!</b>' : '<b>✓</b>') + '</span>'
+      + '<div class="ola-agent-copy"><div class="ola-agent-eyebrow">Trợ lý công văn<span class="ola-agent-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div><p role="status" aria-live="polite" aria-atomic="true"' + (running ? ' data-ol-status' : '') + '>' + esc(title) + '</p><small>' + esc(detail) + '</small></div>'
+      + '<button type="button" class="ola-agent-toggle" data-ol-act="agent-toggle" aria-label="' + (st.agentOpen ? 'Thu gọn tiến trình' : 'Xem tiến trình') + '" aria-expanded="' + !!st.agentOpen + '" aria-controls="ol-agent-details"><span>' + (st.agentOpen ? 'Thu gọn' : 'Tiến trình') + '</span>' + svg(ICON.chevron) + '</button></div>'
+      + '<div class="ola-agent-details" id="ol-agent-details"' + (st.agentOpen ? '' : ' hidden') + '><ol>' + stepsInner(list) + '</ol></div></section>';
   }
-  // Cập nhật tại chỗ để đường tiến độ chạy mượt (không dựng lại phần tử).
+  // Chỉ thay thẻ tiến trình; giữ ô nhập, bản thảo và vị trí cuộn khi chuyển bước.
   function updateSteps() {
     const node = $('[data-ol-steps]');
     if (!node) return;
-    const {list, progress, running} = stepState();
-    node.style.setProperty('--p', progress + '%');
-    node.classList.toggle('is-running', running);
-    node.querySelector('ol').innerHTML = stepsInner(list);
+    node.outerHTML = stepsHtml();
   }
   function noticeHtml() { return st.notice ? '<div class="olp-notice olp-notice--' + esc(st.notice.kind) + '" role="' + (st.notice.kind === 'error' ? 'alert' : 'status') + '">' + esc(st.notice.text) + '</div>' : ''; }
   function requestHtml() {
@@ -768,13 +808,12 @@ const OfficialLetterPage = (() => {
       + '<button type="button" class="ola-more" data-ol-drawer="fields">Xem chi tiết: thông tin, dàn ý, căn cứ, hồ sơ →</button></aside>';
   }
   function documentHtml() {
-    if (!st.letter) return '<div class="ola-doc is-pending"><div class="olp-skeleton" aria-hidden="true">' + '<i></i>'.repeat(10) + '</div><div class="olp-busy" role="status"><span class="olp-spinner"></span><span data-ol-status>' + esc(st.status || 'Đang soạn…') + '</span></div></div>';
+    if (!st.letter) return '<div class="ola-doc is-pending" aria-label="Bản thảo đang được chuẩn bị"><div class="olp-skeleton" aria-hidden="true">' + '<i></i>'.repeat(10) + '</div></div>';
     const locked = !!(st.busy || st.pending);
     const paper = Core().letterToHtml(st.letter, {logoUrl: logoUrl()});
     return '<div class="ola-doc' + (st.busy ? ' is-busy' : '') + '"><div class="ola-doc-bar"><label class="ol-datepick">Ngày <input type="date" data-ol-date value="' + esc(st.letter.date) + '"' + (locked ? ' disabled' : '') + '></label>'
       + '<button type="button" class="olp-tool" data-ol-drawer="versions"' + (locked ? ' disabled' : '') + '>' + svg(ICON.history) + 'Phiên bản (' + st.versions.length + ')</button>'
       + '<button type="button" class="olp-tool is-primary" data-ol-act="docx">' + svg(ICON.word) + 'Tải Word</button><button type="button" class="olp-tool" data-ol-act="print" title="In">' + svg(ICON.print) + '</button><button type="button" class="olp-tool" data-ol-act="copy" title="Sao chép nội dung">' + svg(ICON.copy) + '</button></div>'
-      + (st.busy ? '<div class="olp-busy" role="status"><span class="olp-spinner"></span><span data-ol-status>' + esc(st.status) + '</span></div>' : '')
       + '<div class="ol-paper-wrap">' + (locked ? paper.replace(/contenteditable="true"/g, 'contenteditable="false"') : paper) + '</div></div>';
   }
   function reviewHtml() {
@@ -786,15 +825,16 @@ const OfficialLetterPage = (() => {
   }
   const REFINES = ['Viết ngắn gọn hơn', 'Giọng trang trọng hơn', 'Thêm hạn phản hồi 07 ngày làm việc'];
   function refineHtml() {
-    if (!st.letter) return '';
-    if (st.pending) return '<div class="ola-refine ola-review-hint" role="status">Xem đề xuất ở phía trên và chọn Áp dụng thay đổi hoặc Bỏ đề xuất để tiếp tục.</div>';
-    return '<div class="ola-refine"><div class="ola-selection' + (st.selection.length ? ' is-scoped' : '') + '" data-ol-selection role="status">' + selectionScopeHtml() + '</div><div class="tasco-ai-attachments ola-files" data-ol-file-list="refine"' + (st.refineFiles.length ? '' : ' hidden') + '>' + filesHtml('refineFiles') + '</div><div class="tasco-ai-suggest">' + REFINES.map(text => '<button type="button" class="tasco-ai-suggest__chip" data-ol-refine="' + esc(text) + '"' + (st.busy ? ' disabled' : '') + '>' + esc(text) + '</button>').join('') + '</div>'
+    const agent = stepsHtml();
+    if (!st.letter) return '<div class="ola-refine is-processing">' + agent + '</div>';
+    if (st.pending) return '<div class="ola-refine">' + agent + '<div class="ola-review-hint"><span>Chọn những thay đổi bạn muốn áp dụng vào bản thảo.</span><button type="button" class="olp-tool" data-ol-act="review">Xem đề xuất</button></div></div>';
+    return '<div class="ola-refine' + (st.busy ? ' is-processing' : '') + '">' + agent + '<div class="ola-selection' + (st.selection.length ? ' is-scoped' : '') + '" data-ol-selection role="status">' + selectionScopeHtml() + '</div><div class="tasco-ai-attachments ola-files" data-ol-file-list="refine"' + (st.refineFiles.length ? '' : ' hidden') + '>' + filesHtml('refineFiles') + '</div><div class="tasco-ai-suggest">' + REFINES.map(text => '<button type="button" class="tasco-ai-suggest__chip" data-ol-refine="' + esc(text) + '"' + (st.busy ? ' disabled' : '') + '>' + esc(text) + '</button>').join('') + '</div>'
       + '<div class="tasco-ai-composer ola-refine-box"><label class="ola-icon-btn' + (st.busy ? ' is-disabled' : '') + '" title="Đính kèm ảnh/PDF để AI đọc khi sửa"><input type="file" data-ol-files="refine" accept="image/*,application/pdf" multiple hidden' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label><input class="tasco-ai-input" data-ol-refine-input maxlength="600" placeholder="Nhờ AI sửa: “gửi Phòng CSGT tỉnh”, “nêu thêm ngày tổn thất”… (có thể đính kèm tài liệu)" aria-label="Yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>'
       + '<button type="button" class="tasco-ai-send" data-ol-act="refine" aria-label="Gửi yêu cầu chỉnh sửa"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div></div>';
   }
   function workHtml() {
     // Vùng nội dung cuộn riêng; ô "Nhờ AI sửa" ghim cố định ở đáy, không trôi theo và không đè tờ công văn.
-    return '<div class="ola-work"><div class="ola-scroll" data-ol-scroll><div class="ola-scroll-inner">' + requestHtml() + stepsHtml() + noticeHtml()
+    return '<div class="ola-work"><div class="ola-scroll" data-ol-scroll><div class="ola-scroll-inner">' + requestHtml() + noticeHtml()
       + reviewHtml() + '<div class="ola-stage">' + documentHtml() + notesRail() + '</div></div></div>' + refineHtml() + '</div>';
   }
 
@@ -995,7 +1035,7 @@ const OfficialLetterPage = (() => {
     generation++; controller?.abort(); controller = null;
     resetAnalysis();
     releaseFiles(st.files); releaseFiles(st.refineFiles);
-    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, versionId:''});
+    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, versionId:''});
   }
   const confirmDiscard = () => !(st.values || st.letter) || window.confirm('Bỏ công văn đang soạn để bắt đầu công văn mới?');
 
@@ -1047,6 +1087,8 @@ const OfficialLetterPage = (() => {
     const act = target.closest('[data-ol-act]');
     if (!act) return;
     switch (act.dataset.olAct) {
+      case 'agent-toggle': st.agentOpen = !st.agentOpen; updateSteps(); $('[data-ol-act="agent-toggle"]')?.focus(); break;
+      case 'review': $('.ola-review')?.scrollIntoView({block:'start', behavior:'auto'}); break;
       case 'run': run(); break;
       case 'compose': st.drawer = ''; compose(''); break;
       case 'refine': sendRefine(); break;
