@@ -737,6 +737,8 @@ body:not(.light-mode) .ola-review del { color:#ffb7ae; background:rgba(255,110,9
 .ola-qa-text ul, .ola-qa-text ol { margin:0 0 8px; padding-left:22px; }
 .ola-qa-text li { margin:3px 0; }
 .ola-cite { display:inline-flex; align-items:center; height:18px; margin:0 1px; padding:0 6px; border:1px solid color-mix(in srgb,var(--primary) 40%,var(--border)); border-radius:6px; background:color-mix(in srgb,var(--primary) 10%,transparent); color:var(--primary); font:inherit; font-size:10.5px; font-weight:800; vertical-align:baseline; cursor:pointer; }
+.ola-cite.is-repeat { height:auto; padding:0 3px; border-color:transparent; background:transparent; color:var(--text-muted); font-weight:700; letter-spacing:.05em; }
+.ola-cite.is-repeat:hover { color:var(--primary); }
 .ola-cite:hover { background:color-mix(in srgb,var(--primary) 20%,transparent); }
 .ola-cite.is-bad { border-color:#dc2626; background:color-mix(in srgb,#dc2626 10%,transparent); color:#dc2626; cursor:help; }
 .ola-qa-warn { margin:0; padding:8px 11px; border-radius:10px; background:color-mix(in srgb,#d97706 12%,transparent); color:var(--text-main); font-size:12.5px; line-height:1.5; }

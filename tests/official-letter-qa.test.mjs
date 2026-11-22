@@ -451,3 +451,13 @@ test('mã nguồn tới C999 được nhận (đọc toàn văn có hàng trăm 
   assert.equal(msg.sources.length, 40);
   assert.deepEqual(msg.read.included, [{ name: 'Quy tắc 04', soHieu: '04', chunks: 79 }]);
 });
+
+test('answerHtml: mã nguồn đã hiện ở trên thì lần sau chỉ ghi "…" (vẫn bấm xem được); mã mới và mã lạ giữ nguyên', () => {
+  const { Q } = load();
+  const html = Q.answerHtml('Theo Điều 13 [C1], [C2].\n\n- Giấy tờ một [C1];\n- Giấy tờ hai [C1];\n- Hóa đơn [C2], [C1].\n- Lạ [C9].', SOURCES);
+  assert.equal((html.match(/>C1<\/button>/g) || []).length, 1, 'C1 chỉ hiện đủ mã một lần');
+  assert.equal((html.match(/>C2<\/button>/g) || []).length, 1);
+  assert.equal((html.match(/class="ola-cite is-repeat" data-ol-qa-cite="C1"[^>]*>…<\/button>/g) || []).length, 3);
+  assert.match(html, /is-repeat" data-ol-qa-cite="C2"[^>]*>…<\/button>/);
+  assert.match(html, /<span class="ola-cite is-bad"[^>]*>C9\?<\/span>/);
+});

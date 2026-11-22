@@ -246,25 +246,27 @@ const OfficialLetterQA = (() => {
   const foldVi = text => String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/\s+/g, ' ').trim();
   // Đề mục của câu trả lời (Kết luận, Căn cứ, Điều kiện…): in đậm đứng riêng một dòng, hoặc nhãn đầu mục quen thuộc → gạch chân.
   const SECTION = /^(ket luan|can cu|dieu kien|ngoai le|can xac nhan|luu y|ket qua)(\s|$|[,.;:)])/;
-  function inline(line, known) {
+  function inline(line, known, seen) {
     const solo = /^\*\*[^*\n]+\*\*\s*:?$/.test(line.trim());
     let html = esc(line).replace(/\*\*([^*\n][^*\n]*?)\*\*/g, (_, inner) => {
       const key = foldVi(inner);
       return (solo || (key.length <= 60 && SECTION.test(key))) ? '<b class="ola-h">' + inner + '</b>' : '<b>' + inner + '</b>';
     });
+    // Nguồn đã hiện ở trên trong cùng câu trả lời thì chỉ ghi "…" (vẫn bấm xem được) để các gạch đầu dòng cùng một Điều không lặp mã.
     html = html.replace(/\[(C\d{1,3})\]/g, (_, code) => known.has(code)
-      ? '<button type="button" class="ola-cite" data-ol-qa-cite="' + code + '" title="Xem nguyên văn nguồn ' + code + '">' + code + '</button>'
+      ? (seen && seen.has(code) ? '<button type="button" class="ola-cite is-repeat" data-ol-qa-cite="' + code + '" title="Cùng nguồn ' + code + ' ở trên — bấm để xem nguyên văn">…</button>'
+        : (seen && seen.add(code), '<button type="button" class="ola-cite" data-ol-qa-cite="' + code + '" title="Xem nguyên văn nguồn ' + code + '">' + code + '</button>'))
       : '<span class="ola-cite is-bad" title="Mã nguồn này không nằm trong các đoạn thư viện đã tra — cần kiểm tra lại">' + code + '?</span>');
     return html;
   }
   // Chữ thuần → HTML: đoạn <p>, danh sách <ul>/<ol>, **đậm**, mã nguồn thành nút. Mọi thứ khác bị escape.
   function answerHtml(text, sources) {
-    const known = new Set((sources || []).map(source => source.code));
+    const known = new Set((sources || []).map(source => source.code)), seen = new Set();
     const lines = String(text || '').replace(/\r/g, '').split('\n');
     const out = [];
     let list = null, para = [];
-    const flushPara = () => { if (para.length) { out.push('<p>' + para.map(line => inline(line, known)).join('<br>') + '</p>'); para = []; } };
-    const flushList = () => { if (list) { out.push('<' + list.tag + '>' + list.items.map(item => '<li>' + inline(item, known) + '</li>').join('') + '</' + list.tag + '>'); list = null; } };
+    const flushPara = () => { if (para.length) { out.push('<p>' + para.map(line => inline(line, known, seen)).join('<br>') + '</p>'); para = []; } };
+    const flushList = () => { if (list) { out.push('<' + list.tag + '>' + list.items.map(item => '<li>' + inline(item, known, seen) + '</li>').join('') + '</' + list.tag + '>'); list = null; } };
     for (const raw of lines) {
       const line = raw.trim();
       if (!line) { flushPara(); flushList(); continue; }

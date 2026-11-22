@@ -160,6 +160,8 @@ Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở t
 - **Prompt:** AI phải rà theo trình tự định nghĩa → điều kiện → loại trừ và ngoại lệ → bảng/phụ lục/tỷ lệ → điều khoản bổ sung → điều dẫn chiếu rồi mới kết luận; chỉ được nói "không có căn cứ" sau khi đã rà và nêu các điều đã rà.
 - **Hiển thị:** chỉ lưu và hiện các đoạn AI thực sự dẫn; khối nguồn ghi "Đã đọc toàn văn: … (n đoạn)" và văn bản nào chỉ được trích đoạn. Tab Trò chuyện AI khi bật Tra Thư viện dùng cùng cơ chế. Soạn công văn vẫn dùng tra đoạn.
 
+- **Mã nguồn lặp:** trong cùng một câu trả lời, mỗi mã [C#] chỉ hiện đủ ở lần đầu; các lần sau ghi “…” (vẫn bấm để xem nguyên văn) nên các gạch đầu dòng cùng một Điều không bị lặp chip.
+
 ### Trò chuyện AI (tab thứ 3 trong AI nghiệp vụ, trước đây là Công văn AI)
 Trang AI thông thường để hỏi mọi thứ (viết lại câu chữ, tính toán, Excel, dịch, giải thích…), tách hẳn khỏi Hỏi nghiệp vụ nhưng dùng chung khung chat, khoá/mô hình AI, chip **Hồ sơ** và **Suy luận sâu**.
 - Đính kèm tối đa 5 tệp mỗi câu hỏi bằng nút ghim, kéo-thả hoặc dán: ảnh (JPG/PNG/WebP/HEIC) gửi thẳng cho mô hình (cần mô hình có hỗ trợ ảnh), PDF/Word/Excel/CSV/TXT/MD được đọc thành chữ (`TascoLibParse.readText`, mỗi tệp ≤ 30.000 ký tự, tổng ≤ 60.000). Chữ của tệp được lưu cùng tin nhắn (≤ 12.000 ký tự/tệp) để các lượt sau vẫn hỏi tiếp được; **ảnh chỉ gửi ở lượt hiện tại**, không lưu.
