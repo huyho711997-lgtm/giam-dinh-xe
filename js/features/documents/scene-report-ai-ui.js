@@ -118,6 +118,7 @@ async function sceneReportAiAddFiles(list) {
     try {
       const photo = await SA.prepare(file);
       if (st.claim !== claim) return;
+      if (st.photos.reduce((sum, item) => sum + item.data.length, 0) + photo.data.length > SA.MAX_TOTAL_B64) { errors.push('Tổng dung lượng ảnh đã quá lớn để gửi một lần. Hãy bỏ bớt ảnh hoặc phân tích thành nhiều lượt.'); break; }
       st.photos.push({...photo, kind: 'scene'});
     } catch (error) { errors.push(error.message || 'Không xử lý được ảnh.'); }
   }

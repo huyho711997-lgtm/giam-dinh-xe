@@ -126,3 +126,11 @@ test('analyzeVia báo lỗi rõ: thiếu khoá, ảnh HEIC, hết hạn mức (g
   await assert.rejects(AI.analyzeVia({photos: [{...photos[0], mimeType: 'image/heic'}], active: gemini, apiKey: 'k', ai: LAI}), /HEIC/);
   await assert.rejects(AI.analyzeVia({photos, active: gemini, apiKey: 'k', ai: LAI, fetchImpl: async () => ({ok: false, status: 429, json: async () => ({error: {message: 'quota'}})})}), /429[\s\S]*chọn mô hình khác/);
 });
+
+test('giới hạn ảnh: tối đa 20 ảnh, tổng dung lượng gửi dưới giới hạn của cầu nối Antigravity (12 MB)', () => {
+  assert.equal(AI.MAX_PHOTOS, 20);
+  assert.ok(AI.MAX_TOTAL_B64 < 12 * 1024 * 1024);
+  const result = AI.parseResult(JSON.stringify({scene: 'a', suy_luan: Array.from({length: 20}, (_, i) => ({anh: i + 1, thay: 'x' + i}))}), 20);
+  assert.equal(result.evidence.length, 14); assert.equal(result.evidence[13].photo, 14);
+  assert.deepEqual(plain(AI.parseResult(JSON.stringify({scene: 'a', suy_luan: [{anh: 19, thay: 'x'}]}), 20).evidence.map(item => item.photo)), [19]);
+});

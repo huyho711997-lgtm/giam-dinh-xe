@@ -2,7 +2,9 @@
 // Phần thuần (buildPrompt, parseResult, mergeText, nextKind) chạy được ở Node để kiểm thử; phần đọc ảnh/gọi Gemini cần trình duyệt.
 // AI chỉ ĐỀ XUẤT: kết quả hiện ra để giám định viên sửa/chọn, chỉ ghi vào biên bản khi bấm "Áp dụng".
 const SceneReportAI = (() => {
-  const MAX_PHOTOS = 8, MAX_EDGE = 1280, MAX_RAW = 4 * 1024 * 1024, MAX_NOTE = 600;
+  const MAX_PHOTOS = 20, MAX_EDGE = 1280, MAX_RAW = 4 * 1024 * 1024, MAX_NOTE = 600;
+  // Mỗi ảnh gửi đi tối đa ~450 KB (base64) để 20 ảnh vẫn dưới ~9 MB: cầu nối Antigravity nhận tối đa 12 MB mỗi yêu cầu, Gemini 20 MB.
+  const MAX_TOTAL_B64 = 9 * 1024 * 1024, MAX_PHOTO_B64 = 450 * 1024, STEPS = [[MAX_EDGE, 0.82], [1100, 0.76], [960, 0.7], [800, 0.64]];
   const LIMITS = {scene: 3000, traces: 3000, samples: 2000};
   // Loại ảnh người dùng gắn cho từng ảnh để AI biết cần đọc gì ở ảnh đó.
   const KINDS = {scene: 'Hiện trường', trace: 'Dấu vết', sample: 'Mẫu vật'};
@@ -36,7 +38,7 @@ const SceneReportAI = (() => {
     + '"suy_luan":[{"anh":1,"thay":"điều nhìn thấy trong ảnh","ket_luan":"điều suy ra cho biên bản"}],'
     + '"can_xac_minh":["việc giám định viên phải đo/xác nhận trực tiếp tại hiện trường, gồm cả kiểm tra biển số xe còn lại"],'
     + '"anh_khong_dung":[{"anh":2,"ly_do":"mờ/thiếu sáng/che khuất/không liên quan"}]}. '
-    + '"suy_luan" tối đa 10 dòng, mỗi dòng gắn với một ảnh; "can_xac_minh" tối đa 8 ý. Ảnh dùng được thì không đưa vào "anh_khong_dung".';
+    + '"suy_luan" tối đa 14 dòng, mỗi dòng gắn với một ảnh; "can_xac_minh" tối đa 8 ý. Ảnh dùng được thì không đưa vào "anh_khong_dung".';
 
   // Khối ngữ cảnh gửi kèm: hồ sơ, ghi chú của giám định viên và nội dung đã có trong biên bản.
   function buildContext(ctx = {}, photos = []) {
@@ -71,7 +73,7 @@ const SceneReportAI = (() => {
     const inRange = value => { const n = Number(value); return Number.isInteger(n) && n >= 1 && n <= photoCount ? n : 0; };
     const result = {
       scene: block(data.scene, LIMITS.scene), traces: block(data.traces, LIMITS.traces), samples: block(data.samples, LIMITS.samples),
-      evidence: (Array.isArray(data.suy_luan) ? data.suy_luan : []).filter(item => item && typeof item === 'object').map(item => ({photo: inRange(item.anh), saw: line(item.thay, 300), conclusion: line(item.ket_luan, 300)})).filter(item => item.saw || item.conclusion).slice(0, 10),
+      evidence: (Array.isArray(data.suy_luan) ? data.suy_luan : []).filter(item => item && typeof item === 'object').map(item => ({photo: inRange(item.anh), saw: line(item.thay, 300), conclusion: line(item.ket_luan, 300)})).filter(item => item.saw || item.conclusion).slice(0, 14),
       verify: strings(data.can_xac_minh, 240, 8),
       unusable: (Array.isArray(data.anh_khong_dung) ? data.anh_khong_dung : []).filter(item => item && typeof item === 'object').map(item => ({photo: inRange(item.anh), reason: line(item.ly_do, 160)})).filter(item => item.photo).slice(0, MAX_PHOTOS)
     };
@@ -103,17 +105,26 @@ const SceneReportAI = (() => {
     const url = URL.createObjectURL(file);
     try {
       const image = await new Promise((resolve, reject) => { const element = new Image(); element.onload = () => resolve(element); element.onerror = () => reject(new Error('Không mở được ảnh "' + file.name + '".')); element.src = url; });
-      const scale = Math.min(1, MAX_EDGE / Math.max(image.naturalWidth, image.naturalHeight));
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-      const context = canvas.getContext('2d');
-      context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.82));
-      if (!blob) throw new Error('Không xử lý được ảnh.');
+      const draw = edge => {
+        const scale = Math.min(1, edge / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale)); canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const context = canvas.getContext('2d');
+        context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        return canvas;
+      };
+      let canvas = null, data = '';
+      for (const [edge, quality] of STEPS) {
+        canvas = draw(edge);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+        if (!blob) throw new Error('Không xử lý được ảnh.');
+        data = await toBase64(blob);
+        if (data.length <= MAX_PHOTO_B64) break;   // ảnh nhiều chi tiết thì giảm dần cạnh dài và chất lượng
+      }
       const small = document.createElement('canvas'), ratio = Math.min(1, 160 / Math.max(canvas.width, canvas.height));
       small.width = Math.max(1, Math.round(canvas.width * ratio)); small.height = Math.max(1, Math.round(canvas.height * ratio));
       small.getContext('2d').drawImage(canvas, 0, 0, small.width, small.height);
-      return {name: file.name, mimeType: 'image/jpeg', data: await toBase64(blob), preview: small.toDataURL('image/jpeg', 0.7)};
+      return {name: file.name, mimeType: 'image/jpeg', data, preview: small.toDataURL('image/jpeg', 0.7)};
     } finally { URL.revokeObjectURL(url); }
   }
 
@@ -175,5 +186,5 @@ const SceneReportAI = (() => {
     return parseResult(raw, photos.length);
   }
 
-  return {MAX_PHOTOS, MAX_NOTE, LIMITS, KINDS, KIND_ORDER, nextKind, kindOf, buildPrompt, buildContext, parseResult, mergeText, prepare, analyze, analyzeVia, modelOptions, pickModel};
+  return {MAX_PHOTOS, MAX_TOTAL_B64, MAX_NOTE, LIMITS, KINDS, KIND_ORDER, nextKind, kindOf, buildPrompt, buildContext, parseResult, mergeText, prepare, analyze, analyzeVia, modelOptions, pickModel};
 })();
