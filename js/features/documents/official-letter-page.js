@@ -755,7 +755,7 @@ const OfficialLetterPage = (() => {
     focusMain();
     if (mode === 'ask') scrollQa();
   }
-  const focusMain = () => ($('[data-ol-qa-input]') || $('[data-ol-brief]'))?.focus();
+  const focusMain = (preventScroll = false) => ($('[data-ol-qa-input]') || $('[data-ol-brief]'))?.focus({preventScroll});
   function scrollQa() { const box = $('[data-ol-qa-scroll]'); if (box) box.scrollTop = box.scrollHeight; }
   function paintQaStatus(text) { if (text !== undefined) qa.status = text; host?.querySelectorAll('[data-ol-qa-status]').forEach(node => { node.textContent = qa.status; }); }
   function paintQaUsage() {
@@ -1372,6 +1372,7 @@ const OfficialLetterPage = (() => {
     const working = asking ? !!(qa.messages.length || qa.busy) : !!(st.letter || (st.busy && st.steps));
     const qaBox = $('[data-ol-qa-scroll]'), qaTop = qaBox ? qaBox.scrollTop : 0;
     const scrollBox = $('[data-ol-scroll]'), scrollTop = scrollBox ? scrollBox.scrollTop : 0;
+    const mainBox = $('.ola-main'), mainTop = mainBox ? mainBox.scrollTop : 0;
     const histScroll = $('[data-ol-hist-list]'), histTop = histScroll ? histScroll.scrollTop : 0;
     root.innerHTML = historyHtml() + '<div class="ola-main' + (working ? ' is-working' : '') + (asking ? ' is-ask' : '') + '">' + topbarHtml()
       + (asking ? qaHtml() : working ? workHtml() : heroHtml())
@@ -1384,8 +1385,9 @@ const OfficialLetterPage = (() => {
     const nextQa = $('[data-ol-qa-scroll]'); if (nextQa) nextQa.scrollTop = qaTop;
     const brief = $('[data-ol-brief]'); if (brief) autoGrow(brief);
     const qaInput = $('[data-ol-qa-input]'); if (qaInput) autoGrow(qaInput);
-    if (st.pop === 'record') { updateRecList(); $('[data-ol-rec-q]')?.focus(); }
-    else if (focusSel) $(focusSel)?.focus();
+    if (st.pop === 'record') { updateRecList(); $('[data-ol-rec-q]')?.focus({preventScroll:true}); }
+    else if (focusSel) $(focusSel)?.focus({preventScroll:true});
+    const nextMain = $('.ola-main'); if (nextMain) nextMain.scrollTop = mainTop;
     if (st.busy || st.pending) {
       host.querySelectorAll('[data-ol-act="new"], [data-ol-act="edit"], [data-ol-hist-open], [data-ol-hist-del], [data-ol-drawer], [data-ol-act="compose"]').forEach(node => { node.disabled = true; });
     }
@@ -1578,7 +1580,7 @@ const OfficialLetterPage = (() => {
     const modelBtn = target.closest('[data-ol-model]');
     if (modelBtn) { collectAll(); const cfg = aiConfig(); cfg.selected = modelBtn.dataset.olModel; aiCfg = Models().save(cfg); st.pop = ''; renderAll(); focusMain(); return; }
     const rule = target.closest('[data-ol-rule]');
-    if (rule) { collectAll(); st.legalPin = rule.dataset.olRule ? [rule.dataset.olRule] : []; st.pop = ''; renderAll(); focusMain(); return; }
+    if (rule) { collectAll(); st.legalPin = rule.dataset.olRule ? [rule.dataset.olRule] : []; st.pop = ''; renderAll(); focusMain(true); return; }
     const type = target.closest('[data-ol-type]');
     if (type) { collectAll(); st.templateId = type.dataset.olType; st.pop = ''; renderAll(); focusMain(); return; }
     if (target.closest('[data-ol-rec-clear]')) { collectAll(); st.recordKey = ''; renderAll(); return; }
