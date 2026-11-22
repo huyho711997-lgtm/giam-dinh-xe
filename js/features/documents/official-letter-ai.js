@@ -107,6 +107,7 @@ const OfficialLetterAI = (() => {
   function httpError(status, data, label = 'DeepSeek') {
     const detail = data && (Array.isArray(data) ? data[0] && data[0].error : data.error);
     const text = detail ? (typeof detail === 'string' ? detail : (detail.message || JSON.stringify(detail))).slice(0, 200) : '';
+    if (label.startsWith('Antigravity') && status === 502 && /Không thể kết nối Antigravity trên máy này/i.test(text)) return aiError('Công cụ Antigravity trung gian trên máy chưa kết nối được. Hãy kiểm tra dịch vụ cục bộ rồi thử lại.');
     if (status === 401) return aiError('Khoá ' + label + ' API không đúng hoặc đã bị thu hồi. Kiểm tra lại khoá ở biểu tượng ⚙.');
     if (status === 402) return aiError(label === 'DeepSeek' ? 'Tài khoản DeepSeek đã hết số dư. Nạp thêm tại platform.deepseek.com rồi thử lại.' : 'Tài khoản ' + label + ' đã hết số dư hoặc hạn mức. Kiểm tra gói/thanh toán rồi thử lại.');
     if (status === 403) return aiError(label + ' từ chối quyền truy cập (403): khoá chưa được bật dịch vụ này, hoặc khu vực của bạn chưa được hỗ trợ' + (text ? ' — ' + text : '.'));
@@ -132,6 +133,7 @@ const OfficialLetterAI = (() => {
         response = await doFetch(endpoint, {method: 'POST', signal: options.signal, headers: {'Content-Type': 'application/json', Authorization: 'Bearer ' + options.apiKey}, body});
       } catch (error) {
         if (error && error.name === 'AbortError') throw error;
+        if (label.startsWith('Antigravity')) throw aiError('Không kết nối được công cụ Antigravity trên máy. Hãy kiểm tra công cụ trung gian đang chạy và quyền truy cập mạng cục bộ của trình duyệt.');
         throw aiError('Không kết nối được tới ' + label + '. Kiểm tra mạng (hoặc trình duyệt/tiện ích đang chặn ' + (endpoint.replace(/^https?:\/\//, '').split('/')[0]) + ').', {retryable: true});
       }
       let data = null;

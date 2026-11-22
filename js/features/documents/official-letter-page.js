@@ -981,7 +981,6 @@ const OfficialLetterPage = (() => {
   function qaComposerHtml(big) {
     const busy = !!qa.busy;
     return '<div class="ola-composer ola-qa-composer' + (big ? ' is-big' : ' is-up') + (busy ? ' is-busy' : '') + '"' + (busy ? ' aria-busy="true"' : '') + '>'
-      + (busy ? '<div class="ola-qa-loading" role="status" aria-live="polite"><span class="ola-qa-loading-orb" aria-hidden="true"><span class="ola-qa-loading-orbit"></span>' + svg(ICON.spark) + '</span><span class="ola-qa-loading-text" data-ol-qa-status>' + esc(qa.status || 'Đang suy luận…') + '</span><span class="ola-qa-loading-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div>' : '')
       + '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="200000" placeholder="Hỏi nghiệp vụ, hoặc dán quy tắc và yêu cầu thêm vào thư viện…" aria-label="Câu hỏi nghiệp vụ">' + esc(qa.draft) + '</textarea>'
       + (qa.importFile ? '<div class="ola-qa-import-file"><span>' + svg(ICON.attach) + esc(qa.importFile.name) + '</span><button type="button" data-ol-act="qa-remove-file" aria-label="Bỏ tệp quy tắc"' + (busy ? ' disabled' : '') + '>×</button></div>' : '')
       + '<div class="ola-bar"><label class="ola-icon-btn' + (busy ? ' is-disabled' : '') + '" title="Đính kèm quy tắc để thêm vào thư viện"><input type="file" data-ol-qa-file accept=".md,.markdown,.txt,.docx,.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp" hidden' + (busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label>' + recordChipHtml() + rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)')
@@ -998,7 +997,7 @@ const OfficialLetterPage = (() => {
         + qaComposerHtml(true)
         + '<div class="ola-ideas">' + Q.SUGGESTIONS.map(text => '<button type="button" class="tasco-ai-choice" data-ol-qa-idea="' + esc(text) + '"><strong>' + esc(text) + '</strong></button>').join('') + '</div></section>';
     }
-    const typing = qa.busy ? '<div class="ola-qa-msg is-ai is-typing"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body"><p class="ola-qa-status"><i></i><i></i><i></i><span data-ol-qa-status>' + esc(qa.status) + '</span></p></div></div>' : '';
+    const typing = qa.busy ? '<div class="ola-qa-msg is-ai is-typing"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body"><p class="ola-qa-status" role="status" aria-live="polite"><i></i><i></i><i></i><span data-ol-qa-status>' + esc(qa.status) + '</span></p></div></div>' : '';
     return '<div class="ola-qa"><div class="ola-qa-scroll" data-ol-qa-scroll><div class="ola-qa-inner">' + qa.messages.map(qaMessageHtml).join('') + typing + '</div></div>'
       + '<div class="ola-qa-dock">' + qaComposerHtml(false) + '<p class="ola-qa-foot">AI có thể sai — luôn đối chiếu nguyên văn ở phần "Nguồn đã tra" trước khi dùng trong công văn hoặc trả lời khách hàng.</p></div></div>';
   }
