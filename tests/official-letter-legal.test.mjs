@@ -225,3 +225,47 @@ test('retrieve: văn bản được CHỌN mà truy vấn dài không đủ 60% 
   assert.equal(pinned.error, '');
   assert.ok(pinned.sources.length >= 1 && pinned.sources[0].id === 'qt:0' && pinned.sources.length <= 3);
 });
+
+// ---- Đọc toàn văn (Hỏi nghiệp vụ) ----
+async function loadFull(docs) {
+  const context = load();
+  context.TascoLibStore = { list: async () => docs, index: async () => context.S.build(docs) };
+  return context;
+}
+
+test('readFull: cấp nguyên mọi đoạn của văn bản đang hiệu lực, đánh mã C1…Cn theo thứ tự, bỏ văn bản hết hiệu lực', async () => {
+  const { L } = await loadFull([LUAT, ND, CU]);
+  const out = plain(await L.readFull(['giảm trừ']));
+  assert.equal(out.error, '');
+  assert.equal(out.sources.length, LUAT.chunks.length + ND.chunks.length, 'đủ mọi đoạn, kể cả đoạn không chứa từ khoá');
+  assert.deepEqual(out.sources.map(source => source.code), out.sources.map((_, i) => 'C' + (i + 1)));
+  assert.ok(out.sources.every(source => source.full === true));
+  assert.ok(out.sources.some(source => /Phạm vi điều chỉnh/.test(source.title)), 'đoạn không liên quan từ khoá vẫn được cấp');
+  assert.ok(!out.sources.some(source => /Quy tắc cũ/.test(source.doc)), 'văn bản hết hiệu lực bị bỏ');
+  assert.deepEqual(out.included.map(doc => doc.chunks), [3, 1]);
+  assert.deepEqual(out.skipped, []);
+});
+
+test('readFull: người dùng chọn văn bản thì chỉ đọc văn bản đó (kể cả đã hết hiệu lực)', async () => {
+  const { L } = await loadFull([LUAT, ND, CU]);
+  const out = plain(await L.readFull(['x'], { docIds: ['cu'] }));
+  assert.equal(out.sources.length, 1);
+  assert.equal(out.included[0].name, 'Quy tắc cũ');
+});
+
+test('readFull: vượt ngân sách thì đọc văn bản khớp câu hỏi nhất trước, văn bản không vừa vào danh sách skipped', async () => {
+  const big = { id: 'big', meta: { ten: 'Văn bản dài', trangThai: 'dang_hieu_luc' }, chunks: [{ t: 'Điều 1', x: 'bồi thường tổn thất khấu hao '.repeat(60) }] };
+  const small = { id: 'small', meta: { ten: 'Văn bản ngắn', trangThai: 'dang_hieu_luc' }, chunks: [{ t: 'Điều 9. Thương tật', x: 'Tỷ lệ thương tật gãy xương đòn là 8 phần trăm.' }] };
+  const { L } = await loadFull([big, small]);
+  const out = plain(await L.readFull(['tỷ lệ thương tật gãy xương đòn'], { budget: 400 }));
+  assert.deepEqual(out.included.map(doc => doc.name), ['Văn bản ngắn']);
+  assert.deepEqual(out.skipped.map(doc => doc.name), ['Văn bản dài']);
+  assert.equal(out.sources.length, 1);
+});
+
+test('readFull: thư viện trống hoặc chưa nạp → báo lỗi, không ném ngoại lệ', async () => {
+  const empty = await loadFull([]);
+  assert.match((await empty.L.readFull(['x'])).error, /đang trống/);
+  const none = load();
+  assert.match((await none.L.readFull(['x'])).error, /chưa sẵn sàng/);
+});

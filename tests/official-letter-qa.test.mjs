@@ -421,3 +421,33 @@ test('buildRequest (Hỏi nghiệp vụ): tệp/ảnh đính kèm là dữ kiệ
   assert.ok(!/TÀI LIỆU\/ẢNH NGƯỜI DÙNG/.test(plainReq.contents.at(-1).parts[0].text));
   assert.equal(plainReq.contents.at(-1).parts.length, 1);
 });
+
+test('sourceBlock/buildRequest (đọc toàn văn): tiêu đề văn bản ghi một lần, nêu rõ đã cấp đủ, đoạn dài không bị cắt ở 1800', () => {
+  const { Q } = load();
+  const long = 'a'.repeat(4000);
+  const sources = [
+    { code: 'C1', doc: 'Quy tắc 04', soHieu: '04', title: 'Điều 1', text: 'Phạm vi', full: true, on: true },
+    { code: 'C2', doc: 'Quy tắc 04', soHieu: '04', title: 'Bảng tỷ lệ', text: long, full: true, on: true },
+    { code: 'C3', doc: 'Nghị định 67', title: 'Điều 9', text: 'Tỷ lệ', full: true, on: true }
+  ];
+  const block = Q.sourceBlock(sources);
+  assert.equal((block.match(/=== VĂN BẢN: Quy tắc 04/g) || []).length, 1);
+  assert.match(block, /=== VĂN BẢN: Nghị định 67 ===\n\[C3\]/);
+  assert.ok(block.includes(long), 'đoạn 4000 ký tự được giữ nguyên');
+  const req = plain(Q.buildRequest({ question: 'hỏi', history: [], sources, read: { included: [{ name: 'Quy tắc 04', chunks: 2 }, { name: 'Nghị định 67', chunks: 1 }], skipped: [{ name: 'Luật dài' }] } }));
+  const text = req.contents.at(-1).parts[0].text;
+  assert.match(text, /TOÀN VĂN CÁC VĂN BẢN TRONG THƯ VIỆN — đã cấp ĐỦ Quy tắc 04 \(2 đoạn\); Nghị định 67 \(1 đoạn\); CHƯA cấp[^:]*: Luật dài/);
+  assert.match(req.system_instruction.parts[0].text, /Khi được cấp TOÀN VĂN/);
+  const old = plain(Q.buildRequest({ question: 'hỏi', history: [], sources: [{ code: 'C1', doc: 'D', title: 'T', text: 'x', on: true }] }));
+  assert.match(old.contents.at(-1).parts[0].text, /TRÍCH ĐOẠN THƯ VIỆN \(nguyên văn\)/);
+});
+
+test('mã nguồn tới C999 được nhận (đọc toàn văn có hàng trăm đoạn); normalizeMessage giữ read và tới 40 nguồn', () => {
+  const { Q } = load();
+  assert.deepEqual(plain(Q.citedCodes('Theo [C120] và [C7], không phải [C1000].')), ['C120', 'C7']);
+  assert.ok(!/C120/.test(Q.stripCodes('đúng [C120] thật')));
+  const sources = Array.from({ length: 45 }, (_, i) => ({ code: 'C' + (i + 1), id: 'd:' + i, doc: 'D', title: 'T' + i, text: 'x' }));
+  const msg = plain(Q.normalizeMessage({ role: 'assistant', text: 'ok [C30]', sources, read: { included: [{ name: 'Quy tắc 04', chunks: 79, soHieu: '04' }], skipped: [] } }));
+  assert.equal(msg.sources.length, 40);
+  assert.deepEqual(msg.read.included, [{ name: 'Quy tắc 04', soHieu: '04', chunks: 79 }]);
+});

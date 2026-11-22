@@ -154,6 +154,12 @@ Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở t
 
 - **Đính kèm ở Hỏi nghiệp vụ:** ảnh/tệp là tư liệu của câu hỏi (dữ kiện vụ việc, không phải căn cứ pháp lý; ảnh gửi dạng `inlineData` ở lượt hiện tại, chữ của tệp lưu cùng tin nhắn). Chỉ nạp tệp vào Thư viện khi người dùng ghi rõ "thêm vào thư viện…" hoặc đính kèm mà không hỏi gì. (Trước đây mọi tệp đính kèm đều bị hiểu là nạp thư viện → ảnh bị OCR và treo ở "Đang đọc tài liệu để thêm vào thư viện".)
 
+### Hỏi nghiệp vụ đọc TOÀN VĂN thay vì tra đoạn (`OfficialLetterLegal.readFull`)
+- **Vì sao đổi:** cách cũ tra BM25 rồi chỉ cho AI 8–12 đoạn (~15% quy tắc số 04, ~88.000 ký tự) nên bỏ lọt điều khoản dùng từ khác câu hỏi và AI không thấy quan hệ giữa các điều (loại trừ ↔ ngoại lệ ↔ định nghĩa ↔ bảng) → kết luận thiếu và mâu thuẫn.
+- **Cách mới:** mỗi câu hỏi cấp NGUYÊN văn các văn bản đang hiệu lực (hoặc đúng các văn bản chọn ở chip Quy tắc) cho AI, mỗi đoạn có mã [C#] (tới C999). Ngân sách 160.000 ký tự (~50–60k token; mô hình nhỏ như Groq 24.000). Vượt ngân sách thì văn bản khớp câu hỏi nhất (BM25 cộng điểm theo văn bản) được đọc trước, văn bản không vừa quay về tra đoạn. Không đọc được toàn văn → tự dùng đường tra đoạn cũ.
+- **Prompt:** AI phải rà theo trình tự định nghĩa → điều kiện → loại trừ và ngoại lệ → bảng/phụ lục/tỷ lệ → điều khoản bổ sung → điều dẫn chiếu rồi mới kết luận; chỉ được nói "không có căn cứ" sau khi đã rà và nêu các điều đã rà.
+- **Hiển thị:** chỉ lưu và hiện các đoạn AI thực sự dẫn; khối nguồn ghi "Đã đọc toàn văn: … (n đoạn)" và văn bản nào chỉ được trích đoạn. Tab Trò chuyện AI khi bật Tra Thư viện dùng cùng cơ chế. Soạn công văn vẫn dùng tra đoạn.
+
 ### Trò chuyện AI (tab thứ 3 trong AI nghiệp vụ, trước đây là Công văn AI)
 Trang AI thông thường để hỏi mọi thứ (viết lại câu chữ, tính toán, Excel, dịch, giải thích…), tách hẳn khỏi Hỏi nghiệp vụ nhưng dùng chung khung chat, khoá/mô hình AI, chip **Hồ sơ** và **Suy luận sâu**.
 - Đính kèm tối đa 5 tệp mỗi câu hỏi bằng nút ghim, kéo-thả hoặc dán: ảnh (JPG/PNG/WebP/HEIC) gửi thẳng cho mô hình (cần mô hình có hỗ trợ ảnh), PDF/Word/Excel/CSV/TXT/MD được đọc thành chữ (`TascoLibParse.readText`, mỗi tệp ≤ 30.000 ký tự, tổng ≤ 60.000). Chữ của tệp được lưu cùng tin nhắn (≤ 12.000 ký tự/tệp) để các lượt sau vẫn hỏi tiếp được; **ảnh chỉ gửi ở lượt hiện tại**, không lưu.
