@@ -168,3 +168,19 @@ test('index.html nạp official-letter-qa.js sau ai, trước page', () => {
   const at = name => html.indexOf('js/features/documents/official-letter-' + name + '.js');
   assert.ok(at('ai') > 0 && at('ai') < at('qa') && at('qa') < at('page'));
 });
+
+test('answerHtml: tô xanh chữ kết luận "có", đỏ chữ "không" (in đậm) và một số cụm cố định', () => {
+  const { Q } = load();
+  const html = Q.answerHtml('**Kết luận:** lốp **không** được miễn khấu hao; xe **Có** điều kiện.\n\n- **Không được bồi thường** phần vỏ pin [C1].\n- Tổn thất **thuộc phạm vi** bảo hiểm.\n- Phần này bị loại trừ theo Điều 13, nhưng được bồi thường nếu đồng thời hư hỏng.\n- Thông tin không liên quan đến **Điều 13**; không gian nhà xe.', SOURCES);
+  assert.match(html, /<b class="ola-no">không<\/b> <span class="ola-no">được miễn khấu hao<\/span>/);   // cụm khẳng định sau chữ đậm phủ định cũng đỏ
+  assert.match(html, /<b class="ola-yes">Có<\/b> điều kiện/);
+  assert.match(html, /<b class="ola-no">Không được bồi thường<\/b>/);
+  assert.match(html, /<b class="ola-yes">thuộc phạm vi<\/b>/);
+  assert.match(html, /<span class="ola-no">bị loại trừ<\/span>/);
+  assert.match(html, /<span class="ola-yes">được bồi thường<\/span>/);
+  assert.match(html, /<b>Kết luận:<\/b>/);
+  assert.match(html, /<b>Điều 13<\/b>/);   // chữ đậm không mang nghĩa kết luận giữ nguyên
+  assert.ok(!/ola-(yes|no)">không<\/span>|ola-no">không gian/.test(html));   // không tô chữ "không" lẻ nằm ngoài cụm
+  assert.ok(!/title="[^"]*<span/.test(html));   // không chèn tô màu vào thuộc tính HTML
+  assert.match(html, /data-ol-qa-cite="C1"/);
+});
