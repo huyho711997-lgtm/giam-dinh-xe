@@ -448,5 +448,7 @@ body:not(.light-mode) .ola-review ins { color:#95e4ba; }
   .ola-selection { align-items:flex-start; font-size:10.5px; }
 }
 .ola-chip-t { max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ola-chip:has(.ola-chip-type) { max-width:min(360px,100%); }
+.ola-chip-t.ola-chip-type { max-width:290px; min-width:0; }
 .ola-pop--menu button[disabled] { opacity:.5; cursor:not-allowed; }
 .ola-pop--menu .ol-rec-empty { margin:6px 10px; }
