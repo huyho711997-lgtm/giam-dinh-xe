@@ -94,6 +94,17 @@ const OfficialLetterCore = (() => {
     + '(VD người nhận theo địa điểm tổn thất/cơ quan thụ lý, danh mục tài liệu thông dụng, thời hạn phản hồi thông lệ 07 ngày làm việc) và ghi mỗi suy luận quan trọng vào "assumptions" (tối đa 5, mỗi ý ≤160 ký tự, nói rõ đã giả định gì). '
     + '"questions" CHỈ dành cho tối đa 2 điểm mà đoán sai sẽ làm sai bản chất công văn và không thể suy ra từ dữ liệu; vẫn kèm phương án trong "options". Không hỏi số điện thoại, tên cán bộ, địa chỉ — để trống, hệ thống tự để "……".';
 
+  // Căn cứ thư viện đã tra SẴN trước bước phân tích: AI biết đã có nguyên văn nên không hỏi người dùng / không "giả định thiếu điều khoản".
+  function legalAnalyzeBlock(input) {
+    const pinned = single(input.legalPinned, 200);
+    if (input.legal) {
+      return '\n\nCĂN CỨ TỪ THƯ VIỆN ĐÃ TRA SẴN (nguyên văn; hệ thống sẽ đưa nguyên các đoạn này cho người viết ở bước soạn):\n' + multi(input.legal, 8000)
+        + (pinned ? '\nNGƯỜI DÙNG ĐÃ CHỦ ĐỘNG CHỌN văn bản "' + pinned + '" làm căn cứ: công văn phải viện dẫn và trích đúng điều khoản ở trên.' : '')
+        + '\nVì đã có nguyên văn: KHÔNG hỏi người dùng "có nguyên văn điều khoản/quy tắc không", KHÔNG ghi giả định kiểu "chưa có nguyên văn / chỉ viện dẫn chung". Nếu thấy còn thiếu điều khoản nào thì ghi từ khoá đúng điều khoản đó vào "legalQueries".';
+    }
+    return pinned ? '\n\nNGƯỜI DÙNG ĐÃ CHỦ ĐỘNG CHỌN văn bản "' + pinned + '" làm căn cứ: hãy ghi vào "legalQueries" 2–3 cụm từ khoá đúng điều khoản cần tìm trong văn bản đó (hệ thống tự tra nguyên văn, đừng hỏi người dùng nguyên văn).' : '';
+  }
+
   function buildAnalyzeRequest(template, input) {
     const fieldList = template.fields.map(field => ({key: field.key, label: field.label, hint: field.hint || '', required: !!field.required}));
     const answered = (input.answered || []).filter(item => item && item.question && item.answer);
@@ -102,6 +113,7 @@ const OfficialLetterCore = (() => {
       + (input.outline && input.outline.length ? '\n\nDÀN Ý HIỆN TẠI (người dùng đã duyệt/sửa — giữ nguyên, chỉ đổi khi yêu cầu mới đòi hỏi):\n' + input.outline.map((line, i) => (i + 1) + '. ' + line).join('\n') : '')
       + '\n\nCÁC TRƯỜNG CẦN ĐIỀN:\n' + JSON.stringify(fieldList)
       + (input.dossier ? '\n\nHỒ SƠ:\n' + multi(input.dossier, 14000) : '\n\nDỮ LIỆU HỒ SƠ:\n' + JSON.stringify(input.record || {}))
+      + legalAnalyzeBlock(input)
       + '\n\nGIÁ TRỊ ĐÃ CÓ (không ghi đè):\n' + JSON.stringify(input.current || {})
       + (input.extras && input.extras.length ? '\n\nTHÔNG TIN BỔ SUNG ĐÃ GHI NHẬN:\n' + JSON.stringify(input.extras) : '')
       + (answered.length ? '\n\nĐÃ LÀM RÕ (người dùng đã trả lời, không hỏi lại):\n' + JSON.stringify(answered) : '')
@@ -194,7 +206,12 @@ const OfficialLetterCore = (() => {
       + ((extra.openQuestions || []).length ? '\n\nĐIỂM CHƯA RÕ (người dùng chưa trả lời — chọn cách viết an toàn nhất theo hồ sơ, hoặc viết chung/để "……"; không hỏi lại trong công văn):\n' + extra.openQuestions.map(item => '- ' + single(item, 300)).join('\n') : '')
       + ((extra.keyFacts || []).length ? '\n\nDỮ KIỆN CẦN NÊU (đã chọn từ hồ sơ):\n' + extra.keyFacts.map(item => '- ' + single(item, 300)).join('\n') : '')
       + ((extra.insights || []).length ? '\n\nNHẬN ĐỊNH NGHIỆP VỤ (dùng để chọn lập luận, không chép nguyên văn nếu không cần):\n' + extra.insights.map(item => '- ' + single(item && item.text, 300)).join('\n') : '')
-      + (extra.legal ? '\n\nCĂN CỨ TỪ THƯ VIỆN (nguyên văn — chỉ dùng nếu đúng vấn đề, không bắt buộc dùng):\n' + multi(extra.legal, 16000) : '\n\nCĂN CỨ TỪ THƯ VIỆN: (không có — không viện dẫn điều luật cụ thể)')
+      + (extra.legal
+        ? (extra.legalPinned
+          ? '\n\nCĂN CỨ TỪ THƯ VIỆN — NGƯỜI DÙNG ĐÃ CHỌN văn bản "' + single(extra.legalPinned, 200) + '" làm căn cứ nên BẮT BUỘC viện dẫn đúng Điều/Khoản/Mục và trích nguyên văn điều khoản liên quan từ các đoạn dưới đây (chỉ bỏ đoạn nào không liên quan); không được viết chung chung "theo Quy tắc bảo hiểm":\n'
+          : '\n\nCĂN CỨ TỪ THƯ VIỆN (nguyên văn — chỉ dùng nếu đúng vấn đề, không bắt buộc dùng):\n') + multi(extra.legal, 16000)
+          + '\n(Đã có nguyên văn căn cứ ở trên: nếu GIẢ ĐỊNH hoặc ĐIỂM CHƯA RÕ ở phần trước nói "chưa có nguyên văn điều khoản/quy tắc" thì coi là ĐÃ ĐƯỢC GIẢI QUYẾT — dùng nguyên văn này, không viện dẫn chung chung.)'
+        : '\n\nCĂN CỨ TỪ THƯ VIỆN: (không có — không viện dẫn điều luật cụ thể)')
       + (extra.dossier ? '\n\nHỒ SƠ (tra cứu khi cần; thông tin người dùng đã xác nhận ở trên có hiệu lực cao hơn):\n' + multi(extra.dossier, 12000) : '')
       + (files.length ? '\n\nTỆP ĐÍNH KÈM CỦA NGƯỜI DÙNG (' + files.length + ' tệp, đặt ngay sau văn bản này): đọc kỹ; lấy dữ kiện cần thiết từ đó theo yêu cầu chỉnh sửa mới nhất. Dữ kiện đọc được từ tệp có hiệu lực cao hơn hồ sơ cũ nếu mâu thuẫn; chỗ nào chữ mờ/không chắc thì để "……" và ghi vào "warnings".' : '')
       + '\n\nGHI CHÚ / Ý CHÍNH THÊM CỦA NGƯỜI DÙNG:\n' + (single(brief, 3000) || '(không có)')

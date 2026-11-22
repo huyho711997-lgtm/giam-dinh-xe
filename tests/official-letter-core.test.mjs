@@ -216,3 +216,19 @@ test('sửa công văn: tệp đính kèm đi kèm yêu cầu chỉnh dưới d�
   assert.ok(/giay-to\.pdf/.test(parts[1].text) && /anh\.jpg/.test(parts[3].text));
   assert.equal(parts[4].inlineData.mimeType, 'image/jpeg'); assert.equal(parts[4].inlineData.data, 'REVG');
 });
+
+test('prompt: có căn cứ thư viện thì phân tích không được hỏi/giả định "thiếu nguyên văn"; văn bản người dùng chọn thì bắt buộc trích', () => {
+  const t = tpl('tu_choi_thong_so_lop');
+  const analyze = req => req.contents[0].parts[0].text;
+  const withLegal = analyze(Core.buildAnalyzeRequest(t, {brief: 'x', legal: '[C1] Quy tắc – Điều 10\nNguyên văn điều khoản', legalPinned: 'Quy tắc Tasco', mode: 'fast'}));
+  assert.ok(withLegal.includes('Nguyên văn điều khoản') && withLegal.includes('ĐÃ CHỦ ĐỘNG CHỌN') && withLegal.includes('KHÔNG hỏi người dùng'));
+  const pinnedOnly = analyze(Core.buildAnalyzeRequest(t, {brief: 'x', legalPinned: 'Quy tắc Tasco'}));
+  assert.ok(pinnedOnly.includes('legalQueries') && !pinnedOnly.includes('CĂN CỨ TỪ THƯ VIỆN ĐÃ TRA SẴN'));
+  assert.ok(!analyze(Core.buildAnalyzeRequest(t, {brief: 'x'})).includes('ĐÃ CHỦ ĐỘNG CHỌN'));
+  const values = Core.prefillValues(t, {}, {});
+  const compose = extra => Core.buildComposeRequest(t, values, {}, 'x', '', extra).contents[0].parts[0].text;
+  const pin = compose({legal: '[C1] đoạn', legalPinned: 'Quy tắc Tasco', assumptions: ['a'], openQuestions: []});
+  assert.ok(pin.includes('BẮT BUỘC viện dẫn') && pin.includes('ĐÃ ĐƯỢC GIẢI QUYẾT'));
+  const auto = compose({legal: '[C1] đoạn'});
+  assert.ok(!auto.includes('BẮT BUỘC viện dẫn') && auto.includes('không bắt buộc dùng'));
+});
