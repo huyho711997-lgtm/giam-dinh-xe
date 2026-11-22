@@ -910,26 +910,41 @@ const OfficialLetterPage = (() => {
     const issuer = loadIssuer();
     const dialog = document.createElement('dialog');
     dialog.className = 'ol-dialog';
-    const rows = [['parent', 'Tên công ty'], ['unit', 'Chi nhánh / đơn vị'], ['shortName', 'Tên gọi tắt'], ['place', 'Địa danh ghi ở ngày tháng'], ['signerTitle', 'Chức danh người ký'], ['signerName', 'Họ tên người ký (có thể để trống)'], ['contactPerson', 'Cán bộ liên hệ mặc định'], ['phone', 'Số điện thoại liên hệ'], ['address', 'Địa chỉ nhận hồ sơ']];
-    dialog.innerHTML = '<form method="dialog"><h2>Thông tin đơn vị ban hành</h2><p class="olp-hint">Lưu trên máy này, dùng cho mọi công văn.</p>'
-      + rows.map(([key, label]) => '<label class="ol-field"><span>' + esc(label) + '</span><input name="' + key + '" maxlength="300" value="' + esc(issuer[key]) + '"></label>').join('')
-      + '<h2 class="ol-dialog-sub">Khoá DeepSeek API</h2><p class="olp-hint" data-ds-state>Đang kiểm tra khoá…</p>'
-      + '<label class="ol-field"><span>Nhập khoá mới (bắt đầu bằng sk-…, để trống nếu giữ nguyên)</span><input name="deepseekKey" type="password" autocomplete="off" spellcheck="false" maxlength="200" placeholder="sk-..."></label>'
-      + '<div class="ol-actions"><button type="button" class="tasco-ai-btn-ghost" data-ds-clear hidden>Xoá khoá</button><button type="button" class="tasco-ai-btn-ghost" data-cancel>Hủy</button><button type="submit" class="tasco-ai-btn-primary">Lưu</button></div></form>';
+    dialog.setAttribute('aria-labelledby', 'olSetTitle');
+    // [khoá, nhãn, chiếm cả hàng?, gợi ý trong ô]
+    const rows = [['parent', 'Tên công ty', true, 'CÔNG TY TNHH BẢO HIỂM …'], ['unit', 'Chi nhánh / đơn vị', true, 'CHI NHÁNH …'], ['shortName', 'Tên gọi tắt', false, 'Bảo hiểm Tasco'], ['place', 'Địa danh ghi ở ngày tháng', false, 'Đắk Lắk'], ['signerTitle', 'Chức danh người ký', false, 'GIÁM ĐỐC'], ['signerName', 'Họ tên người ký', false, 'Tuỳ chọn — để trống nếu ký tay'], ['contactPerson', 'Cán bộ liên hệ mặc định', false, 'Tuỳ chọn'], ['phone', 'Số điện thoại liên hệ', false, 'Tuỳ chọn'], ['address', 'Địa chỉ nhận hồ sơ', true, 'Tuỳ chọn']];
+    const icon = path => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>';
+    const field = ([key, label, wide, hint]) => '<label class="ol-set-field' + (wide ? ' is-wide' : '') + '"><span>' + esc(label) + '</span><input name="' + key + '" maxlength="300" value="' + esc(issuer[key]) + '" placeholder="' + esc(hint) + '" autocomplete="off"></label>';
+    dialog.innerHTML = '<form method="dialog" class="ol-set">'
+      + '<header class="ol-set-head"><span class="ol-set-ico">' + icon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h0A1.7 1.7 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h0a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v0a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/>') + '</span>'
+      + '<div><h2 id="olSetTitle">Cài đặt Công văn AI</h2><p>Thông tin đơn vị ban hành và kết nối AI</p></div>'
+      + '<button type="button" class="ol-set-x" data-cancel aria-label="Đóng">' + icon('<path d="M18 6 6 18M6 6l12 12"/>') + '</button></header>'
+      + '<div class="ol-set-body">'
+      + '<section class="ol-set-card ol-set-key"><div class="ol-set-card-head"><h3>Kết nối DeepSeek</h3><span class="ol-set-pill is-wait" data-ds-state>Đang kiểm tra…</span></div>'
+      + '<p class="ol-set-note">Khoá API giúp Công văn AI đọc hồ sơ và soạn nội dung. Khoá chỉ lưu cho tài khoản của bạn và không hiển thị lại.</p>'
+      + '<label class="ol-set-field"><span>Khoá API mới <em>(để trống nếu giữ nguyên)</em></span><div class="ol-set-secret"><input name="deepseekKey" type="password" autofocus autocomplete="off" spellcheck="false" maxlength="200" placeholder="sk-••••••••••••••••">'
+      + '<button type="button" class="ol-set-eye" data-ds-eye aria-label="Hiện / ẩn khoá" title="Hiện / ẩn khoá">' + icon('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>') + '</button></div></label>'
+      + '<div class="ol-set-links"><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer">Lấy khoá tại platform.deepseek.com ↗</a><button type="button" class="ol-set-danger" data-ds-clear hidden>Xoá khoá</button></div></section>'
+      + '<section class="ol-set-card"><div class="ol-set-card-head"><h3>Đơn vị ban hành</h3><small>Lưu trên máy này, dùng cho mọi công văn</small></div><div class="ol-set-grid">' + rows.map(field).join('') + '</div></section>'
+      + '</div>'
+      + '<footer class="ol-set-foot"><button type="button" class="tasco-ai-btn-ghost" data-cancel>Hủy</button><button type="submit" class="tasco-ai-btn-primary">Lưu cài đặt</button></footer></form>';
     document.body.appendChild(dialog);
     const close = () => { dialog.close(); dialog.remove(); };
-    dialog.querySelector('[data-cancel]').onclick = close;
-    const stateNode = dialog.querySelector('[data-ds-state]'), clearBtn = dialog.querySelector('[data-ds-clear]');
-    if (typeof DeepSeekKeyStore === 'undefined') stateNode.textContent = 'Chưa tải được mô-đun lưu khoá. Hãy tải lại trang.';
+    dialog.querySelectorAll('[data-cancel]').forEach(button => { button.onclick = close; });
+    const stateNode = dialog.querySelector('[data-ds-state]'), clearBtn = dialog.querySelector('[data-ds-clear]'), keyInput = dialog.querySelector('[name="deepseekKey"]');
+    const setState = (kind, text) => { stateNode.className = 'ol-set-pill is-' + kind; stateNode.textContent = text; };
+    dialog.querySelector('[data-ds-eye]').onclick = () => { keyInput.type = keyInput.type === 'password' ? 'text' : 'password'; keyInput.focus(); };
+    if (typeof DeepSeekKeyStore === 'undefined') setState('off', 'Chưa tải được mô-đun');
     else DeepSeekKeyStore.get().then(key => {
-      stateNode.textContent = key ? 'Đã có khoá (…' + key.slice(-4) + '). Công văn AI đang dùng DeepSeek.' : 'Chưa có khoá — cần nhập để dùng Công văn AI (lấy tại platform.deepseek.com).';
+      if (key) { setState('ok', 'Đã kết nối · …' + key.slice(-4)); keyInput.placeholder = 'Nhập khoá mới để thay thế'; }
+      else setState('off', 'Chưa có khoá');
       clearBtn.hidden = !key;
     });
-    clearBtn.onclick = async () => { await DeepSeekKeyStore.clear(); stateNode.textContent = 'Đã xoá khoá.'; clearBtn.hidden = true; toast('Đã xoá khoá DeepSeek.', 'info'); };
+    clearBtn.onclick = async () => { await DeepSeekKeyStore.clear(); setState('off', 'Chưa có khoá'); keyInput.placeholder = 'sk-••••••••••••••••'; clearBtn.hidden = true; toast('Đã xoá khoá DeepSeek.', 'info'); };
     dialog.querySelector('form').onsubmit = async event => {
       event.preventDefault();
       const next = {}; rows.forEach(([key]) => { next[key] = dialog.querySelector('[name="' + key + '"]').value; });
-      const keyValue = dialog.querySelector('[name="deepseekKey"]').value.trim();
+      const keyValue = keyInput.value.trim();
       if (keyValue) {
         try {
           const saved = await DeepSeekKeyStore.set(keyValue);
@@ -939,6 +954,7 @@ const OfficialLetterPage = (() => {
       saveIssuer(Core().normalizeIssuer(next)); close(); toast('Đã lưu thông tin đơn vị.', 'success');
     };
     dialog.addEventListener('cancel', close);
+    dialog.addEventListener('click', event => { if (event.target === dialog) close(); });   // bấm ra vùng tối để đóng
     dialog.showModal();
   }
 
