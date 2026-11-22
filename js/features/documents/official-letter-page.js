@@ -43,7 +43,7 @@ const OfficialLetterPage = (() => {
     letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
     pop: '', drawer: '', editing: false, steps: null, agentOpen: false, agentTask: 'draft',
     historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser',
-    versions: [], selection: [], pending: null, versionId: '', usage: null, questionDrafts: Object.create(null),
+    versions: [], selection: [], pending: null, reviewView: 'inline', versionId: '', usage: null, questionDrafts: Object.create(null),
     mode: 'compose'   // 'compose' = soạn công văn · 'ask' = hỏi nghiệp vụ (xem khối "Hỏi nghiệp vụ")
   };
 
@@ -1238,12 +1238,62 @@ const OfficialLetterPage = (() => {
       + '<button type="button" class="olp-tool is-primary" data-ol-act="docx">' + svg(ICON.word) + 'Tải Word</button><button type="button" class="olp-tool" data-ol-act="print" title="In">' + svg(ICON.print) + '</button><button type="button" class="olp-tool" data-ol-act="copy" title="Sao chép nội dung">' + svg(ICON.copy) + '</button></div>'
       + '<div class="ol-paper-wrap">' + (locked ? paper.replace(/contenteditable="true"/g, 'contenteditable="false"') : paper) + '</div></div>';
   }
+  // ---- Duyệt đề xuất chỉnh sửa của AI ----
+  const wordsOf = text => (String(text || '').match(/\S+/g) || []).length;
+  // So sánh theo từ; đoạn bị viết lại gần hết thì không xen kẽ gạch xanh/đỏ (khó đọc) mà hiện hai khối Trước / Sau.
+  function reviewDiff(item) {
+    const parts = Revisions().diff(item.before, item.after);
+    let add = 0, del = 0, same = 0;
+    parts.forEach(part => { const n = wordsOf(part.text); if (part.kind === 'ins') add += n; else if (part.kind === 'del') del += n; else same += n; });
+    const rewrite = del >= 6 && same / (same + del) < 0.35;
+    const mark = (kinds, joiner) => parts.filter(part => kinds.includes(part.kind)).map(part => part.kind === 'same' ? esc(part.text) : '<' + part.kind + '>' + esc(part.text) + '</' + part.kind + '>').join(joiner || '');
+    const plain = kinds => esc(parts.filter(part => kinds.includes(part.kind)).map(part => part.text).join(''));
+    return {add, del, rewrite, inline: mark(['same', 'ins', 'del']), oldHtml: mark(['same', 'del']), newHtml: mark(['same', 'ins']), oldPlain: plain(['same', 'del']), newPlain: plain(['same', 'ins'])};
+  }
+  const reviewText = html => html && html.trim() ? html : '<em class="ola-rv-empty">Chưa có nội dung</em>';
+  function reviewCardHtml(item, i, view) {
+    const d = reviewDiff(item);
+    const delta = d.rewrite ? '<em class="is-rewrite">Viết lại</em>' : (d.add ? '<em class="is-add">+' + d.add + ' từ</em>' : '') + (d.del ? '<em class="is-del">−' + d.del + ' từ</em>' : '');
+    let body;
+    if (view === 'split') body = '<div class="ola-rv-split"><div class="ola-rv-col is-old"><h4>Hiện tại</h4><p>' + reviewText(d.rewrite ? d.oldPlain : d.oldHtml) + '</p></div><div class="ola-rv-col is-new"><h4>Đề xuất</h4><p>' + reviewText(d.rewrite ? d.newPlain : d.newHtml) + '</p></div></div>';
+    else if (d.rewrite) body = '<div class="ola-rv-block is-old"><span>Hiện tại</span><p>' + reviewText(d.oldPlain) + '</p></div><div class="ola-rv-block is-new"><span>Đề xuất</span><p>' + reviewText(d.newPlain) + '</p></div>';
+    else body = '<p class="ola-rv-text">' + reviewText(d.inline) + '</p>';
+    return '<article class="ola-rv-card' + (d.rewrite ? ' is-rewrite' : '') + '"><label class="ola-rv-card-head"><span class="ola-rv-num">' + (i + 1) + '</span><span class="ola-rv-label">' + esc(item.label) + '</span><span class="ola-rv-delta">' + delta + '</span>'
+      + '<span class="ola-rv-switch"><input type="checkbox" data-ol-change="' + i + '"' + (item.on ? ' checked' : '') + ' aria-label="Áp dụng thay đổi ' + esc(item.label) + '"><i aria-hidden="true"></i><span class="t-on">Áp dụng</span><span class="t-off">Bỏ qua</span></span></label>'
+      + '<div class="ola-rv-body">' + body + '</div></article>';
+  }
   function reviewHtml() {
     if (!st.pending) return '';
-    const diffHtml = item => Revisions().diff(item.before, item.after).map(part => part.kind === 'same' ? esc(part.text) : '<' + part.kind + '>' + esc(part.text) + '</' + part.kind + '>').join('');
-    return '<section class="ola-review" aria-label="So sánh chỉnh sửa của AI"><header><div><h2>Đề xuất chỉnh sửa</h2><p>' + esc(st.pending.scoped ? 'Chỉ phần đã bôi đen được thay đổi.' : st.pending.instruction) + '</p></div><span><del>Bỏ</del> <ins>Thêm</ins></span></header>'
-      + '<div class="ola-review-list">' + st.pending.changes.map((item, i) => '<article><label><input type="checkbox" data-ol-change="' + i + '"' + (item.on ? ' checked' : '') + '>Dùng thay đổi: ' + esc(item.label) + '</label><p>' + diffHtml(item) + '</p></article>').join('') + '</div>'
-      + '<footer><span>Bản thảo bên dưới đang giữ nội dung hiện tại.</span><button type="button" class="olp-tool" data-ol-act="reject-changes">Bỏ đề xuất</button><button type="button" class="olp-tool is-primary" data-ol-act="accept-changes">Áp dụng thay đổi</button></footer></section>';
+    const view = st.reviewView === 'split' ? 'split' : 'inline', list = st.pending.changes;
+    const totals = list.reduce((sum, item) => { const d = reviewDiff(item); return {add: sum.add + d.add, del: sum.del + d.del}; }, {add: 0, del: 0});
+    const on = list.filter(item => item.on).length;
+    const ask = st.pending.scoped ? 'Chỉ phần đã bôi đen được thay đổi.' : st.pending.instruction;
+    return '<section class="ola-review" aria-label="So sánh chỉnh sửa của AI">'
+      + '<header class="ola-rv-head"><span class="ola-rv-orb" aria-hidden="true">' + svg(ICON.spark) + '</span><div class="ola-rv-title"><h2>Đề xuất chỉnh sửa</h2><p class="ola-rv-ask"><b>Yêu cầu</b>' + esc(ask) + '</p></div>'
+      + '<div class="ola-rv-view" role="group" aria-label="Kiểu hiển thị"><button type="button" data-ol-act="review-view" data-ol-view="inline" aria-pressed="' + (view === 'inline') + '">Gộp</button><button type="button" data-ol-act="review-view" data-ol-view="split" aria-pressed="' + (view === 'split') + '">Trước / Sau</button></div></header>'
+      + '<div class="ola-rv-bar"><label class="ola-rv-all"><input type="checkbox" data-ol-change-all' + (on === list.length ? ' checked' : '') + '><span data-ol-rv-count>' + reviewCountText(on, list.length) + '</span></label>'
+      + '<span class="ola-rv-stats"><em class="is-add">+' + totals.add + ' từ</em><em class="is-del">−' + totals.del + ' từ</em></span></div>'
+      + '<div class="ola-rv-list">' + list.map((item, i) => reviewCardHtml(item, i, view)).join('') + '</div>'
+      + '<footer class="ola-rv-foot"><span class="ola-rv-note">Bản thảo giữ nguyên cho tới khi bạn áp dụng.</span><button type="button" class="olp-tool" data-ol-act="reject-changes">Bỏ đề xuất</button><button type="button" class="olp-tool is-primary" data-ol-act="accept-changes"' + (on ? '' : ' disabled') + '>' + reviewApplyText(on) + '</button></footer></section>';
+  }
+  const reviewCountText = (on, total) => on === total ? 'Đã chọn tất cả ' + total + ' thay đổi' : 'Đã chọn ' + on + '/' + total + ' thay đổi';
+  const reviewApplyText = on => on ? 'Áp dụng ' + on + ' thay đổi' : 'Chọn thay đổi để áp dụng';
+  // Cập nhật bộ đếm / ô "chọn tất cả" / nút Áp dụng tại chỗ, không dựng lại cả danh sách.
+  function updateReviewState() {
+    const root = $('.ola-review');
+    if (!root || !st.pending) return;
+    const total = st.pending.changes.length, on = st.pending.changes.filter(item => item.on).length;
+    const count = root.querySelector('[data-ol-rv-count]'), all = root.querySelector('[data-ol-change-all]'), apply = root.querySelector('[data-ol-act="accept-changes"]');
+    if (count) count.textContent = reviewCountText(on, total);
+    if (all) { all.checked = on === total; all.indeterminate = on > 0 && on < total; }
+    if (apply) { apply.textContent = reviewApplyText(on); apply.disabled = !on; }
+  }
+  function repaintReview() {
+    const node = $('.ola-review');
+    if (!node || !st.pending) return;
+    const box = $('[data-ol-scroll]'), top = box ? box.scrollTop : 0;
+    node.outerHTML = reviewHtml().replace('class="ola-review"', 'class="ola-review is-static"');   // không chạy lại hiệu ứng xuất hiện khi chỉ đổi kiểu xem
+    if (box) box.scrollTop = top;
   }
   const REFINES = ['Viết ngắn gọn hơn', 'Giọng trang trọng hơn', 'Thêm hạn phản hồi 07 ngày làm việc'];
   function refineHtml() {
@@ -1532,7 +1582,7 @@ const OfficialLetterPage = (() => {
     generation++; controller?.abort(); controller = null;
     resetAnalysis();
     releaseFiles(st.files); releaseFiles(st.refineFiles);
-    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, versionId:'', usage: null, questionDrafts: Object.create(null)});
+    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, reviewView:'inline', versionId:'', usage: null, questionDrafts: Object.create(null)});
   }
   // Hộp xác nhận dùng chung của app (showPremiumConfirmModal) — không dùng hộp thoại hệ thống của trình duyệt.
   function askConfirm(options) {
@@ -1626,6 +1676,7 @@ const OfficialLetterPage = (() => {
     switch (act.dataset.olAct) {
       case 'agent-toggle': st.agentOpen = !st.agentOpen; updateSteps(); $('[data-ol-act="agent-toggle"]')?.focus(); break;
       case 'review': $('.ola-review')?.scrollIntoView({block:'start', behavior:'auto'}); break;
+      case 'review-view': if (st.pending) { st.reviewView = act.dataset.olView === 'split' ? 'split' : 'inline'; repaintReview(); } break;
       case 'run': run(); break;
       case 'qa-send': askQuestion(); break;
       case 'qa-new': newQaChat(); break;
@@ -1667,7 +1718,8 @@ const OfficialLetterPage = (() => {
   }
   function onChange(event) {
     const target = event.target;
-    if (target.matches('[data-ol-change]') && st.pending) { const change = st.pending.changes[Number(target.dataset.olChange)]; if (change) change.on = target.checked; return; }
+    if (target.matches('[data-ol-change]') && st.pending) { const change = st.pending.changes[Number(target.dataset.olChange)]; if (change) change.on = target.checked; updateReviewState(); return; }
+    if (target.matches('[data-ol-change-all]') && st.pending) { st.pending.changes.forEach(item => { item.on = target.checked; }); host.querySelectorAll('[data-ol-change]').forEach(box => { box.checked = target.checked; }); updateReviewState(); return; }
     if (target.matches('[data-ol-legal-doc]')) { pickLegalDoc(target.value); return; }
     if (target.matches('[data-ol-slot]')) { addFiles(target.files, 'files', target.dataset.olSlot); target.value = ''; return; }
     if (target.matches('[data-ol-files]')) { addFiles(target.files, target.dataset.olFiles === 'refine' ? 'refineFiles' : 'files'); target.value = ''; }
