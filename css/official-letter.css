@@ -56,7 +56,7 @@
 .ola-main.is-working .ola-gear { display:none; }
 
 /* Màn mở đầu */
-.ola-hero { display:grid; justify-items:center; gap:18px; max-width:760px; margin:0 auto; padding:min(12vh,110px) 16px 40px; }
+.ola-hero { display:grid; grid-template-columns:minmax(0,1fr); justify-items:center; gap:18px; width:100%; max-width:760px; box-sizing:border-box; margin:0 auto; padding:min(12vh,110px) 16px 40px; }
 .ola-avatar { display:grid; place-items:center; width:52px; height:52px; border:1px solid rgba(179,140,67,.26); border-radius:16px; background:rgba(216,180,109,.12); color:#a07733; }
 .ola-avatar svg { width:24px; height:24px; }
 .ola-hero h1 { margin:0; font-size:clamp(22px,2.4vw,28px); font-weight:800; letter-spacing:-.03em; text-align:center; }
@@ -73,7 +73,7 @@
 .ola-composer textarea::placeholder { color:var(--text-muted); }
 .ola-files { display:flex; flex-wrap:wrap; gap:6px; padding:6px 4px 0; }
 .ola-files[hidden] { display:none; }
-.ola-bar { display:flex; align-items:center; gap:6px; padding-top:8px; }
+.ola-bar { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding-top:8px; }
 .ola-spacer { flex:1; }
 .ola-icon-btn { display:grid; place-items:center; width:34px; height:34px; border-radius:10px; color:var(--text-muted); cursor:pointer; }
 .ola-icon-btn:hover { background:color-mix(in srgb,var(--primary) 10%,transparent); color:var(--primary); }
