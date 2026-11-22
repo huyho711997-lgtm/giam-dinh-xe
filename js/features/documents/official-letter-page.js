@@ -643,25 +643,90 @@ const OfficialLetterPage = (() => {
   // ================= HỎI NGHIỆP VỤ =================
   // Hỏi đáp trên Thư viện tài liệu: tìm đoạn khớp (BM25) → DeepSeek trả lời CHỈ dựa trên các đoạn đó, dẫn mã [C#]; bấm mã để xem nguyên văn.
   // Hội thoại lưu trên máy (localStorage), tách hẳn khỏi phiên soạn công văn; dùng chung khoá DeepSeek, hồ sơ đang chọn và ô "Quy tắc".
-  const QA_KEY = 'officialLetter.qa.v1', MODE_KEY = 'officialLetter.mode.v1';
-  const qa = {messages: [], draft: '', busy: false, status: '', usage: null, open: Object.create(null), loaded: false, deep: true};
+  const QA_KEY = 'officialLetter.qa.v1', QA_CHATS_KEY = 'officialLetter.qaChats.v1', QA_MAX_CHATS = 30, MODE_KEY = 'officialLetter.mode.v1';
+  const qa = {messages: [], draft: '', busy: false, status: '', usage: null, open: Object.create(null), loaded: false, deep: true, chats: [], activeId: ''};
   const DEEP_KEY = 'officialLetter.qaDeep.v1';
+  // Nhiều cuộc trò chuyện: qa.messages/qa.usage là cuộc đang mở; qa.chats là toàn bộ danh sách lưu trên máy (v2), tự chuyển từ bản v1 một cuộc.
   function loadQa() {
     if (qa.loaded) return;
     qa.loaded = true;
-    try { if (QA()) qa.messages = QA().normalizeStore(JSON.parse(localStorage.getItem(QA_KEY) || 'null')); } catch (_) { /* bỏ qua */ }
+    const Q = QA();
+    try {
+      if (Q) {
+        const raw = JSON.parse(localStorage.getItem(QA_CHATS_KEY) || 'null');
+        if (raw && Array.isArray(raw.chats)) {
+          qa.chats = raw.chats.map(chat => ({id: String(chat.id || Q.newId()), title: String(chat.title || '').slice(0, 90), at: Number(chat.at) || 0, usage: chat.usage || null, messages: Q.normalizeStore({messages: chat.messages})})).filter(chat => chat.messages.length).slice(0, QA_MAX_CHATS);
+          const active = qa.chats.find(chat => chat.id === raw.active);
+          if (active) { qa.activeId = active.id; qa.messages = active.messages; qa.usage = active.usage; }
+        } else {
+          const old = Q.normalizeStore(JSON.parse(localStorage.getItem(QA_KEY) || 'null'));
+          if (old.length) { qa.messages = old; qa.activeId = Q.newId(); qaSyncActive(); }
+        }
+      }
+    } catch (_) { /* bỏ qua */ }
     try { const mode = localStorage.getItem(MODE_KEY); if (mode === 'ask' && QA()) st.mode = 'ask'; qa.deep = localStorage.getItem(DEEP_KEY) !== '0'; } catch (_) { /* bỏ qua */ }
   }
+  function qaTitleOf(messages) {
+    const first = messages.find(item => item.role === 'user');
+    const text = String(first ? first.text : 'Cuộc trò chuyện').replace(/\s+/g, ' ').trim();
+    return text.length > 70 ? text.slice(0, 69) + '…' : text;
+  }
+  // Ghi cuộc đang mở vào danh sách (cuộc mới được tạo khi có tin nhắn đầu tiên).
+  function qaSyncActive() {
+    if (!qa.messages.length) return;
+    if (!qa.activeId) qa.activeId = QA().newId();
+    let chat = qa.chats.find(item => item.id === qa.activeId);
+    if (!chat) { chat = {id: qa.activeId, title: '', at: 0, usage: null, messages: []}; qa.chats.unshift(chat); }
+    chat.messages = qa.messages; chat.usage = qa.usage; chat.title = qaTitleOf(qa.messages); chat.at = Date.now();
+    qa.chats.sort((a, b) => b.at - a.at);
+    if (qa.chats.length > QA_MAX_CHATS) qa.chats.length = QA_MAX_CHATS;
+  }
   function saveQa() {
-    const list = qa.messages.slice(-24);
-    try { localStorage.setItem(QA_KEY, JSON.stringify({messages: list})); }
-    catch (_) { try { localStorage.setItem(QA_KEY, JSON.stringify({messages: list.slice(-6).map(item => ({...item, sources: []}))})); } catch (__) { /* hết chỗ lưu: giữ trong phiên */ } }
+    qaSyncActive();
+    const pack = (keepSources) => JSON.stringify({active: qa.activeId, chats: qa.chats.map(chat => ({id: chat.id, title: chat.title, at: chat.at, usage: chat.usage, messages: chat.messages.slice(-24).map(item => (keepSources || chat.id === qa.activeId) ? item : {...item, sources: []})}))});
+    // Hết chỗ lưu thì bỏ nguồn của các cuộc cũ, rồi bỏ bớt cuộc cũ nhất; cuộc đang mở luôn được giữ.
+    try { localStorage.setItem(QA_CHATS_KEY, pack(true)); }
+    catch (_) {
+      try { localStorage.setItem(QA_CHATS_KEY, pack(false)); }
+      catch (__) {
+        try { while (qa.chats.length > 1) { qa.chats.pop(); try { localStorage.setItem(QA_CHATS_KEY, pack(false)); break; } catch (___) { /* thử tiếp */ } } } catch (____) { /* giữ trong phiên */ }
+      }
+    }
+    if (host && st.histOpen && st.mode === 'ask') updateHistory(true);
+  }
+  function resetQaView() { qa.messages = []; qa.usage = null; qa.open = Object.create(null); qa.draft = ''; qa.status = ''; }
+  function newQaChat() {
+    if (qa.busy) return;
+    if (!qa.messages.length) { focusMain(); return; }
+    saveQa();
+    qa.activeId = ''; resetQaView();
+    renderAll(); focusMain();
+  }
+  function openQaChat(id) {
+    if (qa.busy || id === qa.activeId) return;
+    const chat = qa.chats.find(item => item.id === id);
+    if (!chat) return;
+    saveQa();
+    qa.activeId = chat.id; qa.messages = chat.messages; qa.usage = chat.usage; qa.open = Object.create(null); qa.draft = '';
+    saveQa();
+    renderAll(); scrollQa(); focusMain();
+  }
+  async function deleteQaChat(id) {
+    if (qa.busy) return;
+    const chat = qa.chats.find(item => item.id === id);
+    if (!chat && id !== qa.activeId) return;
+    if (!await askConfirm({eyebrow: 'HỎI NGHIỆP VỤ', title: 'Xoá cuộc trò chuyện?', message: '"' + (chat ? chat.title : 'Cuộc trò chuyện này') + '" sẽ bị xoá khỏi máy này và không khôi phục được.', confirmText: 'Xoá'})) return;
+    qa.chats = qa.chats.filter(item => item.id !== id);
+    if (id === qa.activeId) { qa.activeId = ''; resetQaView(); }
+    saveQa();
+    if (!qa.chats.length) try { localStorage.removeItem(QA_CHATS_KEY); } catch (_) { /* bỏ qua */ }
+    renderAll(); focusMain();
   }
   const qaLocked = () => !!(st.busy || st.pending || qa.busy);
   function setMode(mode) {
     if (mode === st.mode || (mode === 'ask' && !QA()) || qaLocked()) return;
     collectAll();
-    st.mode = mode; st.pop = ''; st.recQuery = '';
+    st.mode = mode; st.pop = ''; st.recQuery = ''; st.histQuery = '';
     try { localStorage.setItem(MODE_KEY, mode); } catch (_) { /* bỏ qua */ }
     renderAll();
     focusMain();
@@ -758,12 +823,7 @@ const OfficialLetterPage = (() => {
     qa.messages.splice(at - 1, 2);
     askQuestion(question);
   }
-  async function clearQa() {
-    if (qa.busy) return;
-    if (!await askConfirm({eyebrow: 'HỎI NGHIỆP VỤ', title: 'Xoá cuộc hội thoại?', message: 'Toàn bộ câu hỏi và câu trả lời sẽ bị xoá khỏi máy này.', confirmText: 'Xoá hội thoại'})) return;
-    qa.messages = []; qa.usage = null; qa.open = Object.create(null);
-    saveQa(); renderAll(); focusMain();
-  }
+  const clearQa = () => deleteQaChat(qa.activeId);
   function openCite(msgId, code) {
     const key = msgId + ':' + code;
     qa.open[key] = true;
@@ -849,7 +909,8 @@ const OfficialLetterPage = (() => {
       '<button type="button" role="tab" aria-selected="' + (st.mode === id) + '" class="ola-mode-btn' + (st.mode === id ? ' is-on' : '') + '" data-ol-mode="' + id + '"' + (locked && st.mode !== id ? ' disabled' : '') + '>' + svg(icon) + '<span>' + label + '</span></button>').join('') + '</div>' : '<span></span>';
     const right = st.mode === 'ask'
       ? '<span class="ola-top-acts"><span class="olp-usage" data-ol-qa-usage' + (usageText(qa.usage) ? '' : ' hidden') + ' title="' + esc(usageTitle(qa.usage)) + '">' + esc(usageText(qa.usage)) + '</span>'
-        + (qa.messages.length ? '<button type="button" class="ola-hist-btn" data-ol-act="qa-clear" title="Xoá cuộc hội thoại" aria-label="Xoá cuộc hội thoại"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.trash) + '</button>' : '')
+        + (qa.messages.length ? '<button type="button" class="ola-hist-btn ola-hist-new" data-ol-act="qa-new" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>' : '')
+        + (qa.messages.length ? '<button type="button" class="ola-hist-btn" data-ol-act="qa-clear" title="Xoá cuộc trò chuyện này" aria-label="Xoá cuộc trò chuyện này"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.trash) + '</button>' : '')
         + '<button type="button" class="ola-hist-btn" data-ol-act="settings" title="Cài đặt: khoá DeepSeek &amp; đơn vị ban hành" aria-label="Cài đặt">' + svg(ICON.gear) + '</button></span>'
       : '<span></span>';
     return '<div class="ola-top">' + histBtn + mode + right + '</div>';
@@ -1197,9 +1258,20 @@ const OfficialLetterPage = (() => {
   }
 
   // ---- Thanh lịch sử bên trái ----
+  const askSide = () => st.mode === 'ask' && !!QA();
+  function qaChatsHtml() {
+    const H = History();
+    const query = fold(st.histQuery).trim();
+    const items = qa.chats.map(chat => ({id: chat.id, title: chat.title, sub: Math.ceil(chat.messages.length / 2) + ' câu hỏi', updatedAt: chat.at})).filter(item => !query || fold(item.title).includes(query));
+    if (!items.length) return '<p class="ola-hist-empty">' + (query ? 'Không có cuộc trò chuyện khớp “' + esc(st.histQuery) + '”.' : 'Chưa có cuộc trò chuyện nào. Câu hỏi đầu tiên sẽ tự được lưu ở đây.') + '</p>';
+    const time = ms => { const d = new Date(ms), now = new Date(); const p = n => String(n).padStart(2, '0'); return d.toDateString() === now.toDateString() ? p(d.getHours()) + ':' + p(d.getMinutes()) : p(d.getDate()) + '/' + p(d.getMonth() + 1); };
+    return H.groups(items).map(group => '<div class="ola-hist-group"><h4>' + esc(group.label) + '</h4>' + group.items.map(item => '<div class="ola-hist-item' + (item.id === qa.activeId ? ' is-active' : '') + '"><button type="button" data-ol-qa-open="' + esc(item.id) + '" title="' + esc(item.title) + '"><b>' + esc(item.title) + '</b><small>' + esc([item.sub, time(item.updatedAt)].join(' · ')) + '</small></button>'
+      + '<button type="button" class="ola-hist-del" data-ol-qa-del="' + esc(item.id) + '" aria-label="Xoá cuộc trò chuyện" title="Xoá">' + svg(ICON.trash) + '</button></div>').join('') + '</div>').join('');
+  }
   function historyItemsHtml() {
     const H = History();
     if (!H) return '';
+    if (askSide()) return qaChatsHtml();
     const query = fold(st.histQuery).trim();
     const items = st.history.filter(item => !query || fold(item.title + ' ' + item.sub).includes(query));
     if (!items.length) return '<p class="ola-hist-empty">' + (query ? 'Không có công văn khớp “' + esc(st.histQuery) + '”.' : 'Chưa có công văn nào. Công văn soạn xong sẽ tự lưu ở đây.') + '</p>';
@@ -1209,18 +1281,20 @@ const OfficialLetterPage = (() => {
   }
   function historyHtml() {
     if (!History() || !st.histOpen) return '';
-    return '<div class="ola-hist-backdrop" data-ol-hist-backdrop></div><aside class="ola-hist" aria-label="Lịch sử công văn"><header><b>' + svg(ICON.history) + 'Lịch sử</b><span>'
-      + '<button type="button" class="ola-hist-btn" data-ol-act="new" title="Công văn mới" aria-label="Công văn mới"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>'
+    const ask = askSide();
+    return '<div class="ola-hist-backdrop" data-ol-hist-backdrop></div><aside class="ola-hist" aria-label="' + (ask ? 'Lịch sử hỏi nghiệp vụ' : 'Lịch sử công văn') + '"><header><b>' + svg(ICON.history) + 'Lịch sử</b><span>'
+      + (ask ? '<button type="button" class="ola-hist-btn" data-ol-act="qa-new" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>'
+        : '<button type="button" class="ola-hist-btn" data-ol-act="new" title="Công văn mới" aria-label="Công văn mới"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>')
       + '<button type="button" class="ola-hist-btn" data-ol-act="hist-toggle" title="Thu gọn" aria-label="Thu gọn lịch sử">' + svg(ICON.panel) + '</button></span></header>'
-      + '<label class="ola-hist-search">' + svg(ICON.search) + '<input type="search" data-ol-hist-q placeholder="Tìm công văn…" value="' + esc(st.histQuery) + '" aria-label="Tìm trong lịch sử"></label>'
+      + '<label class="ola-hist-search">' + svg(ICON.search) + '<input type="search" data-ol-hist-q placeholder="' + (ask ? 'Tìm cuộc trò chuyện…' : 'Tìm công văn…') + '" value="' + esc(st.histQuery) + '" aria-label="Tìm trong lịch sử"></label>'
       + '<div class="ola-hist-list" data-ol-hist-list>' + historyItemsHtml() + '</div>'
-      + '<footer>' + (st.histScope === 'account' ? 'Lưu theo tài khoản' : 'Lưu trên trình duyệt này') + '</footer></aside>';
+      + '<footer>' + (!ask && st.histScope === 'account' ? 'Lưu theo tài khoản' : 'Lưu trên trình duyệt này') + '</footer></aside>';
   }
   function updateHistory(listOnly) {
     const box = $('[data-ol-hist-list]');
     if (!box) return;
     box.innerHTML = historyItemsHtml();
-    if (!listOnly) { const foot = $('.ola-hist footer'); if (foot) foot.textContent = st.histScope === 'account' ? 'Lưu theo tài khoản' : 'Lưu trên trình duyệt này'; }
+    if (!listOnly) { const foot = $('.ola-hist footer'); if (foot) foot.textContent = !askSide() && st.histScope === 'account' ? 'Lưu theo tài khoản' : 'Lưu trên trình duyệt này'; }
   }
 
   function renderAll() {
@@ -1366,6 +1440,10 @@ const OfficialLetterPage = (() => {
     if (version && !st.busy && !st.pending) { collectAll(); st.versionId = version.dataset.olVersion; renderAll(); return; }
     const restore = target.closest('[data-ol-restore]');
     if (restore) { restoreVersion(restore.dataset.olRestore); return; }
+    const qaDel = target.closest('[data-ol-qa-del]');
+    if (qaDel) { event.stopPropagation(); deleteQaChat(qaDel.dataset.olQaDel); return; }
+    const qaOpen = target.closest('[data-ol-qa-open]');
+    if (qaOpen) { openQaChat(qaOpen.dataset.olQaOpen); return; }
     const histDel = target.closest('[data-ol-hist-del]');
     if (histDel) { event.stopPropagation(); deleteHistory(histDel.dataset.olHistDel); return; }
     const histOpen = target.closest('[data-ol-hist-open]');
@@ -1423,6 +1501,7 @@ const OfficialLetterPage = (() => {
       case 'review': $('.ola-review')?.scrollIntoView({block:'start', behavior:'auto'}); break;
       case 'run': run(); break;
       case 'qa-send': askQuestion(); break;
+      case 'qa-new': newQaChat(); break;
       case 'qa-stop': controller?.abort(); break;
       case 'qa-deep': if (qa.busy || st.busy) break; collectAll(); qa.deep = !qa.deep; try { localStorage.setItem(DEEP_KEY, qa.deep ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); focusMain(); break;
       case 'qa-clear': clearQa(); break;
