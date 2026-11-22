@@ -695,8 +695,9 @@ const KpiZonePage = (() => {
     const [cy, cm] = monthValue.split('-').map(Number);
     let hi = idx(cy, cm), lo = hi;
     if (prep && prep.records.length) { const a = K.partsOf(prep.asOf); hi = Math.max(hi, idx(a.y, a.m) + 1); lo = Math.min(lo, idx(a.y, a.m) - 35); const first = prep.records.reduce((n, r) => Math.min(n, r.open), Infinity); const f = K.partsOf(first); lo = Math.max(lo, idx(f.y, f.m)); lo = Math.min(lo, idx(cy, cm)); }
+    const nowDt = new Date(), nowY = nowDt.getFullYear(), nowM = nowDt.getMonth() + 1;
     let html = '';
-    for (let i = hi; i >= lo; i--) { const y = Math.floor(i / 12), m = i % 12 + 1, v = y + '-' + String(m).padStart(2, '0'); html += '<option value="' + v + '"' + (v === monthValue ? ' selected' : '') + '>Tháng ' + m + '/' + y + '</option>'; }
+    for (let i = hi; i >= lo; i--) { const y = Math.floor(i / 12), m = i % 12 + 1, v = y + '-' + String(m).padStart(2, '0'); html += '<option value="' + v + '"' + (v === monthValue ? ' selected' : '') + '>Tháng ' + m + '/' + y + (y === nowY && m === nowM ? ' (Tháng hiện tại)' : '') + '</option>'; }
     select.innerHTML = html; select.value = monthValue;
   }
 

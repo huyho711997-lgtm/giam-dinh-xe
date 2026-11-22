@@ -5,6 +5,10 @@
       const container = targetContainer || document.getElementById('tabContentContainer');
       if (!container) return;
 
+      const _nowPeriod = new Date();
+      const currentCalendarMonth = _nowPeriod.getMonth() + 1;
+      const currentCalendarYear = _nowPeriod.getFullYear();
+
       const currentUser = firebase.auth().currentUser;
       if (currentUser && dbNodeInstance) {
         const uid = currentUser.uid;
@@ -2115,7 +2119,10 @@
                   </button>
                   <div id="ddAnnualClaimsYearMenu" class="custom-select-menu report-filter-select-menu" style="display: ${activeOpenDropdownId === 'ddAnnualClaimsYearMenu' ? 'block' : 'none'}; position: absolute; top: calc(100% + 8px); left: 0; z-index: 999; min-width: 170px; max-height: 300px; overflow-y: auto;">
                     <div class="report-filter-menu-head"><span class="report-filter-menu-head__icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></span><div><div class="report-filter-menu-head__title">Năm báo cáo</div><div class="report-filter-menu-head__meta">Chọn năm cần thống kê</div></div></div>
-                    ${getAnnualClaimsAvailableYears().map(year => `<div class="custom-select-item ${String(year) === String(activeAnnualClaimsYear) ? 'active' : ''}" onclick="selectAnnualClaimsYear('${year}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 800; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(year) === String(activeAnnualClaimsYear) ? 'background: rgba(216,180,109,0.15); color: var(--primary);' : ''}"><span>${year}</span></div>`).join('')}
+                    ${getAnnualClaimsAvailableYears().map(year => {
+                      const isCurY = String(year) === String(currentCalendarYear);
+                      return `<div class="custom-select-item ${String(year) === String(activeAnnualClaimsYear) ? 'active' : ''} ${isCurY ? 'is-current-period' : ''}" onclick="selectAnnualClaimsYear('${year}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 800; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(year) === String(activeAnnualClaimsYear) ? 'background: rgba(216,180,109,0.15); color: var(--primary);' : ''}"><span>${year}${isCurY ? ' <span class="ton-current-period-tag">(Năm hiện tại)</span>' : ''}</span></div>`;
+                    }).join('')}
                   </div>
                 </div>
               ` : activeGdvReportView === 'tnds_ton' ? `
@@ -2160,9 +2167,10 @@
                     </div>
                     ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => {
                       const isSel = activeCarBrandReportMonths.includes(String(m));
+                      const isCurM = m === currentCalendarMonth && (activeCarBrandReportYears.includes('all') || activeCarBrandReportYears.includes(String(currentCalendarYear)));
                       return `
-                      <div class="custom-select-item ${isSel ? 'active' : ''}" onclick="toggleCarBrandMonth('${m}', event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
-                        <span>Tháng ${m}</span>
+                      <div class="custom-select-item ${isSel ? 'active' : ''} ${isCurM ? 'is-current-period' : ''}" onclick="toggleCarBrandMonth('${m}', event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                        <span>Tháng ${m}${isCurM ? ' <span class="ton-current-period-tag">(Tháng hiện tại)</span>' : ''}</span>
                         <div style="width: 16px; height: 16px; border-radius: 4px; border: 2px solid ${isSel ? 'var(--primary)' : 'var(--border-strong)'}; background: ${isSel ? 'var(--primary)' : 'transparent'}; display: flex; align-items: center; justify-content: center;">
                           ${isSel ? '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#111" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                         </div>
@@ -2189,9 +2197,10 @@
                     </div>
                     ${yearList.map(y => {
                       const isSel = activeCarBrandReportYears.includes(String(y));
+                      const isCurY = String(y) === String(currentCalendarYear);
                       return `
-                      <div class="custom-select-item ${isSel ? 'active' : ''}" onclick="toggleCarBrandYear('${y}', event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
-                        <span>Năm ${y}</span>
+                      <div class="custom-select-item ${isSel ? 'active' : ''} ${isCurY ? 'is-current-period' : ''}" onclick="toggleCarBrandYear('${y}', event)" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${isSel ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                        <span>Năm ${y}${isCurY ? ' <span class="ton-current-period-tag">(Năm hiện tại)</span>' : ''}</span>
                         <div style="width: 16px; height: 16px; border-radius: 4px; border: 2px solid ${isSel ? 'var(--primary)' : 'var(--border-strong)'}; background: ${isSel ? 'var(--primary)' : 'transparent'}; display: flex; align-items: center; justify-content: center;">
                           ${isSel ? '<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#111" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                         </div>
@@ -2216,12 +2225,15 @@
                       <span>Toàn bộ tháng</span>
                       ${activeGdvReportMonth === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                     </div>
-                    ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => `
-                      <div class="custom-select-item ${String(m) === String(activeGdvReportMonth) ? 'active' : ''}" onclick="selectGdvReportMonth('${m}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(m) === String(activeGdvReportMonth) ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
-                        <span>Tháng ${m}</span>
+                    ${[1,2,3,4,5,6,7,8,9,10,11,12].map(m => {
+                      const isCurM = m === currentCalendarMonth && (activeGdvReportYear === 'all' || String(activeGdvReportYear) === String(currentCalendarYear));
+                      return `
+                      <div class="custom-select-item ${String(m) === String(activeGdvReportMonth) ? 'active' : ''} ${isCurM ? 'is-current-period' : ''}" onclick="selectGdvReportMonth('${m}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(m) === String(activeGdvReportMonth) ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                        <span>Tháng ${m}${isCurM ? ' <span class="ton-current-period-tag">(Tháng hiện tại)</span>' : ''}</span>
                         ${String(m) === String(activeGdvReportMonth) ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                       </div>
-                    `).join('')}
+                    `;
+                    }).join('')}
                   </div>
                 </div>
 
@@ -2240,12 +2252,15 @@
                       <span>Tất cả các năm</span>
                       ${activeGdvReportYear === 'all' ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                     </div>
-                    ${yearList.map(y => `
-                      <div class="custom-select-item ${String(y) === String(activeGdvReportYear) ? 'active' : ''}" onclick="selectGdvReportYear('${y}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(y) === String(activeGdvReportYear) ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
-                        <span>Năm ${y}</span>
+                    ${yearList.map(y => {
+                      const isCurY = String(y) === String(currentCalendarYear);
+                      return `
+                      <div class="custom-select-item ${String(y) === String(activeGdvReportYear) ? 'active' : ''} ${isCurY ? 'is-current-period' : ''}" onclick="selectGdvReportYear('${y}')" style="padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 750; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: space-between; ${String(y) === String(activeGdvReportYear) ? 'background: rgba(216,180,109,0.15); color: var(--primary); font-weight: 850;' : ''}">
+                        <span>Năm ${y}${isCurY ? ' <span class="ton-current-period-tag">(Năm hiện tại)</span>' : ''}</span>
                         ${String(y) === String(activeGdvReportYear) ? '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>' : ''}
                       </div>
-                    `).join('')}
+                    `;
+                    }).join('')}
                   </div>
                 </div>
               `}
