@@ -54,7 +54,7 @@ function sceneReportAiHtml() {
   return '<div class="sr-ai-head"><span class="sr-ai-orb">' + sceneReportIcon('sparkles') + '</span><div><strong>AI phân tích ảnh hiện trường</strong>'
     + '<p>Gửi ảnh để AI nháp mục <b>[9] mô tả hiện trường</b>, <b>[10] dấu vết</b> và <b>[11] mẫu vật</b>. Bấm nhãn trên ảnh để chọn loại: Hiện trường, Dấu vết hoặc Mẫu vật.</p></div></div>'
     + '<div class="sr-ai-photos">' + thumbs + add + '</div>'
-    + '<textarea class="sr-input sr-area sr-ai-note" data-sr-ai-note rows="2" maxlength="' + SA.MAX_NOTE + '" placeholder="Ghi chú cho AI (tuỳ chọn): VD xe lao xuống taluy bên phải; ảnh 4 là mảnh đèn nhặt cách xe khoảng 5 m…"' + (locked ? ' disabled' : '') + '>' + E(st.note) + '</textarea>'
+    + '<textarea class="sr-input sr-area sr-ai-note" data-sr-ai-note rows="2" maxlength="' + SA.MAX_NOTE + '" placeholder="Ghi chú cho AI (tuỳ chọn): VD xe còn lại BKS 48H02661; ảnh 3 là mảnh cản nhặt gần xe…"' + (locked ? ' disabled' : '') + '>' + E(st.note) + '</textarea>'
     + '<div class="sr-ai-actions">' + action + '</div>'
     + (st.error ? '<p class="sr-ai-error" role="alert">' + E(st.error) + '</p>' : '')
     + (st.applied ? '<p class="sr-ai-ok">' + sceneReportIcon('check') + E(st.applied) + '</p>' : '')
@@ -94,7 +94,7 @@ async function sceneReportAiAddFiles(list) {
 
 function sceneReportAiContext() {
   const data = sceneReportState();
-  return {plate: data.plate, location: data.accidentLocation, when: [data.accidentTime, data.accidentDate].filter(Boolean).join(' '), cause: data.withParty, note: sceneReportAi.note,
+  return {plate: data.plate, location: data.accidentLocation, when: [data.accidentTime, data.accidentDate].filter(Boolean).join(' '), withParty: data.withParty, note: sceneReportAi.note,
     existing: {scene: data.scene, traces: data.traces, samples: data.samples}};
 }
 

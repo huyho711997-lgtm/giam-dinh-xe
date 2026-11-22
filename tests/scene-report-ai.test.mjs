@@ -11,13 +11,16 @@ const plain = value => JSON.parse(JSON.stringify(value));
 
 test('buildPrompt đưa loại ảnh, hồ sơ và nội dung đã có vào ngữ cảnh', () => {
   const photos = [{kind: 'scene'}, {kind: 'trace'}, {kind: 'sample'}, {kind: 'lạ'}];
-  const prompt = AI.buildPrompt({plate: '47A-123.45', location: 'QL14', cause: 'va chạm xe tải', note: 'ảnh 3 là mảnh đèn', existing: {scene: '1. Xe nằm trong phần đường.', samples: ''}}, photos);
+  const prompt = AI.buildPrompt({plate: '47A-123.45', location: 'QL14', withParty: 'xe ôtô BKS 48H02661', note: 'ảnh 3 là mảnh đèn', existing: {scene: '1. Xe nằm trong phần đường.', samples: ''}}, photos);
   assert.match(prompt, /Biển số xe được bảo hiểm: 47A-123\.45/);
   assert.match(prompt, /1=Hiện trường, 2=Dấu vết, 3=Mẫu vật, 4=Hiện trường/);
   assert.match(prompt, /Đã có sẵn ở mục \[9\]/);
   assert.doesNotMatch(prompt, /Đã có sẵn ở mục \[11\]/);
-  assert.match(prompt, /KHÔNG xem là sự thật đã xác minh/);
-  assert.match(prompt, /Không tự đưa ra số đo/);
+  assert.match(prompt, /Va chạm \/ xảy ra với \(theo hồ sơ, chỉ để tham khảo, chưa xác minh\): xe ôtô BKS 48H02661/);
+  assert.match(prompt, /KHÔNG để dấu "…"/);
+  assert.match(prompt, /VĂN XUÔI LIỀN MẠCH[\s\S]*KHÔNG đánh số/);
+  assert.match(prompt, /Đối với xe 50B67890[\s\S]*phù hợp với màu sơn của xe 51A12345/);   // ví dụ văn phong: đối chiếu chéo giữa hai xe
+  assert.match(prompt, /Không đoán biển số/);
 });
 
 test('parseResult đọc JSON (kể cả bọc ```), giới hạn độ dài và chuẩn hóa tham chiếu ảnh', () => {
