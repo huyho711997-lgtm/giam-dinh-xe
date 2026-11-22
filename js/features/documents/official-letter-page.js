@@ -1124,13 +1124,13 @@ const OfficialLetterPage = (() => {
     const locked = qaLocked();
     const mode = QA() ? '<div class="ola-mode" role="tablist" aria-label="Chế độ làm việc">' + [['compose', 'Soạn công văn', ICON.letter], ['ask', 'Hỏi nghiệp vụ', ICON.book], ['chat', 'Trò chuyện AI', ICON.chat]].map(([id, label, icon]) =>
       '<button type="button" role="tab" aria-selected="' + (modeId() === id) + '" class="ola-mode-btn' + (modeId() === id ? ' is-on' : '') + '" data-ol-mode="' + id + '"' + (locked && modeId() !== id ? ' disabled' : '') + '>' + svg(icon) + '<span>' + label + '</span></button>').join('') + '</div>' : '<span></span>';
-    const right = st.mode === 'ask'
-      ? '<span class="ola-top-acts"><span class="olp-usage" data-ol-qa-usage' + (usageText(qa.usage) ? '' : ' hidden') + ' title="' + esc(usageTitle(qa.usage)) + '">' + esc(usageText(qa.usage)) + '</span>'
+    const right = '<span class="ola-top-acts">' + (st.mode === 'ask'
+      ? '<span class="olp-usage" data-ol-qa-usage' + (usageText(qa.usage) ? '' : ' hidden') + ' title="' + esc(usageTitle(qa.usage)) + '">' + esc(usageText(qa.usage)) + '</span>'
         + (qa.free && qa.messages.length ? '<button type="button" class="ola-hist-btn" data-ol-act="qa-export" title="Xuất cuộc trò chuyện (.md)" aria-label="Xuất cuộc trò chuyện">' + svg(ICON.download) + '</button>' : '')
         + (qa.messages.length ? '<button type="button" class="ola-hist-btn ola-hist-new" data-ol-act="qa-new" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.plus) + '</button>' : '')
         + (qa.messages.length ? '<button type="button" class="ola-hist-btn" data-ol-act="qa-clear" title="Xoá cuộc trò chuyện này" aria-label="Xoá cuộc trò chuyện này"' + (qa.busy ? ' disabled' : '') + '>' + svg(ICON.trash) + '</button>' : '')
-        + '<button type="button" class="ola-hist-btn" data-ol-act="settings" title="Cài đặt: khoá DeepSeek &amp; đơn vị ban hành" aria-label="Cài đặt">' + svg(ICON.gear) + '</button></span>'
-      : '<span></span>';
+      : '') + '<button type="button" class="ola-hist-btn" data-ol-act="open-library" title="Quản lý dữ liệu quy tắc" aria-label="Quản lý dữ liệu quy tắc">' + svg(ICON.book) + '</button>'
+      + '<button type="button" class="ola-hist-btn" data-ol-act="settings" title="Cài đặt AI" aria-label="Cài đặt AI">' + svg(ICON.gear) + '</button></span>';
     return '<div class="ola-top">' + histBtn + mode + right + '</div>';
   }
 
@@ -1727,8 +1727,7 @@ const OfficialLetterPage = (() => {
     const mainBox = $('.ola-main'), mainTop = mainBox ? mainBox.scrollTop : 0;
     const histScroll = $('[data-ol-hist-list]'), histTop = histScroll ? histScroll.scrollTop : 0;
     root.innerHTML = historyHtml() + '<div class="ola-main' + (working ? ' is-working' : '') + (asking ? ' is-ask' : '') + '">' + topbarHtml()
-      + (asking ? qaHtml() : working ? workHtml() : heroHtml())
-      + '<button type="button" class="ola-gear" data-ol-act="settings" title="Cài đặt: đơn vị ban hành &amp; khoá DeepSeek" aria-label="Cài đặt: đơn vị ban hành và khoá DeepSeek">' + svg(ICON.gear) + '</button></div>' + drawerHtml();
+      + (asking ? qaHtml() : working ? workHtml() : heroHtml()) + '</div>' + drawerHtml();
     const nextHist = $('[data-ol-hist-list]'); if (nextHist) nextHist.scrollTop = histTop;
     root.classList.toggle('is-working', working);
     root.classList.toggle('has-history', st.histOpen);
@@ -2015,7 +2014,9 @@ const OfficialLetterPage = (() => {
       case 'copy': copyText(); break;
       case 'settings': st.pop = ''; openSettings(); break;
       case 'legal-search': searchMoreLegal(); break;
-      case 'open-library': TascoLibrary.open(); break;
+      case 'open-library':
+        if (typeof TascoLibrary === 'undefined' || !TascoLibrary.open) { toast('Chưa tải được thư viện tài liệu. Hãy tải lại trang.', 'warning'); break; }
+        st.libDocs = null; TascoLibrary.open(); break;
       case 'new': exitHistSelect(); st.mode = 'compose'; if (st.letter) { clearTimeout(saveTimer); if (st.historyId) saveHistory(); reset(); renderAll(); $('[data-ol-brief]')?.focus(); } else confirmDiscard().then(ok => { if (ok) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } }); break;
       case 'hist-toggle': st.histOpen = !st.histOpen; if (!st.histOpen) exitHistSelect(); try { localStorage.setItem(HIST_PANEL_KEY, st.histOpen ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); break;
       case 'hist-select': toggleHistSelect(); break;

@@ -709,6 +709,9 @@ body:not(.light-mode) .ola-review del { color:#ffb7ae; background:rgba(255,110,9
 .ola-main.is-ask .ola-gear { display:none; }
 .ola-main:not(.is-working) .ola-top { margin-bottom:0; }
 @media (max-width:640px) {
+  .ola-top { grid-template-columns:minmax(0,1fr) auto; }
+  .ola-top > .ola-mode { grid-column:1 / -1; grid-row:2; justify-self:center; max-width:100%; }
+  .ola-top-acts { grid-column:2; grid-row:1; }
   .ola-top-acts .olp-usage { display:none; }
   .ola-hist-open span { display:none; }
   .ola-hist-open { width:34px; padding:0; justify-content:center; }

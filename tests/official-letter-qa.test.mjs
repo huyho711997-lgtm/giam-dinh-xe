@@ -225,7 +225,7 @@ test('parsePlan: kind "chat" chỉ có hiệu lực khi không có cụm tra; bu
   assert.equal(Q.normalizeMessage({role: 'assistant', text: 'chào', chat: true}).chat, true);
 });
 
-test('qaComposerHtml: hiển thị animation loading trong khung nhập chat khi đang suy luận / xử lý', () => {
+test('Hỏi nghiệp vụ: trạng thái xử lý hiển thị một lần trong hội thoại và có nút dừng', () => {
   const host = { querySelector: () => null, querySelectorAll: () => [], removeEventListener() {} };
   const ctx = vm.createContext({
     console, setTimeout, clearTimeout, Date, Math, Array, Object, Set, JSON, Promise, String, Number, Error,
@@ -236,7 +236,7 @@ test('qaComposerHtml: hiển thị animation loading trong khung nhập chat khi
     testHost: host
   });
   const expose = `host=testHost; renderAll=() => {}; updateHistory=() => {};
-    return { qaComposerHtml, setQa: v => Object.assign(qa, v) };`;
+    return { qaComposerHtml, qaHtml, setQa: v => Object.assign(qa, v) };`;
   vm.runInContext(
     read('js/data/official-letter-templates.js')
     + read('js/features/documents/official-letter-core.js')
@@ -251,14 +251,15 @@ test('qaComposerHtml: hiển thị animation loading trong khung nhập chat khi
   assert.doesNotMatch(idleHtml, /ola-qa-loading|is-busy|aria-busy="true"/);
   assert.match(idleHtml, /data-ol-act="qa-send"/);
 
-  ctx.page.setQa({ busy: true, status: 'Đang suy luận sâu (có thể mất 30–90 giây)…', importFile: { name: 'Nghị định 67.pdf' } });
+  ctx.page.setQa({ busy: true, status: 'Đang suy luận sâu (có thể mất 30–90 giây)…', messages: [{id: 'u1', role: 'user', text: 'Xin chào'}], importFile: { name: 'Nghị định 67.pdf' } });
   const busyHtml = ctx.page.qaComposerHtml(false);
   assert.match(busyHtml, /ola-qa-composer is-up is-busy/);
   assert.match(busyHtml, /aria-busy="true"/);
-  assert.match(busyHtml, /class="ola-qa-loading"/);
-  assert.match(busyHtml, /class="ola-qa-loading-orbit"/);
-  assert.match(busyHtml, /class="ola-qa-loading-wave"/);
-  assert.match(busyHtml, /data-ol-qa-status>Đang suy luận sâu/);
+  assert.doesNotMatch(busyHtml, /data-ol-qa-status/);
+  const conversation = ctx.page.qaHtml();
+  assert.match(conversation, /role="status" aria-live="polite"/);
+  assert.equal((conversation.match(/data-ol-qa-status/g) || []).length, 1);
+  assert.match(conversation, /data-ol-qa-status>Đang suy luận sâu/);
   assert.match(busyHtml, /data-ol-act="qa-stop"/);
   assert.match(busyHtml, /data-ol-act="qa-remove-file"[^>]*disabled/);
 });
