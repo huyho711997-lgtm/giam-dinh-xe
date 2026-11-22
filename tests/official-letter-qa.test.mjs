@@ -226,3 +226,41 @@ test('parsePlan: kind "chat" chỉ có hiệu lực khi không có cụm tra; bu
   assert.match(Q.CHAT_SYSTEM, /không gắn mã nguồn/);
   assert.equal(Q.normalizeMessage({role: 'assistant', text: 'chào', chat: true}).chat, true);
 });
+
+test('qaComposerHtml: hiển thị animation loading trong khung nhập chat khi đang suy luận / xử lý', () => {
+  const host = { querySelector: () => null, querySelectorAll: () => [], removeEventListener() {} };
+  const ctx = vm.createContext({
+    console, setTimeout, clearTimeout, Date, Math, Array, Object, Set, JSON, Promise, String, Number, Error,
+    window: { removeEventListener() {}, innerWidth: 1280 },
+    document: { removeEventListener() {} },
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    OfficialLetterQA: { newId: () => 'qa_1', normalizeStore: () => [], SUGGESTIONS: [] },
+    testHost: host
+  });
+  const expose = `host=testHost; renderAll=() => {}; updateHistory=() => {};
+    return { qaComposerHtml, setQa: v => Object.assign(qa, v) };`;
+  vm.runInContext(
+    read('js/data/official-letter-templates.js')
+    + read('js/features/documents/official-letter-core.js')
+    + read('js/features/documents/official-letter-revisions.js')
+    + read('js/features/documents/official-letter-page.js').replace('return {mount, leave};', expose)
+    + '\nthis.page = OfficialLetterPage;',
+    ctx
+  );
+
+  ctx.page.setQa({ busy: false, status: '', importFile: null });
+  const idleHtml = ctx.page.qaComposerHtml(false);
+  assert.doesNotMatch(idleHtml, /ola-qa-loading|is-busy|aria-busy="true"/);
+  assert.match(idleHtml, /data-ol-act="qa-send"/);
+
+  ctx.page.setQa({ busy: true, status: 'Đang suy luận sâu (có thể mất 30–90 giây)…', importFile: { name: 'Nghị định 67.pdf' } });
+  const busyHtml = ctx.page.qaComposerHtml(false);
+  assert.match(busyHtml, /ola-qa-composer is-up is-busy/);
+  assert.match(busyHtml, /aria-busy="true"/);
+  assert.match(busyHtml, /class="ola-qa-loading"/);
+  assert.match(busyHtml, /class="ola-qa-loading-orbit"/);
+  assert.match(busyHtml, /class="ola-qa-loading-wave"/);
+  assert.match(busyHtml, /data-ol-qa-status>Đang suy luận sâu/);
+  assert.match(busyHtml, /data-ol-act="qa-stop"/);
+  assert.match(busyHtml, /data-ol-act="qa-remove-file"[^>]*disabled/);
+});
