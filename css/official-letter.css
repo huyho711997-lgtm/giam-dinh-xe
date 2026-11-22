@@ -591,28 +591,44 @@ body:not(.light-mode) .ola-review del { color:#ffb7ae; background:rgba(255,110,9
 .ola-pop--menu .ol-rec-empty { margin:6px 10px; }
 
 /* ---- Tài liệu cần có theo loại công văn (đính kèm theo từng mục để AI đọc) ---- */
-.ola-docs { display:grid; gap:0; margin:2px 0 8px; padding:10px 12px 4px; border:1px solid var(--border); border-radius:14px; background:color-mix(in srgb,var(--surface-soft) 70%,transparent); }
+.ola-docs { display:grid; gap:10px; margin:2px 0 8px; padding:10px 12px 12px; border:1px solid var(--border); border-radius:14px; background:color-mix(in srgb,var(--surface-soft) 70%,transparent); }
 .ola-docs[hidden] { display:none; }
-.ola-docs-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 2px 8px; font-size:12px; }
-.ola-docs-head b { font-weight:800; color:var(--text-main); }
-.ola-docs-head span { padding:2px 9px; border-radius:999px; font-size:11px; font-weight:800; white-space:nowrap; }
-.ola-docs-head .is-ok { color:#10b981; background:rgba(16,185,129,.13); }
-.ola-docs-head .is-warn { color:#d97706; background:rgba(217,119,6,.15); }
-.ola-doc-slot { display:grid; grid-template-columns:20px minmax(0,1fr) auto; gap:10px; align-items:start; padding:9px 2px; border-top:1px solid var(--border); }
+.ola-docs-head { display:flex; align-items:center; gap:8px; min-height:24px; font-size:12px; }
+.ola-docs-head b { flex:1; min-width:0; font-weight:800; color:var(--text-main); }
+.ola-docs-count { position:relative; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:800; white-space:nowrap; }
+.ola-docs-count.is-ok { color:#0f9f6e; background:rgba(16,185,129,.13); }
+.ola-docs-count.is-warn { color:#b45309; background:rgba(217,119,6,.14); }
+.ola-docs-fold { display:grid; place-items:center; width:24px; height:24px; padding:0; border:0; border-radius:8px; background:transparent; color:var(--text-muted); cursor:pointer; }
+.ola-docs-fold:hover { background:color-mix(in srgb,var(--text-main) 8%,transparent); color:var(--text-main); }
+.ola-docs-fold svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transition:transform .18s ease; }
+.ola-docs-fold[aria-expanded="false"] svg { transform:rotate(-90deg); }
+.ola-docs-body { display:grid; gap:10px; }
+.ola-doc-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:8px; }
+.ola-doc-slot { display:grid; align-content:start; gap:8px; min-width:0; padding:10px; border:1px dashed color-mix(in srgb,var(--border) 85%,var(--text-muted)); border-radius:12px; background:var(--surface); transition:border-color .15s ease, background .15s ease; }
+.ola-doc-slot.is-missing { border-color:color-mix(in srgb,#d97706 55%,var(--border)); }
+.ola-doc-slot.is-done { border-style:solid; border-color:color-mix(in srgb,#10b981 45%,var(--border)); background:color-mix(in srgb,#10b981 5%,var(--surface)); }
+.ola-doc-pick { display:grid; grid-template-columns:18px minmax(0,1fr); gap:4px 8px; align-items:start; cursor:pointer; }
+.ola-doc-pick.is-disabled { cursor:default; }
 .ola-doc-state { display:grid; place-items:center; width:18px; height:18px; margin-top:1px; border:1.5px solid var(--border); border-radius:50%; color:#fff; font-size:11px; font-weight:900; line-height:1; }
 .ola-doc-slot.is-done .ola-doc-state { background:#10b981; border-color:#10b981; }
 .ola-doc-slot.is-missing .ola-doc-state { border-color:#d97706; }
-.ola-doc-main { min-width:0; }
-.ola-doc-main b { color:var(--text-main); font-size:12.5px; font-weight:750; }
-.ola-doc-main em { margin-left:8px; color:var(--text-muted); font-size:10.5px; font-style:normal; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
-.ola-doc-slot.is-missing .ola-doc-main em { color:#d97706; }
-.ola-doc-main small { display:block; margin-top:2px; color:var(--text-muted); font-size:11.5px; line-height:1.4; }
-.ola-doc-files { margin-top:6px; }
-.ola-doc-add { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 11px; border:1px solid var(--border); border-radius:999px; color:var(--text-muted); font-size:12px; font-weight:700; white-space:nowrap; cursor:pointer; }
-.ola-doc-add svg { width:14px; height:14px; }
-.ola-doc-add:hover:not(.is-disabled) { border-color:color-mix(in srgb,var(--primary) 50%,var(--border)); color:var(--primary); }
-.ola-doc-add.is-disabled { opacity:.45; cursor:not-allowed; }
-@media (max-width:560px) { .ola-doc-slot { grid-template-columns:20px minmax(0,1fr); } .ola-doc-add { grid-column:2; justify-self:start; } }
+.ola-doc-main { display:grid; gap:2px; min-width:0; }
+.ola-doc-main b { color:var(--text-main); font-size:12.5px; font-weight:750; line-height:1.3; }
+.ola-doc-main small { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; color:var(--text-muted); font-size:11px; line-height:1.4; }
+.ola-doc-add { grid-column:2; display:inline-flex; align-items:center; gap:5px; justify-self:start; margin-top:2px; color:var(--primary); font-size:11.5px; font-weight:750; }
+.ola-doc-add svg { width:13px; height:13px; }
+.ola-doc-pick:hover:not(.is-disabled) .ola-doc-add { text-decoration:underline; text-underline-offset:3px; }
+.ola-doc-pick.is-disabled .ola-doc-add { color:var(--text-muted); opacity:.6; }
+.ola-doc-slot:has(.ola-doc-pick:not(.is-disabled):hover) { border-color:color-mix(in srgb,var(--primary) 55%,var(--border)); }
+.ola-doc-files { margin:0; padding-left:26px; }
+.ola-doc-opt { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.ola-doc-opt-label { margin-right:2px; color:var(--text-muted); font-size:10.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+.ola-doc-chip { display:inline-flex; align-items:center; gap:5px; max-width:100%; height:28px; padding:0 11px 0 9px; border:1px solid var(--border); border-radius:999px; background:var(--surface); color:var(--text-muted); font-size:11.5px; font-weight:650; cursor:pointer; transition:border-color .15s ease, color .15s ease; }
+.ola-doc-chip svg { flex:none; width:13px; height:13px; }
+.ola-doc-chip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ola-doc-chip:hover:not(.is-disabled) { border-color:color-mix(in srgb,var(--primary) 50%,var(--border)); color:var(--primary); }
+.ola-doc-chip.is-disabled { opacity:.45; cursor:not-allowed; }
+@media (max-width:560px) { .ola-doc-grid { grid-template-columns:1fr; } }
 
 /* Thanh trên: Lịch sử · nút chuyển chế độ · công cụ của chế độ Hỏi nghiệp vụ */
 .ola-top { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:8px; flex:none; min-height:34px; margin-bottom:6px; }

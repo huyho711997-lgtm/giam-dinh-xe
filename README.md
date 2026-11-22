@@ -101,6 +101,9 @@ Luồng soạn: **đọc hồ sơ → tra căn cứ → suy luận nghiệp vụ
 ### Suy luận sâu với model Antigravity (`official-letter-models.js` · `profile`, `timeoutMs`)
 Model Antigravity (`gemini-3-flash` qua cầu nối cục bộ) nay dùng được chip **Suy luận sâu**: bật → gửi `reasoning_effort: "high"` (CLIProxyAPI đổi thành mức suy nghĩ cao của Gemini 3) và cho phép đầu ra tới 16000 token; tắt → `reasoning_effort: "low"`. Bước *Suy luận nghiệp vụ* của Soạn công văn, Hỏi nghiệp vụ và chỉnh sửa theo yêu cầu đều dùng chung công tắc. Hạn chờ phía trình duyệt là **170 giây** khi suy luận sâu (45 giây khi tắt); cầu nối cục bộ tự giới hạn 180 giây phía upstream. Lỗi quá hạn báo riêng ("chưa trả kết quả suy luận sâu…, hãy thử lại hoặc tắt Suy luận sâu"). Suy luận sâu tốn hạn mức và thời gian hơn; có hiệu lực thật hay không còn phụ thuộc CLIProxyAPI/Antigravity chấp nhận `reasoning_effort`.
 
+### Khối "Tài liệu để AI lấy thông tin" (`official-letter-page.js` · `docsHtml`)
+Tài liệu bắt buộc (hoặc đã có tệp) hiện thành **ô gọn** xếp lưới: dấu tròn/✓, tên, gợi ý tối đa 2 dòng, bấm cả ô để đính kèm, ảnh thu nhỏ nằm ngay trong ô. Tài liệu **"Nếu có"** chưa đính kèm chỉ là chip một dòng. Tiêu đề có bộ đếm *n/m bắt buộc* và nút thu gọn/mở (`st.docsFold`).
+
 ### Duyệt đề xuất chỉnh sửa của AI (`official-letter-page.js` · `reviewHtml`)
 Khi nhờ AI sửa công văn, các thay đổi hiện thành **thẻ riêng từng mục** (Trích yếu, Đoạn 1…) với công tắc **Áp dụng / Bỏ qua** (bấm cả hàng tiêu đề), số từ thêm/bớt, ô **chọn tất cả** kèm bộ đếm, và thanh **Áp dụng N thay đổi** ghim ở đáy vùng cuộn. Hai kiểu xem: **Gộp** (gạch xanh/đỏ theo từ) và **Trước / Sau** (hai cột). Đoạn bị viết lại gần hết (ít từ giữ nguyên) được hiện thành hai khối Hiện tại / Đề xuất thay vì gạch xen kẽ khó đọc. Bản thảo chỉ đổi khi bấm Áp dụng.
 
