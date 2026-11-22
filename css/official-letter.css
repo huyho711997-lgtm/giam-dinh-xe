@@ -567,7 +567,14 @@ body:not(.light-mode) .ola-review ins { color:#95e4ba; }
 .ola-cite.is-bad { border-color:#dc2626; background:color-mix(in srgb,#dc2626 10%,transparent); color:#dc2626; cursor:help; }
 .ola-qa-warn { margin:0; padding:8px 11px; border-radius:10px; background:color-mix(in srgb,#d97706 12%,transparent); color:var(--text-main); font-size:12.5px; line-height:1.5; }
 .ola-qa-srcs { display:grid; gap:6px; }
-.ola-qa-srcs h5 { margin:2px 0 0; color:var(--text-muted); font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.ola-qa-srcs-head { display:flex; align-items:center; gap:8px; width:100%; padding:6px 2px; border:0; background:none; color:var(--text-muted); font:inherit; text-align:left; cursor:pointer; }
+.ola-qa-srcs-head span { flex:none; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.ola-qa-srcs-head em { flex:1; min-width:0; overflow:hidden; color:var(--primary); font-size:11px; font-style:normal; font-weight:700; text-overflow:ellipsis; white-space:nowrap; }
+.ola-qa-srcs-head:hover span { color:var(--text-main); }
+.ola-qa-srcs-head svg { flex:none; margin-left:auto; width:14px; height:14px; transition:transform .15s; }
+.ola-qa-srcs.is-open > .ola-qa-srcs-head svg { transform:rotate(180deg); }
+.ola-qa-srcs-body { display:grid; gap:6px; }
+.ola-qa-srcs-body[hidden] { display:none; }
 .ola-qa-src { border:1px solid var(--border); border-radius:12px; background:var(--surface-strong); overflow:hidden; }
 .ola-qa-src.is-cited { border-color:color-mix(in srgb,var(--primary) 40%,var(--border)); }
 .ola-qa-src-head { display:flex; align-items:center; gap:9px; width:100%; padding:8px 11px; border:0; background:none; color:var(--text-main); font:inherit; font-size:12.5px; text-align:left; cursor:pointer; }

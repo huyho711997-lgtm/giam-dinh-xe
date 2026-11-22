@@ -763,12 +763,22 @@ const OfficialLetterPage = (() => {
   function openCite(msgId, code) {
     const key = msgId + ':' + code;
     qa.open[key] = true;
+    setSourcesOpen(msgId, true);
     const box = [...host.querySelectorAll('[data-ol-qa-srcbox]')].find(node => node.dataset.olQaSrcbox === key);
     if (!box) return;
     box.classList.add('is-open');
     box.querySelector('.ola-qa-src-head')?.setAttribute('aria-expanded', 'true');
     const body = box.querySelector('.ola-qa-src-body'); if (body) body.hidden = false;
     box.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+  }
+  // Cả nhóm "Nguồn đã tra" mặc định thu gọn; người dùng bấm tiêu đề để mở.
+  function setSourcesOpen(msgId, open) {
+    qa.open[msgId + ':*'] = open;
+    const group = [...host.querySelectorAll('[data-ol-qa-srcs]')].find(node => node.dataset.olQaSrcs === msgId);
+    if (!group) return;
+    group.classList.toggle('is-open', open);
+    group.querySelector('.ola-qa-srcs-head')?.setAttribute('aria-expanded', String(open));
+    const body = group.querySelector('.ola-qa-srcs-body'); if (body) body.hidden = !open;
   }
   function toggleSource(key) {
     qa.open[key] = !qa.open[key];
@@ -797,7 +807,11 @@ const OfficialLetterPage = (() => {
     const body = msg.error ? '<div class="olp-notice olp-notice--error"><span>' + esc(msg.text) + '</span></div>'
       : msg.empty ? '<div class="olp-notice olp-notice--warn"><span>' + esc(msg.text) + '</span></div>'
       : '<div class="ola-qa-text">' + Q.answerHtml(msg.text, sources) + '</div>';
-    const srcs = sources.length ? '<div class="ola-qa-srcs"><h5>Nguồn đã tra trong Thư viện (' + sources.length + ')</h5>' + (msg.queries && msg.queries.length ? '<p class="ola-qa-queries" title="Các cụm từ đã dùng để tìm trong Thư viện">Đã tra: ' + msg.queries.map(esc).join(' · ') + '</p>' : '') + sources.map(source => qaSourceHtml(msg, source, cited.includes(source.code))).join('') + '</div>' : '';
+    const groupOpen = !!qa.open[msg.id + ':*'];
+    const srcs = sources.length ? '<div class="ola-qa-srcs' + (groupOpen ? ' is-open' : '') + '" data-ol-qa-srcs="' + esc(msg.id) + '">'
+      + '<button type="button" class="ola-qa-srcs-head" data-ol-qa-srcs-toggle="' + esc(msg.id) + '" aria-expanded="' + groupOpen + '"><span>Nguồn đã tra trong Thư viện (' + sources.length + ')</span>'
+      + (cited.length ? '<em>Đã dẫn: ' + esc(cited.filter(code => sources.some(src => src.code === code)).join(', ')) + '</em>' : '') + svg(ICON.chevron) + '</button>'
+      + '<div class="ola-qa-srcs-body"' + (groupOpen ? '' : ' hidden') + '>' + (msg.queries && msg.queries.length ? '<p class="ola-qa-queries" title="Các cụm từ đã dùng để tìm trong Thư viện">Đã tra: ' + msg.queries.map(esc).join(' · ') + '</p>' : '') + sources.map(source => qaSourceHtml(msg, source, cited.includes(source.code))).join('') + '</div></div>' : '';
     const acts = msg.error ? '<button type="button" class="ola-qa-act" data-ol-qa-retry="' + esc(msg.id) + '"' + (qa.busy ? ' disabled' : '') + '>Thử lại</button>'
       : msg.empty ? '' : '<button type="button" class="ola-qa-act" data-ol-qa-copy="' + esc(msg.id) + '">' + svg(ICON.copy) + 'Sao chép</button>'
         + '<button type="button" class="ola-qa-act is-main" data-ol-qa-compose="' + esc(msg.id) + '"' + (qaLocked() ? ' disabled' : '') + ' title="Chuyển sang Soạn công văn, điền sẵn kết luận này vào yêu cầu">' + svg(ICON.letter) + 'Soạn công văn từ câu trả lời</button>';
@@ -1326,6 +1340,8 @@ const OfficialLetterPage = (() => {
     if (modeBtn) { setMode(modeBtn.dataset.olMode); return; }
     const cite = target.closest('[data-ol-qa-cite]');
     if (cite) { const holder = cite.closest('[data-ol-qa-msg]'); if (holder) openCite(holder.dataset.olQaMsg, cite.dataset.olQaCite); return; }
+    const srcsToggle = target.closest('[data-ol-qa-srcs-toggle]');
+    if (srcsToggle) { const id = srcsToggle.dataset.olQaSrcsToggle; setSourcesOpen(id, !qa.open[id + ':*']); return; }
     const srcHead = target.closest('[data-ol-qa-src]');
     if (srcHead) { toggleSource(srcHead.dataset.olQaSrc); return; }
     const qaIdea = target.closest('[data-ol-qa-idea]');
