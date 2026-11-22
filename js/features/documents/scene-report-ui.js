@@ -3,7 +3,7 @@
 
 const SCENE_REPORT_TEXT_AREAS = new Set(['scene', 'traces', 'samples', 'damageEval', 'parts', 'injuries', 'notes', 'proposals']);
 const SCENE_REPORT_SYNC_FIELD_KEYS = ['accidentDate', 'accidentTime', 'accidentLocation', 'plate', 'driver', 'withParty'];
-const SCENE_REPORT_SEC1_PROGRESS_KEYS = ['reportDate', 'reportTime', 'reportPlace', 'accidentDate', 'accidentTime', 'accidentLocation', 'plate', 'driver', 'withParty'];
+let sceneReportStep = 1; // bước đang mở của form (giữ nguyên khi vẽ lại)
 const SCENE_REPORT_FIELD_MANUAL_MAP = {
   accidentDate: 'accidentDate',
   accidentTime: 'accidentTime',
@@ -102,6 +102,8 @@ const SCENE_REPORT_ICONS = {
   'shield-alert': '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/>',
   shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
   'alert-circle': '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
+  'arrow-left': '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  'arrow-right': '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
   'alert-triangle': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
   thermometer: '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
   flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
@@ -329,7 +331,7 @@ function sceneReportRenderForm(data) {
     `</div>`;
 
   const sec1 = sceneReportSection(
-    'srSection1', 'I',
+    'srSection1', '1',
     'Thời gian, địa điểm & thành phần tham gia',
     'Thông tin hành chính của biên bản, thành phần chứng kiến và dữ liệu vụ tổn thất đồng bộ từ hồ sơ',
     sec1Right,
@@ -390,7 +392,6 @@ function sceneReportRenderForm(data) {
     `</div>`;
 
   const sceneBody =
-    `<section class="sr-ai" data-sr-ai>${typeof sceneReportAiHtml === 'function' ? sceneReportAiHtml() : ''}</section>` +
     `<div class="sr-choice-grid">` +
       sceneReportChoiceTile(data, 'sceneIntact', '[1]', 'Tình trạng hiện trường', { item: '1', icon: 'camera' }) +
       sceneReportChoiceTile(data, 'engineTemp', '[2]', 'Nhiệt độ động cơ', { item: '2', icon: 'thermometer' }) +
@@ -405,10 +406,10 @@ function sceneReportRenderForm(data) {
     sceneReportText(data, 'samples', '[11]', 'Mẫu vật thu được', 2, 'Không thu mẫu vật hoặc mô tả cụ thể chi tiết', '11');
 
   const sec2 = sceneReportSection(
-    'srSection2', 'II',
+    'srSection2', '3',
     'Hiện trường vụ tai nạn',
     'Ghi nhận tình trạng hiện trường, điều kiện địa hình/thời tiết, lái xe, giấy tờ và dấu vết [1–11]',
-    '<span class="sr-sec-badge" data-sr-card-count="2">0/11 mục</span>',
+    '<span class="sr-sec-badge" data-sr-card-count="2">0/10 mục</span>',
     sceneBody
   );
 
@@ -463,7 +464,7 @@ function sceneReportRenderForm(data) {
     closingStrip;
 
   const sec3 = sceneReportSection(
-    'srSection3', 'III',
+    'srSection3', '4',
     'Thiệt hại sơ bộ & kết luận',
     'Khoanh vùng hư hỏng, ước thiệt hại, ghi nhận lời khai và giờ kết thúc biên bản [12–16]',
     '<span class="sr-sec-badge" data-sr-card-count="3">0/5 mục</span>',
@@ -499,10 +500,13 @@ function sceneReportRenderForm(data) {
         `</div>` +
         `<div class="sr-progress-track" aria-hidden="true"><div class="sr-progress-fill" data-sr-progress-bar style="width:0%"></div></div>` +
       `</div>` +
-      `<nav class="sr-nav-pills" aria-label="Điều hướng nhanh các phần">` +
-        `<button type="button" class="sr-nav-pill" data-sr-jump="srSection1">${sceneReportIcon('clipboard-check')}<span>I. Hành chính</span><em data-sr-sec-count="1">0/9</em></button>` +
-        `<button type="button" class="sr-nav-pill" data-sr-jump="srSection2">${sceneReportIcon('map-pin')}<span>II. Hiện trường [1–11]</span><em data-sr-sec-count="2">0/11</em></button>` +
-        `<button type="button" class="sr-nav-pill" data-sr-jump="srSection3">${sceneReportIcon('shield-alert')}<span>III. Thiệt hại [12–16]</span><em data-sr-sec-count="3">0/5</em></button>` +
+      `<nav class="sr-stepper" aria-label="Các bước lập biên bản">` +
+        SCENE_REPORT_STEPS.map(step =>
+          `<button type="button" class="sr-step-btn" data-sr-step-go="${step.id}" data-sr-step-tab="${step.id}">` +
+            `<span class="sr-step-dot" aria-hidden="true"><b>${step.id}</b>${sceneReportIcon('check')}</span>` +
+            `<span class="sr-step-text"><strong>${E(step.title)}</strong><small>${E(step.hint)}</small></span>` +
+            `<em data-sr-step-count="${step.id}">${step.optional ? 'Tùy chọn' : '0/0'}</em>` +
+          `</button>`).join('') +
       `</nav>` +
     `</div>`;
 
@@ -520,7 +524,56 @@ function sceneReportRenderForm(data) {
       `</div>` +
     `</div>`;
 
-  return header + overview + sec1 + sec2 + sec3 + footer;
+  const aiHtml = typeof sceneReportAiHtml === 'function' ? sceneReportAiHtml() : '';
+  const stepNav = (id) => {
+    const prev = id > 1 ? `<button type="button" class="sr-btn sr-btn--compact" data-sr-step-go="${id - 1}"><span class="sr-btn-icon">${sceneReportIcon('arrow-left')}</span><span>Quay lại: ${E(SCENE_REPORT_STEPS[id - 2].title)}</span></button>` : '<span></span>';
+    const next = id < SCENE_REPORT_STEPS.length ? `<button type="button" class="sr-btn sr-btn--primary sr-btn--compact" data-sr-step-go="${id + 1}"><span>Tiếp: ${E(SCENE_REPORT_STEPS[id].title)}</span><span class="sr-btn-icon">${sceneReportIcon('arrow-right')}</span></button>` : '';
+    return `<div class="sr-step-foot">${id < 4 ? `<div class="sr-step-missing" data-sr-missing="${id}"></div>` : ''}<div class="sr-step-nav">${prev}${next}</div></div>`;
+  };
+  const panel = (id, inner) => `<div class="sr-step" data-sr-step="${id}" role="group" aria-label="Bước ${id}: ${E(SCENE_REPORT_STEPS[id - 1].title)}"${id === sceneReportStep ? '' : ' hidden'}>${inner}</div>`;
+  const review = `<section class="sr-review" data-sr-review aria-live="polite"></section>`;
+  const step2 = `<div class="sr-step-intro">${sceneReportIcon('sparkles')}<p><strong>Bước tùy chọn.</strong> Có ảnh hiện trường thì để AI điền trước các mục bên dưới, sau đó bạn soát lại ở bước 3. Không có ảnh thì bấm <em>Tiếp</em>.</p></div>`
+    + `<section class="sr-ai" data-sr-ai>${aiHtml}</section>`;
+  return header + overview
+    + panel(1, sec1 + stepNav(1))
+    + panel(2, step2 + stepNav(2))
+    + panel(3, sec2 + stepNav(3))
+    + panel(4, sec3 + review + footer + stepNav(4));
+}
+
+// Chip "mục còn thiếu" bấm để nhảy tới đúng ô cần nhập (đổi bước nếu cần). withStep: hiện kèm tên bước (bảng kiểm tra cuối).
+function sceneReportMissingHtml(missing, lead, okText, withStep) {
+  const E = sceneReportEsc;
+  if (!missing.length) return okText ? `<span class="sr-missing-ok">${sceneReportIcon('check')}<span>${E(okText)}</span></span>` : '';
+  return (lead ? `<span class="sr-missing-lead">${E(lead)}</span>` : '')
+    + `<span class="sr-missing-list">` + missing.map(item => `<button type="button" class="sr-missing-chip" data-sr-step-go="${item.step}" data-sr-focus="${E(item.focus)}">${withStep ? `<small>B${item.step}</small>` : ''}${E(item.label)}</button>`).join('') + `</span>`;
+}
+
+// Mở bước n: ẩn/hiện các khung bước, đánh dấu tab đang mở; focus (tùy chọn) là selector của ô cần nhảy tới.
+function sceneReportGoStep(n, focus) {
+  const root = document.getElementById('sceneReportRoot');
+  const id = Math.min(SCENE_REPORT_STEPS.length, Math.max(1, Number(n) || 1));
+  sceneReportStep = id;
+  if (!root) return;
+  root.querySelectorAll('[data-sr-step]').forEach(panel => { panel.hidden = Number(panel.dataset.srStep) !== id; });
+  root.querySelectorAll('[data-sr-step-tab]').forEach(btn => {
+    const on = Number(btn.dataset.srStepTab) === id;
+    btn.classList.toggle('is-active', on);
+    if (on) btn.setAttribute('aria-current', 'step'); else btn.removeAttribute('aria-current');
+  });
+  const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const behavior = reduce ? 'auto' : 'smooth';
+  let target = null;
+  if (focus) { try { target = root.querySelector(`[data-sr-step="${id}"] ${focus}`); } catch (_) { target = null; } }
+  if (target) {
+    target.scrollIntoView({ behavior, block: 'center' });
+    const field = target.matches('input,textarea,select,button') ? target : target.querySelector('input:not([type="checkbox"]):not([type="hidden"]),textarea,select,button');
+    if (field) { try { field.focus({ preventScroll: true }); } catch (_) { /* bỏ qua */ } }
+    target.classList.add('is-flash');
+    setTimeout(() => target.classList.remove('is-flash'), 1600);
+  } else {
+    (root.querySelector('.sr-overview') || root).scrollIntoView({ behavior, block: 'start' });
+  }
 }
 
 function sceneReportUpdateUiState(root, data) {
@@ -541,19 +594,32 @@ function sceneReportUpdateUiState(root, data) {
   }
 
   const itemStates = SCENE_REPORT_ITEM_CHECKS.map(fn => !!fn(data));
-  const sec1Done = SCENE_REPORT_SEC1_PROGRESS_KEYS.filter(k => !!String(data[k] || '').trim()).length;
-  const sec2Done = itemStates.slice(0, 11).filter(Boolean).length;
-  const sec3Done = itemStates.slice(11).filter(Boolean).length;
 
   const setCountText = (sel, text) => {
     const el = root.querySelector(sel);
     if (el) el.textContent = text;
   };
-  setCountText('[data-sr-sec-count="1"]', `${sec1Done}/${SCENE_REPORT_SEC1_PROGRESS_KEYS.length}`);
-  setCountText('[data-sr-sec-count="2"]', `${sec2Done}/11`);
-  setCountText('[data-sr-sec-count="3"]', `${sec3Done}/5`);
-  setCountText('[data-sr-card-count="2"]', `${sec2Done}/11 mục`);
-  setCountText('[data-sr-card-count="3"]', `${sec3Done}/5 mục`);
+  const steps = sceneReportStepProgress(data);
+  steps.forEach(step => {
+    const btn = root.querySelector(`[data-sr-step-tab="${step.id}"]`);
+    if (!btn) return;
+    const complete = step.total > 0 && step.done >= step.total;
+    btn.classList.toggle('is-complete', complete);
+    btn.classList.toggle('has-missing', step.total > 0 && !complete);
+    const photos = step.id === 2 && typeof sceneReportAi !== 'undefined' ? sceneReportAi.photos.length : 0;
+    setCountText(`[data-sr-step-count="${step.id}"]`, step.total ? `${step.done}/${step.total}` : (photos ? `${photos} ảnh` : 'Tùy chọn'));
+    const box = root.querySelector(`[data-sr-missing="${step.id}"]`);
+    if (box) box.innerHTML = sceneReportMissingHtml(step.missing, 'Còn thiếu ' + step.missing.length + ' mục:', 'Bước này đã đủ các mục.');
+  });
+  const allMissing = steps.flatMap(step => step.missing);
+  const reviewBox = root.querySelector('[data-sr-review]');
+  if (reviewBox) {
+    reviewBox.classList.toggle('is-ok', !allMissing.length);
+    reviewBox.innerHTML = `<div class="sr-review-head">${sceneReportIcon(allMissing.length ? 'alert-triangle' : 'check')}<strong>${allMissing.length ? `Kiểm tra trước khi in/tải: còn ${allMissing.length} mục chưa nhập` : 'Biên bản đã đủ các mục, sẵn sàng xem trước và in/tải'}</strong></div>`
+      + (allMissing.length ? sceneReportMissingHtml(allMissing, '', '', true) + '<p class="sr-review-note">Vẫn có thể in/tải khi thiếu mục (ví dụ không thu mẫu vật) — nhớ ghi "Không có" nếu mục đó không phát sinh.</p>' : '');
+  }
+  setCountText('[data-sr-card-count="2"]', `${steps[2].done}/${steps[2].total} mục`);
+  setCountText('[data-sr-card-count="3"]', `${steps[3].done}/${steps[3].total} mục`);
 
   root.querySelectorAll('[data-sr-item-tile]').forEach(tile => {
     const id = tile.dataset.srItemTile;
@@ -659,12 +725,23 @@ function sceneReportUpdateProgress() {
   sceneReportUpdateUiState(root, collectionGuideDraft.sceneReport);
 }
 
+// Đánh dấu tab bước đang mở sau khi vẽ lại form (không cuộn trang).
+function sceneReportGoStepQuiet() {
+  const root = document.getElementById('sceneReportRoot');
+  root?.querySelectorAll('[data-sr-step-tab]').forEach(btn => {
+    const on = Number(btn.dataset.srStepTab) === sceneReportStep;
+    btn.classList.toggle('is-active', on);
+    if (on) btn.setAttribute('aria-current', 'step'); else btn.removeAttribute('aria-current');
+  });
+}
+
 function sceneReportRefresh() {
   const pane = document.getElementById('tabPane_SceneReport');
   if (!pane || !collectionGuideDraft) return;
   const data = sceneReportState();
   pane.innerHTML = `<div class="sr-root" id="sceneReportRoot">${sceneReportRenderForm(data)}</div>`;
   sceneReportUpdateUiState(document.getElementById('sceneReportRoot'), data);
+  sceneReportGoStepQuiet();
   if (typeof updateClaimDocumentAutoStatus === 'function') updateClaimDocumentAutoStatus();
 }
 
@@ -876,10 +953,9 @@ document.addEventListener('click', event => {
   const root = t.closest?.('#sceneReportRoot');
   if (!root) return;
 
-  const jump = t.closest('[data-sr-jump]');
-  if (jump) {
-    const section = document.getElementById(jump.dataset.srJump);
-    if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const go = t.closest('[data-sr-step-go]');
+  if (go) {
+    sceneReportGoStep(go.dataset.srStepGo, go.dataset.srFocus || '');
     return;
   }
 

@@ -56,6 +56,13 @@ const SCENE_REPORT_TEXT_FIELDS = {
 // Trường tự theo hồ sơ cho đến khi người dùng sửa tay (giống tab Trưng cầu hồ sơ).
 const SCENE_REPORT_AUTO_FIELDS = ['accidentDate', 'accidentTime', 'accidentLocation', 'plate', 'driver', 'withParty', 'assessorName', 'assessorPhone', 'driverPhone'];
 
+// Khối lái xe [6]/[7] là hai nhánh loại trừ nhau: xong khi nhánh đang chọn đã có dữ liệu (nếu không thì tiến độ không bao giờ đủ 16/16).
+function sceneReportDriverDone(d) {
+  if (d.driverPresence === 'absent') return !!(d.absentReason.trim() || d.absentDestination.trim());
+  if (d.driverPresence === 'present') return !!(d.face || d.breath);
+  return false;
+}
+
 // Các mục đánh số trong biểu mẫu → dùng để đếm tiến độ "x/16 mục đã nhập".
 const SCENE_REPORT_ITEM_CHECKS = [
   d => !!d.sceneIntact,                                             // [1]
@@ -63,8 +70,8 @@ const SCENE_REPORT_ITEM_CHECKS = [
   d => !!d.terrain.trim(),                                          // [3]
   d => !!d.ground,                                                  // [4]
   d => !!d.weather || !!d.light,                                    // [5]
-  d => d.driverPresence === 'absent' && !!(d.absentReason.trim() || d.absentDestination.trim()), // [6]
-  d => d.driverPresence === 'present' && !!(d.face || d.breath),    // [7]
+  d => sceneReportDriverDone(d),                                    // [6] (lái xe vắng mặt)
+  d => sceneReportDriverDone(d),                                    // [7] (lái xe có mặt) — chỉ chọn một nhánh nên cùng tính khi khối lái xe đã nhập
   d => SCENE_REPORT_DOCS.some(([k]) => d.docs[k]) || !!d.docNote.trim(), // [8]
   d => !!d.scene.trim(),                                            // [9]
   d => !!d.traces.trim(),                                           // [10]
@@ -231,6 +238,56 @@ function sceneReportNormalize(saved, defaults) {
   return out;
 }
 
+
+// ---- Các bước nhập (stepper) -------------------------------------------------------------------------------------
+// Bước 1 Thông tin chung → 2 Ảnh & AI (tùy chọn) → 3 Hiện trường [1–11] → 4 Thiệt hại [12–16] & xuất biên bản.
+const SCENE_REPORT_STEPS = [
+  { id: 1, title: 'Thông tin chung', hint: 'Thời gian, địa điểm, thành phần, xe' },
+  { id: 2, title: 'Ảnh & AI', hint: 'Tùy chọn: điền trước từ ảnh', optional: true },
+  { id: 3, title: 'Hiện trường', hint: 'Mục [1–11]' },
+  { id: 4, title: 'Thiệt hại & xuất', hint: 'Mục [12–16], kiểm tra, in/tải' }
+];
+// Ô bắt buộc ở bước 1 ("Va chạm với" có thể trống khi tai nạn một xe nên không bắt buộc).
+const SCENE_REPORT_SEC1_REQUIRED = [
+  ['reportDate', 'Ngày lập biên bản'], ['reportTime', 'Giờ lập'], ['reportPlace', 'Địa điểm lập biên bản'],
+  ['accidentDate', 'Ngày xảy ra'], ['accidentTime', 'Giờ xảy ra'], ['accidentLocation', 'Địa điểm tai nạn'],
+  ['plate', 'Biển số xe'], ['driver', 'Lái xe']
+];
+// Mục đánh số → bước chứa nó, nhãn hiển thị và chỉ số kiểm tra trong SCENE_REPORT_ITEM_CHECKS.
+const SCENE_REPORT_ITEM_META = [
+  { tile: '1', step: 3, label: '[1] Tình trạng hiện trường', idx: [0] },
+  { tile: '2', step: 3, label: '[2] Nhiệt độ động cơ', idx: [1] },
+  { tile: '3', step: 3, label: '[3] Địa hình, vật liệu nền', idx: [2] },
+  { tile: '4', step: 3, label: '[4] Tính chất nền', idx: [3] },
+  { tile: '5', step: 3, label: '[5] Thời tiết, ánh sáng', idx: [4] },
+  { tile: '6-7', step: 3, label: '[6–7] Lái xe có mặt hay vắng mặt', idx: [5, 6] },
+  { tile: '8', step: 3, label: '[8] Giấy tờ xe, lái xe', idx: [7] },
+  { tile: '9', step: 3, label: '[9] Mô tả hiện trường', idx: [8] },
+  { tile: '10', step: 3, label: '[10] Dấu vết tại hiện trường', idx: [9] },
+  { tile: '11', step: 3, label: '[11] Mẫu vật thu được', idx: [10] },
+  { tile: '12', step: 4, label: '[12] Vị trí tổn thất', idx: [11] },
+  { tile: '13', step: 4, label: '[13] Đánh giá thiệt hại', idx: [12] },
+  { tile: '14', step: 4, label: '[14] Tài sản & mức ước tính', idx: [13] },
+  { tile: '15', step: 4, label: '[15] Thiệt hại về người', idx: [14] },
+  { tile: '16', step: 4, label: '[16] Ghi chú, lời khai', idx: [15] }
+];
+
+// Tiến độ từng bước: {id, title, optional, done, total, missing:[{step, label, focus}]}. Bước 2 không có chỉ tiêu (total 0).
+function sceneReportStepProgress(data) {
+  const steps = SCENE_REPORT_STEPS.map(step => ({ id: step.id, title: step.title, hint: step.hint, optional: !!step.optional, done: 0, total: 0, missing: [] }));
+  const at = id => steps[id - 1];
+  SCENE_REPORT_SEC1_REQUIRED.forEach(([key, label]) => {
+    const step = at(1); step.total++;
+    if (String(data[key] == null ? '' : data[key]).trim()) step.done++;
+    else step.missing.push({ step: 1, label, focus: `[data-sr="${key}"]` });
+  });
+  SCENE_REPORT_ITEM_META.forEach(meta => {
+    const step = at(meta.step); step.total++;
+    if (meta.idx.some(i => SCENE_REPORT_ITEM_CHECKS[i](data))) step.done++;
+    else step.missing.push({ step: meta.step, label: meta.label, focus: `[data-sr-item-tile="${meta.tile}"]` });
+  });
+  return steps;
+}
 
 function sceneReportProgress(data) {
   const filled = SCENE_REPORT_ITEM_CHECKS.reduce((n, check) => n + (check(data) ? 1 : 0), 0);

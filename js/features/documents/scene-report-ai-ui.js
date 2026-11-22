@@ -149,7 +149,7 @@ function sceneReportAiHtml() {
     + (modelUi ? '<div class="sr-ai-modelrow">' + modelUi + '</div>' : '')
     + '<div class="sr-ai-actions">' + action + '</div>'
     + (st.error ? '<p class="sr-ai-error" role="alert">' + E(st.error) + '</p>' : '')
-    + (st.applied ? '<p class="sr-ai-ok">' + sceneReportIcon('check') + E(st.applied) + '</p>' : '')
+    + (st.applied ? '<p class="sr-ai-ok">' + sceneReportIcon('check') + '<span>' + E(st.applied) + '</span><button type="button" class="sr-btn sr-btn--primary sr-btn--compact" data-sr-step-go="3"><span>Soát lại ở bước 3</span><span class="sr-btn-icon">' + sceneReportIcon('arrow-right') + '</span></button></p>' : '')
     + (st.result ? sceneReportAiResultHtml() : '')
     + '<p class="sr-ai-legal">AI chỉ đọc từ ảnh. Số đo, hướng, vị trí và mẫu vật phải được giám định viên kiểm tra và xác nhận tại hiện trường trước khi ký biên bản.</p>';
 }

@@ -7,7 +7,7 @@ const read = p => fs.readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 function load() {
   const ctx = vm.createContext({ String, Number, Object, Array, JSON, Math, Date, Uint8Array });
   vm.runInContext(read('js/features/documents/scene-report-model.js') + '\n' + read('js/features/documents/scene-report-docx.js') + `
-    this.api = { sceneReportParseDateTime, sceneReportDefaults, sceneReportNormalize, sceneReportProgress, sceneReportInsertSuggestion, buildSceneReportHtml, SCENE_REPORT_SUGGESTIONS,
+    this.api = { sceneReportParseDateTime, sceneReportDefaults, sceneReportNormalize, sceneReportProgress, sceneReportStepProgress, SCENE_REPORT_STEPS, sceneReportInsertSuggestion, buildSceneReportHtml, SCENE_REPORT_SUGGESTIONS,
       sceneReportDocxDocument, sceneReportDocxFiles, sceneReportDocxFooter, sceneReportImageInfo };`, ctx);
   return ctx.api;
 }
@@ -188,4 +188,36 @@ test('đã nối tab vào modal hồ sơ', () => {
   assert.match(read('js/features/documents/collection-guide.js'), /sceneReport:valid/);
   assert.match(read('js/features/documents/editor.js'), /delete normalized\.state\.sceneReport/);
   assert.match(read('js/features/documents/autosave.js'), /sceneReportAutoStatus/);
+});
+
+test('khối lái xe [6]/[7] là hai nhánh loại trừ nhưng vẫn đạt đủ 16/16 khi nhập đủ', () => {
+  const a = load();
+  const full = { sceneIntact: 'intact', engineTemp: 'warm', terrain: 'a', ground: 'hard', weather: 'sunny', driverPresence: 'present', face: 'normal', docs: { registration: true },
+    scene: 'a', traces: 'a', samples: 'a', damage: { front: { on: true, text: '' } }, damageEval: 'a', parts: 'a', injuries: 'a', notes: 'a' };
+  assert.equal(a.sceneReportProgress(a.sceneReportNormalize(full, {})).filled, 16);
+  const absent = a.sceneReportNormalize({ ...full, driverPresence: 'absent', face: '', absentReason: 'Đi cấp cứu' }, {});
+  assert.equal(a.sceneReportProgress(absent).filled, 16);
+  // chọn nhánh nhưng chưa nhập gì thì [6–7] vẫn thiếu
+  const empty = a.sceneReportNormalize({ ...full, driverPresence: 'present', face: '', breath: '' }, {});
+  assert.equal(a.sceneReportProgress(empty).filled, 14);
+});
+
+test('stepper: 4 bước, đếm mục từng bước và liệt kê mục thiếu kèm ô cần nhảy tới', () => {
+  const a = load();
+  assert.deepEqual(Array.from(a.SCENE_REPORT_STEPS, step => step.id), [1, 2, 3, 4]);
+  const d = a.sceneReportNormalize({ sceneIntact: 'intact', scene: 'mô tả', injuries: 'Không có' }, { plate: '47A-1', driver: 'A', today: '2026-11-13', lossRaw: '05/11/2026 14:30', location: 'QL14' });
+  const steps = a.sceneReportStepProgress(d);
+  assert.equal(steps.length, 4);
+  assert.equal(steps[1].total, 0, 'bước ảnh & AI là tùy chọn, không có chỉ tiêu');
+  assert.equal(steps[2].total, 10);
+  assert.equal(steps[3].total, 5);
+  assert.equal(steps[2].done, 2);
+  assert.equal(steps[3].done, 1);
+  const miss3 = steps[2].missing.map(m => m.label);
+  assert.ok(miss3.includes('[6–7] Lái xe có mặt hay vắng mặt') && !miss3.some(label => label.startsWith('[1]')));
+  assert.ok(steps[2].missing.every(m => m.step === 3 && m.focus.startsWith('[data-sr-item-tile=')));
+  assert.ok(steps[3].missing.every(m => m.step === 4));
+  // "Va chạm với" không bắt buộc ở bước 1
+  assert.ok(!steps[0].missing.some(m => m.focus.includes('withParty')));
+  assert.equal(steps[0].total, 8);
 });

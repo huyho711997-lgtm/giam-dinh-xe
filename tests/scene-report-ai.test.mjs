@@ -103,11 +103,13 @@ test('analyze báo lỗi rõ khi thiếu ảnh/khoá, hết hạn mức hoặc b
   await assert.rejects(AI.analyze({photos, apiKey: 'k', fetchImpl: bad(200, {promptFeedback: {blockReason: 'SAFETY'}})}), /từ chối xử lý ảnh \(SAFETY\)/);
 });
 
-test('trang nạp module AI trước giao diện và form có khối AI ở đầu phần II', () => {
+test('trang nạp module AI trước giao diện và form đặt khối AI ở bước 2 (trước bước Hiện trường)', () => {
   const html = read('index.html');
   assert.ok(html.indexOf('scene-report-ai.js') < html.indexOf('scene-report-ui.js') && html.indexOf('scene-report-ui.js') < html.indexOf('scene-report-ai-ui.js'));
   const ui = read('js/features/documents/scene-report-ui.js');
-  assert.ok(ui.indexOf('data-sr-ai') > 0 && ui.indexOf('data-sr-ai') < ui.indexOf('class="sr-choice-grid"'));
+  const ai = ui.indexOf('<section class="sr-ai" data-sr-ai>');
+  assert.ok(ai > 0 && ai > ui.indexOf('const step2') && ai < ui.indexOf('panel(3, sec2'));
+  assert.ok(ui.indexOf('data-sr-ai>', ui.indexOf('const sceneBody')) > ui.indexOf('const sec2'), 'khối AI không còn nằm trong sceneBody');
 });
 
 test('modelOptions chỉ giữ mô hình đọc được ảnh và có Antigravity; pickModel ưu tiên lựa chọn cũ rồi Gemini', () => {
