@@ -123,7 +123,7 @@
           </header>
 
           <section class="sf-library" aria-labelledby="fieldReimbListTitle">
-            <div class="fr-register-head">
+            <div class="sf-library-bar fr-register-head">
               <h2 id="fieldReimbListTitle">Danh sách phiếu thanh toán</h2>
               <span class="sf-count" id="fieldReimbCount" role="status" aria-live="polite"></span>
             </div>
