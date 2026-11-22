@@ -311,7 +311,6 @@ const OfficialLetterCore = (() => {
   const LOGO_SRC = 'assets/images/tasco-logo-clean.png';
 
   function letterToHtml(letter, options) {
-    const logo = escapeHtml((options && options.logoUrl) || LOGO_SRC);
     const recipients = letter.recipients.length ? letter.recipients : [''];
     const recipientHtml = recipients.length === 1
       ? '<div class="ol-to"><span>Kính gửi: </span>' + editable('recipient:0', recipients[0], 'span') + '</div>'
@@ -322,7 +321,7 @@ const OfficialLetterCore = (() => {
     const title = letter.title ? '<div class="ol-title">' + editable('title', letter.title, 'span') + '</div>' : '';
     return '<article class="ol-paper">'
       + '<div class="ol-head">'
-      + '<div class="ol-head-left"><img class="ol-logo" src="' + logo + '" alt="Tasco Insurance"><div class="ol-unit">' + editable('unit', letter.unit, 'span') + '</div></div>'
+      + '<div class="ol-head-left"><div class="ol-company">' + escapeHtml(String(letter.parent || '').toLocaleUpperCase('vi')) + '</div><div class="ol-unit">' + editable('unit', letter.unit, 'span') + '</div></div>'
       + '<div class="ol-head-right"><div class="ol-nation">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div><div class="ol-motto">Độc lập – Tự do – Hạnh phúc</div><div class="ol-stars">-----***-----</div></div></div>'
       + '<div class="ol-head ol-head-2"><div class="ol-head-left"><div class="ol-number">Số: ' + editable('number', letter.number, 'span', 'ol-number-input') + '</div>'
       + (letter.title ? '' : '<div class="ol-subject">V/v ' + editable('subject', letter.subject, 'span') + '</div>') + '</div>'
@@ -335,7 +334,7 @@ const OfficialLetterCore = (() => {
 
   // CSS của tờ giấy khi in (cửa sổ in riêng) — cùng số đo với file Word: lề trên 2 cm, trái 2,5 cm, phải/dưới 1,5 cm.
   const PRINT_CSS = '@page{size:A4;margin:20mm 15mm 15mm 25mm}body{margin:0;font:12pt/1.25 "Times New Roman",serif;color:#000}'
-    + '.ol-head{display:flex;gap:8px}.ol-head-left{width:44%}.ol-head-right{width:56%;text-align:center;font-weight:700}.ol-logo{display:block;width:4.6cm;height:auto}.ol-unit{margin-top:2px;font-size:11pt;font-weight:700}'
+    + '.ol-head{display:flex;gap:8px}.ol-head-left{width:44%}.ol-head-right{width:56%;text-align:center;font-weight:700}.ol-company{font-size:11pt;font-weight:700;text-transform:uppercase}.ol-unit{margin-top:2px;font-size:11pt;font-weight:700}'
     + '.ol-head-2{margin-top:6px}.ol-head-2 .ol-head-right{font-weight:400}.ol-date{font-style:italic}.ol-subject{margin-top:4px;padding-right:8px}'
     + '.ol-title{margin:12pt 0 6pt;text-align:center;font-size:14pt;font-weight:700}.ol-to{margin:12pt 0 12pt;font-weight:700;text-align:justify;text-indent:1.27cm}.ol-to-li{padding-left:1.27cm;text-indent:0}'
     + '.ol-p{text-align:justify;text-indent:.75cm;margin:6pt 0 3pt}.ol-p-h{font-weight:700}.ol-p-q,.ol-p-liq{font-style:italic}.ol-p-li,.ol-p-liq{text-indent:-.5cm;margin-left:1.8cm}.ol-p-end{text-indent:0;margin:12pt 0}'
