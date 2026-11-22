@@ -667,7 +667,7 @@ const OfficialLetterPage = (() => {
   // Hỏi đáp trên Thư viện tài liệu: tìm đoạn khớp (BM25) → DeepSeek trả lời CHỈ dựa trên các đoạn đó, dẫn mã [C#]; bấm mã để xem nguyên văn.
   // Hội thoại lưu trên máy (localStorage), tách hẳn khỏi phiên soạn công văn; dùng chung khoá DeepSeek, hồ sơ đang chọn và ô "Quy tắc".
   const QA_KEY = 'officialLetter.qa.v1', QA_CHATS_KEY = 'officialLetter.qaChats.v1', QA_MAX_CHATS = 30, MODE_KEY = 'officialLetter.mode.v1';
-  const qa = {messages: [], draft: '', busy: false, status: '', usage: null, open: Object.create(null), loaded: false, deep: true, chats: [], activeId: ''};
+  const qa = {messages: [], draft: '', importFile: null, busy: false, status: '', usage: null, open: Object.create(null), loaded: false, deep: true, chats: [], activeId: ''};
   const DEEP_KEY = 'officialLetter.qaDeep.v1';
   // Nhiều cuộc trò chuyện: qa.messages/qa.usage là cuộc đang mở; qa.chats là toàn bộ danh sách lưu trên máy (v2), tự chuyển từ bản v1 một cuộc.
   function loadQa() {
@@ -717,7 +717,7 @@ const OfficialLetterPage = (() => {
     }
     if (host && st.histOpen && st.mode === 'ask') updateHistory(true);
   }
-  function resetQaView() { qa.messages = []; qa.usage = null; qa.open = Object.create(null); qa.draft = ''; qa.status = ''; }
+  function resetQaView() { qa.messages = []; qa.usage = null; qa.open = Object.create(null); qa.draft = ''; qa.importFile = null; qa.status = ''; }
   function newQaChat() {
     if (qa.busy) return;
     if (!qa.messages.length) { focusMain(); return; }
@@ -730,7 +730,7 @@ const OfficialLetterPage = (() => {
     const chat = qa.chats.find(item => item.id === id);
     if (!chat) return;
     saveQa();
-    qa.activeId = chat.id; qa.messages = chat.messages; qa.usage = chat.usage; qa.open = Object.create(null); qa.draft = '';
+    qa.activeId = chat.id; qa.messages = chat.messages; qa.usage = chat.usage; qa.open = Object.create(null); qa.draft = ''; qa.importFile = null;
     saveQa();
     renderAll(); scrollQa(); focusMain();
   }
@@ -763,11 +763,32 @@ const OfficialLetterPage = (() => {
     if (node) { node.textContent = usageText(qa.usage); node.title = usageTitle(qa.usage); node.hidden = !usageText(qa.usage); }
   }
   const NO_MATCH = 'Thư viện tài liệu chưa có đoạn nào khớp câu hỏi này. Hãy thử nêu bằng thuật ngữ trong văn bản (VD "giảm trừ", "loại trừ", "thời hạn"), chọn đúng văn bản ở nút Quy tắc, hoặc nạp thêm văn bản vào Thư viện tài liệu.';
+  async function importQaRule(question, content) {
+    if (typeof TascoLibrary === 'undefined' || !TascoLibrary.importFromChat) { toast('Chưa tải được thư viện tài liệu. Hãy tải lại trang.', 'warning'); return; }
+    const file = qa.importFile;
+    if (!file && !content) { toast('Hãy dán nội dung quy tắc sau yêu cầu hoặc đính kèm tệp.', 'warning'); return; }
+    const chatId = qa.activeId;
+    qa.busy = true; qa.status = 'Đang đọc tài liệu để thêm vào thư viện…'; renderAll();
+    try {
+      await TascoLibrary.importFromChat({text:content, file, onSaved: ({meta}) => {
+        st.libDocs = null;
+        if (chatId !== qa.activeId) return;
+        const Q = QA();
+        qa.messages.push({id:Q.newId(), role:'user', text: file ? (question || 'Thêm quy tắc vào thư viện') + '\nTệp: ' + file.name : 'Thêm quy tắc vào thư viện: ' + (meta.ten || 'Quy tắc')});
+        qa.messages.push({id:Q.newId(), role:'assistant', text:'Đã lưu “' + (meta.ten || 'Quy tắc') + '” vào Thư viện tài liệu. Bạn có thể hỏi nghiệp vụ hoặc chọn tài liệu này khi soạn công văn.', chat:true, sources:[]});
+        qa.importFile = null; qa.draft = ''; saveQa();
+        if (host && st.mode === 'ask') { renderAll(); scrollQa(); }
+      }});
+    } catch (error) { toast(error.message || 'Không đọc được tài liệu.', 'warning'); }
+    finally { qa.busy = false; qa.status = ''; if (host && st.mode === 'ask') renderAll(); }
+  }
   async function askQuestion(text) {
     const Q = QA(), L = Legal();
     if (!Q || qa.busy) return;
     const input = $('[data-ol-qa-input]');
     const question = String(text !== undefined ? text : (input ? input.value : qa.draft)).trim();
+    const request = Q.importRequest(question);
+    if (qa.importFile || request.intent) { await importQaRule(question, request.content); return; }
     if (!question) { input?.focus(); return; }
     const history = qa.messages.slice();
     qa.messages.push({id: Q.newId(), role: 'user', text: question});
@@ -919,8 +940,9 @@ const OfficialLetterPage = (() => {
   }
   function qaComposerHtml(big) {
     return '<div class="ola-composer ola-qa-composer' + (big ? ' is-big' : ' is-up') + '">'
-      + '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="1500" placeholder="Hỏi về quy định, điều khoản, quy trình… (VD: thông báo tổn thất chậm thì bị giảm trừ thế nào?)" aria-label="Câu hỏi nghiệp vụ">' + esc(qa.draft) + '</textarea>'
-      + '<div class="ola-bar">' + recordChipHtml() + rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)')
+      + '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="200000" placeholder="Hỏi nghiệp vụ, hoặc dán quy tắc và yêu cầu thêm vào thư viện…" aria-label="Câu hỏi nghiệp vụ">' + esc(qa.draft) + '</textarea>'
+      + (qa.importFile ? '<div class="ola-qa-import-file"><span>' + svg(ICON.attach) + esc(qa.importFile.name) + '</span><button type="button" data-ol-act="qa-remove-file" aria-label="Bỏ tệp quy tắc">×</button></div>' : '')
+      + '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm quy tắc để thêm vào thư viện"><input type="file" data-ol-qa-file accept=".md,.markdown,.txt,.docx,.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp" hidden>' + svg(ICON.attach) + '</label>' + recordChipHtml() + rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)')
       + modelChipHtml() + deepChipHtml() + '<span class="ola-spacer"></span>'
       + (qa.busy ? '<button type="button" class="tasco-ai-send is-stop" data-ol-act="qa-stop" title="Dừng" aria-label="Dừng">' + svg(ICON.close) + '</button>'
         : '<button type="button" class="tasco-ai-send" data-ol-act="qa-send" title="Gửi câu hỏi (Enter)" aria-label="Gửi câu hỏi">' + svg(ICON.send) + '</button>') + '</div>'
@@ -1679,6 +1701,7 @@ const OfficialLetterPage = (() => {
       case 'review-view': if (st.pending) { st.reviewView = act.dataset.olView === 'split' ? 'split' : 'inline'; repaintReview(); } break;
       case 'run': run(); break;
       case 'qa-send': askQuestion(); break;
+      case 'qa-remove-file': qa.importFile = null; renderAll(); break;
       case 'qa-new': newQaChat(); break;
       case 'qa-stop': controller?.abort(); break;
       case 'qa-deep': if (qa.busy || st.busy) break; collectAll(); qa.deep = !qa.deep; try { localStorage.setItem(DEEP_KEY, qa.deep ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); focusMain(); break;
@@ -1722,6 +1745,7 @@ const OfficialLetterPage = (() => {
     if (target.matches('[data-ol-change-all]') && st.pending) { st.pending.changes.forEach(item => { item.on = target.checked; }); host.querySelectorAll('[data-ol-change]').forEach(box => { box.checked = target.checked; }); updateReviewState(); return; }
     if (target.matches('[data-ol-legal-doc]')) { pickLegalDoc(target.value); return; }
     if (target.matches('[data-ol-slot]')) { addFiles(target.files, 'files', target.dataset.olSlot); target.value = ''; return; }
+    if (target.matches('[data-ol-qa-file]')) { qa.importFile = target.files[0] || null; target.value = ''; renderAll(); return; }
     if (target.matches('[data-ol-files]')) { addFiles(target.files, target.dataset.olFiles === 'refine' ? 'refineFiles' : 'files'); target.value = ''; }
     else if (target.matches('[data-ol-outline-on]')) st.outlineEdited = true;
     else if (target.matches('[data-ol-src-on]')) { const source = st.sources[Number(target.dataset.olSrcOn)]; if (source) { source.on = target.checked; target.closest('.ol-src').classList.toggle('is-off', !target.checked); } }
@@ -1753,11 +1777,12 @@ const OfficialLetterPage = (() => {
     if (target.matches('.ol-edit')) { // dán chữ thuần để không kéo theo định dạng
       event.preventDefault();
       document.execCommand('insertText', false, (event.clipboardData || window.clipboardData).getData('text').replace(/\s+/g, ' '));
-    } else if (target.matches('[data-ol-brief]') && event.clipboardData && event.clipboardData.files.length) { event.preventDefault(); addFiles(event.clipboardData.files); }
+    } else if (target.matches('[data-ol-qa-input]') && event.clipboardData && event.clipboardData.files.length) { event.preventDefault(); qa.importFile = event.clipboardData.files[0]; renderAll(); }
+    else if (target.matches('[data-ol-brief]') && event.clipboardData && event.clipboardData.files.length) { event.preventDefault(); addFiles(event.clipboardData.files); }
     else if (target.matches('[data-ol-refine-input]') && event.clipboardData && event.clipboardData.files.length) { event.preventDefault(); addFiles(event.clipboardData.files, 'refineFiles'); }
   }
   function onDragOver(event) { if (event.dataTransfer && [...event.dataTransfer.types].includes('Files') && event.target.closest && event.target.closest('.ola-composer, .ola-refine')) event.preventDefault(); }
-  function onDrop(event) { if (event.dataTransfer && event.dataTransfer.files.length && event.target.closest && event.target.closest('.ola-composer, .ola-refine')) { event.preventDefault(); addFiles(event.dataTransfer.files, event.target.closest('.ola-refine') ? 'refineFiles' : 'files'); } }
+  function onDrop(event) { if (event.dataTransfer && event.dataTransfer.files.length && event.target.closest && event.target.closest('.ola-composer, .ola-refine')) { event.preventDefault(); if (event.target.closest('.ola-qa-composer')) { qa.importFile = event.dataTransfer.files[0]; renderAll(); } else addFiles(event.dataTransfer.files, event.target.closest('.ola-refine') ? 'refineFiles' : 'files'); } }
   // Bấm ra ngoài ô chọn (hồ sơ / loại) thì đóng.
   function onOutside(event) { if (st.pop && host && !(event.target.closest && (event.target.closest('.ola-pop') || event.target.closest('[data-ol-pop]')))) closePop(); }
 

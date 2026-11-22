@@ -71,6 +71,11 @@
 .ola-composer textarea { display:block; width:100%; box-sizing:border-box; min-height:48px; max-height:260px; padding:4px 6px; border:0; outline:0; background:transparent; color:var(--text-main); font:inherit; font-size:14px; line-height:1.6; resize:none; box-shadow:none; }
 .ola-composer.is-big textarea { min-height:76px; font-size:15px; }
 .ola-composer textarea::placeholder { color:var(--text-muted); }
+.ola-qa-import-file { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:6px 4px 0; padding:7px 9px; border:1px solid color-mix(in srgb,var(--primary) 30%,var(--border)); border-radius:10px; background:color-mix(in srgb,var(--primary) 7%,var(--surface-strong)); color:var(--text-main); font-size:12px; }
+.ola-qa-import-file > span { display:flex; align-items:center; min-width:0; gap:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ola-qa-import-file svg { flex:none; width:14px; height:14px; color:var(--primary); }
+.ola-qa-import-file button { flex:none; width:24px; height:24px; border:0; border-radius:7px; background:transparent; color:var(--text-muted); font-size:18px; cursor:pointer; }
+.ola-qa-import-file button:hover { background:var(--surface-soft); color:var(--text-main); }
 .ola-files { display:flex; flex-wrap:wrap; gap:6px; padding:6px 4px 0; }
 .ola-files[hidden] { display:none; }
 .ola-bar { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding-top:8px; }

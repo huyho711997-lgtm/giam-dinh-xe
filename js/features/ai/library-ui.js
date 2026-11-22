@@ -75,6 +75,17 @@ const TascoLibrary = (() => {
     draft = {editId: doc.id, meta: {...doc.meta}, chunks: doc.chunks.map(chunk => ({...chunk})), note: '', truncated: false};
     renderPreview();
   }
+  // Nhận nội dung từ Hỏi nghiệp vụ, dùng chung bộ đọc và màn xem trước của thư viện.
+  async function importFromChat({text = '', file = null, onSaved} = {}) {
+    if (!isAdmin()) throw new Error('Chỉ quản trị viên được thêm tài liệu vào thư viện.');
+    if (typeof TascoLibParse === 'undefined') throw new Error('Chưa tải được bộ đọc tài liệu. Hãy tải lại trang.');
+    const result = file
+      ? await TascoLibParse.fromFile(file, {apiKey: typeof GeminiKeyStore !== 'undefined' ? await GeminiKeyStore.get().catch(() => '') : '', model: (() => { try { return localStorage.getItem('gemini_model_name') || 'gemini-2.5-flash'; } catch (_) { return 'gemini-2.5-flash'; } })()})
+      : TascoLibParse.fromText(text, 'Quy tắc từ Hỏi nghiệp vụ');
+    if (!result.chunks.length) throw new Error('Không tìm thấy nội dung quy tắc. Hãy đính kèm tệp hoặc dán nội dung.');
+    draft = {...result, onSaved};
+    renderPreview();
+  }
   // Đọc lại các ô đang nhập vào draft (để thêm/xoá đoạn mà không mất phần đã sửa).
   function collect(body) {
     body.querySelectorAll('[data-f]').forEach(field => { draft.meta[field.dataset.f] = field.value.trim(); });
@@ -108,7 +119,7 @@ const TascoLibrary = (() => {
       if (!chunks.length) { fail('Chưa chọn đoạn nào để lưu.'); return; }
       button.disabled = true; button.textContent = 'Đang lưu…';
       const editing = draft.editId;
-      try { if (editing) await TascoLibStore.update(editing, {meta, chunks}); else await TascoLibStore.save({meta, chunks}); toast(editing ? 'Đã cập nhật tài liệu' : 'Đã lưu tài liệu vào thư viện', 'success'); draft = null; open(); } catch (error) { button.disabled = false; button.textContent = editing ? 'Lưu thay đổi' : 'Lưu vào thư viện'; fail('Không lưu được: ' + (error?.message || 'lỗi không rõ') + (/permission|PERMISSION/.test(String(error?.code || error?.message)) ? ' — tài khoản chưa có quyền ghi thư viện (cần quản trị viên, hoặc rules Firebase chưa cập nhật).' : '')); }
+      try { const id = editing ? await TascoLibStore.update(editing, {meta, chunks}) : await TascoLibStore.save({meta, chunks}); const done = draft.onSaved; toast(editing ? 'Đã cập nhật tài liệu' : 'Đã lưu tài liệu vào thư viện', 'success'); draft = null; if (done) { close(); try { done({id, meta}); } catch (_) { /* đã lưu, không báo nhầm là lỗi ghi */ } } else open(); } catch (error) { button.disabled = false; button.textContent = editing ? 'Lưu thay đổi' : 'Lưu vào thư viện'; fail('Không lưu được: ' + (error?.message || 'lỗi không rõ') + (/permission|PERMISSION/.test(String(error?.code || error?.message)) ? ' — tài khoản chưa có quyền ghi thư viện (cần quản trị viên, hoặc rules Firebase chưa cập nhật).' : '')); }
     });
   }
 
@@ -127,5 +138,5 @@ const TascoLibrary = (() => {
   }
 
   document.addEventListener('click', event => { const cite = event.target.closest?.('[data-lib-cite]'); if (cite) showCitation(cite.dataset.libCite); });
-  return {open, openUpload, openEdit, showCitation, close};
+  return {open, openUpload, openEdit, importFromChat, showCitation, close};
 })();

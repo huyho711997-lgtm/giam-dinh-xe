@@ -16,6 +16,15 @@ const SOURCES = [
   { code: 'C2', id: 'qt:4', doc: 'Quy tắc bảo hiểm xe', soHieu: '', title: 'Mục 4.1', text: 'Giảm trừ 10% nếu thông báo chậm.', from: '', on: true }
 ];
 
+test('nhận yêu cầu thêm quy tắc và giữ nguyên nội dung văn bản', () => {
+  const {Q} = load();
+  const text = 'Điều 4. Phạm vi\nBảo hiểm chi trả theo quy định.';
+  assert.deepEqual(plain(Q.importRequest('Thêm quy tắc này vào cơ sở dữ liệu:\n' + text)), {intent:true, content:text});
+  assert.deepEqual(plain(Q.importRequest(text + '\nLưu quy tắc vào thư viện')), {intent:true, content:text});
+  assert.deepEqual(plain(Q.importRequest('Nạp tài liệu vào thư viện')), {intent:true, content:''});
+  assert.deepEqual(plain(Q.importRequest('Điều 4 của quy tắc này quy định thế nào?')), {intent:false, content:''});
+});
+
 test('buildQueries: câu hỏi gốc đứng đầu, kế đến cụm AI lập, rồi từ điển nghiệp vụ; bỏ trùng; câu hỏi tiếp ngắn được ghép câu trước', () => {
   const { Q } = load();
   const long = 'Thông báo tổn thất chậm quá hạn thì bị giảm trừ thế nào theo quy định?';

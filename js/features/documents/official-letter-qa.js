@@ -22,6 +22,20 @@ const OfficialLetterQA = (() => {
   const clip = (value, max) => { const text = String(value ?? '').replace(/[ \t]+\n/g, '\n').trim(); return text.length > max ? text.slice(0, max - 1) + '…' : text; };
   const oneLine = (value, max) => clip(String(value ?? '').replace(/\s+/g, ' '), max);
   const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  function importRequest(value) {
+    const text = String(value || '').trim();
+    const lines = text.split(/\r?\n/);
+    const command = line => {
+      const s = String(line).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase();
+      return /\b(them|luu|nap|dua|bo sung|cap nhat)\b/.test(s) && /\b(quy tac|tai lieu|thu vien|co so du lieu|database|du lieu)\b/.test(s);
+    };
+    if (!text) return {intent:false, content:''};
+    const first = lines[0], colon = first.indexOf(':');
+    if (colon >= 0 && command(first.slice(0, colon))) return {intent:true, content:[first.slice(colon + 1), ...lines.slice(1)].join('\n').trim()};
+    if (command(first) && lines.length > 1) return {intent:true, content:lines.slice(1).join('\n').trim()};
+    if (lines.length > 1 && command(lines[lines.length - 1])) return {intent:true, content:lines.slice(0, -1).join('\n').trim()};
+    return {intent:command(first), content:''};
+  }
 
   const SYSTEM = [
     'Bạn là chuyên viên nghiệp vụ giám định và bồi thường bảo hiểm xe cơ giới cấp cao của Tasco DLK, trả lời đồng nghiệp trong công ty.',
@@ -264,5 +278,5 @@ const OfficialLetterQA = (() => {
   }
   const normalizeStore = raw => (Array.isArray(raw && raw.messages) ? raw.messages : []).map(normalizeMessage).filter(Boolean).slice(-STORE_MAX);
 
-  return {SYSTEM, PLAN_SYSTEM, CHAT_SYSTEM, SUGGESTIONS, SOURCE_LIMIT, MAX_SOURCES, QA_COVERAGE, MAX_TURNS, buildPlanRequest, parsePlan, isSmallTalk, buildChatRequest, glossaryQueries, buildQueries, buildRequest, sourceBlock, recentTurns, citedCodes, unknownCodes, answerHtml, plainText, normalizeStore, normalizeMessage, newId};
+  return {SYSTEM, PLAN_SYSTEM, CHAT_SYSTEM, SUGGESTIONS, SOURCE_LIMIT, MAX_SOURCES, QA_COVERAGE, MAX_TURNS, importRequest, buildPlanRequest, parsePlan, isSmallTalk, buildChatRequest, glossaryQueries, buildQueries, buildRequest, sourceBlock, recentTurns, citedCodes, unknownCodes, answerHtml, plainText, normalizeStore, normalizeMessage, newId};
 })();
