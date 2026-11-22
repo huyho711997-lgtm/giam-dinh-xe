@@ -609,3 +609,8 @@ body:not(.light-mode) .ola-review ins { color:#95e4ba; }
 
 .ola-icon-btn.ola-deep-btn.is-set { background:color-mix(in srgb,var(--primary) 14%,transparent); color:var(--primary); }
 .ola-icon-btn.ola-deep-btn:disabled { opacity:.45; cursor:default; }
+
+/* Trang Công văn AI đã có giao diện AI chuyên biệt: ẩn nút & khung Trợ lý TASCO AI nổi ở góc dưới phải. */
+body:has(.ola) #tasco-ai-btn,
+body:has(.ola) #tasco-ai-panel { display: none !important; }
+body:has(.ola) #tasco-floating-dock:not(:has(#scrollToTopBtn.visible)) { display: none !important; }
