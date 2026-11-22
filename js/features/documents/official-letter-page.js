@@ -1682,7 +1682,7 @@ const OfficialLetterPage = (() => {
     const field = ([key, label, wide, hint]) => '<label class="ol-set-field' + (wide ? ' is-wide' : '') + '"><span>' + esc(label) + '</span><input name="' + key + '" maxlength="300" value="' + esc(issuer[key]) + '" placeholder="' + esc(hint) + '" autocomplete="off"></label>';
     dialog.innerHTML = '<form method="dialog" class="ol-set">'
       + '<header class="ol-set-head"><span class="ol-set-ico">' + icon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h0A1.7 1.7 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h0a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v0a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/>') + '</span>'
-      + '<div><h2 id="olSetTitle">Cài đặt Công văn AI</h2><p>Thông tin đơn vị ban hành và kết nối AI</p></div>'
+      + '<div><h2 id="olSetTitle">Cài đặt AI nghiệp vụ</h2><p>Thông tin đơn vị ban hành và kết nối AI</p></div>'
       + '<button type="button" class="ol-set-x" data-cancel aria-label="Đóng">' + icon('<path d="M18 6 6 18M6 6l12 12"/>') + '</button></header>'
       + '<div class="ol-set-body">'
       + providerCards()
@@ -1774,7 +1774,7 @@ const OfficialLetterPage = (() => {
     if (typeof showPremiumConfirmModal === 'function') return showPremiumConfirmModal(options);
     return Promise.resolve(window.confirm(options.title + '\n' + (options.message || '')));
   }
-  const confirmDiscard = () => (st.values || st.letter) ? askConfirm({eyebrow: 'CÔNG VĂN AI', title: 'Bỏ bản đang soạn?', message: 'Nội dung đang nhập sẽ bị bỏ để bắt đầu công văn mới.', confirmText: 'Bỏ và soạn mới'}) : Promise.resolve(true);
+  const confirmDiscard = () => (st.values || st.letter) ? askConfirm({eyebrow: 'AI NGHIỆP VỤ', title: 'Bỏ bản đang soạn?', message: 'Nội dung đang nhập sẽ bị bỏ để bắt đầu công văn mới.', confirmText: 'Bỏ và soạn mới'}) : Promise.resolve(true);
 
   // ---- Sự kiện ----
   function closePop() { if (!st.pop) return; collectAll(); st.pop = ''; st.recQuery = ''; renderAll(); }

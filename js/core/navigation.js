@@ -109,8 +109,8 @@
           { tab: 'scene_standalone', title: 'Vẽ sơ đồ hiện trường', icon: 'scene', show: showList || showPending, href: 'so-do-hien-truong.html' },
           { tab: 'contacts', title: 'Danh bạ nội bộ', icon: 'contacts', show: hasUserPermission('contacts', 'view') },
           { tab: 'shared_forms', title: 'Biểu mẫu dùng chung', icon: 'forms', show: hasUserPermission('shared_forms', 'view') },
-          // Soạn công văn bằng AI từ mẫu có sẵn; dùng chung quyền xem với Biểu mẫu dùng chung.
-          { tab: 'official_letters', title: 'Công văn AI', icon: 'letter', show: hasUserPermission('shared_forms', 'view') }
+          // Soạn công văn & hỏi nghiệp vụ bằng AI; dùng chung quyền xem với Biểu mẫu dùng chung.
+          { tab: 'official_letters', title: 'AI nghiệp vụ', icon: 'letter', show: hasUserPermission('shared_forms', 'view') }
         ]},
         { id: 'system', label: 'Hệ thống', items: [
           { tab: 'users', title: 'Quản trị hệ thống', icon: 'system', show: hasUserPermission('users', 'view'), also: ['system'] },

@@ -351,7 +351,7 @@
         return;
       }
       if (tabName === 'official_letters' && !hasUserPermission('shared_forms', 'view')) {
-        triggerToast('Bạn không có quyền dùng Công văn AI.', 'warning');
+        triggerToast('Bạn không có quyền dùng AI nghiệp vụ.', 'warning');
         if (activeDashboardTab === 'official_letters') activeDashboardTab = 'home';
         return;
       }
