@@ -2471,25 +2471,15 @@ const fullList = getCarBrandLossData();
       const shell = targetEl.closest('.gdv-report-premium-shell');
       const isWholeReport = targetEl.id === 'monthlyOpenedClaimsReportCardContainer';
       const paperBg = (shell && getComputedStyle(shell).getPropertyValue(isWholeReport ? '--ton-soft' : '--ton-paper').trim()) || (isDark ? '#121e27' : (isWholeReport ? '#f6f7f2' : '#ffffff'));
-      const exportWidth = Math.ceil(Math.max(targetEl.offsetWidth, isWholeReport ? 1200 : 880));
+      const exportWidth = Math.ceil(targetEl.offsetWidth || (isWholeReport ? 1200 : 880));
       const maxScaleByHeight = targetEl.offsetHeight > 0 ? 7500 / targetEl.offsetHeight : 3;
-      const exportScale = Math.max(1.5, Math.min(3, 3840 / exportWidth, maxScaleByHeight));
+      const exportScale = Math.max(2, Math.min(3, 3840 / Math.max(exportWidth, 600), maxScaleByHeight));
       const targetId = targetEl.id;
 
-      // Chụp trước các canvas Chart.js sang ảnh PNG để bản clone của html2canvas luôn sắc nét, không bị trắng/lỗi context.
-      const canvasSnapshots = [];
+      // Lưu tham chiếu canvas gốc (đã vẽ ở 3x DPR) để chép nguyên pixel sang bản clone mà không bị mờ do upscale.
+      const origCanvases = new Map();
       targetEl.querySelectorAll('canvas').forEach(cv => {
-        try {
-          if (cv.width > 0 && cv.height > 0) {
-            const rect = cv.getBoundingClientRect();
-            canvasSnapshots.push({
-              id: cv.id,
-              src: cv.toDataURL('image/png', 1.0),
-              w: Math.round(rect.width || cv.clientWidth || cv.width),
-              h: Math.round(rect.height || cv.clientHeight || cv.height)
-            });
-          }
-        } catch (_) { /* bỏ qua canvas không đọc được */ }
+        if (cv.id && cv.width > 0 && cv.height > 0) origCanvases.set(cv.id, cv);
       });
 
       html2canvas(targetEl, {
@@ -2532,19 +2522,14 @@ const fullList = getCarBrandLossData();
           target.style.transform = 'none';
           target.style.backgroundColor = paperBg;
 
-          // Thay <canvas> bản clone bằng ảnh chụp trực tiếp từ Chart.js
-          canvasSnapshots.forEach(snap => {
-            if (!snap.id) return;
-            const clonedCv = clonedDoc.getElementById(snap.id);
-            if (!clonedCv || !clonedCv.parentNode) return;
-            const img = clonedDoc.createElement('img');
-            img.src = snap.src;
-            img.alt = clonedCv.getAttribute('aria-label') || '';
-            img.style.display = 'block';
-            img.style.width = snap.w + 'px';
-            img.style.height = snap.h + 'px';
-            img.style.maxWidth = '100%';
-            clonedCv.parentNode.replaceChild(img, clonedCv);
+          // Chép nguyên buffer độ phân giải 3x từ canvas gốc sang canvas bản clone
+          origCanvases.forEach((origCv, cvId) => {
+            const clonedCv = clonedDoc.getElementById(cvId);
+            if (!clonedCv) return;
+            clonedCv.width = origCv.width;
+            clonedCv.height = origCv.height;
+            const c2d = clonedCv.getContext('2d');
+            if (c2d) c2d.drawImage(origCv, 0, 0);
           });
 
           // Khử các hàm màu CSS hiện đại (color-mix / color()) mà html2canvas 1.4.1 không parse được
@@ -3001,6 +2986,7 @@ const fullList = getCarBrandLossData();
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            devicePixelRatio: Math.max(window.devicePixelRatio || 1, 3),
             interaction: { mode: 'index', intersect: false },
             layout: { padding: { top: 6, right: 18, left: 4 } },
             animation: { duration: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 420, easing: 'easeOutQuart' },
