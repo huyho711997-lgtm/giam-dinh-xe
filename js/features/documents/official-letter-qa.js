@@ -168,8 +168,16 @@ const OfficialLetterQA = (() => {
       return part.replace(PHRASES, (match, _g, offset) => '<span class="ola-' + ((afterNo && offset === part.search(/\S/)) ? 'no' : (verdict(match) || 'no')) + '">' + match + '</span>');
     }).join('');
   }
+  // Đề mục của câu trả lời (Kết luận, Căn cứ, Điều kiện…): in đậm đứng riêng một dòng, hoặc nhãn đầu mục quen thuộc → gạch chân.
+  const SECTION = /^(ket luan|can cu|dieu kien|ngoai le|can xac nhan|luu y|ket qua)(\s|$|[,.;:)])/;
   function inline(line, known) {
-    let html = esc(line).replace(/\*\*([^*\n][^*\n]*?)\*\*/g, (_, inner) => { const kind = verdict(inner); return kind ? '<b class="ola-' + kind + '">' + inner + '</b>' : '<b>' + inner + '</b>'; });
+    const solo = /^\*\*[^*\n]+\*\*\s*:?$/.test(line.trim());
+    let html = esc(line).replace(/\*\*([^*\n][^*\n]*?)\*\*/g, (_, inner) => {
+      const kind = verdict(inner);
+      if (kind) return '<b class="ola-' + kind + '">' + inner + '</b>';
+      const key = foldVi(inner);
+      return (solo || (key.length <= 60 && SECTION.test(key))) ? '<b class="ola-h">' + inner + '</b>' : '<b>' + inner + '</b>';
+    });
     html = colorPhrases(html);
     html = html.replace(/\[(C\d{1,2})\]/g, (_, code) => known.has(code)
       ? '<button type="button" class="ola-cite" data-ol-qa-cite="' + code + '" title="Xem nguyên văn nguồn ' + code + '">' + code + '</button>'

@@ -89,7 +89,7 @@ test('answerHtml: escape HTML, **đậm**, danh sách, mã nguồn thành nút, 
   const html = Q.answerHtml('**Kết luận:** <script>alert(1)</script> bị giảm trừ [C2].\n\n- Mục một [C1]\n- Mục hai [C7]\n\n1. Bước\n2) Bước hai\n# Tiêu đề', SOURCES);
   assert.doesNotMatch(html, /<script/);
   assert.match(html, /&lt;script&gt;/);
-  assert.match(html, /<b>Kết luận:<\/b>/);
+  assert.match(html, /<b class="ola-h">Kết luận:<\/b>/);
   assert.match(html, /<button type="button" class="ola-cite" data-ol-qa-cite="C2"/);
   assert.match(html, /<ul><li>Mục một <button[^>]*data-ol-qa-cite="C1"[^>]*>C1<\/button><\/li><li>Mục hai <span class="ola-cite is-bad"[^>]*>C7\?<\/span><\/li><\/ul>/);
   assert.match(html, /<ol><li>Bước<\/li><li>Bước hai<\/li><\/ol>/);
@@ -178,9 +178,21 @@ test('answerHtml: tô xanh chữ kết luận "có", đỏ chữ "không" (in đ
   assert.match(html, /<b class="ola-yes">thuộc phạm vi<\/b>/);
   assert.match(html, /<span class="ola-no">bị loại trừ<\/span>/);
   assert.match(html, /<span class="ola-yes">được bồi thường<\/span>/);
-  assert.match(html, /<b>Kết luận:<\/b>/);
+  assert.match(html, /<b class="ola-h">Kết luận:<\/b>/);
   assert.match(html, /<b>Điều 13<\/b>/);   // chữ đậm không mang nghĩa kết luận giữ nguyên
   assert.ok(!/ola-(yes|no)">không<\/span>|ola-no">không gian/.test(html));   // không tô chữ "không" lẻ nằm ngoài cụm
   assert.ok(!/title="[^"]*<span/.test(html));   // không chèn tô màu vào thuộc tính HTML
   assert.match(html, /data-ol-qa-cite="C1"/);
+});
+
+test('answerHtml: gạch chân đề mục (đậm đứng riêng một dòng hoặc nhãn Kết luận/Căn cứ/Điều kiện…), chữ đậm thường thì không', () => {
+  const { Q } = load();
+  const html = Q.answerHtml('**Kết luận**\n- Khi khách hàng **không tham gia BS07** thì **thay đổi thông số lốp** bị loại trừ.\n\n**Căn cứ**\n- C1 – **BS07**: có hiệu lực.\n\n**Điều kiện, ngoại lệ cần kiểm tra**\n1. **Có BS07 hay không** trong hợp đồng.\n\n**Cần xác nhận thêm:** số khung.', SOURCES);
+  assert.match(html, /<p><b class="ola-h">Kết luận<\/b><\/p>/);
+  assert.match(html, /<p><b class="ola-h">Căn cứ<\/b><\/p>/);
+  assert.match(html, /<p><b class="ola-h">Điều kiện, ngoại lệ cần kiểm tra<\/b><\/p>/);
+  assert.match(html, /<b class="ola-h">Cần xác nhận thêm:<\/b> số khung/);
+  assert.match(html, /<b>BS07<\/b>/);                 // chữ đậm trong danh sách không bị gạch chân
+  assert.match(html, /<b>thay đổi thông số lốp<\/b>/);
+  assert.match(html, /<b class="ola-yes">Có BS07 hay không<\/b>/);   // chữ kết luận vẫn tô màu, không gạch chân
 });

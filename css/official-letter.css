@@ -642,6 +642,7 @@ body:has(.ola) #tasco-floating-dock:not(:has(#scrollToTopBtn.visible)) { display
 .ol-set-chip.is-on { border-color:var(--primary); background:color-mix(in srgb,var(--primary) 14%,transparent); color:var(--primary); font-weight:750; }
 
 /* ---- Tô màu kết luận trong câu trả lời: xanh = có, đỏ = không ---- */
+.ola-qa-text .ola-h { text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:5px; text-decoration-color:color-mix(in srgb,var(--primary) 75%,transparent); text-decoration-skip-ink:none; }
 .ola-qa-text .ola-yes, .ola-qa-text .ola-no { padding:0 5px; border-radius:6px; font-weight:800; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
 .ola-qa-text .ola-yes { color:#4ade80; background:color-mix(in srgb,#22c55e 16%,transparent); }
 .ola-qa-text .ola-no { color:#f87171; background:color-mix(in srgb,#ef4444 16%,transparent); }
