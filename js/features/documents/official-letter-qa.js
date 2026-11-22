@@ -14,6 +14,7 @@ const OfficialLetterQA = (() => {
   const DOSSIER_MAX = 9000;
   const SOURCE_LIMIT = 8;         // số đoạn xếp hạng cao nhất; sau đó mở rộng thêm phần liền kề / điều được dẫn chiếu tới MAX_SOURCES
   const MAX_SOURCES = 12;
+  const CARRY_MAX = 4;            // số đoạn đã dẫn ở câu trả lời trước được mang sang câu hỏi tiếp theo
   const MAX_QUERIES = 10;
   const QA_COVERAGE = 0.34;       // câu hỏi tự nhiên dài hơn truy vấn ngắn → ngưỡng phủ từ thấp hơn so với soạn công văn
   const STORE_MAX = 24;           // số tin nhắn lưu lại trên máy
@@ -21,6 +22,8 @@ const OfficialLetterQA = (() => {
 
   const clip = (value, max) => { const text = String(value ?? '').replace(/[ \t]+\n/g, '\n').trim(); return text.length > max ? text.slice(0, max - 1) + '…' : text; };
   const oneLine = (value, max) => clip(String(value ?? '').replace(/\s+/g, ' '), max);
+  // Mã [C#] chỉ có nghĩa trong lượt trả lời sinh ra nó (được đánh lại mỗi lượt) → bỏ khỏi lịch sử gửi cho AI để khỏi trỏ nhầm nguồn.
+  const stripCodes = text => String(text ?? '').replace(/\s?\[C\d{1,2}\]/g, '');
   const esc = value => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   function importRequest(value) {
     const text = String(value || '').trim();
@@ -46,6 +49,11 @@ const OfficialLetterQA = (() => {
     '2. Duyệt các lớp quy định theo thứ tự: định nghĩa → phạm vi bảo hiểm → điểm loại trừ chung → loại trừ riêng của chương → NGOẠI LỆ nằm trong chính điểm loại trừ ("trừ trường hợp…", "không áp dụng…") → điều khoản bảo hiểm bổ sung (BS…) có gỡ loại trừ không → khấu hao / khấu trừ / giới hạn → hồ sơ, thủ tục.',
     '3. Đọc hết từng mục trước khi kết luận: điều khoản loại trừ thường có ngoại lệ ở cuối câu; chú ý các từ "riêng", "chỉ", "trừ", "đồng thời".',
     '4. Áp dụng vào tình huống người hỏi. Nếu quy tắc nói theo nhóm bộ phận hoặc nói gián tiếp thì VẪN suy luận ra kết luận từ các điều khoản đó và ghi rõ đó là suy luận.',
+    'LOẠI TRỪ TRƯỚC KHI KẾT LUẬN "CÓ": với câu "có được bồi thường / bảo hiểm không", phải rà điểm loại trừ liệt kê đúng bộ phận hoặc sự kiện đó (kể cả tên gần nghĩa, ví dụ chắn gầm ~ lót gầm / ốp gầm / chắn bùn) cùng điều kiện của nó ("riêng", "đơn lẻ", "trừ trường hợp… đồng thời tổn thất bộ phận khác") TRƯỚC khi nhìn phạm vi chung. Có điểm loại trừ kèm ngoại lệ thì kết luận **Có điều kiện** hoặc **Bị loại trừ** theo đúng dữ kiện; không kết luận **Có** trơn chỉ vì thuộc phạm vi chung.',
+    'ĐỐI CHIẾU VỚI HỘI THOẠI (bắt buộc khi đã có câu trước):',
+    '- Câu trả lời trước của bạn có thể sai hoặc thiếu vì khi đó chưa có đủ đoạn trích. Mã [C#] trong lịch sử đã bị bỏ; chỉ dùng mã trong TRÍCH ĐOẠN THƯ VIỆN hiện tại (gồm cả đoạn ghi "đã dẫn ở câu trả lời trước").',
+    '- Cùng một tình huống phải cho cùng một kết luận; chỉ đổi khi người hỏi bổ sung dữ kiện mới hoặc đoạn trích mới làm kết quả đổi, và khi đó nêu rõ dữ kiện/đoạn nào làm đổi.',
+    '- Nếu câu hỏi là hỏi lại, phản biện hoặc chỉ ra hai câu trả lời khác nhau ("sao câu trước trả lời có, giờ lại không"): bắt đầu bằng **Đối chiếu với câu trước:** nêu câu trước kết luận gì, câu này kết luận gì, đọc lại các đoạn trích rồi chỉ ra kết luận nào đúng và VÌ SAO có sự khác nhau (thiếu điểm loại trừ nào, hiểu sai điều kiện nào). Câu trước sai thì nói thẳng "Câu trả lời trước chưa chính xác" và sửa; không lặp lại kết luận cũ chỉ vì đã nói trước đó, không bênh nó khi đoạn trích không ủng hộ.',
     'QUY TẮC TRÌNH BÀY VÀ TRÍCH DẪN (bắt buộc):',
     '- Cấu trúc: **Kết luận** (1–2 câu: Có / Không / Có điều kiện + lý do chính) → **Căn cứ** (gạch đầu dòng, mỗi ý nêu rõ Điều/mục và kèm [C#]) → **Điều kiện, ngoại lệ cần kiểm tra** (nếu có) → **Cần xác nhận thêm** (chỉ khi thật sự thiếu dữ kiện hoặc thiếu đoạn).',
     '- Mọi khẳng định về quy định, thời hạn, tỷ lệ, mức khấu trừ/khấu hao phải có mã nguồn ngay sau câu, ví dụ [C2]; chỉ dùng mã được cấp. Không nêu số Điều/mục/tỷ lệ/thời hạn nào không có trong trích đoạn; không trả lời điều khoản bằng trí nhớ.',
@@ -66,11 +74,15 @@ const OfficialLetterQA = (() => {
     '- kind: "chat" CHỈ khi câu hỏi hoàn toàn không cần tra quy định (chào hỏi, cảm ơn, hỏi bạn là ai / làm được gì / dùng thế nào, trò chuyện thường). Mọi câu hỏi về điều khoản, loại trừ, bồi thường, khấu hao, hồ sơ, thủ tục, thời hạn… đều là "lookup". Khi kind = "chat" thì issue = "" và queries = [].',
     '- issue: vấn đề cần xác định, 1–2 câu (đối tượng, sự kiện, điều cần biết).',
     '- queries: 5–8 cụm từ tra cứu NGẮN (3–9 từ), viết theo ngôn ngữ của văn bản quy tắc bảo hiểm chứ không theo khẩu ngữ. Mỗi cụm một khía cạnh: phạm vi bảo hiểm; điểm loại trừ (chung và riêng); ngoại lệ "trừ trường hợp…"; điều khoản bảo hiểm bổ sung / mở rộng liên quan; định nghĩa thuật ngữ; khấu hao / khấu trừ nếu liên quan; từ đồng nghĩa (VD "vỏ pin" → "pin điện động cơ", "bộ phận", "tổn thất riêng").',
+    '- Nếu câu hỏi là hỏi lại / phản biện câu trả lời trước ("sao trước trả lời có…"): issue nêu vấn đề của câu hỏi trước kèm điểm cần đối chiếu (điểm loại trừ, ngoại lệ), queries bám CHỦ ĐỀ của câu trước chứ không bám chữ của câu phản biện.',
     '- Không bịa số Điều/số hiệu.'
   ].join('\n');
   function buildPlanRequest(question, history) {
     const prev = (history || []).filter(item => item && item.role === 'user' && item.text).slice(-2).map(item => '- ' + oneLine(item.text, 200));
-    const text = (prev.length ? 'CÂU HỎI TRƯỚC TRONG HỘI THOẠI:\n' + prev.join('\n') + '\n\n' : '') + 'CÂU HỎI CẦN TRA:\n' + clip(question, 600);
+    const lastAnswer = [...(history || [])].reverse().find(item => item && item.role === 'assistant' && !item.chat && !item.empty && !item.error && item.text);
+    const text = (prev.length ? 'CÂU HỎI TRƯỚC TRONG HỘI THOẠI:\n' + prev.join('\n') + '\n\n' : '')
+      + (lastAnswer ? 'CÂU TRẢ LỜI TRƯỚC (tóm tắt, có thể chưa đúng):\n' + oneLine(stripCodes(lastAnswer.text), 320) + '\n\n' : '')
+      + 'CÂU HỎI CẦN TRA:\n' + clip(question, 600);
     return {system_instruction: {parts: [{text: PLAN_SYSTEM}]}, contents: [{role: 'user', parts: [{text}]}], generationConfig: {responseMimeType: 'application/json', temperature: 0.1}};
   }
   function parsePlan(raw) {
@@ -120,6 +132,7 @@ const OfficialLetterQA = (() => {
     [/ton that rieng|rieng phan|bo phan|\bvo\b/, ['tổn thất riêng bộ phận trừ trường hợp cùng một nguyên nhân đồng thời']],
     [/khau hao|khau tru|mien thuong/, ['quy định về khấu hao phụ tùng thay mới', 'mức khấu trừ số tiền bồi thường']],
     [/lop|sam|la zang|lazang|mam xe/, ['tổn thất riêng săm lốp loại trừ', 'khấu hao săm lốp ắc quy']],
+    [/chan gam|lot gam|op gam|chan bun|tam chan|chup dau truc|bat thung|nhan mac/, ['loại trừ tổn thất riêng săm lốp bạt thùng xe nhãn mác chắn bùn chụp đầu trục bánh xe lót gầm xe', 'tổn thất riêng các bộ phận không bồi thường trừ khi đồng thời tổn thất bộ phận khác cùng một vụ tai nạn']],
     [/kinh/, ['bảo hiểm kính chắn gió']],
     [/trom|cuop|mat cap/, ['mất bộ phận của xe do bị trộm cướp']],
     [/thong bao|cham|qua han/, ['thời hạn thông báo tổn thất cho doanh nghiệp bảo hiểm', 'giảm trừ bồi thường vi phạm nghĩa vụ của chủ xe']],
@@ -135,6 +148,7 @@ const OfficialLetterQA = (() => {
   }
 
   // Câu hỏi hỏi tiếp ("còn trường hợp xe chưa đóng phí thì sao?") quá ngắn để tìm đúng → ghép thêm câu hỏi trước đó.
+  const FOLLOW_UP = /^(vay|con|the|nhu vay|sao|tai sao|vi sao|neu|nhung|that khong|dung khong)\b|cau (hoi )?truoc|o tren|luc nay|ban (vua )?(noi|tra loi)|tra loi (la )?(co|khong)|mau thuan|khac nhau/;
   const wordCount = text => String(text || '').trim().split(/\s+/).filter(Boolean).length;
   // plan: kết quả parsePlan (tuỳ chọn). Thứ tự: câu hỏi gốc → cụm AI lập → từ điển nghiệp vụ; bỏ trùng, tối đa MAX_QUERIES.
   function buildQueries(question, history, plan) {
@@ -143,17 +157,37 @@ const OfficialLetterQA = (() => {
     const out = [], seen = new Set();
     const push = text => { const clean = oneLine(text, 300), id = foldKey(clean); if (clean && !seen.has(id)) { seen.add(id); out.push(clean); } };
     push(q);
-    const prev = [...(history || [])].reverse().find(item => item && item.role === 'user' && item.text);
-    if (prev && wordCount(q) < 8) push(prev.text + ' ' + q);
+    const prevs = [...(history || [])].reverse().filter(item => item && item.role === 'user' && item.text);
+    const followUp = wordCount(q) < 8 || FOLLOW_UP.test(foldKey(q));
+    if (prevs[0] && followUp) { push(prevs[0].text + ' ' + q); push(prevs[0].text); }   // hỏi tiếp / phản biện: bám chủ đề câu trước
+    if (prevs[1] && FOLLOW_UP.test(foldKey(q))) push(prevs[1].text);
     ((plan && plan.queries) || []).forEach(push);
     glossaryQueries(q + ' ' + ((plan && plan.issue) || '')).forEach(push);
     return out.slice(0, MAX_QUERIES);
   }
 
   const sourceBlock = sources => (sources || []).filter(source => source && source.on !== false).map(source => {
-    const head = '[' + source.code + '] ' + source.doc + (source.soHieu ? ' (số ' + source.soHieu + ')' : '') + ' – ' + source.title + (source.from ? ' (hiệu lực từ ' + source.from + ')' : '') + (source.via ? ' [đoạn bổ sung: ' + source.via + ']' : '');
+    const head = '[' + source.code + '] ' + source.doc + (source.soHieu ? ' (số ' + source.soHieu + ')' : '') + ' – ' + source.title + (source.from ? ' (hiệu lực từ ' + source.from + ')' : '') + (source.carried ? ' [đã dẫn ở câu trả lời trước]' : source.via ? ' [đoạn bổ sung: ' + source.via + ']' : '');
     return head + '\n' + String(source.text || '').replace(/\s+\n/g, '\n').slice(0, 1800);
   }).join('\n\n');
+
+  // Câu hỏi tiếp cần cùng căn cứ với câu trước: mang các đoạn câu trả lời gần nhất ĐÃ DẪN sang lượt này (không trùng), đánh lại mã C1…Cn.
+  // Không có bước này, mã [C#] của lượt trước trỏ sai nguồn và AI không còn thấy điều khoản mình vừa dựa vào nên dễ tự mâu thuẫn.
+  function carrySources(history, sources) {
+    const fresh = (sources || []).map(source => ({...source}));
+    const seen = new Set(fresh.map(source => source.id).filter(Boolean));
+    const carried = [];
+    const answers = (history || []).filter(item => item && item.role === 'assistant' && !item.chat && !item.empty && !item.error && Array.isArray(item.sources) && item.sources.length).slice(-2).reverse();
+    for (const answer of answers) {
+      for (const code of citedCodes(answer.text)) {
+        const source = answer.sources.find(item => item && item.code === code);
+        if (!source || !source.id || seen.has(source.id) || carried.length >= CARRY_MAX) continue;
+        seen.add(source.id);
+        carried.push({...source, via: 'đã dẫn ở câu trả lời trước', carried: true, on: source.on !== false});
+      }
+    }
+    return fresh.concat(carried).slice(0, MAX_SOURCES + CARRY_MAX).map((source, i) => ({...source, code: 'C' + (i + 1)}));
+  }
 
   function recentTurns(history) {
     const turns = (history || []).filter(item => item && (item.role === 'user' || item.role === 'assistant') && String(item.text || '').trim() && !item.error);
@@ -169,7 +203,7 @@ const OfficialLetterQA = (() => {
       + (input.dossier ? '\n\nHỒ SƠ ĐANG CHỌN:\n' + clip(input.dossier, DOSSIER_MAX) : '')
       + (input.issue ? '\n\nVẤN ĐỀ CẦN XÁC ĐỊNH (do bước phân tích câu hỏi đề xuất, tham khảo):\n' + clip(input.issue, 300) : '')
       + '\n\nCÂU HỎI:\n' + question;
-    const contents = recentTurns(input.history).map(item => ({role: item.role === 'assistant' ? 'model' : 'user', parts: [{text: clip(item.text, TURN_CHARS)}]}));
+    const contents = recentTurns(input.history).map(item => ({role: item.role === 'assistant' ? 'model' : 'user', parts: [{text: clip(item.role === 'assistant' ? stripCodes(item.text) : item.text, TURN_CHARS)}]}));
     contents.push({role: 'user', parts: [{text}]});
     return {system_instruction: {parts: [{text: SYSTEM}]}, contents, generationConfig: {temperature: 0.2}};
   }
@@ -266,7 +300,7 @@ const OfficialLetterQA = (() => {
     if (!text.trim()) return null;
     const message = {id: String(item.id || newId()), role: item.role, text};
     if (item.role === 'assistant') {
-      message.sources = (Array.isArray(item.sources) ? item.sources : []).map(normalizeSource).filter(Boolean).slice(0, MAX_SOURCES);
+      message.sources = (Array.isArray(item.sources) ? item.sources : []).map(normalizeSource).filter(Boolean).slice(0, MAX_SOURCES + CARRY_MAX);
       if (item.question) message.question = oneLine(item.question, 300);
       if (Array.isArray(item.queries)) message.queries = item.queries.map(query => oneLine(query, 120)).filter(Boolean).slice(0, MAX_QUERIES);
       if (item.issue) message.issue = oneLine(item.issue, 300);
@@ -278,5 +312,5 @@ const OfficialLetterQA = (() => {
   }
   const normalizeStore = raw => (Array.isArray(raw && raw.messages) ? raw.messages : []).map(normalizeMessage).filter(Boolean).slice(-STORE_MAX);
 
-  return {SYSTEM, PLAN_SYSTEM, CHAT_SYSTEM, SUGGESTIONS, SOURCE_LIMIT, MAX_SOURCES, QA_COVERAGE, MAX_TURNS, importRequest, buildPlanRequest, parsePlan, isSmallTalk, buildChatRequest, glossaryQueries, buildQueries, buildRequest, sourceBlock, recentTurns, citedCodes, unknownCodes, answerHtml, plainText, normalizeStore, normalizeMessage, newId};
+  return {SYSTEM, PLAN_SYSTEM, CHAT_SYSTEM, SUGGESTIONS, SOURCE_LIMIT, MAX_SOURCES, QA_COVERAGE, MAX_TURNS, importRequest, buildPlanRequest, parsePlan, isSmallTalk, buildChatRequest, glossaryQueries, buildQueries, buildRequest, sourceBlock, recentTurns, carrySources, stripCodes, CARRY_MAX, citedCodes, unknownCodes, answerHtml, plainText, normalizeStore, normalizeMessage, newId};
 })();

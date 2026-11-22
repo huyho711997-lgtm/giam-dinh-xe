@@ -264,3 +264,61 @@ test('qaComposerHtml: hiển thị animation loading trong khung nhập chat khi
   assert.match(busyHtml, /data-ol-act="qa-stop"/);
   assert.match(busyHtml, /data-ol-act="qa-remove-file"[^>]*disabled/);
 });
+
+test('carrySources: mang đoạn đã dẫn ở câu trả lời trước sang lượt sau, không trùng, đánh lại mã C1…Cn', () => {
+  const { Q } = load();
+  const old = [
+    { code: 'C1', id: 'qt:13', doc: 'Quy tắc', title: 'Điều 13 mục 7', text: 'Loại trừ tổn thất riêng lót gầm xe…' },
+    { code: 'C2', id: 'qt:9', doc: 'Quy tắc', title: 'Điều 9', text: 'Phạm vi' },
+    { code: 'C3', id: 'qt:20', doc: 'Quy tắc', title: 'Điều 20', text: 'Không được dẫn' }
+  ];
+  const history = [
+    { role: 'user', text: 'chắn gầm có được bồi thường không' },
+    { role: 'assistant', text: '**Không** nếu chỉ riêng chắn gầm [C1]. Phạm vi chung [C2].', sources: old },
+    { role: 'user', text: 'còn lót gầm?' },
+    { role: 'assistant', text: 'Chào bạn', chat: true, sources: [] }
+  ];
+  const fresh = [{ code: 'C1', id: 'qt:9', doc: 'Quy tắc', title: 'Điều 9', text: 'Phạm vi' }, { code: 'C2', id: 'qt:30', doc: 'Quy tắc', title: 'Điều 30', text: 'Khác' }];
+  const merged = plain(Q.carrySources(history, fresh));
+  assert.deepEqual(merged.map(s => s.id), ['qt:9', 'qt:30', 'qt:13'], 'đoạn mới đứng trước, đoạn cũ đã dẫn thêm sau, bỏ trùng và bỏ đoạn không được dẫn');
+  assert.deepEqual(merged.map(s => s.code), ['C1', 'C2', 'C3']);
+  assert.equal(merged[2].carried, true);
+  assert.equal(merged[0].carried, undefined);
+  assert.equal(plain(Q.carrySources([], fresh)).length, 2);
+  // giới hạn số đoạn mang sang
+  const many = Array.from({ length: 9 }, (_, i) => ({ code: 'C' + (i + 1), id: 'x:' + i, doc: 'D', title: 'T' + i, text: 't' }));
+  const big = plain(Q.carrySources([{ role: 'assistant', text: many.map(s => '[' + s.code + ']').join(' '), sources: many }], []));
+  assert.equal(big.length, Q.CARRY_MAX);
+});
+
+test('buildRequest: bỏ mã [C#] cũ trong lịch sử, gắn nhãn đoạn đã dẫn ở câu trước, có quy tắc đối chiếu và rà loại trừ trước', () => {
+  const { Q } = load();
+  const sources = [{ ...SOURCES[0] }, { ...SOURCES[1], carried: true }];
+  const history = [{ role: 'user', text: 'câu 1' }, { role: 'assistant', text: 'Có [C4] và [C12].' }];
+  const req = plain(Q.buildRequest({ question: 'vậy sao câu trước trả lời có', sources, history }));
+  const assistant = req.contents.find(c => c.role === 'model');
+  assert.equal(assistant.parts[0].text, 'Có và.');
+  assert.match(req.contents[req.contents.length - 1].parts[0].text, /\[C2\] Quy tắc bảo hiểm xe – Mục 4\.1 \[đã dẫn ở câu trả lời trước\]/);
+  const system = req.system_instruction.parts[0].text;
+  assert.match(system, /LOẠI TRỪ TRƯỚC KHI KẾT LUẬN "CÓ"/);
+  assert.match(system, /Đối chiếu với câu trước/);
+  assert.match(system, /Cùng một tình huống phải cho cùng một kết luận/);
+});
+
+test('buildQueries: câu phản biện / hỏi lại bám chủ đề câu hỏi trước; glossary chắn gầm kéo điểm loại trừ liệt kê bộ phận', () => {
+  const { Q } = load();
+  const history = [{ role: 'user', text: 'tổn thất riêng phần chắn gầm thì có được bồi thường không' }, { role: 'assistant', text: 'Có', sources: [] }, { role: 'user', text: 'riêng mỗi chắn gầm vẫn được bồi thường à' }, { role: 'assistant', text: 'Không', sources: [] }];
+  const queries = Q.buildQueries('vậy sao câu hỏi trước lại trả lời là có', history, { queries: [], issue: '' });
+  assert.ok(queries.some(q => q === 'riêng mỗi chắn gầm vẫn được bồi thường à'), 'chủ đề câu trước');
+  assert.ok(queries.some(q => q === 'tổn thất riêng phần chắn gầm thì có được bồi thường không'), 'chủ đề trước nữa');
+  const gloss = Q.glossaryQueries('chắn gầm có được bồi thường không');
+  assert.ok(gloss.some(q => /lót gầm xe/.test(q) && /chắn bùn/.test(q)));
+});
+
+test('buildPlanRequest: kèm tóm tắt câu trả lời trước (đã bỏ mã nguồn) để bước tra cứu hiểu câu phản biện', () => {
+  const { Q } = load();
+  const req = plain(Q.buildPlanRequest('sao câu trước lại là có', [{ role: 'user', text: 'chắn gầm được bồi thường không' }, { role: 'assistant', text: '**Có** theo phạm vi [C4].' }]));
+  const text = req.contents[0].parts[0].text;
+  assert.match(text, /CÂU TRẢ LỜI TRƯỚC[^\n]*\n\*\*Có\*\* theo phạm vi\./);
+  assert.ok(!/\[C4\]/.test(text));
+});

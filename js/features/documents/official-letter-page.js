@@ -866,15 +866,17 @@ const OfficialLetterPage = (() => {
       const found = L ? await L.retrieve(queries, Object.assign({limit: Math.min(Q.SOURCE_LIMIT, modelCap('maxSources') || Q.SOURCE_LIMIT), minCoverage: Q.QA_COVERAGE, expand: true, maxSources: Math.min(Q.MAX_SOURCES, modelCap('maxSources') || Q.MAX_SOURCES), perArticle: 2}, st.legalPin.length ? {docIds: st.legalPin} : {}))
         : {sources: [], total: 0, error: 'Chưa tải được mô-đun thư viện. Hãy tải lại trang.'};
       if (mine !== generation || !host) return;
-      if (!found.sources.length && (found.error || (!history.some(item => item.role === 'assistant' && !item.chat && !item.empty && !item.error) && !dossier))) {
+      // Mang các đoạn câu trả lời trước đã dẫn sang lượt này: câu hỏi tiếp/phản biện vẫn thấy điều khoản mình vừa dựa vào.
+      const sources = Q.carrySources(history, found.sources);
+      if (!sources.length && (found.error || (!history.some(item => item.role === 'assistant' && !item.chat && !item.empty && !item.error) && !dossier))) {
         // Không có căn cứ nào để trả lời → không gọi AI (tránh tốn token và tránh AI trả lời bằng trí nhớ).
         reply({text: found.error || NO_MATCH, empty: true, queries});
       } else {
         // Bước 3 — suy luận trên nguyên văn các đoạn tìm được.
-        paintQaStatus((found.sources.length ? 'Tìm thấy ' + found.sources.length + ' đoạn liên quan — ' : 'Đang trả lời theo hội thoại — ') + (deepOn() ? 'đang suy luận sâu (có thể mất 30–90 giây)…' : 'đang soạn câu trả lời…'));
+        paintQaStatus((sources.length ? 'Tìm thấy ' + found.sources.length + ' đoạn liên quan' + (sources.length > found.sources.length ? ' (+' + (sources.length - found.sources.length) + ' đoạn đã dẫn ở câu trước)' : '') + ' — ' : 'Đang trả lời theo hội thoại — ') + (deepOn() ? 'đang suy luận sâu (có thể mất 30–90 giây)…' : 'đang soạn câu trả lời…'));
         usage.resumeText = qa.status;
-        const answer = await callAI(Q.buildRequest({question, history, sources: found.sources, libraryError: found.error, dossier, issue: plan.issue}), Object.assign({thinking: qa.deep, effort: 'high'}, usage));
-        reply({text: String(answer).trim(), sources: found.sources, queries, issue: plan.issue});
+        const answer = await callAI(Q.buildRequest({question, history, sources, libraryError: found.error, dossier, issue: plan.issue}), Object.assign({thinking: qa.deep, effort: 'high'}, usage));
+        reply({text: String(answer).trim(), sources, queries, issue: plan.issue});
       }
     } catch (error) {
       if (error && error.name === 'AbortError') {
