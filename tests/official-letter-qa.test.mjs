@@ -251,7 +251,7 @@ test('Hỏi nghiệp vụ: trạng thái xử lý hiển thị một lần trong
   assert.doesNotMatch(idleHtml, /ola-qa-loading|is-busy|aria-busy="true"/);
   assert.match(idleHtml, /data-ol-act="qa-send"/);
 
-  ctx.page.setQa({ busy: true, status: 'Đang suy luận sâu (có thể mất 30–90 giây)…', messages: [{id: 'u1', role: 'user', text: 'Xin chào'}], importFile: { name: 'Nghị định 67.pdf' } });
+  ctx.page.setQa({ busy: true, status: 'Đang suy luận sâu (có thể mất 30–90 giây)…', messages: [{id: 'u1', role: 'user', text: 'Xin chào'}], importFile: null, attach: [{ kind: 'text', name: 'Nghị định 67.pdf', text: 'x' }] });
   const busyHtml = ctx.page.qaComposerHtml(false);
   assert.match(busyHtml, /ola-qa-composer is-up is-busy/);
   assert.match(busyHtml, /aria-busy="true"/);
@@ -261,7 +261,7 @@ test('Hỏi nghiệp vụ: trạng thái xử lý hiển thị một lần trong
   assert.equal((conversation.match(/data-ol-qa-status/g) || []).length, 1);
   assert.match(conversation, /data-ol-qa-status>Đang suy luận sâu/);
   assert.match(busyHtml, /data-ol-act="qa-stop"/);
-  assert.match(busyHtml, /data-ol-act="qa-remove-file"[^>]*disabled/);
+  assert.match(busyHtml, /data-ol-act="qa-attach-remove"[^>]*disabled/);
 });
 
 test('carrySources: mang đoạn đã dẫn ở câu trả lời trước sang lượt sau, không trùng, đánh lại mã C1…Cn', () => {
@@ -401,4 +401,23 @@ test('normalizeMessage: giữ files (≤5, chữ ≤12000) trên tin người d�
   assert.ok(user.files.every(file => file.text.length <= 12000));
   const ai = plain(Q.normalizeMessage({ role: 'assistant', text: 'ok', free: true }));
   assert.equal(ai.free, true);
+});
+
+test('buildRequest (Hỏi nghiệp vụ): tệp/ảnh đính kèm là dữ kiện vụ việc, tách khỏi trích đoạn thư viện; ảnh đi kèm dạng inlineData', () => {
+  const { Q } = load();
+  const req = plain(Q.buildRequest({
+    question: 'Theo bảng tỷ lệ thương tật thì trường hợp này bao nhiêu?', history: [], sources: SOURCES,
+    files: [{ name: 'giay-ra-vien.txt', text: 'Gãy xương đòn trái' }], images: [{ name: 'xray.jpg', mimeType: 'image/jpeg', data: 'QUJD' }]
+  }));
+  const last = req.contents.at(-1);
+  const text = last.parts[0].text;
+  assert.match(text, /TÀI LIỆU\/ẢNH NGƯỜI DÙNG ĐÍNH KÈM[^\n]*KHÔNG phải căn cứ pháp lý/);
+  assert.match(text, /TỆP: giay-ra-vien\.txt\nGãy xương đòn trái/);
+  assert.match(text, /ẢNH: xray\.jpg/);
+  assert.ok(text.indexOf('TRÍCH ĐOẠN THƯ VIỆN') < text.indexOf('TÀI LIỆU/ẢNH'));
+  assert.equal(last.parts[1].inlineData.data, 'QUJD');
+  assert.match(req.system_instruction.parts[0].text, /TÀI LIỆU\/ẢNH ĐÍNH KÈM của người dùng/);
+  const plainReq = plain(Q.buildRequest({ question: 'hỏi thường', history: [], sources: SOURCES }));
+  assert.ok(!/TÀI LIỆU\/ẢNH NGƯỜI DÙNG/.test(plainReq.contents.at(-1).parts[0].text));
+  assert.equal(plainReq.contents.at(-1).parts.length, 1);
 });

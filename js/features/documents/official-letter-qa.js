@@ -65,6 +65,7 @@ const OfficialLetterQA = (() => {
     '- Nếu một đoạn bị cắt giữa chừng hoặc mục liền kề không có trong trích đoạn, nói rõ phần nào chưa đọc được.',
     '- Hai đoạn mâu thuẫn hoặc khác phạm vi áp dụng (luật chung với quy tắc bảo hiểm): nêu cả hai và chỉ ra điểm khác.',
     '- Có HỒ SƠ: áp dụng đúng hồ sơ đó, nêu dữ kiện hồ sơ đã dùng; thiếu dữ kiện nào thì nói rõ thiếu gì thay vì giả định.',
+    '- Có TÀI LIỆU/ẢNH ĐÍNH KÈM của người dùng: đó là dữ kiện vụ việc (ảnh thương tích, biên bản, bảng kê…), không phải căn cứ pháp lý. Mô tả ngắn điều bạn thấy/đọc được trước khi áp quy tắc; không đọc được hoặc không rõ thì nói rõ và hỏi thêm, tuyệt đối không đoán. Không tự chẩn đoán y khoa từ ảnh: chỉ đối chiếu với tiêu chí trong đoạn [C#] và nêu cần giám định/giấy tờ y tế nào.',
     '- Văn bản trích có thể lỗi chính tả do quét (OCR): hiểu theo ngữ cảnh, không coi lỗi chính tả là nội dung khác.',
     '- Văn phong ngắn gọn, thực dụng, tiếng Việt. Chỉ dùng **chữ đậm** và danh sách bắt đầu "- " hoặc "1. "; luôn in đậm chính từ quyết định ở Kết luận và Điều kiện (**Có**, **Không**, **Không được bồi thường**, **Thuộc phạm vi**, **Bị loại trừ**, **Có điều kiện**); không dùng bảng, không dùng tiêu đề #.',
     '- Chào hỏi hoặc câu không thuộc nghiệp vụ: trả lời ngắn, không cần dẫn nguồn.'
@@ -202,12 +203,20 @@ const OfficialLetterQA = (() => {
     const question = clip(input.question, QUESTION_MAX);
     const sources = input.sources || [];
     const library = sourceBlock(sources);
+    const attachText = [fileBlock(limitFiles(input.files)), (input.images || []).length ? 'ẢNH: ' + input.images.map(image => image.name).join(', ') + ' (xem ảnh đính kèm)' : ''].filter(Boolean).join('\n\n');
     const text = (library ? 'TRÍCH ĐOẠN THƯ VIỆN (nguyên văn):\n' + library : 'TRÍCH ĐOẠN THƯ VIỆN: (không tìm thấy đoạn nào khớp câu hỏi' + (input.libraryError ? ' — ' + input.libraryError : '') + ')')
       + (input.dossier ? '\n\nHỒ SƠ ĐANG CHỌN:\n' + clip(input.dossier, DOSSIER_MAX) : '')
       + (input.issue ? '\n\nVẤN ĐỀ CẦN XÁC ĐỊNH (do bước phân tích câu hỏi đề xuất, tham khảo):\n' + clip(input.issue, 300) : '')
+      + (attachText ? '\n\nTÀI LIỆU/ẢNH NGƯỜI DÙNG ĐÍNH KÈM (dữ kiện của vụ việc — KHÔNG phải căn cứ pháp lý; chỉ dùng để xác định sự việc, thương tật, hư hỏng…; kết luận về quy tắc vẫn chỉ dựa trên đoạn [C#]):\n' + attachText : '')
       + '\n\nCÂU HỎI:\n' + question;
-    const contents = recentTurns(input.history).map(item => ({role: item.role === 'assistant' ? 'model' : 'user', parts: [{text: clip(item.role === 'assistant' ? stripCodes(item.text) : item.text, TURN_CHARS)}]}));
-    contents.push({role: 'user', parts: [{text}]});
+    const contents = recentTurns(input.history).map(item => {
+      let turn = clip(item.role === 'assistant' ? stripCodes(item.text) : item.text, TURN_CHARS);
+      if (item.role === 'user' && item.files && item.files.length) turn += '\n\n' + fileBlock(item.files.map(file => ({...file, text: String(file.text || '').slice(0, 4000)})));
+      return {role: item.role === 'assistant' ? 'model' : 'user', parts: [{text: turn}]};
+    });
+    const parts = [{text}];
+    for (const image of input.images || []) parts.push({inlineData: {mimeType: image.mimeType || 'image/jpeg', data: image.data}});
+    contents.push({role: 'user', parts});
     return {system_instruction: {parts: [{text: SYSTEM}]}, contents, generationConfig: {temperature: 0.2}};
   }
 

@@ -816,9 +816,8 @@ const OfficialLetterPage = (() => {
     if (node) { node.textContent = usageText(qa.usage); node.title = usageTitle(qa.usage); node.hidden = !usageText(qa.usage); }
   }
   const NO_MATCH = 'Thư viện tài liệu chưa có đoạn nào khớp câu hỏi này. Hãy thử nêu bằng thuật ngữ trong văn bản (VD "giảm trừ", "loại trừ", "thời hạn"), chọn đúng văn bản ở nút Quy tắc, hoặc nạp thêm văn bản vào Thư viện tài liệu.';
-  async function importQaRule(question, content) {
+  async function importQaRule(question, content, file) {
     if (typeof TascoLibrary === 'undefined' || !TascoLibrary.importFromChat) { toast('Chưa tải được thư viện tài liệu. Hãy tải lại trang.', 'warning'); return; }
-    const file = qa.importFile;
     if (!file && !content) { toast('Hãy dán nội dung quy tắc sau yêu cầu hoặc đính kèm tệp.', 'warning'); return; }
     const chatId = qa.activeId;
     qa.busy = true; qa.status = 'Đang đọc tài liệu để thêm vào thư viện…'; renderAll();
@@ -829,7 +828,7 @@ const OfficialLetterPage = (() => {
         const Q = QA();
         qa.messages.push({id:Q.newId(), role:'user', text: file ? (question || 'Thêm quy tắc vào thư viện') + '\nTệp: ' + file.name : 'Thêm quy tắc vào thư viện: ' + (meta.ten || 'Quy tắc')});
         qa.messages.push({id:Q.newId(), role:'assistant', text:'Đã lưu “' + (meta.ten || 'Quy tắc') + '” vào Thư viện tài liệu. Bạn có thể hỏi nghiệp vụ hoặc chọn tài liệu này khi soạn công văn.', chat:true, sources:[]});
-        qa.importFile = null; qa.draft = ''; saveQa();
+        qa.importFile = null; qa.attach = []; qa.draft = ''; saveQa();
         if (host && st.mode === 'ask') { renderAll(); scrollQa(); }
       }});
     } catch (error) { toast(error.message || 'Không đọc được tài liệu.', 'warning'); }
@@ -840,7 +839,6 @@ const OfficialLetterPage = (() => {
   async function addQaFiles(list) {
     const files = [...(list || [])].filter(Boolean);
     if (!files.length) return;
-    if (!qa.free) { qa.importFile = files[0]; renderAll(); return; }
     if (qa.busy || qa.attaching) return;
     const room = ATTACH_MAX - qa.attach.length;
     if (room <= 0) { toast('Mỗi câu hỏi đính kèm tối đa ' + ATTACH_MAX + ' tệp.', 'warning'); return; }
@@ -853,7 +851,7 @@ const OfficialLetterPage = (() => {
         if (isImage) {
           if (typeof SceneReportAI === 'undefined' || !SceneReportAI.prepare) throw new Error('Chưa tải được mô-đun đọc ảnh. Hãy tải lại trang.');
           const photo = await SceneReportAI.prepare(file.type ? file : new File([file], file.name, {type: 'image/jpeg'}));
-          qa.attach.push({kind: 'image', name: photo.name, mimeType: photo.mimeType, data: photo.data, preview: photo.preview});
+          qa.attach.push({file, kind: 'image', name: photo.name, mimeType: photo.mimeType, data: photo.data, preview: photo.preview});
         } else {
           if (typeof TascoLibParse === 'undefined' || !TascoLibParse.readText) throw new Error('Chưa tải được mô-đun đọc tệp. Hãy tải lại trang.');
           let apiKey = '';
@@ -861,7 +859,7 @@ const OfficialLetterPage = (() => {
           const read = await TascoLibParse.readText(file, {apiKey, signal: controller ? controller.signal : undefined});
           if (!read.text) throw new Error('"' + file.name + '" không có chữ để đọc (tệp trống hoặc là ảnh quét).');
           const Q = QA(), max = Q.FILE_CHARS;
-          qa.attach.push({kind: 'text', name: file.name, text: read.text.slice(0, max), truncated: read.text.length > max, note: read.note || ''});
+          qa.attach.push({file, kind: 'text', name: file.name, text: read.text.slice(0, max), truncated: read.text.length > max, note: read.note || ''});
         }
       } catch (error) { errors.push(error && error.message ? error.message : 'Không đọc được "' + file.name + '".'); }
     }
@@ -929,11 +927,15 @@ const OfficialLetterPage = (() => {
     const question = String(text !== undefined ? text : (input ? input.value : qa.draft)).trim();
     if (qa.free) { await askFree(question); return; }
     const request = Q.importRequest(question);
-    if (qa.importFile || request.intent) { await importQaRule(question, request.content); return; }
+    // Có tệp đính kèm: chỉ nạp vào Thư viện khi người dùng nói rõ ("thêm vào thư viện…") hoặc không hỏi gì; còn lại tệp/ảnh là tư liệu của câu hỏi.
+    if (request.intent || (!question && qa.attach.length)) { await importQaRule(question, request.content, qa.attach.length ? qa.attach[0].file : null); return; }
     if (!question) { input?.focus(); return; }
     const history = qa.messages.slice();
-    qa.messages.push({id: Q.newId(), role: 'user', text: question});
-    qa.draft = ''; qa.busy = true; qa.status = 'Đang tra Thư viện tài liệu…'; st.pop = '';
+    const attach = qa.attach.slice();
+    const askFiles = attach.filter(item => item.kind === 'text').map(item => ({name: item.name, text: item.text, truncated: item.truncated, note: item.note}));
+    const askImages = attach.filter(item => item.kind === 'image');
+    qa.messages.push({id: Q.newId(), role: 'user', text: question, files: attach.map(item => ({name: item.name, kind: item.kind, text: item.kind === 'text' ? item.text : '', truncated: item.truncated}))});
+    qa.draft = ''; qa.attach = []; qa.busy = true; qa.status = 'Đang tra Thư viện tài liệu…'; st.pop = '';
     const mine = generation;
     renderAll(); scrollQa();
     const reply = message => { if (mine !== generation || !host) return; qa.messages.push(Object.assign({id: Q.newId(), role: 'assistant', sources: [], question}, message)); };
@@ -976,7 +978,7 @@ const OfficialLetterPage = (() => {
         // Bước 3 — suy luận trên nguyên văn các đoạn tìm được.
         paintQaStatus((sources.length ? 'Tìm thấy ' + found.sources.length + ' đoạn liên quan' + (sources.length > found.sources.length ? ' (+' + (sources.length - found.sources.length) + ' đoạn đã dẫn ở câu trước)' : '') + ' — ' : 'Đang trả lời theo hội thoại — ') + (deepOn() ? 'đang suy luận sâu (có thể mất 30–90 giây)…' : 'đang soạn câu trả lời…'));
         usage.resumeText = qa.status;
-        const answer = await callAI(Q.buildRequest({question, history, sources, libraryError: found.error, dossier, issue: plan.issue}), Object.assign({thinking: qa.deep, effort: 'high'}, usage));
+        const answer = await callAI(Q.buildRequest({question, history, sources, libraryError: found.error, dossier, issue: plan.issue, files: askFiles, images: askImages}), Object.assign({thinking: qa.deep, effort: 'high'}, usage));
         reply({text: String(answer).trim(), sources, queries, issue: plan.issue});
       }
     } catch (error) {
@@ -1089,13 +1091,12 @@ const OfficialLetterPage = (() => {
   function qaComposerHtml(big) {
     const busy = !!qa.busy;
     return '<div class="ola-composer ola-qa-composer' + (big ? ' is-big' : ' is-up') + (busy ? ' is-busy' : '') + '"' + (busy ? ' aria-busy="true"' : '') + '>'
-      + '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="200000" placeholder="' + (qa.free ? 'Hỏi bất cứ điều gì — có thể đính kèm ảnh, PDF, Word, Excel…' : 'Hỏi nghiệp vụ, hoặc dán quy tắc và yêu cầu thêm vào thư viện…') + '" aria-label="' + (qa.free ? 'Tin nhắn cho trợ lý AI' : 'Câu hỏi nghiệp vụ') + '">' + esc(qa.draft) + '</textarea>'
-      + (qa.free && (qa.attach.length || qa.attaching) ? '<div class="ola-qa-attach">' + qa.attach.map((item, at) => '<span class="ola-qa-file' + (item.kind === 'image' ? ' is-image' : '') + '">'
+      + '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="200000" placeholder="' + (qa.free ? 'Hỏi bất cứ điều gì — có thể đính kèm ảnh, PDF, Word, Excel…' : 'Hỏi nghiệp vụ (có thể đính kèm ảnh/tệp của vụ việc), hoặc dán quy tắc và ghi “thêm vào thư viện”…') + '" aria-label="' + (qa.free ? 'Tin nhắn cho trợ lý AI' : 'Câu hỏi nghiệp vụ') + '">' + esc(qa.draft) + '</textarea>'
+      + ((qa.attach.length || qa.attaching) ? '<div class="ola-qa-attach">' + qa.attach.map((item, at) => '<span class="ola-qa-file' + (item.kind === 'image' ? ' is-image' : '') + '">'
         + (item.kind === 'image' && item.preview ? '<img src="' + esc(item.preview) + '" alt="">' : svg(ICON.attach)) + '<em title="' + esc(item.name + (item.truncated ? ' (đã cắt bớt vì quá dài)' : '')) + '">' + esc(item.name) + (item.truncated ? ' ✂' : '') + '</em>'
         + '<button type="button" data-ol-act="qa-attach-remove" data-ol-idx="' + at + '" aria-label="Bỏ ' + esc(item.name) + '"' + (busy ? ' disabled' : '') + '>×</button></span>').join('')
         + (qa.attaching ? '<span class="ola-qa-file is-loading"><i></i><i></i><i></i> Đang đọc tệp…</span>' : '') + '</div>' : '')
-      + (!qa.free && qa.importFile ? '<div class="ola-qa-import-file"><span>' + svg(ICON.attach) + esc(qa.importFile.name) + '</span><button type="button" data-ol-act="qa-remove-file" aria-label="Bỏ tệp quy tắc"' + (busy ? ' disabled' : '') + '>×</button></div>' : '')
-      + '<div class="ola-bar"><label class="ola-icon-btn' + (busy ? ' is-disabled' : '') + '" title="' + (qa.free ? 'Đính kèm ảnh / PDF / Word / Excel (tối đa ' + ATTACH_MAX + ' tệp)' : 'Đính kèm quy tắc để thêm vào thư viện') + '"><input type="file" data-ol-qa-file accept=".md,.markdown,.txt,.docx,.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp,.heic,.heif"' + (qa.free ? ' multiple' : '') + ' hidden' + (busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label>' + recordChipHtml() + (qa.free ? libChipHtml() + (qa.lib ? rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)') : '') : rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)'))
+      + '<div class="ola-bar"><label class="ola-icon-btn' + (busy ? ' is-disabled' : '') + '" title="' + (qa.free ? 'Đính kèm ảnh / PDF / Word / Excel (tối đa ' + ATTACH_MAX + ' tệp)' : 'Đính kèm ảnh/tệp của vụ việc để hỏi (tối đa ' + ATTACH_MAX + ' tệp). Muốn nạp quy tắc vào Thư viện: đính kèm rồi ghi “thêm vào thư viện”.') + '"><input type="file" data-ol-qa-file accept=".md,.markdown,.txt,.docx,.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp,.heic,.heif"' + ' multiple' + ' hidden' + (busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label>' + recordChipHtml() + (qa.free ? libChipHtml() + (qa.lib ? rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)') : '') : rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)'))
       + modelChipHtml() + deepChipHtml() + '<span class="ola-spacer"></span>'
       + (busy ? '<button type="button" class="tasco-ai-send is-stop" data-ol-act="qa-stop" title="Dừng" aria-label="Dừng">' + svg(ICON.close) + '</button>'
         : '<button type="button" class="tasco-ai-send" data-ol-act="qa-send" title="Gửi câu hỏi (Enter)" aria-label="Gửi câu hỏi">' + svg(ICON.send) + '</button>') + '</div>'
@@ -1994,7 +1995,6 @@ const OfficialLetterPage = (() => {
       case 'review-view': if (st.pending) { st.reviewView = act.dataset.olView === 'split' ? 'split' : 'inline'; repaintReview(); } break;
       case 'run': run(); break;
       case 'qa-send': askQuestion(); break;
-      case 'qa-remove-file': qa.importFile = null; renderAll(); break;
       case 'qa-attach-remove': if (!qa.busy) { collectAll(); qa.attach.splice(Number(act.dataset.olIdx), 1); renderAll(); focusMain(true); } break;
       case 'qa-lib': if (qa.busy) break; collectAll(); qa.lib = !qa.lib; try { localStorage.setItem(LIB_KEY, qa.lib ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); focusMain(true); break;
       case 'qa-export': exportChat(); break;

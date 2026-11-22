@@ -152,6 +152,8 @@ Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở t
 
 `firebase/user-secrets.rules.json` (đã nằm trong `database.rules.json`): nhánh `user_secrets/{uid}` lưu khoá Gemini API riêng từng tài khoản, chỉ chính chủ đọc/ghi.
 
+- **Đính kèm ở Hỏi nghiệp vụ:** ảnh/tệp là tư liệu của câu hỏi (dữ kiện vụ việc, không phải căn cứ pháp lý; ảnh gửi dạng `inlineData` ở lượt hiện tại, chữ của tệp lưu cùng tin nhắn). Chỉ nạp tệp vào Thư viện khi người dùng ghi rõ "thêm vào thư viện…" hoặc đính kèm mà không hỏi gì. (Trước đây mọi tệp đính kèm đều bị hiểu là nạp thư viện → ảnh bị OCR và treo ở "Đang đọc tài liệu để thêm vào thư viện".)
+
 ### Trò chuyện AI (tab thứ 3 trong AI nghiệp vụ, trước đây là Công văn AI)
 Trang AI thông thường để hỏi mọi thứ (viết lại câu chữ, tính toán, Excel, dịch, giải thích…), tách hẳn khỏi Hỏi nghiệp vụ nhưng dùng chung khung chat, khoá/mô hình AI, chip **Hồ sơ** và **Suy luận sâu**.
 - Đính kèm tối đa 5 tệp mỗi câu hỏi bằng nút ghim, kéo-thả hoặc dán: ảnh (JPG/PNG/WebP/HEIC) gửi thẳng cho mô hình (cần mô hình có hỗ trợ ảnh), PDF/Word/Excel/CSV/TXT/MD được đọc thành chữ (`TascoLibParse.readText`, mỗi tệp ≤ 30.000 ký tự, tổng ≤ 60.000). Chữ của tệp được lưu cùng tin nhắn (≤ 12.000 ký tự/tệp) để các lượt sau vẫn hỏi tiếp được; **ảnh chỉ gửi ở lượt hiện tại**, không lưu.
