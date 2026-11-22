@@ -1270,13 +1270,14 @@ const OfficialLetterPage = (() => {
   function fieldsBody() {
     const tpl = template();
     const missing = Core().missingFields(tpl, st.values);
-    return '<div data-ol-block="fields"><div class="ol-form">' + tpl.fields.map(field => {
+    const compact = new Set(['plate', 'noticeDate', 'lossTime', 'standardTyre', 'fittedTyre']);
+    return '<div data-ol-block="fields"><div class="ola-fields-intro"><div><h3>Thông tin công văn</h3><p>Kiểm tra và chỉnh sửa thông tin trước khi soạn lại.</p></div><span>' + tpl.fields.length + ' mục</span></div>'
+      + '<p class="' + (missing.length ? 'ol-warn' : 'ol-ok') + ' ola-fields-status" data-ol-missing>' + esc(missingText(missing)) + '</p><div class="ol-form">' + tpl.fields.map(field => {
         const flag = field.required && !Core().single(st.values[field.key], 1);
-        return '<label class="ol-field is-wide' + (flag ? ' is-missing' : '') + '" data-ol-wrap="' + esc(field.key) + '"><span>' + esc(field.label) + (field.required ? ' <b title="Bắt buộc">*</b>' : '')
+        return '<label class="ol-field' + (compact.has(field.key) && field.type !== 'textarea' ? '' : ' is-wide') + (flag ? ' is-missing' : '') + '" data-ol-wrap="' + esc(field.key) + '"><span>' + esc(field.label) + (field.required ? ' <b title="Bắt buộc">*</b>' : '')
           + (st.filledByAI.includes(field.key) ? ' <em class="ol-ai-tag">AI điền</em>' : '') + '</span>' + fieldInput(field, st.values[field.key]) + '</label>';
       }).join('') + '</div>'
-      + '<div class="ol-extras"><b>Thông tin bổ sung</b>' + st.extras.map(item => extraRowHtml(item)).join('') + '<button type="button" class="ol-add" data-ol-act="add-extra">+ Thêm</button></div>'
-      + '<p class="' + (missing.length ? 'ol-warn' : 'ol-ok') + '" data-ol-missing>' + esc(missingText(missing)) + '</p></div>';
+      + '<div class="ol-extras"><b>Thông tin bổ sung</b>' + st.extras.map(item => extraRowHtml(item)).join('') + '<button type="button" class="ol-add" data-ol-act="add-extra">+ Thêm</button></div></div>';
   }
   function outlineBody() {
     return '<div class="ol-outline">' + st.outline.map(item => '<div class="ol-outline-row" data-ol-outline-row><input type="checkbox" data-ol-outline-on' + (item.on ? ' checked' : '') + ' aria-label="Dùng ý này"><input class="ol-outline-text" data-ol-outline-text maxlength="300" value="' + esc(item.text) + '" aria-label="Nội dung ý"><button type="button" class="ol-x" data-ol-act="remove-outline" aria-label="Xóa ý" title="Xóa ý">' + svg(ICON.close) + '</button></div>').join('')
@@ -1311,9 +1312,9 @@ const OfficialLetterPage = (() => {
     if (!st.drawer || (!st.values && st.drawer !== 'versions')) return '';
     const tabs = [['fields', 'Thông tin'], ['outline', 'Dàn ý'], ['legal', 'Căn cứ'], ['dossier', 'Hồ sơ'], ['versions', 'Phiên bản']].filter(([name]) => name !== 'legal' || Legal());
     const body = {fields: fieldsBody, outline: outlineBody, legal: legalBody, dossier: dossierBody, versions:versionsBody}[st.drawer] || fieldsBody;
-    return '<div class="ola-drawer-backdrop" data-ol-drawer-close></div><aside class="ola-drawer" role="dialog" aria-label="Chi tiết công văn"><header><div class="ola-tabs" role="tablist">'
+    return '<div class="ola-drawer-backdrop" data-ol-drawer-close></div><aside class="ola-drawer" role="dialog" aria-label="Chi tiết công văn"><header><div class="ola-drawer-heading"><div><small>KHÔNG GIAN SOẠN THẢO</small><h2>Chi tiết công văn</h2><p>Quản lý nội dung và căn cứ soạn thảo</p></div><button type="button" class="ol-x" data-ol-drawer-close aria-label="Đóng">' + svg(ICON.close) + '</button></div><div class="ola-tabs" role="tablist" aria-label="Các phần chi tiết công văn">'
       + tabs.map(([name, label]) => '<button type="button" role="tab" aria-selected="' + (st.drawer === name) + '" data-ol-drawer="' + name + '">' + label + '</button>').join('')
-      + '</div><button type="button" class="ol-x" data-ol-drawer-close aria-label="Đóng">' + svg(ICON.close) + '</button></header><div class="ola-drawer-body">' + body() + '</div>'
+      + '</div></header><div class="ola-drawer-body">' + body() + '</div>'
       + (['dossier', 'versions'].includes(st.drawer) ? '' : '<footer><button type="button" class="olp-tool is-primary" data-ol-act="compose"' + (st.busy ? ' disabled' : '') + '>Soạn lại theo chi tiết này</button></footer>') + '</aside>';
   }
   function versionsBody() {
@@ -1415,7 +1416,7 @@ const OfficialLetterPage = (() => {
       if (wrap) wrap.classList.toggle('is-missing', !!field.required && !Core().single(st.values[field.key], 1));
     });
     const line = $('[data-ol-missing]');
-    if (line) { line.className = missing.length ? 'ol-warn' : 'ol-ok'; line.textContent = missingText(missing); }
+    if (line) { line.className = (missing.length ? 'ol-warn' : 'ol-ok') + ' ola-fields-status'; line.textContent = missingText(missing); }
   }
 
   // ---- Cài đặt đơn vị ban hành ----
