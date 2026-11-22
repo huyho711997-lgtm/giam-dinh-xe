@@ -26,22 +26,37 @@ function setup(reply, options = {}) {
   return ctx;
 }
 
-test('agent chuyển bước theo kết quả thật của phân tích, thư viện và soạn thảo', async () => {
-  const readGate = deferred(), legalGate = deferred(), writeGate = deferred(); let calls = 0;
+const plan = '{"position":"Thông báo kết quả","reasoning":[{"point":"Kết quả giám định","facts":["đã xong"],"basis":""}],"objections":[{"likely":"Vì sao?","reply":"Do hồ sơ"}]}';
+test('agent chuyển bước theo kết quả thật của phân tích, thư viện, suy luận và soạn thảo', async () => {
+  const readGate = deferred(), legalGate = deferred(), reasonGate = deferred(), writeGate = deferred(); let calls = 0; const sent = [];
   const legal = {buildQueries:() => ['quy tắc'], retrieve:() => legalGate.promise, renumber:items => items, promptBlock:() => ''};
-  const {page} = setup(() => ++calls === 1 ? readGate.promise : writeGate.promise, {legal});
+  const {page} = setup(request => { sent.push(request); return [readGate, reasonGate, writeGate][calls++].promise; }, {legal});
   const running = page.run(); await turn();
-  assert.equal(page.state().steps.read.state, 'run'); assert.equal(page.state().steps.write.state, 'idle');
-  assert.match(page.stepsHtml(), /is-running/); assert.match(page.stepsHtml(), /Bước 1\/3/);
+  assert.equal(page.state().steps.read.state, 'run'); assert.equal(page.state().steps.reason.state, 'idle'); assert.equal(page.state().steps.write.state, 'idle');
+  assert.match(page.stepsHtml(), /is-running/); assert.match(page.stepsHtml(), /Bước 1\/4/);
   readGate.resolve(analysis); await turn();
   assert.equal(page.state().steps.read.state, 'done'); assert.equal(page.state().steps.legal.state, 'run');
   legalGate.resolve({sources:[], error:''}); await turn();
-  assert.equal(page.state().steps.legal.state, 'skip'); assert.equal(page.state().steps.write.state, 'run');
-  assert.match(page.stepsHtml(), /Bước 3\/3/);
+  assert.equal(page.state().steps.legal.state, 'skip'); assert.equal(page.state().steps.reason.state, 'run'); assert.equal(page.state().steps.write.state, 'idle');
+  assert.match(page.stepsHtml(), /Bước 3\/4/); assert.match(page.stepsHtml(), /Suy luận nghiệp vụ/);
+  reasonGate.resolve(plan); await turn();
+  assert.equal(page.state().steps.reason.state, 'done'); assert.equal(page.state().steps.write.state, 'run');
+  assert.match(page.stepsHtml(), /Bước 4\/4/);
   writeGate.resolve(draft); await running;
   assert.equal(page.stepState().running, false); assert.equal(page.state().steps.write.state, 'done');
   assert.match(page.stepsHtml(), /is-ready/); assert.match(page.stepsHtml(), /Công văn đã sẵn sàng/);
   assert.match(page.stepsHtml(), /id="ol-agent-details" hidden/);
+  assert.equal(calls, 3);
+  assert.match(sent[2].contents[0].parts[0].text, /KẾ HOẠCH LẬP LUẬN[\s\S]*Kết quả giám định/);   // kế hoạch lập luận đi vào bước viết
+});
+
+test('bước suy luận lỗi không chặn việc soạn và không đưa kế hoạch hỏng vào bước viết', async () => {
+  let calls = 0; const sent = [];
+  const failing = setup(async request => { sent.push(request); calls++; return calls === 1 ? analysis : calls === 2 ? 'không phải json' : draft; });
+  await failing.page.run();
+  assert.equal(calls, 3); assert.equal(failing.page.state().steps.reason.state, 'err'); assert.equal(failing.page.state().steps.write.state, 'done');
+  assert.doesNotMatch(sent[2].contents[0].parts[0].text, /KẾ HOẠCH LẬP LUẬN/);
+  assert.ok(failing.page.state().letter);
 });
 
 test('tiến trình nằm trong dock chỉnh sửa, không nằm giữa tiêu đề và bản thảo', async () => {
@@ -121,7 +136,7 @@ test('sau đếm ngược thử lại, tiêu đề trở về tác vụ đang ch
     assert.doesNotMatch(page.state().status, /tự thử lại/);
     return calls === 2 ? analysis : draft;
   }, {realCall:true, fastTimers:true}));
-  await page.run(); assert.equal(calls, 3); assert.equal(page.state().steps.write.state, 'done');
+  await page.run(); assert.equal(calls, 4); assert.equal(page.state().steps.write.state, 'done');   // thử lại + phân tích + suy luận + soạn
 });
 
 test('rời trang trong khi chờ AI không áp dụng phản hồi muộn', async () => {

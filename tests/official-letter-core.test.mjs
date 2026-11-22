@@ -250,3 +250,38 @@ test('tài liệu cần có theo loại công văn: định nghĩa hợp lệ, t
   assert.ok(text.includes('inspectionNo, standardTyre') && text.includes('fittedTyre') && text.includes('ĐÚNG NGUYÊN VĂN'));
   assert.ok(!Core.buildAnalyzeRequest(tpl('tu_do'), {brief: 'x'}).contents[0].parts[0].text.includes('TÀI LIỆU CẦN CÓ'));
 });
+
+test('suy luận nghiệp vụ: buildReasonRequest chỉ gửi dữ kiện + căn cứ, parseReasoning chuẩn hoá và loại mã lạ', () => {
+  const t = tpl('tu_choi_thong_so_lop');
+  const req = Core.buildReasonRequest(t, {plate: '48H02598'}, {}, 'từ chối vì lốp', {keyFacts: ['Lốp lắp 275/65R18'], legal: '[C1] Điều 10 – điểm loại trừ', insights: [{level: 'warn', text: 'Thông số lệch'}], dossier: 'HS 0107621'});
+  const text = req.contents[0].parts[0].text;
+  assert.equal(req.system_instruction.parts[0].text, Core.REASON_SYSTEM);
+  assert.equal(req.generationConfig.responseMimeType, 'application/json');
+  assert.match(text, /Lốp lắp 275\/65R18/); assert.match(text, /\[C1\] Điều 10/); assert.match(text, /HS 0107621/); assert.match(text, /Thông số lệch/);
+  assert.match(Core.REASON_SYSTEM, /không bịa/i);
+  const plan = Core.parseReasoning('```json\n' + JSON.stringify({position: ' Từ chối bồi thường **vì** lốp khác thông số ', reasoning: [
+    {point: 'Xe lắp lốp khác thông số kiểm định', facts: ['275/65R18 so với 255/65R18'], basis: '[C1]'}, {point: 'Không có BS07', facts: ['x'], basis: 'Điều 10'}, {point: ''}],
+    checks: ['Đã xét ngoại lệ BS07'], objections: [{likely: 'Lốp cùng hãng', reply: 'Vẫn khác thông số'}, {likely: ''}], tone: 'nghiêm túc', opening: 'Nêu ngay kết quả', nextSteps: ['Gửi phản hồi trong 07 ngày'], risks: ['Kiểm tra lại BS07']}) + '\n```');
+  assert.equal(plan.position, 'Từ chối bồi thường vì lốp khác thông số');
+  assert.equal(plan.reasoning.length, 2);
+  assert.equal(plan.reasoning[0].basis, 'C1'); assert.equal(plan.reasoning[1].basis, '');   // mã không đúng dạng C# bị bỏ
+  assert.equal(plan.objections.length, 1);
+  assert.throws(() => Core.parseReasoning('{"tone":"x"}'), /chưa lập được/);
+  assert.throws(() => Core.parseReasoning('không phải json'), /không đọc được/);
+  const block = Core.reasoningBlock(plan);
+  assert.match(block, /KẾ HOẠCH LẬP LUẬN/); assert.match(block, /căn cứ \[C1\]/); assert.match(block, /Người nhận có thể thắc mắc: Lốp cùng hãng → Vẫn khác thông số/);
+  assert.equal(Core.reasoningBlock(null), '');
+});
+
+test('soạn công văn: kế hoạch lập luận được đưa vào yêu cầu soạn; quy tắc văn phong cấm câu chào sáo và "Theo Căn cứ"; mẫu chỉ là khung', () => {
+  const t = tpl('tu_choi_thong_so_lop');
+  const plan = Core.parseReasoning(JSON.stringify({position: 'Từ chối vì lốp', reasoning: [{point: 'Lốp khác thông số', facts: ['275/65R18'], basis: 'C1'}], nextSteps: ['Phản hồi trong 07 ngày']}));
+  const withPlan = Core.buildComposeRequest(t, {}, {}, '', '', {reasoning: plan}).contents[0].parts[0].text;
+  assert.match(withPlan, /KẾ HOẠCH LẬP LUẬN/); assert.match(withPlan, /Lốp khác thông số/);
+  assert.doesNotMatch(Core.buildComposeRequest(t, {}, {}, '', '', {}).contents[0].parts[0].text, /KẾ HOẠCH LẬP LUẬN/);
+  assert.match(Core.COMPOSE_SYSTEM, /Lời đầu tiên/); assert.match(Core.COMPOSE_SYSTEM, /Theo Căn cứ/); assert.match(Core.COMPOSE_SYSTEM, /VÌ SAO/);
+  const sample = Core.buildComposeRequest(t, {}, {}, '').contents[0].parts[0].text;
+  assert.match(sample, /KHÔNG dùng lại câu mở, câu nối, câu kết của mẫu/);
+  assert.match(sample, /KHÔNG phải câu chữ/);
+  assert.doesNotMatch(t.outline.join(' '), /lời chào trân trọng/);
+});
