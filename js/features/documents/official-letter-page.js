@@ -780,11 +780,24 @@ const OfficialLetterPage = (() => {
       const dossier = dossierText();
       // Bước 1 — AI đổi câu hỏi khẩu ngữ thành vấn đề + các cụm tra theo ngôn ngữ của quy tắc. Lỗi ở bước này không chặn việc trả lời (còn từ điển nghiệp vụ cố định).
       let plan = {issue: '', queries: []};
-      if (L) {
+      // Chào hỏi / hỏi về trợ lý: trả lời tự nhiên, không tra Thư viện và không dẫn nguồn.
+      let chat = Q.isSmallTalk(question);
+      if (!chat && L) {
         paintQaStatus('Đang phân tích câu hỏi…');
         try { plan = Q.parsePlan(await callAI(Q.buildPlanRequest(question, history), usage)); }
         catch (error) { if (error && (error.name === 'AbortError' || error.message === NO_KEY)) throw error; }
         if (mine !== generation || !host) return;
+        chat = !!plan.chat;
+      }
+      if (chat) {
+        paintQaStatus('Đang soạn câu trả lời…');
+        const answer = await callAI(Q.buildChatRequest({question, history}), usage);
+        reply({text: String(answer).trim(), chat: true});
+        qa.busy = false; qa.status = '';
+        if (mine !== generation || !host) return;
+        saveQa();
+        if (st.mode === 'ask') { renderAll(); scrollQa(); }
+        return;
       }
       // Bước 2 — tra Thư viện theo mọi cụm, lấy thêm phần liền kề và điều được dẫn chiếu.
       const queries = Q.buildQueries(question, history, plan);
@@ -792,7 +805,7 @@ const OfficialLetterPage = (() => {
       const found = L ? await L.retrieve(queries, Object.assign({limit: Math.min(Q.SOURCE_LIMIT, modelCap('maxSources') || Q.SOURCE_LIMIT), minCoverage: Q.QA_COVERAGE, expand: true, maxSources: Math.min(Q.MAX_SOURCES, modelCap('maxSources') || Q.MAX_SOURCES), perArticle: 2}, st.legalPin.length ? {docIds: st.legalPin} : {}))
         : {sources: [], total: 0, error: 'Chưa tải được mô-đun thư viện. Hãy tải lại trang.'};
       if (mine !== generation || !host) return;
-      if (!found.sources.length && (found.error || (!history.length && !dossier))) {
+      if (!found.sources.length && (found.error || (!history.some(item => item.role === 'assistant' && !item.chat && !item.empty && !item.error) && !dossier))) {
         // Không có căn cứ nào để trả lời → không gọi AI (tránh tốn token và tránh AI trả lời bằng trí nhớ).
         reply({text: found.error || NO_MATCH, empty: true, queries});
       } else {
@@ -901,7 +914,7 @@ const OfficialLetterPage = (() => {
       + '<div class="ola-qa-srcs-body"' + (groupOpen ? '' : ' hidden') + '>' + (msg.queries && msg.queries.length ? '<p class="ola-qa-queries" title="Các cụm từ đã dùng để tìm trong Thư viện">Đã tra: ' + msg.queries.map(esc).join(' · ') + '</p>' : '') + sources.map(source => qaSourceHtml(msg, source, cited.includes(source.code))).join('') + '</div></div>' : '';
     const acts = msg.error ? '<button type="button" class="ola-qa-act" data-ol-qa-retry="' + esc(msg.id) + '"' + (qa.busy ? ' disabled' : '') + '>Thử lại</button>'
       : msg.empty ? '' : '<button type="button" class="ola-qa-act" data-ol-qa-copy="' + esc(msg.id) + '">' + svg(ICON.copy) + 'Sao chép</button>'
-        + '<button type="button" class="ola-qa-act is-main" data-ol-qa-compose="' + esc(msg.id) + '"' + (qaLocked() ? ' disabled' : '') + ' title="Chuyển sang Soạn công văn, điền sẵn kết luận này vào yêu cầu">' + svg(ICON.letter) + 'Soạn công văn từ câu trả lời</button>';
+        + (msg.chat ? '' : '<button type="button" class="ola-qa-act is-main" data-ol-qa-compose="' + esc(msg.id) + '"' + (qaLocked() ? ' disabled' : '') + ' title="Chuyển sang Soạn công văn, điền sẵn kết luận này vào yêu cầu">' + svg(ICON.letter) + 'Soạn công văn từ câu trả lời</button>');
     return '<div class="ola-qa-msg is-ai" data-ol-qa-msg="' + esc(msg.id) + '"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body">' + body + warn + srcs + (acts ? '<div class="ola-qa-acts">' + acts + '</div>' : '') + '</div></div>';
   }
   function qaComposerHtml(big) {

@@ -196,3 +196,24 @@ test('answerHtml: gạch chân đề mục (đậm đứng riêng một dòng ho
   assert.match(html, /<b>thay đổi thông số lốp<\/b>/);
   assert.match(html, /<b class="ola-yes">Có BS07 hay không<\/b>/);   // chữ kết luận vẫn tô màu, không gạch chân
 });
+
+test('isSmallTalk: chào hỏi / hỏi về trợ lý → trò chuyện; câu nghiệp vụ không bao giờ lọt vào', () => {
+  const { Q } = load();
+  for (const text of ['bạn làm được gì', 'Bạn làm được gì?', 'bạn là ai', 'bạn có thể giúp gì cho tôi', 'xin chào', 'Chào bạn', 'hello', 'cảm ơn', 'ok', 'bạn tên gì', 'hướng dẫn sử dụng tính năng này']) assert.equal(Q.isSmallTalk(text), true, text);
+  for (const text of ['xe thay đổi thông số lốp có được bồi thường không', 'chào bạn, xe ngập nước có được bồi thường không', 'thông báo tổn thất chậm thì sao', 'ok còn trường hợp xe chưa đóng phí thì sao', 'hi', '']) assert.equal(Q.isSmallTalk(text), text === 'hi', text);
+});
+
+test('parsePlan: kind "chat" chỉ có hiệu lực khi không có cụm tra; buildChatRequest không kèm thư viện/nguồn', () => {
+  const { Q } = load();
+  assert.equal(Q.parsePlan('{"kind":"chat","issue":"","queries":[]}').chat, true);
+  assert.equal(Q.parsePlan('{"kind":"chat","issue":"x","queries":["phạm vi bảo hiểm"]}').chat, undefined);
+  assert.equal(Q.parsePlan('{"kind":"lookup","issue":"x","queries":[]}').chat, undefined);
+  assert.match(Q.buildPlanRequest('chào', []).system_instruction.parts[0].text, /"kind"/);
+  const req = Q.buildChatRequest({question: 'bạn làm được gì', history: [{role: 'user', text: 'a'}, {role: 'assistant', text: 'b'}]});
+  assert.equal(req.system_instruction.parts[0].text, Q.CHAT_SYSTEM);
+  assert.equal(req.contents.length, 3);
+  assert.equal(req.contents.at(-1).parts[0].text, 'bạn làm được gì');
+  assert.doesNotMatch(JSON.stringify(req.contents), /TRÍCH ĐOẠN THƯ VIỆN/);
+  assert.match(Q.CHAT_SYSTEM, /không gắn mã nguồn/);
+  assert.equal(Q.normalizeMessage({role: 'assistant', text: 'chào', chat: true}).chat, true);
+});

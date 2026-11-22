@@ -48,7 +48,8 @@ const OfficialLetterQA = (() => {
   // ---- Bước 1: lập kế hoạch tra cứu ----
   const PLAN_SYSTEM = [
     'Bạn là chuyên viên nghiệp vụ bảo hiểm xe cơ giới. Việc của bạn: chuẩn bị tra cứu trong Quy tắc bảo hiểm / Luật / Nghị định cho câu hỏi của đồng nghiệp.',
-    'Chỉ trả về MỘT đối tượng JSON: {"issue": "...", "queries": ["...", "..."]}',
+    'Chỉ trả về MỘT đối tượng JSON: {"kind": "lookup", "issue": "...", "queries": ["...", "..."]}',
+    '- kind: "chat" CHỈ khi câu hỏi hoàn toàn không cần tra quy định (chào hỏi, cảm ơn, hỏi bạn là ai / làm được gì / dùng thế nào, trò chuyện thường). Mọi câu hỏi về điều khoản, loại trừ, bồi thường, khấu hao, hồ sơ, thủ tục, thời hạn… đều là "lookup". Khi kind = "chat" thì issue = "" và queries = [].',
     '- issue: vấn đề cần xác định, 1–2 câu (đối tượng, sự kiện, điều cần biết).',
     '- queries: 5–8 cụm từ tra cứu NGẮN (3–9 từ), viết theo ngôn ngữ của văn bản quy tắc bảo hiểm chứ không theo khẩu ngữ. Mỗi cụm một khía cạnh: phạm vi bảo hiểm; điểm loại trừ (chung và riêng); ngoại lệ "trừ trường hợp…"; điều khoản bảo hiểm bổ sung / mở rộng liên quan; định nghĩa thuật ngữ; khấu hao / khấu trừ nếu liên quan; từ đồng nghĩa (VD "vỏ pin" → "pin điện động cơ", "bộ phận", "tổn thất riêng").',
     '- Không bịa số Điều/số hiệu.'
@@ -70,7 +71,31 @@ const OfficialLetterQA = (() => {
       const query = oneLine(item, 120), id = foldKey(query);
       if (query && wordCount(query) >= 2 && !seen.has(id)) { seen.add(id); queries.push(query); }
     }
-    return {issue: oneLine(data.issue, 300), queries: queries.slice(0, 8)};
+    const plan = {issue: oneLine(data.issue, 300), queries: queries.slice(0, 8)};
+    if (String(data.kind || '').toLowerCase() === 'chat' && !plan.queries.length) plan.chat = true;   // chỉ coi là trò chuyện khi planner không đề xuất cụm tra nào
+    return plan;
+  }
+
+  // ---- Câu không cần tra quy định: chào hỏi, cảm ơn, hỏi về trợ lý → trò chuyện tự nhiên, không tra Thư viện, không dẫn nguồn ----
+  const CHAT_SYSTEM = [
+    'Bạn là trợ lý nghiệp vụ giám định và bồi thường bảo hiểm xe cơ giới của Tasco DLK, đang trò chuyện với đồng nghiệp trong công ty.',
+    'Câu này là trò chuyện thường (chào hỏi, cảm ơn, hỏi bạn làm được gì…), không cần tra quy định. Hãy đáp như một đồng nghiệp thân thiện, tự nhiên, ngắn gọn (1–4 câu), tiếng Việt, xưng "mình", gọi người hỏi là "bạn".',
+    'Nếu được hỏi bạn làm được gì, kể ngắn gọn bằng lời thường những việc có thật: tra cứu và đối chiếu Quy tắc bảo hiểm, Luật, Nghị định trong Thư viện tài liệu để trả lời có dẫn nguồn (phạm vi bảo hiểm, loại trừ, ngoại lệ, khấu hao, thời hạn, hồ sơ); dùng thông tin hồ sơ đang chọn nếu có; chuyển kết luận sang Soạn công văn. Gợi ý một hai ví dụ câu hỏi cụ thể để họ thử.',
+    'Quy tắc: không mở đầu bằng tự giới thiệu dài dòng; không dùng tiêu đề, không dùng cấu trúc Kết luận/Căn cứ, không gắn mã nguồn [C#], không liệt kê dài; chỉ dùng "- " khi thật cần liệt kê. Tuyệt đối không nêu số Điều, tỷ lệ, thời hạn hay nội dung quy định bằng trí nhớ; nếu họ thực ra đang hỏi về quy định, mời họ nêu rõ tình huống để mình tra Thư viện.'
+  ].join('\n');
+  // Nhận diện cục bộ, chặt: chỉ câu ngắn khớp mẫu chào hỏi / cảm ơn / hỏi về trợ lý. Câu nghiệp vụ không bao giờ lọt vào đây.
+  const CHAT_GREET = /^(xin chao|chao|hello|hi|hey|alo|cam on|thanks|thank you|ok|oke|okay|tam biet|bye)(\s|$)/;
+  const CHAT_META = /(ban|em|ong|ai|bot|tro ly)\s+(la\s+ai|ten\s+(?:gi|la)|lam\s+duoc\s+gi|giup\s+(?:duoc\s+)?gi|co\s+the\s+(?:lam|giup)\s+(?:gi|duoc\s+gi)|biet\s+lam\s+gi|khoe\s+khong)|(?:cach|huong\s+dan)\s+(?:su\s+dung|dung)\s+(?:cai\s+nay|tinh\s+nang\s+nay|chuc\s+nang\s+nay)|ai\s+tao\s+ra\s+ban/;
+  function isSmallTalk(question) {
+    const key = foldKey(question), words = key ? key.split(' ').length : 0;
+    if (!key || words > 12) return false;
+    if (CHAT_META.test(key)) return true;
+    return words <= 5 && CHAT_GREET.test(key);
+  }
+  function buildChatRequest(input) {
+    const contents = recentTurns(input.history).map(item => ({role: item.role === 'assistant' ? 'model' : 'user', parts: [{text: clip(item.text, TURN_CHARS)}]}));
+    contents.push({role: 'user', parts: [{text: clip(input.question, QUESTION_MAX)}]});
+    return {system_instruction: {parts: [{text: CHAT_SYSTEM}]}, contents, generationConfig: {temperature: 0.6}};
   }
 
   // Từ điển nghiệp vụ cố định — dự phòng khi bước lập kế hoạch lỗi, và bổ sung các cụm hay bị bỏ sót (khẩu ngữ → ngôn ngữ quy tắc).
@@ -233,10 +258,11 @@ const OfficialLetterQA = (() => {
       if (item.issue) message.issue = oneLine(item.issue, 300);
       if (item.error) message.error = true;
       if (item.empty) message.empty = true;
+      if (item.chat) message.chat = true;
     }
     return message;
   }
   const normalizeStore = raw => (Array.isArray(raw && raw.messages) ? raw.messages : []).map(normalizeMessage).filter(Boolean).slice(-STORE_MAX);
 
-  return {SYSTEM, PLAN_SYSTEM, SUGGESTIONS, SOURCE_LIMIT, MAX_SOURCES, QA_COVERAGE, MAX_TURNS, buildPlanRequest, parsePlan, glossaryQueries, buildQueries, buildRequest, sourceBlock, recentTurns, citedCodes, unknownCodes, answerHtml, plainText, normalizeStore, normalizeMessage, newId};
+  return {SYSTEM, PLAN_SYSTEM, CHAT_SYSTEM, SUGGESTIONS, SOURCE_LIMIT, MAX_SOURCES, QA_COVERAGE, MAX_TURNS, buildPlanRequest, parsePlan, isSmallTalk, buildChatRequest, glossaryQueries, buildQueries, buildRequest, sourceBlock, recentTurns, citedCodes, unknownCodes, answerHtml, plainText, normalizeStore, normalizeMessage, newId};
 })();
