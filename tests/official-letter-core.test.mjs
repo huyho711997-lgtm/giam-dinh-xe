@@ -232,3 +232,21 @@ test('prompt: có căn cứ thư viện thì phân tích không được hỏi/g
   const auto = compose({legal: '[C1] đoạn'});
   assert.ok(!auto.includes('BẮT BUỘC viện dẫn') && auto.includes('không bắt buộc dùng'));
 });
+
+test('tài liệu cần có theo loại công văn: định nghĩa hợp lệ, tính thiếu/đủ, đưa vào prompt phân tích', () => {
+  for (const t of Core.templates()) {
+    const docs = Core.templateDocs(t);
+    assert.equal(new Set(docs.map(d => d.key)).size, docs.length, t.id + ': khoá mục trùng');
+    const fieldKeys = new Set(t.fields.map(f => f.key));
+    for (const d of docs) { assert.ok(d.label && d.short && d.read && d.hint, t.id + '/' + d.key + ' thiếu mô tả'); assert.ok(d.fills.every(k => fieldKeys.has(k)), t.id + '/' + d.key + ': fills ngoài trường'); assert.ok(d.max >= 1 && d.max <= 6); }
+  }
+  assert.equal(Core.templateDocs(tpl('tu_do')).length, 0);
+  const tyre = tpl('tu_choi_thong_so_lop');
+  assert.deepEqual(Array.from(Core.templateDocs(tyre).filter(d => d.required).map(d => d.key)), ['dang_kiem', 'anh_lop', 'tem_cua']);
+  const status = JSON.parse(JSON.stringify(Core.docsStatus(tyre, {dang_kiem: 1, anh_lop: 2})));
+  assert.equal(status.haveRequired, 2); assert.equal(status.totalRequired, 3); assert.deepEqual(status.missingRequired.map(d => d.key), ['tem_cua']);
+  const text = Core.buildAnalyzeRequest(tyre, {brief: 'x', docCounts: {dang_kiem: 1, anh_lop: 2}}).contents[0].parts[0].text;
+  assert.ok(text.includes('TÀI LIỆU CẦN CÓ') && text.includes('[Đăng kiểm] (BẮT BUỘC) ĐÃ ĐÍNH KÈM 1 tệp') && text.includes('[Tem trên cửa] (BẮT BUỘC) CHƯA CÓ'));
+  assert.ok(text.includes('inspectionNo, standardTyre') && text.includes('fittedTyre') && text.includes('ĐÚNG NGUYÊN VĂN'));
+  assert.ok(!Core.buildAnalyzeRequest(tpl('tu_do'), {brief: 'x'}).contents[0].parts[0].text.includes('TÀI LIỆU CẦN CÓ'));
+});

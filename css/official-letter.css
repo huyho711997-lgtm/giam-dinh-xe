@@ -500,3 +500,27 @@ body:not(.light-mode) .ola-review ins { color:#95e4ba; }
 .ola-chip-t.ola-chip-type { max-width:290px; min-width:0; }
 .ola-pop--menu button[disabled] { opacity:.5; cursor:not-allowed; }
 .ola-pop--menu .ol-rec-empty { margin:6px 10px; }
+
+/* ---- Tài liệu cần có theo loại công văn (đính kèm theo từng mục để AI đọc) ---- */
+.ola-docs { display:grid; gap:0; margin:2px 0 8px; padding:10px 12px 4px; border:1px solid var(--border); border-radius:14px; background:color-mix(in srgb,var(--surface-soft) 70%,transparent); }
+.ola-docs[hidden] { display:none; }
+.ola-docs-head { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 2px 8px; font-size:12px; }
+.ola-docs-head b { font-weight:800; color:var(--text-main); }
+.ola-docs-head span { padding:2px 9px; border-radius:999px; font-size:11px; font-weight:800; white-space:nowrap; }
+.ola-docs-head .is-ok { color:#10b981; background:rgba(16,185,129,.13); }
+.ola-docs-head .is-warn { color:#d97706; background:rgba(217,119,6,.15); }
+.ola-doc-slot { display:grid; grid-template-columns:20px minmax(0,1fr) auto; gap:10px; align-items:start; padding:9px 2px; border-top:1px solid var(--border); }
+.ola-doc-state { display:grid; place-items:center; width:18px; height:18px; margin-top:1px; border:1.5px solid var(--border); border-radius:50%; color:#fff; font-size:11px; font-weight:900; line-height:1; }
+.ola-doc-slot.is-done .ola-doc-state { background:#10b981; border-color:#10b981; }
+.ola-doc-slot.is-missing .ola-doc-state { border-color:#d97706; }
+.ola-doc-main { min-width:0; }
+.ola-doc-main b { color:var(--text-main); font-size:12.5px; font-weight:750; }
+.ola-doc-main em { margin-left:8px; color:var(--text-muted); font-size:10.5px; font-style:normal; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+.ola-doc-slot.is-missing .ola-doc-main em { color:#d97706; }
+.ola-doc-main small { display:block; margin-top:2px; color:var(--text-muted); font-size:11.5px; line-height:1.4; }
+.ola-doc-files { margin-top:6px; }
+.ola-doc-add { display:inline-flex; align-items:center; gap:6px; height:30px; padding:0 11px; border:1px solid var(--border); border-radius:999px; color:var(--text-muted); font-size:12px; font-weight:700; white-space:nowrap; cursor:pointer; }
+.ola-doc-add svg { width:14px; height:14px; }
+.ola-doc-add:hover:not(.is-disabled) { border-color:color-mix(in srgb,var(--primary) 50%,var(--border)); color:var(--primary); }
+.ola-doc-add.is-disabled { opacity:.45; cursor:not-allowed; }
+@media (max-width:560px) { .ola-doc-slot { grid-template-columns:20px minmax(0,1fr); } .ola-doc-add { grid-column:2; justify-self:start; } }

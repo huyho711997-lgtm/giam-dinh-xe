@@ -81,7 +81,7 @@ const OfficialLetterCore = (() => {
     + '(3) trích thông tin để điền các trường ("fields"); (4) ghi nhận các thông tin quan trọng của yêu cầu mà trường chưa có chỗ chứa vào "extras" (VD: thời hạn đề nghị phản hồi, lý do khẩn, căn cứ, tình tiết đặc biệt); '
     + '(5) đề xuất "outline": dàn ý các đoạn riêng cho yêu cầu này, xuất phát từ DÀN Ý MẶC ĐỊNH của mẫu — bỏ ý không phù hợp, thêm ý cần, đổi thứ tự; mỗi ý là một chỉ dẫn ngắn (≤200 ký tự) cho người viết; '
     + '(5b) "insights": tối đa 6 nhận định nghiệp vụ NGẮN rút ra từ hồ sơ có ảnh hưởng tới công văn này (VD điểm bất thường, rủi ro, căn cứ nên viện dẫn, chỗ dữ liệu mâu thuẫn), mỗi ý có level "warn" (cần lưu ý) hoặc "info"; không lặp lại nguyên văn nhận định tính sẵn trừ khi nó quan trọng cho công văn; '
-    + '(5c) "keyFacts": tối đa 10 dữ kiện CỤ THỂ trong hồ sơ mà công văn nên nêu (ghi đúng giá trị: ngày, số HS, biển số, số tiền, tên gara, diễn biến tóm tắt…), chỉ chọn cái liên quan mục đích; '
+    + '(5c) "keyFacts": tối đa 14 dữ kiện CỤ THỂ trong hồ sơ mà công văn nên nêu (ghi đúng giá trị: ngày, số HS, biển số, số tiền, tên gara, diễn biến tóm tắt…), chỉ chọn cái liên quan mục đích; '
     + '(5d) "legalQueries": CHỈ khi công văn thực sự cần viện dẫn căn cứ pháp lý (kết luận bồi thường, giảm trừ, từ chối, giải trình, hoặc người dùng yêu cầu) — ngược lại để []; tối đa 3 cụm từ tìm kiếm NGẮN (3–10 từ, tiếng Việt) mô tả vấn đề pháp lý công văn cần căn cứ (VD "thời hạn thông báo tổn thất", "giảm trừ bồi thường do không bảo lưu hiện trường", "hồ sơ yêu cầu bồi thường gồm") — hệ thống sẽ tìm trong thư viện văn bản; KHÔNG ghi số điều, số hiệu văn bản theo trí nhớ; '
     + '(6) đặt tối đa 5 câu hỏi làm rõ trong "questions": CHỈ hỏi điều thực sự làm thay đổi nội dung công văn mà dữ liệu chưa có hoặc đang mâu thuẫn, ưu tiên câu quan trọng nhất; không hỏi điều đã có trong dữ liệu hay trong "ĐÃ LÀM RÕ"; '
     + 'mỗi câu kèm 2–4 phương án trả lời gợi ý ngắn trong "options" (chỉ lấy từ dữ liệu hoặc lựa chọn chung như "Công an cấp huyện", "Phòng CSGT"; tuyệt đối không bịa tên người, số liệu, số văn bản cụ thể); nếu hỏi về một trường của mẫu thì ghi "key" của trường đó, ngược lại để "". '
@@ -105,6 +105,33 @@ const OfficialLetterCore = (() => {
     return pinned ? '\n\nNGƯỜI DÙNG ĐÃ CHỦ ĐỘNG CHỌN văn bản "' + pinned + '" làm căn cứ: hãy ghi vào "legalQueries" 2–3 cụm từ khoá đúng điều khoản cần tìm trong văn bản đó (hệ thống tự tra nguyên văn, đừng hỏi người dùng nguyên văn).' : '';
   }
 
+  // Tài liệu cần có theo loại công văn (template.docs): chuẩn hoá, bỏ khoá trường không tồn tại.
+  function templateDocs(template) {
+    const keys = new Set(((template && template.fields) || []).map(field => field.key));
+    return ((template && template.docs) || []).filter(doc => doc && doc.key && doc.label).map(doc => ({
+      key: doc.key, label: single(doc.label, 120), short: single(doc.short || doc.label, 60), required: !!doc.required, hint: single(doc.hint, 200), read: single(doc.read, 600),
+      fills: (doc.fills || []).filter(key => keys.has(key)), max: Math.min(Math.max(Number(doc.max) || 3, 1), 6)
+    }));
+  }
+  // counts: {khoáMục: số tệp đã đính kèm}. Trả về {docs:[{...doc, count}], missingRequired:[doc], ready}.
+  function docsStatus(template, counts) {
+    const docs = templateDocs(template).map(doc => ({...doc, count: Math.max(0, Number(counts && counts[doc.key]) || 0)}));
+    const missingRequired = docs.filter(doc => doc.required && !doc.count);
+    return {docs, missingRequired, haveRequired: docs.filter(doc => doc.required && doc.count).length, totalRequired: docs.filter(doc => doc.required).length};
+  }
+  // Đưa danh mục tài liệu + việc cần đọc cho AI phân tích: mỗi tệp đính kèm có tên bắt đầu bằng [nhãn mục].
+  function docsAnalyzeBlock(template, counts) {
+    const status = docsStatus(template, counts);
+    if (!status.docs.length) return '';
+    const lines = status.docs.map(doc => '- [' + doc.short + '] ' + (doc.required ? '(BẮT BUỘC) ' : '(nếu có) ') + (doc.count ? 'ĐÃ ĐÍNH KÈM ' + doc.count + ' tệp' : 'CHƯA CÓ')
+      + ' — cần đọc: ' + doc.read + (doc.fills.length ? ' → điền vào trường: ' + doc.fills.join(', ') : ''));
+    return '\n\nTÀI LIỆU CẦN CÓ CHO LOẠI CÔNG VĂN NÀY (tệp đính kèm được đặt tên bắt đầu bằng [tên mục]):\n' + lines.join('\n')
+      + '\nCÁCH DÙNG: đọc KỸ từng tệp theo đúng mục của nó và lấy TOÀN BỘ thông tin cần đọc; chép ĐÚNG NGUYÊN VĂN từng số, ký tự, ngày giờ (VD thông số lốp, số GCN kiểm định) — không làm tròn, không suy đoán. '
+      + 'Giá trị đọc được đưa vào đúng "fields" đã chỉ định; mọi thông tin khác cần cho công văn ghi vào "keyFacts" dạng "Mục: giá trị" hoặc "extras". '
+      + 'Nếu nhiều tệp cùng mục nói khác nhau, hoặc khác hồ sơ, ghi mâu thuẫn vào "insights" (level "warn"). '
+      + 'Mục CHƯA CÓ: tuyệt đối không bịa; ghi 1 "insights" level "warn" nêu rõ thiếu tài liệu nào, và phần cần nó để trống chuỗi "". Ảnh mờ/cắt mất/không đọc được: để trống và ghi lý do vào "insights".';
+  }
+
   function buildAnalyzeRequest(template, input) {
     const fieldList = template.fields.map(field => ({key: field.key, label: field.label, hint: field.hint || '', required: !!field.required}));
     const answered = (input.answered || []).filter(item => item && item.question && item.answer);
@@ -114,6 +141,7 @@ const OfficialLetterCore = (() => {
       + '\n\nCÁC TRƯỜNG CẦN ĐIỀN:\n' + JSON.stringify(fieldList)
       + (input.dossier ? '\n\nHỒ SƠ:\n' + multi(input.dossier, 14000) : '\n\nDỮ LIỆU HỒ SƠ:\n' + JSON.stringify(input.record || {}))
       + legalAnalyzeBlock(input)
+      + docsAnalyzeBlock(template, input.docCounts)
       + '\n\nGIÁ TRỊ ĐÃ CÓ (không ghi đè):\n' + JSON.stringify(input.current || {})
       + (input.extras && input.extras.length ? '\n\nTHÔNG TIN BỔ SUNG ĐÃ GHI NHẬN:\n' + JSON.stringify(input.extras) : '')
       + (answered.length ? '\n\nĐÃ LÀM RÕ (người dùng đã trả lời, không hỏi lại):\n' + JSON.stringify(answered) : '')
@@ -151,10 +179,10 @@ const OfficialLetterCore = (() => {
       key: known.has(item && item.key) ? item.key : '', question: single(item && item.question, 300),
       options: (Array.isArray(item && item.options) ? item.options : []).filter(option => typeof option === 'string').map(option => single(option, 80)).filter(Boolean).filter((option, i, all) => all.indexOf(option) === i).slice(0, 4)
     })).filter(item => item.question).slice(0, 5);
-    const extras = (Array.isArray(data && data.extras) ? data.extras : []).map(item => ({label: single(item && item.label, 80), value: single(item && item.value, 400)})).filter(item => item.label && item.value).slice(0, 8);
+    const extras = (Array.isArray(data && data.extras) ? data.extras : []).map(item => ({label: single(item && item.label, 80), value: single(item && item.value, 400)})).filter(item => item.label && item.value).slice(0, 12);
     const outline = (Array.isArray(data && data.outline) ? data.outline : []).filter(line => typeof line === 'string').map(line => single(stripMarkdown(line).replace(/^\d+[.)]\s*/, ''), 300)).filter(Boolean).slice(0, 12);
     const insights = (Array.isArray(data && data.insights) ? data.insights : []).map(item => typeof item === 'string' ? {level: 'info', text: single(stripMarkdown(item), 300)} : {level: item && item.level === 'warn' ? 'warn' : 'info', text: single(stripMarkdown(item && item.text), 300)}).filter(item => item.text).slice(0, 6);
-    const keyFacts = (Array.isArray(data && data.keyFacts) ? data.keyFacts : []).filter(item => typeof item === 'string').map(item => single(stripMarkdown(item), 300)).filter(Boolean).filter((item, i, all) => all.indexOf(item) === i).slice(0, 10);
+    const keyFacts = (Array.isArray(data && data.keyFacts) ? data.keyFacts : []).filter(item => typeof item === 'string').map(item => single(stripMarkdown(item), 300)).filter(Boolean).filter((item, i, all) => all.indexOf(item) === i).slice(0, 14);
     const legalQueries = (Array.isArray(data && data.legalQueries) ? data.legalQueries : []).filter(item => typeof item === 'string').map(item => single(stripMarkdown(item), 160)).filter(Boolean).slice(0, 5);
     const assumptions = (Array.isArray(data && data.assumptions) ? data.assumptions : []).filter(item => typeof item === 'string').map(item => single(stripMarkdown(item), 200)).filter(Boolean).slice(0, 5);
     return {fields, questions, extras, outline, insights, keyFacts, legalQueries, assumptions, understanding: single(data && data.understanding, 700), notes: single(data && data.notes, 500)};
@@ -491,7 +519,7 @@ const OfficialLetterCore = (() => {
   }
 
   return {
-    GAP, DEFAULT_ISSUER, NOI_NHAN_DEFAULT, templates, findTemplate, normalizeIssuer, prefillValues, mergeAnalysis, missingFields, cleanValue,
+    GAP, DEFAULT_ISSUER, NOI_NHAN_DEFAULT, templates, findTemplate, templateDocs, docsStatus, normalizeIssuer, prefillValues, mergeAnalysis, missingFields, cleanValue,
     buildAnalyzeRequest, parseAnalysis, buildComposeRequest, parseLetter, assembleLetter, sanitizeLetter, countGaps, dateLine, numberLine, todayIso,
     fileBaseName, letterToHtml, letterToText, documentXml, docxFiles, bodyKinds, PRINT_CSS, LOGO_SRC, escapeHtml, single, multi
   };
