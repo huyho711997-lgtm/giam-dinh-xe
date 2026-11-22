@@ -1216,7 +1216,7 @@
       m.className = 'fr-modal';
       m.dataset.batchId = batchId;
       m.innerHTML = `
-        <section class="fr-panel" role="dialog" aria-modal="true" aria-label="Chi tiết đề nghị thanh toán ${id}">
+        <section class="fr-panel fr-detail-panel" role="dialog" aria-modal="true" aria-label="Chi tiết đề nghị thanh toán ${id}">
           <header class="fr-head">
             <div class="sf-page-title">
               <span class="sf-page-emblem">${ic('file')}</span>
