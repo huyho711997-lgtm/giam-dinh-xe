@@ -614,3 +614,29 @@ body:not(.light-mode) .ola-review ins { color:#95e4ba; }
 body:has(.ola) #tasco-ai-btn,
 body:has(.ola) #tasco-ai-panel { display: none !important; }
 body:has(.ola) #tasco-floating-dock:not(:has(#scrollToTopBtn.visible)) { display: none !important; }
+
+/* ---- Chọn mô hình AI & khoá nhiều nhà cung cấp ---- */
+.ola-chip.is-free:not(.is-warn) { border-color:color-mix(in srgb,#16a34a 45%,var(--border)); }
+.ola-chip.is-warn { border-color:color-mix(in srgb,#f59e0b 60%,var(--border)); color:#b45309; }
+.ola-chip.is-na, .ola-icon-btn.is-na { opacity:.55; }
+.ola-chip[disabled] { opacity:.55; cursor:default; }
+.ola-pop--models h6 { margin:8px 10px 2px; color:var(--text-muted); font-size:10.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+.ola-pop--models h6:first-child { margin-top:2px; }
+.ola-pop--models h6 i { margin-left:4px; padding:1px 6px; border-radius:999px; background:color-mix(in srgb,#16a34a 14%,transparent); color:#15803d; font-size:10px; font-style:normal; letter-spacing:0; text-transform:none; }
+.ola-pop--models h6 em { margin-left:4px; color:#b45309; font-size:10px; font-style:normal; letter-spacing:0; text-transform:none; }
+.ola-pop--models .ola-pop-foot { margin-top:6px; border-top:1px solid var(--border); border-radius:0 0 9px 9px; }
+.ol-set-key .ol-set-field + .ol-set-field, .ol-set-key .ol-set-grid + .ol-set-field { margin-top:10px; }
+.ol-set-key .ol-set-grid .ol-set-field { margin-top:0; }
+.ola-pop--models { max-height:min(340px,46vh); }
+.ola-pop--models button { padding:6px 10px; }
+.ol-set-free { margin-left:6px; padding:1px 7px; border-radius:999px; background:color-mix(in srgb,#16a34a 14%,transparent); color:#15803d; font-size:10.5px; font-weight:800; }
+.ol-set-actions { display:flex; align-items:center; gap:8px; }
+.ol-set-link { padding:6px 12px; border:1px solid var(--border); border-radius:9px; background:transparent; color:var(--text-main); font:inherit; font-size:12px; font-weight:750; cursor:pointer; }
+.ol-set-link:hover { border-color:color-mix(in srgb,var(--primary) 45%,var(--border)); background:var(--surface-soft); }
+.ol-set-link[disabled] { opacity:.6; cursor:default; }
+.ol-set-models { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.ol-set-models:empty { display:none; }
+.ol-set-models small { color:var(--text-muted); font-size:11.5px; }
+.ol-set-chip { padding:4px 10px; border:1px solid var(--border); border-radius:999px; background:var(--surface-soft); color:var(--text-main); font:inherit; font-size:11.5px; cursor:pointer; }
+.ol-set-chip:hover { border-color:color-mix(in srgb,var(--primary) 45%,var(--border)); }
+.ol-set-chip.is-on { border-color:var(--primary); background:color-mix(in srgb,var(--primary) 14%,transparent); color:var(--primary); font-weight:750; }

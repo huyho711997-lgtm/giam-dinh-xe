@@ -21,6 +21,7 @@ const OfficialLetterPage = (() => {
     plus: '<path d="M12 5v14M5 12h14"/>',
     search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/>',
     close: '<path d="m6 6 12 12M18 6 6 18"/>',
+    chip: '<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
     spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>',
     word: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13l1.5 5 1.5-4 1.5 4 1.5-5"/>',
     print: '<path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/>',
@@ -167,6 +168,13 @@ const OfficialLetterPage = (() => {
 
   // ---- Gọi DeepSeek ----
   const RETRY_WAITS = [8, 20];   // giây chờ trước mỗi lần thử lại khi DeepSeek báo 429/quá tải
+  // ---- Mô hình AI (DeepSeek, Gemini, Groq, tuỳ chỉnh) ----
+  const Models = () => (typeof OfficialLetterModels !== 'undefined' ? OfficialLetterModels : null);
+  let aiCfg = null;
+  const aiConfig = () => aiCfg || (aiCfg = Models().load());
+  const activeModel = () => (Models() ? Models().resolve(aiConfig()) : null);
+  const aiKeys = {};   // nhà cung cấp → đã có khoá chưa (nạp bất đồng bộ)
+  function refreshKeys() { if (Models()) Models().keyStatus().then(map => { Object.assign(aiKeys, map); if (host && st.pop === 'model') renderAll(); }).catch(() => { /* bỏ qua */ }); }
   const NO_KEY = 'Chưa có khoá DeepSeek API. Bấm biểu tượng ⚙ ở góc phải để nhập khoá (lấy tại platform.deepseek.com).';
   // Token đã dùng trong phiên soạn hiện tại (công văn đang mở): cộng dồn từ mọi lần gọi AI, đặt lại khi bắt đầu công văn mới / mở lại từ lịch sử.
   function usageText(u = st.usage) {
@@ -176,7 +184,7 @@ const OfficialLetterPage = (() => {
   function usageTitle(u = st.usage) {
     if (!u || !u.calls) return '';
     const n = value => value.toLocaleString('vi-VN');
-    return 'Phiên này: ' + u.calls + ' lượt gọi DeepSeek · tổng ' + n(u.total) + ' token\nGửi đi: ' + n(u.prompt) + (u.hit ? ' (đã lưu đệm ' + n(u.hit) + ')' : '') + ' · Nhận về: ' + n(u.completion);
+    return 'Phiên này: ' + u.calls + ' lượt gọi AI · tổng ' + n(u.total) + ' token\nGửi đi: ' + n(u.prompt) + (u.hit ? ' (đã lưu đệm ' + n(u.hit) + ')' : '') + ' · Nhận về: ' + n(u.completion);
   }
   function paintUsage() {
     const node = $('[data-ol-usage]');
@@ -184,11 +192,21 @@ const OfficialLetterPage = (() => {
   }
   // extra (tuỳ chọn): {onUsage, onWait, resumeText, thinking, effort} — chế độ Hỏi nghiệp vụ dùng để đếm token/hiện trạng thái riêng, không đụng tới phiên soạn công văn.
   async function callAI(request, extra = {}) {
-    if (typeof DeepSeekKeyStore === 'undefined' || typeof OfficialLetterAI === 'undefined') throw new Error('Chưa tải được mô-đun AI. Hãy tải lại trang.');
-    const apiKey = await DeepSeekKeyStore.get();
-    if (!apiKey) throw new Error(NO_KEY);
-    let model = OfficialLetterAI.DEFAULT_MODEL;
-    try { model = localStorage.getItem('deepseek_letter_model') || model; } catch (_) { /* bỏ qua */ }
+    if (typeof OfficialLetterAI === 'undefined') throw new Error('Chưa tải được mô-đun AI. Hãy tải lại trang.');
+    const active = activeModel();
+    let apiKey, model = OfficialLetterAI.DEFAULT_MODEL;
+    if (active) {
+      apiKey = await Models().getKey(active.provider);
+      if (!apiKey) throw new Error(Models().noKeyMessage(active.provider, aiConfig()));
+      model = active.model;
+    } else {
+      if (typeof DeepSeekKeyStore === 'undefined') throw new Error('Chưa tải được mô-đun AI. Hãy tải lại trang.');
+      apiKey = await DeepSeekKeyStore.get();
+      if (!apiKey) throw new Error(NO_KEY);
+      try { model = localStorage.getItem('deepseek_letter_model') || model; } catch (_) { /* bỏ qua */ }
+    }
+    const label = active ? active.providerLabel : 'DeepSeek';
+    const thinking = !!extra.thinking && (!active || active.profile.reasoning !== 'none');
     controller?.abort();
     controller = new AbortController();
     const signal = controller.signal;
@@ -196,11 +214,11 @@ const OfficialLetterPage = (() => {
     const countUsage = extra.onUsage || (usage => { st.usage = OfficialLetterAI.addUsage(st.usage, usage); paintUsage(); });
     // Một công văn gọi AI 2–3 lần: khi bị giới hạn lưu lượng/quá tải thì tự chờ rồi thử lại, có đếm ngược cho người dùng thấy.
     for (let attempt = 0; ; attempt++) {
-      try { return await OfficialLetterAI.call(request, {apiKey, model, signal, onUsage: countUsage, thinking: !!extra.thinking, effort: extra.effort, maxTokens: extra.thinking ? 16000 : undefined}); }
+      try { return await OfficialLetterAI.call(request, {apiKey, model, signal, onUsage: countUsage, thinking, effort: extra.effort, maxTokens: thinking ? 16000 : undefined, endpoint: active ? active.endpoint : undefined, label, profile: active ? active.profile : undefined}); }
       catch (error) {
         if (!(error && error.retryable) || attempt >= RETRY_WAITS.length) throw error;
         for (let left = RETRY_WAITS[attempt]; left > 0; left--) {
-          wait('DeepSeek đang bận — tự thử lại sau ' + left + ' giây…');
+          wait(label + ' đang bận — tự thử lại sau ' + left + ' giây…');
           await new Promise((resolve, reject) => { const timer = setTimeout(resolve, 1000); signal.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('Đã huỷ', 'AbortError')); }, {once: true}); });
         }
         wait(taskStatus);
@@ -209,8 +227,11 @@ const OfficialLetterPage = (() => {
   }
 
   // Suy luận sâu dùng chung cho Soạn công văn và Hỏi nghiệp vụ (một công tắc, nhớ trên máy).
-  const deepOpts = () => (qa.deep ? {thinking: true, effort: 'high'} : {});
-  const deepNote = text => (qa.deep ? text + ' (suy luận sâu, có thể mất 30–90 giây)' : text);
+  const modelCap = name => { const active = activeModel(); return active && active.profile[name] ? active.profile[name] : 0; };
+  const deepSupported = () => { const active = activeModel(); return !active || active.profile.reasoning !== 'none'; };
+  const deepOn = () => qa.deep && deepSupported();
+  const deepOpts = () => (deepOn() ? {thinking: true, effort: 'high'} : {});
+  const deepNote = text => (deepOn() ? text + ' (suy luận sâu, có thể mất 30–90 giây)' : text);
 
   function startValues() {
     const base = Core().prefillValues(template(), currentRecord(), loadIssuer());
@@ -414,7 +435,7 @@ const OfficialLetterPage = (() => {
       if (my !== generation) return;
       dropStaleLegalNotes();
       step('legal', st.legalError ? 'err' : activeSources().length ? 'done' : 'skip', st.legalError ? 'Không đọc được thư viện' : activeSources().length ? activeSources().length + ' đoạn liên quan' : 'Không cần viện dẫn');
-      setStatus(deepNote('Đang soạn công văn…')); step('write', 'run', qa.deep ? 'Đang suy luận & viết' : 'Đang viết');
+      setStatus(deepNote('Đang soạn công văn…')); step('write', 'run', deepOn() ? 'Đang suy luận & viết' : 'Đang viết');
       const letter = await composeCore('');
       if (my !== generation) return;
       if (before) {
@@ -766,7 +787,7 @@ const OfficialLetterPage = (() => {
       // Bước 2 — tra Thư viện theo mọi cụm, lấy thêm phần liền kề và điều được dẫn chiếu.
       const queries = Q.buildQueries(question, history, plan);
       paintQaStatus('Đang tra Thư viện tài liệu (' + queries.length + ' cụm tìm kiếm)…');
-      const found = L ? await L.retrieve(queries, Object.assign({limit: Q.SOURCE_LIMIT, minCoverage: Q.QA_COVERAGE, expand: true, maxSources: Q.MAX_SOURCES, perArticle: 2}, st.legalPin.length ? {docIds: st.legalPin} : {}))
+      const found = L ? await L.retrieve(queries, Object.assign({limit: Math.min(Q.SOURCE_LIMIT, modelCap('maxSources') || Q.SOURCE_LIMIT), minCoverage: Q.QA_COVERAGE, expand: true, maxSources: Math.min(Q.MAX_SOURCES, modelCap('maxSources') || Q.MAX_SOURCES), perArticle: 2}, st.legalPin.length ? {docIds: st.legalPin} : {}))
         : {sources: [], total: 0, error: 'Chưa tải được mô-đun thư viện. Hãy tải lại trang.'};
       if (mine !== generation || !host) return;
       if (!found.sources.length && (found.error || (!history.length && !dossier))) {
@@ -774,7 +795,7 @@ const OfficialLetterPage = (() => {
         reply({text: found.error || NO_MATCH, empty: true, queries});
       } else {
         // Bước 3 — suy luận trên nguyên văn các đoạn tìm được.
-        paintQaStatus((found.sources.length ? 'Tìm thấy ' + found.sources.length + ' đoạn liên quan — ' : 'Đang trả lời theo hội thoại — ') + (qa.deep ? 'đang suy luận sâu (có thể mất 30–90 giây)…' : 'đang soạn câu trả lời…'));
+        paintQaStatus((found.sources.length ? 'Tìm thấy ' + found.sources.length + ' đoạn liên quan — ' : 'Đang trả lời theo hội thoại — ') + (deepOn() ? 'đang suy luận sâu (có thể mất 30–90 giây)…' : 'đang soạn câu trả lời…'));
         usage.resumeText = qa.status;
         const answer = await callAI(Q.buildRequest({question, history, sources: found.sources, libraryError: found.error, dossier, issue: plan.issue}), Object.assign({thinking: qa.deep, effort: 'high'}, usage));
         reply({text: String(answer).trim(), sources: found.sources, queries, issue: plan.issue});
@@ -885,7 +906,7 @@ const OfficialLetterPage = (() => {
     return '<div class="ola-composer ola-qa-composer' + (big ? ' is-big' : ' is-up') + '">'
       + '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="1500" placeholder="Hỏi về quy định, điều khoản, quy trình… (VD: thông báo tổn thất chậm thì bị giảm trừ thế nào?)" aria-label="Câu hỏi nghiệp vụ">' + esc(qa.draft) + '</textarea>'
       + '<div class="ola-bar">' + recordChipHtml() + rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)')
-      + deepChipHtml() + '<span class="ola-spacer"></span>'
+      + modelChipHtml() + deepChipHtml() + '<span class="ola-spacer"></span>'
       + (qa.busy ? '<button type="button" class="tasco-ai-send is-stop" data-ol-act="qa-stop" title="Dừng" aria-label="Dừng">' + svg(ICON.close) + '</button>'
         : '<button type="button" class="tasco-ai-send" data-ol-act="qa-send" title="Gửi câu hỏi (Enter)" aria-label="Gửi câu hỏi">' + svg(ICON.send) + '</button>') + '</div>'
       + popoverHtml() + '</div>';
@@ -1021,6 +1042,7 @@ const OfficialLetterPage = (() => {
   function popoverHtml() {
     if (st.pop === 'record') return '<div class="ola-pop" role="dialog" aria-label="Chọn hồ sơ"><label class="ol-rec-search">' + svg(ICON.search) + '<input type="search" data-ol-rec-q autocomplete="off" spellcheck="false" placeholder="Biển số, số HSBT, chủ xe…" value="' + esc(st.recQuery) + '" aria-label="Tìm hồ sơ"></label><div class="ol-rec-list" data-ol-rec-list role="listbox" aria-label="Hồ sơ"></div></div>';
     if (st.pop === 'type') return '<div class="ola-pop ola-pop--menu" role="menu" aria-label="Loại công văn">' + Core().templates().map(item => '<button type="button" role="menuitemradio" aria-checked="' + (item.id === templateId()) + '" data-ol-type="' + esc(item.id) + '"><b>' + esc(item.id === DEFAULT_TEMPLATE ? 'Tự do' : item.name) + '</b><small>' + esc(item.id === DEFAULT_TEMPLATE ? 'AI tự viết theo yêu cầu của bạn' : item.group) + '</small></button>').join('') + '</div>';
+    if (st.pop === 'model') return modelPopHtml();
     if (st.pop === 'rules') {
       const docs = st.libDocs, pinned = st.legalPin[0] || '';
       const auto = '<button type="button" role="menuitemradio" aria-checked="' + (!pinned) + '" data-ol-rule=""><b>Tự động</b><small>AI tự tìm căn cứ trong toàn bộ Thư viện tài liệu theo vấn đề</small></button>';
@@ -1043,10 +1065,40 @@ const OfficialLetterPage = (() => {
     return '<button type="button" class="ola-chip' + (st.legalPin.length ? ' is-set' : '') + '" data-ol-pop="rules" title="' + esc(title || 'Chọn văn bản/quy tắc làm căn cứ cho AI') + '">' + svg(ICON.book) + '<span class="ola-chip-t">' + esc(ruleLabel) + '</span>' + svg(ICON.chevron) + '</button>';
   }
   function deepChipHtml(compact) {
-    const title = qa.deep ? 'Đang bật: AI suy luận kỹ hơn (chậm hơn, tốn token hơn). Bấm để tắt.' : 'Đang tắt: trả lời nhanh, ít tốn token. Bấm để bật suy luận sâu.';
+    const on = deepOn(), able = deepSupported();
+    const title = !able ? 'Mô hình đang chọn không có chế độ suy luận riêng — AI vẫn trả lời theo từng bước nhưng không chạy thêm bước suy luận.' : qa.deep ? 'Đang bật: AI suy luận kỹ hơn (chậm hơn, tốn token hơn). Bấm để tắt.' : 'Đang tắt: trả lời nhanh, ít tốn token. Bấm để bật suy luận sâu.';
     const disabled = (qa.busy || st.busy) ? ' disabled' : '';
-    if (compact) return '<button type="button" class="ola-icon-btn ola-deep-btn' + (qa.deep ? ' is-set' : '') + '" data-ol-act="qa-deep" aria-pressed="' + qa.deep + '" title="Suy luận sâu — ' + esc(title) + '" aria-label="Suy luận sâu"' + disabled + '>' + svg(ICON.spark) + '</button>';
-    return '<button type="button" class="ola-chip' + (qa.deep ? ' is-set' : '') + '" data-ol-act="qa-deep" aria-pressed="' + qa.deep + '" title="' + esc(title) + '"' + disabled + '>' + svg(ICON.spark) + '<span class="ola-chip-t">Suy luận sâu</span></button>';
+    if (compact) return '<button type="button" class="ola-icon-btn ola-deep-btn' + (on ? ' is-set' : '') + (able ? '' : ' is-na') + '" data-ol-act="qa-deep" aria-pressed="' + on + '" title="Suy luận sâu — ' + esc(title) + '" aria-label="Suy luận sâu"' + disabled + '>' + svg(ICON.spark) + '</button>';
+    return '<button type="button" class="ola-chip' + (on ? ' is-set' : '') + (able ? '' : ' is-na') + '" data-ol-act="qa-deep" aria-pressed="' + on + '" title="' + esc(title) + '"' + disabled + '>' + svg(ICON.spark) + '<span class="ola-chip-t">Suy luận sâu</span></button>';
+  }
+  // Nút chọn mô hình AI (DeepSeek / Gemini / Groq / tuỳ chỉnh) — cạnh ô soạn và ô hỏi.
+  function modelChipHtml() {
+    const active = activeModel();
+    if (!active) return '';
+    const missing = aiKeys[active.provider] === false;
+    return '<button type="button" class="ola-chip' + (active.free ? ' is-free' : '') + (missing ? ' is-warn' : '') + '" data-ol-pop="model" title="Chọn mô hình AI' + (missing ? ' — chưa có khoá cho mô hình này' : '') + '"' + ((qa.busy || st.busy) ? ' disabled' : '') + '>' + svg(ICON.chip) + '<span class="ola-chip-t">' + esc(active.label) + '</span>' + svg(ICON.chevron) + '</button>';
+  }
+  function modelPopHtml() {
+    const M = Models(), cfg = aiConfig(), active = activeModel();
+    if (!M || !active) return '';
+    const groups = M.ORDER.map(id => {
+      const items = M.entries(cfg).filter(entry => entry.provider === id);
+      if (!items.length) return '';
+      const p = M.PROVIDERS[id], has = aiKeys[id] !== false;   // chưa nạp xong khoá thì coi như có, tránh nhấp nháy
+      return '<h6>' + esc(M.providerLabel(id, cfg)) + (p.free ? ' <i>miễn phí</i>' : '') + (has ? '' : ' <em>chưa có khoá</em>') + '</h6>'
+        + items.map(entry => has
+          ? '<button type="button" role="menuitemradio" aria-checked="' + (entry.id === active.id) + '" data-ol-model="' + esc(entry.id) + '"><b>' + esc(entry.model) + '</b><small>' + esc(modelHint(entry)) + '</small></button>'
+          : '<button type="button" data-ol-act="settings" title="Thêm khoá ' + esc(M.providerLabel(id, cfg)) + '"><b>' + esc(entry.model) + '</b><small>Chưa có khoá — bấm để thêm trong Cài đặt</small></button>').join('');
+    }).join('');
+    return '<div class="ola-pop ola-pop--menu ola-pop--models" role="menu" aria-label="Mô hình AI">' + groups
+      + '<button type="button" class="ola-pop-foot" data-ol-act="settings"><b>Thêm khoá / mô hình…</b><small>Gemini, Groq miễn phí; OpenRouter và dịch vụ tương thích OpenAI</small></button></div>';
+  }
+  function modelHint(entry) {
+    const p = entry.provider, prof = Models().profile(p, entry.model), bits = [];
+    bits.push(prof.reasoning === 'none' ? 'không có suy luận sâu' : 'có suy luận sâu');
+    if (!prof.vision) bits.push('không đọc ảnh');
+    if (prof.maxSources) bits.push('hạn mức nhỏ: ít nguồn, trả lời ngắn');
+    return bits.join(' · ');
   }
   function composerHtml(big) {
     const tpl = template();
@@ -1058,7 +1110,7 @@ const OfficialLetterPage = (() => {
       + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (filesHtml() ? '' : ' hidden') + '>' + filesHtml() + '</div>'
       + '<div class="ola-docs" data-ol-docs' + (docList().length ? '' : ' hidden') + '>' + docsHtml() + '</div>'
       + '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm ảnh/PDF"><input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>' + svg(ICON.attach) + '</label>'
-      + recordChip + typeChip + rulesChip + deepChipHtml() + '<span class="ola-spacer"></span>'
+      + recordChip + typeChip + rulesChip + modelChipHtml() + deepChipHtml() + '<span class="ola-spacer"></span>'
       + '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div>'
       + popoverHtml() + '</div>';
   }
@@ -1350,6 +1402,22 @@ const OfficialLetterPage = (() => {
   }
 
   // ---- Cài đặt đơn vị ban hành ----
+  // Thẻ cài đặt cho từng nhà cung cấp AI: khoá, danh sách mô hình, (tuỳ chỉnh) địa chỉ gốc.
+  function providerCards() {
+    const M = Models();
+    if (!M) return '';
+    const cfg = aiConfig(), field = (label, inner, wide) => '<label class="ol-set-field' + (wide ? ' is-wide' : '') + '"><span>' + label + '</span>' + inner + '</label>';
+    return M.ORDER.map(id => {
+      const p = M.PROVIDERS[id], c = cfg.providers[id];
+      return '<section class="ol-set-card ol-set-key" data-prov="' + id + '"><div class="ol-set-card-head"><h3>' + esc(id === 'custom' ? 'AI tuỳ chỉnh (tương thích OpenAI)' : p.label) + (p.free ? ' <span class="ol-set-free">miễn phí</span>' : '') + '</h3><span class="ol-set-pill is-wait" data-st>Đang kiểm tra…</span></div>'
+        + '<p class="ol-set-note">' + esc(p.note) + '</p>'
+        + (id === 'custom' ? '<div class="ol-set-grid">' + field('Tên hiển thị <em>(tuỳ chọn)</em>', '<input data-label maxlength="40" value="' + esc(c.label) + '" placeholder="OpenRouter" autocomplete="off">') + field('Địa chỉ gốc API', '<input data-base maxlength="300" value="' + esc(c.base) + '" placeholder="https://openrouter.ai/api/v1" autocomplete="off" spellcheck="false">') + '</div>' : '')
+        + field('Khoá API mới <em>(để trống nếu giữ nguyên)</em>', '<div class="ol-set-secret"><input data-key type="password" autocomplete="off" spellcheck="false" maxlength="200" placeholder="' + esc(p.keyHint) + '"><button type="button" class="ol-set-eye" data-eye aria-label="Hiện / ẩn khoá" title="Hiện / ẩn khoá"><span data-eye-icon></span></button></div>')
+        + field('Mô hình <em>(cách nhau dấu phẩy; mô hình đầu là mặc định)</em>', '<input data-models maxlength="400" value="' + esc(c.models.join(', ')) + '" placeholder="' + esc(id === 'custom' ? 'meta-llama/llama-3.3-70b-instruct:free' : p.models.join(', ')) + '" autocomplete="off" spellcheck="false">')
+        + '<div class="ol-set-models" data-list></div>'
+        + '<div class="ol-set-links">' + (p.keyUrl ? '<a href="' + esc(p.keyUrl) + '" target="_blank" rel="noopener noreferrer">Lấy khoá ↗</a>' : '<span></span>') + '<span class="ol-set-actions"><button type="button" class="ol-set-link" data-fetch>Lấy danh sách mô hình</button><button type="button" class="ol-set-danger" data-clear hidden>Xoá khoá</button></span></div></section>';
+    }).join('');
+  }
   function openSettings() {
     const issuer = loadIssuer();
     const dialog = document.createElement('dialog');
@@ -1364,38 +1432,77 @@ const OfficialLetterPage = (() => {
       + '<div><h2 id="olSetTitle">Cài đặt Công văn AI</h2><p>Thông tin đơn vị ban hành và kết nối AI</p></div>'
       + '<button type="button" class="ol-set-x" data-cancel aria-label="Đóng">' + icon('<path d="M18 6 6 18M6 6l12 12"/>') + '</button></header>'
       + '<div class="ol-set-body">'
-      + '<section class="ol-set-card ol-set-key"><div class="ol-set-card-head"><h3>Kết nối DeepSeek</h3><span class="ol-set-pill is-wait" data-ds-state>Đang kiểm tra…</span></div>'
-      + '<p class="ol-set-note">Khoá API giúp Công văn AI đọc hồ sơ và soạn nội dung. Khoá chỉ lưu cho tài khoản của bạn và không hiển thị lại.</p>'
-      + '<label class="ol-set-field"><span>Khoá API mới <em>(để trống nếu giữ nguyên)</em></span><div class="ol-set-secret"><input name="deepseekKey" type="password" autofocus autocomplete="off" spellcheck="false" maxlength="200" placeholder="sk-••••••••••••••••">'
-      + '<button type="button" class="ol-set-eye" data-ds-eye aria-label="Hiện / ẩn khoá" title="Hiện / ẩn khoá">' + icon('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>') + '</button></div></label>'
-      + '<div class="ol-set-links"><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer">Lấy khoá tại platform.deepseek.com ↗</a><button type="button" class="ol-set-danger" data-ds-clear hidden>Xoá khoá</button></div></section>'
+      + providerCards()
       + '<section class="ol-set-card"><div class="ol-set-card-head"><h3>Đơn vị ban hành</h3><small>Lưu trên máy này, dùng cho mọi công văn</small></div><div class="ol-set-grid">' + rows.map(field).join('') + '</div></section>'
       + '</div>'
       + '<footer class="ol-set-foot"><button type="button" class="tasco-ai-btn-ghost" data-cancel>Hủy</button><button type="submit" class="tasco-ai-btn-primary">Lưu cài đặt</button></footer></form>';
     document.body.appendChild(dialog);
     const close = () => { dialog.close(); dialog.remove(); };
     dialog.querySelectorAll('[data-cancel]').forEach(button => { button.onclick = close; });
-    const stateNode = dialog.querySelector('[data-ds-state]'), clearBtn = dialog.querySelector('[data-ds-clear]'), keyInput = dialog.querySelector('[name="deepseekKey"]');
-    const setState = (kind, text) => { stateNode.className = 'ol-set-pill is-' + kind; stateNode.textContent = text; };
-    dialog.querySelector('[data-ds-eye]').onclick = () => { keyInput.type = keyInput.type === 'password' ? 'text' : 'password'; keyInput.focus(); };
-    if (typeof DeepSeekKeyStore === 'undefined') setState('off', 'Chưa tải được mô-đun');
-    else DeepSeekKeyStore.get().then(key => {
-      if (key) { setState('ok', 'Đã kết nối · …' + key.slice(-4)); keyInput.placeholder = 'Nhập khoá mới để thay thế'; }
-      else setState('off', 'Chưa có khoá');
-      clearBtn.hidden = !key;
+    const eyeIcon = icon('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>');
+    const cards = {};
+    if (Models()) Models().ORDER.forEach(id => {
+      const card = dialog.querySelector('[data-prov="' + id + '"]');
+      if (!card) return;
+      const ui = cards[id] = {card, state: card.querySelector('[data-st]'), key: card.querySelector('[data-key]'), clear: card.querySelector('[data-clear]'), models: card.querySelector('[data-models]'), list: card.querySelector('[data-list]'), fetch: card.querySelector('[data-fetch]'), base: card.querySelector('[data-base]'), label: card.querySelector('[data-label]'), stored: ''};
+      const setState = (kind, text) => { ui.state.className = 'ol-set-pill is-' + kind; ui.state.textContent = text; };
+      card.querySelector('[data-eye]').onclick = () => { ui.key.type = ui.key.type === 'password' ? 'text' : 'password'; ui.key.focus(); };
+      Models().getKey(id).then(key => {
+        ui.stored = key;
+        if (key) { setState('ok', 'Đã kết nối · …' + key.slice(-4)); ui.key.placeholder = 'Nhập khoá mới để thay thế'; } else setState('off', 'Chưa có khoá');
+        ui.clear.hidden = !key;
+      });
+      ui.clear.onclick = async () => {
+        const s = Models().PROVIDERS[id] && (id === 'deepseek' ? DeepSeekKeyStore : id === 'gemini' ? GeminiKeyStore : ProviderKeyStore[id]);
+        if (s) await s.clear();
+        ui.stored = ''; setState('off', 'Chưa có khoá'); ui.clear.hidden = true; ui.key.placeholder = Models().PROVIDERS[id].keyHint; aiKeys[id] = false;
+        toast('Đã xoá khoá ' + Models().PROVIDERS[id].label + '.', 'info');
+      };
+      const chipsFor = names => {
+        const chosen = Models().parseModels(ui.models.value);
+        ui.list.innerHTML = names.length ? names.map(name => '<button type="button" class="ol-set-chip' + (chosen.includes(name) ? ' is-on' : '') + '" data-pick="' + esc(name) + '">' + esc(name) + '</button>').join('') : '<small>Không có mô hình nào khả dụng.</small>';
+      };
+      ui.fetch.onclick = async () => {
+        const tmp = Models().normalize({providers: {[id]: {models: ['x'], base: ui.base ? ui.base.value : ''}}});
+        ui.fetch.disabled = true; const old = ui.fetch.textContent; ui.fetch.textContent = 'Đang lấy…';
+        try {
+          const names = await Models().listModels(id, tmp, {apiKey: ui.key.value.trim() || ui.stored});
+          chipsFor(names); toast('Có ' + names.length + ' mô hình — bấm để chọn.', 'success');
+        } catch (error) { ui.list.innerHTML = ''; toast(error.message, 'warning'); }
+        ui.fetch.disabled = false; ui.fetch.textContent = old;
+      };
+      ui.list.onclick = event => {
+        const pick = event.target.closest('[data-pick]');
+        if (!pick) return;
+        const name = pick.dataset.pick, chosen = Models().parseModels(ui.models.value);
+        ui.models.value = (chosen.includes(name) ? chosen.filter(item => item !== name) : chosen.concat(name)).join(', ');
+        pick.classList.toggle('is-on');
+      };
     });
-    clearBtn.onclick = async () => { await DeepSeekKeyStore.clear(); setState('off', 'Chưa có khoá'); keyInput.placeholder = 'sk-••••••••••••••••'; clearBtn.hidden = true; toast('Đã xoá khoá DeepSeek.', 'info'); };
+    dialog.querySelectorAll('[data-eye-icon]').forEach(node => { node.innerHTML = eyeIcon; });
     dialog.querySelector('form').onsubmit = async event => {
       event.preventDefault();
       const next = {}; rows.forEach(([key]) => { next[key] = dialog.querySelector('[name="' + key + '"]').value; });
-      const keyValue = keyInput.value.trim();
-      if (keyValue) {
-        try {
-          const saved = await DeepSeekKeyStore.set(keyValue);
-          toast(saved.scope === 'account' ? 'Đã lưu khoá DeepSeek vào tài khoản.' : 'Đã lưu khoá DeepSeek trên trình duyệt này (tài khoản chưa cho phép lưu).', 'success');
-        } catch (error) { toast(error.message, 'warning'); return; }
+      if (Models()) {
+        const M = Models(), providers = {};
+        for (const id of M.ORDER) {
+          const ui = cards[id];
+          if (!ui) continue;
+          providers[id] = {models: M.parseModels(ui.models.value)};
+          if (id === 'custom') { providers[id].base = M.normalizeBase(ui.base.value); providers[id].label = ui.label.value; if (providers[id].models.length && !providers[id].base) { toast('Nhập địa chỉ gốc API hợp lệ (https://…) cho mục Tuỳ chỉnh.', 'warning'); return; } }
+          const keyValue = ui.key.value.trim();
+          if (keyValue) {
+            try {
+              const store = id === 'deepseek' ? DeepSeekKeyStore : id === 'gemini' ? GeminiKeyStore : ProviderKeyStore[id];
+              const saved = await store.set(keyValue);
+              toast(saved.scope === 'account' ? 'Đã lưu khoá ' + M.PROVIDERS[id].label + ' vào tài khoản.' : 'Đã lưu khoá ' + M.PROVIDERS[id].label + ' trên trình duyệt này (tài khoản chưa cho phép lưu).', 'success');
+            } catch (error) { toast(error.message, 'warning'); return; }
+          }
+        }
+        aiCfg = M.save({selected: aiConfig().selected, providers});
+        refreshKeys();
       }
-      saveIssuer(Core().normalizeIssuer(next)); close(); toast('Đã lưu thông tin đơn vị.', 'success');
+      saveIssuer(Core().normalizeIssuer(next)); close(); toast('Đã lưu cài đặt.', 'success'); renderAll();
     };
     dialog.addEventListener('cancel', close);
     dialog.addEventListener('click', event => { if (event.target === dialog) close(); });   // bấm ra vùng tối để đóng
@@ -1453,6 +1560,8 @@ const OfficialLetterPage = (() => {
     if (popButton) { collectAll(); const name = popButton.dataset.olPop; st.pop = st.pop === name ? '' : name; st.recQuery = ''; st.recActive = 0; if (st.pop === 'record' && !index.length) loadRecords(); if (st.pop === 'rules' && st.libDocs === null) loadLibDocs().then(() => { if (st.pop === 'rules') renderAll(); }); renderAll(); return; }
     const pick = target.closest('[data-ol-pick]');
     if (pick) { collectAll(); st.recordKey = pick.dataset.olPick; st.pop = ''; st.recQuery = ''; renderAll(); focusMain(); return; }
+    const modelBtn = target.closest('[data-ol-model]');
+    if (modelBtn) { collectAll(); const cfg = aiConfig(); cfg.selected = modelBtn.dataset.olModel; aiCfg = Models().save(cfg); st.pop = ''; renderAll(); focusMain(); return; }
     const rule = target.closest('[data-ol-rule]');
     if (rule) { collectAll(); st.legalPin = rule.dataset.olRule ? [rule.dataset.olRule] : []; st.pop = ''; renderAll(); focusMain(); return; }
     const type = target.closest('[data-ol-type]');
@@ -1515,7 +1624,7 @@ const OfficialLetterPage = (() => {
       case 'docx': downloadDocx(); break;
       case 'print': printLetter(); break;
       case 'copy': copyText(); break;
-      case 'settings': openSettings(); break;
+      case 'settings': st.pop = ''; openSettings(); break;
       case 'legal-search': searchMoreLegal(); break;
       case 'open-library': TascoLibrary.open(); break;
       case 'new': st.mode = 'compose'; if (st.letter) { clearTimeout(saveTimer); if (st.historyId) saveHistory(); reset(); renderAll(); $('[data-ol-brief]')?.focus(); } else confirmDiscard().then(ok => { if (ok) { reset(); renderAll(); $('[data-ol-brief]')?.focus(); } }); break;
@@ -1589,6 +1698,7 @@ const OfficialLetterPage = (() => {
     host = container;
     loadRecords();
     loadQa();
+    refreshKeys();
     host.innerHTML = '<div class="ola" data-ol-root></div>';
     HANDLERS.forEach(([name, fn]) => host.addEventListener(name, fn));
     document.addEventListener('mousedown', onOutside, true);

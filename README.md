@@ -105,6 +105,14 @@ Nút chuyển **Soạn công văn ⇄ Hỏi nghiệp vụ** ở đầu trang Cô
 - Dùng chung khoá DeepSeek, chip **Hồ sơ** (AI áp dụng vào hồ sơ đó) và **Quy tắc** (chỉ tra trong văn bản đã chọn). Giữ 6 lượt gần nhất làm ngữ cảnh; nhiều cuộc trò chuyện, lưu trên máy (`officialLetter.qaChats.v1`, tối đa 30 cuộc, tự chuyển từ bản một cuộc `officialLetter.qa.v1`), có đếm token riêng. Nút **+** (thanh trên và thanh Lịch sử) mở cuộc trò chuyện mới; ở chế độ Hỏi nghiệp vụ thanh Lịch sử liệt kê, tìm, mở và xoá các cuộc trò chuyện (tiêu đề lấy từ câu hỏi đầu tiên).
 - Nút **Soạn công văn từ câu trả lời** chuyển sang chế độ soạn, điền sẵn kết luận vào yêu cầu và ghim văn bản được dẫn làm căn cứ.
 
+### Chọn nhà cung cấp/mô hình AI (`official-letter-models.js`, `provider-key.js`)
+Nút **Mô hình** cạnh ô soạn và ô hỏi nghiệp vụ chọn AI dùng cho Công văn AI: **DeepSeek** (mặc định, trả phí rẻ), **Google Gemini** và **Groq** (có gói miễn phí), hoặc mục **Tuỳ chỉnh** cho dịch vụ tương thích OpenAI (OpenRouter có model miễn phí, Cerebras, Together, Ollama cục bộ…). Tất cả gọi `POST <địa chỉ gốc>/chat/completions` bằng khoá Bearer.
+- **Khoá và mô hình** nhập ở ⚙ Cài đặt: mỗi nhà cung cấp một thẻ (khoá, danh sách mô hình cách nhau dấu phẩy, nút **Lấy danh sách mô hình** gọi `GET <gốc>/models` để chọn đúng tên). Khoá Gemini dùng chung với Thư viện tài liệu/Trợ lý AI; khoá DeepSeek như cũ; khoá Groq và tuỳ chỉnh lưu ở `user_secrets/{uid}/groqApiKey` và `customAiApiKey` (cần publish lại `firebase/database.rules.json`; chưa publish thì tạm lưu trên trình duyệt). Cấu hình mô hình (không chứa khoá) lưu ở `officialLetter.aiConfig.v1`.
+- Tên mô hình đổi nhanh nên mặc định (`gemini-3.8-flash`, `openai/gpt-oss-120b`, `llama-3.3-70b-versatile`) có thể lỗi thời — sửa trong Cài đặt hoặc bấm **Lấy danh sách mô hình**; lỗi 404 nghĩa là tên mô hình sai.
+- **Suy luận sâu** map theo từng loại: DeepSeek dùng `thinking`, Gemini và gpt-oss dùng `reasoning_effort`, mô hình không có suy luận (vd Llama) bỏ qua công tắc.
+- **Giới hạn gói miễn phí**: Groq khoảng 8.000 token/phút nên ứng dụng tự giảm số nguồn tra cứu (5) và trần trả lời (4.000 token) — hợp để hỏi nghiệp vụ ngắn, không hợp soạn công văn dài; Llama trên Groq không đọc ảnh (ảnh/PDF scan sẽ báo lỗi và gợi ý chọn Gemini/DeepSeek). Gói miễn phí của Gemini có thể bị Google dùng để cải thiện sản phẩm — không dùng cho dữ liệu nhạy cảm của khách hàng.
+- Dịch vụ không hỗ trợ JSON mode (HTTP 400 nhắc `response_format`) được tự thử lại một lần không có `response_format`.
+
 ## Biểu mẫu dùng chung
 
 Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở trang chủ. Trang hỗ trợ tìm kiếm không dấu, lọc loại file, phân loại, sắp xếp, phân trang, tải nhiều file, sửa tên/phân loại/ghi chú và xóa khỏi thư viện. Hai mẫu Word có sẵn của dự án luôn hiển thị. Người đã đăng nhập được xem và tải lên; người tải quản lý file của mình, người có quyền `users.admin` quản lý toàn bộ.
