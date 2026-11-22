@@ -2468,7 +2468,10 @@ const fullList = getCarBrandLossData();
       }
 
       triggerToast('Đang xuất ảnh Báo cáo xe & dự phòng Ultra HD (4K)...', 'info');
-      const exportWidth = Math.ceil(Math.max(cardEl.offsetWidth, cardEl.querySelector('table')?.scrollWidth || 0));
+      const isDark = !document.body.classList.contains('light-mode');
+      const shell = cardEl.closest('.gdv-report-premium-shell');
+      const paperBg = (shell && getComputedStyle(shell).getPropertyValue('--ton-soft').trim()) || (isDark ? '#121e27' : '#f6f7f2');
+      const exportWidth = Math.ceil(Math.max(cardEl.offsetWidth, 1200));
 
       html2canvas(cardEl, {
         scale: Math.max(1, Math.min(3.5, 4096 / exportWidth)),
@@ -2476,16 +2479,17 @@ const fullList = getCarBrandLossData();
         windowWidth: Math.max(document.documentElement.clientWidth, exportWidth + 64),
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: paperBg,
         logging: false,
         scrollX: 0,
         scrollY: 0,
         onclone: function(clonedDoc) {
           const target = clonedDoc.getElementById('monthlyOpenedClaimsReportCardContainer');
           if (target) {
+            target.classList.add('mo-report-shell--export');
             target.style.boxShadow = 'none';
             target.style.transform = 'none';
-            target.style.backgroundColor = '#ffffff';
+            target.style.backgroundColor = paperBg;
             if (typeof prepareRemainingReportImageClone === 'function') prepareRemainingReportImageClone(target, exportWidth);
           }
         },
@@ -2541,150 +2545,150 @@ const fullList = getCarBrandLossData();
           vcxCount++;
           vcxReserve += r;
         }
-
       });
 
       const avgReservePerVehicle = totalClaims > 0 ? Math.round(totalReserve / totalClaims) : 0;
       const reserveCoveragePct = totalClaims > 0 ? Math.round((claimsWithReserveCount / totalClaims) * 100) : 0;
 
-
-
       const chartData = getMonthlyOpenedChartData();
 
-      // Khung biểu đồ: tiêu đề + chip tổng số hồ sơ / tiền dự phòng / mục cao nhất, để đọc nhanh không cần rê chuột.
       const sumOf = list => list.reduce((n, v) => n + (v || 0), 0);
       const moMoney = value => value >= 1e9 ? (value / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 }) + ' Tỷ' : value >= 1e6 ? (value / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' Tr' : Math.round(value).toLocaleString('vi-VN') + ' đ';
-      const moChip = (label, value, color) => `<span style="display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 11px; border-radius: 999px; background: ${color}1a; border: 1px solid ${color}40; font-size: 11.5px; font-weight: 750; color: var(--text-soft); white-space: nowrap;">${label} <strong style="font-size: 13px; font-weight: 900; color: ${color};">${value}</strong></span>`;
-      const moPanel = (title, series, canvasId, height, aria, extraStyle = '', note = '') => {
+      const moChip = (label, value, variant = '') => `<span class="mo-chip ${variant ? 'mo-chip--' + variant : ''}">${label} <strong>${value}</strong></span>`;
+      const buildPanelHead = (title, series, note = '') => {
         const top = series.count.reduce((best, v, i) => (v > (series.count[best] || 0) || (v === series.count[best] && series.reserve[i] > series.reserve[best])) ? i : best, 0);
         const topReserve = series.reserve.reduce((best, v, i) => v > series.reserve[best] ? i : best, 0);
         return `
-        <section aria-label="${escapeAttributeData(title)}" style="${extraStyle} padding: 18px 20px 14px; border-radius: 16px; border: 1px solid var(--border-strong); background: linear-gradient(180deg, rgba(216,180,109,0.06), transparent 38%), var(--surface); box-shadow: var(--shadow-sm); min-width: 0;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
-            <div style="min-width: 0;">
-              <div style="font-size: 13px; font-weight: 900; color: var(--text-main); text-transform: uppercase; letter-spacing: .05em;">${escapeHtmlOutput(title)}</div>
-              ${note ? `<div style="font-size: 11.5px; font-weight: 650; color: var(--text-soft); margin-top: 3px;">${escapeHtmlOutput(note)}</div>` : ''}
+          <div class="mo-panel-head">
+            <div>
+              <div class="mo-panel-title">${escapeHtmlOutput(title)}</div>
+              ${note ? `<div class="mo-panel-note">${escapeHtmlOutput(note)}</div>` : ''}
             </div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              ${moChip('Tổng', sumOf(series.count).toLocaleString('vi-VN') + ' hồ sơ', '#3b82f6')}
-              ${moChip('Dự phòng', moMoney(sumOf(series.reserve)), '#b88935')}
-              ${series.labels.length > 1 ? moChip('Nhiều nhất', escapeHtmlOutput(series.labels[top]) + ' · ' + series.count[top], '#10b981') : ''}
-              ${series.labels.length > 1 && topReserve !== top ? moChip('Dự phòng cao nhất', escapeHtmlOutput(series.labels[topReserve]) + ' · ' + moMoney(series.reserve[topReserve]), '#a855f7') : ''}
+            <div class="mo-panel-chips">
+              ${moChip('Tổng', sumOf(series.count).toLocaleString('vi-VN') + ' hồ sơ')}
+              ${moChip('Dự phòng', moMoney(sumOf(series.reserve)), 'gold')}
+              ${series.labels.length > 1 ? moChip('Nhiều nhất', escapeHtmlOutput(series.labels[top]) + ' · ' + series.count[top], 'emerald') : ''}
+              ${series.labels.length > 1 && topReserve !== top ? moChip('DP cao nhất', escapeHtmlOutput(series.labels[topReserve]) + ' · ' + moMoney(series.reserve[topReserve]), 'gold') : ''}
             </div>
-          </div>
-          <div style="position: relative; height: ${height}px; width: 100%;"><canvas id="${canvasId}" role="img" aria-label="${escapeAttributeData(aria)}"></canvas></div>
-        </section>`;
+          </div>`;
       };
+      const moStandaloneCard = (title, series, canvasId, height, aria, note = '') => `
+        <section class="mo-chart-card mo-chart-card--standalone" aria-label="${escapeAttributeData(title)}">
+          ${buildPanelHead(title, series, note)}
+          <div class="mo-canvas-wrap" style="height: ${height}px;">
+            <canvas id="${canvasId}" role="img" aria-label="${escapeAttributeData(aria)}"></canvas>
+          </div>
+        </section>`;
 
       return `
-        <!-- 4 EXECUTIVE KPI SUMMARY CARDS -->
-        <div class="rp-summary-strip rp-summary-strip--monthly-opened" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
-          
-          <!-- Card 1: Số lượng xe / hồ sơ mở trong tháng -->
-          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(216, 180, 109, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <span style="font-size: 12.5px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Số lượng xe / Hồ sơ mở</span>
-              <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(216, 180, 109, 0.15); display: flex; align-items: center; justify-content: center; color: var(--primary);">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"></path><circle cx="7" cy="17" r="2"></circle><path d="M9 17h6"></path><circle cx="17" cy="17" r="2"></circle></svg>
-              </div>
+        <!-- 4 EXECUTIVE KPI SUMMARY CARDS (đồng bộ chuẩn Paper / Forest / Champagne) -->
+        <div class="rp-summary-strip rp-summary-strip--monthly-opened">
+          <!-- Card 1: Số lượng xe / hồ sơ mở -->
+          <div class="p-card stat-widget">
+            <div class="mo-kpi-head">
+              <span class="mo-kpi-label">Số lượng xe / Hồ sơ mở</span>
             </div>
-            <div style="display: flex; align-items: baseline; gap: 8px;">
-              <div style="font-size: 32px; font-weight: 900; color: var(--primary); line-height: 1.1;">${totalClaims.toLocaleString('vi-VN')}</div>
-              <span style="font-size: 13.5px; font-weight: 800; color: var(--text-soft);">hồ sơ (${totalUniqueVehicles} xe)</span>
+            <div class="mo-kpi-value mo-kpi-value--gold">
+              <span>${totalClaims.toLocaleString('vi-VN')}</span>
+              <span class="mo-kpi-unit">hồ sơ (${totalUniqueVehicles} xe)</span>
             </div>
-            <div style="font-size: 12px; color: var(--text-soft); margin-top: 8px; font-weight: 700;">Ngày mở hồ sơ trong ${monthLabel}</div>
+            <div class="mo-kpi-meta">Ngày mở hồ sơ trong ${escapeHtmlOutput(monthLabel)}</div>
           </div>
 
-          <!-- Card 2: Tổng số tiền bồi thường (lấy theo dự phòng) -->
-          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(16, 185, 129, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <span style="font-size: 12.5px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Tổng tiền dự phòng bồi thường</span>
-              <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(16, 185, 129, 0.12); display: flex; align-items: center; justify-content: center; color: #10b981;">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              </div>
+          <!-- Card 2: Tổng tiền dự phòng bồi thường -->
+          <div class="p-card stat-widget">
+            <div class="mo-kpi-head">
+              <span class="mo-kpi-label">Tổng tiền dự phòng bồi thường</span>
             </div>
-            <div style="font-size: 28px; font-weight: 900; color: #10b981; line-height: 1.1;">${formatCurrencyInputNumber(totalReserve)} <span style="font-size: 15px; font-weight: 750;">đ</span></div>
-            <div style="font-size: 12px; color: var(--text-soft); margin-top: 8px; font-weight: 700;">Lấy theo số tiền dự phòng tổn thất</div>
+            <div class="mo-kpi-value mo-kpi-value--green">
+              <span>${formatCurrencyInputNumber(totalReserve)}</span>
+              <span class="mo-kpi-unit">đ</span>
+            </div>
+            <div class="mo-kpi-meta">Lấy theo số tiền dự phòng tổn thất</div>
           </div>
 
           <!-- Card 3: Dự phòng bình quân / xe -->
-          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(59, 130, 246, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <span style="font-size: 12.5px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Dự phòng bình quân / xe</span>
-              <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(59, 130, 246, 0.12); display: flex; align-items: center; justify-content: center; color: #3b82f6;">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
-              </div>
+          <div class="p-card stat-widget">
+            <div class="mo-kpi-head">
+              <span class="mo-kpi-label">Dự phòng bình quân / xe</span>
             </div>
-            <div style="font-size: 28px; font-weight: 900; color: #3b82f6; line-height: 1.1;">${formatCurrencyInputNumber(avgReservePerVehicle)} <span style="font-size: 15px; font-weight: 750;">đ/xe</span></div>
-            <div style="font-size: 12px; color: var(--text-soft); margin-top: 8px; font-weight: 700;">Ước tính tổn thất trung bình mỗi xe</div>
+            <div class="mo-kpi-value mo-kpi-value--blue">
+              <span>${formatCurrencyInputNumber(avgReservePerVehicle)}</span>
+              <span class="mo-kpi-unit">đ/xe</span>
+            </div>
+            <div class="mo-kpi-meta">Ước tính tổn thất trung bình mỗi xe</div>
           </div>
 
-          <!-- Card 4: Tỷ lệ có dự phòng & Nghiệp vụ -->
-          <div class="p-card stat-widget" style="padding: 20px; border-radius: 18px; border: 1px solid rgba(168, 85, 247, 0.35); background: var(--surface); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <span style="font-size: 12.5px; font-weight: 850; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px;">Hồ sơ có dự phòng & Nghiệp vụ</span>
-              <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(168, 85, 247, 0.12); display: flex; align-items: center; justify-content: center; color: #a855f7;">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-              </div>
+          <!-- Card 4: Hồ sơ có dự phòng & Nghiệp vụ -->
+          <div class="p-card stat-widget">
+            <div class="mo-kpi-head">
+              <span class="mo-kpi-label">Hồ sơ có dự phòng &amp; Nghiệp vụ</span>
+              <span class="mo-kpi-badge">${reserveCoveragePct}%</span>
             </div>
-            <div style="display: flex; align-items: baseline; gap: 8px;">
-              <div style="font-size: 28px; font-weight: 900; color: #a855f7; line-height: 1.1;">${claimsWithReserveCount}<span style="font-size: 16px; color: var(--text-soft); font-weight: 750;">/${totalClaims}</span></div>
-              <span style="font-size: 12px; font-weight: 850; padding: 2px 8px; border-radius: 6px; background: rgba(168, 85, 247, 0.15); color: #a855f7;">${reserveCoveragePct}%</span>
+            <div class="mo-kpi-value mo-kpi-value--violet">
+              <span>${claimsWithReserveCount}</span>
+              <span class="mo-kpi-unit">/${totalClaims} hồ sơ</span>
             </div>
-            <div style="font-size: 11.5px; color: var(--text-soft); margin-top: 8px; font-weight: 700; display: flex; gap: 10px; flex-wrap: wrap;">
-              <span>VCX: <strong style="color: #3b82f6;">${vcxCount} xe</strong> (${formatCurrencyInputNumber(vcxReserve)} đ)</span>
-              <span>TNDS: <strong style="color: #a855f7;">${tndsCount} xe</strong> (${formatCurrencyInputNumber(tndsReserve)} đ)</span>
+            <div class="mo-kpi-meta">
+              <span class="mo-kpi-split" title="Vật chất xe: ${formatCurrencyInputNumber(vcxReserve)} đ"><span class="mo-kpi-dot" style="background:#2563eb;"></span>VCX: <strong>${vcxCount}</strong> (${moMoney(vcxReserve)})</span>
+              <span class="mo-kpi-split" title="Trách nhiệm dân sự: ${formatCurrencyInputNumber(tndsReserve)} đ"><span class="mo-kpi-dot" style="background:#7c3aed;"></span>TNDS: <strong>${tndsCount}</strong> (${moMoney(tndsReserve)})</span>
             </div>
           </div>
-
         </div>
 
-        <!-- BIỂU ĐỒ (thay cho danh sách): diễn biến theo thời gian, theo GĐV, theo trạng thái -->
-        <div class="p-card rp-data-card" id="monthlyOpenedClaimsReportCardContainer" style="padding: 24px 28px; border-radius: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--border-strong); background: var(--surface); margin-bottom: 24px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px dashed var(--border); flex-wrap: wrap; gap: 14px;">
-            <div>
-              <span style="display: block; color: var(--ton-gold, #b88935); font-size: 9px; font-weight: 800; letter-spacing: .14em;">XE &amp; DỰ PHÒNG MỞ TRONG KỲ</span>
-              <h2 style="font-size: 18px; font-weight: 850; color: var(--text-main); margin: 4px 0 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--primary)" stroke-width="2.3"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                <span>Biểu đồ hồ sơ mở &amp; dự phòng bồi thường · ${escapeHtmlOutput(monthLabel)}</span>
-              </h2>
-              <div style="font-size: 12.5px; color: var(--text-soft); margin-top: 4px; font-weight: 650;">
-                Cột xanh dương: hồ sơ VCX • Cột tím: hồ sơ TNDS (số trong cột, tổng trên đỉnh) • Đường vàng: tiền dự phòng (ghi tại từng điểm) • Tổng: <strong style="color: #10b981; font-weight: 850;">${formatCurrencyInputNumber(totalReserve)} đ</strong> • Bình quân: <strong style="color: #3b82f6; font-weight: 850;">${formatCurrencyInputNumber(avgReservePerVehicle)} đ/hồ sơ</strong>
+        <!-- BIỂU ĐỒ BÁO CÁO (cấu trúc card tách thoáng đồng bộ với Phát sinh theo năm & KPI Zone) -->
+        <div id="monthlyOpenedClaimsReportCardContainer" class="mo-report-shell">
+          <section class="mo-chart-card" aria-label="Biểu đồ hồ sơ mở và dự phòng bồi thường">
+            <div class="mo-chart-heading">
+              <div class="mo-chart-heading__copy">
+                <span class="mo-eyebrow">XE &amp; DỰ PHÒNG MỞ TRONG KỲ</span>
+                <h2 class="mo-chart-title">Biểu đồ hồ sơ mở &amp; dự phòng bồi thường · ${escapeHtmlOutput(monthLabel)}</h2>
+                <p class="mo-chart-subtitle">
+                  <span>Tổng dự phòng: <strong>${formatCurrencyInputNumber(totalReserve)} đ</strong></span>
+                  <span>Bình quân: <strong>${formatCurrencyInputNumber(avgReservePerVehicle)} đ/hồ sơ</strong></span>
+                  <span>Phân tách VCX, TNDS và dự phòng tổn thất theo ngày mở hồ sơ</span>
+                </p>
+              </div>
+              <div class="mo-chart-actions hide-on-screenshot">
+                <div role="group" aria-label="Kiểu biểu đồ" class="mo-chart-toggle">
+                  <button type="button" class="mo-chart-type" aria-pressed="${activeMonthlyOpenedChartType === 'bar'}" onclick="activeMonthlyOpenedChartType='bar'; renderGdvMonthlyReportPage();">Biểu đồ cột</button>
+                  <button type="button" class="mo-chart-type" aria-pressed="${activeMonthlyOpenedChartType === 'line'}" onclick="activeMonthlyOpenedChartType='line'; renderGdvMonthlyReportPage();">Biểu đồ đường</button>
+                </div>
+                <button type="button" class="mo-chart-btn-secondary" onclick="exportMonthlyOpenedClaimsReportExcel()">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                  <span>Tải Excel (.xlsx)</span>
+                </button>
+                <button type="button" class="mo-chart-download" onclick="downloadMonthlyOpenedClaimsReportImage()">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                  <span>Xuất ảnh (4K)</span>
+                </button>
               </div>
             </div>
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;" class="hide-on-screenshot">
-              <div role="group" aria-label="Kiểu biểu đồ" style="display: flex; gap: 6px; padding: 3px; border-radius: 10px; background: rgba(216,180,109,0.12);">
-                <button type="button" aria-pressed="${activeMonthlyOpenedChartType === 'bar'}" onclick="activeMonthlyOpenedChartType='bar'; renderGdvMonthlyReportPage();" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeMonthlyOpenedChartType === 'bar' ? 'background: var(--primary); color: #111;' : 'background: transparent; color: var(--primary);'}">Biểu đồ cột</button>
-                <button type="button" aria-pressed="${activeMonthlyOpenedChartType === 'line'}" onclick="activeMonthlyOpenedChartType='line'; renderGdvMonthlyReportPage();" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; ${activeMonthlyOpenedChartType === 'line' ? 'background: var(--primary); color: #111;' : 'background: transparent; color: var(--primary);'}">Biểu đồ đường</button>
-              </div>
-              <button type="button" class="btn-premium" onclick="exportMonthlyOpenedClaimsReportExcel()" style="padding: 0 16px; height: 38px; border-radius: 10px; font-size: 12.5px; font-weight: 850; display: inline-flex; align-items: center; gap: 7px; cursor: pointer;">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                <span>Tải Excel (.xlsx)</span>
-              </button>
-              <button type="button" class="btn-premium" onclick="downloadMonthlyOpenedClaimsReportImage()" style="padding: 0 14px; height: 38px; border-radius: 10px; font-size: 12.5px; font-weight: 850; display: inline-flex; align-items: center; gap: 7px; cursor: pointer;">
-                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                <span>Xuất ảnh (4K)</span>
-              </button>
-            </div>
-          </div>
 
-          ${totalClaims === 0 ? `
-            <div role="status" style="padding: 56px 16px; text-align: center; color: var(--text-soft); font-weight: 700;">Không có hồ sơ nào mở trong ${escapeHtmlOutput(monthLabel)} theo bộ lọc hiện tại.</div>
-          ` : `
-            ${moPanel('Diễn biến theo ' + (chartData.mode === 'day' ? 'ngày' : 'tháng') + ' mở hồ sơ', chartData.timeline, 'monthlyOpenedTimelineCanvas', 360, 'Số hồ sơ và tiền dự phòng theo thời gian', 'margin-bottom: 20px;')}
-            ${moPanel('Theo gara — số hồ sơ & tiền dự phòng từng gara', chartData.gara, 'monthlyOpenedGaraCanvas', 420, 'Số hồ sơ và tiền dự phòng theo từng gara', 'margin-bottom: 20px;', `${chartData.garaNamedCount} gara${chartData.gara.labels.includes('Khác') ? ' · 15 gara nhiều hồ sơ nhất, còn lại gộp "Khác"' : ''} · đầy đủ từng gara trong Excel (sheet Theo_Gara)`)}
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 20px;">
-              ${moPanel('Theo giám định viên', chartData.gdv, 'monthlyOpenedGdvCanvas', 340, 'Số hồ sơ và tiền dự phòng theo giám định viên')}
-              ${moPanel('Theo trạng thái hồ sơ', chartData.status, 'monthlyOpenedStatusCanvas', 340, 'Số hồ sơ và tiền dự phòng theo trạng thái')}
+            ${totalClaims === 0 ? `
+              <div role="status" class="mo-empty-state">Không có hồ sơ nào mở trong ${escapeHtmlOutput(monthLabel)} theo bộ lọc hiện tại.</div>
+            ` : `
+              ${buildPanelHead('Diễn biến theo ' + (chartData.mode === 'day' ? 'ngày' : 'tháng') + ' mở hồ sơ', chartData.timeline)}
+              <div class="mo-canvas-wrap" style="height: 390px;">
+                <canvas id="monthlyOpenedTimelineCanvas" role="img" aria-label="Số hồ sơ và tiền dự phòng theo thời gian"></canvas>
+              </div>
+            `}
+          </section>
+
+          ${totalClaims > 0 ? `
+            ${moStandaloneCard('Theo gara — số hồ sơ & tiền dự phòng từng gara', chartData.gara, 'monthlyOpenedGaraCanvas', 410, 'Số hồ sơ và tiền dự phòng theo từng gara', `${chartData.garaNamedCount} gara${chartData.gara.labels.includes('Khác') ? ' · 15 gara nhiều hồ sơ nhất, còn lại gộp "Khác"' : ''} · đầy đủ từng gara trong Excel (sheet Theo_Gara)`)}
+            <div class="mo-secondary-grid">
+              ${moStandaloneCard('Theo giám định viên', chartData.gdv, 'monthlyOpenedGdvCanvas', 340, 'Số hồ sơ và tiền dự phòng theo giám định viên')}
+              ${moStandaloneCard('Theo trạng thái hồ sơ', chartData.status, 'monthlyOpenedStatusCanvas', 340, 'Số hồ sơ và tiền dự phòng theo trạng thái')}
             </div>
             <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onload="if(window.initMonthlyOpenedClaimsCharts) setTimeout(window.initMonthlyOpenedClaimsCharts, 50); this.remove();" style="display:none;" alt="" />
-          `}
+          ` : ''}
         </div>
       `;
     }
 
     // Vẽ 4 biểu đồ kết hợp (cột/đường = số hồ sơ VCX/TNDS, đường vàng trục phải = tiền dự phòng) có ghi nhãn số liệu
-    // ngay trên biểu đồ: số hồ sơ trong từng cột + tổng trên đỉnh cột, tiền dự phòng ("298 Tr", "1,2 Tỷ") tại từng điểm.
+    // rõ ràng, lót nền paper chống đường kẻ cắt ngang chữ và thuật toán né va chạm theo hướng dốc điểm dữ liệu.
     let monthlyOpenedChartInstances = [];
     function formatMonthlyOpenedMoney(value) {
       const v = Number(value) || 0;
@@ -2705,20 +2709,21 @@ const fullList = getCarBrandLossData();
       const isDark = !document.body.classList.contains('light-mode');
       const style = getComputedStyle(root.closest('.gdv-report-premium-shell') || root);
       const ink = style.getPropertyValue('--ton-ink').trim() || (isDark ? '#f0f2eb' : '#283b36');
+      const muted = style.getPropertyValue('--ton-muted').trim() || (isDark ? '#9ea8a4' : '#76817e');
       const grid = style.getPropertyValue('--ton-line').trim() || (isDark ? '#2a3840' : '#e5e8e0');
-      const paper = style.getPropertyValue('--ton-paper').trim() || (isDark ? '#121e27' : '#fffefb');
+      const paper = style.getPropertyValue('--ton-paper').trim() || (isDark ? '#121e27' : '#ffffff');
       const FONT = "'Plus Jakarta Sans', sans-serif";
-      const GOLD = isDark ? '#e6b85c' : '#b07d1f';
+      const GOLD = isDark ? '#e6b85c' : '#a17c3b';
       const isLine = activeMonthlyOpenedChartType === 'line';
-      const COLORS = { vcx: '#2563eb', tnds: '#8b5cf6' };
+      const COLORS = isDark ? { vcx: '#538df8', tnds: '#a78bfa' } : { vcx: '#2563eb', tnds: '#7c3aed' };
       const fmtVnd = value => Math.round(value || 0).toLocaleString('vi-VN') + ' đ';
 
-      // Cột có dải màu đứng (đậm ở đỉnh) + bo góc trên, giống biểu đồ gara.
       const gradient = color => context => {
         const area = context.chart.chartArea;
         if (!area) return color;
         const fill = context.chart.ctx.createLinearGradient(0, area.bottom, 0, area.top);
-        fill.addColorStop(0, color + 'b3'); fill.addColorStop(1, color);
+        fill.addColorStop(0, color + 'a8');
+        fill.addColorStop(1, color + 'f2');
         return fill;
       };
 
@@ -2729,8 +2734,13 @@ const fullList = getCarBrandLossData();
 
       const labelsPlugin = {
         id: 'monthlyOpenedLabels',
-        beforeDraw(chart) { // nền đặc để xuất ảnh không bị trong suốt
-          const { ctx } = chart; ctx.save(); ctx.globalCompositeOperation = 'destination-over'; ctx.fillStyle = paper; ctx.fillRect(0, 0, chart.width, chart.height); ctx.restore();
+        beforeDraw(chart) {
+          const { ctx } = chart;
+          ctx.save();
+          ctx.globalCompositeOperation = 'destination-over';
+          ctx.fillStyle = paper;
+          ctx.fillRect(0, 0, chart.width, chart.height);
+          ctx.restore();
         },
         afterDatasetsDraw(chart) {
           const { ctx, chartArea } = chart;
@@ -2738,18 +2748,25 @@ const fullList = getCarBrandLossData();
           const countSets = datasets.map((dataset, index) => ({ dataset, index })).filter(item => item.dataset.yAxisID === 'y');
           const reserveIndex = datasets.findIndex(dataset => dataset.yAxisID === 'y1');
           const taken = [];
-          const free = rect => rect.y1 >= chartArea.top - 14 && !taken.some(t => rect.x1 < t.x2 && rect.x2 > t.x1 && rect.y1 < t.y2 && rect.y2 > t.y1);
+          const overlaps = (a, b, pad = 3) => (a.x1 - pad) < b.x2 && (a.x2 + pad) > b.x1 && (a.y1 - 2) < b.y2 && (a.y2 + 2) > b.y1;
+          const free = (rect, pad = 3) => rect.y1 >= chartArea.top - 8 && rect.x1 >= chartArea.left - 4 && rect.x2 <= chartArea.right + 4 && !taken.some(t => overlaps(rect, t, pad));
+
           ctx.save();
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
 
           const countText = (text, x, y, color, size) => {
-            ctx.font = `900 ${size}px ${FONT}`;
-            const w = ctx.measureText(text).width, rect = { x1: x - w / 2 - 2, x2: x + w / 2 + 2, y1: y - size / 2 - 1, y2: y + size / 2 + 1 };
-            if (!free(rect)) return false;
-            ctx.fillStyle = color; ctx.fillText(text, x, y); taken.push(rect); return true;
+            ctx.font = `800 ${size}px ${FONT}`;
+            const w = ctx.measureText(text).width;
+            const rect = { x1: x - w / 2 - 2, x2: x + w / 2 + 2, y1: y - size / 2 - 1, y2: y + size / 2 + 1 };
+            if (!free(rect, 1)) return false;
+            ctx.fillStyle = color;
+            ctx.fillText(text, x, y);
+            taken.push(rect);
+            return true;
           };
 
-          // 1) số hồ sơ
+          // 1) Nhãn số lượng hồ sơ trên cột hoặc đường
           const n = chart.data.labels.length;
           for (let i = 0; i < n; i++) {
             if (!isLine) {
@@ -2760,36 +2777,70 @@ const fullList = getCarBrandLossData();
                 if (!value || !element) return;
                 total += value;
                 if (!top || element.y < top.y) top = element;
-                if (Math.abs(element.base - element.y) >= 17 && (element.width || 0) >= 14) countText(String(value), element.x, (element.y + element.base) / 2, '#ffffff', 11);
+                if (Math.abs(element.base - element.y) >= 18 && (element.width || 0) >= 14) {
+                  countText(String(value), element.x, (element.y + element.base) / 2, '#ffffff', 10.5);
+                }
               });
-              if (total && top) countText(String(total), top.x, top.y - 10, ink, 12.5);
+              if (total && top) countText(String(total), top.x, top.y - 10, ink, 11.5);
             } else {
               countSets.forEach(({ dataset, index }) => {
                 const value = dataset.data[i] || 0;
                 const element = chart.getDatasetMeta(index).data[i];
-                if (value && element) countText(String(value), element.x, element.y - 12, dataset.borderColor, 11.5);
+                if (value && element) countText(String(value), element.x, element.y - 11, dataset.borderColor, 11);
               });
             }
           }
 
-          // 2) tiền dự phòng: viên thuốc màu vàng phía trên điểm, tránh đè nhãn khác
+          // 2) Nhãn tiền dự phòng: lót nền đặc (paper) che nét đường bên dưới + né va chạm thông minh
           if (reserveIndex >= 0) {
             const meta = chart.getDatasetMeta(reserveIndex);
+            const rawVals = datasets[reserveIndex].data;
+            const nodeBoxes = meta.data.map((el, idx) => (rawVals[idx] && el && !el.skip) ? { x1: el.x - 6, x2: el.x + 6, y1: el.y - 6, y2: el.y + 6, idx } : null);
+
             meta.data.forEach((element, i) => {
-              const value = datasets[reserveIndex].data[i];
+              const value = rawVals[i];
               if (!value || !element || element.skip) return;
               const text = formatMonthlyOpenedMoney(value);
-              ctx.font = `800 10.5px ${FONT}`;
-              const w = ctx.measureText(text).width + 12, h = 17;
-              for (const offset of [-17, -37, 19, 39]) {
-                const rect = { x1: element.x - w / 2, x2: element.x + w / 2, y1: element.y + offset - h / 2, y2: element.y + offset + h / 2 };
-                if (rect.y2 > chartArea.bottom + 2 || !free(rect)) continue;
-                ctx.fillStyle = isDark ? 'rgba(230,184,92,0.18)' : 'rgba(184,137,53,0.14)';
-                roundRect(ctx, rect.x1, rect.y1, w, h, 8); ctx.fill();
-                ctx.strokeStyle = GOLD + '88'; ctx.lineWidth = 1; ctx.stroke();
-                ctx.fillStyle = GOLD; ctx.fillText(text, element.x, element.y + offset + 0.5);
+              ctx.font = `750 10px ${FONT}`;
+              const w = ctx.measureText(text).width + 11, h = 17;
+
+              // Đáy cục bộ đặt xuống dưới trước; đỉnh cục bộ / điểm thường đặt lên trên trước
+              let prevV = null, nextV = null;
+              for (let k = i - 1; k >= 0; k--) if (rawVals[k]) { prevV = rawVals[k]; break; }
+              for (let k = i + 1; k < n; k++) if (rawVals[k]) { nextV = rawVals[k]; break; }
+              const isValley = prevV !== null && nextV !== null && value < prevV && value < nextV;
+              const dyList = isValley ? [20, 38, -20, -38] : [-20, 20, -38, 38];
+              const dxList = [0, -10, 10];
+
+              let placed = null;
+              outer: for (const dy of dyList) {
+                for (const dx of dxList) {
+                  const cx = element.x + dx;
+                  const cy = element.y + dy;
+                  const rect = { x1: cx - w / 2, x2: cx + w / 2, y1: cy - h / 2, y2: cy + h / 2 };
+                  if (rect.y2 > chartArea.bottom + 2 || !free(rect, 3)) continue;
+                  const hitsNode = nodeBoxes.some(nb => nb && overlaps(rect, nb, 2));
+                  if (hitsNode) continue;
+                  placed = { cx, cy, rect };
+                  break outer;
+                }
+              }
+
+              if (placed) {
+                const { cx, cy, rect } = placed;
+                ctx.fillStyle = paper;
+                roundRect(ctx, rect.x1, rect.y1, w, h, 8);
+                ctx.fill();
+                ctx.fillStyle = isDark ? 'rgba(230,184,92,0.16)' : 'rgba(161,124,59,0.12)';
+                roundRect(ctx, rect.x1, rect.y1, w, h, 8);
+                ctx.fill();
+                ctx.strokeStyle = isDark ? 'rgba(230,184,92,0.48)' : 'rgba(161,124,59,0.38)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.fillStyle = GOLD;
+                ctx.fillText(text, cx, cy + 0.5);
                 taken.push(rect);
-                break;
               }
             });
           }
@@ -2801,15 +2852,28 @@ const fullList = getCarBrandLossData();
         const canvas = document.getElementById(canvasId);
         if (!canvas || !series.labels.length) return;
         const compact = canvas.clientWidth < 560;
-        // Tách hai vùng để nhãn không đè nhau: cột/đường hồ sơ ở nửa dưới (~55% chiều cao), đường dự phòng ở vùng phía trên.
+        // Tách hai vùng: cột/đường số hồ sơ nằm gọn nửa dưới (~42%), đường dự phòng nằm ở băng trên (~45%)
         const peakCount = Math.max(1, ...series.labels.map((_, i) => isLine ? Math.max(series.vcx[i], series.tnds[i]) : series.vcx[i] + series.tnds[i]));
         const peakReserve = Math.max(1, ...series.reserve.map((value, i) => series.count[i] ? value : 0));
-        const countMax = Math.ceil(peakCount * 1.9);
+        const countMax = Math.max(peakCount + 3, Math.ceil(peakCount * 2.25));
         const claimSet = (key, label) => ({
-          type: isLine ? 'line' : 'bar', label, data: series[key], yAxisID: 'y',
-          borderColor: COLORS[key], backgroundColor: isLine ? COLORS[key] : gradient(COLORS[key]), borderWidth: isLine ? 3 : 0,
-          borderRadius: isLine ? 0 : { topLeft: 7, topRight: 7, bottomLeft: 0, bottomRight: 0 }, maxBarThickness: 46, stack: isLine ? undefined : 'claims',
-          pointRadius: isLine ? 4 : 0, pointHoverRadius: 6, pointBackgroundColor: paper, pointBorderColor: COLORS[key], pointBorderWidth: 2.5, tension: .3, fill: false
+          type: isLine ? 'line' : 'bar',
+          label,
+          data: series[key],
+          yAxisID: 'y',
+          borderColor: COLORS[key],
+          backgroundColor: isLine ? COLORS[key] : gradient(COLORS[key]),
+          borderWidth: isLine ? 2.8 : 0,
+          borderRadius: isLine ? 0 : { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
+          maxBarThickness: 42,
+          stack: isLine ? undefined : 'claims',
+          pointRadius: isLine ? 4 : 0,
+          pointHoverRadius: 6,
+          pointBackgroundColor: paper,
+          pointBorderColor: COLORS[key],
+          pointBorderWidth: 2.2,
+          tension: 0.32,
+          fill: false
         });
         const chart = new Chart(canvas.getContext('2d'), {
           type: isLine ? 'line' : 'bar',
@@ -2819,21 +2883,57 @@ const fullList = getCarBrandLossData();
               claimSet('vcx', 'VCX (hồ sơ)'),
               claimSet('tnds', 'TNDS (hồ sơ)'),
               {
-                type: 'line', label: 'Dự phòng (đ)', data: series.reserve.map((value, i) => series.count[i] ? value : null), spanGaps: true, yAxisID: 'y1', order: -1,
-                borderColor: GOLD, backgroundColor: GOLD, borderWidth: 3.5, pointRadius: 5, pointHoverRadius: 7, pointBackgroundColor: paper, pointBorderColor: GOLD, pointBorderWidth: 3, tension: .3, fill: false
+                type: 'line',
+                label: 'Dự phòng (đ)',
+                data: series.reserve.map((value, i) => series.count[i] ? value : null),
+                spanGaps: true,
+                yAxisID: 'y1',
+                order: -1,
+                borderColor: GOLD,
+                backgroundColor: GOLD,
+                borderWidth: 2.8,
+                pointRadius: 4.2,
+                pointHoverRadius: 6.5,
+                pointBackgroundColor: paper,
+                pointBorderColor: GOLD,
+                pointBorderWidth: 2.5,
+                tension: 0.32,
+                fill: false
               }
             ]
           },
           options: {
-            responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-            layout: { padding: { top: 10, right: 30 } },
-            animation: { duration: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 450, easing: 'easeOutQuart' },
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            layout: { padding: { top: 6, right: 18, left: 4 } },
+            animation: { duration: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 420, easing: 'easeOutQuart' },
             plugins: {
-              legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 9, boxHeight: 9, padding: 18, color: ink, font: { family: FONT, size: 12, weight: '800' } } },
+              legend: {
+                position: 'top',
+                align: 'end',
+                labels: {
+                  usePointStyle: true,
+                  pointStyle: 'circle',
+                  boxWidth: 8,
+                  boxHeight: 8,
+                  padding: 16,
+                  color: ink,
+                  font: { family: FONT, size: 11.5, weight: '750' }
+                }
+              },
               tooltip: {
-                backgroundColor: isDark ? 'rgba(15,23,42,0.96)' : 'rgba(255,255,255,0.97)', titleColor: isDark ? '#ffffff' : '#0f172a', bodyColor: isDark ? '#cbd5e1' : '#475569',
-                borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', borderWidth: 1, padding: 14, cornerRadius: 12, usePointStyle: true, boxPadding: 6,
-                titleFont: { family: FONT, size: 13, weight: '800' }, bodyFont: { family: FONT, size: 13, weight: '700' },
+                backgroundColor: isDark ? 'rgba(15,23,42,0.96)' : 'rgba(255,255,255,0.98)',
+                titleColor: isDark ? '#ffffff' : '#1b2a22',
+                bodyColor: isDark ? '#cbd5e1' : '#475569',
+                borderColor: grid,
+                borderWidth: 1,
+                padding: 13,
+                cornerRadius: 11,
+                usePointStyle: true,
+                boxPadding: 5,
+                titleFont: { family: FONT, size: 12.5, weight: '800' },
+                bodyFont: { family: FONT, size: 12.5, weight: '700' },
                 callbacks: {
                   label: context => context.dataset.yAxisID === 'y1' ? context.dataset.label.replace(' (đ)', '') + ': ' + fmtVnd(context.parsed.y) : context.dataset.label.replace(' (hồ sơ)', '') + ': ' + context.parsed.y + ' hồ sơ',
                   footer: items => { const total = items.filter(item => item.dataset.yAxisID === 'y').reduce((sum, item) => sum + (item.parsed.y || 0), 0); return total ? 'Tổng: ' + total + ' hồ sơ' : ''; }
@@ -2841,9 +2941,46 @@ const fullList = getCarBrandLossData();
               }
             },
             scales: {
-              x: { stacked: !isLine, grid: { display: false }, border: { display: false }, ticks: { color: ink, padding: 8, maxRotation: view.rotate || 0, minRotation: view.rotate || 0, autoSkip: !view.rotate, font: { family: FONT, size: compact ? 10 : 11, weight: '800' } } },
-              y: { stacked: !isLine, min: 0, max: countMax, grid: { color: grid, borderDash: [5, 5] }, border: { display: false }, ticks: { precision: 0, color: ink, padding: 8, font: { family: FONT, size: 11, weight: '700' }, callback: v => v <= peakCount * 1.2 ? v + ' hs' : '' } },
-              y1: { position: 'right', min: -peakReserve * 1.8, max: peakReserve * 1.08, grid: { drawOnChartArea: false }, border: { display: false }, ticks: { display: false } }
+              x: {
+                stacked: !isLine,
+                grid: { display: false },
+                border: { display: false },
+                ticks: {
+                  color: muted,
+                  padding: 8,
+                  maxRotation: view.rotate || 0,
+                  minRotation: view.rotate || 0,
+                  autoSkip: !view.rotate,
+                  font: { family: FONT, size: compact ? 10 : 11, weight: '750' },
+                  callback: function(value) {
+                    const lbl = this.getLabelForValue(value) || '';
+                    return (view.truncate && lbl.length > view.truncate) ? lbl.slice(0, view.truncate - 1) + '…' : lbl;
+                  }
+                }
+              },
+              y: {
+                stacked: !isLine,
+                min: 0,
+                max: countMax,
+                grid: { color: grid, borderDash: [4, 4] },
+                border: { display: false },
+                ticks: {
+                  precision: 0,
+                  maxTicksLimit: 6,
+                  color: muted,
+                  padding: 8,
+                  font: { family: FONT, size: 10.5, weight: '700' },
+                  callback: v => v <= peakCount * 1.15 ? v + ' hs' : ''
+                }
+              },
+              y1: {
+                position: 'right',
+                min: -peakReserve * 1.48,
+                max: peakReserve * 1.24,
+                grid: { drawOnChartArea: false },
+                border: { display: false },
+                ticks: { display: false }
+              }
             }
           },
           plugins: [labelsPlugin]
@@ -2851,7 +2988,7 @@ const fullList = getCarBrandLossData();
         monthlyOpenedChartInstances.push(chart);
       };
       build('monthlyOpenedTimelineCanvas', data.timeline);
-      build('monthlyOpenedGaraCanvas', data.gara, { rotate: 30 });
+      build('monthlyOpenedGaraCanvas', data.gara, { rotate: 28, truncate: 18 });
       build('monthlyOpenedGdvCanvas', data.gdv);
-      build('monthlyOpenedStatusCanvas', data.status);
+      build('monthlyOpenedStatusCanvas', data.status, { truncate: 16 });
     }
