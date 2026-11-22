@@ -2581,6 +2581,9 @@ const fullList = getCarBrandLossData();
             #${targetId} .mo-chip--gold {
               border-color: ${isDark ? 'rgba(230, 184, 92, 0.36)' : 'rgba(161, 124, 59, 0.34)'} !important;
             }
+            #${targetId} .mo-panel-chips, #${targetId} .mo-panel-right, #${targetId} .hide-on-screenshot {
+              display: none !important;
+            }
           `;
           clonedDoc.head.appendChild(safeStyle);
 
@@ -2706,8 +2709,8 @@ const fullList = getCarBrandLossData();
               <div class="mo-panel-title">${escapeHtmlOutput(title)}</div>
               ${note ? `<div class="mo-panel-note">${escapeHtmlOutput(note)}</div>` : ''}
             </div>
-            <div class="mo-panel-right">
-              <div class="mo-panel-chips">
+            <div class="mo-panel-right hide-on-screenshot">
+              <div class="mo-panel-chips hide-on-screenshot">
                 ${moChip('Tổng', sumOf(series.count).toLocaleString('vi-VN') + ' hồ sơ')}
                 ${moChip('Dự phòng', moMoney(sumOf(series.reserve)), 'gold')}
                 ${cardId === 'monthlyOpenedGaraCard' ? moChip('Duyệt HSBT', moMoney(sumOf(series.approved)), 'emerald') : ''}
