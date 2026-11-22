@@ -202,7 +202,7 @@ const OFFICIAL_LETTER_TEMPLATES = [
       { key: 'address', label: 'Địa chỉ nhận văn bản khiếu nại', type: 'textarea', setting: 'address', max: 300 }
     ],
     outline: [
-      'Đoạn mở: lời chào trân trọng của Bảo hiểm Tasco gửi Quý khách hàng.',
+      'Đoạn mở: vào việc ngay bằng một hai câu nêu Bảo hiểm Tasco đang phản hồi yêu cầu bồi thường nào (xe, biển số, ngày thông báo); không dùng câu chào dập khuôn.',
       'Đoạn tiếp nhận: ngày nhận thông báo tổn thất; xe, biển số, thời điểm tổn thất; số hợp đồng/GCNBH và thời hạn hiệu lực.',
       'Đoạn diễn biến: nguyên văn/tóm lược diễn biến, nguyên nhân tổn thất theo thông báo của khách hàng (đặt trong ngoặc kép); nêu Biên bản xác định thiệt hại đã được khách hàng phối hợp với giám định viên xác nhận.',
       'Đoạn phát hiện: qua hình ảnh giám định, xe đang lắp lốp thông số nào, trong khi thông số trên GCN kiểm định (nêu số) là gì.',

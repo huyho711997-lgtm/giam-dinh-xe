@@ -39,7 +39,7 @@ const OfficialLetterPage = (() => {
   const st = {
     templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null,
     values: null, filledByAI: [], questions: [], extras: [], outline: [], outlineEdited: false, understanding: '', notes: '',
-    insights: [], keyFacts: [], legalQueries: [], assumptions: [], sources: [], legalError: '', legalLoaded: false,
+    insights: [], keyFacts: [], legalQueries: [], assumptions: [], reasoning: null, sources: [], legalError: '', legalLoaded: false,
     letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
     pop: '', drawer: '', editing: false, steps: null, agentOpen: false, agentTask: 'draft',
     historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser',
@@ -349,7 +349,7 @@ const OfficialLetterPage = (() => {
   function startAgent(task, text) {
     st.agentTask = task; st.agentOpen = false;
     if (st.notice?.kind === 'error') notice('');
-    st.steps = {read: {state:'run', text:text || 'Đang đọc yêu cầu'}, legal: {state:'idle', text:''}, write: {state:task === 'legal' ? 'skip' : 'idle', text:task === 'legal' ? 'Giữ nguyên bản thảo' : ''}};
+    st.steps = {read: {state:'run', text:text || 'Đang đọc yêu cầu'}, legal: {state:'idle', text:''}, reason: {state:'skip', text:task === 'legal' ? '' : 'Dùng kế hoạch đã lập'}, write: {state:task === 'legal' ? 'skip' : 'idle', text:task === 'legal' ? 'Giữ nguyên bản thảo' : ''}};
   }
   // Trạng thái 3 bước hiển thị kiểu agent: idle | run | done | skip | err, kèm mô tả ngắn.
   function step(name, state, text) { if (!st.steps) st.steps = {}; st.steps[name] = {state, text: text || ''}; updateSteps(); }
@@ -361,7 +361,7 @@ const OfficialLetterPage = (() => {
   // Đổi hồ sơ hoặc loại công văn → bỏ kết quả phân tích cũ (giữ bản thảo đang có cho tới khi soạn xong bản mới).
   function resetAnalysis() {
     st.values = null; st.filledByAI = []; st.questions = []; st.extras = []; st.outline = []; st.outlineEdited = false; st.understanding = ''; st.notes = '';
-    st.insights = []; st.keyFacts = []; st.legalQueries = []; st.assumptions = []; st.sources = st.sources.filter(source => source.manual); st.legalError = ''; st.legalLoaded = false;
+    st.insights = []; st.keyFacts = []; st.legalQueries = []; st.assumptions = []; st.reasoning = null; st.sources = st.sources.filter(source => source.manual); st.legalError = ''; st.legalLoaded = false;
   }
 
   // Bấm "Soạn công văn": đọc hồ sơ + yêu cầu → tìm căn cứ → soạn. Không dừng hỏi; AI tự giả định và ghi lại.
@@ -437,6 +437,19 @@ const OfficialLetterPage = (() => {
       if (my !== generation) return;
       dropStaleLegalNotes();
       step('legal', st.legalError ? 'err' : activeSources().length ? 'done' : 'skip', st.legalError ? 'Không đọc được thư viện' : activeSources().length ? activeSources().length + ' đoạn liên quan' : 'Không cần viện dẫn');
+      // Suy luận nghiệp vụ (chỉ khi bật "Suy luận sâu"): dựng chuỗi lập luận từ hồ sơ + căn cứ trước khi viết. Lỗi ở bước này không chặn việc soạn.
+      st.reasoning = null;
+      if (deepOn()) {
+        setStatus(deepNote('Đang suy luận nghiệp vụ…')); step('reason', 'run', 'Dựng chuỗi lập luận từ hồ sơ và căn cứ');
+        try {
+          st.reasoning = Core().parseReasoning(await callAI(Core().buildReasonRequest(tpl, st.values, loadIssuer(), st.brief, composeCtx([])), deepOpts()));
+          if (my !== generation) return;
+          step('reason', 'done', st.reasoning.reasoning.length + ' ý lập luận' + (st.reasoning.objections.length ? ', ' + st.reasoning.objections.length + ' phản biện đã lường trước' : ''));
+        } catch (error) {
+          if (my !== generation || error.name === 'AbortError') throw error;
+          step('reason', 'err', 'Không lập được kế hoạch — vẫn soạn từ hồ sơ');
+        }
+      } else step('reason', 'skip', 'Đang tắt Suy luận sâu');
       setStatus(deepNote('Đang soạn công văn…')); step('write', 'run', deepOn() ? 'Đang suy luận & viết' : 'Đang viết');
       const letter = await composeCore('');
       if (my !== generation) return;
@@ -450,7 +463,7 @@ const OfficialLetterPage = (() => {
     } catch (error) {
       if (my !== generation || error.name === 'AbortError') return;
       notice(error.message || 'Không soạn được công văn.', 'error');
-      if (st.steps) for (const name of ['read', 'legal', 'write']) if (st.steps[name] && st.steps[name].state === 'run') st.steps[name] = {state: 'err', text: 'Lỗi'};
+      if (st.steps) for (const name of STEP_NAMES) if (st.steps[name] && st.steps[name].state === 'run') st.steps[name] = {state: 'err', text: 'Lỗi'};
     } finally {
       if (my === generation) {
         st.busy = ''; st.status = ''; st.agentOpen = false; renderAll();
@@ -459,13 +472,18 @@ const OfficialLetterPage = (() => {
     }
   }
 
+  // Ngữ cảnh dùng chung cho bước suy luận và bước soạn.
+  function composeCtx(attachments) {
+    return {outline: st.outline.filter(item => item.on).map(item => item.text).filter(text => Core().single(text, 1)), extras: st.extras, answers: answeredList(), understanding: st.understanding,
+      keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText(), legal: legalPrompt(), legalPinned: pinnedLabel(), assumptions: st.assumptions, openQuestions: openQuestions(), files: attachments || [], reasoning: st.reasoning};
+  }
   async function composeCore(instruction, attachments) {
     const tpl = template();
     const issuer = loadIssuer();
     const previous = instruction && st.letter ? st.letter.paragraphs.map(p => p.text).join('\n') : '';
     const brief = st.brief + (instruction ? '\nYÊU CẦU CHỈNH SỬA MỚI NHẤT: ' + instruction : '');
-    const ctx = {outline: st.outline.filter(item => item.on).map(item => item.text).filter(text => Core().single(text, 1)), extras: st.extras, answers: answeredList(), understanding: st.understanding,
-      keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText(), legal: legalPrompt(), legalPinned: pinnedLabel(), assumptions: st.assumptions, openQuestions: openQuestions(), files: attachments || []};
+    const ctx = composeCtx(attachments);
+    if (instruction) ctx.reasoning = null;   // chỉnh theo yêu cầu mới: kế hoạch lập luận ban đầu có thể đã lỗi thời, yêu cầu mới có hiệu lực cao nhất
     const raw = await callAI(Core().buildComposeRequest(tpl, st.values, issuer, brief, previous, ctx), deepOpts());
     const parsed = Core().parseLetter(raw);
     const date = st.letter && st.letter.date, number = st.letter && st.letter.number;
@@ -1154,10 +1172,10 @@ const OfficialLetterPage = (() => {
 
   // ---- Màn làm việc ----
   // Tiến trình nằm trong khung nhập; chỉ chuyển bước khi tác vụ tương ứng đã trả kết quả.
-  const STEP_NAMES = ['read', 'legal', 'write'];
-  const STEP_LABEL = {read: 'Đọc hồ sơ & yêu cầu', legal: 'Căn cứ pháp lý', write: 'Soạn công văn'};
+  const STEP_NAMES = ['read', 'legal', 'reason', 'write'];
+  const STEP_LABEL = {read: 'Đọc hồ sơ & yêu cầu', legal: 'Căn cứ pháp lý', reason: 'Suy luận nghiệp vụ', write: 'Soạn công văn'};
   function stepState() {
-    const steps = st.steps || {read: {state: 'done', text: ''}, legal: {state: 'done', text: ''}, write: {state: 'done', text: ''}};
+    const steps = st.steps || {read: {state: 'done', text: ''}, legal: {state: 'done', text: ''}, reason: {state: 'skip', text: ''}, write: {state: 'done', text: ''}};
     const list = STEP_NAMES.map(name => {
       const item = steps[name] || {};
       return {name, state:['idle', 'run', 'done', 'skip', 'err'].includes(item.state) ? item.state : 'idle', text:String(item.text || '')};
@@ -1168,7 +1186,7 @@ const OfficialLetterPage = (() => {
     const failed = !running && (st.notice?.kind === 'error' || list.some(item => item.state === 'err') && steps.write?.state !== 'done');
     const warning = list.some(item => item.state === 'err');
     const title = running ? st.status || 'Đang xử lý yêu cầu…' : failed ? 'Chưa hoàn tất yêu cầu' : interrupted ? 'Phiên xử lý trước đã dừng' : st.pending ? 'Đề xuất chỉnh sửa đã sẵn sàng' : st.agentTask === 'legal' ? 'Đã kiểm tra căn cứ' : warning ? 'Đã soạn xong · có lưu ý' : 'Công văn đã sẵn sàng';
-    const detail = running ? (current < 0 ? 'Đang hoàn tất tác vụ' : 'Bước ' + (current + 1) + '/3 · ' + (list[current].text || STEP_LABEL[list[current].name])) : failed ? 'Kiểm tra thông báo lỗi rồi gửi lại yêu cầu.' : interrupted ? 'Bạn có thể gửi lại yêu cầu để tiếp tục.' : st.pending ? st.pending.changes.length + ' thay đổi đang chờ bạn duyệt.' : st.agentTask === 'legal' ? 'Bản thảo được giữ nguyên.' : 'Bạn có thể bôi đen một đoạn hoặc gửi yêu cầu mới.';
+    const detail = running ? (current < 0 ? 'Đang hoàn tất tác vụ' : 'Bước ' + (current + 1) + '/' + STEP_NAMES.length + ' · ' + (list[current].text || STEP_LABEL[list[current].name])) : failed ? 'Kiểm tra thông báo lỗi rồi gửi lại yêu cầu.' : interrupted ? 'Bạn có thể gửi lại yêu cầu để tiếp tục.' : st.pending ? st.pending.changes.length + ' thay đổi đang chờ bạn duyệt.' : st.agentTask === 'legal' ? 'Bản thảo được giữ nguyên.' : 'Bạn có thể bôi đen một đoạn hoặc gửi yêu cầu mới.';
     return {list, running, failed, interrupted, title, detail};
   }
   function stepsInner(list) {
@@ -1582,7 +1600,7 @@ const OfficialLetterPage = (() => {
     generation++; controller?.abort(); controller = null;
     resetAnalysis();
     releaseFiles(st.files); releaseFiles(st.refineFiles);
-    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, reviewView:'inline', versionId:'', usage: null, questionDrafts: Object.create(null)});
+    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, reasoning:null, reviewView:'inline', versionId:'', usage: null, questionDrafts: Object.create(null)});
   }
   // Hộp xác nhận dùng chung của app (showPremiumConfirmModal) — không dùng hộp thoại hệ thống của trình duyệt.
   function askConfirm(options) {

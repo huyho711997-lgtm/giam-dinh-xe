@@ -95,6 +95,9 @@ Khi chọn hồ sơ, AI không nhận bản ghi thô nữa mà nhận "hồ sơ 
 - **Kiểm chứng tự động** trên bản thảo (cả khi sửa tay): mọi "khoản/điểm … Điều N <văn bản>", "Luật/Nghị định/Thông tư/Quy tắc …", số hiệu `xx/yyyy/…` đều được đối chiếu với các đoạn đã chọn — ✓ kèm mã nguồn hoặc ⚠ "chưa kiểm chứng" (đúng số điều nhưng sai văn bản cũng bị bắt). Tải Word khi còn ⚠ sẽ có cảnh báo.
 - Chất lượng phụ thuộc thư viện: cần nạp Luật Kinh doanh bảo hiểm 08/2022/QH15, Nghị định 67/2023/NĐ-CP, Quy tắc bảo hiểm xe cơ giới Tasco… (mỗi Điều thành một mục để tìm trúng).
 
+### Soạn công văn có chiều sâu (`official-letter-core.js` · `buildReasonRequest`)
+Luồng soạn: **đọc hồ sơ → tra căn cứ → suy luận nghiệp vụ → viết**. Khi bật **Suy luận sâu**, bước *Suy luận nghiệp vụ* dựng **kế hoạch lập luận** từ hồ sơ + nguyên văn căn cứ (ý chính, chuỗi dữ kiện → quy định → áp dụng → kết luận, điểm đã kiểm tra, phản biện có thể gặp, giọng văn, cách vào đề, bước tiếp theo, rủi ro) rồi đưa vào bước viết; lỗi ở bước này không chặn việc soạn. Bước viết có quy tắc văn phong riêng: vào việc ngay, không câu chào sáo ngữ, mỗi đoạn một việc, giải thích *vì sao*, kết bằng bước tiếp theo cụ thể; công văn mẫu và dàn ý chỉ là khung (không chép câu của mẫu). Chỉnh sửa theo yêu cầu mới không dùng lại kế hoạch cũ.
+
 ### Duyệt đề xuất chỉnh sửa của AI (`official-letter-page.js` · `reviewHtml`)
 Khi nhờ AI sửa công văn, các thay đổi hiện thành **thẻ riêng từng mục** (Trích yếu, Đoạn 1…) với công tắc **Áp dụng / Bỏ qua** (bấm cả hàng tiêu đề), số từ thêm/bớt, ô **chọn tất cả** kèm bộ đếm, và thanh **Áp dụng N thay đổi** ghim ở đáy vùng cuộn. Hai kiểu xem: **Gộp** (gạch xanh/đỏ theo từ) và **Trước / Sau** (hai cột). Đoạn bị viết lại gần hết (ít từ giữ nguyên) được hiện thành hai khối Hiện tại / Đề xuất thay vì gạch xen kẽ khó đọc. Bản thảo chỉ đổi khi bấm Áp dụng.
 
