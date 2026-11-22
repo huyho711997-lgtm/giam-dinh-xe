@@ -33,6 +33,7 @@ const OfficialLetterPage = (() => {
     panel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
     chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.5-4.7A8 8 0 1 1 21 12Z"/><path d="M9 10h6M9 13.5h4"/>',
     download: '<path d="M12 4v10M8 10.5l4 4 4-4M5 19h14"/>',
+    pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
     checklist: '<path d="M10 6h11M10 12h11M10 18h11"/><path d="m3 6 1.8 1.8L7.5 5M3 12l1.8 1.8L7.5 11M3 18l1.8 1.8L7.5 17"/>',
     check: '<path d="m5 12 4.5 4.5L19 7"/>'
@@ -45,7 +46,7 @@ const OfficialLetterPage = (() => {
     insights: [], keyFacts: [], legalQueries: [], assumptions: [], reasoning: null, sources: [], legalError: '', legalLoaded: false,
     letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {},
     pop: '', drawer: '', editing: false, steps: null, agentOpen: false, agentTask: 'draft',
-    historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser', histSelect: false, histPicked: [],
+    historyId: '', savedRecordLabel: '', history: [], histQuery: '', histOpen: true, histScope: 'browser', histSelect: false, histPicked: [], histRename: null, customTitle: '',
     versions: [], selection: [], pending: null, reviewView: 'inline', versionId: '', usage: null, questionDrafts: Object.create(null),
     mode: 'compose'   // 'compose' = soạn công văn · 'ask' = hỏi nghiệp vụ (xem khối "Hỏi nghiệp vụ")
   };
@@ -732,7 +733,7 @@ const OfficialLetterPage = (() => {
       if (Q) {
         const raw = JSON.parse(localStorage.getItem(QA_CHATS_KEY) || 'null');
         if (raw && Array.isArray(raw.chats)) {
-          qa.chats = raw.chats.map(chat => ({id: String(chat.id || Q.newId()), title: String(chat.title || '').slice(0, 90), at: Number(chat.at) || 0, usage: chat.usage || null, free: !!chat.free, pin: pinList(chat.pin), messages: Q.normalizeStore({messages: chat.messages})})).filter(chat => chat.messages.length).slice(0, QA_MAX_CHATS);
+          qa.chats = raw.chats.map(chat => ({id: String(chat.id || Q.newId()), title: String(chat.title || '').slice(0, 90), at: Number(chat.at) || 0, usage: chat.usage || null, free: !!chat.free, named: !!chat.named, pin: pinList(chat.pin), messages: Q.normalizeStore({messages: chat.messages})})).filter(chat => chat.messages.length).slice(0, QA_MAX_CHATS);
           const active = qa.chats.find(chat => chat.id === raw.active);
           if (active) { qa.activeId = active.id; qa.messages = active.messages; qa.usage = active.usage; qa.free = !!active.free; }
         } else {
@@ -754,14 +755,15 @@ const OfficialLetterPage = (() => {
     if (!qa.activeId) qa.activeId = QA().newId();
     let chat = qa.chats.find(item => item.id === qa.activeId);
     if (!chat) { chat = {id: qa.activeId, title: '', at: 0, usage: null, free: qa.free, messages: []}; qa.chats.unshift(chat); }
-    chat.messages = qa.messages; chat.usage = qa.usage; chat.title = qaTitleOf(qa.messages); chat.at = Date.now();
+    chat.messages = qa.messages; chat.usage = qa.usage; if (!chat.named) chat.title = qaTitleOf(qa.messages);   // tên người dùng đặt thì không bị ghi đè bằng câu hỏi đầu
+    chat.at = Date.now();
     if (st.mode === 'ask') chat.pin = pinList(st.legalPin);   // ở Soạn công văn st.legalPin là của công văn, không ghi vào cuộc trò chuyện
     qa.chats.sort((a, b) => b.at - a.at);
     if (qa.chats.length > QA_MAX_CHATS) qa.chats.length = QA_MAX_CHATS;
   }
   function saveQa() {
     qaSyncActive();
-    const pack = (keepSources) => JSON.stringify({active: qa.activeId, chats: qa.chats.map(chat => ({id: chat.id, title: chat.title, at: chat.at, usage: chat.usage, free: !!chat.free, pin: pinList(chat.pin), messages: chat.messages.slice(-24).map(item => (keepSources || chat.id === qa.activeId) ? item : {...item, sources: []})}))});
+    const pack = (keepSources) => JSON.stringify({active: qa.activeId, chats: qa.chats.map(chat => ({id: chat.id, title: chat.title, at: chat.at, usage: chat.usage, free: !!chat.free, named: !!chat.named, pin: pinList(chat.pin), messages: chat.messages.slice(-24).map(item => (keepSources || chat.id === qa.activeId) ? item : {...item, sources: []})}))});
     // Hết chỗ lưu thì bỏ nguồn của các cuộc cũ, rồi bỏ bớt cuộc cũ nhất; cuộc đang mở luôn được giữ.
     try { localStorage.setItem(QA_CHATS_KEY, pack(true)); }
     catch (_) {
@@ -1184,7 +1186,7 @@ const OfficialLetterPage = (() => {
     syncLetter();
     const found = chosenRecord();
     const result = Revisions().fitSnapshot({
-      v: 2, versions:st.versions, brief: st.brief, recordKey: st.recordKey, recordLabel: found ? recordLabel(found.info) : st.savedRecordLabel, templateId: st.templateId,
+      v: 2, versions:st.versions, customTitle: st.customTitle, brief: st.brief, recordKey: st.recordKey, recordLabel: found ? recordLabel(found.info) : st.savedRecordLabel, templateId: st.templateId,
       fileNames: st.files.map(item => item.file.name), letter: st.letter, values: st.values, filledByAI: st.filledByAI, questions: st.questions, extras: st.extras,
       outline: st.outline, outlineEdited: st.outlineEdited, understanding: st.understanding, notes: st.notes, insights: st.insights, keyFacts: st.keyFacts,
       legalQueries: st.legalQueries, assumptions: st.assumptions, legalError: st.legalError, legalLoaded: st.legalLoaded, analyzedKey: st.analyzedKey,
@@ -1195,6 +1197,7 @@ const OfficialLetterPage = (() => {
   }
   function restore(data) {
     reset();
+    st.customTitle = String(data.customTitle || '').slice(0, 300);
     const list = value => Array.isArray(value) ? value : [];
     Object.assign(st, {
       brief: String(data.brief || ''), recordKey: index.some(item => item.row.key === data.recordKey) ? data.recordKey : '', savedRecordLabel: String(data.recordLabel || ''),
@@ -1219,7 +1222,7 @@ const OfficialLetterPage = (() => {
     const mine = session, data = Revisions().clone(snapshot()), tpl = template();
     if (!st.historyId) st.historyId = H.newId ? H.newId() : Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
     const id = st.historyId;
-    const entry = {title:(st.letter.subject ? 'V/v ' + st.letter.subject : st.brief) || 'Công văn', sub:[data.recordLabel, tpl.id === DEFAULT_TEMPLATE ? '' : tpl.name].filter(Boolean).join(' · '), data};
+    const entry = {title: st.customTitle || (st.letter.subject ? 'V/v ' + st.letter.subject : st.brief) || 'Công văn', sub:[data.recordLabel, tpl.id === DEFAULT_TEMPLATE ? '' : tpl.name].filter(Boolean).join(' · '), data};
     saveQueue = saveQueue.catch(() => {}).then(async () => {
       try {
         const result = await H.save(id, entry);
@@ -1253,6 +1256,39 @@ const OfficialLetterPage = (() => {
     st.history = H.list();
     if (id === st.historyId) st.historyId = '';
     updateHistory();
+  }
+  // ---- Đổi tên đoạn chat / công văn trong lịch sử ----
+  function startRename(kind, id) {
+    if (histLocked() || st.histSelect || !id) return;
+    st.histRename = {kind, id};
+    updateHistory(true);
+    const input = $('[data-ol-hist-rename-input]');
+    if (input) { input.focus(); input.select(); }
+  }
+  function cancelRename() { if (!st.histRename) return; st.histRename = null; updateHistory(true); }
+  async function commitRename() {
+    const target = st.histRename;
+    if (!target) return;
+    const input = $('[data-ol-hist-rename-input]');
+    const name = input ? input.value.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
+    st.histRename = null;   // xoá trước để focusout sau khi vẽ lại không lưu lần hai
+    if (name) {
+      try {
+        if (target.kind === 'qa') {
+          const chat = qa.chats.find(item => item.id === target.id);
+          if (chat && chat.title !== name) { chat.title = name; chat.named = true; saveQa(); }
+        } else {
+          const H = History();
+          const entry = H && st.history.find(item => item.id === target.id);
+          if (entry && entry.title !== name) {
+            if (target.id === st.historyId && st.letter) { st.customTitle = name; clearTimeout(saveTimer); saveHistory(); await saveQueue; }
+            else await H.rename(target.id, name);
+            st.history = H.list();
+          }
+        }
+      } catch (error) { toast((error && error.message) || 'Không đổi được tên.', 'warning'); }
+    }
+    updateHistory(true);
   }
   const histLocked = () => askSide() ? !!qa.busy : !!(st.busy || st.pending);
   const histAllIds = () => askSide() ? qaKindChats(qa.free).map(chat => chat.id) : st.history.map(item => item.id);
@@ -1693,7 +1729,12 @@ const OfficialLetterPage = (() => {
         + '<span class="ola-hist-meta"><b>' + esc(item.title) + '</b><small>' + esc(subText) + '</small></span>'
         + '</button></div>';
     }
-    return '<div class="ola-hist-item' + (isActive ? ' is-active' : '') + '"><button type="button" ' + openAttr + '="' + esc(item.id) + '" title="' + esc(item.title) + '"><b>' + esc(item.title) + '</b><small>' + esc(subText) + '</small></button>'
+    const kind = openAttr === 'data-ol-qa-open' ? 'qa' : 'letter';
+    if (st.histRename && st.histRename.kind === kind && st.histRename.id === item.id) {
+      return '<div class="ola-hist-item is-renaming' + (isActive ? ' is-active' : '') + '"><input type="text" class="ola-hist-rename" data-ol-hist-rename-input maxlength="120" value="' + esc(item.title) + '" aria-label="Tên mới" placeholder="Nhập tên rồi Enter"></div>';
+    }
+    return '<div class="ola-hist-item' + (isActive ? ' is-active' : '') + '"><button type="button" ' + openAttr + '="' + esc(item.id) + '" title="' + esc(item.title) + ' (bấm đúp để đổi tên)"><b>' + esc(item.title) + '</b><small>' + esc(subText) + '</small></button>'
+      + '<button type="button" class="ola-hist-edit" data-ol-hist-rename="' + kind + ':' + esc(item.id) + '" aria-label="Đổi tên" title="Đổi tên"' + (histLocked() ? ' disabled' : '') + '>' + svg(ICON.pencil) + '</button>'
       + '<button type="button" class="ola-hist-del" ' + delAttr + '="' + esc(item.id) + '" aria-label="' + delLabel + '" title="Xoá">' + svg(ICON.trash) + '</button></div>';
   }
   function qaChatsHtml() {
@@ -1930,7 +1971,7 @@ const OfficialLetterPage = (() => {
     generation++; controller?.abort(); controller = null;
     resetAnalysis();
     releaseFiles(st.files); releaseFiles(st.refineFiles);
-    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, reasoning:null, reviewView:'inline', versionId:'', usage: null, questionDrafts: Object.create(null)});
+    Object.assign(st, {templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null, customTitle: '', histRename: null, sources: [], letter: null, analyzedKey: '', busy: '', status: '', notice: null, open: {}, pop: '', drawer: '', editing: false, steps: null, agentOpen:false, agentTask:'draft', historyId: '', savedRecordLabel: '', versions:[], selection:[], pending:null, reasoning:null, reviewView:'inline', versionId:'', usage: null, questionDrafts: Object.create(null)});
   }
   // Hộp xác nhận dùng chung của app (showPremiumConfirmModal) — không dùng hộp thoại hệ thống của trình duyệt.
   function askConfirm(options) {
@@ -1965,6 +2006,9 @@ const OfficialLetterPage = (() => {
     if (restore) { restoreVersion(restore.dataset.olRestore); return; }
     const histToggle = target.closest('[data-ol-hist-toggle]');
     if (histToggle) { toggleHistPick(histToggle.dataset.olHistToggle); return; }
+    const renameBtn = target.closest('[data-ol-hist-rename]');
+    if (renameBtn) { event.stopPropagation(); const [kind, ...rest] = renameBtn.dataset.olHistRename.split(':'); startRename(kind, rest.join(':')); return; }
+    if (target.closest('[data-ol-hist-rename-input]')) return;
     const qaDel = target.closest('[data-ol-qa-del]');
     if (qaDel) { event.stopPropagation(); deleteQaChat(qaDel.dataset.olQaDel); return; }
     const qaOpen = target.closest('[data-ol-qa-open]');
@@ -2103,6 +2147,11 @@ const OfficialLetterPage = (() => {
   function onKeydown(event) {
     const target = event.target;
     if (!target.matches) return;
+    if (target.matches('[data-ol-hist-rename-input]')) {
+      if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); commitRename(); }
+      else if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); cancelRename(); }
+      return;
+    }
     if (event.key === 'Escape') { if (st.pop) { event.preventDefault(); closePop(); return; } if (st.drawer) { collectAll(); st.drawer = ''; renderAll(); return; } if (st.histSelect) { event.preventDefault(); toggleHistSelect(false); return; } }
     if (target.matches('.ol-edit') && event.key === 'Enter') { event.preventDefault(); return; } // mỗi khối là một dòng/đoạn
     if (target.matches('[data-ol-brief]') && event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); run(); return; }
@@ -2135,7 +2184,14 @@ const OfficialLetterPage = (() => {
   // Bấm ra ngoài ô chọn (hồ sơ / loại) thì đóng.
   function onOutside(event) { if (st.pop && host && !(event.target.closest && (event.target.closest('.ola-pop') || event.target.closest('[data-ol-pop]')))) closePop(); }
 
-  const HANDLERS = [['click', onClick], ['input', onInput], ['change', onChange], ['keydown', onKeydown], ['paste', onPaste], ['dragover', onDragOver], ['drop', onDrop]];
+    function onDblClick(event) {
+    const row = event.target.closest && event.target.closest('[data-ol-qa-open], [data-ol-hist-open]');
+    if (!row) return;
+    event.preventDefault();
+    if (row.dataset.olQaOpen) startRename('qa', row.dataset.olQaOpen); else startRename('letter', row.dataset.olHistOpen);
+  }
+  const onFocusOut = event => { if (event.target.matches && event.target.matches('[data-ol-hist-rename-input]')) commitRename(); };
+  const HANDLERS = [['dblclick', onDblClick], ['focusout', onFocusOut], ['click', onClick], ['input', onInput], ['change', onChange], ['keydown', onKeydown], ['paste', onPaste], ['dragover', onDragOver], ['drop', onDrop]];
 
   function mount(container) {
     leave();

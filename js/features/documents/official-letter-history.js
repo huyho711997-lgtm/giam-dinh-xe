@@ -59,7 +59,7 @@ const OfficialLetterHistory = (() => {
     const key = validId(id) ? id : newId();
     let data = JSON.stringify(entry.data || {});
     if (data.length > MAX_DATA) throw new Error('Công văn quá dài để lưu vào lịch sử.');
-    const meta = {title: clip(entry.title, MAX_TITLE) || 'Công văn chưa có trích yếu', sub: clip(entry.sub, MAX_SUB), updatedAt: Date.now()};
+    const meta = {title: clip(entry.title, MAX_TITLE) || 'Công văn chưa có trích yếu', sub: clip(entry.sub, MAX_SUB), updatedAt: entry.keepTime && state.index[key] ? state.index[key].updatedAt : Date.now()};
     state.index[key] = meta;
     const stale = list().slice(MAX_ITEMS).map(item => item.id);   // giữ tối đa MAX_ITEMS bản mới nhất
     stale.forEach(old => { delete state.index[old]; });
@@ -81,6 +81,20 @@ const OfficialLetterHistory = (() => {
     Object.keys(local.index).sort((a, b) => local.index[b].updatedAt - local.index[a].updatedAt).slice(MAX_LOCAL).forEach(old => { delete local.index[old]; delete local.items[old]; });
     if (!writeLocal(state.uid, local)) throw new Error('Bộ nhớ trình duyệt đã đầy, không lưu được lịch sử.');
     return {id: key, scope: 'browser'};
+  }
+
+  // Đổi tên một công văn trong lịch sử: tên tuỳ đặt nằm trong data.customTitle (index chỉ cho title/sub/updatedAt theo rules) và giữ nguyên thời gian cập nhật.
+  async function rename(id, title) {
+    const name = clip(title, MAX_TITLE);
+    if (!validId(id) || !name) return false;
+    if (!state.loaded) await load();
+    const current = state.index[id];
+    if (!current) return false;
+    const data = await get(id);
+    if (!data) return false;
+    data.customTitle = name;
+    await save(id, {title: name, sub: current.sub, data, keepTime: true});
+    return true;
   }
 
   async function remove(id) {
@@ -126,5 +140,5 @@ const OfficialLetterHistory = (() => {
     return out;
   }
 
-  return {load, list, get, save, remove, removeMany, groups, newId, scope: () => state.scope, MAX_ITEMS};
+  return {load, list, get, save, rename, remove, removeMany, groups, newId, scope: () => state.scope, MAX_ITEMS};
 })();

@@ -164,6 +164,8 @@ Mở **Biểu mẫu dùng chung** trên thanh điều hướng hoặc nút ở t
 
 - **Quy tắc theo từng cuộc trò chuyện:** văn bản căn cứ chọn ở chip **Quy tắc** được lưu cùng cuộc (`chat.pin` trong `officialLetter.qaChats.v1`); mở lại cuộc nào, tải lại trang hay chuyển Hỏi nghiệp vụ ⇄ Trò chuyện AI đều về đúng quy tắc của cuộc đó, cuộc mới bắt đầu ở “Tự động”. Quy tắc của Soạn công văn được giữ riêng (không bị lẫn). Văn bản đã bị xoá khỏi Thư viện tự bị bỏ khỏi lựa chọn.
 
+- **Đổi tên đoạn chat / công văn:** rê chuột vào một dòng trong Lịch sử → nút bút chì (hoặc bấm đúp vào dòng) để sửa tại chỗ; Enter hoặc bấm ra ngoài là lưu, Esc là huỷ. Hỏi nghiệp vụ / Trò chuyện AI: tên lưu trong `chat.title` kèm cờ `named` nên không bị ghi đè bằng câu hỏi đầu khi hỏi tiếp. Soạn công văn: `OfficialLetterHistory.rename(id, title)` ghi tên vào `data.customTitle` (nhánh `index` trên Firebase chỉ cho `title/sub/updatedAt` nên không thêm trường mới), giữ nguyên thời gian cập nhật; tên tuỳ đặt được ưu tiên hơn tên tự sinh từ trích yếu khi lưu lại công văn.
+
 ### Trò chuyện AI (tab thứ 3 trong AI nghiệp vụ, trước đây là Công văn AI)
 Trang AI thông thường để hỏi mọi thứ (viết lại câu chữ, tính toán, Excel, dịch, giải thích…), tách hẳn khỏi Hỏi nghiệp vụ nhưng dùng chung khung chat, khoá/mô hình AI, chip **Hồ sơ** và **Suy luận sâu**.
 - Đính kèm tối đa 5 tệp mỗi câu hỏi bằng nút ghim, kéo-thả hoặc dán: ảnh (JPG/PNG/WebP/HEIC) gửi thẳng cho mô hình (cần mô hình có hỗ trợ ảnh), PDF/Word/Excel/CSV/TXT/MD được đọc thành chữ (`TascoLibParse.readText`, mỗi tệp ≤ 30.000 ký tự, tổng ≤ 60.000). Chữ của tệp được lưu cùng tin nhắn (≤ 12.000 ký tự/tệp) để các lượt sau vẫn hỏi tiếp được; **ảnh chỉ gửi ở lượt hiện tại**, không lưu.

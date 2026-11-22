@@ -188,3 +188,31 @@ test('index.html nạp official-letter-history.js trước trang Công văn AI',
   const at = name => html.indexOf('js/features/documents/official-letter-' + name + '.js');
   assert.ok(at('history') > 0 && at('history') < at('page'));
 });
+
+test('rename: đổi tên công văn, giữ nguyên thời gian cập nhật và nội dung; tên tuỳ đặt nằm trong data (index đúng quy tắc title/sub/updatedAt)', async () => {
+  const { api, tree } = setup();
+  await api.load();
+  const { id } = await api.save(undefined, { title: 'V/v cũ', sub: 'HS 1', data: { brief: 'giữ', letter: { subject: 'x' } } });
+  const before = plain(api.list())[0].updatedAt;
+  await new Promise(resolve => setTimeout(resolve, 5));
+  assert.equal(await api.rename(id, '  Bản gửi  anh Nam  '), true);
+  const item = plain(api.list()).find(entry => entry.id === id);
+  assert.equal(item.title, 'Bản gửi anh Nam');
+  assert.equal(item.sub, 'HS 1');
+  assert.equal(item.updatedAt, before, 'đổi tên không đẩy công văn lên đầu danh sách');
+  const data = await api.get(id);
+  assert.equal(data.customTitle, 'Bản gửi anh Nam');
+  assert.equal(data.brief, 'giữ');
+  assert.deepEqual(Object.keys(tree.user_letters.u1.index[id]).sort(), ['sub', 'title', 'updatedAt']);
+  assert.equal(await api.rename(id, '   '), false, 'tên rỗng bị từ chối');
+  assert.equal(await api.rename('khongco123', 'X'), false);
+});
+
+test('rename: lưu trên trình duyệt khi chưa đăng nhập vẫn đổi được', async () => {
+  const { api } = setup({ uid: '' });
+  await api.load();
+  const { id } = await api.save(undefined, { title: 'Tạm', sub: '', data: { brief: 'a' } });
+  assert.equal(await api.rename(id, 'Tên mới'), true);
+  assert.equal(plain(api.list())[0].title, 'Tên mới');
+  assert.equal((await api.get(id)).customTitle, 'Tên mới');
+});

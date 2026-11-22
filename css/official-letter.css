@@ -37,7 +37,7 @@
 .ola-hist-list { flex:1; min-height:0; overflow-y:auto; padding:0 8px 8px; }
 .ola-hist-group h4 { margin:10px 8px 4px; color:var(--text-muted); font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
 .ola-hist-item { position:relative; display:flex; align-items:center; border-radius:10px; }
-.ola-hist-item > button:first-child { flex:1; min-width:0; display:grid; gap:1px; padding:8px 30px 8px 10px; border:0; border-radius:10px; background:none; color:var(--text-main); font:inherit; text-align:left; cursor:pointer; }
+.ola-hist-item > button:first-child { flex:1; min-width:0; display:grid; gap:1px; padding:8px 56px 8px 10px; border:0; border-radius:10px; background:none; color:var(--text-main); font:inherit; text-align:left; cursor:pointer; }
 .ola-hist-item.is-selecting > button.ola-hist-pick { display:flex; align-items:center; gap:9px; padding:8px 10px; }
 .ola-hist-meta { flex:1; min-width:0; display:grid; gap:1px; }
 .ola-hist-item b { overflow:hidden; font-size:12.5px; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
@@ -48,6 +48,13 @@
 .ola-hist-item.is-selecting.is-active:not(.is-checked) { background:color-mix(in srgb,var(--primary) 6%,transparent); }
 .ola-hist-item.is-checked { background:color-mix(in srgb,var(--primary) 15%,transparent); }
 .ola-hist-item.is-checked:hover { background:color-mix(in srgb,var(--primary) 19%,transparent); }
+.ola-hist-edit { position:absolute; right:30px; display:grid; place-items:center; width:26px; height:26px; border:0; border-radius:8px; background:none; color:var(--text-muted); opacity:0; cursor:pointer; }
+.ola-hist-edit svg { width:14px; height:14px; }
+.ola-hist-item:hover .ola-hist-edit, .ola-hist-edit:focus-visible { opacity:1; }
+.ola-hist-edit:hover { background:var(--surface-soft); color:var(--primary); }
+.ola-hist-edit:disabled { display:none; }
+.ola-hist-item.is-renaming { padding:4px 6px; }
+.ola-hist-rename { width:100%; min-width:0; padding:7px 9px; border:1px solid color-mix(in srgb,var(--primary) 55%,var(--border)); border-radius:9px; background:var(--surface-strong); color:var(--text-main); font:inherit; font-size:12.5px; font-weight:650; outline:none; box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 16%,transparent); }
 .ola-hist-del { position:absolute; right:4px; display:grid; place-items:center; width:26px; height:26px; border:0; border-radius:8px; background:none; color:var(--text-muted); opacity:0; cursor:pointer; }
 .ola-hist-del svg { width:14px; height:14px; }
 .ola-hist-item:hover .ola-hist-del, .ola-hist-del:focus-visible { opacity:1; }
