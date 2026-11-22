@@ -1081,7 +1081,7 @@ const OfficialLetterPage = (() => {
   function modelPopHtml() {
     const M = Models(), cfg = aiConfig(), active = activeModel();
     if (!M || !active) return '';
-    const groups = M.ORDER.map(id => {
+    const groups = [...M.ORDER, 'antigravity'].map(id => {
       const items = M.entries(cfg).filter(entry => entry.provider === id);
       if (!items.length) return '';
       const p = M.PROVIDERS[id], has = aiKeys[id] !== false;   // chưa nạp xong khoá thì coi như có, tránh nhấp nháy

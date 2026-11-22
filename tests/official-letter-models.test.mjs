@@ -51,6 +51,15 @@ test('resolve: địa chỉ gọi, nhãn và khả năng của từng nhà cung 
   assert.equal(M.resolve(cfg, 'không-có').id, 'deepseek:deepseek-flash');
 });
 
+test('Antigravity được chọn và lưu lại, địa chỉ chỉ trỏ về máy đang dùng', () => {
+  const cfg = M.normalize({selected:'antigravity:gemini-3-flash'});
+  const item = M.resolve(cfg);
+  assert.equal(item.provider,'antigravity');
+  assert.equal(item.endpoint,'http://127.0.0.1:18318/v1/chat/completions');
+  assert.equal(item.model,'gemini-3-flash');
+  assert.equal(M.normalize(cfg).selected,item.id);
+});
+
 test('toChatRequest: Gemini dùng reasoning_effort, không gửi tham số thinking của DeepSeek', () => {
   const prof = M.profile('gemini', 'gemini-3.8-flash');
   const deep = plain(AI.toChatRequest(gemini(), {model: 'gemini-3.8-flash', profile: prof, thinking: true, maxTokens: 16000}));
