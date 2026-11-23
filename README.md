@@ -262,3 +262,5 @@ Trang **Hồ sơ bồi thường → Cập nhật dữ liệu từ Excel** dùng
 ### Lỗi "Không kết nối được công cụ Antigravity" (máy mới)
 
 Antigravity chạy qua công cụ trung gian cục bộ (`scripts/antigravity-local-bridge.mjs`, cổng 18318, cần CLIProxyAPI cổng 18317 và cấu hình trong `%LOCALAPPDATA%\codex-antigravity-bridge`). Máy mới chưa cài/chạy công cụ này, hoặc trình duyệt chặn truy cập mạng cục bộ, thì lệnh gọi thất bại. Khi gặp lỗi này, câu trả lời có thêm nút **Chọn mô hình khác** để chuyển ngay sang Gemini/DeepSeek (không cần công cụ trên máy).
+
+**Kiểm tra nhanh trên máy mới:** mở PowerShell trong thư mục dự án và chạy `node scripts/antigravity-local-bridge.mjs --check`. Lệnh in từng mắt xích `OK`/`LỖI`: (1) tệp `local-settings.json` (email đăng nhập website) và `config.yaml` (khoá `api-keys`), (2) CLIProxyAPI ở cổng 18317, (3) cầu nối ở cổng 18318. Sửa lỗi từ trên xuống dưới rồi chạy lại. Khi chạy cầu nối mà thiếu cấu hình hoặc cổng bị chiếm, nó in lý do cụ thể thay vì thoát im lặng.

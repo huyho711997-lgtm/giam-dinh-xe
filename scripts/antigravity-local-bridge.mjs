@@ -57,10 +57,46 @@ export function createBridge({email, upstreamKey, fetchImpl = fetch, verifyToken
   });
 }
 
+export const bridgeDir = () => join(process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local'), 'codex-antigravity-bridge');
+
+// Đọc cấu hình cục bộ; trả về {email, key} hoặc {problems} (mỗi lỗi kèm cách xử lý) thay vì ném lỗi khó hiểu.
+export async function loadLocal(dir = bridgeDir(), read = readFile) {
+  const problems = [];
+  let email = '', key = '';
+  try { email = String(JSON.parse(await read(join(dir, 'local-settings.json'), 'utf8')).email || '').trim(); } catch { /* báo bên dưới */ }
+  if (!email) problems.push('Thiếu hoặc sai ' + join(dir, 'local-settings.json') + ' (cần {"email":"<email đăng nhập website>"}).');
+  try { key = /^  - '([a-f0-9]+)'$/m.exec(await read(join(dir, 'config.yaml'), 'utf8'))?.[1] || ''; } catch { /* báo bên dưới */ }
+  if (!key) problems.push('Thiếu hoặc sai ' + join(dir, 'config.yaml') + ' (cần dòng khoá api-keys dạng:   - \'<chuỗi hex>\').');
+  return {email, key, problems};
+}
+
+// Kiểm tra từng mắt xích: cấu hình → CLIProxyAPI (18317) → cầu nối (18318). Trả về danh sách dòng "OK/LỖI".
+export async function checkSetup({dir = bridgeDir(), read = readFile, fetchImpl = fetch} = {}) {
+  const lines = [];
+  const local = await loadLocal(dir, read);
+  if (local.problems.length) local.problems.forEach(text => lines.push('LỖI  ' + text)); else lines.push('OK    Cấu hình cục bộ (' + local.email + ')');
+  if (local.key) {
+    try {
+      const upstream = await fetchImpl('http://127.0.0.1:18317/v1/models', {headers: {Authorization: 'Bearer ' + local.key}, signal: AbortSignal.timeout(5000)});
+      lines.push(upstream.ok ? 'OK    CLIProxyAPI đang chạy ở cổng 18317' : 'LỖI  CLIProxyAPI ở cổng 18317 trả về HTTP ' + upstream.status + (upstream.status === 401 ? ' — khoá trong config.yaml không khớp với CLIProxyAPI đang chạy.' : '.'));
+    } catch { lines.push('LỖI  Không kết nối được CLIProxyAPI ở cổng 18317 — hãy chạy CLIProxyAPI (và đăng nhập Google/Antigravity trong đó) trước.'); }
+  }
+  try {
+    const bridge = await fetchImpl('http://127.0.0.1:18318/v1/chat/completions', {method: 'OPTIONS', headers: {Origin: [...origins][0], 'Access-Control-Request-Method': 'POST'}, signal: AbortSignal.timeout(3000)});
+    lines.push(bridge.status === 204 ? 'OK    Cầu nối đang chạy ở cổng 18318' : 'LỖI  Cổng 18318 có dịch vụ nhưng trả HTTP ' + bridge.status + ' (có thể là chương trình khác chiếm cổng).');
+  } catch { lines.push('LỖI  Cầu nối chưa chạy ở cổng 18318 — chạy: node scripts/antigravity-local-bridge.mjs'); }
+  return lines;
+}
+
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const dir = join(process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local'), 'codex-antigravity-bridge');
-  const local = JSON.parse(await readFile(join(dir, 'local-settings.json'), 'utf8'));
-  const config = await readFile(join(dir, 'config.yaml'), 'utf8');
-  const key = /^  - '([a-f0-9]+)'$/m.exec(config)?.[1];
-  createBridge({email:local.email, upstreamKey:key}).listen(18318, '127.0.0.1', () => console.log('Antigravity local bridge: http://127.0.0.1:18318'));
+  if (process.argv.includes('--check')) {
+    const lines = await checkSetup();
+    console.log(lines.join('\n'));
+    process.exit(lines.some(line => line.startsWith('LỖI')) ? 1 : 0);
+  }
+  const local = await loadLocal();
+  if (local.problems.length) { console.error('Chưa chạy được cầu nối Antigravity:\n- ' + local.problems.join('\n- ') + '\nChạy "node scripts/antigravity-local-bridge.mjs --check" để kiểm tra toàn bộ.'); process.exit(1); }
+  const server = createBridge({email: local.email, upstreamKey: local.key});
+  server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? 'Cổng 18318 đang bị chiếm — có thể cầu nối đã chạy sẵn ở cửa sổ khác.' : 'Lỗi cầu nối: ' + error.message); process.exit(1); });
+  server.listen(18318, '127.0.0.1', () => console.log('Antigravity local bridge: http://127.0.0.1:18318 (tài khoản ' + local.email + ')'));
 }
