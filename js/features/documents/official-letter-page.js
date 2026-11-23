@@ -211,7 +211,8 @@ const OfficialLetterPage = (() => {
     if (node) { node.textContent = usageText(); node.title = usageTitle(); node.hidden = !usageText(); }
   }
   // extra (tuỳ chọn): {onUsage, onWait, resumeText, thinking, effort} — chế độ Hỏi nghiệp vụ dùng để đếm token/hiện trạng thái riêng, không đụng tới phiên soạn công văn.
-  let tieredFailedAt = 0, qaDeepOnce = false;   // qaDeepOnce: lượt hỏi lại do người dùng bấm "Suy luận sâu lại" thì luôn suy luận sâu
+  const failedAt = Object.create(null);   // mô hình Antigravity nào vừa thất bại hẳn → 10 phút tới dùng thẳng mô hình dự phòng
+  let qaDeepOnce = false;   // qaDeepOnce: lượt hỏi lại do người dùng bấm "Suy luận sâu lại" thì luôn suy luận sâu
   async function callAI(request, extra = {}) {
     if (typeof OfficialLetterAI === 'undefined') throw new Error('Chưa tải được mô-đun AI. Hãy tải lại trang.');
     const active = activeModel();
@@ -230,7 +231,7 @@ const OfficialLetterPage = (() => {
     const thinking = !!extra.thinking && (!active || active.profile.reasoning !== 'none');
     controller?.abort();
     controller = new AbortController();
-    const limit = active ? Models().timeoutMs(active.provider, thinking) : 0;   // Antigravity: lượt suy luận sâu được chờ lâu hơn lượt thường
+    const limit = active ? Models().timeoutMs(active.provider, thinking, active.model) : 0;   // Antigravity: lượt suy luận sâu được chờ lâu hơn lượt thường
     // Hạn chờ tính RIÊNG cho từng lần gọi (không gộp thời gian đếm ngược tự thử lại), nếu không lần thử lại chỉ còn vài giây rồi bị báo "không phản hồi".
     const canTimeout = limit && typeof AbortSignal.timeout === 'function' && typeof AbortSignal.any === 'function';
     const attemptSignal = () => (canTimeout ? AbortSignal.any([controller.signal, AbortSignal.timeout(limit)]) : controller.signal);
@@ -239,7 +240,7 @@ const OfficialLetterPage = (() => {
     // Một công văn gọi AI 2–3 lần: khi bị giới hạn lưu lượng/quá tải thì tự chờ rồi thử lại, có đếm ngược cho người dùng thấy.
     // Vừa phải chuyển mô hình trong 10 phút qua thì các lượt gọi sau dùng thẳng mô hình dự phòng, khỏi chờ lại cả vòng thử lại.
     let fellBack = false;
-    if (active && Date.now() - tieredFailedAt < 600000 && Models().fallbackModel(active.provider, model)) { model = Models().fallbackModel(active.provider, model); fellBack = true; }
+    if (active && Date.now() - (failedAt[model] || 0) < 600000 && Models().fallbackModel(active.provider, model)) { model = Models().fallbackModel(active.provider, model); fellBack = true; }
     for (let attempt = 0; ; attempt++) {
       const signal = attemptSignal();
       try { return await OfficialLetterAI.call(request, {apiKey, model, signal, onUsage: countUsage, thinking, effort: extra.effort, maxTokens: thinking ? 16000 : undefined, endpoint: active ? active.endpoint : undefined, label, profile: active ? active.profile : undefined}); }
@@ -249,8 +250,8 @@ const OfficialLetterPage = (() => {
         // 3.8 Flash thất bại hẳn (hết hạn chờ, hoặc quá tải sau mọi lần thử lại) → tự chuyển sang Gemini 3 Flash một lần, báo rõ cho người dùng.
         const fallback = active && !fellBack && (timedOut || (error && error.retryable && attempt >= RETRY_WAITS.length)) ? Models().fallbackModel(active.provider, model) : '';
         if (fallback) {
-          fellBack = true; model = fallback; attempt = -1; tieredFailedAt = Date.now();
-          wait('Mô hình 3.8 Flash đang chậm/bận — tự chuyển sang Gemini 3 Flash…');
+          failedAt[model] = Date.now(); fellBack = true; const was = model; model = fallback; attempt = -1;
+          wait('Mô hình ' + was + ' đang chậm/bận — tự chuyển sang ' + fallback + '…');
           continue;
         }
         if (timedOut) {
@@ -1944,8 +1945,12 @@ const OfficialLetterPage = (() => {
     return '<section class="ol-set-card ol-set-key" data-prov="antigravity"><div class="ol-set-card-head"><h3>Antigravity (máy trung gian riêng)</h3><span class="ol-set-pill is-ok" data-ag-st>' + esc(host ? 'Tailscale · ' + host : 'Mặc định · localhost') + '</span></div>'
       + '<p class="ol-set-note">Xác thực bằng tài khoản đăng nhập website (Firebase), không lưu khoá relay trên trình duyệt. Để trống để dùng mặc định trên chính máy này (<code>http://127.0.0.1:18318/v1</code>), hoặc nhập địa chỉ HTTPS Tailscale (<code>.ts.net</code>) lưu riêng trên trình duyệt này.</p>'
       + field('Địa chỉ máy trung gian Tailscale <em>(tuỳ chọn · chỉ HTTPS .ts.net)</em>', '<input data-ag-base type="url" maxlength="300" value="' + esc(display) + '" placeholder="https://ten-may.tailxxxx.ts.net (để trống = localhost)" autocomplete="off" spellcheck="false">', true)
-      + '<div class="ol-set-links"><span>Mô hình cố định: ' + esc(M.PROVIDERS.antigravity.models.join(', ')) + '</span><span class="ol-set-actions"><button type="button" class="ol-set-link" data-ag-reset' + (base ? '' : ' hidden') + '>Dùng mặc định (localhost)</button></span></div></section>';
+      + '<div class="ol-set-links"><span data-ag-count>' + esc(agyCountText(cfg)) + '</span><span class="ol-set-actions"><button type="button" class="ol-set-link" data-ag-fetch>Lấy danh sách mô hình từ Antigravity</button><button type="button" class="ol-set-link" data-ag-reset' + (base ? '' : ' hidden') + '>Dùng mặc định (localhost)</button></span></div>'
+      + '<div class="ol-set-models" data-ag-list>' + agyChips(cfg) + '</div></section>';
   }
+  const agyAll = cfg => Models().entries(cfg).filter(entry => entry.provider === 'antigravity').map(entry => entry.model);
+  const agyCountText = cfg => 'Đang dùng ' + agyAll(cfg).length + ' mô hình Antigravity' + ((cfg.providers.antigravity.models || []).length ? ' (đã lấy từ máy trung gian)' : ' (mặc định — bấm "Lấy danh sách" để dùng toàn bộ mô hình của tài khoản)') + '.';
+  const agyChips = cfg => agyAll(cfg).map(name => '<span class="ol-set-chip is-on">' + esc(name) + '</span>').join('');
   function providerCards() {
     const M = Models();
     if (!M) return '';
@@ -2025,6 +2030,26 @@ const OfficialLetterPage = (() => {
     const agBaseInput = dialog.querySelector('[data-ag-base]');
     const agResetBtn = dialog.querySelector('[data-ag-reset]');
     const agStatePill = dialog.querySelector('[data-ag-st]');
+    const agFetchBtn = dialog.querySelector('[data-ag-fetch]');
+    let agModels = (aiConfig().providers.antigravity.models || []).slice();   // danh sách lấy từ máy trung gian, lưu khi bấm Lưu
+    if (agFetchBtn && agBaseInput) {
+      agFetchBtn.onclick = async () => {
+        const raw = agBaseInput.value.trim(), base = raw ? Models().normalizeAntigravityBase(raw) : '';
+        if (raw && !base) { toast('Địa chỉ Antigravity phải là HTTPS Tailscale (.ts.net).', 'warning'); agBaseInput.focus(); return; }
+        const tmp = Models().normalize({providers: {antigravity: {base}}});
+        agFetchBtn.disabled = true; const old = agFetchBtn.textContent; agFetchBtn.textContent = 'Đang lấy…';
+        try {
+          const names = await Models().listModels('antigravity', tmp);
+          if (!names.length) throw new Error('Máy trung gian chưa liệt kê mô hình nào — hãy đăng nhập tài khoản Antigravity trong CLIProxyAPI.');
+          agModels = Models().parseAgyModels(names);
+          tmp.providers.antigravity.models = agModels;
+          dialog.querySelector('[data-ag-count]').textContent = agyCountText(tmp);
+          dialog.querySelector('[data-ag-list]').innerHTML = agyChips(tmp);
+          toast('Có ' + agyAll(tmp).length + ' mô hình Antigravity — bấm Lưu để dùng.', 'success');
+        } catch (error) { toast(error.message, 'warning'); }
+        agFetchBtn.disabled = false; agFetchBtn.textContent = old;
+      };
+    }
     if (agResetBtn && agBaseInput) {
       agResetBtn.onclick = () => {
         agBaseInput.value = '';
@@ -2047,7 +2072,7 @@ const OfficialLetterPage = (() => {
             agBaseInput.focus();
             return;
           }
-          providers.antigravity = {base: agBase};
+          providers.antigravity = {base: agBase, models: agModels};
         }
         for (const id of M.ORDER) {
           const ui = cards[id];

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBridge, verifyFirebaseToken, loadLocal, checkSetup} from '../scripts/antigravity-local-bridge.mjs';
+import {createBridge, verifyFirebaseToken, explainToken, loadLocal, checkSetup, CLOCK_SKEW_SECONDS} from '../scripts/antigravity-local-bridge.mjs';
 
 test('cầu nối chỉ nhận đúng website, tài khoản và mô hình, không tiết lộ khoá', async t => {
   let forwarded;
@@ -16,7 +16,8 @@ test('cầu nối chỉ nhận đúng website, tài khoản và mô hình, khôn
   assert.equal(preflight.headers.get('access-control-allow-private-network'),'true');
   assert.equal((await fetch(url,{method:'POST',headers:{...headers,origin:'https://other.example'},body:'{}'})).status,403);
   assert.equal((await fetch(url,{method:'POST',headers:{...headers,authorization:'Bearer invalid'},body:'{}'})).status,401);
-  assert.equal((await fetch(url,{method:'POST',headers,body:JSON.stringify({model:'other',stream:false})})).status,400);
+  assert.equal((await fetch(url,{method:'POST',headers,body:JSON.stringify({model:'../etc/passwd',stream:false})})).status,400);
+  assert.equal((await fetch(url,{method:'POST',headers,body:JSON.stringify({model:'gemini-3-flash',stream:true})})).status,400);
   const ok = await fetch(url,{method:'POST',headers,body:JSON.stringify({model:'gemini-3-flash',stream:false,messages:[]})});
   assert.equal(ok.status,200);
   assert.equal((await ok.json()).choices[0].message.content,'OK');
@@ -120,4 +121,78 @@ test('cầu nối giới hạn đúng hostname .ts.net và origin Vercel khi c�
   // Đúng Host + Origin + Firebase token hợp lệ được chuyển tiếp
   const ok = await req('POST', {Host: 'relay-node.tail1234.ts.net', Origin: 'https://giam-dinh-xe-rose.vercel.app', Authorization: 'Bearer valid', 'Content-Type': 'application/json'}, JSON.stringify({model: 'gemini-3-flash', stream: false, messages: []}));
   assert.equal(ok.status, 200);
+});
+
+
+test('cầu nối cho phép mọi mô hình hợp lệ của Antigravity và liệt kê mô hình thật (GET /v1/models)', async t => {
+  const calls = [];
+  const allowedHosts = new Set();
+  const server = createBridge({email:'owner@example.com', upstreamKey:'private-key', allowedHosts, verifyToken: async token => token === 'valid',
+    fetchImpl: async (url, options) => { calls.push({url, method: options?.method || 'GET'}); return url.endsWith('/v1/models') ? new Response(JSON.stringify({data:[{id:'gemini-3-pro-high'},{id:'claude-sonnet-4-5-thinking'}]}), {status:200}) : new Response(JSON.stringify({choices:[{message:{content:'OK'}}]}), {status:200}); }});
+  await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
+  allowedHosts.add(`127.0.0.1:${server.address().port}`);
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const headers = {host:'127.0.0.1:18318',origin:'https://giam-dinh-xe-rose.vercel.app',authorization:'Bearer valid','content-type':'application/json'};
+  const preflight = await fetch(base + '/v1/models',{method:'OPTIONS',headers});
+  assert.match(preflight.headers.get('access-control-allow-methods'), /GET/);
+  const noAuth = await fetch(base + '/v1/models',{headers:{...headers,authorization:'Bearer bad'}});
+  assert.equal(noAuth.status,401);
+  assert.match((await noAuth.json()).error.message, /từ chối token/);
+  const list = await fetch(base + '/v1/models',{headers});
+  assert.equal(list.status,200);
+  assert.deepEqual((await list.json()).data.map(item => item.id), ['gemini-3-pro-high','claude-sonnet-4-5-thinking']);
+  await fetch(base + '/v1/models',{headers});
+  assert.equal(calls.filter(call => call.url.endsWith('/v1/models')).length, 1, 'danh sách được lưu đệm');
+  for (const model of ['gemini-3-pro-high','claude-sonnet-4-5-thinking','gpt-oss-120b-medium']) {
+    const reply = await fetch(base + '/v1/chat/completions',{method:'POST',headers,body:JSON.stringify({model,stream:false,messages:[]})});
+    assert.equal(reply.status,200, model);
+  }
+  assert.equal((await fetch(base + '/v1/other',{headers})).status,404);
+});
+
+test('token mới làm mới (iat hơi ở tương lai do đồng hồ máy chậm) vẫn được chấp nhận; lỗi token được giải thích rõ', async () => {
+  const part = value => Buffer.from(JSON.stringify(value)).toString('base64url');
+  const now = Date.now(), seconds = Math.floor(now / 1000);
+  const mk = extra => `${part({alg:'RS256',kid:'k'})}.${part({aud:'doi-chieu-gara',iss:'https://securetoken.google.com/doi-chieu-gara',sub:'u',email:'Owner@Example.com',iat:seconds,exp:seconds+3600,...extra})}.sig`;
+  // Chữ ký giả nên vẫn bị từ chối, nhưng KHÔNG phải vì iat: mô phỏng lấy chứng chỉ để chắc chắn đã đi qua bước kiểm tra thời gian.
+  const realFetch = globalThis.fetch; let certRequests = 0;
+  globalThis.fetch = async () => { certRequests++; return new Response('{}', {status:200}); };
+  try {
+    assert.equal(await verifyFirebaseToken(mk({iat:seconds+30}),'owner@example.com',now), false);
+    assert.ok(certRequests > 0, 'iat lệch 30 giây phải đi tới bước kiểm tra chữ ký');
+    certRequests = 0;
+    assert.equal(await verifyFirebaseToken(mk({iat:seconds+CLOCK_SKEW_SECONDS+60}),'owner@example.com',now), false);
+    assert.equal(certRequests, 0, 'iat quá xa bị loại trước khi lấy chứng chỉ');
+  } finally { globalThis.fetch = realFetch; }
+  assert.match(explainToken(mk({exp:seconds-4000}),'owner@example.com',now), /hết hạn/);
+  assert.match(explainToken(mk({iat:seconds+1200}),'owner@example.com',now), /Đồng hồ máy tính/);
+  assert.match(explainToken(mk({email:'x@y.z'}),'owner@example.com',now), /khác với tài khoản/);
+});
+
+test('chứng chỉ Google tải lỗi thì cầu nối báo 503 rõ nguyên nhân thay vì "không kết nối Antigravity"', async t => {
+  const allowedHosts = new Set();
+  const server = createBridge({email:'owner@example.com', upstreamKey:'k', allowedHosts, verifyToken: async () => { throw new Error('cert'); }, fetchImpl: async () => new Response('{}')});
+  await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
+  allowedHosts.add(`127.0.0.1:${server.address().port}`);
+  t.after(() => server.close());
+  const reply = await fetch(`http://127.0.0.1:${server.address().port}/v1/models`,{headers:{host:'127.0.0.1:18318',origin:'https://giam-dinh-xe-rose.vercel.app',authorization:'Bearer x'}});
+  assert.equal(reply.status,503);
+  assert.match((await reply.json()).error.message,/chứng chỉ/);
+});
+
+test('cầu nối thử lại một lần khi kết nối tới CLIProxyAPI bị ngắt, nhưng không thử lại khi đã có mã HTTP', async t => {
+  let attempts = 0, mode = 'drop';
+  const allowedHosts = new Set();
+  const server = createBridge({email:'owner@example.com', upstreamKey:'k', allowedHosts, verifyToken: async () => true,
+    fetchImpl: async () => { attempts++; if (mode === 'drop' && attempts === 1) throw new Error('ECONNRESET'); return new Response(mode === 'status' ? '{"error":"quota"}' : '{"ok":true}', {status: mode === 'status' ? 429 : 200}); }});
+  await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
+  allowedHosts.add(`127.0.0.1:${server.address().port}`);
+  t.after(() => server.close());
+  const call = () => fetch(`http://127.0.0.1:${server.address().port}/v1/chat/completions`,{method:'POST',headers:{host:'127.0.0.1:18318',origin:'https://giam-dinh-xe-rose.vercel.app',authorization:'Bearer x','content-type':'application/json'},body:JSON.stringify({model:'gemini-3-flash',stream:false,messages:[]})});
+  assert.equal((await call()).status,200);
+  assert.equal(attempts,2);
+  mode = 'status'; attempts = 0;
+  assert.equal((await call()).status,429);
+  assert.equal(attempts,1);
 });

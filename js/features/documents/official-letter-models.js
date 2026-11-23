@@ -45,6 +45,9 @@ const OfficialLetterModels = (() => {
     return ('https://' + host + portPart + '/v1').slice(0, 300);
   }
   const uniq = list => Array.from(new Set(list));
+  // Mô hình Antigravity do máy trung gian liệt kê (gemini-3-pro-high, claude-…-thinking, gpt-oss-…): bỏ loại không dùng để trò chuyện.
+  const AGY_SKIP = /embed|image|imagen|tts|veo|audio|live|aqa|rerank|moderation/i;
+  const parseAgyModels = value => uniq((Array.isArray(value) ? value : []).map(clean).filter(name => MODEL_RE.test(name) && !AGY_SKIP.test(name))).slice(0, 40);
   const parseModels = value => uniq((Array.isArray(value) ? value : String(value || '').split(/[,\n;]+/)).map(clean).filter(name => MODEL_RE.test(name))).slice(0, 12);
 
   // DeepSeek: tôn trọng khoá cài đặt cũ 'deepseek_letter_model' nếu có.
@@ -64,7 +67,7 @@ const OfficialLetterModels = (() => {
       if (id === 'custom') { providers[id].base = normalizeBase(saved.base); providers[id].label = clean(saved.label).slice(0, 40); }
     }
     const savedAgy = source.providers && source.providers.antigravity || {};
-    providers.antigravity = {base: normalizeAntigravityBase(savedAgy.base)};
+    providers.antigravity = {base: normalizeAntigravityBase(savedAgy.base), models: parseAgyModels(savedAgy.models)};
     const cfg = {selected: '', providers};
     const ids = entries(cfg).map(entry => entry.id);
     cfg.selected = ids.includes(source.selected) ? source.selected : (ids[0] || '');
@@ -89,7 +92,8 @@ const OfficialLetterModels = (() => {
   function entries(cfg) {
     const out = [];
     for (const id of ORDER) for (const model of cfg.providers[id].models) out.push({id: id + ':' + model, provider: id, model, label: providerLabel(id, cfg) + ' · ' + shortModel(model)});
-    for (const model of PROVIDERS.antigravity.models) out.push({id: 'antigravity:' + model, provider: 'antigravity', model, label: providerLabel('antigravity', cfg) + ' · ' + model});
+    const agyModels = uniq(PROVIDERS.antigravity.models.concat(cfg && cfg.providers && cfg.providers.antigravity && cfg.providers.antigravity.models || []));
+    for (const model of agyModels) out.push({id: 'antigravity:' + model, provider: 'antigravity', model, label: providerLabel('antigravity', cfg) + ' · ' + model});
     return out;
   }
   function baseOf(id, cfg) {
@@ -104,15 +108,19 @@ const OfficialLetterModels = (() => {
     if (providerId === 'deepseek') return {reasoning: 'deepseek', vision: true, maxOut: 0, maxSources: 0};
     if (providerId === 'gemini') return {reasoning: 'effort', effortOn: 'high', effortOff: 'low', vision: true, maxOut: 0, maxSources: 0};
     // Antigravity (qua CLIProxyAPI): reasoning_effort được dịch sang thinkingLevel của Gemini 3 — "high" suy luận sâu hơn "low" nhiều lần.
-    if (providerId === 'antigravity') return {reasoning: 'effort', effortOn: 'high', effortOff: 'low', vision: true, maxOut: 0, maxSources: 0};
+    // Chỉ họ Gemini nhận reasoning_effort; Claude "-thinking" và GPT-OSS tự suy luận theo tên mô hình (gửi reasoning_effort có thể bị từ chối 400). GPT-OSS không đọc ảnh.
+    if (providerId === 'antigravity') return {reasoning: /gemini/i.test(model || '') ? 'effort' : 'none', effortOn: 'high', effortOff: 'low', vision: !/gpt-oss/i.test(model || ''), maxOut: 0, maxSources: 0};
     if (providerId === 'groq') return {reasoning: /gpt-oss/i.test(model) ? 'effort' : 'none', effortOn: 'medium', effortOff: 'low', vision: /llama-4|scout|maverick|vision/i.test(model), maxOut: 4000, maxSources: 5};
     return {reasoning: 'none', vision: true, maxOut: 0, maxSources: 0};
   }
   // Hạn chờ một lượt gọi (mili giây; 0 = không đặt thêm). Antigravity đi qua cầu nối cục bộ (tối đa 180 giây): lượt thường chờ 90 giây (mô hình tầng nhanh 3.8 có lúc xếp hàng/chậm; 45 giây là quá ngắn),
   // lượt suy luận sâu cần lâu hơn nhưng vẫn ngắn hơn hạn của cầu nối để người dùng nhận được thông báo rõ ràng.
-  const timeoutMs = (providerId, thinking) => providerId !== 'antigravity' ? 0 : thinking ? 170000 : 90000;
+  // Mô hình luôn suy luận (tên có "thinking", hoặc bản "-high" của Pro) cũng cần hạn dài như lượt suy luận sâu.
+  const timeoutMs = (providerId, thinking, model) => providerId !== 'antigravity' ? 0 : (thinking || /thinking|-high$|opus/i.test(model || '')) ? 170000 : 90000;
   // Mô hình tầng nhanh 3.8 của Antigravity hay xếp hàng/quá tải: khi nó thất bại hẳn (hết hạn chờ hoặc hết lượt thử lại) thì tự chuyển sang Gemini 3 Flash, mô hình ổn định hơn trên cùng công cụ trung gian.
-  const fallbackModel = (providerId, model) => providerId === 'antigravity' && /3\.8-flash-tiered/i.test(model || '') ? 'gemini-3-flash' : '';
+  // Mọi mô hình Antigravity khác (Pro, Claude, GPT-OSS…) cũng dùng Gemini 3 Flash làm dự phòng khi hết hạn chờ hoặc quá tải; giao diện luôn báo rõ khi đã chuyển.
+  const FALLBACK_MODEL = 'gemini-3-flash';
+  const fallbackModel = (providerId, model) => providerId === 'antigravity' && model && model !== FALLBACK_MODEL ? FALLBACK_MODEL : '';
   // Trả về mô hình đang chọn (hoặc theo id) cùng mọi thứ cần để gọi API.
   function resolve(cfg, id) {
     const all = entries(cfg);
@@ -171,8 +179,9 @@ const OfficialLetterModels = (() => {
     let ids = list.map(item => clean(item && (item.id || item.name)).replace(/^models\//, '')).filter(Boolean);
     if (providerId === 'gemini') ids = ids.filter(id => /^(gemini|gemma)/i.test(id) && !/embed|image|tts|aqa|veo|imagen|live|audio/i.test(id));
     if (providerId === 'groq') ids = ids.filter(id => !/whisper|tts|guard|embed|orpheus|playai|distil/i.test(id));
+    if (providerId === 'antigravity') ids = ids.filter(id => !AGY_SKIP.test(id));
     return uniq(ids).filter(id => MODEL_RE.test(id)).sort();
   }
 
-  return {KEY, ORDER, PROVIDERS, defaults, normalize, load, save, entries, resolve, profile, endpointOf, baseOf, timeoutMs, fallbackModel, providerLabel, shortModel, parseModels, normalizeBase, normalizeAntigravityBase, getKey, keyStatus, noKeyMessage, listModels};
+  return {KEY, ORDER, PROVIDERS, defaults, normalize, load, save, entries, resolve, profile, endpointOf, baseOf, timeoutMs, fallbackModel, providerLabel, shortModel, parseModels, parseAgyModels, normalizeBase, normalizeAntigravityBase, getKey, keyStatus, noKeyMessage, listModels};
 })();

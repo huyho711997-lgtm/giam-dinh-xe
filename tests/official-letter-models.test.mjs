@@ -143,12 +143,38 @@ test('Antigravity có suy luận sâu: reasoning_effort high khi bật, low khi 
   for (const id of ['deepseek', 'gemini', 'groq', 'custom']) assert.equal(M.timeoutMs(id, true), 0);
 });
 
-test('3.8 Flash của Antigravity có mô hình dự phòng, các mô hình khác thì không', () => {
+test('mọi mô hình Antigravity (trừ chính Gemini 3 Flash) đều có Gemini 3 Flash làm dự phòng; nhà cung cấp khác thì không', () => {
   assert.equal(M.fallbackModel('antigravity', 'gemini-3.8-flash-tiered'), 'gemini-3-flash');
+  assert.equal(M.fallbackModel('antigravity', 'claude-sonnet-4-5-thinking'), 'gemini-3-flash');
   assert.equal(M.fallbackModel('antigravity', 'gemini-3-flash'), '');
   assert.equal(M.fallbackModel('gemini', 'gemini-3.8-flash'), '');
   assert.equal(M.fallbackModel('antigravity', ''), '');
 });
+
+test('danh sách mô hình lấy từ Antigravity được lưu, lọc loại không trò chuyện được và có hồ sơ khả năng riêng', () => {
+  const saved = M.save({selected: 'antigravity:claude-sonnet-4-5-thinking', providers: {antigravity: {base: 'https://relay-node.tail1234.ts.net', models: ['gemini-3-pro-high', 'claude-sonnet-4-5-thinking', 'gpt-oss-120b-medium', 'gemini-3-pro-image', 'bad name!', 'gemini-3-flash']}}});
+  const names = M.entries(saved).filter(e => e.provider === 'antigravity').map(e => e.model);
+  assert.deepEqual(plain(names), ['gemini-3.8-flash-tiered', 'gemini-3-flash', 'gemini-3-pro-high', 'claude-sonnet-4-5-thinking', 'gpt-oss-120b-medium']);
+  assert.equal(saved.selected, 'antigravity:claude-sonnet-4-5-thinking');
+  assert.equal(M.profile('antigravity', 'gemini-3-pro-high').reasoning, 'effort');
+  assert.equal(M.profile('antigravity', 'claude-sonnet-4-5-thinking').reasoning, 'none');
+  assert.equal(M.profile('antigravity', 'gpt-oss-120b-medium').vision, false);
+  assert.equal(M.profile('antigravity', 'claude-sonnet-4-5-thinking').vision, true);
+  assert.equal(M.timeoutMs('antigravity', false, 'claude-sonnet-4-5-thinking'), 170000);
+  assert.equal(M.timeoutMs('antigravity', false, 'gemini-3-flash'), 90000);
+  const missing = M.normalize({selected: 'antigravity:claude-sonnet-4-5-thinking'});
+  assert.notEqual(missing.selected, 'antigravity:claude-sonnet-4-5-thinking', 'không còn trong danh sách → về mô hình hợp lệ');
+});
+
+test('listModels Antigravity gọi GET /models bằng token Firebase và bỏ mô hình ảnh/nhúng', async () => {
+  const cfg = M.normalize({providers: {antigravity: {base: 'https://relay-node.tail1234.ts.net'}}});
+  let seen;
+  const names = await M.listModels('antigravity', cfg, {apiKey: 'tok', fetchImpl: async (url, options) => { seen = {url, auth: options.headers.Authorization}; return {ok: true, status: 200, json: async () => ({data: [{id: 'gemini-3-pro-high'}, {id: 'gemini-3-pro-image'}, {id: 'claude-opus-4-5-thinking'}]})}; }});
+  assert.equal(seen.url, 'https://relay-node.tail1234.ts.net/v1/models');
+  assert.equal(seen.auth, 'Bearer tok');
+  assert.deepEqual(plain(names), ['claude-opus-4-5-thinking', 'gemini-3-pro-high']);
+});
+
 
 test('Antigravity hỗ trợ endpoint HTTPS Tailscale (.ts.net) theo trình duyệt và từ chối URL không hợp lệ', () => {
   // Mặc định vẫn là localhost
@@ -182,7 +208,7 @@ test('Antigravity hỗ trợ endpoint HTTPS Tailscale (.ts.net) theo trình duy�
   assert.equal(active.endpoint, 'https://relay-node.tail1234.ts.net/v1/chat/completions');
   assert.equal(active.providerLabel, 'Antigravity (Tailscale)');
   assert.equal(loaded.providers.antigravity.apiKey, undefined);
-  assert.deepEqual(plain(M.entries(loaded).filter(e => e.provider === 'antigravity').map(e => e.model)), ['gemini-3.8-flash-tiered', 'gemini-3-flash']);
+  assert.deepEqual(plain(M.entries(loaded).filter(e => e.provider === 'antigravity').map(e => e.model)), ['gemini-3.8-flash-tiered', 'gemini-3-flash', 'evil-model']);   // tên hợp lệ chỉ là chuỗi gửi tới máy trung gian của chính người dùng, nó tự từ chối tên không có
   assert.equal(saved.providers.antigravity.base, 'https://relay-node.tail1234.ts.net/v1');
   // Xoá endpoint Tailscale thì quay lại localhost mặc định
   M.save({selected: 'antigravity:gemini-3-flash', providers: {antigravity: {base: ''}}});

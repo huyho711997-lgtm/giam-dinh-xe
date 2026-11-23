@@ -108,6 +108,8 @@ const OfficialLetterAI = (() => {
     const detail = data && (Array.isArray(data) ? data[0] && data[0].error : data.error);
     const text = detail ? (typeof detail === 'string' ? detail : (detail.message || JSON.stringify(detail))).slice(0, 200) : '';
     if (label.startsWith('Antigravity') && status === 502 && /Không thể kết nối Antigravity trên máy này/i.test(text)) return aiError('Công cụ Antigravity trung gian trên máy chưa kết nối được. Hãy kiểm tra dịch vụ cục bộ rồi thử lại.');
+    // Cầu nối Antigravity trả lý do cụ thể (token hết hạn, đồng hồ máy tính lệch, sai tài khoản, không tải được chứng chỉ Google…): hiện nguyên văn thay vì báo "khoá sai".
+    if (label.startsWith('Antigravity') && (status === 401 || status === 503) && text && /^(Cầu nối|Máy trung gian|Thiếu token)/.test(text)) return aiError(text, status === 503 ? {retryable: true} : undefined);
     if (status === 401) return aiError('Khoá ' + label + ' API không đúng hoặc đã bị thu hồi. Kiểm tra lại khoá ở biểu tượng ⚙.');
     if (status === 402) return aiError(label === 'DeepSeek' ? 'Tài khoản DeepSeek đã hết số dư. Nạp thêm tại platform.deepseek.com rồi thử lại.' : 'Tài khoản ' + label + ' đã hết số dư hoặc hạn mức. Kiểm tra gói/thanh toán rồi thử lại.');
     if (status === 403) return aiError(label + ' từ chối quyền truy cập (403): khoá chưa được bật dịch vụ này, hoặc khu vực của bạn chưa được hỗ trợ' + (text ? ' — ' + text : '.'));

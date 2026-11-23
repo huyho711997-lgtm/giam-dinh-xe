@@ -10,6 +10,22 @@ const project = 'doi-chieu-gara';
 const origins = new Set(['https://giam-dinh-xe-rose.vercel.app', 'http://localhost:3000']);
 const certUrl = 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
 let certCache = null, certExpires = 0;
+// Đồng hồ Windows thường chậm vài giây so với Google: token vừa được làm mới có iat "ở tương lai" so với máy này → trước đây bị từ chối (lúc được lúc không).
+// Cho phép lệch đồng hồ tới 5 phút (mức các thư viện xác minh JWT của Google cũng chấp nhận).
+export const CLOCK_SKEW_SECONDS = 300;
+// Mô hình hợp lệ: id do CLIProxyAPI cung cấp (gemini-3-pro-high, claude-sonnet-4-5-thinking, gpt-oss-120b-medium…). CLIProxyAPI tự từ chối id không có trong tài khoản.
+export const MODEL_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:@+\-]{0,99}$/;
+const decodePayload = token => { try { return JSON.parse(Buffer.from(String(token || '').split('.')[1] || '', 'base64url')); } catch { return null; } };
+// Giải thích vì sao token bị từ chối (chỉ đọc phần chưa xác thực để gợi ý cách xử lý; không dùng để cho phép truy cập).
+export function explainToken(token, email, now = Date.now()) {
+  const payload = decodePayload(token), seconds = Math.floor(now / 1000);
+  if (!payload) return 'Token không hợp lệ.';
+  if (payload.exp && payload.exp <= seconds - CLOCK_SKEW_SECONDS) return 'Token đã hết hạn — hãy tải lại trang/mở lại app rồi thử lại.';
+  if (payload.iat && payload.iat > seconds + CLOCK_SKEW_SECONDS) return 'Đồng hồ máy tính chạy chậm hơn ' + Math.round((payload.iat - seconds) / 60) + ' phút so với Google — hãy đồng bộ giờ Windows (Settings → Time & language → Sync now).';
+  if (payload.email && email && String(payload.email).toLowerCase() !== String(email).toLowerCase()) return 'Tài khoản đăng nhập (' + payload.email + ') khác với tài khoản đã cấu hình trong local-settings.json.';
+  if (payload.aud && payload.aud !== project) return 'Token thuộc dự án Firebase khác.';
+  return 'Không xác minh được chữ ký token.';
+}
 
 export async function verifyFirebaseToken(token, email, now = Date.now()) {
   const parts = String(token || '').split('.');
@@ -17,12 +33,19 @@ export async function verifyFirebaseToken(token, email, now = Date.now()) {
   let header, payload;
   try { header = JSON.parse(Buffer.from(parts[0], 'base64url')); payload = JSON.parse(Buffer.from(parts[1], 'base64url')); } catch { return false; }
   const seconds = Math.floor(now / 1000);
-  if (header.alg !== 'RS256' || !header.kid || payload.aud !== project || payload.iss !== `https://securetoken.google.com/${project}` || !payload.sub || payload.exp <= seconds || !payload.exp || !payload.iat || payload.iat > seconds || payload.email?.toLowerCase() !== email.toLowerCase()) return false;
+  if (header.alg !== 'RS256' || !header.kid || payload.aud !== project || payload.iss !== `https://securetoken.google.com/${project}` || !payload.sub || payload.exp <= seconds - 60 || !payload.exp || !payload.iat || payload.iat > seconds + CLOCK_SKEW_SECONDS || payload.email?.toLowerCase() !== email.toLowerCase()) return false;
   if (!certCache || Date.now() >= certExpires || !certCache[header.kid]) {
-    const response = await fetch(certUrl, {signal: AbortSignal.timeout(10000)});
-    if (!response.ok) throw new Error('Không thể xác minh tài khoản Firebase.');
-    certCache = await response.json();
-    certExpires = Date.now() + Math.min(Number(/max-age=(\d+)/.exec(response.headers.get('cache-control') || '')?.[1] || 300), 3600) * 1000;
+    // Mạng của máy tính chập chờn khi lấy chứng chỉ không được làm hỏng cả yêu cầu: thử lại một lần, rồi dùng tạm chứng chỉ cũ (Google chỉ xoay khoá vài ngày một lần).
+    let fresh = null, lastError = null;
+    for (let attempt = 0; attempt < 2 && !fresh; attempt++) {
+      try {
+        const response = await fetch(certUrl, {signal: AbortSignal.timeout(8000)});
+        if (!response.ok) throw new Error('Không thể xác minh tài khoản Firebase.');
+        fresh = {certs: await response.json(), expires: Date.now() + Math.min(Number(/max-age=(\d+)/.exec(response.headers.get('cache-control') || '')?.[1] || 300), 3600) * 1000};
+      } catch (error) { lastError = error; }
+    }
+    if (fresh) { certCache = fresh.certs; certExpires = fresh.expires; }
+    else if (!certCache || !certCache[header.kid]) throw lastError || new Error('Không thể xác minh tài khoản Firebase.');
   }
   if (!certCache[header.kid]) return false;
   const verify = createVerify('RSA-SHA256');
@@ -32,29 +55,51 @@ export async function verifyFirebaseToken(token, email, now = Date.now()) {
 
 export function createBridge({email, upstreamKey, fetchImpl = fetch, verifyToken = verifyFirebaseToken, allowedHosts = new Set(['127.0.0.1:18318', 'localhost:18318']), allowedOrigins = origins}) {
   if (!email || !upstreamKey) throw new Error('Thiếu tài khoản website hoặc khoá kết nối cục bộ.');
+  let modelsCache = null;
   return http.createServer(async (req, res) => {
     const origin = req.headers.origin;
     const host = String(req.headers.host || '').trim();
     if (!allowedOrigins.has(origin) || (!allowedHosts.has(host) && !allowedHosts.has(host.toLowerCase()))) { res.writeHead(403).end(); return; }
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
     res.setHeader('Access-Control-Allow-Private-Network', 'true');
     if (req.method === 'OPTIONS') { res.writeHead(204).end(); return; }
-    if (req.method !== 'POST' || req.url !== '/v1/chat/completions') { res.writeHead(404).end(); return; }
+    const isModels = req.method === 'GET' && req.url === '/v1/models';
+    if (!isModels && (req.method !== 'POST' || req.url !== '/v1/chat/completions')) { res.writeHead(404).end(); return; }
+    const fail = (status, message, code) => { if (!res.headersSent) res.writeHead(status, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'}); res.end(JSON.stringify({error: {message, code}})); };
     try {
       const token = /^Bearer (.+)$/.exec(req.headers.authorization || '')?.[1];
-      if (!token || !await verifyToken(token, email)) { res.writeHead(401).end(); return; }
+      if (!token) { fail(401, 'Thiếu token đăng nhập.', 'auth'); return; }
+      let accepted;
+      try { accepted = await verifyToken(token, email); }
+      catch { fail(503, 'Máy trung gian không tải được chứng chỉ xác minh của Google (mạng của máy tính đang chập chờn). Thử lại sau vài giây.', 'cert'); return; }
+      if (!accepted) { fail(401, 'Cầu nối từ chối token: ' + explainToken(token, email), 'auth'); return; }
+      if (isModels) {
+        // Danh sách mô hình thật mà các tài khoản Antigravity trong CLIProxyAPI đang dùng được (lưu đệm 30 giây).
+        if (!modelsCache || Date.now() > modelsCache.until) {
+          const upstream = await fetchImpl('http://127.0.0.1:18317/v1/models', {headers: {Authorization: 'Bearer ' + upstreamKey}, signal: AbortSignal.timeout(15000)});
+          if (!upstream.ok) { fail(upstream.status === 401 ? 502 : upstream.status, 'CLIProxyAPI không trả được danh sách mô hình (HTTP ' + upstream.status + ').', 'upstream'); return; }
+          modelsCache = {body: Buffer.from(await upstream.arrayBuffer()), until: Date.now() + 30000};
+        }
+        res.writeHead(200, {'Content-Type': 'application/json', 'Cache-Control': 'no-store'});
+        res.end(modelsCache.body);
+        return;
+      }
       let size = 0; const chunks = [];
       for await (const chunk of req) { size += chunk.length; if (size > 12 * 1024 * 1024) { res.writeHead(413).end(); return; } chunks.push(chunk); }
       const body = Buffer.concat(chunks);
       const parsed = JSON.parse(body.toString('utf8'));
-      if (!['gemini-3-flash', 'gemini-3.8-flash-tiered'].includes(parsed.model) || parsed.stream !== false) { res.writeHead(400).end(); return; }
-      const upstream = await fetchImpl('http://127.0.0.1:18317/v1/chat/completions', {method: 'POST', headers: {'Content-Type':'application/json', Authorization: 'Bearer ' + upstreamKey}, body, signal: AbortSignal.timeout(180000)});
+      if (!MODEL_PATTERN.test(String(parsed.model || '')) || parsed.stream !== false) { fail(400, 'Tên mô hình không hợp lệ hoặc yêu cầu không ở chế độ stream=false.', 'bad_request'); return; }
+      const send = () => fetchImpl('http://127.0.0.1:18317/v1/chat/completions', {method: 'POST', headers: {'Content-Type':'application/json', Authorization: 'Bearer ' + upstreamKey}, body, signal: AbortSignal.timeout(180000)});
+      let upstream;
+      // Chỉ thử lại khi KẾT NỐI tới CLIProxyAPI bị ngắt trước khi có phản hồi (không thử lại khi đã nhận mã HTTP, để khỏi tính phí/hạn mức hai lần).
+      try { upstream = await send(); }
+      catch (error) { if (error && error.name === 'TimeoutError') throw error; await new Promise(resolve => setTimeout(resolve, 400)); upstream = await send(); }
       res.writeHead(upstream.status, {'Content-Type':'application/json', 'Cache-Control':'no-store'});
       res.end(Buffer.from(await upstream.arrayBuffer()));
-    } catch { if (!res.headersSent) res.writeHead(502, {'Content-Type':'application/json'}); res.end('{"error":{"message":"Không thể kết nối Antigravity trên máy này."}}'); }
+    } catch { fail(502, 'Không thể kết nối Antigravity trên máy này.', 'upstream'); }
   });
 }
 
@@ -87,12 +132,19 @@ export async function loadLocal(dir = bridgeDir(), read = readFile) {
 
 // Kiểm tra từng mắt xích: cấu hình → CLIProxyAPI (18317) → cầu nối (18318). Trả về danh sách dòng "OK/LỖI".
 export async function checkSetup({dir = bridgeDir(), read = readFile, fetchImpl = fetch} = {}) {
-  const lines = [];
+  const lines = [], extra = [];
   const local = await loadLocal(dir, read);
   if (local.problems.length) local.problems.forEach(text => lines.push('LỖI  ' + text)); else lines.push('OK    Cấu hình cục bộ (' + local.email + ')');
   if (local.key) {
     try {
       const upstream = await fetchImpl('http://127.0.0.1:18317/v1/models', {headers: {Authorization: 'Bearer ' + local.key}, signal: AbortSignal.timeout(5000)});
+      if (upstream.ok && typeof upstream.json === 'function') {
+        try {
+          const list = (await upstream.json())?.data;
+          const ids = Array.isArray(list) ? list.map(item => item?.id).filter(Boolean) : [];
+          extra.push(ids.length ? 'OK    Antigravity cung cấp ' + ids.length + ' mô hình: ' + ids.join(', ') : 'CẢNH BÁO  CLIProxyAPI chưa liệt kê mô hình nào — hãy đăng nhập tài khoản Antigravity trong CLIProxyAPI.');
+        } catch { /* không đọc được danh sách: bỏ qua */ }
+      }
       lines.push(upstream.ok ? 'OK    CLIProxyAPI đang chạy ở cổng 18317' : 'LỖI  CLIProxyAPI ở cổng 18317 trả về HTTP ' + upstream.status + (upstream.status === 401 ? ' — khoá trong config.yaml không khớp với CLIProxyAPI đang chạy.' : '.'));
     } catch { lines.push('LỖI  Không kết nối được CLIProxyAPI ở cổng 18317 — hãy chạy CLIProxyAPI (và đăng nhập Google/Antigravity trong đó) trước.'); }
   }
@@ -103,7 +155,18 @@ export async function checkSetup({dir = bridgeDir(), read = readFile, fetchImpl 
     const bridge = await fetchImpl(checkUrl, {method: 'OPTIONS', headers: {Origin: checkOrigin, 'Access-Control-Request-Method': 'POST'}, signal: AbortSignal.timeout(3000)});
     lines.push(bridge.status === 204 ? ('OK    Cầu nối đang chạy' + (remoteHost ? ' qua https://' + remoteHost : ' ở cổng 18318')) : 'LỖI  Cổng 18318 có dịch vụ nhưng trả HTTP ' + bridge.status + ' (có thể là chương trình khác chiếm cổng hoặc sai Host/Origin).');
   } catch { lines.push('LỖI  Cầu nối chưa chạy ở cổng 18318 — chạy: node scripts/antigravity-local-bridge.mjs'); }
-  return lines;
+  // Đồng hồ máy tính lệch so với Google làm token đăng nhập bị từ chối ngẫu nhiên.
+  try {
+    const clock = await fetchImpl(certUrl, {method: 'HEAD', signal: AbortSignal.timeout(5000)});
+    const header = clock?.headers?.get?.('date');
+    const skew = header ? Math.round((Date.now() - Date.parse(header)) / 1000) : NaN;
+    if (Number.isFinite(skew)) {
+      if (Math.abs(skew) > CLOCK_SKEW_SECONDS - 60) extra.push('LỖI  Đồng hồ máy tính lệch ' + skew + ' giây so với Google — hãy đồng bộ giờ Windows (Settings → Time & language → Sync now).');
+      else if (Math.abs(skew) > 30) extra.push('CẢNH BÁO  Đồng hồ máy tính lệch ' + skew + ' giây so với Google (cầu nối chịu được ' + CLOCK_SKEW_SECONDS + ' giây) — nên đồng bộ giờ Windows.');
+      else extra.push('OK    Đồng hồ máy tính khớp Google (lệch ' + skew + ' giây)');
+    }
+  } catch { /* không có mạng ra ngoài: bỏ qua */ }
+  return lines.concat(extra);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
