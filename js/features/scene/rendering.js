@@ -651,6 +651,7 @@ function getShapeDisplayName(shape) {
     case 'house': return 'Nhà';
     case 'goods_display': return 'Hàng hóa trưng bày';
     case 'goods_damaged': return 'Hàng hóa đổ vỡ';
+    case 'parts_debris': return 'Mảnh vỡ phụ tùng';
     case 'hill': return 'Đồi núi';
     case 'line': return 'Mũi tên di chuyển (nét liền)';
     case 'dashed_line': return 'Mũi tên di chuyển (nét đứt)';

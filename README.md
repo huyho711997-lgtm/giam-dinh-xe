@@ -268,3 +268,7 @@ Antigravity chạy qua công cụ trung gian cục bộ (`scripts/antigravity-lo
 ### Lưu công văn vào hồ sơ
 
 Thanh công cụ của công văn có nút **Lưu vào hồ sơ** (cạnh "Tải Word"): tạo bản Word của bản thảo hiện tại và lưu vào **Tài liệu hồ sơ** (kho Drive) của hồ sơ đang chọn ở chip "Hồ sơ". Kho Drive đọc `pending_claims` nên chỉ có cho **Hồ sơ tồn**; với hồ sơ giám định hoặc khi chưa chọn hồ sơ, nút báo rõ lý do và gợi ý tải Word về máy. Lưu thành công thì công văn cũng được ghi vào lịch sử. Lỗi Drive (không quyền, mạng) hiện thông báo lỗi và bản Word được giữ để thử lại trong Tài liệu hồ sơ. `ClaimDocuments.saveWord(blob, name, context, {notify:false})` trả `{ok, file | reason, error}` để nơi gọi tự báo kết quả; `ClaimDocuments.claimIdFromKey('pending:<id>')` đổi khoá hồ sơ sang mã kho.
+
+### Sơ đồ hiện trường: Mảnh vỡ phụ tùng
+
+Nhóm **Dấu vết & vật chứng** có thêm công cụ **Mảnh vỡ phụ tùng** (`parts_debris`, `js/features/scene/debris-assets.js`). Kéo một vùng (hoặc dùng viền tự nhiên / tự vẽ ranh giới như Bãi đá) để rải các mảnh nhựa, mảnh kính, mảnh ốp cản có lỗ vít, mảnh vỡ đèn và vụn nhỏ; kéo rộng thì thêm mảnh chứ không phóng to từng mảnh. Vị trí mảnh cố định theo id đối tượng nên vẽ lại, in và xuất ảnh luôn giống nhau. Mặc định không có chữ giữa vùng (tên đã có trong bảng ký hiệu); đặt "Tên vùng" thì nhãn được giữ và các mảnh tránh chỗ nhãn.

@@ -224,7 +224,7 @@ window.addEventListener('keydown', event => {
 // ---- Rừng cây / đồi cây / đồng lúa: chọn hình dạng vùng và vẽ ranh giới tự do ----
 // Khung chữ nhật không khớp khi đường cong cắt qua sườn đồi → cho phép viền tự nhiên hoặc tự vẽ ranh giới.
 // Ranh giới lưu dạng toạ độ chuẩn hoá trong khung (areaOutline) nên kéo giãn / xoay / in vẫn đúng hình.
-const SCENE_AREA_SHAPE_TYPES = ['forest', 'rice_field', 'rock_field', 'hill', 'goods_display', 'goods_damaged'];
+const SCENE_AREA_SHAPE_TYPES = ['forest', 'rice_field', 'rock_field', 'hill', 'goods_display', 'goods_damaged', 'parts_debris'];
 function getSelectedAreaShapeTarget() {
   if (typeof sceneShapes === 'undefined' || !selectedShapeId) return null;
   const ids = (typeof selectedShapeIds !== 'undefined' && Array.isArray(selectedShapeIds)) ? selectedShapeIds : [];
@@ -247,7 +247,7 @@ function setSelectedSceneryAreaShape(kind) {
 // Trước đây areaLabel được vẽ nhưng không có chỗ nhập → người dùng không đặt được tên.
 const SCENE_AREA_LABEL_DEFAULTS = {
   house: '', bridge: 'CẦU', forest: 'RỪNG CÂY', rice_field: 'ĐỒNG LÚA', rock_field: 'BÃI ĐÁ',
-  hill: 'ĐỒI NÚI', goods_display: 'HÀNG HÓA', goods_damaged: 'HÀNG HÓA ĐỔ VỠ',
+  hill: 'ĐỒI NÚI', goods_display: 'HÀNG HÓA', goods_damaged: 'HÀNG HÓA ĐỔ VỠ', parts_debris: '',
   scale_bar: '10 m'   // chiều dài thước tỷ lệ (road-assets.js)
 };
 function getSelectedAreaLabelTarget() {

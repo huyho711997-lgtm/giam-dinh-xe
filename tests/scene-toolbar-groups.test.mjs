@@ -24,7 +24,7 @@ const LEGACY_TOOLS = [
   'road_line', 'road_dashed', 'road_edge', 'road_intersection', 'curve', 'curve_dashed',
   'line', 'dashed_line', 'direction_label',
   'geo_circle', 'geo_rect', 'geo_triangle', 'geo_round_triangle', 'sign_circle_post', 'sign_triangle_post',
-  'car', 'truck', 'container', 'bike', 'fallen_bike', 'person', 'xmark', 'rect', 'house', 'goods_display', 'goods_damaged',
+  'car', 'truck', 'container', 'bike', 'fallen_bike', 'person', 'xmark', 'rect', 'house', 'goods_display', 'goods_damaged', 'parts_debris',
   'crosswalk', 'tire_track', 'guardrail', 'traffic_light', 'median', 'median_blocks', 'toll_station', 'bridge',
   'utility_pole', 'road_boundary_marker', 'pothole', 'tree', 'median_tree', 'rice_field', 'forest', 'rock_field', 'hill',
   // Thêm sau đợt chia nhóm:
@@ -81,6 +81,7 @@ test('các nhóm theo chức năng: đúng nơi đặt của những công cụ 
   assert.equal(where('xmark'), 'evidence');
   assert.equal(where('tire_track'), 'evidence');
   assert.equal(where('pothole'), 'evidence');
+  assert.equal(where('parts_debris'), 'evidence');
   assert.equal(where('house'), 'structures');
   assert.equal(where('rect'), 'structures');
   assert.equal(where('bridge'), 'road_assets');

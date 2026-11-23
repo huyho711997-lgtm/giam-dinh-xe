@@ -1055,7 +1055,7 @@ function isSceneryAssetType(type) {
     type === 'geo_circle' || type === 'geo_rect' || type === 'geo_triangle' || type === 'geo_round_triangle' ||
     isTrafficSignPostType(type) ||
     type === 'tree' || type === 'median_tree' || type === 'rice_field' || type === 'forest' ||
-    type === 'rock_field' || type === 'hill' || type === 'goods_display' || type === 'goods_damaged' || type === 'house' ||
+    type === 'rock_field' || type === 'hill' || type === 'goods_display' || type === 'goods_damaged' || type === 'parts_debris' || type === 'house' ||
     type === 'truck' || type === 'toll_station' || type === 'bridge' ||
     getSceneExtraAssetSpec(type) !== null;   // xe mới (vehicle-assets.js) và ký hiệu đường bộ (road-assets.js)
 }
@@ -1397,7 +1397,7 @@ function getSceneryAspectRatio(type) {
   if (type === 'rock_field') return 0.6;
   if (type === 'goods_display') return 0.45;
   if (type === 'house') return 0.58;
-  if (type === 'goods_damaged') return 0.6;
+  if (type === 'goods_damaged' || type === 'parts_debris') return 0.6;
   if (type === 'hill') return 0.7;
   if (type === 'truck') return 0.4;
   if (type === 'toll_station') return 0.62;
@@ -1421,7 +1421,7 @@ function getSceneryMinimumLength(type) {
   if (type === 'rice_field') return 60;
   if (type === 'forest') return 60;
   if (type === 'rock_field') return 60;
-  if (type === 'goods_display' || type === 'goods_damaged') return 50;
+  if (type === 'goods_display' || type === 'goods_damaged' || type === 'parts_debris') return 50;
   if (type === 'house') return 24;
   if (type === 'hill') return 70;
   if (type === 'truck') return 60;

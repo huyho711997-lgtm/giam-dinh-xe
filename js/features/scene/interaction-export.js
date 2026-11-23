@@ -1415,6 +1415,9 @@ function drawSceneryAsset(ctx, type, x, y, color, width, w, h, shapeData = null)
   } else if (typeof isSceneGoodsType === 'function' && isSceneGoodsType(type)) {
     // Hàng hóa trưng bày / đổ vỡ: xem goods-assets.js
     drawSceneGoods(ctx, type, x, y, color, width, w, h, shapeData);
+  } else if (typeof isSceneDebrisType === 'function' && isSceneDebrisType(type)) {
+    // Mảnh vỡ phụ tùng rơi vãi: xem debris-assets.js
+    drawSceneDebris(ctx, x, y, color, width, w, h, shapeData);
   }
   ctx.restore();
 }

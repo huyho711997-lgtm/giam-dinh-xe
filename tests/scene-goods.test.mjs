@@ -34,7 +34,7 @@ test('đăng ký công cụ hàng hóa', () => {
   const runtime = read('runtime.js');
   assert.match(runtime, /id: 'goods_display', name: 'Hàng hóa trưng bày'/);
   assert.match(runtime, /\n  goods_damaged: '<svg/);
-  assert.match(read('scene-editor-ui.js'), /'goods_display', 'goods_damaged'\]/);
+  assert.match(read('scene-editor-ui.js'), /'goods_display', 'goods_damaged'/);
   assert.match(fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8'), /scene\/goods-assets\.js\?v=/);
 });
 
