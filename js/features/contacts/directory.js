@@ -8,7 +8,7 @@ const ContactDirectoryPage = (() => {
   const SORTS = [{key: 'name', label: 'Tên A → Z'}, {key: 'unit', label: 'Phòng ban'}, {key: 'code', label: 'Mã nhân viên'}, {key: 'title', label: 'Chức danh'}];
   const XLSX_SRC = 'js/vendor/xlsx-js-style-1.2.0.bundle.js?v=20261031-kpi-4';
   const state = {q: '', nhom: 'all', phong: 'all', chucDanh: 'all', noiLamViec: 'all', donVi: 'all', quick: 'all', sort: 'name', view: window.innerWidth < 900 ? 'cards' : 'table', page: 1, per: 24};
-  let host = null, records = [], loaded = false, loadError = '', storeStatus = 'idle', listening = false, modal = null, searchTimer = 0, xlsxPromise = null, importState = null, confirmResolve = null;
+  let host = null, records = [], loaded = false, loadError = '', listening = false, modal = null, searchTimer = 0, xlsxPromise = null, importState = null, confirmResolve = null;
 
   const I = {
     book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><circle cx="13" cy="9" r="2.4"/><path d="M8.6 15.2c.6-1.6 2.2-2.5 4.4-2.5s3.8.9 4.4 2.5"/>',
@@ -43,17 +43,19 @@ const ContactDirectoryPage = (() => {
 
   // ----- Dữ liệu (realtime) -----
   function ensureListener() {
-    if (listening) return;
+    if (listening || typeof dbNodeInstance === 'undefined' || !dbNodeInstance) return;
     listening = true;
-    // Dữ liệu danh bạ nằm ở Supabase (dùng chung với trang Tasco DLK); xem contact-store.js.
-    ContactStore.subscribe(snap => {
-      storeStatus = snap.status;
-      records = snap.records.map(rec => ({...rec, _s: C().searchText(rec)}));
-      if (snap.status === 'ready' || snap.status === 'error' || snap.status === 'signedout') loaded = true;
-      loadError = snap.status === 'error' ? snap.message : '';
+    // Nguồn chính là Firebase (contact_directory): dùng chung phiên đăng nhập của app, không cần đăng nhập thêm.
+    // Bản sao sang Supabase (cho trang Tasco DLK trên điện thoại) chỉ chạy nền khi máy này đã có phiên Supabase: xem mirrorContacts.
+    dbNodeInstance.ref('contact_directory').on('value', snap => {
+      const value = snap.val() || {};
+      records = Object.entries(value).filter(([, r]) => r && typeof r === 'object' && r.hoTen).map(([key, r]) => { const rec = {key, ...r}; rec._s = C().searchText(rec); return rec; });
+      loaded = true; loadError = '';
       if (host && host.isConnected) paint();
-    });
+    }, error => { listening = false; loaded = true; loadError = (error && error.message) || 'Không đọc được danh bạ'; if (host && host.isConnected) paint(); });
   }
+  // Chép nền sang Supabase (một chiều, âm thầm); chưa đăng nhập Supabase hoặc không đủ quyền thì bỏ qua, không ảnh hưởng thao tác của người dùng.
+  const mirrorContacts = (recs, removeKeys, by) => { ContactStore.mirror(recs, {removeKeys, by}).catch(() => {}); };
   const missing = r => !r.sdt || !r.email;
   const quickTest = {all: () => true, missing};
   function view() {
@@ -169,7 +171,7 @@ const ContactDirectoryPage = (() => {
     host.querySelector('[data-ct-reset]').disabled = !filtered;
     host.querySelector('#ctCount').innerHTML = `<strong>${total.toLocaleString('vi-VN')}</strong> / ${records.length.toLocaleString('vi-VN')} liên hệ`;
     host.querySelectorAll('[data-ct-view]').forEach(b => { const on = b.dataset.ctView === state.view; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
-    const empty = storeStatus === 'signedout' ? loginHtml() : !loaded ? `<div class="pn-empty"><b>Đang tải danh bạ…</b></div>` : loadError ? `<div class="pn-empty">${svg('alert', 28)}<b>Không đọc được danh bạ</b><span>${esc(loadError)}</span></div>`
+    const empty = !loaded ? `<div class="pn-empty"><b>Đang tải danh bạ…</b></div>` : loadError ? `<div class="pn-empty">${svg('alert', 28)}<b>Không đọc được danh bạ</b><span>${esc(loadError)}</span></div>`
       : `<div class="pn-empty">${svg('search', 28)}<b>${records.length ? 'Không có liên hệ phù hợp' : 'Danh bạ chưa có dữ liệu'}</b><span>${records.length ? 'Thử bỏ bớt bộ lọc hoặc đổi từ khóa tìm kiếm.' : canManage() ? 'Bấm “Nhập Excel” để nạp danh sách nhân sự từ file Excel.' : 'Quản trị viên chưa nạp danh bạ.'}</span>${records.length && filtered ? '<button type="button" class="pending-action-btn" data-ct-reset><span>Xóa bộ lọc</span></button>' : ''}${!records.length && loaded && !loadError && canManage() ? '<button type="button" class="pending-action-btn pending-action-btn--import" data-ct-import><span>Nhập Excel</span></button>' : ''}</div>`;
     const body = host.querySelector('#ctBody');
     if (!pageRows.length) body.innerHTML = empty;
@@ -181,19 +183,6 @@ const ContactDirectoryPage = (() => {
     if (keepOpen && host.querySelector(`[data-ct-dd="${keepOpen}"]`)) openDd(keepOpen);
   }
 
-  // ----- Đăng nhập Supabase (danh bạ dùng chung; chỉ phải đăng nhập một lần / thiết bị) -----
-  function loginHtml() {
-    return `<form class="rc-garage-login ct-login" data-ct-login><div><strong>Đăng nhập để dùng danh bạ dùng chung</strong><p>Danh bạ lưu trên hệ thống Tasco DLK (Supabase), cùng dữ liệu với trang Tasco DLK trên điện thoại. Dùng email và mật khẩu của trang đó.</p></div>
-      <label class="sf-field"><span class="sf-field-label">Email</span><input type="email" name="email" autocomplete="username" required></label><label class="sf-field"><span class="sf-field-label">Mật khẩu</span><input type="password" name="password" autocomplete="current-password" required></label>
-      <p class="sf-feedback" role="status" aria-live="polite" data-ct-login-msg></p><button type="submit" class="sf-button sf-primary">${svg('check', 16)}<span>Đăng nhập</span></button></form>`;
-  }
-  async function onSubmit(event) {
-    const form = event.target.closest('[data-ct-login]'); if (!form) return;
-    event.preventDefault();
-    const msg = form.querySelector('[data-ct-login-msg]'), button = form.querySelector('button[type=submit]'); msg.textContent = ''; button.disabled = true;
-    try { await ContactStore.signIn(form.elements.email.value, form.elements.password.value); }
-    catch (error) { msg.textContent = error && error.message || 'Không đăng nhập được.'; button.disabled = false; }
-  }
   // ----- Đồng bộ sang Supabase (Admin): chuyển danh bạ Firebase cũ + đẩy bản rút gọn hồ sơ -----
   async function syncShared(button) {
     if (!await askConfirm('Đẩy dữ liệu sang Supabase?', 'Sẽ <b>chép danh bạ từ Firebase</b> sang kho dùng chung (ghi đè theo Mã NV, không xóa gì ở Firebase) và <b>đẩy bản rút gọn hồ sơ bồi thường</b> (không có số tiền, SĐT) cho trang Tasco DLK.', 'Đồng ý đẩy', false)) return;
@@ -309,7 +298,10 @@ const ContactDirectoryPage = (() => {
     try {
       const out = {...rec, updatedAt: Date.now(), updatedBy: me().slice(0, 120)};
       if (out.namSinh === null) delete out.namSinh;
-      await ContactStore.upsertMany([{...out, key}], {removeKeys: oldKey && oldKey !== key ? [oldKey] : [], by: me()});
+      const updates = {['contact_directory/' + key]: out};
+      if (oldKey && oldKey !== key) updates['contact_directory/' + oldKey] = null;
+      await dbNodeInstance.ref().update(updates);
+      mirrorContacts([{...out, key}], oldKey && oldKey !== key ? [oldKey] : [], me());
       if (typeof logUserActivity === 'function') logUserActivity('SYSTEM_SETTING', (oldKey ? 'Sửa' : 'Thêm') + ' liên hệ danh bạ: ' + rec.hoTen + ' (' + rec.maNv + ')');
       toast(oldKey ? 'Đã cập nhật liên hệ' : 'Đã thêm liên hệ', 'success'); closeModal();
     } catch (error) { fail('Không lưu được: ' + (error && error.message || 'lỗi không xác định')); save.disabled = false; }
@@ -327,7 +319,8 @@ const ContactDirectoryPage = (() => {
     if (!can('delete')) return void toast('Bạn không có quyền xóa liên hệ trong Danh bạ nội bộ.', 'warning');
     if (!await askConfirm('Xóa liên hệ?', `<b>${esc(r.hoTen)}</b> (${esc(r.maNv || '—')}) sẽ bị xóa khỏi danh bạ cho mọi người dùng. Không thể hoàn tác.`, 'Xóa liên hệ', true)) return;
     try {
-      await ContactStore.remove(key);
+      await dbNodeInstance.ref('contact_directory/' + key).remove();
+      mirrorContacts([], [key], me());
       if (typeof logUserActivity === 'function') logUserActivity('SYSTEM_SETTING', 'Xóa liên hệ danh bạ: ' + r.hoTen + ' (' + r.maNv + ')');
       toast('Đã xóa liên hệ', 'success'); closeModal();
     } catch (error) { toast('Không xóa được: ' + (error && error.message || 'lỗi không xác định'), 'error'); }
@@ -378,12 +371,15 @@ const ContactDirectoryPage = (() => {
     if (s.mode === 'replace' && d.removed.length && !await askConfirm('Thay thế toàn bộ danh bạ?', `Sẽ <b>xóa ${d.removed.length}</b> liên hệ không có trong file, thêm ${d.added.length} và cập nhật ${d.updated.length}. Không thể hoàn tác.`, 'Đồng ý thay thế', true)) return;
     go.disabled = true; go.querySelector('span:last-child').textContent = 'Đang ghi…';
     try {
-      const by = me().slice(0, 120), label = go.querySelector('span:last-child');
-      const list = [...d.added, ...d.updated].map(r => { const {_s, ...rest} = r; return rest; });
-      await ContactStore.upsertMany(list, {removeKeys: d.removed, by, onProgress: (done, total) => { label.textContent = `Đang ghi… ${done}/${total}`; }});
+      const now = Date.now(), by = me().slice(0, 120), updates = {}, label = go.querySelector('span:last-child'), mirrorList = [];
+      for (const r of [...d.added, ...d.updated]) { const {key, _s, ...rest} = r; const out = {...rest, updatedAt: now, updatedBy: by}; if (out.namSinh === null) delete out.namSinh; updates['contact_directory/' + key] = out; mirrorList.push({...out, key}); }
+      for (const key of d.removed) updates['contact_directory/' + key] = null;
+      const keys = Object.keys(updates);
+      for (let i = 0; i < keys.length; i += 300) { await dbNodeInstance.ref().update(Object.fromEntries(keys.slice(i, i + 300).map(k => [k, updates[k]]))); label.textContent = `Đang ghi… ${Math.min(i + 300, keys.length)}/${keys.length}`; }
+      mirrorContacts(mirrorList, d.removed, by);
       if (typeof logUserActivity === 'function') logUserActivity('SYSTEM_SETTING', `Nhập danh bạ nội bộ từ Excel: +${d.added.length}, cập nhật ${d.updated.length}, xóa ${d.removed.length} (${s.fileName})`);
       toast(`Đã nhập danh bạ: thêm ${d.added.length}, cập nhật ${d.updated.length}${d.removed.length ? ', xóa ' + d.removed.length : ''}`, 'success'); closeModal();
-    } catch (error) { toast('Không nhập được: ' + (error && error.message || 'lỗi không xác định') + '. Chỉ Admin được ghi danh bạ dùng chung.', 'error'); go.disabled = false; go.querySelector('span:last-child').textContent = 'Thử lại'; }
+    } catch (error) { toast('Không nhập được: ' + (error && error.message || 'lỗi không xác định') + '. Kiểm tra quyền ghi trong Firebase rules.', 'error'); go.disabled = false; go.querySelector('span:last-child').textContent = 'Thử lại'; }
   }
 
   // ----- Khung trang & sự kiện -----
@@ -467,7 +463,7 @@ const ContactDirectoryPage = (() => {
       closeModal();
       target.innerHTML = skeleton();
       host = target.querySelector('#ctRoot');
-      host.addEventListener('click', onClick); host.addEventListener('keydown', onKey); host.addEventListener('input', onInput); host.addEventListener('change', onChange); host.addEventListener('submit', onSubmit);
+      host.addEventListener('click', onClick); host.addEventListener('keydown', onKey); host.addEventListener('input', onInput); host.addEventListener('change', onChange);
       const drop = host.querySelector('#ctModal');
       drop.addEventListener('dragover', e => { if (e.target.closest('#ctDrop')) { e.preventDefault(); e.target.closest('#ctDrop').classList.add('is-over'); } });
       drop.addEventListener('dragleave', e => e.target.closest('#ctDrop')?.classList.remove('is-over'));

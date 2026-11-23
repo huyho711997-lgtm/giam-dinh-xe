@@ -1,7 +1,8 @@
 /* Kho dữ liệu DÙNG CHUNG giữa giam-dinh-xe và trang Tasco DLK (mobile) trên Supabase.
  *   • Danh bạ nội bộ:  bảng tasco_contacts (+ tasco_contact_private: năm sinh/giới tính, chỉ Admin đọc được).
  *   • Hồ sơ bồi thường: bảng tasco_claims_mirror — bản RÚT GỌN, đẩy MỘT CHIỀU từ Firebase sang (không có số tiền, SĐT).
- * Dùng chung phiên đăng nhập Supabase với tab Gara cứu hộ (RescueGarages.getClient) nên chỉ phải đăng nhập một lần / thiết bị.
+ * Trang Danh bạ nội bộ đọc/ghi Firebase (không cần đăng nhập thêm) và dùng mirror() để chép một chiều sang đây khi máy đã có phiên Supabase.
+ * Phiên Supabase dùng chung với tab Gara cứu hộ (RescueGarages.getClient), chỉ cần đăng nhập một lần / thiết bị.
  * Quyền thật sự do RLS của Supabase quyết định: mọi tài khoản đang hoạt động được đọc; chỉ Admin được ghi.
  * Các hàm ánh xạ dữ liệu là hàm thuần (ContactStore.pure / ClaimsMirror.pure) để kiểm thử. */
 const ContactStore = (() => {
@@ -97,25 +98,41 @@ const ContactStore = (() => {
   // ----- Ghi (RLS: chỉ Admin) -----
   async function write(operation) {
     const api = await client(), {data} = await api.auth.getSession();
-    if (!data || !data.session) throw new Error('Đăng nhập tài khoản Supabase để lưu danh bạ.');
+    if (!data || !data.session) throw new Error('Chưa đăng nhập Supabase trên máy này. Đăng nhập ở tab Gara cứu hộ (một lần / thiết bị) rồi thử lại.');
     try { await operation(api); } catch (error) { throw error instanceof Error && !error.code ? error : new Error(describe(error)); }
     await load();
   }
+  // Ghi theo lô lên Supabase (dùng chung cho upsertMany và mirror).
+  async function applyChanges(api, list, removeKeys, by, onProgress) {
+    const total = list.length + removeKeys.length;
+    let done = 0;
+    for (const part of chunks(list, CHUNK)) {
+      const at = new Date().toISOString();
+      await timed(api.from(T).upsert(part.map(rec => toRow(rec, by, at)), {onConflict: 'ma_nv'}));
+      await timed(api.from(P).upsert(part.map(toPrivate), {onConflict: 'ma_nv'}));
+      done += part.length; if (onProgress) onProgress(done, total);
+    }
+    for (const part of chunks(removeKeys, CHUNK)) { await timed(api.from(T).delete().in('ma_nv', part)); done += part.length; if (onProgress) onProgress(done, total); }
+  }
   // upsert: danh sách bản ghi {key,...}; removeKeys: khoá cần xóa. onProgress(done,total).
   async function upsertMany(recs, {removeKeys = [], by = '', onProgress} = {}) {
-    const list = recs.filter(rec => KEY_RE.test(String(rec.key || ''))), total = list.length + removeKeys.length;
+    const list = recs.filter(rec => KEY_RE.test(String(rec.key || '')));
     if (list.length !== recs.length) throw new Error('Có liên hệ có Mã NV không hợp lệ (chỉ dùng chữ, số, gạch ngang/dưới).');
-    let done = 0;
-    await write(async api => {
-      for (const part of chunks(list, CHUNK)) {
-        const at = new Date().toISOString();
-        await timed(api.from(T).upsert(part.map(rec => toRow(rec, by, at)), {onConflict: 'ma_nv'}));
-        await timed(api.from(P).upsert(part.map(toPrivate), {onConflict: 'ma_nv'}));
-        done += part.length; if (onProgress) onProgress(done, total);
-      }
-      for (const part of chunks(removeKeys, CHUNK)) { await timed(api.from(T).delete().in('ma_nv', part)); done += part.length; if (onProgress) onProgress(done, total); }
-    });
+    await write(api => applyChanges(api, list, removeKeys, by, onProgress));
     return {written: list.length, removed: removeKeys.length};
+  }
+  // Sao chép MỘT CHIỀU sang Supabase sau khi đã lưu ở Firebase (nguồn chính của trang Danh bạ, không cần đăng nhập thêm).
+  // Chỉ chạy khi trình duyệt này đã có phiên Supabase; chưa đăng nhập hoặc không đủ quyền thì bỏ qua âm thầm, không bao giờ ném lỗi.
+  async function mirror(recs, {removeKeys = [], by = ''} = {}) {
+    try {
+      const list = (recs || []).filter(rec => KEY_RE.test(String(rec.key || ''))), keys = (removeKeys || []).filter(key => KEY_RE.test(String(key)));
+      if (!list.length && !keys.length) return {ok: true, written: 0, removed: 0};
+      const g = garages(); if (!g) return {ok: false, reason: 'unavailable'};
+      const api = await g.getClient(), {data} = await api.auth.getSession();
+      if (!data || !data.session) return {ok: false, reason: 'signedout'};
+      await applyChanges(api, list, keys, by);
+      return {ok: true, written: list.length, removed: keys.length};
+    } catch (error) { return {ok: false, reason: 'error', message: describe(error)}; }
   }
   const remove = key => upsertMany([], {removeKeys: [key]});
 
@@ -128,7 +145,7 @@ const ContactStore = (() => {
     return {...result, skipped: parsed.skipped.length};
   }
 
-  return {subscribe, reload: load, signIn, upsertMany, remove, migrateFromFirebase, snapshot, get status() { return status; }, pure: {toRow, toPrivate, fromRows, fromFirebase, hasCode, chunks, KEY_RE}};
+  return {subscribe, reload: load, signIn, upsertMany, mirror, remove, migrateFromFirebase, snapshot, get status() { return status; }, pure: {toRow, toPrivate, fromRows, fromFirebase, hasCode, chunks, KEY_RE}};
 })();
 
 /* Bản rút gọn hồ sơ bồi thường → Supabase (một chiều). Chỉ chạy khi trình duyệt đã đăng nhập Supabase bằng tài khoản Admin. */

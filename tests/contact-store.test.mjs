@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const src = fs.readFileSync(new URL('../js/features/contacts/contact-store.js', import.meta.url), 'utf8');
-const ctx = vm.createContext({document: {addEventListener() {}, hidden: false}});
+const ctx = vm.createContext({document: {addEventListener() {}, hidden: false}, AbortController, setTimeout, clearTimeout});
 const {ContactStore, ClaimsMirror} = vm.runInContext(src + '\n;({ContactStore, ClaimsMirror})', ctx);
 const P = ContactStore.pure, M = ClaimsMirror.pure;
 const plain = value => JSON.parse(JSON.stringify(value));   // đưa mảng/đối tượng từ vm về realm hiện tại để deepEqual so được
@@ -57,4 +57,42 @@ test('kế hoạch đồng bộ: chỉ ghi hàng đổi, xóa hàng đã mất, 
   assert.deepEqual(plain(M.plan({}, pushed).removeIds), []);
   pushed.set('old', 'x');
   assert.deepEqual(plain(M.plan(payload, pushed).removeIds), ['old']);
+});
+
+function fakeApi({session = true, fail = null} = {}) {
+  const calls = [];
+  const ok = {abortSignal: async () => (fail ? {error: fail} : {data: null, error: null})};
+  return {
+    calls,
+    auth: {getSession: async () => ({data: {session: session ? {} : null}})},
+    from: table => ({
+      upsert: (rows, opts) => { calls.push(['upsert', table, rows.map(r => r.ma_nv), opts.onConflict]); return ok; },
+      delete: () => ({in: (col, keys) => { calls.push(['delete', table, col, keys]); return ok; }})
+    })
+  };
+}
+const withApi = api => { ctx.RescueGarages = {getClient: async () => api}; };
+
+test('mirror: chưa đăng nhập Supabase thì bỏ qua âm thầm, không ghi, không ném lỗi', async () => {
+  const api = fakeApi({session: false}); withApi(api);
+  const r = await ContactStore.mirror([{key: 'TIC1', hoTen: 'A'}], {by: 'Admin'});
+  assert.deepEqual(plain(r), {ok: false, reason: 'signedout'}); assert.equal(api.calls.length, 0);
+});
+
+test('mirror: có phiên thì ghi bảng chính + bảng cá nhân, xóa khoá cũ, bỏ khoá không hợp lệ', async () => {
+  const api = fakeApi(); withApi(api);
+  const r = await ContactStore.mirror([{key: 'TIC1', hoTen: 'A', namSinh: 1990}, {key: 'bad key', hoTen: 'B'}], {removeKeys: ['OLD1', 'x y'], by: 'Admin'});
+  assert.deepEqual(plain(r), {ok: true, written: 1, removed: 1});
+  assert.deepEqual(plain(api.calls), [['upsert', 'tasco_contacts', ['TIC1'], 'ma_nv'], ['upsert', 'tasco_contact_private', ['TIC1'], 'ma_nv'], ['delete', 'tasco_contacts', 'ma_nv', ['OLD1']]]);
+  assert.deepEqual(plain(await ContactStore.mirror([], {removeKeys: []})), {ok: true, written: 0, removed: 0});
+});
+
+test('mirror: không đủ quyền (RLS) hoặc lỗi mạng chỉ trả kết quả lỗi, không ném', async () => {
+  withApi(fakeApi({fail: {code: '42501', message: 'new row violates row-level security policy'}}));
+  const denied = await ContactStore.mirror([{key: 'TIC1', hoTen: 'A'}]);
+  assert.equal(denied.ok, false); assert.equal(denied.reason, 'error'); assert.match(denied.message, /Admin/);
+  ctx.RescueGarages = {getClient: async () => { throw new Error('offline'); }};
+  assert.equal((await ContactStore.mirror([{key: 'TIC1', hoTen: 'A'}])).reason, 'error');
+  ctx.RescueGarages = undefined;
+  assert.equal((await ContactStore.mirror([{key: 'TIC1', hoTen: 'A'}])).reason, 'unavailable');
 });

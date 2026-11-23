@@ -272,3 +272,7 @@ Thanh công cụ của công văn có nút **Lưu vào hồ sơ** (cạnh "Tải
 ### Sơ đồ hiện trường: Mảnh vỡ phụ tùng
 
 Nhóm **Dấu vết & vật chứng** có thêm công cụ **Mảnh vỡ phụ tùng** (`parts_debris`, `js/features/scene/debris-assets.js`). Kéo một vùng (hoặc dùng viền tự nhiên / tự vẽ ranh giới như Bãi đá) để rải các mảnh nhựa, mảnh kính, mảnh ốp cản có lỗ vít, mảnh vỡ đèn và vụn nhỏ; kéo rộng thì thêm mảnh chứ không phóng to từng mảnh. Vị trí mảnh cố định theo id đối tượng nên vẽ lại, in và xuất ảnh luôn giống nhau. Mặc định không có chữ giữa vùng (tên đã có trong bảng ký hiệu); đặt "Tên vùng" thì nhãn được giữ và các mảnh tránh chỗ nhãn.
+
+### Danh bạ nội bộ: không cần đăng nhập thêm
+
+Trang **Danh bạ nội bộ** đọc/ghi Firebase (`contact_directory`) bằng chính phiên đăng nhập của app và quyền Danh bạ (xem/thêm/sửa/xóa) như trước, không còn form đăng nhập Supabase. Dữ liệu Firebase và Supabase khớp nhau (1.302 liên hệ, chép ngày 18/11). Mỗi lần Thêm/Sửa/Xóa/Nhập Excel, app chép nền một chiều sang Supabase (`ContactStore.mirror`) **chỉ khi** trình duyệt đó đã có phiên Supabase (Admin đã đăng nhập ở tab Gara cứu hộ); chưa đăng nhập hoặc không đủ quyền thì bỏ qua âm thầm. Trang Tasco DLK trên điện thoại vẫn đọc Supabase; nút **Đẩy sang Supabase** vẫn dùng để chép lại toàn bộ khi cần.
