@@ -142,3 +142,42 @@ test('Antigravity có suy luận sâu: reasoning_effort high khi bật, low khi 
   assert.ok(M.timeoutMs('antigravity', true) > 120000 && M.timeoutMs('antigravity', true) < 180000);   // dài hơn lượt thường nhưng ngắn hơn hạn 180 giây của cầu nối
   for (const id of ['deepseek', 'gemini', 'groq', 'custom']) assert.equal(M.timeoutMs(id, true), 0);
 });
+
+test('Antigravity hỗ trợ endpoint HTTPS Tailscale (.ts.net) theo trình duyệt và từ chối URL không hợp lệ', () => {
+  // Mặc định vẫn là localhost
+  assert.equal(M.resolve(M.defaults(), 'antigravity:gemini-3-flash').endpoint, 'http://127.0.0.1:18318/v1/chat/completions');
+  // Chuẩn hoá các dạng URL Tailscale HTTPS hợp lệ
+  assert.equal(M.normalizeAntigravityBase('https://relay-node.tail1234.ts.net'), 'https://relay-node.tail1234.ts.net/v1');
+  assert.equal(M.normalizeAntigravityBase('https://RELAY-NODE.tail1234.ts.net/v1/'), 'https://relay-node.tail1234.ts.net/v1');
+  assert.equal(M.normalizeAntigravityBase('https://relay-node.tail1234.ts.net/v1/chat/completions'), 'https://relay-node.tail1234.ts.net/v1');
+  // Từ chối HTTP, non-Tailscale, IP, username/password, query, hash, path lạ
+  for (const bad of [
+    'http://relay-node.tail1234.ts.net',
+    'http://127.0.0.1:18318/v1',
+    'https://100.64.0.1/v1',
+    'https://evil.example.com/v1',
+    'https://relay-node.tail1234.ts.net.evil.com',
+    'https://ts.net',
+    'https://single.ts.net',
+    'https://user:pass@relay-node.tail1234.ts.net',
+    'https://user@relay-node.tail1234.ts.net',
+    'https://relay-node.tail1234.ts.net?foo=1',
+    'https://relay-node.tail1234.ts.net/v1?token=abc',
+    'https://relay-node.tail1234.ts.net/v1#frag',
+    'https://relay-node.tail1234.ts.net/other'
+  ]) {
+    assert.equal(M.normalizeAntigravityBase(bad), '', 'phải từ chối: ' + bad);
+  }
+  // Lưu vào localStorage, không lưu khoá relay và giữ nguyên danh sách model cố định
+  const saved = M.save({selected: 'antigravity:gemini-3-flash', providers: {antigravity: {base: 'https://relay-node.tail1234.ts.net', apiKey: 'should-drop', models: ['evil-model']}}});
+  const loaded = M.load();
+  const active = M.resolve(loaded, 'antigravity:gemini-3-flash');
+  assert.equal(active.endpoint, 'https://relay-node.tail1234.ts.net/v1/chat/completions');
+  assert.equal(active.providerLabel, 'Antigravity (Tailscale)');
+  assert.equal(loaded.providers.antigravity.apiKey, undefined);
+  assert.deepEqual(plain(M.entries(loaded).filter(e => e.provider === 'antigravity').map(e => e.model)), ['gemini-3.8-flash-tiered', 'gemini-3-flash']);
+  assert.equal(saved.providers.antigravity.base, 'https://relay-node.tail1234.ts.net/v1');
+  // Xoá endpoint Tailscale thì quay lại localhost mặc định
+  M.save({selected: 'antigravity:gemini-3-flash', providers: {antigravity: {base: ''}}});
+  assert.equal(M.resolve(M.load(), 'antigravity:gemini-3-flash').endpoint, 'http://127.0.0.1:18318/v1/chat/completions');
+});

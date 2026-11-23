@@ -1901,7 +1901,16 @@ const OfficialLetterPage = (() => {
   }
 
   // ---- Cài đặt đơn vị ban hành ----
-  // Thẻ cài đặt cho từng nhà cung cấp AI: khoá, danh sách mô hình, (tuỳ chỉnh) địa chỉ gốc.
+  // Thẻ cài đặt cho từng nhà cung cấp AI: khoá, danh sách mô hình, (tuỳ chỉnh) địa chỉ gốc, và cầu nối Antigravity.
+  function antigravityCard(M, cfg, field) {
+    const base = (cfg.providers.antigravity && cfg.providers.antigravity.base) || '';
+    const host = base ? base.replace(/^https:\/\//i, '').replace(/\/.*$/, '') : '';
+    const display = base ? base.replace(/\/v1$/i, '') : '';
+    return '<section class="ol-set-card ol-set-key" data-prov="antigravity"><div class="ol-set-card-head"><h3>Antigravity (máy trung gian riêng)</h3><span class="ol-set-pill is-ok" data-ag-st>' + esc(host ? 'Tailscale · ' + host : 'Mặc định · localhost') + '</span></div>'
+      + '<p class="ol-set-note">Xác thực bằng tài khoản đăng nhập website (Firebase), không lưu khoá relay trên trình duyệt. Để trống để dùng mặc định trên chính máy này (<code>http://127.0.0.1:18318/v1</code>), hoặc nhập địa chỉ HTTPS Tailscale (<code>.ts.net</code>) lưu riêng trên trình duyệt này.</p>'
+      + field('Địa chỉ máy trung gian Tailscale <em>(tuỳ chọn · chỉ HTTPS .ts.net)</em>', '<input data-ag-base type="url" maxlength="300" value="' + esc(display) + '" placeholder="https://ten-may.tailxxxx.ts.net (để trống = localhost)" autocomplete="off" spellcheck="false">', true)
+      + '<div class="ol-set-links"><span>Mô hình cố định: ' + esc(M.PROVIDERS.antigravity.models.join(', ')) + '</span><span class="ol-set-actions"><button type="button" class="ol-set-link" data-ag-reset' + (base ? '' : ' hidden') + '>Dùng mặc định (localhost)</button></span></div></section>';
+  }
   function providerCards() {
     const M = Models();
     if (!M) return '';
@@ -1915,7 +1924,7 @@ const OfficialLetterPage = (() => {
         + field('Mô hình <em>(cách nhau dấu phẩy; mô hình đầu là mặc định)</em>', '<input data-models maxlength="400" value="' + esc(c.models.join(', ')) + '" placeholder="' + esc(id === 'custom' ? 'meta-llama/llama-3.3-70b-instruct:free' : p.models.join(', ')) + '" autocomplete="off" spellcheck="false">')
         + '<div class="ol-set-models" data-list></div>'
         + '<div class="ol-set-links">' + (p.keyUrl ? '<a href="' + esc(p.keyUrl) + '" target="_blank" rel="noopener noreferrer">Lấy khoá ↗</a>' : '<span></span>') + '<span class="ol-set-actions"><button type="button" class="ol-set-link" data-fetch>Lấy danh sách mô hình</button><button type="button" class="ol-set-danger" data-clear hidden>Xoá khoá</button></span></div></section>';
-    }).join('');
+    }).join('') + antigravityCard(M, cfg, field);
   }
   function openSettings() {
     const issuer = loadIssuer();
@@ -1978,12 +1987,33 @@ const OfficialLetterPage = (() => {
         pick.classList.toggle('is-on');
       };
     });
+    const agBaseInput = dialog.querySelector('[data-ag-base]');
+    const agResetBtn = dialog.querySelector('[data-ag-reset]');
+    const agStatePill = dialog.querySelector('[data-ag-st]');
+    if (agResetBtn && agBaseInput) {
+      agResetBtn.onclick = () => {
+        agBaseInput.value = '';
+        agResetBtn.hidden = true;
+        if (agStatePill) agStatePill.textContent = 'Mặc định · localhost';
+        agBaseInput.focus();
+      };
+    }
     dialog.querySelectorAll('[data-eye-icon]').forEach(node => { node.innerHTML = eyeIcon; });
     dialog.querySelector('form').onsubmit = async event => {
       event.preventDefault();
       const next = {}; rows.forEach(([key]) => { next[key] = dialog.querySelector('[name="' + key + '"]').value; });
       if (Models()) {
         const M = Models(), providers = {};
+        if (agBaseInput) {
+          const agRaw = agBaseInput.value.trim();
+          const agBase = agRaw ? M.normalizeAntigravityBase(agRaw) : '';
+          if (agRaw && !agBase) {
+            toast('Địa chỉ Antigravity phải là HTTPS Tailscale (.ts.net), không chứa tài khoản/mật khẩu hoặc tham số truy vấn (?…).', 'warning');
+            agBaseInput.focus();
+            return;
+          }
+          providers.antigravity = {base: agBase};
+        }
         for (const id of M.ORDER) {
           const ui = cards[id];
           if (!ui) continue;

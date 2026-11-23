@@ -17,6 +17,7 @@ const OfficialLetterModels = (() => {
       note: 'Dịch vụ bất kỳ tương thích OpenAI: OpenRouter (có model miễn phí), Cerebras, Together, Ollama cục bộ… Nhập địa chỉ gốc, ví dụ https://openrouter.ai/api/v1.'}
   };
   const MODEL_RE = /^[\w./:@+\-]{1,100}$/;
+  const TAILSCALE_HOST_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.){2,}ts\.net$/i;
 
   const clean = value => String(value == null ? '' : value).trim();
   function normalizeBase(value) {
@@ -24,6 +25,24 @@ const OfficialLetterModels = (() => {
     url = url.replace(/\/chat\/completions$/i, '');
     if (!/^https:\/\/[^\s/]+/i.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(url)) return '';
     return url.slice(0, 300);
+  }
+  // Địa chỉ máy trung gian Antigravity tuỳ chọn: CHỈ chấp nhận HTTPS Tailscale (*.ts.net), không user/pass, không query/hash.
+  // Trả về chuỗi chuẩn hoá "<origin>/v1" hoặc '' nếu rỗng / không hợp lệ.
+  function normalizeAntigravityBase(value) {
+    const raw = clean(value);
+    if (!raw || raw.length > 300 || /[\s?#\\@]/.test(raw)) return '';
+    const match = /^https:\/\/([^/:]+)(?::(\d{1,5}))?(\/.*)?$/i.exec(raw);
+    if (!match) return '';
+    const host = match[1].toLowerCase(), portRaw = match[2] || '', pathRaw = (match[3] || '').replace(/\/+$/, '');
+    if (!TAILSCALE_HOST_RE.test(host)) return '';
+    let portPart = '';
+    if (portRaw) {
+      const port = Number(portRaw);
+      if (!Number.isInteger(port) || port < 1 || port > 65535) return '';
+      if (port !== 443) portPart = ':' + port;
+    }
+    if (pathRaw && !/^\/v1(?:\/chat\/completions)?$/i.test(pathRaw)) return '';
+    return ('https://' + host + portPart + '/v1').slice(0, 300);
   }
   const uniq = list => Array.from(new Set(list));
   const parseModels = value => uniq((Array.isArray(value) ? value : String(value || '').split(/[,\n;]+/)).map(clean).filter(name => MODEL_RE.test(name))).slice(0, 12);
@@ -44,6 +63,8 @@ const OfficialLetterModels = (() => {
       providers[id] = {models: models.length ? models : (saved.models === undefined || id !== 'custom' ? defModels(id) : [])};
       if (id === 'custom') { providers[id].base = normalizeBase(saved.base); providers[id].label = clean(saved.label).slice(0, 40); }
     }
+    const savedAgy = source.providers && source.providers.antigravity || {};
+    providers.antigravity = {base: normalizeAntigravityBase(savedAgy.base)};
     const cfg = {selected: '', providers};
     const ids = entries(cfg).map(entry => entry.id);
     cfg.selected = ids.includes(source.selected) ? source.selected : (ids[0] || '');
@@ -59,14 +80,23 @@ const OfficialLetterModels = (() => {
   }
 
   const shortModel = model => String(model).split('/').pop();
-  const providerLabel = (id, cfg) => id === 'custom' ? ((cfg && cfg.providers.custom.label) || PROVIDERS.custom.label) : PROVIDERS[id].label;
+  const antigravityCustomBase = cfg => (cfg && cfg.providers && cfg.providers.antigravity && normalizeAntigravityBase(cfg.providers.antigravity.base)) || '';
+  const providerLabel = (id, cfg) => {
+    if (id === 'custom') return (cfg && cfg.providers.custom.label) || PROVIDERS.custom.label;
+    if (id === 'antigravity') return antigravityCustomBase(cfg) ? 'Antigravity (Tailscale)' : PROVIDERS.antigravity.label;
+    return PROVIDERS[id].label;
+  };
   function entries(cfg) {
     const out = [];
     for (const id of ORDER) for (const model of cfg.providers[id].models) out.push({id: id + ':' + model, provider: id, model, label: providerLabel(id, cfg) + ' · ' + shortModel(model)});
-    for (const model of PROVIDERS.antigravity.models) out.push({id: 'antigravity:' + model, provider: 'antigravity', model, label: 'Antigravity trên máy này · ' + model});
+    for (const model of PROVIDERS.antigravity.models) out.push({id: 'antigravity:' + model, provider: 'antigravity', model, label: providerLabel('antigravity', cfg) + ' · ' + model});
     return out;
   }
-  function baseOf(id, cfg) { return id === 'custom' ? cfg.providers.custom.base : PROVIDERS[id].base; }
+  function baseOf(id, cfg) {
+    if (id === 'custom') return cfg.providers.custom.base;
+    if (id === 'antigravity') return antigravityCustomBase(cfg) || PROVIDERS.antigravity.base;
+    return PROVIDERS[id].base;
+  }
   const endpointOf = (id, cfg) => { const base = baseOf(id, cfg); return base ? base + '/chat/completions' : ''; };
 
   // Khả năng của từng mô hình: kiểu suy luận ('deepseek' = tham số thinking; 'effort' = reasoning_effort; 'none' = không có), đọc ảnh, giới hạn đầu ra và số nguồn tra cứu.
@@ -142,5 +172,5 @@ const OfficialLetterModels = (() => {
     return uniq(ids).filter(id => MODEL_RE.test(id)).sort();
   }
 
-  return {KEY, ORDER, PROVIDERS, defaults, normalize, load, save, entries, resolve, profile, endpointOf, baseOf, timeoutMs, providerLabel, shortModel, parseModels, normalizeBase, getKey, keyStatus, noKeyMessage, listModels};
+  return {KEY, ORDER, PROVIDERS, defaults, normalize, load, save, entries, resolve, profile, endpointOf, baseOf, timeoutMs, providerLabel, shortModel, parseModels, normalizeBase, normalizeAntigravityBase, getKey, keyStatus, noKeyMessage, listModels};
 })();

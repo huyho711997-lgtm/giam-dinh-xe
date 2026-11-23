@@ -91,7 +91,10 @@ function sceneReportAiModelHtml(locked) {
     + '<div class="sr-ai-model-options" aria-label="Chọn mô hình AI">' + model.options.map(option => '<button type="button" data-sr-ai-model-option="' + E(option.id) + '" aria-pressed="' + (option.id === model.id) + '"' + (locked ? ' disabled' : '') + '><span>' + E(text(option)) + '</span>' + (option.id === model.id ? '<span aria-hidden="true">✓</span>' : '') + '</button>').join('') + '</div></details></div>';
   const deep = model.current.reasoning
     ? '<label class="sr-ai-deep" title="AI suy nghĩ kỹ hơn trước khi viết; chậm hơn và tốn hạn mức hơn"><input type="checkbox" data-sr-ai-deep' + (sceneReportAiDeepOn(model) ? ' checked' : '') + (locked ? ' disabled' : '') + '><span class="sr-ai-deep-content">' + sceneReportIcon('sparkles') + '<span>Suy luận sâu</span><span class="sr-ai-switch" aria-hidden="true"></span></span></label>' : '';
-  const note = model.current.local ? '<p class="sr-ai-local">Antigravity cần công cụ kết nối trên máy này. Suy luận sâu có thể mất 1–3 phút.</p>' : '';
+  const agyBase = model.cfg && model.cfg.providers && model.cfg.providers.antigravity && model.cfg.providers.antigravity.base;
+  const agyHost = agyBase ? agyBase.replace(/^https:\/\//i, '').replace(/\/.*$/, '') : '';
+  const note = model.current.local
+    ? '<p class="sr-ai-local">' + (agyHost ? 'Antigravity kết nối qua máy trung gian Tailscale (' + E(agyHost) + '). Suy luận sâu có thể mất 1–3 phút.' : 'Antigravity cần công cụ kết nối trên máy này. Suy luận sâu có thể mất 1–3 phút.') + '</p>' : '';
   return select + deep + note;
 }
 

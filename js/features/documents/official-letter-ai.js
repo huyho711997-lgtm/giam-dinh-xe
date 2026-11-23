@@ -133,7 +133,11 @@ const OfficialLetterAI = (() => {
         response = await doFetch(endpoint, {method: 'POST', signal: options.signal, headers: {'Content-Type': 'application/json', Authorization: 'Bearer ' + options.apiKey}, body});
       } catch (error) {
         if (error && error.name === 'AbortError') throw error;
-        if (label.startsWith('Antigravity')) throw aiError('Không kết nối được công cụ Antigravity trên máy. Hãy kiểm tra công cụ trung gian đang chạy và quyền truy cập mạng cục bộ của trình duyệt.');
+        if (label.startsWith('Antigravity')) {
+          throw aiError(/^https:\/\//i.test(endpoint)
+            ? 'Không kết nối được máy trung gian Antigravity qua Tailscale. Hãy kiểm tra thiết bị đã bật Tailscale và máy trung gian đang hoạt động.'
+            : 'Không kết nối được công cụ Antigravity trên máy. Hãy kiểm tra công cụ trung gian đang chạy và quyền truy cập mạng cục bộ của trình duyệt.');
+        }
         throw aiError('Không kết nối được tới ' + label + '. Kiểm tra mạng (hoặc trình duyệt/tiện ích đang chặn ' + (endpoint.replace(/^https?:\/\//, '').split('/')[0]) + ').', {retryable: true});
       }
       let data = null;
