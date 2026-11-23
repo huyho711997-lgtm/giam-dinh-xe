@@ -211,6 +211,7 @@ const OfficialLetterPage = (() => {
     if (node) { node.textContent = usageText(); node.title = usageTitle(); node.hidden = !usageText(); }
   }
   // extra (tuỳ chọn): {onUsage, onWait, resumeText, thinking, effort} — chế độ Hỏi nghiệp vụ dùng để đếm token/hiện trạng thái riêng, không đụng tới phiên soạn công văn.
+  let tieredFailedAt = 0;
   async function callAI(request, extra = {}) {
     if (typeof OfficialLetterAI === 'undefined') throw new Error('Chưa tải được mô-đun AI. Hãy tải lại trang.');
     const active = activeModel();
@@ -236,11 +237,23 @@ const OfficialLetterPage = (() => {
     const taskStatus = extra.onWait ? (extra.resumeText || '') : st.status, wait = extra.onWait || setStatus;
     const countUsage = extra.onUsage || (usage => { st.usage = OfficialLetterAI.addUsage(st.usage, usage); paintUsage(); });
     // Một công văn gọi AI 2–3 lần: khi bị giới hạn lưu lượng/quá tải thì tự chờ rồi thử lại, có đếm ngược cho người dùng thấy.
+    // Vừa phải chuyển mô hình trong 10 phút qua thì các lượt gọi sau dùng thẳng mô hình dự phòng, khỏi chờ lại cả vòng thử lại.
+    let fellBack = false;
+    if (active && Date.now() - tieredFailedAt < 600000 && Models().fallbackModel(active.provider, model)) { model = Models().fallbackModel(active.provider, model); fellBack = true; }
     for (let attempt = 0; ; attempt++) {
       const signal = attemptSignal();
       try { return await OfficialLetterAI.call(request, {apiKey, model, signal, onUsage: countUsage, thinking, effort: extra.effort, maxTokens: thinking ? 16000 : undefined, endpoint: active ? active.endpoint : undefined, label, profile: active ? active.profile : undefined}); }
       catch (error) {
-        if (active && active.provider === 'antigravity' && signal.aborted && !controller.signal.aborted) {
+        const timedOut = !!active && active.provider === 'antigravity' && signal.aborted && !controller.signal.aborted;
+        if (controller.signal.aborted) throw error;
+        // 3.8 Flash thất bại hẳn (hết hạn chờ, hoặc quá tải sau mọi lần thử lại) → tự chuyển sang Gemini 3 Flash một lần, báo rõ cho người dùng.
+        const fallback = active && !fellBack && (timedOut || (error && error.retryable && attempt >= RETRY_WAITS.length)) ? Models().fallbackModel(active.provider, model) : '';
+        if (fallback) {
+          fellBack = true; model = fallback; attempt = -1; tieredFailedAt = Date.now();
+          wait('Mô hình 3.8 Flash đang chậm/bận — tự chuyển sang Gemini 3 Flash…');
+          continue;
+        }
+        if (timedOut) {
           const seconds = Math.round(limit / 1000);
           throw new Error(thinking ? 'Antigravity chưa trả kết quả suy luận sâu sau ' + seconds + ' giây. Hãy thử lại, tắt Suy luận sâu hoặc chọn mô hình khác.' : 'Antigravity chưa trả lời sau ' + seconds + ' giây — mô hình đang chậm hoặc bận (công cụ trung gian vẫn chạy). Hãy thử lại hoặc chọn mô hình khác (như Gemini 3 Flash).');
         }

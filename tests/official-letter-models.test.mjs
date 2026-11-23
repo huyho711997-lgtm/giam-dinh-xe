@@ -143,6 +143,13 @@ test('Antigravity có suy luận sâu: reasoning_effort high khi bật, low khi 
   for (const id of ['deepseek', 'gemini', 'groq', 'custom']) assert.equal(M.timeoutMs(id, true), 0);
 });
 
+test('3.8 Flash của Antigravity có mô hình dự phòng, các mô hình khác thì không', () => {
+  assert.equal(M.fallbackModel('antigravity', 'gemini-3.8-flash-tiered'), 'gemini-3-flash');
+  assert.equal(M.fallbackModel('antigravity', 'gemini-3-flash'), '');
+  assert.equal(M.fallbackModel('gemini', 'gemini-3.8-flash'), '');
+  assert.equal(M.fallbackModel('antigravity', ''), '');
+});
+
 test('Antigravity hỗ trợ endpoint HTTPS Tailscale (.ts.net) theo trình duyệt và từ chối URL không hợp lệ', () => {
   // Mặc định vẫn là localhost
   assert.equal(M.resolve(M.defaults(), 'antigravity:gemini-3-flash').endpoint, 'http://127.0.0.1:18318/v1/chat/completions');

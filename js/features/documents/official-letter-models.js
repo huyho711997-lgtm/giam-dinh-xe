@@ -111,6 +111,8 @@ const OfficialLetterModels = (() => {
   // Hạn chờ một lượt gọi (mili giây; 0 = không đặt thêm). Antigravity đi qua cầu nối cục bộ (tối đa 180 giây): lượt thường chờ 90 giây (mô hình tầng nhanh 3.8 có lúc xếp hàng/chậm; 45 giây là quá ngắn),
   // lượt suy luận sâu cần lâu hơn nhưng vẫn ngắn hơn hạn của cầu nối để người dùng nhận được thông báo rõ ràng.
   const timeoutMs = (providerId, thinking) => providerId !== 'antigravity' ? 0 : thinking ? 170000 : 90000;
+  // Mô hình tầng nhanh 3.8 của Antigravity hay xếp hàng/quá tải: khi nó thất bại hẳn (hết hạn chờ hoặc hết lượt thử lại) thì tự chuyển sang Gemini 3 Flash, mô hình ổn định hơn trên cùng công cụ trung gian.
+  const fallbackModel = (providerId, model) => providerId === 'antigravity' && /3\.8-flash-tiered/i.test(model || '') ? 'gemini-3-flash' : '';
   // Trả về mô hình đang chọn (hoặc theo id) cùng mọi thứ cần để gọi API.
   function resolve(cfg, id) {
     const all = entries(cfg);
@@ -172,5 +174,5 @@ const OfficialLetterModels = (() => {
     return uniq(ids).filter(id => MODEL_RE.test(id)).sort();
   }
 
-  return {KEY, ORDER, PROVIDERS, defaults, normalize, load, save, entries, resolve, profile, endpointOf, baseOf, timeoutMs, providerLabel, shortModel, parseModels, normalizeBase, normalizeAntigravityBase, getKey, keyStatus, noKeyMessage, listModels};
+  return {KEY, ORDER, PROVIDERS, defaults, normalize, load, save, entries, resolve, profile, endpointOf, baseOf, timeoutMs, fallbackModel, providerLabel, shortModel, parseModels, normalizeBase, normalizeAntigravityBase, getKey, keyStatus, noKeyMessage, listModels};
 })();
