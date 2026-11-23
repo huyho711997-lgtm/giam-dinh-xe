@@ -106,6 +106,16 @@ test('answerHtml: escape HTML, **đậm**, danh sách, mã nguồn thành nút, 
   assert.equal(Q.answerHtml('', SOURCES), '');
 });
 
+test('isQuickQuestion: câu tra cứu ngắn chạy nhanh, câu cần lập luận/tính toán/đính kèm thì không', () => {
+  const { Q } = load();
+  for (const q of ['các hồ sơ cần có để giải quyết tnds về người', 'Hạn thông báo tổn thất là mấy ngày', 'giấy tờ cần khi mất cắp toàn bộ xe']) assert.equal(Q.isQuickQuestion(q), true, q);
+  for (const q of ['So sánh giảm trừ do thông báo chậm và do lỗi vi phạm', 'bồi thường bao nhiêu nếu xe tổn thất 60% giá trị', 'Xe lái lúc có nồng độ cồn có được bồi thường không', '', 'a\nb', 'x '.repeat(30)]) assert.equal(Q.isQuickQuestion(q), false, q);
+  assert.equal(Q.isQuickQuestion('hồ sơ cần có gì', {attach: 1}), false);
+  assert.equal(Q.isQuickQuestion('hồ sơ cần có gì', {dossier: true}), false);
+  assert.equal(Q.normalizeMessage({role: 'assistant', text: 'a', quick: true}).quick, true);
+  assert.equal(Q.normalizeMessage({role: 'assistant', text: 'a'}).quick, undefined);
+});
+
 test('normalizeMessage giữ thời gian trả lời (giây) hợp lệ và bỏ giá trị bậy', () => {
   const { Q } = load();
   assert.equal(Q.normalizeMessage({role: 'assistant', text: 'a', secs: 18.4}).secs, 18);

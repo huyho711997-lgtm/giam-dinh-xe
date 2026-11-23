@@ -118,6 +118,15 @@ const OfficialLetterQA = (() => {
   // Nhận diện cục bộ, chặt: chỉ câu ngắn khớp mẫu chào hỏi / cảm ơn / hỏi về trợ lý. Câu nghiệp vụ không bao giờ lọt vào đây.
   const CHAT_GREET = /^(xin chao|chao|hello|hi|hey|alo|cam on|thanks|thank you|ok|oke|okay|tam biet|bye)(\s|$)/;
   const CHAT_META = /(ban|em|ong|ai|bot|tro ly)\s+(la\s+ai|ten\s+(?:gi|la)|lam\s+duoc\s+gi|giup\s+(?:duoc\s+)?gi|co\s+the\s+(?:lam|giup)\s+(?:gi|duoc\s+gi)|biet\s+lam\s+gi|khoe\s+khong)|(?:cach|huong\s+dan)\s+(?:su\s+dung|dung)\s+(?:cai\s+nay|tinh\s+nang\s+nay|chuc\s+nang\s+nay)|ai\s+tao\s+ra\s+ban/;
+  // Câu hỏi tra cứu ngắn, một ý ("hồ sơ cần có gì…", "thời hạn thông báo là mấy ngày") không cần suy luận sâu: chạy chế độ nhanh cho đỡ chờ.
+  // Loại trừ câu cần lập luận/tính toán/so sánh, câu dài, nhiều dòng, có tệp/ảnh đính kèm hoặc đang gắn hồ sơ vụ việc.
+  const COMPLEX_Q = /so sánh|phân tích|giải thích|tại sao|vì sao|đánh giá|lập luận|mâu thuẫn|ngoại lệ|tính toán|tính (?:số tiền|giảm trừ|bồi thường)|bao nhiêu|công thức|đồng thời|kết luận|có (?:phải|được|bị|thuộc|nằm)\b|nếu\b.*\bthì\b|hay là|\bhoặc\b.*\bhoặc\b|từ chối|loại trừ/i;
+  function isQuickQuestion(question, opts = {}) {
+    const text = String(question || '').trim();
+    if (!text || opts.attach || opts.dossier) return false;
+    if (text.length > 140 || /\n/.test(text) || text.split(/\s+/).length > 22) return false;
+    return !COMPLEX_Q.test(text);
+  }
   function isSmallTalk(question) {
     const key = foldKey(question), words = key ? key.split(' ').length : 0;
     if (!key || words > 12) return false;
@@ -444,10 +453,11 @@ const OfficialLetterQA = (() => {
       if (item.empty) message.empty = true;
       if (item.chat) message.chat = true;
       if (item.free) message.free = true;
+      if (item.quick) message.quick = true;   // trả lời ở chế độ nhanh (không suy luận sâu) → hiện nút "Suy luận sâu lại"
     }
     return message;
   }
   const normalizeStore = raw => (Array.isArray(raw && raw.messages) ? raw.messages : []).map(normalizeMessage).filter(Boolean).slice(-STORE_MAX);
 
-  return {SYSTEM, PLAN_SYSTEM, CHAT_SYSTEM, SUGGESTIONS, SOURCE_LIMIT, MAX_SOURCES, QA_COVERAGE, MAX_TURNS, importRequest, buildPlanRequest, parsePlan, isSmallTalk, buildChatRequest, glossaryQueries, buildQueries, buildRequest, FREE_SYSTEM, FREE_SUGGESTIONS, buildFreeRequest, limitFiles, chatHtml, exportMarkdown, FILE_CHARS, sourceBlock, recentTurns, carrySources, stripCodes, CARRY_MAX, citedCodes, unknownCodes, answerHtml, plainText, normalizeStore, normalizeMessage, newId};
+  return {SYSTEM, PLAN_SYSTEM, CHAT_SYSTEM, SUGGESTIONS, SOURCE_LIMIT, MAX_SOURCES, QA_COVERAGE, MAX_TURNS, importRequest, buildPlanRequest, parsePlan, isSmallTalk, isQuickQuestion, buildChatRequest, glossaryQueries, buildQueries, buildRequest, FREE_SYSTEM, FREE_SUGGESTIONS, buildFreeRequest, limitFiles, chatHtml, exportMarkdown, FILE_CHARS, sourceBlock, recentTurns, carrySources, stripCodes, CARRY_MAX, citedCodes, unknownCodes, answerHtml, plainText, normalizeStore, normalizeMessage, newId};
 })();

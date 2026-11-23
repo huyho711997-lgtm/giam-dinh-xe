@@ -211,7 +211,7 @@ const OfficialLetterPage = (() => {
     if (node) { node.textContent = usageText(); node.title = usageTitle(); node.hidden = !usageText(); }
   }
   // extra (tuỳ chọn): {onUsage, onWait, resumeText, thinking, effort} — chế độ Hỏi nghiệp vụ dùng để đếm token/hiện trạng thái riêng, không đụng tới phiên soạn công văn.
-  let tieredFailedAt = 0;
+  let tieredFailedAt = 0, qaDeepOnce = false;   // qaDeepOnce: lượt hỏi lại do người dùng bấm "Suy luận sâu lại" thì luôn suy luận sâu
   async function callAI(request, extra = {}) {
     if (typeof OfficialLetterAI === 'undefined') throw new Error('Chưa tải được mô-đun AI. Hãy tải lại trang.');
     const active = activeModel();
@@ -960,7 +960,7 @@ const OfficialLetterPage = (() => {
     const images = attach.filter(item => item.kind === 'image');
     qa.messages.push({id: Q.newId(), role: 'user', text, files: attach.map(item => ({name: item.name, kind: item.kind, text: item.kind === 'text' ? item.text : '', truncated: item.truncated}))});
     qa.draft = ''; qa.attach = []; qa.busy = true; qa.status = 'Đang soạn câu trả lời…'; st.pop = '';
-    const mine = generation;
+    const mine = generation, forceDeep = qaDeepOnce; qaDeepOnce = false;
     renderAll(); scrollQa();
     const reply = message => { if (mine !== generation || !host) return; qa.messages.push(Object.assign({id: Q.newId(), role: 'assistant', sources: [], question: text, free: true, secs: qaElapsed()}, message)); };
     const usage = {onUsage: u => { qa.usage = OfficialLetterAI.addUsage(qa.usage, u); paintQaUsage(); }, onWait: t => paintQaStatus(t), resumeText: qa.status};
@@ -976,11 +976,13 @@ const OfficialLetterPage = (() => {
         if (found.error && !sources.length) toast(found.error, 'warning');
       }
       if (images.length && activeModel() && !activeModel().profile.vision) toast('Mô hình đang chọn có thể không đọc được ảnh — hãy chọn mô hình có hỗ trợ ảnh (Gemini, GPT-4o…) nếu AI không thấy ảnh.', 'warning');
-      paintQaStatus(deepOn() ? 'Đang suy luận sâu (có thể mất 30–90 giây)…' : 'Đang soạn câu trả lời…');
+      const quick = deepOn() && !forceDeep && Q.isQuickQuestion(text, {attach: attach.length, dossier: !!dossierText()});
+      const thinking = deepOn() && !quick;
+      paintQaStatus(thinking ? 'Đang suy luận sâu (có thể mất 30–90 giây)…' : quick ? 'Câu hỏi ngắn — đang trả lời nhanh…' : 'Đang soạn câu trả lời…');
       usage.resumeText = qa.status;
-      const answer = await callAI(Q.buildFreeRequest({question: text, history, dossier: dossierText(), files, images, sources, read}), Object.assign({thinking: deepOn(), effort: 'high'}, usage));
+      const answer = await callAI(Q.buildFreeRequest({question: text, history, dossier: dossierText(), files, images, sources, read}), Object.assign({thinking, effort: 'high'}, usage));
       const answerText = String(answer).trim(), cited = Q.citedCodes(answerText);
-      reply({text: answerText, sources: read ? sources.filter(source => cited.includes(source.code)) : sources, queries, read: read || undefined});
+      reply({quick: quick || undefined, text: answerText, sources: read ? sources.filter(source => cited.includes(source.code)) : sources, queries, read: read || undefined});
     } catch (error) {
       if (error && error.name === 'AbortError') {
         qa.busy = false; qa.status = '';
@@ -1039,7 +1041,7 @@ const OfficialLetterPage = (() => {
     const askImages = attach.filter(item => item.kind === 'image');
     qa.messages.push({id: Q.newId(), role: 'user', text: question, files: attach.map(item => ({name: item.name, kind: item.kind, text: item.kind === 'text' ? item.text : '', truncated: item.truncated}))});
     qa.draft = ''; qa.attach = []; qa.busy = true; qa.status = 'Đang tra Thư viện tài liệu…'; st.pop = '';
-    const mine = generation;
+    const mine = generation, forceDeep = qaDeepOnce; qaDeepOnce = false;
     renderAll(); scrollQa();
     const reply = message => { if (mine !== generation || !host) return; qa.messages.push(Object.assign({id: Q.newId(), role: 'assistant', sources: [], question, secs: qaElapsed()}, message)); };
     const usage = {onUsage: u => { qa.usage = OfficialLetterAI.addUsage(qa.usage, u); paintQaUsage(); }, onWait: text => paintQaStatus(text), resumeText: qa.status};
@@ -1076,14 +1078,16 @@ const OfficialLetterPage = (() => {
         // Không có căn cứ nào để trả lời → không gọi AI (tránh tốn token và tránh AI trả lời bằng trí nhớ).
         reply({text: found.error || NO_MATCH, empty: true, queries});
       } else {
-        // Bước 3 — suy luận trên văn bản đã cấp.
-        paintQaStatus((found.read ? 'Đã đọc toàn văn ' + found.read.included.map(doc => doc.name).join(', ') + ' (' + found.read.included.reduce((sum, doc) => sum + doc.chunks, 0) + ' đoạn) — ' : sources.length ? 'Tìm thấy ' + found.fresh + ' đoạn liên quan' + (sources.length > found.fresh ? ' (+' + (sources.length - found.fresh) + ' đoạn đã dẫn ở câu trước)' : '') + ' — ' : 'Đang trả lời theo hội thoại — ') + (deepOn() ? 'đang suy luận sâu (có thể mất 30–90 giây)…' : 'đang soạn câu trả lời…'));
+        // Bước 3 — suy luận trên văn bản đã cấp. Câu hỏi tra cứu ngắn chạy chế độ nhanh (không suy luận sâu); người dùng vẫn bấm "Suy luận sâu lại" được.
+        const quick = deepOn() && !forceDeep && Q.isQuickQuestion(question, {attach: askFiles.length + askImages.length, dossier: !!dossier});
+        const thinking = deepOn() && !quick;
+        paintQaStatus((found.read ? 'Đã đọc toàn văn ' + found.read.included.map(doc => doc.name).join(', ') + ' (' + found.read.included.reduce((sum, doc) => sum + doc.chunks, 0) + ' đoạn) — ' : sources.length ? 'Tìm thấy ' + found.fresh + ' đoạn liên quan' + (sources.length > found.fresh ? ' (+' + (sources.length - found.fresh) + ' đoạn đã dẫn ở câu trước)' : '') + ' — ' : 'Đang trả lời theo hội thoại — ') + (thinking ? 'đang suy luận sâu (có thể mất 30–90 giây)…' : quick ? 'câu hỏi ngắn nên trả lời nhanh…' : 'đang soạn câu trả lời…'));
         usage.resumeText = qa.status;
-        const answer = await callAI(Q.buildRequest({question, history, sources, libraryError: found.error, dossier, issue: plan.issue, files: askFiles, images: askImages, read: found.read}), Object.assign({thinking: qa.deep, effort: 'high'}, usage));
+        const answer = await callAI(Q.buildRequest({question, history, sources, libraryError: found.error, dossier, issue: plan.issue, files: askFiles, images: askImages, read: found.read}), Object.assign({thinking, effort: 'high'}, usage));
         const text = String(answer).trim();
         // Đọc toàn văn có hàng trăm đoạn: chỉ lưu và hiển thị các đoạn AI thực sự dẫn.
         const cited = Q.citedCodes(text);
-        reply({text, sources: found.read ? sources.filter(source => cited.includes(source.code)) : sources, queries, issue: plan.issue, read: found.read || undefined});
+        reply({quick: quick || undefined, text, sources: found.read ? sources.filter(source => cited.includes(source.code)) : sources, queries, issue: plan.issue, read: found.read || undefined});
       }
     } catch (error) {
       if (error && error.name === 'AbortError') {
@@ -1122,9 +1126,10 @@ const OfficialLetterPage = (() => {
     try { await navigator.clipboard.writeText(QA().plainText(msg.text)); toast('Đã sao chép câu trả lời.', 'success'); }
     catch (_) { toast('Không sao chép được. Hãy bôi đen nội dung rồi nhấn Ctrl+C.', 'warning'); }
   }
-  function retryAnswer(id) {
+  function retryAnswer(id, deep) {
     const at = qa.messages.findIndex(item => item.id === id);
     if (at < 1 || qa.busy) return;
+    if (deep) qaDeepOnce = true;
     const question = qa.messages[at - 1].text;
     qa.messages.splice(at - 1, 2);
     askQuestion(question);
@@ -1190,6 +1195,7 @@ const OfficialLetterPage = (() => {
     const acts = msg.error ? '<button type="button" class="ola-qa-act" data-ol-qa-retry="' + esc(msg.id) + '"' + (qa.busy ? ' disabled' : '') + '>Thử lại</button>'
       + (bridgeDown ? '<button type="button" class="ola-qa-act is-main" data-ol-pop="model" title="Chọn Gemini, DeepSeek… không cần công cụ trên máy">Chọn mô hình khác</button>' : '')
       : msg.empty ? '' : '<button type="button" class="ola-qa-act" data-ol-qa-copy="' + esc(msg.id) + '">' + svg(ICON.copy) + 'Sao chép</button>'
+        + (msg.quick && deepSupported() ? '<button type="button" class="ola-qa-act" data-ol-qa-deeper="' + esc(msg.id) + '"' + (qaLocked() ? ' disabled' : '') + ' title="Hỏi lại câu này với chế độ suy luận sâu (chậm hơn, tốn token hơn, kỹ hơn)">' + svg(ICON.spark) + 'Suy luận sâu lại</button>' : '')
         + (msg.chat || msg.free ? '' : '<button type="button" class="ola-qa-act is-main" data-ol-qa-compose="' + esc(msg.id) + '"' + (qaLocked() ? ' disabled' : '') + ' title="Chuyển sang Soạn công văn, điền sẵn kết luận này vào yêu cầu">' + svg(ICON.letter) + 'Soạn công văn từ câu trả lời</button>');
     return '<div class="ola-qa-msg is-ai" data-ol-qa-msg="' + esc(msg.id) + '"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body">' + body + warn + srcs + (acts ? '<div class="ola-qa-acts">' + acts + (!msg.error && !msg.empty && msg.secs ? '<span class="ola-qa-took" title="Thời gian AI trả lời câu hỏi này">' + fmtSecs(msg.secs) + '</span>' : '') + '</div>' : '') + '</div></div>';
   }
@@ -1487,7 +1493,7 @@ const OfficialLetterPage = (() => {
   }
   function deepChipHtml(compact) {
     const on = deepOn(), able = deepSupported();
-    const title = !able ? 'Mô hình đang chọn không có chế độ suy luận riêng — AI vẫn trả lời theo từng bước nhưng không chạy thêm bước suy luận.' : qa.deep ? 'Đang bật: AI suy luận kỹ hơn (chậm hơn, tốn token hơn). Bấm để tắt.' : 'Đang tắt: trả lời nhanh, ít tốn token. Bấm để bật suy luận sâu.';
+    const title = !able ? 'Mô hình đang chọn không có chế độ suy luận riêng — AI vẫn trả lời theo từng bước nhưng không chạy thêm bước suy luận.' : qa.deep ? 'Đang bật: AI suy luận kỹ hơn (chậm hơn, tốn token hơn); câu hỏi tra cứu ngắn tự trả lời nhanh và có nút "Suy luận sâu lại". Bấm để tắt.' : 'Đang tắt: trả lời nhanh, ít tốn token. Bấm để bật suy luận sâu.';
     const disabled = (qa.busy || st.busy) ? ' disabled' : '';
     if (compact) return '<button type="button" class="ola-icon-btn ola-deep-btn' + (on ? ' is-set' : '') + (able ? '' : ' is-na') + '" data-ol-act="qa-deep" aria-pressed="' + on + '" title="Suy luận sâu — ' + esc(title) + '" aria-label="Suy luận sâu"' + disabled + '>' + svg(ICON.spark) + '</button>';
     return '<button type="button" class="ola-chip' + (on ? ' is-set' : '') + (able ? '' : ' is-na') + '" data-ol-act="qa-deep" aria-pressed="' + on + '" title="' + esc(title) + '"' + disabled + '>' + svg(ICON.spark) + '<span class="ola-chip-t">Suy luận sâu</span></button>';
@@ -2101,6 +2107,8 @@ const OfficialLetterPage = (() => {
     if (qaCompose) { composeFromAnswer(qaCompose.dataset.olQaCompose); return; }
     const qaRetry = target.closest('[data-ol-qa-retry]');
     if (qaRetry) { retryAnswer(qaRetry.dataset.olQaRetry); return; }
+    const qaDeeper = target.closest('[data-ol-qa-deeper]');
+    if (qaDeeper) { retryAnswer(qaDeeper.dataset.olQaDeeper, true); return; }
     const version = target.closest('[data-ol-version]');
     if (version && !st.busy && !st.pending) { collectAll(); st.versionId = version.dataset.olVersion; renderAll(); return; }
     const restore = target.closest('[data-ol-restore]');
