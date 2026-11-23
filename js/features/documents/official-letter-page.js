@@ -1124,7 +1124,10 @@ const OfficialLetterPage = (() => {
       + '<button type="button" class="ola-qa-srcs-head" data-ol-qa-srcs-toggle="' + esc(msg.id) + '" aria-expanded="' + groupOpen + '"><span>' + (msg.read ? 'Đã đọc toàn văn Thư viện — đoạn được dẫn (' : 'Nguồn đã tra trong Thư viện (') + sources.length + ')</span>'
       + (cited.length ? '<em>Đã dẫn: ' + esc(cited.filter(code => sources.some(src => src.code === code)).join(', ')) + '</em>' : '') + svg(ICON.chevron) + '</button>'
       + '<div class="ola-qa-srcs-body"' + (groupOpen ? '' : ' hidden') + '>' + readNote + (msg.queries && msg.queries.length ? '<p class="ola-qa-queries" title="Các cụm từ đã dùng để tìm trong Thư viện">Đã tra: ' + msg.queries.map(esc).join(' · ') + '</p>' : '') + sources.map(source => qaSourceHtml(msg, source, cited.includes(source.code))).join('') + '</div></div>' : '';
+    // Antigravity chạy qua công cụ trung gian cục bộ: máy mới chưa cài/chạy thì thử lại vô ích → mời đổi mô hình ngay.
+    const bridgeDown = msg.error && /Antigravity/i.test(msg.text || '');
     const acts = msg.error ? '<button type="button" class="ola-qa-act" data-ol-qa-retry="' + esc(msg.id) + '"' + (qa.busy ? ' disabled' : '') + '>Thử lại</button>'
+      + (bridgeDown ? '<button type="button" class="ola-qa-act is-main" data-ol-pop="model" title="Chọn Gemini, DeepSeek… không cần công cụ trên máy">Chọn mô hình khác</button>' : '')
       : msg.empty ? '' : '<button type="button" class="ola-qa-act" data-ol-qa-copy="' + esc(msg.id) + '">' + svg(ICON.copy) + 'Sao chép</button>'
         + (msg.chat || msg.free ? '' : '<button type="button" class="ola-qa-act is-main" data-ol-qa-compose="' + esc(msg.id) + '"' + (qaLocked() ? ' disabled' : '') + ' title="Chuyển sang Soạn công văn, điền sẵn kết luận này vào yêu cầu">' + svg(ICON.letter) + 'Soạn công văn từ câu trả lời</button>');
     return '<div class="ola-qa-msg is-ai" data-ol-qa-msg="' + esc(msg.id) + '"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body">' + body + warn + srcs + (acts ? '<div class="ola-qa-acts">' + acts + '</div>' : '') + '</div></div>';

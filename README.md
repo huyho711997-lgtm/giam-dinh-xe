@@ -258,3 +258,7 @@ Trang **Hồ sơ bồi thường → Cập nhật dữ liệu từ Excel** dùng
 - **Trước khi publish:** mở Quản trị hệ thống và chắc chắn mọi người đang dùng đều có tên trong danh sách người dùng (có `profile`); tài khoản chỉ có trong Authentication mà không có hồ sơ sẽ mất quyền đọc/ghi dữ liệu cho tới khi quản trị viên tạo hồ sơ.
 - Kiểm thử logic rules: `tests/database-rules.test.mjs` (giả lập tối giản, không thay thế Firebase Emulator/Rules Playground).
 - Cũng nên tắt tự đăng ký tài khoản (Authentication → Settings) và giới hạn khoá API theo tên miền trong Google Cloud Console.
+
+### Lỗi "Không kết nối được công cụ Antigravity" (máy mới)
+
+Antigravity chạy qua công cụ trung gian cục bộ (`scripts/antigravity-local-bridge.mjs`, cổng 18318, cần CLIProxyAPI cổng 18317 và cấu hình trong `%LOCALAPPDATA%\codex-antigravity-bridge`). Máy mới chưa cài/chạy công cụ này, hoặc trình duyệt chặn truy cập mạng cục bộ, thì lệnh gọi thất bại. Khi gặp lỗi này, câu trả lời có thêm nút **Chọn mô hình khác** để chuyển ngay sang Gemini/DeepSeek (không cần công cụ trên máy).
