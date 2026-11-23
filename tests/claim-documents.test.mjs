@@ -108,3 +108,24 @@ test('retries stop after two attempts and a real server error is not retried',as
   await denied.context.documents.saveWord({size:1},'test.docx',denied.context.documents.capture());
   assert.equal(denied.requests.length,1);
 });
+
+test('saveWord trả kết quả có cấu trúc và có thể tự báo (notify=false)',async()=>{
+  const okRun=client();
+  const saved=await okRun.context.documents.saveWord({size:1},'a.docx',okRun.context.documents.capture(),{notify:false});
+  assert.equal(saved.ok,true);assert.equal(okRun.toasts.length,0,'notify=false không bật toast');
+  const noId=client();noId.context.editingPendingClaimId='';
+  const none=await noId.context.documents.saveWord({size:1},'a.docx',noId.context.documents.capture(),{notify:false});
+  assert.deepEqual([none.ok,none.reason],[false,'unsaved']);
+  const denied=client([{ok:true,status:200,json:async()=>({ok:false,error:'Tài khoản chưa được cấp quyền'})}]);
+  const failed=await denied.context.documents.saveWord({size:1},'a.docx',denied.context.documents.capture(),{notify:false});
+  assert.deepEqual([failed.ok,failed.reason],[false,'error']);assert.match(failed.error,/chưa được cấp quyền/);
+  assert.equal(denied.toasts.length,0);
+});
+test('claimIdFromKey chỉ nhận hồ sơ tồn (pending:) vì kho Drive đọc pending_claims',()=>{
+  const {context}=client();
+  assert.equal(context.documents.claimIdFromKey('pending:abc-123_X'),'abc-123_X');
+  assert.equal(context.documents.claimIdFromKey('case:abc'),'');
+  assert.equal(context.documents.claimIdFromKey('pending:'),'');
+  assert.equal(context.documents.claimIdFromKey('pending:a/b'),'');
+  assert.equal(context.documents.claimIdFromKey(undefined),'');
+});

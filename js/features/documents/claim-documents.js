@@ -474,11 +474,15 @@ const ClaimDocuments = (() => {
     const worker=async()=>{while(cursor<files.length){if(currentUser()?.uid!==owner)return;const file=files[cursor++];let item;try{item=makeItem(file,file.name,id,'upload');await send(item);}catch(error){if(currentUser()?.uid!==owner)return;if(item)pending.set(item.requestId,item);errors.push(file.name+': '+error.message);}state.done++;message(id,'Đã tải '+state.done+'/'+files.length+' tệp…');updateProgress(id);}};
     try{await Promise.all([worker(),worker()]);}finally{busy=false;if(currentUser()?.uid===owner){message(id,errors.length?errors.join(' · '):'Đã lưu '+files.length+' tệp vào Drive.');paintIfCurrent(id);}}
   }
-  async function saveWord(blob,name,context){
-    if(!endpoint()||context.owner!==currentUser()?.uid)return;
-    if(!context.id){triggerToast('Word đã tải về máy. Lưu hồ sơ trước để lưu thêm lên Drive.','warning');return;}
-    let item;try{item=makeItem(blob,name,context.id,'word');await send(item);paintIfCurrent(context.id);triggerToast('Đã lưu Word vào Drive của hồ sơ.','success');}
-    catch(error){if(context.owner!==currentUser()?.uid)return;if(item)pending.set(item.requestId,item);message(context.id,error.message);paintIfCurrent(context.id);triggerToast('Word chưa lưu Drive. Mở Tài liệu hồ sơ để thử lại.','warning');}
+  // Khoá hồ sơ trong trang Soạn công văn ('pending:<id>' = hồ sơ tồn, 'case:<id>' = hồ sơ giám định). Kho Drive chỉ có cho hồ sơ tồn.
+  const claimIdFromKey=recordKey=>{const match=/^pending:([\w-]{1,200})$/.exec(String(recordKey||''));return match?match[1]:'';};
+  // options.notify=false: bên gọi tự báo kết quả (trang Soạn công văn). Trả về {ok,file?,reason?,error?}.
+  async function saveWord(blob,name,context,options={}){
+    const notify=options.notify!==false;
+    if(!endpoint()||context.owner!==currentUser()?.uid)return {ok:false,reason:'unavailable'};
+    if(!context.id){if(notify)triggerToast('Word đã tải về máy. Lưu hồ sơ trước để lưu thêm lên Drive.','warning');return {ok:false,reason:'unsaved'};}
+    let item;try{item=makeItem(blob,name,context.id,'word');const result=await send(item);paintIfCurrent(context.id);if(notify)triggerToast('Đã lưu Word vào Drive của hồ sơ.','success');return {ok:true,file:result.file};}
+    catch(error){if(context.owner!==currentUser()?.uid)return {ok:false,reason:'owner'};if(item)pending.set(item.requestId,item);message(context.id,error.message);paintIfCurrent(context.id);if(notify)triggerToast('Word chưa lưu Drive. Mở Tài liệu hồ sơ để thử lại.','warning');return {ok:false,reason:'error',error:error.message};}
   }
-  return {render,prefetch,saveWord,capture:()=>({id:claimId(),owner:currentUser()?.uid})};
+  return {render,prefetch,saveWord,claimIdFromKey,hasStorage:()=>!!endpoint(),capture:()=>({id:claimId(),owner:currentUser()?.uid})};
 })();

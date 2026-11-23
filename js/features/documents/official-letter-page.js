@@ -41,6 +41,7 @@ const OfficialLetterPage = (() => {
 
   let host = null, controller = null, generation = 0, records = [], index = [];
   const st = {
+    savingRecord: false,
     templateId: '', recordKey: '', recQuery: '', recOpen: false, recActive: 0, brief: '', files: [], refineFiles: [], legalPin: [], libDocs: null,
     values: null, filledByAI: [], questions: [], extras: [], outline: [], outlineEdited: false, understanding: '', notes: '',
     insights: [], keyFacts: [], legalQueries: [], assumptions: [], reasoning: null, sources: [], legalError: '', legalLoaded: false,
@@ -668,21 +669,52 @@ const OfficialLetterPage = (() => {
   }
 
   // ---- Xuất ----
+  // Tạo file Word từ bản thảo hiện tại (dùng chung cho "Tải Word" và "Lưu vào hồ sơ").
+  async function buildDocx() {
+    if (typeof JSZip === 'undefined') { toast('Chưa tải được thư viện tạo Word. Kiểm tra mạng rồi thử lại.', 'warning'); return null; }
+    syncLetter();
+    const unverified = citationChecks().filter(item => !item.ok).length;
+    if (unverified) toast('Lưu ý: còn ' + unverified + ' căn cứ chưa kiểm chứng với thư viện — kiểm tra trước khi ký.', 'warning');
+    const zip = new JSZip();
+    Core().docxFiles(st.letter, st.letter.title || st.letter.subject).forEach(file => zip.file(file.path, file.bytes || file.text, {createFolders: false}));
+    const blob = await zip.generateAsync({type: 'blob', compression: 'DEFLATE', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    return {blob, name: Core().fileBaseName(st.letter, st.values) + '.docx', gaps: Core().countGaps(st.letter)};
+  }
   async function downloadDocx() {
     if (!st.letter) return;
-    if (typeof JSZip === 'undefined') { toast('Chưa tải được thư viện tạo Word. Kiểm tra mạng rồi thử lại.', 'warning'); return; }
     try {
-      syncLetter();
-      const unverified = citationChecks().filter(item => !item.ok).length;
-      if (unverified) toast('Lưu ý: còn ' + unverified + ' căn cứ chưa kiểm chứng với thư viện — kiểm tra trước khi ký.', 'warning');
-      const zip = new JSZip();
-      Core().docxFiles(st.letter, st.letter.title || st.letter.subject).forEach(file => zip.file(file.path, file.bytes || file.text, {createFolders: false}));
-      const blob = await zip.generateAsync({type: 'blob', compression: 'DEFLATE', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
-      SharedFormsAI.saveBlob(blob, Core().fileBaseName(st.letter, st.values) + '.docx');
-      const gaps = Core().countGaps(st.letter);
-      toast(gaps ? 'Đã tải Word. Còn ' + gaps + ' chỗ "……" cần điền tay.' : 'Đã tải file Word.', gaps ? 'warning' : 'success');
+      const docx = await buildDocx();
+      if (!docx) return;
+      SharedFormsAI.saveBlob(docx.blob, docx.name);
+      toast(docx.gaps ? 'Đã tải Word. Còn ' + docx.gaps + ' chỗ "……" cần điền tay.' : 'Đã tải file Word.', docx.gaps ? 'warning' : 'success');
       saveHistory();
     } catch (error) { toast('Không tạo được file Word: ' + (error.message || error), 'error'); }
+  }
+  // Lưu bản Word vào kho Drive của hồ sơ đang chọn. Kho này chỉ có cho "Hồ sơ tồn" (pending_claims).
+  async function saveToRecord() {
+    if (!st.letter || st.savingRecord) return;
+    const found = chosenRecord();
+    if (!found) { toast('Chưa chọn hồ sơ. Bấm chip "Hồ sơ" ở thanh soạn để chọn hồ sơ cần lưu công văn vào.', 'warning'); return; }
+    const Docs = typeof ClaimDocuments !== 'undefined' ? ClaimDocuments : null;
+    const claimId = Docs ? Docs.claimIdFromKey(found.row.key) : '';
+    if (!claimId) { toast('Hồ sơ giám định chưa có kho tài liệu — chỉ lưu được vào "Hồ sơ tồn". Hãy tải Word về máy.', 'warning'); return; }
+    if (!Docs.hasStorage()) { toast('Kho Drive hồ sơ chưa được kích hoạt. Hãy tải Word về máy.', 'warning'); return; }
+    const owner = typeof firebase !== 'undefined' && firebase.auth().currentUser ? firebase.auth().currentUser.uid : '';
+    if (!owner) { toast('Cần đăng nhập để lưu vào hồ sơ.', 'warning'); return; }
+    syncLetter();   // chốt các chỉnh sửa tay trước khi vẽ lại giao diện
+    st.savingRecord = true; renderAll();
+    try {
+      const docx = await buildDocx();
+      if (!docx) return;
+      const label = recordLabel(found.info);
+      const result = await Docs.saveWord(docx.blob, docx.name, {id: claimId, owner}, {notify: false});
+      if (result.ok) {
+        toast('Đã lưu "' + docx.name + '" vào hồ sơ ' + label + (docx.gaps ? '. Còn ' + docx.gaps + ' chỗ "……" cần điền tay.' : '.'), docx.gaps ? 'warning' : 'success');
+        saveHistory();
+      } else if (result.reason === 'error') toast('Chưa lưu được vào hồ sơ: ' + (result.error || 'lỗi kho Drive') + ' Mở hồ sơ → Tài liệu hồ sơ để thử lại, hoặc tải Word về máy.', 'error');
+      else toast('Không lưu được vào hồ sơ (phiên đăng nhập hoặc kho Drive không sẵn sàng). Hãy tải Word về máy.', 'warning');
+    } catch (error) { toast('Không tạo được file Word: ' + (error.message || error), 'error'); }
+    finally { st.savingRecord = false; if (host) renderAll(); }
   }
   function printLetter() {
     if (!st.letter) return;
@@ -1573,6 +1605,12 @@ const OfficialLetterPage = (() => {
       + (warns.length ? '<div class="ola-note-block is-warn"><h3>Lưu ý từ hồ sơ</h3><ul>' + warns.map(fact => '<li>' + esc(fact.text) + '</li>').join('') + '</ul></div>' : '')
       + '<button type="button" class="ola-more" data-ol-drawer="fields">Xem chi tiết: thông tin, dàn ý, căn cứ, hồ sơ →</button></aside>';
   }
+  function saveRecordTitle() {
+    const found = chosenRecord();
+    if (!found) return 'Chọn hồ sơ (chip Hồ sơ) để lưu công văn Word vào kho tài liệu của hồ sơ';
+    if (!(typeof ClaimDocuments !== 'undefined' && ClaimDocuments.claimIdFromKey(found.row.key))) return 'Hồ sơ giám định chưa có kho tài liệu — chỉ lưu được vào Hồ sơ tồn';
+    return 'Lưu bản Word vào Tài liệu hồ sơ: ' + recordLabel(found.info);
+  }
   function documentHtml() {
     if (!st.letter) return '<div class="ola-doc is-pending" aria-label="Bản thảo đang được chuẩn bị"><div class="olp-skeleton" aria-hidden="true">' + '<i></i>'.repeat(10) + '</div></div>';
     const locked = !!(st.busy || st.pending);
@@ -1580,6 +1618,7 @@ const OfficialLetterPage = (() => {
     return '<div class="ola-doc' + (st.busy ? ' is-busy' : '') + '"><div class="ola-doc-bar"><label class="ol-datepick">Ngày <input type="date" data-ol-date value="' + esc(st.letter.date) + '"' + (locked ? ' disabled' : '') + '></label>'
       + '<span class="olp-usage" data-ol-usage title="' + esc(usageTitle()) + '"' + (usageText() ? '' : ' hidden') + '>' + esc(usageText()) + '</span>'
       + '<button type="button" class="olp-tool" data-ol-drawer="versions"' + (locked ? ' disabled' : '') + '>' + svg(ICON.history) + 'Phiên bản (' + st.versions.length + ')</button>'
+      + '<button type="button" class="olp-tool" data-ol-act="save-record" title="' + esc(saveRecordTitle()) + '"' + (st.savingRecord || locked ? ' disabled' : '') + '>' + svg(ICON.folder) + (st.savingRecord ? 'Đang lưu…' : 'Lưu vào hồ sơ') + '</button>'
       + '<button type="button" class="olp-tool is-primary" data-ol-act="docx">' + svg(ICON.word) + 'Tải Word</button><button type="button" class="olp-tool" data-ol-act="print" title="In">' + svg(ICON.print) + '</button><button type="button" class="olp-tool" data-ol-act="copy" title="Sao chép nội dung">' + svg(ICON.copy) + '</button></div>'
       + '<div class="ol-paper-wrap">' + (locked ? paper.replace(/contenteditable="true"/g, 'contenteditable="false"') : paper) + '</div></div>';
   }
@@ -2104,6 +2143,7 @@ const OfficialLetterPage = (() => {
       case 'edit': st.editing = true; renderAll(); $('[data-ol-brief]')?.focus(); break;
       case 'cancel-edit': collectAll(); st.editing = false; st.pop = ''; renderAll(); break;
       case 'docx': downloadDocx(); break;
+      case 'save-record': saveToRecord(); break;
       case 'print': printLetter(); break;
       case 'copy': copyText(); break;
       case 'settings': st.pop = ''; openSettings(); break;
