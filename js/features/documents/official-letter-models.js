@@ -172,6 +172,9 @@ const OfficialLetterModels = (() => {
     let data = null;
     try { data = await response.json(); } catch (_) { /* không phải JSON */ }
     if (!response.ok) {
+      // Cầu nối bản cũ (trước khi có GET /v1/models) trả 404: kết nối, Origin và Host đều đã đúng, chỉ cần cập nhật cầu nối trên máy tính.
+      if (providerId === 'antigravity' && (response.status === 404 || response.status === 405)) throw new Error('Cầu nối Antigravity trên máy tính còn là bản cũ (chưa có danh sách mô hình). Trên máy tính: git pull, rồi tắt và chạy lại "node scripts/antigravity-local-bridge.mjs".');
+      if (providerId === 'antigravity' && data && data.error && data.error.message) throw new Error(String(data.error.message).slice(0, 200));
       if (response.status === 401 || response.status === 403) throw new Error('Khoá ' + providerLabel(providerId, cfg) + ' không đúng hoặc chưa có quyền.');
       throw new Error(providerLabel(providerId, cfg) + ' lỗi HTTP ' + response.status + ' khi lấy danh sách mô hình.');
     }

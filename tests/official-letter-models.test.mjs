@@ -214,3 +214,9 @@ test('Antigravity hỗ trợ endpoint HTTPS Tailscale (.ts.net) theo trình duy�
   M.save({selected: 'antigravity:gemini-3-flash', providers: {antigravity: {base: ''}}});
   assert.equal(M.resolve(M.load(), 'antigravity:gemini-3-flash').endpoint, 'http://127.0.0.1:18318/v1/chat/completions');
 });
+
+test('listModels Antigravity: cầu nối bản cũ (404) được hướng dẫn cập nhật, lý do của cầu nối được hiển thị nguyên văn', async () => {
+  const cfg = M.normalize({providers: {antigravity: {base: 'https://relay-node.tail1234.ts.net'}}});
+  await assert.rejects(M.listModels('antigravity', cfg, {apiKey: 'tok', fetchImpl: async () => ({ok: false, status: 404, json: async () => null})}), /bản cũ/);
+  await assert.rejects(M.listModels('antigravity', cfg, {apiKey: 'tok', fetchImpl: async () => ({ok: false, status: 401, json: async () => ({error: {message: 'Cầu nối từ chối token: Token đã hết hạn'}})})}), /từ chối token/);
+});
