@@ -259,6 +259,9 @@ Trang **Hồ sơ bồi thường → Cập nhật dữ liệu từ Excel** dùng
 - Kiểm thử logic rules: `tests/database-rules.test.mjs` (giả lập tối giản, không thay thế Firebase Emulator/Rules Playground).
 - Cũng nên tắt tự đăng ký tài khoản (Authentication → Settings) và giới hạn khoá API theo tên miền trong Google Cloud Console.
 
+### Đồng hồ đếm giây khi AI trả lời (Hỏi nghiệp vụ / Trò chuyện AI)
+Khi AI đang trả lời, cạnh dòng trạng thái có viên thuốc đếm giây ("12 giây", từ 60 giây đổi thành "1 phút 05 giây"). Quá **30 giây** viên thuốc chuyển màu cam và gợi ý có thể Dừng để thử lại/đổi mô hình; đồng hồ chạy xuyên suốt cả lúc đếm ngược tự thử lại và lúc tự chuyển sang mô hình dự phòng. Trả lời xong, thời gian được lưu cùng câu trả lời (`secs`, tối đa 3600) và hiện nhỏ bên phải hàng nút *Sao chép*; câu lỗi/bị dừng không hiện. Mốc bắt đầu được ghi tự động mỗi khi `qa.busy` chuyển từ false sang true nên mọi luồng hỏi đáp đều có đồng hồ.
+
 ### Lỗi "Không kết nối được công cụ Antigravity" (máy mới)
 
 Antigravity chạy qua công cụ trung gian cục bộ (`scripts/antigravity-local-bridge.mjs`, cổng 18318, cần CLIProxyAPI cổng 18317 và cấu hình trong `%LOCALAPPDATA%\codex-antigravity-bridge`). Máy mới chưa cài/chạy công cụ này, hoặc trình duyệt chặn truy cập mạng cục bộ, thì lệnh gọi thất bại. Khi gặp lỗi này, câu trả lời có thêm nút **Chọn mô hình khác** để chuyển ngay sang Gemini/DeepSeek (không cần công cụ trên máy).

@@ -757,7 +757,18 @@ const OfficialLetterPage = (() => {
   // Hỏi đáp trên Thư viện tài liệu: tìm đoạn khớp (BM25) → DeepSeek trả lời CHỈ dựa trên các đoạn đó, dẫn mã [C#]; bấm mã để xem nguyên văn.
   // Hội thoại lưu trên máy (localStorage), tách hẳn khỏi phiên soạn công văn; dùng chung khoá DeepSeek, hồ sơ đang chọn và ô "Quy tắc".
   const QA_KEY = 'officialLetter.qa.v1', QA_CHATS_KEY = 'officialLetter.qaChats.v1', QA_MAX_CHATS = 30, MODE_KEY = 'officialLetter.mode.v1';
-  const qa = {messages: [], draft: '', importFile: null, busy: false, status: '', usage: null, open: Object.create(null), loaded: false, deep: true, chats: [], activeId: '', free: false, lib: false, attach: [], attaching: false};
+  const qa = {messages: [], draft: '', importFile: null, since: 0, status: '', usage: null, open: Object.create(null), loaded: false, deep: true, chats: [], activeId: '', free: false, lib: false, attach: [], attaching: false};
+  // Bộ đếm giây của lượt trả lời: mốc bắt đầu được ghi mỗi khi qa.busy chuyển false → true (mọi luồng hỏi đáp đều đi qua đây).
+  let qaBusyFlag = false, qaTicker = 0;
+  Object.defineProperty(qa, 'busy', {enumerable: true, get: () => qaBusyFlag, set: value => { value = !!value; if (value && !qaBusyFlag) qa.since = Date.now(); qaBusyFlag = value; }});
+  const qaElapsed = () => Math.max(0, Math.round((Date.now() - (qa.since || Date.now())) / 1000));
+  const fmtSecs = n => n < 60 ? n + ' giây' : Math.floor(n / 60) + ' phút ' + String(n % 60).padStart(2, '0') + ' giây';
+  const QA_SLOW_SECS = 30;   // quá mốc này thì đồng hồ đổi sang màu cảnh báo nhẹ: mô hình đang chậm hơn thường lệ
+  function paintQaTimer() {
+    if (!host || !qa.busy) return;
+    const secs = qaElapsed();
+    host.querySelectorAll('[data-ol-qa-timer]').forEach(node => { node.textContent = fmtSecs(secs); node.classList.toggle('is-slow', secs >= QA_SLOW_SECS); node.title = secs >= QA_SLOW_SECS ? 'Mô hình đang trả lời chậm hơn thường lệ — có thể bấm Dừng rồi thử lại hoặc chọn mô hình khác' : 'Thời gian AI đã làm việc'; });
+  }
   const DEEP_KEY = 'officialLetter.qaDeep.v1', LIB_KEY = 'officialLetter.freeLib.v1';
   // Nhiều cuộc trò chuyện: qa.messages/qa.usage là cuộc đang mở; qa.chats là toàn bộ danh sách lưu trên máy (v2), tự chuyển từ bản v1 một cuộc.
   // Quy tắc (văn bản căn cứ) đã chọn thuộc về TỪNG cuộc trò chuyện: lưu cùng cuộc, mở lại cuộc nào thì chip Quy tắc về đúng lựa chọn của cuộc đó; cuộc mới bắt đầu ở "Tự động".
@@ -951,7 +962,7 @@ const OfficialLetterPage = (() => {
     qa.draft = ''; qa.attach = []; qa.busy = true; qa.status = 'Đang soạn câu trả lời…'; st.pop = '';
     const mine = generation;
     renderAll(); scrollQa();
-    const reply = message => { if (mine !== generation || !host) return; qa.messages.push(Object.assign({id: Q.newId(), role: 'assistant', sources: [], question: text, free: true}, message)); };
+    const reply = message => { if (mine !== generation || !host) return; qa.messages.push(Object.assign({id: Q.newId(), role: 'assistant', sources: [], question: text, free: true, secs: qaElapsed()}, message)); };
     const usage = {onUsage: u => { qa.usage = OfficialLetterAI.addUsage(qa.usage, u); paintQaUsage(); }, onWait: t => paintQaStatus(t), resumeText: qa.status};
     try {
       let sources = [], queries = [];
@@ -1030,7 +1041,7 @@ const OfficialLetterPage = (() => {
     qa.draft = ''; qa.attach = []; qa.busy = true; qa.status = 'Đang tra Thư viện tài liệu…'; st.pop = '';
     const mine = generation;
     renderAll(); scrollQa();
-    const reply = message => { if (mine !== generation || !host) return; qa.messages.push(Object.assign({id: Q.newId(), role: 'assistant', sources: [], question}, message)); };
+    const reply = message => { if (mine !== generation || !host) return; qa.messages.push(Object.assign({id: Q.newId(), role: 'assistant', sources: [], question, secs: qaElapsed()}, message)); };
     const usage = {onUsage: u => { qa.usage = OfficialLetterAI.addUsage(qa.usage, u); paintQaUsage(); }, onWait: text => paintQaStatus(text), resumeText: qa.status};
     try {
       const dossier = dossierText();
@@ -1180,7 +1191,7 @@ const OfficialLetterPage = (() => {
       + (bridgeDown ? '<button type="button" class="ola-qa-act is-main" data-ol-pop="model" title="Chọn Gemini, DeepSeek… không cần công cụ trên máy">Chọn mô hình khác</button>' : '')
       : msg.empty ? '' : '<button type="button" class="ola-qa-act" data-ol-qa-copy="' + esc(msg.id) + '">' + svg(ICON.copy) + 'Sao chép</button>'
         + (msg.chat || msg.free ? '' : '<button type="button" class="ola-qa-act is-main" data-ol-qa-compose="' + esc(msg.id) + '"' + (qaLocked() ? ' disabled' : '') + ' title="Chuyển sang Soạn công văn, điền sẵn kết luận này vào yêu cầu">' + svg(ICON.letter) + 'Soạn công văn từ câu trả lời</button>');
-    return '<div class="ola-qa-msg is-ai" data-ol-qa-msg="' + esc(msg.id) + '"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body">' + body + warn + srcs + (acts ? '<div class="ola-qa-acts">' + acts + '</div>' : '') + '</div></div>';
+    return '<div class="ola-qa-msg is-ai" data-ol-qa-msg="' + esc(msg.id) + '"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body">' + body + warn + srcs + (acts ? '<div class="ola-qa-acts">' + acts + (!msg.error && !msg.empty && msg.secs ? '<span class="ola-qa-took" title="Thời gian AI trả lời câu hỏi này">' + fmtSecs(msg.secs) + '</span>' : '') + '</div>' : '') + '</div></div>';
   }
   function libChipHtml() {
     return '<button type="button" class="ola-chip' + (qa.lib ? ' is-set' : '') + '" data-ol-act="qa-lib" aria-pressed="' + !!qa.lib + '" title="' + (qa.lib ? 'Đang tra Thư viện tài liệu: AI dùng các đoạn tìm được và dẫn mã [C#]. Bấm để tắt.' : 'Bật để AI tra Thư viện tài liệu (Luật, Nghị định, quy tắc bảo hiểm) trước khi trả lời.') + '">' + svg(ICON.book) + 'Tra Thư viện: ' + (qa.lib ? 'Bật' : 'Tắt') + '</button>';
@@ -1213,7 +1224,7 @@ const OfficialLetterPage = (() => {
         + qaComposerHtml(true)
         + '<div class="ola-ideas">' + Q.SUGGESTIONS.map(text => '<button type="button" class="tasco-ai-choice" data-ol-qa-idea="' + esc(text) + '"><strong>' + esc(text) + '</strong></button>').join('') + '</div></section>';
     }
-    const typing = qa.busy ? '<div class="ola-qa-msg is-ai is-typing"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body"><p class="ola-qa-status" role="status" aria-live="polite"><i></i><i></i><i></i><span data-ol-qa-status>' + esc(qa.status) + '</span></p></div></div>' : '';
+    const typing = qa.busy ? '<div class="ola-qa-msg is-ai is-typing"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body"><p class="ola-qa-status" role="status" aria-live="polite"><i></i><i></i><i></i><span data-ol-qa-status>' + esc(qa.status) + '</span><span class="ola-qa-timer' + (qaElapsed() >= QA_SLOW_SECS ? ' is-slow' : '') + '" data-ol-qa-timer aria-hidden="true">' + fmtSecs(qaElapsed()) + '</span></p></div></div>' : '';
     return '<div class="ola-qa"><div class="ola-qa-scroll" data-ol-qa-scroll><div class="ola-qa-inner">' + qa.messages.map(qaMessageHtml).join('') + typing + '</div></div>'
       + '<div class="ola-qa-dock">' + qaComposerHtml(false) + '<p class="ola-qa-foot">' + (qa.free ? 'AI có thể sai — hãy kiểm tra lại số liệu và nội dung quan trọng. Với điều khoản bảo hiểm, bật “Tra Thư viện” để có nguồn đối chiếu.' : 'AI có thể sai — luôn đối chiếu nguyên văn ở phần "Nguồn đã tra" trước khi dùng trong công văn hoặc trả lời khách hàng.') + '</p></div></div>';
   }
@@ -2296,6 +2307,7 @@ const OfficialLetterPage = (() => {
     document.addEventListener('selectionchange', captureSelection);
     window.addEventListener('resize', fitHeight);
     try { const saved = localStorage.getItem(HIST_PANEL_KEY); st.histOpen = saved === null ? window.innerWidth >= 1000 : saved === '1'; } catch (_) { /* bỏ qua */ }
+    qaTicker = setInterval(paintQaTimer, 1000);
     renderAll();
     const H = History();
     if (H) H.load().then(list => { st.history = list; st.histScope = H.scope(); if (host) updateHistory(); }).catch(() => { /* lịch sử là phụ */ });
@@ -2305,6 +2317,7 @@ const OfficialLetterPage = (() => {
     if (saveTimer && st.letter) { clearTimeout(saveTimer); saveHistory(); }
     generation++;
     controller?.abort(); controller = null;
+    clearInterval(qaTicker); qaTicker = 0;
     st.busy = ''; st.status = ''; st.pop = '';
     exitHistSelect();
     if (host) HANDLERS.forEach(([name, fn]) => host.removeEventListener(name, fn));

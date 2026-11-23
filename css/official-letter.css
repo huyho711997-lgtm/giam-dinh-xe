@@ -781,6 +781,10 @@ body:not(.light-mode) .ola-review del { color:#ffb7ae; background:rgba(255,110,9
 .ola-qa-status i { width:6px; height:6px; border-radius:50%; background:var(--primary); opacity:.35; animation:ola-qa-dot 1.2s ease-in-out infinite; }
 .ola-qa-status i:nth-child(2) { animation-delay:.15s; } .ola-qa-status i:nth-child(3) { animation-delay:.3s; }
 .ola-qa-status span { margin-left:6px; }
+.ola-qa-status .ola-qa-timer { margin-left:10px; padding:1px 9px; border-radius:999px; border:1px solid var(--border); background:var(--surface-strong); font-size:12px; font-variant-numeric:tabular-nums; font-weight:600; color:var(--text-muted); white-space:nowrap; transition:color .2s, border-color .2s, background .2s; }
+.ola-qa-status .ola-qa-timer.is-slow { color:#b45309; border-color:rgba(180,83,9,.4); background:rgba(245,158,11,.12); }
+.ola-qa-took { align-self:center; margin-left:auto; padding:0 4px; font-size:12px; color:var(--text-muted); font-variant-numeric:tabular-nums; }
+.ola-qa-took::before { content:'\23F1\FE0E'; margin-right:4px; }
 @keyframes ola-qa-dot { 0%,80%,100% { opacity:.25; transform:scale(.8); } 40% { opacity:1; transform:scale(1.1); } }
 .ola-qa-dock { flex:none; max-width:820px; width:100%; box-sizing:border-box; margin:0 auto; padding:0 6px; }
 .ola-qa-foot { margin:6px 0 2px; color:var(--text-muted); font-size:11px; text-align:center; }

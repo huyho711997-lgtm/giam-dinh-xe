@@ -88,7 +88,7 @@ test('giới hạn dung lượng lịch sử chỉ bỏ bản cũ, giữ nguyên
 function setupPage(reply) {
   const saves = [], messages = [];
   const host = {querySelector:() => null, querySelectorAll:() => [], removeEventListener() {}};
-  const ctx = vm.createContext({setTimeout, clearTimeout, AbortController, btoa:text => Buffer.from(text, 'binary').toString('base64'),
+  const ctx = vm.createContext({setTimeout, clearTimeout, setInterval, clearInterval, AbortController, btoa:text => Buffer.from(text, 'binary').toString('base64'),
     document:{removeEventListener() {}}, window:{removeEventListener() {}}, localStorage:{getItem:() => null},
     triggerToast:(...args) => messages.push(args),
     OfficialLetterAI:{pdfToAttachments:async name => [{name, mimeType:'text/plain', data:'Zm9v'}]},   // DeepSeek không nhận PDF → PDF được đọc thành văn bản trước khi gửi

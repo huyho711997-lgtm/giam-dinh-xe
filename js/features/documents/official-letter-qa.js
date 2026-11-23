@@ -439,6 +439,7 @@ const OfficialLetterQA = (() => {
         included: item.read.included.slice(0, 12).map(doc => ({name: oneLine(doc && doc.name, 120), soHieu: oneLine(doc && doc.soHieu, 60), chunks: Number(doc && doc.chunks) || 0})).filter(doc => doc.name),
         skipped: (Array.isArray(item.read.skipped) ? item.read.skipped : []).slice(0, 12).map(doc => ({name: oneLine(doc && doc.name, 120)})).filter(doc => doc.name)
       };
+      if (Number.isFinite(item.secs) && item.secs > 0) message.secs = Math.min(Math.round(item.secs), 3600);   // thời gian AI trả lời (giây)
       if (item.error) message.error = true;
       if (item.empty) message.empty = true;
       if (item.chat) message.chat = true;

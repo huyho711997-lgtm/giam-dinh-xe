@@ -106,6 +106,14 @@ test('answerHtml: escape HTML, **đậm**, danh sách, mã nguồn thành nút, 
   assert.equal(Q.answerHtml('', SOURCES), '');
 });
 
+test('normalizeMessage giữ thời gian trả lời (giây) hợp lệ và bỏ giá trị bậy', () => {
+  const { Q } = load();
+  assert.equal(Q.normalizeMessage({role: 'assistant', text: 'a', secs: 18.4}).secs, 18);
+  assert.equal(Q.normalizeMessage({role: 'assistant', text: 'a', secs: 99999}).secs, 3600);
+  for (const bad of [0, -3, NaN, '12', null]) assert.equal(Q.normalizeMessage({role: 'assistant', text: 'a', secs: bad}).secs, undefined);
+  assert.equal(Q.normalizeMessage({role: 'user', text: 'a', secs: 5}).secs, undefined);
+});
+
 test('plainText bỏ ký hiệu đậm; normalizeStore lọc tin nhắn hỏng, cắt nguồn và số lượng', () => {
   const { Q } = load();
   assert.equal(Q.plainText('**Có** được [C1]'), 'Có được [C1]');

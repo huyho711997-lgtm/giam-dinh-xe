@@ -12,7 +12,7 @@ const draft = '{"subject":"Thông báo kết quả","paragraphs":[{"type":"p","t
 
 function setup(reply, options = {}) {
   const host = {querySelector:() => null, querySelectorAll:() => [], removeEventListener() {}};
-  const ctx = vm.createContext({setTimeout:options.fastTimers ? fn => setTimeout(fn, 0) : setTimeout, clearTimeout, AbortController, DOMException,
+  const ctx = vm.createContext({setTimeout:options.fastTimers ? fn => setTimeout(fn, 0) : setTimeout, clearTimeout, setInterval, clearInterval, AbortController, DOMException,
     window:{removeEventListener() {}}, document:{removeEventListener() {}}, localStorage:{getItem:() => null},
     testReply:reply, testHost:host, DeepSeekKeyStore:{get:async () => 'test-key'}, OfficialLetterAI:{DEFAULT_MODEL:'deepseek-flash', call:reply},
     ...(options.legal ? {OfficialLetterLegal:options.legal} : {})});
