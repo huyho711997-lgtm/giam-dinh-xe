@@ -230,19 +230,24 @@ const OfficialLetterPage = (() => {
     controller?.abort();
     controller = new AbortController();
     const limit = active ? Models().timeoutMs(active.provider, thinking) : 0;   // Antigravity: lượt suy luận sâu được chờ lâu hơn lượt thường
-    const signal = limit && typeof AbortSignal.timeout === 'function' && typeof AbortSignal.any === 'function'
-      ? AbortSignal.any([controller.signal, AbortSignal.timeout(limit)]) : controller.signal;
+    // Hạn chờ tính RIÊNG cho từng lần gọi (không gộp thời gian đếm ngược tự thử lại), nếu không lần thử lại chỉ còn vài giây rồi bị báo "không phản hồi".
+    const canTimeout = limit && typeof AbortSignal.timeout === 'function' && typeof AbortSignal.any === 'function';
+    const attemptSignal = () => (canTimeout ? AbortSignal.any([controller.signal, AbortSignal.timeout(limit)]) : controller.signal);
     const taskStatus = extra.onWait ? (extra.resumeText || '') : st.status, wait = extra.onWait || setStatus;
     const countUsage = extra.onUsage || (usage => { st.usage = OfficialLetterAI.addUsage(st.usage, usage); paintUsage(); });
     // Một công văn gọi AI 2–3 lần: khi bị giới hạn lưu lượng/quá tải thì tự chờ rồi thử lại, có đếm ngược cho người dùng thấy.
     for (let attempt = 0; ; attempt++) {
+      const signal = attemptSignal();
       try { return await OfficialLetterAI.call(request, {apiKey, model, signal, onUsage: countUsage, thinking, effort: extra.effort, maxTokens: thinking ? 16000 : undefined, endpoint: active ? active.endpoint : undefined, label, profile: active ? active.profile : undefined}); }
       catch (error) {
-        if (active && active.provider === 'antigravity' && signal.aborted && !controller.signal.aborted) throw new Error(thinking ? 'Antigravity chưa trả kết quả suy luận sâu sau ' + Math.round(limit / 1000) + ' giây. Hãy thử lại, tắt Suy luận sâu hoặc kiểm tra công cụ trung gian trên máy.' : 'Kết nối Antigravity trên máy không phản hồi. Kiểm tra công cụ trung gian và quyền truy cập mạng cục bộ của trình duyệt.');
+        if (active && active.provider === 'antigravity' && signal.aborted && !controller.signal.aborted) {
+          const seconds = Math.round(limit / 1000);
+          throw new Error(thinking ? 'Antigravity chưa trả kết quả suy luận sâu sau ' + seconds + ' giây. Hãy thử lại, tắt Suy luận sâu hoặc chọn mô hình khác.' : 'Antigravity chưa trả lời sau ' + seconds + ' giây — mô hình đang chậm hoặc bận (công cụ trung gian vẫn chạy). Hãy thử lại hoặc chọn mô hình khác (như Gemini 3 Flash).');
+        }
         if (!(error && error.retryable) || attempt >= RETRY_WAITS.length) throw error;
         for (let left = RETRY_WAITS[attempt]; left > 0; left--) {
           wait(label + ' đang bận — tự thử lại sau ' + left + ' giây…');
-          await new Promise((resolve, reject) => { const timer = setTimeout(resolve, 1000); signal.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('Đã huỷ', 'AbortError')); }, {once: true}); });
+          await new Promise((resolve, reject) => { const timer = setTimeout(resolve, 1000); controller.signal.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('Đã huỷ', 'AbortError')); }, {once: true}); });
         }
         wait(taskStatus);
       }

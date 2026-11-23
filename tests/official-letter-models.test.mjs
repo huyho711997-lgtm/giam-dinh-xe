@@ -138,7 +138,7 @@ test('Antigravity có suy luận sâu: reasoning_effort high khi bật, low khi 
   assert.equal(deep.reasoning_effort, 'high'); assert.equal(deep.thinking, undefined); assert.equal(deep.temperature, undefined); assert.equal(deep.max_tokens, 16000);
   const fast = plain(AI.toChatRequest(gemini(), {model: 'gemini-3-flash', profile: prof}));
   assert.equal(fast.reasoning_effort, 'low'); assert.equal(fast.thinking, undefined); assert.equal(fast.temperature, 0.3);
-  assert.equal(M.timeoutMs('antigravity', false), 45000);
+  assert.equal(M.timeoutMs('antigravity', false), 90000);
   assert.ok(M.timeoutMs('antigravity', true) > 120000 && M.timeoutMs('antigravity', true) < 180000);   // dài hơn lượt thường nhưng ngắn hơn hạn 180 giây của cầu nối
   for (const id of ['deepseek', 'gemini', 'groq', 'custom']) assert.equal(M.timeoutMs(id, true), 0);
 });

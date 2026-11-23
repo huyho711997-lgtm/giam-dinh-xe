@@ -108,9 +108,9 @@ const OfficialLetterModels = (() => {
     if (providerId === 'groq') return {reasoning: /gpt-oss/i.test(model) ? 'effort' : 'none', effortOn: 'medium', effortOff: 'low', vision: /llama-4|scout|maverick|vision/i.test(model), maxOut: 4000, maxSources: 5};
     return {reasoning: 'none', vision: true, maxOut: 0, maxSources: 0};
   }
-  // Hạn chờ một lượt gọi (mili giây; 0 = không đặt thêm). Antigravity đi qua cầu nối cục bộ (tối đa 180 giây): lượt thường cắt sớm để báo lỗi kết nối,
+  // Hạn chờ một lượt gọi (mili giây; 0 = không đặt thêm). Antigravity đi qua cầu nối cục bộ (tối đa 180 giây): lượt thường chờ 90 giây (mô hình tầng nhanh 3.8 có lúc xếp hàng/chậm; 45 giây là quá ngắn),
   // lượt suy luận sâu cần lâu hơn nhưng vẫn ngắn hơn hạn của cầu nối để người dùng nhận được thông báo rõ ràng.
-  const timeoutMs = (providerId, thinking) => providerId !== 'antigravity' ? 0 : thinking ? 170000 : 45000;
+  const timeoutMs = (providerId, thinking) => providerId !== 'antigravity' ? 0 : thinking ? 170000 : 90000;
   // Trả về mô hình đang chọn (hoặc theo id) cùng mọi thứ cần để gọi API.
   function resolve(cfg, id) {
     const all = entries(cfg);
