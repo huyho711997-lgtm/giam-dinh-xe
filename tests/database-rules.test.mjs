@@ -80,6 +80,18 @@ const DB = {
 };
 const asUser = uid => ({uid, token: {email: uid + '@x.vn'}});
 
+test('biên bản hiện trường độc lập chỉ thuộc tài khoản đã đăng nhập', () => {
+  const path='standalone_scene_reports/gdv1/report1';
+  const report={updatedAt:1, data:{plate:'47A12345'}, map:{latitude:12.7,longitude:108.0}};
+  assert.equal(canWrite(asUser('gdv1'),path,report,DB),true);
+  assert.equal(canRead(asUser('gdv1'),path,DB),true);
+  assert.equal(canRead(asUser('gdv2'),path,DB),false);
+  assert.equal(canWrite(asUser('gdv2'),path,report,DB),false);
+  assert.equal(canRead(null,path,DB),false);
+  assert.equal(canWrite(asUser('stranger'),'standalone_scene_reports/stranger/report1',report,DB),false);
+  assert.equal(canRead(asUser('gdv1'),'standalone_scene_reports',DB),false);
+});
+
 test('người dùng thường KHÔNG tự nâng mình thành quản trị viên', () => {
   const gdv = asUser('gdv1');
   assert.equal(canWrite(gdv, 'users/gdv1/profile', {...DB.users.gdv1.profile, role: 'Admin'}, DB), false, 'ghi cả hồ sơ với role Admin');
