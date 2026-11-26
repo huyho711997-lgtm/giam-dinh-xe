@@ -1234,33 +1234,63 @@ const OfficialLetterPage = (() => {
   function libChipHtml() {
     return '<button type="button" class="ola-chip' + (qa.lib ? ' is-set' : '') + '" data-ol-act="qa-lib" aria-pressed="' + !!qa.lib + '" title="' + (qa.lib ? 'Đang tra Thư viện tài liệu: AI dùng các đoạn tìm được và dẫn mã [C#]. Bấm để tắt.' : 'Bật để AI tra Thư viện tài liệu (Luật, Nghị định, quy tắc bảo hiểm) trước khi trả lời.') + '">' + svg(ICON.book) + 'Tra Thư viện: ' + (qa.lib ? 'Bật' : 'Tắt') + '</button>';
   }
+  function workspacePromptHtml(input, label, hint) {
+    return '<div class="ola-workspace-prompt">' + (label ? '<label for="ol-workspace-input">' + label + '</label>' : '')
+      + input + (hint ? '<p id="ol-workspace-hint">' + hint + '</p>' : '') + '</div>';
+  }
+  function workspaceToolbarHtml(context, options, action) {
+    return '<div class="ola-workspace-context" role="group" aria-label="Tài liệu và căn cứ">' + context + '</div>'
+      + '<div class="ola-workspace-footer"><div class="ola-workspace-options" role="group" aria-label="Tùy chọn AI">'
+      + options + '</div>' + action + '</div>';
+  }
+  function workspaceIdeaHtml({attrs, icon, title, detail, selected}) {
+    return '<button type="button" class="ola-workspace-idea" ' + attrs + '><span class="ola-workspace-idea-icon">' + svg(icon)
+      + '</span><span class="ola-workspace-idea-text"><strong>' + esc(title) + '</strong>' + (detail ? '<small>' + esc(detail) + '</small>' : '')
+      + '</span><span class="ola-workspace-idea-arrow">' + svg(selected ? ICON.check : ICON.arrowRight) + '</span></button>';
+  }
+  function workspaceHomeHtml({icon, title, description, composer, feedback = '', progress = '', suggestionsTitle, cards}) {
+    return '<section class="ola-hero ola-workspace-home" aria-labelledby="ol-workspace-title">'
+      + '<header class="ola-workspace-heading"><span class="ola-avatar">' + svg(icon) + '</span><div><h1 id="ol-workspace-title">'
+      + title + '</h1><p>' + description + '</p></div></header>' + feedback + composer + progress
+      + '<section class="ola-workspace-starters" aria-labelledby="ol-workspace-starters"><h2 id="ol-workspace-starters">' + suggestionsTitle + '</h2>'
+      + '<div class="ola-workspace-ideas">' + cards + '</div></section></section>';
+  }
   function qaComposerHtml(big) {
     const busy = !!qa.busy;
-    return '<div class="ola-composer ola-qa-composer' + (big ? ' is-big' : ' is-up') + (busy ? ' is-busy' : '') + '"' + (busy ? ' aria-busy="true"' : '') + '>'
-      + '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="200000" placeholder="' + (qa.free ? 'Hỏi bất cứ điều gì — có thể đính kèm ảnh, PDF, Word, Excel…' : 'Hỏi nghiệp vụ (có thể đính kèm ảnh/tệp của vụ việc), hoặc dán quy tắc và ghi “thêm vào thư viện”…') + '" aria-label="' + (qa.free ? 'Tin nhắn cho trợ lý AI' : 'Câu hỏi nghiệp vụ') + '">' + esc(qa.draft) + '</textarea>'
+    const label = qa.free ? 'Tin nhắn cho trợ lý AI' : 'Câu hỏi nghiệp vụ';
+    const placeholder = big
+      ? (qa.free ? 'Ví dụ: Tóm tắt tài liệu này thành 5 ý chính…' : 'Ví dụ: Thông báo tổn thất chậm có bị giảm trừ không?')
+      : (qa.free ? 'Nhập tin nhắn hoặc đính kèm tài liệu…' : 'Nhập câu hỏi nghiệp vụ hoặc đính kèm tài liệu…');
+    const hint = qa.free ? 'Có thể đính kèm ảnh, PDF, Word hoặc Excel.' : 'Bạn cũng có thể dán hoặc đính kèm quy tắc và ghi “thêm vào thư viện”.';
+    const input = '<textarea data-ol-qa-input rows="' + (big ? 3 : 2) + '" maxlength="200000" placeholder="' + esc(placeholder) + '"'
+      + (big ? ' id="ol-workspace-input" aria-describedby="ol-workspace-hint"' : ' aria-label="' + label + '"') + '>' + esc(qa.draft) + '</textarea>';
+    const disabled = busy ? ' disabled' : '';
+    const attach = '<input type="file" data-ol-qa-file accept=".md,.markdown,.txt,.docx,.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp,.heic,.heif" multiple hidden' + disabled + '>'
+      + '<button type="button" class="ola-chip" data-ol-act="attach-qa" title="Đính kèm ảnh hoặc tài liệu"' + disabled + '>' + svg(ICON.attach) + 'Đính kèm</button>';
+    const context = attach + recordChipHtml() + (qa.free ? libChipHtml() : '')
+      + ((!qa.free || qa.lib) ? rulesChipHtml('Chọn văn bản làm căn cứ, mặc định tra toàn bộ Thư viện tài liệu') : '');
+    const sendLabel = qa.free ? 'Gửi tin nhắn' : 'Gửi câu hỏi';
+    const send = busy ? '<button type="button" class="tasco-ai-send is-stop" data-ol-act="qa-stop" title="Dừng" aria-label="Dừng">' + svg(ICON.close) + '<span>Dừng</span></button>'
+      : '<button type="button" class="tasco-ai-send" data-ol-act="qa-send" title="' + sendLabel + ' (Enter)" aria-label="' + sendLabel + '">' + svg(ICON.send) + '<span>' + sendLabel + '</span></button>';
+    return '<div class="ola-composer ola-qa-composer' + (big ? ' is-big' : ' is-up') + (busy ? ' is-busy' : '') + ' ola-workspace-composer"' + (busy ? ' aria-busy="true"' : '') + '>'
+      + workspacePromptHtml(input, big ? label : '', big ? hint : '')
       + ((qa.attach.length || qa.attaching) ? '<div class="ola-qa-attach">' + qa.attach.map((item, at) => '<span class="ola-qa-file' + (item.kind === 'image' ? ' is-image' : '') + '">'
         + (item.kind === 'image' && item.preview ? '<img src="' + esc(item.preview) + '" alt="">' : svg(ICON.attach)) + '<em title="' + esc(item.name + (item.truncated ? ' (đã cắt bớt vì quá dài)' : '')) + '">' + esc(item.name) + (item.truncated ? ' ✂' : '') + '</em>'
         + '<button type="button" data-ol-act="qa-attach-remove" data-ol-idx="' + at + '" aria-label="Bỏ ' + esc(item.name) + '"' + (busy ? ' disabled' : '') + '>×</button></span>').join('')
         + (qa.attaching ? '<span class="ola-qa-file is-loading"><i></i><i></i><i></i> Đang đọc tệp…</span>' : '') + '</div>' : '')
-      + '<div class="ola-bar"><label class="ola-icon-btn' + (busy ? ' is-disabled' : '') + '" title="' + (qa.free ? 'Đính kèm ảnh / PDF / Word / Excel (tối đa ' + ATTACH_MAX + ' tệp)' : 'Đính kèm ảnh/tệp của vụ việc để hỏi (tối đa ' + ATTACH_MAX + ' tệp). Muốn nạp quy tắc vào Thư viện: đính kèm rồi ghi “thêm vào thư viện”.') + '"><input type="file" data-ol-qa-file accept=".md,.markdown,.txt,.docx,.pdf,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp,.heic,.heif"' + ' multiple' + ' hidden' + (busy ? ' disabled' : '') + '>' + svg(ICON.attach) + '</label>' + recordChipHtml() + (qa.free ? libChipHtml() + (qa.lib ? rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)') : '') : rulesChipHtml('Chỉ tra trong văn bản này (mặc định: toàn bộ Thư viện tài liệu)'))
-      + modelChipHtml() + deepChipHtml() + '<span class="ola-spacer"></span>'
-      + (busy ? '<button type="button" class="tasco-ai-send is-stop" data-ol-act="qa-stop" title="Dừng" aria-label="Dừng">' + svg(ICON.close) + '</button>'
-        : '<button type="button" class="tasco-ai-send" data-ol-act="qa-send" title="Gửi câu hỏi (Enter)" aria-label="Gửi câu hỏi">' + svg(ICON.send) + '</button>') + '</div>'
-      + popoverHtml() + '</div>';
+      + workspaceToolbarHtml(context, modelChipHtml() + deepChipHtml(), send) + popoverHtml() + '</div>';
   }
   function qaHtml() {
     const Q = QA();
-    if (!qa.messages.length && !qa.busy && qa.free) {
-      return '<section class="ola-hero ola-qa-hero ola-free-hero"><span class="ola-avatar" aria-hidden="true">' + svg(ICON.chat) + '</span><h1>Hôm nay bạn cần giúp gì?</h1>'
-        + '<p class="ola-qa-lead">Hỏi mọi thứ: viết lại câu chữ, tính toán, Excel, dịch, giải thích kiến thức… Đính kèm ảnh, PDF, Word, Excel để AI đọc cùng. Cần đúng điều khoản bảo hiểm thì bật “Tra Thư viện” hoặc dùng tab Hỏi nghiệp vụ.</p>'
-        + qaComposerHtml(true)
-        + '<div class="ola-ideas">' + Q.FREE_SUGGESTIONS.map(text => '<button type="button" class="tasco-ai-choice" data-ol-qa-idea="' + esc(text) + '"><strong>' + esc(text) + '</strong></button>').join('') + '</div></section>';
-    }
     if (!qa.messages.length && !qa.busy) {
-      return '<section class="ola-hero ola-qa-hero"><span class="ola-avatar" aria-hidden="true">' + svg(ICON.book) + '</span><h1>Cần tra cứu nghiệp vụ gì?</h1>'
-        + '<p class="ola-qa-lead">Hỏi về Luật, Nghị định, quy tắc bảo hiểm… đã nạp trong Thư viện tài liệu. Câu trả lời chỉ dựa trên văn bản trong thư viện và luôn dẫn nguồn nguyên văn để bạn đối chiếu.</p>'
-        + qaComposerHtml(true)
-        + '<div class="ola-ideas">' + Q.SUGGESTIONS.map(text => '<button type="button" class="tasco-ai-choice" data-ol-qa-idea="' + esc(text) + '"><strong>' + esc(text) + '</strong></button>').join('') + '</div></section>';
+      const icon = qa.free ? ICON.chat : ICON.book;
+      const cards = (qa.free ? Q.FREE_SUGGESTIONS : Q.SUGGESTIONS).map(title =>
+        workspaceIdeaHtml({attrs:'data-ol-qa-idea="' + esc(title) + '"', icon, title})).join('');
+      return workspaceHomeHtml({
+        icon, title: qa.free ? 'Trò chuyện AI' : 'Hỏi nghiệp vụ',
+        description: qa.free ? 'Viết, tóm tắt tài liệu, tính toán hoặc trao đổi với AI.' : 'Tra cứu điều khoản bảo hiểm trong Thư viện tài liệu và đối chiếu nguồn trích dẫn.',
+        composer: qaComposerHtml(true), suggestionsTitle: qa.free ? 'Gợi ý trò chuyện' : 'Gợi ý tra cứu', cards
+      });
     }
     const typing = qa.busy ? '<div class="ola-qa-msg is-ai is-typing"><span class="ola-qa-av" aria-hidden="true">' + svg(ICON.book) + '</span><div class="ola-qa-body"><p class="ola-qa-status" role="status" aria-live="polite"><i></i><i></i><i></i><span data-ol-qa-status>' + esc(qa.status) + '</span><span class="ola-qa-timer' + (qaElapsed() >= QA_SLOW_SECS ? ' is-slow' : '') + '" data-ol-qa-timer aria-hidden="true">' + fmtSecs(qaElapsed()) + '</span></p></div></div>' : '';
     return '<div class="ola-qa"><div class="ola-qa-scroll" data-ol-qa-scroll><div class="ola-qa-inner">' + qa.messages.map(qaMessageHtml).join('') + typing + '</div></div>'
@@ -1645,17 +1675,15 @@ const OfficialLetterPage = (() => {
     const fileInput = '<input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>';
     const send = '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + (big ? '<span>Soạn công văn</span>' : '') + '</button>';
     const toolbar = big
-      ? '<div class="ola-draft-context" role="group" aria-label="Tài liệu và căn cứ">' + fileInput
-        + '<button type="button" class="ola-chip" data-ol-act="attach-draft" title="Đính kèm ảnh hoặc PDF">' + svg(ICON.attach) + 'Đính kèm</button>' + context + '</div>'
-        + '<div class="ola-draft-footer"><div class="ola-draft-options" role="group" aria-label="Tùy chọn AI">' + modelChipHtml() + deepChipHtml(false) + styleChipHtml(false) + '</div>' + send + '</div>'
+      ? workspaceToolbarHtml(fileInput + '<button type="button" class="ola-chip" data-ol-act="attach-draft" title="Đính kèm ảnh hoặc PDF">'
+        + svg(ICON.attach) + 'Đính kèm</button>' + context, modelChipHtml() + deepChipHtml(false) + styleChipHtml(false), send)
       : '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm ảnh/PDF">' + fileInput + svg(ICON.attach) + '</label>'
         + context + modelChipHtml() + '<span class="ola-spacer"></span>' + deepChipHtml(true) + styleChipHtml(true) + send + '</div>';
-    return '<div class="ola-composer' + (big ? ' is-big ola-draft-composer' : '') + '">'
-      + (big ? '<div class="ola-draft-prompt"><label for="ol-draft-brief">Yêu cầu soạn thảo</label>' : '')
-      + '<textarea data-ol-brief rows="' + (big ? 3 : 2) + '" maxlength="3000"'
-      + (big ? ' id="ol-draft-brief" aria-describedby="ol-draft-hint" placeholder="Ví dụ: Đề nghị khách hàng bổ sung biên bản tai nạn…"' : ' placeholder="Mô tả công văn cần soạn… (gõ số HSBT hoặc biển số để AI tự lấy hồ sơ)" aria-label="Yêu cầu soạn công văn"')
-      + '>' + esc(st.brief) + '</textarea>'
-      + (big ? '<p id="ol-draft-hint">Nhập số HSBT hoặc biển số để AI tìm hồ sơ liên quan.</p></div>' : '')
+    const input = '<textarea data-ol-brief rows="' + (big ? 3 : 2) + '" maxlength="3000"'
+      + (big ? ' id="ol-workspace-input" aria-describedby="ol-workspace-hint" placeholder="Ví dụ: Đề nghị khách hàng bổ sung biên bản tai nạn…"' : ' placeholder="Mô tả công văn cần soạn… (gõ số HSBT hoặc biển số để AI tự lấy hồ sơ)" aria-label="Yêu cầu soạn công văn"')
+      + '>' + esc(st.brief) + '</textarea>';
+    return '<div class="ola-composer' + (big ? ' is-big ola-workspace-composer' : '') + '">'
+      + (big ? workspacePromptHtml(input, 'Yêu cầu soạn thảo', 'Nhập số HSBT hoặc biển số để AI tìm hồ sơ liên quan.') : input)
       + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (files ? '' : ' hidden') + '>' + files + '</div>'
       + '<div class="ola-docs" data-ol-docs' + (docList().length ? '' : ' hidden') + '>' + docsHtml() + '</div>'
       + toolbar + popoverHtml() + '</div>';
@@ -1675,17 +1703,17 @@ const OfficialLetterPage = (() => {
 
   function heroHtml() {
     const ideas = Core().templates().filter(item => TEMPLATE_HINTS[item.id]);
-    const cards = ideas.map(item => '<button type="button" class="ola-draft-idea" data-ol-idea="' + esc(item.id) + '" aria-pressed="' + (item.id === st.templateId) + '">'
-      + '<span class="ola-draft-idea-icon">' + svg(ICON.letter) + '</span><span class="ola-draft-idea-text"><strong>' + esc(item.name) + '</strong><small>' + esc(item.group) + '</small></span>'
-      + '<span class="ola-draft-idea-arrow">' + svg(item.id === st.templateId ? ICON.check : ICON.arrowRight) + '</span></button>').join('');
-    return '<section class="ola-hero ola-draft-home" aria-labelledby="ol-draft-title">'
-      + '<header class="ola-draft-heading"><span class="ola-avatar">' + svg(ICON.letter) + '</span><div><h1 id="ol-draft-title">Soạn công văn</h1>'
-      + '<p>Mô tả yêu cầu hoặc chọn một gợi ý để bắt đầu.</p></div></header>'
-      + (st.notice ? noticeHtml() : '')
-      + composerHtml(true)
-      + (st.steps ? '<div class="ola-task-result">' + stepsHtml() + '</div>' : '')
-      + '<section class="ola-draft-starters" aria-labelledby="ol-draft-starters"><h2 id="ol-draft-starters">Gợi ý soạn nhanh</h2>'
-      + '<div class="ola-draft-ideas">' + cards + '</div></section></section>';
+    const cards = ideas.map(item => {
+      const selected = item.id === st.templateId;
+      return workspaceIdeaHtml({attrs:'data-ol-idea="' + esc(item.id) + '" aria-pressed="' + selected + '"',
+        icon:ICON.letter, title:item.name, detail:item.group, selected});
+    }).join('');
+    return workspaceHomeHtml({
+      icon:ICON.letter, title:'Soạn công văn', description:'Mô tả yêu cầu hoặc chọn một gợi ý để bắt đầu.',
+      composer:composerHtml(true), feedback:st.notice ? noticeHtml() : '',
+      progress:st.steps ? '<div class="ola-task-result">' + stepsHtml() + '</div>' : '',
+      suggestionsTitle:'Gợi ý soạn nhanh', cards
+    });
   }
 
   // ---- Màn làm việc ----
@@ -2010,7 +2038,7 @@ const OfficialLetterPage = (() => {
     const root = $('[data-ol-root]');
     const active = document.activeElement, focusSel = active && host.contains(active) ? (active.matches('[data-ol-rec-q]') ? '[data-ol-rec-q]' : active.matches('[data-ol-brief]') ? '[data-ol-brief]' : active.matches('[data-ol-qa-input]') ? '[data-ol-qa-input]' : '') : '';
     const focusRule = active && host.contains(active) && active.matches('[data-ol-rule]') ? active.dataset.olRule : null;
-    const focusDraftPop = active?.closest('.ola-draft-composer') && host.contains(active) ? active.dataset.olPop : '';
+    const focusWorkspacePop = active?.closest('.ola-workspace-composer') && host.contains(active) ? active.dataset.olPop : '';
     const modelPop = $('.ola-pop--models');
     const modelQuery = modelPop?.querySelector('[data-ol-model-q]');
     const modelScroll = modelPop?.querySelector('.ola-model-list').scrollTop || 0;
@@ -2031,14 +2059,14 @@ const OfficialLetterPage = (() => {
     const nextQa = $('[data-ol-qa-scroll]'); if (nextQa) nextQa.scrollTop = qaTop;
     const brief = $('[data-ol-brief]'); if (brief) autoGrow(brief);
     const qaInput = $('[data-ol-qa-input]'); if (qaInput) autoGrow(qaInput);
-    const draftPickers = root.querySelectorAll('.ola-draft-composer [data-ol-pop]');
-    draftPickers.forEach(button => {
+    const workspacePickers = root.querySelectorAll('.ola-workspace-composer [data-ol-pop]');
+    workspacePickers.forEach(button => {
       button.setAttribute('aria-expanded', String(st.pop === button.dataset.olPop));
       button.setAttribute('aria-haspopup', ['record', 'model'].includes(button.dataset.olPop) ? 'dialog' : 'menu');
     });
     if (st.pop === 'record') { updateRecList(); $('[data-ol-rec-q]')?.focus({preventScroll:true}); }
     else if (st.pop === 'rules' && focusRule !== null) [...host.querySelectorAll('[data-ol-rule]')].find(node => node.dataset.olRule === focusRule)?.focus({preventScroll:true});
-    else if (focusDraftPop) [...draftPickers].find(button => button.dataset.olPop === focusDraftPop)?.focus({preventScroll:true});
+    else if (focusWorkspacePop) [...workspacePickers].find(button => button.dataset.olPop === focusWorkspacePop)?.focus({preventScroll:true});
     else if (focusSel) $(focusSel)?.focus({preventScroll:true});
     const nextMain = $('.ola-main'); if (nextMain) nextMain.scrollTop = mainTop;
     const nextModelPop = $('.ola-pop--models');
@@ -2482,6 +2510,7 @@ const OfficialLetterPage = (() => {
     switch (act.dataset.olAct) {
       case 'close-model': dismissModelPop(); break;
       case 'attach-draft': $('[data-ol-files]')?.click(); break;
+      case 'attach-qa': $('[data-ol-qa-file]')?.click(); break;
       case 'docs-toggle': st.docsFold = !st.docsFold; updateFiles(); break;
       case 'agent-toggle': st.agentOpen = !st.agentOpen; updateSteps(); $('[data-ol-act="agent-toggle"]')?.focus(); break;
       case 'review': $('.ola-review')?.scrollIntoView({block:'start', behavior:'auto'}); break;
@@ -2567,9 +2596,9 @@ const OfficialLetterPage = (() => {
       if (st.pop === 'model') { event.preventDefault(); dismissModelPop(); return; }
       if (st.pop) {
         event.preventDefault();
-        const draftPop = target.closest('.ola-draft-composer') ? st.pop : '';
+        const workspacePop = target.closest('.ola-workspace-composer') ? st.pop : '';
         closePop();
-        if (draftPop) [...host.querySelectorAll('.ola-draft-composer [data-ol-pop]')].find(button => button.dataset.olPop === draftPop)?.focus({preventScroll:true});
+        if (workspacePop) [...host.querySelectorAll('.ola-workspace-composer [data-ol-pop]')].find(button => button.dataset.olPop === workspacePop)?.focus({preventScroll:true});
         return;
       }
       if (st.drawer) { collectAll(); st.drawer = ''; renderAll(); return; }
