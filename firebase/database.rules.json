@@ -314,6 +314,20 @@
         ".write": "auth != null && auth.uid === $uid && root.child('users').child(auth.uid).child('profile').exists()"
       }
     },
+    "user_letter_samples": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "$id": {
+          ".validate": "$id.matches(/^[a-z0-9]{6,32}$/) && newData.hasChildren(['text', 'updatedAt'])",
+          "name": { ".validate": "newData.isString() && newData.val().length <= 120" },
+          "templateId": { ".validate": "newData.isString() && newData.val().length <= 60" },
+          "text": { ".validate": "newData.isString() && newData.val().length <= 12000" },
+          "updatedAt": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        }
+      }
+    },
     "user_letters": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

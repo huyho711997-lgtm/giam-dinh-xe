@@ -872,3 +872,22 @@ body:has(.ola) #tasco-floating-dock:not(:has(#scrollToTopBtn.visible)) { display
 .ola-pop-note { margin:2px 8px 6px; padding:7px 10px; border-radius:10px; font-size:12px; line-height:1.4; color:var(--text-muted); background:var(--surface-strong); border:1px solid var(--border); display:flex; gap:8px; align-items:center; justify-content:space-between; }
 .ola-pop-note.is-warn { color:#b45309; background:rgba(245,158,11,.1); border-color:rgba(180,83,9,.35); }
 .ola-pop-note button { flex:none; padding:3px 10px; border-radius:8px; border:1px solid currentColor; background:transparent; color:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+
+.ol-dialog--wide { width:min(900px,calc(100vw - 32px)); }
+.ol-smp-body { display:grid; grid-template-columns:240px 1fr; gap:16px; padding:16px 20px; min-height:0; overflow:auto; }
+.ol-smp-list { display:flex; flex-direction:column; gap:6px; max-height:56dvh; overflow:auto; }
+.ol-smp-new, .ol-smp-item { display:grid; gap:1px; text-align:left; padding:9px 11px; border-radius:10px; border:1px solid var(--border); background:var(--surface-strong); color:var(--text-main); font:inherit; cursor:pointer; }
+.ol-smp-new { font-weight:700; color:var(--primary); border-style:dashed; }
+.ol-smp-item b { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ol-smp-item small { font-size:11px; color:var(--text-muted); }
+.ol-smp-new.is-on, .ol-smp-item.is-on { border-color:var(--primary); background:color-mix(in srgb,var(--primary) 11%,transparent); }
+.ol-smp-empty { font-size:12px; line-height:1.5; color:var(--text-muted); margin:4px 2px; }
+.ol-smp-form { display:grid; gap:12px; align-content:start; }
+.ol-smp-form textarea, .ol-smp-form input, .ol-smp-form select { width:100%; box-sizing:border-box; }
+.ol-smp-form textarea { resize:vertical; min-height:220px; font:inherit; line-height:1.5; }
+.ol-smp-form em { font-style:normal; font-weight:400; color:var(--text-muted); }
+.ol-smp-tools { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.ol-smp-tools small { color:var(--text-muted); font-size:12px; }
+.ol-smp-file { cursor:pointer; }
+.ol-smp-del { color:#dc2626; }
+@media (max-width:720px) { .ol-smp-body { grid-template-columns:1fr; } .ol-smp-list { max-height:160px; } }

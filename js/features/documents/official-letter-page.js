@@ -542,7 +542,7 @@ const OfficialLetterPage = (() => {
   // Ngữ cảnh dùng chung cho bước suy luận và bước soạn.
   function composeCtx(attachments) {
     return {outline: st.outline.filter(item => item.on).map(item => item.text).filter(text => Core().single(text, 1)), extras: st.extras, answers: answeredList(), understanding: st.understanding,
-      keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText(), legal: legalPrompt(), legalPinned: pinnedLabel(), assumptions: st.assumptions, openQuestions: openQuestions(), files: attachments || [], reasoning: st.reasoning, free: freeStyleOn()};
+      keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText(), legal: legalPrompt(), legalPinned: pinnedLabel(), assumptions: st.assumptions, openQuestions: openQuestions(), files: attachments || [], reasoning: st.reasoning, free: freeStyleOn(), userSample: currentSample()};
   }
   async function composeCore(instruction, attachments) {
     const tpl = template();
@@ -795,6 +795,14 @@ const OfficialLetterPage = (() => {
     const secs = qaElapsed();
     host.querySelectorAll('[data-ol-qa-timer]').forEach(node => { node.textContent = fmtSecs(secs); node.classList.toggle('is-slow', secs >= QA_SLOW_SECS); node.title = secs >= QA_SLOW_SECS ? 'Mô hình đang trả lời chậm hơn thường lệ — có thể bấm Dừng rồi thử lại hoặc chọn mô hình khác' : 'Thời gian AI đã làm việc'; });
   }
+  // ---- Mẫu công văn của người dùng (OfficialLetterSamples): AI lấy mẫu đã chọn làm theo ----
+  const SAMPLE_KEY = 'officialLetter.sampleChoice.v1';   // 'auto' | 'none' | id mẫu
+  const Samples = () => (typeof OfficialLetterSamples !== 'undefined' ? OfficialLetterSamples : null);
+  let sampleChoice = (() => { try { return localStorage.getItem(SAMPLE_KEY) || 'auto'; } catch (_) { return 'auto'; } })();
+  let sampleList = [];
+  const currentSample = () => (Samples() ? Samples().pick(sampleList, sampleChoice, templateId()) : null);
+  function loadSamples() { if (Samples()) Samples().load().then(items => { sampleList = items; if (host) renderAll(); }).catch(() => { /* bỏ qua */ }); }
+  function setSampleChoice(value) { sampleChoice = value || 'auto'; try { localStorage.setItem(SAMPLE_KEY, sampleChoice); } catch (_) { /* bỏ qua */ } }
   const STYLE_KEY = 'officialLetter.writeStyle.v1';   // '0' = theo khuôn (dàn ý + mẫu); mặc định = viết tự do
   const freeStyleOn = () => { try { return localStorage.getItem(STYLE_KEY) !== '0'; } catch (_) { return true; } };
   const DEEP_KEY = 'officialLetter.qaDeep.v1', LIB_KEY = 'officialLetter.freeLib.v1';
@@ -1491,6 +1499,7 @@ const OfficialLetterPage = (() => {
   }
   function popoverHtml() {
     if (st.pop === 'record') return '<div class="ola-pop" role="dialog" aria-label="Chọn hồ sơ"><label class="ol-rec-search">' + svg(ICON.search) + '<input type="search" data-ol-rec-q autocomplete="off" spellcheck="false" placeholder="Biển số, số HSBT, chủ xe…" value="' + esc(st.recQuery) + '" aria-label="Tìm hồ sơ"></label><div class="ol-rec-list" data-ol-rec-list role="listbox" aria-label="Hồ sơ"></div></div>';
+    if (st.pop === 'sample') return samplePopHtml();
     if (st.pop === 'type') return '<div class="ola-pop ola-pop--menu" role="menu" aria-label="Loại công văn">' + Core().templates().map(item => '<button type="button" role="menuitemradio" aria-checked="' + (item.id === templateId()) + '" data-ol-type="' + esc(item.id) + '"><b>' + esc(item.id === DEFAULT_TEMPLATE ? 'Tự do' : item.name) + '</b><small>' + esc(item.id === DEFAULT_TEMPLATE ? 'AI tự viết theo yêu cầu của bạn' : item.group) + '</small></button>').join('') + '</div>';
     if (st.pop === 'model') return modelPopHtml();
     if (st.pop === 'rules') {
@@ -1518,6 +1527,23 @@ const OfficialLetterPage = (() => {
     const ruleLabel = ruleLabelText();
     const ruleTitle = title || (pinnedDocs.length ? 'Căn cứ đã chọn: ' + pinnedDocs.map(doc => doc.name).join(', ') : 'Chọn một hoặc nhiều văn bản/quy tắc làm căn cứ cho AI');
     return '<button type="button" class="ola-chip' + (st.legalPin.length ? ' is-set' : '') + '" data-ol-pop="rules" title="' + esc(ruleTitle) + '">' + svg(ICON.book) + '<span class="ola-chip-t">' + esc(ruleLabel) + '</span>' + svg(ICON.chevron) + '</button>';
+  }
+  function sampleChipHtml() {
+    const cur = currentSample(), explicit = sampleChoice !== 'auto' && sampleChoice !== 'none';
+    const short = text => (text.length > 22 ? text.slice(0, 21) + '…' : text);
+    const label = sampleChoice === 'none' ? 'Mẫu: Không dùng' : cur ? 'Mẫu: ' + short(cur.name) : 'Mẫu: Tự động';
+    const title = cur ? 'AI sẽ làm theo mẫu "' + cur.name + '"' : sampleChoice === 'none' ? 'Không dùng mẫu nào' : 'AI dùng mẫu hệ thống của loại công văn; chọn mẫu của bạn để AI làm theo';
+    return '<button type="button" class="ola-chip' + (cur || explicit ? ' is-set' : '') + '" data-ol-pop="sample" title="' + esc(title) + '">' + svg(ICON.letter) + '<span class="ola-chip-t">' + esc(label) + '</span>' + svg(ICON.chevron) + '</button>';
+  }
+  function samplePopHtml() {
+    const cur = currentSample(), tpls = Core().templates();
+    const typeName = id => { const found = tpls.find(item => item.id === id); return found ? (found.id === DEFAULT_TEMPLATE ? 'Tự do' : found.name) : 'Mọi loại'; };
+    const opt = (value, name, hint, checked) => '<button type="button" role="menuitemradio" aria-checked="' + checked + '" data-ol-sample="' + esc(value) + '"><b>' + esc(name) + '</b><small>' + esc(hint) + '</small></button>';
+    return '<div class="ola-pop ola-pop--menu ola-pop--samples" role="menu" aria-label="Mẫu công văn">'
+      + opt('auto', 'Tự động', 'Mẫu mới nhất của bạn cùng loại công văn; không có thì dùng mẫu hệ thống', sampleChoice === 'auto')
+      + opt('none', 'Không dùng mẫu', 'AI tự viết, không bám mẫu nào', sampleChoice === 'none')
+      + sampleList.map(item => opt(item.id, item.name, typeName(item.templateId) + (cur && cur.id === item.id && sampleChoice === 'auto' ? ' · đang được tự chọn' : ''), sampleChoice === item.id)).join('')
+      + '<button type="button" class="ola-pop-foot" data-ol-act="samples"><b>Quản lý mẫu…</b><small>' + (sampleList.length ? sampleList.length + ' mẫu của bạn' : 'Chưa có mẫu — thêm mẫu để AI làm theo') + '</small></button></div>';
   }
   function styleChipHtml() {
     const on = freeStyleOn(), disabled = (qa.busy || st.busy) ? ' disabled' : '';
@@ -1571,7 +1597,7 @@ const OfficialLetterPage = (() => {
       + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (filesHtml() ? '' : ' hidden') + '>' + filesHtml() + '</div>'
       + '<div class="ola-docs" data-ol-docs' + (docList().length ? '' : ' hidden') + '>' + docsHtml() + '</div>'
       + '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm ảnh/PDF"><input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>' + svg(ICON.attach) + '</label>'
-      + recordChip + typeChip + rulesChip + modelChipHtml() + deepChipHtml() + styleChipHtml() + '<span class="ola-spacer"></span>'
+      + recordChip + typeChip + rulesChip + sampleChipHtml() + modelChipHtml() + deepChipHtml() + styleChipHtml() + '<span class="ola-spacer"></span>'
       + '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div>'
       + popoverHtml() + '</div>';
   }
@@ -1688,6 +1714,7 @@ const OfficialLetterPage = (() => {
       + '<span class="olp-usage" data-ol-usage title="' + esc(usageTitle()) + '"' + (usageText() ? '' : ' hidden') + '>' + esc(usageText()) + '</span>'
       + '<button type="button" class="olp-tool" data-ol-drawer="versions"' + (locked ? ' disabled' : '') + '>' + svg(ICON.history) + 'Phiên bản (' + st.versions.length + ')</button>'
       + '<button type="button" class="olp-tool" data-ol-act="save-record" title="' + esc(saveRecordTitle()) + '"' + (st.savingRecord || locked ? ' disabled' : '') + '>' + svg(ICON.folder) + (st.savingRecord ? 'Đang lưu…' : 'Lưu vào hồ sơ') + '</button>'
+      + '<button type="button" class="olp-tool" data-ol-act="save-sample" title="Lưu công văn này làm mẫu để AI làm theo ở các lần sau">' + svg(ICON.letter) + 'Lưu làm mẫu</button>'
       + '<button type="button" class="olp-tool is-primary" data-ol-act="docx">' + svg(ICON.word) + 'Tải Word</button><button type="button" class="olp-tool" data-ol-act="print" title="In">' + svg(ICON.print) + '</button><button type="button" class="olp-tool" data-ol-act="copy" title="Sao chép nội dung">' + svg(ICON.copy) + '</button></div>'
       + '<div class="ol-paper-wrap">' + (locked ? paper.replace(/contenteditable="true"/g, 'contenteditable="false"') : paper) + '</div></div>';
   }
@@ -1999,6 +2026,93 @@ const OfficialLetterPage = (() => {
         + '<div class="ol-set-links">' + (p.keyUrl ? '<a href="' + esc(p.keyUrl) + '" target="_blank" rel="noopener noreferrer">Lấy khoá ↗</a>' : '<span></span>') + '<span class="ol-set-actions"><button type="button" class="ol-set-link" data-fetch>Lấy danh sách mô hình</button><button type="button" class="ol-set-danger" data-clear hidden>Xoá khoá</button></span></div></section>';
     }).join('') + antigravityCard(M, cfg, field);
   }
+  // Công văn đang xem → mẫu (mở hộp quản lý để người dùng ẩn thông tin cá nhân trước khi dùng).
+  async function saveAsSample() {
+    if (!st.letter || !Samples()) return;
+    syncLetter();
+    const lines = ['V/v: ' + (st.letter.subject || '')].concat(st.letter.paragraphs.map(item => (item.type === 'li' ? '- ' : item.type === 'h' ? '## ' : '') + item.text));
+    try {
+      const sample = await Samples().save({name: st.letter.subject ? 'V/v ' + st.letter.subject : 'Mẫu từ công văn', templateId: templateId(), text: lines.join('\n\n')});
+      sampleList = Samples().list();
+      toast('Đã lưu công văn làm mẫu. Hãy ẩn thông tin cá nhân trong mẫu rồi chọn mẫu ở ô "Mẫu".', 'success');
+      openSamples(sample.id);
+    } catch (error) { toast(error.message, 'warning'); }
+  }
+  function openSamples(selectId) {
+    const S = Samples(); if (!S) { toast('Chưa tải được mô-đun mẫu công văn. Hãy tải lại trang.', 'warning'); return; }
+    const dialog = document.createElement('dialog');
+    dialog.className = 'ol-dialog ol-dialog--wide';
+    dialog.setAttribute('aria-labelledby', 'olSmpTitle');
+    const tpls = Core().templates();
+    const typeOptions = '<option value="">Mọi loại công văn</option>' + tpls.map(item => '<option value="' + esc(item.id) + '">' + esc(item.id === DEFAULT_TEMPLATE ? 'Tự do' : item.name) + '</option>').join('');
+    dialog.innerHTML = '<div class="ol-set ol-smp">'
+      + '<header class="ol-set-head"><div><h2 id="olSmpTitle">Quản lý mẫu công văn</h2><p>AI sẽ làm theo bố cục, trình tự và giọng văn của mẫu bạn chọn; dữ kiện luôn lấy từ hồ sơ.</p></div>'
+      + '<button type="button" class="ol-set-x" data-cancel aria-label="Đóng">×</button></header>'
+      + '<div class="ol-smp-body"><aside class="ol-smp-list" data-smp-list></aside>'
+      + '<form class="ol-smp-form" data-smp-form>'
+      + '<label class="ol-set-field"><span>Tên mẫu</span><input name="name" maxlength="' + S.MAX_NAME + '" placeholder="VD: Từ chối bồi thường — lốp khác thông số"></label>'
+      + '<label class="ol-set-field"><span>Dùng cho loại công văn</span><select name="templateId">' + typeOptions + '</select></label>'
+      + '<label class="ol-set-field"><span>Nội dung mẫu <em data-smp-count></em></span><textarea name="text" rows="14" maxlength="' + S.MAX_TEXT + '" placeholder="Dán công văn mẫu vào đây (phần nội dung, từ trích yếu đến hết thân công văn). Nên thay tên, biển số, số tiền, số hồ sơ bằng […] hoặc ……"></textarea></label>'
+      + '<div class="ol-smp-tools"><label class="tasco-ai-btn-ghost ol-smp-file">Nhập từ tệp (.docx, .pdf, .txt)<input type="file" accept=".docx,.pdf,.txt,.md" hidden data-smp-file></label><small data-smp-note></small></div>'
+      + '</form></div>'
+      + '<footer class="ol-set-foot"><button type="button" class="tasco-ai-btn-ghost ol-smp-del" data-smp-del hidden>Xoá mẫu</button><span class="ola-spacer"></span><button type="button" class="tasco-ai-btn-ghost" data-cancel>Đóng</button><button type="button" class="tasco-ai-btn-ghost" data-smp-save>Lưu mẫu</button><button type="button" class="tasco-ai-btn-primary" data-smp-use>Lưu &amp; dùng mẫu này</button></footer></div>';
+    document.body.appendChild(dialog);
+    const q = sel => dialog.querySelector(sel), form = q('[data-smp-form]'), listBox = q('[data-smp-list]'), note = q('[data-smp-note]'), count = q('[data-smp-count]'), delBtn = q('[data-smp-del]');
+    let currentId = '';
+    const close = () => { dialog.close(); dialog.remove(); renderAll(); };
+    dialog.querySelectorAll('[data-cancel]').forEach(button => { button.onclick = close; });
+    dialog.addEventListener('cancel', () => { setTimeout(() => { dialog.remove(); renderAll(); }, 0); });
+    const updateCount = () => { count.textContent = '(' + form.text.value.length.toLocaleString('vi-VN') + '/' + S.MAX_TEXT.toLocaleString('vi-VN') + ')'; };
+    function paintList() {
+      listBox.innerHTML = '<button type="button" class="ol-smp-new' + (currentId ? '' : ' is-on') + '" data-smp-new>+ Mẫu mới</button>'
+        + (sampleList.length ? sampleList.map(item => '<button type="button" class="ol-smp-item' + (item.id === currentId ? ' is-on' : '') + '" data-smp-id="' + esc(item.id) + '"><b>' + esc(item.name) + '</b><small>' + esc((tpls.find(t => t.id === item.templateId) || {}).name || 'Mọi loại') + (sampleChoice === item.id ? ' · đang dùng' : '') + '</small></button>').join('')
+          : '<p class="ol-smp-empty">Chưa có mẫu. Dán một công văn mẫu bên phải rồi bấm Lưu mẫu, hoặc mở một công văn đã soạn và bấm “Lưu làm mẫu”.</p>');
+      if (S.scope() === 'browser') note.textContent = 'Đang lưu trên trình duyệt này (chưa đồng bộ tài khoản).';
+    }
+    function fill(item) {
+      currentId = item ? item.id : '';
+      form.name.value = item ? item.name : ''; form.templateId.value = item ? item.templateId : (templateId() === DEFAULT_TEMPLATE ? '' : templateId()); form.text.value = item ? item.text : '';
+      delBtn.hidden = !item; updateCount(); paintList();
+    }
+    async function persist(use) {
+      const text = form.text.value.trim();
+      if (!text) { toast('Nội dung mẫu đang trống.', 'warning'); form.text.focus(); return; }
+      try {
+        const saved = await S.save({id: currentId, name: form.name.value, templateId: form.templateId.value, text});
+        sampleList = S.list(); currentId = saved.id;
+        if (use) { setSampleChoice(saved.id); toast('AI sẽ làm theo mẫu “' + saved.name + '” ở các lần soạn tới.', 'success'); close(); return; }
+        toast('Đã lưu mẫu.', 'success'); fill(saved);
+      } catch (error) { toast(error.message, 'warning'); }
+    }
+    listBox.addEventListener('click', event => {
+      if (event.target.closest('[data-smp-new]')) { fill(null); form.name.focus(); return; }
+      const item = event.target.closest('[data-smp-id]'); if (item) fill(S.get(item.dataset.smpId));
+    });
+    form.text.addEventListener('input', updateCount);
+    q('[data-smp-save]').onclick = () => persist(false);
+    q('[data-smp-use]').onclick = () => persist(true);
+    delBtn.onclick = async () => {
+      if (!currentId || !confirm('Xoá mẫu này?')) return;
+      await S.remove(currentId); sampleList = S.list();
+      if (sampleChoice === currentId) setSampleChoice('auto');
+      toast('Đã xoá mẫu.', 'success'); fill(null);
+    };
+    q('[data-smp-file]').onchange = async event => {
+      const file = event.target.files && event.target.files[0]; event.target.value = '';
+      if (!file) return;
+      if (typeof TascoLibParse === 'undefined' || !TascoLibParse.readText) { toast('Chưa tải được mô-đun đọc tệp. Hãy tải lại trang.', 'warning'); return; }
+      note.textContent = 'Đang đọc tệp…';
+      try {
+        const read = await TascoLibParse.readText(file, {});
+        if (!read.text) throw new Error('Tệp không có chữ để đọc.');
+        form.text.value = read.text.slice(0, S.MAX_TEXT); if (!form.name.value) form.name.value = file.name.replace(/\.[^.]+$/, '');
+        updateCount(); note.textContent = read.text.length > S.MAX_TEXT ? 'Tệp dài hơn ' + S.MAX_TEXT.toLocaleString('vi-VN') + ' ký tự nên chỉ lấy phần đầu.' : 'Đã đọc tệp — hãy ẩn thông tin cá nhân rồi bấm Lưu mẫu.';
+      } catch (error) { note.textContent = ''; toast(error.message, 'warning'); }
+    };
+    fill(selectId ? S.get(selectId) : null);
+    dialog.showModal();
+  }
+
   function openSettings() {
     const issuer = loadIssuer();
     const dialog = document.createElement('dialog');
@@ -2186,6 +2300,8 @@ const OfficialLetterPage = (() => {
     if (histOpen) { openHistory(histOpen.dataset.olHistOpen); return; }
     if (target.closest('[data-ol-hist-backdrop]')) { st.histOpen = false; exitHistSelect(); renderAll(); return; }
     if (target.closest('[data-ol-agy-refresh]')) { refreshAgyModels(true); return; }
+    const sampleBtn = target.closest('[data-ol-sample]');
+    if (sampleBtn) { setSampleChoice(sampleBtn.dataset.olSample); st.pop = ''; renderAll(); focusMain(); return; }
     const popButton = target.closest('[data-ol-pop]');
     if (popButton) { collectAll(); const name = popButton.dataset.olPop; st.pop = st.pop === name ? '' : name; if (st.pop === 'model') refreshAgyModels(false); st.recQuery = ''; st.recActive = 0; if (st.pop === 'record' && !index.length) loadRecords(); if (st.pop === 'rules' && st.libDocs === null) loadLibDocs().then(() => { if (st.pop === 'rules') renderAll(); }); renderAll(); return; }
     const pick = target.closest('[data-ol-pick]');
@@ -2274,6 +2390,8 @@ const OfficialLetterPage = (() => {
       case 'print': printLetter(); break;
       case 'copy': copyText(); break;
       case 'settings': st.pop = ''; openSettings(); break;
+      case 'samples': st.pop = ''; renderAll(); openSamples(); break;
+      case 'save-sample': saveAsSample(); break;
       case 'legal-search': searchMoreLegal(); break;
       case 'open-library':
         if (typeof TascoLibrary === 'undefined' || !TascoLibrary.open) { toast('Chưa tải được thư viện tài liệu. Hãy tải lại trang.', 'warning'); break; }
@@ -2368,6 +2486,7 @@ const OfficialLetterPage = (() => {
     host = container;
     loadRecords();
     loadQa();
+    loadSamples();
     refreshKeys();
     host.innerHTML = '<div class="ola" data-ol-root></div>';
     HANDLERS.forEach(([name, fn]) => host.addEventListener(name, fn));

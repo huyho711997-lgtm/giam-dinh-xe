@@ -200,6 +200,7 @@ const OfficialLetterCore = (() => {
     + 'Khi viện dẫn: tối đa 2 căn cứ, đặt ngay tại câu cần căn cứ (không gom thành đoạn "Căn cứ…" ở đầu), ghi đúng tên văn bản, số hiệu, số điều/khoản như đoạn trích, không suy rộng nội dung; tuyệt đối không dẫn văn bản/điều nào khác theo trí nhớ; không ghi mã [C1] vào nội dung. Liệt kê mã đã dùng trong "basis" (không dùng thì []). '
     + '(7) Khi "YÊU CẦU CHỈNH SỬA MỚI NHẤT" chỉ định văn bản/điều khoản cần viện dẫn (VD "dùng Quy tắc Tasco"): viện dẫn ĐÚNG văn bản đó từ "CĂN CỨ TỪ THƯ VIỆN" và THAY căn cứ cũ trong bản nháp nếu khác; nếu văn bản đó không có trong phần căn cứ thì KHÔNG tự dẫn theo trí nhớ — để "……" và ghi rõ vào "warnings". '
     + '(5) Dùng đúng dàn ý được cung cấp (có thể gộp ý quá ngắn); mỗi đoạn là một ý trọn vẹn, đoạn liệt kê dùng loại "li". Thông tin người dùng đã làm rõ có hiệu lực cao hơn dữ liệu cũ. '
+    + '(9) Khi có "MẪU CÔNG VĂN CỦA NGƯỜI DÙNG": làm theo mẫu đó (bố cục, trình tự, giọng văn, cách xưng hô, độ dài) thay cho dàn ý mặc định, nhưng không chép dữ kiện của mẫu. '
     + '(8) CHIỀU SÂU VÀ VĂN PHONG — viết như chuyên viên bồi thường kỳ cựu viết riêng cho hồ sơ này, không như điền vào biểu mẫu: '
     + '(a) Trước khi viết, xác định MỘT thông điệp chính người đọc cần nhớ và đặt ngay ở câu/đoạn đầu; vào việc luôn, không mở bằng câu chào sáo ngữ kiểu "Lời đầu tiên…", "xin gửi tới … lời chào trân trọng" (trừ khi người dùng yêu cầu). '
     + '(b) Mỗi đoạn phải làm một việc rõ (nêu việc → dữ kiện cụ thể → lập luận → hệ quả/bước tiếp); bỏ câu chỉ để cho đủ khuôn, bỏ đoạn đệm. '
@@ -213,7 +214,7 @@ const OfficialLetterCore = (() => {
   // làm việc với tài liệu; trả về văn bản thuần (không JSON) để câu chữ tự nhiên hơn.
   const FREE_COMPOSE_SYSTEM = 'Bạn là một chuyên viên bồi thường bảo hiểm xe cơ giới giàu kinh nghiệm, viết công văn cho Bảo hiểm Tasco bằng tiếng Việt. '
     + 'Hãy tự đọc hồ sơ, yêu cầu và tài liệu, tự hiểu người nhận cần gì rồi viết PHẦN NỘI DUNG công văn như chính bạn sẽ viết: tự quyết bố cục, độ dài, số đoạn và giọng văn sao cho đúng việc, rõ ràng, trang trọng nhưng tự nhiên, giàu thông tin cụ thể của hồ sơ này. '
-    + 'Dàn ý, công văn mẫu, ghi chú (nếu có) chỉ là gợi ý — bạn được bỏ, gộp, đổi thứ tự hoặc viết khác đi nếu như vậy hay hơn. '
+    + 'Dàn ý, ghi chú (nếu có) chỉ là gợi ý — bạn được bỏ, gộp, đổi thứ tự hoặc viết khác đi nếu như vậy hay hơn; RIÊNG khi có "MẪU CÔNG VĂN CỦA NGƯỜI DÙNG" thì bám sát mẫu đó về bố cục, trình tự, giọng văn và độ dài. '
     + 'Chỉ có vài ranh giới cố định: (1) không bịa số liệu, số tiền, ngày tháng, số văn bản, tên người, điều luật — chỉ dùng dữ kiện trong tài liệu được đưa; thiếu thì để "……" đúng chỗ đó; '
     + '(2) chỉ viện dẫn điều khoản có nguyên văn trong "CĂN CỨ TỪ THƯ VIỆN" và đúng vấn đề (ghi đúng tên văn bản, số điều/khoản; không viết mã [C#] trong nội dung); không có căn cứ đúng thì không viện dẫn; '
     + '(3) không viết quốc hiệu, tiêu ngữ, số/ngày, "Kính gửi", lời kết, chữ ký — hệ thống tự thêm; không dùng markdown (**, #). '
@@ -283,6 +284,14 @@ const OfficialLetterCore = (() => {
   }
 
   // Công văn mẫu thật (đã ẩn thông tin cá nhân) của mẫu — AI học cấu trúc, trình tự lập luận, giọng văn; không được chép dữ kiện/điều khoản từ đây.
+  // Mẫu do người dùng chọn/lưu: AI phải LÀM THEO bố cục, trình tự, giọng văn, cách xưng hô và độ dài của mẫu, nhưng dữ kiện lấy từ hồ sơ — tuyệt đối không chép dữ kiện của mẫu.
+  function userSampleBlock(sample) {
+    const text = multi(sample && sample.text, 12000);
+    if (!text) return '';
+    return '\n\nMẪU CÔNG VĂN CỦA NGƯỜI DÙNG' + (sample.name ? ' ("' + single(sample.name, 120) + '")' : '') + ' — HÃY LÀM THEO MẪU NÀY: giữ đúng bố cục và trình tự các phần, cách mở đầu/kết thúc, giọng văn, cách xưng hô, kiểu trình bày liệt kê và độ dài tương đương mẫu; chỉ thay nội dung cho đúng hồ sơ hiện tại và bỏ phần mẫu không áp dụng. '
+      + 'Dữ kiện (tên, biển số, số tiền, ngày tháng, số hồ sơ, số văn bản, điều khoản…) trong mẫu chỉ là ví dụ — TUYỆT ĐỐI không chép; mọi dữ kiện lấy từ THÔNG TIN ĐÃ XÁC NHẬN, HỒ SƠ, TỆP ĐÍNH KÈM; chỗ mẫu cần dữ kiện mà hồ sơ chưa có thì để "……". Nếu DÀN Ý hoặc yêu cầu của người dùng khác mẫu thì theo yêu cầu của người dùng:\n'
+      + text.split('\n').map(line => '| ' + line).join('\n');
+  }
   function sampleBlock(template) {
     const lines = (Array.isArray(template.sample) ? template.sample : []).map(line => single(line, 900)).filter(Boolean).slice(0, 30);
     if (!lines.length) return '';
@@ -306,7 +315,7 @@ const OfficialLetterCore = (() => {
     const files = (extra.files || []).filter(file => file && file.data && file.mimeType).slice(0, 6);
     const text = 'LOẠI CÔNG VĂN: ' + template.name + '\nMỤC ĐÍCH VÀ YÊU CẦU: ' + template.purpose
       + (extra.understanding ? '\nCÁCH HIỂU YÊU CẦU (đã được người dùng xem): ' + single(extra.understanding, 700) : '')
-      + (free ? '' : sampleBlock(template))
+      + (extra.userSample ? userSampleBlock(extra.userSample) : free ? '' : sampleBlock(template))
       + '\n\nĐƠN VỊ BAN HÀNH: ' + cfg.parent + (cfg.unit ? ' – ' + cfg.unit : '') + ' (gọi tắt: ' + cfg.shortName + ')'
       + (free ? (outline.length ? '\n\nÝ NGƯỜI DÙNG MUỐN CÓ (gợi ý, bạn tự quyết cách viết và thứ tự):\n' + outline.map((line, index) => (index + 1) + '. ' + line).join('\n') : '') : '\n\nDÀN Ý CÁC ĐOẠN' + (outline.length ? ' (người dùng đã duyệt — viết đúng theo, không thêm bớt đoạn)' : ' (là các ý cần có, KHÔNG phải câu chữ: gộp/bỏ/đổi thứ tự ý nào không hợp tình huống để mạch lập luận tự nhiên)') + ':\n' + lines.map((line, index) => (index + 1) + '. ' + line).join('\n'))
       + '\n\nTHÔNG TIN ĐÃ XÁC NHẬN:\n' + JSON.stringify(facts)
@@ -633,7 +642,7 @@ const OfficialLetterCore = (() => {
 
   return {
     GAP, DEFAULT_ISSUER, NOI_NHAN_DEFAULT, templates, findTemplate, templateDocs, docsStatus, normalizeIssuer, prefillValues, mergeAnalysis, missingFields, cleanValue,
-    buildAnalyzeRequest, parseAnalysis, buildReasonRequest, parseReasoning, reasoningBlock, REASON_SYSTEM, COMPOSE_SYSTEM, buildComposeRequest, parseLetter, parseFreeLetter, FREE_COMPOSE_SYSTEM, assembleLetter, sanitizeLetter, countGaps, dateLine, numberLine, todayIso,
+    buildAnalyzeRequest, parseAnalysis, buildReasonRequest, parseReasoning, reasoningBlock, REASON_SYSTEM, COMPOSE_SYSTEM, buildComposeRequest, userSampleBlock, parseLetter, parseFreeLetter, FREE_COMPOSE_SYSTEM, assembleLetter, sanitizeLetter, countGaps, dateLine, numberLine, todayIso,
     fileBaseName, letterToHtml, letterToText, documentXml, docxFiles, bodyKinds, PRINT_CSS, LOGO_SRC, escapeHtml, single, multi
   };
 })();
