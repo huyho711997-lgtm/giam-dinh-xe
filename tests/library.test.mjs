@@ -72,11 +72,20 @@ test('bảng tính thành đoạn có tên cột', () => {
   assert.equal(chunk.x, 'Loại xe: Ô tô con; Khấu hao: 10%\nLoại xe: Xe tải; Khấu hao: 12%');
 });
 
-test('giới hạn số đoạn', () => {
+test('giới hạn số đoạn: tài liệu dài giữ đủ để tách phần, chỉ cắt khi vượt MAX_PARTS × 600', () => {
   const many = Array.from({length: 700}, (_, i) => ({t: 'm' + i, x: 'x'}));
-  const result = Parse.limitChunks(many);
-  assert.equal(result.chunks.length, 600);
-  assert.equal(result.truncated, true);
+  const ok = Parse.limitChunks(many);
+  assert.equal(ok.chunks.length, 700);
+  assert.equal(ok.truncated, false);
+  const huge = Array.from({length: Parse.MAX_CHUNKS * Parse.MAX_PARTS + 50}, (_, i) => ({t: 'm' + i, x: 'x'}));
+  const cut = Parse.limitChunks(huge);
+  assert.equal(cut.chunks.length, Parse.MAX_CHUNKS * Parse.MAX_PARTS);
+  assert.equal(cut.truncated, true);
+});
+
+test('bỏ sẵn các đoạn mục lục khi cắt', () => {
+  const input = [{t: 'BỘ LUẬT DÂN SỰ › Mục lục (phần 1)', x: 'a'}, {t: 'Mục lục', x: 'b'}, {t: 'BỘ LUẬT › Điều 1. Phạm vi', x: 'c'}, {t: 'Điều 2. Mục lục tham chiếu', x: 'd'}];
+  assert.deepEqual([...Parse.limitChunks(input).chunks.map(chunk => chunk.x)], ['c', 'd']);
 });
 
 test('BM25: tìm không phân biệt dấu, ưu tiên đúng mục, bỏ bản hết hiệu lực', () => {

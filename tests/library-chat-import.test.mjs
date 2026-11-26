@@ -12,7 +12,7 @@ function setup(admin = true, failSave = false) {
   const foot = {innerHTML:'', querySelector:selector => nodes[selector]};
   const overlay = {className:'', innerHTML:'', addEventListener(){}, remove(){}, querySelector:selector => selector === '.dlib-body' ? body : selector === '.dlib-foot' ? foot : null};
   const document = {createElement:() => overlay, addEventListener(){}, body:{appendChild(){}}};
-  const ctx = vm.createContext({document, activeUserProfile:{role:admin ? 'admin' : 'user'}, TascoLibParse:{fromText:(text) => ({meta:{ten:'Quy tắc thử'},chunks:[{t:'Điều 1',x:text}]}), fromFile:async file => ({meta:{ten:file.name},chunks:[{t:'Điều 1',x:'Nội dung nguyên văn'}]})}, TascoLibStore:{save:async data => {if(failSave) throw Error('permission denied'); writes.push(data); return 'new-id';}}, localStorage:{getItem:() => null}, triggerToast() {}, console});
+  const ctx = vm.createContext({document, activeUserProfile:{role:admin ? 'admin' : 'user'}, TascoLibParse:{MAX_CHUNKS:600,fromText:(text) => ({meta:{ten:'Quy tắc thử'},chunks:[{t:'Điều 1',x:text}]}), fromFile:async file => ({meta:{ten:file.name},chunks:[{t:'Điều 1',x:'Nội dung nguyên văn'}]})}, TascoLibStore:{saveParts:async data => {if(failSave) throw Error('permission denied'); writes.push(data); return ['new-id'];}}, localStorage:{getItem:() => null}, triggerToast() {}, console});
   vm.runInContext(fs.readFileSync(new URL('../js/features/ai/library-ui.js',import.meta.url),'utf8') + '\nthis.api=TascoLibrary;',ctx);
   return {api:ctx.api,writes,save,events};
 }

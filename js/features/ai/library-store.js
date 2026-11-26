@@ -39,6 +39,17 @@ const TascoLibStore = (() => {
     invalidate();
     return ref.key;
   }
+  // Tài liệu dài hơn size đoạn: lưu thành nhiều tài liệu "Tên (phần i/n)", chia đều. Trả về mảng id.
+  async function saveParts({meta, chunks}, size = 600) {
+    const all = asList(chunks).filter(chunk => chunk && typeof chunk.x === 'string' && chunk.x.trim());
+    if (all.length <= size) return [await save({meta, chunks: all})];
+    const count = Math.ceil(all.length / size), per = Math.ceil(all.length / count), ids = [];
+    for (let i = 0; i < count; i++) {
+      const name = str(meta.ten, 160 - 14) + ' (phần ' + (i + 1) + '/' + count + ')';
+      ids.push(await save({meta: {...meta, ten: name}, chunks: all.slice(i * per, (i + 1) * per)}));
+    }
+    return ids;
+  }
   // Sửa tài liệu đã lưu: giữ nguyên người tạo/ngày tạo, chỉ ghi lại thông tin và các đoạn.
   async function update(id, {meta, chunks}) {
     const clean = cleanChunks(chunks);
@@ -58,5 +69,5 @@ const TascoLibStore = (() => {
   }
   async function find(docId) { return (await list()).find(doc => doc.id === docId) || null; }
 
-  return {list, save, update, remove, setStatus, index, find, invalidate, cleanMeta, cleanChunks, safeUrl};
+  return {list, save, saveParts, update, remove, setStatus, index, find, invalidate, cleanMeta, cleanChunks, safeUrl};
 })();

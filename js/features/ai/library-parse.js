@@ -1,7 +1,7 @@
 // Thư viện tài liệu nghiệp vụ: đọc file (Markdown, Word, PDF, Excel/CSV, ảnh scan) → các đoạn tra cứu {t: tiêu đề mục, x: nội dung}.
 // Phần thuần (parseFrontMatter, chunkMarkdown, textToMarkdown, rowsToChunks) chạy được ở Node để kiểm thử; phần đọc file cần trình duyệt.
 const TascoLibParse = (() => {
-  const MAX_CHARS = 1800, MAX_TITLE = 200, MAX_CHUNKS = 600, MAX_TOTAL = 1500000;
+  const MAX_CHARS = 1800, MAX_TITLE = 200, MAX_CHUNKS = 600, MAX_PARTS = 8, MAX_TOTAL = 4000000;   // MAX_CHUNKS = đoạn/tài liệu (khớp rules); tài liệu dài tự tách tối đa MAX_PARTS phần
   const norm = value => String(value ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   const STATUS = {dang_hieu_luc: 'dang_hieu_luc', het_hieu_luc: 'het_hieu_luc', da_thay_the: 'da_thay_the'};
 
@@ -122,11 +122,21 @@ const TascoLibParse = (() => {
     return chunks;
   }
 
+  // Đoạn mục lục (tiêu đề cuối là "Mục lục (phần n)") chỉ làm nhiễu tra cứu → bỏ sẵn.
+  const isToc = chunk => /^m[ụu]c l[ụu]c\b/i.test(String(chunk.t || '').split('›').pop().trim());
   const limitChunks = chunks => {
+    const useful = chunks.filter(chunk => !isToc(chunk));
+    const source = useful.length ? useful : chunks;
     const out = [];
     let total = 0;
-    for (const chunk of chunks) { total += chunk.x.length + chunk.t.length; if (out.length >= MAX_CHUNKS || total > MAX_TOTAL) break; out.push(chunk); }
-    return {chunks: out, truncated: out.length < chunks.length};
+    for (const chunk of source) { total += chunk.x.length + chunk.t.length; if (out.length >= MAX_CHUNKS * MAX_PARTS || total > MAX_TOTAL) break; out.push(chunk); }
+    return {chunks: out, truncated: out.length < source.length};
+  };
+  // Chia danh sách đoạn thành các phần ≤ size đoạn (mỗi phần lưu thành một tài liệu).
+  const splitParts = (chunks, size = MAX_CHUNKS) => {
+    const count = Math.max(1, Math.ceil(chunks.length / size)), per = Math.ceil(chunks.length / count), parts = [];
+    for (let start = 0; start < chunks.length; start += per) parts.push(chunks.slice(start, start + per));
+    return parts;
   };
 
   // ---- Phần cần trình duyệt: đọc từng loại file ----
@@ -227,5 +237,5 @@ const TascoLibParse = (() => {
     return {meta, ...limitChunks(chunkMarkdown(textToMarkdown(parsed.body), {docTitle: meta.ten})), note: ''};
   }
 
-  return {parseFrontMatter, chunkMarkdown, textToMarkdown, rowsToChunks, normalizeStatus, normalizeDate, limitChunks, fromFile, readText, fromText, MAX_CHUNKS, MAX_CHARS};
+  return {parseFrontMatter, chunkMarkdown, textToMarkdown, rowsToChunks, normalizeStatus, normalizeDate, limitChunks, splitParts, isToc, fromFile, readText, fromText, MAX_CHUNKS, MAX_PARTS, MAX_CHARS};
 })();
