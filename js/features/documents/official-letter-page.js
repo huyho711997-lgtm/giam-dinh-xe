@@ -1520,7 +1520,7 @@ const OfficialLetterPage = (() => {
   }
   function ruleLabelText() {
     const pinnedDocs = (st.libDocs || []).filter(doc => st.legalPin.includes(doc.id));
-    return st.legalPin.length > 1 ? st.legalPin.length + ' quy tắc đã chọn' : st.legalPin.length ? (pinnedDocs[0]?.name || 'Đã chọn quy tắc') : 'Quy tắc: Tự động';
+    return st.legalPin.length > 1 ? st.legalPin.length + ' quy tắc đã chọn' : st.legalPin.length ? (pinnedDocs[0]?.name || 'Đã chọn quy tắc') : 'Quy tắc';
   }
   function rulesChipHtml(title) {
     const pinnedDocs = (st.libDocs || []).filter(doc => st.legalPin.includes(doc.id));
@@ -1531,7 +1531,7 @@ const OfficialLetterPage = (() => {
   function sampleChipHtml() {
     const cur = currentSample(), explicit = sampleChoice !== 'auto' && sampleChoice !== 'none';
     const short = text => (text.length > 22 ? text.slice(0, 21) + '…' : text);
-    const label = sampleChoice === 'none' ? 'Mẫu: Không dùng' : cur ? 'Mẫu: ' + short(cur.name) : 'Mẫu: Tự động';
+    const label = sampleChoice === 'none' ? 'Không mẫu' : cur ? short(cur.name) : 'Mẫu';
     const title = cur ? 'AI sẽ làm theo mẫu "' + cur.name + '"' : sampleChoice === 'none' ? 'Không dùng mẫu nào' : 'AI dùng mẫu hệ thống của loại công văn; chọn mẫu của bạn để AI làm theo';
     return '<button type="button" class="ola-chip' + (cur || explicit ? ' is-set' : '') + '" data-ol-pop="sample" title="' + esc(title) + '">' + svg(ICON.letter) + '<span class="ola-chip-t">' + esc(label) + '</span>' + svg(ICON.chevron) + '</button>';
   }
@@ -1547,7 +1547,8 @@ const OfficialLetterPage = (() => {
   }
   function styleChipHtml() {
     const on = freeStyleOn(), disabled = (qa.busy || st.busy) ? ' disabled' : '';
-    return '<button type="button" class="ola-chip' + (on ? ' is-set' : '') + '" data-ol-act="free-style" aria-pressed="' + on + '" title="' + (on ? 'Đang bật: AI tự quyết bố cục, độ dài và giọng văn (ít khuôn hơn, tự nhiên hơn). Bấm để quay lại viết theo dàn ý + công văn mẫu.' : 'Đang tắt: AI viết bám dàn ý và công văn mẫu. Bấm để bật viết tự do.') + '"' + disabled + '>' + svg(ICON.edit || ICON.spark) + '<span class="ola-chip-t">Viết tự do</span></button>';
+    const title = on ? 'Viết tự do — đang bật: AI tự quyết bố cục, độ dài và giọng văn (ít khuôn hơn, tự nhiên hơn). Bấm để quay lại viết theo dàn ý + công văn mẫu.' : 'Viết tự do — đang tắt: AI viết bám dàn ý và công văn mẫu. Bấm để bật.';
+    return '<button type="button" class="ola-icon-btn ola-deep-btn' + (on ? ' is-set' : '') + '" data-ol-act="free-style" aria-pressed="' + on + '" title="' + esc(title) + '" aria-label="Viết tự do"' + disabled + '>' + svg(ICON.edit || ICON.spark) + '</button>';
   }
   function deepChipHtml(compact) {
     const on = deepOn(), able = deepSupported();
@@ -1590,14 +1591,14 @@ const OfficialLetterPage = (() => {
   function composerHtml(big) {
     const tpl = template();
     const recordChip = recordChipHtml();
-    const typeChip = '<button type="button" class="ola-chip' + (tpl.id !== DEFAULT_TEMPLATE ? ' is-set' : '') + '" data-ol-pop="type" title="' + esc(tpl.name) + '">' + svg(ICON.letter) + '<span class="ola-chip-t ola-chip-type">' + esc(tpl.id === DEFAULT_TEMPLATE ? 'Loại: Tự do' : tpl.name) + '</span>' + svg(ICON.chevron) + '</button>';
+    const typeChip = '<button type="button" class="ola-chip' + (tpl.id !== DEFAULT_TEMPLATE ? ' is-set' : '') + '" data-ol-pop="type" title="' + esc(tpl.name) + '">' + svg(ICON.letter) + '<span class="ola-chip-t ola-chip-type">' + esc(tpl.id === DEFAULT_TEMPLATE ? 'Loại' : tpl.name) + '</span>' + svg(ICON.chevron) + '</button>';
     const rulesChip = rulesChipHtml();
     return '<div class="ola-composer' + (big ? ' is-big' : '') + '">'
       + '<textarea data-ol-brief rows="' + (big ? 3 : 2) + '" maxlength="3000" placeholder="Mô tả công văn cần soạn… (gõ số HSBT hoặc biển số để AI tự lấy hồ sơ)" aria-label="Yêu cầu soạn công văn">' + esc(st.brief) + '</textarea>'
       + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (filesHtml() ? '' : ' hidden') + '>' + filesHtml() + '</div>'
       + '<div class="ola-docs" data-ol-docs' + (docList().length ? '' : ' hidden') + '>' + docsHtml() + '</div>'
       + '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm ảnh/PDF"><input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>' + svg(ICON.attach) + '</label>'
-      + recordChip + typeChip + rulesChip + sampleChipHtml() + modelChipHtml() + deepChipHtml() + styleChipHtml() + '<span class="ola-spacer"></span>'
+      + recordChip + typeChip + rulesChip + sampleChipHtml() + modelChipHtml() + '<span class="ola-spacer"></span>' + deepChipHtml(true) + styleChipHtml()
       + '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div>'
       + popoverHtml() + '</div>';
   }

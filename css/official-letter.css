@@ -891,3 +891,11 @@ body:has(.ola) #tasco-floating-dock:not(:has(#scrollToTopBtn.visible)) { display
 .ol-smp-file { cursor:pointer; }
 .ol-smp-del { color:#dc2626; }
 @media (max-width:720px) { .ol-smp-body { grid-template-columns:1fr; } .ol-smp-list { max-height:160px; } }
+
+/* Thanh công cụ khung soạn gọn: một hàng, chip thấp hơn, hai nút bật/tắt chỉ còn biểu tượng */
+.ola-composer .ola-bar { flex-wrap:nowrap; gap:5px; overflow:hidden; }
+.ola-composer .ola-bar .ola-chip { height:28px; padding:0 9px; gap:5px; font-size:11.5px; flex:0 1 auto; min-width:0; }
+.ola-composer .ola-bar .ola-chip-t { max-width:120px; }
+.ola-composer .ola-bar .ola-icon-btn { width:30px; height:30px; flex:none; }
+.ola-composer .ola-bar .ola-spacer { flex:1 1 0; min-width:0; }
+@media (max-width:640px) { .ola-composer .ola-bar { flex-wrap:wrap; } }
