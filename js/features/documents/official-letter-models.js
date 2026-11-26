@@ -168,7 +168,7 @@ const OfficialLetterModels = (() => {
     const doFetch = options.fetchImpl || fetch;
     let response;
     try { response = await doFetch(base + '/models', {headers: {Authorization: 'Bearer ' + apiKey}}); }
-    catch (_) { throw new Error('Không kết nối được tới ' + providerLabel(providerId, cfg) + ' để lấy danh sách mô hình.'); }
+    catch (_) { throw new Error('Không kết nối được tới ' + providerLabel(providerId, cfg) + ' để lấy danh sách mô hình.' + (providerId === 'antigravity' ? ' Kiểm tra cầu nối đang chạy trên máy tính (chạy "node scripts/antigravity-local-bridge.mjs --check").' : '')); }
     let data = null;
     try { data = await response.json(); } catch (_) { /* không phải JSON */ }
     if (!response.ok) {

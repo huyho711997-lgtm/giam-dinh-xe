@@ -259,6 +259,9 @@ Trang **Hồ sơ bồi thường → Cập nhật dữ liệu từ Excel** dùng
 - Kiểm thử logic rules: `tests/database-rules.test.mjs` (giả lập tối giản, không thay thế Firebase Emulator/Rules Playground).
 - Cũng nên tắt tự đăng ký tài khoản (Authentication → Settings) và giới hạn khoá API theo tên miền trong Google Cloud Console.
 
+### Danh sách mô hình Antigravity tự tải
+Mở bảng chọn mô hình (chip mô hình ở khung nhập) thì app tự gọi `GET /v1/models` trên cầu nối Antigravity (tối đa 1 lần / 5 phút) và lưu vào cấu hình, nên không cần vào Cài đặt bấm tay. Dòng "Đang tải…" hiện dưới tiêu đề nhóm; nếu lỗi sẽ hiện lý do kèm nút **Thử lại** (vd. cầu nối chưa chạy → chạy `node scripts/antigravity-local-bridge.mjs --check`; cầu nối bản cũ trả 404 → `git pull` rồi chạy lại cầu nối). Hai mô hình mặc định (`gemini-3.8-flash-tiered`, `gemini-3-flash`) luôn có sẵn dù chưa tải được.
+
 ### Đồng hồ đếm giây khi AI trả lời (Hỏi nghiệp vụ / Trò chuyện AI)
 Khi AI đang trả lời, cạnh dòng trạng thái có viên thuốc đếm giây ("12 giây", từ 60 giây đổi thành "1 phút 05 giây"). Quá **30 giây** viên thuốc chuyển màu cam và gợi ý có thể Dừng để thử lại/đổi mô hình; đồng hồ chạy xuyên suốt cả lúc đếm ngược tự thử lại và lúc tự chuyển sang mô hình dự phòng. Trả lời xong, thời gian được lưu cùng câu trả lời (`secs`, tối đa 3600) và hiện nhỏ bên phải hàng nút *Sao chép*; câu lỗi/bị dừng không hiện. Mốc bắt đầu được ghi tự động mỗi khi `qa.busy` chuyển từ false sang true nên mọi luồng hỏi đáp đều có đồng hồ.
 

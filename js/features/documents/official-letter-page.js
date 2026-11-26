@@ -194,6 +194,31 @@ const OfficialLetterPage = (() => {
   const aiConfig = () => aiCfg || (aiCfg = Models().load());
   const activeModel = () => (Models() ? Models().resolve(aiConfig()) : null);
   const aiKeys = {};   // nhà cung cấp → đã có khoá chưa (nạp bất đồng bộ)
+  // Danh sách mô hình Antigravity: tự tải từ cầu nối khi mở bảng chọn mô hình (tối đa 1 lần / 5 phút, hoặc khi bấm Thử lại) và lưu vào cấu hình,
+  // không bắt người dùng vào Cài đặt bấm tay. Lỗi hiện ngay trong bảng kèm lý do.
+  const agyLoad = {at: 0, busy: false, error: ''};
+  function renderModelPop() {   // vẽ lại nhưng giữ vị trí cuộn của bảng chọn (bảng dài, nhóm Antigravity nằm cuối)
+    if (!host || st.pop !== 'model') return;
+    const top = (host.querySelector('.ola-pop--models') || {}).scrollTop || 0;
+    renderAll();
+    const box = host.querySelector('.ola-pop--models'); if (box) box.scrollTop = top;
+  }
+  async function refreshAgyModels(force) {
+    const M = Models();
+    if (!M || agyLoad.busy || (!force && agyLoad.at && Date.now() - agyLoad.at < 300000)) return;
+    agyLoad.busy = true; agyLoad.error = '';
+    renderModelPop();
+    try {
+      const cfg = aiConfig();
+      const names = M.parseAgyModels(await M.listModels('antigravity', cfg));
+      if (!names.length) throw new Error('Cầu nối chưa liệt kê mô hình nào — hãy đăng nhập tài khoản Antigravity trong CLIProxyAPI.');
+      cfg.providers.antigravity.models = names;
+      aiCfg = M.save(cfg);
+      agyLoad.at = Date.now();
+    } catch (error) { agyLoad.error = String(error && error.message || error).slice(0, 220); }
+    agyLoad.busy = false;
+    renderModelPop();
+  }
   function refreshKeys() { if (Models()) Models().keyStatus().then(map => { Object.assign(aiKeys, map); if (host && st.pop === 'model') renderAll(); }).catch(() => { /* bỏ qua */ }); }
   const NO_KEY = 'Chưa có khoá DeepSeek API. Bấm biểu tượng ⚙ ở góc phải để nhập khoá (lấy tại platform.deepseek.com).';
   // Token đã dùng trong phiên soạn hiện tại (công văn đang mở): cộng dồn từ mọi lần gọi AI, đặt lại khi bắt đầu công văn mới / mở lại từ lịch sử.
@@ -1513,7 +1538,9 @@ const OfficialLetterPage = (() => {
       const items = M.entries(cfg).filter(entry => entry.provider === id);
       if (!items.length) return '';
       const p = M.PROVIDERS[id], has = aiKeys[id] !== false;   // chưa nạp xong khoá thì coi như có, tránh nhấp nháy
-      return '<h6>' + esc(M.providerLabel(id, cfg)) + (p.free ? ' <i>miễn phí</i>' : '') + (has ? '' : ' <em>chưa có khoá</em>') + '</h6>'
+      const agyNote = id !== 'antigravity' ? '' : agyLoad.busy ? '<div class="ola-pop-note" role="status">Đang tải danh sách mô hình từ Antigravity…</div>'
+        : agyLoad.error ? '<div class="ola-pop-note is-warn" role="alert"><span>Chưa tải được danh sách mô hình: ' + esc(agyLoad.error) + '</span><button type="button" data-ol-agy-refresh>Thử lại</button></div>' : '';
+      return '<h6>' + esc(M.providerLabel(id, cfg)) + (p.free ? ' <i>miễn phí</i>' : '') + (has ? '' : ' <em>chưa có khoá</em>') + '</h6>' + agyNote
         + items.map(entry => has
           ? '<button type="button" role="menuitemradio" aria-checked="' + (entry.id === active.id) + '" data-ol-model="' + esc(entry.id) + '"><b>' + esc(entry.model) + '</b><small>' + esc(modelHint(entry)) + '</small></button>'
           : '<button type="button" data-ol-act="settings" title="Thêm khoá ' + esc(M.providerLabel(id, cfg)) + '"><b>' + esc(entry.model) + '</b><small>Chưa có khoá — bấm để thêm trong Cài đặt</small></button>').join('');
@@ -2152,8 +2179,9 @@ const OfficialLetterPage = (() => {
     const histOpen = target.closest('[data-ol-hist-open]');
     if (histOpen) { openHistory(histOpen.dataset.olHistOpen); return; }
     if (target.closest('[data-ol-hist-backdrop]')) { st.histOpen = false; exitHistSelect(); renderAll(); return; }
+    if (target.closest('[data-ol-agy-refresh]')) { refreshAgyModels(true); return; }
     const popButton = target.closest('[data-ol-pop]');
-    if (popButton) { collectAll(); const name = popButton.dataset.olPop; st.pop = st.pop === name ? '' : name; st.recQuery = ''; st.recActive = 0; if (st.pop === 'record' && !index.length) loadRecords(); if (st.pop === 'rules' && st.libDocs === null) loadLibDocs().then(() => { if (st.pop === 'rules') renderAll(); }); renderAll(); return; }
+    if (popButton) { collectAll(); const name = popButton.dataset.olPop; st.pop = st.pop === name ? '' : name; if (st.pop === 'model') refreshAgyModels(false); st.recQuery = ''; st.recActive = 0; if (st.pop === 'record' && !index.length) loadRecords(); if (st.pop === 'rules' && st.libDocs === null) loadLibDocs().then(() => { if (st.pop === 'rules') renderAll(); }); renderAll(); return; }
     const pick = target.closest('[data-ol-pick]');
     if (pick) { collectAll(); st.recordKey = pick.dataset.olPick; st.pop = ''; st.recQuery = ''; renderAll(); focusMain(); return; }
     const modelBtn = target.closest('[data-ol-model]');
