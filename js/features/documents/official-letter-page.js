@@ -36,7 +36,8 @@ const OfficialLetterPage = (() => {
     pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
     checklist: '<path d="M10 6h11M10 12h11M10 18h11"/><path d="m3 6 1.8 1.8L7.5 5M3 12l1.8 1.8L7.5 11M3 18l1.8 1.8L7.5 17"/>',
-    check: '<path d="m5 12 4.5 4.5L19 7"/>'
+    check: '<path d="m5 12 4.5 4.5L19 7"/>',
+    arrowRight: '<path d="M5 12h14m-6-6 6 6-6 6"/>'
   };
 
   let host = null, controller = null, generation = 0, records = [], index = [];
@@ -1545,10 +1546,11 @@ const OfficialLetterPage = (() => {
       + sampleList.map(item => opt(item.id, item.name, typeName(item.templateId) + (cur && cur.id === item.id && sampleChoice === 'auto' ? ' · đang được tự chọn' : ''), sampleChoice === item.id)).join('')
       + '<button type="button" class="ola-pop-foot" data-ol-act="samples"><b>Quản lý mẫu…</b><small>' + (sampleList.length ? sampleList.length + ' mẫu của bạn' : 'Chưa có mẫu — thêm mẫu để AI làm theo') + '</small></button></div>';
   }
-  function styleChipHtml() {
+  function styleChipHtml(compact) {
     const on = freeStyleOn(), disabled = (qa.busy || st.busy) ? ' disabled' : '';
     const title = on ? 'Viết tự do — đang bật: AI tự quyết bố cục, độ dài và giọng văn (ít khuôn hơn, tự nhiên hơn). Bấm để quay lại viết theo dàn ý + công văn mẫu.' : 'Viết tự do — đang tắt: AI viết bám dàn ý và công văn mẫu. Bấm để bật.';
-    return '<button type="button" class="ola-icon-btn ola-deep-btn' + (on ? ' is-set' : '') + '" data-ol-act="free-style" aria-pressed="' + on + '" title="' + esc(title) + '" aria-label="Viết tự do"' + disabled + '>' + svg(ICON.edit || ICON.spark) + '</button>';
+    return '<button type="button" class="' + (compact ? 'ola-icon-btn ola-deep-btn' : 'ola-chip') + (on ? ' is-set' : '') + '" data-ol-act="free-style" aria-pressed="' + on + '" title="' + esc(title) + '" aria-label="Viết tự do"' + disabled + '>'
+      + svg(ICON.pencil) + (compact ? '' : '<span>Viết tự do</span>') + '</button>';
   }
   function deepChipHtml(compact) {
     const on = deepOn(), able = deepSupported();
@@ -1590,17 +1592,26 @@ const OfficialLetterPage = (() => {
   }
   function composerHtml(big) {
     const tpl = template();
-    const recordChip = recordChipHtml();
-    const typeChip = '<button type="button" class="ola-chip' + (tpl.id !== DEFAULT_TEMPLATE ? ' is-set' : '') + '" data-ol-pop="type" title="' + esc(tpl.name) + '">' + svg(ICON.letter) + '<span class="ola-chip-t ola-chip-type">' + esc(tpl.id === DEFAULT_TEMPLATE ? 'Loại' : tpl.name) + '</span>' + svg(ICON.chevron) + '</button>';
-    const rulesChip = rulesChipHtml();
-    return '<div class="ola-composer' + (big ? ' is-big' : '') + '">'
-      + '<textarea data-ol-brief rows="' + (big ? 3 : 2) + '" maxlength="3000" placeholder="Mô tả công văn cần soạn… (gõ số HSBT hoặc biển số để AI tự lấy hồ sơ)" aria-label="Yêu cầu soạn công văn">' + esc(st.brief) + '</textarea>'
-      + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (filesHtml() ? '' : ' hidden') + '>' + filesHtml() + '</div>'
+    const typeChip = '<button type="button" class="ola-chip' + (tpl.id !== DEFAULT_TEMPLATE ? ' is-set' : '') + '" data-ol-pop="type" title="' + esc(tpl.name) + '">' + svg(ICON.letter) + '<span class="ola-chip-t ola-chip-type">' + esc(tpl.id === DEFAULT_TEMPLATE ? 'Loại công văn' : tpl.name) + '</span>' + svg(ICON.chevron) + '</button>';
+    const context = recordChipHtml() + typeChip + rulesChipHtml() + sampleChipHtml();
+    const files = filesHtml();
+    const fileInput = '<input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>';
+    const send = '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + (big ? '<span>Soạn công văn</span>' : '') + '</button>';
+    const toolbar = big
+      ? '<div class="ola-draft-context" role="group" aria-label="Tài liệu và căn cứ">' + fileInput
+        + '<button type="button" class="ola-chip" data-ol-act="attach-draft" title="Đính kèm ảnh hoặc PDF">' + svg(ICON.attach) + 'Đính kèm</button>' + context + '</div>'
+        + '<div class="ola-draft-footer"><div class="ola-draft-options" role="group" aria-label="Tùy chọn AI">' + modelChipHtml() + deepChipHtml(false) + styleChipHtml(false) + '</div>' + send + '</div>'
+      : '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm ảnh/PDF">' + fileInput + svg(ICON.attach) + '</label>'
+        + context + modelChipHtml() + '<span class="ola-spacer"></span>' + deepChipHtml(true) + styleChipHtml(true) + send + '</div>';
+    return '<div class="ola-composer' + (big ? ' is-big ola-draft-composer' : '') + '">'
+      + (big ? '<div class="ola-draft-prompt"><label for="ol-draft-brief">Yêu cầu soạn thảo</label>' : '')
+      + '<textarea data-ol-brief rows="' + (big ? 3 : 2) + '" maxlength="3000"'
+      + (big ? ' id="ol-draft-brief" aria-describedby="ol-draft-hint" placeholder="Ví dụ: Đề nghị khách hàng bổ sung biên bản tai nạn…"' : ' placeholder="Mô tả công văn cần soạn… (gõ số HSBT hoặc biển số để AI tự lấy hồ sơ)" aria-label="Yêu cầu soạn công văn"')
+      + '>' + esc(st.brief) + '</textarea>'
+      + (big ? '<p id="ol-draft-hint">Nhập số HSBT hoặc biển số để AI tìm hồ sơ liên quan.</p></div>' : '')
+      + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (files ? '' : ' hidden') + '>' + files + '</div>'
       + '<div class="ola-docs" data-ol-docs' + (docList().length ? '' : ' hidden') + '>' + docsHtml() + '</div>'
-      + '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm ảnh/PDF"><input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>' + svg(ICON.attach) + '</label>'
-      + recordChip + typeChip + rulesChip + sampleChipHtml() + modelChipHtml() + '<span class="ola-spacer"></span>' + deepChipHtml(true) + styleChipHtml()
-      + '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div>'
-      + popoverHtml() + '</div>';
+      + toolbar + popoverHtml() + '</div>';
   }
   function filesHtml(which) {
     const bucket = which === 'refineFiles' ? 'refineFiles' : 'files';
@@ -1617,12 +1628,17 @@ const OfficialLetterPage = (() => {
 
   function heroHtml() {
     const ideas = Core().templates().filter(item => TEMPLATE_HINTS[item.id]);
-    return '<section class="ola-hero">'
-      + '<span class="ola-avatar" aria-hidden="true">' + svg(ICON.spark) + '</span><h1>Hôm nay cần soạn công văn gì?</h1>'
+    const cards = ideas.map(item => '<button type="button" class="ola-draft-idea" data-ol-idea="' + esc(item.id) + '" aria-pressed="' + (item.id === st.templateId) + '">'
+      + '<span class="ola-draft-idea-icon">' + svg(ICON.letter) + '</span><span class="ola-draft-idea-text"><strong>' + esc(item.name) + '</strong><small>' + esc(item.group) + '</small></span>'
+      + '<span class="ola-draft-idea-arrow">' + svg(item.id === st.templateId ? ICON.check : ICON.arrowRight) + '</span></button>').join('');
+    return '<section class="ola-hero ola-draft-home" aria-labelledby="ol-draft-title">'
+      + '<header class="ola-draft-heading"><span class="ola-avatar">' + svg(ICON.letter) + '</span><div><h1 id="ol-draft-title">Soạn công văn</h1>'
+      + '<p>Mô tả yêu cầu hoặc chọn một gợi ý để bắt đầu.</p></div></header>'
       + (st.notice ? noticeHtml() : '')
       + composerHtml(true)
       + (st.steps ? '<div class="ola-task-result">' + stepsHtml() + '</div>' : '')
-      + '<div class="ola-ideas">' + ideas.map(item => '<button type="button" class="tasco-ai-choice" data-ol-idea="' + esc(item.id) + '"><strong>' + esc(item.name) + '</strong><small>' + esc(item.group) + '</small></button>').join('') + '</div></section>';
+      + '<section class="ola-draft-starters" aria-labelledby="ol-draft-starters"><h2 id="ol-draft-starters">Gợi ý soạn nhanh</h2>'
+      + '<div class="ola-draft-ideas">' + cards + '</div></section></section>';
   }
 
   // ---- Màn làm việc ----
@@ -1947,6 +1963,7 @@ const OfficialLetterPage = (() => {
     const root = $('[data-ol-root]');
     const active = document.activeElement, focusSel = active && host.contains(active) ? (active.matches('[data-ol-rec-q]') ? '[data-ol-rec-q]' : active.matches('[data-ol-brief]') ? '[data-ol-brief]' : active.matches('[data-ol-qa-input]') ? '[data-ol-qa-input]' : '') : '';
     const focusRule = active && host.contains(active) && active.matches('[data-ol-rule]') ? active.dataset.olRule : null;
+    const focusDraftPop = active?.closest('.ola-draft-composer') && host.contains(active) ? active.dataset.olPop : '';
     const asking = st.mode === 'ask' && !!QA();
     const working = asking ? !!(qa.messages.length || qa.busy) : !!(st.letter || (st.busy && st.steps));
     const qaBox = $('[data-ol-qa-scroll]'), qaTop = qaBox ? qaBox.scrollTop : 0;
@@ -1963,8 +1980,14 @@ const OfficialLetterPage = (() => {
     const nextQa = $('[data-ol-qa-scroll]'); if (nextQa) nextQa.scrollTop = qaTop;
     const brief = $('[data-ol-brief]'); if (brief) autoGrow(brief);
     const qaInput = $('[data-ol-qa-input]'); if (qaInput) autoGrow(qaInput);
+    const draftPickers = root.querySelectorAll('.ola-draft-composer [data-ol-pop]');
+    draftPickers.forEach(button => {
+      button.setAttribute('aria-expanded', String(st.pop === button.dataset.olPop));
+      button.setAttribute('aria-haspopup', button.dataset.olPop === 'record' ? 'dialog' : 'menu');
+    });
     if (st.pop === 'record') { updateRecList(); $('[data-ol-rec-q]')?.focus({preventScroll:true}); }
     else if (st.pop === 'rules' && focusRule !== null) [...host.querySelectorAll('[data-ol-rule]')].find(node => node.dataset.olRule === focusRule)?.focus({preventScroll:true});
+    else if (focusDraftPop) [...draftPickers].find(button => button.dataset.olPop === focusDraftPop)?.focus({preventScroll:true});
     else if (focusSel) $(focusSel)?.focus({preventScroll:true});
     const nextMain = $('.ola-main'); if (nextMain) nextMain.scrollTop = mainTop;
     if (st.busy || st.pending) {
@@ -2365,6 +2388,7 @@ const OfficialLetterPage = (() => {
     const act = target.closest('[data-ol-act]');
     if (!act) return;
     switch (act.dataset.olAct) {
+      case 'attach-draft': $('[data-ol-files]')?.click(); break;
       case 'docs-toggle': st.docsFold = !st.docsFold; updateFiles(); break;
       case 'agent-toggle': st.agentOpen = !st.agentOpen; updateSteps(); $('[data-ol-act="agent-toggle"]')?.focus(); break;
       case 'review': $('.ola-review')?.scrollIntoView({block:'start', behavior:'auto'}); break;
@@ -2441,7 +2465,17 @@ const OfficialLetterPage = (() => {
       else if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); cancelRename(); }
       return;
     }
-    if (event.key === 'Escape') { if (st.pop) { event.preventDefault(); closePop(); return; } if (st.drawer) { collectAll(); st.drawer = ''; renderAll(); return; } if (st.histSelect) { event.preventDefault(); toggleHistSelect(false); return; } }
+    if (event.key === 'Escape') {
+      if (st.pop) {
+        event.preventDefault();
+        const draftPop = target.closest('.ola-draft-composer') ? st.pop : '';
+        closePop();
+        if (draftPop) [...host.querySelectorAll('.ola-draft-composer [data-ol-pop]')].find(button => button.dataset.olPop === draftPop)?.focus({preventScroll:true});
+        return;
+      }
+      if (st.drawer) { collectAll(); st.drawer = ''; renderAll(); return; }
+      if (st.histSelect) { event.preventDefault(); toggleHistSelect(false); return; }
+    }
     if (target.matches('.ol-edit') && event.key === 'Enter') { event.preventDefault(); return; } // mỗi khối là một dòng/đoạn
     if (target.matches('[data-ol-brief]') && event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); run(); return; }
     if (target.matches('[data-ol-qa-input]') && event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); askQuestion(); return; }
