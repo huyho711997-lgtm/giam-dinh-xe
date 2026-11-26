@@ -262,6 +262,12 @@ Trang **Hồ sơ bồi thường → Cập nhật dữ liệu từ Excel** dùng
 ### Đồng hồ đếm giây khi AI trả lời (Hỏi nghiệp vụ / Trò chuyện AI)
 Khi AI đang trả lời, cạnh dòng trạng thái có viên thuốc đếm giây ("12 giây", từ 60 giây đổi thành "1 phút 05 giây"). Quá **30 giây** viên thuốc chuyển màu cam và gợi ý có thể Dừng để thử lại/đổi mô hình; đồng hồ chạy xuyên suốt cả lúc đếm ngược tự thử lại và lúc tự chuyển sang mô hình dự phòng. Trả lời xong, thời gian được lưu cùng câu trả lời (`secs`, tối đa 3600) và hiện nhỏ bên phải hàng nút *Sao chép*; câu lỗi/bị dừng không hiện. Mốc bắt đầu được ghi tự động mỗi khi `qa.busy` chuyển từ false sang true nên mọi luồng hỏi đáp đều có đồng hồ.
 
+### Lịch sử cập nhật dữ liệu: "Khôi phục về bản này" và "về trước lần này"
+Mỗi dòng trong **Lịch sử cập nhật dữ liệu** (Hồ sơ bồi thường, chỉ quản trị viên) có hai cách quay lại dữ liệu cũ:
+- **Khôi phục về bản này** — đưa toàn bộ danh sách hồ sơ về đúng trạng thái *sau* lần nhập đó (dữ liệu như lúc bản ấy đang dùng). Lấy từ bản sao lưu trước-khi-ghi của phiên bản kế tiếp, nên gồm cả chỉnh sửa trong ứng dụng cho tới ngay trước lần cập nhật kế tiếp. Không hiện ở bản **Đang dùng** (đã là bản này).
+- **Khôi phục về trước lần này** — trạng thái ngay *trước* lần nhập đó (bản sao lưu của chính nó).
+Cả hai luôn lưu dữ liệu hiện tại thành một phiên bản "Khôi phục" mới trước khi ghi, nên hoàn tác được bằng chính nút khôi phục của dòng đó. Ghi chú tiến độ, tài liệu Drive và sơ đồ hiện trường lưu riêng nên không bị ảnh hưởng. Logic: `ClaimImportVersions.restore(id, {point: 'before'|'after'})`.
+
 ### Câu hỏi ngắn tự trả lời nhanh (Hỏi nghiệp vụ / Trò chuyện AI)
 Chip **Suy luận sâu** đang bật thì mọi câu hỏi đều chạy suy luận sâu (30–90 giây với 3.8 Flash), kể cả câu tra cứu đơn giản như "hồ sơ cần có gì…". Nay `isQuickQuestion` (`official-letter-qa.js`) nhận ra câu **tra cứu ngắn một ý** (≤ 140 ký tự, ≤ 22 từ, một dòng, không có từ khoá lập luận/tính toán/so sánh như "so sánh, phân tích, tại sao, bao nhiêu, có được/bị…không, từ chối, loại trừ", không đính kèm tệp/ảnh, không gắn hồ sơ vụ việc) và trả lời ở chế độ nhanh; dòng trạng thái ghi "câu hỏi ngắn nên trả lời nhanh". Câu trả lời đó có nút **Suy luận sâu lại** để hỏi lại kỹ hơn (`data-ol-qa-deeper`, lưu cờ `quick` cùng câu trả lời). Câu cần lập luận vẫn suy luận sâu như trước; tắt chip Suy luận sâu thì mọi câu đều nhanh.
 

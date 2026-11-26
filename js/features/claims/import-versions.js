@@ -237,21 +237,28 @@ const ClaimImportVersions = (() => {
     }
     return {entry, planned};
   }
-  // Khôi phục dữ liệu về trạng thái ngay trước phiên bản "target". Lưu bản hiện tại thành một phiên bản để có thể hoàn tác.
-  async function restore(targetId, {onProgress} = {}) {
+  // Khôi phục dữ liệu về một mốc của phiên bản "target". Lưu bản hiện tại thành một phiên bản để có thể hoàn tác.
+  //   point 'before' (mặc định): trạng thái NGAY TRƯỚC lần cập nhật này  → bản sao lưu `before` của chính nó.
+  //   point 'after'            : trạng thái SAU lần cập nhật này (bản "đang dùng" lúc đó) → bản sao lưu `before` của phiên bản kế tiếp (mới hơn),
+  //                              nên gồm cả chỉnh sửa trong ứng dụng cho tới ngay trước lần cập nhật kế tiếp. Phiên bản mới nhất thì đang là bản này rồi.
+  async function restore(targetId, {onProgress, point = 'before'} = {}) {
     requireAdmin();
-    const history = await list(), target = history.find(item => item.id === targetId);
+    const history = await list(), index = history.findIndex(item => item.id === targetId), target = history[index];
     if (!target) throw new Error('Không tìm thấy phiên bản cần khôi phục.');
+    const after = point === 'after';
+    if (after && index === 0) throw new Error('Đây đã là phiên bản đang dùng, không cần khôi phục.');
     onProgress?.(10, 'Đang tải bản sao lưu…');
-    const before = await blob(targetId, 'before');
-    if (!before || typeof before !== 'object') throw new Error('Phiên bản này không có bản sao lưu để khôi phục.');
-    const rows = target.prevVersionId ? await blob(target.prevVersionId, 'rows') : null;
+    const snapshot = await blob(after ? history[index - 1].id : targetId, 'before');
+    if (!snapshot || typeof snapshot !== 'object') throw new Error('Phiên bản này không có bản sao lưu để khôi phục.');
+    const baseId = after ? target.id : (target.prevVersionId || '');
+    const rows = baseId ? await blob(baseId, 'rows') : null;
     onProgress?.(35, 'Đang sao lưu dữ liệu hiện tại…');
     const claims = await currentClaims();
-    const entry = await saveVersion({kind:'restore', createdAt:Math.max(Date.now(), (history[0]?.createdAt || 0) + 1), fileName:'Khôi phục về trước "' + (target.fileName || target.id) + '"', restoredFrom:targetId,
-      rowCount:Object.keys(before).length, prevVersionId:target.prevVersionId || '', summary:{total:Object.keys(before).length}}, {rows, before:claims});
+    const name = target.fileName || target.id;
+    const entry = await saveVersion({kind:'restore', createdAt:Math.max(Date.now(), (history[0]?.createdAt || 0) + 1), fileName:(after ? 'Khôi phục về bản "' : 'Khôi phục về trước "') + name + '"', restoredFrom:targetId, restoredPoint:after ? 'after' : 'before',
+      rowCount:Object.keys(snapshot).length, prevVersionId:baseId, summary:{total:Object.keys(snapshot).length}}, {rows, before:claims});
     onProgress?.(70, 'Đang khôi phục dữ liệu…');
-    await db().ref('pending_claims').set(before);
+    await db().ref('pending_claims').set(snapshot);
     return entry;
   }
 

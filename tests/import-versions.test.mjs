@@ -158,6 +158,31 @@ test('apply → apply → restore: versions are saved before writing, restore re
   assert.deepEqual(plain(afterSecondRows.filter(Boolean)), ['A1', 'A3']);
 });
 
+test('restore point "after": quay về đúng dữ liệu của bản cũ (sau lần nhập đó), không phải trước nó, và hoàn tác được', async () => {
+  const db = fakeDb({pending_claims:{manual:{id:'manual', bienSo:'30A99999', khachHang:'Tạo tay'}}});
+  const {V: api} = adminContext(db);
+  const first = await api.apply(api.rowsFromFile([row('A1'), row('A2')]), {fileName:'thang9.xlsx'});
+  const afterFirst = structuredClone(db.data.pending_claims);
+  const second = await api.apply(api.rowsFromFile([row('A1', {status:'cho_gdct'}), row('A3')]), {fileName:'thang10.xlsx'});
+  const afterSecond = structuredClone(db.data.pending_claims);
+  const third = await api.apply(api.rowsFromFile([row('A4')]), {fileName:'thang11.xlsx'});
+  // Bản đang dùng (mới nhất) không có gì để khôi phục "về bản này".
+  await assert.rejects(api.restore(third.entry.id, {point:'after'}), /đang dùng/);
+  // Về bản tháng 9 = dữ liệu ngay sau lần nhập tháng 9 (khác với "trước tháng 9" là dữ liệu ban đầu).
+  const r1 = await api.restore(first.entry.id, {point:'after'});
+  assert.deepEqual(plain(db.data.pending_claims), plain(afterFirst));
+  assert.equal(r1.kind, 'restore'); assert.equal(r1.restoredPoint, 'after'); assert.match(r1.fileName, /Khôi phục về bản "thang9\.xlsx"/);
+  // Về bản tháng 10 (bản ở giữa).
+  const r2 = await api.restore(second.entry.id, {point:'after'});
+  assert.deepEqual(plain(db.data.pending_claims), plain(afterSecond));
+  // Hoàn tác: bản tháng 9 → khôi phục về trước r2 → dữ liệu lúc đó (= sau tháng 9).
+  await api.restore(r2.id, {point:'before'});
+  assert.deepEqual(plain(db.data.pending_claims), plain(afterFirst));
+  // rows của bản khôi phục khớp bản gốc → lần nhập sau so khớp đúng "file trước".
+  assert.deepEqual(plain(await api.blob(r1.id, 'rows')), plain(await api.blob(first.entry.id, 'rows')));
+  assert.equal(r1.prevVersionId, first.entry.id);
+});
+
 test('non-admins cannot read history, apply or restore', async () => {
   const db = fakeDb({pending_claims:{}});
   const ctx = adminContext(db); ctx.activeUserProfile = {role:'GĐV'};

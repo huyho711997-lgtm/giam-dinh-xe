@@ -149,6 +149,7 @@ const ClaimImportUI = (() => {
             + '<div class="cim-version-head"><strong>' + esc(item.fileName || 'Tệp Excel') + '</strong>' + (current ? '<span class="cim-badge">Đang dùng</span>' : '') + (item.kind === 'restore' ? '<span class="cim-badge is-muted">Khôi phục</span>' : '') + '</div>'
             + '<small>' + when(item.createdAt) + ' · ' + esc(item.createdBy?.name || '—') + (item.storedBytes ? ' · sao lưu ' + Math.max(1, Math.round(item.storedBytes / 1024)).toLocaleString('vi-VN') + ' KB' : '') + '</small><div class="cim-chips">' + chips + '</div></div>'
             + '<div class="cim-version-actions">' + (canDiff && item.prevVersionId ? '<button type="button" class="cim-btn" data-cim-diff="' + esc(item.id) + '">' + ICON.compare + '<span>Xem thay đổi</span></button>' : '')
+            + (current ? '' : '<button type="button" class="cim-btn cim-btn--warn is-main" data-cim-restore-to="' + esc(item.id) + '" title="Đưa toàn bộ danh sách hồ sơ về đúng trạng thái sau lần cập nhật này (dữ liệu như lúc bản này đang dùng)">' + ICON.restore + '<span>Khôi phục về bản này</span></button>')
             + '<button type="button" class="cim-btn cim-btn--warn" data-cim-restore="' + esc(item.id) + '" title="Đưa toàn bộ danh sách hồ sơ về đúng trạng thái trước lần cập nhật này">' + ICON.restore + '<span>Khôi phục về trước lần này</span></button></div></li>';
         }).join('') + '</ol>';
     historyOverlay.innerHTML = shell(body, 'Lịch sử cập nhật dữ liệu', versions.length + ' phiên bản · Khôi phục luôn tự sao lưu dữ liệu hiện tại trước, nên có thể hoàn tác.');
@@ -161,7 +162,7 @@ const ClaimImportUI = (() => {
   async function onHistoryClick(event) {
     if (event.target === historyOverlay || event.target.closest('[data-cim-close]')) { closeHistory(); return; }
     if (event.target.closest('[data-cim-back]')) { await renderHistory(); return; }
-    const diff = event.target.closest('[data-cim-diff]'), restoreBtn = event.target.closest('[data-cim-restore]'), selected = event.target.closest('[data-cim-compare-selected]');
+    const diff = event.target.closest('[data-cim-diff]'), restoreBtn = event.target.closest('[data-cim-restore]'), restoreTo = event.target.closest('[data-cim-restore-to]'), selected = event.target.closest('[data-cim-compare-selected]');
     if (diff) { const item = versions.find(v => v.id === diff.dataset.cimDiff); if (item) compare(item.prevVersionId, item.id); }
     else if (selected) {
       const a = historyOverlay.querySelector('[data-cim-a]').value, b = historyOverlay.querySelector('[data-cim-b]').value;
@@ -169,7 +170,8 @@ const ClaimImportUI = (() => {
       const [older, newer] = [versions.find(v => v.id === a), versions.find(v => v.id === b)].sort((x, y) => x.createdAt - y.createdAt);
       compare(older.id, newer.id);
     }
-    else if (restoreBtn) restore(restoreBtn.dataset.cimRestore, restoreBtn);
+    else if (restoreTo) restore(restoreTo.dataset.cimRestoreTo, restoreTo, 'after');
+    else if (restoreBtn) restore(restoreBtn.dataset.cimRestore, restoreBtn, 'before');
   }
 
   // ---- So sánh hai file -------------------------------------------------------------------------
@@ -208,22 +210,23 @@ const ClaimImportUI = (() => {
   }
 
   // ---- Khôi phục ------------------------------------------------------------------------------
-  async function restore(versionId, button) {
+  async function restore(versionId, button, point = 'before') {
     if (!guard()) return;
     const item = versions.find(v => v.id === versionId); if (!item) return;
+    const after = point === 'after';
     const ok = typeof showPremiumConfirmModal === 'function' ? await showPremiumConfirmModal({
-      eyebrow:'KHÔI PHỤC DỮ LIỆU HỒ SƠ', title:'Khôi phục về trước lần cập nhật này?',
-      message:'Toàn bộ danh sách hồ sơ sẽ trở về đúng trạng thái ngay trước "' + (item.fileName || item.id) + '" (' + when(item.createdAt) + '). Dữ liệu hiện tại được tự động sao lưu thành một phiên bản mới nên bạn có thể hoàn tác.',
-      items:['Chỉnh sửa trong ứng dụng sau thời điểm đó cũng trở về như cũ', 'Ghi chú tiến độ, tài liệu Drive, sơ đồ hiện trường lưu riêng – không bị ảnh hưởng'],
+      eyebrow:'KHÔI PHỤC DỮ LIỆU HỒ SƠ', title:after ? 'Khôi phục về bản này?' : 'Khôi phục về trước lần cập nhật này?',
+      message:(after ? 'Toàn bộ danh sách hồ sơ sẽ trở về đúng trạng thái sau khi nhập "' : 'Toàn bộ danh sách hồ sơ sẽ trở về đúng trạng thái ngay trước "') + (item.fileName || item.id) + '" (' + when(item.createdAt) + '). Dữ liệu hiện tại được tự động sao lưu thành một phiên bản mới nên bạn có thể hoàn tác.',
+      items:[after ? 'Gồm cả chỉnh sửa trong ứng dụng cho tới ngay trước lần cập nhật kế tiếp; các cập nhật và chỉnh sửa sau đó bị lùi lại' : 'Chỉnh sửa trong ứng dụng sau thời điểm đó cũng trở về như cũ', 'Ghi chú tiến độ, tài liệu Drive, sơ đồ hiện trường lưu riêng – không bị ảnh hưởng'],
       confirmText:'Khôi phục'
-    }) : confirm('Khôi phục dữ liệu về trước lần cập nhật này?');
+    }) : confirm(after ? 'Khôi phục dữ liệu về bản này?' : 'Khôi phục dữ liệu về trước lần cập nhật này?');
     if (!ok) return;
     button.disabled = true;
     const progress = typeof updateBackgroundImportProgress === 'function' ? updateBackgroundImportProgress : () => {};
     try {
       progress(5, 'Đang khôi phục dữ liệu hồ sơ…');
-      await V().restore(versionId, {onProgress:(percent, text) => progress(percent, text)});
-      progress(100, 'Đã khôi phục.', true, false, 'Đã khôi phục dữ liệu về trước "' + (item.fileName || item.id) + '".');
+      await V().restore(versionId, {point, onProgress:(percent, text) => progress(percent, text)});
+      progress(100, 'Đã khôi phục.', true, false, (after ? 'Đã khôi phục dữ liệu về bản "' : 'Đã khôi phục dữ liệu về trước "') + (item.fileName || item.id) + '".');
       toast('Đã khôi phục dữ liệu hồ sơ. Bản trước khi khôi phục được lưu trong lịch sử.');
       await renderHistory();
       if (typeof executeUIRenderPendingClaims === 'function') executeUIRenderPendingClaims();

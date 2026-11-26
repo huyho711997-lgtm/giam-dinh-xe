@@ -152,6 +152,7 @@ button.cim-chip:hover,button.cim-chip[aria-pressed="true"] { border-color:var(--
 .cim-chip em { font-style:normal; opacity:.75; }
 .cim-version-actions { display:flex; flex-wrap:wrap; gap:6px; }
 .cim-version-actions .cim-btn { height:34px; padding:0 11px; font-size:11px; }
+.cim-version-actions .cim-btn.is-main { font-weight:700; }
 .cim-empty-state { display:flex; flex-direction:column; align-items:center; gap:8px; padding:46px 20px; border:1.5px dashed var(--cim-line); border-radius:14px; text-align:center; }
 .cim-empty-state svg { width:30px; height:30px; color:var(--cim-gold); }
 .cim-empty-state strong { font-size:14px; }
