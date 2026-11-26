@@ -2164,73 +2164,103 @@ const OfficialLetterPage = (() => {
   function openSamples(selectId) {
     const S = Samples(); if (!S) { toast('Chưa tải được mô-đun mẫu công văn. Hãy tải lại trang.', 'warning'); return; }
     const dialog = document.createElement('dialog');
-    dialog.className = 'ol-dialog ol-dialog--wide';
+    dialog.className = 'ol-dialog ol-smp-dialog';
     dialog.setAttribute('aria-labelledby', 'olSmpTitle');
     const tpls = Core().templates();
     const typeOptions = '<option value="">Mọi loại công văn</option>' + tpls.map(item => '<option value="' + esc(item.id) + '">' + esc(item.id === DEFAULT_TEMPLATE ? 'Tự do' : item.name) + '</option>').join('');
     dialog.innerHTML = '<div class="ol-set ol-smp">'
-      + '<header class="ol-set-head"><div><h2 id="olSmpTitle">Quản lý mẫu công văn</h2><p>AI sẽ làm theo bố cục, trình tự và giọng văn của mẫu bạn chọn; dữ kiện luôn lấy từ hồ sơ.</p></div>'
-      + '<button type="button" class="ol-set-x" data-cancel aria-label="Đóng">×</button></header>'
-      + '<div class="ol-smp-body"><aside class="ol-smp-list" data-smp-list></aside>'
-      + '<form class="ol-smp-form" data-smp-form>'
-      + '<label class="ol-set-field"><span>Tên mẫu</span><input name="name" maxlength="' + S.MAX_NAME + '" placeholder="VD: Từ chối bồi thường — lốp khác thông số"></label>'
-      + '<label class="ol-set-field"><span>Dùng cho loại công văn</span><select name="templateId">' + typeOptions + '</select></label>'
-      + '<label class="ol-set-field"><span>Nội dung mẫu <em data-smp-count></em></span><textarea name="text" rows="14" maxlength="' + S.MAX_TEXT + '" placeholder="Dán công văn mẫu vào đây (phần nội dung, từ trích yếu đến hết thân công văn). Nên thay tên, biển số, số tiền, số hồ sơ bằng […] hoặc ……"></textarea></label>'
-      + '<div class="ol-smp-tools"><label class="tasco-ai-btn-ghost ol-smp-file">Nhập từ tệp (.docx, .pdf, .txt)<input type="file" accept=".docx,.pdf,.txt,.md" hidden data-smp-file></label><small data-smp-note></small></div>'
-      + '</form></div>'
-      + '<footer class="ol-set-foot"><button type="button" class="tasco-ai-btn-ghost ol-smp-del" data-smp-del hidden>Xoá mẫu</button><span class="ola-spacer"></span><button type="button" class="tasco-ai-btn-ghost" data-cancel>Đóng</button><button type="button" class="tasco-ai-btn-ghost" data-smp-save>Lưu mẫu</button><button type="button" class="tasco-ai-btn-primary" data-smp-use>Lưu &amp; dùng mẫu này</button></footer></div>';
+      + '<header class="ol-set-head"><span class="ol-smp-icon">' + svg(ICON.letter) + '</span>'
+      + '<div><h2 id="olSmpTitle">Quản lý mẫu công văn</h2><p>AI dùng bố cục và giọng văn của mẫu, rồi điền dữ kiện từ hồ sơ.</p></div>'
+      + '<button type="button" class="ol-set-x" data-cancel aria-label="Đóng cửa sổ">' + svg(ICON.close) + '</button></header>'
+      + '<div class="ol-smp-body"><aside class="ol-smp-library" aria-labelledby="olSmpLibrary"><div class="ol-smp-library-head"><h3 id="olSmpLibrary">Mẫu của bạn</h3>'
+      + '<span data-smp-total></span></div><div class="ol-smp-list" data-smp-list></div><p class="ol-smp-scope">' + svg(ICON.folder) + '<span data-smp-scope></span></p></aside>'
+      + '<form class="ol-smp-form" id="olSmpForm" aria-labelledby="olSmpEditor" data-smp-form>'
+      + '<div class="ol-smp-editor-head"><h3 id="olSmpEditor" data-smp-editor></h3><input type="file" accept=".docx,.pdf,.txt,.md" hidden data-smp-file>'
+      + '<button type="button" class="olp-tool ol-smp-file" data-smp-import title="Nhập nội dung từ DOCX, PDF, TXT hoặc MD">' + svg(ICON.attach) + 'Nhập từ tệp</button></div>'
+      + '<div class="ol-smp-fields"><label class="ol-set-field"><span>Tên mẫu</span><input name="name" maxlength="' + S.MAX_NAME + '" placeholder="Ví dụ: Thông báo bổ sung hồ sơ"></label>'
+      + '<label class="ol-set-field"><span>Loại công văn</span><span class="ol-smp-select"><select name="templateId">' + typeOptions + '</select>' + svg(ICON.chevron) + '</span></label></div>'
+      + '<div class="ol-smp-content"><div class="ol-smp-content-head"><label for="olSmpText">Nội dung mẫu</label><span data-smp-count></span></div>'
+      + '<textarea id="olSmpText" name="text" rows="10" maxlength="' + S.MAX_TEXT + '" aria-describedby="olSmpHint" placeholder="Dán nội dung mẫu, từ trích yếu đến hết thân công văn…"></textarea>'
+      + '<p id="olSmpHint">Thay tên, biển số, số tiền và số hồ sơ cụ thể bằng […].</p></div>'
+      + '<p class="ol-smp-note" data-smp-note role="status" hidden></p></form></div>'
+      + '<footer class="ol-set-foot ol-smp-foot"><button type="button" class="olp-tool ol-smp-del" data-smp-del hidden>' + svg(ICON.trash) + 'Xoá mẫu</button>'
+      + '<div class="ol-smp-actions"><button type="button" class="tasco-ai-btn-ghost" data-cancel>Đóng</button>'
+      + '<button type="submit" form="olSmpForm" class="tasco-ai-btn-ghost" data-smp-save>Lưu mẫu</button>'
+      + '<button type="button" class="tasco-ai-btn-primary" data-smp-use>' + svg(ICON.check) + 'Lưu và dùng mẫu</button></div></footer></div>';
     document.body.appendChild(dialog);
     const q = sel => dialog.querySelector(sel), form = q('[data-smp-form]'), listBox = q('[data-smp-list]'), note = q('[data-smp-note]'), count = q('[data-smp-count]'), delBtn = q('[data-smp-del]');
     let currentId = '';
-    const close = () => { dialog.close(); dialog.remove(); renderAll(); };
+    const close = () => {
+      dialog.close();
+      dialog.remove();
+      renderAll();
+      $(selectId ? '[data-ol-act="save-sample"]' : '[data-ol-pop="sample"]')?.focus({preventScroll:true});
+    };
     dialog.querySelectorAll('[data-cancel]').forEach(button => { button.onclick = close; });
-    dialog.addEventListener('cancel', () => { setTimeout(() => { dialog.remove(); renderAll(); }, 0); });
-    const updateCount = () => { count.textContent = '(' + form.text.value.length.toLocaleString('vi-VN') + '/' + S.MAX_TEXT.toLocaleString('vi-VN') + ')'; };
+    dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
+    const report = (text, isError = false) => {
+      note.textContent = text;
+      note.classList.toggle('is-error', isError);
+      note.hidden = !text;
+    };
+    const updateCount = () => {
+      count.textContent = form.text.value.length.toLocaleString('vi-VN') + ' / ' + S.MAX_TEXT.toLocaleString('vi-VN');
+    };
     function paintList() {
-      listBox.innerHTML = '<button type="button" class="ol-smp-new' + (currentId ? '' : ' is-on') + '" data-smp-new>+ Mẫu mới</button>'
-        + (sampleList.length ? sampleList.map(item => '<button type="button" class="ol-smp-item' + (item.id === currentId ? ' is-on' : '') + '" data-smp-id="' + esc(item.id) + '"><b>' + esc(item.name) + '</b><small>' + esc((tpls.find(t => t.id === item.templateId) || {}).name || 'Mọi loại') + (sampleChoice === item.id ? ' · đang dùng' : '') + '</small></button>').join('')
-          : '<p class="ol-smp-empty">Chưa có mẫu. Dán một công văn mẫu bên phải rồi bấm Lưu mẫu, hoặc mở một công văn đã soạn và bấm “Lưu làm mẫu”.</p>');
-      if (S.scope() === 'browser') note.textContent = 'Đang lưu trên trình duyệt này (chưa đồng bộ tài khoản).';
+      q('[data-smp-total]').textContent = sampleList.length + ' mẫu';
+      q('[data-smp-scope]').textContent = S.scope() === 'browser' ? 'Lưu trên trình duyệt này' : 'Lưu theo tài khoản';
+      listBox.innerHTML = '<button type="button" class="ol-smp-new" data-smp-new>' + svg(ICON.plus) + 'Tạo mẫu mới</button>'
+        + (sampleList.length ? sampleList.map(item => {
+          const type = tpls.find(tpl => tpl.id === item.templateId);
+          const label = type?.id === DEFAULT_TEMPLATE ? 'Tự do' : type?.name || 'Mọi loại công văn';
+          return '<button type="button" class="ol-smp-item" data-smp-id="' + esc(item.id) + '"' + (item.id === currentId ? ' aria-current="true"' : '') + '>'
+            + '<span class="ol-smp-item-icon">' + svg(ICON.letter) + '</span><span class="ol-smp-item-details"><b>' + esc(item.name) + '</b>'
+            + '<small>' + esc(label) + '</small>' + (sampleChoice === item.id ? '<em>Đang dùng</em>' : '') + '</span></button>';
+        }).join('') : '<div class="ol-smp-empty"><b>Chưa có mẫu nào</b><p>Nhập từ tệp hoặc dán nội dung mẫu để lưu và dùng lại.</p></div>');
     }
     function fill(item) {
       currentId = item ? item.id : '';
       form.name.value = item ? item.name : ''; form.templateId.value = item ? item.templateId : (templateId() === DEFAULT_TEMPLATE ? '' : templateId()); form.text.value = item ? item.text : '';
-      delBtn.hidden = !item; updateCount(); paintList();
+      q('[data-smp-editor]').textContent = item ? 'Chỉnh sửa mẫu' : 'Mẫu công văn mới';
+      delBtn.hidden = !item; report(''); updateCount(); paintList();
     }
     async function persist(use) {
       const text = form.text.value.trim();
-      if (!text) { toast('Nội dung mẫu đang trống.', 'warning'); form.text.focus(); return; }
+      if (!text) { report('Nhập nội dung mẫu trước khi lưu.', true); form.text.focus(); return; }
       try {
         const saved = await S.save({id: currentId, name: form.name.value, templateId: form.templateId.value, text});
         sampleList = S.list(); currentId = saved.id;
         if (use) { setSampleChoice(saved.id); toast('AI sẽ làm theo mẫu “' + saved.name + '” ở các lần soạn tới.', 'success'); close(); return; }
-        toast('Đã lưu mẫu.', 'success'); fill(saved);
-      } catch (error) { toast(error.message, 'warning'); }
+        fill(saved); report('Đã lưu mẫu.');
+      } catch (error) { report(error.message, true); }
     }
     listBox.addEventListener('click', event => {
       if (event.target.closest('[data-smp-new]')) { fill(null); form.name.focus(); return; }
-      const item = event.target.closest('[data-smp-id]'); if (item) fill(S.get(item.dataset.smpId));
+      const item = event.target.closest('[data-smp-id]');
+      if (item) { fill(S.get(item.dataset.smpId)); listBox.querySelector('[aria-current="true"]')?.focus({preventScroll:true}); }
     });
-    form.text.addEventListener('input', updateCount);
-    q('[data-smp-save]').onclick = () => persist(false);
+    form.text.addEventListener('input', () => { updateCount(); if (note.classList.contains('is-error')) report(''); });
+    form.addEventListener('submit', event => { event.preventDefault(); persist(false); });
     q('[data-smp-use]').onclick = () => persist(true);
+    q('[data-smp-import]').onclick = () => q('[data-smp-file]').click();
     delBtn.onclick = async () => {
       if (!currentId || !confirm('Xoá mẫu này?')) return;
       await S.remove(currentId); sampleList = S.list();
       if (sampleChoice === currentId) setSampleChoice('auto');
-      toast('Đã xoá mẫu.', 'success'); fill(null);
+      fill(null); report('Đã xoá mẫu.');
     };
     q('[data-smp-file]').onchange = async event => {
       const file = event.target.files && event.target.files[0]; event.target.value = '';
       if (!file) return;
       if (typeof TascoLibParse === 'undefined' || !TascoLibParse.readText) { toast('Chưa tải được mô-đun đọc tệp. Hãy tải lại trang.', 'warning'); return; }
-      note.textContent = 'Đang đọc tệp…';
+      report('Đang đọc tệp…');
       try {
         const read = await TascoLibParse.readText(file, {});
         if (!read.text) throw new Error('Tệp không có chữ để đọc.');
         form.text.value = read.text.slice(0, S.MAX_TEXT); if (!form.name.value) form.name.value = file.name.replace(/\.[^.]+$/, '');
-        updateCount(); note.textContent = read.text.length > S.MAX_TEXT ? 'Tệp dài hơn ' + S.MAX_TEXT.toLocaleString('vi-VN') + ' ký tự nên chỉ lấy phần đầu.' : 'Đã đọc tệp — hãy ẩn thông tin cá nhân rồi bấm Lưu mẫu.';
-      } catch (error) { note.textContent = ''; toast(error.message, 'warning'); }
+        updateCount();
+        report(read.text.length > S.MAX_TEXT ? 'Chỉ lấy ' + S.MAX_TEXT.toLocaleString('vi-VN') + ' ký tự đầu của tệp.' : 'Đã nhập nội dung từ ' + file.name + '.');
+      } catch (error) { report(error.message, true); }
     };
     fill(selectId ? S.get(selectId) : null);
     dialog.showModal();
