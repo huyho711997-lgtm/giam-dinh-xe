@@ -209,6 +209,17 @@ const OfficialLetterCore = (() => {
     + '(f) Dàn ý, công văn mẫu và "KẾ HOẠCH LẬP LUẬN" (nếu có) là khung để bạn viết lại bằng câu chữ của riêng mình theo hồ sơ này; không chép lại câu của mẫu; nếu kế hoạch ghi rủi ro/điểm cần kiểm tra thì đưa vào "warnings". '
     + 'Chỉ trả về JSON: {"subject":"<trích yếu, bắt đầu bằng chữ thường sau V/v, không quá 200 ký tự>","paragraphs":[{"type":"p|h|li","text":"..."}],"warnings":["<điều cần người dùng kiểm tra lại>"],"basis":[{"code":"C1","cite":"<cách đã viện dẫn>"}]}.';
 
+  // Chế độ VIẾT TỰ DO: ít luật, ít khuôn — chỉ giữ các ranh giới cứng (không bịa, đúng căn cứ). Bố cục, độ dài, giọng văn do AI tự quyết như một người viết giỏi
+  // làm việc với tài liệu; trả về văn bản thuần (không JSON) để câu chữ tự nhiên hơn.
+  const FREE_COMPOSE_SYSTEM = 'Bạn là một chuyên viên bồi thường bảo hiểm xe cơ giới giàu kinh nghiệm, viết công văn cho Bảo hiểm Tasco bằng tiếng Việt. '
+    + 'Hãy tự đọc hồ sơ, yêu cầu và tài liệu, tự hiểu người nhận cần gì rồi viết PHẦN NỘI DUNG công văn như chính bạn sẽ viết: tự quyết bố cục, độ dài, số đoạn và giọng văn sao cho đúng việc, rõ ràng, trang trọng nhưng tự nhiên, giàu thông tin cụ thể của hồ sơ này. '
+    + 'Dàn ý, công văn mẫu, ghi chú (nếu có) chỉ là gợi ý — bạn được bỏ, gộp, đổi thứ tự hoặc viết khác đi nếu như vậy hay hơn. '
+    + 'Chỉ có vài ranh giới cố định: (1) không bịa số liệu, số tiền, ngày tháng, số văn bản, tên người, điều luật — chỉ dùng dữ kiện trong tài liệu được đưa; thiếu thì để "……" đúng chỗ đó; '
+    + '(2) chỉ viện dẫn điều khoản có nguyên văn trong "CĂN CỨ TỪ THƯ VIỆN" và đúng vấn đề (ghi đúng tên văn bản, số điều/khoản; không viết mã [C#] trong nội dung); không có căn cứ đúng thì không viện dẫn; '
+    + '(3) không viết quốc hiệu, tiêu ngữ, số/ngày, "Kính gửi", lời kết, chữ ký — hệ thống tự thêm; không dùng markdown (**, #). '
+    + 'ĐỊNH DẠNG TRẢ VỀ (văn bản thuần, không JSON, không giải thích thêm): dòng đầu "V/v: <trích yếu>"; một dòng trống; rồi các đoạn văn cách nhau bằng dòng trống; ý liệt kê viết mỗi ý một dòng bắt đầu bằng "- "; tiêu đề nhỏ (nếu cần) viết một dòng bắt đầu bằng "## ". '
+    + 'Cuối cùng, nếu có điều người dùng cần kiểm tra lại (dữ kiện chưa chắc, chỗ để trống, rủi ro) thì thêm dòng "[KIỂM TRA]" rồi mỗi ý một dòng bắt đầu "- "; nếu đã viện dẫn căn cứ thì thêm dòng "[CĂN CỨ]" rồi mỗi dòng "C1: cách đã viện dẫn".';
+
   // ---- Suy luận nghiệp vụ (chạy khi bật "Suy luận sâu"): dựng kế hoạch lập luận từ hồ sơ + căn cứ TRƯỚC khi viết, để công văn có chiều sâu thay vì điền khuôn ----
   const REASON_SYSTEM = 'Bạn là chuyên viên bồi thường bảo hiểm xe cơ giới cấp cao, từng xử lý hàng nghìn hồ sơ và viết công văn gửi khách hàng, gara, cơ quan công an. '
     + 'Lúc này bạn KHÔNG viết công văn mà LẬP KẾ HOẠCH LẬP LUẬN để người soạn viết một công văn có chiều sâu, đúng bản chất vụ việc. Làm lần lượt: '
@@ -289,14 +300,15 @@ const OfficialLetterCore = (() => {
     for (const field of template.fields) { const value = single(values[field.key], 1) ? cleanValue(field, values[field.key]) : ''; if (value) facts[field.label] = value; }
     for (const item of extra.extras || []) { const label = single(item && item.label, 80), value = single(item && item.value, 400); if (label && value) facts[label] = value; }
     const outline = (extra.outline || []).map(line => single(line, 300)).filter(Boolean);
+    const free = !!extra.free;
     const lines = outline.length ? outline : template.outline;
     const answers = (extra.answers || []).filter(item => item && item.question && item.answer).map(item => ({hoi: single(item.question, 300), dap: single(item.answer, 400)}));
     const files = (extra.files || []).filter(file => file && file.data && file.mimeType).slice(0, 6);
     const text = 'LOẠI CÔNG VĂN: ' + template.name + '\nMỤC ĐÍCH VÀ YÊU CẦU: ' + template.purpose
       + (extra.understanding ? '\nCÁCH HIỂU YÊU CẦU (đã được người dùng xem): ' + single(extra.understanding, 700) : '')
-      + sampleBlock(template)
+      + (free ? '' : sampleBlock(template))
       + '\n\nĐƠN VỊ BAN HÀNH: ' + cfg.parent + (cfg.unit ? ' – ' + cfg.unit : '') + ' (gọi tắt: ' + cfg.shortName + ')'
-      + '\n\nDÀN Ý CÁC ĐOẠN' + (outline.length ? ' (người dùng đã duyệt — viết đúng theo, không thêm bớt đoạn)' : ' (là các ý cần có, KHÔNG phải câu chữ: gộp/bỏ/đổi thứ tự ý nào không hợp tình huống để mạch lập luận tự nhiên)') + ':\n' + lines.map((line, index) => (index + 1) + '. ' + line).join('\n')
+      + (free ? (outline.length ? '\n\nÝ NGƯỜI DÙNG MUỐN CÓ (gợi ý, bạn tự quyết cách viết và thứ tự):\n' + outline.map((line, index) => (index + 1) + '. ' + line).join('\n') : '') : '\n\nDÀN Ý CÁC ĐOẠN' + (outline.length ? ' (người dùng đã duyệt — viết đúng theo, không thêm bớt đoạn)' : ' (là các ý cần có, KHÔNG phải câu chữ: gộp/bỏ/đổi thứ tự ý nào không hợp tình huống để mạch lập luận tự nhiên)') + ':\n' + lines.map((line, index) => (index + 1) + '. ' + line).join('\n'))
       + '\n\nTHÔNG TIN ĐÃ XÁC NHẬN:\n' + JSON.stringify(facts)
       + (answers.length ? '\n\nNGƯỜI DÙNG ĐÃ LÀM RÕ:\n' + JSON.stringify(answers) : '')
       + ((extra.assumptions || []).length ? '\n\nGIẢ ĐỊNH ĐÃ DÙNG (người dùng chưa phản đối; nếu phần làm rõ/yêu cầu chỉnh sửa nói khác thì theo người dùng):\n' + extra.assumptions.map(item => '- ' + single(item, 200)).join('\n') : '')
@@ -316,6 +328,7 @@ const OfficialLetterCore = (() => {
       + (previous ? '\n\nBẢN NHÁP TRƯỚC (chỉ để chỉnh theo yêu cầu mới nhất ở phần ghi chú; vẫn không được thêm thông tin ngoài phần đã xác nhận):\n' + multi(previous, 6000) : '');
     const parts = [{text}];
     files.forEach((file, index) => { parts.push({text: 'Tệp đính kèm ' + (index + 1) + ': ' + single(file.name, 80)}); parts.push({inlineData: {mimeType: file.mimeType, data: file.data}}); });
+    if (free) return {system_instruction: {parts: [{text: FREE_COMPOSE_SYSTEM}]}, contents: [{role: 'user', parts}], generationConfig: {temperature: 0.7}};
     return {system_instruction: {parts: [{text: COMPOSE_SYSTEM}]}, contents: [{role: 'user', parts}], generationConfig: {responseMimeType: 'application/json', temperature: 0.3}};
   }
 
@@ -331,6 +344,36 @@ const OfficialLetterCore = (() => {
     const warnings = (Array.isArray(data && data.warnings) ? data.warnings : []).map(item => single(item, 300)).filter(Boolean).slice(0, 8);
     const basis = (Array.isArray(data && data.basis) ? data.basis : []).map(item => ({code: single(item && item.code, 6).toUpperCase(), cite: single(stripMarkdown(item && item.cite), 300)})).filter(item => /^C\d{1,2}$/.test(item.code)).slice(0, 12);
     return {subject, paragraphs, warnings, basis};
+  }
+
+  // Đọc bản viết tự do (văn bản thuần) → cùng cấu trúc với parseLetter. Nếu mô hình vẫn trả JSON thì dùng parseLetter.
+  function parseFreeLetter(raw) {
+    const text = String(raw == null ? '' : raw).replace(/\r/g, '').trim();
+    if (/^```/.test(text) || /^\s*\{/.test(text)) { try { return parseLetter(text); } catch (_) { /* thử đọc như văn bản thuần */ } }
+    const clean = text.replace(/^```[a-z]*\n?|```$/gi, '').trim();
+    const lines = clean.split('\n');
+    let subject = '', mode = 'body', block = [];
+    const paragraphs = [], warnings = [], basis = [];
+    const flush = () => {
+      const joined = block.join(' ').replace(/\s+/g, ' ').trim(); block = [];
+      if (joined) paragraphs.push({type: 'p', text: single(stripMarkdown(joined), MAX_PARAGRAPH_TEXT)});
+    };
+    for (const line of lines) {
+      const t = line.trim();
+      if (/^\[\s*KIỂM TRA\s*\]/i.test(t)) { flush(); mode = 'check'; continue; }
+      if (/^\[\s*CĂN CỨ\s*\]/i.test(t)) { flush(); mode = 'basis'; continue; }
+      if (mode === 'check') { const item = t.replace(/^[-–•*]\s*/, ''); if (item) warnings.push(single(stripMarkdown(item), 300)); continue; }
+      if (mode === 'basis') { const match = t.replace(/^[-–•*]\s*/, '').match(/^\[?(C\d{1,2})\]?\s*[:：\-–]?\s*(.*)$/i); if (match) basis.push({code: match[1].toUpperCase(), cite: single(stripMarkdown(match[2]), 300)}); continue; }
+      if (!subject && /^v\/v\s*[:：]?/i.test(t)) { subject = single(stripMarkdown(t).replace(/^v\/v\s*[:：]?\s*/i, ''), MAX_SUBJECT); continue; }
+      if (!t) { flush(); continue; }
+      if (/^#{1,6}\s+/.test(t)) { flush(); paragraphs.push({type: 'h', text: single(stripMarkdown(t.replace(/^#{1,6}\s+/, '')), MAX_PARAGRAPH_TEXT)}); continue; }
+      if (/^[-–•*]\s+/.test(t)) { flush(); paragraphs.push({type: 'li', text: single(stripMarkdown(t.replace(/^[-–•*]\s+/, '')), MAX_PARAGRAPH_TEXT)}); continue; }
+      block.push(t);
+    }
+    flush();
+    const body = paragraphs.filter(item => item.text).slice(0, MAX_PARAGRAPHS);
+    if (!body.length) throw new Error('AI không viết được nội dung công văn. Hãy bổ sung thông tin hoặc ý chính rồi soạn lại.');
+    return {subject, paragraphs: body, warnings: warnings.filter(Boolean).slice(0, 8), basis: basis.filter(item => /^C\d{1,2}$/.test(item.code)).slice(0, 12)};
   }
 
   // ---- Ráp công văn ----
@@ -590,7 +633,7 @@ const OfficialLetterCore = (() => {
 
   return {
     GAP, DEFAULT_ISSUER, NOI_NHAN_DEFAULT, templates, findTemplate, templateDocs, docsStatus, normalizeIssuer, prefillValues, mergeAnalysis, missingFields, cleanValue,
-    buildAnalyzeRequest, parseAnalysis, buildReasonRequest, parseReasoning, reasoningBlock, REASON_SYSTEM, COMPOSE_SYSTEM, buildComposeRequest, parseLetter, assembleLetter, sanitizeLetter, countGaps, dateLine, numberLine, todayIso,
+    buildAnalyzeRequest, parseAnalysis, buildReasonRequest, parseReasoning, reasoningBlock, REASON_SYSTEM, COMPOSE_SYSTEM, buildComposeRequest, parseLetter, parseFreeLetter, FREE_COMPOSE_SYSTEM, assembleLetter, sanitizeLetter, countGaps, dateLine, numberLine, todayIso,
     fileBaseName, letterToHtml, letterToText, documentXml, docxFiles, bodyKinds, PRINT_CSS, LOGO_SRC, escapeHtml, single, multi
   };
 })();

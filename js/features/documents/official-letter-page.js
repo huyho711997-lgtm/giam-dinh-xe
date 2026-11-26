@@ -542,7 +542,7 @@ const OfficialLetterPage = (() => {
   // Ngữ cảnh dùng chung cho bước suy luận và bước soạn.
   function composeCtx(attachments) {
     return {outline: st.outline.filter(item => item.on).map(item => item.text).filter(text => Core().single(text, 1)), extras: st.extras, answers: answeredList(), understanding: st.understanding,
-      keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText(), legal: legalPrompt(), legalPinned: pinnedLabel(), assumptions: st.assumptions, openQuestions: openQuestions(), files: attachments || [], reasoning: st.reasoning};
+      keyFacts: st.keyFacts, insights: st.insights, dossier: dossierText(), legal: legalPrompt(), legalPinned: pinnedLabel(), assumptions: st.assumptions, openQuestions: openQuestions(), files: attachments || [], reasoning: st.reasoning, free: freeStyleOn()};
   }
   async function composeCore(instruction, attachments) {
     const tpl = template();
@@ -552,7 +552,7 @@ const OfficialLetterPage = (() => {
     const ctx = composeCtx(attachments);
     if (instruction) ctx.reasoning = null;   // chỉnh theo yêu cầu mới: kế hoạch lập luận ban đầu có thể đã lỗi thời, yêu cầu mới có hiệu lực cao nhất
     const raw = await callAI(Core().buildComposeRequest(tpl, st.values, issuer, brief, previous, ctx), deepOpts());
-    const parsed = Core().parseLetter(raw);
+    const parsed = ctx.free ? Core().parseFreeLetter(raw) : Core().parseLetter(raw);
     const date = st.letter && st.letter.date, number = st.letter && st.letter.number;
     const candidate = Core().assembleLetter(tpl, st.values, issuer, parsed, date);
     if (number) candidate.number = number;
@@ -795,6 +795,8 @@ const OfficialLetterPage = (() => {
     const secs = qaElapsed();
     host.querySelectorAll('[data-ol-qa-timer]').forEach(node => { node.textContent = fmtSecs(secs); node.classList.toggle('is-slow', secs >= QA_SLOW_SECS); node.title = secs >= QA_SLOW_SECS ? 'Mô hình đang trả lời chậm hơn thường lệ — có thể bấm Dừng rồi thử lại hoặc chọn mô hình khác' : 'Thời gian AI đã làm việc'; });
   }
+  const STYLE_KEY = 'officialLetter.writeStyle.v1';   // '0' = theo khuôn (dàn ý + mẫu); mặc định = viết tự do
+  const freeStyleOn = () => { try { return localStorage.getItem(STYLE_KEY) !== '0'; } catch (_) { return true; } };
   const DEEP_KEY = 'officialLetter.qaDeep.v1', LIB_KEY = 'officialLetter.freeLib.v1';
   // Nhiều cuộc trò chuyện: qa.messages/qa.usage là cuộc đang mở; qa.chats là toàn bộ danh sách lưu trên máy (v2), tự chuyển từ bản v1 một cuộc.
   // Quy tắc (văn bản căn cứ) đã chọn thuộc về TỪNG cuộc trò chuyện: lưu cùng cuộc, mở lại cuộc nào thì chip Quy tắc về đúng lựa chọn của cuộc đó; cuộc mới bắt đầu ở "Tự động".
@@ -1517,6 +1519,10 @@ const OfficialLetterPage = (() => {
     const ruleTitle = title || (pinnedDocs.length ? 'Căn cứ đã chọn: ' + pinnedDocs.map(doc => doc.name).join(', ') : 'Chọn một hoặc nhiều văn bản/quy tắc làm căn cứ cho AI');
     return '<button type="button" class="ola-chip' + (st.legalPin.length ? ' is-set' : '') + '" data-ol-pop="rules" title="' + esc(ruleTitle) + '">' + svg(ICON.book) + '<span class="ola-chip-t">' + esc(ruleLabel) + '</span>' + svg(ICON.chevron) + '</button>';
   }
+  function styleChipHtml() {
+    const on = freeStyleOn(), disabled = (qa.busy || st.busy) ? ' disabled' : '';
+    return '<button type="button" class="ola-chip' + (on ? ' is-set' : '') + '" data-ol-act="free-style" aria-pressed="' + on + '" title="' + (on ? 'Đang bật: AI tự quyết bố cục, độ dài và giọng văn (ít khuôn hơn, tự nhiên hơn). Bấm để quay lại viết theo dàn ý + công văn mẫu.' : 'Đang tắt: AI viết bám dàn ý và công văn mẫu. Bấm để bật viết tự do.') + '"' + disabled + '>' + svg(ICON.edit || ICON.spark) + '<span class="ola-chip-t">Viết tự do</span></button>';
+  }
   function deepChipHtml(compact) {
     const on = deepOn(), able = deepSupported();
     const title = !able ? 'Mô hình đang chọn không có chế độ suy luận riêng — AI vẫn trả lời theo từng bước nhưng không chạy thêm bước suy luận.' : qa.deep ? 'Đang bật: AI suy luận kỹ hơn (chậm hơn, tốn token hơn); câu hỏi tra cứu ngắn tự trả lời nhanh và có nút "Suy luận sâu lại". Bấm để tắt.' : 'Đang tắt: trả lời nhanh, ít tốn token. Bấm để bật suy luận sâu.';
@@ -1565,7 +1571,7 @@ const OfficialLetterPage = (() => {
       + '<div class="tasco-ai-attachments ola-files" data-ol-file-list' + (filesHtml() ? '' : ' hidden') + '>' + filesHtml() + '</div>'
       + '<div class="ola-docs" data-ol-docs' + (docList().length ? '' : ' hidden') + '>' + docsHtml() + '</div>'
       + '<div class="ola-bar"><label class="ola-icon-btn" title="Đính kèm ảnh/PDF"><input type="file" data-ol-files accept="image/*,application/pdf" multiple hidden>' + svg(ICON.attach) + '</label>'
-      + recordChip + typeChip + rulesChip + modelChipHtml() + deepChipHtml() + '<span class="ola-spacer"></span>'
+      + recordChip + typeChip + rulesChip + modelChipHtml() + deepChipHtml() + styleChipHtml() + '<span class="ola-spacer"></span>'
       + '<button type="button" class="tasco-ai-send" data-ol-act="run" title="Soạn công văn (Enter)" aria-label="Soạn công văn"' + (st.busy ? ' disabled' : '') + '>' + svg(ICON.send) + '</button></div>'
       + popoverHtml() + '</div>';
   }
@@ -2253,6 +2259,7 @@ const OfficialLetterPage = (() => {
       case 'qa-export': exportChat(); break;
       case 'qa-new': newQaChat(); break;
       case 'qa-stop': controller?.abort(); break;
+      case 'free-style': if (qa.busy || st.busy) break; collectAll(); try { localStorage.setItem(STYLE_KEY, freeStyleOn() ? '0' : '1'); } catch (_) { /* bỏ qua */ } toast(freeStyleOn() ? 'Đã bật Viết tự do: lần soạn tới AI tự quyết bố cục và giọng văn.' : 'Đã tắt Viết tự do: AI viết bám dàn ý và công văn mẫu.', 'success'); renderAll(); focusMain(); break;
       case 'qa-deep': if (qa.busy || st.busy) break; collectAll(); qa.deep = !qa.deep; try { localStorage.setItem(DEEP_KEY, qa.deep ? '1' : '0'); } catch (_) { /* bỏ qua */ } renderAll(); focusMain(); break;
       case 'qa-clear': clearQa(); break;
       case 'compose': st.drawer = ''; compose(''); break;

@@ -259,6 +259,9 @@ Trang **Hồ sơ bồi thường → Cập nhật dữ liệu từ Excel** dùng
 - Kiểm thử logic rules: `tests/database-rules.test.mjs` (giả lập tối giản, không thay thế Firebase Emulator/Rules Playground).
 - Cũng nên tắt tự đăng ký tài khoản (Authentication → Settings) và giới hạn khoá API theo tên miền trong Google Cloud Console.
 
+### Soạn công văn: chế độ "Viết tự do"
+Chip **Viết tự do** (cạnh Suy luận sâu ở khung nhập, mặc định BẬT) cho AI viết công văn kiểu trợ lý: prompt rất gọn (`FREE_COMPOSE_SYSTEM`, chỉ giữ ranh giới cứng: không bịa dữ kiện/số/ngày/điều luật, chỉ viện dẫn căn cứ có nguyên văn trong Thư viện, không tự viết quốc hiệu/kính gửi/chữ ký), **không ép dàn ý và không đưa công văn mẫu**, nhiệt độ 0,7, trả **văn bản thuần** (không JSON) để câu chữ tự nhiên; AI tự quyết bố cục, độ dài, giọng văn. Dàn ý do người dùng đã duyệt vẫn được đưa vào như gợi ý. Kết quả được `parseFreeLetter` đọc: dòng "V/v:", đoạn cách nhau dòng trống, "- " là liệt kê, "## " là tiêu đề, khối `[KIỂM TRA]` → mục *Nên kiểm tra*, khối `[CĂN CỨ]` → căn cứ đã dẫn (nếu mô hình vẫn trả JSON thì tự dùng bộ đọc cũ). Tắt chip để quay lại chế độ **theo khuôn** (dàn ý + mẫu + JSON, nhiệt độ 0,3). Sửa chọn đoạn (Chọn đoạn → nhờ AI chỉnh) vẫn dùng đường JSON cũ.
+
 ### Danh sách mô hình Antigravity tự tải
 Mở bảng chọn mô hình (chip mô hình ở khung nhập) thì app tự gọi `GET /v1/models` trên cầu nối Antigravity (tối đa 1 lần / 5 phút) và lưu vào cấu hình, nên không cần vào Cài đặt bấm tay. Dòng "Đang tải…" hiện dưới tiêu đề nhóm; nếu lỗi sẽ hiện lý do kèm nút **Thử lại** (vd. cầu nối chưa chạy → chạy `node scripts/antigravity-local-bridge.mjs --check`; cầu nối bản cũ trả 404 → `git pull` rồi chạy lại cầu nối). Hai mô hình mặc định (`gemini-3.8-flash-tiered`, `gemini-3-flash`) luôn có sẵn dù chưa tải được.
 

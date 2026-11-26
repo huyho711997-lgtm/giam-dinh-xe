@@ -285,3 +285,32 @@ test('soạn công văn: kế hoạch lập luận được đưa vào yêu cầ
   assert.match(sample, /KHÔNG phải câu chữ/);
   assert.doesNotMatch(t.outline.join(' '), /lời chào trân trọng/);
 });
+
+test('Viết tự do: prompt gọn, không ép dàn ý/mẫu, trả văn bản thuần; chế độ khuôn giữ nguyên', () => {
+  const t = tpl('de_nghi_cung_cap_ho_so');
+  const free = Core.buildComposeRequest(t, {}, {}, 'ý chính', '', {free: true});
+  const text = free.contents[0].parts[0].text;
+  assert.equal(free.system_instruction.parts[0].text, Core.FREE_COMPOSE_SYSTEM);
+  assert.equal(free.generationConfig.responseMimeType, undefined, 'không ép JSON');
+  assert.equal(free.generationConfig.temperature, 0.7);
+  assert(!/DÀN Ý CÁC ĐOẠN/.test(text) && !/CÔNG VĂN MẪU THAM KHẢO/.test(text), 'không đưa dàn ý/mẫu mặc định');
+  assert(/ÝCHÍNH|ý chính/.test(text));
+  assert(Core.FREE_COMPOSE_SYSTEM.length < Core.COMPOSE_SYSTEM.length / 1.5, 'ít luật hơn hẳn');
+  const guided = Core.buildComposeRequest(t, {}, {}, '', '', {});
+  assert.equal(guided.system_instruction.parts[0].text, Core.COMPOSE_SYSTEM);
+  assert.equal(guided.generationConfig.responseMimeType, 'application/json');
+  // Dàn ý người dùng đã duyệt vẫn được đưa vào như gợi ý.
+  assert(/Ý NGƯỜI DÙNG MUỐN CÓ/.test(Core.buildComposeRequest(t, {}, {}, '', '', {free: true, outline: ['Nêu lý do']}).contents[0].parts[0].text));
+});
+
+test('parseFreeLetter đọc văn bản thuần: trích yếu, đoạn, liệt kê, tiêu đề, kiểm tra, căn cứ; vẫn nhận JSON', () => {
+  const raw = 'V/v: từ chối bồi thường lốp\n\nChúng tôi đã xem xét hồ sơ.\nLốp lắp khác thông số.\n\n## Căn cứ\n\n- Lốp 275/65R18\n- Không có BS07\n\nKính mong ông bà phản hồi.\n\n[KIỂM TRA]\n- Xác nhận ngày xảy ra\n\n[CĂN CỨ]\nC1: Quy tắc Tasco, Điều 5\n';
+  const out = Core.parseFreeLetter(raw);
+  assert.equal(out.subject, 'từ chối bồi thường lốp');
+  assert.deepEqual(JSON.parse(JSON.stringify(out.paragraphs.map(p => [p.type, p.text]))), [['p', 'Chúng tôi đã xem xét hồ sơ. Lốp lắp khác thông số.'], ['h', 'Căn cứ'], ['li', 'Lốp 275/65R18'], ['li', 'Không có BS07'], ['p', 'Kính mong ông bà phản hồi.']]);
+  assert.deepEqual(JSON.parse(JSON.stringify(out.warnings)), ['Xác nhận ngày xảy ra']);
+  assert.deepEqual(JSON.parse(JSON.stringify(out.basis)), [{code: 'C1', cite: 'Quy tắc Tasco, Điều 5'}]);
+  const asJson = Core.parseFreeLetter('{"subject":"x","paragraphs":[{"type":"p","text":"Nội dung"}],"warnings":[],"basis":[]}');
+  assert.equal(asJson.paragraphs[0].text, 'Nội dung');
+  assert.throws(() => Core.parseFreeLetter('  '), /không viết được/);
+});
