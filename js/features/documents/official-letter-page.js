@@ -198,12 +198,7 @@ const OfficialLetterPage = (() => {
   // Danh sách mô hình Antigravity: tự tải từ cầu nối khi mở bảng chọn mô hình (tối đa 1 lần / 5 phút, hoặc khi bấm Thử lại) và lưu vào cấu hình,
   // không bắt người dùng vào Cài đặt bấm tay. Lỗi hiện ngay trong bảng kèm lý do.
   const agyLoad = {at: 0, busy: false, error: ''};
-  function renderModelPop() {   // vẽ lại nhưng giữ vị trí cuộn của bảng chọn (bảng dài, nhóm Antigravity nằm cuối)
-    if (!host || st.pop !== 'model') return;
-    const top = (host.querySelector('.ola-pop--models') || {}).scrollTop || 0;
-    renderAll();
-    const box = host.querySelector('.ola-pop--models'); if (box) box.scrollTop = top;
-  }
+  function renderModelPop() { if (host && st.pop === 'model') renderAll(); }
   async function refreshAgyModels(force) {
     const M = Models();
     if (!M || agyLoad.busy || (!force && agyLoad.at && Date.now() - agyLoad.at < 300000)) return;
@@ -220,7 +215,7 @@ const OfficialLetterPage = (() => {
     agyLoad.busy = false;
     renderModelPop();
   }
-  function refreshKeys() { if (Models()) Models().keyStatus().then(map => { Object.assign(aiKeys, map); if (host && st.pop === 'model') renderAll(); }).catch(() => { /* bỏ qua */ }); }
+  function refreshKeys() { if (Models()) Models().keyStatus().then(map => { Object.assign(aiKeys, map); renderModelPop(); }).catch(() => { /* bỏ qua */ }); }
   const NO_KEY = 'Chưa có khoá DeepSeek API. Bấm biểu tượng ⚙ ở góc phải để nhập khoá (lấy tại platform.deepseek.com).';
   // Token đã dùng trong phiên soạn hiện tại (công văn đang mở): cộng dồn từ mọi lần gọi AI, đặt lại khi bắt đầu công văn mới / mở lại từ lịch sử.
   function usageText(u = st.usage) {
@@ -1564,31 +1559,83 @@ const OfficialLetterPage = (() => {
     const active = activeModel();
     if (!active) return '';
     const missing = aiKeys[active.provider] === false;
-    return '<button type="button" class="ola-chip' + (active.free ? ' is-free' : '') + (missing ? ' is-warn' : '') + '" data-ol-pop="model" title="Chọn mô hình AI' + (missing ? ' — chưa có khoá cho mô hình này' : '') + '"' + ((qa.busy || st.busy) ? ' disabled' : '') + '>' + svg(ICON.chip) + '<span class="ola-chip-t">' + esc(active.label) + '</span>' + svg(ICON.chevron) + '</button>';
+    return '<button type="button" class="ola-chip' + (active.free ? ' is-free' : '') + (missing ? ' is-warn' : '') + '" data-ol-pop="model" aria-haspopup="dialog" aria-expanded="' + (st.pop === 'model') + '" title="' + esc(active.label + (missing ? ' — cần cấu hình' : '')) + '"' + ((qa.busy || st.busy) ? ' disabled' : '') + '>' + svg(ICON.chip) + '<span class="ola-chip-t">' + esc(active.label) + '</span>' + svg(ICON.chevron) + '</button>';
   }
   function modelPopHtml() {
     const M = Models(), cfg = aiConfig(), active = activeModel();
     if (!M || !active) return '';
-    const groups = [...M.ORDER, 'antigravity'].map(id => {
-      const items = M.entries(cfg).filter(entry => entry.provider === id);
-      if (!items.length) return '';
-      const p = M.PROVIDERS[id], has = aiKeys[id] !== false;   // chưa nạp xong khoá thì coi như có, tránh nhấp nháy
-      const agyNote = id !== 'antigravity' ? '' : agyLoad.busy ? '<div class="ola-pop-note" role="status">Đang tải danh sách mô hình từ Antigravity…</div>'
+    const providers = [active.provider, ...[...M.ORDER, 'antigravity'].filter(id => id !== active.provider)];
+    const entries = M.entries(cfg);
+    const agyNote = agyLoad.busy ? '<div class="ola-pop-note" role="status">Đang tải mô hình Antigravity…</div>'
         : agyLoad.error ? '<div class="ola-pop-note is-warn" role="alert"><span>Chưa tải được danh sách mô hình: ' + esc(agyLoad.error) + '</span><button type="button" data-ol-agy-refresh>Thử lại</button></div>' : '';
-      return '<h6>' + esc(M.providerLabel(id, cfg)) + (p.free ? ' <i>miễn phí</i>' : '') + (has ? '' : ' <em>chưa có khoá</em>') + '</h6>' + agyNote
-        + items.map(entry => has
-          ? '<button type="button" role="menuitemradio" aria-checked="' + (entry.id === active.id) + '" data-ol-model="' + esc(entry.id) + '"><b>' + esc(entry.model) + '</b><small>' + esc(modelHint(entry)) + '</small></button>'
-          : '<button type="button" data-ol-act="settings" title="Thêm khoá ' + esc(M.providerLabel(id, cfg)) + '"><b>' + esc(entry.model) + '</b><small>Chưa có khoá — bấm để thêm trong Cài đặt</small></button>').join('');
+    const groups = providers.map(id => {
+      const items = entries.filter(entry => entry.provider === id);
+      if (!items.length && (id !== 'antigravity' || !agyNote)) return '';
+      if (id === active.provider) items.sort((a, b) => Number(b.id === active.id) - Number(a.id === active.id));
+      const label = M.providerLabel(id, cfg);
+      const hasKey = aiKeys[id] !== false;
+      return '<section class="ola-model-group" aria-label="' + esc(label) + '" data-ol-model-group>'
+        + '<h3>' + svg(ICON.chip) + '<span>' + esc(label) + '</span>'
+        + (M.PROVIDERS[id].free ? '<small class="ola-model-free">Miễn phí</small>' : '')
+        + (hasKey ? '' : '<small class="ola-model-setup">Cần cấu hình</small>') + '</h3>'
+        + (id === 'antigravity' ? agyNote : '')
+        + items.map(entry => {
+          const selected = active.id === entry.id;
+          const profile = M.profile(id, entry.model);
+          const capabilities = [profile.vision ? 'Đọc ảnh' : 'Chỉ văn bản'];
+          if (profile.reasoning !== 'none') capabilities.push('Suy luận sâu');
+          if (profile.maxSources) capabilities.push('Phù hợp hỏi ngắn');
+          return '<button type="button" class="ola-model-row" data-ol-model-match="' + esc(fold(label + ' ' + entry.model)) + '"'
+            + (selected ? ' aria-current="true"' : '')
+            + (hasKey ? ' data-ol-model="' + esc(entry.id) + '"' : ' data-ol-act="settings" title="Cấu hình ' + esc(label) + '"')
+            + '><span class="ola-model-details"><b>' + esc(entry.model) + '</b><span class="ola-model-features">'
+            + capabilities.map(text => '<small>' + text + '</small>').join('') + '</span></span>'
+            + '<span class="ola-model-mark">' + (selected ? svg(ICON.check) : hasKey ? '' : svg(ICON.gear)) + '</span></button>';
+        }).join('') + '</section>';
     }).join('');
-    return '<div class="ola-pop ola-pop--menu ola-pop--models" role="menu" aria-label="Mô hình AI">' + groups
-      + '<button type="button" class="ola-pop-foot" data-ol-act="settings"><b>Thêm khoá / mô hình…</b><small>Gemini, Groq miễn phí; OpenRouter và dịch vụ tương thích OpenAI</small></button></div>';
+    return '<div class="ola-pop ola-pop--models" role="dialog" aria-labelledby="ola-model-title" tabindex="-1">'
+      + '<header class="ola-model-head"><div class="ola-model-heading"><span class="ola-model-icon">' + svg(ICON.chip) + '</span><div><h2 id="ola-model-title">Chọn mô hình AI</h2>'
+      + '<p title="' + esc(active.label) + '">Đang dùng <b>' + esc(active.model) + '</b></p></div>'
+      + '<button type="button" class="ola-model-close" data-ol-act="close-model" aria-label="Đóng bảng chọn mô hình">' + svg(ICON.close) + '</button></div>'
+      + '<label class="ola-model-search">' + svg(ICON.search) + '<input type="search" data-ol-model-q autocomplete="off" spellcheck="false" aria-label="Tìm mô hình hoặc nhà cung cấp" placeholder="Tìm mô hình hoặc nhà cung cấp…"></label></header>'
+      + '<div class="ola-model-list">' + groups + '<p class="ola-model-empty" data-ol-model-empty role="status" hidden>Không tìm thấy mô hình phù hợp.</p></div>'
+      + '<footer class="ola-model-footer"><button type="button" data-ol-act="settings">' + svg(ICON.gear) + 'Cài đặt mô hình và kết nối' + svg(ICON.arrowRight) + '</button></footer></div>';
   }
-  function modelHint(entry) {
-    const p = entry.provider, prof = Models().profile(p, entry.model), bits = [];
-    bits.push(prof.reasoning === 'none' ? 'không có suy luận sâu' : 'có suy luận sâu');
-    if (!prof.vision) bits.push('không đọc ảnh');
-    if (prof.maxSources) bits.push('hạn mức nhỏ: ít nguồn, trả lời ngắn');
-    return bits.join(' · ');
+  function filterModelPop(pop, query) {
+    const terms = fold(query).trim().split(/\s+/).filter(Boolean);
+    let found = false;
+    pop.querySelectorAll('[data-ol-model-group]').forEach(group => {
+      let match = false;
+      group.querySelectorAll('[data-ol-model-match]').forEach(row => {
+        row.hidden = !terms.every(term => row.dataset.olModelMatch.includes(term));
+        if (!row.hidden) match = true;
+      });
+      group.hidden = terms.length > 0 && !match;
+      found ||= match;
+    });
+    pop.querySelector('[data-ol-model-empty]').hidden = !terms.length || found;
+  }
+  function positionModelPop() {
+    const pop = $('.ola-pop--models');
+    if (!pop) return;
+    const anchor = pop.parentElement.querySelector('[data-ol-pop="model"]');
+    const parent = pop.offsetParent;
+    if (!anchor || !parent) return;
+    const area = (pop.closest('.ola-scroll') || pop.closest('.ola-main')).getBoundingClientRect();
+    const trigger = anchor.getBoundingClientRect();
+    const frame = parent.getBoundingClientRect();
+    const top = Math.max(0, area.top);
+    const bottom = Math.min(window.innerHeight, area.bottom);
+    const above = trigger.top - top;
+    const below = bottom - trigger.bottom;
+    const opensUp = below < 350 && above > below;
+    const gap = 8;
+    const overlap = Math.max(above, below) < 250;
+    const available = overlap ? bottom - top : opensUp ? above : below;
+    pop.style.setProperty('--ol-model-height', Math.max(0, available - 2 * gap) + 'px');
+    pop.style.setProperty('--ol-model-left', Math.max(gap, Math.min(trigger.left - frame.left - parent.clientLeft, parent.clientWidth - pop.offsetWidth - gap)) + 'px');
+    const anchorY = overlap ? top + gap : opensUp ? trigger.top - pop.offsetHeight - gap : trigger.bottom + gap;
+    pop.style.setProperty('--ol-model-top', anchorY - frame.top - parent.clientTop + 'px');
   }
   function composerHtml(big) {
     const tpl = template();
@@ -1964,6 +2011,10 @@ const OfficialLetterPage = (() => {
     const active = document.activeElement, focusSel = active && host.contains(active) ? (active.matches('[data-ol-rec-q]') ? '[data-ol-rec-q]' : active.matches('[data-ol-brief]') ? '[data-ol-brief]' : active.matches('[data-ol-qa-input]') ? '[data-ol-qa-input]' : '') : '';
     const focusRule = active && host.contains(active) && active.matches('[data-ol-rule]') ? active.dataset.olRule : null;
     const focusDraftPop = active?.closest('.ola-draft-composer') && host.contains(active) ? active.dataset.olPop : '';
+    const modelPop = $('.ola-pop--models');
+    const modelQuery = modelPop?.querySelector('[data-ol-model-q]');
+    const modelScroll = modelPop?.querySelector('.ola-model-list').scrollTop || 0;
+    const modelFocus = modelPop?.contains(active);
     const asking = st.mode === 'ask' && !!QA();
     const working = asking ? !!(qa.messages.length || qa.busy) : !!(st.letter || (st.busy && st.steps));
     const qaBox = $('[data-ol-qa-scroll]'), qaTop = qaBox ? qaBox.scrollTop : 0;
@@ -1983,13 +2034,32 @@ const OfficialLetterPage = (() => {
     const draftPickers = root.querySelectorAll('.ola-draft-composer [data-ol-pop]');
     draftPickers.forEach(button => {
       button.setAttribute('aria-expanded', String(st.pop === button.dataset.olPop));
-      button.setAttribute('aria-haspopup', button.dataset.olPop === 'record' ? 'dialog' : 'menu');
+      button.setAttribute('aria-haspopup', ['record', 'model'].includes(button.dataset.olPop) ? 'dialog' : 'menu');
     });
     if (st.pop === 'record') { updateRecList(); $('[data-ol-rec-q]')?.focus({preventScroll:true}); }
     else if (st.pop === 'rules' && focusRule !== null) [...host.querySelectorAll('[data-ol-rule]')].find(node => node.dataset.olRule === focusRule)?.focus({preventScroll:true});
     else if (focusDraftPop) [...draftPickers].find(button => button.dataset.olPop === focusDraftPop)?.focus({preventScroll:true});
     else if (focusSel) $(focusSel)?.focus({preventScroll:true});
     const nextMain = $('.ola-main'); if (nextMain) nextMain.scrollTop = mainTop;
+    const nextModelPop = $('.ola-pop--models');
+    if (nextModelPop) {
+      const input = nextModelPop.querySelector('[data-ol-model-q]');
+      if (modelQuery?.value) {
+        input.value = modelQuery.value;
+        filterModelPop(nextModelPop, input.value);
+      }
+      positionModelPop();
+      nextModelPop.querySelector('.ola-model-list').scrollTop = modelScroll;
+      if (modelFocus) {
+        if (active === modelQuery) {
+          input.focus({preventScroll:true});
+          input.setSelectionRange(modelQuery.selectionStart, modelQuery.selectionEnd);
+        } else {
+          const row = active.dataset.olModel && [...nextModelPop.querySelectorAll('[data-ol-model]')].find(node => node.dataset.olModel === active.dataset.olModel);
+          (row || nextModelPop).focus({preventScroll:true});
+        }
+      }
+    }
     if (st.busy || st.pending) {
       host.querySelectorAll('[data-ol-act="new"], [data-ol-act="edit"], [data-ol-hist-open], [data-ol-hist-del], [data-ol-hist-toggle], [data-ol-act="hist-select"], [data-ol-act="hist-select-all"], [data-ol-act="hist-del-selected"], [data-ol-drawer], [data-ol-act="compose"]').forEach(node => { node.disabled = true; });
     }
@@ -2005,6 +2075,7 @@ const OfficialLetterPage = (() => {
     const page = document.scrollingElement || document.documentElement;
     const extra = page.scrollHeight - window.innerHeight;
     if (extra > 0) root.style.setProperty('--ola-gap', (14 + extra) + 'px');
+    positionModelPop();
   }
   function autoGrow(area) { area.style.height = 'auto'; area.style.height = Math.min(area.scrollHeight, 260) + 'px'; }
   function updateMissingLive() {
@@ -2285,6 +2356,10 @@ const OfficialLetterPage = (() => {
 
   // ---- Sự kiện ----
   function closePop() { if (!st.pop) return; collectAll(); st.pop = ''; st.recQuery = ''; renderAll(); }
+  function dismissModelPop() {
+    closePop();
+    $('.ola-composer [data-ol-pop="model"]')?.focus({preventScroll:true});
+  }
   function onClick(event) {
     const target = event.target;
     const modeBtn = target.closest('[data-ol-mode]');
@@ -2327,11 +2402,28 @@ const OfficialLetterPage = (() => {
     const sampleBtn = target.closest('[data-ol-sample]');
     if (sampleBtn) { setSampleChoice(sampleBtn.dataset.olSample); st.pop = ''; renderAll(); focusMain(); return; }
     const popButton = target.closest('[data-ol-pop]');
-    if (popButton) { collectAll(); const name = popButton.dataset.olPop; st.pop = st.pop === name ? '' : name; if (st.pop === 'model') refreshAgyModels(false); st.recQuery = ''; st.recActive = 0; if (st.pop === 'record' && !index.length) loadRecords(); if (st.pop === 'rules' && st.libDocs === null) loadLibDocs().then(() => { if (st.pop === 'rules') renderAll(); }); renderAll(); return; }
+    if (popButton) {
+      collectAll();
+      const name = popButton.dataset.olPop;
+      const wasOpen = st.pop === name;
+      if (name === 'model' && wasOpen) { dismissModelPop(); return; }
+      st.pop = wasOpen ? '' : name;
+      st.recQuery = '';
+      st.recActive = 0;
+      if (st.pop === 'record' && !index.length) loadRecords();
+      if (st.pop === 'rules' && st.libDocs === null) loadLibDocs().then(() => { if (st.pop === 'rules') renderAll(); });
+      renderAll();
+      if (st.pop === 'model') {
+        const pointerOnTouch = event.detail > 0 && window.matchMedia('(pointer: coarse)').matches;
+        $(pointerOnTouch ? '.ola-pop--models' : '[data-ol-model-q]')?.focus({preventScroll:true});
+        refreshAgyModels(false);
+      }
+      return;
+    }
     const pick = target.closest('[data-ol-pick]');
     if (pick) { collectAll(); st.recordKey = pick.dataset.olPick; st.pop = ''; st.recQuery = ''; renderAll(); focusMain(); return; }
     const modelBtn = target.closest('[data-ol-model]');
-    if (modelBtn) { collectAll(); const cfg = aiConfig(); cfg.selected = modelBtn.dataset.olModel; aiCfg = Models().save(cfg); st.pop = ''; renderAll(); focusMain(); return; }
+    if (modelBtn) { const cfg = aiConfig(); cfg.selected = modelBtn.dataset.olModel; aiCfg = Models().save(cfg); dismissModelPop(); return; }
     const rule = target.closest('[data-ol-rule]');
     if (rule) {
       collectAll();
@@ -2388,6 +2480,7 @@ const OfficialLetterPage = (() => {
     const act = target.closest('[data-ol-act]');
     if (!act) return;
     switch (act.dataset.olAct) {
+      case 'close-model': dismissModelPop(); break;
       case 'attach-draft': $('[data-ol-files]')?.click(); break;
       case 'docs-toggle': st.docsFold = !st.docsFold; updateFiles(); break;
       case 'agent-toggle': st.agentOpen = !st.agentOpen; updateSteps(); $('[data-ol-act="agent-toggle"]')?.focus(); break;
@@ -2437,6 +2530,11 @@ const OfficialLetterPage = (() => {
   function onInput(event) {
     const target = event.target;
     if (target.matches('[data-ol-rec-q]')) { st.recQuery = target.value; st.recActive = 0; updateRecList(); }
+    else if (target.matches('[data-ol-model-q]')) {
+      const pop = target.closest('.ola-pop--models');
+      filterModelPop(pop, target.value);
+      pop.querySelector('.ola-model-list').scrollTop = 0;
+    }
     else if (target.matches('[data-ol-hist-q]')) { st.histQuery = target.value; updateHistory(true); }
     else if (target.matches('[data-ol-brief]')) { st.brief = target.value; autoGrow(target); }
     else if (target.matches('[data-ol-qa-input]')) { qa.draft = target.value; autoGrow(target); }
@@ -2466,6 +2564,7 @@ const OfficialLetterPage = (() => {
       return;
     }
     if (event.key === 'Escape') {
+      if (st.pop === 'model') { event.preventDefault(); dismissModelPop(); return; }
       if (st.pop) {
         event.preventDefault();
         const draftPop = target.closest('.ola-draft-composer') ? st.pop : '';
