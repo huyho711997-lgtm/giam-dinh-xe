@@ -23,8 +23,26 @@ export function explainToken(token, email, now = Date.now()) {
   if (payload.exp && payload.exp <= seconds - CLOCK_SKEW_SECONDS) return 'Token đã hết hạn — hãy tải lại trang/mở lại app rồi thử lại.';
   if (payload.iat && payload.iat > seconds + CLOCK_SKEW_SECONDS) return 'Đồng hồ máy tính chạy chậm hơn ' + Math.round((payload.iat - seconds) / 60) + ' phút so với Google — hãy đồng bộ giờ Windows (Settings → Time & language → Sync now).';
   if (payload.email && email && String(payload.email).toLowerCase() !== String(email).toLowerCase()) return 'Tài khoản đăng nhập (' + payload.email + ') khác với tài khoản đã cấu hình trong local-settings.json.';
+  if (payload.iss && String(payload.iss).includes('/auth/v1')) return 'Supabase không xác nhận token này (hết hạn, hoặc email khác với tài khoản đã cấu hình).';
   if (payload.aud && payload.aud !== project) return 'Token thuộc dự án Firebase khác.';
   return 'Không xác minh được chữ ký token.';
+}
+
+// Bản "Kho giá phụ tùng Pro" đăng nhập bằng Supabase: nhờ chính Supabase Auth xác minh token (không cần giữ khoá bí mật nào trên máy).
+// URL và khoá anon là giá trị công khai (cùng giá trị nằm trong trang web); có thể ghi đè trong local-settings.json (supabaseUrl, supabaseAnonKey).
+export const SUPABASE_AUTH = {url: 'https://yxwmcpoklxpzlikxojez.supabase.co', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4d21jcG9rbHhwemxpa3hvamV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1Njk0MDEsImV4cCI6MjA5NjE0NTQwMX0.dmyjtDDo_KTlUFyxQgoCGqEt5Bsq2krEEYg2BCyXeFc'};
+export async function verifySupabaseToken(token, email, fetchImpl = fetch, auth = SUPABASE_AUTH) {
+  const payload = decodePayload(token);
+  if (!payload || !auth.url || !auth.anonKey || payload.iss !== auth.url + '/auth/v1' || !payload.exp || payload.exp <= Math.floor(Date.now() / 1000) - 60) return false;
+  const response = await fetchImpl(auth.url + '/auth/v1/user', {headers: {Authorization: 'Bearer ' + token, apikey: auth.anonKey}, signal: AbortSignal.timeout(8000)});
+  if (response.status === 401 || response.status === 403) return false;
+  if (!response.ok) throw new Error('Supabase Auth không phản hồi.');
+  const user = await response.json().catch(() => null);
+  return !!user?.id && String(user.email || '').toLowerCase() === String(email || '').toLowerCase();
+}
+// Chọn cách xác minh theo nơi cấp token: Firebase (giam-dinh-xe) hoặc Supabase (Kho giá phụ tùng Pro).
+export async function verifyAccountToken(token, email, now = Date.now()) {
+  return decodePayload(token)?.iss === SUPABASE_AUTH.url + '/auth/v1' ? verifySupabaseToken(token, email) : verifyFirebaseToken(token, email, now);
 }
 
 export async function verifyFirebaseToken(token, email, now = Date.now()) {
@@ -53,7 +71,7 @@ export async function verifyFirebaseToken(token, email, now = Date.now()) {
   try { return verify.verify(certCache[header.kid], Buffer.from(parts[2], 'base64url')); } catch { return false; }
 }
 
-export function createBridge({email, upstreamKey, fetchImpl = fetch, verifyToken = verifyFirebaseToken, allowedHosts = new Set(['127.0.0.1:18318', 'localhost:18318']), allowedOrigins = origins}) {
+export function createBridge({email, upstreamKey, fetchImpl = fetch, verifyToken = verifyAccountToken, allowedHosts = new Set(['127.0.0.1:18318', 'localhost:18318']), allowedOrigins = origins}) {
   if (!email || !upstreamKey) throw new Error('Thiếu tài khoản website hoặc khoá kết nối cục bộ.');
   let modelsCache = null;
   return http.createServer(async (req, res) => {
@@ -112,6 +130,8 @@ export async function loadLocal(dir = bridgeDir(), read = readFile) {
   try {
     const settings = JSON.parse(await read(join(dir, 'local-settings.json'), 'utf8'));
     email = String(settings?.email || '').trim();
+    if (typeof settings?.supabaseUrl === 'string' && /^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(settings.supabaseUrl.trim())) SUPABASE_AUTH.url = settings.supabaseUrl.trim();
+    if (typeof settings?.supabaseAnonKey === 'string' && settings.supabaseAnonKey.trim()) SUPABASE_AUTH.anonKey = settings.supabaseAnonKey.trim();
     const rawHosts = Array.isArray(settings?.allowedHosts) ? settings.allowedHosts : (typeof settings?.tailscaleHost === 'string' ? [settings.tailscaleHost] : []);
     const hosts = rawHosts.map(item => String(item || '').trim().toLowerCase()).filter(Boolean);
     if (hosts.length) allowedHosts = new Set(hosts);

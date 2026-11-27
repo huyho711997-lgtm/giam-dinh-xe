@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBridge, verifyFirebaseToken, explainToken, loadLocal, checkSetup, CLOCK_SKEW_SECONDS} from '../scripts/antigravity-local-bridge.mjs';
+import {createBridge, verifyFirebaseToken, verifySupabaseToken, SUPABASE_AUTH, explainToken, loadLocal, checkSetup, CLOCK_SKEW_SECONDS} from '../scripts/antigravity-local-bridge.mjs';
 
 test('cầu nối chỉ nhận đúng website, tài khoản và mô hình, không tiết lộ khoá', async t => {
   let forwarded;
@@ -195,4 +195,21 @@ test('cầu nối thử lại một lần khi kết nối tới CLIProxyAPI bị
   mode = 'status'; attempts = 0;
   assert.equal((await call()).status,429);
   assert.equal(attempts,1);
+});
+
+test('token Supabase (bản Pro): chỉ nhận đúng nơi cấp, chưa hết hạn và đúng email chủ máy', async () => {
+  const auth = {url: 'https://abc.supabase.co', anonKey: 'anon'};
+  const jwt = payload => 'h.' + Buffer.from(JSON.stringify(payload)).toString('base64url') + '.s';
+  const good = jwt({iss: 'https://abc.supabase.co/auth/v1', exp: Math.floor(Date.now() / 1000) + 600});
+  let seen;
+  const ok = async (url, options) => { seen = {url, options}; return new Response(JSON.stringify({id: 'u1', email: 'Owner@Example.com'}), {status: 200}); };
+  assert.equal(await verifySupabaseToken(good, 'owner@example.com', ok, auth), true);
+  assert.equal(seen.url, 'https://abc.supabase.co/auth/v1/user');
+  assert.equal(seen.options.headers.apikey, 'anon');
+  assert.equal(await verifySupabaseToken(good, 'other@example.com', ok, auth), false);
+  assert.equal(await verifySupabaseToken(jwt({iss: 'https://evil.supabase.co/auth/v1', exp: 9999999999}), 'owner@example.com', ok, auth), false);
+  assert.equal(await verifySupabaseToken(jwt({iss: auth.url + '/auth/v1', exp: 1}), 'owner@example.com', ok, auth), false);
+  assert.equal(await verifySupabaseToken(good, 'owner@example.com', async () => new Response('{}', {status: 401}), auth), false);
+  await assert.rejects(verifySupabaseToken(good, 'owner@example.com', async () => new Response('{}', {status: 500}), auth));
+  assert.ok(SUPABASE_AUTH.url.startsWith('https://') && SUPABASE_AUTH.anonKey.length > 40);
 });
