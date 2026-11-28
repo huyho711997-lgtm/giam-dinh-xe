@@ -66,11 +66,66 @@ const WeeklyDetail = (() => {
       return words.every(word => hay.includes(word));
     });
   }
-  return {BUCKETS, PERIOD_IDS, build, filter, isChuaDuyetStatus, gdvOf, amountOf, norm};
+  // Cột của bảng: sort theo `type` (text/number), lọc nhiều giá trị với cột có filter:true.
+  const COLUMNS = [
+    {key: 'stt', label: 'STT', sort: false},
+    {key: 'hsbt', label: 'Số HSBT', type: 'text'},
+    {key: 'bienSo', label: 'Biển số', type: 'text'},
+    {key: 'owner', label: 'Chủ xe', type: 'text'},
+    {key: 'gdv', label: 'GĐV', type: 'text', filter: true},
+    {key: 'gara', label: 'Gara', type: 'text', filter: true},
+    {key: 'date', label: 'Ngày mở HS', type: 'number'},
+    {key: 'status', label: 'Trạng thái', type: 'text', filter: true},
+    {key: 'amount', label: 'Số tiền BT', type: 'number'},
+    {key: 'groups', label: 'Thuộc nhóm', type: 'text', filter: true}
+  ];
+  const groupLabels = row => BUCKETS.filter(b => row.buckets[b.id]).map(b => b.label);
+  // ctx: {ownerOf(claim), statusOf(claim) → nhãn}
+  function valueOf(row, key, ctx) {
+    const c = row.claim, x = ctx || {};
+    switch (key) {
+      case 'hsbt': return String(c.soHoSoBoiThuong || '');
+      case 'bienSo': return String(c.bienSo || '');
+      case 'owner': { const v = x.ownerOf ? x.ownerOf(c) : ''; return v === 'N/A' ? '' : String(v || ''); }
+      case 'gdv': return row.gdv;
+      case 'gara': return String(c.tenGaraVietTat || c.tenGara || '');
+      case 'date': return row.openMs || 0;
+      case 'status': return x.statusOf ? String(x.statusOf(c) || '') : String(c.trangThai || '');
+      case 'amount': return row.amount || 0;
+      case 'groups': return groupLabels(row).join(', ');
+      default: return '';
+    }
+  }
+  // Giá trị riêng của cột (cột "groups" có nhiều giá trị/hàng); rỗng → '(Trống)'.
+  const valuesOf = (row, key, ctx) => key === 'groups' ? groupLabels(row) : [valueOf(row, key, ctx) || '(Trống)'];
+  // filters: {key: [giá trị được giữ]}; mảng rỗng/không có = không lọc.
+  function applyColumnFilters(rows, filters, ctx) {
+    const active = Object.entries(filters || {}).filter(([, list]) => Array.isArray(list) && list.length);
+    if (!active.length) return rows;
+    return rows.filter(row => active.every(([key, list]) => valuesOf(row, key, ctx).some(value => list.includes(value))));
+  }
+  function distinct(rows, key, ctx) {
+    const map = new Map();
+    rows.forEach(row => valuesOf(row, key, ctx).forEach(value => map.set(value, (map.get(value) || 0) + 1)));
+    return [...map.entries()].map(([value, count]) => ({value, count})).sort((a, b) => b.count - a.count || a.value.localeCompare(b.value, 'vi'));
+  }
+  function sortRows(rows, sort, ctx) {
+    const col = COLUMNS.find(item => item.key === (sort && sort.key));
+    if (!col || col.sort === false || !sort.dir) return rows;
+    const sign = sort.dir === 'desc' ? -1 : 1;
+    return rows.map((row, index) => ({row, index, v: valueOf(row, col.key, ctx)})).sort((a, b) => {
+      let d = col.type === 'number' ? a.v - b.v : String(a.v).localeCompare(String(b.v), 'vi', {numeric: true, sensitivity: 'base'});
+      // hàng trống luôn xuống cuối dù tăng hay giảm
+      const ea = a.v === '' || a.v === 0, eb = b.v === '' || b.v === 0;
+      if (ea !== eb) return ea ? 1 : -1;
+      return d * sign || a.index - b.index;
+    }).map(item => item.row);
+  }
+  return {BUCKETS, PERIOD_IDS, COLUMNS, build, filter, applyColumnFilters, distinct, sortRows, valueOf, isChuaDuyetStatus, gdvOf, amountOf, norm};
 })();
 
 // ---- Giao diện (dùng biến/hàm toàn cục của webapp) ----
-var weeklyDetailState = {bucket: 'all', query: '', limit: 50};
+var weeklyDetailState = {bucket: 'all', query: '', limit: 50, sort: {key: '', dir: ''}, colFilters: {}, pop: ''};
 function weeklyDetailData() {
   const period = getWeeklyZoneReportPeriod();
   const claims = Object.entries(cachedPendingClaimsPayload || {}).map(([id, claim]) => { claim._id = id; return claim; });
@@ -80,20 +135,40 @@ function weeklyDetailData() {
   });
   return {period, ...result};
 }
+function weeklyDetailStatusLabel(c) { const cfg = (typeof PENDING_STATUS_MAP !== 'undefined' && PENDING_STATUS_MAP[c.trangThai]) || null; return cfg ? cfg.label : (c.trangThai || 'Mới'); }
+function weeklyDetailCtx() { return {ownerOf: extractClaimOwnerName, statusOf: weeklyDetailStatusLabel}; }
+// Danh sách đang hiển thị = nhóm + tìm kiếm + lọc theo cột + sắp xếp (dùng chung cho bảng và Xuất Excel).
+function weeklyDetailRows(data, ignoreKey) {
+  const st = weeklyDetailState, ctx = weeklyDetailCtx();
+  let rows = WeeklyDetail.filter(data.rows, st.bucket, st.query, extractClaimOwnerName);
+  const filters = ignoreKey ? Object.fromEntries(Object.entries(st.colFilters).filter(([key]) => key !== ignoreKey)) : st.colFilters;
+  rows = WeeklyDetail.applyColumnFilters(rows, filters, ctx);
+  return ignoreKey ? rows : WeeklyDetail.sortRows(rows, st.sort, ctx);
+}
+const weeklyDetailActiveFilters = () => Object.values(weeklyDetailState.colFilters).filter(list => list && list.length).length;
 function weeklyDetailBodyHtml(data) {
   const st = weeklyDetailState, esc = escapeHtmlOutput;
-  const rows = WeeklyDetail.filter(data.rows, st.bucket, st.query, extractClaimOwnerName);
+  const rows = weeklyDetailRows(data);
   const shown = rows.slice(0, st.limit);
   const fmtDate = ms => { if (!ms) return '—'; const d = new Date(ms); return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); };
-  const statusOf = c => { const cfg = (typeof PENDING_STATUS_MAP !== 'undefined' && PENDING_STATUS_MAP[c.trangThai]) || null; return {label: cfg ? cfg.label : (c.trangThai || 'Mới'), color: cfg ? cfg.color : '#64748b'}; };
+  const statusColor = c => { const cfg = (typeof PENDING_STATUS_MAP !== 'undefined' && PENDING_STATUS_MAP[c.trangThai]) || null; return cfg ? cfg.color : '#64748b'; };
   const body = shown.map((row, index) => {
-    const c = row.claim, s = statusOf(c), owner = extractClaimOwnerName(c);
+    const c = row.claim, owner = extractClaimOwnerName(c);
     const chips = WeeklyDetail.BUCKETS.filter(b => row.buckets[b.id]).map(b => '<span class="wkd-chip" style="--c:' + b.color + '">' + esc(b.label) + '</span>').join('');
-    return '<tr><td class="wkd-n">' + (index + 1) + '</td><td class="wkd-hsbt">' + esc(c.soHoSoBoiThuong || '—') + '</td><td>' + esc(c.bienSo || '—') + '</td><td class="wkd-l wkd-own" title="' + esc(owner === 'N/A' ? '' : owner) + '">' + esc(owner === 'N/A' ? '—' : owner) + '</td><td class="wkd-l wkd-gdv">' + esc(row.gdv) + '</td><td class="wkd-l wkd-gara" title="' + esc(c.tenGaraVietTat || c.tenGara || '') + '">' + esc(c.tenGaraVietTat || c.tenGara || '—') + '</td><td>' + fmtDate(row.openMs) + '</td><td><span class="wkd-status" style="--c:' + s.color + '">' + esc(s.label) + '</span></td><td class="wkd-r">' + (row.amount ? row.amount.toLocaleString('vi-VN') + ' đ' : '—') + '</td><td class="wkd-l"><div class="wkd-chips">' + chips + '</div></td></tr>';
+    return '<tr><td class="wkd-n">' + (index + 1) + '</td><td class="wkd-hsbt">' + esc(c.soHoSoBoiThuong || '—') + '</td><td>' + esc(c.bienSo || '—') + '</td><td class="wkd-l wkd-own" title="' + esc(owner === 'N/A' ? '' : owner) + '">' + esc(owner === 'N/A' ? '—' : owner) + '</td><td class="wkd-l wkd-gdv">' + esc(row.gdv) + '</td><td class="wkd-l wkd-gara" title="' + esc(c.tenGaraVietTat || c.tenGara || '') + '">' + esc(c.tenGaraVietTat || c.tenGara || '—') + '</td><td>' + fmtDate(row.openMs) + '</td><td><span class="wkd-status" style="--c:' + statusColor(c) + '">' + esc(weeklyDetailStatusLabel(c)) + '</span></td><td class="wkd-r">' + (row.amount ? row.amount.toLocaleString('vi-VN') + ' đ' : '—') + '</td><td class="wkd-l"><div class="wkd-chips">' + chips + '</div></td></tr>';
   }).join('');
   const more = rows.length > shown.length ? '<div class="wkd-more"><button type="button" class="btn-premium btn-secondary" onclick="weeklyDetailShowMore()">Xem thêm ' + Math.min(50, rows.length - shown.length) + ' hồ sơ (còn ' + (rows.length - shown.length) + ')</button></div>' : '';
-  return '<div class="wkd-sum"><b>' + rows.length.toLocaleString('vi-VN') + '</b> hồ sơ' + (st.query ? ' khớp “' + esc(st.query) + '”' : '') + '</div>'
-    + '<div class="wkd-scroll"><table class="wkd-table"><thead><tr><th>STT</th><th>Số HSBT</th><th>Biển số</th><th>Chủ xe</th><th>GĐV</th><th>Gara</th><th>Ngày mở HS</th><th>Trạng thái</th><th>Số tiền BT</th><th>Thuộc nhóm</th></tr></thead><tbody>'
+  const heads = WeeklyDetail.COLUMNS.map(col => {
+    if (col.sort === false) return '<th>' + esc(col.label) + '</th>';
+    const dir = st.sort.key === col.key ? st.sort.dir : '', fl = (st.colFilters[col.key] || []).length;
+    const arrow = '<span class="wkd-arrow" aria-hidden="true">' + (dir === 'asc' ? '▲' : dir === 'desc' ? '▼' : '↕') + '</span>';
+    const funnel = col.filter ? '<button type="button" class="wkd-funnel' + (fl ? ' is-on' : '') + '" onclick="weeklyDetailOpenFilter(\'' + col.key + '\', event)" title="Lọc theo ' + esc(col.label) + '" aria-label="Lọc theo ' + esc(col.label) + '"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"></path></svg>' + (fl ? '<i>' + fl + '</i>' : '') + '</button>' : '';
+    return '<th class="wkd-th' + (dir ? ' is-sorted' : '') + '" data-wkd-col="' + col.key + '" onclick="weeklyDetailSort(\'' + col.key + '\')" title="Bấm để sắp xếp" aria-sort="' + (dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none') + '"><span class="wkd-th-in"><span>' + esc(col.label) + '</span>' + arrow + funnel + '</span></th>';
+  }).join('');
+  const nFilters = weeklyDetailActiveFilters();
+  const clear = nFilters ? ' <button type="button" class="wkd-clear" onclick="weeklyDetailClearFilters()">Xoá lọc cột (' + nFilters + ')</button>' : '';
+  return '<div class="wkd-sum"><b>' + rows.length.toLocaleString('vi-VN') + '</b> hồ sơ' + (st.query ? ' khớp “' + esc(st.query) + '”' : '') + clear + '</div>'
+    + '<div class="wkd-scroll"><table class="wkd-table"><thead><tr>' + heads + '</tr></thead><tbody>'
     + (body || '<tr><td colspan="10" class="wkd-empty">Không có hồ sơ nào trong kỳ theo bộ lọc hiện tại.</td></tr>') + '</tbody></table></div>' + more;
 }
 function weeklyDetailBucketHtml(data) {
@@ -128,18 +203,58 @@ function weeklyDetailSetBucket(id) {
   if (typeof activeOpenDropdownId !== 'undefined') activeOpenDropdownId = null;
   const host = document.getElementById('weeklyDetailBucketHost');
   if (host && weeklyDetailState.data) host.innerHTML = weeklyDetailBucketHtml(weeklyDetailState.data);
-  weeklyDetailRepaint();
+  weeklyDetailClosePop(); weeklyDetailRepaint();
 }
 function weeklyDetailShowMore() { weeklyDetailState.limit += 50; weeklyDetailRepaint(); }
+// Bấm tiêu đề cột: tăng dần → giảm dần → bỏ sắp xếp.
+function weeklyDetailSort(key) {
+  const st = weeklyDetailState, same = st.sort.key === key;
+  st.sort = same ? {key: st.sort.dir === 'desc' ? '' : key, dir: st.sort.dir === 'asc' ? 'desc' : st.sort.dir === 'desc' ? '' : 'asc'} : {key, dir: 'asc'};
+  st.limit = 50; weeklyDetailRepaint();
+}
+function weeklyDetailClearFilters() { weeklyDetailState.colFilters = {}; weeklyDetailState.limit = 50; weeklyDetailClosePop(); weeklyDetailRepaint(); }
+function weeklyDetailClosePop() { weeklyDetailState.pop = ''; document.getElementById('weeklyDetailPop')?.remove(); }
+function weeklyDetailPopHtml(key) {
+  const st = weeklyDetailState, esc = escapeHtmlOutput, col = WeeklyDetail.COLUMNS.find(item => item.key === key);
+  const options = WeeklyDetail.distinct(weeklyDetailRows(st.data, key), key, weeklyDetailCtx());
+  const chosen = st.colFilters[key] || [];
+  const items = options.map((opt, i) => '<label class="wkd-opt' + (chosen.includes(opt.value) ? ' is-on' : '') + '"><input type="checkbox" data-wkd-val="' + i + '"' + (chosen.includes(opt.value) ? ' checked' : '') + '><span class="wkd-opt-t">' + esc(opt.value) + '</span><b>' + opt.count + '</b></label>').join('');
+  return '<div class="wkd-pop-head"><div><div class="report-filter-menu-head__title">Lọc theo ' + esc(col.label) + '</div><div class="report-filter-menu-head__meta">' + (chosen.length ? 'Đang chọn ' + chosen.length + ' giá trị' : 'Chọn một hoặc nhiều giá trị') + '</div></div><button type="button" class="wkd-pop-clear" data-wkd-reset' + (chosen.length ? '' : ' disabled') + '>Bỏ chọn</button></div><div class="wkd-pop-list">' + (items || '<div class="wkd-empty">Không có giá trị nào.</div>') + '</div>';
+}
+function weeklyDetailOpenFilter(key, event) {
+  if (event) event.stopPropagation();
+  const st = weeklyDetailState, card = document.getElementById('weeklyDetailCard'), th = card && card.querySelector('th[data-wkd-col="' + key + '"]');
+  if (!card || !th) return;
+  const wasOpen = st.pop === key; weeklyDetailClosePop(); if (wasOpen) return;
+  st.pop = key;
+  const pop = document.createElement('div'); pop.id = 'weeklyDetailPop'; pop.className = 'wkd-pop';
+  pop.innerHTML = weeklyDetailPopHtml(key);
+  card.appendChild(pop);
+  const cr = card.getBoundingClientRect(), tr = th.getBoundingClientRect();
+  pop.style.top = (tr.bottom - cr.top + 6) + 'px';
+  pop.style.left = Math.max(8, Math.min(tr.left - cr.left, cr.width - pop.offsetWidth - 8)) + 'px';
+  pop.addEventListener('click', e => e.stopPropagation());
+  const refresh = () => { const list = pop.querySelector('.wkd-pop-list'), top = list ? list.scrollTop : 0; pop.innerHTML = weeklyDetailPopHtml(key); const next = pop.querySelector('.wkd-pop-list'); if (next) next.scrollTop = top; weeklyDetailRepaint(); };
+  pop.addEventListener('change', e => {
+    const box = e.target.closest('[data-wkd-val]'); if (!box) return;
+    const options = WeeklyDetail.distinct(weeklyDetailRows(st.data, key), key, weeklyDetailCtx()), value = options[Number(box.dataset.wkdVal)]?.value;
+    if (value === undefined) return;
+    const set = new Set(st.colFilters[key] || []); if (box.checked) set.add(value); else set.delete(value);
+    if (set.size) st.colFilters[key] = [...set]; else delete st.colFilters[key];
+    st.limit = 50; refresh();
+  });
+  pop.addEventListener('click', e => { if (e.target.closest('[data-wkd-reset]')) { delete st.colFilters[key]; st.limit = 50; refresh(); } });
+  setTimeout(() => document.addEventListener('click', function close(e) { if (!pop.isConnected) { document.removeEventListener('click', close); return; } if (!pop.contains(e.target)) { document.removeEventListener('click', close); weeklyDetailClosePop(); } }), 0);
+}
 function weeklyDetailExport() {
   const data = weeklyDetailState.data; if (!data) return;
   if (typeof XLSX === 'undefined') { triggerToast('Thư viện Excel đang tải, vui lòng thử lại sau vài giây.', 'warning'); return; }
-  const rows = WeeklyDetail.filter(data.rows, weeklyDetailState.bucket, weeklyDetailState.query, extractClaimOwnerName);
+  const rows = weeklyDetailRows(data);
   if (!rows.length) { triggerToast('Không có hồ sơ để xuất.', 'warning'); return; }
   const sheet = XLSX.utils.json_to_sheet(rows.map((row, index) => ({
     'STT': index + 1, 'Số HSBT': row.claim.soHoSoBoiThuong || '', 'Biển số': row.claim.bienSo || '', 'Chủ xe': extractClaimOwnerName(row.claim) === 'N/A' ? '' : extractClaimOwnerName(row.claim),
     'GĐV': row.gdv, 'Gara': row.claim.tenGaraVietTat || row.claim.tenGara || '', 'Ngày mở HS': row.openMs ? new Date(row.openMs).toLocaleDateString('vi-VN') : '',
-    'Trạng thái': (PENDING_STATUS_MAP[row.claim.trangThai] || {}).label || row.claim.trangThai || '', 'Số tiền bồi thường': row.amount || '',
+    'Trạng thái': weeklyDetailStatusLabel(row.claim), 'Số tiền bồi thường': row.amount || '',
     'Thuộc nhóm': WeeklyDetail.BUCKETS.filter(b => row.buckets[b.id]).map(b => b.label).join(', ')
   })));
   const book = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(book, sheet, 'Chi tiết hồ sơ');

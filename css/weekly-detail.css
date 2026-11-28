@@ -41,3 +41,27 @@
 .wkd-empty { padding: 32px 10px !important; color: var(--text-muted) !important; white-space: normal !important; }
 .wkd-more { text-align: center; margin-top: 12px; }
 @media (max-width: 720px) { #weeklyDetailCard { padding: 16px; } .wkd-searchbox { max-width: none; } .wkd-bar .weekly-report-image-export { margin-left: 0; } }
+
+/* tiêu đề cột bấm được: sắp xếp + lọc nhiều giá trị */
+.wkd-th { cursor: pointer; user-select: none; transition: color .15s ease; }
+.wkd-th:hover, .wkd-th.is-sorted { color: var(--primary); }
+.wkd-th-in { display: inline-flex; align-items: center; gap: 5px; }
+.wkd-arrow { font-size: 9px; opacity: .45; }
+.wkd-th.is-sorted .wkd-arrow, .wkd-th:hover .wkd-arrow { opacity: 1; }
+.wkd-funnel { position: relative; display: inline-flex; align-items: center; gap: 3px; height: 20px; padding: 0 5px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text-muted); cursor: pointer; }
+.wkd-funnel:hover { color: var(--primary); border-color: var(--border-strong); background: var(--bg-soft); }
+.wkd-funnel.is-on { color: #fff; background: var(--primary); border-color: var(--primary); }
+.wkd-funnel i { font-style: normal; font-size: 10px; font-weight: 850; }
+.wkd-clear { margin-left: 8px; padding: 2px 10px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--bg-soft); color: var(--primary); font: inherit; font-size: 11.5px; font-weight: 850; cursor: pointer; }
+.wkd-clear:hover { border-color: var(--primary); }
+.wkd-pop { position: absolute; z-index: 40; width: 280px; max-width: calc(100% - 16px); padding: 10px; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface-strong, #fff); box-shadow: 0 18px 40px rgba(37,31,20,.16), 0 2px 8px rgba(37,31,20,.06); text-align: left; }
+.wkd-pop-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 4px 6px 10px; border-bottom: 1px solid var(--border); }
+.wkd-pop-clear { border: 0; background: none; color: var(--primary); font: inherit; font-size: 12px; font-weight: 850; cursor: pointer; }
+.wkd-pop-clear:disabled { opacity: .4; cursor: default; }
+.wkd-pop-list { max-height: 260px; overflow: auto; padding-top: 6px; display: grid; gap: 2px; }
+.wkd-opt { display: flex; align-items: center; gap: 9px; padding: 8px 8px; border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--text-main); cursor: pointer; }
+.wkd-opt:hover { background: rgba(201,154,67,.1); }
+.wkd-opt.is-on { background: rgba(216,180,109,.16); color: var(--primary); font-weight: 850; }
+.wkd-opt input { accent-color: var(--primary); }
+.wkd-opt-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wkd-opt b { font-size: 12px; color: var(--text-soft, var(--text-muted)); font-weight: 850; }

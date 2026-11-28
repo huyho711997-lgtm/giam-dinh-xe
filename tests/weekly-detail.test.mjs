@@ -71,3 +71,29 @@ test('số tiền bồi thường đọc từ chuỗi có dấu chấm', () => {
   assert.equal(W.amountOf({ ttbtTongSoTienBoiThuong: '8.500.000' }), 8500000);
   assert.equal(run().rows.find(row => row.id === 'a').amount, 8500000);
 });
+
+test('sắp xếp theo cột: chữ (tiếng Việt, số tự nhiên), số, hàng trống luôn cuối', () => {
+  const { rows } = run();
+  const ids = list => [...list.map(row => row.claim.soHoSoBoiThuong)];
+  assert.equal(ids(W.sortRows(rows, { key: 'hsbt', dir: 'asc' }, {}))[0], 'A1');
+  assert.equal(ids(W.sortRows(rows, { key: 'hsbt', dir: 'desc' }, {}))[0], 'E5');
+  const byAmount = W.sortRows(rows, { key: 'amount', dir: 'desc' }, {});
+  assert.equal(byAmount[0].claim.soHoSoBoiThuong, 'A1');                      // chỉ A1 có số tiền
+  const asc = W.sortRows(rows, { key: 'amount', dir: 'asc' }, {});
+  assert.equal(asc[0].claim.soHoSoBoiThuong, 'A1');                           // trống (0) vẫn xuống cuối khi tăng dần
+  assert.equal(W.sortRows(rows, { key: 'hsbt', dir: '' }, {}), rows);         // không sắp xếp → giữ nguyên
+});
+test('lọc nhiều giá trị theo cột và liệt kê giá trị khả dụng kèm số đếm', () => {
+  const { rows } = run();
+  const ctx = { ownerOf: c => c.khachHang || '', statusOf: c => c.trangThai };
+  const d = W.distinct(rows, 'gdv', ctx);
+  assert.equal(d.reduce((sum, item) => sum + item.count, 0), rows.length);
+  const phuc = W.applyColumnFilters(rows, { gdv: ['Phúc'] }, ctx);
+  assert.ok(phuc.length > 0 && phuc.every(row => row.gdv === 'Phúc'));
+  const both = W.applyColumnFilters(rows, { gdv: ['Phúc'], status: ['moi'] }, ctx);
+  assert.ok(both.every(row => row.gdv === 'Phúc' && row.claim.trangThai === 'moi'));
+  assert.equal(W.applyColumnFilters(rows, { gdv: [] }, ctx), rows);           // rỗng = không lọc
+  const groups = W.distinct(rows, 'groups', ctx).map(item => item.value);
+  assert.ok(groups.includes('Phát sinh'));
+  assert.ok(W.applyColumnFilters(rows, { groups: ['Carpla'] }, ctx).every(row => row.buckets.carpla));
+});
