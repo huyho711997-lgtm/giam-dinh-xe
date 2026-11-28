@@ -48,11 +48,11 @@
 }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer::before,
 .gdv-report-premium-shell #weeklyZoneReportCardContainer::after { content: none; }
-.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-header { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 8px; padding: 24px 26px; border-bottom: 1px solid var(--ton-line); }
+.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-header { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 8px; padding: 24px 26px; border-bottom: 1px solid var(--ton-line); }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-header > .hide-on-screenshot { position: static !important; }
-.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-title-block { order: 0; min-width: 0; margin: 0 !important; padding: 0 !important; border: 0 !important; text-align: left !important; }
-.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-columns-action { order: 1; }
-.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-export-action { order: 2; }
+.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-title-block { order: 0; min-width: 0; margin: 0 !important; padding: 0 !important; border: 0 !important; text-align: center !important; grid-column: 2; grid-row: 1; }
+.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-columns-action { order: 1; grid-column: 1; grid-row: 1; justify-self: start; }
+.gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-export-action { order: 2; grid-column: 3; grid-row: 1; justify-self: end; }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer:has(.ton-dropdown-host--open),
 .gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-header:has(.ton-dropdown-host--open) { z-index: 1200 !important; }
 .gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-eyebrow { display: block; margin-bottom: 8px; color: var(--ton-gold); font-size: 9px; font-weight: 800; letter-spacing: .15em; }
@@ -153,6 +153,8 @@ body:not(.light-mode) .gdv-report-premium-shell #weeklyZoneReportCardContainer .
   .gdv-report-premium-shell:has(.weekly-report-header) .weekly-report-kpi:nth-child(n+3) { border-top: 1px solid var(--ton-line); }
   .gdv-report-premium-shell:has(.weekly-report-header) .weekly-report-kpi__value { font-size: 27px; }
   .gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-header { grid-template-columns: 1fr auto; padding: 20px; gap: 16px 8px; }
+  .gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-columns-action, .gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-export-action { grid-column: auto; grid-row: auto; }
+  .gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-title-block { grid-row: 1; }
   .gdv-report-premium-shell #weeklyZoneReportCardContainer .weekly-report-title-block { grid-column: 1 / -1; }
   .gdv-report-premium-shell:has(.weekly-report-header) .gdv-report-date-actions { width: 100%; }
   .gdv-report-premium-shell:has(.weekly-report-header) .gdv-report-date-picker-shell { flex-wrap: nowrap !important; }

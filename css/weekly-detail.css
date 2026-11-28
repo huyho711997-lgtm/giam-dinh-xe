@@ -9,7 +9,9 @@
   box-shadow: 0 20px 48px rgba(37,31,20,.075), 0 3px 12px rgba(37,31,20,.025), inset 0 1px 0 rgba(255,255,255,.68), inset 0 0 0 1px rgba(255,255,255,.18);
 }
 #weeklyDetailCard .weekly-report-title-block { text-align: center; margin: 0 0 16px; padding: 0 0 12px; border-bottom: 1px solid var(--border); }
-#weeklyDetailCard .weekly-report-title-block h2 { margin: 0; color: var(--text-main); font-size: 20px; font-weight: 900; letter-spacing: -.025em; line-height: 1.3; }
+#weeklyDetailCard .weekly-report-title-block h2 { margin: 0; color: var(--ton-ink, var(--text-main)); font-size: 18px; font-weight: 800; letter-spacing: -.025em; line-height: 1.3; }
+#weeklyDetailCard .weekly-report-eyebrow { display: block; margin-bottom: 8px; color: var(--ton-gold, var(--report-gold)); font-size: 9px; font-weight: 800; letter-spacing: .15em; }
+#weeklyDetailCard .weekly-report-period { margin-top: 7px; padding: 0; border: 0; border-radius: 0; background: none; color: var(--ton-muted, var(--text-muted)); font-size: 11px; font-weight: 500; }
 
 /* một hàng công cụ: nhóm hồ sơ · tìm kiếm · xuất Excel */
 .wkd-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
