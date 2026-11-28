@@ -7,13 +7,12 @@ const WeeklyDetail = (() => {
     {id: 'phatSinh', label: 'Phát sinh', color: '#3b82f6'},
     {id: 'daDuyet', label: 'Đã duyệt HSBT', color: '#10b981'},
     {id: 'chuaDuyet', label: 'Chưa duyệt PASC', color: '#f59e0b'},
-    {id: 'chuyenDntt', label: 'Chuyển ĐNTT', color: '#ec4899'},
     {id: 'carpla', label: 'Carpla', color: '#06b6d4'},
     {id: 'tndsTon', label: 'TNDS tồn', color: '#6366f1'},
     {id: 'tonQuaHan', label: 'Tồn quá hạn', color: '#ef4444'}
   ];
   // Hồ sơ "trong kỳ" = thuộc ít nhất một nhóm tính theo kỳ; TNDS tồn / Tồn quá hạn không theo kỳ nên chỉ hiện khi chọn riêng nhóm đó.
-  const PERIOD_IDS = ['phatSinh', 'daDuyet', 'chuaDuyet', 'chuyenDntt', 'carpla'];
+  const PERIOD_IDS = ['phatSinh', 'daDuyet', 'chuaDuyet', 'carpla'];
   const CHUA_DUYET_KEYS = ['moi', 'cho_giam_dinh_ht', 'da_giam_dinh_ht', 'cho_gdct', 'da_gdct', 'cho_duyet_pasc'];
   const CHUA_DUYET_TEXT = ['chờ giám định ht', 'cho giam dinh ht', 'đã giám định ht', 'da giam dinh ht', 'chờ gđct', 'cho gdct', 'đã gđct', 'da gdct', 'chờ duyệt pasc', 'cho duyet pasc'];
   const isChuaDuyetStatus = value => {
@@ -24,7 +23,7 @@ const WeeklyDetail = (() => {
   const amountOf = c => parseInt(String(c.ttbtTongSoTienBoiThuong || '0').replace(/[^0-9]/g, ''), 10) || 0;
   const norm = value => String(value ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase();
 
-  // opts: {claims: {id: claim}|[claim], period:{startDate,endDate}, rules, h:{getClaimDateMs,getClaimTimestamp,isPhatSinh,isChuyenDntt,isTndsClaim,isUnpaidClaim,isDuyetHsbtApproved,isOnlyDaDuyetHsbt}, selectedGdv:[], now}
+  // opts: {claims: {id: claim}|[claim], period:{startDate,endDate}, rules, h:{getClaimDateMs,getClaimTimestamp,isPhatSinh,isTndsClaim,isUnpaidClaim,isDuyetHsbtApproved,isOnlyDaDuyetHsbt}, selectedGdv:[], now}
   function build(opts) {
     const {period, rules: r, h} = opts, now = opts.now || Date.now();
     const start = period.startDate.getTime(), end = period.endDate.getTime();
@@ -44,7 +43,6 @@ const WeeklyDetail = (() => {
         phatSinh: inRange(dateOf('phatSinhDateField', 'ngayMoHs')) && !!h.isPhatSinh(c),
         daDuyet: inRange(dateOf('daDuyetDateField', 'ngayMoHs')) && !!h.isDuyetHsbtApproved(c),
         chuaDuyet: stamp >= start && stamp <= end && isChuaDuyetStatus(c.trangThai),
-        chuyenDntt: inRange(dateOf('chuyenDnttDateField', 'ngayNhanDuHoSo')) && !!h.isChuyenDntt(c),
         carpla: inRange(dateOf('carplaDateField', 'toTrinhNgayDuyet')) && String(c.tenGaraVietTat || '').toLowerCase().includes('carpla'),
         tndsTon: inRange(dateOf('tndsTonDateField', 'none')) && !!h.isTndsClaim(c) && !!h.isUnpaidClaim(c),
         tonQuaHan: !!h.isOnlyDaDuyetHsbt(c) && hsTonMs > 0 && (now - hsTonMs > (Number(r.hsTonDays) || 30) * 86400000)
@@ -78,7 +76,7 @@ function weeklyDetailData() {
   const claims = Object.entries(cachedPendingClaimsPayload || {}).map(([id, claim]) => { claim._id = id; return claim; });
   const result = WeeklyDetail.build({
     claims, period, rules: cachedReportRules, selectedGdv: typeof activeSelectedGdvNames !== 'undefined' ? activeSelectedGdvNames : [],
-    h: {getClaimDateMs, getClaimTimestamp, isPhatSinh, isChuyenDntt, isTndsClaim, isUnpaidClaim, isDuyetHsbtApproved, isOnlyDaDuyetHsbt}
+    h: {getClaimDateMs, getClaimTimestamp, isPhatSinh, isTndsClaim, isUnpaidClaim, isDuyetHsbtApproved, isOnlyDaDuyetHsbt}
   });
   return {period, ...result};
 }
@@ -102,9 +100,12 @@ function renderWeeklyZoneDetailHtml() {
   const data = weeklyDetailData(), st = weeklyDetailState, esc = escapeHtmlOutput;
   weeklyDetailState.data = data;
   const options = [{id: 'all', label: 'Tất cả hồ sơ trong kỳ'}].concat(WeeklyDetail.BUCKETS).map(b => '<option value="' + b.id + '"' + (st.bucket === b.id ? ' selected' : '') + '>' + esc(b.label) + ' (' + (data.counts[b.id] || 0) + ')</option>').join('');
-  return '<section class="wkd-card" id="weeklyDetailCard"><div class="wkd-head"><div><span class="weekly-report-eyebrow">CHI TIẾT HỒ SƠ</span><h3>Danh sách hồ sơ trong kỳ</h3><p>' + esc(data.period.label) + ' · theo GĐV và quy tắc đang chọn</p></div>'
-    + '<div class="wkd-tools"><input type="search" class="wkd-search" placeholder="Tìm số HSBT, biển số, chủ xe, GĐV, gara…" value="' + esc(st.query) + '" oninput="weeklyDetailSearch(this.value)" aria-label="Tìm hồ sơ"><select class="wkd-select" onchange="weeklyDetailSetBucket(this.value)" aria-label="Nhóm hồ sơ">' + options + '</select>'
-    + '<button type="button" class="btn-premium btn-secondary wkd-export" onclick="weeklyDetailExport()">Xuất Excel</button></div></div><div id="weeklyDetailBody">' + weeklyDetailBodyHtml(data) + '</div></section>';
+  return '<section class="wkd-card" id="weeklyDetailCard">'
+    + '<div class="wkd-toolbar hide-on-screenshot"><input type="search" class="wkd-search" placeholder="Tìm số HSBT, biển số, chủ xe, GĐV, gara…" value="' + esc(st.query) + '" oninput="weeklyDetailSearch(this.value)" aria-label="Tìm hồ sơ">'
+    + '<select class="wkd-select" onchange="weeklyDetailSetBucket(this.value)" aria-label="Nhóm hồ sơ">' + options + '</select>'
+    + '<button type="button" class="btn-premium btn-secondary wkd-export" onclick="weeklyDetailExport()">Xuất Excel</button></div>'
+    + '<div class="weekly-report-title-block"><span class="weekly-report-eyebrow">CHI TIẾT HỒ SƠ</span><h2>DANH SÁCH HỒ SƠ TRONG KỲ</h2><div class="weekly-report-period">' + esc(data.period.label) + '</div></div>'
+    + '<div id="weeklyDetailBody">' + weeklyDetailBodyHtml(data) + '</div></section>';
 }
 function weeklyDetailRepaint() { const box = document.getElementById('weeklyDetailBody'); if (box && weeklyDetailState.data) box.innerHTML = weeklyDetailBodyHtml(weeklyDetailState.data); }
 let weeklyDetailTimer = 0;

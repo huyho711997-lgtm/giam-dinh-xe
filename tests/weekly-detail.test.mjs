@@ -15,7 +15,6 @@ const h = {
   getClaimDateMs: (c, field) => field === 'none' ? -1 : (c[field] || c.ngayMoHs || 0),
   getClaimTimestamp: c => c.ngayMoHs || 0,
   isPhatSinh: c => c.trangThai !== 'tu_choi',
-  isChuyenDntt: c => !!c.dntt,
   isTndsClaim: c => !!c.tnds,
   isUnpaidClaim: c => c.trangThai !== 'da_thanh_toan',
   isDuyetHsbtApproved: c => ['da_duyet_hsbt', 'da_thanh_toan'].includes(c.trangThai),
@@ -48,6 +47,13 @@ test('Tồn quá hạn và TNDS tồn không theo kỳ: chỉ hiện khi chọn 
   assert.ok([...over].includes('C3'));
   assert.ok(![...W.filter(rows, 'all', '').map(row => row.claim.soHoSoBoiThuong)].includes('C3'));
   assert.deepEqual([...W.filter(rows, 'tndsTon', '').map(row => row.claim.soHoSoBoiThuong)], ['E5']);
+});
+test('không có nhóm Chuyển ĐNTT; hồ sơ chỉ chuyển ĐNTT không lọt vào danh sách', () => {
+  const extra = { ...claims, z: { soHoSoBoiThuong: 'Z9', gdvTiepNhan: 'Huy', trangThai: 'da_thanh_toan', dntt: true, ngayMoHs: day(2, 6), ngayNhanDuHoSo: day(10, 11) } };
+  const { rows, counts } = W.build({ claims: extra, period, rules: { hsTonDays: 30 }, h, now: day(28, 11) });
+  assert.ok(!W.BUCKETS.some(bucket => /dntt/i.test(bucket.id)));
+  assert.equal('chuyenDntt' in counts, false);
+  assert.ok(![...rows.map(row => row.claim.soHoSoBoiThuong)].includes('Z9'));
 });
 test('lọc GĐV đang chọn (không phân biệt hoa thường)', () => {
   const { rows } = run({ selectedGdv: ['  HUY '] });
