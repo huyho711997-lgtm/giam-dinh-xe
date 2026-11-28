@@ -1,0 +1,20 @@
+.wkd-card { background:var(--surface); border:1px solid var(--border-strong); border-radius:20px; padding:22px 24px; margin-bottom:24px; box-shadow:var(--shadow-sm); }
+.wkd-head { display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:14px; margin-bottom:14px; }
+.wkd-head h3 { margin:2px 0 2px; font-size:18px; letter-spacing:-.02em; color:var(--text-main); }
+.wkd-head p { margin:0; font-size:12.5px; color:var(--text-muted); }
+.wkd-tools { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.wkd-search, .wkd-select { height:36px; border:1px solid var(--border-strong); border-radius:10px; background:var(--bg-soft); color:var(--text-main); font:inherit; font-size:13px; padding:0 12px; }
+.wkd-search { width:280px; max-width:100%; }
+.wkd-export { width:auto; flex:none; padding:0 14px; height:36px; font-size:12.5px; font-weight:800; }
+.wkd-sum { font-size:12.5px; font-weight:700; color:var(--text-muted); margin:0 0 8px; }
+.wkd-scroll { overflow:auto; max-height:70vh; border:1px solid var(--border); border-radius:14px; }
+.wkd-table { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; text-align:center; }
+.wkd-table th { position:sticky; top:0; z-index:1; background:var(--bg-soft); color:var(--text-muted); font-size:11px; font-weight:850; letter-spacing:.03em; text-transform:uppercase; padding:11px 10px; border-bottom:1px solid var(--border-strong); white-space:nowrap; }
+.wkd-table td { padding:10px; border-bottom:1px solid var(--border); color:var(--text-main); vertical-align:middle; }
+.wkd-table tbody tr:hover td { background:color-mix(in srgb,var(--primary) 5%,transparent); }
+.wkd-table .wkd-l { text-align:left; } .wkd-table .wkd-r { text-align:right; font-weight:800; white-space:nowrap; }
+.wkd-n { color:var(--text-muted); } .wkd-hsbt { font-weight:850; color:#3b82f6; white-space:nowrap; }
+.wkd-status, .wkd-chip { display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:800; white-space:nowrap; color:var(--c); background:color-mix(in srgb,var(--c) 13%,transparent); }
+.wkd-chip { margin:1px 3px 1px 0; }
+.wkd-empty { padding:28px 10px !important; color:var(--text-muted) !important; }
+.wkd-more { text-align:center; margin-top:12px; }

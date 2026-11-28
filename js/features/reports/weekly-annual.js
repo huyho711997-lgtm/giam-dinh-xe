@@ -228,6 +228,7 @@
             </table>
           </div>
         </div>
+        <div id="weeklyDetailHost">${typeof renderWeeklyZoneDetailHtml === 'function' ? renderWeeklyZoneDetailHtml() : ''}</div>
       `;
     }
 
